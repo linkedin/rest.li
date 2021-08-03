@@ -56,7 +56,7 @@ public class CompressionResource extends CollectionResourceTemplate<Long, Greeti
   @Finder("repeatedGreetings")
   public List<Greeting> serveRepeatedGreeting(@QueryParam(value="repeat", typeref=CustomLongRef.class) CustomLong l)
   {
-    List<Greeting> result = new ArrayList<Greeting>();
+    List<Greeting> result = new ArrayList<>();
     Greeting g = new Greeting();
     g.setId(1);
 

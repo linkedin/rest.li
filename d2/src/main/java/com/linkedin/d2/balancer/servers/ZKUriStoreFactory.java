@@ -40,7 +40,7 @@ public class ZKUriStoreFactory implements ZooKeeperConnectionManager.ZKStoreFact
   @Override
   public ZooKeeperEphemeralStore<UriProperties> createStore(ZKConnection connection, String path)
   {
-    return new ZooKeeperEphemeralStore<UriProperties>(
-            connection, new UriPropertiesJsonSerializer(), new UriPropertiesMerger(), path);
+    return new ZooKeeperEphemeralStore<>(connection, new UriPropertiesJsonSerializer(),
+        new UriPropertiesMerger(), path);
   }
 }

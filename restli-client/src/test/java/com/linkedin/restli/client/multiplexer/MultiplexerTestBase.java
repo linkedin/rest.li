@@ -103,7 +103,7 @@ public class MultiplexerTestBase
   protected static Response<TestRecord> fakeResponse(int id)
   {
     TestRecord record = fakeEntity(id);
-    return new ResponseImpl<TestRecord>(HttpStatus.S_200_OK.getCode(), HEADERS, Collections.<HttpCookie>emptyList(), record, null);
+    return new ResponseImpl<>(HttpStatus.S_200_OK.getCode(), HEADERS, Collections.<HttpCookie>emptyList(), record, null);
   }
 
   protected static TestRecord fakeEntity(int id)
@@ -148,7 +148,7 @@ public class MultiplexerTestBase
 
   private static Map<String, String> normalizeHeaderName(Map<String, String> headers)
   {
-    Map<String, String> normalizedHeaders = new HashMap<String, String>();
+    Map<String, String> normalizedHeaders = new HashMap<>();
     for (Map.Entry<String, String> header : headers.entrySet())
     {
       // make all header names lower case
@@ -159,7 +159,7 @@ public class MultiplexerTestBase
 
   private static Map<String, String> normalizeSetCookies(List<String> cookies)
   {
-    Map<String, String> normalizedSetCookies = new HashMap<String, String>();
+    Map<String, String> normalizedSetCookies = new HashMap<>();
     for(HttpCookie cookie : CookieUtil.decodeSetCookies(cookies))
     {
       normalizedSetCookies.put(cookie.getName(), cookie.toString());

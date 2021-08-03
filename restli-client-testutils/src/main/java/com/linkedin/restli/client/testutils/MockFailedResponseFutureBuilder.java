@@ -272,7 +272,7 @@ public class MockFailedResponseFutureBuilder<K, V extends RecordTemplate> extend
 
     ExecutionException executionException = new ExecutionException(restLiResponseException);
     Future<Response<V>> responseFuture = buildFuture(null, executionException);
-    return new ResponseFutureImpl<V>(responseFuture, _errorHandlingBehavior);
+    return new ResponseFutureImpl<>(responseFuture, _errorHandlingBehavior);
   }
 
   private ResponseFuture<V> buildWithEntity()
@@ -301,7 +301,7 @@ public class MockFailedResponseFutureBuilder<K, V extends RecordTemplate> extend
     ExecutionException executionException = new ExecutionException(restLiResponseException);
 
     Future<Response<V>> responseFuture = buildFuture(null, executionException);
-    return new ResponseFutureImpl<V>(responseFuture, _errorHandlingBehavior);
+    return new ResponseFutureImpl<>(responseFuture, _errorHandlingBehavior);
   }
 
   private static byte[] mapToBytes(DataMap dataMap)

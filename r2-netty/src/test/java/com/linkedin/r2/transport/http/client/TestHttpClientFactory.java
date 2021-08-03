@@ -153,7 +153,7 @@ public class TestHttpClientFactory
     try
     {
       server.start();
-      List<Client> clients = new ArrayList<Client>();
+      List<Client> clients = new ArrayList<>();
       for (int i = 0; i < 100; i++)
       {
         HashMap<String, String> properties = new HashMap<>();
@@ -167,12 +167,12 @@ public class TestHttpClientFactory
         c.restRequest(r).get(30, TimeUnit.SECONDS);
       }
 
-      FutureCallback<None> factoryShutdown = new FutureCallback<None>();
+      FutureCallback<None> factoryShutdown = new FutureCallback<>();
       factory.shutdown(factoryShutdown);
 
       for (Client c : clients)
       {
-        FutureCallback<None> callback = new FutureCallback<None>();
+        FutureCallback<None> callback = new FutureCallback<>();
         c.shutdown(callback);
         callback.get(30, TimeUnit.SECONDS);
       }
@@ -199,7 +199,7 @@ public class TestHttpClientFactory
         .setShutdownScheduledExecutorService(true)
         .build();
 
-    Map<String, String> properties = new HashMap<String, String>();
+    Map<String, String> properties = new HashMap<>();
 
     String requestTimeout = "7000";
     String poolSize = "10";
@@ -240,7 +240,7 @@ public class TestHttpClientFactory
   public void testNewSSLProperties() throws Exception
   {
     HttpClientFactory factory = new HttpClientFactory.Builder().build();
-    Map<String,Object> params = new HashMap<String, Object>();
+    Map<String,Object> params = new HashMap<>();
     SSLParameters sslParameters = new SSLParameters();
     sslParameters.setProtocols(new String[]{ "Unsupported" });
     params.put(HttpClientFactory.HTTP_SSL_CONTEXT, SSLContext.getDefault());
@@ -262,7 +262,7 @@ public class TestHttpClientFactory
   public void testSSLParams() throws Exception
   {
     HttpClientFactory factory = new HttpClientFactory.Builder().build();
-    Map<String,Object> params = new HashMap<String, Object>();
+    Map<String,Object> params = new HashMap<>();
     SSLParameters sslParameters = new SSLParameters();
     sslParameters.setProtocols(new String[]{ "Unsupported" });
 
@@ -291,7 +291,7 @@ public class TestHttpClientFactory
     try
     {
       server.start();
-      List<Client> clients = new ArrayList<Client>();
+      List<Client> clients = new ArrayList<>();
       for (int i = 0; i < 100; i++)
       {
         HashMap<String, String> properties = new HashMap<>();
@@ -305,7 +305,7 @@ public class TestHttpClientFactory
         c.restRequest(r).get(30, TimeUnit.SECONDS);
       }
 
-      FutureCallback<None> factoryShutdown = new FutureCallback<None>();
+      FutureCallback<None> factoryShutdown = new FutureCallback<>();
       factory.shutdown(factoryShutdown, 1, TimeUnit.SECONDS);
 
       factoryShutdown.get(30, TimeUnit.SECONDS);
@@ -329,7 +329,7 @@ public class TestHttpClientFactory
     try
     {
       server.start();
-      List<Client> clients = new ArrayList<Client>();
+      List<Client> clients = new ArrayList<>();
       for (int i = 0; i < 100; i++)
       {
         HashMap<String, String> properties = new HashMap<>();
@@ -348,7 +348,7 @@ public class TestHttpClientFactory
       server.stop();
     }
 
-    FutureCallback<None> factoryShutdown = new FutureCallback<None>();
+    FutureCallback<None> factoryShutdown = new FutureCallback<>();
     factory.shutdown(factoryShutdown);
     try
     {
@@ -383,10 +383,10 @@ public class TestHttpClientFactory
       URI uri = new URI(URI);
       Future<RestResponse> responseFuture = client.restRequest(new RestRequestBuilder(uri).build());
 
-      FutureCallback<None> factoryShutdown = new FutureCallback<None>();
+      FutureCallback<None> factoryShutdown = new FutureCallback<>();
       factory.shutdown(factoryShutdown);
 
-      FutureCallback<None> clientShutdown = new FutureCallback<None>();
+      FutureCallback<None> clientShutdown = new FutureCallback<>();
       client.shutdown(clientShutdown);
 
       // Client and factory shutdowns are now pending.  When we release the latch, the response will
@@ -422,7 +422,7 @@ public class TestHttpClientFactory
     ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     HttpClientFactory factory = getHttpClientFactory(eventLoop, false, scheduler, false);
 
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     factory.shutdown(callback, 60, TimeUnit.MINUTES);
     callback.get(60, TimeUnit.SECONDS);
     scheduler.shutdown();
@@ -438,11 +438,11 @@ public class TestHttpClientFactory
     HttpClientFactory factory = new HttpClientFactory.Builder().build();
     TransportClient client = factory.getClient(Collections.<String, Object>emptyMap());
     // first shutdown call
-    FutureCallback<None> clientShutdown = new FutureCallback<None>();
+    FutureCallback<None> clientShutdown = new FutureCallback<>();
     client.shutdown(clientShutdown);
     clientShutdown.get(30, TimeUnit.SECONDS);
     // second shutdown call
-    clientShutdown = new FutureCallback<None>();
+    clientShutdown = new FutureCallback<>();
     client.shutdown(clientShutdown);
     try
     {
@@ -454,7 +454,7 @@ public class TestHttpClientFactory
       Assert.assertTrue(ex.getCause() instanceof IllegalStateException);
     }
 
-    FutureCallback<None> shutdownCallback = new FutureCallback<None>();
+    FutureCallback<None> shutdownCallback = new FutureCallback<>();
     factory.shutdown(shutdownCallback);
     shutdownCallback.get(30, TimeUnit.SECONDS);
   }
@@ -477,7 +477,7 @@ public class TestHttpClientFactory
   @Test(dataProvider = "compressionConfigsData")
   public void testGetRequestCompressionConfig(String serviceName, int requestCompressionThresholdDefault, CompressionConfig expectedConfig)
   {
-    Map<String, CompressionConfig> requestCompressionConfigs = new HashMap<String, CompressionConfig>();
+    Map<String, CompressionConfig> requestCompressionConfigs = new HashMap<>();
     requestCompressionConfigs.put("service1", new CompressionConfig(0));
     requestCompressionConfigs.put("service2", new CompressionConfig(Integer.MAX_VALUE));
     requestCompressionConfigs.put("service3", new CompressionConfig(111));

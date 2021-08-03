@@ -35,7 +35,7 @@ public class PathKeysImpl implements MutablePathKeys
   public PathKeysImpl()
   {
     super();
-    _keyMap = new HashMap<String, Object>(4);
+    _keyMap = new HashMap<>(4);
   }
 
   @Override

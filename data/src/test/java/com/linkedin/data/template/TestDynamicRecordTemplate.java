@@ -55,43 +55,43 @@ public class TestDynamicRecordTemplate
       );
 
   public static final FieldDef<Boolean> FIELD_boolean =
-      new FieldDef<Boolean>("boolean", Boolean.class, SCHEMA.getField("boolean").getType());
+      new FieldDef<>("boolean", Boolean.class, SCHEMA.getField("boolean").getType());
   public static final FieldDef<Integer> FIELD_int =
-      new FieldDef<Integer>("int", Integer.class, SCHEMA.getField("int").getType());
+      new FieldDef<>("int", Integer.class, SCHEMA.getField("int").getType());
   public static final FieldDef<Long> FIELD_long =
-      new FieldDef<Long>("long", Long.class, SCHEMA.getField("long").getType());
+      new FieldDef<>("long", Long.class, SCHEMA.getField("long").getType());
   public static final FieldDef<Float> FIELD_float =
-      new FieldDef<Float>("float", Float.class, SCHEMA.getField("float").getType());
+      new FieldDef<>("float", Float.class, SCHEMA.getField("float").getType());
   public static final FieldDef<Double> FIELD_double =
-      new FieldDef<Double>("double", Double.class, SCHEMA.getField("double").getType());
+      new FieldDef<>("double", Double.class, SCHEMA.getField("double").getType());
   public static final FieldDef<String> FIELD_string =
-      new FieldDef<String>("string", String.class, SCHEMA.getField("string").getType());
+      new FieldDef<>("string", String.class, SCHEMA.getField("string").getType());
   public static final FieldDef<ByteString> FIELD_bytes =
-      new FieldDef<ByteString>("bytes", ByteString.class, SCHEMA.getField("bytes").getType());
+      new FieldDef<>("bytes", ByteString.class, SCHEMA.getField("bytes").getType());
   public static final FieldDef<TestRecordAndUnionTemplate.EnumType> FIELD_enum =
-      new FieldDef<TestRecordAndUnionTemplate.EnumType>("enum", TestRecordAndUnionTemplate.EnumType.class, SCHEMA.getField("enum").getType());
+      new FieldDef<>("enum", TestRecordAndUnionTemplate.EnumType.class, SCHEMA.getField("enum").getType());
   public static final FieldDef<TestRecordAndUnionTemplate.FixedType> FIELD_fixed =
-      new FieldDef<TestRecordAndUnionTemplate.FixedType>("fixed", TestRecordAndUnionTemplate.FixedType.class, SCHEMA.getField("fixed").getType());
+      new FieldDef<>("fixed", TestRecordAndUnionTemplate.FixedType.class, SCHEMA.getField("fixed").getType());
   public static final FieldDef<TestRecordAndUnionTemplate.Bar> FIELD_record =
-      new FieldDef<TestRecordAndUnionTemplate.Bar>("record", TestRecordAndUnionTemplate.Bar.class, SCHEMA.getField("record").getType());
+      new FieldDef<>("record", TestRecordAndUnionTemplate.Bar.class, SCHEMA.getField("record").getType());
 
   public static final FieldDef<TestRecordAndUnionTemplate.FixedType[]> FIELD_fixedArray =
-      new FieldDef<TestRecordAndUnionTemplate.FixedType[]>("fixedArray", TestRecordAndUnionTemplate.FixedType[].class, SCHEMA.getField("fixedArray").getType());
+      new FieldDef<>("fixedArray", TestRecordAndUnionTemplate.FixedType[].class, SCHEMA.getField("fixedArray").getType());
   public static final FieldDef<Integer[]> FIELD_intArray =
-      new FieldDef<Integer[]>("intArray", Integer[].class, SCHEMA.getField("intArray").getType());
+      new FieldDef<>("intArray", Integer[].class, SCHEMA.getField("intArray").getType());
   public static final FieldDef<TestRecordAndUnionTemplate.Bar[]> FIELD_recordArray =
-      new FieldDef<TestRecordAndUnionTemplate.Bar[]>("recordArray", TestRecordAndUnionTemplate.Bar[].class, SCHEMA.getField("recordArray").getType());
+      new FieldDef<>("recordArray", TestRecordAndUnionTemplate.Bar[].class, SCHEMA.getField("recordArray").getType());
   public static final FieldDef<TestRecordAndUnionTemplate.EnumType[]> FIELD_enumArray =
-      new FieldDef<TestRecordAndUnionTemplate.EnumType[]>("enumArray", TestRecordAndUnionTemplate.EnumType[].class, SCHEMA.getField("enumArray").getType());
+      new FieldDef<>("enumArray", TestRecordAndUnionTemplate.EnumType[].class, SCHEMA.getField("enumArray").getType());
   public static final FieldDef<IntegerArray> FIELD_intArrayTemplate =
-      new FieldDef<IntegerArray>("intArrayTemplate", IntegerArray.class, SCHEMA.getField("intArray").getType());
+      new FieldDef<>("intArrayTemplate", IntegerArray.class, SCHEMA.getField("intArray").getType());
   public static final FieldDef<CustomNumber> FIELD_typeRef =
-      new FieldDef<CustomNumber>("typeRef", CustomNumber.class, SCHEMA.getField("typeRef").getType());
+      new FieldDef<>("typeRef", CustomNumber.class, SCHEMA.getField("typeRef").getType());
   public static DynamicRecordMetadata METADATA;
 
   static
   {
-    ArrayList<FieldDef<?>> fieldDefs = new ArrayList<FieldDef<?>>();
+    ArrayList<FieldDef<?>> fieldDefs = new ArrayList<>();
     fieldDefs.add(FIELD_boolean);
     fieldDefs.add(FIELD_bytes);
     fieldDefs.add(FIELD_double);

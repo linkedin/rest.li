@@ -69,6 +69,7 @@ public class ResourceMethodDescriptor
   private final String                                  _actionName;
   private final ResourceLevel                           _actionResourceLevel;
   private final FieldDef<?>                             _actionReturnFieldDef;
+  private final boolean                                 _isActionReadOnly;
   private final RecordDataSchema                        _actionReturnRecordDataSchema;
   private final RecordDataSchema                        _requestDataSchema;
   private final InterfaceType                           _interfaceType;
@@ -105,6 +106,7 @@ public class ResourceMethodDescriptor
                                         null,
                                         null,
                                         null,
+                                        false,
                                         null,
                                         metadataType,
                                         interfaceType,
@@ -140,6 +142,7 @@ public class ResourceMethodDescriptor
                                         null,
                                         null,
                                         null,
+                                        false,
                                         null,
                                         metadataType,
                                         interfaceType,
@@ -180,6 +183,50 @@ public class ResourceMethodDescriptor
                                         actionResourceType,
                                         actionReturnType,
                                         actionReturnRecordDataSchema,
+                                        false,
+                                        recordDataSchema,
+                                        null,
+                                        interfaceType,
+                                        customAnnotations);
+  }
+
+  /**
+   * Action resource method descriptor factory.
+   *
+   * @param method resource {@link Method}
+   * @param parameters rest.li method {@link Parameter}s
+   * @param actionName action name
+   * @param actionResourceType action {@link ResourceLevel}
+   * @param actionReturnType action return type class
+   * @param actionReturnRecordDataSchema the RecordDataSchema for the action return
+   * @param recordDataSchema the RecordDataSchema for the method
+   * @param isActionReadOnly true if the action is read only, false otherwise.
+   * @param interfaceType resource method {@link InterfaceType}
+   * @return action {@link ResourceMethodDescriptor}
+   */
+  public static ResourceMethodDescriptor createForAction(
+      final Method method,
+      final List<Parameter<?>> parameters,
+      final String actionName,
+      final ResourceLevel actionResourceType,
+      final FieldDef<?> actionReturnType,
+      final RecordDataSchema actionReturnRecordDataSchema,
+      final boolean isActionReadOnly,
+      final RecordDataSchema recordDataSchema,
+      final InterfaceType interfaceType,
+      final DataMap customAnnotations)
+  {
+    return new ResourceMethodDescriptor(ResourceMethod.ACTION,
+                                        method,
+                                        parameters,
+                                        null,
+                                        null,
+                                        BATCH_FINDER_NULL_CRITERIA_INDEX,
+                                        actionName,
+                                        actionResourceType,
+                                        actionReturnType,
+                                        actionReturnRecordDataSchema,
+                                        isActionReadOnly,
                                         recordDataSchema,
                                         null,
                                         interfaceType,
@@ -234,6 +281,7 @@ public class ResourceMethodDescriptor
                                         null,
                                         null,
                                         null,
+                                        false,
                                         null,
                                         collectionCustomMetadataType,
                                         interfaceType,
@@ -253,6 +301,7 @@ public class ResourceMethodDescriptor
                                    final ResourceLevel actionResourceLevel,
                                    final FieldDef<?> actionReturnType,
                                    final RecordDataSchema actionReturnRecordDataSchema,
+                                   final boolean isActionReadOnly,
                                    final RecordDataSchema requestDataSchema,
                                    final Class<? extends RecordTemplate> collectionCustomMetadataType,
                                    final InterfaceType interfaceType,
@@ -268,6 +317,7 @@ public class ResourceMethodDescriptor
     _actionResourceLevel = actionResourceLevel;
     _actionReturnFieldDef = actionReturnType;
     _actionReturnRecordDataSchema = actionReturnRecordDataSchema;
+    _isActionReadOnly = isActionReadOnly;
     _requestDataSchema = requestDataSchema;
     _collectionCustomMetadataType = collectionCustomMetadataType;
     _interfaceType = interfaceType;
@@ -353,7 +403,7 @@ public class ResourceMethodDescriptor
    */
   public List<Parameter<?>> getParametersWithType(final Parameter.ParamType type)
   {
-    List<Parameter<?>> params = new ArrayList<Parameter<?>>();
+    List<Parameter<?>> params = new ArrayList<>();
     for (Parameter<?> p : _parameters)
     {
       if (p.getParamType() == type)
@@ -456,6 +506,11 @@ public class ResourceMethodDescriptor
   public RecordDataSchema getActionReturnRecordDataSchema()
   {
     return _actionReturnRecordDataSchema;
+  }
+
+  public boolean isActionReadOnly()
+  {
+    return _isActionReadOnly;
   }
 
   public RecordDataSchema getRequestDataSchema()

@@ -31,7 +31,7 @@ public class PartitionDataFactory
 {
   public static Map<Integer, PartitionData> createPartitionDataMap(Map<String, Object> sourceMap)
   {
-    Map<Integer, PartitionData> map = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> map = new HashMap<>();
     if (sourceMap != null)
     {
       for (Map.Entry<String, Object> entry : sourceMap.entrySet())

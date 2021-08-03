@@ -96,12 +96,13 @@ public class StateUpdater
   /**
    * Update the state of the partition if necessary
    * This update is triggered by the request. If the cluster is not initialized or the uris changed, we will update the state.
-   *
-   * @param trackerClients The set of hosts for this partition
+   *  @param trackerClients The set of hosts for this partition
    * @param partitionId The id of the partition
    * @param clusterGenerationId The id that uniquely identifies a set of hosts in the cluster
+   * @param shouldForceUpdate Whether or not to force update
    */
-  public void updateState(Set<TrackerClient> trackerClients, int partitionId, long clusterGenerationId)
+  public void updateState(Set<TrackerClient> trackerClients, int partitionId, long clusterGenerationId,
+      boolean shouldForceUpdate)
   {
     if (!_partitionLoadBalancerStateMap.containsKey(partitionId))
     {
@@ -117,10 +118,11 @@ public class StateUpdater
       }
 
     }
-    else if (clusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId())
+    else if (shouldForceUpdate || clusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId())
     {
       // Asynchronously update the state if it is from uri properties change
-      _executorService.execute(() -> updateStateDueToClusterChange(trackerClients, partitionId, clusterGenerationId));
+      _executorService.execute(() -> updateStateDueToClusterChange(trackerClients, partitionId, clusterGenerationId,
+          shouldForceUpdate));
     }
   }
 
@@ -218,9 +220,10 @@ public class StateUpdater
    * We will check the cluster generation id again before performing the actual update to make sure only one updates got executed
    * This can be guaranteed because the executor service has has 1 thread
    */
-  void updateStateDueToClusterChange(Set<TrackerClient> trackerClients, int partitionId, Long newClusterGenerationId)
+  void updateStateDueToClusterChange(Set<TrackerClient> trackerClients, int partitionId, Long newClusterGenerationId,
+      boolean shouldForceUpdate)
   {
-    if (newClusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId())
+    if (shouldForceUpdate || newClusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId())
     {
       PartitionState oldPartitionState = _partitionLoadBalancerStateMap.get(partitionId);
       updateStateForPartition(trackerClients, partitionId, oldPartitionState, newClusterGenerationId);

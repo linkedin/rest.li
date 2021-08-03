@@ -323,9 +323,9 @@ public class ExampleRequestResponseGenerator
   {
     checkSupports(ResourceMethod.GET_ALL);
     GetAllRequestBuilder<Object, RecordTemplatePlaceholder> getAll =
-      new GetAllRequestBuilder<Object, RecordTemplatePlaceholder>(
-        _uriTemplate,
-        RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
+        new GetAllRequestBuilder<>(
+            _uriTemplate,
+            RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
 
     addParams(getAll, ResourceMethod.GET_ALL);
     addPathKeys(getAll);
@@ -338,9 +338,9 @@ public class ExampleRequestResponseGenerator
   {
     checkSupports(ResourceMethod.GET);
     GetRequestBuilder<Object, RecordTemplatePlaceholder> get =
-      new GetRequestBuilder<Object, RecordTemplatePlaceholder>(
-        _uriTemplate,
-        RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
+        new GetRequestBuilder<>(
+            _uriTemplate,
+            RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
 
     if (_resourceSpec.getKeyType() != null)
     {
@@ -356,9 +356,9 @@ public class ExampleRequestResponseGenerator
   {
     checkSupports(ResourceMethod.CREATE);
     CreateRequestBuilder<Object, RecordTemplatePlaceholder> create =
-      new CreateRequestBuilder<Object, RecordTemplatePlaceholder>(
-        _uriTemplate,
-        RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
+        new CreateRequestBuilder<>(
+            _uriTemplate,
+            RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
     create.input(generateEntity());
     addParams(create, ResourceMethod.CREATE);
     addPathKeys(create);
@@ -370,9 +370,9 @@ public class ExampleRequestResponseGenerator
   {
     checkSupports(ResourceMethod.UPDATE);
     UpdateRequestBuilder<Object, RecordTemplatePlaceholder> update =
-      new UpdateRequestBuilder<Object, RecordTemplatePlaceholder>(
-        _uriTemplate,
-        RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
+        new UpdateRequestBuilder<>(
+            _uriTemplate,
+            RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
     if (_resourceSpec.getKeyType() != null)
     {
       update.id(generateKey());
@@ -388,9 +388,9 @@ public class ExampleRequestResponseGenerator
   {
     checkSupports(ResourceMethod.PARTIAL_UPDATE);
     PartialUpdateRequestBuilder<Object, RecordTemplatePlaceholder> update =
-      new PartialUpdateRequestBuilder<Object, RecordTemplatePlaceholder>(
-        _uriTemplate,
-        RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
+        new PartialUpdateRequestBuilder<>(
+            _uriTemplate,
+            RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
     if (_resourceSpec.getKeyType() != null)
     {
       update.id(generateKey());
@@ -406,9 +406,9 @@ public class ExampleRequestResponseGenerator
   {
     checkSupports(ResourceMethod.DELETE);
     DeleteRequestBuilder<Object, RecordTemplatePlaceholder> delete =
-      new DeleteRequestBuilder<Object, RecordTemplatePlaceholder>(
-        _uriTemplate,
-        RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
+        new DeleteRequestBuilder<>(
+            _uriTemplate,
+            RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
     if (_resourceSpec.getKeyType() != null)
     {
       delete.id(generateKey());
@@ -423,9 +423,9 @@ public class ExampleRequestResponseGenerator
   {
     checkSupports(ResourceMethod.BATCH_GET);
     BatchGetRequestBuilder<Object, RecordTemplatePlaceholder> batchGet =
-      new BatchGetRequestBuilder<Object, RecordTemplatePlaceholder>(
-        _uriTemplate,
-        RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
+        new BatchGetRequestBuilder<>(
+            _uriTemplate,
+            RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
     Object id1 = generateKey(0);
     Object id2 = generateKey(1);
     batchGet.ids(id1, id2);
@@ -433,10 +433,10 @@ public class ExampleRequestResponseGenerator
     addPathKeys(batchGet);
     BatchGetKVRequest<Object, RecordTemplatePlaceholder> request = batchGet.buildKV();
 
-    final Map<Object, RecordTemplatePlaceholder> bgResponseData = new HashMap<Object, RecordTemplatePlaceholder>();
+    final Map<Object, RecordTemplatePlaceholder> bgResponseData = new HashMap<>();
     bgResponseData.put(id1, generateEntity());
     bgResponseData.put(id2, generateEntity());
-    BatchResult<Object, RecordTemplatePlaceholder> result = new BatchResult<Object, RecordTemplatePlaceholder>(bgResponseData, new HashMap<Object, RestLiServiceException>());
+    BatchResult<Object, RecordTemplatePlaceholder> result = new BatchResult<>(bgResponseData, new HashMap<>());
     return buildRequestResponse(request, result, buildResourceMethodDescriptorForRestMethod(request));
   }
 
@@ -444,15 +444,15 @@ public class ExampleRequestResponseGenerator
   {
     checkSupports(ResourceMethod.BATCH_CREATE);
     BatchCreateRequestBuilder<Object, RecordTemplatePlaceholder> create =
-      new BatchCreateRequestBuilder<Object, RecordTemplatePlaceholder>(
-        _uriTemplate,
-        RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
+        new BatchCreateRequestBuilder<>(
+            _uriTemplate,
+            RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
     create.input(generateEntity());
     create.input(generateEntity());
     addParams(create, ResourceMethod.BATCH_CREATE);
     addPathKeys(create);
     BatchCreateRequest<RecordTemplatePlaceholder> request = create.build();
-    BatchCreateResult<Object, RecordTemplatePlaceholder> result = new BatchCreateResult<Object, RecordTemplatePlaceholder>(Arrays.asList(
+    BatchCreateResult<Object, RecordTemplatePlaceholder> result = new BatchCreateResult<>(Arrays.asList(
         new CreateResponse(generateKey(), HttpStatus.S_201_CREATED),
         new CreateResponse(generateKey(), HttpStatus.S_201_CREATED)));
     return buildRequestResponse(request, result, buildResourceMethodDescriptorForRestMethod(request));
@@ -462,9 +462,9 @@ public class ExampleRequestResponseGenerator
   {
     checkSupports(ResourceMethod.BATCH_UPDATE);
     BatchUpdateRequestBuilder<Object, RecordTemplatePlaceholder> update =
-      new BatchUpdateRequestBuilder<Object, RecordTemplatePlaceholder>(
-        _uriTemplate,
-        RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
+        new BatchUpdateRequestBuilder<>(
+            _uriTemplate,
+            RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
     Object id1 = generateKey(0);
     Object id2 = generateKey(1);
 
@@ -478,19 +478,19 @@ public class ExampleRequestResponseGenerator
 
   private BatchUpdateResult<Object, RecordTemplatePlaceholder> createBatchUpdateResult(Object id1, Object id2)
   {
-    Map<Object, UpdateResponse> buResponseData = new HashMap<Object, UpdateResponse>();
+    Map<Object, UpdateResponse> buResponseData = new HashMap<>();
     buResponseData.put(id1, new UpdateResponse(HttpStatus.S_200_OK));
     buResponseData.put(id2, new UpdateResponse(HttpStatus.S_200_OK));
-    return new BatchUpdateResult<Object, RecordTemplatePlaceholder>(buResponseData);
+    return new BatchUpdateResult<>(buResponseData);
   }
 
   public ExampleRequestResponse batchPartialUpdate()
   {
     checkSupports(ResourceMethod.BATCH_PARTIAL_UPDATE);
     BatchPartialUpdateRequestBuilder<Object, RecordTemplatePlaceholder> update =
-      new BatchPartialUpdateRequestBuilder<Object, RecordTemplatePlaceholder>(
-        _uriTemplate,
-        RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
+        new BatchPartialUpdateRequestBuilder<>(
+            _uriTemplate,
+            RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
     Object id1 = generateKey(0);
     Object id2 = generateKey(1);
     update.input(id1, PatchGenerator.<RecordTemplatePlaceholder>diffEmpty(generateEntity()));
@@ -505,9 +505,9 @@ public class ExampleRequestResponseGenerator
   {
     checkSupports(ResourceMethod.BATCH_DELETE);
     BatchDeleteRequestBuilder<Object, RecordTemplatePlaceholder> delete =
-      new BatchDeleteRequestBuilder<Object, RecordTemplatePlaceholder>(
-        _uriTemplate,
-        RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
+        new BatchDeleteRequestBuilder<>(
+            _uriTemplate,
+            RecordTemplatePlaceholder.class, _resourceSpec, _requestOptions);
     Object id1 = generateKey(0);
     Object id2 = generateKey(1);
     delete.ids(id1, id2);
@@ -515,10 +515,10 @@ public class ExampleRequestResponseGenerator
     addPathKeys(delete);
     BatchDeleteRequest<Object, RecordTemplatePlaceholder> request = delete.build();
 
-    final Map<Object, UpdateResponse> bdResponseData = new HashMap<Object, UpdateResponse>();
+    final Map<Object, UpdateResponse> bdResponseData = new HashMap<>();
     bdResponseData.put(id1, new UpdateResponse(HttpStatus.S_200_OK));
     bdResponseData.put(id2, new UpdateResponse(HttpStatus.S_200_OK));
-    BatchUpdateResult<Object, RecordTemplatePlaceholder> result = new BatchUpdateResult<Object, RecordTemplatePlaceholder>(bdResponseData);
+    BatchUpdateResult<Object, RecordTemplatePlaceholder> result = new BatchUpdateResult<>(bdResponseData);
     return buildRequestResponse(request, result, buildResourceMethodDescriptorForRestMethod(request));
   }
 
@@ -623,7 +623,7 @@ public class ExampleRequestResponseGenerator
   {
 
     FindRequestBuilder<Object, RecordTemplatePlaceholder> finder =
-        new FindRequestBuilder<Object, RecordTemplatePlaceholder>(
+        new FindRequestBuilder<>(
             _uriTemplate,
             RecordTemplatePlaceholder.class,
             _resourceSpec,
@@ -656,7 +656,7 @@ public class ExampleRequestResponseGenerator
 
   private CollectionResult<RecordTemplatePlaceholder, RecordTemplatePlaceholder> buildFinderResult(RecordDataSchema finderMetadataSchema)
   {
-    final List<RecordTemplatePlaceholder> results = new ArrayList<RecordTemplatePlaceholder>();
+    final List<RecordTemplatePlaceholder> results = new ArrayList<>();
     results.add(generateEntity());
     results.add(generateEntity());
 
@@ -664,11 +664,11 @@ public class ExampleRequestResponseGenerator
     {
       DataMap metadataDataMap = (DataMap)_dataGenerator.buildData("metadata", finderMetadataSchema);
       RecordTemplatePlaceholder metadata = new RecordTemplatePlaceholder(metadataDataMap, finderMetadataSchema);
-      return new CollectionResult<RecordTemplatePlaceholder, RecordTemplatePlaceholder>(results, results.size(), metadata);
+      return new CollectionResult<>(results, results.size(), metadata);
     }
     else
     {
-      return new CollectionResult<RecordTemplatePlaceholder, RecordTemplatePlaceholder>(results);
+      return new CollectionResult<>(results);
     }
   }
 
@@ -676,7 +676,7 @@ public class ExampleRequestResponseGenerator
   {
 
     BatchFindRequestBuilder<Object, RecordTemplatePlaceholder> batchFinder =
-        new BatchFindRequestBuilder<Object, RecordTemplatePlaceholder>(
+        new BatchFindRequestBuilder<>(
             _uriTemplate,
             RecordTemplatePlaceholder.class,
             _resourceSpec,
@@ -714,7 +714,7 @@ public class ExampleRequestResponseGenerator
   @SuppressWarnings({"unchecked", "rawtypes"})
   private BatchFinderResult<RecordTemplatePlaceholder,RecordTemplatePlaceholder, RecordTemplatePlaceholder> buildBatchFinderResult(RecordDataSchema batchFinderMetadataSchema, RecordTemplate batchFinderCriteria)
   {
-    final List<RecordTemplatePlaceholder> results = new ArrayList<RecordTemplatePlaceholder>();
+    final List<RecordTemplatePlaceholder> results = new ArrayList<>();
     results.add(generateEntity());
     results.add(generateEntity());
 
@@ -724,7 +724,7 @@ public class ExampleRequestResponseGenerator
     {
       DataMap metadataDataMap = (DataMap)_dataGenerator.buildData("metadata", batchFinderMetadataSchema);
       RecordTemplatePlaceholder metadata = new RecordTemplatePlaceholder(metadataDataMap, batchFinderMetadataSchema);
-      CollectionResult cr = new CollectionResult<RecordTemplatePlaceholder, RecordTemplatePlaceholder>(results, results.size(), metadata);
+      CollectionResult cr = new CollectionResult<>(results, results.size(), metadata);
       batchFinderResult.putResult(batchFinderCriteria, cr);
     }
     else
@@ -749,16 +749,16 @@ public class ExampleRequestResponseGenerator
       FieldDef<?> fieldDef = responseMetadata.getFieldDef("value");
       if (fieldDef != null && fieldDef.getDataClass() != null)
       {
-        responseType = new TypeSpec<RecordTemplatePlaceholder>(
-          (Class<RecordTemplatePlaceholder>)fieldDef.getDataClass(),
-          responseMetadata.getRecordDataSchema());
+        responseType = new TypeSpec<>(
+            (Class<RecordTemplatePlaceholder>) fieldDef.getDataClass(),
+            responseMetadata.getRecordDataSchema());
       }
     }
     ActionRequestBuilder<Object, RecordTemplatePlaceholder> request =
-        new ActionRequestBuilder<Object, RecordTemplatePlaceholder>(
-          _uriTemplate,
-          responseType,
-          _resourceSpec,
+        new ActionRequestBuilder<>(
+            _uriTemplate,
+            responseType,
+            _resourceSpec,
             _requestOptions);
 
     request.name(action.getName());
@@ -782,7 +782,7 @@ public class ExampleRequestResponseGenerator
     {
       FieldDef<?> fieldDef = returnsMetadata.getFieldDef("value");
       Object returnValue = generateFieldDefValue(fieldDef);
-      return new ActionResult<Object>(returnValue);
+      return new ActionResult<>(returnValue);
     }
     else
     {
@@ -949,13 +949,13 @@ public class ExampleRequestResponseGenerator
           // just use the string value already generated.  Will be coerced by DataTemplateUtil.DynamicEnumCoercer.
           break;
         case ARRAY:
-          value = new ArrayTemplatePlaceholder<Object>((DataList)value, (ArrayDataSchema)dereferencedDataSchema, Object.class);
+          value = new ArrayTemplatePlaceholder<>((DataList) value, (ArrayDataSchema) dereferencedDataSchema, Object.class);
           break;
         case RECORD:
           value = new RecordTemplatePlaceholder((DataMap)value, (RecordDataSchema)dereferencedDataSchema);
           break;
         case MAP:
-          value = new MapTemplatePlaceholder<Object>((DataMap)value, (MapDataSchema)dereferencedDataSchema, Object.class);
+          value = new MapTemplatePlaceholder<>((DataMap) value, (MapDataSchema) dereferencedDataSchema, Object.class);
           break;
         case UNION:
           value = new UnionTemplatePlaceholder(value, (UnionDataSchema)dereferencedDataSchema);
@@ -995,7 +995,7 @@ public class ExampleRequestResponseGenerator
         RecordDataSchema paramsSchema = (RecordDataSchema)resourceSpec.getComplexKeyType().getParamsType().getSchema();
         DataMap paramsData = (DataMap)_dataGenerator.buildData(postfixBatchIdx(keySchema.getName() + "Params", batchIdx),
                                                               paramsSchema);
-        return new ComplexResourceKey<RecordTemplatePlaceholder, RecordTemplatePlaceholder>(
+        return new ComplexResourceKey<>(
             new RecordTemplatePlaceholder(keyData, keySchema),
             new RecordTemplatePlaceholder(paramsData, paramsSchema)
         );
@@ -1104,7 +1104,7 @@ public class ExampleRequestResponseGenerator
   private static Map<ResourceSchema, ResourceSpec> translate(List<ResourceSchema> resourceSchemas,
                                                              DataSchemaResolver schemaResolver)
   {
-    Map<ResourceSchema, ResourceSpec> result = new HashMap<ResourceSchema, ResourceSpec>();
+    Map<ResourceSchema, ResourceSpec> result = new HashMap<>();
     for (ResourceSchema resourceSchema : resourceSchemas)
     {
       result.put(resourceSchema, translate(resourceSchema, schemaResolver));

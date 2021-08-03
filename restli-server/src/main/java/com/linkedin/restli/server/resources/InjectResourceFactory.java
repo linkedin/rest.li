@@ -61,7 +61,7 @@ public class InjectResourceFactory implements ResourceFactory
 
     _rootResources = rootResources;
 
-    Collection<Class<?>> allResourceClasses = new HashSet<Class<?>>();
+    Collection<Class<?>> allResourceClasses = new HashSet<>();
     for (ResourceModel resourceModel : _rootResources.values())
     {
       processChildResource(resourceModel, allResourceClasses);

@@ -833,7 +833,7 @@ public class TestSchemaTranslator
    String avroSchemaText = SchemaTranslator.dataToAvroSchemaJson(schema, transOptions);
    DataMap avroSchemaAsDataMap = TestUtil.dataMapFromString(avroSchemaText);
    DataMap fieldsPropertiesMap = TestUtil.dataMapFromString(expectedAvroSchemaAsString);
-   assertEquals(fieldsPropertiesMap, avroSchemaAsDataMap);
+   assertEquals(avroSchemaAsDataMap, fieldsPropertiesMap);
  }
 
   @Test(dataProvider = "toAvroSchemaDataTestTypeRefAnnotationPropagation")
@@ -2306,10 +2306,10 @@ public class TestSchemaTranslator
         DataSchema schema = TestUtil.dataSchemaFromString(schemaText);
         String preTranslateSchemaText = schema.toString();
         String avroTextFromSchema = null;
-        DataToAvroSchemaTranslationOptions transOptions = new DataToAvroSchemaTranslationOptions(optionalDefaultMode, JsonBuilder.Pretty.SPACES, embedSchemaMode);
+        DataToAvroSchemaTranslationOptions transOptions =
+            new DataToAvroSchemaTranslationOptions(optionalDefaultMode, JsonBuilder.Pretty.SPACES, embedSchemaMode);
         transOptions.setTyperefPropertiesExcludeSet(new HashSet<>(Arrays.asList("validate", "java")));
-        avroTextFromSchema = SchemaTranslator.dataToAvroSchemaJson(
-          schema, transOptions);
+        avroTextFromSchema = SchemaTranslator.dataToAvroSchemaJson(schema, transOptions);
 
         if (embedSchemaMode == EmbedSchemaMode.ROOT_ONLY && hasEmbeddedSchema(schema))
         {

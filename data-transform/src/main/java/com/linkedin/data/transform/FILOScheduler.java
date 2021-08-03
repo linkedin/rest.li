@@ -40,7 +40,7 @@ public class FILOScheduler implements InstructionScheduler
    */
   public FILOScheduler()
   {
-    _stack = new ArrayDeque<Instruction>();
+    _stack = new ArrayDeque<>();
   }
 
   public void scheduleInstructions(List<Instruction> instructions)

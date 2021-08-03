@@ -88,7 +88,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   private int _checkedOut = 0;
   // Unused objects live here, sorted by age.
   // The first object is the least recently added object.
-  private final Deque<TimedObject<T>> _idle = new LinkedList<TimedObject<T>>();
+  private final Deque<TimedObject<T>> _idle = new LinkedList<>();
   // When no unused objects are available, callbacks live here while they wait
   // for a new object (either returned by another user, or newly created)
   private final LinkedDeque<Callback<T>> _waiters = new LinkedDeque<>();
@@ -335,7 +335,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
   {
     synchronized (_lock)
     {
-      List<Callback<T>> cancelled = new ArrayList<Callback<T>>(_waiters.size());
+      List<Callback<T>> cancelled = new ArrayList<>(_waiters.size());
       for (Callback<T> item; (item = _waiters.poll()) != null;)
       {
          cancelled.add(item);
@@ -352,7 +352,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
     boolean create = false;
     boolean reject = false;
     final LinkedDeque.Node<Callback<T>> node;
-    Callback<T> callbackWithTracking = new TimeTrackingCallback<T>(callback);
+    Callback<T> callbackWithTracking = new TimeTrackingCallback<>(callback);
     for (;;)
     {
       TimedObject<T> obj = null;
@@ -479,7 +479,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
       waiter = _waiters.poll();
       if (waiter == null)
       {
-        _idle.offerLast(new TimedObject<T>(obj));
+        _idle.offerLast(new TimedObject<>(obj));
       }
       else
       {
@@ -754,7 +754,7 @@ public class AsyncPoolImpl<T> implements AsyncPool<T>
 
   private Collection<T> getExpiredObjects()
   {
-    List<T> expiredObjects = new ArrayList<T>();
+    List<T> expiredObjects = new ArrayList<>();
     long now = _clock.currentTimeMillis();
 
     synchronized (_lock)

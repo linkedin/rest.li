@@ -77,7 +77,7 @@ public class TestGreetingClientContentTypes extends RestLiIntegrationTest
     Request<Greeting> request = builders.get().id(1L).build();
     Response<Greeting> response = restClient.sendRequest(request).getResponse();
     Greeting greeting = response.getEntity();
-    Assert.assertEquals(greeting.getId(), new Long(1));
+    Assert.assertEquals(greeting.getId(), Long.valueOf(1));
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "clientDataBatchDataProvider")

@@ -137,7 +137,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
     response = getClient().sendRequest(findRequest).getResponse();
     Assert.assertEquals(response.getEntity().getElements().size(), 0);
 
-    List<Calendar> calendars = new ArrayList<Calendar>();
+    List<Calendar> calendars = new ArrayList<>();
     calendars.add(new GregorianCalendar());
     findRequest = new CustomTypesRequestBuilders().findByCalendars().calendarsParam(calendars).build();
     response = getClient().sendRequest(findRequest).getResponse();
@@ -155,7 +155,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testCustomLongArray(RootBuilderWrapper<Long, Greeting> builders) throws RemoteInvocationException
   {
-    List<CustomLong> ls = new ArrayList<CustomLong>(2);
+    List<CustomLong> ls = new ArrayList<>(2);
     ls.add(new CustomLong(1L));
     ls.add(new CustomLong(2L));
 
@@ -281,7 +281,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
   public void testCollectionBatchPartialUpdate(RootBuilderWrapper<CustomLong, Greeting> builders) throws RemoteInvocationException
   {
     RequestBuilder<? extends Request<BatchKVResponse<CustomLong, UpdateStatus>>> request = builders.batchPartialUpdate().input(new CustomLong(1L),
-                                                                                                                               new PatchRequest<Greeting>()).input(new CustomLong(2L), new PatchRequest<Greeting>()).getBuilder();
+        new PatchRequest<>()).input(new CustomLong(2L), new PatchRequest<>()).getBuilder();
     Map<CustomLong, UpdateStatus> statuses = getClient().sendRequest(request).getResponse().getEntity().getResults();
 
     Assert.assertEquals(statuses.size(), 2);
@@ -320,7 +320,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
     Response<CollectionResponse<CreateStatus>> response = getClient().sendRequest(request).getResponse();
     List<CreateStatus> results = response.getEntity().getElements();
 
-    Set<CustomLong> expectedKeys = new HashSet<CustomLong>();
+    Set<CustomLong> expectedKeys = new HashSet<>();
     expectedKeys.add(new CustomLong(1L));
     expectedKeys.add(new CustomLong(2L));
 
@@ -347,7 +347,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
     Response<BatchCreateIdResponse<CustomLong>> response = getClient().sendRequest(request).getResponse();
     List<CreateIdStatus<CustomLong>> results = response.getEntity().getElements();
 
-    Set<CustomLong> expectedKeys = new HashSet<CustomLong>();
+    Set<CustomLong> expectedKeys = new HashSet<>();
     expectedKeys.add(new CustomLong(1L));
     expectedKeys.add(new CustomLong(2L));
 
@@ -372,7 +372,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
     Request<Greeting> request = builders.get().setPathKey("customTypes2Id", new CustomLong(id2)).id(new CustomLong(id4)).build();
     Greeting result = getClient().sendRequest(request).getResponse().getEntity();
 
-    Assert.assertEquals(result.getId(), new Long(id2*id4));
+    Assert.assertEquals(result.getId(), Long.valueOf(id2*id4));
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request3BuilderDataProvider")
@@ -385,7 +385,7 @@ public class TestCustomTypesClient extends RestLiIntegrationTest
     Request<Greeting> request = builders.get().id(key).build();
     Greeting result = getClient().sendRequest(request).getResponse().getEntity();
 
-    Assert.assertEquals(result.getId(),  new Long(lo+date));
+    Assert.assertEquals(result.getId(),  Long.valueOf(lo+date));
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "request3BuilderDataProvider")

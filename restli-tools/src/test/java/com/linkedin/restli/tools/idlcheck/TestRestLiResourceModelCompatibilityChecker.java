@@ -32,8 +32,8 @@ public class TestRestLiResourceModelCompatibilityChecker
   {
     final String nonExistentFilename1 = "NonExistentFile1";
     final String nonExistentFilename2 = "NonExistentFile2";
-    final Collection<CompatibilityInfo> testIncompatibles = new HashSet<CompatibilityInfo>();
-    final Collection<CompatibilityInfo> testCompatibles = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> testIncompatibles = new HashSet<>();
+    final Collection<CompatibilityInfo> testCompatibles = new HashSet<>();
 
     testIncompatibles.add(new CompatibilityInfo(Arrays.<Object>asList(""),
                                                  CompatibilityInfo.Type.RESOURCE_MISSING,
@@ -49,8 +49,8 @@ public class TestRestLiResourceModelCompatibilityChecker
                                      nonExistentFilename2,
                                      CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getIncompatibles());
-    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(checker.getInfoMap().getCompatibles());
+    final Collection<CompatibilityInfo> incompatibles = new HashSet<>(checker.getInfoMap().getIncompatibles());
+    final Collection<CompatibilityInfo> compatibles = new HashSet<>(checker.getInfoMap().getCompatibles());
 
     for (CompatibilityInfo te : incompatibles)
     {

@@ -59,6 +59,6 @@ public final class EntityStreams
    */
   public static <T> EntityStream<T> newEntityStream(Writer<? extends T> writer)
   {
-    return new EntityStreamImpl<T>(writer);
+    return new EntityStreamImpl<>(writer);
   }
 }

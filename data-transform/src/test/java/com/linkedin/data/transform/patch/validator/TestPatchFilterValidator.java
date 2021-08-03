@@ -48,7 +48,7 @@ public class TestPatchFilterValidator
 
   public class VisitedValidator implements Validator
   {
-    public List<String> _visitedPaths = new ArrayList<String>();
+    public List<String> _visitedPaths = new ArrayList<>();
 
     public void validate(ValidatorContext ctx)
     {
@@ -593,4 +593,3 @@ public class TestPatchFilterValidator
     }
   }
 }
-

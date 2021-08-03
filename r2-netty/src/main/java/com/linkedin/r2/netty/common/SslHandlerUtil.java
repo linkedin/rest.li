@@ -116,8 +116,8 @@ public class SslHandlerUtil
    */
   private static void checkContained(String[] containingArray, String[] containedArray, String valueName)
   {
-    Set<String> containingSet = new HashSet<String>(Arrays.asList(containingArray));
-    Set<String> containedSet = new HashSet<String>(Arrays.asList(containedArray));
+    Set<String> containingSet = new HashSet<>(Arrays.asList(containingArray));
+    Set<String> containedSet = new HashSet<>(Arrays.asList(containedArray));
 
     final boolean changed = containedSet.removeAll(containingSet);
     if (!changed)

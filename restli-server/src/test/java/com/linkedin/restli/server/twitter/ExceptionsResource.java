@@ -37,12 +37,12 @@ public class ExceptionsResource extends CollectionResourceTemplate<Long, Status>
   @RestMethod.Get
   public GetResult<Status> getWithResult(Long key)
   {
-    return new GetResult<Status>(new Status(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+    return new GetResult<>(new Status(), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
   }
 
   @Action(name = "exception")
   public ActionResult<Integer> actionWithResult()
   {
-    return new ActionResult<Integer>(100, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+    return new ActionResult<>(100, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
   }
 }

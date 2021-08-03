@@ -47,7 +47,7 @@ public class StreamExecutionCallback implements TransportCallback<StreamResponse
   private static final Logger LOG = LoggerFactory.getLogger(StreamExecutionCallback.class);
 
   private final ExecutorService _executor;
-  private final Queue<Runnable> _taskQueue = new LinkedBlockingQueue<Runnable>();
+  private final Queue<Runnable> _taskQueue = new LinkedBlockingQueue<>();
   private final AtomicInteger _pending = new AtomicInteger(0);
   private AtomicReference<TransportCallback<StreamResponse>>  _callbackRef;
 
@@ -85,7 +85,7 @@ public class StreamExecutionCallback implements TransportCallback<StreamResponse
   public StreamExecutionCallback(ExecutorService executor, TransportCallback<StreamResponse> callback)
   {
     _executor = executor;
-    _callbackRef = new AtomicReference<TransportCallback<StreamResponse>>(callback);
+    _callbackRef = new AtomicReference<>(callback);
   }
 
   private void trySchedule(Runnable r)

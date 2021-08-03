@@ -96,7 +96,7 @@ public class TestMIMEReaderDrain extends AbstractMIMEUnitTest
   @DataProvider(name = "allTypesOfBodiesDataSource")
   public Object[][] allTypesOfBodiesDataSource() throws Exception
   {
-    final List<MimeBodyPart> bodyPartList = new ArrayList<MimeBodyPart>();
+    final List<MimeBodyPart> bodyPartList = new ArrayList<>();
     bodyPartList.add(SMALL_DATA_SOURCE);
     bodyPartList.add(LARGE_DATA_SOURCE);
     bodyPartList.add(HEADER_LESS_BODY);
@@ -160,7 +160,7 @@ public class TestMIMEReaderDrain extends AbstractMIMEUnitTest
       final BodyPart currentExpectedPart = _currentMimeMultipartBody.getBodyPart(i);
 
       //Construct expected headers and verify they match 
-      final Map<String, String> expectedHeaders = new HashMap<String, String>();
+      final Map<String, String> expectedHeaders = new HashMap<>();
       @SuppressWarnings("unchecked")
       final Enumeration<Header> allHeaders = currentExpectedPart.getAllHeaders();
 
@@ -200,7 +200,7 @@ public class TestMIMEReaderDrain extends AbstractMIMEUnitTest
       final BodyPart currentExpectedPart = _currentMimeMultipartBody.getBodyPart(i);
 
       //Construct expected headers and verify they match 
-      final Map<String, String> expectedHeaders = new HashMap<String, String>();
+      final Map<String, String> expectedHeaders = new HashMap<>();
       @SuppressWarnings("unchecked")
       final Enumeration<Header> allHeaders = currentExpectedPart.getAllHeaders();
 
@@ -233,7 +233,7 @@ public class TestMIMEReaderDrain extends AbstractMIMEUnitTest
       final BodyPart currentExpectedPart = _currentMimeMultipartBody.getBodyPart(i);
 
       //Construct expected headers and verify they match 
-      final Map<String, String> expectedHeaders = new HashMap<String, String>();
+      final Map<String, String> expectedHeaders = new HashMap<>();
       @SuppressWarnings("unchecked")
       final Enumeration<Header> allHeaders = currentExpectedPart.getAllHeaders();
 
@@ -271,7 +271,7 @@ public class TestMIMEReaderDrain extends AbstractMIMEUnitTest
       final BodyPart currentExpectedPart = _currentMimeMultipartBody.getBodyPart(i);
 
       //Construct expected headers and verify they match 
-      final Map<String, String> expectedHeaders = new HashMap<String, String>();
+      final Map<String, String> expectedHeaders = new HashMap<>();
       @SuppressWarnings("unchecked")
       final Enumeration<Header> allHeaders = currentExpectedPart.getAllHeaders();
 
@@ -310,7 +310,7 @@ public class TestMIMEReaderDrain extends AbstractMIMEUnitTest
       final BodyPart currentExpectedPart = _currentMimeMultipartBody.getBodyPart(i);
 
       //Construct expected headers and verify they match 
-      final Map<String, String> expectedHeaders = new HashMap<String, String>();
+      final Map<String, String> expectedHeaders = new HashMap<>();
       @SuppressWarnings("unchecked")
       final Enumeration<Header> allHeaders = currentExpectedPart.getAllHeaders();
 
@@ -343,7 +343,7 @@ public class TestMIMEReaderDrain extends AbstractMIMEUnitTest
       final BodyPart currentExpectedPart = _currentMimeMultipartBody.getBodyPart(i);
 
       //Construct expected headers and verify they match 
-      final Map<String, String> expectedHeaders = new HashMap<String, String>();
+      final Map<String, String> expectedHeaders = new HashMap<>();
       @SuppressWarnings("unchecked")
       final Enumeration<Header> allHeaders = currentExpectedPart.getAllHeaders();
 
@@ -476,8 +476,8 @@ public class TestMIMEReaderDrain extends AbstractMIMEUnitTest
     final CountDownLatch _latch;
     final String _drainValue;
     final MultiPartMIMEReader _reader;
-    final Map<String, String> _responseHeaders = new HashMap<String, String>();
-    final List<SinglePartMIMEDrainReaderCallbackImpl> _singlePartMIMEReaderCallbacks = new ArrayList<SinglePartMIMEDrainReaderCallbackImpl>();
+    final Map<String, String> _responseHeaders = new HashMap<>();
+    final List<SinglePartMIMEDrainReaderCallbackImpl> _singlePartMIMEReaderCallbacks = new ArrayList<>();
 
     MultiPartMIMEDrainReaderCallbackImpl(final CountDownLatch latch, final String drainValue,
                                          final MultiPartMIMEReader reader)

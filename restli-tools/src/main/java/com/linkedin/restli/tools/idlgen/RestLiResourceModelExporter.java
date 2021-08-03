@@ -138,7 +138,7 @@ public class RestLiResourceModelExporter
       config.addResourcePackageNames(resourcePackages);
     }
 
-    final Map<String, String> classFileNames = new HashMap<String, String>();
+    final Map<String, String> classFileNames = new HashMap<>();
     for (String path : sourcePaths)
     {
       classFileNames.putAll(FileClassNameScanner.scan(path));
@@ -151,7 +151,7 @@ public class RestLiResourceModelExporter
       {
         config.addResourceClassNames(resourceClasses);
 
-        sourceFileNames = new ArrayList<String>(resourceClasses.length);
+        sourceFileNames = new ArrayList<>(resourceClasses.length);
         for (String resourceClass : resourceClasses)
         {
           final String resourceFileName = classFileNames.get(resourceClass);
@@ -261,7 +261,7 @@ public class RestLiResourceModelExporter
 
     final ResourceModelEncoder encoder = new ResourceModelEncoder(docsProvider);
 
-    final List<ResourceSchema> rootResourceNodes = new ArrayList<ResourceSchema>();
+    final List<ResourceSchema> rootResourceNodes = new ArrayList<>();
     for (Entry<String, ResourceModel> entry: rootResourceMap.entrySet())
     {
       final ResourceSchema rootResourceNode = encoder.buildResourceSchema(entry.getValue());
@@ -291,8 +291,8 @@ public class RestLiResourceModelExporter
 
   class Result implements GeneratorResult
   {
-    private List<File> targetFiles = new ArrayList<File>();
-    private List<File> modifiedFiles = new ArrayList<File>();
+    private List<File> targetFiles = new ArrayList<>();
+    private List<File> modifiedFiles = new ArrayList<>();
 
     public void addTargetFile(File file)
     {

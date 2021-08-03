@@ -102,7 +102,7 @@ public class TestMIMEIntegrationReaderDrain extends AbstractMIMEIntegrationStrea
   @Override
   protected Map<String, String> getClientProperties()
   {
-    Map<String, String> clientProperties = new HashMap<String, String>();
+    Map<String, String> clientProperties = new HashMap<>();
     clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "9000000");
     return clientProperties;
   }
@@ -112,7 +112,7 @@ public class TestMIMEIntegrationReaderDrain extends AbstractMIMEIntegrationStrea
   @DataProvider(name = "allTypesOfBodiesDataSource")
   public Object[][] allTypesOfBodiesDataSource() throws Exception
   {
-    final List<MimeBodyPart> bodyPartList = new ArrayList<MimeBodyPart>();
+    final List<MimeBodyPart> bodyPartList = new ArrayList<>();
     bodyPartList.add(SMALL_DATA_SOURCE);
     bodyPartList.add(LARGE_DATA_SOURCE);
     bodyPartList.add(HEADER_LESS_BODY);
@@ -189,7 +189,7 @@ public class TestMIMEIntegrationReaderDrain extends AbstractMIMEIntegrationStrea
       final BodyPart currentExpectedPart = mimeMultipart.getBodyPart(i);
 
       //Construct expected headers and verify they match 
-      final Map<String, String> expectedHeaders = new HashMap<String, String>();
+      final Map<String, String> expectedHeaders = new HashMap<>();
       @SuppressWarnings("unchecked")
       final Enumeration<Header> allHeaders = currentExpectedPart.getAllHeaders();
 
@@ -230,7 +230,7 @@ public class TestMIMEIntegrationReaderDrain extends AbstractMIMEIntegrationStrea
       final BodyPart currentExpectedPart = mimeMultipart.getBodyPart(i);
 
       //Construct expected headers and verify they match 
-      final Map<String, String> expectedHeaders = new HashMap<String, String>();
+      final Map<String, String> expectedHeaders = new HashMap<>();
       @SuppressWarnings("unchecked")
       final Enumeration<Header> allHeaders = currentExpectedPart.getAllHeaders();
 
@@ -263,7 +263,7 @@ public class TestMIMEIntegrationReaderDrain extends AbstractMIMEIntegrationStrea
       final BodyPart currentExpectedPart = mimeMultipart.getBodyPart(i);
 
       //Construct expected headers and verify they match 
-      final Map<String, String> expectedHeaders = new HashMap<String, String>();
+      final Map<String, String> expectedHeaders = new HashMap<>();
       @SuppressWarnings("unchecked")
       final Enumeration<Header> allHeaders = currentExpectedPart.getAllHeaders();
 
@@ -301,7 +301,7 @@ public class TestMIMEIntegrationReaderDrain extends AbstractMIMEIntegrationStrea
       final BodyPart currentExpectedPart = mimeMultipart.getBodyPart(i);
 
       //Construct expected headers and verify they match 
-      final Map<String, String> expectedHeaders = new HashMap<String, String>();
+      final Map<String, String> expectedHeaders = new HashMap<>();
       @SuppressWarnings("unchecked")
       final Enumeration<Header> allHeaders = currentExpectedPart.getAllHeaders();
 
@@ -341,7 +341,7 @@ public class TestMIMEIntegrationReaderDrain extends AbstractMIMEIntegrationStrea
       final BodyPart currentExpectedPart = mimeMultipart.getBodyPart(i);
 
       //Construct expected headers and verify they match 
-      final Map<String, String> expectedHeaders = new HashMap<String, String>();
+      final Map<String, String> expectedHeaders = new HashMap<>();
       @SuppressWarnings("unchecked")
       final Enumeration<Header> allHeaders = currentExpectedPart.getAllHeaders();
 
@@ -374,7 +374,7 @@ public class TestMIMEIntegrationReaderDrain extends AbstractMIMEIntegrationStrea
       final BodyPart currentExpectedPart = mimeMultipart.getBodyPart(i);
 
       //Construct expected headers and verify they match 
-      final Map<String, String> expectedHeaders = new HashMap<String, String>();
+      final Map<String, String> expectedHeaders = new HashMap<>();
       @SuppressWarnings("unchecked")
       final Enumeration<Header> allHeaders = currentExpectedPart.getAllHeaders();
 
@@ -416,7 +416,7 @@ public class TestMIMEIntegrationReaderDrain extends AbstractMIMEIntegrationStrea
 
     final AtomicInteger status = new AtomicInteger(-1);
     final CountDownLatch latch = new CountDownLatch(1);
-    final Map<String, String> responseHeaders = new HashMap<String, String>();
+    final Map<String, String> responseHeaders = new HashMap<>();
     Callback<StreamResponse> callback = expectSuccessCallback(latch, status, responseHeaders);
     _client.streamRequest(request, callback);
     latch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS);
@@ -480,7 +480,7 @@ public class TestMIMEIntegrationReaderDrain extends AbstractMIMEIntegrationStrea
     final Callback<StreamResponse> _r2callback;
     final String _drainValue;
     final MultiPartMIMEReader _reader;
-    final List<SinglePartMIMEDrainReaderCallbackImpl> _singlePartMIMEReaderCallbacks = new ArrayList<SinglePartMIMEDrainReaderCallbackImpl>();
+    final List<SinglePartMIMEDrainReaderCallbackImpl> _singlePartMIMEReaderCallbacks = new ArrayList<>();
 
     MultiPartMIMEDrainReaderCallbackImpl(final Callback<StreamResponse> r2callback, final String drainValue,
                                          final MultiPartMIMEReader reader)

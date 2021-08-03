@@ -57,7 +57,7 @@ public class TestGeneralEchoServiceTest extends AbstractEchoServiceTest
     final EchoService client = getEchoClient(_client, Bootstrap.getEchoURI());
 
     final String msg = "This is a simple echo message";
-    final FutureCallback<String> callback = new FutureCallback<String>();
+    final FutureCallback<String> callback = new FutureCallback<>();
     client.echo(msg, callback);
 
     String actual = callback.get();
@@ -74,7 +74,7 @@ public class TestGeneralEchoServiceTest extends AbstractEchoServiceTest
     final EchoService client = getEchoClient(_client, URI.create("/unknown-service"));
 
     final String msg = "This is a simple echo message";
-    final FutureCallback<String> callback = new FutureCallback<String>();
+    final FutureCallback<String> callback = new FutureCallback<>();
     client.echo(msg, callback);
 
     try
@@ -98,7 +98,7 @@ public class TestGeneralEchoServiceTest extends AbstractEchoServiceTest
     }
 
     final String msg = "This is a simple echo message";
-    final FutureCallback<String> callback = new FutureCallback<String>();
+    final FutureCallback<String> callback = new FutureCallback<>();
     client.echo(msg, callback);
 
     try
@@ -121,7 +121,7 @@ public class TestGeneralEchoServiceTest extends AbstractEchoServiceTest
     final EchoService client = getEchoClient(_client, Bootstrap.getThrowingEchoURI());
 
     final String msg = "This is a simple echo message";
-    final FutureCallback<String> callback = new FutureCallback<String>();
+    final FutureCallback<String> callback = new FutureCallback<>();
     client.echo(msg, callback);
 
     try
@@ -141,7 +141,7 @@ public class TestGeneralEchoServiceTest extends AbstractEchoServiceTest
     final EchoService client = getEchoClient(_client, Bootstrap.getOnExceptionEchoURI());
 
     final String msg = "This is a simple echo message";
-    final FutureCallback<String> callback = new FutureCallback<String>();
+    final FutureCallback<String> callback = new FutureCallback<>();
     client.echo(msg, callback);
 
     try
@@ -161,7 +161,7 @@ public class TestGeneralEchoServiceTest extends AbstractEchoServiceTest
     final EchoService client = getEchoClient(_client, Bootstrap.getEchoURI());
 
     final String msg = "This is a simple echo message";
-    final FutureCallback<String> callback = new FutureCallback<String>();
+    final FutureCallback<String> callback = new FutureCallback<>();
 
     client.echo(msg, callback);
     callback.get();
@@ -182,7 +182,7 @@ public class TestGeneralEchoServiceTest extends AbstractEchoServiceTest
     final EchoService client = getEchoClient(_client, URI.create("/unknown-service"));
 
     final String msg = "This is a simple echo message";
-    final FutureCallback<String> callback = new FutureCallback<String>();
+    final FutureCallback<String> callback = new FutureCallback<>();
 
     client.echo(msg, callback);
     try

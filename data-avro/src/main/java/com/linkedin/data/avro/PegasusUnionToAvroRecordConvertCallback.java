@@ -15,7 +15,6 @@ import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,13 +32,10 @@ import java.util.Map;
  */
 class PegasusUnionToAvroRecordConvertCallback implements DataSchemaTraverse.Callback {
   private final DataToAvroSchemaTranslationOptions _options;
-  private final IdentityHashMap<RecordDataSchema.Field, FieldOverride> _schemaOverrides;
 
-  PegasusUnionToAvroRecordConvertCallback(DataToAvroSchemaTranslationOptions options,
-      IdentityHashMap<RecordDataSchema.Field, FieldOverride> schemaOverrides)
+  PegasusUnionToAvroRecordConvertCallback(DataToAvroSchemaTranslationOptions options)
   {
     _options = options;
-    _schemaOverrides = schemaOverrides;
   }
 
   @SuppressWarnings("unchecked")
@@ -187,12 +183,6 @@ class PegasusUnionToAvroRecordConvertCallback implements DataSchemaTraverse.Call
   private void overrideUnionFieldSchemaAndDefault(RecordDataSchema.Field field,
       DataSchema modifiedSchema, Object modifiedDefaultValue, Map<String, Object> propagatedProperties)
   {
-    // Stash the field's original type and default value, so that we can use this for reverting them back after
-    // the schema translation is complete. This is because we don't want the input schema to have any modifications
-    // when the control goes back to the caller.
-    FieldOverride fieldSchemaOverride = new FieldOverride(field.getType(), field.getDefault());
-    _schemaOverrides.put(field, fieldSchemaOverride);
-
     field.setType(modifiedSchema);
     field.setDefault(modifiedDefaultValue);
     field.setProperties(propagatedProperties);

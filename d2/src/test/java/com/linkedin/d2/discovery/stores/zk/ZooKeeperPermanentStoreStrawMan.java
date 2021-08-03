@@ -36,15 +36,15 @@ public class ZooKeeperPermanentStoreStrawMan
           PropertyStoreException
   {
     ZKConnection zkClient = new ZKConnection("localhost:2181", 1000);
-    Set<String> listenTos = new HashSet<String>();
+    Set<String> listenTos = new HashSet<>();
     ZooKeeperPermanentStore<String> zk =
-        new ZooKeeperPermanentStore<String>(zkClient,
-                                            new PropertyStringSerializer(),
-                                            "/test/lb/test-property");
+        new ZooKeeperPermanentStore<>(zkClient,
+                                      new PropertyStringSerializer(),
+                                      "/test/lb/test-property");
 
     listenTos.add("foo12");
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-    PropertyEventBus<String> bus = new PropertyEventBusImpl<String>(executorService, zk);
+    PropertyEventBus<String> bus = new PropertyEventBusImpl<>(executorService, zk);
 
     bus.register(listenTos, new PropertyEventSubscriber<String>()
     {

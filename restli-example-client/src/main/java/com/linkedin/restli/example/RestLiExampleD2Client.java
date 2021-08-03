@@ -40,7 +40,7 @@ public class RestLiExampleD2Client
   public static void main(String[] args) throws Exception
   {
     final D2Client d2Client = new D2ClientBuilder().build();
-    d2Client.start(new FutureCallback<None>());
+    d2Client.start(new FutureCallback<>());
     final RestClient restClient = new RestClient(d2Client, "d2://");
     final RestLiExampleBasicClient photoClient = new RestLiExampleBasicClient(restClient);
 

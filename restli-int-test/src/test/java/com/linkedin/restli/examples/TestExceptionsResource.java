@@ -221,7 +221,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
     @SuppressWarnings("unchecked")
     CreateIdStatus<Long> status0 =  (CreateIdStatus<Long>)createStatuses.get(0);
     Assert.assertEquals(status0.getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
-    Assert.assertEquals(status0.getKey(), new Long(10));
+    Assert.assertEquals(status0.getKey(), Long.valueOf(10));
     @SuppressWarnings("deprecation")
     String id = status0.getId();
     Assert.assertEquals(BatchResponse.keyToString(status0.getKey(), ProtocolVersionUtil.extractProtocolVersion(response.getHeaders())),
@@ -264,7 +264,7 @@ public class TestExceptionsResource extends RestLiIntegrationTest
     @SuppressWarnings("unchecked")
     CreateIdStatus<Long> status0 =  createStatuses.get(0);
     Assert.assertEquals(status0.getStatus().intValue(), HttpStatus.S_201_CREATED.getCode());
-    Assert.assertEquals(status0.getKey(), new Long(10));
+    Assert.assertEquals(status0.getKey(), Long.valueOf(10));
     @SuppressWarnings("deprecation")
     String id = status0.getId();
     Assert.assertEquals(BatchResponse.keyToString(status0.getKey(), ProtocolVersionUtil.extractProtocolVersion(response.getHeaders())),

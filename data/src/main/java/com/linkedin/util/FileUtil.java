@@ -62,8 +62,8 @@ public class FileUtil
    */
   public static List<File> listFiles(File directory, FileFilter fileFilter)
   {
-    final List<File> result = new ArrayList<File>();
-    final ArrayDeque<File> deque = new ArrayDeque<File>();
+    final List<File> result = new ArrayList<>();
+    final ArrayDeque<File> deque = new ArrayDeque<>();
     deque.addFirst(directory);
 
     while (deque.isEmpty() == false)

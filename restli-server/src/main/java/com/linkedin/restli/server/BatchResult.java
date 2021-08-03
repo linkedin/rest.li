@@ -48,9 +48,9 @@ public class BatchResult<K, V extends RecordTemplate> implements Map<K, V>
 
   public BatchResult(final Map<K, V> data, final Map<K, HttpStatus> statuses, final Map<K, RestLiServiceException> errors)
   {
-    _data = data == null ? new HashMap<K, V>() : data;
-    _statuses = statuses == null ? new HashMap<K, HttpStatus>() : statuses;
-    _errors = errors == null ? new HashMap<K, RestLiServiceException>() : errors;
+    _data = data == null ? new HashMap<>() : data;
+    _statuses = statuses == null ? new HashMap<>() : statuses;
+    _errors = errors == null ? new HashMap<>() : errors;
   }
 
   @Override

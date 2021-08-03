@@ -153,8 +153,8 @@ public class TestPegasusSchemaSnapshotCompatibilityChecker
   @DataProvider
   private Object[][] incompatibleInputFiles()
   {
-    final Collection<CompatibilityInfo> incompatibilityErrors = new HashSet<CompatibilityInfo>();
-    final Collection<CompatibilityInfo> compatibilityDiffs = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> incompatibilityErrors = new HashSet<>();
+    final Collection<CompatibilityInfo> compatibilityDiffs = new HashSet<>();
     incompatibilityErrors.add(new CompatibilityInfo(Arrays.<Object>asList("BirthInfo"),
         CompatibilityInfo.Type.TYPE_BREAKS_NEW_READER, "new record added required fields name"));
     incompatibilityErrors.add(new CompatibilityInfo(Arrays.<Object>asList("BirthInfo"),

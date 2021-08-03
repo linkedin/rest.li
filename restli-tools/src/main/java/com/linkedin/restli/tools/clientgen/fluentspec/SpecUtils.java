@@ -37,14 +37,14 @@ import org.apache.commons.text.StringEscapeUtils;
  */
 public class SpecUtils {
   static final String JAVA_LANG_PREFIX = "java.lang";
-  static final Set<String> PRIMITIVE_CLASS_NAMES = new HashSet<String>(Arrays.asList(
+  static final Set<String> PRIMITIVE_CLASS_NAMES = new HashSet<>(Arrays.asList(
       Integer.class.getSimpleName(),
       Double.class.getSimpleName(),
       Boolean.class.getSimpleName(),
       String.class.getSimpleName(),
       Long.class.getSimpleName(),
       Float.class.getSimpleName()
-      ));
+  ));
 
   private SpecUtils()
   {

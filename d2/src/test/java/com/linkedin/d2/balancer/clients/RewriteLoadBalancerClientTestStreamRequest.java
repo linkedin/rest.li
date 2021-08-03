@@ -49,9 +49,8 @@ public class RewriteLoadBalancerClientTestStreamRequest
     assertEquals(client.getServiceName(), serviceName);
 
     StreamRequest streamRequest = new StreamRequestBuilder(URI.create("d2://HistoryService/getCube")).build(EntityStreams.emptyStream());
-    Map<String, String> restWireAttrs = new HashMap<String, String>();
-    TestTransportCallback<StreamResponse> restCallback =
-        new TestTransportCallback<StreamResponse>();
+    Map<String, String> restWireAttrs = new HashMap<>();
+    TestTransportCallback<StreamResponse> restCallback = new TestTransportCallback<>();
 
     client.streamRequest(streamRequest, new RequestContext(), restWireAttrs, restCallback);
 
@@ -77,9 +76,8 @@ public class RewriteLoadBalancerClientTestStreamRequest
     assertEquals(client.getServiceName(), serviceName);
 
     StreamRequest streamRequest = getRequest("d2://HistoryService/getCube?bar=baz#fragId");
-    Map<String, String> restWireAttrs = new HashMap<String, String>();
-    TestTransportCallback<StreamResponse> restCallback =
-        new TestTransportCallback<StreamResponse>();
+    Map<String, String> restWireAttrs = new HashMap<>();
+    TestTransportCallback<StreamResponse> restCallback = new TestTransportCallback<>();
 
     client.streamRequest(streamRequest, new RequestContext(), restWireAttrs, restCallback);
 
@@ -127,9 +125,8 @@ public class RewriteLoadBalancerClientTestStreamRequest
     assertEquals(client.getServiceName(), serviceName);
 
     StreamRequest streamRequest = getRequest("d2://" + serviceName + path);
-    Map<String, String> restWireAttrs = new HashMap<String, String>();
-    TestTransportCallback<StreamResponse> restCallback =
-        new TestTransportCallback<StreamResponse>();
+    Map<String, String> restWireAttrs = new HashMap<>();
+    TestTransportCallback<StreamResponse> restCallback = new TestTransportCallback<>();
 
     client.streamRequest(streamRequest, new RequestContext(), restWireAttrs, restCallback);
 
@@ -152,9 +149,8 @@ public class RewriteLoadBalancerClientTestStreamRequest
     assertEquals(client.getServiceName(), serviceName);
 
     StreamRequest streamRequest = getRequest("d2://HistoryService/getCube?bar=baz#fragId");
-    Map<String, String> restWireAttrs = new HashMap<String, String>();
-    TestTransportCallback<StreamResponse> restCallback =
-        new TestTransportCallback<StreamResponse>();
+    Map<String, String> restWireAttrs = new HashMap<>();
+    TestTransportCallback<StreamResponse> restCallback = new TestTransportCallback<>();
 
     client.streamRequest(streamRequest, new RequestContext(), restWireAttrs, restCallback);
 
@@ -176,9 +172,8 @@ public class RewriteLoadBalancerClientTestStreamRequest
     assertEquals(client.getServiceName(), serviceName);
 
     StreamRequest streamRequest;
-    Map<String, String> restWireAttrs = new HashMap<String, String>();
-    TestTransportCallback<StreamResponse> restCallback =
-            new TestTransportCallback<StreamResponse>();
+    Map<String, String> restWireAttrs = new HashMap<>();
+    TestTransportCallback<StreamResponse> restCallback = new TestTransportCallback<>();
 
     streamRequest = getRequest("d2://HistoryService");
     client.streamRequest(streamRequest, new RequestContext(), restWireAttrs, restCallback);

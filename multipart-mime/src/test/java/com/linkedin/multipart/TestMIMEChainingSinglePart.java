@@ -118,8 +118,7 @@ public class TestMIMEChainingSinglePart extends AbstractMIMEUnitTest
     final CountDownLatch _latch;
     boolean _firstPartEchoed = false;
     final Callback<StreamResponse> _callback;
-    final List<MIMETestUtils.SinglePartMIMEFullReaderCallback> _singlePartMIMEReaderCallbacks =
-        new ArrayList<MIMETestUtils.SinglePartMIMEFullReaderCallback>();
+    final List<MIMETestUtils.SinglePartMIMEFullReaderCallback> _singlePartMIMEReaderCallbacks = new ArrayList<>();
 
     ServerMultiPartMIMEReaderSinglePartSenderCallback(final CountDownLatch latch,
                                                       final Callback<StreamResponse> callback)

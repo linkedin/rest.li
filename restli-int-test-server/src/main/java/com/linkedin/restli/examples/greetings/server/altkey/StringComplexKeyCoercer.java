@@ -36,7 +36,7 @@ public class StringComplexKeyCoercer implements KeyCoercer<String, ComplexResour
   public ComplexResourceKey<TwoPartKey, TwoPartKey> coerceToKey(String object) throws InvalidAlternativeKeyException
   {
     String[] keys = object.split("x");
-    return new ComplexResourceKey<TwoPartKey, TwoPartKey>(
+    return new ComplexResourceKey<>(
         new TwoPartKey().setMajor(keys[1]).setMinor(keys[3]),
         new TwoPartKey());
   }

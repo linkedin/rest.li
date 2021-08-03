@@ -278,7 +278,7 @@ public class TestExamplesGenerator
 
   private static Map<String, ResourceModel> buildResourceModels(Class<?>... resourceClasses)
   {
-    final Set<Class<?>> classes = new HashSet<Class<?>>(Arrays.asList(resourceClasses));
+    final Set<Class<?>> classes = new HashSet<>(Arrays.asList(resourceClasses));
     return RestLiApiBuilder.buildResourceModels(classes);
   }
 
@@ -549,7 +549,7 @@ public class TestExamplesGenerator
       throws IOException
   {
     final DataMap respData = _codec.bytesToMap(response.getEntity().copyBytes());
-    final CollectionResponse<T> collResp = new CollectionResponse<T>(respData, recordClass);
+    final CollectionResponse<T> collResp = new CollectionResponse<>(respData, recordClass);
     final DataSchema recordSchema = DataTemplateUtil.getSchema(recordClass);
 
     for (T record: collResp.getElements())
@@ -571,12 +571,12 @@ public class TestExamplesGenerator
       throws IOException
   {
     final DataMap respData = _codec.bytesToMap(response.getEntity().copyBytes());
-    final FieldDef<T> responseFieldDef = new FieldDef<T>(ActionResponse.VALUE_NAME,
-                                                         recordClass,
-                                                         DataTemplateUtil.getSchema(recordClass));
+    final FieldDef<T> responseFieldDef = new FieldDef<>(ActionResponse.VALUE_NAME,
+        recordClass,
+        DataTemplateUtil.getSchema(recordClass));
     final RecordDataSchema recordDataSchema = DynamicRecordMetadata.buildSchema(ActionResponse.class.getName(),
                                                                                 Collections.<FieldDef<?>>singletonList(responseFieldDef));
-    final ActionResponse<T> actionResp = new ActionResponse<T>(respData, responseFieldDef, recordDataSchema);
+    final ActionResponse<T> actionResp = new ActionResponse<>(respData, responseFieldDef, recordDataSchema);
     final DataSchema recordSchema = DataTemplateUtil.getSchema(recordClass);
 
     return ValidateDataAgainstSchema.validate(actionResp.getValue().data(), recordSchema, options);

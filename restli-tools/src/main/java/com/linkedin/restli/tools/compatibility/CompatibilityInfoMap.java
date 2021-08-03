@@ -35,20 +35,20 @@ import java.util.Stack;
 
 public class CompatibilityInfoMap
 {
-  private Map<CompatibilityInfo.Level, Collection<CompatibilityInfo>> _restSpecMap = new HashMap<CompatibilityInfo.Level, Collection<CompatibilityInfo>>();
-  private Map<CompatibilityInfo.Level, Collection<CompatibilityInfo>> _modelMap = new HashMap<CompatibilityInfo.Level, Collection<CompatibilityInfo>>();
+  private Map<CompatibilityInfo.Level, Collection<CompatibilityInfo>> _restSpecMap = new HashMap<>();
+  private Map<CompatibilityInfo.Level, Collection<CompatibilityInfo>> _modelMap = new HashMap<>();
   private Map<CompatibilityInfo.Level, Collection<CompatibilityInfo>> _annotationMap = new HashMap<>();
 
   public CompatibilityInfoMap()
   {
-    _restSpecMap.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<CompatibilityInfo>());
-    _restSpecMap.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<CompatibilityInfo>());
+    _restSpecMap.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<>());
+    _restSpecMap.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<>());
 
-    _modelMap.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<CompatibilityInfo>());
-    _modelMap.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<CompatibilityInfo>());
+    _modelMap.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<>());
+    _modelMap.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<>());
 
-    _annotationMap.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<CompatibilityInfo>());
-    _annotationMap.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<CompatibilityInfo>());
+    _annotationMap.put(CompatibilityInfo.Level.INCOMPATIBLE, new ArrayList<>());
+    _annotationMap.put(CompatibilityInfo.Level.COMPATIBLE, new ArrayList<>());
   }
 
   public void addRestSpecInfo(CompatibilityInfo.Type infoType, Stack<Object> path,
@@ -276,7 +276,7 @@ public class CompatibilityInfoMap
 
   public Collection<CompatibilityInfo> get(CompatibilityInfo.Level level)
   {
-    Collection<CompatibilityInfo> infos = new ArrayList<CompatibilityInfo>(getRestSpecInfo(level));
+    Collection<CompatibilityInfo> infos = new ArrayList<>(getRestSpecInfo(level));
     infos.addAll(getModelInfo(level));
     return infos;
   }
@@ -330,9 +330,25 @@ public class CompatibilityInfoMap
     _annotationMap.get(infoType.getLevel()).add(info);
   }
 
+  /**
+   * This method indicates whether the schema annotation changes are compatible or not,
+   * by default it uses "backwards" as compatibility level.
+   * @return boolean
+   */
   public boolean isAnnotationCompatible()
   {
-    return _annotationMap.get(CompatibilityInfo.Level.INCOMPATIBLE).size() == 0;
+    return isAnnotationCompatible(CompatibilityLevel.BACKWARDS);
+  }
+
+  /**
+   * This method indicates whether the schema annotation changes are compatible or not based on the given compatibility level.
+   * @param level, the given {@link CompatibilityLevel}.
+   * @return boolean
+   */
+  public boolean isAnnotationCompatible(CompatibilityLevel level)
+  {
+    return isCompatible(_annotationMap.get(CompatibilityInfo.Level.INCOMPATIBLE),
+            _annotationMap.get(CompatibilityInfo.Level.COMPATIBLE), level);
   }
 
   public Collection<CompatibilityInfo> getAnnotationInfo(CompatibilityInfo.Level level)

@@ -76,7 +76,7 @@ public class CallTrackerImpl implements CallTracker
   private Pending _pending = null;
 
   // This CallTrackerListener list is immutable and copy-on-write.
-  private volatile List<StatsRolloverEventListener> _listeners = new ArrayList<StatsRolloverEventListener>();
+  private volatile List<StatsRolloverEventListener> _listeners = new ArrayList<>();
 
   public CallTrackerImpl(long interval)
   {
@@ -93,7 +93,7 @@ public class CallTrackerImpl implements CallTracker
     _interval = interval;
     _lastStartTime = -1;
     _lastResetTime = _clock.currentTimeMillis();
-    _errorTypeCountsTotal = new HashMap<ErrorType, Integer>();
+    _errorTypeCountsTotal = new HashMap<>();
     /* create trackers for each resolution */
     _tracker = new Tracker(percentileTrackingEnabled);
   }
@@ -167,7 +167,7 @@ public class CallTrackerImpl implements CallTracker
       // compared to read access to deliver events
       // which cannot be be done while holding _lock,
       // copy-on-write is implemented for _listeners.
-      List<StatsRolloverEventListener> copy = new ArrayList<StatsRolloverEventListener>(_listeners);
+      List<StatsRolloverEventListener> copy = new ArrayList<>(_listeners);
       copy.add(listener);
       _listeners = Collections.unmodifiableList(copy);
     }
@@ -185,7 +185,7 @@ public class CallTrackerImpl implements CallTracker
       // copy-on-write is implemented for _listeners.
       if (_listeners.contains(listener))
       {
-        List<StatsRolloverEventListener> copy = new ArrayList<StatsRolloverEventListener>(_listeners);
+        List<StatsRolloverEventListener> copy = new ArrayList<>(_listeners);
         removed = copy.remove(listener);
         _listeners = Collections.unmodifiableList(copy);
       }
@@ -214,7 +214,7 @@ public class CallTrackerImpl implements CallTracker
   @Override
   public Map<ErrorType, Integer> getCurrentErrorTypeCountsTotal()
   {
-    return Collections.unmodifiableMap(new HashMap<ErrorType, Integer>(_errorTypeCountsTotal));
+    return Collections.unmodifiableMap(new HashMap<>(_errorTypeCountsTotal));
   }
 
   @Override
@@ -458,7 +458,7 @@ public class CallTrackerImpl implements CallTracker
       {
         _callTimeTracking = new SimpleLongTracking();
       }
-      _errorTypeCounts = new HashMap<ErrorType, Integer>();
+      _errorTypeCounts = new HashMap<>();
       reset();
     }
 
@@ -591,7 +591,7 @@ public class CallTrackerImpl implements CallTracker
 
     private Pending(List<StatsRolloverEventListener> listeners)
     {
-      _pendingEvents = new ArrayList<PendingEvent>(4);
+      _pendingEvents = new ArrayList<>(4);
       _listeners = listeners;
     }
 
@@ -691,8 +691,8 @@ public class CallTrackerImpl implements CallTracker
       _outstandingCount = outstandingCount;
 
       _callTimeStats = callTimeStats;
-      _errorTypeCounts = Collections.unmodifiableMap(new HashMap<ErrorType, Integer>(errorTypeCounts));
-      _errorTypeCountsTotal = Collections.unmodifiableMap(new HashMap<ErrorType, Integer>(errorTypeCountsTotal));
+      _errorTypeCounts = Collections.unmodifiableMap(new HashMap<>(errorTypeCounts));
+      _errorTypeCountsTotal = Collections.unmodifiableMap(new HashMap<>(errorTypeCountsTotal));
     }
 
     public Map<ErrorType, Integer> getErrorTypeCounts()

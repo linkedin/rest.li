@@ -93,10 +93,10 @@ public class DocletDocsProvider implements DocsProvider
 
     final PrintWriter sysoutWriter = new PrintWriter(System.out, true);
     final PrintWriter nullWriter = new PrintWriter(new NullWriter());
-    final List<String> javadocArgs = new ArrayList<String>(Arrays.asList("-classpath",
-                                                                         flatClasspath,
-                                                                         "-sourcepath",
-                                                                         StringUtils.join(_sourcePaths, ":")));
+    final List<String> javadocArgs = new ArrayList<>(Arrays.asList("-classpath",
+        flatClasspath,
+        "-sourcepath",
+        StringUtils.join(_sourcePaths, ":")));
     if (_resourcePackages != null)
     {
       javadocArgs.add("-subpackages");

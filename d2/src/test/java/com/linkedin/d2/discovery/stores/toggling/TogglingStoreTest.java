@@ -33,7 +33,7 @@ public class TogglingStoreTest extends PropertyStoreTest
   @Override
   public TogglingStore<String> getStore()
   {
-    return new TogglingStore<String>(new MockStore<String>());
+    return new TogglingStore<>(new MockStore<>());
   }
 
   @Test(groups = { "small", "back-end" })

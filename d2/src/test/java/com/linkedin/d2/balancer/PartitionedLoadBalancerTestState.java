@@ -67,7 +67,7 @@ public class PartitionedLoadBalancerTestState implements LoadBalancerState
     _partitionDescriptions = partitionDescriptions;
     _orderedStrategies = orderedStrategies;
     _partitionAccessor = partitionAccessor;
-    _trackerClients = new ConcurrentHashMap<URI, TrackerClient>();
+    _trackerClients = new ConcurrentHashMap<>();
     _maxClientRequestRetryRatio = maxClientRequestRetryRatio;
   }
 
@@ -113,33 +113,33 @@ public class PartitionedLoadBalancerTestState implements LoadBalancerState
   {
     //this is used to get partitionId -> host uris
     UriProperties uriProperties = new UriProperties(_cluster, _partitionDescriptions);
-    return new LoadBalancerStateItem<UriProperties>(uriProperties, 1, 1);
+    return new LoadBalancerStateItem<>(uriProperties, 1, 1);
   }
 
   @Override
   public LoadBalancerStateItem<ClusterProperties> getClusterProperties(String clusterName)
   {
-    List<String> prioritizedSchemes = new ArrayList<String>();
+    List<String> prioritizedSchemes = new ArrayList<>();
     prioritizedSchemes.add("http");
     ClusterProperties clusterProperties = new ClusterProperties(_cluster, prioritizedSchemes);
-    return new LoadBalancerStateItem<ClusterProperties>(clusterProperties, 1, 1);
+    return new LoadBalancerStateItem<>(clusterProperties, 1, 1);
   }
 
   @Override
   public LoadBalancerStateItem<PartitionAccessor> getPartitionAccessor(String clusterName)
   {
     //this is used to get partitionId -> key mapping
-    return new LoadBalancerStateItem<PartitionAccessor>(_partitionAccessor,1,1);
+    return new LoadBalancerStateItem<>(_partitionAccessor,1,1);
   }
 
   @Override
   public LoadBalancerStateItem<ServiceProperties> getServiceProperties(String serviceName)
   {
     ServiceProperties serviceProperties = new ServiceProperties(serviceName, _cluster, _path,
-        Collections.singletonList(_strategyName), Collections.<String, Object>emptyMap(),
+        Collections.singletonList(_strategyName), Collections.emptyMap(),
         Collections.singletonMap(PropertyKeys.HTTP_MAX_CLIENT_REQUEST_RETRY_RATIO, _maxClientRequestRetryRatio),
-        Collections.<String, String>emptyMap(), Collections.<String>emptyList(), Collections.<URI>emptySet());
-    return new LoadBalancerStateItem<ServiceProperties>(serviceProperties, 1, 1);
+        Collections.emptyMap(), Collections.emptyList(), Collections.emptySet());
+    return new LoadBalancerStateItem<>(serviceProperties, 1, 1);
   }
 
   @Override

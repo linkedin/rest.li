@@ -47,7 +47,7 @@ public class PropertyEventThread extends Thread
 
   public PropertyEventThread(String name, int size, boolean start)
   {
-    _messages = new LinkedBlockingQueue<PropertyEvent>(size);
+    _messages = new LinkedBlockingQueue<>(size);
 
     setDaemon(true);
     setName("PropertyEventThread-" + getId() + "-" + name);

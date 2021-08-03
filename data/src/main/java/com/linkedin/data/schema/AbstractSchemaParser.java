@@ -722,7 +722,7 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
     List<String> list = null;
     if (dataList != null)
     {
-      list = new ArrayList<String>();
+      list = new ArrayList<>();
       for (Object o : dataList)
       {
         if (o instanceof String)
@@ -748,7 +748,7 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
   protected Map<String, Object> extractProperties(DataMap map, Set<String> reserved)
   {
     // Use TreeMap to keep properties in sorted order.
-    Map<String, Object> props = new TreeMap<String, Object>();
+    Map<String, Object> props = new TreeMap<>();
     for (Map.Entry<String, Object> e : map.entrySet())
     {
       String key = e.getKey();
@@ -978,8 +978,8 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
    */
   private String _currentPackage = "";
 
-  private final Map<Object, DataLocation> _dataLocationMap = new IdentityHashMap<Object, DataLocation>();
-  private final List<DataSchema> _topLevelDataSchemas = new ArrayList<DataSchema>();
+  private final Map<Object, DataLocation> _dataLocationMap = new IdentityHashMap<>();
+  private final List<DataSchema> _topLevelDataSchemas = new ArrayList<>();
   private final DataSchemaResolver _resolver;
 
   public static final ValidationOptions getDefaultSchemaParserValidationOptions()

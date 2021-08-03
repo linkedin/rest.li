@@ -51,7 +51,7 @@ public class GetAllRequest<T extends RecordTemplate> extends
           null,
           headers,
           cookies,
-          new CollectionResponseDecoder<T>(templateClass),
+        new CollectionResponseDecoder<>(templateClass),
           resourceSpec,
           queryParams,
           queryParamClasses,

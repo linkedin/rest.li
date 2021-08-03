@@ -125,7 +125,7 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
     Greeting greeting2 = new Greeting();
     greeting2.setMessage("first time!");
     greeting2.setTone(Tone.FRIENDLY);
-    List<Greeting> greetings = new ArrayList<Greeting>();
+    List<Greeting> greetings = new ArrayList<>();
     greetings.add(greeting);
     greetings.add(greeting2);
 
@@ -183,7 +183,7 @@ public class TestReturnEntityWithCreate extends RestLiIntegrationTest
     Greeting greeting2 = new Greeting();
     greeting2.setMessage("too much!");
     greeting2.setTone(Tone.FRIENDLY);
-    List<Greeting> greetings = new ArrayList<Greeting>(Arrays.asList(greeting, greeting, greeting, greeting2));
+    List<Greeting> greetings = new ArrayList<>(Arrays.asList(greeting, greeting, greeting, greeting2));
 
 
     BatchCreateIdEntityRequest<Long, Greeting> batchCreateIdEntityRequest = builders.batchCreateAndGet().inputs(

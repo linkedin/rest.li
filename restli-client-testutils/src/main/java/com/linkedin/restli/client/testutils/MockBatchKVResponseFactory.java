@@ -93,13 +93,13 @@ public class MockBatchKVResponseFactory
 
     @SuppressWarnings("unchecked")
     BatchKVResponse<ComplexResourceKey<KK, KP>, V> response =
-      (BatchKVResponse<ComplexResourceKey<KK, KP>, V>) (Object) new BatchKVResponse<ComplexResourceKey, V>(batchResponseDataMap,
-                                                                                                           ComplexResourceKey.class,
-                                                                                                           valueClass,
-                                                                                                           null,
-                                                                                                           keyKeyClass,
-                                                                                                           keyParamsClass,
-                                                                                                           version);
+      (BatchKVResponse<ComplexResourceKey<KK, KP>, V>) (Object) new BatchKVResponse<>(batchResponseDataMap,
+          ComplexResourceKey.class,
+          valueClass,
+          null,
+          keyKeyClass,
+          keyParamsClass,
+          version);
     return response;
   }
 
@@ -185,12 +185,12 @@ public class MockBatchKVResponseFactory
   {
     DataMap batchResponseDataMap = buildDataMap(recordTemplates, errorResponses, version);
 
-    return new BatchKVResponse<K, V>(batchResponseDataMap,
-                                     keyClass,
-                                     valueClass,
-                                     keyParts,
-                                     null,
-                                     null,
-                                     version);
+    return new BatchKVResponse<>(batchResponseDataMap,
+        keyClass,
+        valueClass,
+        keyParts,
+        null,
+        null,
+        version);
   }
 }

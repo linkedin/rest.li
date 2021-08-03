@@ -133,7 +133,7 @@ public class JavaCodeUtil
    */
   public static List<File> targetFiles(File targetDirectory, JCodeModel codeModel, ClassLoader classLoader, PersistentClassChecker checker, boolean generateLowercasePath)
   {
-    final List<File> generatedFiles = new ArrayList<File>();
+    final List<File> generatedFiles = new ArrayList<>();
 
     for (Iterator<JPackage> packageIterator = codeModel.packages(); packageIterator.hasNext(); )
     {
@@ -192,7 +192,7 @@ public class JavaCodeUtil
     }
     else
     {
-      final List<URL> list = new ArrayList<URL>();
+      final List<URL> list = new ArrayList<>();
       final StringTokenizer tokenizer = new StringTokenizer(resolverPath, File.pathSeparator);
       while (tokenizer.hasMoreTokens())
       {

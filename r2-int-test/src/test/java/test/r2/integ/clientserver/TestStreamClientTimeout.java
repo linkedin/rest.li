@@ -113,7 +113,7 @@ public class TestStreamClientTimeout extends AbstractServiceTest
   {
     StreamRequest request = new StreamRequestBuilder(_clientProvider.createHttpURI(_port, NORMAL_URI)).build(EntityStreams.emptyStream());
     final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<StreamResponse> response = new AtomicReference<StreamResponse>();
+    final AtomicReference<StreamResponse> response = new AtomicReference<>();
     _client.streamRequest(request, new Callback<StreamResponse>()
     {
       @Override
@@ -135,7 +135,7 @@ public class TestStreamClientTimeout extends AbstractServiceTest
     // let it timeout before we read
     Thread.sleep(5000);
 
-    final AtomicReference<Throwable> throwable = new AtomicReference<Throwable>();
+    final AtomicReference<Throwable> throwable = new AtomicReference<>();
     final CountDownLatch errorLatch = new CountDownLatch(1);
     Reader reader = new DrainReader()
     {

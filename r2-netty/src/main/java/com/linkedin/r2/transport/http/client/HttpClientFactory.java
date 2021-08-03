@@ -1188,7 +1188,7 @@ public class HttpClientFactory implements TransportClientFactory
   {
     if (encodings != null)
     {
-      List<StreamEncodingType> encodingTypes = new ArrayList<StreamEncodingType>();
+      List<StreamEncodingType> encodingTypes = new ArrayList<>();
       for (String encoding : encodings)
       {
         if (StreamEncodingType.isSupported(encoding))
@@ -1208,7 +1208,7 @@ public class HttpClientFactory implements TransportClientFactory
   {
     if (encodings != null)
     {
-      List<EncodingType> encodingTypes = new ArrayList<EncodingType>();
+      List<EncodingType> encodingTypes = new ArrayList<>();
       for (String encoding : encodings)
       {
         if (EncodingType.isSupported(encoding))

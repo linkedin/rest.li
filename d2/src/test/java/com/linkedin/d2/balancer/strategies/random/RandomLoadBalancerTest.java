@@ -40,7 +40,7 @@ public class RandomLoadBalancerTest
   {
     RandomLoadBalancerStrategyFactory lbFactory = new RandomLoadBalancerStrategyFactory();
     RandomLoadBalancerStrategy rrLoadBalancer = lbFactory.newLoadBalancer(null);
-    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
+    Map<Integer, PartitionData> partitionDataMap = new HashMap<>(2);
     partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
     TrackerClient trackerClient1 = Mockito.mock(TrackerClient.class);
     TrackerClient trackerClient2 = Mockito.mock(TrackerClient.class);

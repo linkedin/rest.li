@@ -52,7 +52,7 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
   public CheckedList()
   {
     _checker = null;
-    _list = new InternalList<E>();
+    _list = new InternalList<>();
   }
 
   /**
@@ -64,7 +64,7 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
   {
     _checker = null;
     checkAll(list);
-    _list = new InternalList<E>(list);
+    _list = new InternalList<>(list);
   }
 
   /**
@@ -75,7 +75,7 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
   public CheckedList(int initialCapacity)
   {
     _checker = null;
-    _list = new InternalList<E>(initialCapacity);
+    _list = new InternalList<>(initialCapacity);
   }
 
   /**
@@ -86,7 +86,7 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
   public CheckedList(ListChecker<E> checker)
   {
     _checker = checker;
-    _list = new InternalList<E>();
+    _list = new InternalList<>();
   }
 
   /**
@@ -100,7 +100,7 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
   {
     _checker = checker;
     checkAll(list);
-    _list = new InternalList<E>(list);
+    _list = new InternalList<>(list);
   }
 
   /**
@@ -113,7 +113,7 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
   public CheckedList(int initialCapacity, ListChecker<E> checker)
   {
     _checker = checker;
-    _list = new InternalList<E>(initialCapacity);
+    _list = new InternalList<>(initialCapacity);
   }
 
   @Override

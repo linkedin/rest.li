@@ -46,6 +46,13 @@ public interface TrackerClient extends LoadBalancerClient
   TransportClient getTransportClient();
 
   /**
+   * @param doNotSlowStart Should the host skip performing slow start
+   */
+  default void setDoNotSlowStart(boolean doNotSlowStart)
+  {
+  }
+
+  /**
    * @return Should the host skip performing slow start
    */
   boolean doNotSlowStart();

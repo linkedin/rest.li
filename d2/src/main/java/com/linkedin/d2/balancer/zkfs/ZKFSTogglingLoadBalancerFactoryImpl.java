@@ -324,9 +324,8 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                                                 ScheduledExecutorService executorService,
                                                                 int zookeeperReadWindowMs)
   {
-    ZooKeeperPermanentStore<T> store = new ZooKeeperPermanentStore<T>(zkConnection, serializer, nodePath,
-                                                                      executorService, zookeeperReadWindowMs);
-    return store;
+    return new ZooKeeperPermanentStore<>(zkConnection, serializer, nodePath,
+                                         executorService, zookeeperReadWindowMs);
   }
 
   protected <T> ZooKeeperEphemeralStore<T> createEphemeralStore(ZKConnection zkConnection, String nodePath,
@@ -336,15 +335,13 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                                                 ScheduledExecutorService executorService,
                                                                 int readWindow)
   {
-    ZooKeeperEphemeralStore<T> store = new ZooKeeperEphemeralStore<T>(zkConnection, serializer, merger, nodePath,
+    return new ZooKeeperEphemeralStore<>(zkConnection, serializer, merger, nodePath,
       false, useNewWatcher, backupStoreFilePath, executorService, readWindow);
-    return store;
   }
 
   protected <T> FileStore<T> createFileStore(String path, PropertySerializer<T> serializer)
   {
-    FileStore<T> store = new FileStore<>(path, FileSystemDirectory.FILE_STORE_EXTENSION, serializer);
-    return store;
+    return new FileStore<>(path, FileSystemDirectory.FILE_STORE_EXTENSION, serializer);
   }
 
   public interface ComponentFactory

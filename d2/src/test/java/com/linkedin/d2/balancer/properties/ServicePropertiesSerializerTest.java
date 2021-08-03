@@ -62,7 +62,7 @@ public class ServicePropertiesSerializerTest
                                      Collections.<String,Object>singletonMap("foo", "bar"));
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
 
-    Map<String, Object> arbitraryProperties = new HashMap<String, Object>();
+    Map<String, Object> arbitraryProperties = new HashMap<>();
     arbitraryProperties.put("foo", "bar");
     property = new ServiceProperties(TEST_SERVICE_NAME,
       TEST_CLUSTER_NAME,
@@ -96,7 +96,7 @@ public class ServicePropertiesSerializerTest
     ServicePropertiesJsonSerializer serializer = new ServicePropertiesJsonSerializer();
     Map<String, String> badDegraderConfig = Collections.singletonMap(PropertyKeys.DEGRADER_INITIAL_DROP_RATE, "0.1");
 
-    Map<String, Object> arbitraryProperties = new HashMap<String, Object>();
+    Map<String, Object> arbitraryProperties = new HashMap<>();
     arbitraryProperties.put("foo", "bar");
     ServiceProperties badServiceProp = new ServiceProperties(TEST_SERVICE_NAME,
       TEST_CLUSTER_NAME,

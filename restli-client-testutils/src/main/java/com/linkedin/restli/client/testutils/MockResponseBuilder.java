@@ -142,7 +142,7 @@ public class MockResponseBuilder<K, V>
    */
   public Response<V> build()
   {
-    Map<String, String> headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     if (_headers != null)
     {
       headers.putAll(_headers);
@@ -173,7 +173,7 @@ public class MockResponseBuilder<K, V>
     }
     List<HttpCookie> cookies = _cookies == null ? Collections.<HttpCookie>emptyList() : _cookies;
 
-    final ResponseImpl<V> response = new ResponseImpl<V>(status, headers, cookies, _entity, _restLiResponseException);
+    final ResponseImpl<V> response = new ResponseImpl<>(status, headers, cookies, _entity, _restLiResponseException);
     response.setAttachmentReader(_restLiAttachmentReader);
 
     return response;

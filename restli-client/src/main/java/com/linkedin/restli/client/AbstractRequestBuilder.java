@@ -58,11 +58,11 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
 
   protected final ResourceSpec        _resourceSpec;
 
-  private Map<String, String>         _headers     = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
-  private List<HttpCookie>            _cookies     = new ArrayList<HttpCookie>();
-  private final Map<String, Object>   _queryParams = new HashMap<String, Object>();
-  private final Map<String, Class<?>> _queryParamClasses = new HashMap<String, Class<?>>();
-  private final Map<String, Object>   _pathKeys    = new HashMap<String, Object>();
+  private Map<String, String>         _headers     = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+  private List<HttpCookie>            _cookies     = new ArrayList<>();
+  private final Map<String, Object>   _queryParams = new HashMap<>();
+  private final Map<String, Class<?>> _queryParamClasses = new HashMap<>();
+  private final Map<String, Object>   _pathKeys    = new HashMap<>();
   private final CompoundKey           _assocKey    = new CompoundKey();
 
   protected AbstractRequestBuilder(String baseUriTemplate, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
@@ -123,7 +123,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
    */
   public AbstractRequestBuilder<K, V, R> setHeaders(Map<String, String> headers)
   {
-    _headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    _headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     _headers.putAll(headers);
     return this;
   }
@@ -160,7 +160,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
    */
   public AbstractRequestBuilder<K, V, R> clearCookies()
   {
-    _cookies = new ArrayList<HttpCookie>();
+    _cookies = new ArrayList<>();
     return this;
   }
 
@@ -244,7 +244,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     final Object existingData = _queryParams.get(key);
     if (existingData == null)
     {
-      final Collection<Object> newData = new ArrayList<Object>();
+      final Collection<Object> newData = new ArrayList<>();
       newData.add(value);
       setParam(key, newData);
     }
@@ -254,7 +254,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     }
     else if (existingData instanceof Iterable)
     {
-      final Collection<Object> newData = new ArrayList<Object>();
+      final Collection<Object> newData = new ArrayList<>();
       for (Object d : (Iterable) existingData)
       {
         newData.add(d);
@@ -322,7 +322,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     Set<K> existingIds = (Set<K>) _queryParams.get(RestConstants.QUERY_BATCH_IDS_PARAM);
     if (existingIds == null)
     {
-      existingIds = new HashSet<K>();
+      existingIds = new HashSet<>();
       _queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, existingIds);
     }
     for (K id: ids)
@@ -403,7 +403,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
   {
     try
     {
-      Map<String, Object> readOnlyCopy = new HashMap<String, Object>
+      Map<String, Object> readOnlyCopy = new HashMap<>
           (CollectionUtils.getMapInitialCapacity(queryParams.size(), 0.75f), 0.75f);
       for (Map.Entry<String, Object> entry: queryParams.entrySet())
       {
@@ -438,7 +438,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
   {
     try
     {
-      Map<String, Object> readOnlyCopy = new HashMap<String, Object>(
+      Map<String, Object> readOnlyCopy = new HashMap<>(
           CollectionUtils.getMapInitialCapacity(pathKeys.size(), 0.75f), 0.75f);
       for (Map.Entry<String, Object> entry: pathKeys.entrySet())
       {
@@ -533,7 +533,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     {
       // array of non-primitives
       Object[] arr = (Object[]) value;
-      List<Object> list = new ArrayList<Object>(arr.length);
+      List<Object> list = new ArrayList<>(arr.length);
       for (Object o: arr)
       {
         list.add(getReadOnlyJavaObject(o));
@@ -544,7 +544,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     {
       // array of primitives
       int length = Array.getLength(value);
-      List<Object> list = new ArrayList<Object>();
+      List<Object> list = new ArrayList<>();
       for (int i = 0; i < length; i++)
       {
         list.add(Array.get(value, i));
@@ -571,7 +571,7 @@ public abstract class AbstractRequestBuilder<K, V, R extends Request<?>> extends
     }
     else if (value instanceof Iterable)
     {
-      List<Object> list = new ArrayList<Object>();
+      List<Object> list = new ArrayList<>();
       for (Object o: (Iterable)value)
       {
         list.add(getReadOnlyJavaObject(o));

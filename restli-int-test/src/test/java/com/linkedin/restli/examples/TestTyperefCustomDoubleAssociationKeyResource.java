@@ -83,20 +83,20 @@ public class TestTyperefCustomDoubleAssociationKeyResource extends RestLiIntegra
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestOptionsDataProvider")
   public void testGet(RestliRequestOptions requestOptions) throws RemoteInvocationException, URISyntaxException
   {
-    HashMap<String, CompoundKey.TypeInfo> keyParts = new HashMap<String, CompoundKey.TypeInfo>();
+    HashMap<String, CompoundKey.TypeInfo> keyParts = new HashMap<>();
     keyParts.put("src", new CompoundKey.TypeInfo(CustomDouble.class, CustomDoubleRef.class));
     keyParts.put("dest", new CompoundKey.TypeInfo(URI.class, UriRef.class));
-    GetRequestBuilder<CompoundKey, Message> getBuilder = new GetRequestBuilder<CompoundKey, Message>(
+    GetRequestBuilder<CompoundKey, Message> getBuilder = new GetRequestBuilder<>(
         "typerefCustomDoubleAssociationKeyResource",
         Message.class,
         new ResourceSpecImpl(EnumSet.of(ResourceMethod.GET),
-                             new HashMap<String, DynamicRecordMetadata>(),
-                             new HashMap<String, DynamicRecordMetadata>(),
-                             CompoundKey.class,
-                             null,
-                             null,
-                             Message.class,
-                             keyParts),
+            new HashMap<>(),
+            new HashMap<>(),
+            CompoundKey.class,
+            null,
+            null,
+            Message.class,
+            keyParts),
         requestOptions);
 
     final String[] stringArray = {"foo"};

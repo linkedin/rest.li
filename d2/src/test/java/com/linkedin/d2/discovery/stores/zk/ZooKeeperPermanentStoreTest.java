@@ -56,11 +56,11 @@ public class ZooKeeperPermanentStoreTest extends PropertyStoreTest
       ZKConnection client = new ZKConnection("localhost:" + PORT, 30000);
       client.start();
 
-      ZooKeeperPermanentStore<String> store = new ZooKeeperPermanentStore<String>(
+      ZooKeeperPermanentStore<String> store = new ZooKeeperPermanentStore<>(
               client,
               new PropertyStringSerializer(),
               "/test-path");
-      FutureCallback<None> callback = new FutureCallback<None>();
+      FutureCallback<None> callback = new FutureCallback<>();
       store.start(callback);
       callback.get();
       return store;

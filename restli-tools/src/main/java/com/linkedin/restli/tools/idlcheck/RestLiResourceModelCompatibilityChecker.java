@@ -166,7 +166,7 @@ public class RestLiResourceModelCompatibilityChecker
     _prevRestspecPath = prevRestspecPath;
     _currRestspecPath = currRestspecPath;
 
-    Stack<Object> path = new Stack<Object>();
+    Stack<Object> path = new Stack<>();
     path.push("");
 
     ResourceSchema prevRec = null;

@@ -363,11 +363,11 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
     return schema;
   }
 
-  private final Map<String, NamedDataSchema> _nameToDataSchema = new HashMap<String, NamedDataSchema>();
-  private final Map<String, DataSchemaLocation> _nameToDataSchemaLocations = new HashMap<String, DataSchemaLocation>();
+  private final Map<String, NamedDataSchema> _nameToDataSchema = new HashMap<>();
+  private final Map<String, DataSchemaLocation> _nameToDataSchemaLocations = new HashMap<>();
   private final DataSchemaParserFactory _parserFactory;
   private final Set<DataSchemaLocation> _badLocations = new HashSet<>();
-  private final Set<DataSchemaLocation> _resolvedLocations = new HashSet<DataSchemaLocation>();
+  private final Set<DataSchemaLocation> _resolvedLocations = new HashSet<>();
   // Map of pending records with the boolean flag indicating if includes are being processed for that schema.
   private final LinkedHashMap<String, Boolean> _pendingSchemas = new LinkedHashMap<>();
 

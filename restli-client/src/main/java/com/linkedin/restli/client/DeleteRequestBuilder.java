@@ -108,14 +108,14 @@ public class DeleteRequestBuilder<K, V extends RecordTemplate>
   @Override
   public DeleteRequest<V> build()
   {
-    return new DeleteRequest<V>(buildReadOnlyHeaders(),
-                                buildReadOnlyCookies(),
-                                _resourceSpec,
-                                buildReadOnlyQueryParameters(),
-                                getQueryParamClasses(),
-                                getBaseUriTemplate(),
-                                buildReadOnlyPathKeys(),
-                                getRequestOptions(),
-                                buildReadOnlyId());
+    return new DeleteRequest<>(buildReadOnlyHeaders(),
+        buildReadOnlyCookies(),
+        _resourceSpec,
+        buildReadOnlyQueryParameters(),
+        getQueryParamClasses(),
+        getBaseUriTemplate(),
+        buildReadOnlyPathKeys(),
+        getRequestOptions(),
+        buildReadOnlyId());
   }
 }

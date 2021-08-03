@@ -50,6 +50,6 @@ public class MockBatchResponseFactory
     {
       rawBatchData.put(entry.getKey(), entry.getValue().data());
     }
-    return new BatchResponse<T>(batchResponseDataMap, entryClass);
+    return new BatchResponse<>(batchResponseDataMap, entryClass);
   }
 }

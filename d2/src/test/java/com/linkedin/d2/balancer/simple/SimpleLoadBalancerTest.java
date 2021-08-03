@@ -155,7 +155,7 @@ public class SimpleLoadBalancerTest
   @BeforeSuite
   public void doOneTimeSetUp()
   {
-    _dirsToDelete = new ArrayList<File>();
+    _dirsToDelete = new ArrayList<>();
   }
 
   @AfterSuite
@@ -189,7 +189,7 @@ public class SimpleLoadBalancerTest
     SimpleLoadBalancer loadBalancer =
         new SimpleLoadBalancer(loadBalancerState, 5, TimeUnit.SECONDS, _d2Executor);
 
-    FutureCallback<None> balancerCallback = new FutureCallback<None>();
+    FutureCallback<None> balancerCallback = new FutureCallback<>();
     loadBalancer.start(balancerCallback);
     balancerCallback.get();
     return loadBalancer;
@@ -240,7 +240,7 @@ public class SimpleLoadBalancerTest
   {
     Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(partitionIdForAdd, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(numHttp);
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>(numHttp);
     Set<String> schemeSet = new HashSet<>();
     schemeSet.add(PropertyKeys.HTTP_SCHEME);
     schemeSet.add(PropertyKeys.HTTPS_SCHEME);
@@ -264,7 +264,11 @@ public class SimpleLoadBalancerTest
     MockStore<UriProperties> uriRegistry = new MockStore<>();
     SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
 
-    DarkClusterConfig darkClusterConfig = new DarkClusterConfig().setMultiplier(1.0f);
+    DarkClusterConfig darkClusterConfig = new DarkClusterConfig()
+        .setMultiplier(1.0f)
+        .setDispatcherOutboundTargetRate(1)
+        .setDispatcherMaxRequestsToBuffer(1)
+        .setDispatcherBufferedRequestExpiryInSeconds(1);
     DarkClusterConfigMap darkClusterConfigMap = new DarkClusterConfigMap();
     darkClusterConfigMap.put(DARK_CLUSTER1_NAME, darkClusterConfig);
 
@@ -301,7 +305,11 @@ public class SimpleLoadBalancerTest
     MockStore<UriProperties> uriRegistry = new MockStore<>();
     SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
 
-    DarkClusterConfig darkClusterConfig = new DarkClusterConfig().setMultiplier(1.0f);
+    DarkClusterConfig darkClusterConfig = new DarkClusterConfig()
+        .setMultiplier(1.0f)
+        .setDispatcherOutboundTargetRate(1)
+        .setDispatcherMaxRequestsToBuffer(1)
+        .setDispatcherBufferedRequestExpiryInSeconds(1);
     DarkClusterConfigMap darkClusterConfigMap = new DarkClusterConfigMap();
     darkClusterConfigMap.put(DARK_CLUSTER1_NAME, darkClusterConfig);
 
@@ -363,7 +371,7 @@ public class SimpleLoadBalancerTest
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
     MockStore<UriProperties> uriRegistry = new MockStore<>();
     SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
-    FutureCallback<None> balancerCallback = new FutureCallback<None>();
+    FutureCallback<None> balancerCallback = new FutureCallback<>();
     loadBalancer.start(balancerCallback);
     balancerCallback.get();
     MockClusterListener testClusterListener = new MockClusterListener();
@@ -394,7 +402,7 @@ public class SimpleLoadBalancerTest
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
     MockStore<UriProperties> uriRegistry = new MockStore<>();
     SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
-    FutureCallback<None> balancerCallback = new FutureCallback<None>();
+    FutureCallback<None> balancerCallback = new FutureCallback<>();
     loadBalancer.start(balancerCallback);
     balancerCallback.get();
     MockClusterListener testClusterListener = new MockClusterListener();
@@ -423,14 +431,13 @@ public class SimpleLoadBalancerTest
     for (int tryAgain = 0; tryAgain < 1000; ++tryAgain)
     {
       Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-          new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
-      Map<String, TransportClientFactory> clientFactories =
-          new HashMap<String, TransportClientFactory>();
-      List<String> prioritizedSchemes = new ArrayList<String>();
+          new HashMap<>();
+      Map<String, TransportClientFactory> clientFactories = new HashMap<>();
+      List<String> prioritizedSchemes = new ArrayList<>();
 
-      MockStore<ServiceProperties> serviceRegistry = new MockStore<ServiceProperties>();
-      MockStore<ClusterProperties> clusterRegistry = new MockStore<ClusterProperties>();
-      MockStore<UriProperties> uriRegistry = new MockStore<UriProperties>();
+      MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+      MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+      MockStore<UriProperties> uriRegistry = new MockStore<>();
 
       ScheduledExecutorService executorService = new SynchronousExecutorService();
 
@@ -451,7 +458,7 @@ public class SimpleLoadBalancerTest
       SimpleLoadBalancer loadBalancer =
         new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor);
 
-      FutureCallback<None> balancerCallback = new FutureCallback<None>();
+      FutureCallback<None> balancerCallback = new FutureCallback<>();
       loadBalancer.start(balancerCallback);
       balancerCallback.get();
 
@@ -459,9 +466,9 @@ public class SimpleLoadBalancerTest
       URI uri2 = URI.create("http://test.qa2.com:2345");
       URI uri3 = URI.create("http://test.qa3.com:6789");
 
-      Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+      Map<Integer, PartitionData> partitionData = new HashMap<>(1);
       partitionData.put(DEFAULT_PARTITION_ID, new PartitionData(1d));
-      Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(3);
+      Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>(3);
       uriData.put(uri1, partitionData);
       uriData.put(uri2, partitionData);
       uriData.put(uri3, partitionData);
@@ -485,7 +492,7 @@ public class SimpleLoadBalancerTest
       URI expectedUri2 = URI.create("http://test.qa2.com:2345/foo");
       URI expectedUri3 = URI.create("http://test.qa3.com:6789/foo");
 
-      Set<URI> expectedUris = new HashSet<URI>();
+      Set<URI> expectedUris = new HashSet<>();
 
       expectedUris.add(expectedUri1);
       expectedUris.add(expectedUri2);
@@ -528,13 +535,13 @@ public class SimpleLoadBalancerTest
   public void testGetClientWithBannedURI() throws Exception
   {
     Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-        new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
-    Map<String, TransportClientFactory> clientFactories = new HashMap<String, TransportClientFactory>();
-    List<String> prioritizedSchemes = new ArrayList<String>();
+        new HashMap<>();
+    Map<String, TransportClientFactory> clientFactories = new HashMap<>();
+    List<String> prioritizedSchemes = new ArrayList<>();
 
-    MockStore<ServiceProperties> serviceRegistry = new MockStore<ServiceProperties>();
-    MockStore<ClusterProperties> clusterRegistry = new MockStore<ClusterProperties>();
-    MockStore<UriProperties> uriRegistry = new MockStore<UriProperties>();
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
 
     ScheduledExecutorService executorService = new SynchronousExecutorService();
 
@@ -552,15 +559,15 @@ public class SimpleLoadBalancerTest
     SimpleLoadBalancer loadBalancer =
       new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor);
 
-    FutureCallback<None> balancerCallback = new FutureCallback<None>();
+    FutureCallback<None> balancerCallback = new FutureCallback<>();
     loadBalancer.start(balancerCallback);
     balancerCallback.get();
 
     URI uri1Banned = URI.create("http://test.qd.com:1234");
     URI uri2Usable = URI.create("http://test.qd.com:5678");
-    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(2);
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>(2);
     uriData.put(uri1Banned, partitionData);
     uriData.put(uri2Usable, partitionData);
 
@@ -602,14 +609,13 @@ public class SimpleLoadBalancerTest
   {
 
     Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-        new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
-    Map<String, TransportClientFactory> clientFactories =
-        new HashMap<String, TransportClientFactory>();
-    List<String> prioritizedSchemes = new ArrayList<String>();
+        new HashMap<>();
+    Map<String, TransportClientFactory> clientFactories = new HashMap<>();
+    List<String> prioritizedSchemes = new ArrayList<>();
 
-    MockStore<ServiceProperties> serviceRegistry = new MockStore<ServiceProperties>();
-    MockStore<ClusterProperties> clusterRegistry = new MockStore<ClusterProperties>();
-    MockStore<UriProperties> uriRegistry = new MockStore<UriProperties>();
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
 
     ScheduledExecutorService executorService = new SynchronousExecutorService();
 
@@ -630,13 +636,13 @@ public class SimpleLoadBalancerTest
     SimpleLoadBalancer loadBalancer =
       new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor);
 
-    FutureCallback<None> balancerCallback = new FutureCallback<None>();
+    FutureCallback<None> balancerCallback = new FutureCallback<>();
     loadBalancer.start(balancerCallback);
     balancerCallback.get(5, TimeUnit.SECONDS);
 
-    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(3);
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>(3);
 
     prioritizedSchemes.add(PropertyKeys.HTTPS_SCHEME);
 
@@ -696,13 +702,13 @@ public class SimpleLoadBalancerTest
     SimpleLoadBalancer loadBalancer =
         new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor);
 
-    FutureCallback<None> balancerCallback = new FutureCallback<None>();
+    FutureCallback<None> balancerCallback = new FutureCallback<>();
     loadBalancer.start(balancerCallback);
     balancerCallback.get();
 
-    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(2);
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>(2);
     uriData.put(URI.create("http://host1/path"), partitionData);
 
     prioritizedSchemes.add(PropertyKeys.HTTP_SCHEME);
@@ -783,29 +789,29 @@ public class SimpleLoadBalancerTest
     String strategyName = "degrader";
 
     // setup 3 partitions. Partition 1 and Partition 2 both have server1 - server3. Partition 3 only has server1.
-    Map<URI,Map<Integer, PartitionData>> partitionDescriptions = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI,Map<Integer, PartitionData>> partitionDescriptions = new HashMap<>();
 
     final URI server1 = new URI("http://foo1.com");
-    Map<Integer, PartitionData> server1Data = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> server1Data = new HashMap<>();
     server1Data.put(1, new PartitionData(1.0));
     server1Data.put(2, new PartitionData(1.0));
     server1Data.put(3, new PartitionData(1.0));
     partitionDescriptions.put(server1, server1Data);
 
     final URI server2 = new URI("http://foo2.com");
-    Map<Integer, PartitionData> server2Data = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> server2Data = new HashMap<>();
     server2Data.put(1, new PartitionData(1.0));
     server2Data.put(2, new PartitionData(1.0));
     partitionDescriptions.put(server2, server2Data);
 
     final URI server3 = new URI("http://foo3.com");
-    Map<Integer, PartitionData> server3Data = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> server3Data = new HashMap<>();
     server3Data.put(1, new PartitionData(1.0));
     server3Data.put(2, new PartitionData(1.0));
     partitionDescriptions.put(server3, server3Data);
 
     //setup strategy which involves tweaking the hash ring to get partitionId -> URI host
-    List<LoadBalancerState.SchemeStrategyPair> orderedStrategies = new ArrayList<LoadBalancerState.SchemeStrategyPair>();
+    List<LoadBalancerState.SchemeStrategyPair> orderedStrategies = new ArrayList<>();
     LoadBalancerStrategy strategy = new TestLoadBalancerStrategy(partitionDescriptions);
 
     orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair(PropertyKeys.HTTP_SCHEME, strategy));
@@ -819,7 +825,7 @@ public class SimpleLoadBalancerTest
       accessor
     ), _d2Executor);
 
-    List<Integer> keys = new ArrayList<Integer>();
+    List<Integer> keys = new ArrayList<>();
     keys.add(1);
     keys.add(2);
     keys.add(3);
@@ -972,31 +978,31 @@ public class SimpleLoadBalancerTest
     String strategyName = "degrader";
 
     //setup partition
-    Map<URI,Map<Integer, PartitionData>> partitionDescriptions = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI,Map<Integer, PartitionData>> partitionDescriptions = new HashMap<>();
 
     final URI server1 = new URI("http://foo1.com");
-    Map<Integer, PartitionData> server1Data = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> server1Data = new HashMap<>();
     server1Data.put(1, new PartitionData(1.0));
     server1Data.put(2, new PartitionData(1.0));
     server1Data.put(3, new PartitionData(1.0));
     partitionDescriptions.put(server1, server1Data);
 
     final URI server2 = new URI("http://foo2.com");
-    Map<Integer, PartitionData> server2Data = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> server2Data = new HashMap<>();
     server2Data.put(1, new PartitionData(1.0));
     server2Data.put(2, new PartitionData(1.0));
     //server2Data.put(3, new PartitionData(1.0));
     partitionDescriptions.put(server2, server2Data);
 
     final URI server3 = new URI("http://foo3.com");
-    Map<Integer, PartitionData> server3Data = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> server3Data = new HashMap<>();
     server3Data.put(1, new PartitionData(1.0));
     server3Data.put(2, new PartitionData(1.0));
     //server3Data.put(3, new PartitionData(1.0));
     partitionDescriptions.put(server3, server3Data);
 
     //setup strategy which involves tweaking the hash ring to get partitionId -> URI host
-    List<LoadBalancerState.SchemeStrategyPair> orderedStrategies = new ArrayList<LoadBalancerState.SchemeStrategyPair>();
+    List<LoadBalancerState.SchemeStrategyPair> orderedStrategies = new ArrayList<>();
     LoadBalancerStrategy strategy = new TestLoadBalancerStrategy(partitionDescriptions);
 
     orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair(PropertyKeys.HTTP_SCHEME, strategy));
@@ -1050,14 +1056,13 @@ public class SimpleLoadBalancerTest
     for (int tryAgain = 0; tryAgain < 12; ++tryAgain)
     {
       Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-          new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
-      Map<String, TransportClientFactory> clientFactories =
-          new HashMap<String, TransportClientFactory>();
-      List<String> prioritizedSchemes = new ArrayList<String>();
+          new HashMap<>();
+      Map<String, TransportClientFactory> clientFactories = new HashMap<>();
+      List<String> prioritizedSchemes = new ArrayList<>();
 
-      MockStore<ServiceProperties> serviceRegistry = new MockStore<ServiceProperties>();
-      MockStore<ClusterProperties> clusterRegistry = new MockStore<ClusterProperties>();
-      MockStore<UriProperties> uriRegistry = new MockStore<UriProperties>();
+      MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+      MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+      MockStore<UriProperties> uriRegistry = new MockStore<>();
 
       ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
       loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
@@ -1075,7 +1080,7 @@ public class SimpleLoadBalancerTest
       SimpleLoadBalancer loadBalancer =
         new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, executorService);
 
-      FutureCallback<None> balancerCallback = new FutureCallback<None>();
+      FutureCallback<None> balancerCallback = new FutureCallback<>();
       loadBalancer.start(balancerCallback);
       balancerCallback.get();
 
@@ -1083,23 +1088,23 @@ public class SimpleLoadBalancerTest
       URI uri2 = URI.create("http://test.qa2.com:2345");
       URI uri3 = URI.create("http://test.qa3.com:6789");
 
-      Map<URI, Double> uris = new HashMap<URI, Double>();
+      Map<URI, Double> uris = new HashMap<>();
 
       uris.put(uri1, 1d);
       uris.put(uri2, 1d);
       uris.put(uri3, 1d);
 
       Map<URI,Map<Integer, PartitionData>> partitionDesc =
-          new HashMap<URI, Map<Integer, PartitionData>>();
+          new HashMap<>();
 
-      Map<Integer, PartitionData> server1 = new HashMap<Integer, PartitionData>();
+      Map<Integer, PartitionData> server1 = new HashMap<>();
       server1.put(0, new PartitionData(1d));
       server1.put(1, new PartitionData(1d));
 
-      Map<Integer, PartitionData> server2 = new HashMap<Integer, PartitionData>();
+      Map<Integer, PartitionData> server2 = new HashMap<>();
       server2.put(0, new PartitionData(1d));
 
-      Map<Integer, PartitionData> server3 = new HashMap<Integer, PartitionData>();
+      Map<Integer, PartitionData> server3 = new HashMap<>();
       server3.put(1, new PartitionData(1d));
       partitionDesc.put(uri1, server1);
       partitionDesc.put(uri2, server2);
@@ -1111,21 +1116,21 @@ public class SimpleLoadBalancerTest
       switch (partitionMethod)
       {
         case 0:
-          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", null, new HashMap<String, String>(),
-            new HashSet<URI>(), new RangeBasedPartitionProperties("id=(\\d+)", 0, 50, 2)));
+          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", null, new HashMap<>(),
+            new HashSet<>(), new RangeBasedPartitionProperties("id=(\\d+)", 0, 50, 2)));
           break;
         case 1:
-          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", null, new HashMap<String, String>(),
-              new HashSet<URI>(), new HashBasedPartitionProperties("id=(\\d+)", 2, HashBasedPartitionProperties.HashAlgorithm.valueOf("MODULO"))));
+          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", null, new HashMap<>(),
+              new HashSet<>(), new HashBasedPartitionProperties("id=(\\d+)", 2, HashBasedPartitionProperties.HashAlgorithm.valueOf("MODULO"))));
           break;
         case 2:
-          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", null, new HashMap<String, String>(),
-              new HashSet<URI>(), new HashBasedPartitionProperties("id=(\\d+)", 2, HashBasedPartitionProperties.HashAlgorithm.valueOf("MD5"))));
+          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", null, new HashMap<>(),
+              new HashSet<>(), new HashBasedPartitionProperties("id=(\\d+)", 2, HashBasedPartitionProperties.HashAlgorithm.valueOf("MD5"))));
           break;
         case 3:
           // test getRings with gap. here, no server serves partition 2
-          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", null, new HashMap<String, String>(),
-              new HashSet<URI>(), new RangeBasedPartitionProperties("id=(\\d+)", 0, 50, 4)));
+          clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", null, new HashMap<>(),
+              new HashSet<>(), new RangeBasedPartitionProperties("id=(\\d+)", 0, 50, 4)));
           server3.put(3, new PartitionData(1d));
           partitionDesc.put(uri3, server3);
           break;
@@ -1150,7 +1155,7 @@ public class SimpleLoadBalancerTest
         Map<Integer, Ring<URI>> ringMap = loadBalancer.getRings(URI.create("d2://foo"));
         assertEquals(ringMap.size(), 4);
         // the ring for partition 2 should be empty
-        assertEquals(ringMap.get(2).toString(), new ConsistentHashRing<URI>(Collections.emptyList()).toString());
+        assertEquals(ringMap.get(2).toString(), new ConsistentHashRing<>(Collections.emptyList()).toString());
         continue;
       }
 
@@ -1158,7 +1163,7 @@ public class SimpleLoadBalancerTest
       URI expectedUri2 = URI.create("http://test.qa2.com:2345/foo");
       URI expectedUri3 = URI.create("http://test.qa3.com:6789/foo");
 
-      Set<URI> expectedUris = new HashSet<URI>();
+      Set<URI> expectedUris = new HashSet<>();
       expectedUris.add(expectedUri1);
       expectedUris.add(expectedUri2);
       expectedUris.add(expectedUri3);
@@ -1236,7 +1241,7 @@ public class SimpleLoadBalancerTest
 
       if (partitionMethod != 2)
       {
-        Set<String> keys = new HashSet<String>();
+        Set<String> keys = new HashSet<>();
         for (int j = 0; j < 50; j++)
         {
           if (partitionMethod == 0)
@@ -1540,12 +1545,12 @@ public class SimpleLoadBalancerTest
 
     SimpleLoadBalancerSimulation simulator =
         new SimpleLoadBalancerSimulation(new DegraderLoadBalancerStrategyFactoryV3(),
-                                         new FileStoreTestFactory<ClusterProperties>("cluster",
-                                                                                     new ClusterPropertiesJsonSerializer()),
-                                         new FileStoreTestFactory<ServiceProperties>("service",
-                                                                                     new ServicePropertiesJsonSerializer()),
-                                         new FileStoreTestFactory<UriProperties>("uri",
-                                                                                 new UriPropertiesJsonSerializer()));
+                                         new FileStoreTestFactory<>("cluster",
+                                                                    new ClusterPropertiesJsonSerializer()),
+                                         new FileStoreTestFactory<>("service",
+                                                                    new ServicePropertiesJsonSerializer()),
+                                         new FileStoreTestFactory<>("uri",
+                                                                    new UriPropertiesJsonSerializer()));
 
     simulator.simulateMultithreaded(1, 1000, 20);
     simulator.reset();
@@ -1562,12 +1567,12 @@ public class SimpleLoadBalancerTest
   {
     SimpleLoadBalancerSimulation simulator =
         new SimpleLoadBalancerSimulation(new DegraderLoadBalancerStrategyFactoryV3(),
-                                         new FileStoreTestFactory<ClusterProperties>("cluster",
-                                                                                     new ClusterPropertiesJsonSerializer()),
-                                         new FileStoreTestFactory<ServiceProperties>("service",
-                                                                                     new ServicePropertiesJsonSerializer()),
-                                         new FileStoreTestFactory<UriProperties>("uri",
-                                                                                 new UriPropertiesJsonSerializer()));
+                                         new FileStoreTestFactory<>("cluster",
+                                                                    new ClusterPropertiesJsonSerializer()),
+                                         new FileStoreTestFactory<>("service",
+                                                                    new ServicePropertiesJsonSerializer()),
+                                         new FileStoreTestFactory<>("uri",
+                                                                    new UriPropertiesJsonSerializer()));
 
     simulator.simulateMultithreaded(1, 1000, 20);
     simulator.reset();
@@ -1607,9 +1612,9 @@ public class SimpleLoadBalancerTest
     @Override
     public PropertyStore<T> getStore()
     {
-      return new FileStore<T>(_testDirectory + File.separator + _subfolder,
-                              FileSystemDirectory.FILE_STORE_EXTENSION,
-                              _serializer);
+      return new FileStore<>(_testDirectory + File.separator + _subfolder,
+                             FileSystemDirectory.FILE_STORE_EXTENSION,
+                             _serializer);
     }
   }
 
@@ -1673,14 +1678,14 @@ public class SimpleLoadBalancerTest
 
     public TestLoadBalancerStrategy(Map<URI, Map<Integer, PartitionData>> partitionDescriptions)
     {
-      _partitionData = new HashMap<Integer, Map<URI, Integer>>();
+      _partitionData = new HashMap<>();
       for (Map.Entry<URI, Map<Integer, PartitionData>> uriPartitionPair : partitionDescriptions.entrySet())
       {
         for (Map.Entry<Integer, PartitionData> partitionData : uriPartitionPair.getValue().entrySet())
         {
           if (!_partitionData.containsKey(partitionData.getKey()))
           {
-            _partitionData.put(partitionData.getKey(), new HashMap<URI, Integer>());
+            _partitionData.put(partitionData.getKey(), new HashMap<>());
           }
           _partitionData.get(partitionData.getKey()).put(uriPartitionPair.getKey(), 100);
         }
@@ -1709,11 +1714,11 @@ public class SimpleLoadBalancerTest
     {
       if (_partitionData.containsKey(partitionId))
       {
-        return new ConsistentHashRing<URI>(_partitionData.get(partitionId));
+        return new ConsistentHashRing<>(_partitionData.get(partitionId));
       }
       else
       {
-        return new ConsistentHashRing<URI>(new HashMap<URI, Integer>());
+        return new ConsistentHashRing<>(new HashMap<>());
       }
     }
 
@@ -1774,13 +1779,13 @@ public class SimpleLoadBalancerTest
     for (int tryAgain = 0; tryAgain < RETRY; ++tryAgain)
     {
       Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-              new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
-      Map<String, TransportClientFactory> clientFactories = new HashMap<String, TransportClientFactory>();
-      List<String> prioritizedSchemes = new ArrayList<String>();
+              new HashMap<>();
+      Map<String, TransportClientFactory> clientFactories = new HashMap<>();
+      List<String> prioritizedSchemes = new ArrayList<>();
 
-      MockStore<ServiceProperties> serviceRegistry = new MockStore<ServiceProperties>();
-      MockStore<ClusterProperties> clusterRegistry = new MockStore<ClusterProperties>();
-      MockStore<UriProperties> uriRegistry = new MockStore<UriProperties>();
+      MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+      MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+      MockStore<UriProperties> uriRegistry = new MockStore<>();
 
       ScheduledExecutorService executorService = new SynchronousExecutorService();
 
@@ -1801,7 +1806,7 @@ public class SimpleLoadBalancerTest
       SimpleLoadBalancer loadBalancer =
         new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor);
 
-      FutureCallback<None> balancerCallback = new FutureCallback<None>();
+      FutureCallback<None> balancerCallback = new FutureCallback<>();
       loadBalancer.start(balancerCallback);
       balancerCallback.get();
 
@@ -1809,9 +1814,9 @@ public class SimpleLoadBalancerTest
       URI uri2 = URI.create("http://test.qa2.com:2345");
       URI uri3 = URI.create("http://test.qa3.com:6789");
 
-      Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+      Map<Integer, PartitionData> partitionData = new HashMap<>(1);
       partitionData.put(DEFAULT_PARTITION_ID, new PartitionData(1d));
-      Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(3);
+      Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>(3);
       uriData.put(uri1, partitionData);
       uriData.put(uri2, partitionData);
       uriData.put(uri3, partitionData);
@@ -1835,7 +1840,7 @@ public class SimpleLoadBalancerTest
       URI expectedUri2 = URI.create("http://test.qa2.com:2345/foo");
       URI expectedUri3 = URI.create("http://test.qa3.com:6789/foo");
 
-      Set<URI> expectedUris = new HashSet<URI>();
+      Set<URI> expectedUris = new HashSet<>();
 
       expectedUris.add(expectedUri1);
       expectedUris.add(expectedUri2);

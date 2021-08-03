@@ -52,18 +52,18 @@ public class TestChannelPoolManager
       @Override
       public AsyncPool<Channel> getPool(SocketAddress address)
       {
-        return new FakePool<Channel>();
+        return new FakePool<>();
       }
     };
     ChannelPoolManager m = new ChannelPoolManagerImpl(factory, null, null);
 
     final int NUM = 100;
-    List<SocketAddress> addresses = new ArrayList<SocketAddress>(NUM);
+    List<SocketAddress> addresses = new ArrayList<>(NUM);
     for (int i = 0; i < NUM; i++)
     {
       addresses.add(new InetSocketAddress(i));
     }
-    List<AsyncPool<Channel>> pools = new ArrayList<AsyncPool<Channel>>(NUM);
+    List<AsyncPool<Channel>> pools = new ArrayList<>(NUM);
     for (int i = 0; i < NUM; i++)
     {
       pools.add(m.getPoolForAddress(addresses.get(i)));

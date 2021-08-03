@@ -42,7 +42,7 @@ import java.util.Set;
 
 public class ComplexKeysDataProvider
 {
-  private Map<String, Message> _db = new HashMap<String, Message>();
+  private Map<String, Message> _db = new HashMap<>();
 
   public ComplexKeysDataProvider()
   {
@@ -69,7 +69,7 @@ public class ComplexKeysDataProvider
     key.setMinor(message.getMessage());
 
     _db.put(keyToString(key), message);
-    return new ComplexResourceKey<TwoPartKey, TwoPartKey>(key, new TwoPartKey());
+    return new ComplexResourceKey<>(key, new TwoPartKey());
   }
 
   public void update(ComplexResourceKey<TwoPartKey, TwoPartKey> key, Message message) {
@@ -86,7 +86,7 @@ public class ComplexKeysDataProvider
 
   public List<Message> findByPrefix(String prefix)
   {
-    ArrayList<Message> results = new ArrayList<Message>();
+    ArrayList<Message> results = new ArrayList<>();
 
     for (Map.Entry<String, Message> entry : _db.entrySet())
     {
@@ -103,9 +103,9 @@ public class ComplexKeysDataProvider
       Set<ComplexResourceKey<TwoPartKey, TwoPartKey>> keys)
   {
     Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> data =
-        new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>();
+        new HashMap<>();
     Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, RestLiServiceException> errors =
-        new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, RestLiServiceException>();
+        new HashMap<>();
 
     for (ComplexResourceKey<TwoPartKey, TwoPartKey> key : keys)
     {
@@ -120,16 +120,16 @@ public class ComplexKeysDataProvider
       }
     }
 
-    return new BatchResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(data, errors);
+    return new BatchResult<>(data, errors);
   }
 
   public BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchUpdate(
       BatchUpdateRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> entities)
   {
     final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateResponse> results =
-        new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateResponse>();
+        new HashMap<>();
     final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, RestLiServiceException> errors =
-        new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, RestLiServiceException>();
+        new HashMap<>();
 
     for (Map.Entry<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> entry : entities.getData().entrySet())
     {
@@ -144,14 +144,14 @@ public class ComplexKeysDataProvider
       }
     }
 
-    return new BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(results, errors);
+    return new BatchUpdateResult<>(results, errors);
   }
 
   public BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchUpdate(
       BatchPatchRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> patches)
   {
     final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateResponse> results =
-        new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateResponse>();
+        new HashMap<>();
 
     for (Map.Entry<ComplexResourceKey<TwoPartKey, TwoPartKey>, PatchRequest<Message>> patch : patches.getData().entrySet())
     {
@@ -166,14 +166,14 @@ public class ComplexKeysDataProvider
       }
     }
 
-    return new BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(results);
+    return new BatchUpdateResult<>(results);
   }
 
   public BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchDelete(
       BatchDeleteRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> ids)
   {
     final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateResponse> results =
-        new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateResponse>();
+        new HashMap<>();
 
     for (ComplexResourceKey<TwoPartKey, TwoPartKey> id : ids.getKeys())
     {
@@ -181,12 +181,12 @@ public class ComplexKeysDataProvider
       results.put(id, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
     }
 
-    return new BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(results);
+    return new BatchUpdateResult<>(results);
   }
 
   public List<Message> getAll()
   {
-    ArrayList<Message> results = new ArrayList<Message>();
+    ArrayList<Message> results = new ArrayList<>();
 
     for (Map.Entry<String, Message> entry : _db.entrySet())
     {

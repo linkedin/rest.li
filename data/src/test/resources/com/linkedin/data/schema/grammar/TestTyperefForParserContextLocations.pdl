@@ -1,0 +1,25 @@
+namespace com.linkedin.data.schema.grammar
+
+/**
+ * Typeref to test returning context locations from the source file.
+ */
+@location = {"startLine": 3, "startCol": 1, "endLine": 25, "endCol": 3}
+typeref TestTyperefForParserContextLocations =
+  @location = {"startLine": 8, "startCol": 3, "endLine": 25, "endCol": 3}
+  union[
+    @location = {"startLine": 10, "startCol": 5, "endLine": 20, "endCol": 9}
+    aRef:
+      @location = {"startLine": 12, "startCol": 7, "endLine": 20, "endCol": 9}
+      typeref ARef =
+        @location = {"startLine": 14, "startCol": 9, "endLine": 20, "endCol": 9}
+        record InlineTyperefRecord {
+          @location = {"startLine": 16, "startCol": 11, "endLine": 17, "endCol": 15}
+          a:int
+          @location = {"startLine": 18, "startCol": 11, "endLine": 19, "endCol": 15}
+          b:int
+        }
+    @location = {"startLine": 21, "startCol": 5, "endLine": 24, "endCol": 24}
+    bRef:
+      @location = {"startLine": 23, "startCol": 7, "endLine": 24, "endCol": 24}
+      typeref BRef = int
+  ]

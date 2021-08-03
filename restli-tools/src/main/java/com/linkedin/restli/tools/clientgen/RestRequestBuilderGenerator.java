@@ -200,7 +200,7 @@ public class RestRequestBuilderGenerator
       ResourceSchema resourceSchema = pair.first;
 
       // Skip unstructured data resources for client generation
-      if (resourceSchema != null && ResourceEntityType.UNSTRUCTURED_DATA == resourceSchema.getEntityType())
+      if (resourceSchema == null || ResourceEntityType.UNSTRUCTURED_DATA == resourceSchema.getEntityType())
       {
         continue;
       }
@@ -211,7 +211,8 @@ public class RestRequestBuilderGenerator
       }
       catch (Exception e)
       {
-        message.append(e.getMessage() + "\n");
+        _log.error("Failed to generate request builders for schema: " + resourceSchema.getName(), e);
+        message.append(e.getMessage()).append("\n");
       }
     }
 

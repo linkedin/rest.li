@@ -39,21 +39,21 @@ public class FindersResource extends CollectionResourceTemplate<Long, Greeting> 
   @Finder("searchWithoutMetadata")
   public CollectionResult<Greeting, NoMetadata> search()
   {
-    return new CollectionResult<Greeting, NoMetadata>(Collections.<Greeting>emptyList(), 0, null);
+    return new CollectionResult<>(Collections.<Greeting>emptyList(), 0, null);
   }
 
   @Finder("searchWithMetadata")
   public CollectionResult<Greeting, SearchMetadata> searchWithMetadata()
   {
-    return new CollectionResult<Greeting, SearchMetadata>(Collections.<Greeting>emptyList(),
-                                                          0,
-                                                          new SearchMetadata());
+    return new CollectionResult<>(Collections.<Greeting>emptyList(),
+        0,
+        new SearchMetadata());
   }
 
   @Finder("basicSearch")
   public BasicCollectionResult<Greeting> basicSearch()
   {
-    return new BasicCollectionResult<Greeting>(Collections.<Greeting>emptyList(), 0);
+    return new BasicCollectionResult<>(Collections.<Greeting>emptyList(), 0);
   }
 
   @Finder("predefinedSearch")
@@ -62,4 +62,3 @@ public class FindersResource extends CollectionResourceTemplate<Long, Greeting> 
     return new GreetingFinderResult(Collections.<Greeting>emptyList(), 0);
   }
 }
-

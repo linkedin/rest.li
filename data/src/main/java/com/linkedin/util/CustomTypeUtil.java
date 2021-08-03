@@ -56,11 +56,14 @@ public class CustomTypeUtil
     {
       try
       {
-        bindingClass = Class.forName(javaCoercerClassName, false, Thread.currentThread().getContextClassLoader());
+        return Class.forName(javaCoercerClassName, false, CustomTypeUtil.class.getClassLoader());
       }
-      catch (ClassNotFoundException e)
+      catch (SecurityException | ClassNotFoundException e)
       {
-        throw new IllegalArgumentException("Unable to find java coercer class of " + javaCoercerClassName + " for schema " + schema.getUnionMemberKey());
+        // If CustomTypeUtil.class.getClassLoader() throws exception
+        // or CustomTypeUtil.class.getClassLoader() could not load class,
+        // fall back to use thread context class loader
+        return getBindingClass(javaCoercerClassName, Thread.currentThread().getContextClassLoader(), schema);
       }
     }
     else
@@ -90,5 +93,17 @@ public class CustomTypeUtil
 
     return (String) o2;
 
+  }
+
+  private static Class<?> getBindingClass(String javaCoercerClassName, ClassLoader classLoader, DataSchema schema)
+  {
+    try
+    {
+      return Class.forName(javaCoercerClassName, false, classLoader);
+    }
+    catch (ClassNotFoundException e)
+    {
+      throw new IllegalArgumentException("Unable to find java coercer class of " + javaCoercerClassName + " for schema " + schema.getUnionMemberKey());
+    }
   }
 }

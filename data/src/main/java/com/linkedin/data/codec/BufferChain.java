@@ -70,7 +70,7 @@ public class BufferChain
 
   private int _currentIndex;
   private ByteBuffer _currentBuffer;
-  private ArrayList<ByteBuffer> _bufferList = new ArrayList<ByteBuffer>();
+  private ArrayList<ByteBuffer> _bufferList = new ArrayList<>();
   private int _bufferSize;
   private ByteOrder _order;
   private CharsetDecoder _decoder;
@@ -636,7 +636,7 @@ public class BufferChain
     byteBuffer.order(_order);
     _currentBuffer.position(newPosition);
     if (bufferList == null)
-      bufferList = new ArrayList<ByteBuffer>();
+      bufferList = new ArrayList<>();
     bufferList.add(byteBuffer);
     return bufferList;
   }

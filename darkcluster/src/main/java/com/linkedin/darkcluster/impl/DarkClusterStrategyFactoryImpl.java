@@ -17,6 +17,8 @@
 package com.linkedin.darkcluster.impl;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.r2.transport.http.client.ConstantQpsRateLimiter;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -63,13 +65,15 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
   private final Random _random;
   private final LoadBalancerClusterListener _clusterListener;
   private final DarkClusterVerifierManager _verifierManager;
+  private final ConstantQpsRateLimiter _rateLimiter;
 
   public DarkClusterStrategyFactoryImpl(@Nonnull Facilities facilities,
                                         @Nonnull String sourceClusterName,
                                         @Nonnull DarkClusterDispatcher darkClusterDispatcher,
                                         @Nonnull Notifier notifier,
                                         @Nonnull Random random,
-                                        @Nonnull DarkClusterVerifierManager verifierManager)
+                                        @Nonnull DarkClusterVerifierManager verifierManager,
+                                        ConstantQpsRateLimiter rateLimiter)
   {
     _facilities = facilities;
     _sourceClusterName = sourceClusterName;
@@ -78,7 +82,18 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
     _random = random;
     _darkClusterDispatcher = darkClusterDispatcher;
     _verifierManager = verifierManager;
+    _rateLimiter = rateLimiter;
     _clusterListener = new DarkClusterListener();
+  }
+
+  public DarkClusterStrategyFactoryImpl(@Nonnull Facilities facilities,
+                                        @Nonnull String sourceClusterName,
+                                        @Nonnull DarkClusterDispatcher darkClusterDispatcher,
+                                        @Nonnull Notifier notifier,
+                                        @Nonnull Random random,
+                                        @Nonnull DarkClusterVerifierManager verifierManager)
+  {
+    this(facilities, sourceClusterName, darkClusterDispatcher, notifier, random, verifierManager, null);
   }
 
   @Override
@@ -128,10 +143,10 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
             if (RelativeTrafficMultiplierDarkClusterStrategy.isValidConfig(darkClusterConfig))
             {
               BaseDarkClusterDispatcher baseDarkClusterDispatcher =
-                new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
-              return new RelativeTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName, darkClusterConfig.getMultiplier(),
-                                                                      baseDarkClusterDispatcher, _notifier, _facilities.getClusterInfoProvider(),
-                                                                      _random);
+                  new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
+              return new RelativeTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName,
+                                                                      darkClusterConfig.getMultiplier(), baseDarkClusterDispatcher,
+                                                                      _notifier, _facilities.getClusterInfoProvider(), _random);
             }
             break;
           case IDENTICAL_TRAFFIC:
@@ -139,13 +154,28 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
             {
               BaseDarkClusterDispatcher baseDarkClusterDispatcher =
                   new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
-              return new IdenticalTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName, darkClusterConfig.getMultiplier(),
-                  baseDarkClusterDispatcher, _notifier, _facilities.getClusterInfoProvider(),
-                  _random);
+              return new IdenticalTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName,
+                                                                       darkClusterConfig.getMultiplier(), baseDarkClusterDispatcher,
+                                                                       _notifier, _facilities.getClusterInfoProvider(), _random);
             }
             break;
           case CONSTANT_QPS:
-            // the constant qps strategy is not yet implemented, continue to the next strategy if it exists
+            if (_rateLimiter == null)
+            {
+              LOG.error("Dark Cluster {} configured to use CONSTANT_QPS strategy, but no rate limiter provided during instantiation. "
+                  + "No Dark Cluster strategy will be used!", darkClusterName);
+              break;
+            }
+            if (ConstantQpsDarkClusterStrategy.isValidConfig(darkClusterConfig))
+            {
+              BaseDarkClusterDispatcher baseDarkClusterDispatcher =
+                  new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
+              _rateLimiter.setBufferCapacity(darkClusterConfig.getDispatcherMaxRequestsToBuffer());
+              _rateLimiter.setBufferTtl(darkClusterConfig.getDispatcherBufferedRequestExpiryInSeconds(), ChronoUnit.SECONDS);
+              return new ConstantQpsDarkClusterStrategy(_sourceClusterName, darkClusterName,
+                  darkClusterConfig.getDispatcherOutboundTargetRate(), baseDarkClusterDispatcher,
+                  _notifier, _facilities.getClusterInfoProvider(), _rateLimiter);
+            }
             break;
           default:
             break;
@@ -171,7 +201,8 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
         _facilities.getClusterInfoProvider().getDarkClusterConfigMap(_sourceClusterName, new Callback<DarkClusterConfigMap>()
         {
           @Override
-          public void onError(Throwable e) {
+          public void onError(Throwable e)
+          {
             _notifier.notify(() -> new RuntimeException("PEGA_0019 unable to refresh DarkClusterConfigMap for source cluster: "
                     + _sourceClusterName, e));
           }

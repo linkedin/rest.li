@@ -89,7 +89,7 @@ public abstract class AbstractR2Servlet extends HttpServlet
     }
 
     final AtomicReference<TransportResponse<RestResponse>> result =
-        new AtomicReference<TransportResponse<RestResponse>>();
+        new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(1);
 
     TransportCallback<RestResponse> callback = new TransportCallback<RestResponse>()

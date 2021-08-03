@@ -16,11 +16,13 @@
 
 package com.linkedin.restli.server.twitter;
 
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.server.BatchCreateRequest;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.BatchDeleteRequest;
+import com.linkedin.restli.server.BatchFinderResult;
 import com.linkedin.restli.server.BatchPatchRequest;
 import com.linkedin.restli.server.BatchUpdateRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
@@ -32,6 +34,7 @@ import com.linkedin.restli.server.altkey.AltStatusKeyCoercer;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.AlternativeKey;
+import com.linkedin.restli.server.annotations.BatchFinder;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Optional;
 import com.linkedin.restli.server.annotations.PagingContextParam;
@@ -84,6 +87,30 @@ public class StatusCollectionResource extends CollectionResourceTemplate<Long,St
   public List<Status> search(@QueryParam("keywords") String keywords,
                              @QueryParam("since") @Optional("-1") long since,
                              @QueryParam("type") @Optional StatusType type)
+  {
+    return null;
+  }
+
+  /** * find status by a parameter named "action"
+   *
+   */
+  @Finder("findByAction")
+  public List<Status> findByAction(@QueryParam("action") String  actionName,
+      @QueryParam("bq") String bqParameterValue
+  )
+  {
+    return null;
+  }
+
+  /** * Batchfinder by a parameter named "action"
+   *    This is an invalid method since the parameter name cannot be named "q"
+   *    in batchFinder
+   */
+  @BatchFinder(value="batchFinderByAction",  batchParam="action")
+  public BatchFinderResult<Status, Status, EmptyRecord> batchFinderByAction(
+      @QueryParam("action") Status[]  actionNames,
+      @QueryParam("q") @Optional String qParam
+  )
   {
     return null;
   }

@@ -59,7 +59,7 @@ public class MockClient extends AbstractClient
   public void streamRequest(StreamRequest request, RequestContext requestContext,
                           Callback<StreamResponse> callback)
   {
-    TransportCallback<StreamResponse> adapter = HttpBridge.streamToHttpCallback(new TransportCallbackAdapter<StreamResponse>(callback), request);
+    TransportCallback<StreamResponse> adapter = HttpBridge.streamToHttpCallback(new TransportCallbackAdapter<>(callback), request);
 
     RestResponse response = new RestResponseBuilder()
             .setStatus(status())

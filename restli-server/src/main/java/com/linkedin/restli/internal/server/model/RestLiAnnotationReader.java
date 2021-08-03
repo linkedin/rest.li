@@ -281,7 +281,7 @@ public final class RestLiAnnotationReader
         alternativeKeyAnnotations = new AlternativeKey[]{resourceClass.getAnnotation(AlternativeKey.class)};
       }
 
-      Map<String, com.linkedin.restli.server.AlternativeKey<?, ?>> alternativeKeyMap = new HashMap<String, com.linkedin.restli.server.AlternativeKey<?, ?>>(alternativeKeyAnnotations.length);
+      Map<String, com.linkedin.restli.server.AlternativeKey<?, ?>> alternativeKeyMap = new HashMap<>(alternativeKeyAnnotations.length);
       for (AlternativeKey altKeyAnnotation : alternativeKeyAnnotations)
       {
         @SuppressWarnings("unchecked")
@@ -292,7 +292,7 @@ public final class RestLiAnnotationReader
     }
     else
     {
-      model.putAlternativeKeys(new HashMap<String, com.linkedin.restli.server.AlternativeKey<?, ?>>());
+      model.putAlternativeKeys(new HashMap<>());
     }
   }
 
@@ -420,7 +420,7 @@ public final class RestLiAnnotationReader
 
   private static void checkRestLiDataAnnotations(final Class<?> resourceClass, RecordDataSchema dataSchema)
   {
-    Map<String, String[]> annotations = new HashMap<String, String[]>();
+    Map<String, String[]> annotations = new HashMap<>();
     if (resourceClass.isAnnotationPresent(ReadOnly.class))
     {
       annotations.put(ReadOnly.class.getSimpleName(), resourceClass.getAnnotation(ReadOnly.class).value());
@@ -436,7 +436,7 @@ public final class RestLiAnnotationReader
       checkPathsAgainstSchema(dataSchema, resourceClassName, annotationEntry.getKey(), annotationEntry.getValue());
     }
     // Check for redundant or conflicting information.
-    Map<String, String> pathToAnnotation = new HashMap<String, String>();
+    Map<String, String> pathToAnnotation = new HashMap<>();
     for (Map.Entry<String, String[]> annotationEntry : annotations.entrySet())
     {
       String annotationName = annotationEntry.getKey();
@@ -607,7 +607,7 @@ public final class RestLiAnnotationReader
     }
 
     Key primaryKey = buildKey(name, keyName, keyClass, annotationData.typerefInfoClass());
-    Set<Key> keys = new HashSet<Key>();
+    Set<Key> keys = new HashSet<>();
     if (annotationData.keys() == null)
     {
       keys.add(primaryKey);
@@ -995,9 +995,9 @@ public final class RestLiAnnotationReader
                                                   final Method method,
                                                   final ResourceMethod methodType)
   {
-    Set<String> paramNames = new HashSet<String>();
+    Set<String> paramNames = new HashSet<>();
 
-    List<Parameter<?>> queryParameters = new ArrayList<Parameter<?>>();
+    List<Parameter<?>> queryParameters = new ArrayList<>();
     Annotation[][] paramsAnnos = method.getParameterAnnotations();
 
     // Iterate over the method parameters.
@@ -1267,14 +1267,14 @@ public final class RestLiAnnotationReader
     {
       throw new ResourceConfigException("Param Annotation type must be 'ParseqContextParam' or the deprecated 'ParseqContext' for ParseqContext");
     }
-    return new Parameter<Context>("",
-                                                      Context.class,
-                                                      null,
-                                                      false,
-                                                      null,
-                                                      parameter,
-                                                      false,
-                                                      annotations);
+    return new Parameter<>("",
+        Context.class,
+        null,
+        false,
+        null,
+        parameter,
+        false,
+        annotations);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -1430,7 +1430,7 @@ public final class RestLiAnnotationReader
   private static Set<Key> buildKeys(String resourceName,
                                     com.linkedin.restli.server.annotations.Key[] annoKeys)
   {
-    Set<Key> keys = new HashSet<Key>();
+    Set<Key> keys = new HashSet<>();
     for(com.linkedin.restli.server.annotations.Key key : annoKeys)
     {
       keys.add(buildKey(resourceName, key.name(), key.type(), key.typeref()));
@@ -2032,7 +2032,7 @@ public final class RestLiAnnotationReader
   private static void validateCrudMethods(final ResourceModel model)
   {
     Map<ResourceMethod, ResourceMethodDescriptor> crudMethods =
-        new HashMap<ResourceMethod, ResourceMethodDescriptor>();
+        new HashMap<>();
     for (ResourceMethodDescriptor descriptor : model.getResourceMethodDescriptors())
     {
       ResourceMethod type = descriptor.getType();
@@ -2409,6 +2409,7 @@ public final class RestLiAnnotationReader
                                                                                                 getActionResourceLevel(actionAnno, model),
                                                                                                 returnFieldDef,
                                                                                                 actionReturnRecordDataSchema,
+                                                                                                actionAnno.readOnly(),
                                                                                                 recordDataSchema,
                                                                                                 getInterfaceType(method),
                                                                                                 annotationsMap);

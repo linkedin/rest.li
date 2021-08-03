@@ -225,7 +225,7 @@ public class TestRequestCompression extends RestLiIntegrationTest
              TimeoutException
   {
     ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("R2 Netty Scheduler"));
-    Map<String, CompressionConfig> requestCompressionConfigs = new HashMap<String, CompressionConfig>();
+    Map<String, CompressionConfig> requestCompressionConfigs = new HashMap<>();
     if (requestCompressionConfig != null)
     {
       requestCompressionConfigs.put(SERVICE_NAME, requestCompressionConfig);
@@ -242,13 +242,13 @@ public class TestRequestCompression extends RestLiIntegrationTest
         .setRequestCompressionThresholdDefault(500)
         .setRequestCompressionConfigs(requestCompressionConfigs)
         .build();
-    Map<String, String> properties = new HashMap<String, String>();
+    Map<String, String> properties = new HashMap<>();
 
     properties.put(HttpClientFactory.HTTP_REQUEST_CONTENT_ENCODINGS, supportedEncodings);
     properties.put(HttpClientFactory.HTTP_SERVICE_NAME, SERVICE_NAME);
     TransportClientAdapter clientAdapter1 = new TransportClientAdapter(httpClientFactory.getClient(properties));
     RestClient client = new RestClient(clientAdapter1, FILTERS_URI_PREFIX);
-    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<Long, Greeting>(new GreetingsRequestBuilders(restliRequestOptions));
+    RootBuilderWrapper<Long, Greeting> builders = new RootBuilderWrapper<>(new GreetingsRequestBuilders(restliRequestOptions));
 
     // GET
     Request<Greeting> request = builders.get().id(1L).build();
@@ -274,11 +274,11 @@ public class TestRequestCompression extends RestLiIntegrationTest
 
     Assert.assertEquals(response2, message);
 
-    FutureCallback<None> callback1 = new FutureCallback<None>();
+    FutureCallback<None> callback1 = new FutureCallback<>();
     client.shutdown(callback1);
     callback1.get(30, TimeUnit.SECONDS);
 
-    FutureCallback<None> callback2 = new FutureCallback<None>();
+    FutureCallback<None> callback2 = new FutureCallback<>();
     httpClientFactory.shutdown(callback2);
     callback2.get(30, TimeUnit.SECONDS);
   }

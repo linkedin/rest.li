@@ -116,7 +116,7 @@ public class AutomaticValidationWithProjectionResource implements KeyValueResour
     // _returnEntity.setIntA() valid, missing optional
     _returnEntity.setValidationDemoNext(nextDemo);
 
-    _returnEntityList = new ArrayList<ValidationDemo>();
+    _returnEntityList = new ArrayList<>();
     _returnEntityList.add(_returnEntity);
   }
 
@@ -124,16 +124,16 @@ public class AutomaticValidationWithProjectionResource implements KeyValueResour
   @ReturnEntity
   public CreateKVResponse<Integer, ValidationDemo> create() throws CloneNotSupportedException
   {
-    return new CreateKVResponse<Integer, ValidationDemo>(1, _returnEntity);
+    return new CreateKVResponse<>(1, _returnEntity);
   }
 
   @RestMethod.BatchCreate
   @ReturnEntity
   public BatchCreateKVResult<Integer, ValidationDemo> batchCreate()
   {
-    List<CreateKVResponse<Integer, ValidationDemo>> results = new ArrayList<CreateKVResponse<Integer, ValidationDemo>>();
-    results.add(new CreateKVResponse<Integer, ValidationDemo>(1, _returnEntity));
-    return new BatchCreateKVResult<Integer, ValidationDemo>(results);
+    List<CreateKVResponse<Integer, ValidationDemo>> results = new ArrayList<>();
+    results.add(new CreateKVResponse<>(1, _returnEntity));
+    return new BatchCreateKVResult<>(results);
   }
 
   @RestMethod.Get
@@ -145,9 +145,9 @@ public class AutomaticValidationWithProjectionResource implements KeyValueResour
   @RestMethod.BatchGet
   public BatchResult<Integer, ValidationDemo> batchGet()
   {
-    Map<Integer, ValidationDemo> resultMap = new HashMap<Integer, ValidationDemo>();
+    Map<Integer, ValidationDemo> resultMap = new HashMap<>();
     resultMap.put(1, _returnEntity);
-    return new BatchResult<Integer, ValidationDemo>(resultMap, new HashMap<Integer, RestLiServiceException>());
+    return new BatchResult<>(resultMap, new HashMap<>());
   }
 
   @RestMethod.GetAll
@@ -159,7 +159,7 @@ public class AutomaticValidationWithProjectionResource implements KeyValueResour
   @Finder("searchWithProjection")
   public List<ValidationDemo> searchWithProjection()
   {
-    List<ValidationDemo> validationDemos = new ArrayList<ValidationDemo>();
+    List<ValidationDemo> validationDemos = new ArrayList<>();
     validationDemos.add(_returnEntity);
     return validationDemos;
   }

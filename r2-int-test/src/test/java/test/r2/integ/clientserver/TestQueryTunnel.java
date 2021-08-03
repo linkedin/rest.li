@@ -111,14 +111,14 @@ public class TestQueryTunnel extends AbstractServiceTest
       public void handleRestRequest(RestRequest req, Map<String, String> wireAttrs, RequestContext requestContext,
           TransportCallback<RestResponse> callback)
       {
-        restHandler.handleRequest(req, requestContext, new TransportCallbackAdapter<RestResponse>(callback));
+        restHandler.handleRequest(req, requestContext, new TransportCallbackAdapter<>(callback));
       }
 
       @Override
       public void handleStreamRequest(StreamRequest req, Map<String, String> wireAttrs,
           RequestContext requestContext, TransportCallback<StreamResponse> callback)
       {
-        streamHandler.handleRequest(req, requestContext, new TransportCallbackAdapter<StreamResponse>(callback));
+        streamHandler.handleRequest(req, requestContext, new TransportCallbackAdapter<>(callback));
       }
     };
   }

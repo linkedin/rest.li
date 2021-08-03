@@ -50,7 +50,7 @@ public class CowSet<K> extends AbstractSet<K> implements CommonSet<K>
    */
   public CowSet()
   {
-    _map = new CowMap<K, Object>();
+    _map = new CowMap<>();
   }
 
   private CowSet(CowMap<K, Object> map)
@@ -61,7 +61,7 @@ public class CowSet<K> extends AbstractSet<K> implements CommonSet<K>
   @Override
   public Object clone() throws CloneNotSupportedException
   {
-    return new CowSet<K>(_map.clone());
+    return new CowSet<>(_map.clone());
   }
 
   @Override

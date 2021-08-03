@@ -32,10 +32,10 @@ public class InterpreterContext
 {
 
   //stores error messages
-  private final MessageList<Message> _errorMessages = new MessageList<Message>();
+  private final MessageList<Message> _errorMessages = new MessageList<>();
 
   //stores informational messages
-  private final MessageList<Message> _infoMessages = new MessageList<Message>();
+  private final MessageList<Message> _infoMessages = new MessageList<>();
 
   //current instruction is in every method that needs to add error message, because
   //instruction stores path; instead of passing instruction as parameter, it is accessible

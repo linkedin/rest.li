@@ -52,7 +52,7 @@ public class RichResourceSchema
 {
   public static Collection<RichResourceSchema> toRichResourceSchemas(Collection<ResourceSchema> resourceSchemas)
   {
-    ArrayList<RichResourceSchema> results = new ArrayList<RichResourceSchema>(resourceSchemas.size());
+    ArrayList<RichResourceSchema> results = new ArrayList<>(resourceSchemas.size());
     for(ResourceSchema resourceSchema : resourceSchemas)
     {
       results.add(new RichResourceSchema(resourceSchema));
@@ -165,37 +165,37 @@ public class RichResourceSchema
       _subresources = Collections.emptyList();
     }
 
-    _methodsByName = new HashMap<String, RestMethodSchema>(_methods.size());
+    _methodsByName = new HashMap<>(_methods.size());
     for(RestMethodSchema method : _methods)
     {
       _methodsByName.put(method.getMethod(), method);
     }
 
-    _findersByName = new HashMap<String, FinderSchema>(_finders.size());
+    _findersByName = new HashMap<>(_finders.size());
     for(FinderSchema finder : _finders)
     {
       _findersByName.put(finder.getName(), finder);
     }
 
-    _batchFindersByName = new HashMap<String, BatchFinderSchema>(_batchFinders.size());
+    _batchFindersByName = new HashMap<>(_batchFinders.size());
     for(BatchFinderSchema batchFinder : _batchFinders)
     {
       _batchFindersByName.put(batchFinder.getName(), batchFinder);
     }
 
-    _actionsByName = new HashMap<String, ActionSchema>(_actions.size());
+    _actionsByName = new HashMap<>(_actions.size());
     for(ActionSchema action : _actions)
     {
       _actionsByName.put(action.getName(), action);
     }
 
-    _entityActionsByName = new HashMap<String, ActionSchema>(_entityActions.size());
+    _entityActionsByName = new HashMap<>(_entityActions.size());
     for(ActionSchema entityAction : _entityActions)
     {
       _entityActionsByName.put(entityAction.getName(), entityAction);
     }
 
-    _subresourcesByName = new HashMap<String, RichResourceSchema>(_subresources.size());
+    _subresourcesByName = new HashMap<>(_subresources.size());
     for(RichResourceSchema subresource : _subresources)
     {
       _subresourcesByName.put(subresource.getName(), subresource);

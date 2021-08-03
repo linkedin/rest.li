@@ -104,7 +104,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     TwoPartKey param = new TwoPartKey();
     param.setMajor("c");
     param.setMinor("d");
-    ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<TwoPartKey, TwoPartKey>(key, param);
+    ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<>(key, param);
     Request<TwoPartKey> request = builders.get().setPathKey("keys", complexKey).id("stringKey").build();
     TwoPartKey response = getClient().sendRequest(request).get().getEntity();
     Assert.assertEquals(response.getMajor(), "aANDc");
@@ -120,7 +120,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     TwoPartKey param = new TwoPartKey();
     param.setMajor("c&3");
     param.setMinor("d&4");
-    ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<TwoPartKey, TwoPartKey>(key, param);
+    ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<>(key, param);
     Request<TwoPartKey> request = builders.get().setPathKey("keys", complexKey).id("stringKey").build();
     TwoPartKey response = getClient().sendRequest(request).get().getEntity();
     Assert.assertEquals(response.getMajor(), "a&1ANDc&3");
@@ -367,7 +367,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     final String messageText2 = "secondMessage";
     Message message2 = new Message();
     message2.setMessage(messageText2);
-    List<Message> messages = new ArrayList<Message>(2);
+    List<Message> messages = new ArrayList<>(2);
     messages.add(message1);
     messages.add(message2);
 
@@ -379,14 +379,14 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     ResponseFuture<CollectionResponse<CreateStatus>> future = getClient().sendRequest(request);
     Response<CollectionResponse<CreateStatus>> response = future.getResponse();
     Assert.assertEquals(response.getStatus(), 200);
-    Set<ComplexResourceKey<TwoPartKey, TwoPartKey>> expectedComplexKeys = new HashSet<ComplexResourceKey<TwoPartKey, TwoPartKey>>(2);
+    Set<ComplexResourceKey<TwoPartKey, TwoPartKey>> expectedComplexKeys = new HashSet<>(2);
     expectedComplexKeys.add(expectedComplexKey1);
     expectedComplexKeys.add(expectedComplexKey2);
     for (CreateStatus createStatus : response.getEntity().getElements())
     {
       @SuppressWarnings("unchecked")
       CreateIdStatus<ComplexResourceKey<TwoPartKey, TwoPartKey>> createIdStatus = (CreateIdStatus<ComplexResourceKey<TwoPartKey, TwoPartKey>>) createStatus;
-      Assert.assertEquals(createIdStatus.getStatus(), new Integer(201));
+      Assert.assertEquals(createIdStatus.getStatus(), Integer.valueOf(201));
       Assert.assertTrue(expectedComplexKeys.contains(createIdStatus.getKey()));
 
       try
@@ -405,7 +405,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     Assert.assertTrue(expectedComplexKeys.isEmpty());
 
     // attempt to batch get created records
-    List<ComplexResourceKey<TwoPartKey, TwoPartKey>> createdKeys = new ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>>(2);
+    List<ComplexResourceKey<TwoPartKey, TwoPartKey>> createdKeys = new ArrayList<>(2);
     createdKeys.add(expectedComplexKey1);
     createdKeys.add(expectedComplexKey2);
     BatchGetKVRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> getRequest = batchGetRequestBuilder.ids(createdKeys).buildKV();
@@ -427,7 +427,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     final String messageText2 = "secondMessage";
     Message message2 = new Message();
     message2.setMessage(messageText2);
-    List<Message> messages = new ArrayList<Message>(2);
+    List<Message> messages = new ArrayList<>(2);
     messages.add(message1);
     messages.add(message2);
 
@@ -438,12 +438,12 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     BatchCreateIdRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> request = batchCreateRequestBuilder.inputs(messages).build();
     Response<BatchCreateIdResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>>> response = getClient().sendRequest(request).getResponse();
     Assert.assertEquals(response.getStatus(), 200);
-    Set<ComplexResourceKey<TwoPartKey, TwoPartKey>> expectedComplexKeys = new HashSet<ComplexResourceKey<TwoPartKey, TwoPartKey>>(2);
+    Set<ComplexResourceKey<TwoPartKey, TwoPartKey>> expectedComplexKeys = new HashSet<>(2);
     expectedComplexKeys.add(expectedComplexKey1);
     expectedComplexKeys.add(expectedComplexKey2);
     for (CreateIdStatus<ComplexResourceKey<TwoPartKey, TwoPartKey>> status : response.getEntity().getElements())
     {
-      Assert.assertEquals(status.getStatus(), new Integer(201));
+      Assert.assertEquals(status.getStatus(), Integer.valueOf(201));
       Assert.assertTrue(expectedComplexKeys.contains(status.getKey()));
 
       try
@@ -462,7 +462,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     Assert.assertTrue(expectedComplexKeys.isEmpty());
 
     // attempt to batch get created records
-    List<ComplexResourceKey<TwoPartKey, TwoPartKey>> createdKeys = new ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>>(2);
+    List<ComplexResourceKey<TwoPartKey, TwoPartKey>> createdKeys = new ArrayList<>(2);
     createdKeys.add(expectedComplexKey1);
     createdKeys.add(expectedComplexKey2);
     Request<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> getRequest = batchGetRequestBuilder.ids(createdKeys).build();
@@ -555,7 +555,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     throws Exception
   {
     final Request<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> request = builder.build();
-    final FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    final FutureCallback<RestResponse> callback = new FutureCallback<>();
     getClient().sendRestRequest(request, new RequestContext(), callback);
     final RestResponse result = callback.get();
 
@@ -581,7 +581,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     message2.setMessage(messageText2);
     message2.setTone(Tone.INSULTING);
 
-    final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> inputs = new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>();
+    final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> inputs = new HashMap<>();
     ComplexResourceKey<TwoPartKey, TwoPartKey> key1 = getComplexKey(StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2);
     ComplexResourceKey<TwoPartKey, TwoPartKey> key2 = getComplexKey(StringTestKeys.URL, StringTestKeys.URL2);
     ComplexResourceKey<TwoPartKey, TwoPartKey> key3 = getComplexKey(StringTestKeys.ERROR, StringTestKeys.ERROR);
@@ -615,7 +615,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
 
     Assert.assertNotNull(response.getErrors().get(key3));
 
-    ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids = new ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>>();
+    ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids = new ArrayList<>();
     ids.add(key1);
     ids.add(key2);
     BatchGetEntityRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchGetRequest =
@@ -640,7 +640,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     PatchRequest<Message> patch = PatchGenerator.diffEmpty(message);
 
     final Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, PatchRequest<Message>> inputs =
-        new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, PatchRequest<Message>>();
+        new HashMap<>();
     ComplexResourceKey<TwoPartKey, TwoPartKey> key1 = getComplexKey(StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2);
     ComplexResourceKey<TwoPartKey, TwoPartKey> key2 = getComplexKey(StringTestKeys.URL, StringTestKeys.URL2);
     inputs.put(key1, patch);
@@ -664,7 +664,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
 
     Assert.assertTrue(response.getErrors().isEmpty());
 
-    ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids = new ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>>();
+    ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids = new ArrayList<>();
     ids.add(key1);
     ids.add(key2);
     Request<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, EntityResponse<Message>>> batchGetRequest =
@@ -704,7 +704,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
     ComplexResourceKey<TwoPartKey, TwoPartKey> key1 = getComplexKey(messageText, messageText);
     ComplexResourceKey<TwoPartKey, TwoPartKey> key2 = getComplexKey(messageText2, messageText2);
 
-    ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids = new ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>>();
+    ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids = new ArrayList<>();
     ids.add(key1);
     ids.add(key2);
     final Request<BatchKVResponse<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateStatus>> request =
@@ -736,7 +736,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
   private static List<ComplexResourceKey<TwoPartKey, TwoPartKey>> getBatchComplexKeys()
   {
     List<ComplexResourceKey<TwoPartKey, TwoPartKey>> ids =
-      new ArrayList<ComplexResourceKey<TwoPartKey, TwoPartKey>>();
+        new ArrayList<>();
     ComplexResourceKey<TwoPartKey, TwoPartKey> key1 = getComplexKey(StringTestKeys.SIMPLEKEY, StringTestKeys.SIMPLEKEY2);
     ComplexResourceKey<TwoPartKey, TwoPartKey> key2 = getComplexKey(StringTestKeys.URL, StringTestKeys.URL2);
     ComplexResourceKey<TwoPartKey, TwoPartKey> key3 = getComplexKey(StringTestKeys.ERROR, StringTestKeys.ERROR);
@@ -749,7 +749,7 @@ public class TestComplexKeysResource extends RestLiIntegrationTest
 
   private static ComplexResourceKey<TwoPartKey, TwoPartKey> getComplexKey(String major, String minor)
   {
-    return new ComplexResourceKey<TwoPartKey, TwoPartKey>(
+    return new ComplexResourceKey<>(
         new TwoPartKey().setMajor(major).setMinor(minor),
         new TwoPartKey());
   }

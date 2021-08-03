@@ -181,7 +181,7 @@ public class LoadBalancerSimulator
 
     _loadBalancer = new SimpleLoadBalancer(_loadBalancerState, 5, TimeUnit.SECONDS, _d2Executor);
 
-    FutureCallback<None> balancerCallback = new FutureCallback<None>();
+    FutureCallback<None> balancerCallback = new FutureCallback<>();
     _loadBalancer.start(balancerCallback);
     balancerCallback.get();
 

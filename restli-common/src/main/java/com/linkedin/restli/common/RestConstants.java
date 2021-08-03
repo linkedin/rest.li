@@ -83,7 +83,7 @@ public interface RestConstants
   String METADATA_FIELDS_PARAM = "metadataFields";
   String PAGING_FIELDS_PARAM = "pagingFields";
   String RETURN_ENTITY_PARAM = "$returnEntity";
-  Set<String> PROJECTION_PARAMETERS = Collections.unmodifiableSet(new LinkedHashSet<String>(
+  Set<String> PROJECTION_PARAMETERS = Collections.unmodifiableSet(new LinkedHashSet<>(
       Arrays.asList(FIELDS_PARAM, METADATA_FIELDS_PARAM, PAGING_FIELDS_PARAM)));
 
   /** delimiter used for separating (name=value) parts of compound key */
@@ -98,13 +98,13 @@ public interface RestConstants
   String RESOURCE_MODEL_FILENAME_EXTENSION = ".restspec.json";
   String SNAPSHOT_FILENAME_EXTENTION = ".snapshot.json";
   Set<ResourceMethod> SIMPLE_RESOURCE_METHODS = Collections.unmodifiableSet(
-      new HashSet<ResourceMethod>(
-        Arrays.asList(
-            ResourceMethod.ACTION,
-            ResourceMethod.DELETE,
-            ResourceMethod.GET,
-            ResourceMethod.PARTIAL_UPDATE,
-            ResourceMethod.UPDATE)));
+      new HashSet<>(
+          Arrays.asList(
+              ResourceMethod.ACTION,
+              ResourceMethod.DELETE,
+              ResourceMethod.GET,
+              ResourceMethod.PARTIAL_UPDATE,
+              ResourceMethod.UPDATE)));
 
   String RESTLI_PROTOCOL_VERSION_PROPERTY = "restli.protocol";
   String RESTLI_PROTOCOL_VERSION_PERCENTAGE_PROPERTY = "restli.protocol.percentage";

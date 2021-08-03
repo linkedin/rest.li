@@ -110,7 +110,7 @@ public abstract class BaseMessageBuilder<B extends BaseMessageBuilder<B>>
   @Override
   public B setCookies(List<String> cookies)
   {
-    _cookies = new ArrayList<String>(cookies);
+    _cookies = new ArrayList<>(cookies);
     return thisBuilder();
   }
 
@@ -216,7 +216,7 @@ public abstract class BaseMessageBuilder<B extends BaseMessageBuilder<B>>
    */
   public B unsafeSetHeaders(Map<String, String> headers)
   {
-    _headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    _headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     return unsafeOverwriteHeaders(headers);
   }
 
@@ -304,7 +304,7 @@ public abstract class BaseMessageBuilder<B extends BaseMessageBuilder<B>>
   protected Map<String, String> getCanonicalHeaders()
   {
     final Map<String, String> orig = getHeaders();
-    final Map<String, String> headers = new HashMap<String, String>(orig.size());
+    final Map<String, String> headers = new HashMap<>(orig.size());
     for (Map.Entry<String, String> entry : orig.entrySet())
     {
       final String key = entry.getKey().toLowerCase();
@@ -321,7 +321,7 @@ public abstract class BaseMessageBuilder<B extends BaseMessageBuilder<B>>
   protected List<String> getCanonicalCookies()
   {
     final List<String> orig = getCookies();
-    final List<String> cookies = new ArrayList<String>(orig.size());
+    final List<String> cookies = new ArrayList<>(orig.size());
     for (String entry : orig)
     {
       final String value = CANONICAL_PATTERN.matcher(entry.trim()).replaceAll(CANONICAL_REPLACEMENT);

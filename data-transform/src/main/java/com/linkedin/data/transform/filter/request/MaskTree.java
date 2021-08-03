@@ -127,7 +127,7 @@ public class MaskTree extends MaskMap
    */
   public Map<PathSpec, MaskOperation> getOperations()
   {
-    Map<PathSpec, MaskOperation> result = new HashMap<PathSpec, MaskOperation>();
+    Map<PathSpec, MaskOperation> result = new HashMap<>();
     getOperationsImpl(_representation, PathSpec.emptyPath(), result);
     return result;
   }

@@ -53,7 +53,7 @@ public class RestMethod
   }
 
   static Map<Class<? extends Annotation>, ResourceMethod> _restMethodAnnotationToResourceMethodMap =
-                                                                                                       new HashMap<Class<? extends Annotation>, ResourceMethod>();
+      new HashMap<>();
   // Build annotation-to-resourceMethod mapping. Check for absent or ambiguous mappings
   static
   {

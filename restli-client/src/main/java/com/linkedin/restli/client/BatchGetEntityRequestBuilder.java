@@ -101,15 +101,15 @@ public class BatchGetEntityRequestBuilder<K, V extends RecordTemplate> extends
     final Map<String, Object> batchQueryParams =
         getReadOnlyQueryParameters(BatchGetRequestUtil.getBatchQueryParam(requests, batchFields));
 
-    return new BatchGetEntityRequest<K, V>(firstRequest.getHeaders(),
-                                           firstRequest.getCookies(),
-                                           firstRequest.getResponseDecoder(),
-                                           batchQueryParams,
-                                           firstRequest.getQueryParamClasses(),
-                                           firstResourceSpec,
-                                           firstRequest.getBaseUriTemplate(),
-                                           firstRequest.getPathKeys(),
-                                           firstRequest.getRequestOptions());
+    return new BatchGetEntityRequest<>(firstRequest.getHeaders(),
+        firstRequest.getCookies(),
+        firstRequest.getResponseDecoder(),
+        batchQueryParams,
+        firstRequest.getQueryParamClasses(),
+        firstResourceSpec,
+        firstRequest.getBaseUriTemplate(),
+        firstRequest.getPathKeys(),
+        firstRequest.getRequestOptions());
   }
 
   public BatchGetEntityRequestBuilder(String baseUriTemplate,
@@ -127,11 +127,11 @@ public class BatchGetEntityRequestBuilder<K, V extends RecordTemplate> extends
                                       RestliRequestOptions requestOptions)
   {
     this(baseUriTemplate,
-          new BatchEntityResponseDecoder<K, V>(
-              (TypeSpec<V>) resourceSpec.getValueType(),
-              (TypeSpec<K>) resourceSpec.getKeyType(),
-              resourceSpec.getKeyParts(),
-              resourceSpec.getComplexKeyType()),
+        new BatchEntityResponseDecoder<>(
+            (TypeSpec<V>) resourceSpec.getValueType(),
+            (TypeSpec<K>) resourceSpec.getKeyType(),
+            resourceSpec.getKeyParts(),
+            resourceSpec.getComplexKeyType()),
           resourceSpec,
           requestOptions);
   }
@@ -214,15 +214,15 @@ public class BatchGetEntityRequestBuilder<K, V extends RecordTemplate> extends
   {
     ensureBatchKeys();
 
-    return new BatchGetEntityRequest<K, V>(buildReadOnlyHeaders(),
-                                           buildReadOnlyCookies(),
-                                           _decoder,
-                                           buildReadOnlyQueryParameters(),
-                                           getQueryParamClasses(),
-                                           _resourceSpec,
-                                           getBaseUriTemplate(),
-                                           buildReadOnlyPathKeys(),
-                                           getRequestOptions());
+    return new BatchGetEntityRequest<>(buildReadOnlyHeaders(),
+        buildReadOnlyCookies(),
+        _decoder,
+        buildReadOnlyQueryParameters(),
+        getQueryParamClasses(),
+        _resourceSpec,
+        getBaseUriTemplate(),
+        buildReadOnlyPathKeys(),
+        getRequestOptions());
   }
 
   public BatchGetEntityRequestBuilder<K, V> fields(PathSpec... fieldPaths)

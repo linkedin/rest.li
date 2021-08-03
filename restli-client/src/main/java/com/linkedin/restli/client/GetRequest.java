@@ -55,7 +55,7 @@ public class GetRequest<T extends RecordTemplate> extends Request<T>
           null,
           headers,
           cookies,
-          new EntityResponseDecoder<T>(templateClass),
+        new EntityResponseDecoder<>(templateClass),
           resourceSpec,
           queryParams,
           queryParamClasses,

@@ -440,7 +440,7 @@ public class LoadBalancerClientCli
   Exception
   {
     _zkfsLoadBalancer = getZKFSLoadBalancer(zkHostsPortsConnectionString, d2path, servicePath);
-    FutureCallback<None> startupCallback = new FutureCallback<None>();
+    FutureCallback<None> startupCallback = new FutureCallback<>();
     _zkfsLoadBalancer.start(startupCallback);
     startupCallback.get(5000, TimeUnit.MILLISECONDS);
 
@@ -589,7 +589,7 @@ public class LoadBalancerClientCli
       if (storeUri.getScheme().equals("zk"))
       {
 
-        ZooKeeperPermanentStore<T> zkStore = new ZooKeeperPermanentStore<T>(
+        ZooKeeperPermanentStore<T> zkStore = new ZooKeeperPermanentStore<>(
                 zkclient, serializer, storeUri.getPath());
         startStore(zkStore);
         return zkStore;
@@ -602,14 +602,14 @@ public class LoadBalancerClientCli
     else
     {
       // assume it's a local file
-      return new FileStore<T>(storeUri.getPath(), ".json", serializer);
+      return new FileStore<>(storeUri.getPath(), ".json", serializer);
     }
 
   }
 
   public static List<String> getServicesGroups (ZKConnection zkclient, String basePath) throws Exception
   {
-    List<String> servicesGroups = new ArrayList<String>();
+    List<String> servicesGroups = new ArrayList<>();
     ZooKeeper zook = zkclient.getZooKeeper();
 
     List<String> children = zook.getChildren(basePath,false);
@@ -639,7 +639,7 @@ public class LoadBalancerClientCli
       if (storeUri.getScheme().equals("zk"))
       {
 
-        ZooKeeperEphemeralStore<T> zkStore = new ZooKeeperEphemeralStore<T>( zkclient, serializer, merger, storeUri.getPath());
+        ZooKeeperEphemeralStore<T> zkStore = new ZooKeeperEphemeralStore<>( zkclient, serializer, merger, storeUri.getPath());
         startStore(zkStore);
         return zkStore;
       }
@@ -651,7 +651,7 @@ public class LoadBalancerClientCli
     else
     {
       // assume it's a local file
-      return new FileStore<T>(storeUri.getPath(), ".json", serializer);
+      return new FileStore<>(storeUri.getPath(), ".json", serializer);
     }
 
   }
@@ -660,7 +660,7 @@ public class LoadBalancerClientCli
   {
     try
     {
-      FutureCallback<None> callback = new FutureCallback<None>();
+      FutureCallback<None> callback = new FutureCallback<>();
       store.start(callback);
       callback.get(30, TimeUnit.SECONDS);
     }
@@ -703,14 +703,14 @@ public class LoadBalancerClientCli
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("D2 PropertyEventExecutor"));
 
     PropertyEventBus<ServiceProperties> serviceBus =
-        new PropertyEventBusImpl<ServiceProperties>(executor, zkServiceRegistry);
+        new PropertyEventBusImpl<>(executor, zkServiceRegistry);
     PropertyEventBus<UriProperties> uriBus =
-        new PropertyEventBusImpl<UriProperties>(executor, zkUriRegistry);
+        new PropertyEventBusImpl<>(executor, zkUriRegistry);
     PropertyEventBus<ClusterProperties> clusterBus =
-        new PropertyEventBusImpl<ClusterProperties>(executor, zkClusterRegistry);
+        new PropertyEventBusImpl<>(executor, zkClusterRegistry);
 
     Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-        new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
+        new HashMap<>();
 
     loadBalancerStrategyFactories.put("random", new RandomLoadBalancerStrategyFactory());
     loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
@@ -718,8 +718,7 @@ public class LoadBalancerClientCli
     loadBalancerStrategyFactories.put("degraderV3", new DegraderLoadBalancerStrategyFactoryV3());
     loadBalancerStrategyFactories.put("degraderV2_1", new DegraderLoadBalancerStrategyFactoryV3());
 
-    Map<String, TransportClientFactory> clientFactories =
-        new HashMap<String, TransportClientFactory>();
+    Map<String, TransportClientFactory> clientFactories = new HashMap<>();
 
     clientFactories.put("http", new HttpClientFactory.Builder().build());
 
@@ -734,7 +733,7 @@ public class LoadBalancerClientCli
                                     null, null, false);
 
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, executor);
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     balancer.start(callback);
     callback.get(5, TimeUnit.SECONDS);
 
@@ -759,11 +758,11 @@ public class LoadBalancerClientCli
       d2ServicePath = "services";
     }
 
-    Map<String, TransportClientFactory> clientFactories = new HashMap<String, TransportClientFactory>();
+    Map<String, TransportClientFactory> clientFactories = new HashMap<>();
     clientFactories.put("http", new HttpClientFactory.Builder().build());
 
     Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-    new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
+        new HashMap<>();
 
     loadBalancerStrategyFactories.put("random", new RandomLoadBalancerStrategyFactory());
     loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
@@ -786,7 +785,7 @@ public class LoadBalancerClientCli
   URISyntaxException,
   PropertyStoreException
   {
-    Set<UriProperties> uriprops = new HashSet<UriProperties>();
+    Set<UriProperties> uriprops = new HashSet<>();
     // zk stores
     String scstoreString = zkserver + ZKFSUtil.servicePath(d2path);
     String uristoreString = zkserver + ZKFSUtil.uriPath(d2path);
@@ -812,7 +811,7 @@ public class LoadBalancerClientCli
   URISyntaxException,
   PropertyStoreException
   {
-    Map<String,UriProperties> map = new HashMap<String,UriProperties>();
+    Map<String, UriProperties> map = new HashMap<>();
     // zk stores
     String scstoreString = zkserver + ZKFSUtil.servicePath(d2path);
     String uristoreString = zkserver + ZKFSUtil.uriPath(d2path);
@@ -985,9 +984,9 @@ public class LoadBalancerClientCli
     int serviceCount = 0;
     String zkstr = "\nZKServer:" + zkserver;
     StringBuilder sb = new StringBuilder();
-    Set<String> currentservices = new HashSet<String>();
-    Map<String,ZooKeeperPermanentStore<ServiceProperties>> zkServiceRegistryMap = new HashMap<String,ZooKeeperPermanentStore<ServiceProperties>>();
-    Map<String,List<String>> servicesGroupMap = new HashMap<String,List<String>>();
+    Set<String> currentservices = new HashSet<>();
+    Map<String, ZooKeeperPermanentStore<ServiceProperties>> zkServiceRegistryMap = new HashMap<>();
+    Map<String, List<String>> servicesGroupMap = new HashMap<>();
 
     // zk stores
     String clstoreString = zkserver + ZKFSUtil.clusterPath(d2path);
@@ -1285,7 +1284,7 @@ public class LoadBalancerClientCli
   {
     if (zkregistry != null)
     {
-      FutureCallback<None> shutdownCallback = new FutureCallback<None>();
+      FutureCallback<None> shutdownCallback = new FutureCallback<>();
       zkregistry.shutdown(shutdownCallback);
       shutdownCallback.get(5000, TimeUnit.MILLISECONDS);
     }

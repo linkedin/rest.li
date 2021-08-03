@@ -124,15 +124,15 @@ public class TestMIMEChainingMultipleSources
   public void tearDown() throws Exception
   {
     _scheduledExecutorService.shutdownNow();
-    final FutureCallback<None> clientShutdownCallback = new FutureCallback<None>();
+    final FutureCallback<None> clientShutdownCallback = new FutureCallback<>();
     _client.shutdown(clientShutdownCallback);
     clientShutdownCallback.get();
 
-    final FutureCallback<None> server1ClientShutdownCallback = new FutureCallback<None>();
+    final FutureCallback<None> server1ClientShutdownCallback = new FutureCallback<>();
     _server_A_client.shutdown(server1ClientShutdownCallback);
     server1ClientShutdownCallback.get();
 
-    final FutureCallback<None> factoryShutdownCallback = new FutureCallback<None>();
+    final FutureCallback<None> factoryShutdownCallback = new FutureCallback<>();
     _clientFactory.shutdown(factoryShutdownCallback);
     factoryShutdownCallback.get();
 
@@ -220,8 +220,7 @@ public class TestMIMEChainingMultipleSources
     final Callback<StreamResponse> _incomingRequestCallback;
     final StreamRequest _incomingRequest;
     boolean _firstPartConsumed = false;
-    final List<MIMETestUtils.SinglePartMIMEFullReaderCallback> _singlePartMIMEReaderCallbacks =
-        new ArrayList<MIMETestUtils.SinglePartMIMEFullReaderCallback>();
+    final List<MIMETestUtils.SinglePartMIMEFullReaderCallback> _singlePartMIMEReaderCallbacks = new ArrayList<>();
 
     ServerAMultiPartCallback(final StreamRequest incomingRequest, final Callback<StreamResponse> callback)
     {
@@ -313,7 +312,7 @@ public class TestMIMEChainingMultipleSources
             new MultiPartMIMEInputStream.Builder(new ByteArrayInputStream(BODY_4.getPartData().copyBytes()),
                 _scheduledExecutorService, BODY_4.getPartHeaders()).withWriteChunkSize(_chunkSize).build();
 
-        final List<MultiPartMIMEDataSourceWriter> dataSources = new ArrayList<MultiPartMIMEDataSourceWriter>();
+        final List<MultiPartMIMEDataSourceWriter> dataSources = new ArrayList<>();
         dataSources.add(body1DataSource);
         dataSources.add(body2DataSource);
         dataSources.add(body3DataSource);
@@ -414,8 +413,7 @@ public class TestMIMEChainingMultipleSources
   //count down the latch upon finishing.
   private class ClientMultiPartReceiver implements MultiPartMIMEReaderCallback
   {
-    final List<MIMETestUtils.SinglePartMIMEFullReaderCallback> _singlePartMIMEReaderCallbacks =
-        new ArrayList<MIMETestUtils.SinglePartMIMEFullReaderCallback>();
+    final List<MIMETestUtils.SinglePartMIMEFullReaderCallback> _singlePartMIMEReaderCallbacks = new ArrayList<>();
 
     ClientMultiPartReceiver()
     {

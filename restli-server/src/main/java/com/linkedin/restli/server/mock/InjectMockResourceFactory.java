@@ -61,7 +61,7 @@ public class InjectMockResourceFactory implements ResourceFactory
   @Override
   public void setRootResources(final Map<String, ResourceModel> rootResources)
   {
-    Collection<Class<?>> allResourceClasses = new HashSet<Class<?>>();
+    Collection<Class<?>> allResourceClasses = new HashSet<>();
     for (ResourceModel resourceModel : rootResources.values())
     {
       processChildResource(resourceModel, allResourceClasses);

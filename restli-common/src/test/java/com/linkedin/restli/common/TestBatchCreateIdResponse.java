@@ -41,7 +41,7 @@ public class TestBatchCreateIdResponse
   private ComplexResourceKey<MyComplexKey, EmptyRecord> buildComplexResourceKey(Long id)
   {
     MyComplexKey complexKey = new MyComplexKey().setB(id).setA(id + "");
-    return new ComplexResourceKey<MyComplexKey, EmptyRecord>(complexKey, new EmptyRecord());
+    return new ComplexResourceKey<>(complexKey, new EmptyRecord());
   }
 
   @DataProvider
@@ -60,14 +60,14 @@ public class TestBatchCreateIdResponse
   {
     ProtocolVersion version = AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
 
-    List<CreateIdStatus<K>> elements = new ArrayList<CreateIdStatus<K>>();
-    elements.add(new CreateIdStatus<K>(HttpStatus.S_201_CREATED.getCode(), keys[0], null, version));
-    elements.add(new CreateIdStatus<K>(HttpStatus.S_201_CREATED.getCode(), keys[1], null, version));
+    List<CreateIdStatus<K>> elements = new ArrayList<>();
+    elements.add(new CreateIdStatus<>(HttpStatus.S_201_CREATED.getCode(), keys[0], null, version));
+    elements.add(new CreateIdStatus<>(HttpStatus.S_201_CREATED.getCode(), keys[1], null, version));
 
     ErrorResponse error = new ErrorResponse().setMessage("3");
-    elements.add(new CreateIdStatus<K>(HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(), keys[2], error, version));
+    elements.add(new CreateIdStatus<>(HttpStatus.S_500_INTERNAL_SERVER_ERROR.getCode(), keys[2], error, version));
 
-    BatchCreateIdResponse<K> batchResp = new BatchCreateIdResponse<K>(elements);
+    BatchCreateIdResponse<K> batchResp = new BatchCreateIdResponse<>(elements);
 
     Assert.assertEquals(batchResp.getElements(), elements);
   }

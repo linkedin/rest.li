@@ -92,14 +92,14 @@ public class AutomaticValidationDemoResource implements KeyValueResource<Integer
       // Return valid entity
       returnedEntity = _validReturnEntity;
     }
-    return new CreateKVResponse<Integer, ValidationDemo>(1234, returnedEntity);
+    return new CreateKVResponse<>(1234, returnedEntity);
   }
 
   @RestMethod.BatchCreate
   @ReturnEntity
   public BatchCreateKVResult<Integer, ValidationDemo> batchCreate(final BatchCreateRequest<Integer, ValidationDemo> entities)
   {
-    List<CreateKVResponse<Integer, ValidationDemo>> results = new ArrayList<CreateKVResponse<Integer, ValidationDemo>>();
+    List<CreateKVResponse<Integer, ValidationDemo>> results = new ArrayList<>();
     int id = 0;
     for (ValidationDemo entity : entities.getInput())
     {
@@ -120,10 +120,10 @@ public class AutomaticValidationDemoResource implements KeyValueResource<Integer
       {
         returnEntity = _validReturnEntity;
       }
-      results.add(new CreateKVResponse<Integer, ValidationDemo>(id, returnEntity));
+      results.add(new CreateKVResponse<>(id, returnEntity));
       id++;
     }
-    return new BatchCreateKVResult<Integer, ValidationDemo>(results);
+    return new BatchCreateKVResult<>(results);
   }
 
   @RestMethod.Update
@@ -135,15 +135,15 @@ public class AutomaticValidationDemoResource implements KeyValueResource<Integer
   @RestMethod.BatchUpdate
   public BatchUpdateResult<Integer, ValidationDemo> batchUpdate(final BatchUpdateRequest<Integer, ValidationDemo> entities)
   {
-    Map<Integer, UpdateResponse> results = new HashMap<Integer, UpdateResponse>();
-    Map<Integer, RestLiServiceException> errors = new HashMap<Integer, RestLiServiceException>();
+    Map<Integer, UpdateResponse> results = new HashMap<>();
+    Map<Integer, RestLiServiceException> errors = new HashMap<>();
     for (Map.Entry<Integer, ValidationDemo> entry : entities.getData().entrySet())
     {
       Integer key = entry.getKey();
       ValidationDemo entity = entry.getValue();
       results.put(key, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
     }
-    return new BatchUpdateResult<Integer, ValidationDemo>(results, errors);
+    return new BatchUpdateResult<>(results, errors);
   }
 
   @RestMethod.PartialUpdate
@@ -155,15 +155,15 @@ public class AutomaticValidationDemoResource implements KeyValueResource<Integer
   @RestMethod.BatchPartialUpdate
   public BatchUpdateResult<Integer, ValidationDemo> batchUpdate(final BatchPatchRequest<Integer, ValidationDemo> entityUpdates)
   {
-    Map<Integer, UpdateResponse> results = new HashMap<Integer, UpdateResponse>();
-    Map<Integer, RestLiServiceException> errors = new HashMap<Integer, RestLiServiceException>();
+    Map<Integer, UpdateResponse> results = new HashMap<>();
+    Map<Integer, RestLiServiceException> errors = new HashMap<>();
     for (Map.Entry<Integer, PatchRequest<ValidationDemo>> entry : entityUpdates.getData().entrySet())
     {
       Integer key = entry.getKey();
       PatchRequest<ValidationDemo> patch = entry.getValue();
       results.put(key, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
     }
-    return new BatchUpdateResult<Integer, ValidationDemo>(results, errors);
+    return new BatchUpdateResult<>(results, errors);
   }
 
   @RestMethod.Get
@@ -183,8 +183,8 @@ public class AutomaticValidationDemoResource implements KeyValueResource<Integer
   @RestMethod.BatchGet
   public BatchResult<Integer, ValidationDemo> batchGet(Set<Integer> ids)
   {
-    Map<Integer, ValidationDemo> resultMap = new HashMap<Integer, ValidationDemo>();
-    Map<Integer, RestLiServiceException> errorMap = new HashMap<Integer, RestLiServiceException>();
+    Map<Integer, ValidationDemo> resultMap = new HashMap<>();
+    Map<Integer, RestLiServiceException> errorMap = new HashMap<>();
     // Generate entities that are missing a required field
     for (Integer id : ids)
     {
@@ -206,13 +206,13 @@ public class AutomaticValidationDemoResource implements KeyValueResource<Integer
         resultMap.put(id, validationDemo);
       }
     };
-    return new BatchResult<Integer, ValidationDemo>(resultMap, errorMap);
+    return new BatchResult<>(resultMap, errorMap);
   }
 
   @RestMethod.GetAll
   public List<ValidationDemo> getAll()
   {
-    List<ValidationDemo> validationDemos = new ArrayList<ValidationDemo>();
+    List<ValidationDemo> validationDemos = new ArrayList<>();
     // Generate entities with stringA fields that are too long
     for (int i = 0; i < 4; i++)
     {
@@ -231,7 +231,7 @@ public class AutomaticValidationDemoResource implements KeyValueResource<Integer
     {
       throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST);
     }
-    List<ValidationDemo> validationDemos = new ArrayList<ValidationDemo>();
+    List<ValidationDemo> validationDemos = new ArrayList<>();
     // Generate entities that are missing stringB fields
     for (int i = 0; i < 3; i++)
     {
@@ -249,7 +249,7 @@ public class AutomaticValidationDemoResource implements KeyValueResource<Integer
     BatchFinderResult<ValidationDemoCriteria, ValidationDemo, Empty> batchFinderResult = new BatchFinderResult<>();
 
     for (ValidationDemoCriteria currentCriteria : criteria) {
-      List<ValidationDemo> validationDemos = new ArrayList<ValidationDemo>();
+      List<ValidationDemo> validationDemos = new ArrayList<>();
       if (currentCriteria.getIntA() == 1111) {
         // Generate entities that are missing stringB fields
         for (int i = 0; i < 3; i++)

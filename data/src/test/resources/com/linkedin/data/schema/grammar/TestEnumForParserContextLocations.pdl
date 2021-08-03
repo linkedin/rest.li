@@ -1,0 +1,15 @@
+namespace com.linkedin.data.schema.grammar
+
+/**
+ * Enum to test returning context locations from the source file.
+ */
+@location = {"startLine": 3, "startCol": 1, "endLine": 15, "endCol": 1}
+enum TestEnumForParserContextLocations {
+  /**
+   * Symbol docs and properties are included in the location of the enum symbol
+   */
+  @location = {"startLine": 8, "startCol": 3, "endLine": 12, "endCol": 7}
+  TEST1
+  @location = {"startLine": 13, "startCol": 3, "endLine": 14, "endCol": 7}
+  TEST2
+}

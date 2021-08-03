@@ -169,7 +169,7 @@ public abstract class RestResponseDecoder<T>
   private ResponseImpl<T> createResponse(Map<String, String> headers, int status, ByteString entity, List<String> cookies)
       throws RestLiDecodingException
   {
-    ResponseImpl<T> response = new ResponseImpl<T>(status, headers, CookieUtil.decodeSetCookies(cookies));
+    ResponseImpl<T> response = new ResponseImpl<>(status, headers, CookieUtil.decodeSetCookies(cookies));
 
     try
     {
@@ -206,7 +206,7 @@ public abstract class RestResponseDecoder<T>
   private ResponseImpl<T> createResponse(Map<String, String> headers, int status, DataMap dataMap, List<String> cookies)
       throws RestLiDecodingException
   {
-    ResponseImpl<T> response = new ResponseImpl<T>(status, headers, CookieUtil.decodeSetCookies(cookies));
+    ResponseImpl<T> response = new ResponseImpl<>(status, headers, CookieUtil.decodeSetCookies(cookies));
 
     try
     {

@@ -49,12 +49,12 @@ public class ClientCompressionHelper
   /**
    * The set of methods for which response compression will be turned on
    */
-  private final Set<String> _responseCompressionMethods = new HashSet<String>();
+  private final Set<String> _responseCompressionMethods = new HashSet<>();
 
   /**
    * The set of families for which response compression will be turned on.
    */
-  private final Set<String> _responseCompressionFamilies = new HashSet<String>();
+  private final Set<String> _responseCompressionFamilies = new HashSet<>();
 
   private final boolean _compressAllResponses;
 

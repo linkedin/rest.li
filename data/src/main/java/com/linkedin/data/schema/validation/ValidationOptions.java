@@ -178,7 +178,7 @@ public final class ValidationOptions
   {
     if (_validatorParameters == NO_VALIDATOR_PARAMETERS)
     {
-      _validatorParameters = new HashMap<String, Object>();
+      _validatorParameters = new HashMap<>();
     }
     _validatorParameters.put(key, parameter);
   }

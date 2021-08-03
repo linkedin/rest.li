@@ -131,7 +131,7 @@ public enum HttpStatus
   }
 
   private static Map<Integer, HttpStatus> initialize() {
-    Map<Integer, HttpStatus> result = new HashMap<Integer, HttpStatus>(HttpStatus.values().length);
+    Map<Integer, HttpStatus> result = new HashMap<>(HttpStatus.values().length);
     for (HttpStatus status : HttpStatus.values()) {
       result.put(status.getCode(), status);
     }

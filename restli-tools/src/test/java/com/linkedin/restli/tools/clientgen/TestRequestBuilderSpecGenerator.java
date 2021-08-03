@@ -78,7 +78,7 @@ public class TestRequestBuilderSpecGenerator
     final DataSchemaParser schemaParser = new DataSchemaParser(RESOLVER_DIR);
     final TemplateSpecGenerator specGenerator = new TemplateSpecGenerator(schemaParser.getSchemaResolver());
     final RestSpecParser parser = new RestSpecParser();
-    final Map<ResourceMethod, String> builderBaseMap = new HashMap<ResourceMethod, String>();
+    final Map<ResourceMethod, String> builderBaseMap = new HashMap<>();
     builderBaseMap.put(ResourceMethod.GET, "GetRequestBuilder");
     builderBaseMap.put(ResourceMethod.DELETE, "DeleteRequestBuilder");
     builderBaseMap.put(ResourceMethod.UPDATE, "UpdateRequestBuilder");
@@ -115,7 +115,7 @@ public class TestRequestBuilderSpecGenerator
     Set<BuilderSpec> builderSpecs = generateBuilderSpec(new String[] {idl});
     Assert.assertNotNull(builderSpecs);
     Assert.assertTrue(builderSpecs.size() == 6);
-    Map<String, String> methodMap = new HashMap<String, String>();
+    Map<String, String> methodMap = new HashMap<>();
     methodMap.put("get", "Gets the greeting.");
     methodMap.put("delete","Deletes the greeting.");
     methodMap.put("update", "Updates the greeting.");
@@ -172,12 +172,12 @@ public class TestRequestBuilderSpecGenerator
     Assert.assertNotNull(builderSpecs);
     Assert.assertTrue(builderSpecs.size() == 15);
     List<String> expectedMethods = Arrays.asList("actionAnotherAction", "actionSomeAction", "actionVoidAction", "batchGet", "create", "delete", "findBySearch", "get", "getAll", "partialUpdate", "update");
-    List<String> actualMethods = new ArrayList<String>();
+    List<String> actualMethods = new ArrayList<>();
     CollectionRootBuilderSpec rootBuilder = null;
     CollectionRootBuilderSpec subRootBuilder = null;
     FinderBuilderSpec finderBuilder = null;
-    List<ActionBuilderSpec> actionBuilders = new ArrayList<ActionBuilderSpec>();
-    List<RestMethodBuilderSpec> basicMethodBuilders = new ArrayList<RestMethodBuilderSpec>();
+    List<ActionBuilderSpec> actionBuilders = new ArrayList<>();
+    List<RestMethodBuilderSpec> basicMethodBuilders = new ArrayList<>();
 
     for (BuilderSpec spec : builderSpecs)
     {
@@ -339,7 +339,7 @@ public class TestRequestBuilderSpecGenerator
     Assert.assertEquals(builderSpecs.size(), 27);
 
     ActionSetRootBuilderSpec rootBuilder = null;
-    List<ActionBuilderSpec> actionBuilders = new ArrayList<ActionBuilderSpec>();
+    List<ActionBuilderSpec> actionBuilders = new ArrayList<>();
 
     for (BuilderSpec spec : builderSpecs)
     {
@@ -372,12 +372,12 @@ public class TestRequestBuilderSpecGenerator
 
     Assert.assertNotNull(actionBuilders);
     Assert.assertEquals(actionBuilders.size(), 26);
-    Set<String> actionNames = new HashSet<String>(Arrays.asList("arrayPromise", "echo", "echoRecord", "echoRecordArray", "echoStringArray",
-                                                                "echoEnumArray", "failCallbackCall", "failCallbackThrow", "failPromiseCall", "failPromiseThrow",
-                                                                "failTaskCall", "failTaskThrow", "failThrowInTask", "get", "nullPromise",
-                                                                "nullTask", "parseq", "parseq3", "returnBool", "returnBoolOptionalParam",
-                                                                "returnInt", "returnIntOptionalParam", "returnVoid", "timeout", "timeoutCallback",
-                                                                "ultimateAnswer"));
+    Set<String> actionNames = new HashSet<>(Arrays.asList("arrayPromise", "echo", "echoRecord", "echoRecordArray", "echoStringArray",
+        "echoEnumArray", "failCallbackCall", "failCallbackThrow", "failPromiseCall", "failPromiseThrow",
+        "failTaskCall", "failTaskThrow", "failThrowInTask", "get", "nullPromise",
+        "nullTask", "parseq", "parseq3", "returnBool", "returnBoolOptionalParam",
+        "returnInt", "returnIntOptionalParam", "returnVoid", "timeout", "timeoutCallback",
+        "ultimateAnswer"));
     for (ActionBuilderSpec spec : actionBuilders)
     {
       Assert.assertTrue(actionNames.contains(spec.getActionName()));
