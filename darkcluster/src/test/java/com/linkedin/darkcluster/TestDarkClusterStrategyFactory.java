@@ -46,7 +46,6 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import static com.linkedin.d2.DarkClusterStrategyName.CONSTANT_QPS;
 import static com.linkedin.d2.DarkClusterStrategyName.RELATIVE_TRAFFIC;
 import static com.linkedin.darkcluster.DarkClusterTestUtil.createRelativeTrafficMultiplierConfig;
-import static com.linkedin.darkcluster.DarkClusterTestUtil.createConstantQpsOutboundTargetRateConfig;
 import static com.linkedin.darkcluster.impl.DarkClusterStrategyFactoryImpl.NO_OP_DARK_CLUSTER_STRATEGY;
 import static org.testng.Assert.fail;
 import org.testng.Assert;
