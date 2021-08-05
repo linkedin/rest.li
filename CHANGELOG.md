@@ -5044,8 +5044,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.15...master
-[29.19.15]: https://github.com/linkedin/rest.li/compare/v29.19.14...v29.19.15
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.20.0...master
+[29.20.0]: https://github.com/linkedin/rest.li/compare/v29.19.14...v29.20.0
 [29.19.14]: https://github.com/linkedin/rest.li/compare/v29.19.13...v29.19.14
 [29.19.13]: https://github.com/linkedin/rest.li/compare/v29.19.12...v29.19.13
 [29.19.12]: https://github.com/linkedin/rest.li/compare/v29.19.11...v29.19.12
