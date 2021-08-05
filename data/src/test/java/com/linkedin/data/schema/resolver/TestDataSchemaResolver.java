@@ -113,7 +113,7 @@ public class TestDataSchemaResolver
       return new AbstractPathAndSchemaDirectoryIterator(_paths, Collections.singletonList(SchemaDirectoryName.PEGASUS))
       {
         @Override
-        protected DataSchemaLocation transform(String path, SchemaDirectoryName schemaDirectoryName)
+        protected DataSchemaLocation transform(String path, SchemaDirectory schemaDirectoryName)
         {
           return new MapResolverLocation(path + File.separator + transformedName);
         }
@@ -991,13 +991,13 @@ public class TestDataSchemaResolver
 
   static class TestIterator extends AbstractDataSchemaResolver.AbstractPathAndSchemaDirectoryIterator
   {
-    TestIterator(Iterable<String> iterable, List<SchemaDirectoryName> schemaDirectories)
+    TestIterator(Iterable<String> iterable, List<SchemaDirectory> schemaDirectories)
     {
       super(iterable, schemaDirectories);
     }
 
     @Override
-    protected DataSchemaLocation transform(String path, SchemaDirectoryName schemaDirectory)
+    protected DataSchemaLocation transform(String path, SchemaDirectory schemaDirectory)
     {
       return () -> new File(schemaDirectory.getName() + "/" + path);
     }

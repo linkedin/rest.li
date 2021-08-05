@@ -16,6 +16,7 @@
 
 package com.linkedin.data.schema;
 
+import com.linkedin.data.schema.resolver.SchemaDirectory;
 import com.linkedin.data.schema.resolver.SchemaDirectoryName;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -161,7 +162,7 @@ public interface DataSchemaResolver
    * Returns the list of schema directories this resolver will check when resolving schemas.
    * Defaults to the single {@link SchemaDirectoryName#PEGASUS} directory.
    */
-  default List<SchemaDirectoryName> getSchemaDirectories()
+  default List<SchemaDirectory> getSchemaDirectories()
   {
     return Collections.singletonList(SchemaDirectoryName.PEGASUS);
   }

@@ -17,31 +17,23 @@
 package com.linkedin.data.schema.resolver;
 
 /**
- * Directories within resource jar file that holds different types of pegasus schemas. Ex. Data or Extensions
+ * Represents a schema directory relative to the resolver path (directory or Jar file). This is used to customize
+ * schema resolvers to limit which directories are used for resolving schema references.
  *
- * @author Aman Gupta
+ * @author Karthik Balasubramanian
  */
-public enum SchemaDirectoryName implements SchemaDirectory
+public interface SchemaDirectory
 {
   /**
-   * Directory holds the pegasus schemas. Pegasus parsers and resolvers look for pegasus
-   * files(*.pdl, *.pdsc) only within this directory.
+   * Return the schema directory name.
    */
-  PEGASUS("pegasus"),
+  String getName();
+
   /**
-   * Directory holds the Entity Relationship pegasus schemas.
-   * Pegasus Extensions schema parsers and resolvers look for pegasus files(*.pdl) only within this directory.
+   * Checks if the given jar file path starts with this schema directory name.
    */
-  EXTENSIONS("extensions");
-
-  private String _name;
-
-  SchemaDirectoryName(String name)
+  default boolean matchesJarFilePath(String path)
   {
-    _name = name;
-  }
-
-  public String getName() {
-    return _name;
+    return path.startsWith(getName() + "/");
   }
 }

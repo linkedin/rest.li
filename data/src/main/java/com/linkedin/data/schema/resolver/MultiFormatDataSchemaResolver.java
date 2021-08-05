@@ -66,7 +66,7 @@ public class MultiFormatDataSchemaResolver extends AbstractMultiFormatDataSchema
   public MultiFormatDataSchemaResolver(
       String resolverPath,
       List<DataSchemaParserFactory> parsersForFormats,
-      List<SchemaDirectoryName> schemaDirectories)
+      List<SchemaDirectory> schemaDirectories)
   {
     for (DataSchemaParserFactory parserForFormat: parsersForFormats)
     {

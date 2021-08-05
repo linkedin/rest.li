@@ -101,7 +101,7 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
   @Deprecated
   public ClasspathResourceDataSchemaResolver(ClassLoader classLoader, SchemaDirectoryName schemaDirectoryName)
   {
-    List<SchemaDirectoryName> schemaDirectories = new ArrayList<>();
+    List<SchemaDirectory> schemaDirectories = new ArrayList<>();
     schemaDirectories.add(schemaDirectoryName);
     // The below logic is kept for backwards compatibility. Ideally the constructor that accepts list of schema
     // directories should be used to configure all the resolver directores.
@@ -126,7 +126,7 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
    * @param classLoader provides the {@link ClassLoader}.
    * @param schemaDirectories The list of schema directories to use for resolving referenced schemas.
    */
-  public ClasspathResourceDataSchemaResolver(ClassLoader classLoader, List<SchemaDirectoryName> schemaDirectories)
+  public ClasspathResourceDataSchemaResolver(ClassLoader classLoader, List<SchemaDirectory> schemaDirectories)
   {
     for (DataSchemaParserFactory parserForFormat: BUILTIN_FORMAT_PARSER_FACTORIES)
     {
@@ -143,7 +143,7 @@ public class ClasspathResourceDataSchemaResolver extends AbstractMultiFormatData
   public SchemaDirectoryName getSchemasDirectoryName()
   {
     assert getSchemaDirectories().size() > 0;
-    return getSchemaDirectories().get(0);
+    return (SchemaDirectoryName) getSchemaDirectories().get(0);
   }
 
   /**

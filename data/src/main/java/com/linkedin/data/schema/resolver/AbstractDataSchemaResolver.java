@@ -55,7 +55,7 @@ import java.util.Set;
  * <li> the locations to search for the named DataSchema
  *      (by implementing {@link #possibleLocations(String)},
  * <li> how transform the name and a search path into a location
- *      (by implementing {@link AbstractPathAndSchemaDirectoryIterator#transform(String, SchemaDirectoryName)}, and
+ *      (by implementing {@link AbstractPathAndSchemaDirectoryIterator#transform(String, SchemaDirectory)}, and
  * <li> how to obtain an {@link InputStream} from a location
  *      (by implementing {@link #locationToInputStream(DataSchemaLocation, StringBuilder)}.
  * </ul>
@@ -167,7 +167,7 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
    */
   abstract static class AbstractPathAndSchemaDirectoryIterator implements Iterator<DataSchemaLocation>
   {
-    protected abstract DataSchemaLocation transform(String path, SchemaDirectoryName schemaDirectory);
+    protected abstract DataSchemaLocation transform(String path, SchemaDirectory schemaDirectory);
 
     /**
      * Constructor.
@@ -176,7 +176,7 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
      * @param schemaDirectories List of schema directories to use as possible schema locations.
      */
     protected AbstractPathAndSchemaDirectoryIterator(
-        Iterable<String> paths, List<SchemaDirectoryName> schemaDirectories)
+        Iterable<String> paths, List<SchemaDirectory> schemaDirectories)
     {
       _it = paths.iterator();
       _schemaDirectories = schemaDirectories;
@@ -207,7 +207,7 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
     }
 
     /**
-     * Obtains the next element, invokes and returns the output of {@link #transform(String, SchemaDirectoryName)}.
+     * Obtains the next element, invokes and returns the output of {@link #transform(String, SchemaDirectory)}.
      *
      * @return the next location to search.
      */
@@ -238,8 +238,8 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
      */
     private final Iterator<String> _it;
     private String _currentPath;
-    private Iterator<SchemaDirectoryName> _directoryNameIterator;
-    private final List<SchemaDirectoryName> _schemaDirectories;
+    private Iterator<SchemaDirectory> _directoryNameIterator;
+    private final List<SchemaDirectory> _schemaDirectories;
   }
 
   private final DataSchemaResolver _dependencyResolver;
@@ -351,7 +351,7 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
   }
 
   @Override
-  public List<SchemaDirectoryName> getSchemaDirectories()
+  public List<SchemaDirectory> getSchemaDirectories()
   {
     return _schemaDirectories;
   }
@@ -361,7 +361,7 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
    *
    * @param schemaDirectories schema directory names.
    */
-  void setSchemaDirectories(List<SchemaDirectoryName> schemaDirectories)
+  void setSchemaDirectories(List<SchemaDirectory> schemaDirectories)
   {
     _schemaDirectories = schemaDirectories;
   }
@@ -478,7 +478,7 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
    *
    * Ex "pegasus" for data or "extensions" for relationship extension schema files
    */
-  private List<SchemaDirectoryName> _schemaDirectories = Collections.singletonList(SchemaDirectoryName.PEGASUS);
+  private List<SchemaDirectory> _schemaDirectories = Collections.singletonList(SchemaDirectoryName.PEGASUS);
 
   protected static final PrintStream out = new PrintStream(new FileOutputStream(FileDescriptor.out));
 }

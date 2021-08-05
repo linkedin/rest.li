@@ -53,7 +53,7 @@ public abstract class AbstractMultiFormatDataSchemaResolver implements DataSchem
   };
 
   private final List<DataSchemaResolver> _resolvers = new ArrayList<>();
-  private List<SchemaDirectoryName> _schemaDirectories = Collections.singletonList(SchemaDirectoryName.PEGASUS);
+  private List<SchemaDirectory> _schemaDirectories = Collections.singletonList(SchemaDirectoryName.PEGASUS);
 
   public static List<DataSchemaParserFactory> BUILTIN_FORMAT_PARSER_FACTORIES;
   static {
@@ -197,12 +197,12 @@ public abstract class AbstractMultiFormatDataSchemaResolver implements DataSchem
   }
 
   @Override
-  public List<SchemaDirectoryName> getSchemaDirectories()
+  public List<SchemaDirectory> getSchemaDirectories()
   {
     return _schemaDirectories;
   }
 
-  public void setSchemaDirectories(List<SchemaDirectoryName> schemaDirectories)
+  public void setSchemaDirectories(List<SchemaDirectory> schemaDirectories)
   {
     _schemaDirectories = schemaDirectories;
   }

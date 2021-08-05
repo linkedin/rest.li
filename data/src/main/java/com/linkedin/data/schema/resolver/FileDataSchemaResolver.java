@@ -188,8 +188,8 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
   @SuppressWarnings("deprecation")
   public SchemaDirectoryName getSchemasDirectoryName()
   {
-    assert(getSchemaDirectories().size() == 1);
-    return getSchemaDirectories().get(0);
+    assert getSchemaDirectories().size() == 1;
+    return (SchemaDirectoryName) getSchemaDirectories().get(0);
   }
 
   /**
@@ -241,7 +241,7 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
     return new AbstractPathAndSchemaDirectoryIterator(_paths, getSchemaDirectories())
     {
       @Override
-      protected DataSchemaLocation transform(String path, SchemaDirectoryName schemaDirectoryName)
+      protected DataSchemaLocation transform(String path, SchemaDirectory schemaDirectory)
       {
         boolean isJar = path.endsWith(JAR_EXTENSION);
         if (isJar)
@@ -262,7 +262,7 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
           StringBuilder builder = new StringBuilder();
           // within a JAR file, files are treated as resources. Thus, we should lookup using the resource separator
           // character, which is '/'
-          builder.append(schemaDirectoryName.getName())
+          builder.append(schemaDirectory.getName())
               .append('/')
               .append(transformedName.replace(File.separatorChar, '/'));
           return new InJarFileDataSchemaLocation(jarFile, builder.toString());

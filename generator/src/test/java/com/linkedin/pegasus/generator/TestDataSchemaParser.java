@@ -19,6 +19,7 @@ package com.linkedin.pegasus.generator;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.schema.resolver.SchemaDirectory;
 import com.linkedin.data.schema.resolver.SchemaDirectoryName;
 import java.io.File;
 import java.io.FileInputStream;
@@ -105,7 +106,7 @@ public class TestDataSchemaParser
   {
     String tempDirectoryPath = _tempDir.getAbsolutePath();
     String jarFile = tempDirectoryPath + FS + "test.jar";
-    SchemaDirectoryName customSchemaDirectory = () -> "custom";
+    SchemaDirectory customSchemaDirectory = () -> "custom";
     String pegasusFile = TEST_RESOURCES_DIR + FS + pegasusFilename;
     String pegasusFileInJar = customSchemaDirectory.getName() + "/" + pegasusFilename;
     createTempJarFile(Collections.singletonMap(pegasusFile, pegasusFileInJar), jarFile);
@@ -136,16 +137,16 @@ public class TestDataSchemaParser
     String tempDirectoryPath = _tempDir.getAbsolutePath();
     String jarFile = tempDirectoryPath + FS + "test.jar";
     String schemaDir = TEST_RESOURCES_DIR + FS + "extensionSchemas";
-    SchemaDirectoryName customSchemaDirectory = () -> "custom";
+    SchemaDirectory customSchemaDirectory = () -> "custom";
     Map<String, String> entryToFileMap = new HashMap<>();
     // FooExtensions is in "extensions" directory and references "Foo" from "custom" directory.
     entryToFileMap.put(schemaDir + FS + "pegasus/Foo.pdl", "custom/Foo.pdl");
     entryToFileMap.put(schemaDir + FS + "extensions/FooExtensions.pdl", "extensions/FooExtensions.pdl");
     createTempJarFile(entryToFileMap, jarFile);
 
-    List<SchemaDirectoryName> resolverDirectories = Arrays.asList(
+    List<SchemaDirectory> resolverDirectories = Arrays.asList(
         SchemaDirectoryName.EXTENSIONS, customSchemaDirectory);
-    List<SchemaDirectoryName> sourceDirectories = Collections.singletonList(SchemaDirectoryName.EXTENSIONS);
+    List<SchemaDirectory> sourceDirectories = Collections.singletonList(SchemaDirectoryName.EXTENSIONS);
     DataSchemaParser parser = new DataSchemaParser.Builder(jarFile)
         .setResolverDirectories(resolverDirectories)
         .setSourceDirectories(sourceDirectories)
@@ -219,9 +220,9 @@ public class TestDataSchemaParser
         filename -> filename));
     createTempJarFile(entryToFileMap, jarFile);
 
-    List<SchemaDirectoryName> resolverDirectories = Arrays.asList(
+    List<SchemaDirectory> resolverDirectories = Arrays.asList(
         SchemaDirectoryName.EXTENSIONS, SchemaDirectoryName.PEGASUS);
-    List<SchemaDirectoryName> sourceDirectories = Collections.singletonList(SchemaDirectoryName.EXTENSIONS);
+    List<SchemaDirectory> sourceDirectories = Collections.singletonList(SchemaDirectoryName.EXTENSIONS);
     DataSchemaParser parser = new DataSchemaParser.Builder(jarFile)
         .setResolverDirectories(resolverDirectories)
         .setSourceDirectories(sourceDirectories)
@@ -246,9 +247,9 @@ public class TestDataSchemaParser
     String resolverPath = pegasusWithFS + "extensionSchemas/extensions:"
         + pegasusWithFS + "extensionSchemas/others:"
         + pegasusWithFS + "extensionSchemas/pegasus";
-    List<SchemaDirectoryName> resolverDirectories = Arrays.asList(
+    List<SchemaDirectory> resolverDirectories = Arrays.asList(
         SchemaDirectoryName.EXTENSIONS, SchemaDirectoryName.PEGASUS);
-    List<SchemaDirectoryName> sourceDirectories = Collections.singletonList(SchemaDirectoryName.EXTENSIONS);
+    List<SchemaDirectory> sourceDirectories = Collections.singletonList(SchemaDirectoryName.EXTENSIONS);
     DataSchemaParser parser = new DataSchemaParser.Builder(resolverPath)
         .setResolverDirectories(resolverDirectories)
         .setSourceDirectories(sourceDirectories)

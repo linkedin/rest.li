@@ -24,6 +24,7 @@ import com.linkedin.data.schema.resolver.AbstractMultiFormatDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.InJarFileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
+import com.linkedin.data.schema.resolver.SchemaDirectory;
 import com.linkedin.data.schema.resolver.SchemaDirectoryName;
 import com.linkedin.util.FileUtil;
 import java.io.File;
@@ -96,8 +97,8 @@ public class DataSchemaParser
 
   private DataSchemaParser(String resolverPath,
       List<DataSchemaParserFactory> parserFactoriesForFormats,
-      List<SchemaDirectoryName> sourceDirectories,
-      List<SchemaDirectoryName> resolverDirectories)
+      List<SchemaDirectory> sourceDirectories,
+      List<SchemaDirectory> resolverDirectories)
   {
     _parserByFileExtension = new HashMap<>();
     _resolverPath = resolverPath;
@@ -207,7 +208,7 @@ public class DataSchemaParser
 
   private void init(AbstractMultiFormatDataSchemaResolver resolver,
       List<DataSchemaParserFactory> parserFactoriesForFormats,
-      List<SchemaDirectoryName> sourceDirectories)
+      List<SchemaDirectory> sourceDirectories)
   {
     for (DataSchemaParserFactory parserForFormat : parserFactoriesForFormats)
     {
@@ -302,8 +303,8 @@ public class DataSchemaParser
   {
     private final String _resolverPath;
     private List<DataSchemaParserFactory> _parserFactoriesForFormats = AbstractMultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES;
-    private List<SchemaDirectoryName> _sourceDirectories = Collections.singletonList(SchemaDirectoryName.PEGASUS);
-    private List<SchemaDirectoryName> _resolverDirectories = Collections.singletonList(SchemaDirectoryName.PEGASUS);
+    private List<SchemaDirectory> _sourceDirectories = Collections.singletonList(SchemaDirectoryName.PEGASUS);
+    private List<SchemaDirectory> _resolverDirectories = Collections.singletonList(SchemaDirectoryName.PEGASUS);
 
     public Builder(String resolverPath)
     {
@@ -323,7 +324,7 @@ public class DataSchemaParser
     /**
      * Set the schema directories to use for parsing source schema files.
      */
-    public Builder setSourceDirectories(List<SchemaDirectoryName> sourceDirectories)
+    public Builder setSourceDirectories(List<SchemaDirectory> sourceDirectories)
     {
       _sourceDirectories = sourceDirectories;
       return this;
@@ -332,7 +333,7 @@ public class DataSchemaParser
     /**
      * Set the schema directories to use for resolving referenced schemas.
      */
-    public Builder setResolverDirectories(List<SchemaDirectoryName> resolverDirectories)
+    public Builder setResolverDirectories(List<SchemaDirectory> resolverDirectories)
     {
       _resolverDirectories = resolverDirectories;
       return this;

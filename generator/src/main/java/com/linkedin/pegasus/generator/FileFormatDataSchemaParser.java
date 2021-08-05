@@ -24,6 +24,7 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.InJarFileDataSchemaLocation;
+import com.linkedin.data.schema.resolver.SchemaDirectory;
 import com.linkedin.data.schema.resolver.SchemaDirectoryName;
 import com.linkedin.util.FileUtil;
 
@@ -51,7 +52,7 @@ public class FileFormatDataSchemaParser
   static final String SCHEMA_PATH_PREFIX = SchemaDirectoryName.PEGASUS.getName() + "/";
   private final DataSchemaResolver _schemaResolver;
   private final DataSchemaParserFactory _schemaParserFactory;
-  private final List<SchemaDirectoryName> _sourceDirectories;
+  private final List<SchemaDirectory> _sourceDirectories;
 
   public FileFormatDataSchemaParser(String resolverPath, DataSchemaResolver schemaResolver, DataSchemaParserFactory schemaParserFactory)
   {
@@ -59,7 +60,7 @@ public class FileFormatDataSchemaParser
   }
 
   public FileFormatDataSchemaParser(DataSchemaResolver schemaResolver,
-      DataSchemaParserFactory schemaParserFactory, List<SchemaDirectoryName> sourceDirectories)
+      DataSchemaParserFactory schemaParserFactory, List<SchemaDirectory> sourceDirectories)
   {
     _schemaResolver = schemaResolver;
     _schemaParserFactory = schemaParserFactory;
@@ -157,9 +158,9 @@ public class FileFormatDataSchemaParser
 
   private boolean shouldParseFile(String path)
   {
-    for (SchemaDirectoryName schemaDirectoryName : _sourceDirectories)
+    for (SchemaDirectory schemaDirectory : _sourceDirectories)
     {
-      if (schemaDirectoryName.matchesJarFilePath(path))
+      if (schemaDirectory.matchesJarFilePath(path))
       {
         return true;
       }

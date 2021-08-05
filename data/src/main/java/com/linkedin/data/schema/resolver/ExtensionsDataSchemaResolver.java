@@ -44,7 +44,7 @@ import java.util.List;
 @Deprecated
 public class ExtensionsDataSchemaResolver extends AbstractMultiFormatDataSchemaResolver
 {
-  private static final List<SchemaDirectoryName> RESOLVER_SCHEMA_DIRECTORIES =
+  private static final List<SchemaDirectory> RESOLVER_SCHEMA_DIRECTORIES =
       Arrays.asList(SchemaDirectoryName.PEGASUS, SchemaDirectoryName.EXTENSIONS);
   public ExtensionsDataSchemaResolver(String resolverPath)
   {
@@ -73,7 +73,7 @@ public class ExtensionsDataSchemaResolver extends AbstractMultiFormatDataSchemaR
   }
 
   @Override
-  public List<SchemaDirectoryName> getSchemaDirectories()
+  public List<SchemaDirectory> getSchemaDirectories()
   {
     // This override is to maintain backwards compatibility with the old behavior which used the schema directory name
     // to parse the source files. Limiting the extension resolver to load only the extension schemas by using only
