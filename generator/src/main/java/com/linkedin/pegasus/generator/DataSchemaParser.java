@@ -44,7 +44,8 @@ import org.apache.commons.io.FilenameUtils;
 
 
 /**
- * Combines multiple file format specific parsers into a single parser for ".pdsc" and ".pdl" files.
+ * Combines multiple file format specific parsers into a single parser for ".pdsc" and ".pdl" files. Use {@link Builder}
+ * to create instances of this parser.
  *
  * @author Joe Betz
  */
@@ -309,6 +310,15 @@ public class DataSchemaParser
     public Builder(String resolverPath)
     {
       _resolverPath = resolverPath;
+    }
+
+    /**
+     * Create a new instance of the builder.
+     * @param resolverPath Resolver path to use for resolving schema references.
+     */
+    public static Builder newBuilder(String resolverPath)
+    {
+      return new Builder(resolverPath);
     }
 
     /**
