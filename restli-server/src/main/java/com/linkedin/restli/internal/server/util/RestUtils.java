@@ -226,8 +226,7 @@ public class RestUtils
       }
 
       return MIMEParse.bestMatch(
-          Stream.concat(customMimeTypesSupported.stream(), RestConstants.SUPPORTED_MIME_TYPES.stream())
-              .collect(Collectors.toList()),
+          Stream.concat(customMimeTypesSupported.stream(), RestConstants.SUPPORTED_MIME_TYPES.stream()),
           acceptHeader);
     }
 
