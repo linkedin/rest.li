@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Rest.li - A framework for building RESTful architectures at scale</title>
+    <meta name="description" content="A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs" />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+          <div class="section no-pad-bot dark-grey lighten-1" id="index-banner">
+    <div class="container" style="margin-top:10px;">
+
+        <h1 class="home row center col s12" >Rest.li</h1> 
+        <h2 style="color:#fff;" class="home row center col s12 light"><p>A framework for building RESTful architectures at scale</p>
+</h2>
+        
+
+          <div class="row center" style="margin-top:0px">
+              <a class='btn-large dark-grey' href='/rest.li/get_started/quick_start' data-activates='dropdown1'>Get Started</a>
+            </div>  
+      <br><br>
+
+    </div>
+  </div>
+
+
+  <div style="margin-top:30px; margin-bottom:30px">
+  <div class="container last-post">
+    <div class="section">
+
+      <!--   Icon Section   -->
+      <div class="row">
+        <div class="col s12 m4">
+          <div class="icon-block">
+            <h2 class="home center dark-blue-text"><i class="material-icons" style="font-size:2.5rem">settings</i></h2>
+            <h5 class="home center">Simple Asynchronous APIs for writing non-blocking client and server code</h5>
+          </div>
+        </div>
+
+        <div class="col s12 m4">
+          <div class="icon-block">
+            <h2 class="home center dark-blue-text"><i class="material-icons" style="font-size:2.5rem">group</i></h2>
+            <h5 class="home center">Type-safe development using generated data and client bindings</h5>
+          </div>
+        </div>
+
+        <div class="col s12 m4">
+          <div class="icon-block">
+            <h2 class="home center dark-blue-text"><i class="material-icons" style="font-size:2.5rem">merge_type</i></h2>
+            <h5 class="home center">Optional Dynamic Discovery subsystem that adds client side load balancing and fault tolerance</h5>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+      
+    <!-- </div> -->
+    <div class="row">
+      <div class="divider col s8 offset-s2"></div>
+        <!-- <hr class="col s8 offset-s2"/> -->
+    </div>
+    
+    
+    <!-- style="background: #ddd" -->
+    <div >
+      <div class="container ">
+        <div class="section">
+
+            <!--   Icon Section   -->
+            <div class="row">
+              <div class="col s12 m4">
+                <div class="icon-block">
+                  <h2 class="home center "><i class="material-icons" style="font-size:2.5rem">done</i></h2>
+                  <h5 class="home center">Backward compatibility checking to ensure all API changes are safe</h5>
+                </div>
+              </div>
+      
+              <div class="col s12 m4">
+                <div class="icon-block">
+                  <h2 class="home center"><i class="material-icons" style="font-size:2.5rem">dehaze</i></h2>
+                  <h5 class="home center">Support for batch operations, partial updates and projections</h5>
+                </div>
+              </div>
+      
+              <div class="col s12 m4">
+                <div class="icon-block">
+                  <h2 class="home center dark-blue-text"><i class="material-icons" style="font-size:2.5rem">info_outline</i></h2>
+                  <h5 class="home center">Web UI for browsing and searching a catalog of Rest.li APIs</h5>
+                </div>
+              </div>
+            </div>
+          </div>
+   
+      </div>
+    </div>
+  </div>
+
+  
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

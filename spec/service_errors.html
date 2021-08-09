@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Service Errors</title>
+    <meta name="description" content="This page describes how service errors are returned by Rest.li and how they are documented in a resource&#39;s IDL." />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/spec/service_errors" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Spec</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/spec/protocol">Rest.li Protocol</a></li>
+                       
+                         <li><a href="/rest.li/spec/restspec_format">Restspec JSON format</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_0-response-API">Rest.li 2.0 response-API</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Rest.li Server</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/spec/service_errors">Service Errors</a></li>
+                       
+                         <li><a href="/rest.li/spec/return_entity">Return Entity</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Rest.li Resource Method</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/batch_finder_resource_method">Batch Finder</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">R2D2</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Dynamic_Discovery">Dynamic Discovery</a></li>
+                       
+                         <li><a href="/rest.li/D2-Zookeeper-Properties">D2 Zookeeper properties</a></li>
+                       
+                         <li><a href="/rest.li/Request-Response-API-(R2)">Request-Response API</a></li>
+                       
+                         <li><a href="/rest.li/Request-Response-Framework">Request-Response framework</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">HTTP Frameworks</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-with-Netty">Netty</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-with-Servlet-Containers">Servlet containers</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Dependency injection</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Spring-Dependency-Injection">Spring dependency injection</a></li>
+                       
+                         <li><a href="/rest.li/Guice-Dependency-Injection">Guice dependency injection</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="service-errors">Service Errors</h1>
+
+<p>This page describes how service errors are returned by Rest.li and how they are documented in a resource’s IDL.</p>
+
+<p>See <a href="/rest.li/user_guide/service_errors_java">Configuring Service Errors in Java</a> for a step-by-step guide showing how
+to configure service errors in Rest.li Java.</p>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#error-responses">Error Responses</a>
+    <ul>
+      <li><a href="#fields">Fields</a></li>
+      <li><a href="#example">Example</a></li>
+      <li><a href="#returning-a-subset-of-fields">Returning a Subset of Fields</a></li>
+    </ul>
+  </li>
+  <li><a href="#documenting-service-errors-in-the-idl">Documenting Service Errors in the IDL</a>
+    <ul>
+      <li><a href="#resource-level-errors">Resource-Level Errors</a></li>
+      <li><a href="#method-level-errors">Method-Level Errors</a></li>
+      <li><a href="#success-codes">Success Codes</a></li>
+      <li><a href="#backward-compatibility">Backward Compatibility</a></li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="error-responses">Error Responses</h2>
+
+<p>All error responses are returned by Rest.li in a format conforming to the
+<a href="https://github.com/linkedin/rest.li/blob/master/restli-common/src/main/pegasus/com/linkedin/restli/common/ErrorResponse.pdl">ErrorResponse schema</a>,
+which contains various fields describing the service failure.</p>
+
+<h3 id="fields">Fields</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="highlighter-rouge">status</code></td>
+      <td>The HTTP status code.</td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">code</code></td>
+      <td>The canonical error code, e.g. for ‘400 Bad Request’ it can be ‘INPUT_VALIDATION_FAILED’. Only predefined codes should be used.</td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">message</code></td>
+      <td>A human-readable explanation of the error.</td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">docUrl</code></td>
+      <td>URL to a page that describes this particular error in more detail.</td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">requestId</code></td>
+      <td>The unique identifier that would identify this error. For example, it can be used to identify requests in the service’s logs.</td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">exceptionClass</code></td>
+      <td>The FQCN of the exception thrown by the server.</td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">stackTrace</code></td>
+      <td>The full stack trace of the exception thrown by the server.</td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">errorDetailType</code></td>
+      <td>The type of the error detail model, e.g. com.example.api.BadRequest. Clients can use this field to identify the actual error detail schema.</td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">errorDetails</code></td>
+      <td>This field should be used for communicating extra error details to clients.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="example">Example</h3>
+
+<p>Here is an example error response serialized to JSON as it would be sent over the wire and received by the client. This
+scenario involves a client which has used up its daily quota for a particular service, triggering the resource method to
+throw a fictitious <code class="highlighter-rouge">QuotaExceededException</code>. The error details object conforms to the fictitious <code class="highlighter-rouge">QuotaDetails</code> schema,
+which contains relevant information about the quota usage.</p>
+
+<p>Please note that the stack trace has been truncated for the sake of space.</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"status"</span><span class="p">:</span><span class="w"> </span><span class="mi">429</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"QUOTA_EXCEEDED"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"You've exceeded your daily request quota."</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"docUrl"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://example.com/docs/errors/QUOTA_EXCEEDED"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"requestId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cgA4qNoE48AJabrC"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"exceptionClass"</span><span class="p">:</span><span class="w"> </span><span class="s2">"com.example.QuotaExceededException"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"stackTrace"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Exception in thread </span><span class="se">\"</span><span class="s2">main</span><span class="se">\"</span><span class="s2"> com.example.QuotaExceededException: ..."</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"errorDetailType"</span><span class="p">:</span><span class="w"> </span><span class="s2">"com.example.api.QuotaDetails"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"errorDetails"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"interval"</span><span class="p">:</span><span class="w"> </span><span class="s2">"DAILY"</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"quota"</span><span class="p">:</span><span class="w"> </span><span class="mi">10000</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"usage"</span><span class="p">:</span><span class="w"> </span><span class="mi">10034</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="returning-a-subset-of-fields">Returning a Subset of Fields</h3>
+
+<p>By default, Rest.li returns the error response containing all the fields described above, in addition to
+an <code class="highlighter-rouge">X-RestLi-Error-Response</code> HTTP header. However, Rest.li supports returning only a subset of these fields.</p>
+
+<h4 id="java">Java</h4>
+
+<p>In Java, the <code class="highlighter-rouge">RestLiConfig</code> class is used to configure which <code class="highlighter-rouge">ErrorResponse</code> fields should be included
+in the response.</p>
+
+<p>Using a predefined error response format to only return the status, code, and message:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">restLiConfig</span><span class="o">.</span><span class="na">setErrorResponseFormat</span><span class="o">(</span><span class="nc">ErrorResponseFormat</span><span class="o">.</span><span class="na">MESSAGE_AND_SERVICECODE</span><span class="o">);</span>
+</code></pre></div></div>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"status"</span><span class="p">:</span><span class="w"> </span><span class="mi">429</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"QUOTA_EXCEEDED"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"You've exceeded your daily request quota."</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Creating a custom subset of fields to return:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">EnumSet</span><span class="o">&lt;</span><span class="nc">ErrorResponseFormat</span><span class="o">.</span><span class="na">ErrorResponsePart</span><span class="o">&gt;</span> <span class="n">parts</span> <span class="o">=</span> <span class="nc">EnumSet</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="no">HEADERS</span><span class="o">,</span>
+                                                                  <span class="no">STATUS_CODE_IN_BODY</span><span class="o">,</span>
+                                                                  <span class="no">DOC_URL</span><span class="o">,</span>
+                                                                  <span class="no">STACKTRACE</span><span class="o">);</span>
+<span class="n">restLiConfig</span><span class="o">.</span><span class="na">setErrorResponseFormat</span><span class="o">(</span><span class="k">new</span> <span class="nc">ErrorResponseFormat</span><span class="o">(</span><span class="n">parts</span><span class="o">));</span>
+</code></pre></div></div>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+    </span><span class="nl">"status"</span><span class="p">:</span><span class="w"> </span><span class="mi">429</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"docUrl"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://example.com/docs/errors/QUOTA_EXCEEDED"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"stackTrace"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Exception in thread </span><span class="se">\"</span><span class="s2">main</span><span class="se">\"</span><span class="s2"> com.example.QuotaExceededException: ..."</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h2 id="documenting-service-errors-in-the-idl">Documenting Service Errors in the IDL</h2>
+
+<p>Semantically, an error response is still a valid API response – it’s one of the possible outputs of an API call - so it
+must be part of the formal contract. Having well-documented service errors as part of an API enables clients to handle
+failures resiliently, and allows developers to intelligently prepare their clients for failures.</p>
+
+<p>For a full, in-depth example of what an IDL looks like documented with service errors and success codes, see
+<a href="https://github.com/linkedin/rest.li/blob/master/restli-example-server/src/main/java/com/linkedin/restli/example/impl/AlbumEntryResource.java">AlbumEntryResource</a>
+and its <a href="https://github.com/linkedin/rest.li/blob/master/restli-example-api/src/main/idl/com.linkedin.restli.example.photos.albumEntry.restspec.json">generated IDL</a>.</p>
+
+<h3 id="resource-level-errors">Resource-Level Errors</h3>
+
+<p>If a resource has been given a set of service errors (done in Java using <code class="highlighter-rouge">@ServiceErrors</code>, see
+<a href="/rest.li/user_guide/service_errors_java">here</a>), those service errors will be documented in the IDL as a list of
+objects, each containing the HTTP status code, the application-specific string error code, the message, and the
+error detail type (for each that is present). For example, a resource <code class="highlighter-rouge">someResource</code> that may fail due to some
+rate-limiting restrictions will be documented in the IDL as:</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="dl">"</span><span class="s2">name</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">someResource</span><span class="dl">"</span><span class="p">,</span>
+  <span class="p">...</span>
+  <span class="dl">"</span><span class="s2">collection</span><span class="dl">"</span> <span class="p">:</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">serviceErrors</span><span class="dl">"</span> <span class="p">:</span> <span class="p">[</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">status</span><span class="dl">"</span> <span class="p">:</span> <span class="mi">429</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">code</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">QUOTA_EXCEEDED</span><span class="dl">"</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">message</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">You've exceeded your daily request quota.</span><span class="dl">"</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">errorDetailType</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">com.example.api.QuotaDetails</span><span class="dl">"</span>
+    <span class="p">}</span> <span class="p">],</span>
+    <span class="p">...</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="method-level-errors">Method-Level Errors</h3>
+
+<p>If a resource has been given a set of service errors (done in Java using <code class="highlighter-rouge">@ServiceErrors</code> or <code class="highlighter-rouge">@ParamErrors</code>, see
+<a href="/rest.li/user_guide/service_errors_java">here</a>), those service errors will be documented in the IDL as a list of
+objects similar to what is shown above. The difference here is that these will be documented per-method, and also
+support indicating specific parameter names. For example, a <code class="highlighter-rouge">finder</code> method that may fail on some parameter <code class="highlighter-rouge">albumId</code>
+will documented in the IDL as:</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="dl">"</span><span class="s2">serviceErrors</span><span class="dl">"</span> <span class="p">:</span> <span class="p">[</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">status</span><span class="dl">"</span> <span class="p">:</span> <span class="mi">422</span><span class="p">,</span>
+    <span class="dl">"</span><span class="s2">code</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">INVALID_ID</span><span class="dl">"</span><span class="p">,</span>
+    <span class="dl">"</span><span class="s2">message</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">Id cannot be less than 0</span><span class="dl">"</span><span class="p">,</span>
+    <span class="dl">"</span><span class="s2">errorDetailType</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">com.example.api.IdError</span><span class="dl">"</span><span class="p">,</span>
+    <span class="dl">"</span><span class="s2">parameters</span><span class="dl">"</span> <span class="p">:</span> <span class="p">[</span> <span class="dl">"</span><span class="s2">albumId</span><span class="dl">"</span> <span class="p">]</span>
+  <span class="p">}</span> <span class="p">],</span>
+  <span class="dl">"</span><span class="s2">name</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">search</span><span class="dl">"</span><span class="p">,</span>
+  <span class="dl">"</span><span class="s2">parameters</span><span class="dl">"</span> <span class="p">:</span> <span class="p">[</span> <span class="p">{</span>
+    <span class="dl">"</span><span class="s2">name</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">albumId</span><span class="dl">"</span><span class="p">,</span>
+    <span class="dl">"</span><span class="s2">type</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">long</span><span class="dl">"</span><span class="p">,</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="success-codes">Success Codes</h3>
+
+<p>If a resource method has been given a set of success codes (done in Java using <code class="highlighter-rouge">@SuccessResponse</code>), those success codes
+will be documented in the IDL as a list of integers. For example, a <code class="highlighter-rouge">get</code> method that returns an HTTP <code class="highlighter-rouge">200</code> response on
+success will be documented in the IDL as:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"success"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="mi">200</span><span class="w"> </span><span class="p">],</span><span class="w">
+  </span><span class="nl">"method"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"get"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"doc"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"Gets a thing."</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="backward-compatibility">Backward Compatibility</h3>
+
+<p>Making changes to the service error information in a resource’s IDL has an impact on the
+<a href="/rest.li/modeling/compatibility_check">compatibility checker</a>.</p>
+
+<p>The following changes are considered <strong>backward compatible</strong>:</p>
+
+<ul>
+  <li>Removing a service error code from a resource or a method.</li>
+  <li>Removing a service error code from a resource then adding it to a subset of its methods.</li>
+</ul>
+
+<p>The following changes are considered <strong>backward incompatible</strong>:</p>
+
+<ul>
+  <li>Adding a new service error code to a resource or a method.
+    <ul>
+      <li><em>Note:</em> Changing an existing code is treated semantically as removing one and adding another.</li>
+    </ul>
+  </li>
+  <li>Changing the <code class="highlighter-rouge">errorDetailType</code> for an existing service error code.</li>
+  <li>Changing the HTTP <code class="highlighter-rouge">status</code> code for an existing service error code.</li>
+  <li>Changing the <code class="highlighter-rouge">message</code> for an existing service error code.</li>
+</ul>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

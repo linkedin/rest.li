@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Unstructured Data in Rest.li Quick Start</title>
+    <meta name="description" content="This tutorial demonstrates how to serve unstructured binary data, such as Binary Large Object (BLOB), in a Rest.li server. It will show how to define a Rest...." />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/start/unstructured" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Getting Started</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/get_started/quick_start">Quick Start Guide</a></li>
+                       
+                         <li><a href="/rest.li/start/step_by_step">Step by Step Tutorial</a></li>
+                       
+                         <li><a href="/rest.li/start/d2_quick_start">Dynamic Discovery</a></li>
+                       
+                         <li><a href="/rest.li/start/unstructured">Unstructured Data (BLOB)</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Installation</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/setup/building">Building Rest.li from Source</a></li>
+                       
+                         <li><a href="/rest.li/setup/gradle">Gradle Build Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Presentations</span></li>
+                        <ul>
+                       
+                         <li><a href="https://www.slideshare.net/minchencm/saturn-2018-restli">Rest.li, R2D2, Deco, and ParSeq at Saturn 2018.</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="unstructured-data-in-restli-quick-start">Unstructured Data in Rest.li Quick Start</h1>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#serve-unstructured-data">Serve Unstructured Data</a></li>
+  <li><a href="#consume-unstructured-data">Consume Unstructured Data</a></li>
+  <li><a href="#recap">Recap</a></li>
+</ul>
+
+<h2 id="introduction">Introduction</h2>
+<p>This tutorial demonstrates how to serve unstructured binary data, such as Binary Large Object (BLOB), in a Rest.li server. It will show how to define a Rest.li resource that responds with fortune reports (in PDF format) for GET requests and how to consume the GET response from a HTTP client.</p>
+
+<p>This tutorial assumes that you already have a working Rest.li server. Otherwise, follow the <a href="/rest.li/get_started/quick_start">Rest.li Quick Start Guide</a> before you continue.</p>
+
+<h2 id="serve-unstructured-data">Serve Unstructured Data</h2>
+<p>We start by defining a resource class on the server side by extending the provided CollectionUnstructuredDataResourceTemplate with the generic type of our resource key as String. Notice that, different from a regular Rest.li resource interface/template that also requires a value type, an unstructured data resource doesn’t require one. Next, we annotate the resource with @RestLiCollection and specify the required resource name and namespace:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@RestLiCollection(name = "fortuneReports", namespace = "com.example.fortune")
+public class FortuneReportsResource extends CollectionUnstructuredDataResourceTemplate&lt;String&gt;
+{
+  @Override
+  public void get(String key, @UnstructuredDataWriterParam UnstructuredDataWriter writer)
+  {
+    byte[] fortuneReportPDF = fortuneReportDB.get(key);  // Fetch the data from source
+    writer.setContentType("application/pdf");            // Set the proper MIME content-type
+    writer.getOutputStream().write(fortuneReportPDF);    // Output the data into response
+  }
+}
+</code></pre></div></div>
+
+<p>We then implement the GET method simply by overriding from the template class. We obtain the requested fortune report PDF from source (in bytes) and use the UnstructuredDataWriter instance given by the method parameter to return the response.</p>
+
+<p>UnstructuredDataWriter provides a setter for the required Content-Type header and an OutputStream instance for writing the binary data that goes into the response content. The final response will then be sent to the client after the GET method is successfully returned.</p>
+
+<h2 id="consume-unstructured-data">Consume Unstructured Data</h2>
+<p>The response wire format contains the Content-Type header and content payload exactly as they were specified in the GET method without any alterations from the Rest.li framework. This means the response can be consumed directly by any HTTP client with no special client-side handling required.</p>
+
+<p>Example: Using the GET endpoint in a HTML anchor</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;a src="d2://fortuneReports/1"&gt;
+</code></pre></div></div>
+
+<p>When the link is clicked, the browser receive the PDF response and render the PDF inline or as file-download depends on the resource implementation.</p>
+
+<p>Example: Calling a local deployed GET endpoint with curl</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ curl -v http://localhost:1338/fortuneReports/1
+...
+HTTP/1.1 200 OK
+Content-Type: application/pdf
+Content-Length: 5
+Content: &lt;&lt;&lt; binary data of the PDF report &gt;&gt;&gt;
+</code></pre></div></div>
+
+<p>Currently, the Rest.li client doesn’t have support for unstructured data resource. Request builders aren’t generated for unstructured data resources.</p>
+
+<h2 id="recap">Recap</h2>
+<p>As you can see, serving unstructured data in Rest.li is very easy. Defining a resource for unstructured data is similar to how you define a regular Rest.li resource for Records with one exception. Instead of returning records, you respond with writing the data to an OutputStream.</p>
+
+<p>You can learn more about unstructured data support in <a href="/rest.li/user_guide/restli_server">Rest.li User Guide</a>.</p>
+
+                     </div>
+                     <!-- <div class="col l3">
+                            <div class="row">
+                                    <div class="col l12">
+                                      <div class="card blue-grey darken-1">
+                                        <div class="card-content white-text">
+                                          <span class="card-title">Card Title</span>
+                                          <p>I am a very simple card. I am good at containing small bits of information.
+                                          I am convenient because I require little markup to use effectively.</p>
+                                        </div>
+                                        <div class="card-action">
+                                          <a href="#">This is a link</a>
+                                          <a href="#">This is a link</a>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                     </div> -->
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

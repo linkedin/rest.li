@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Rest.li Projections in Java</title>
+    <meta name="description" content="Projections are a way for a client to request only specific fields from an object instead of the entire object. Using projections when the client needs a few..." />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/How-to-use-projections-in-Java" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">User Guide</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/user_guide/server_architecture">Rest.li Architecture</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_server">Rest.li Server</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_client">Rest.li Client Framework</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/unstructured_data">Unstructured Data</a></li>
+                       
+                         <li><a href="/rest.li/Components">Components</a></li>
+                       
+                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous in Rest.li</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data Schemas</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/pdl_schema">PDL Schema</a></li>
+                       
+                         <li><a href="/rest.li/pdsc_syntax">PDSC Syntax</a></li>
+                       
+                         <li><a href="/rest.li/pdl_migration">Migrating from PDSC to PDL</a></li>
+                       
+                         <li><a href="/rest.li/avro_translation">Avro Translation</a></li>
+                       
+                         <li><a href="/rest.li/java_binding">Java Binding</a></li>
+                       
+                         <li><a href="/rest.li/annotation_processor">Schema Annotation Processor</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Modeling Resources</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
+                       
+                         <li><a href="/rest.li/modeling/compatibility_check">Snapshots and Resource Compatibility Checking</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/how_data_is_serialized_for_transport">How Data is Serialized for Transport</a></li>
+                       
+                         <li><a href="/rest.li/how_data_is_represented_in_memory">How Data is Represented in Memory</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Main concepts</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-Filters">Filters</a></li>
+                       
+                         <li><a href="/rest.li/Projections">Projections</a></li>
+                       
+                         <li><a href="/rest.li/pathspec">PathSpecs</a></li>
+                       
+                         <li><a href="/rest.li/Validation-in-Rest_li">Validation</a></li>
+                       
+                         <li><a href="/rest.li/Attachment-Streaming">Attachment Streaming</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Mutli-language</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/multi_language_compatibility_matrix">Compatibility Matrix</a></li>
+                       
+                         <li><a href="/rest.li/test_suite">Test Suite</a></li>
+                       
+                         <li><a href="https://github.com/mchen07/restli-csharp">C#</a></li>
+                       
+                         <li><a href="/rest.li/Scala-Integration">Scala Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Testing</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers">Writing Unit Tests</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">How to</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Send-Rest_li-Request-Query-In-Request-Body">Send Request Query in the Body</a></li>
+                       
+                         <li><a href="/rest.li/How-to-use-projections-in-Java">Use Projections</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li_Avro_conversions">Avro Conversion</a></li>
+                       
+                         <li><a href="/rest.li/Compression">Compression</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_x-upgrade-instructions">Migrate to Rest.li 2.x</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_how_to">Test Suite</a></li>
+                       
+                         <li><a href="/rest.li/howto_add_new_language">Test Suite - Add New Language</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/service_errors_java">Configure Service Errors in Java</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">FAQ</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Data-FAQ">Rest.li - FAQ</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_troubleshooting">Test Suite - Troubleshooting</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="how-to-use-projections-in-java">How to Use Projections in Java</h1>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#what-are-projections">What Are Projections</a></li>
+  <li><a href="#what-can-be-projected">What Can Be Projected</a></li>
+  <li><a href="#getting-the-pathspec-of-a-field">Getting the PathSpec of a Field</a></li>
+  <li><a href="#how-to-make-a-rest-request-with-projections-using-the-java-client">How To Make a REST Request with Projections using the Java
+Client</a></li>
+  <li><a href="#turning-off-the-restli-frameworks-automatic-projection">Turning Off the Rest.li Framework’s AUTOMATIC
+Projection</a></li>
+  <li><a href="#faq">FAQ</a></li>
+</ul>
+
+<h2 id="what-are-projections">What Are Projections</h2>
+
+<p>Projections are a way for a client to request only specific fields from an object instead of the entire object. Using projections when the client needs a few fields from an object is a good way to self-document the code, reduce payload of responses, and even allow the server to relax an otherwise time consuming computation or IO operation. You can read more about projections at <a href="Projections">Projections</a>.</p>
+
+<h2 id="what-can-be-projected">What Can Be Projected</h2>
+
+<p>Clients can project the entity object(s) in a response. For example, one
+can project:</p>
+
+<ul>
+  <li>The RecordTemplate value provided in a GetResult from a GET</li>
+  <li>Each of the RecordTemplate objects in the values returned in a map
+by a BATCH_GET</li>
+  <li>Each of the RecordTemplate objects in a list returned by a FINDER</li>
+  <li>Each of the RecordTemplate objects in each CollectionResult returned by a BATCH_FINDER</li>
+</ul>
+
+<p>For resource methods returning CollectionResult, the Metadata and Paging
+that is sent back to the client may also be projected.</p>
+
+<h2 id="getting-the-pathspec-of-a-field">Getting the PathSpec of a Field</h2>
+
+<p>Using projections in Java code relies heavily on <code class="highlighter-rouge">PathSpec</code> objects,
+which represent specific fields of an object. To get a <code class="highlighter-rouge">PathSpec</code> of a
+field <em>bar</em> of a RecordTemplate object <em>Foo</em>, you would write the
+following:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">PathSpec</span> <span class="n">pathSpec</span> <span class="o">=</span> <span class="nc">Foo</span><span class="o">.</span><span class="na">fields</span><span class="o">().</span><span class="na">bar</span><span class="o">();</span>
+</code></pre></div></div>
+
+<p>For Paging projection, here is an example on how to get the <code class="highlighter-rouge">PathSpec</code>
+of the <em>total</em> field:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">PathSpec</span> <span class="n">pathSpec</span> <span class="o">=</span> <span class="nc">CollectionMetadata</span><span class="o">.</span><span class="na">fields</span><span class="o">().</span><span class="na">total</span><span class="o">();</span>
+</code></pre></div></div>
+
+<p>It is not possible to set projections for non-RecordTemplate objects.</p>
+
+<h2 id="how-to-make-a-rest-request-with-projections-using-the-java-client">How To Make a REST Request with Projections using the Java Client</h2>
+
+<p>Projections are set by the request builder. To set a request projection
+for entity objects in the response, create your builder as you normally
+would and then add your projection to it:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">builder</span><span class="o">.</span><span class="na">fields</span><span class="o">(</span><span class="n">pathSpec</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p>the <code class="highlighter-rouge">fields()</code> method can take as arguments any number of PathSpecs, or
+an array of them.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">builder</span><span class="o">.</span><span class="na">fields</span><span class="o">(</span><span class="n">pathSpec1</span><span class="o">,</span> <span class="n">pathSpec2</span><span class="o">,</span> <span class="n">pathSpec3</span><span class="o">);</span>
+
+<span class="n">builder</span><span class="o">.</span><span class="na">fields</span><span class="o">(</span><span class="n">pathSpecArray</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p>This will create a positive projection for your given fields. The
+request will only return fields that you have specified with
+<code class="highlighter-rouge">.fields(...)</code>.</p>
+
+<p>Similarly, you can do the same for custom Metadata projection and Paging
+projection for resource methods that return <code class="highlighter-rouge">CollectionResult</code>, for
+example:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">builder</span><span class="o">.</span><span class="na">metadataFields</span><span class="o">(</span><span class="n">pathSpec1</span><span class="o">,</span> <span class="n">pathSpec2</span><span class="o">);</span>
+<span class="n">builder</span><span class="o">.</span><span class="na">pagingFields</span><span class="o">(</span><span class="nc">CollectionMetadata</span><span class="o">.</span><span class="na">fields</span><span class="o">().</span><span class="na">total</span><span class="o">());</span>
+</code></pre></div></div>
+
+<h2 id="turning-off-the-restli-frameworks-automatic-projection">Turning Off the Rest.li Framework’s <code class="highlighter-rouge">AUTOMATIC</code> Projection</h2>
+
+<p>If you choose to examine and apply projections manually, or if you
+simply would like to disable them for performance optimization, you can
+turn off the framework’s <code class="highlighter-rouge">AUTOMATIC</code> projection processing.</p>
+
+<p>This can be done by setting the “projection mode” to <code class="highlighter-rouge">MANUAL</code> on the
+ResourceContext:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//For entity objects in the response</span>
+<span class="n">getContext</span><span class="o">().</span><span class="na">setProjectionMode</span><span class="o">(</span><span class="nc">ProjectionMode</span><span class="o">.</span><span class="na">MANUAL</span><span class="o">);</span>
+
+<span class="c1">//For custom Metadata projection (CollectionResult only)</span>
+<span class="n">getContext</span><span class="o">().</span><span class="na">setMetadataProjectionMode</span><span class="o">(</span><span class="nc">ProjectionMode</span><span class="o">.</span><span class="na">MANUAL</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p>For example:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="nc">Greeting</span> <span class="nf">get</span><span class="o">(</span><span class="nc">Long</span> <span class="n">key</span><span class="o">)</span>
+<span class="o">{</span>
+  <span class="nc">MaskTree</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getProjectionMask</span><span class="o">();</span>
+  <span class="k">if</span> <span class="o">(</span><span class="n">mask</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+  <span class="o">{</span>
+    <span class="c1">// client has requested a projection of the entity</span>
+    <span class="n">getContext</span><span class="o">().</span><span class="na">setProjectionMode</span><span class="o">(</span><span class="nc">ProjectionMode</span><span class="o">.</span><span class="na">MANUAL</span><span class="o">);</span> <span class="c1">// since we’re manually applying the projection</span>
+    <span class="c1">// manually examine the projection and apply it entity before returning</span>
+    <span class="c1">// here we can take advantage of the information the projection provides to only load the data the</span>
+    <span class="c1">// client requested</span>
+  <span class="o">}</span>
+  <span class="k">else</span>
+  <span class="o">{</span>
+    <span class="c1">// client is requesting the full entity</span>
+    <span class="c1">// construct and return the full entity</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>and in the case of CollectionResult, you could do the following as well:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Finder</span><span class="o">(</span><span class="s">"myFinder"</span><span class="o">)</span>
+<span class="kd">public</span> <span class="nc">CollectionResult</span><span class="o">&lt;</span><span class="nc">SomeEntity</span><span class="o">,</span> <span class="nc">SomeCustomEntity</span><span class="o">&gt;</span> <span class="nf">myFinderResourceMethod</span><span class="o">(</span>
+  <span class="kd">final</span> <span class="nd">@PagingContextParam</span> <span class="nc">PagingContext</span> <span class="n">ctx</span><span class="o">,</span>
+  <span class="kd">final</span> <span class="nd">@ProjectionParam</span> <span class="nc">MaskTree</span> <span class="n">entityObjectProjection</span><span class="o">,</span>
+  <span class="kd">final</span> <span class="nd">@MetadataProjectionParam</span> <span class="nc">MaskTree</span> <span class="n">metadataProjection</span><span class="o">,</span>
+  <span class="kd">final</span> <span class="nd">@PagingProjectionParam</span> <span class="nc">MaskTree</span> <span class="n">pagingProjection</span><span class="o">)</span>
+<span class="o">{</span>
+
+  <span class="kd">final</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">SomeEntity</span><span class="o">&gt;</span> <span class="n">responseList</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ArrayList</span><span class="o">&lt;&gt;();</span>
+  <span class="k">if</span> <span class="o">(</span><span class="n">entityObjectProjection</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+  <span class="o">{</span>
+    <span class="c1">// client has requested a projection of the entity</span>
+    <span class="n">getContext</span><span class="o">().</span><span class="na">setProjectionMode</span><span class="o">(</span><span class="nc">ProjectionMode</span><span class="o">.</span><span class="na">MANUAL</span><span class="o">);</span> <span class="c1">// since we’re manually applying the projection</span>
+
+    <span class="c1">// manually examine the projection and apply it entity before returning</span>
+    <span class="c1">// here we can take advantage of the information the projection provides to only load the data the</span>
+    <span class="c1">// client requested</span>
+    <span class="n">responseList</span><span class="o">.</span><span class="na">addAll</span><span class="o">(</span><span class="n">fetchFiltereredEntities</span><span class="o">());</span>
+  <span class="o">}</span>
+  <span class="k">else</span>
+  <span class="o">{</span>
+    <span class="c1">// client is requesting the full entities</span>
+    <span class="c1">// construct the full entities</span>
+    <span class="n">responseList</span><span class="o">.</span><span class="na">addAll</span><span class="o">(</span><span class="n">fetchEntities</span><span class="o">());</span>
+  <span class="o">}</span>
+
+  <span class="kd">final</span> <span class="nc">SomeCustomEntity</span> <span class="n">customEntity</span><span class="o">;</span>
+  <span class="k">if</span> <span class="o">(</span><span class="n">metadataProjection</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+  <span class="o">{</span>
+    <span class="c1">// client has requested a projection of the custom metadata</span>
+    <span class="n">getContext</span><span class="o">().</span><span class="na">setMetadataProjectionMode</span><span class="o">(</span><span class="nc">ProjectionMode</span><span class="o">.</span><span class="na">MANUAL</span><span class="o">);</span> <span class="c1">// since we’re manually applying the meta data projection</span>
+
+    <span class="c1">// manually examine the projection and apply it entity before returning</span>
+    <span class="c1">// here we can take advantage of the information the projection provides to only load the data the</span>
+    <span class="c1">// client requested</span>
+    <span class="n">customEntity</span> <span class="o">=</span> <span class="n">fetchSomeFilteredCustomEntity</span><span class="o">();</span>
+  <span class="o">}</span>
+  <span class="k">else</span>
+  <span class="o">{</span>
+    <span class="c1">// client is requesting the full metadata entity</span>
+    <span class="c1">// construct and return the full metadata</span>
+    <span class="n">customEntity</span> <span class="o">=</span> <span class="n">fetchSomeCustomEntity</span><span class="o">();</span>
+  <span class="o">}</span>
+
+  <span class="kd">final</span> <span class="nc">Integer</span> <span class="n">total</span><span class="o">;</span>
+  <span class="k">if</span> <span class="o">(</span><span class="n">pagingProjection</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+  <span class="o">{</span>
+    <span class="c1">// client has requested a projection of the paging information</span>
+    <span class="c1">// since the rest.li framework will always automatically project paging,</span>
+    <span class="c1">// we can still selectively calculate the total based on the path spec</span>
+    <span class="k">if</span><span class="o">(</span><span class="n">pagingProjections</span><span class="o">.</span><span class="na">getOperations</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="nc">CollectionMetadata</span><span class="o">.</span><span class="na">fields</span><span class="o">().</span><span class="na">total</span><span class="o">())</span> <span class="o">==</span> <span class="nc">MaskOperation</span><span class="o">.</span><span class="na">POSITIVE_MASK_OP</span><span class="o">)</span>
+    <span class="o">{</span>
+      <span class="n">total</span> <span class="o">=</span> <span class="n">calculateTimeConsumingTotal</span><span class="o">();</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+  <span class="k">else</span>
+  <span class="o">{</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="k">return</span> <span class="k">new</span> <span class="nf">CollectionResult</span><span class="o">(</span><span class="n">responseList</span><span class="o">,</span> <span class="n">total</span><span class="o">,</span> <span class="n">customEntity</span><span class="o">);</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+<p>Note that Paging projection is always automatically applied by the
+Rest.li framework if there is a request by the client to do so. This is
+because it is the Rest.li framework who is responsible for constructing
+the pagination (<code class="highlighter-rouge">CollectionMetadata</code>) which includes items such as the
+next/prev links . The <code class="highlighter-rouge">MaskTree</code> provided for Paging is simply provided
+as a reference to the resource method with the most common use case
+being whether or not to pass <code class="highlighter-rouge">null</code> for the total in the construction of
+<code class="highlighter-rouge">CollectionResult</code>.</p>
+
+<h2 id="faq">FAQ</h2>
+
+<h4 id="is-it-possible-to-create-a-negative-projection-if-i-want-all-but-a-few-fields">Is it possible to create a negative projection if I want all but a few fields?</h4>
+
+<p>No. If you want a large number of fields, you will need to include them
+all in the <code class="highlighter-rouge">.fields(...)</code> method
+call.</p>
+
+<h4 id="if-a-fields-type-is-itself-a-recordtemplate-can-i-create-a-projection-on-it">If a field’s type is itself a RecordTemplate, can I create a projection on it?</h4>
+
+<p>Yes, the simplest way to is to use the <code class="highlighter-rouge">RecordTemplate.fields()</code> method
+to help construct the appropriate pathspec to pass to the builder’s
+<code class="highlighter-rouge">.fields(...)</code> method call. For example:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">new</span> <span class="nc">ExampleBuilders</span><span class="o">(</span><span class="n">options</span><span class="o">).</span><span class="na">get</span><span class="o">()</span>
+  <span class="o">.</span><span class="na">id</span><span class="o">(</span><span class="n">id</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">fields</span><span class="o">(</span><span class="nc">RootRecord</span><span class="o">.</span><span class="na">fields</span><span class="o">().</span><span class="na">message</span><span class="o">().</span><span class="na">id</span><span class="o">())</span>
+  <span class="o">.</span><span class="na">build</span><span class="o">()</span>
+</code></pre></div></div>
+
+<p>Applies projection on a GET request to a resource where the <code class="highlighter-rouge">message</code>
+field of <code class="highlighter-rouge">RootRecord.pdl</code> is a record type called <code class="highlighter-rouge">Message.pdl</code>, and
+only the <code class="highlighter-rouge">id</code> fields of the message is being projected. The same logic
+can be applied to RecordTemplates within custom Metadata and Paging
+projection.</p>
+
+<h4 id="can-i-examine-a-requests-projections-on-the-server-side">Can I examine a request’s projections on the server side?</h4>
+
+<p>In general, examining a request’s projections on the server side will
+not be necessary. When the server returns an object to the client, the
+REST framework will take care of stripping all unrequested fields. It is
+not necessary for the server to examine the projection and strip fields
+itself.</p>
+
+<p>However, it is possible for the server to examine a request’s
+projection.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">MaskTree</span> <span class="n">entityProjection</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getProjectionMask</span><span class="o">();</span>
+<span class="nc">MaskTree</span> <span class="n">metadataProjection</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getMetadataProjectionMask</span><span class="o">();</span>
+<span class="nc">MaskTree</span> <span class="n">pagingProjection</span> <span class="o">=</span> <span class="n">getContext</span><span class="o">().</span><span class="na">getPagingProjectionMask</span><span class="o">();</span>
+</code></pre></div></div>
+
+<p>Or, if you are using free-form resources, you can get the same
+<code class="highlighter-rouge">MaskTree</code> by having it injected in, for example:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RestMethod</span><span class="o">.</span><span class="na">Get</span>
+<span class="kd">public</span> <span class="nc">Greeting</span> <span class="nf">get</span><span class="o">(</span><span class="nc">Long</span> <span class="n">key</span><span class="o">,</span> <span class="nd">@ProjectionParam</span> <span class="nc">MaskTree</span> <span class="n">projection</span><span class="o">)</span>
+<span class="o">{</span>
+  <span class="c1">// …</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>This will get you all possible projections of a request. If there were
+no projections available, the respective <code class="highlighter-rouge">MaskTrees</code> would be <code class="highlighter-rouge">null</code>.
+Note that the use of these annotations is mandatory if you specify
+<code class="highlighter-rouge">MaskTrees</code> in your method signatures.</p>
+
+<p>If there were projections, you can check the status of each field.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">MaskOperation</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">projections</span><span class="o">.</span><span class="na">getOperations</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">pathSpec</span><span class="o">);</span>
+
+<span class="k">if</span> <span class="o">(</span><span class="n">mask</span> <span class="o">==</span> <span class="nc">MaskOperation</span><span class="o">.</span><span class="na">POSITIVE_MASK_OP</span><span class="o">)</span>
+<span class="o">{</span>
+  <span class="c1">// field is requested.</span>
+<span class="o">}</span>
+<span class="k">else</span>
+<span class="o">{</span>
+  <span class="c1">// field is not requested</span>
+<span class="o">}</span>
+
+<span class="nc">MaskOperation</span> <span class="n">totalMask</span> <span class="o">=</span> <span class="n">pagingProjections</span><span class="o">.</span><span class="na">getOperations</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="nc">CollectionMetadata</span><span class="o">.</span><span class="na">fields</span><span class="o">().</span><span class="na">total</span><span class="o">());</span>
+
+<span class="k">if</span> <span class="o">(</span><span class="n">totalMask</span> <span class="o">==</span> <span class="nc">MaskOperation</span><span class="o">.</span><span class="na">POSITIVE_MASK_OP</span><span class="o">)</span>
+<span class="o">{</span>
+  <span class="c1">// the total field in pagination is requested.</span>
+<span class="o">}</span>
+<span class="k">else</span>
+<span class="o">{</span>
+  <span class="c1">// total is not requested</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>You can use this information in whatever way you wish to. For example,
+resource methods may choose to exclude the calculation of ‘total’
+(thereby passing <code class="highlighter-rouge">null</code> for total into <code class="highlighter-rouge">CollectionResult</code>) if the client
+decided they didn’t need it.</p>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

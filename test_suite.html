@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Test Suite</title>
+    <meta name="description" content="A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs" />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/test_suite" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">User Guide</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/user_guide/server_architecture">Rest.li Architecture</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_server">Rest.li Server</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_client">Rest.li Client Framework</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/unstructured_data">Unstructured Data</a></li>
+                       
+                         <li><a href="/rest.li/Components">Components</a></li>
+                       
+                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous in Rest.li</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data Schemas</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/pdl_schema">PDL Schema</a></li>
+                       
+                         <li><a href="/rest.li/pdsc_syntax">PDSC Syntax</a></li>
+                       
+                         <li><a href="/rest.li/pdl_migration">Migrating from PDSC to PDL</a></li>
+                       
+                         <li><a href="/rest.li/avro_translation">Avro Translation</a></li>
+                       
+                         <li><a href="/rest.li/java_binding">Java Binding</a></li>
+                       
+                         <li><a href="/rest.li/annotation_processor">Schema Annotation Processor</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Modeling Resources</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
+                       
+                         <li><a href="/rest.li/modeling/compatibility_check">Snapshots and Resource Compatibility Checking</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/how_data_is_serialized_for_transport">How Data is Serialized for Transport</a></li>
+                       
+                         <li><a href="/rest.li/how_data_is_represented_in_memory">How Data is Represented in Memory</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Main concepts</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-Filters">Filters</a></li>
+                       
+                         <li><a href="/rest.li/Projections">Projections</a></li>
+                       
+                         <li><a href="/rest.li/pathspec">PathSpecs</a></li>
+                       
+                         <li><a href="/rest.li/Validation-in-Rest_li">Validation</a></li>
+                       
+                         <li><a href="/rest.li/Attachment-Streaming">Attachment Streaming</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Mutli-language</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/multi_language_compatibility_matrix">Compatibility Matrix</a></li>
+                       
+                         <li><a href="/rest.li/test_suite">Test Suite</a></li>
+                       
+                         <li><a href="https://github.com/mchen07/restli-csharp">C#</a></li>
+                       
+                         <li><a href="/rest.li/Scala-Integration">Scala Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Testing</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers">Writing Unit Tests</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">How to</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Send-Rest_li-Request-Query-In-Request-Body">Send Request Query in the Body</a></li>
+                       
+                         <li><a href="/rest.li/How-to-use-projections-in-Java">Use Projections</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li_Avro_conversions">Avro Conversion</a></li>
+                       
+                         <li><a href="/rest.li/Compression">Compression</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_x-upgrade-instructions">Migrate to Rest.li 2.x</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_how_to">Test Suite</a></li>
+                       
+                         <li><a href="/rest.li/howto_add_new_language">Test Suite - Add New Language</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/service_errors_java">Configure Service Errors in Java</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">FAQ</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Data-FAQ">Rest.li - FAQ</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_troubleshooting">Test Suite - Troubleshooting</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="restli-cross-language-test-suite-framework">Rest.li Cross-Language Test Suite Framework</h1>
+
+<h2 id="contents">Contents</h2>
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#motivation">Motivation</a></li>
+  <li><a href="#getting-started">Getting Started</a></li>
+  <li><a href="#design-and-code-structure">Design and Code Structure</a></li>
+  <li><a href="#next-steps">Next Steps</a></li>
+  <li><a href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>The Rest.li Cross-Language Test Suite is a framework for testing and comparing Rest.li implementations.
+The framework contains the Rest.li Test Suite Specification, which provides test data
+and testing guidelines that specify which features and scenarios to test, and how to test them.
+These test guidelines should be followed when testing a particular language implementation of Rest.li. 
+Currently, the framework only supports client testing, though we hope to add server testing support in the future.</p>
+
+<p>The test suite also includes Java tests that follow the <a href="#restli-test-suite-specification">Rest.li Test Suite Specification</a>, demonstrating how the spec
+can be used to test the Java implementation of Rest.li client.</p>
+
+<h2 id="motivation">Motivation</h2>
+
+<p>The Rest.li Test Suite Specification will help us achieve consistency and quality across multiple Rest.li client
+language bindings by:</p>
+
+<ul>
+  <li>Reducing testing effort required to add a new Rest.li client implementation</li>
+  <li>Standardizing test plans that can be shared among multiple Rest.li client implementations</li>
+  <li>“Certifying” Rest.li client implementations with a quantifiable measure of quality</li>
+  <li>Making it easier to develop compatible Rest.li implementations, so that a Rest.li client in one language can be used with a Rest.li server in another language.</li>
+</ul>
+
+<p>We have leveraged this Rest.li Test Suite Specification to implement tests for Java and Python Rest.li client bindings,
+respectively. With this sharable test suite spec, we have identified their coverage and feature parity in this 
+<a href="testsuite_compatibility_matrix.md">Compatibility Matrix</a>.</p>
+
+<h2 id="getting-started">Getting Started</h2>
+
+<h3 id="how-to-download-project">How to Download Project</h3>
+<p>Make sure you have installed <a href="https://gradle.org/">gradle</a>, which is used for building the test suite.</p>
+
+<p>Download the test suite from its git repository:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone &lt;coming soon&gt;
+cd restli-testsuite
+</code></pre></div></div>
+
+<h3 id="how-to-run-java-tests-and-expand-test-spec">How to Run Java Tests and Expand Test Spec</h3>
+<p>For new test suite users, take a look at <a href="testsuite_how_to.md">How to Run the Java TestNG Tests and Expand the Test Suite Specification</a>. This will walk you through running
+the provided Java TestNG tests. It will also explain how to expand the Rest.li Test Suite Specification.</p>
+
+<h3 id="how-to-add-tests-to-a-new-client-language-binding">How to Add Tests to a New Client Language Binding</h3>
+<p>If you would like to follow the spec and add tests for a new language binding, refer to
+<a href="testsuite_new_language.md">How to Add Tests to a New Client Language Binding</a>. 
+This is a more involved process that requires understanding the spec. It will be helpful to go over the Design and Code
+Structure section of this document first.</p>
+
+<h2 id="design-and-code-structure">Design and Code Structure</h2>
+
+<h3 id="background">Background</h3>
+<p>This documentation assumes a background in <a href="https://github.com/linkedin/rest.li">Rest.li</a>. Specifically, test developers should be familar with Rest.li data
+schema, IDL, and wire protocol format as demonstrated by the following links:</p>
+
+<ul>
+  <li>Data schema (<code class="highlighter-rouge">.pdl</code>) - https://linkedin.github.io/rest.li/pdl_schema</li>
+  <li>IDL (<code class="highlighter-rouge">.restspec.json</code>) - https://linkedin.github.io/rest.li/spec/restspec_format</li>
+  <li>Rest.li Wire Protocol - https://linkedin.github.io/rest.li/spec/protocol</li>
+</ul>
+
+<p>Implementers are encouraged to explore the
+test data and reference documentation in tandem to learn the details of Rest.li.</p>
+
+<h3 id="design-principles">Design Principles</h3>
+
+<p>There are two main ways of interacting with the Rest.li Test Suite Specification:</p>
+
+<ol>
+  <li>Expanding or updating the Rest.li Test Suite Specification for new Rest.li features or updated Rest.li behavior.</li>
+  <li>Following the spec to add tests for a Rest.li client binding implemented in a new language.</li>
+</ol>
+
+<p>These distinct ways of using the Rest.li Test Suite Specification point to an important distinction between language-independent
+and language-specific components within this test suite. The Rest.li Test Suite Specification consists of
+language-independent data and test guidelines, meant to be used for standardizing cross-platform testing. 
+It cannot immediately be used to test a specific language implementation of Rest.li client. As a test developer,
+you follow the Rest.li Test Suite Specification to write tests in your desired language.</p>
+
+<p>Throughout the documentation, we use “Rest.li Test Suite Specification” to refer to the language-independent
+components of the project. We use “Java TestNG Tests” or “Python pytest Tests” for its language-dependent components, which
+follow the Test Suite Specification.</p>
+
+<h3 id="components">Components</h3>
+<p>This test suite is composed of:</p>
+
+<ul>
+  <li>Rest.li Test Suite Specification
+    <ul>
+      <li>Data files in language-neutral formats such as <code class="highlighter-rouge">.json</code>, <code class="highlighter-rouge">.pdsc</code>,<code class="highlighter-rouge">.restspec.json</code>.</li>
+      <li>A <code class="highlighter-rouge">manifest.json</code> file containing all the test data provided in this suite to help drive automated test execution.</li>
+      <li>Guidelines on how to use the spec to validate a Rest.li client implementation.</li>
+    </ul>
+  </li>
+  <li>A Java TestNG suite that uses the spec’s test data to validate the Java Rest.li client implementation.</li>
+  <li>A Rest.li Java server for wire protocol data generation and potential integration testing</li>
+</ul>
+
+<p>The test suite is structured as follows:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>.
+|—— client-testsuite
+|   |—— manifest.json
+|   |—— data/
+|   |—— requests/
+|   |—— requests-v2/
+|   |—— responses/
+|   |—— responses-v2/
+|   |—— restspecs/
+|   |—— schemas/
+|   |—— snapshots/
+|   |—— src/
+|   |—— ...
+|—— restli-testsuite-server
+|   |—— src
+|   |—— ...
+|—— build.gradle
+|... 
+</code></pre></div></div>
+
+<h4 id="restli-test-suite-specification">Rest.li Test Suite Specification</h4>
+
+<h5 id="manifestjson">manifest.json</h5>
+<p>This manifest file provides machine readable information about all the automated tests included in this spec.
+It is shared across languages, and does not need to be changed when adding a test suite for a new language. 
+It should be changed when expanding the Rest.li Test Suite Specification.</p>
+
+<p>This file is intended to help drive portions of the test suite execution for each language. Although it does help,
+writing additional assertions by hand will still be needed in most languages to validate correctness of in-memory
+representations and language bindings.</p>
+
+<p>The file is broken down into a few main sections:</p>
+
+<ul>
+  <li>jsonTestData - list of JSON data files.</li>
+  <li>schemaTestData - list of Rest.li data schema files (<code class="highlighter-rouge">.pdsc</code>) as well as JSON data files matching the schemas.</li>
+  <li>wireProtocolTestData - list of Rest.li interface definition files (<code class="highlighter-rouge">.restspec.json</code>) as well as test HTTP requests and responses,
+in the form of files, for operations supported by the interface definition.</li>
+</ul>
+
+<h5 id="test-data-folders">Test data folders</h5>
+<p>These folders contain testing data used by the automated tests in the spec. Most of them were generated by Java Rest.li,
+and should be used when following the spec to test your Rest.li client implementation.</p>
+
+<p>The following folders are included:</p>
+<ul>
+  <li><strong>data</strong>: input JSON data for testing schemas and json serialization</li>
+  <li><strong>requests</strong>: incoming HTTP requests for wire protocol tests (Rest.li protocol 1.0)</li>
+  <li><strong>requests-v2</strong>: incoming HTTP requests for wire protocol tests (Rest.li protocol 2.0)</li>
+  <li><strong>responses</strong>: expected HTTP responses for wire protocol tests (Rest.li protocol 1.0)</li>
+  <li><strong>responses-v2</strong>: expected HTTP responses for wire protocol tests (Rest.li protocol 2.0)</li>
+  <li><strong>restspecs</strong>: IDL (Interface Description Language) generated from Java resources. These should be used by Rest.li implementations
+to make request builders.</li>
+  <li><strong>snapshots</strong>: snapshots for resource compatibility checker</li>
+</ul>
+
+<h4 id="java-testng-tests">Java TestNG Tests</h4>
+<p>In <code class="highlighter-rouge">src/test/java</code>, you can find the Java test suite, which uses the TestNG testing framework. 
+You can add test suites for new languages in <code class="highlighter-rouge">src/test/</code>. The Java suite is separated into two folders:</p>
+<ul>
+  <li>
+    <p><strong>test</strong>: Java files containing the tests (<code class="highlighter-rouge">TestRestClientAgainstStandardTestSuite</code> and <code class="highlighter-rouge">TestRestClientWithManualAssertions</code>), and utility methods (<code class="highlighter-rouge">StandardTestSuiteBase</code>) for running tests.</p>
+  </li>
+  <li>
+    <p><strong>testsuite</strong>: Java files for building and loading requests and responses.</p>
+  </li>
+</ul>
+
+<h4 id="sample-restli-server">Sample Rest.li server</h4>
+<p>The <code class="highlighter-rouge">restli-testsuite-server</code> directory contains code for a Rest.li Java server. Based on java resources defined there,
+Java Rest.li will generate language-independent restspecs in the <code class="highlighter-rouge">client-testsuite/restspecs</code> folder. Using these restspecs,
+other Rest.li implementations can generate request builders without modifying server code.
+When adding a new test, you may want to update or add a resource to <code class="highlighter-rouge">restli-testsuite-server/src/main/java/testsuite</code>.
+See the section on wire protocol tests in <a href="testsuite_how_to.md">How To Run the Java TestNG Tests and Expand the Test Suite Specification</a>.</p>
+
+<h2 id="restli-test-suite-specification-coverage">Rest.li Test Suite Specification Coverage</h2>
+
+<p>The test suite spec is intended to cover three categories of Rest.li client behavior: <strong>JSON serialization, data template
+generation, and wire protocol</strong>. Each test category is described in more detail below.</p>
+
+<h3 id="json-tests">JSON Tests</h3>
+<p>These are tests for serialization and deserialization. Tests cover basic JSON and JSON corner cases such as large
+numbers, special characters and encodings.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>JSON feature</th>
+      <th>Details</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Basic Types</td>
+      <td>string, number, boolean, null, object, array</td>
+    </tr>
+    <tr>
+      <td>Empty Collections</td>
+      <td>empty object, empty array, object with empty arrays, object with empty objects, array of empty object, array of empty arrays</td>
+    </tr>
+    <tr>
+      <td>Large Numbers</td>
+      <td>int32 and int64</td>
+    </tr>
+    <tr>
+      <td>Special Characters</td>
+      <td>periods in key</td>
+    </tr>
+    <tr>
+      <td>Unicode</td>
+      <td>Chinese character and e with an accent mark</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="data-schema-tests">Data Schema Tests</h3>
+<p>These are tests for data template generation from schema. Tests cover schema types (records, unions, enums, typerefs,
+…), primitive types, optionals and defaults. Backward compatibility rules are also covered.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Schema feature</th>
+      <th>Details</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Primitive Types</td>
+      <td>int, long, float, double, bytes, string</td>
+    </tr>
+    <tr>
+      <td>Complex Types</td>
+      <td>array of maps, map of ints, record</td>
+    </tr>
+    <tr>
+      <td>Complex Type: Unions</td>
+      <td>union of complex types, union of primitives, union of same types</td>
+    </tr>
+    <tr>
+      <td>Enums</td>
+      <td>with properties and with alias</td>
+    </tr>
+    <tr>
+      <td>Fixed Type</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>Typerefs</td>
+      <td>for string, array, chained typeref, array, map, field, union</td>
+    </tr>
+    <tr>
+      <td>Include</td>
+      <td>include, and include with include</td>
+    </tr>
+    <tr>
+      <td>Default Fixup</td>
+      <td>to see if required fields are “fixed up” with defaults</td>
+    </tr>
+    <tr>
+      <td>Optional Fields</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h3 id="wire-protocol-tests">Wire Protocol Tests</h3>
+<p>These are tests for building requests and decoding responses. Tests cover serializing/deserializing of URLs, 
+headers and bodies, escaping/encoding, batch formats, projections, and partial updates.</p>
+
+<p>We test for well-formed requests by comparing the built HTTP request
+with the expected HTTP request in the <code class="highlighter-rouge">requests/</code> or <code class="highlighter-rouge">requests-v2/</code> folder. We compare url, method, headers, and body.
+We test that Rest.li can decode a Rest.li response from an HTTP response by checking the decoded Rest.li response for
+the correct values. We compare the response’s status and error message with the status and error message specified by
+<code class="highlighter-rouge">manifest.json</code>. The body of the response is tested through manual assertions that check for the correct values.</p>
+
+<h4 id="basic-resource-method-tests-for-requestsresponses">Basic Resource Method Tests for Requests/Responses</h4>
+
+<table>
+  <thead>
+    <tr>
+      <th>Rest.li Method</th>
+      <th>Collection</th>
+      <th>Simple</th>
+      <th>Association</th>
+      <th>Action Set</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>get</td>
+      <td>x</td>
+      <td>x</td>
+      <td>x</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>batch-get</td>
+      <td>x</td>
+      <td> </td>
+      <td>x</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>finder</td>
+      <td>x</td>
+      <td> </td>
+      <td>x</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>batch-finder</td>
+      <td>o</td>
+      <td> </td>
+      <td>o</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>create</td>
+      <td>x</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>create with returned entity</td>
+      <td>x</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>batch-create</td>
+      <td>x</td>
+      <td> </td>
+      <td> </td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>update</td>
+      <td>x</td>
+      <td>x</td>
+      <td>x</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>partial update</td>
+      <td>x</td>
+      <td> </td>
+      <td>o</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>batch-update</td>
+      <td>x</td>
+      <td> </td>
+      <td>x</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>batch-partial-update</td>
+      <td>x</td>
+      <td> </td>
+      <td>o</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>delete</td>
+      <td>x</td>
+      <td>x</td>
+      <td>x</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>batch-delete</td>
+      <td>x</td>
+      <td> </td>
+      <td>x</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>action</td>
+      <td>o</td>
+      <td>o</td>
+      <td>o</td>
+      <td>x</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>“x” - test is included in Rest.li Test Suite Specification<br />
+“o” - test is not included but method should be supported by the resource<br />
+“ “ - test is not included and method should NOT be supported by resource</p>
+
+<h4 id="resource-key-and-parameter-tests">Resource Key and Parameter Tests</h4>
+
+<table>
+  <thead>
+    <tr>
+      <th>Key Feature</th>
+      <th>Rest.li Method used</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Key with Union of Simple and Complex Members</td>
+      <td>get</td>
+    </tr>
+    <tr>
+      <td>Query Params (int, string, long, string array, message array, string map, primitive union, complex types union, optional string, url typeref)</td>
+      <td>get</td>
+    </tr>
+    <tr>
+      <td>Complex Key (simple record)</td>
+      <td>get, create, delete, update batch-create, batch-delete, batch-get, batch-update, partial-update</td>
+    </tr>
+    <tr>
+      <td>Special Chars in ComplexKey Strings</td>
+      <td>get, batch-get</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4 id="error-tests">Error tests</h4>
+
+<table>
+  <thead>
+    <tr>
+      <th>Error</th>
+      <th>Resource used</th>
+      <th>Rest.li Method</th>
+      <th>Details</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>404</td>
+      <td>Collection</td>
+      <td>get</td>
+      <td>Send empty get request</td>
+    </tr>
+    <tr>
+      <td>400</td>
+      <td>Collection</td>
+      <td>update</td>
+      <td>Request has a missing required field</td>
+    </tr>
+    <tr>
+      <td>500</td>
+      <td>Collection</td>
+      <td>create</td>
+      <td>Create request with id field</td>
+    </tr>
+    <tr>
+      <td>Error Details</td>
+      <td>Collection</td>
+      <td>create</td>
+      <td>CreateResponse with Error Details</td>
+    </tr>
+    <tr>
+      <td>Batch Results with Errors</td>
+      <td>Collection</td>
+      <td>batch_update</td>
+      <td>Batch update with one good and two bad requests</td>
+    </tr>
+  </tbody>
+</table>
+
+<h4 id="misc-tests">Misc. Tests</h4>
+
+<table>
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>Resource tested</th>
+      <th>Method used</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Typeref</td>
+      <td>Collection, Association</td>
+      <td>get</td>
+    </tr>
+    <tr>
+      <td>Subresource</td>
+      <td>Collection, Association</td>
+      <td>get</td>
+    </tr>
+    <tr>
+      <td>Projection</td>
+      <td>Collection, Association, ComplexKeyResource</td>
+      <td>get</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="next-steps">Next Steps</h2>
+
+<h3 id="improvements-to-test-suite-specification">Improvements to Test Suite Specification</h3>
+<ul>
+  <li>Add test for record with lowercase name</li>
+  <li>Add test for tunneled query params</li>
+  <li>Add test that includes unicode (non-ascii) characters on wire</li>
+  <li>Extend spec to include cross-language server testing</li>
+</ul>
+
+<h3 id="gaps-in-example-java-tests">Gaps in example Java Tests</h3>
+<ul>
+  <li>Enrich manual assertions for wire protocol and schema tests</li>
+  <li>Fill in the gaps listed in the Base Resource Method Tests table</li>
+</ul>
+
+<h3 id="future-work">Future Work</h3>
+<ul>
+  <li>Expand reference implementations of spec to different languages, such as mobile.</li>
+</ul>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<p>For questions or troubleshooting, refer to <a href="testsuite_troubleshooting.md">Test Suite Troubleshooting</a>.</p>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

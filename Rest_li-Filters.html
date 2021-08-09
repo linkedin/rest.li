@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Rest.li Filters</title>
+    <meta name="description" content="Rest.li provides a mechanism to intercept incoming requests and outgoing responses via filters. Each Rest.li filter contains methods that handle both request..." />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/Rest_li-Filters" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">User Guide</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/user_guide/server_architecture">Rest.li Architecture</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_server">Rest.li Server</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_client">Rest.li Client Framework</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/unstructured_data">Unstructured Data</a></li>
+                       
+                         <li><a href="/rest.li/Components">Components</a></li>
+                       
+                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous in Rest.li</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data Schemas</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/pdl_schema">PDL Schema</a></li>
+                       
+                         <li><a href="/rest.li/pdsc_syntax">PDSC Syntax</a></li>
+                       
+                         <li><a href="/rest.li/pdl_migration">Migrating from PDSC to PDL</a></li>
+                       
+                         <li><a href="/rest.li/avro_translation">Avro Translation</a></li>
+                       
+                         <li><a href="/rest.li/java_binding">Java Binding</a></li>
+                       
+                         <li><a href="/rest.li/annotation_processor">Schema Annotation Processor</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Modeling Resources</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
+                       
+                         <li><a href="/rest.li/modeling/compatibility_check">Snapshots and Resource Compatibility Checking</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/how_data_is_serialized_for_transport">How Data is Serialized for Transport</a></li>
+                       
+                         <li><a href="/rest.li/how_data_is_represented_in_memory">How Data is Represented in Memory</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Main concepts</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-Filters">Filters</a></li>
+                       
+                         <li><a href="/rest.li/Projections">Projections</a></li>
+                       
+                         <li><a href="/rest.li/pathspec">PathSpecs</a></li>
+                       
+                         <li><a href="/rest.li/Validation-in-Rest_li">Validation</a></li>
+                       
+                         <li><a href="/rest.li/Attachment-Streaming">Attachment Streaming</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Mutli-language</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/multi_language_compatibility_matrix">Compatibility Matrix</a></li>
+                       
+                         <li><a href="/rest.li/test_suite">Test Suite</a></li>
+                       
+                         <li><a href="https://github.com/mchen07/restli-csharp">C#</a></li>
+                       
+                         <li><a href="/rest.li/Scala-Integration">Scala Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Testing</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers">Writing Unit Tests</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">How to</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Send-Rest_li-Request-Query-In-Request-Body">Send Request Query in the Body</a></li>
+                       
+                         <li><a href="/rest.li/How-to-use-projections-in-Java">Use Projections</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li_Avro_conversions">Avro Conversion</a></li>
+                       
+                         <li><a href="/rest.li/Compression">Compression</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_x-upgrade-instructions">Migrate to Rest.li 2.x</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_how_to">Test Suite</a></li>
+                       
+                         <li><a href="/rest.li/howto_add_new_language">Test Suite - Add New Language</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/service_errors_java">Configure Service Errors in Java</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">FAQ</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Data-FAQ">Rest.li - FAQ</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_troubleshooting">Test Suite - Troubleshooting</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="restli-filters">Rest.li Filters</h1>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#how-filters-work">How Filters Work</a></li>
+  <li><a href="#using-filters">Using Filters</a></li>
+  <li><a href="#filter-chaining">Filter Chaining</a></li>
+  <li><a href="#transferring-state-between-filters">Transferring State Between Filters</a></li>
+  <li><a href="#exception-handling-and-filter-chains">Exception Handing and Filter Chains</a></li>
+  <li><a href="#making-asynchronous-blocking-calls-from-filters">Making Asynchronous Blocking Calls from Filters</a></li>
+</ul>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>On the server side, Rest.li provides a mechanism to intercept incoming requests and outgoing responses via filters. Each
+Rest.li filter contains methods that handle both requests and responses.</p>
+
+<p>On the request side, filters can be used for a wide range of use cases, including request validation, admission control,
+and throttling.</p>
+
+<p>Similarly on the response side, filters can be used for a wide range of use cases, including augmentation of response
+body and encrypting sensitive information in the response payload.</p>
+
+<h2 id="how-filters-work">How Filters Work</h2>
+
+<p>When using a filter, you have the option of implementing the interface’s <code class="highlighter-rouge">onRequest</code>, <code class="highlighter-rouge">onResponse</code>, and <code class="highlighter-rouge">onError</code>
+methods - here is where you specify what the filter will do. onRequest is invoked on the request before the actual
+resource method is invoked. <code class="highlighter-rouge">onResponse</code> is invoked on the response after the resource method is invoked but before
+being passed to the R2 stack. <code class="highlighter-rouge">onError</code> is invoked when an exception occurs in one of the filter’s methods or if it
+receives a response error from the previous filter’s <code class="highlighter-rouge">onResponse</code> method. <code class="highlighter-rouge">onError</code> of the first filter in the response
+filter chain will also be invoked if the REST resource method returns an error.</p>
+
+<p>If you do not implement these methods, the default behavior for each method is to do nothing. For example, you can
+choose to only implement the onRequest method. This way, on responses or errors, the filter will simply pass the
+response/error to the next filter.</p>
+
+<p>When a request arrives, the filters intercept it. If onRequest executes successfully, it will pass it to the next
+filter. If an exception occurs, all subsequent filters are skipped, the filter’s <code class="highlighter-rouge">onError</code> will be invoked, and an error
+response is passed through the filter chain in reverse and sent back to the client.</p>
+
+<p>When a response is returned from the REST resource method, it is passed into the filter’s onResponse method. If the REST
+resource method returns an error response, it will be passed into the <code class="highlighter-rouge">onError</code> method instead. If a filter’s onResponse
+executes successfully, it will pass the response to the next filter. If an exception occurs, the filter will pass it to
+the next filter’s <code class="highlighter-rouge">onError</code> method.</p>
+
+<p>When <code class="highlighter-rouge">onError</code> is invoked, by default it will pass the error response to the next filter’s <code class="highlighter-rouge">onError</code> method. You can
+specify additional handling (e.g. logging the error) before passing the response on. You can specify logic to fix the
+error, whereupon the next filter’s onResponse method will be invoked.</p>
+
+<p>When a Rest.li server is configured to use filters, the filters will be invoked for all incoming requests and outgoing
+responses of all resources hosted by that server. Therefore, when implementing filters, please keep in mind that filters
+are cross-cutting and should be applicable to all resources that are hosted by the given Rest.li server.</p>
+
+<h2 id="using-filters">Using Filters</h2>
+
+<p>Creating a concrete filter is simple. All you need to do is implement the <code class="highlighter-rouge">com.linkedin.restli.server.filter.Filter</code>
+interface. Rest.li guarantees that for a given request-response pair, the same instance of <code class="highlighter-rouge">FilterRequestContext</code> is
+made available to both the request filter and response filter.</p>
+
+<h3 id="filter-return-type">Filter Return Type</h3>
+
+<p>Each filter method returns a <code class="highlighter-rouge">CompletableFuture&lt;Void&gt;</code>. A <code class="highlighter-rouge">CompletableFuture</code> represents the status result of filter
+execution and has 3 states - completed, completed with exception, and incomplete. The next filter will not be invoked
+until the previous filter has completed (either successfully or exceptionally).</p>
+
+<p>If the filter does not call any asynchronous methods, you can simply return <code class="highlighter-rouge">CompletableFuture.completedFuture(null)</code> -
+this returns an already completed future, and it will cause the filter chain to invoke the next filter.</p>
+
+<p>If there is an error, you can either throw an Exception or return a future that has already called
+<code class="highlighter-rouge">future.completeExceptionally(exception)</code> - both will do the same thing.</p>
+
+<p>If the filter calls an asynchronous method, you can instantiate an incomplete CompletableFuture and return it from the
+filter method. This future should be passed into your asynchronous method - when the method finishes, you can call
+<code class="highlighter-rouge">future.complete(null)</code>. This will trigger the filter chain to invoke the next filter. If there is an error, you can
+call <code class="highlighter-rouge">future.completeExceptionally(exception)</code>. There are more details on this below.</p>
+
+<p>Not completing a future, whether successfully or exceptionally, will cause the filter chain processing to hang
+indefinitely.</p>
+
+<h3 id="filter-requests">Filter Requests</h3>
+
+<p>The implementation of the <code class="highlighter-rouge">onRequest</code> method is free to modify the incoming request. Additionally, it can also reject
+the incoming request by throwing an exception or completing the future exceptionally - in this case, a response error is
+automatically passed into the filter’s <code class="highlighter-rouge">onError</code> method.</p>
+
+<p>The onRequest method has access to the <code class="highlighter-rouge">FilterRequestContext</code>. <code class="highlighter-rouge">FilterRequestContext</code> is an interface that abstracts
+information regarding the incoming request, including the request URI, projection mask, request query parameters, and
+request headers. Please see documentation of <code class="highlighter-rouge">FilterRequestContext</code> for more info.</p>
+
+<p>After all the filters’ <code class="highlighter-rouge">onRequest</code> method have been successfully invoked, the filter chain passes the request to the
+Rest.li resource.</p>
+
+<h3 id="filter-responses">Filter Responses</h3>
+
+<p>The implementation of the <code class="highlighter-rouge">onResponse</code> method can inspect and modify the outgoing response body, HTTP status, and
+headers. Throwing an exception causes the response to be converted into an error response and passed into the next
+filter’s <code class="highlighter-rouge">onError</code> method.</p>
+
+<p>The <code class="highlighter-rouge">onResponse</code> method has access to the <code class="highlighter-rouge">FilterRequestContext</code> and <code class="highlighter-rouge">FilterResponseContext</code>. The
+<code class="highlighter-rouge">FilterResponseContext</code> is an interface that abstracts information regarding the outgoing response, including the
+response HTTP status, response body, and response headers. Please see documentation of <code class="highlighter-rouge">FilterResponseContext</code> for more
+info.</p>
+
+<p>After the last filter’s <code class="highlighter-rouge">onResponse</code> method has been invoked successfully, the filter chain passes the outgoing response
+to the underlying R2 stack. If the last filter’s <code class="highlighter-rouge">onResponse</code> method’s future completes exceptionally, the response is
+converted into an error response and is passed into the R2 stack.</p>
+
+<h3 id="filter-errors">Filter Errors</h3>
+
+<p>The implementation of the <code class="highlighter-rouge">onError</code> method handles errors, and has the capability to alter the response body, HTTP
+status, and headers. The onError method has access to the exception that caused the error, <code class="highlighter-rouge">FilterRequestContext</code>, and
+<code class="highlighter-rouge">FilterResponseContext</code>.</p>
+
+<p>The <code class="highlighter-rouge">CompletableFuture</code> that is returned by this method should be completed exceptionally unless this filter fixes the
+error, whereupon the future should be completed successfully. The paradigm is that if an error exists in the response at
+the end of the filter, the future should be completed exceptionally.</p>
+
+<p>If an exception occurs within the <code class="highlighter-rouge">onError</code> method itself, the next filter’s <code class="highlighter-rouge">onError</code> will be invoked. However, the
+most recently occurring exception will be passed in as the exception argument.</p>
+
+<p>After the last filter’s <code class="highlighter-rouge">onError</code> method has been invoked, the filter chain passes the outgoing response error to the
+underlying R2 stack. If the last filter’s onError method’s future completes successfully (i.e. the error was fixed), the
+error response is converted into a success response and passed to the R2 stack.</p>
+
+<h3 id="example-filter">Example Filter</h3>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">com.linkedin.restli.server.filter.FilterRequestContext</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">com.linkedin.restli.server.filter.FilterResponseContext</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">com.linkedin.restli.server.filter.Filter</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">RestliExampleFilter</span> <span class="kd">implements</span> <span class="nc">Filter</span>
+<span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;</span> <span class="nf">onRequest</span><span class="o">(</span><span class="kd">final</span> <span class="nc">FilterRequestContext</span> <span class="n">requestContext</span><span class="o">)</span>
+  <span class="o">{</span>
+    <span class="n">log</span><span class="o">.</span><span class="na">debug</span><span class="o">(</span><span class="nc">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">"Received %s request for %s resource."</span><span class="o">,</span> <span class="n">requestContext</span><span class="o">.</span><span class="na">getMethodType</span><span class="o">(),</span> <span class="n">requestContext</span><span class="o">.</span><span class="na">getFilterResourceModel</span><span class="o">().</span><span class="na">getResourceName</span><span class="o">()));</span>
+    <span class="k">return</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">completedFuture</span><span class="o">(</span><span class="kc">null</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;</span> <span class="nf">onResponse</span><span class="o">(</span><span class="kd">final</span> <span class="nc">FilterRequestContext</span> <span class="n">requestContext</span><span class="o">,</span> <span class="kd">final</span> <span class="nc">FilterResponseContext</span> <span class="n">responseContext</span><span class="o">)</span>
+  <span class="o">{</span>
+    <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="nc">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">"Responding to %s request for %s resource with status code %d."</span><span class="o">,</span> <span class="n">requestContext</span><span class="o">.</span><span class="na">getMethodType</span><span class="o">(),</span>
+                                     <span class="n">requestContext</span><span class="o">.</span><span class="na">getFilterResourceModel</span><span class="o">().</span><span class="na">getResourceName</span><span class="o">(),</span> <span class="n">responseContext</span><span class="o">.</span><span class="na">getResponseData</span><span class="o">().</span><span class="na">getStatus</span><span class="o">().</span><span class="na">getCode</span><span class="o">()));</span>
+    <span class="k">return</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">completedFuture</span><span class="o">(</span><span class="kc">null</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;</span> <span class="nf">onError</span><span class="o">(</span><span class="nc">Throwable</span> <span class="n">t</span><span class="o">,</span> <span class="kd">final</span> <span class="nc">FilterRequestContext</span> <span class="n">requestContext</span><span class="o">,</span> <span class="kd">final</span> <span class="nc">FilterResponseContext</span> <span class="n">responseContext</span><span class="o">)</span>
+  <span class="o">{</span>
+    <span class="n">log</span><span class="o">.</span><span class="na">debug</span><span class="o">(</span><span class="n">t</span><span class="o">.</span><span class="na">toString</span><span class="o">());</span>
+    <span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;</span> <span class="n">future</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;();</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">isErrorFixable</span><span class="o">(</span><span class="n">t</span><span class="o">))</span>
+    <span class="o">{</span>
+      <span class="n">fixError</span><span class="o">();</span>
+      <span class="n">future</span><span class="o">.</span><span class="na">complete</span><span class="o">(</span><span class="kc">null</span><span class="o">);</span> <span class="c1">// success</span>
+    <span class="o">}</span>
+    <span class="k">else</span>
+    <span class="o">{</span>
+       <span class="n">future</span><span class="o">.</span><span class="na">completeExceptionally</span><span class="o">(</span><span class="n">t</span><span class="o">);</span> <span class="c1">// could not fix error, so this filter did not execute successfully</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="n">future</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>When a request arrives, this filter prints the request type and resource name for every incoming request.</p>
+
+<p>When a response is sent, this filter prints the HTTP response code along with request type and resource name for every
+outgoing response.</p>
+
+<p>When there is an error, this filter logs the exception that caused it. Notice how the filter has the ability to either
+fix the error or propagate the error (complete normally vs. complete exceptionally).</p>
+
+<h3 id="response-data-api">Response Data API</h3>
+
+<p>The <code class="highlighter-rouge">FilterResponseContext</code> has access to a <code class="highlighter-rouge">RestLiResponseData</code> object. This object contains the response data as a
+<code class="highlighter-rouge">RestLiResponseEnvelope</code>, which also includes the HTTP status (if success) and the error exception (if error). Besides,
+it contains headers and cookies, as well as indicators for response type and the resource method.</p>
+
+<h3 id="response-envelope-api">Response Envelope API</h3>
+
+<p>The <code class="highlighter-rouge">RestLiResponseEnvelope</code> contains the actual data from the response, as well as HTTP status (if success) and the
+error exception (if error). For example, a GET response would store the retrieved resource data in the envelope.</p>
+
+<p>If there is an error, the exception will never be null but the data stored inside of <code class="highlighter-rouge">RestLiResponseEnvelope</code> will
+always be null (the envelope itself will not be null, only the data inside of it). The opposite is true if there is no
+error.</p>
+
+<p>The type of response envelope is based on the Rest.li resource method. For example, a GET response would have data
+stored in the <code class="highlighter-rouge">GetResponseEnvelope</code>.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Resource Method</th>
+      <th>Response Envelope</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="highlighter-rouge">GET</code></td>
+      <td><code class="highlighter-rouge">GetResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">CREATE</code></td>
+      <td><code class="highlighter-rouge">CreateResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">ACTION</code></td>
+      <td><code class="highlighter-rouge">ActionResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">BATCH_GET</code></td>
+      <td><code class="highlighter-rouge">BatchGetResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">BATCH_PARTIAL_UPDATE</code></td>
+      <td><code class="highlighter-rouge">BatchPartialUpdateResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">BATCH_UPDATE</code></td>
+      <td><code class="highlighter-rouge">BatchUpdateResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">BATCH_DELETE</code></td>
+      <td><code class="highlighter-rouge">BatchDeleteResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">BATCH_CREATE</code></td>
+      <td><code class="highlighter-rouge">BatchCreateResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">BATCH_FINDER</code></td>
+      <td><code class="highlighter-rouge">BatchFinderResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">GET_ALL</code></td>
+      <td><code class="highlighter-rouge">GetAllResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">FINDER</code></td>
+      <td><code class="highlighter-rouge">FinderResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">UPDATE</code></td>
+      <td><code class="highlighter-rouge">UpdateResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">PARTIAL_UPDATE</code></td>
+      <td><code class="highlighter-rouge">PartialUpdateResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">OPTIONS</code></td>
+      <td><code class="highlighter-rouge">OptionsResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">DELETE</code></td>
+      <td><code class="highlighter-rouge">DeleteResponseEnvelope</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Response envelopes are grouped together based on <code class="highlighter-rouge">ResponseTypes</code>. Each response type shares the same data format, and
+thus use the same getters and setters. A parent response envelope is subclassed by the envelopes in the same
+ResponseType group.</p>
+
+<p>For example, <code class="highlighter-rouge">GetResponseEnvelope</code>, <code class="highlighter-rouge">ActionResponseEnvelope</code>, and <code class="highlighter-rouge">CreateResponseEnvelope</code> all store a <code class="highlighter-rouge">RecordTemplate</code>
+and all use <code class="highlighter-rouge">getRecord</code> and <code class="highlighter-rouge">setRecord</code> as their data access methods. As such, <code class="highlighter-rouge">RecordResponseEnvelope</code> is the parent
+envelope for all three. Grouping them together this way reduces code duplication because you can write code for all
+envelopes that share the same interface.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Response Type</th>
+      <th>Parent Response Envelope</th>
+      <th>Child Response Envelopes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="highlighter-rouge">SINGLE_ENTITY</code></td>
+      <td><code class="highlighter-rouge">RecordResponseEnvelope</code></td>
+      <td><code class="highlighter-rouge">GetResponseEnvelope</code>, <code class="highlighter-rouge">CreateResponseEnvelope</code>, <code class="highlighter-rouge">ActionResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">CREATE_COLLECTION</code></td>
+      <td>N/A - only one envelope falls under this response type, <br /> so no need for parent</td>
+      <td><code class="highlighter-rouge">BatchCreateResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">GET_COLLECTION</code></td>
+      <td><code class="highlighter-rouge">CollectionResponseEnvelope</code></td>
+      <td><code class="highlighter-rouge">GetAllResponseEnvelope</code>, <code class="highlighter-rouge">FinderResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">BATCH_COLLECTION</code></td>
+      <td>N/A - only one envelope falls under this response type, <br /> so no need for parent</td>
+      <td><code class="highlighter-rouge">BatchFinderResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">BATCH_ENTITIES</code></td>
+      <td><code class="highlighter-rouge">BatchResponseEnvelope</code></td>
+      <td><code class="highlighter-rouge">BatchGetResponseEnvelope</code>, <code class="highlighter-rouge">BatchUpdateResponseEnvelope</code>, <code class="highlighter-rouge">BatchPartialUpdateResponseEnvelope</code>, <code class="highlighter-rouge">BatchDeleteResponseEnvelope</code></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">STATUS_ONLY</code></td>
+      <td><code class="highlighter-rouge">EmptyResponseEnvelope</code></td>
+      <td><code class="highlighter-rouge">PartialUpdateResponseEnvelope</code>, <code class="highlighter-rouge">UpdateResponseEnvelope</code>, <code class="highlighter-rouge">DeleteResponseEnvelope</code>, <code class="highlighter-rouge">OptionsResponseEnvelope</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A typical use case is as follows - notice there are 2 ways to handle different response data types, the first using the resource method and the second using the response type:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">RestliExampleFilter</span> <span class="kd">implements</span> <span class="nc">Filter</span>
+<span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;</span> <span class="nf">onResponse</span><span class="o">(</span><span class="nc">FilterRequestContext</span> <span class="n">requestContext</span><span class="o">,</span> <span class="nc">FilterResponseContext</span> <span class="n">responseContext</span><span class="o">)</span>
+  <span class="o">{</span>
+    <span class="nc">RestLiResponseData</span><span class="o">&lt;?&gt;</span> <span class="n">responseData</span> <span class="o">=</span> <span class="n">responseContext</span><span class="o">.</span><span class="na">getResponseData</span><span class="o">();</span>
+    <span class="k">switch</span> <span class="o">(</span><span class="n">responseData</span><span class="o">.</span><span class="na">getResourceMethod</span><span class="o">())</span> 
+    <span class="o">{</span>
+      <span class="c1">// Example showing determining code path based on resource method (CREATE, GET, etc.)</span>
+      <span class="k">case</span> <span class="nl">CREATE:</span>        <span class="c1">// Handle CREATE response</span>
+        <span class="nc">CreateResponseEnvelope</span> <span class="n">envelope</span> <span class="o">=</span> <span class="o">(</span><span class="nc">CreateResponseEnvelope</span><span class="o">)</span> <span class="n">responseData</span><span class="o">.</span><span class="na">getResponseEnvelope</span><span class="o">();</span>
+        <span class="n">someMethod</span><span class="o">(</span><span class="n">envelope</span><span class="o">.</span><span class="na">getStatus</span><span class="o">());</span>
+        <span class="n">anotherMethod</span><span class="o">(</span><span class="n">envelope</span><span class="o">.</span><span class="na">getRecord</span><span class="o">());</span>
+        <span class="n">envelope</span><span class="o">.</span><span class="na">setRecord</span><span class="o">(</span><span class="k">new</span> <span class="nc">EmptyRecord</span><span class="o">());</span> <span class="c1">//Modify the response</span>
+        <span class="k">break</span><span class="o">;</span>
+      <span class="k">case</span> <span class="no">GET</span>        <span class="c1">// Handles GET responses</span>
+        <span class="k">break</span><span class="o">;</span>
+      <span class="k">default</span><span class="o">:</span>
+      <span class="c1">// Other types available as well.</span>
+    <span class="o">}</span>
+
+    <span class="c1">// Another example, this time showing determining code path based on response type (SINGLE_ENTITY, GET_COLLECTION, etc.)</span>
+    <span class="k">switch</span> <span class="o">(</span><span class="n">responseData</span><span class="o">.</span><span class="na">getResponseType</span><span class="o">())</span> 
+    <span class="o">{</span>
+      <span class="k">case</span> <span class="nl">SINGLE_ENTITY:</span>        <span class="c1">// Handle GET, ACTION, and CREATE responses - note how you can apply the same logic to all 3 because they share the same data access interface</span>
+        <span class="nc">RecordResponseEnvelope</span> <span class="n">envelope</span> <span class="o">=</span> <span class="o">(</span><span class="nc">RecordResponseEnvelope</span><span class="o">)</span> <span class="n">responseData</span><span class="o">.</span><span class="na">getResponseEnvelope</span><span class="o">();</span>
+        <span class="n">someMethod</span><span class="o">(</span><span class="n">envelope</span><span class="o">.</span><span class="na">getRecord</span><span class="o">());</span>
+        <span class="n">envelope</span><span class="o">.</span><span class="na">setRecord</span><span class="o">(</span><span class="k">new</span> <span class="nc">EmptyRecord</span><span class="o">());</span> <span class="c1">//Modify the response</span>
+        <span class="k">break</span><span class="o">;</span>
+      <span class="k">case</span> <span class="no">GET_COLLECTION</span>        <span class="c1">// Handles GET_ALL and FINDER responses</span>
+        <span class="k">break</span><span class="o">;</span>
+      <span class="k">default</span><span class="o">:</span>
+      <span class="c1">// Other types available as well.</span>
+    <span class="o">}</span>
+    <span class="k">return</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">completedFuture</span><span class="o">(</span><span class="kc">null</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="filter-chaining">Filter Chaining</h2>
+
+<p>Rest.li supports chaining of filters. When a Rest.li server is configured to use multiple filters, the filters are
+ordered in the same order specified in the <code class="highlighter-rouge">RestLiConfig</code>. On requests, filters that are declared closer to the
+beginning are invoked first. On responses, filters that are declared closer to the end are invoked first. See diagram at
+top of document for visualization.</p>
+
+<p>Approach 1 to chain three filters.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">final</span> <span class="nc">RestLiConfig</span> <span class="n">config</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">RestLiConfig</span><span class="o">();</span>
+<span class="n">config</span><span class="o">.</span><span class="na">addFilter</span><span class="o">(</span><span class="k">new</span> <span class="nc">FilterOne</span><span class="o">(),</span> <span class="k">new</span> <span class="nc">FilterTwo</span><span class="o">(),</span> <span class="k">new</span> <span class="nc">FilterThree</span><span class="o">());</span>
+</code></pre></div></div>
+
+<p>Approach 2 to chain three filters.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">final</span> <span class="nc">RestLiConfig</span> <span class="n">config</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">RestLiConfig</span><span class="o">();</span>
+<span class="n">config</span><span class="o">.</span><span class="na">addFilter</span><span class="o">(</span><span class="k">new</span> <span class="nc">FilterOne</span><span class="o">());</span>
+<span class="n">config</span><span class="o">.</span><span class="na">addFilter</span><span class="o">(</span><span class="k">new</span> <span class="nc">FilterTwo</span><span class="o">());</span>
+<span class="n">config</span><span class="o">.</span><span class="na">addFilter</span><span class="o">(</span><span class="k">new</span> <span class="nc">FilterThree</span><span class="o">());</span>
+</code></pre></div></div>
+
+<p>Approach 3 to chain three filters.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">final</span> <span class="nc">RestLiConfig</span> <span class="n">config</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">RestLiConfig</span><span class="o">();</span>
+<span class="n">config</span><span class="o">.</span><span class="na">addFilter</span><span class="o">(</span><span class="nc">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="k">new</span> <span class="nc">FilterOne</span><span class="o">(),</span> <span class="k">new</span> <span class="nc">FilterTwo</span><span class="o">(),</span> <span class="k">new</span> <span class="nc">FilterThree</span><span class="o">()));</span>
+</code></pre></div></div>
+
+<p>Approach 4 to chain three filters</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;bean</span> <span class="na">class=</span><span class="s">"com.linkedin.restli.server.RestLiConfig"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;property</span> <span class="na">name=</span><span class="s">“filters</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;list&gt;</span>
+            <span class="nt">&lt;bean</span> <span class="na">class=</span><span class="s">“FilterOne”/</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;bean</span> <span class="na">class=</span><span class="s">“FilterTwo”/</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;bean</span> <span class="na">class=</span><span class="s">"FilterThree”/</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;/list&gt;</span>
+    <span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre></div></div>
+
+<h2 id="transferring-state-between-filters">Transferring State Between Filters</h2>
+
+<p>It is recommended that Rest.li filters be stateless. To facilitate transfer of state between filters, Rest.li provides a
+scratch pad in the form of a Java Map. This scratch pad can be accessed via the <code class="highlighter-rouge">getFilterScratchpad</code> method on the
+<code class="highlighter-rouge">FilterRequestContext</code>. See below for an example Rest.li filter that computes the request processing time and print it
+to standard out.</p>
+
+<h2 id="exception-handling-and-filter-chains">Exception Handling and Filter Chains</h2>
+
+<p>The manner in which exceptions are handled in the filter’s request vs. response methods are different.</p>
+
+<p>There are 2 ways a filter can invoke an exception:</p>
+
+<ol>
+  <li>The filter throws an exception from within one of its methods</li>
+  <li>The filter completes its future exceptionally - i.e. <code class="highlighter-rouge">future.completeExceptionally(throwable)</code></li>
+</ol>
+
+<h3 id="requests">Requests</h3>
+
+<p>If an exception is thrown while processing a request or if the future is completed exceptionally, further processing of
+the request is terminated and the filter’s onError method is invoked. In other words, in order for the incoming request
+to reach the resource implementation, invocation of all filters’ <code class="highlighter-rouge">onRequest</code> methods needs to be successful.</p>
+
+<h3 id="responses">Responses</h3>
+
+<p>Exception/error handling in the context of response filters is a little more involved than in the case of request
+filters. Response filters are applied to both successful responses as well as all types of errors.</p>
+
+<p>Such errors can include:</p>
+
+<ol>
+  <li>Exceptions thrown by the resource method, including runtime exceptions such as <code class="highlighter-rouge">NullPointerException</code> or
+  <code class="highlighter-rouge">RestLiServiceException</code>.</li>
+  <li>Exceptions generated by Rest.li due to bugs in resource methods. These could include bugs such as nulls returned
+  directly from the resource methods, or indirectly such as null values inside of returned objects (e.g a null element
+  list inside of a <code class="highlighter-rouge">CollectionResult</code>).</li>
+</ol>
+
+<p>Subsequently, response filters can transform a successful response from the resource to an error response and vice
+versa. In addition, a successful response from a filter earlier in the filter chain can be transformed into an error
+response and vice versa by filters that are subsequent in the filter chain.</p>
+
+<p>The exception/error handling behavior of response filters is summarized as follows:</p>
+
+<ol>
+  <li>If the last filter in the filter chain throws an exception or completes its future exceptionally, an error response
+  is returned to the client corresponding to this exception.</li>
+  <li>If an exception is thrown or the result future is completed exceptionally by any filter except the last filter in the
+  filter chain. The subsequent filter’s <code class="highlighter-rouge">onError</code> method is invoked. You can specify error handling in the onError method
+  (i.e. fix the error or propagate it to the next filter).</li>
+  <li>The response that is generated as a result of executing the filter chain is the response that is forwarded to the
+  client. Note that the filter chain can transform a successful/error response from the resource to a error/successful
+  response that’s sent to the client.</li>
+</ol>
+
+<p>When an exception occurs, the HTTP status code will be automatically set according to this rule:</p>
+
+<ul>
+  <li>If the exception is a <code class="highlighter-rouge">RestLiServiceException</code>, the status will be taken from the exception.</li>
+  <li>If not, the status will be set to 500 (Internal Server Error).</li>
+</ul>
+
+<p>It is recommended that filters throw a <code class="highlighter-rouge">RestLiServiceException</code>.</p>
+
+<p>Note that response headers will be maintained if an exception is thrown, however some new headers signifying an error may be added.</p>
+
+<h2 id="making-asynchronous-blocking-calls-from-filters">Making Asynchronous Blocking Calls from Filters</h2>
+
+<p>Situations may arise where you may need to make external calls within your filter code. Say for example, there’s an
+external Auth service that your service integrates with. Every call that comes to your service should be first routed to
+the Auth service for approval, and only if the Auth service give you a green light, can your resource process the
+request. Let’s say you have a RestLi filter that abstracts away the invocation of the Auth service. One way to implement
+this Auth filter is as follows:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">com.linkedin.restli.server.filter.FilterRequestContext</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">com.linkedin.restli.server.filter.Filter</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">AuthFilter</span> <span class="kd">implements</span> <span class="nc">Filter</span>
+<span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;</span> <span class="nf">onRequest</span><span class="o">(</span><span class="nc">FilterRequestContext</span> <span class="n">requestContext</span><span class="o">)</span>
+  <span class="o">{</span>
+    <span class="nc">String</span> <span class="n">resourceName</span> <span class="o">=</span> <span class="n">requestContext</span><span class="o">.</span><span class="na">getResourceModel</span><span class="o">().</span><span class="na">getResourceName</span><span class="o">();</span>
+    <span class="c1">// Now invoke the auth service.</span>
+    <span class="nc">Request</span><span class="o">&lt;</span><span class="nc">Permission</span><span class="o">&gt;</span> <span class="n">getRequest</span> <span class="o">=</span> <span class="n">builders</span><span class="o">.</span><span class="na">get</span><span class="o">().</span><span class="na">resourceName</span><span class="o">(</span><span class="n">resourceName</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+    <span class="nc">Permission</span> <span class="n">permission</span> <span class="o">=</span> <span class="n">getClient</span><span class="o">().</span><span class="na">sendRequest</span><span class="o">(</span><span class="n">getRequest</span><span class="o">).</span><span class="na">getResponse</span><span class="o">().</span><span class="na">getEntity</span><span class="o">();</span>
+    <span class="n">log</span><span class="o">.</span><span class="na">debug</span><span class="o">(</span><span class="nc">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">"Received permission %s from auth service for request for %s resource."</span><span class="o">,</span>
+                             <span class="n">requestContext</span><span class="o">.</span><span class="na">getMethodType</span><span class="o">(),</span> <span class="n">resourceName</span><span class="o">));</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">permission</span><span class="o">.</span><span class="na">isGranted</span><span class="o">())</span> 
+    <span class="o">{</span>
+       <span class="c1">// Since we have permissions, pass the request along.</span>
+       <span class="k">return</span> <span class="nc">CompletableFuture</span><span class="o">.</span><span class="na">completedFuture</span><span class="o">(</span><span class="kc">null</span><span class="o">);</span>
+    <span class="o">}</span> 
+    <span class="k">else</span> 
+    <span class="o">{</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nf">RestLiServiceException</span><span class="o">(</span><span class="nc">HttpStatus</span><span class="o">.</span><span class="na">S_401_UNAUTHORIZED</span><span class="o">,</span> <span class="s">"Permission denied"</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>The above implementation makes a synchronous call to an external auth service to authenticate the incoming request.
+Although the above implementation is functionally correct, it is not very efficient. Upon close investigation, you’ll
+observe that the request processing thread of your service is now blocked on an outgoing call to the auth service. If
+the auth service is slow to respond to requests, very soon it’s possible that all threads of your service is blocked
+waiting for response from the auth service.</p>
+
+<p>The Rest.li filters provide a CompletableFuture interface that handles the asynchronous callbacks for you. The
+implementation is shown below:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">com.linkedin.restli.server.filter.FilterRequestContext</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">com.linkedin.restli.server.filter.Filter</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">AuthFilter</span> <span class="kd">implements</span> <span class="nc">Filter</span>
+<span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;</span> <span class="nf">onRequest</span><span class="o">(</span><span class="nc">FilterRequestContext</span> <span class="n">requestContext</span><span class="o">)</span>
+  <span class="o">{</span>
+    <span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;</span> <span class="n">future</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">CompletableFuture</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;();</span>
+    <span class="nc">String</span> <span class="n">resourceName</span> <span class="o">=</span> <span class="n">requestContext</span><span class="o">.</span><span class="na">getResourceModel</span><span class="o">().</span><span class="na">getResourceName</span><span class="o">();</span>
+    <span class="c1">// Now invoke the auth service.</span>
+    <span class="nc">Request</span><span class="o">&lt;</span><span class="nc">Permission</span><span class="o">&gt;</span> <span class="n">getRequest</span> <span class="o">=</span> <span class="n">builders</span><span class="o">.</span><span class="na">get</span><span class="o">().</span><span class="na">resourceName</span><span class="o">(</span><span class="n">resourceName</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+    <span class="nc">Callback</span><span class="o">&lt;</span><span class="nc">Response</span><span class="o">&lt;</span><span class="nc">Permission</span><span class="o">&gt;&gt;</span> <span class="n">cb</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Callback</span><span class="o">&lt;</span><span class="nc">Response</span><span class="o">&lt;</span><span class="nc">Permission</span><span class="o">&gt;&gt;()</span>
+      <span class="o">{</span>
+        <span class="nd">@Override</span>
+        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onSuccess</span><span class="o">(</span><span class="nc">Response</span><span class="o">&lt;</span><span class="nc">Permission</span><span class="o">&gt;</span> <span class="n">response</span><span class="o">)</span>
+        <span class="o">{</span>
+          <span class="nc">Permission</span> <span class="n">permission</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="na">getEntity</span><span class="o">();</span>
+          <span class="n">log</span><span class="o">.</span><span class="na">debug</span><span class="o">(</span><span class="nc">String</span><span class="o">.</span><span class="na">format</span><span class="o">(</span><span class="s">"Received permission %s from auth service for request for %s resource."</span><span class="o">,</span>
+                                  <span class="n">requestContext</span><span class="o">.</span><span class="na">getMethodType</span><span class="o">(),</span> <span class="n">resourceName</span><span class="o">));</span>
+          <span class="k">if</span> <span class="o">(</span><span class="n">permission</span><span class="o">.</span><span class="na">isGranted</span><span class="o">())</span> 
+          <span class="o">{</span>
+            <span class="c1">// Since we have permissions, pass the request along.</span>
+           <span class="n">future</span><span class="o">.</span><span class="na">complete</span><span class="o">(</span><span class="kc">null</span><span class="o">);</span>
+          <span class="o">}</span> 
+          <span class="k">else</span>
+          <span class="o">{</span>
+            <span class="n">future</span><span class="o">.</span><span class="na">completeExceptionally</span><span class="o">(</span><span class="k">new</span> <span class="nc">RestLiServiceException</span><span class="o">(</span><span class="nc">HttpStatus</span><span class="o">.</span><span class="na">S_401_UNAUTHORIZED</span><span class="o">,</span> <span class="s">"Permission denied"</span><span class="o">));</span>
+          <span class="o">}</span>
+        <span class="o">}</span>
+        <span class="nd">@Override</span>
+        <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onError</span><span class="o">(</span><span class="nc">Throwable</span> <span class="n">e</span><span class="o">)</span>
+        <span class="o">{</span>
+          <span class="n">future</span><span class="o">.</span><span class="na">completeExceptionally</span><span class="o">(</span><span class="k">new</span> <span class="nc">RestLiServiceException</span><span class="o">(</span><span class="nc">HttpStatus</span><span class="o">.</span><span class="na">S_500_INTERNAL_SERVER_ERROR</span><span class="o">,</span> <span class="n">e</span><span class="o">));</span>
+        <span class="o">}</span>
+      <span class="o">}</span>
+    <span class="c1">// Invoke the auth service asynchronously. </span>
+    <span class="n">getClient</span><span class="o">().</span><span class="na">sendRequest</span><span class="o">(</span><span class="n">getRequest</span><span class="o">,</span> <span class="n">requestContext</span><span class="o">,</span> <span class="n">cb</span><span class="o">);</span>
+    <span class="k">return</span> <span class="n">future</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>The above implementation makes an asynchronous blocking call to the external auth service to authenticate the incoming
+request. In this implementation, the request processing thread of your service is NOT blocked on an outgoing call to the
+auth service and is free to process more incoming requests for your service. By using <code class="highlighter-rouge">CompletableFuture</code>, you can make
+outgoing asynchronous calls from within RestLi filters.</p>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

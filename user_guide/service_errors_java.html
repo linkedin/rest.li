@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Configuring Service Errors in Java</title>
+    <meta name="description" content="This page describes how to configure service errors for a resource in Java." />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/user_guide/service_errors_java" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">User Guide</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/user_guide/server_architecture">Rest.li Architecture</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_server">Rest.li Server</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_client">Rest.li Client Framework</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/unstructured_data">Unstructured Data</a></li>
+                       
+                         <li><a href="/rest.li/Components">Components</a></li>
+                       
+                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous in Rest.li</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data Schemas</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/pdl_schema">PDL Schema</a></li>
+                       
+                         <li><a href="/rest.li/pdsc_syntax">PDSC Syntax</a></li>
+                       
+                         <li><a href="/rest.li/pdl_migration">Migrating from PDSC to PDL</a></li>
+                       
+                         <li><a href="/rest.li/avro_translation">Avro Translation</a></li>
+                       
+                         <li><a href="/rest.li/java_binding">Java Binding</a></li>
+                       
+                         <li><a href="/rest.li/annotation_processor">Schema Annotation Processor</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Modeling Resources</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
+                       
+                         <li><a href="/rest.li/modeling/compatibility_check">Snapshots and Resource Compatibility Checking</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/how_data_is_serialized_for_transport">How Data is Serialized for Transport</a></li>
+                       
+                         <li><a href="/rest.li/how_data_is_represented_in_memory">How Data is Represented in Memory</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Main concepts</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-Filters">Filters</a></li>
+                       
+                         <li><a href="/rest.li/Projections">Projections</a></li>
+                       
+                         <li><a href="/rest.li/pathspec">PathSpecs</a></li>
+                       
+                         <li><a href="/rest.li/Validation-in-Rest_li">Validation</a></li>
+                       
+                         <li><a href="/rest.li/Attachment-Streaming">Attachment Streaming</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Mutli-language</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/multi_language_compatibility_matrix">Compatibility Matrix</a></li>
+                       
+                         <li><a href="/rest.li/test_suite">Test Suite</a></li>
+                       
+                         <li><a href="https://github.com/mchen07/restli-csharp">C#</a></li>
+                       
+                         <li><a href="/rest.li/Scala-Integration">Scala Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Testing</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers">Writing Unit Tests</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">How to</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Send-Rest_li-Request-Query-In-Request-Body">Send Request Query in the Body</a></li>
+                       
+                         <li><a href="/rest.li/How-to-use-projections-in-Java">Use Projections</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li_Avro_conversions">Avro Conversion</a></li>
+                       
+                         <li><a href="/rest.li/Compression">Compression</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_x-upgrade-instructions">Migrate to Rest.li 2.x</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_how_to">Test Suite</a></li>
+                       
+                         <li><a href="/rest.li/howto_add_new_language">Test Suite - Add New Language</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/service_errors_java">Configure Service Errors in Java</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">FAQ</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Data-FAQ">Rest.li - FAQ</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_troubleshooting">Test Suite - Troubleshooting</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="configuring-service-errors-in-java">Configuring Service Errors in Java</h1>
+
+<p>This page describes how to configure service errors for a resource in Java.</p>
+
+<p>See <a href="/rest.li/spec/service_errors">Service Errors</a> for an in-depth reference of service errors in Rest.li.</p>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#background">Background</a></li>
+  <li><a href="#step-1-define-your-service-errors">Step 1: Define your Service Errors</a></li>
+  <li><a href="#step-2-write-your-service-error-definition">Step 2: Write Your Service Error Definition</a></li>
+  <li><a href="#step-3-apply-the-service-errors-to-your-resource">Step 3: Apply the Service Errors to your Resource</a></li>
+  <li><a href="#step-4-returning-service-errors">Step 4: Returning Service Errors</a></li>
+  <li><a href="#step-5-enabling-service-error-validation">Step 5: Enabling Service Error Validation</a></li>
+</ul>
+
+<h2 id="background">Background</h2>
+
+<p>It’s important to communicate to the consumers of a service what types of errors may be returned by a particular API.
+Fortunately, Rest.li allows application developers to configure service errors for their resources. This makes APIs
+clearer by documenting in the IDL what sorts of errors should be expected, allowing clients to effectively handle and
+process returned errors. Also, enabling service error validation allows services to guarantee which errors a client
+should expect to encounter.</p>
+
+<h2 id="step-1-define-your-service-errors">Step 1: Define your Service Errors</h2>
+
+<p>First, you need to determine which service error codes your service may return, and what information will be contained
+in error responses corresponding with these codes. You’ll need to define four things:</p>
+
+<ul>
+  <li>The application-specific string code associated with some service error (e.g. <code class="highlighter-rouge">QUOTA_EXCEEDED</code>)</li>
+  <li>The HTTP status code it’ll return (e.g. <code class="highlighter-rouge">429</code>)</li>
+  <li>The string message it’ll return</li>
+  <li>The schema defining the format of the error details</li>
+</ul>
+
+<p>For example, say we want to standardize the way errors are returned as a result of violating the service’s rate-limiting
+constraint. We would need to pick a string error code such as <code class="highlighter-rouge">QUOTA_EXCEEDED</code>, an HTTP status such as <code class="highlighter-rouge">429</code>, a string
+message describing the failure, and some schema describing the custom error details sent back to the client.</p>
+
+<p>If you need help determining which HTTP status code is right for your service error, please
+see <a href="https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml">this table of codes</a>.</p>
+
+<h2 id="step-2-write-your-service-error-definition">Step 2: Write Your Service Error Definition</h2>
+
+<p>Write a Java enum implementing the
+<a href="https://github.com/linkedin/rest.li/blob/master/restli-server/src/main/java/com/linkedin/restli/server/errors/ServiceError.java"><code class="highlighter-rouge">ServiceError</code></a>
+interface, which will contain a set of service error definitions for your service. The enum implementation may expose
+methods for obtaining the HTTP status, the error code, the error message, and the error detail type. Here is an example
+implementation which defines one service error and exposes all four accessor methods:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">enum</span> <span class="nc">SampleServiceError</span> <span class="kd">implements</span> <span class="nc">ServiceError</span>
+<span class="o">{</span>
+  <span class="no">QUOTA_EXCEEDED</span><span class="o">(</span><span class="nc">HttpStatus</span><span class="o">.</span><span class="na">S_429_TOO_MANY_REQUESTS</span><span class="o">,</span> <span class="s">"You've exceeded your daily request quota."</span><span class="o">,</span> <span class="nc">QuotaDetails</span><span class="o">.</span><span class="na">class</span><span class="o">),</span>
+  <span class="no">INVALID_PERMISSIONS</span><span class="o">(</span><span class="nc">HttpStatus</span><span class="o">.</span><span class="na">S_403_FORBIDDEN</span><span class="o">,</span> <span class="s">"User does not have valid permissions"</span><span class="o">,</span> <span class="kc">null</span><span class="o">),</span>
+  <span class="no">ILLEGAL_PARAM</span><span class="o">(</span><span class="nc">HttpStatus</span><span class="o">.</span><span class="na">S_400_BAD_REQUEST</span><span class="o">,</span> <span class="s">"Request parameter cannot be used"</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+  <span class="c1">// Add more service errors here...</span>
+
+  <span class="nc">SampleServiceError</span><span class="o">(</span><span class="nc">HttpStatus</span> <span class="n">status</span><span class="o">,</span> <span class="nc">String</span> <span class="n">message</span><span class="o">,</span> <span class="nc">Class</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="nc">RecordTemplate</span><span class="o">&gt;</span> <span class="n">errorDetailType</span><span class="o">)</span>
+  <span class="o">{</span>
+    <span class="n">_httpStatus</span> <span class="o">=</span> <span class="n">status</span><span class="o">;</span>
+    <span class="n">_message</span> <span class="o">=</span> <span class="n">message</span><span class="o">;</span>
+    <span class="n">_errorDetailType</span> <span class="o">=</span> <span class="n">errorDetailType</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="kd">private</span> <span class="kd">final</span> <span class="nc">HttpStatus</span> <span class="n">_status</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="nc">String</span> <span class="n">_message</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="kd">final</span> <span class="nc">Class</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="nc">RecordTemplate</span><span class="o">&gt;</span> <span class="n">_errorDetailType</span><span class="o">;</span>
+
+  <span class="cm">/*
+   * Suggested: Define string constants for each of the error codes for easy access.
+   * String literals or constants must be used as annotation attributes due to the
+   * restrictions imposed by Java.
+   *
+   * These codes should match the enum value names.
+   */</span>
+  <span class="kd">public</span> <span class="kd">class</span> <span class="nc">Codes</span>
+  <span class="o">{</span>
+    <span class="no">QUOTA_EXCEEDED</span> <span class="o">=</span> <span class="s">"QUOTA_EXCEEDED"</span><span class="o">;</span>
+    <span class="no">INVALID_PERMISSIONS</span> <span class="o">=</span> <span class="s">"INVALID_PERMISSIONS"</span><span class="o">;</span>
+    <span class="no">ILLEGAL_PARAM</span> <span class="o">=</span> <span class="s">"ILLEGAL_PARAM"</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="nc">HttpStatus</span> <span class="nf">httpStatus</span><span class="o">()</span>
+  <span class="o">{</span>
+    <span class="k">return</span> <span class="n">_status</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="nc">String</span> <span class="nf">code</span><span class="o">()</span>
+  <span class="o">{</span>
+    <span class="c1">// Note how the application-specific code defers to the enum value name</span>
+    <span class="k">return</span> <span class="nf">name</span><span class="o">();</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="nc">String</span> <span class="nf">message</span><span class="o">()</span>
+  <span class="o">{</span>
+    <span class="k">return</span> <span class="n">_message</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="nc">Class</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="nc">RecordTemplate</span><span class="o">&gt;</span> <span class="nf">errorDetailType</span><span class="o">()</span>
+  <span class="o">{</span>
+    <span class="k">return</span> <span class="n">_errorDetailType</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="step-3-apply-the-service-errors-to-your-resource">Step 3: Apply the Service Errors to your Resource</h2>
+
+<p>Now that you have defined your service errors, you can use them to specify which resources
+or particular resource methods may return such errors. You can do this by using a few
+Java annotations described below.</p>
+
+<p>Keep in mind that adding or removing service error codes impacts the backward compatibility of a resource.
+See <a href="/rest.li/spec/service_errors#backward-compatibility">here</a> for more information.</p>
+
+<h3 id="serviceerrordef"><code class="highlighter-rouge">@ServiceErrorDef</code></h3>
+
+<p>In order to apply your service error definitions to a particular resource, you first need to use the <code class="highlighter-rouge">@ServiceErrorDef</code>
+annotation at the resource level to reference your enum. This class-level annotation is used to reference your service
+error enum definition. This is used by Rest.li during build-time when generating IDLs and also during runtime when
+validating service errors returned by your resource. Without this annotation, Rest.li will have no way of referencing
+the information in your service error definition.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@ServiceErrorDef</span><span class="o">(</span><span class="nc">SampleServiceError</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="kd">class</span> <span class="nc">MyResource</span> <span class="kd">extends</span> <span class="nc">CollectionResourceTemplate</span><span class="o">&lt;</span><span class="nc">Long</span><span class="o">,</span> <span class="nc">MyRecord</span><span class="o">&gt;</span>
+<span class="o">{</span>
+  <span class="c1">// Resource methods here...</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="serviceerrors"><code class="highlighter-rouge">@ServiceErrors</code></h3>
+
+<p>Next, you can use the <code class="highlighter-rouge">@ServiceErrors</code> annotation to indicate which service error codes may be returned by a particular
+resource or method. It can be used as a class-level annotation (to refer to a resource) or as a method-level annotation
+(to refer to a resource method). This is used during build-time when generating IDLs and also during runtime when
+validating service errors returned by your resource. In the following example, all methods in the resource may return a
+<code class="highlighter-rouge">QUOTA_EXCEEDED</code> error, but only <code class="highlighter-rouge">getAll</code> can return an <code class="highlighter-rouge">INVALID_PERMISSIONS</code> error:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@ServiceErrorDef</span><span class="o">(</span><span class="nc">SampleServiceError</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="nd">@ServiceErrors</span><span class="o">(</span><span class="nc">SampleServiceError</span><span class="o">.</span><span class="na">Codes</span><span class="o">.</span><span class="na">QUOTA_EXCEEDED</span><span class="o">)</span>
+<span class="kd">class</span> <span class="nc">MyResource</span> <span class="kd">extends</span> <span class="nc">CollectionResourceTemplate</span><span class="o">&lt;</span><span class="nc">Long</span><span class="o">,</span> <span class="nc">MyRecord</span><span class="o">&gt;</span>
+<span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="nc">MyRecord</span> <span class="nf">get</span><span class="o">(</span><span class="nc">Long</span> <span class="n">id</span><span class="o">)</span>
+  <span class="o">{</span>
+    <span class="c1">// Logic here...</span>
+  <span class="o">}</span>
+
+  <span class="nd">@Override</span>
+  <span class="nd">@ServiceErrors</span><span class="o">(</span><span class="nc">SampleServiceError</span><span class="o">.</span><span class="na">Codes</span><span class="o">.</span><span class="na">INVALID_PERMISSIONS</span><span class="o">)</span>
+  <span class="kd">public</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">MyRecord</span><span class="o">&gt;</span> <span class="nf">getAll</span><span class="o">()</span>
+  <span class="o">{</span>
+    <span class="c1">// Logic here...</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="paramerror"><code class="highlighter-rouge">@ParamError</code></h3>
+
+<p>Additionally, you can use the <code class="highlighter-rouge">@ParamError</code> annotation to indicate that a service error may be returned by a particular
+method, but also that it references a specific parameter of such method. This is used solely as a means of documentation
+in the IDL; no validation at all is done at runtime using this information. In this example, the <code class="highlighter-rouge">search</code> method may
+return an <code class="highlighter-rouge">ILLEGAL_PARAM</code> error related to either the <code class="highlighter-rouge">foo</code> parameter or the <code class="highlighter-rouge">bar</code> parameter:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@ServiceErrorDef</span><span class="o">(</span><span class="nc">SampleServiceError</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="kd">class</span> <span class="nc">MyResource</span> <span class="kd">extends</span> <span class="nc">CollectionResourceTemplate</span><span class="o">&lt;</span><span class="nc">Long</span><span class="o">,</span> <span class="nc">MyRecord</span><span class="o">&gt;</span>
+<span class="o">{</span>
+  <span class="nd">@Finder</span><span class="o">(</span><span class="s">"search"</span><span class="o">)</span>
+  <span class="nd">@ParamError</span><span class="o">(</span><span class="n">code</span> <span class="o">=</span> <span class="nc">SampleServiceError</span><span class="o">.</span><span class="na">Codes</span><span class="o">.</span><span class="na">ILLEGAL_PARAM</span><span class="o">,</span> <span class="n">parameterNames</span> <span class="o">=</span> <span class="o">{</span> <span class="s">"foo"</span><span class="o">,</span> <span class="s">"bar"</span> <span class="o">})</span>
+  <span class="kd">public</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">MyRecord</span><span class="o">&gt;</span> <span class="nf">search</span><span class="o">(</span><span class="nd">@QueryParam</span><span class="o">(</span><span class="s">"foo"</span><span class="o">)</span> <span class="nc">String</span> <span class="n">foo</span><span class="o">,</span> <span class="nd">@QueryParam</span><span class="o">(</span><span class="s">"bar"</span><span class="o">)</span> <span class="nc">String</span> <span class="n">bar</span><span class="o">)</span>
+  <span class="o">{</span>
+    <span class="c1">// Logic here...</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="successresponse"><code class="highlighter-rouge">@SuccessResponse</code></h3>
+
+<p>In addition to service errors, success response codes can also be specified for a resource method. Note that success
+codes (unlike service errors) are not validated by the Rest.li framework, meaning that the framework will allow
+unrecognized success codes to be returned. This feature is meant only for enhancing IDL documentation, please see
+<a href="/rest.li/spec/service_errors#success-codes">this page</a> for how this are documented. In this example, the <code class="highlighter-rouge">action</code>
+method may return an HTTP <code class="highlighter-rouge">200</code> or <code class="highlighter-rouge">204</code> response:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@ServiceErrorDef</span><span class="o">(</span><span class="nc">SampleServiceError</span><span class="o">.</span><span class="na">class</span><span class="o">)</span>
+<span class="kd">class</span> <span class="nc">MyResource</span> <span class="kd">extends</span> <span class="nc">CollectionResourceTemplate</span><span class="o">&lt;</span><span class="nc">Long</span><span class="o">,</span> <span class="nc">MyRecord</span><span class="o">&gt;</span>
+<span class="o">{</span>
+  <span class="nd">@Action</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"action"</span><span class="o">)</span>
+  <span class="nd">@SuccessResponse</span><span class="o">(</span><span class="n">statuses</span> <span class="o">=</span> <span class="o">{</span> <span class="nc">HttpStatus</span><span class="o">.</span><span class="na">S_200_OK</span><span class="o">,</span> <span class="nc">HttpStatus</span><span class="o">.</span><span class="na">S_204_NO_CONTENT</span> <span class="o">})</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">action</span><span class="o">()</span>
+  <span class="o">{</span>
+    <span class="c1">// Logic here...</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="step-4-returning-service-errors">Step 4: Returning Service Errors</h2>
+
+<p>To return one of your defined service errors, you can simply do the following in your
+resource implementation:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">throw</span> <span class="k">new</span> <span class="nc">RestLiServiceException</span><span class="o">(</span><span class="nc">SampleServiceError</span><span class="o">.</span><span class="na">QUOTA_EXCEEDED</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p>This automatically constructs an <code class="highlighter-rouge">ErrorResponse</code> using information from your service error definition:</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"QUOTA_EXCEEDED"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"httpStatus"</span><span class="p">:</span><span class="w"> </span><span class="mi">429</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"You've exceeded your daily request quota."</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>This looks good, except it’s missing some extra information such as error details and
+a request ID. Fortunately, you can use builder syntax to easily add this data:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">RestLiServiceException</span> <span class="n">exception</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">RestLiServiceException</span><span class="o">(</span><span class="nc">SampleServiceError</span><span class="o">.</span><span class="na">QUOTA_EXCEEDED</span><span class="o">);</span>
+
+<span class="k">throw</span> <span class="n">exception</span><span class="o">.</span><span class="na">setRequestId</span><span class="o">(</span><span class="n">requestId</span><span class="o">).</span><span class="na">setErrorDetails</span><span class="o">(</span><span class="n">quotaInfo</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p>You can also use purely builder syntax to construct your exception:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">throw</span> <span class="k">new</span> <span class="nc">RestLiServiceException</span><span class="o">(</span><span class="nc">HttpStatus</span><span class="o">.</span><span class="na">S_400_BAD_REQUEST</span><span class="o">).</span><span class="na">setCode</span><span class="o">(</span><span class="n">code</span><span class="o">);</span>
+</code></pre></div></div>
+
+<h2 id="step-5-enabling-service-error-validation">Step 5: Enabling Service Error Validation</h2>
+
+<p>Returned service errors can be validated in order to ensure that only specified
+service errors are returned. In other words, if a method returns an error that
+isn’t specified via an annotation, a <code class="highlighter-rouge">500</code> exception will be thrown.</p>
+
+<p>This validation can be enabled by adding an <code class="highlighter-rouge">ErrorResponseValidationFilter</code> to
+the server filter chain:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">restLiConfig</span><span class="o">.</span><span class="na">addFilter</span><span class="o">(</span><span class="k">new</span> <span class="nc">ErrorResponseValidationFilter</span><span class="o">());</span>
+</code></pre></div></div>
+
+<p>Note that only exceptions containing a <code class="highlighter-rouge">code</code> property will be validated.</p>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

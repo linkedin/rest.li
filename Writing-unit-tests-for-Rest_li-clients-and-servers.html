@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Writing-unit-tests-for-Rest.li-clients-and-servers</title>
+    <meta name="description" content="A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs" />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">User Guide</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/user_guide/server_architecture">Rest.li Architecture</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_server">Rest.li Server</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_client">Rest.li Client Framework</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/unstructured_data">Unstructured Data</a></li>
+                       
+                         <li><a href="/rest.li/Components">Components</a></li>
+                       
+                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous in Rest.li</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data Schemas</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/pdl_schema">PDL Schema</a></li>
+                       
+                         <li><a href="/rest.li/pdsc_syntax">PDSC Syntax</a></li>
+                       
+                         <li><a href="/rest.li/pdl_migration">Migrating from PDSC to PDL</a></li>
+                       
+                         <li><a href="/rest.li/avro_translation">Avro Translation</a></li>
+                       
+                         <li><a href="/rest.li/java_binding">Java Binding</a></li>
+                       
+                         <li><a href="/rest.li/annotation_processor">Schema Annotation Processor</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Modeling Resources</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
+                       
+                         <li><a href="/rest.li/modeling/compatibility_check">Snapshots and Resource Compatibility Checking</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/how_data_is_serialized_for_transport">How Data is Serialized for Transport</a></li>
+                       
+                         <li><a href="/rest.li/how_data_is_represented_in_memory">How Data is Represented in Memory</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Main concepts</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-Filters">Filters</a></li>
+                       
+                         <li><a href="/rest.li/Projections">Projections</a></li>
+                       
+                         <li><a href="/rest.li/pathspec">PathSpecs</a></li>
+                       
+                         <li><a href="/rest.li/Validation-in-Rest_li">Validation</a></li>
+                       
+                         <li><a href="/rest.li/Attachment-Streaming">Attachment Streaming</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Mutli-language</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/multi_language_compatibility_matrix">Compatibility Matrix</a></li>
+                       
+                         <li><a href="/rest.li/test_suite">Test Suite</a></li>
+                       
+                         <li><a href="https://github.com/mchen07/restli-csharp">C#</a></li>
+                       
+                         <li><a href="/rest.li/Scala-Integration">Scala Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Testing</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers">Writing Unit Tests</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">How to</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Send-Rest_li-Request-Query-In-Request-Body">Send Request Query in the Body</a></li>
+                       
+                         <li><a href="/rest.li/How-to-use-projections-in-Java">Use Projections</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li_Avro_conversions">Avro Conversion</a></li>
+                       
+                         <li><a href="/rest.li/Compression">Compression</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_x-upgrade-instructions">Migrate to Rest.li 2.x</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_how_to">Test Suite</a></li>
+                       
+                         <li><a href="/rest.li/howto_add_new_language">Test Suite - Add New Language</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/service_errors_java">Configure Service Errors in Java</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">FAQ</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Data-FAQ">Rest.li - FAQ</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_troubleshooting">Test Suite - Troubleshooting</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="writing-unit-tests-for-restli">Writing Unit Tests for Rest.li</h1>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#writing-unit-tests-for-restli-clients">Writing Unit Tests for Rest.li Clients</a></li>
+  <li><a href="#writing-unit-tests-for-restli-servers">Writing Unit Tests for Rest.li Servers</a></li>
+  <li><a href="#writing-unit-tests-for-restli-data-recordtemplates-and-datamaps">Writing Unit Tests for Rest.li Data (RecordTemplates and DataMaps)</a></li>
+</ul>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>The Rest.li team added classes to Rest.li (starting with Rest.li 1.14.7) to make writing unit tests for Rest.li clients and servers easier. These classes are spread across three modules: <code class="highlighter-rouge">restli-client-testutils</code>, <code class="highlighter-rouge">restli-common-testutils</code>, and <code class="highlighter-rouge">restli-server-testutils</code>.</p>
+
+<h2 id="writing-unit-tests-for-restli-clients">Writing Unit Tests for Rest.li Clients</h2>
+
+<p>The classes that help writing unit tests for Rest.li clients are present in <code class="highlighter-rouge">restli-client-testutils</code>. These classes are mainly builders and factories that help in creating different types of <code class="highlighter-rouge">com.linkedin.restli.client.Response</code> objects. The expected use case for these classes is where you want to test that your code is able to process a <code class="highlighter-rouge">Response</code> object that it receives from making a Rest.li request.</p>
+
+<p>Suppose you want to test a method that makes a GET request which returns a <code class="highlighter-rouge">Greeting</code> entity and then this method returns the property <code class="highlighter-rouge">message</code> from this entity. Your code that you want to test might look something like this:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MyApplication</span>
+<span class="o">{</span>
+  <span class="o">...</span>
+  
+  <span class="kd">public</span> <span class="nc">String</span> <span class="nf">getMessage</span><span class="o">(</span><span class="kt">long</span> <span class="n">id</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">Exception</span>  
+  <span class="o">{</span>
+    <span class="nc">GetRequest</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">getRequest</span> <span class="o">=</span> <span class="no">GREETINGS_BUILDERS</span><span class="o">.</span><span class="na">get</span><span class="o">().</span><span class="na">id</span><span class="o">(</span><span class="n">id</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+    <span class="k">return</span> <span class="n">_restClient</span><span class="o">.</span><span class="na">sendRequest</span><span class="o">(</span><span class="n">getRequest</span><span class="o">).</span><span class="na">getResponseEntity</span><span class="o">().</span><span class="na">getMessage</span><span class="o">();</span>
+  <span class="o">}</span>
+  
+  <span class="o">...</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>To test this method, your code might look like this:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">GetRequest</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">expectedRequest</span> <span class="o">=</span> <span class="no">GREETINGS_BUILDERS</span><span class="o">.</span><span class="na">get</span><span class="o">().</span><span class="na">id</span><span class="o">(</span><span class="n">id</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+
+<span class="c1">// use the test utilities to construct a response that is processed by the method</span>
+<span class="c1">// we are testing</span>
+<span class="nc">Greeting</span> <span class="n">mockGreeting</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Greeting</span><span class="o">().</span><span class="na">setId</span><span class="o">(</span><span class="mi">1L</span><span class="o">).</span><span class="na">setMessage</span><span class="o">(</span><span class="s">"test message"</span><span class="o">);</span>
+<span class="nc">MockSuccessfulResponseFutureBuilder</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">responseFutureBuilder</span> <span class="o">=</span> 
+  <span class="k">new</span> <span class="nc">MockSuccessfulResponseFutureBuilder</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;().</span><span class="na">setEntity</span><span class="o">(</span><span class="n">expectedGreeting</span><span class="o">);</span>
+<span class="nc">ResponseFuture</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">mockResponse</span> <span class="o">=</span> <span class="n">responseFutureBuilder</span><span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+<span class="c1">// assume myApplication is an instance of MyApplication</span>
+<span class="c1">// assume mockClient is a mock RestClient that has been created using EasyMock</span>
+<span class="nc">EasyMock</span><span class="o">.</span><span class="na">expect</span><span class="o">(</span><span class="n">mockClient</span><span class="o">.</span><span class="na">sendRequest</span><span class="o">(</span><span class="n">expectedRequest</span><span class="o">)).</span><span class="na">andReturn</span><span class="o">(</span><span class="n">mockResponse</span><span class="o">);</span>
+<span class="nc">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="n">myClass</span><span class="o">.</span><span class="na">getMessage</span><span class="o">(</span><span class="mi">1L</span><span class="o">),</span> <span class="s">"test message"</span><span class="o">);</span>
+</code></pre></div></div>
+
+<h4 id="mockresponsebuilder">MockResponseBuilder</h4>
+
+<p><code class="highlighter-rouge">MockResponseBuilder</code> is a builder that can be used to easily construct <code class="highlighter-rouge">Response</code> objects. You can use it to set the headers, entity, HTTP response code, and so on, of the <code class="highlighter-rouge">Response</code> object. The use case that we envision for this class is when you are testing code that uses a version of <code class="highlighter-rouge">sendRequest</code> in <code class="highlighter-rouge">RestClient</code> that takes in a <code class="highlighter-rouge">CallBack&lt;Response&lt;T&gt;&gt;</code> as one of it’s parameters. The <code class="highlighter-rouge">CallBack</code> argument can be filled in using this builder.</p>
+
+<h4 id="mocksuccessfulresponsefuturebuilder">MockSuccessfulResponseFutureBuilder</h4>
+
+<p>The <code class="highlighter-rouge">MockSuccessfulResponseFutureBuilder</code> class is used to construct <code class="highlighter-rouge">ResponseFuture</code>s that represent a successful Rest.li call, for example, no exceptions are thrown and the HTTP status code is 2xx. This builder can be used to set the entity, HTTP response code, and so on, of the response.</p>
+
+<h4 id="mockfailedresponsefuturebuilder">MockFailedResponseFutureBuilder</h4>
+
+<p>The <code class="highlighter-rouge">MockFailedResponseFutureBuilder</code> class is used to construct <code class="highlighter-rouge">ResponseFuture</code>s that represent either a failed Rest.li call. This failed call can be of two types:</p>
+
+<ol>
+  <li>The call failed completely and the server did not return any result. For example, you make a GET request but there is no entity for that ID, resulting in a 404.</li>
+  <li>The call failed but the server still sent a response. For example you make a GET request and the server returns a partially constructed entity with some fields not filled out because of an internal server problem. In this case, there is an entity in the response as well as an error.</li>
+</ol>
+
+<p>Please see the JavaDoc on this class for a detailed explanation on how each of the scenarios above can be modeled. This builder also lets us define how server exceptions should be treated using the <code class="highlighter-rouge">setErrorHandlingBehavior(ErrorHandlingBehavior errorHandlingBehavior)</code> method. Again, please see the JavaDoc for more details.</p>
+
+<h4 id="mockbatchcreateidresponsefactory-mockbatchkvresponsefactory-mockbatchentityresponsefactory-mockbatchresponsefactory-and-mockcollectionresponsefactory">MockBatchCreateIdResponseFactory, MockBatchKVResponseFactory, MockBatchEntityResponseFactory, MockBatchResponseFactory, and MockCollectionResponseFactory</h4>
+
+<p>The other classes in this module, namely <code class="highlighter-rouge">MockBatchCreateIdResponseFactory</code>, <code class="highlighter-rouge">MockBatchKVResponseFactory</code>, <code class="highlighter-rouge">MockBatchEntityResponseFactory</code>, <code class="highlighter-rouge">MockBatchResponseFactory</code>, and <code class="highlighter-rouge">MockCollectionResponseFactory</code> are used to construct specific types of <code class="highlighter-rouge">RecordTemplate</code> objects. The use case for these classes is that they will be used to construct a specific type of entity which can then be used in the <code class="highlighter-rouge">MockResponseBuilder</code>, <code class="highlighter-rouge">MockSuccessfulResponseFutureBuilder</code>, or <code class="highlighter-rouge">MockFailedResponseFutureBuilder</code> as the entity object. For example, say you are making a request to a Rest.li finder on a <code class="highlighter-rouge">/greetings</code> resource. You can model the fact that this request returns a <code class="highlighter-rouge">CollectionResponse&lt;Greeting&gt;</code> as follows:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// assume "data" is what we want to return</span>
+<span class="nc">CollectionResponse</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">mockResponse</span> <span class="o">=</span> <span class="nc">MockCollectionResponseFactory</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="nc">Greetings</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">data</span><span class="o">);</span>
+<span class="nc">MockSuccessfulResponseFutureBuilder</span><span class="o">&lt;</span><span class="nc">CollectionResponse</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;&gt;</span> <span class="n">responseFutureBuilder</span> <span class="o">=</span> 
+  <span class="k">new</span> <span class="nc">MockSuccessfulResponseFutureBuilder</span><span class="o">&lt;</span><span class="nc">CollectionResponse</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;&gt;().</span><span class="na">setEntity</span><span class="o">(</span><span class="n">expectedGreeting</span><span class="o">);</span>
+<span class="c1">// use the ResponseFuture that you will get from the builder in tests</span>
+</code></pre></div></div>
+
+<h2 id="writing-unit-tests-for-restli-servers">Writing Unit Tests for Rest.li Servers</h2>
+
+<h4 id="mockhttpserverfactory">MockHttpServerFactory</h4>
+
+<p>The <code class="highlighter-rouge">MockHttpServerFactory</code> class is used to create a stand-alone Rest.li server easily that you can then write tests against. The primary use case for this class would be to bring up a Rest.li server at the start of the test, and then each test can test a different endpoint that this server supports. This factory also allows us to pass in beans that would have been injected into your Rest.li server by the Rest.li framework. For more information on bean injection in a Rest.li server, see the <a href="/rest.li/user_guide/restli_server#dependency-injection">documentation on Dependency Injection</a>.</p>
+
+<p>Suppose we want to test that we have implemented the GET method correctly for our resource <code class="highlighter-rouge">GreetingsResource</code>. Let’s assume that <code class="highlighter-rouge">GreetingsResource</code> needs one bean named “db” of type <code class="highlighter-rouge">DataBase</code> to be injected. Here is what our test might look like (assuming we are using TestNG):</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">TestGreetingsResource</span>
+<span class="o">{</span>
+  <span class="kd">private</span> <span class="nc">HttpServer</span> <span class="n">_testServer</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="nc">Client</span> <span class="n">_restClient</span><span class="o">;</span>
+  
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">int</span> <span class="no">PORT</span> <span class="o">=</span> <span class="mi">7777</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">String</span> <span class="no">HOST</span> <span class="o">=</span> <span class="s">"http://localhost:"</span> <span class="o">+</span> <span class="no">PORT</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="nc">GreetingsBuilders</span> <span class="no">GREETINGS_BUILDERS</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">GreetingsBuilders</span><span class="o">();</span>
+  
+  <span class="nd">@BeforeTest</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">init</span><span class="o">()</span>
+  <span class="o">{</span>
+    <span class="nc">DataBase</span> <span class="n">testDataBase</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">TestDataBase</span><span class="o">();</span>
+    <span class="nc">Map</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">Object</span><span class="o">&gt;</span> <span class="n">beans</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">HashMap</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">Object</span><span class="o">&gt;();</span>
+    <span class="n">beans</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">"db"</span><span class="o">,</span> <span class="n">testDataBase</span><span class="o">);</span>
+    <span class="nc">Set</span><span class="o">&lt;</span><span class="nc">Class</span><span class="o">&gt;</span> <span class="n">resourceClasses</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">HashSet</span><span class="o">&lt;</span><span class="nc">Class</span><span class="o">&gt;();</span>
+    <span class="n">resourceClasses</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="nc">GreetingsResource</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+    
+    <span class="c1">// use the factory to create a test server</span>
+    <span class="n">_testServer</span> <span class="o">=</span> <span class="nc">MockHttpServerFactory</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="no">PORT</span><span class="o">,</span> <span class="n">resourceClasses</span><span class="o">,</span> <span class="n">beans</span><span class="o">,</span> <span class="kc">true</span><span class="o">);</span>
+
+    <span class="c1">// start the server</span>
+    <span class="n">_testServer</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+    
+    <span class="c1">// initialize other members</span>
+  <span class="o">}</span>
+  
+  <span class="nd">@Test</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">testGet</span><span class="o">()</span>
+  <span class="o">{</span>
+    <span class="nc">GetRequest</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">getRequest</span> <span class="o">=</span> <span class="no">GREETINGS_BUILDERS</span><span class="o">.</span><span class="na">get</span><span class="o">().</span><span class="na">id</span><span class="o">(</span><span class="mi">1L</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+    <span class="nc">Greeting</span> <span class="n">expectedGreeting</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Greeting</span><span class="o">().</span><span class="na">setId</span><span class="o">(</span><span class="mi">1L</span><span class="o">).</span><span class="na">setMessage</span><span class="o">(</span><span class="s">"test greeting"</span><span class="o">);</span>
+    <span class="c1">// the request sent by the _restClient goes to our _testServer. </span>
+    <span class="nc">Greeting</span> <span class="n">actualGreeting</span> <span class="o">=</span> <span class="n">_restClient</span><span class="o">.</span><span class="na">sendRequest</span><span class="o">(</span><span class="n">getRequest</span><span class="o">).</span><span class="na">getResponseEntity</span><span class="o">();</span>
+    <span class="nc">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="n">actualGreeting</span><span class="o">,</span> <span class="n">expectedGreeting</span><span class="o">);</span>
+  <span class="o">}</span>
+  
+  <span class="c1">// other tests</span>
+  
+  <span class="nd">@AfterTest</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">cleanup</span><span class="o">()</span>
+  <span class="o">{</span>
+    <span class="n">_testServer</span><span class="o">.</span><span class="na">stop</span><span class="o">();</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+
+<h2 id="writing-unit-tests-for-restli-data-recordtemplates-and-datamaps">Writing Unit Tests for Rest.li Data (RecordTemplates and DataMaps)</h2>
+
+<p>The <code class="highlighter-rouge">restli-common-testutils</code> module contains <code class="highlighter-rouge">DataAssert</code>, a class which allows you to compare <code class="highlighter-rouge">DataMap</code>s and <code class="highlighter-rouge">RecordTemplate</code>s.</p>
+
+<h4 id="dataassert">DataAssert</h4>
+
+<p>The <code class="highlighter-rouge">DataAssert</code> class contains methods that allow you to compare two <code class="highlighter-rouge">DataMap</code>s, <code class="highlighter-rouge">RecordTemplate</code>s or <code class="highlighter-rouge">Collection</code>s of <code class="highlighter-rouge">RecordTemplate</code>s. These methods print out an easy to read output in case of an inequality, with the error message containing only the field(s) which makes the passed in objects not equal to each other. This is better than using a regular JUnit or TestNG <code class="highlighter-rouge">Assert.assertEquals</code> method as it might be hard to figure which field(s) caused the inequality, since the vanilla <code class="highlighter-rouge">Assert.assertEquals</code> print out the <code class="highlighter-rouge">toString()</code> of both objects which can be hard to read if there are many fields. Internally, this class uses TestNG to run assertions.</p>
+
+<p>You can also specify <code class="highlighter-rouge">ValidationOptions</code> that will be applied to the passed in <code class="highlighter-rouge">RecordTemplate</code>s before any comparison takes place. Please see the Javadoc for more details. Similarly, when comparing two <code class="highlighter-rouge">DataMap</code>s you can also specify that <code class="highlighter-rouge">null</code> is the same as an empty <code class="highlighter-rouge">DataList</code> or <code class="highlighter-rouge">DataMap</code>. Again, please see the Javadoc for more details.</p>
+
+<p>Here is an example on how to use this class:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// we make a request to our server for which we know the expected result.</span>
+<span class="c1">// we then compare the actual result with the expected result.</span>
+<span class="nc">Greeting</span> <span class="n">actualGreeting</span> <span class="o">=</span> <span class="n">_restClient</span><span class="o">.</span><span class="na">sendRequest</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">getResponseEntity</span><span class="o">();</span>
+<span class="nc">Greeting</span> <span class="n">expectedGreeting</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Greeting</span><span class="o">().</span><span class="na">setId</span><span class="o">(</span><span class="mi">1L</span><span class="o">).</span><span class="na">setMessage</span><span class="o">(</span><span class="s">"Greeting 1"</span><span class="o">);</span>
+<span class="c1">// we do not want to perform fix-up or coercion, hence we pass in null as the last argument.</span>
+<span class="nc">DataAssert</span><span class="o">.</span><span class="na">assertRecordTemplateDataEqual</span><span class="o">(</span><span class="n">actualGreeting</span><span class="o">,</span> <span class="n">expectedGreeting</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+</code></pre></div></div>
+
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

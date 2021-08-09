@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Rest.li D2 Dynamic discovery tutorial</title>
+    <meta name="description" content="Rest.li D2 Dynamic discovery tutorial" />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/start/d2_quick_start" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Getting Started</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/get_started/quick_start">Quick Start Guide</a></li>
+                       
+                         <li><a href="/rest.li/start/step_by_step">Step by Step Tutorial</a></li>
+                       
+                         <li><a href="/rest.li/start/d2_quick_start">Dynamic Discovery</a></li>
+                       
+                         <li><a href="/rest.li/start/unstructured">Unstructured Data (BLOB)</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Installation</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/setup/building">Building Rest.li from Source</a></li>
+                       
+                         <li><a href="/rest.li/setup/gradle">Gradle Build Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Presentations</span></li>
+                        <ul>
+                       
+                         <li><a href="https://www.slideshare.net/minchencm/saturn-2018-restli">Rest.li, R2D2, Deco, and ParSeq at Saturn 2018.</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="dynamic-discovery-d2-quick-start">Dynamic Discovery (D2) Quick Start</h1>
+
+<h2 id="contents">Contents</h2>
+
+<p>In this tutorial, we will explain the basic concepts of D2 using a
+simple client server project. <a href="http://zookeeper.apache.org/">Apache
+Zookeeper</a> is required for doing this
+tutorial. The completed code for this tutorial is available in Rest.li’s
+examples/d2-quickstart:</p>
+
+<ul>
+  <li><a href="#what-is-d2-in-a-nutshell">What is D2 in a Nutshell</a></li>
+  <li><a href="#the-tutorial">The Tutorial</a>
+    <ul>
+      <li><a href="#step-1-create-a-server">Step 1. Create a Server</a></li>
+      <li><a href="#step-2-create-a-config-runner">Step 2. Create a Config Runner</a></li>
+      <li><a href="#step-3-create-a-client">Step 3. Create a Client</a></li>
+    </ul>
+  </li>
+  <li><a href="#next-steps">Next Steps</a></li>
+</ul>
+
+<h2 id="what-is-d2-in-a-nutshell">What is D2 in a Nutshell</h2>
+
+<p>Imagine we have a Service Oriented Architecture. Let’s say we have
+hundreds of servers. Each server can host different set of services.
+Some of those services may be partitioned, so a server may belong to some
+specific partitions for those services. We use D2 to store information
+about which server can serve what service. So this means with D2, a
+client requesting a particular service doesn’t need to know where the
+physical servers are. The client can ask D2 to route a request to the
+right server. D2 is similar to DNS in some ways. At the core, D2 is a layer of indirection between a client and a
+server. However, D2 supports many other goodies like client side load
+balancing, partitioning, and multi-data-center routing.</p>
+
+<p>Our smallest unit of indirection is called a <strong>service</strong>. A service can
+be a URL endpoint, a Rest.li resource, or anything else as long as the
+name of the service is <em>unique</em>. A collection of services is called a
+<strong>cluster</strong>. A service that belongs to one cluster cannot belong to a
+different cluster. A cluster has <em>one-to-many</em> relationship to a
+service. All this information about clusters and services is stored in
+Zookeeper.</p>
+
+<p>A server joins a cluster by creating an ephemeral node in Zookeeper.
+When a server dies, Zookeeper will notice because the heart beat message
+is not refreshed. Then, the ephemeral node is automatically removed.</p>
+
+<p>A client attempting to send a request to a service first consults
+Zookeeper to find out which cluster owns the service. Then, the client
+queries Zookeeper for all the ephemeral nodes (servers) for that
+cluster. Given a list of ephemeral nodes, the client will deliberately
+choose a server to send the request to.</p>
+
+<p>That is all you need to know about D2 in a nutshell.</p>
+
+<h2 id="the-tutorial">The Tutorial</h2>
+
+<p>We will create a basic client server application in Java. We use gradle
+for our build process. The top level structure of our project will have
+3 subdirectories:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/server
+/client
+/config
+</code></pre></div></div>
+
+<p>You also need a settings.gradle and build.gradle file in the root
+directory.</p>
+
+<p>For settings.gradle:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>include 'server'
+include 'client'
+include 'config'
+</code></pre></div></div>
+
+<p>This will tell gradle that gradle should search for <code class="highlighter-rouge">server</code>, <code class="highlighter-rouge">client</code>,
+<code class="highlighter-rouge">config</code> directories and mark them as part of the project.</p>
+
+<p>For build.gradle:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>allprojects {
+    apply plugin: 'idea'
+    apply plugin: 'eclipse'
+}
+
+final pegasusVersion = '1.20.0'
+ext.spec = [
+    'product' : [
+        'pegasus' : [
+                'r2' : 'com.linkedin.pegasus:r2:' + pegasusVersion,
+                'd2' : 'com.linkedin.pegasus:d2:' + pegasusVersion
+        ]
+    ]
+]
+
+subprojects {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+</code></pre></div></div>
+
+<p>This tells gradle that it should use pegasus artifact version 1.20.0
+from the maven central repository. This also tells gradle we have
+dependencies to r2 and d2 libraries.</p>
+
+<h3 id="step-1-create-a-server">Step 1. Create a Server</h3>
+
+<p>Create the following project structure in the <code class="highlighter-rouge">server</code> sub-directory:</p>
+
+<ul>
+  <li><strong>d2-quickstart/</strong>
+    <ul>
+      <li><strong>client/</strong></li>
+      <li><strong>config/</strong></li>
+      <li><strong>server/</strong>
+        <ul>
+          <li><strong>build.gradle</strong></li>
+          <li><strong>src/</strong>
+            <ul>
+              <li><strong>main/</strong>
+                <ul>
+                  <li><strong>java/</strong>
+                    <ul>
+                      <li><strong>com/</strong>
+                        <ul>
+                          <li><strong>example/</strong>
+                            <ul>
+                              <li><strong>d2/</strong>
+                                <ul>
+                                  <li><strong>server/</strong>
+                                    <ul>
+                                      <li><strong>EchoServer.java</strong></li>
+                                      <li><strong>ExampleD2Server.java</strong></li>
+                                    </ul>
+                                  </li>
+                                </ul>
+                              </li>
+                            </ul>
+                          </li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </li>
+                  <li><strong>config/</strong>
+                    <ul>
+                      <li><strong>server.json</strong></li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<p>In this example, we are creating an echo server to illustrate a real
+production server. The echo server always returns HTTP status code 200
+and prints to stdout when a request comes in.</p>
+
+<p>First, we add our compile dependencies to the server’s build.gradle:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apply plugin: 'java'
+
+dependencies {
+    compile 'com.googlecode.json-simple:json-simple:1.1.1'
+    compile spec.product.pegasus.r2
+    compile spec.product.pegasus.d2
+}
+</code></pre></div></div>
+
+<p>Here is the implementation of the echo server:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">package</span> <span class="n">com</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">d2</span><span class="p">.</span><span class="n">server</span><span class="p">;</span>
+
+<span class="n">import</span> <span class="n">com</span><span class="p">.</span><span class="n">sun</span><span class="p">.</span><span class="n">net</span><span class="p">.</span><span class="n">httpserver</span><span class="p">.</span><span class="n">HttpExchange</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">com</span><span class="p">.</span><span class="n">sun</span><span class="p">.</span><span class="n">net</span><span class="p">.</span><span class="n">httpserver</span><span class="p">.</span><span class="n">HttpHandler</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">com</span><span class="p">.</span><span class="n">sun</span><span class="p">.</span><span class="n">net</span><span class="p">.</span><span class="n">httpserver</span><span class="p">.</span><span class="n">HttpServer</span><span class="p">;</span>
+
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">io</span><span class="p">.</span><span class="n">IOException</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">io</span><span class="p">.</span><span class="n">OutputStream</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">net</span><span class="p">.</span><span class="n">InetSocketAddress</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="n">Date</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="k">List</span><span class="p">;</span>
+
+<span class="k">public</span> <span class="n">class</span> <span class="n">EchoServer</span>
+<span class="p">{</span>
+  <span class="n">private</span> <span class="n">final</span> <span class="n">int</span>        <span class="n">_port</span><span class="p">;</span>
+  <span class="n">private</span> <span class="n">final</span> <span class="n">HttpServer</span> <span class="n">_server</span><span class="p">;</span>
+
+  <span class="k">public</span> <span class="n">EchoServer</span> <span class="p">(</span><span class="n">int</span> <span class="n">port</span><span class="p">,</span> <span class="n">final</span> <span class="k">String</span> <span class="n">name</span><span class="p">,</span> <span class="k">List</span><span class="p">&lt;</span><span class="k">String</span><span class="p">&gt;</span> <span class="n">contextPaths</span><span class="p">)</span>
+      <span class="n">throws</span> <span class="n">IOException</span>
+  <span class="p">{</span>
+    <span class="n">_port</span> <span class="p">=</span> <span class="n">port</span><span class="p">;</span>
+    <span class="n">_server</span> <span class="p">=</span> <span class="n">HttpServer</span><span class="p">.</span><span class="nb">create</span><span class="p">(</span><span class="n">new</span> <span class="n">InetSocketAddress</span><span class="p">(</span><span class="n">_port</span><span class="p">),</span> <span class="m">0</span><span class="p">);</span>
+    <span class="n">for</span> <span class="p">(</span><span class="k">String</span> <span class="n">contextPath</span> <span class="p">:</span> <span class="n">contextPaths</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">_server</span><span class="p">.</span><span class="n">createContext</span><span class="p">(</span><span class="n">contextPath</span><span class="p">,</span> <span class="n">new</span> <span class="n">MyHandler</span><span class="p">(</span><span class="n">contextPath</span><span class="p">,</span> <span class="n">name</span><span class="p">));</span>
+    <span class="p">}</span>
+    <span class="n">_server</span><span class="p">.</span><span class="n">setExecutor</span><span class="p">(</span><span class="n">null</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="n">static</span> <span class="n">class</span> <span class="n">MyHandler</span> <span class="n">implements</span> <span class="n">HttpHandler</span>
+  <span class="p">{</span>
+    <span class="n">private</span> <span class="n">final</span> <span class="k">String</span> <span class="n">_name</span><span class="p">;</span>
+    <span class="n">private</span> <span class="n">final</span> <span class="k">String</span> <span class="n">_serverName</span><span class="p">;</span>
+
+    <span class="n">private</span> <span class="n">MyHandler</span><span class="p">(</span><span class="k">String</span> <span class="n">name</span><span class="p">,</span> <span class="k">String</span> <span class="n">serverName</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">_name</span> <span class="p">=</span> <span class="n">name</span><span class="p">;</span>
+      <span class="n">_serverName</span> <span class="p">=</span> <span class="n">serverName</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="n">void</span> <span class="n">handle</span><span class="p">(</span><span class="n">HttpExchange</span> <span class="n">t</span><span class="p">)</span> <span class="n">throws</span> <span class="n">IOException</span>
+    <span class="p">{</span>
+      <span class="nf">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="n">new</span> <span class="n">Date</span><span class="p">().</span><span class="n">toString</span><span class="p">()</span> <span class="p">+</span> <span class="s2">": "</span> <span class="p">+</span> <span class="n">_serverName</span>
+                             <span class="p">+</span> <span class="s2">" received a request for the context handler = "</span> <span class="p">+</span> <span class="n">_name</span> <span class="p">);</span>
+      <span class="k">String</span> <span class="n">response</span> <span class="p">=</span> <span class="s2">"Successfully contacted server "</span> <span class="p">+</span> <span class="n">_serverName</span><span class="p">;</span>
+      <span class="n">t</span><span class="p">.</span><span class="n">sendResponseHeaders</span><span class="p">(</span><span class="m">200</span><span class="p">,</span> <span class="n">response</span><span class="p">.</span><span class="n">length</span><span class="p">());</span>
+      <span class="n">OutputStream</span> <span class="n">os</span> <span class="p">=</span> <span class="n">t</span><span class="p">.</span><span class="n">getResponseBody</span><span class="p">();</span>
+      <span class="n">os</span><span class="p">.</span><span class="nb">write</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="n">getBytes</span><span class="p">());</span>
+      <span class="n">os</span><span class="p">.</span><span class="n">close</span><span class="p">();</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="k">public</span> <span class="n">void</span> <span class="n">start</span><span class="p">()</span>
+      <span class="n">throws</span> <span class="n">IOException</span>
+  <span class="p">{</span>
+    <span class="n">_server</span><span class="p">.</span><span class="n">start</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="k">public</span> <span class="n">void</span> <span class="nf">stop</span><span class="p">()</span>
+      <span class="n">throws</span> <span class="n">IOException</span>
+  <span class="p">{</span>
+    <span class="n">_server</span><span class="p">.</span><span class="nf">stop</span><span class="p">(</span><span class="m">0</span><span class="p">);</span>
+  <span class="p">}</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>We store the configuration for the servers in server.json. Here is the
+content of server.json:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+    "echoServers" :
+        [
+            {
+                "name" : "RecommendationService-1",
+                "port" : 39901,
+                "threadPoolSize" : 1,
+                "contextPaths" : [
+                    "/articleRecommendation",
+                    "/jobRecommendation"
+                ]
+            },
+            {
+                "name" : "RecommendationService-2",
+                "port" : 39902,
+                "threadPoolSize" : 1,
+                "contextPaths" : [
+                    "/articleRecommendation",
+                    "/jobRecommendation"
+                ]
+            },
+            {
+                "name" : "RecommendationService-3",
+                "port" : 39903,
+                "threadPoolSize" : 1,
+                "contextPaths" : [
+                    "/articleRecommendation",
+                    "/jobRecommendation"
+                ]
+            },
+            {
+                "name" : "NewsService-1",
+                "port" : 39904,
+                "threadPoolSize" : 1,
+                "contextPaths" : [
+                    "/newsArticle"
+                ]
+            },
+            {
+                "name" : "NewsService-2",
+                "port" : 39905,
+                "threadPoolSize" : 1,
+                "contextPaths" : [
+                    "/newsArticle"
+                ]
+            },
+            {
+                "name" : "NewsService-3",
+                "port" : 39906,
+                "threadPoolSize" : 1,
+                "contextPaths" : [
+                    "/newsArticle"
+                ]
+            }
+        ],
+    "d2Servers" :
+        [
+            {
+                "serverUri" : "http://localhost:39901",
+                "d2Cluster" : "RecommendationService",
+                "partitionData" : {
+                    "0" : {
+                        "weight" : "1.0"
+                    }
+                }
+            },
+            {
+                "serverUri" : "http://localhost:39902",
+                "d2Cluster" : "RecommendationService",
+                "partitionData" : {
+                    "0" : {
+                        "weight" : "1.0"
+                    }
+                }
+            },
+            {
+                "serverUri" : "http://localhost:39903",
+                "d2Cluster" : "RecommendationService",
+                "partitionData" : {
+                    "0" : {
+                        "weight" : "1.0"
+                    }
+                }
+            },
+            {
+                "serverUri" : "http://localhost:39904",
+                "d2Cluster" : "NewsService",
+                "partitionData" : {
+                    "0" : {
+                        "weight" : "1.0"
+                    }
+                }
+            },
+            {
+                "serverUri" : "http://localhost:39905",
+                "d2Cluster" : "NewsService",
+                "partitionData" : {
+                    "0" : {
+                        "weight" : "1.0"
+                    }
+                }
+            },
+            {
+                "serverUri" : "http://localhost:39906",
+                "d2Cluster" : "NewsService",
+                "partitionData" : {
+                    "0" : {
+                        "weight" : "1.0"
+                    }
+                }
+            }
+        ],
+    "zkConnectString" : "localhost:2181",
+    "zkSessionTimeout" : 5000,
+    "zkBasePath" : "/d2",
+    "zkRetryLimit" : 10,
+    "announcerStartTimeout" : 5000,
+    "announcerShutdownTimeout" : 5000
+}
+</code></pre></div></div>
+
+<p>In the configuration, above we have 6 echo servers and 6 d2 announcers.
+The first 3 echo servers belong to RecommendationService, and the
+remaining echo servers belong to NewsService.</p>
+
+<p>Finally, we add the task of running this server to the server’s
+build.gradle:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>task runServer(type: JavaExec) {
+    main = 'com.example.d2.server.ExampleD2Server'
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+}
+</code></pre></div></div>
+
+<p>In order to run the server, you run this command:</p>
+
+<p><code class="highlighter-rouge">../../gradlew runServer
+</code></p>
+
+<h3 id="step-2-create-a-config-runner">Step 2. Create a Config Runner</h3>
+
+<p>Create the following project structure in the ‘config’ sub-directory:</p>
+
+<ul>
+  <li><strong>d2-quickstart/</strong>
+    <ul>
+      <li><strong>client/</strong></li>
+      <li><strong>config/</strong>
+        <ul>
+          <li><strong>build.gradle</strong></li>
+          <li><strong>src/</strong>
+            <ul>
+              <li><strong>main/</strong>
+                <ul>
+                  <li><strong>java/</strong>
+                    <ul>
+                      <li><strong>com/</strong>
+                        <ul>
+                          <li><strong>example/</strong>
+                            <ul>
+                              <li><strong>d2/</strong>
+                                <ul>
+                                  <li><strong>config/</strong>
+                                    <ul>
+                                      <li><strong>ConfigRunner.java</strong></li>
+                                    </ul>
+                                  </li>
+                                </ul>
+                              </li>
+                            </ul>
+                          </li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </li>
+                  <li><strong>d2Config/</strong>
+                    <ul>
+                      <li><strong>d2Config.json</strong></li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li><strong>server/</strong></li>
+    </ul>
+  </li>
+</ul>
+
+<p>We specify the mapping of clusters and services in d2Config.json. In
+real production scenario, we can do a lot more with d2Config. We can
+configure how the load balancer behaves. We can also set up partitioning
+and sticky routings.</p>
+
+<p>But for simplicity we won’t include all these in this example. Here is
+how our d2Config.json going to look like:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+    "d2Clusters" : {
+        "RecommendationService": {
+            "services":
+                {
+                    "articleRecommendation": {
+                        "path" : "/articleRecommendation"
+                    },
+                    "jobRecommendation": {
+                        "path" : "/jobRecommendation"
+                    }
+                }
+
+        },
+        "NewsService": {
+            "services":
+                {
+                    "newsArticle" : {
+                        "path" : "/newsArticle"
+                    }
+                }
+
+        }
+    },
+    "defaultServiceProperties" : {
+        "loadBalancerStrategyList" : [
+            "degraderV3",
+            "degraderV2"
+        ],
+        "prioritizedSchemes" : [
+            "http"
+        ],
+        "loadBalancerStrategyProperties" : {
+            "http.loadBalancer.updateIntervalMs" : "5000",
+            "http.loadBalancer.pointsPerWeight" : "100"
+        },
+        "transportClientProperties" : {
+            "http.requestTimeout" : "10000"
+        },
+        "degraderProperties" : {
+            "degrader.minCallCount" : "10",
+            "degrader.lowErrorRate" : "0.01",
+            "degrader.highErrorRate" : "0.1"
+        }
+    },
+    "zkConnectString" : "localhost:2181",
+    "zkSessionTimeout" : 5000,
+    "zkBasePath" : "/d2",
+    "zkRetryLimit" : 10
+}
+</code></pre></div></div>
+
+<p>From reading the configuration above you probably have questions about
+these properties. So here are some explanation for some non-obvious
+ones.</p>
+
+<ul>
+  <li><strong>loadBalancerStrategyList</strong> was set to a list consisting of
+<strong>degraderV3</strong> and <strong>degraderV2</strong>. This means, we try to use
+<strong>degraderV3</strong> if possible. The difference between <strong>degraderV3</strong>
+and <strong>degraderV2</strong> is degraderV3 supports <em>partitioning</em> while
+degraderV2 does not.</li>
+  <li>For schemes we support <strong>https</strong> and <strong>http</strong>, but for simplicity
+we’ll use only <strong>http</strong>. Using <strong>https</strong> require us to wire in SSL
+parameter and that’s beyond the scope of this example.</li>
+</ul>
+
+<p>The rest of the config values should be pretty obvious. For the list of
+all configuration please see <a href="/rest.li/D2-Zookeeper-Properties">D2 Zookeeper Properties</a>.</p>
+
+<p>Then we modify the config’s build.gradle to add our java dependencies.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apply plugin: 'java'
+
+dependencies {
+    compile 'com.googlecode.json-simple:json-simple:1.1.1'
+    compile spec.product.pegasus.d2
+}
+</code></pre></div></div>
+
+<p>Next we will create a java class that reads this config and publish it
+to zookeeper. We have a utility class called D2Config that does this for
+you. But we have to feed D2Config some parameters in order for it to
+work.</p>
+
+<p>Here’s the java class for running the D2Config.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">package</span> <span class="n">com</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">d2</span><span class="p">.</span><span class="n">config</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">com</span><span class="p">.</span><span class="n">linkedin</span><span class="p">.</span><span class="n">d2</span><span class="p">.</span><span class="n">discovery</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="n">D2Config</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">org</span><span class="p">.</span><span class="n">json</span><span class="p">.</span><span class="n">simple</span><span class="p">.</span><span class="n">JSONObject</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">org</span><span class="p">.</span><span class="n">json</span><span class="p">.</span><span class="n">simple</span><span class="p">.</span><span class="n">parser</span><span class="p">.</span><span class="n">JSONParser</span><span class="p">;</span>
+
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">io</span><span class="p">.</span><span class="n">File</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">io</span><span class="p">.</span><span class="n">FileReader</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="n">Collections</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="n">Map</span><span class="p">;</span>
+
+<span class="k">public</span> <span class="n">class</span> <span class="n">ConfigRunner</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="n">static</span> <span class="n">void</span> <span class="n">main</span><span class="p">(</span><span class="k">String</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+      <span class="n">throws</span> <span class="n">Exception</span>
+  <span class="p">{</span>
+    <span class="p">//</span><span class="n">get</span> <span class="n">server</span> <span class="n">configuration</span>
+    <span class="k">String</span> <span class="n">path</span> <span class="p">=</span> <span class="n">new</span> <span class="n">File</span><span class="p">(</span><span class="n">new</span> <span class="n">File</span><span class="p">(</span><span class="s2">"."</span><span class="p">).</span><span class="n">getAbsolutePath</span><span class="p">()).</span><span class="n">getCanonicalPath</span><span class="p">()</span> <span class="p">+</span>
+        <span class="s2">"/src/main/d2Config/d2Config.json"</span><span class="p">;</span>
+    <span class="n">JSONParser</span> <span class="n">parser</span> <span class="p">=</span> <span class="n">new</span> <span class="n">JSONParser</span><span class="p">();</span>
+    <span class="n">Object</span> <span class="n">object</span> <span class="p">=</span> <span class="n">parser</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">new</span> <span class="n">FileReader</span><span class="p">(</span><span class="n">path</span><span class="p">));</span>
+    <span class="n">JSONObject</span> <span class="n">json</span> <span class="p">=</span> <span class="p">(</span><span class="n">JSONObject</span><span class="p">)</span> <span class="n">object</span><span class="p">;</span>
+    <span class="nf">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s2">"Finished parsing d2 topology config"</span><span class="p">);</span>
+
+    <span class="k">String</span> <span class="n">zkConnectString</span> <span class="p">=</span> <span class="p">(</span><span class="k">String</span><span class="p">)</span><span class="n">json</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"zkConnectString"</span><span class="p">);</span>
+    <span class="n">int</span> <span class="n">zkSessionTimeout</span> <span class="p">=</span> <span class="p">((</span><span class="n">Long</span><span class="p">)</span><span class="n">json</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"zkSessionTimeout"</span><span class="p">)).</span><span class="n">intValue</span><span class="p">();</span>
+    <span class="k">String</span> <span class="n">zkBasePath</span> <span class="p">=</span> <span class="p">(</span><span class="k">String</span><span class="p">)</span><span class="n">json</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"zkBasePath"</span><span class="p">);</span>
+    <span class="n">int</span> <span class="n">zkRetryLimit</span> <span class="p">=</span> <span class="p">((</span><span class="n">Long</span><span class="p">)</span><span class="n">json</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"zkRetryLimit"</span><span class="p">)).</span><span class="n">intValue</span><span class="p">();</span>
+
+    <span class="n">Map</span><span class="p">&lt;</span><span class="k">String</span><span class="p">,</span><span class="n">Object</span><span class="p">&gt;</span> <span class="n">serviceDefaults</span> <span class="p">=</span> <span class="p">(</span><span class="n">Map</span><span class="p">&lt;</span><span class="k">String</span><span class="p">,</span> <span class="n">Object</span><span class="p">&gt;)</span><span class="n">json</span><span class="p">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s2">"defaultServiceProperties"</span><span class="p">);</span>
+
+    <span class="p">//</span><span class="n">this</span> <span class="n">contains</span> <span class="n">the</span> <span class="n">topology</span> <span class="k">of</span> <span class="n">our</span> <span class="nf">system</span>
+    <span class="n">Map</span><span class="p">&lt;</span><span class="k">String</span><span class="p">,</span><span class="n">Object</span><span class="p">&gt;</span> <span class="n">clusterServiceConfigurations</span> <span class="p">=</span>
+        <span class="p">(</span><span class="n">Map</span><span class="p">&lt;</span><span class="k">String</span><span class="p">,</span> <span class="n">Object</span><span class="p">&gt;)</span><span class="n">json</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"d2Clusters"</span><span class="p">);</span>
+
+    <span class="nf">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s2">"Populating zookeeper with d2 configuration"</span><span class="p">);</span>
+
+    <span class="p">//</span><span class="n">d2Config</span> <span class="n">is</span> <span class="n">the</span> <span class="n">utility</span> <span class="n">class</span> <span class="n">for</span> <span class="n">populating</span> <span class="n">zookeeper</span> <span class="k">with</span> <span class="n">our</span> <span class="n">topology</span>
+    <span class="p">//</span><span class="n">some</span> <span class="n">the</span> <span class="n">params</span> <span class="n">are</span> <span class="k">not</span> <span class="n">needed</span> <span class="n">for</span> <span class="n">this</span> <span class="n">simple</span> <span class="n">example</span> <span class="n">so</span> <span class="n">we</span> <span class="n">will</span> <span class="n">just</span> <span class="n">use</span>
+    <span class="p">//</span><span class="n">default</span> <span class="n">value</span> <span class="n">by</span> <span class="n">passing</span> <span class="n">an</span> <span class="n">empty</span> <span class="n">map</span>
+    <span class="n">D2Config</span> <span class="n">d2Config</span> <span class="p">=</span> <span class="n">new</span> <span class="n">D2Config</span><span class="p">(</span><span class="n">zkConnectString</span><span class="p">,</span> <span class="n">zkSessionTimeout</span><span class="p">,</span> <span class="n">zkBasePath</span><span class="p">,</span>
+                                     <span class="n">zkSessionTimeout</span><span class="p">,</span> <span class="n">zkRetryLimit</span><span class="p">,</span>
+                                     <span class="p">(</span><span class="n">Map</span><span class="p">&lt;</span><span class="k">String</span><span class="p">,</span> <span class="n">Object</span><span class="p">&gt;)</span><span class="n">Collections</span><span class="p">.</span><span class="n">EMPTY_MAP</span><span class="p">,</span>
+                                     <span class="n">serviceDefaults</span><span class="p">,</span>
+                                     <span class="n">clusterServiceConfigurations</span><span class="p">,</span>
+                                     <span class="p">(</span><span class="n">Map</span><span class="p">&lt;</span><span class="k">String</span><span class="p">,</span> <span class="n">Object</span><span class="p">&gt;)</span><span class="n">Collections</span><span class="p">.</span><span class="n">EMPTY_MAP</span><span class="p">,</span>
+                                     <span class="p">(</span><span class="n">Map</span><span class="p">&lt;</span><span class="k">String</span><span class="p">,</span> <span class="n">Object</span><span class="p">&gt;)</span><span class="n">Collections</span><span class="p">.</span><span class="n">EMPTY_MAP</span><span class="p">);</span>
+
+    <span class="p">//</span><span class="n">populate</span> <span class="n">zookeeper</span>
+    <span class="n">d2Config</span><span class="p">.</span><span class="n">configure</span><span class="p">();</span>
+    <span class="nf">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s2">"Finished populating zookeeper with d2 configuration"</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Finally, we add a task in config’s build.gradle to run the above Java
+class.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>task runConfigRunner(type: JavaExec) {
+    main = 'com.example.d2.config.ConfigRunner'
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+}
+</code></pre></div></div>
+
+<p>In order to run D2Config run ../../gradlew runConfigRunner</p>
+
+<h3 id="step-3-create-a-client">Step 3. Create a Client</h3>
+
+<p>Create the following project structure in the ‘client’ subdirectory:</p>
+
+<ul>
+  <li><strong>d2-quickstart/</strong>
+    <ul>
+      <li><strong>client/</strong>
+        <ul>
+          <li><strong>build.gradle</strong></li>
+          <li><strong>src/</strong>
+            <ul>
+              <li><strong>main/</strong>
+                <ul>
+                  <li><strong>java/</strong>
+                    <ul>
+                      <li><strong>com/</strong>
+                        <ul>
+                          <li><strong>example/</strong>
+                            <ul>
+                              <li><strong>d2/</strong>
+                                <ul>
+                                  <li><strong>client/</strong>
+                                    <ul>
+                                      <li><strong>ExampleD2Client.java</strong></li>
+                                    </ul>
+                                  </li>
+                                </ul>
+                              </li>
+                            </ul>
+                          </li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </li>
+                  <li><strong>config/</strong>
+                    <ul>
+                      <li><strong>client.json</strong></li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li><strong>config/</strong></li>
+      <li><strong>server/</strong></li>
+    </ul>
+  </li>
+</ul>
+
+<p>First we create build.gradle to declare our java dependencies</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apply plugin: 'java'
+dependencies {
+    compile 'com.googlecode.json-simple:json-simple:1.1.1'
+    compile spec.product.pegasus.d2
+}
+</code></pre></div></div>
+
+<p>Then we need the client code to instantiate D2 client and to send
+traffic through the D2 client. Here’s how our ExampleD2Client looks
+like:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">package</span> <span class="n">com</span><span class="p">.</span><span class="n">example</span><span class="p">.</span><span class="n">d2</span><span class="p">.</span><span class="n">client</span><span class="p">;</span>
+
+<span class="n">import</span> <span class="n">com</span><span class="p">.</span><span class="n">linkedin</span><span class="p">.</span><span class="n">common</span><span class="p">.</span><span class="n">callback</span><span class="p">.</span><span class="n">Callback</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">com</span><span class="p">.</span><span class="n">linkedin</span><span class="p">.</span><span class="n">common</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="n">None</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">com</span><span class="p">.</span><span class="n">linkedin</span><span class="p">.</span><span class="n">d2</span><span class="p">.</span><span class="n">balancer</span><span class="p">.</span><span class="n">D2Client</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">com</span><span class="p">.</span><span class="n">linkedin</span><span class="p">.</span><span class="n">d2</span><span class="p">.</span><span class="n">balancer</span><span class="p">.</span><span class="n">D2ClientBuilder</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">com</span><span class="p">.</span><span class="n">linkedin</span><span class="p">.</span><span class="n">r2</span><span class="p">.</span><span class="n">message</span><span class="p">.</span><span class="n">rest</span><span class="p">.</span><span class="n">RestRequest</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">com</span><span class="p">.</span><span class="n">linkedin</span><span class="p">.</span><span class="n">r2</span><span class="p">.</span><span class="n">message</span><span class="p">.</span><span class="n">rest</span><span class="p">.</span><span class="n">RestRequestBuilder</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">org</span><span class="p">.</span><span class="n">json</span><span class="p">.</span><span class="n">simple</span><span class="p">.</span><span class="n">JSONObject</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">org</span><span class="p">.</span><span class="n">json</span><span class="p">.</span><span class="n">simple</span><span class="p">.</span><span class="n">parser</span><span class="p">.</span><span class="n">JSONParser</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">org</span><span class="p">.</span><span class="n">json</span><span class="p">.</span><span class="n">simple</span><span class="p">.</span><span class="n">parser</span><span class="p">.</span><span class="n">ParseException</span><span class="p">;</span>
+
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">io</span><span class="p">.</span><span class="n">File</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">io</span><span class="p">.</span><span class="n">FileReader</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">io</span><span class="p">.</span><span class="n">IOException</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">net</span><span class="p">.</span><span class="n">URI</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">net</span><span class="p">.</span><span class="n">URISyntaxException</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="n">Map</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="n">concurrent</span><span class="p">.</span><span class="n">CountDownLatch</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="n">concurrent</span><span class="p">.</span><span class="n">ExecutorService</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="n">concurrent</span><span class="p">.</span><span class="n">Executors</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="n">concurrent</span><span class="p">.</span><span class="n">ScheduledExecutorService</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="n">concurrent</span><span class="p">.</span><span class="n">ScheduledFuture</span><span class="p">;</span>
+<span class="n">import</span> <span class="n">java</span><span class="p">.</span><span class="n">util</span><span class="p">.</span><span class="n">concurrent</span><span class="p">.</span><span class="n">TimeUnit</span><span class="p">;</span>
+
+<span class="k">public</span> <span class="n">class</span> <span class="n">ExampleD2Client</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="n">static</span> <span class="n">void</span> <span class="n">main</span><span class="p">(</span><span class="k">String</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+      <span class="n">throws</span> <span class="n">IOException</span><span class="p">,</span> <span class="n">ParseException</span><span class="p">,</span> <span class="n">InterruptedException</span>
+  <span class="p">{</span>
+    <span class="p">//</span><span class="n">get</span> <span class="n">client</span> <span class="n">configuration</span>
+    <span class="n">JSONObject</span> <span class="n">json</span> <span class="p">=</span> <span class="n">parseConfig</span><span class="p">();</span>
+    <span class="k">String</span> <span class="n">zkConnectString</span> <span class="p">=</span> <span class="p">(</span><span class="k">String</span><span class="p">)</span> <span class="n">json</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"zkConnectString"</span><span class="p">);</span>
+    <span class="n">Long</span> <span class="n">zkSessionTimeout</span> <span class="p">=</span> <span class="p">(</span><span class="n">Long</span><span class="p">)</span> <span class="n">json</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"zkSessionTimeout"</span><span class="p">);</span>
+    <span class="k">String</span> <span class="n">zkBasePath</span> <span class="p">=</span> <span class="p">(</span><span class="k">String</span><span class="p">)</span> <span class="n">json</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"zkBasePath"</span><span class="p">);</span>
+    <span class="n">Long</span> <span class="n">zkStartupTimeout</span> <span class="p">=</span> <span class="p">(</span><span class="n">Long</span><span class="p">)</span> <span class="n">json</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"zkStartupTimeout"</span><span class="p">);</span>
+    <span class="n">Long</span> <span class="n">zkLoadBalancerNotificationTimeout</span> <span class="p">=</span> <span class="p">(</span><span class="n">Long</span><span class="p">)</span> <span class="n">json</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"zkLoadBalancerNotificationTimeout"</span><span class="p">);</span>
+    <span class="k">String</span> <span class="n">zkFlagFile</span> <span class="p">=</span> <span class="p">(</span><span class="k">String</span><span class="p">)</span> <span class="n">json</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"zkFlagFile"</span><span class="p">);</span>
+    <span class="k">String</span> <span class="n">fsBasePath</span> <span class="p">=</span> <span class="p">(</span><span class="k">String</span><span class="p">)</span> <span class="n">json</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"fsBasePath"</span><span class="p">);</span>
+    <span class="n">final</span> <span class="n">Map</span><span class="p">&lt;</span><span class="k">String</span><span class="p">,</span> <span class="n">Long</span><span class="p">&gt;</span> <span class="n">trafficProportion</span> <span class="p">=</span> <span class="p">(</span><span class="n">Map</span><span class="p">&lt;</span><span class="k">String</span><span class="p">,</span> <span class="n">Long</span><span class="p">&gt;)</span> <span class="n">json</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"trafficProportion"</span><span class="p">);</span>
+    <span class="n">final</span> <span class="n">Long</span> <span class="n">clientShutdownTimeout</span> <span class="p">=</span> <span class="p">(</span><span class="n">Long</span><span class="p">)</span> <span class="n">json</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clientShutdownTimeout"</span><span class="p">);</span>
+    <span class="n">final</span> <span class="n">Long</span> <span class="n">clientStartTimeout</span> <span class="p">=</span> <span class="p">(</span><span class="n">Long</span><span class="p">)</span> <span class="n">json</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"clientStartTimeout"</span><span class="p">);</span>
+    <span class="n">Long</span> <span class="n">rate</span> <span class="p">=</span> <span class="p">(</span><span class="n">Long</span><span class="p">)</span> <span class="n">json</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"rateMillisecond"</span><span class="p">);</span>
+    <span class="nf">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s2">"Finished parsing client config"</span><span class="p">);</span>
+
+    <span class="p">//</span><span class="nb">create</span> <span class="n">d2</span> <span class="n">client</span>
+    <span class="n">final</span> <span class="n">D2Client</span> <span class="n">d2Client</span> <span class="p">=</span> <span class="n">new</span> <span class="n">D2ClientBuilder</span><span class="p">().</span><span class="n">setZkHosts</span><span class="p">(</span><span class="n">zkConnectString</span><span class="p">)</span>
+                                                      <span class="p">.</span><span class="n">setZkSessionTimeout</span><span class="p">(</span>
+                                                          <span class="n">zkSessionTimeout</span><span class="p">,</span>
+                                                          <span class="n">TimeUnit</span><span class="p">.</span><span class="n">MILLISECONDS</span><span class="p">)</span>
+                                                      <span class="p">.</span><span class="n">setZkStartupTimeout</span><span class="p">(</span>
+                                                          <span class="n">zkStartupTimeout</span><span class="p">,</span>
+                                                          <span class="n">TimeUnit</span><span class="p">.</span><span class="n">MILLISECONDS</span><span class="p">)</span>
+                                                      <span class="p">.</span><span class="n">setLbWaitTimeout</span><span class="p">(</span>
+                                                          <span class="n">zkLoadBalancerNotificationTimeout</span><span class="p">,</span>
+                                                          <span class="n">TimeUnit</span><span class="p">.</span><span class="n">MILLISECONDS</span><span class="p">)</span>
+                                                      <span class="p">.</span><span class="n">setFlagFile</span><span class="p">(</span><span class="n">zkFlagFile</span><span class="p">)</span>
+                                                      <span class="p">.</span><span class="n">setBasePath</span><span class="p">(</span><span class="n">zkBasePath</span><span class="p">)</span>
+                                                      <span class="p">.</span><span class="n">setFsBasePath</span><span class="p">(</span><span class="n">fsBasePath</span><span class="p">)</span>
+                                                      <span class="p">.</span><span class="n">build</span><span class="p">();</span>
+
+    <span class="nf">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s2">"Finished creating d2 client, starting d2 client..."</span><span class="p">);</span>
+
+    <span class="n">ScheduledExecutorService</span> <span class="n">executorService</span> <span class="p">=</span> <span class="n">Executors</span><span class="p">.</span><span class="n">newSingleThreadScheduledExecutor</span><span class="p">();</span>
+    <span class="n">final</span> <span class="n">CountDownLatch</span> <span class="n">latch</span> <span class="p">=</span> <span class="n">new</span> <span class="n">CountDownLatch</span><span class="p">(</span><span class="m">1</span><span class="p">);</span>
+
+    <span class="p">//</span><span class="n">start</span> <span class="n">d2</span> <span class="n">client</span> <span class="n">by</span> <span class="n">connecting</span> <span class="k">to</span> <span class="n">zookeeper</span>
+    <span class="n">startClient</span><span class="p">(</span><span class="n">d2Client</span><span class="p">,</span> <span class="n">executorService</span><span class="p">,</span> <span class="n">clientStartTimeout</span><span class="p">,</span>
+                <span class="n">new</span> <span class="n">Callback</span><span class="p">&lt;</span><span class="n">None</span><span class="p">&gt;()</span>
+                <span class="p">{</span>
+                  <span class="p">@</span><span class="n">Override</span>
+                  <span class="k">public</span> <span class="n">void</span> <span class="n">onError</span> <span class="p">(</span><span class="n">Throwable</span> <span class="n">e</span><span class="p">)</span>
+                  <span class="p">{</span>
+                    <span class="nf">System</span><span class="p">.</span><span class="k">exit</span><span class="p">(</span><span class="m">1</span><span class="p">);</span>
+                  <span class="p">}</span>
+
+                  <span class="p">@</span><span class="n">Override</span>
+                  <span class="k">public</span> <span class="n">void</span> <span class="n">onSuccess</span> <span class="p">(</span><span class="n">None</span> <span class="n">result</span><span class="p">)</span>
+                  <span class="p">{</span>
+                    <span class="n">latch</span><span class="p">.</span><span class="n">countDown</span><span class="p">();</span>
+                  <span class="p">}</span>
+                <span class="p">});</span>
+    <span class="n">latch</span><span class="p">.</span><span class="n">await</span><span class="p">();</span>
+    <span class="nf">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s2">"D2 client is sending traffic"</span><span class="p">);</span>
+
+    <span class="n">ScheduledFuture</span> <span class="n">task</span> <span class="p">=</span> <span class="n">executorService</span><span class="p">.</span><span class="n">scheduleAtFixedRate</span><span class="p">(</span><span class="n">new</span> <span class="n">Runnable</span><span class="p">()</span>
+    <span class="p">{</span>
+      <span class="p">@</span><span class="n">Override</span>
+      <span class="k">public</span> <span class="n">void</span> <span class="nf">run</span> <span class="p">()</span>
+      <span class="p">{</span>
+        <span class="n">try</span>
+        <span class="p">{</span>
+          <span class="n">sendTraffic</span><span class="p">(</span><span class="n">trafficProportion</span><span class="p">,</span> <span class="n">d2Client</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="n">catch</span> <span class="p">(</span><span class="n">URISyntaxException</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+          <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">},</span> <span class="m">0</span><span class="p">,</span> <span class="n">rate</span><span class="p">,</span> <span class="n">TimeUnit</span><span class="p">.</span><span class="n">MILLISECONDS</span><span class="p">);</span>
+
+    <span class="nf">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s2">"Press enter to stop D2 client..."</span><span class="p">);</span>
+    <span class="nf">System</span><span class="p">.</span><span class="k">in</span><span class="p">.</span><span class="nb">read</span><span class="p">();</span>
+    <span class="n">task</span><span class="p">.</span><span class="n">cancel</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span>
+    <span class="nf">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s2">"Shutting down..."</span><span class="p">);</span>
+    <span class="n">shutdown</span><span class="p">(</span><span class="n">d2Client</span><span class="p">,</span> <span class="n">executorService</span><span class="p">,</span> <span class="n">clientShutdownTimeout</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="n">private</span> <span class="n">static</span> <span class="n">void</span> <span class="n">startClient</span><span class="p">(</span><span class="n">final</span> <span class="n">D2Client</span> <span class="n">d2Client</span><span class="p">,</span>
+                                  <span class="n">ExecutorService</span> <span class="n">executorService</span><span class="p">,</span>
+                                  <span class="n">Long</span> <span class="n">timeout</span><span class="p">,</span>
+                                  <span class="n">final</span> <span class="n">Callback</span><span class="p">&lt;</span><span class="n">None</span><span class="p">&gt;</span> <span class="n">callback</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">try</span>
+    <span class="p">{</span>
+      <span class="n">executorService</span><span class="p">.</span><span class="n">submit</span><span class="p">(</span><span class="n">new</span> <span class="n">Runnable</span><span class="p">()</span>
+      <span class="p">{</span>
+        <span class="p">@</span><span class="n">Override</span>
+        <span class="k">public</span> <span class="n">void</span> <span class="nf">run</span> <span class="p">()</span>
+        <span class="p">{</span>
+          <span class="n">d2Client</span><span class="p">.</span><span class="n">start</span><span class="p">(</span><span class="n">new</span> <span class="n">Callback</span><span class="p">&lt;</span><span class="n">None</span><span class="p">&gt;()</span>
+          <span class="p">{</span>
+            <span class="p">@</span><span class="n">Override</span>
+            <span class="k">public</span> <span class="n">void</span> <span class="n">onError</span> <span class="p">(</span><span class="n">Throwable</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+              <span class="nf">System</span><span class="p">.</span><span class="n">err</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s2">"Error starting d2Client. Aborting... "</span><span class="p">);</span>
+              <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span>
+              <span class="nf">System</span><span class="p">.</span><span class="k">exit</span><span class="p">(</span><span class="m">1</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="p">@</span><span class="n">Override</span>
+            <span class="k">public</span> <span class="n">void</span> <span class="n">onSuccess</span> <span class="p">(</span><span class="n">None</span> <span class="n">result</span><span class="p">)</span>
+            <span class="p">{</span>
+              <span class="nf">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s2">"D2 client started"</span><span class="p">);</span>
+              <span class="n">callback</span><span class="p">.</span><span class="n">onSuccess</span><span class="p">(</span><span class="n">None</span><span class="p">.</span><span class="n">none</span><span class="p">());</span>
+            <span class="p">}</span>
+          <span class="p">});</span>
+        <span class="p">}</span>
+      <span class="p">}).</span><span class="n">get</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span> <span class="n">TimeUnit</span><span class="p">.</span><span class="n">MILLISECONDS</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="nf">System</span><span class="p">.</span><span class="n">err</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s2">"Cannot start d2 client. Timeout is set to "</span> <span class="p">+</span>
+                             <span class="n">timeout</span> <span class="p">+</span> <span class="s2">" ms"</span><span class="p">);</span>
+      <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="n">private</span> <span class="n">static</span> <span class="n">void</span> <span class="n">shutdown</span><span class="p">(</span><span class="n">final</span> <span class="n">D2Client</span> <span class="n">d2Client</span><span class="p">,</span>
+                               <span class="n">ExecutorService</span> <span class="n">executorService</span><span class="p">,</span>
+                               <span class="n">Long</span> <span class="n">timeout</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">try</span>
+    <span class="p">{</span>
+      <span class="n">executorService</span><span class="p">.</span><span class="n">submit</span><span class="p">(</span><span class="n">new</span> <span class="n">Runnable</span><span class="p">()</span>
+      <span class="p">{</span>
+        <span class="p">@</span><span class="n">Override</span>
+        <span class="k">public</span> <span class="n">void</span> <span class="nf">run</span> <span class="p">()</span>
+        <span class="p">{</span>
+          <span class="n">d2Client</span><span class="p">.</span><span class="n">shutdown</span><span class="p">(</span><span class="n">new</span> <span class="n">Callback</span><span class="p">&lt;</span><span class="n">None</span><span class="p">&gt;()</span>
+          <span class="p">{</span>
+            <span class="p">@</span><span class="n">Override</span>
+            <span class="k">public</span> <span class="n">void</span> <span class="n">onError</span> <span class="p">(</span><span class="n">Throwable</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+              <span class="nf">System</span><span class="p">.</span><span class="n">err</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s2">"Error shutting down d2Client."</span><span class="p">);</span>
+              <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span>
+            <span class="p">}</span>
+
+            <span class="p">@</span><span class="n">Override</span>
+            <span class="k">public</span> <span class="n">void</span> <span class="n">onSuccess</span> <span class="p">(</span><span class="n">None</span> <span class="n">result</span><span class="p">)</span>
+            <span class="p">{</span>
+              <span class="nf">System</span><span class="p">.</span><span class="n">out</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s2">"D2 client stopped"</span><span class="p">);</span>
+            <span class="p">}</span>
+          <span class="p">});</span>
+        <span class="p">}</span>
+      <span class="p">}).</span><span class="n">get</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span> <span class="n">TimeUnit</span><span class="p">.</span><span class="n">MILLISECONDS</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="nf">System</span><span class="p">.</span><span class="n">err</span><span class="p">.</span><span class="n">println</span><span class="p">(</span><span class="s2">"Cannot stop d2 client. Timeout is set to "</span> <span class="p">+</span>
+                             <span class="n">timeout</span> <span class="p">+</span> <span class="s2">" ms"</span><span class="p">);</span>
+      <span class="n">e</span><span class="p">.</span><span class="n">printStackTrace</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="n">finally</span>
+    <span class="p">{</span>
+      <span class="n">executorService</span><span class="p">.</span><span class="n">shutdown</span><span class="p">();</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="n">private</span> <span class="n">static</span> <span class="n">JSONObject</span> <span class="n">parseConfig</span><span class="p">()</span>
+      <span class="n">throws</span> <span class="n">IOException</span><span class="p">,</span> <span class="n">ParseException</span>
+  <span class="p">{</span>
+    <span class="k">String</span> <span class="n">path</span> <span class="p">=</span> <span class="n">new</span> <span class="n">File</span><span class="p">(</span><span class="n">new</span> <span class="n">File</span><span class="p">(</span><span class="s2">"."</span><span class="p">).</span><span class="n">getAbsolutePath</span><span class="p">()).</span><span class="n">getCanonicalPath</span><span class="p">()</span> <span class="p">+</span>
+        <span class="s2">"/src/main/config/client.json"</span><span class="p">;</span>
+    <span class="n">JSONParser</span> <span class="n">parser</span> <span class="p">=</span> <span class="n">new</span> <span class="n">JSONParser</span><span class="p">();</span>
+    <span class="n">Object</span> <span class="n">object</span> <span class="p">=</span> <span class="n">parser</span><span class="p">.</span><span class="n">parse</span><span class="p">(</span><span class="n">new</span> <span class="n">FileReader</span><span class="p">(</span><span class="n">path</span><span class="p">));</span>
+    <span class="n">return</span> <span class="p">(</span><span class="n">JSONObject</span><span class="p">)</span> <span class="n">object</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="n">private</span> <span class="n">static</span> <span class="n">void</span> <span class="n">sendTraffic</span><span class="p">(</span><span class="n">Map</span><span class="p">&lt;</span><span class="k">String</span><span class="p">,</span> <span class="n">Long</span><span class="p">&gt;</span> <span class="n">trafficProportion</span><span class="p">,</span> <span class="n">D2Client</span> <span class="n">d2Client</span><span class="p">)</span>
+      <span class="n">throws</span> <span class="n">URISyntaxException</span>
+  <span class="p">{</span>
+    <span class="n">for</span> <span class="p">(</span><span class="n">Map</span><span class="p">.</span><span class="n">Entry</span><span class="p">&lt;</span><span class="k">String</span><span class="p">,</span> <span class="n">Long</span><span class="p">&gt;</span> <span class="n">entry</span> <span class="p">:</span> <span class="n">trafficProportion</span><span class="p">.</span><span class="n">entrySet</span><span class="p">())</span>
+    <span class="p">{</span>
+      <span class="n">URI</span> <span class="n">uri</span> <span class="p">=</span> <span class="n">new</span> <span class="n">URI</span><span class="p">(</span><span class="s2">"d2://"</span> <span class="p">+</span> <span class="n">entry</span><span class="p">.</span><span class="n">getKey</span><span class="p">());</span>
+      <span class="n">RestRequest</span> <span class="n">request</span> <span class="p">=</span> <span class="n">new</span> <span class="n">RestRequestBuilder</span><span class="p">(</span><span class="n">uri</span><span class="p">).</span><span class="n">setMethod</span><span class="p">(</span><span class="s2">"get"</span><span class="p">).</span><span class="n">build</span><span class="p">();</span>
+      <span class="n">for</span> <span class="p">(</span><span class="n">long</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">entry</span><span class="p">.</span><span class="nf">getValue</span><span class="p">();</span> <span class="n">i</span><span class="p">++)</span>
+      <span class="p">{</span>
+        <span class="p">//</span><span class="n">we</span> <span class="n">don</span><span class="s1">'t care about the result from the server after all,
+        //you can see the traffic hits the echo server from stdout
+        d2Client.restRequest(request);
+      }
+    }
+  }
+}
+</span></code></pre></div></div>
+
+<p>In the above code, sendTraffic() will send request based on the
+trafficProportion configured in client.json. Let’s configure the config
+so that the client sends:</p>
+
+<ul>
+  <li>3 requests to “newsArticle” service every 1000 ms.</li>
+  <li>2 requests to “jobRecommendation” service every 1000 ms.</li>
+  <li>1 request to “articleRecommendation” service every 1000 ms.</li>
+</ul>
+
+<p>Here’s our client.json:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+    "zkConnectString" : "localhost:2181",
+    "zkSessionTimeout" : 5000,
+    "zkStartupTimeout" : 5000,
+    "zkLoadBalancerNotificationTimeout" : 5000,
+    "zkFlagFile" : "/tmp/suppressZkFlag",
+    "zkBasePath" : "/d2",
+    "fsBasePath" : "/tmp/backup",
+    "clientShutdownTimeout" : 5000,
+    "clientStartTimeout" : 5000,
+    "trafficProportion" : {
+        "newsArticle": 3,
+        "jobRecommendation": 2,
+        "articleRecommendation" : 1
+    },
+    "rateMillisecond" : 1000
+}
+</code></pre></div></div>
+
+<p>Now we are ready to add the following task to build.gradle:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>task runClient(type: JavaExec) {
+    main = 'com.example.d2.client.ExampleD2Client'
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+}
+</code></pre></div></div>
+
+<p>To run the client, run the following command in a different terminal
+console:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>../../gradlew runClient
+</code></pre></div></div>
+
+<h2 id="next-steps">Next Steps</h2>
+
+<p>Congratulations! You have finished this tutorial. Now you can build
+your own D2 client/server applications. Next, you can learn the advanced
+features of D2 examples like the following:</p>
+
+<ul>
+  <li>Partitioning and sticky routing</li>
+  <li>Tuning load balancer</li>
+  <li>Overriding client properties</li>
+  <li>And many more</li>
+</ul>
+
+<p>To do so, check out the examples in the Res.tli source code. Go to
+<a href="https://github.com/linkedin/rest.li/tree/master/examples/d2-advanced-example">/example/d2-advanced-examples</a>.</p>
+
+<p>See also <a href="/rest.li/Dynamic_Discovery">Dynamic Discovery</a>.</p>
+
+                     </div>
+                     <!-- <div class="col l3">
+                            <div class="row">
+                                    <div class="col l12">
+                                      <div class="card blue-grey darken-1">
+                                        <div class="card-content white-text">
+                                          <span class="card-title">Card Title</span>
+                                          <p>I am a very simple card. I am good at containing small bits of information.
+                                          I am convenient because I require little markup to use effectively.</p>
+                                        </div>
+                                        <div class="card-action">
+                                          <a href="#">This is a link</a>
+                                          <a href="#">This is a link</a>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                     </div> -->
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

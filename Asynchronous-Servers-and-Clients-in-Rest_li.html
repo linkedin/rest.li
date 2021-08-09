@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Asynchronous Servers and Clients In Rest.li</title>
+    <meta name="description" content="Rest.li is asynchronous and non-blocking under the hood. This section covers asynchronous servers and slients in Rest.li" />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">User Guide</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/user_guide/server_architecture">Rest.li Architecture</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_server">Rest.li Server</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_client">Rest.li Client Framework</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/unstructured_data">Unstructured Data</a></li>
+                       
+                         <li><a href="/rest.li/Components">Components</a></li>
+                       
+                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous in Rest.li</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data Schemas</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/pdl_schema">PDL Schema</a></li>
+                       
+                         <li><a href="/rest.li/pdsc_syntax">PDSC Syntax</a></li>
+                       
+                         <li><a href="/rest.li/pdl_migration">Migrating from PDSC to PDL</a></li>
+                       
+                         <li><a href="/rest.li/avro_translation">Avro Translation</a></li>
+                       
+                         <li><a href="/rest.li/java_binding">Java Binding</a></li>
+                       
+                         <li><a href="/rest.li/annotation_processor">Schema Annotation Processor</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Modeling Resources</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
+                       
+                         <li><a href="/rest.li/modeling/compatibility_check">Snapshots and Resource Compatibility Checking</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/how_data_is_serialized_for_transport">How Data is Serialized for Transport</a></li>
+                       
+                         <li><a href="/rest.li/how_data_is_represented_in_memory">How Data is Represented in Memory</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Main concepts</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-Filters">Filters</a></li>
+                       
+                         <li><a href="/rest.li/Projections">Projections</a></li>
+                       
+                         <li><a href="/rest.li/pathspec">PathSpecs</a></li>
+                       
+                         <li><a href="/rest.li/Validation-in-Rest_li">Validation</a></li>
+                       
+                         <li><a href="/rest.li/Attachment-Streaming">Attachment Streaming</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Mutli-language</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/multi_language_compatibility_matrix">Compatibility Matrix</a></li>
+                       
+                         <li><a href="/rest.li/test_suite">Test Suite</a></li>
+                       
+                         <li><a href="https://github.com/mchen07/restli-csharp">C#</a></li>
+                       
+                         <li><a href="/rest.li/Scala-Integration">Scala Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Testing</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers">Writing Unit Tests</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">How to</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Send-Rest_li-Request-Query-In-Request-Body">Send Request Query in the Body</a></li>
+                       
+                         <li><a href="/rest.li/How-to-use-projections-in-Java">Use Projections</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li_Avro_conversions">Avro Conversion</a></li>
+                       
+                         <li><a href="/rest.li/Compression">Compression</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_x-upgrade-instructions">Migrate to Rest.li 2.x</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_how_to">Test Suite</a></li>
+                       
+                         <li><a href="/rest.li/howto_add_new_language">Test Suite - Add New Language</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/service_errors_java">Configure Service Errors in Java</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">FAQ</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Data-FAQ">Rest.li - FAQ</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_troubleshooting">Test Suite - Troubleshooting</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="asynchronous-servers-and-clients-in-restli">Asynchronous Servers And Clients In Rest.li</h1>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#async-server-implementations">Async Server Implementations</a></li>
+  <li><a href="#async-client-implementations">Async Client Implementations</a></li>
+</ul>
+
+<p>This section assumes you are familiar with <a href="https://github.com/linkedin/parseq">ParSeq</a> and its <a href="https://github.com/linkedin/parseq/wiki/User's-Guide#key-concepts">key concepts</a>.</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Rest.li is asynchronous and non-blocking under the hood:</p>
+
+<ul>
+  <li><strong>R2</strong> - On the client side, R2 uses a <a href="http://netty.io/">Netty</a> based asynchronous client. On the server side if you are using our experimental Netty server, it is async and non-blocking. If you are using <a href="http://www.eclipse.org/jetty/">Jetty</a>, you need to <a href="#server-configuration">configure it</a> to run in async mode.</li>
+  <li><strong>D2</strong> - All communication with <a href="http://zookeeper.apache.org/">ZooKeeper</a> uses the async APIs.</li>
+  <li><strong>Rest.li</strong> - Rest.li does not handle I/O. All I/O work is done by R2, which is async and non-blocking as explained above. Rest.li uses <a href="https://github.com/linkedin/parseq">ParSeq</a> to interact with and delegate to server application code. The <code class="highlighter-rouge">RestClient</code> used to make Rest.li requests on the client-side has several options in order to write async non-blocking code.</li>
+</ul>
+
+<h2 id="async-server-implementations">Async Server Implementations</h2>
+
+<p>As shown above the Rest.li framework is async and non-blocking under the hood. R2 uses non-blocking I/O via both Netty and Jetty to serve client traffic using Java NIO. Resource methods are invoked in an event driven fashion.</p>
+
+<p>As a result of this, if you do any blocking work in your method implementation, it can negatively impact your application throughput as threads are held up by your application that are needed by Rest.li <strong>(if you enable async mode in your Rest.li server)</strong>. It is the responsibility of application developers to ensure that their method implementations are async and use non-blocking I/O.</p>
+
+<p>There are two main options available to write async server implementations in Rest.li:</p>
+
+<ol>
+  <li>Using a <code class="highlighter-rouge">com.linkedin.common.Callback</code> (included in Rest.li)</li>
+  <li>Using ParSeq</li>
+</ol>
+
+<h3 id="async-server-templates">Async Server Templates</h3>
+
+<p>Rest.li also includes templates to make writing async resources slightly easier. There are templates that use <code class="highlighter-rouge">Callback</code>s and <code class="highlighter-rouge">Task</code>s for each type of Rest.li resource. For example, for collection resources with primitive keys we have <code class="highlighter-rouge">com.linkedin.restli.server.resources.CollectionResourceAsyncTemplate</code> and <code class="highlighter-rouge">com.linkedin.restli.server.resources.CollectionResourceTaskTemplate</code>. There are similar templates for complex key resources, association resources, and simple resources.</p>
+
+<h3 id="server-configuration">Server Configuration</h3>
+
+<p>Async request handling is available for Servlet API 3.0 or greater and is enabled by default for 3.0+.</p>
+
+<p>To us async mode in Servlet containers, <code class="highlighter-rouge">async-supported</code> must be set to <code class="highlighter-rouge">true</code> in your <code class="highlighter-rouge">web.xml</code>.</p>
+
+<p>Example:</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;servlet&gt;</span>
+  ...
+  <span class="nt">&lt;async-supported&gt;</span>true<span class="nt">&lt;/async-supported&gt;</span>
+  ...
+<span class="nt">&lt;/servlet&gt;</span>
+</code></pre></div></div>
+
+<p><a href="https://github.com/linkedin/rest.li/blob/master/examples/quickstart/server/src/main/webapp/WEB-INF/web.xml#L13">Here</a> is an example configuration for our quick start example server.</p>
+
+<p>Async can be further configured by the Rest.li <code class="highlighter-rouge">uscAsync</code> servlet param (which defaults to <code class="highlighter-rouge">true</code> for servlet API 3.0+ servlet containers). The <code class="highlighter-rouge">asyncTimeout</code> param can be set to a desired maximum timeout value in milliseconds.</p>
+
+<p>Example:</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;init-param&gt;</span>
+  <span class="nt">&lt;param-name&gt;</span>useAysnc<span class="nt">&lt;/param-name&gt;</span>
+  <span class="nt">&lt;param-value&gt;</span>true<span class="nt">&lt;/param-value&gt;</span>
+<span class="nt">&lt;/init-param&gt;</span>
+<span class="nt">&lt;init-param&gt;</span>
+  <span class="nt">&lt;param-name&gt;</span>asyncTimeout<span class="nt">&lt;/param-name&gt;</span>
+  <span class="nt">&lt;param-value&gt;</span>30000<span class="nt">&lt;/param-value&gt;</span>
+<span class="nt">&lt;/init-param&gt;</span>
+</code></pre></div></div>
+
+<h3 id="using-callbacks">Using Callbacks</h3>
+
+<p>Consider the following implementation of an async GET method using a <code class="highlighter-rouge">Callback</code>. In this example, we fetch data from ZooKeeper asynchronously. Based on the data that we get back, we either return a <code class="highlighter-rouge">404</code> to the user or build a <code class="highlighter-rouge">Greeting</code> <code class="highlighter-rouge">RecordTemplate</code>. We will use this example to understand how to write <code class="highlighter-rouge">Callback</code> based Rest.li async method implementations.</p>
+
+<p>Example:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RestMethod</span><span class="o">.</span><span class="na">Get</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">get</span><span class="o">(</span><span class="kd">final</span> <span class="nc">Long</span> <span class="n">id</span><span class="o">,</span> <span class="nd">@CallbackParam</span> <span class="kd">final</span> <span class="nc">Callback</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">callback</span><span class="o">)</span> <span class="o">{</span>
+  <span class="nc">String</span> <span class="n">path</span> <span class="o">=</span> <span class="s">"/data/"</span> <span class="o">+</span> <span class="n">id</span><span class="o">;</span>
+  <span class="c1">// _zkClient is a regular ZooKeeper client</span>
+  <span class="n">_zkClient</span><span class="o">.</span><span class="na">getData</span><span class="o">(</span><span class="n">path</span><span class="o">,</span> <span class="kc">false</span><span class="o">,</span> <span class="k">new</span> <span class="nc">DataCallback</span><span class="o">()</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">processResult</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">,</span> <span class="nc">String</span> <span class="n">s</span><span class="o">,</span> <span class="nc">Object</span> <span class="n">o</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">b</span><span class="o">,</span> <span class="nc">Stat</span> <span class="n">st</span><span class="o">)</span> <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">b</span><span class="o">.</span><span class="na">length</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">callback</span><span class="o">.</span><span class="na">onError</span><span class="o">(</span><span class="k">new</span> <span class="nc">RestLiServiceException</span><span class="o">(</span><span class="nc">HttpStatus</span><span class="o">.</span><span class="na">S_404_NOT_FOUND</span><span class="o">));</span>
+      <span class="o">}</span>
+      <span class="k">else</span> <span class="o">{</span>
+        <span class="n">callback</span><span class="o">.</span><span class="na">onSuccess</span><span class="o">(</span><span class="n">buildGreeting</span><span class="o">(</span><span class="n">b</span><span class="o">));</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+  <span class="o">},</span> <span class="kc">null</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h4 id="signature">Signature</h4>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RestMethod</span><span class="o">.</span><span class="na">Get</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">get</span><span class="o">(</span><span class="kd">final</span> <span class="nc">Long</span> <span class="n">id</span><span class="o">,</span> <span class="nd">@CallbackParam</span> <span class="kd">final</span> <span class="nc">Callback</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">callback</span><span class="o">)</span> <span class="o">{</span>
+</code></pre></div></div>
+
+<p>In order to use a <code class="highlighter-rouge">Callback</code>, we need to set the return type of the function to be <code class="highlighter-rouge">void</code> and pass in a <code class="highlighter-rouge">Callback&lt;T&gt;</code> as a parameter to the function. <code class="highlighter-rouge">T</code> here is whatever type you would have returned from a synchronous implementation of the same function. In this case, the synchronous implementation would have returned a <code class="highlighter-rouge">Greeting</code>, which is why we are returning a <code class="highlighter-rouge">Callback&lt;Greeting&gt;</code> here. The <code class="highlighter-rouge">@CallbackParam</code> is required.</p>
+
+<h4 id="function-body">Function Body</h4>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">_zkClient</span><span class="o">.</span><span class="na">getData</span><span class="o">(</span><span class="n">path</span><span class="o">,</span> <span class="kc">false</span><span class="o">,</span> <span class="k">new</span> <span class="nc">DataCallback</span><span class="o">()</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">processResult</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">,</span> <span class="nc">String</span> <span class="n">s</span><span class="o">,</span> <span class="nc">Object</span> <span class="n">o</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">b</span><span class="o">,</span> <span class="nc">Stat</span> <span class="n">st</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">b</span><span class="o">.</span><span class="na">length</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">callback</span><span class="o">.</span><span class="na">onError</span><span class="o">(</span><span class="k">new</span> <span class="nc">RestLiServiceException</span><span class="o">(</span><span class="nc">HttpStatus</span><span class="o">.</span><span class="na">S_404_NOT_FOUND</span><span class="o">));</span>
+    <span class="o">}</span>
+    <span class="k">else</span> <span class="o">{</span>
+      <span class="n">callback</span><span class="o">.</span><span class="na">onSuccess</span><span class="o">(</span><span class="n">buildGreeting</span><span class="o">(</span><span class="n">b</span><span class="o">));</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">},</span> <span class="kc">null</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p>We use the async ZooKeeper <code class="highlighter-rouge">getData</code> API call to fetch data from ZooKeeper. Based on the data we get back from ZooKeeper in the <code class="highlighter-rouge">DataCallback</code> (which is a <strong>ZooKeeper</strong> construct), we invoke either the <code class="highlighter-rouge">onError</code> or the <code class="highlighter-rouge">onSuccess</code> method on the <code class="highlighter-rouge">Callback</code> interface.</p>
+
+<p><code class="highlighter-rouge">onError</code> is used to signify that something went wrong. In this case, we invoke <code class="highlighter-rouge">onError</code> with a <code class="highlighter-rouge">RestliServiceException</code> when the length of data that we get back from ZooKeeper is 0. The Rest.li framework translates this <code class="highlighter-rouge">Exception</code> into an appropriate REST response to send back to the client.</p>
+
+<p>In case we get back data that has non-zero length, we build a <code class="highlighter-rouge">Greeting</code> object from it in the <code class="highlighter-rouge">buildGreeting</code> method (not shown here) and return that to the client by invoking the <code class="highlighter-rouge">onSuccess</code> method.</p>
+
+<p>All you have to do is invoke the <code class="highlighter-rouge">onError</code> or <code class="highlighter-rouge">onSuccess</code> method within your method, and the Rest.li framework will return data back to the client. This is why the return type for the method is <code class="highlighter-rouge">void</code>, since the <code class="highlighter-rouge">Callback</code> is used to return values back to the client.</p>
+
+<h4 id="callback-execution">Callback Execution</h4>
+
+<p>It is up to the application developer to execute the <code class="highlighter-rouge">Callback</code>. <strong>Rest.li does not execute the <code class="highlighter-rouge">Callback</code> for you</strong>. In the above example, the <code class="highlighter-rouge">Callback</code> was executed by the ZooKeeper thread, which is why we didn’t have to explicitly execute it. However, once the <code class="highlighter-rouge">onError</code> or <code class="highlighter-rouge">onSuccess</code> method has been invoked in the <code class="highlighter-rouge">Callback</code>, Rest.li will translate that into a response to send back to the client. In other words, <code class="highlighter-rouge">Callback</code> execution is up to the application developer, but sending a response back once the <code class="highlighter-rouge">Callback</code> has been executed is handled by Rest.li.</p>
+
+<h3 id="using-parseq">Using ParSeq</h3>
+
+<p>Consider the following example of an async GET implementation that uses ParSeq:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RestMethod</span><span class="o">.</span><span class="na">Get</span>
+<span class="kd">public</span> <span class="nc">Task</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="nf">get</span><span class="o">(</span><span class="kd">final</span> <span class="nc">Long</span> <span class="n">id</span><span class="o">)</span> <span class="o">{</span>
+  <span class="kd">final</span> <span class="nc">Task</span><span class="o">&lt;</span><span class="nc">FileData</span><span class="o">&gt;</span> <span class="n">fileDataTask</span> <span class="o">=</span> <span class="n">buildFileDataTask</span><span class="o">();</span>
+  <span class="kd">final</span> <span class="nc">Task</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">mainTask</span> <span class="o">=</span> <span class="nc">Tasks</span><span class="o">.</span><span class="na">callable</span><span class="o">(</span><span class="s">"main"</span><span class="o">,</span> <span class="k">new</span> <span class="nc">Callable</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;()</span> <span class="o">{</span>
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="nc">Greeting</span> <span class="nf">call</span><span class="o">()</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+      <span class="nc">FileData</span> <span class="n">fileData</span> <span class="o">=</span> <span class="n">fileDataTask</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+      <span class="k">return</span> <span class="nf">buildGreetingFromFileData</span><span class="o">(</span><span class="n">id</span><span class="o">,</span> <span class="n">fileData</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">});</span>
+  <span class="k">return</span> <span class="nc">Tasks</span><span class="o">.</span><span class="na">seq</span><span class="o">(</span><span class="n">fileDataTask</span><span class="o">,</span> <span class="n">mainTask</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><code class="highlighter-rouge">buildFileDataTask</code> (implementation not shown here) reads some file on disk using async I/O and returns a <code class="highlighter-rouge">Task&lt;FileData&gt;</code>, where <code class="highlighter-rouge">FileData</code> (implementation not shown here) is some abstraction for the data being read. We use <code class="highlighter-rouge">FileData</code> to build a <code class="highlighter-rouge">Greeting</code> to return to the client.</p>
+
+<h4 id="signature-1">Signature</h4>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RestMethod</span><span class="o">.</span><span class="na">Get</span>
+<span class="kd">public</span> <span class="nc">Task</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="nf">get</span><span class="o">(</span><span class="kd">final</span> <span class="nc">Long</span> <span class="n">id</span><span class="o">)</span> <span class="o">{</span>
+</code></pre></div></div>
+
+<p>In order to use ParSeq the function implementation must return a ParSeq <code class="highlighter-rouge">Task&lt;T&gt;</code>. <code class="highlighter-rouge">T</code> here is whatever type you would have returned from a synchronous implementation of the same function. In this case the synchronous implementation would have returned a <code class="highlighter-rouge">Greeting</code>, which is why we are returning a <code class="highlighter-rouge">Task&lt;Greeting&gt;</code> here.</p>
+
+<h4 id="function-body-1">Function Body</h4>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">final</span> <span class="nc">Task</span><span class="o">&lt;</span><span class="nc">FileData</span><span class="o">&gt;</span> <span class="n">fileDataTask</span> <span class="o">=</span> <span class="n">buildFileDataTask</span><span class="o">();</span>
+<span class="kd">final</span> <span class="nc">Task</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">mainTask</span> <span class="o">=</span> <span class="nc">Tasks</span><span class="o">.</span><span class="na">callable</span><span class="o">(</span><span class="s">"main"</span><span class="o">,</span> <span class="k">new</span> <span class="nc">Callable</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;()</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="nc">Greeting</span> <span class="nf">call</span><span class="o">()</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+    <span class="nc">FileData</span> <span class="n">fileData</span> <span class="o">=</span> <span class="n">fileDataTask</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+    <span class="k">return</span> <span class="nf">buildGreetingFromFileData</span><span class="o">(</span><span class="n">id</span><span class="o">,</span> <span class="n">fileData</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">});</span>
+<span class="k">return</span> <span class="nc">Tasks</span><span class="o">.</span><span class="na">seq</span><span class="o">(</span><span class="n">fileDataTask</span><span class="o">,</span> <span class="n">mainTask</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p>The basic idea to use ParSeq for Rest.li async method implementations is to return a <code class="highlighter-rouge">Task</code>.</p>
+
+<p><code class="highlighter-rouge">fileDataTask</code> is a <code class="highlighter-rouge">Task</code> for the <code class="highlighter-rouge">FileData</code> that we read from disk. We want to transform this <code class="highlighter-rouge">FileData</code> into a <code class="highlighter-rouge">Greeting</code> to return to the user. We define a new <code class="highlighter-rouge">Task</code>, called <code class="highlighter-rouge">mainTask</code> in the example above, to do this.</p>
+
+<p>Within the <code class="highlighter-rouge">call</code> method of <code class="highlighter-rouge">mainTask</code>, we obtain the <code class="highlighter-rouge">FileData</code> from the <code class="highlighter-rouge">fileDataTask</code>. This is a non-blocking call because of the way we assemble our final call graph (more on this in a bit). Finally, we build a <code class="highlighter-rouge">Greeting</code> in the <code class="highlighter-rouge">buildGreetingFromFileData</code> (implementation not shown here) method.</p>
+
+<p>So we have two <code class="highlighter-rouge">Task</code>s now, <code class="highlighter-rouge">fileDataTask</code> and <code class="highlighter-rouge">mainTask</code>, with <code class="highlighter-rouge">mainTask</code> depending on the result of <code class="highlighter-rouge">fileDataTask</code>. <code class="highlighter-rouge">mainTask</code> also builds the <code class="highlighter-rouge">Greeting</code> object that we want to return to the client. In order to build this dependency between the two <code class="highlighter-rouge">Task</code>s, we use the <code class="highlighter-rouge">Tasks.seq</code> method.</p>
+
+<h4 id="task-execution">Task Execution</h4>
+
+<p>It is suggested to return a <code class="highlighter-rouge">Task</code> from your method. In the above example, <code class="highlighter-rouge">Task.seq(fileDataTask, mainTask)</code> returns a new <code class="highlighter-rouge">Task</code> that is <strong>executed for you automatically</strong> using the ParSeq engine within Rest.li. In other words, you do not have to provide a separate ParSeq execution engine to run this <code class="highlighter-rouge">Task</code>. Rest.li runs the <code class="highlighter-rouge">Task</code> for you and returns an appropriate response to the client.</p>
+
+<h4 id="promise-execution">Promise Execution</h4>
+
+<p>Even though the example above returns a <code class="highlighter-rouge">Task</code>, it is worth pointing out the difference between returning a <code class="highlighter-rouge">Task</code> and returning a <code class="highlighter-rouge">Promise</code> from an async method implementation. If you return a <code class="highlighter-rouge">Promise</code> from a resource method, Rest.li creates a <code class="highlighter-rouge">Task</code> for you to resolve the <code class="highlighter-rouge">Promise</code>. This <code class="highlighter-rouge">Task</code> is then run on the underlying ParSeq engine within Rest.li.</p>
+
+<p>One thing to keep in mind is that if you are returning a <code class="highlighter-rouge">Task</code> from your method you should <strong>never</strong> return it as a <code class="highlighter-rouge">Promise</code>! This is because the Rest.li framework will wrap this <code class="highlighter-rouge">Promise</code> in a new <code class="highlighter-rouge">Task</code> to execute it, and thus two ParSeq <code class="highlighter-rouge">Task</code>s are created. In our performance benchmarks, we have noticed that this one extra <code class="highlighter-rouge">Task</code> can lead to a noticeable increase in latency, especially in high QPS scenarios.</p>
+
+<h4 id="promise-or-task">Promise or Task?</h4>
+
+<p>If you are using ParSeq, you can return either a <code class="highlighter-rouge">Promise</code> or a <code class="highlighter-rouge">Task</code> from your resource method implementation. In general, you should return a <code class="highlighter-rouge">Task</code>. The <code class="highlighter-rouge">Promise</code> templates are deprecated and should not be used for new development.</p>
+
+<h2 id="async-client-implementations">Async Client Implementations</h2>
+
+<p>There are two main options available to make async requests using Rest.li:</p>
+
+<ol>
+  <li>Using a <code class="highlighter-rouge">com.linkedin.common.Callback</code></li>
+  <li>Using a <code class="highlighter-rouge">com.linkedin.restli.client.ParSeqRestClient</code> (included in Rest.li)</li>
+</ol>
+
+<h3 id="using-callbacks-1">Using Callbacks</h3>
+
+<p>Here is a partial example of making a GET request to the /greetings resource and then using the result asynchronously:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Callback</span><span class="o">&lt;</span><span class="nc">Response</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;&gt;</span> <span class="n">cb</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Callback</span><span class="o">()</span> <span class="o">{</span>
+  <span class="kt">void</span> <span class="nf">onSuccess</span><span class="o">(</span><span class="nc">Response</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">response</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// do something with the returned Greeting</span>
+  <span class="o">}</span>
+  <span class="kt">void</span> <span class="nf">onError</span><span class="o">(</span><span class="nc">Throwable</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// whoops</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="nc">Request</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">getRequest</span> <span class="o">=</span> <span class="no">BUILDERS</span><span class="o">.</span><span class="na">get</span><span class="o">().</span><span class="na">id</span><span class="o">(</span><span class="mi">1L</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+
+<span class="n">_restClient</span><span class="o">.</span><span class="na">sendRequest</span><span class="o">(</span><span class="n">getRequest</span><span class="o">,</span> <span class="k">new</span> <span class="nc">RequestContext</span><span class="o">(),</span> <span class="n">cb</span><span class="o">);</span>
+
+</code></pre></div></div>
+
+<h4 id="defining-the-callback">Defining the Callback</h4>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Callback</span><span class="o">&lt;</span><span class="nc">Response</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;&gt;</span> <span class="n">cb</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Callback</span><span class="o">()</span> <span class="o">{</span>
+  <span class="kt">void</span> <span class="nf">onSuccess</span><span class="o">(</span><span class="nc">Response</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">response</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// do something with the returned Greeting</span>
+  <span class="o">}</span>
+  <span class="kt">void</span> <span class="nf">onError</span><span class="o">(</span><span class="nc">Throwable</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// whoops</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>We need to define the <code class="highlighter-rouge">Callback</code> that will be executed when we get back a <code class="highlighter-rouge">Response</code> from the server. <code class="highlighter-rouge">onSuccess</code> will be invoked by Rest.li on getting a non-exception result (i.e. a <code class="highlighter-rouge">Response</code>), while <code class="highlighter-rouge">onError</code> will be invoked by Rest.li in case an <code class="highlighter-rouge">Exception</code> is thrown. The key concept to note here is that <strong>Rest.li invokes the <code class="highlighter-rouge">Callback</code> from you once we get a <code class="highlighter-rouge">Response</code> or an <code class="highlighter-rouge">Exception</code> is thrown</strong>.</p>
+
+<h4 id="sending-the-request">Sending the Request</h4>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Request</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">getRequest</span> <span class="o">=</span> <span class="no">BUILDERS</span><span class="o">.</span><span class="na">get</span><span class="o">().</span><span class="na">id</span><span class="o">(</span><span class="mi">1L</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+<span class="n">_restClient</span><span class="o">.</span><span class="na">sendRequest</span><span class="o">(</span><span class="n">getRequest</span><span class="o">,</span> <span class="k">new</span> <span class="nc">RequestContext</span><span class="o">(),</span> <span class="n">cb</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p>We pass the <code class="highlighter-rouge">Callback</code> we defined previously as the last parameter of the <code class="highlighter-rouge">sendRequest</code> call. This calls returns right away, because as stated above, Rest.li invokes the <code class="highlighter-rouge">Callback</code> for you appropriately.</p>
+
+<h3 id="using-a-parseqrestclient">Using a ParSeqRestClient</h3>
+
+<p>A <code class="highlighter-rouge">ParSeqRestclient</code> is simply a wrapper around the standard <code class="highlighter-rouge">RestClient</code> that returns a ParSeq <code class="highlighter-rouge">Task</code> or <code class="highlighter-rouge">Promise</code>. Here is an example that uses a <code class="highlighter-rouge">ParSeqRestClient</code> to make two asynchronous Rest.li requests in parallel and then print out the results:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Request</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">greetingsRequest</span> <span class="o">=</span> <span class="no">GREETINGS_BUILDERS</span><span class="o">.</span><span class="na">get</span><span class="o">().</span><span class="na">id</span><span class="o">(</span><span class="mi">1</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+<span class="nc">Request</span><span class="o">&lt;</span><span class="nc">Fortune</span><span class="o">&gt;</span> <span class="n">fortunesRequest</span> <span class="o">=</span> <span class="no">FORTUNES_BUILDERS</span><span class="o">.</span><span class="na">get</span><span class="o">().</span><span class="na">id</span><span class="o">(</span><span class="mi">1</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+
+<span class="nc">Task</span><span class="o">&lt;</span><span class="nc">Response</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;&gt;</span> <span class="n">greetingsResponseTask</span> <span class="o">=</span> <span class="n">_parseqRestClient</span><span class="o">.</span><span class="na">createTask</span><span class="o">(</span><span class="n">greetingsRequest</span><span class="o">);</span>
+<span class="nc">Task</span><span class="o">&lt;</span><span class="nc">Response</span><span class="o">&lt;</span><span class="nc">Fortune</span><span class="o">&gt;&gt;</span> <span class="n">fortunesResponseTask</span> <span class="o">=</span> <span class="n">_parseqRestClient</span><span class="o">.</span><span class="na">createTask</span><span class="o">(</span><span class="n">fortunesRequest</span><span class="o">);</span>
+
+<span class="nc">Task</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;</span> <span class="n">printTask</span> <span class="o">=</span> <span class="nc">Tasks</span><span class="o">.</span><span class="na">callable</span><span class="o">(</span><span class="s">"printTask"</span><span class="o">,</span> <span class="k">new</span> <span class="nc">Callable</span><span class="o">&lt;</span><span class="nc">Void</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="nc">Void</span> <span class="nf">call</span><span class="o">()</span> <span class="kd">throws</span> <span class="nc">Exception</span> <span class="o">{</span>
+    <span class="nc">Greeting</span> <span class="n">greeting</span> <span class="o">=</span> <span class="n">greetingsResponseTask</span><span class="o">.</span><span class="na">get</span><span class="o">().</span><span class="na">getEntity</span><span class="o">();</span>
+    <span class="nc">Fortune</span> <span class="n">fortune</span> <span class="o">=</span> <span class="n">fotunesResponseTask</span><span class="o">.</span><span class="na">get</span><span class="o">().</span><span class="na">getEntity</span><span class="o">();</span>
+    <span class="nc">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">greeting</span> <span class="o">+</span> <span class="s">", "</span> <span class="o">+</span> <span class="n">fortune</span><span class="o">);</span>
+    <span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+  <span class="o">}</span>
+<span class="o">});</span>
+
+<span class="n">_engine</span><span class="o">.</span><span class="na">run</span><span class="o">(</span><span class="nc">Tasks</span><span class="o">.</span><span class="na">seq</span><span class="o">(</span><span class="nc">Tasks</span><span class="o">.</span><span class="na">par</span><span class="o">(</span><span class="n">greetingsResponseTask</span><span class="o">,</span> <span class="n">fortunesResponseTask</span><span class="o">),</span> <span class="n">printTask</span><span class="o">));</span>
+</code></pre></div></div>
+
+<h4 id="task-creation">Task Creation</h4>
+
+<p>The <code class="highlighter-rouge">ParSeqRestClient</code> includes APIs to get back a <code class="highlighter-rouge">Task</code> or <code class="highlighter-rouge">Promise</code> corresponding to the <code class="highlighter-rouge">Response</code> of a <code class="highlighter-rouge">Request</code>. In the example above, we build out a <code class="highlighter-rouge">Request</code> for a <code class="highlighter-rouge">Greeting</code> and <code class="highlighter-rouge">Fortune</code> using the standard generated builders. We then use the <code class="highlighter-rouge">createTask</code> API to get back a <code class="highlighter-rouge">Task&lt;Response&lt;Greeting&gt;&gt;</code> and <code class="highlighter-rouge">Task&lt;Response&lt;Fortune&gt;&gt;</code>. <strong>This does not send the request out over the network!</strong> It simply gives you back a <code class="highlighter-rouge">Task</code>, which, when run on a ParSeq engine, would give you back a <code class="highlighter-rouge">Response&lt;Greeting&gt;</code> or <code class="highlighter-rouge">Response&lt;Fortune&gt;</code>.</p>
+
+<p>To print out the result we get back from the server, we define a third <code class="highlighter-rouge">Task</code> named <code class="highlighter-rouge">printTask</code>. In this <code class="highlighter-rouge">Task</code>, we get the <code class="highlighter-rouge">Greeting</code> and <code class="highlighter-rouge">Fortune</code> from the previous <code class="highlighter-rouge">Task</code>s and print it out.</p>
+
+<h4 id="building-the-call-graph-and-running-the-tasks">Building the Call Graph and Running the Tasks</h4>
+
+<p>Now that we have the <code class="highlighter-rouge">Task</code>s that we want to run, we need to build the call graph and execute the <code class="highlighter-rouge">Task</code>s on a ParSeq engine.</p>
+
+<p>We want to make our Rest.li requests in parallel. To do this we use the <code class="highlighter-rouge">Tasks.par</code> method to run <code class="highlighter-rouge">greetingsResponseTask</code> and <code class="highlighter-rouge">fortunesResponseTask</code> in parallel. We want to run <code class="highlighter-rouge">printTask</code> after both these <code class="highlighter-rouge">Task</code>s have completed, which is why we use the <code class="highlighter-rouge">Tasks.seq</code> method <code class="highlighter-rouge">Tasks.seq(Tasks.par(greetingsResponseTask, fortunesResponseTask), printTask)</code>. This gives us the final <code class="highlighter-rouge">Task</code> that we run on our ParSeq engine using the <code class="highlighter-rouge">run</code> method.</p>
+
+<h4 id="using-promises">Using Promises</h4>
+
+<p><code class="highlighter-rouge">ParSeqRestClient</code> also has a <code class="highlighter-rouge">Promise</code> based API. It is very similar to the <code class="highlighter-rouge">Callback</code> based approach of sending a request. The main difference is that instead of passing in a <code class="highlighter-rouge">Callback</code> to the <code class="highlighter-rouge">sendRequest</code> call we attach a <code class="highlighter-rouge">PromiseListener</code> that is invoked asynchronously when we get a result from the server. Here is the <a href="#using-callbacks-1">Callback example</a> implemented using the <code class="highlighter-rouge">Promise</code> API:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Request</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">getRequest</span> <span class="o">=</span> <span class="no">BUILDERS</span><span class="o">.</span><span class="na">get</span><span class="o">().</span><span class="na">id</span><span class="o">(</span><span class="mi">1L</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+
+<span class="c1">// this call sends the request over the wire and returns a Promise</span>
+<span class="nc">Promise</span><span class="o">&lt;</span><span class="nc">Response</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;&gt;</span> <span class="n">greetingPromise</span> <span class="o">=</span> <span class="n">_parseqRestClient</span><span class="o">.</span><span class="na">sendRequest</span><span class="o">(</span><span class="n">getRequest</span><span class="o">);</span>
+
+<span class="n">greetingPromise</span><span class="o">.</span><span class="na">addListener</span><span class="o">(</span><span class="k">new</span> <span class="nc">PromiseListener</span><span class="o">&lt;</span><span class="nc">Response</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;&gt;()</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onResolved</span><span class="o">(</span><span class="nc">Promise</span><span class="o">&lt;</span><span class="nc">Response</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;&gt;</span> <span class="n">promise</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">promise</span><span class="o">.</span><span class="na">isFailed</span><span class="o">())</span> <span class="o">{</span>
+      <span class="nc">Throwable</span> <span class="n">t</span> <span class="o">=</span> <span class="n">promise</span><span class="o">.</span><span class="na">getError</span><span class="o">();</span>
+      <span class="c1">// something went wrong</span>
+    <span class="o">}</span>
+    <span class="k">else</span> <span class="o">{</span>
+      <span class="nc">Response</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">promise</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+      <span class="c1">// do something with the returned Greeting</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">});</span>
+</code></pre></div></div>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

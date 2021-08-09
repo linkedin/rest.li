@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Java Binding</title>
+    <meta name="description" content="Rest.li Java binding." />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/java_binding" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">User Guide</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/user_guide/server_architecture">Rest.li Architecture</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_server">Rest.li Server</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_client">Rest.li Client Framework</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/unstructured_data">Unstructured Data</a></li>
+                       
+                         <li><a href="/rest.li/Components">Components</a></li>
+                       
+                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous in Rest.li</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data Schemas</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/pdl_schema">PDL Schema</a></li>
+                       
+                         <li><a href="/rest.li/pdsc_syntax">PDSC Syntax</a></li>
+                       
+                         <li><a href="/rest.li/pdl_migration">Migrating from PDSC to PDL</a></li>
+                       
+                         <li><a href="/rest.li/avro_translation">Avro Translation</a></li>
+                       
+                         <li><a href="/rest.li/java_binding">Java Binding</a></li>
+                       
+                         <li><a href="/rest.li/annotation_processor">Schema Annotation Processor</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Modeling Resources</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
+                       
+                         <li><a href="/rest.li/modeling/compatibility_check">Snapshots and Resource Compatibility Checking</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/how_data_is_serialized_for_transport">How Data is Serialized for Transport</a></li>
+                       
+                         <li><a href="/rest.li/how_data_is_represented_in_memory">How Data is Represented in Memory</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Main concepts</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-Filters">Filters</a></li>
+                       
+                         <li><a href="/rest.li/Projections">Projections</a></li>
+                       
+                         <li><a href="/rest.li/pathspec">PathSpecs</a></li>
+                       
+                         <li><a href="/rest.li/Validation-in-Rest_li">Validation</a></li>
+                       
+                         <li><a href="/rest.li/Attachment-Streaming">Attachment Streaming</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Mutli-language</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/multi_language_compatibility_matrix">Compatibility Matrix</a></li>
+                       
+                         <li><a href="/rest.li/test_suite">Test Suite</a></li>
+                       
+                         <li><a href="https://github.com/mchen07/restli-csharp">C#</a></li>
+                       
+                         <li><a href="/rest.li/Scala-Integration">Scala Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Testing</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers">Writing Unit Tests</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">How to</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Send-Rest_li-Request-Query-In-Request-Body">Send Request Query in the Body</a></li>
+                       
+                         <li><a href="/rest.li/How-to-use-projections-in-Java">Use Projections</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li_Avro_conversions">Avro Conversion</a></li>
+                       
+                         <li><a href="/rest.li/Compression">Compression</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_x-upgrade-instructions">Migrate to Rest.li 2.x</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_how_to">Test Suite</a></li>
+                       
+                         <li><a href="/rest.li/howto_add_new_language">Test Suite - Add New Language</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/service_errors_java">Configure Service Errors in Java</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">FAQ</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Data-FAQ">Rest.li - FAQ</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_troubleshooting">Test Suite - Troubleshooting</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="java-binding">Java Binding</h1>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#package-and-class-names">Package and Class Names</a></li>
+  <li><a href="#primitive-types">Primitive Types</a></li>
+  <li><a href="#enum-type">Enum Type</a></li>
+  <li><a href="#fixed-type">Fixed Type</a></li>
+  <li><a href="#array-type">Array Type</a></li>
+  <li><a href="#map-type">Map Type</a></li>
+  <li><a href="#record-type">Record Type</a></li>
+  <li><a href="#error-type">Error Type</a></li>
+  <li><a href="#union-type">Union Type</a></li>
+  <li><a href="#custom-java-class-binding-for-primitive-types">Custom Java Class Binding for Primitive Types</a></li>
+  <li><a href="#fields-class">Fields class</a></li>
+  <li><a href="#clone-method">Clone Method</a></li>
+  <li><a href="#escaping-for-reserved-words">Escaping for Reserved Words</a></li>
+  <li><a href="#exceptions">Exceptions</a></li>
+  <li><a href="#running-the-code-generator">Running the Code Generator</a></li>
+</ul>
+
+<p>This section describes the details of the Java classes (dataModels)
+generated by the code generator.</p>
+
+<h2 id="package-and-class-names">Package and Class Names</h2>
+
+<p>The Java binding determines the package and class names of the generated
+and/or built-in classes using the following rules.</p>
+
+<table>
+<thead>
+<tr class="header">
+<th>Schema Type <br /></th>
+<th>Java Package and Class Name<br /></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>
+maps and arrays of primitive types
+</td>
+<td>
+Package name is <code>com.linkedin.data.template</code>. <br />
+Class name is computed by appending "Map" or "Array" to the corresponding boxed type's class name. <br />
+For multi-dimensional maps and arrays, a "Map" or "Array" is appended for each dimension starting with the inner most dimension first. <br />
+<br />
+<b>Example Schema</b><pre><code>
+{ "type" : "map", "values" : "boolean" }
+{ "type" : "array", "items" : { "type" : "map" : "values" : "string" } }
+</code></pre>
+<b>Java package and class</b><pre><code>
+package com.linkedin.data.template;
+public class BooleanMap extends DirectArrayTemplate&amp;ltBoolean&amp;gt ...
+public class StringMapArray extends DirectArrayTemplate&amp;ltStringMap&amp;gt ...
+</code></pre>
+</td>
+</tr>
+<tr class="even">
+<td>
+enum, fixed, record types <br /> (named schema types)
+</td>
+<td>
+Package name is the package of the named schema type if it is specified, otherwise package name will use the namespace of the named schema type by default. <br />
+Class name is the name of the named schema type. <br />
+<br />
+<b>Example Schema</b> 
+<pre><code>
+{ "type" : "record", "name" : "a.b.c.d.Foo", "fields" : ... }
+{ "type" : "enum", "name" : "Bar", "namespace" : "x.y.z", "package": "x.y.z.test", symbols" : ... }
+</code></pre>
+<b>Java package and class</b>
+<pre><code>
+package a.b.c.d;
+public class Foo extends RecordTemplate ...
+<br />
+package x.y.z.test;
+public enum class Bar ...
+</code></pre>
+</td>
+</tr>
+<tr class="odd">
+<td>
+maps and arrays of enum, fixed, record <br />
+(maps and arrays of named schema types) <br />
+</td>
+<td>
+Package name is the package name of the named schema type, which follows the rule documented in this table for named schema. <br />
+Class name is computed by appending "Map" or "Array" to name of generated class for the named schema type. <br />
+For multi-dimensional maps and arrays, a "Map" or "Array" is appended for each dimension starting with the inner most dimension first. <br />
+<br />
+<b>Example Schema</b> 
+<pre><code>
+{ "type" : "map", "values" : "a.b.c.d.Foo" }
+{ "type" : "map", "values" : { "type" : "array", "items" : "a.b.c.d.Foo" } }
+<br />
+{ "type" : "array", "items" : "x.y.z.Bar" }
+{ "type" : "array", "items" : { "type" : "map", "values" : "x.y.z.Bar" } }
+</code></pre>
+
+<b>Java package and class</b> 
+<pre><code>
+package a.b.c.d;
+ 
+public class FooMap extends WrappingMapTemplate&lt;Foo&gt; ...
+public class FooArrayMap extends WrappingMapTemplate&lt;Foo&amp;gt ...
+ 
+package x.y.z.test;
+public class BarArray extends DirectArrayTemplate&lt;Bar&amp;gt ...
+public class BarMapArray extends DirectArrayTemplate&lt;Bar&amp;gt ...
+</code></pre>
+</td>
+</tr>
+<tr class="even">
+<td>
+unions <br />
+</td>
+<td>
+The name of the union class is determined in two ways. <br />
+<br />
+<b>1. Union without typeref</b> <br />
+If there is no typeref for the union, the code generator makes up the class name from the name of the closest enclosing field that declared the union type. <br />
+Package name is the package name of the closest outer record type, which follows the rule documented in this table for that closest outer record type. <br />
+The generated union class will be declared in the generated class of the closest outer record type. <br />
+Class name will be name of the field in the closest outer record that declared the union with the first character capitalized. <br />
+<br />
+<b>Example Schema</b> <pre><code>
+{
+  "type" : "record",
+  "name" : "a.b.c.d.Foo",
+  "fields" : [ { "name" : "bar", "type" : [ "int", "string" ] } ]
+}
+</code></pre>
+<b>Java package and class</b> <pre><code>
+package a.b.c.d;
+public class Foo extends RecordTemplate {
+  public class Bar extends UnionTemplate ...
+}
+</code></pre>
+<b>2. Union with typeref</b> <br />
+If there is a typeref for the union, the code generator will use the name of typeref for the generated union class. <br />
+Package name is the package of the typeref if it is specified, otherwise package name is the namespace of the typeref by default. <br />
+Class name is the name of the typeref.<br />
+<br />
+<b>Example Schema</b> 
+<pre><code>
+{
+  "type" : "typeref",
+  "name" : "a.b.c.d.Bar",
+  "package" : "a.b.c.d.test",
+  "ref"  : [ "int", "string" ] 
+}
+</code></pre><b>Java package and class</b>
+<pre><code>
+package a.b.c.d.test;
+public class Bar extends UnionTemplate implements HasTyperefInfo {
+  ...
+  public TyperefInfo typerefInfo() 
+  {
+    ... 
+  }
+}
+</code></pre>
+When the typeref provides the name of the generated union class.   The generated class will also implement the <code>HasTyperefInfo</code> interface.  This interface declares the <code>typerefInfo()</code> method that will be implemented by the generated class.<br />
+To avoid generating duplicate classes for the duplicate declarations of unions, it is a good practice to declare unions with a typeref when the same union type is used more than once.<br />
+</td>
+</tr>
+<tr class="odd">
+<td>
+maps and arrays of unions <br />
+</td>
+<td>
+Package name is the package name of the union, which follows the rule documented in this table for unions.  <br />
+The generated class will be declared in the same outer class (for unions without typeref) or same package (for unions with typeref) as the generated class for the union. <br />
+Class name is computed by appending "Map" or "Array" to the name of the generated class for the union. <br />
+For multi-dimensional maps and arrays, a "Map" or "Array" is appended for each dimension starting the inner most dimension first. <br />
+<br />
+<b>1. Union without typeref</b><br />
+<br />
+<b>Example Schema</b> 
+<pre>
+<code>
+{
+  "type" : "record",
+  "name" : "a.b.c.d.Foo",
+  "fields" : [
+    { "name" : "members", "type" : { "type" : "array", "items" : [ "int", "string" ] } }
+    { "name" : "locations", "type" : { "type" : "map", "values" : [ "int", "string" ]  } }
+  ]
+}
+</code>
+</pre>
+
+<b>Java package and class</b> 
+<pre><code>
+package a.b.c.d;
+public class Foo extends RecordTemplate {
+  public class Members extends UnionTemplate ...
+  public class MembersArray extends WrappingArrayTemplate&lt;Members&gt; ...
+  public class Locations extends UnionTemplate ...
+  public class LocationsMap extends WrappingMapTemplate&lt;Locations&t; ...
+ <br />
+  public MembersArray getMembers() ...
+  public LocationsMap getLocations() ...
+}
+
+</code></pre>
+
+<b>2. Union with typeref</b><br />
+<b>Example Schema</b> 
+<pre><code>
+{
+  "type" : "typeref",
+  "name" : "a.b.c.d.Bar",
+  "package": "a.b.c.d.test",
+  "ref"  : [ "int", "string" ] 
+}
+<br /> 
+{
+  "type" : "record",
+  "name" : "a.b.c.d.Foo",
+  "package" : "a.b.c.d.test",
+  "fields" : [
+    { "name" : "members", "type" : { "type" : "array", "items" : "Bar" } }
+    { "name" : "locations", "type" : { "type" : "map", "values" : "Bar" } }
+  ]
+}
+</code></pre><b>Java package and class</b> <br />
+<pre><code>
+package a.b.c.d.test;
+<br /> 
+public class Bar extends UnionTemplate ...
+public class BarArray extends WrappingArrayTemplate&lt;Bar&gt; ...
+public class BarMap extends WrappingMapTemplate&lt;Bar&gt; ...
+<br /> 
+public class Foo extends RecordTemplate
+{
+  public BarArray getMembers() ...
+  public BarMap getLocations() ...
+}
+</code></pre><br /> 
+</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="primitive-types">Primitive Types</h2>
+
+<p>The Java binding for primitive schema types are as follows:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Schema Type</th>
+      <th>Java Type</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>int <br /></td>
+      <td><code class="highlighter-rouge">java.lang.Integer</code> or <code class="highlighter-rouge">int</code> (1) <br /></td>
+    </tr>
+    <tr>
+      <td>long <br /></td>
+      <td><code class="highlighter-rouge">java.lang.Long</code> or <code class="highlighter-rouge">long</code> (1) <br /></td>
+    </tr>
+    <tr>
+      <td>float <br /></td>
+      <td><code class="highlighter-rouge">java.lang.Float</code> or <code class="highlighter-rouge">float</code> (1) <br /></td>
+    </tr>
+    <tr>
+      <td>double <br /></td>
+      <td><code class="highlighter-rouge">java.lang.Double</code> or <code class="highlighter-rouge">double</code> (1) <br /></td>
+    </tr>
+    <tr>
+      <td>boolean <br /></td>
+      <td><code class="highlighter-rouge">java.lang.Boolean</code> or <code class="highlighter-rouge">boolean</code> (1) <br /></td>
+    </tr>
+    <tr>
+      <td>string <br /></td>
+      <td><code class="highlighter-rouge">java.lang.String</code> <br /></td>
+    </tr>
+    <tr>
+      <td>bytes <br /></td>
+      <td><code class="highlighter-rouge">com.linkedin.data.ByteString</code> <br /></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>(1) Depending on the method, un-boxed types will be preferred to boxed
+types if applicable when input or output arguments can never be null.</p>
+
+<p>In addition to the standard bindings, custom Java class bindings may be
+defined for these types to specify a user-defined class as substitute
+for the standard Java class bindings. For additional details, see
+<a href="#CustomJavaClassBindingforPrimitiveTypes">Custom Java Class Binding for Primitive
+Types</a>.</p>
+
+<h2 id="enum-type">Enum Type</h2>
+
+<p>The code generator generates a Java enum class. There will be a
+corresponding symbol in the Java enum class for each symbol in the enum
+schema. In addition, the code generator will add a <code class="highlighter-rouge">$UNKNOWN</code> symbol to
+the generated enum class. <code class="highlighter-rouge">$UNKNOWN</code> will be returned if the value
+stored in the Data layer cannot be mapped to a symbol present in the
+Java enum class. For example, this may occur if an enum symbol has been
+added to a new version of the enum schema and is transmitted to client
+that has not been updated with the new enum schema.</p>
+
+<p>Enums also supports a symbolDocs attribute to provide documentation for
+each enum symbol. E.g.</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">...</span>
+<span class="dl">"</span><span class="s2">symbols</span><span class="dl">"</span> <span class="p">:</span> <span class="p">[</span> <span class="dl">"</span><span class="s2">APPLE</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">BANANA</span><span class="dl">"</span><span class="p">,</span> <span class="p">...</span> <span class="p">],</span>
+<span class="dl">"</span><span class="s2">symbolDocs</span><span class="dl">"</span> <span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">APPLE</span><span class="dl">"</span><span class="p">:</span><span class="dl">"</span><span class="s2">A red, yellow or green fruit.</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">BANANA</span><span class="dl">"</span><span class="p">:</span><span class="dl">"</span><span class="s2">A yellow fruit.</span><span class="dl">"</span><span class="p">,</span> <span class="p">...</span> <span class="p">}</span> 
+<span class="p">...</span>
+
+</code></pre></div></div>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">linkedin</span><span class="o">.</span><span class="na">pegasus</span><span class="o">.</span><span class="na">generator</span><span class="o">.</span><span class="na">examples</span><span class="o">;</span>
+
+<span class="o">...</span>
+<span class="cm">/**
+* A fruit
+*
+*/</span>
+<span class="kd">public</span> <span class="kd">enum</span> <span class="nc">Fruits</span> <span class="o">{</span>
+
+  <span class="cm">/**
+   * A red, yellow or green fruit.
+   * 
+   */</span>
+  <span class="no">APPLE</span><span class="o">,</span>
+
+  <span class="cm">/**
+   * A yellow fruit.
+   * 
+   */</span>
+  <span class="no">BANANA</span><span class="o">,</span>
+
+  <span class="cm">/**
+   * An orange fruit.
+   * 
+   */</span>
+  <span class="no">ORANGE</span><span class="o">,</span>
+
+  <span class="cm">/**
+   * A yellow fruit.
+   * 
+   */</span>
+  <span class="no">PINEAPPLE</span><span class="o">,</span>
+  <span class="n">$UNKNOWN</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><strong>Note:</strong> Due to the addition of doclint in JDK8, anything under the
+<code class="highlighter-rouge">symbolDocs</code> attribute must be W3C HTML 4.01 compliant. This is because
+the contents of this string will appear as Javadocs in the generated
+Java ‘data template’ classes later. Please take this into consideration
+when writing your documentation.</p>
+
+<h2 id="fixed-type">Fixed Type</h2>
+
+<p>The code generator generates a class that extends
+<code class="highlighter-rouge">com.linkedin.data.template.FixedTemplate</code>. This class provides the
+following
+methods:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method <br /></th>
+      <th>Implemented by <br /></th>
+      <th>Description <br /></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><em>Constructor</em>(String arg) <br /></td>
+      <td>Generated class <br /></td>
+      <td>Construct with an instance whose value is provided by the input string representing the bytes in the fixed. <br /></td>
+    </tr>
+    <tr>
+      <td><em>Constructor</em>(Object obj) <br /></td>
+      <td>Generated class <br /></td>
+      <td>Construct with an instance whose value is provided by the input string representing the bytes in the fixed or a <code class="highlighter-rouge">ByteString</code>. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">ByteString bytes()</code> <br /></td>
+      <td>Base class <br /></td>
+      <td>Returns the bytes of the fixed type. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">FixedDataSchema schema()</code> <br /></td>
+      <td>Generated class <br /></td>
+      <td>Returns the <code class="highlighter-rouge">DataSchema</code> of the instance. The size of the fixed type can be obtained from this schema. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">Object data()</code> <br /></td>
+      <td>Base class <br /></td>
+      <td>Returns the underlying data of the instance. This is the same as bytes(). <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">String toString()</code> <br /></td>
+      <td>Base class <br /></td>
+      <td>Returns the string representation of the bytes in the instance. <br /></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>A fixed instance is immutable once constructed.</p>
+
+<h2 id="array-type">Array Type</h2>
+
+<p>The code generator generates a class that extends
+<code class="highlighter-rouge">com.linkedin.data.template.DirectArrayTemplate&lt;E&gt;</code> or
+<code class="highlighter-rouge">com.linkedin.data.template.WrappingArrayTemplate&lt;E extends
+DataTemplate&lt;?&gt;&gt;</code>. The latter is used for item types whose Java binding
+require wrapping. The former is used for items types whose Java binding
+that do not require wrapping. The <code class="highlighter-rouge">E</code> generic type variable is the Java
+class of the array’s item type. By creating a concrete subclass per map
+type, this binding avoids lost of item type information due to Java
+generics type erasure.</p>
+
+<p>The primary characteristics of both base classes are as follows:</p>
+
+<ul>
+  <li>They implement <code class="highlighter-rouge">java.util.List&lt;E&gt;</code>.</li>
+  <li>Their methods perform runtime checks on updates and inserts to
+ensure that the value types of arguments are either the exact type
+specified by the type variable or types that can be coerced to the
+specified type.</li>
+</ul>
+
+<p>The methods with more specific behavior are described
+below.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th>Implemented by <br /></th>
+      <th>Description <br /></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><em>Constructor</em>()</td>
+      <td>Generated class <br /></td>
+      <td>Constructs an empty array. <br /></td>
+    </tr>
+    <tr>
+      <td><em>Constructor</em>(int initialCapacity)</td>
+      <td>Generated class</td>
+      <td>Constructs an empty array with the specified initial capacity. <br /></td>
+    </tr>
+    <tr>
+      <td><em>Constructor</em>(Collection<E> c)</E></td>
+      <td>Generated class</td>
+      <td>Constructs an array by inserting each element of the provided collection into the constructed array. <br /></td>
+    </tr>
+    <tr>
+      <td><em>Constructor</em>(DataList list)</td>
+      <td>Generated class</td>
+      <td>Constructs an array that wraps the provided <code class="highlighter-rouge">DataList</code>. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">ArrayDataSchema schema()</code></td>
+      <td>Generated class</td>
+      <td>Returns the <code class="highlighter-rouge">DataSchema</code> of the instance. The schema of the items in the array can be obtained from this schema.</td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">int hashCode()</code> <br /></td>
+      <td>Base class <br /></td>
+      <td>Returns the <code class="highlighter-rouge">hashCode()</code> of the underlying <code class="highlighter-rouge">DataList</code> wrapped by this instance. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">boolean equals(Object object)</code> <br /></td>
+      <td>Base class <br /></td>
+      <td>If object is an instance of <code class="highlighter-rouge">AbstractArrayTemplate</code>, invoke equals on the underlying <code class="highlighter-rouge">DataList</code> of this instance and the object’s underlying <code class="highlighter-rouge">DataList</code>. Otherwise, invoke <code class="highlighter-rouge">super.equals(object)</code> which is <code class="highlighter-rouge">AbstractMap</code> ’s equals method. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">String toString()</code> <br /></td>
+      <td>Base class <br /></td>
+      <td>Returns the result of calling <code class="highlighter-rouge">toString()</code> on the underlying <code class="highlighter-rouge">DataList</code> wrapped by this instance. <br /></td>
+    </tr>
+    <tr>
+      <td><em>java.util.List methods</em></td>
+      <td>Base class <br /></td>
+      <td>See <code class="highlighter-rouge">java.util.List</code>. <br /></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="map-type">Map Type</h2>
+
+<p>The code generator generates a class that extends
+<code class="highlighter-rouge">com.linkedin.data.template.DirectMapTemplate&lt;E&gt;</code> or
+<code class="highlighter-rouge">com.linkedin.data.template.WrappingMapTemplate&lt;E extends
+DataTemplate&lt;?&gt;&gt;</code>. The latter is used for item types whose Java binding
+require wrapping. The former is used for items types whose Java binding
+that do not require wrapping. The <code class="highlighter-rouge">E</code> generic type variable is the Java
+class of the map’s value type. By creating a concrete subclass per map
+type, this binding avoids lost of value type information due to Java
+generics type erasure.</p>
+
+<p>The primary characteristics of both base classes are as follows:</p>
+
+<ul>
+  <li>They implement <code class="highlighter-rouge">java.util.Map&lt;String, E&gt;</code>.</li>
+  <li>Their methods perform runtime checks on updates and inserts to
+ensure that the value types of arguments are either the exact type
+specified by the type variable or are types that can be coerced to
+the specified type.</li>
+</ul>
+
+<p>The methods with somewhat specialized behavior are described
+below.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th>Implemented by <br /></th>
+      <th>Description <br /></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><em>Constructor</em>()</td>
+      <td>Generated class <br /></td>
+      <td>Constructs an empty map. <br /></td>
+    </tr>
+    <tr>
+      <td><em>Constructor</em>(int initialCapacity)</td>
+      <td>Generated class</td>
+      <td>Constructs an empty map with the specified initial capacity. <br /></td>
+    </tr>
+    <tr>
+      <td><em>Constructor</em>(int initialCapacity, float loadFactor)</td>
+      <td>Generated class</td>
+      <td>Constructs an empty map with the specified initial capacity and load factor. <br /></td>
+    </tr>
+    <tr>
+      <td><em>Constructor</em>(Map&lt;String, E&gt; c)</td>
+      <td>Generated class</td>
+      <td>Constructs a map by inserting each entry of the provided map into new instance. <br /></td>
+    </tr>
+    <tr>
+      <td><em>Constructor</em>(DataMap map)</td>
+      <td>Generated class</td>
+      <td>Constructs an array that wraps the provided <code class="highlighter-rouge">DataMap</code>. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">MapDataSchema schema()</code></td>
+      <td>Generated class</td>
+      <td>Returns the <code class="highlighter-rouge">DataSchema</code> of the instance. The schema of the values in the map can be obtained from this schema.</td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">int hashCode()</code> <br /></td>
+      <td>Base class <br /></td>
+      <td>Returns the <code class="highlighter-rouge">hashCode()</code> of the underlying <code class="highlighter-rouge">DataMap</code> wrapped by this instance. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">boolean equals(Object object)</code> <br /></td>
+      <td>Base class <br /></td>
+      <td>If object is an instance of <code class="highlighter-rouge">AbstractMapTemplate</code>, invoke equals on the underlying <code class="highlighter-rouge">DataMap</code> of this instance and the object’s underlying <code class="highlighter-rouge">DataMap</code>. Otherwise, invoke super.equals(object) which is <code class="highlighter-rouge">AbstractMap</code> ’s equals method. <br /></td>
+    </tr>
+    <tr>
+      <td>String toString() <br /></td>
+      <td>Base class <br /></td>
+      <td>Returns the result of calling <code class="highlighter-rouge">toString()</code> on the underlying <code class="highlighter-rouge">DataMap</code> wrapped by this instance. <br /></td>
+    </tr>
+    <tr>
+      <td><em>java.util.Map methods</em></td>
+      <td>Base class <br /></td>
+      <td>See <code class="highlighter-rouge">java.util.Map</code>. <br /></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="record-type">Record Type</h2>
+
+<p>The code generator generates a class that extends
+<code class="highlighter-rouge">com.linkedin.data.template.RecordTemplate</code>. This class provides the
+following
+methods:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method <br /></th>
+      <th>Implemented by <br /></th>
+      <th>Description <br /></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><em>Constructor</em>() <br /></td>
+      <td>Generated class <br /></td>
+      <td>Construct instance that wraps an empty <code class="highlighter-rouge">DataMap</code>. Even mandatory fields are not present. <br /></td>
+    </tr>
+    <tr>
+      <td><em>Constructor</em>(DataMap map) <br /></td>
+      <td>Generated class</td>
+      <td>Construct instance that wraps the provided <code class="highlighter-rouge">DataMap</code>. Method invocations on the <code class="highlighter-rouge">RecordTemplate</code> translates to accesses to the underlying <code class="highlighter-rouge">DataMap</code>. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">RecordDataSchema schema()</code> <br /></td>
+      <td>Generated class</td>
+      <td>Returns the <code class="highlighter-rouge">DataSchema</code> of this instance. The fields of the record can be obtained from this schema. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">static Fields fields()</code> <br /></td>
+      <td>Generated class</td>
+      <td>Returns a generated <code class="highlighter-rouge">Fields</code> class that provides identifiers for fields of this record and certain nested types. See Fields section below. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">DataMap data()</code> <br /></td>
+      <td>Base class</td>
+      <td>Returns the underlying <code class="highlighter-rouge">DataMap</code> wrapped by this instance. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">String toString()</code> <br /></td>
+      <td>Base class</td>
+      <td>Equivalent to <code class="highlighter-rouge">data().toString()</code>. <br /></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The code generator generates the following methods in the generated
+class for each field. <em>FieldName</em> is the name of field with the first
+character
+capitalized.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th>Description <br /></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="highlighter-rouge">boolean hasFieldName()</code> <br /></td>
+      <td>Returns whether the field is present in the underlying <code class="highlighter-rouge">DataMap</code>. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">void removeFieldName()</code> <br /></td>
+      <td>Removes the field from the underlying <code class="highlighter-rouge">DataMap</code>. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">T getFieldName(GetMode mode)</code> <br /></td>
+      <td>Returns the value of the field. The mode parameter allows the client to specify the desired behavior if the field is not present. <code class="highlighter-rouge">T</code> is the Java type of the field.</td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">T getFieldName()</code> <br /></td>
+      <td>Returns the value of the field. This is equivalent to <code class="highlighter-rouge">getFieldName(GetMode.STRICT)</code>. <code class="highlighter-rouge">T</code> is the Java type of the field. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">R setFieldName(T value, SetMode mode)</code></td>
+      <td>Sets the specified value into the field. The mode parameter allows the client to specify the desired behavior if the provided value is null. Returns this. <code class="highlighter-rouge">R</code> is the generated Java class. <code class="highlighter-rouge">T</code> is the Java type of the field. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">R setFieldName(T value)</code> <br /></td>
+      <td>Sets the specified value into the field. This is equivalent to <code class="highlighter-rouge">setFieldName(value, SetMode.DISALLOW_NULL)</code>. Returns this. <code class="highlighter-rouge">R</code> is the generated Java class. <code class="highlighter-rouge">T</code> is the native type rather than the corresponding boxed type where applicable, e.g. <code class="highlighter-rouge">int</code> instead of <code class="highlighter-rouge">Integer</code>. <br /></td>
+    </tr>
+  </tbody>
+</table>
+
+<p><a name="GetMode"></a></p>
+
+<h3 id="getmode">GetMode</h3>
+
+<p>When getting a field from a record, the caller must specify the behavior
+of the function in case the requested field does not exist in the
+record.</p>
+
+<p>The available GetModes are:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">NULL</code><br />
+If the field is present, then return the value of the field. If the
+field is not present, then return null (even if there is a default
+value).</li>
+  <li><code class="highlighter-rouge">DEFAULT</code><br />
+If the field is present, then return the value of the field. If the
+field is not present and there is a default value, then return the
+default value. If the field is not present and there is no default
+value, then return null.</li>
+  <li><code class="highlighter-rouge">STRICT</code><br />
+If the field is present, then return the value of the field.<br />
+If the field is not present and the field has a default value, then
+return the default value.<br />
+If the field is not present and the field is not optional, then
+throw
+<code class="highlighter-rouge">com.linkedin.data.template.RequiredFieldNotPresentException</code>.<br />
+If the field is not present and the field is optional, then return
+null.</li>
+</ul>
+
+<h3 id="setmode">SetMode</h3>
+
+<p>When setting a field in a record, the caller must specify the behavior
+of the function in case the field is attempted to be set to <code class="highlighter-rouge">null</code>.</p>
+
+<p>The available SetModes are:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">IGNORE_NULL</code><br />
+If the provided value is null, then do nothing i.e. the value of the
+field is not changed. The field may or may be present.</li>
+  <li><code class="highlighter-rouge">REMOVE_IF_NULL</code><br />
+If the provided value is null, then remove the field. This occurs
+regardless of whether the field is optional.</li>
+  <li><code class="highlighter-rouge">REMOVE_OPTIONAL_IF_NULL</code><br />
+If the provided value is null and the field is an optional field,
+then remove the field. If the provided value is null and the field
+is a mandatory field, then throw
+<code class="highlighter-rouge">java.lang.IllegalArgumentException</code>.</li>
+  <li><code class="highlighter-rouge">DISALLOW_NULL</code><br />
+The provided value cannot be null. If the provided value is null,
+then throw <code class="highlighter-rouge">java.lang.NullPointerException</code>.</li>
+</ul>
+
+<!-- end list -->
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">linkedin</span><span class="o">.</span><span class="na">pegasus</span><span class="o">.</span><span class="na">generator</span><span class="o">.</span><span class="na">examples</span><span class="o">;</span>
+
+<span class="o">...</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Foo</span> <span class="kd">extends</span> <span class="nc">RecordTemplate</span>
+<span class="o">{</span>
+    <span class="kd">public</span> <span class="nf">Foo</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nf">Foo</span><span class="o">(</span><span class="nc">DataMap</span> <span class="n">data</span><span class="o">)</span> <span class="o">...</span>
+    <span class="o">...</span>
+
+    <span class="c1">// intField - field of int type</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">hasIntField</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">removeIntField</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">Integer</span> <span class="nf">getIntField</span><span class="o">(</span><span class="nc">GetMode</span> <span class="n">mode</span><span class="o">)</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">Integer</span> <span class="nf">getIntField</span><span class="o">()</span> <span class="o">{</span> <span class="k">return</span> <span class="n">getIntField</span><span class="o">(</span><span class="nc">GetMode</span><span class="o">.</span><span class="na">STRICT</span><span class="o">);</span> <span class="o">}</span>
+    <span class="kd">public</span> <span class="nc">Foo</span> <span class="nf">setIntField</span><span class="o">(</span><span class="kt">int</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span> <span class="o">...</span> <span class="o">;</span> <span class="k">return</span> <span class="k">this</span><span class="o">;</span> <span class="o">}</span>
+    <span class="kd">public</span> <span class="nc">Foo</span> <span class="nf">setIntField</span><span class="o">(</span><span class="nc">Integer</span> <span class="n">value</span><span class="o">,</span> <span class="nc">SetMode</span> <span class="n">mode</span> <span class="o">{</span> <span class="o">...</span> <span class="o">;</span> <span class="k">return</span> <span class="k">this</span><span class="o">;</span> <span class="o">}</span>
+    <span class="o">...</span>
+
+    <span class="c1">// bytesField - field of bytes, Java binding for bytes is ByteString</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">hasBytesField</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">removeBytesField</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">ByteString</span> <span class="nf">getBytesField</span><span class="o">(</span><span class="nc">GetMode</span> <span class="n">mode</span><span class="o">)</span> <span class="o">{</span> <span class="k">return</span> <span class="n">getBytesField</span><span class="o">(</span><span class="nc">GetMode</span><span class="o">.</span><span class="na">STRICT</span><span class="o">);</span> <span class="o">}</span>
+    <span class="kd">public</span> <span class="nc">ByteString</span> <span class="nf">getBytesField</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">Foo</span> <span class="nf">setBytesField</span><span class="o">(</span><span class="nc">ByteString</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span> <span class="o">...</span> <span class="o">;</span> <span class="k">return</span> <span class="k">this</span><span class="o">;</span> <span class="o">}</span>
+    <span class="kd">public</span> <span class="nc">Foo</span> <span class="nf">setBytesField</span><span class="o">(</span><span class="nc">ByteString</span> <span class="n">value</span><span class="o">,</span> <span class="nc">SetMode</span> <span class="n">mode</span><span class="o">)</span> <span class="o">{</span> <span class="o">...</span> <span class="o">;</span> <span class="k">return</span> <span class="k">this</span><span class="o">;</span> <span class="o">}</span>
+    <span class="o">...</span>
+
+    <span class="c1">// fruitsField - field of enum</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">hasFruitsField</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">removeFruitsField</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">Fruits</span> <span class="nf">getFruitsField</span><span class="o">(</span><span class="nc">GetMode</span> <span class="n">mode</span><span class="o">)</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">Fruits</span> <span class="nf">getFruitsField</span><span class="o">()</span> <span class="o">{</span> <span class="k">return</span> <span class="n">getFruitsField</span><span class="o">(</span><span class="nc">GetMode</span><span class="o">.</span><span class="na">STRICT</span><span class="o">);</span> <span class="o">}</span>
+    <span class="kd">public</span> <span class="nc">Foo</span> <span class="nf">setFruitsField</span><span class="o">(</span><span class="nc">Fruits</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span> <span class="o">...</span> <span class="o">;</span> <span class="k">return</span> <span class="k">this</span><span class="o">;</span> <span class="o">}</span>
+    <span class="kd">public</span> <span class="nc">Foo</span> <span class="nf">setFruitsField</span><span class="o">(</span><span class="nc">Fruits</span> <span class="n">value</span><span class="o">,</span> <span class="nc">SetMode</span> <span class="n">mode</span><span class="o">)</span> <span class="o">{</span> <span class="o">...</span> <span class="o">;</span> <span class="k">return</span> <span class="k">this</span><span class="o">;</span> <span class="o">}</span>
+    <span class="o">...</span>
+
+    <span class="c1">// intArrayField - field of { "type" : "array", "items" : "int" }</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">hasIntArrayField</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">removeIntArrayField</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">IntegerArray</span> <span class="nf">getIntArrayField</span><span class="o">(</span><span class="nc">GetMode</span> <span class="n">mode</span><span class="o">)</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">IntegerArray</span> <span class="nf">getIntArrayField</span><span class="o">()</span> <span class="o">{</span> <span class="k">return</span> <span class="n">getIntArrayField</span><span class="o">(</span><span class="nc">GetMode</span><span class="o">.</span><span class="na">STRICT</span><span class="o">);</span> <span class="o">}</span>
+    <span class="kd">public</span> <span class="nc">Foo</span> <span class="nf">setIntArrayField</span><span class="o">(</span><span class="nc">IntegerArray</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span> <span class="o">...</span> <span class="o">;</span> <span class="k">return</span> <span class="k">this</span><span class="o">;</span> <span class="o">}</span>
+    <span class="kd">public</span> <span class="nc">Foo</span> <span class="nf">setIntArrayField</span><span class="o">(</span><span class="nc">IntegerArray</span> <span class="n">value</span><span class="o">,</span> <span class="nc">SetMode</span> <span class="n">mode</span><span class="o">)</span> <span class="o">{</span> <span class="o">...</span> <span class="o">;</span> <span class="k">return</span> <span class="k">this</span><span class="o">;</span> <span class="o">}</span>
+
+    <span class="c1">// stringMapField - field of { "type" : "map", "values" : "string" }</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">hasStringMapField</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">removeStringMapField</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">StringMap</span> <span class="nf">getStringMapField</span><span class="o">(</span><span class="nc">GetMode</span> <span class="n">mode</span><span class="o">)</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">StringMap</span> <span class="nf">getStringMapField</span><span class="o">()</span> <span class="o">{</span> <span class="k">return</span> <span class="n">getIntStringMapField</span><span class="o">(</span><span class="nc">GetMode</span><span class="o">.</span><span class="na">STRICT</span><span class="o">);</span> <span class="o">}</span>
+    <span class="kd">public</span> <span class="nc">Foo</span> <span class="nf">setStringMapField</span><span class="o">(</span><span class="nc">StringMap</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span> <span class="o">...</span> <span class="o">;</span> <span class="k">return</span> <span class="k">this</span><span class="o">;</span> <span class="o">}</span>
+    <span class="kd">public</span> <span class="nc">Foo</span> <span class="nf">setStringMapField</span><span class="o">(</span><span class="nc">StringMap</span> <span class="n">value</span><span class="o">,</span> <span class="nc">SetMode</span> <span class="n">mode</span><span class="o">)</span> <span class="o">{</span> <span class="o">...</span> <span class="o">;</span> <span class="k">return</span> <span class="k">this</span><span class="o">;</span> <span class="o">}</span>
+    <span class="o">...</span>
+
+    <span class="c1">// unionField - field of union</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">hasUnionField</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">removeUnionField</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">Foo</span><span class="o">.</span><span class="na">UnionField</span> <span class="nf">getUnionField</span><span class="o">(</span><span class="nc">GetMode</span> <span class="n">mode</span><span class="o">)</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">Foo</span><span class="o">.</span><span class="na">UnionField</span> <span class="nf">getUnionField</span><span class="o">()</span> <span class="o">{</span> <span class="k">return</span> <span class="n">getUnionField</span><span class="o">(</span><span class="nc">GetMode</span><span class="o">.</span><span class="na">STRICT</span><span class="o">);</span> <span class="o">}</span>
+    <span class="kd">public</span> <span class="nc">Foo</span> <span class="nf">setUnionField</span><span class="o">(</span><span class="nc">Foo</span><span class="o">.</span><span class="na">UnionField</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span> <span class="o">...</span> <span class="o">;</span> <span class="k">return</span> <span class="k">this</span><span class="o">;</span> <span class="o">}</span>
+    <span class="kd">public</span> <span class="nc">Foo</span> <span class="nf">setUnionField</span><span class="o">(</span><span class="nc">Foo</span><span class="o">.</span><span class="na">UnionField</span> <span class="n">value</span><span class="o">,</span> <span class="nc">SetMode</span> <span class="n">mode</span><span class="o">)</span> <span class="o">{</span> <span class="o">...</span> <span class="o">;</span> <span class="k">return</span> <span class="k">this</span><span class="o">;</span> <span class="o">}</span>
+
+    <span class="c1">// get fields</span>
+    <span class="kd">public</span> <span class="kd">static</span> <span class="nc">Foo</span><span class="o">.</span><span class="na">Fields</span> <span class="nf">fields</span><span class="o">()</span> <span class="o">{</span>
+        <span class="o">...;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Fields</span>
+        <span class="kd">extends</span> <span class="nc">PathSpec</span>
+    <span class="o">{</span>
+        <span class="o">...</span>
+        <span class="kd">public</span> <span class="nc">PathSpec</span> <span class="nf">intField</span><span class="o">()</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+        <span class="kd">public</span> <span class="nc">PathSpec</span> <span class="nf">longField</span><span class="o">()</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+        <span class="kd">public</span> <span class="nc">PathSpec</span> <span class="nf">bytesField</span><span class="o">()</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+        <span class="kd">public</span> <span class="nc">PathSpec</span> <span class="nf">fruitsField</span><span class="o">()</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+        <span class="kd">public</span> <span class="nc">PathSpec</span> <span class="nf">intArrayField</span><span class="o">()</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+        <span class="kd">public</span> <span class="nc">PathSpec</span> <span class="nf">stringMapField</span><span class="o">()</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+        <span class="kd">public</span> <span class="nc">Foo</span><span class="o">.</span><span class="na">UnionField</span><span class="o">.</span><span class="na">Fields</span> <span class="nf">unionField</span><span class="o">()</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="error-type">Error Type</h2>
+
+<p>Error types are specialized record types. The code generator generates a
+class that extends <code class="highlighter-rouge">com.linkedin.data.template.ExceptionTemplate</code>. The
+generated class has the same methods as a generated class for a record
+with the same fields. Unlike <code class="highlighter-rouge">RecordTemplate</code> instances,
+<code class="highlighter-rouge">ExceptionTemplate</code> instances can be thrown and caught.
+<code class="highlighter-rouge">ExceptionTemplate</code> extends <code class="highlighter-rouge">java.lang.Exception</code>.</p>
+
+<h2 id="union-type">Union Type</h2>
+
+<p>The code generator generates a class that extends
+<code class="highlighter-rouge">com.linkedin.data.template.UnionTemplate</code>. This class provides the
+following methods:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method <br /></th>
+      <th>Implemented by <br /></th>
+      <th>Description <br /></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="highlighter-rouge">Constructor()</code> <br /></td>
+      <td>Generated class <br /></td>
+      <td>Construct a union with null as it value. An instance with null as its value cannot be assigned another value. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">Constructor(DataMap map)</code> <br /></td>
+      <td>Generated class</td>
+      <td>If the argument is null or <code class="highlighter-rouge">Data.NULL</code>, then construct a union with a null value. <br />If the argument is not null, then construct a union whose value is provided by the <code class="highlighter-rouge">DataMap</code>. Method invocations on the <code class="highlighter-rouge">UnionTemplate</code> translates to accesses to the underlying <code class="highlighter-rouge">DataMap</code>. <br />An instance with null as its value cannot be assigned another value. <br />An instance that has a non-null value cannot be later assigned a null value. <br />Note: This limitation is because the underlying data types that back the union for null verus non-null values are different. For non-null values, the underlying data type is a <code class="highlighter-rouge">DataMap</code>. For null values, the underlying data type is a string. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">UnionDataSchema schema()</code> <br /></td>
+      <td>Generated class</td>
+      <td>Returns the <code class="highlighter-rouge">DataSchema</code> of the instance. The members of the union can be obtained from this schema. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">DataScheme memberType()</code> <br /></td>
+      <td>Base class <br /></td>
+      <td>Returns <code class="highlighter-rouge">DataSchemaConstants.NULL_TYPE</code> if the union has a null value, else return the schema for the value. <br />If the schema cannot be determined, then throw <code class="highlighter-rouge">TemplateOutputCastException</code>. The schema cannot be determined if the content of the underlying <code class="highlighter-rouge">DataMap</code> cannot be resolved to a known member type of the union schema. See serialization format for details. This exception is thrown if the <code class="highlighter-rouge">DataMap</code> has more than one entry and the key of the only entry does not identify one of the member types of the union. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">boolean memberIs(String key)</code> <br /></td>
+      <td>Base class <br /></td>
+      <td>Returns whether the union member key of the current value is equal the specified key. The type of the current value is identified by the specified key if the underlying <code class="highlighter-rouge">DataMap</code> has a single entry and the entry’s key equals the specified key. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">boolean isNull()</code> <br /></td>
+      <td>Base class <br /></td>
+      <td>Returns whether the value of the union is null. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">Object data()</code> <br /></td>
+      <td>Base class</td>
+      <td>Returns <code class="highlighter-rouge">Data.NULL</code> if the union has a null value, else return the underlying <code class="highlighter-rouge">DataMap</code> fronted by the instance. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">String toString()</code> <br /></td>
+      <td>Base class</td>
+      <td>Equivalent to <code class="highlighter-rouge">data().toString()</code>. <br /></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The code generator generates the following methods in the generated
+class for each member type of the union. In the following table,
+<em>MemberKey</em> is either the member’s alias (if specified) or the member’s
+non-fully qualified type name with the first character
+capitalized.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th>Description <br /></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="highlighter-rouge">U createWithMemberKey(T value)</code> <br /></td>
+      <td>Create a union instance with the specified value for the member identified by <em>MemberKey</em>. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">boolean isMemberKey()</code> <br /></td>
+      <td>Returns whether the value of the union is of the member identified by the <em>MemberKey</em>. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">T getMemberKey()</code> <br /></td>
+      <td>Returns the value of the union if it is for the member identified by <em>MemberKey</em>. <code class="highlighter-rouge">T</code> is the Java type of the value and if the current value is not of this type, then throw <code class="highlighter-rouge">TemplateOutputCastException</code>. <br /></td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">void setMemberKey(T value)</code> <br /></td>
+      <td>Sets the specified value into the union. <br /></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Here is an example generated class for a union who’s members are not
+aliased.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">linkedin</span><span class="o">.</span><span class="na">pegasus</span><span class="o">.</span><span class="na">examples</span><span class="o">;</span>
+
+<span class="o">...</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Foo</span> <span class="kd">extends</span> <span class="nc">RecordTemplate</span>
+<span class="o">{</span>
+  <span class="o">...</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">UnionField</span> <span class="kd">extends</span> <span class="nc">UnionTemplate</span>
+  <span class="o">{</span>
+    <span class="kd">public</span> <span class="nf">UnionField</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nf">UnionField</span><span class="o">(</span><span class="nc">Object</span> <span class="n">data</span><span class="o">)</span> <span class="o">...</span>
+
+    <span class="c1">// int value</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">isInt</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">Integer</span> <span class="nf">getInt</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setInt</span><span class="o">(</span><span class="nc">Integer</span> <span class="n">value</span><span class="o">)</span> <span class="o">...</span>
+
+    <span class="c1">// string value</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">isString</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">String</span> <span class="nf">getString</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setString</span><span class="o">(</span><span class="nc">String</span> <span class="n">value</span><span class="o">)</span> <span class="o">...</span>
+
+    <span class="c1">// com.linkedin.pegasus.generator.examples.Fruits enum value</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">isFruits</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">Fruits</span> <span class="nf">getFruits</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setFruits</span><span class="o">(</span><span class="nc">Fruits</span> <span class="n">value</span><span class="o">)</span> <span class="o">...</span>
+
+    <span class="c1">// com.linkedin.pegasus.generator.examples.Foo record value</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">isFoo</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">Foo</span> <span class="nf">getFoo</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setFoo</span><span class="o">(</span><span class="nc">Foo</span> <span class="n">value</span><span class="o">)</span> <span class="o">...</span>
+
+    <span class="c1">// array value ({ "type" : "array", "items" : "string" })</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">isArray</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">StringArray</span> <span class="nf">getArray</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setArray</span><span class="o">(</span><span class="nc">StringArray</span> <span class="n">value</span><span class="o">)</span> <span class="o">...</span>
+
+    <span class="c1">// map value ({ "type" : "map", "values" : "long" })</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">isMap</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">LongMap</span> <span class="nf">getMap</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setMap</span><span class="o">(</span><span class="nc">LongMap</span> <span class="n">value</span><span class="o">)</span> <span class="o">...</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Fields</span> <span class="kd">extends</span> <span class="nc">PathSpec</span>
+  <span class="o">{</span>
+    <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">Foo</span><span class="o">.</span><span class="na">Fields</span> <span class="nf">Foo</span><span class="o">()</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>For a union who’s members are aliased, the generated methods will use
+the alias instead of the member’s type name like illustrated below.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">linkedin</span><span class="o">.</span><span class="na">pegasus</span><span class="o">.</span><span class="na">examples</span><span class="o">;</span>
+
+<span class="o">...</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Foo</span> <span class="kd">extends</span> <span class="nc">RecordTemplate</span>
+<span class="o">{</span>
+  <span class="o">...</span>
+  <span class="kd">public</span> <span class="kd">final</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">UnionField</span> <span class="kd">extends</span> <span class="nc">UnionTemplate</span>
+  <span class="o">{</span>
+    <span class="kd">public</span> <span class="nf">UnionField</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nf">UnionField</span><span class="o">(</span><span class="nc">Object</span> <span class="n">data</span><span class="o">)</span> <span class="o">...</span>
+
+    <span class="c1">// int with alias ({ "type" : "int", "alias" : "count" })</span>
+    <span class="kd">public</span> <span class="nc">UnionField</span> <span class="nf">createWithCount</span><span class="o">(</span><span class="nc">Integer</span> <span class="n">value</span><span class="o">)</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">isCount</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">Integer</span> <span class="nf">getCount</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setCount</span><span class="o">(</span><span class="nc">Integer</span> <span class="n">value</span><span class="o">)</span> <span class="o">...</span>
+
+    <span class="c1">// string with alias ({ "type" : "string", "alias" : "message" })</span>
+    <span class="kd">public</span> <span class="nc">UnionField</span> <span class="nf">createWithMessage</span><span class="o">(</span><span class="nc">String</span> <span class="n">value</span><span class="o">)</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">isMessage</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">String</span> <span class="nf">getMessage</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setMessage</span><span class="o">(</span><span class="nc">String</span> <span class="n">value</span><span class="o">)</span> <span class="o">...</span>
+
+    <span class="c1">// another string with alias ({ "type" : "string", "alias" : "greeting" })</span>
+    <span class="kd">public</span> <span class="nc">UnionField</span> <span class="nf">createWithGreeting</span><span class="o">(</span><span class="nc">String</span> <span class="n">value</span><span class="o">)</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">isGreeting</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">String</span> <span class="nf">getGreeting</span><span class="o">()</span> <span class="o">...</span>
+    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">setGreeting</span><span class="o">(</span><span class="nc">String</span> <span class="n">value</span><span class="o">)</span> <span class="o">...</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Fields</span> <span class="kd">extends</span> <span class="nc">PathSpec</span>
+  <span class="o">{</span>
+    <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">Foo</span><span class="o">.</span><span class="na">Fields</span> <span class="nf">Foo</span><span class="o">()</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="custom-java-class-binding-for-primitive-types">Custom Java Class Binding for Primitive Types</h2>
+
+<p>A typeref can also be used to define a custom Java class binding for a
+primitive type. The primary intended use is to provide a more developer
+friendly experience by having the framework perform conversions from
+primitive type to a more friendly Java class that can implement methods
+for manipulating the underlying primitive data. Custom Java class
+binding also provides additional type-safety by allowing typerefs of the
+same primitive type to be bound to different custom Java classes. This
+enables compile time type-checking to disambiguate typeref’s, e.g. a Urn
+typeref to a string can be bound to a different Java class than a
+FileName typeref to a string.</p>
+
+<p>When a typeref has a custom Java binding, the generated Java data
+templates that reference this type will accept and return parameters of
+the custom Java class instead of standard Java class for the primitive
+type. The value stored in the underlying DataMap or DataList will always
+be of the corresponding primitive Java type (not the custom Java type.)</p>
+
+<p>A custom Java class binding is declared by:</p>
+
+<ul>
+  <li>defining a typeref of the primitive type,</li>
+  <li>adding a “java” attribute whose value is a map to the typeref
+declaration,</li>
+  <li>adding a “class” attribute to the “java” map whose value is a string
+that identifies the name of custom Java class.</li>
+</ul>
+
+<p>A custom class must meet the following requirements:</p>
+
+<ol>
+  <li>Instances of the custom class must be immutable.</li>
+  <li>A coercer must be defined that can coerce the primitive Java class
+of the type to the custom Java class of the type, in both the input
+and output directions. The coercer implements the <code class="highlighter-rouge">DirectCoercer</code>
+interface.</li>
+  <li>An instance of the coercer must be registered with the data template
+framework.</li>
+</ol>
+
+<!-- end list -->
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"typeref"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"CustomPoint"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"ref"</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"java"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"class"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"CustomPoint"</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//</span>
+<span class="c1">// The custom class</span>
+<span class="c1">// It has to be immutable.</span>
+<span class="c1">//</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">CustomPoint</span>
+<span class="o">{</span>
+  <span class="kd">private</span> <span class="kt">int</span> <span class="n">_x</span><span class="o">;</span>
+  <span class="kd">private</span> <span class="kt">int</span> <span class="n">_y</span><span class="o">;</span>
+
+  <span class="kd">public</span> <span class="nf">CustomPoint</span><span class="o">(</span><span class="nc">String</span> <span class="n">s</span><span class="o">)</span>
+  <span class="o">{</span>
+    <span class="nc">String</span> <span class="n">parts</span><span class="o">[]</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="na">split</span><span class="o">(</span><span class="s">","</span><span class="o">);</span>
+    <span class="n">_x</span> <span class="o">=</span> <span class="nc">Integer</span><span class="o">.</span><span class="na">parseInt</span><span class="o">(</span><span class="n">parts</span><span class="s">"0"</span><span class="o">:</span><span class="mi">0</span><span class="o">);</span>
+    <span class="n">_y</span> <span class="o">=</span> <span class="nc">Integer</span><span class="o">.</span><span class="na">parseInt</span><span class="o">(</span><span class="n">parts</span><span class="s">"1"</span><span class="o">:</span><span class="mi">1</span><span class="o">);</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="nf">CustomPoint</span><span class="o">(</span><span class="kt">int</span> <span class="n">x</span><span class="o">,</span> <span class="kt">int</span> <span class="n">y</span><span class="o">)</span>
+  <span class="o">{</span>
+    <span class="n">_x</span> <span class="o">=</span> <span class="n">x</span><span class="o">;</span>
+    <span class="n">_y</span> <span class="o">=</span> <span class="n">y</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">getX</span><span class="o">()</span>
+  <span class="o">{</span>
+    <span class="k">return</span> <span class="n">_x</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">getY</span><span class="o">()</span>
+  <span class="o">{</span>
+    <span class="k">return</span> <span class="n">_y</span><span class="o">;</span>
+  <span class="o">}</span>
+
+  <span class="c1">// Implement equals, hashCode, toString, ...</span>
+
+  <span class="c1">//</span>
+  <span class="c1">// The custom class's DirectCoercer.</span>
+  <span class="c1">//</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">CustomPointCoercer</span> <span class="kd">implements</span> <span class="nc">DirectCoercer</span><span class="o">&lt;</span><span class="nc">CustomPoint</span><span class="o">&gt;</span>
+  <span class="o">{</span>
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="nc">Object</span> <span class="nf">coerceInput</span><span class="o">(</span><span class="nc">CustomPoint</span> <span class="n">object</span><span class="o">)</span>
+      <span class="kd">throws</span> <span class="nc">ClassCastException</span>
+    <span class="o">{</span>
+      <span class="k">return</span> <span class="n">object</span><span class="o">.</span><span class="na">toString</span><span class="o">();</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="nc">CustomPoint</span> <span class="nf">coerceOutput</span><span class="o">(</span><span class="nc">Object</span> <span class="n">object</span><span class="o">)</span>
+      <span class="kd">throws</span> <span class="nc">TemplateOutputCastException</span>
+    <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(</span><span class="n">object</span> <span class="k">instanceof</span> <span class="nc">String</span> <span class="o">==</span> <span class="kc">false</span><span class="o">)</span>
+      <span class="o">{</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nf">TemplateOutputCastException</span><span class="o">(</span><span class="s">"Output "</span> <span class="o">+</span> <span class="n">object</span> <span class="o">+</span> 
+                                              <span class="s">" is not a string, and cannot be coerced to "</span> <span class="o">+</span> 
+                                              <span class="nc">CustomPoint</span><span class="o">.</span><span class="na">class</span><span class="o">.</span><span class="na">getName</span><span class="o">());</span>
+      <span class="o">}</span>
+      <span class="k">return</span> <span class="k">new</span> <span class="nf">CustomPoint</span><span class="o">((</span><span class="nc">String</span><span class="o">)</span> <span class="n">object</span><span class="o">);</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+
+  <span class="c1">//</span>
+  <span class="c1">// Automatically register Java custom class and its coercer.</span>
+  <span class="c1">//</span>
+  <span class="kd">static</span>
+  <span class="o">{</span>
+    <span class="nc">Custom</span><span class="o">.</span><span class="na">registerCoercer</span><span class="o">(</span><span class="nc">CustomPoint</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="k">new</span> <span class="nc">CustomPointCoercer</span><span class="o">());</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="fields-class">Fields class</h2>
+
+<p>The code generator also generates a <code class="highlighter-rouge">Fields</code> class within the generated
+class for certain complex types. The primary use case for the <code class="highlighter-rouge">Fields</code>
+class is to provide a type-safe way to refer or identify a field within
+a record or a member of a union. The <code class="highlighter-rouge">Fields</code> class of a record is
+accessed through the generated <code class="highlighter-rouge">fields()</code> method of the generated class
+for a record. Only record types have the generated <code class="highlighter-rouge">fields()</code> method.</p>
+
+<p>If there are nested complex types, a path to a particular nested field
+may be obtained by chaining method invocations on <code class="highlighter-rouge">Fields</code> classes along
+the path to the field, e.g. <code class="highlighter-rouge">Foo.fields().barField().bazField()</code>. The
+path may be used to specify the nested fields to return from a resource
+request, i.e. deep projection.</p>
+
+<p>The following table summarizes which complex types will have a generated
+<code class="highlighter-rouge">Fields</code> class and the content of the <code class="highlighter-rouge">Fields</code>
+class.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Complex type <br /></th>
+      <th>Whether type will have a generated Fields class <br /></th>
+      <th>Content of generated Fields class <br /></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>record <br /></td>
+      <td>A <code class="highlighter-rouge">Fields</code> class always generated. <br /></td>
+      <td>A method returning a <code class="highlighter-rouge">PathSpec</code> will be generated for each field of the record. <br /></td>
+    </tr>
+    <tr>
+      <td>union <br /></td>
+      <td>A <code class="highlighter-rouge">Fields</code> class always generated. <br /></td>
+      <td>A method returning a <code class="highlighter-rouge">PathSpec</code> will be generated for each member of the union. <br /></td>
+    </tr>
+    <tr>
+      <td>array <br /></td>
+      <td>A <code class="highlighter-rouge">Fields</code> class will be generated if the array directly or indirectly contains a nested record or union. <br /></td>
+      <td>An <code class="highlighter-rouge">items()</code> method returning a <code class="highlighter-rouge">PathSpec</code> will be generated for the array. <br /></td>
+    </tr>
+    <tr>
+      <td>map <br /></td>
+      <td>A <code class="highlighter-rouge">Fields</code> class will be generated if the map directly or indirectly contains a nested record or union. <br /></td>
+      <td>A <code class="highlighter-rouge">values()</code> method returning a <code class="highlighter-rouge">PathSpec</code> will be generated for the map.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="clone-method">Clone Method</h2>
+
+<p>For the classes that wrap <code class="highlighter-rouge">DataMap</code> or <code class="highlighter-rouge">DataList</code>, their clone method
+will clone the underlying <code class="highlighter-rouge">DataMap</code> or <code class="highlighter-rouge">DataList</code> and then create and
+return a new <code class="highlighter-rouge">DataTemplate</code> of the same class to wrap the clone. This
+clone operation performs a shallow copy.</p>
+
+<h2 id="escaping-for-reserved-words">Escaping for Reserved Words</h2>
+
+<p>When symbols such as schema names or enum symbol names are the same as
+one of the reserved words in Java, the code generator will escape these
+symbols by appending an underscore (“_”) to the name to obtain the Java
+name of the symbol.</p>
+
+<h2 id="exceptions">Exceptions</h2>
+
+<p>The Data layer can throw two exceptions:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">java.lang.ClassCastException</code> - This exception is thrown if the
+input argument to a method is not the expected type, cannot be cast
+or coerced to the expected type.</li>
+  <li><code class="highlighter-rouge">com.linkedin.data.TemplateOutputCastException</code> - This exception if
+the underlying data cannot be wrapped, cast or coerced to the type
+to type of the output argument.</li>
+</ul>
+
+<p><a name="RunningtheCodeGenerator"></a></p>
+
+<h2 id="running-the-code-generator">Running the Code Generator</h2>
+
+<p>The code generator that generates the Java bindings is the
+<code class="highlighter-rouge">com.linkedin.pegasus.generator.PegasusDataTemplateGenerator</code> class.</p>
+
+<p>The arguments to the main method of this class are <code class="highlighter-rouge">targetDirectoryPath
+[sourceFile or schemaName]+</code>”.</p>
+
+<ul>
+  <li><code class="highlighter-rouge">targetDirectoryPath</code> provides the root of the output directory for
+Java source files generated by the code generator. The output
+directory structure will follow the Java convention, with Java
+source files residing in sub-directories corresponding to the
+package name of the classes in the Java source files.</li>
+  <li><code class="highlighter-rouge">sourceFile</code> provides the name of a file. Files containing schemas
+should have an <code class="highlighter-rouge">.pdsc</code> extension. Although a file name provided as
+an argument to the code generator need not end with <code class="highlighter-rouge">.pdsc</code>, only
+<code class="highlighter-rouge">.pdsc</code> files will be read by the schema resolver when trying to
+resolve a name to schema. Java type: <code class="highlighter-rouge">String</code>.</li>
+  <li><code class="highlighter-rouge">schemaName</code> provides the fully qualified name of a schema. The
+schema resolver computes a relative path name from this argument and
+enumerate through resolver paths to locate a file with this relative
+name. If a file is found, the code generator will parse the file
+looking for a schema with the specified name. Java type: <code class="highlighter-rouge">String[]</code>.</li>
+</ul>
+
+<p>The resolver path is provided by the “generator.resolver.path” property.
+Its format is the same as the format for Java classpath. Each path is
+separated by a colon (“:”). Only file system directory paths may be
+specified (i.e. the resolver does not comprehend <code class="highlighter-rouge">.jar</code> files in the
+resolver path.). You can set this in java by <code class="highlighter-rouge">System.setProperty()</code>.</p>
+
+<p>The dependencies of the code generator are:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">com.sun.codemodel:codemodel:2.2</code></li>
+  <li><code class="highlighter-rouge">org.codehaus.jackson-core-asl:jackson-core-asl:1.4.0</code></li>
+  <li><code class="highlighter-rouge">com.linkedin.pegasus:cow</code></li>
+  <li><code class="highlighter-rouge">com.linkedin.pegasus:r2</code></li>
+  <li><code class="highlighter-rouge">com.linkedin.pegasus:generator</code></li>
+</ul>
+
+<h3 id="running-the-code-generator-from-command-line">Running the Code Generator from Command Line</h3>
+
+<h3 id="running-the-code-generator-with-gradle">Running the Code Generator with Gradle</h3>
+
+<p>A <code class="highlighter-rouge">dataTemplate.gradle</code> script is available in the <code class="highlighter-rouge">build_script/</code>
+directory of pegasus. To use it, add the script to your project, then
+add this to your <code class="highlighter-rouge">build.gradle</code> file:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apply from: "${buildScriptDirPath}/dataTemplate.gradle"
+</code></pre></div></div>
+
+<p>and put the <code class="highlighter-rouge">.pdl</code> files in a directory structure of the form:
+‘src/\&lt;sourceset\&gt;/pegasus’, where typically it would be
+<code class="highlighter-rouge">src/main/pegasus</code>. The plugin is set to trigger on this sort of
+directory structure and have the files laid out like a java source tree,
+ie if the namespace of my foo schema is “com.linkedin.foo.rest.api”, the
+file would be located at
+<code class="highlighter-rouge">src/main/pegasus/com/linkedin/foo/rest/api/Foo.pdl</code>. See
+<code class="highlighter-rouge">restli-example-api/build.gradle</code> in the Pegasus codebase for an
+example. This script will generate the required Java classes before the
+compileJava task, so that other classes can refer to it.</p>
+
+<p>Note this will only generate the data templates, but further steps will
+be needed to generate the rest.li IDL and the clientModel.</p>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Rest.li Projections</title>
+    <meta name="description" content="Rest.li projection" />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/Projections" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">User Guide</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/user_guide/server_architecture">Rest.li Architecture</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_server">Rest.li Server</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_client">Rest.li Client Framework</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/unstructured_data">Unstructured Data</a></li>
+                       
+                         <li><a href="/rest.li/Components">Components</a></li>
+                       
+                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous in Rest.li</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data Schemas</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/pdl_schema">PDL Schema</a></li>
+                       
+                         <li><a href="/rest.li/pdsc_syntax">PDSC Syntax</a></li>
+                       
+                         <li><a href="/rest.li/pdl_migration">Migrating from PDSC to PDL</a></li>
+                       
+                         <li><a href="/rest.li/avro_translation">Avro Translation</a></li>
+                       
+                         <li><a href="/rest.li/java_binding">Java Binding</a></li>
+                       
+                         <li><a href="/rest.li/annotation_processor">Schema Annotation Processor</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Modeling Resources</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
+                       
+                         <li><a href="/rest.li/modeling/compatibility_check">Snapshots and Resource Compatibility Checking</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/how_data_is_serialized_for_transport">How Data is Serialized for Transport</a></li>
+                       
+                         <li><a href="/rest.li/how_data_is_represented_in_memory">How Data is Represented in Memory</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Main concepts</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-Filters">Filters</a></li>
+                       
+                         <li><a href="/rest.li/Projections">Projections</a></li>
+                       
+                         <li><a href="/rest.li/pathspec">PathSpecs</a></li>
+                       
+                         <li><a href="/rest.li/Validation-in-Rest_li">Validation</a></li>
+                       
+                         <li><a href="/rest.li/Attachment-Streaming">Attachment Streaming</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Mutli-language</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/multi_language_compatibility_matrix">Compatibility Matrix</a></li>
+                       
+                         <li><a href="/rest.li/test_suite">Test Suite</a></li>
+                       
+                         <li><a href="https://github.com/mchen07/restli-csharp">C#</a></li>
+                       
+                         <li><a href="/rest.li/Scala-Integration">Scala Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Testing</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers">Writing Unit Tests</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">How to</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Send-Rest_li-Request-Query-In-Request-Body">Send Request Query in the Body</a></li>
+                       
+                         <li><a href="/rest.li/How-to-use-projections-in-Java">Use Projections</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li_Avro_conversions">Avro Conversion</a></li>
+                       
+                         <li><a href="/rest.li/Compression">Compression</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_x-upgrade-instructions">Migrate to Rest.li 2.x</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_how_to">Test Suite</a></li>
+                       
+                         <li><a href="/rest.li/howto_add_new_language">Test Suite - Add New Language</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/service_errors_java">Configure Service Errors in Java</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">FAQ</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Data-FAQ">Rest.li - FAQ</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_troubleshooting">Test Suite - Troubleshooting</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="restli-projections">Rest.li Projections</h1>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#motivation">Motivation</a></li>
+  <li><a href="#goals">Goals</a></li>
+  <li><a href="#proposed-solution">Proposed Solution</a></li>
+  <li><a href="#rest-api">REST API</a></li>
+  <li><a href="#client-api">Client API</a></li>
+</ul>
+
+<p>For details on how to use Projections from Java, see <a href="How-to-use-projections-in-Java">How to use
+projections in Java</a>.</p>
+
+<h2 id="motivation">Motivation</h2>
+
+<p>Many real life use cases require filtering of objects solely based on
+their structure. Two main use cases are:</p>
+
+<ul>
+  <li>Selecting only a subset of object contents for performance reasons.
+For example, select only names from User profile objects.</li>
+  <li>Removing certain fields based on security policy. For example,
+remove private email and phone number fields from User profile
+objects.</li>
+</ul>
+
+<p>We call this type of filtering - structural filtering or projections.
+The following section describes design and implementation of structural
+filtering in Pegasus.</p>
+
+<h2 id="goals">Goals</h2>
+
+<p>Two main goals of structural filtering design are:</p>
+
+<ul>
+  <li>Ease of use</li>
+  <li>Efficiency</li>
+</ul>
+
+<p>In order to satisfy those goals, it is desirable that:</p>
+
+<ol>
+  <li>Order in which filters are applied is not important. This simplifies
+life on the client side.</li>
+  <li>Filters are composable. This adds flexibility on the server side and
+allow efficient implementation.</li>
+</ol>
+
+<p>More formally, filters are functions on objects; if f, g and h are
+filters and x is an object, we would like the have:</p>
+
+<ol>
+  <li>Commutativity: f(g(x)) = g(f(x))</li>
+  <li>Semantically valid composition function: having f, g define (fg)</li>
+  <li>If possible, associativity: (fg)h(x) = f(gh)(x)</li>
+</ol>
+
+<h2 id="proposed-solution">Proposed Solution</h2>
+
+<p>Before going into details, one note on terminology. There is a big
+overlap between Map and Object types (in general). In many languages,
+they are treated interchangeably. You can think of an object as a map,
+where map key is field name and map value is a field value. Moreover,
+JSON does not distinguish between the two. Thus, this document describes
+only how to define filters for Map data type. All definitions related to
+Map type also apply to Object type.</p>
+
+<p>There are two types of structural filters users might want to express:</p>
+
+<ol>
+  <li>Positive mask: select only specified fields from the object</li>
+  <li>Negative mask: remove specified fields from the object</li>
+</ol>
+
+<h3 id="negative-projection-support">Negative Projection Support</h3>
+
+<p>It is important to note that even though the Rest.li framework can
+process negative masks for negative projections, the generated client
+builders do <strong>NOT</strong> allow such negative masks to be created. Only
+positive masks can be created by the generated request builders and
+hence all projection use cases within LinkedIn use positive projections.</p>
+
+<p>The documentation listed below here for positive and negative masks is
+provided simply for reference purposes. At some point in the future, it
+may be possible that the Rest.li framework supports negative projection.</p>
+
+<h3 id="syntax">Syntax</h3>
+
+<p>Structural filtering can be expressed as a JSON or any equivalent in
+memory representation. Ability of expressing filters as JSON objects is
+beneficial because it can be easily processed by clients and is language
+agnostic.</p>
+
+<h4 id="positive-mask-syntax">Positive Mask Syntax</h4>
+
+<p>Positive mask is a JSON object, with number 1 assigned to selected
+fields, for example:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "person": {
+    "phone": 1,
+    "firstname": 1,
+    "lastname": 1,
+    "current_position": {
+      "job_title": 1
+    }
+  }
+}
+</code></pre></div></div>
+
+<p>is a mask, which selects only phone, first name, last name and current
+position’s job title from User Profile.</p>
+
+<h4 id="negative-mask-syntax">Negative Mask Syntax</h4>
+
+<p>Negative mask is a JSON object, with number 0 assigned to selected
+fields, for example:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "profile": {
+    "phone": 0
+  }
+}
+</code></pre></div></div>
+
+<p>is a mask, which hides phone number in the User Profile.</p>
+
+<h4 id="complex-data-structures">Complex data structures</h4>
+
+<h5 id="array">Array</h5>
+
+<p>Syntax for array is the following:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"array_field": {
+  "$start": 10,
+  "$count": 15,
+  "$*": {
+    (...)
+  }
+}
+</code></pre></div></div>
+
+<p>where $* is a wildcard mask, applied to every element in Array. $start
+and $count are optional fields which specify range of array that will be
+returned. First element of an array has index 0. Semantic of $start and
+$count is intuitive:</p>
+
+<ul>
+  <li>$start specify first element of an array, which will be returned</li>
+  <li>$count specifies how many elements, starting from $start will be
+returned</li>
+</ul>
+
+<p>Specifying range in an array is treated as a positive mask e.g. it is
+equivalent to selecting elements of array using positive mask.</p>
+
+<p>If mask contains only $start, then $count is implicitly evaluated to
+Integer.MAX_INT.</p>
+
+<p>If mask contains only $count, then $start is implicitly evaluated to 0.</p>
+
+<p>If entire array needs to be masked, then syntax is simply:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"array_field": 1
+</code></pre></div></div>
+
+<p>for positive mask or</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"array_field": 0
+</code></pre></div></div>
+
+<p>for negative mask.</p>
+
+<h5 id="map">Map</h5>
+
+<p>Syntax for the map is the following:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"map_field": {
+    "$*": {
+      /* mask for every values in the map */
+    },
+    "key1": {
+      /* mask for value of key1 */
+    },
+    "key2": {
+      /* mask for value of key2 */
+    }
+  }
+}
+</code></pre></div></div>
+
+<p>where $* is a wildcard mask, applied to every value in Map.</p>
+
+<p>If mask for map contains both wildcard $* and values for specific key
+e.g. key1, then mask, which will be applied to the value of key1 is a
+composition of wildcard mask and mask for key1. See next chapters for
+semantics of mask composition.</p>
+
+<p>If entire value for a specific key needs to be masked, syntax is:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"map_field": {
+  "key1": 1,
+  "key2": 1
+}
+</code></pre></div></div>
+
+<p>for positive mask and:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"map_field": {
+  "key1": 0,
+  "key2": 0
+}
+</code></pre></div></div>
+
+<p>for negative mask.</p>
+
+<p>Finally, if entire map needs to be masked, syntax is:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"map_field": 1
+</code></pre></div></div>
+
+<p>for positive mask and:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"map_field": 0
+</code></pre></div></div>
+
+<p>for negative mask.</p>
+
+<h6 id="escaping">Escaping</h6>
+
+<p>Mask syntax defines meta-fields: $<strong>, $start and $count. They do not
+represent mask for fields with names: $</strong>, $start, $count and they have
+special semantics. In order to be able to represent mask for fields,
+which names start with ‘$’ character, ‘$’ character is escaped in all
+field names e.g.:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "$$field": 1
+}
+</code></pre></div></div>
+
+<p>is a mask, which selects only field with name “$field”.</p>
+
+<h3 id="masks-semantics">Masks semantics</h3>
+
+<p>Positive mask is used in situations where user wants to limit the
+results only to specified fields (most likely for performance reasons).</p>
+
+<p>If positive mask is applied to an object, all fields not specified in
+the mask will be permanently removed from the object, leaving only
+fields specified in the mask.</p>
+
+<p>Negative mask is used in situations where user wants to restrict access
+to some fields. One use case might be applying security policies on the
+server side, where certain confidential fields are removed from objects.
+Other use case is that client might want to fetch entire object
+excluding some specified fields e.g. for performance reasons - see REST
+API section for use case example.</p>
+
+<p>If negative mask is applied to an object, all fields specified in the
+mask will be permanently removed from the object, leaving all other
+fields untouched in the object.</p>
+
+<p>In case all fields of an object get removed by the negative mask, then
+the result is an empty object. Similarly, if object does not have any of
+fields specified in positive mask, the result is an empty object.</p>
+
+<h3 id="masks-composition">Masks Composition</h3>
+
+<h4 id="motivation-1">Motivation</h4>
+
+<p>Two main use cases for mask composition are:</p>
+
+<ul>
+  <li>Server side service implementation wants to apply various security
+policies on top of positive mask obtained from request; for
+performance reasons it is better to compose masks and apply them in
+one go, especially if object is big</li>
+  <li>Assembly-like engine wants to compose multiple positive masks, send
+single request to fetch data and return result to requesters; with
+proposed mask composition semantics this would be possible</li>
+</ul>
+
+<h4 id="masks-of-the-same-kind">Masks of the Same Kind</h4>
+
+<p>In terms of JSON representation, composition of 2 or more masks of same
+kind is just union of objects that JSON represents.<br />
+Composition of two positive masks is mask equivalent to sum of fields
+requested in separate masks.</p>
+
+<p>The following table summarizes the semantics of composition of two
+positive masks (1 means that field exists in positive mask, - means that
+it does not exist in mask, v in result means that field exist in an
+object after applying mask, - means that field is missing):</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>positive mask</th>
+      <th>positive mask</th>
+      <th>result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>-</td>
+      <td>1</td>
+      <td>v</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>-</td>
+      <td>v</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>1</td>
+      <td>v</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The following table summarizes the semantics of composition of two
+negative masks (0 means that field exists in negative mask, - means that
+it does not exist in mask, v in result means that field exist in an
+object after applying mask, - means that field is missing):</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>negative mask</th>
+      <th>negative mask</th>
+      <th>result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>-</td>
+      <td>-</td>
+      <td>v</td>
+    </tr>
+    <tr>
+      <td>-</td>
+      <td>0</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>0</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>0</td>
+      <td>0</td>
+      <td>-</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>For example, composition of two positive masks:</p>
+
+<p>mask1:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "a": 1,
+  "c": 1
+}
+</code></pre></div></div>
+
+<p>mask2:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "b": 1,
+  "d": 1
+}
+</code></pre></div></div>
+
+<p>composition of mask1 and mask2:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "a": 1,
+  "b": 1,
+  "c": 1,
+  "d": 1
+}
+</code></pre></div></div>
+
+<p>Case of array’s $start and $count meta-fields requires extra
+explanation. Since $start and $count are treated as a positive mask, for
+example selection of sub-range of array, composition of two ranges is
+smallest range that contains both ranges:</p>
+
+<p>mask1:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"array_field": {
+  "$start": 15,
+  "$count": 20,
+  "$*": {
+    (...)
+  }
+}
+</code></pre></div></div>
+
+<p>mask2:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"array_field": {
+  "$start": 20,
+  "$count": 30,
+  "$*": {
+    (...)
+  }
+}
+</code></pre></div></div>
+
+<p>composition of mask1 and mask2:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"array_field": {
+  "$start": 15,
+  "$count": 35,
+  "$*": {
+    /* composition of masks from mask1 and mask2 */
+    (...)
+  }
+}
+</code></pre></div></div>
+
+<p>another example, when ranges are disjoint:</p>
+
+<p>mask1:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"array_field": {
+  "$start": 10
+  "$count": 5,
+  "$*": {
+    (...)
+  }
+}
+</code></pre></div></div>
+
+<p>mask2:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"array_field": {
+  "$start": 20,
+  "$count": 5,
+  "$*": {
+    (...)
+  }
+}
+</code></pre></div></div>
+
+<p>composition of mask1 and mask2:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"array_field": {
+  "$start": 10,
+  "$count": 15,
+  "$*": {
+    /* composition of masks from mask1 and mask2 */
+    (...)
+  }
+}
+</code></pre></div></div>
+
+<h4 id="masks-of-different-kinds">Masks of different kinds</h4>
+
+<p>Intuitively the output of composition of positive and negative masks is
+as if at first, positive mask was applied and after that, negative mask
+was applied.</p>
+
+<p>The following table summarizes the semantics of composition of positive
+and negative masks (1 means that field exists in positive mask, 0 means
+that field exists in negative mask, v in result means that field exist
+in an object after applying mask, - means that field is missing):</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>positive mask</th>
+      <th>negative mask</th>
+      <th>result</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>-</td>
+      <td>-</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>-</td>
+      <td>0</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>-</td>
+      <td>v</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>0</td>
+      <td>-</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Here’s a few examples.</p>
+
+<p>mask1 (positive):</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "a": 1,
+  "b": 1
+}
+</code></pre></div></div>
+
+<p>mask2 (negative):</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "b": 0,
+  "c": 0
+}
+</code></pre></div></div>
+
+<p>input object:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "a": "value1",
+  "b": "value2",
+  "c": "value3",
+  "d": "value4"
+}
+</code></pre></div></div>
+
+<p>result after applying composition of mask1 and mask2:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "a": "value1"
+}
+</code></pre></div></div>
+
+<h4 id="composition-of-simple-mask-with-complex-mask">Composition of simple mask with complex mask</h4>
+
+<p>It is possible that simple mask (0 or 1) is composed with a complex
+mask, represented as an object.</p>
+
+<h5 id="composition-of-negative-mask-0-with-complex-mask">Composition of negative mask 0 with complex mask</h5>
+
+<p>Since negative mask (0) has the higher priority than positive mask, then
+result of composition of mask equal to 0 with any other mask is 0 e.g.
+composition of mask:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "a": 0
+}
+</code></pre></div></div>
+
+<p>with</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "a": {
+    "$*": 1
+    "b": 0,
+  }
+}
+</code></pre></div></div>
+
+<p>is equal to:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "a": 0
+}
+</code></pre></div></div>
+
+<h5 id="composition-of-positive-mask-1-with-complex-mask">Composition of positive mask 1 with complex mask</h5>
+
+<p>The semantics of positive mask is: select this field and all it’s
+children. Hence, the following two masks are semantically equivalent:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "a": 1
+}
+</code></pre></div></div>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "a": {
+    "$*": 1
+  }
+}
+</code></pre></div></div>
+
+<p>In other words, positive mask is recursive. If positive mask was not
+recursive, then it would not be possible to express the following
+filter: “select field ”a” and all it’s children” without prior knowledge
+of all available fields in field “a”.</p>
+
+<p>Composition of positive mask with a complex mask propagates positive
+mask recursively e.g. composition of:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "a": 1
+}
+</code></pre></div></div>
+
+<p>with:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "a": {
+    "b": 0
+  }
+}
+</code></pre></div></div>
+
+<p>yields result:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "a": {
+    "$*": 1,
+    "b": 0
+  }
+}
+</code></pre></div></div>
+
+<p>If complex mask already contains wildcard mask, then $*=1 is
+recursively pushed down to the wildcard of the wildcard e.g. composition
+of positive mask:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "profile": 1
+}
+</code></pre></div></div>
+
+<p>with negative mask:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "profile": {
+    "$*": {
+      "password": 0
+    }
+  }
+}
+</code></pre></div></div>
+
+<p>yields result:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "profile": {
+    "$*": {
+      "$*": 1,
+      "password": 0
+    }
+  }
+}
+</code></pre></div></div>
+
+<p>The reason why pushing down the $*=1 mask preserves correct semantics
+is because simple mask 1 is equivalent to the complex mask: { “$*”: 1
+}.</p>
+
+<p>It means that the following masks are equivalent:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "a": 1
+}
+</code></pre></div></div>
+
+<p>and</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "a": {
+    "$*": 1
+  }
+}
+</code></pre></div></div>
+
+<h4 id="mask-composition-properties">Mask composition properties</h4>
+
+<p>Mask composition is commutative. It means that it doesn’t matter in
+which order masks are composed. However, application of masks, which are
+or were built using positive masks, on the object is not associative
+operation. Consider the following example:</p>
+
+<p>mask1:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "a": 1
+}
+</code></pre></div></div>
+
+<p>mask2:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "b": 1
+}
+</code></pre></div></div>
+
+<p>input object:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "a": "value1",
+  "b": "value2"
+}
+</code></pre></div></div>
+
+<p>If we first compose masks and apply mask obtained from composition on
+input object the result will contain both fields “a” and “b”. However,
+if we first apply mask1 on input object and then apply mask2 on the
+result, then final result will be empty object.</p>
+
+<h2 id="rest-api">REST API</h2>
+
+<p>REST API uses syntax similar to LinkedIn public REST API extended with
+concept of negative masks. The need for concept of negative mask is
+required to accommodate the following scenario.</p>
+
+<p>Let’s assume that User Profile contains a field “emails” which contains
+mailbox contents in it. Client might want to request User Profile data
+(without knowing exactly which fields are available) but definitely
+without “emails” field, which might be huge. The notion of not needing
+to know which fields are available allows backward compatible evolution
+of data model without modification of all clients. This use case might
+appear in mid-tier, where service retrieves objects, do
+calculations/modify them and return to requesters. It would be
+beneficial if mid-tier services were oblivious (to some extent) to data
+model evolution.</p>
+
+<p>The reasons for choosing LinkedIn public API syntax in REST API, instead
+of encoding JSON are the following:</p>
+
+<ul>
+  <li>It is concise, so filters can be written by hand when needed (for
+example, during development and testing).</li>
+  <li>It is familiar to LinkedIn public API users.</li>
+  <li>It is expressive.</li>
+</ul>
+
+<p>Internally, filter expressions and JSON filter expressions will be
+parsed into the same data structure. This will allow composition of
+filters (for example, security policies). REST API will not be fully
+compatible with original LinkeIn public API syntax.</p>
+
+<p>Proposed syntax will be used only in REST interface. Composition of
+simple masks can generate complicated masks. Pegasus will automatically
+generate correct expression and will be able to parse it. The only time,
+when developer will deal with projections syntax is during
+experimenting, debugging and so on.</p>
+
+<p>For example, the following JSON positive mask:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "person": {
+    "firstname": 1,
+    "lastname": 1
+  }
+}
+</code></pre></div></div>
+
+<p>would translate to the following expression:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>:(person:(firstname,lastname))
+</code></pre></div></div>
+
+<p>Projections are passed as a value of ‘fields’ request parameter in URL
+e.g.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>http://host:port/context/resource/id?fields=person:(firstname,lastname)
+</code></pre></div></div>
+
+<p>Please note that, as mentioned above, negative projections <strong>should
+not</strong> be used.</p>
+
+<h3 id="array-1">Array</h3>
+
+<p>The syntax for array representation is the following:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"array_field": {
+"$start": 10,
+"$count": 15,
+"$*": {
+  "field1": 1,
+  "field2": 1
+  }
+}
+</code></pre></div></div>
+
+<p>will be represented as:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>array_field:($*:(field1,field2),$start:10,$count:15)
+</code></pre></div></div>
+
+<h3 id="map-1">Map</h3>
+
+<p>The syntax for map representation follows similarity between Object and
+Map data structure. The syntax is the following, for mask on map:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code> "map_field": {
+    "$*": {
+      "field1": 1
+    },
+    "key1": {
+      "field2": 1
+    },
+    "key2": {
+      "field3": 1
+    }
+  }
+}
+</code></pre></div></div>
+
+<p>will be represented as:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>map_field:($*:(field1),key1:(field2),key2:(field3))
+</code></pre></div></div>
+
+<h2 id="client-api">Client API</h2>
+
+<p>Java client should use helper classes in:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>com.linkedin.data.transform.filter.request
+</code></pre></div></div>
+
+<p>to build and manipulate projections.</p>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

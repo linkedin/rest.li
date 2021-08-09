@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Rest.li 2.0 response API</title>
+    <meta name="description" content="Rest.li 2.0 response API" />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/Rest_li-2_0-response-API" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Spec</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/spec/protocol">Rest.li Protocol</a></li>
+                       
+                         <li><a href="/rest.li/spec/restspec_format">Restspec JSON format</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_0-response-API">Rest.li 2.0 response-API</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Rest.li Server</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/spec/service_errors">Service Errors</a></li>
+                       
+                         <li><a href="/rest.li/spec/return_entity">Return Entity</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Rest.li Resource Method</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/batch_finder_resource_method">Batch Finder</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">R2D2</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Dynamic_Discovery">Dynamic Discovery</a></li>
+                       
+                         <li><a href="/rest.li/D2-Zookeeper-Properties">D2 Zookeeper properties</a></li>
+                       
+                         <li><a href="/rest.li/Request-Response-API-(R2)">Request-Response API</a></li>
+                       
+                         <li><a href="/rest.li/Request-Response-Framework">Request-Response framework</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">HTTP Frameworks</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-with-Netty">Netty</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-with-Servlet-Containers">Servlet containers</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Dependency injection</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Spring-Dependency-Injection">Spring dependency injection</a></li>
+                       
+                         <li><a href="/rest.li/Guice-Dependency-Injection">Guice dependency injection</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="restli-20-response-api">Rest.li 2.0 response API</h1>
+
+<p>Pegasus 1.17.2 features a new set of response APIs for various batch operations. The motivation of this change is to simplify the old response APIs. This change focuses on two sets of operations: <code class="highlighter-rouge">BatchGet</code> and <code class="highlighter-rouge">BatchUpdate</code>/<code class="highlighter-rouge">BatchPartialUpdate</code>/<code class="highlighter-rouge">BatchDelete</code>.</p>
+
+<h2 id="batchget">BatchGet</h2>
+<p>The following table summarizes the Rest.li response types:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Response name</th>
+      <th>Returned by</th>
+      <th>Strong-typed key?</th>
+      <th>Value type</th>
+      <th>New in 1.17.2?</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>BatchResponse</td>
+      <td>BatchGetRequestBuilder.build()</td>
+      <td>No</td>
+      <td>T</td>
+      <td>No</td>
+    </tr>
+    <tr>
+      <td>BatchKVResponse</td>
+      <td>BatchGetRequestBuilder.buildKV()</td>
+      <td>Yes</td>
+      <td>T</td>
+      <td>No</td>
+    </tr>
+    <tr>
+      <td>BatchEntityResponse</td>
+      <td>BatchGetEntityRequestBuilder.build()</td>
+      <td>Yes</td>
+      <td>EntityResponse<T></T></td>
+      <td>Yes</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><code class="highlighter-rouge">EntityResponse</code> is a new <code class="highlighter-rouge">RecordTemplate</code> class, which contains three fields:</p>
+<ul>
+  <li><code class="highlighter-rouge">entity</code> provides an entity record if the server resource finds a corresponding value for the key.</li>
+  <li><code class="highlighter-rouge">status</code> provides an optional status code.</li>
+  <li><code class="highlighter-rouge">error</code> provides the error detail from the server resource (generally <code class="highlighter-rouge">entity</code> and <code class="highlighter-rouge">error</code> are mutually exclusive as <code class="highlighter-rouge">null</code>, but it is ultimately up to the server resource).</li>
+</ul>
+
+<p>Note that since <code class="highlighter-rouge">EntityResponse</code> contains <code class="highlighter-rouge">error</code> field, the <code class="highlighter-rouge">Map&lt;K, V&gt;</code> returned by <code class="highlighter-rouge">BatchEntityResponse.getResults()</code> contains both successful as well as failed entries. <code class="highlighter-rouge">BatchEntityResponse.getErrors()</code> will only return failed entries.</p>
+
+<h2 id="batchupdatebatchpartialupdatebatchdelete">BatchUpdate/BatchPartialUpdate/BatchDelete</h2>
+<p>The response type of the BatchUpdate series methods are not changed. However, similar to <code class="highlighter-rouge">EntityResponse</code>, we added a new <code class="highlighter-rouge">error</code> field to <code class="highlighter-rouge">UpdateStatus</code> (the value type of the <code class="highlighter-rouge">BatchUpdate</code> series methods). Furthermore, <code class="highlighter-rouge">BatchKVResponse&lt;K, UpdateStatus&gt;.getResults()</code> will returns both successful as well as failed entries. <code class="highlighter-rouge">getErrors()</code> will only return failed entries.</p>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

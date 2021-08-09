@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Validation in Rest.li</title>
+    <meta name="description" content="Rest.li validation" />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/Validation-in-Rest_li" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">User Guide</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/user_guide/server_architecture">Rest.li Architecture</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_server">Rest.li Server</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_client">Rest.li Client Framework</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/unstructured_data">Unstructured Data</a></li>
+                       
+                         <li><a href="/rest.li/Components">Components</a></li>
+                       
+                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous in Rest.li</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data Schemas</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/pdl_schema">PDL Schema</a></li>
+                       
+                         <li><a href="/rest.li/pdsc_syntax">PDSC Syntax</a></li>
+                       
+                         <li><a href="/rest.li/pdl_migration">Migrating from PDSC to PDL</a></li>
+                       
+                         <li><a href="/rest.li/avro_translation">Avro Translation</a></li>
+                       
+                         <li><a href="/rest.li/java_binding">Java Binding</a></li>
+                       
+                         <li><a href="/rest.li/annotation_processor">Schema Annotation Processor</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Modeling Resources</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
+                       
+                         <li><a href="/rest.li/modeling/compatibility_check">Snapshots and Resource Compatibility Checking</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/how_data_is_serialized_for_transport">How Data is Serialized for Transport</a></li>
+                       
+                         <li><a href="/rest.li/how_data_is_represented_in_memory">How Data is Represented in Memory</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Main concepts</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-Filters">Filters</a></li>
+                       
+                         <li><a href="/rest.li/Projections">Projections</a></li>
+                       
+                         <li><a href="/rest.li/pathspec">PathSpecs</a></li>
+                       
+                         <li><a href="/rest.li/Validation-in-Rest_li">Validation</a></li>
+                       
+                         <li><a href="/rest.li/Attachment-Streaming">Attachment Streaming</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Mutli-language</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/multi_language_compatibility_matrix">Compatibility Matrix</a></li>
+                       
+                         <li><a href="/rest.li/test_suite">Test Suite</a></li>
+                       
+                         <li><a href="https://github.com/mchen07/restli-csharp">C#</a></li>
+                       
+                         <li><a href="/rest.li/Scala-Integration">Scala Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Testing</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers">Writing Unit Tests</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">How to</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Send-Rest_li-Request-Query-In-Request-Body">Send Request Query in the Body</a></li>
+                       
+                         <li><a href="/rest.li/How-to-use-projections-in-Java">Use Projections</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li_Avro_conversions">Avro Conversion</a></li>
+                       
+                         <li><a href="/rest.li/Compression">Compression</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_x-upgrade-instructions">Migrate to Rest.li 2.x</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_how_to">Test Suite</a></li>
+                       
+                         <li><a href="/rest.li/howto_add_new_language">Test Suite - Add New Language</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/service_errors_java">Configure Service Errors in Java</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">FAQ</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Data-FAQ">Rest.li - FAQ</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_troubleshooting">Test Suite - Troubleshooting</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="validation-in-restli">Validation In Rest.li</h1>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#specifying-validation-rules">Specifying Validation Rules</a></li>
+  <li><a href="#custom-validation-rules">Custom Validation Rules</a></li>
+  <li><a href="#restli-validation-annotations">Rest.li Validation Annotations</a></li>
+  <li><a href="#using-the-restli-data-validator-for-servers">Using the Rest.li Data Validator For Servers</a></li>
+  <li><a href="#using-the-restli-data-validator-for-clients">Using the Rest.li Data Validator For Clients</a></li>
+  <li><a href="#validating-data-without-restli-context">Validating Data Without Rest.li Context</a></li>
+  <li><a href="#backwards-compatibility">Backwards Compatibility</a></li>
+</ul>
+
+<p>There are many situations in which incoming or outgoing data should be
+validated. For example, when creating a record which stores user
+information, you may want to check that the username field doesn’t
+contain special characters, or you may want to ensure that all required
+(non-optional) fields are present before processing the incoming record.
+When a required field is not present (and doesn’t have a default value
+either), calling getXXX() will throw a
+<code class="highlighter-rouge">RequiredFieldNotPresentException</code>. So validating the entity beforehand
+can simplify the error handling code because you wouldn’t need to call
+hasXXX() for every single field before calling getXXX(). Also, you may
+want to check that clients are not trying to modify certain fields, like
+server-generated ids or timestamps. Rest.li validation provides a
+mechanism to perform such validation.</p>
+
+<p>To use Rest.li’s validation feature, you need to specify validation
+rules and choose how to enable validation.</p>
+
+<h2 id="specifying-validation-rules">Specifying Validation Rules</h2>
+
+<p>Rest.li validates using three types of rules:</p>
+
+<ol>
+  <li>Schema validation rules (checking the type of field values and the
+presence of required fields)</li>
+  <li>Custom validation rules (checking whether a number is in some range,
+matching a string to a regular expression, etc)</li>
+  <li>Rest.li validation annotations (<code class="highlighter-rouge">@ReadOnly</code> and <code class="highlighter-rouge">@CreateOnly</code>)</li>
+</ol>
+
+<p>The first two rules are specified in the data schema (<code class="highlighter-rouge">.pdl</code> file), and
+the third one is specified in the resource implementation. This is
+because the first two rules only deal with information in the data
+itself, but the third rule also needs additional Rest.li context such as
+the method type. For example, a read only field shouldn’t be included in
+a create request, but should be included in a get response.</p>
+
+<p>For partial update requests (patches), the goal is to ensure that if the
+patch is applied to a valid entity, the modified entity will also be
+valid. For example, a patch that deletes a required field is invalid
+because the modified entity will be missing that field. If there is a
+custom validation rule on the username field that it must be at least 3
+characters, a patch setting the username to “AA” is invalid.</p>
+
+<p>You can read more about required and optional fields in <a href="pdl_schema#record-type">Data Schemas - PDL Syntax - Record Type</a>.</p>
+
+<h2 id="custom-validation-rules">Custom Validation Rules</h2>
+
+<p>Rest.li includes <a href="https://github.com/linkedin/rest.li/tree/master/data/src/main/java/com/linkedin/data/schema/validator">some customizable
+validators</a>,
+such as “strlen” and “regex”, that can be added to schemas. Developers
+can write additional validators for any specific need.</p>
+
+<p>For example, to use “strlen” to validate a string between 1 and 20 chars
+long, we add it to the “validate” map of the field in the schema, for
+example:</p>
+
+<div class="language-pdl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">namespace</span> <span class="n">com.example</span><span class="p">
+
+</span><span class="kr">record</span><span class="p"> </span><span class="n">Fortune</span><span class="p"> {
+  </span><span class="nd">@validate.strlen</span> <span class="p">=</span><span class="w"> </span><span class="p">{</span><span class="nl">"min"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nl">"max"</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span><span class="p">}
+  </span><span class="nl">message</span><span class="p">:</span> <span class="kt">string</span><span class="p">
+}
+</span></code></pre></div></div>
+
+<p>Validator names are case sensitive and must have a matching validator
+Java class in the current classpath. Rest.li finds the validator class
+by uppercasing the first letter of the validator name and appending the
+“Validator” suffix. For example, “strlen” maps to
+<a href="https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/validator/StrlenValidator.java">StrlenValidator</a>.
+Developers writing additional validators only need to write a class
+extending <code class="highlighter-rouge">AbstractValidator</code> and include it in the classpath to use it.</p>
+
+<p>Additional details are described in the javadoc for
+<a href="https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/validator/DataSchemaAnnotationValidator.java">DataSchemaAnnotationValidator</a>.</p>
+
+<h2 id="restli-validation-annotations">Rest.li Validation Annotations</h2>
+
+<p>Fields in a pegasus data schema can be either required or optional.
+However, there are certain cases where this distinction is not
+expressive enough. For example, a client shouldn’t send a
+server-generated id in a create request (i.e. id is optional), but the
+server must send the id when responding to a get request (i.e. id is
+required). To cover cases like this, we introduce two new Rest.li
+validation annotations: <code class="highlighter-rouge">@ReadOnly</code> and <code class="highlighter-rouge">@CreateOnly</code>.</p>
+
+<p>A <code class="highlighter-rouge">@ReadOnly</code> field cannot be set or changed by the client, ex.
+server-generated ID field. A <code class="highlighter-rouge">@CreateOnly</code> field can be set the client
+when creating the entity, but cannot be changed by the client
+afterwards. This annotation implies that the field is immutable, ex. a
+purchase price. The client will send the price to the CREATE method
+while creating a purchase entry.</p>
+
+<p>As a best practice, Rest.li validation annotation should not conflict
+with schema validation rules and custom validation rules specified in
+the schema. For example, <code class="highlighter-rouge">@ReadOnly</code> should only be used to enforce that
+an optional field is not present. It should not be specified for a
+required field, making missing required field value valid.</p>
+
+<p>The <a href="https://github.com/linkedin/rest.li/blob/master/restli-common/src/main/java/com/linkedin/restli/common/validation/RestLiDataValidator.java">Rest.li data
+validator</a>
+will enforce the following rules for fields in request data based on the
+annotation:</p>
+
+<p><strong>Note that validation is not turned on by default, and servers have to manually call the validator or use the validation filter.</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th> </th>
+      <th>Create</th>
+      <th>Partial Update</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="highlighter-rouge">@ReadOnly</code></td>
+      <td>Must not be present (See notes below)</td>
+      <td>Must not be present</td>
+    </tr>
+    <tr>
+      <td><code class="highlighter-rouge">@CreateOnly</code></td>
+      <td>N/A</td>
+      <td>Must not be present</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Batch create, batch update, and batch partial update are treated the
+same as create, update, and partial update respectively.</p>
+<h3 id="notes-on-readonly-validation-rules-for-create-request">Notes on @ReadOnly Validation Rules for Create Request</h3>
+
+<p>If <code class="highlighter-rouge">@ReadOnly</code> is specified to a field that is required in schema, the
+field is treated as optional and the validation rule enforces that the
+field is not present in the Create request data.</p>
+
+<h3 id="validation-for-update-requests">Validation for Update Requests</h3>
+
+<p>Update methods can be used in two scenarios:</p>
+<ol>
+  <li>As a PUT method, that updates the whole entity. The client should’ve
+fetched the original entity, updated it and then called UPDATE with the
+full entity. In this case, both <code class="highlighter-rouge">@ReadOnly</code> and <code class="highlighter-rouge">@CreateOnly</code> marked fields
+should be present.</li>
+  <li>As CREATE when UPDATE is used to as UPSERT method. In this scenario, UPDATE
+is used both to update or create the entity (if it is not already present). When
+the entity is being created, the <code class="highlighter-rouge">@ReadOnly</code> fields may be absent and the <code class="highlighter-rouge">@CreateOnly</code>
+fields may be present. Similarly, when the entity is be updated, both sets of fields
+will be present (similar to scenario 1).</li>
+</ol>
+
+<p>So to support both these scenarios, the validation for Update requests is relaxed
+to allow <code class="highlighter-rouge">@ReadOnly</code> and <code class="highlighter-rouge">@CreateOnly</code> fields to be present and for <code class="highlighter-rouge">@ReadOnly</code>
+fields to be optional (when the field is marked as required in schema).</p>
+
+<p>In the update request, when the <code class="highlighter-rouge">@ReadOnly</code> or <code class="highlighter-rouge">@CreateOnly</code> fields are present, and if 
+the request is updating an existing entity, they are expected to have the same value as
+the original entity (if the field was missing from the original entity,
+it should be missing in the update request too). <em>However, this is not
+checked by the Rest.li framework and should be checked manually in the
+resource implementation.</em></p>
+
+<h3 id="specifying-restli-validation-annotations">Specifying Rest.li Validation Annotations</h3>
+
+<p>Rest.li validation annotations are specified on top of the resource. For
+example,</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RestLiCollection</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"photos"</span><span class="o">,</span> <span class="n">namespace</span> <span class="o">=</span> <span class="s">"com.linkedin.restli.example.photos"</span><span class="o">)</span>
+<span class="nd">@ReadOnly</span><span class="o">(</span><span class="s">"urn"</span><span class="o">)</span>  
+<span class="nd">@CreateOnly</span><span class="o">({</span><span class="s">"/id"</span><span class="o">,</span> <span class="s">"/EXIF"</span><span class="o">})</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">PhotoResource</span> <span class="kd">extends</span> <span class="nc">CollectionResourceTemplate</span><span class="o">&lt;</span><span class="nc">Long</span><span class="o">,</span> <span class="nc">Photo</span><span class="o">&gt;</span>
+<span class="o">{</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+</code></pre></div></div>
+<p>Every path should correspond to a field in a record, and not an enum
+constant, a member of a union, etc. Paths should be specified in the
+format used by
+“PathSpec”:https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/PathSpec.java.
+Note that the first / character can be either specified or omitted. You
+can check the correct path for a field by getting its PathSpec and
+calling toString(). For example, if the <code class="highlighter-rouge">ValidationDemo</code> record contains
+an array field like this:</p>
+
+<div class="language-pdl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">record</span><span class="p"> </span><span class="n">ValidationDemo</span><span class="p"> {
+  </span><span class="nl">ArrayWithInlineRecord</span><span class="p">:</span> <span class="kr">optional</span><span class="p"> </span><span class="kr">array</span><span class="p">[</span><span class="kr">record</span><span class="p"> </span><span class="n">myItem</span><span class="p"> {
+    </span><span class="nl">bar1</span><span class="p">:</span> <span class="kt">string</span><span class="p">,
+    </span><span class="nl">bar2</span><span class="p">:</span> <span class="kt">string</span><span class="p">
+  }]
+  </span><span class="c1">// ...</span><span class="p">
+}
+</span></code></pre></div></div>
+
+<p><code class="highlighter-rouge">ValidationDemo.fields().ArrayWithInlineRecord().items().bar1().toString()</code>
+will return <code class="highlighter-rouge">/ArrayWithInlineRecord/*/bar1</code>.</p>
+
+<p>You can also refer to these rules:</p>
+<ul>
+  <li>For a non-nested field, put the field name. e.g. “stringA”</li>
+  <li>For a nested field, put the full path separated by / characters. e.g.
+“location/latitude”</li>
+  <li>For a field of an array item, specify the array name followed by the wildcard and the field name. e.g. “ArrayWithInlineRecord/*/bar1”</li>
+  <li>Similarly, for a field of a map value, specify the map name followed by the wildcard and the field name.</li>
+  <li>For a field of a record inside a union, specify the union name, followed by the fully qualified record schema name, and then the field name. e.g. “UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo2”</li>
+</ul>
+
+<p>Because full paths are listed, different rules can be specified for
+records that have the same schema. For example, if the schema contains
+two Photos, you can make the id of photo1 ReadOnly and id of photo2
+non-ReadOnly. This is different from the optional/required distinction
+specified in data schemas, where if the id of photo1 is required, the
+id of photo2 will also be required.</p>
+
+<h2 id="using-the-restli-data-validator-for-servers">Using the Rest.li Data Validator For Servers</h2>
+
+<p>The Rest.li data validator can be called directly or indirectly using
+the validation filters. When the resource calls it directly, it gets
+specific error messages about where and why the validation failed, and
+can decide how to handle the error. When a filter is used instead, the
+resource does not get to examine why validation failed. Instead, the
+client gets an error response with a message describing why the
+validation failed. The validation filters are convenient if you want to
+simply discard invalid requests or responses. On the other hand, if you
+need to log the error or fail requests for only certain types of errors,
+you need to call the validator directly.</p>
+
+<h3 id="request-validation-before-resource-handling">Request validation before resource handling</h3>
+
+<p>The <a href="https://github.com/linkedin/rest.li/blob/master/restli-server/src/main/java/com/linkedin/restli/server/validation/RestLiValidationFilter.java">RestLiValidationFilter</a>
+rejects all invalid requests automatically. It sends a 422
+(Unprocessable Entity) error response back to the client if the data is
+invalid. A sample error message is:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ERROR :: /stringA :: ReadOnly field present in a create request
+ERROR :: /stringB :: field is required but not found and has no default value
+</code></pre></div></div>
+
+<h3 id="response-validation-after-resource-handling">Response validation after resource handling</h3>
+
+<p>The RestLiValidationFilter also discards all invalid responses. The
+filter sends a 500 error response back to the client if the response is
+invalid. A sample error message is:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ERROR :: /stringA :: length of “Lorem ipsum dolor sit amet” is out of range 1...10
+ERROR :: /stringB :: field is required but not found and has no default value
+</code></pre></div></div>
+
+<p><a href="Rest_li-Filters">Rest.li Filters</a> explains how to install the filter.</p>
+
+<h3 id="request-validation-during-resource-handling">Request validation during resource handling</h3>
+
+<p>To use the Rest.li data validator explicitly, it needs to be declared as
+a method parameter using the <code class="highlighter-rouge">@ValidatorParam</code> annotation.
+For example, to validate the input of a create request,</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RestMethod</span><span class="o">.</span><span class="na">Create</span>  
+<span class="kd">public</span> <span class="nc">CreateResponse</span> <span class="nf">create</span><span class="o">(</span><span class="kd">final</span> <span class="nc">Fortune</span> <span class="n">entity</span><span class="o">,</span> <span class="nd">@ValidatorParam</span> <span class="nc">RestLiDataValidator</span> <span class="n">validator</span><span class="o">)</span>
+<span class="o">{</span>
+  <span class="nc">ValidationResult</span> <span class="n">result</span> <span class="o">=</span> <span class="n">validator</span><span class="o">.</span><span class="na">validateInput</span><span class="o">(</span><span class="n">entity</span><span class="o">);</span>  
+  <span class="k">if</span> <span class="o">(!</span><span class="n">result</span><span class="o">.</span><span class="na">isValid</span><span class="o">())</span>  
+  <span class="o">{</span>  
+    <span class="k">throw</span> <span class="k">new</span> <span class="nf">RestLiServiceException</span><span class="o">(</span><span class="nc">HttpStatus</span><span class="o">.</span><span class="na">S_422_UNPROCESSABLE_ENTITY</span><span class="o">,</span> <span class="n">result</span><span class="o">.</span><span class="na">getMessages</span><span class="o">().</span><span class="na">toString</span><span class="o">());</span>  
+  <span class="o">}</span>  
+  <span class="o">...</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Batch requests have to be validated one by one:</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RestMethod</span><span class="o">.</span><span class="na">BatchPartialUpdate</span>
+<span class="kd">public</span> <span class="nc">BatchUpdateResult</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Fortune</span><span class="o">&gt;</span> <span class="nf">batchUpdate</span><span class="o">(</span><span class="nc">BatchPatchRequest</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Fortune</span><span class="o">&gt;</span> <span class="n">updates</span><span class="o">,</span> <span class="nd">@ValidatorParam</span>
+<span class="nc">RestLiDataValidator</span> <span class="n">validator</span><span class="o">)</span>
+<span class="o">{</span>
+  <span class="k">for</span> <span class="o">(</span><span class="nc">Map</span><span class="o">.</span><span class="na">Entry</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">PatchRequest</span><span class="o">&lt;</span><span class="nc">Fortune</span><span class="o">&gt;&gt;</span> <span class="n">entry</span> <span class="o">:</span> <span class="n">entityUpdates</span><span class="o">.</span><span class="na">getData</span><span class="o">().</span><span class="na">entrySet</span><span class="o">())</span>
+  <span class="o">{</span>
+    <span class="nc">Integer</span> <span class="n">key</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="na">getKey</span><span class="o">();</span>
+    <span class="nc">PatchRequest</span><span class="o">&lt;</span><span class="nc">Fortune</span><span class="o">&gt;</span> <span class="n">patch</span> <span class="o">=</span> <span class="n">entry</span><span class="o">.</span><span class="na">getValue</span><span class="o">();</span>
+    <span class="nc">ValidationResult</span> <span class="n">result</span> <span class="o">=</span> <span class="n">validator</span><span class="o">.</span><span class="na">validateInput</span><span class="o">(</span><span class="n">patch</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">result</span><span class="o">.</span><span class="na">isValid</span><span class="o">())</span>
+    <span class="o">{</span>
+      <span class="c1">// update entity</span>
+    <span class="o">}</span>
+    <span class="k">else</span>
+    <span class="o">{</span>
+      <span class="n">errors</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">key</span><span class="o">,</span> <span class="k">new</span> <span class="nc">RestLiServiceException</span><span class="o">(</span><span class="nc">HttpStatus</span><span class="o">.</span><span class="na">S_422_UNPROCESSABLE_ENTITY</span><span class="o">,</span> <span class="n">result</span><span class="o">.</span><span class="na">getMessages</span><span class="o">().</span><span class="na">toString</span><span class="o">()));</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>The <a href="https://github.com/linkedin/rest.li/blob/master/restli-int-test-server/src/main/java/com/linkedin/restli/examples/greetings/server/ValidationDemoResource.java">ValidationDemoResource</a>
+class shows how to use the validator for each resource method type.</p>
+
+<h3 id="response-validation-during-resource-handling">Response validation during resource handling</h3>
+
+<p>Similar to request validation, the Rest.li data validator needs to be
+declared as a method parameter.<br />
+For example:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RestMethod</span><span class="o">.</span><span class="na">BatchGet</span>
+<span class="kd">public</span> <span class="nc">Map</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Fortune</span><span class="o">&gt;</span> <span class="nf">batchGet</span><span class="o">(</span><span class="nc">Set</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">&gt;</span> <span class="n">ids</span><span class="o">,</span> <span class="nd">@ValidatorParam</span> <span class="nc">RestLiDataValidator</span> <span class="n">validator</span><span class="o">)</span>
+<span class="o">{</span>
+  <span class="nc">Map</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Fortune</span><span class="o">&gt;</span> <span class="n">resultMap</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">HashMap</span><span class="o">&lt;</span><span class="nc">Integer</span><span class="o">,</span> <span class="nc">Fortune</span><span class="o">&gt;();</span>
+  <span class="o">...</span>
+  <span class="k">for</span> <span class="o">(</span><span class="nc">Fortune</span> <span class="n">entity</span> <span class="o">:</span> <span class="n">resultMap</span><span class="o">.</span><span class="na">values</span><span class="o">())</span>
+  <span class="o">{</span>
+    <span class="nc">ValidationResult</span> <span class="n">result</span> <span class="o">=</span> <span class="n">validator</span><span class="o">.</span><span class="na">validateOutput</span><span class="o">(</span><span class="n">entity</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">result</span><span class="o">.</span><span class="na">isValid</span><span class="o">())</span>
+    <span class="o">{</span>
+      <span class="c1">// fix the entity</span>
+    <span class="o">}</span>
+  <span class="o">}</span>  
+  <span class="o">...</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="using-the-restli-data-validator-for-clients">Using the Rest.li Data Validator For Clients</h2>
+
+<h3 id="request-validation">Request validation</h3>
+
+<p>Clients can validate requests before sending it to the server, to ensure
+that the request wouldn’t be rejected by the server. Request builders
+for create, update, partial update and their respective batch operations
+have validateInput() methods.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Photo</span> <span class="n">newPhoto</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Photo</span><span class="o">().</span><span class="na">setTitle</span><span class="o">(</span><span class="err">“</span><span class="nc">New</span> <span class="nc">Photo</span><span class="err">”</span><span class="o">).</span><span class="na">setFormat</span><span class="o">(</span><span class="nc">PhotoFormats</span><span class="o">.</span><span class="na">PNG</span><span class="o">).</span><span class="na">setExif</span><span class="o">(</span><span class="n">newExif</span><span class="o">);</span>
+<span class="nc">ValidationResult</span> <span class="n">validationResult</span> <span class="o">=</span> <span class="nc">PhotosCreateRequestBuilder</span><span class="o">.</span><span class="na">validateInput</span><span class="o">(</span><span class="n">newPhoto</span><span class="o">);</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">validationResult</span><span class="o">.</span><span class="na">isValid</span><span class="o">())</span>
+<span class="o">{</span>
+  <span class="c1">// send request</span>
+<span class="o">}</span>
+<span class="k">else</span>
+<span class="o">{</span>
+  <span class="c1">// fix photo</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Input data for batch requests have to be validated one by one:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="o">(</span><span class="nc">PatchRequest</span><span class="o">&lt;</span><span class="nc">Photo</span><span class="o">&gt;</span> <span class="n">patch</span> <span class="o">:</span> <span class="n">patches</span><span class="o">)</span>
+<span class="o">{</span>
+  <span class="nc">ValidationResult</span> <span class="n">validationResult</span> <span class="o">=</span> <span class="nc">PhotosPartialUpdateRequestBuilder</span><span class="o">.</span><span class="na">validateInput</span><span class="o">(</span><span class="n">patch</span><span class="o">);</span>
+  <span class="k">if</span> <span class="o">(!</span><span class="n">validationResult</span><span class="o">.</span><span class="na">isValid</span><span class="o">())</span>
+  <span class="o">{</span>
+    <span class="c1">// fix patch</span>
+  <span class="o">}</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="response-validation">Response validation</h3>
+
+<p>When validating data returned by the server, clients have to use the <code class="highlighter-rouge">ValidateDataAgainstSchema</code> class as explained below.</p>
+
+<h2 id="validating-data-without-restli-context">Validating Data Without Rest.li Context</h2>
+
+<p>When ReadOnly or CreateOnly annotations are used, Rest.li context
+(method type, request vs response) is necessary to validate the data.
+Otherwise the data and the schema information is enough. <a href="how_data_is_represented_in_memory#data-to-schema-validation">Data to Schema
+Validation</a>
+explains how to validate data using the <code class="highlighter-rouge">ValidateDataAgainstSchema</code>
+class. If it is used with <code class="highlighter-rouge">DataSchemaAnnotationValidator</code>, it will
+consider the first two types of rules out of three listed in
+<a href="#specifying-validation-rules">Specifying Validation Rules</a>.</p>
+
+<p>For example:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Send the request to the server and get the response</span>
+<span class="kd">final</span> <span class="nc">Photo</span> <span class="n">photo</span> <span class="o">=</span> <span class="n">restClient</span><span class="o">.</span><span class="na">sendRequest</span><span class="o">(</span><span class="n">request</span><span class="o">).</span><span class="na">getResponse</span><span class="o">().</span><span class="na">getEntity</span><span class="o">();</span>
+<span class="nc">DataSchemaAnnotationValidator</span> <span class="n">validator</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">DataSchemaAnnotationValidator</span><span class="o">(</span><span class="n">photo</span><span class="o">.</span><span class="na">schema</span><span class="o">());</span>
+<span class="nc">ValidationResult</span> <span class="n">result</span> <span class="o">=</span> <span class="nc">ValidateDataAgainstSchema</span><span class="o">.</span><span class="na">validate</span><span class="o">(</span><span class="n">photo</span><span class="o">.</span><span class="na">data</span><span class="o">(),</span> <span class="n">photo</span><span class="o">.</span><span class="na">schema</span><span class="o">(),</span> <span class="k">new</span> <span class="nc">ValidationOptions</span><span class="o">(),</span> <span class="n">validator</span><span class="o">);</span>
+<span class="k">if</span> <span class="o">(!</span><span class="n">result</span><span class="o">.</span><span class="na">isValid</span><span class="o">())</span>
+<span class="o">{</span>
+  <span class="c1">// handle the error</span>
+<span class="o">}</span> 
+</code></pre></div></div>
+
+<h2 id="backwards-compatibility">Backwards Compatibility</h2>
+
+<p>Adding or removing a <code class="highlighter-rouge">@ReadOnly</code> or <code class="highlighter-rouge">@CreateOnly</code> annotation for a field is considered backwards incompatible. When an annotation is added, old client’s create or partial update requests may fail validation because they still contain the field in the request. When an annotation is removed, clients may have to send fields that they didn’t have to before.</p>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

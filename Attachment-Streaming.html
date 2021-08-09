@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Attachment Streaming</title>
+    <meta name="description" content="A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs" />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/Attachment-Streaming" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">User Guide</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/user_guide/server_architecture">Rest.li Architecture</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_server">Rest.li Server</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_client">Rest.li Client Framework</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/unstructured_data">Unstructured Data</a></li>
+                       
+                         <li><a href="/rest.li/Components">Components</a></li>
+                       
+                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous in Rest.li</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data Schemas</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/pdl_schema">PDL Schema</a></li>
+                       
+                         <li><a href="/rest.li/pdsc_syntax">PDSC Syntax</a></li>
+                       
+                         <li><a href="/rest.li/pdl_migration">Migrating from PDSC to PDL</a></li>
+                       
+                         <li><a href="/rest.li/avro_translation">Avro Translation</a></li>
+                       
+                         <li><a href="/rest.li/java_binding">Java Binding</a></li>
+                       
+                         <li><a href="/rest.li/annotation_processor">Schema Annotation Processor</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Modeling Resources</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
+                       
+                         <li><a href="/rest.li/modeling/compatibility_check">Snapshots and Resource Compatibility Checking</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/how_data_is_serialized_for_transport">How Data is Serialized for Transport</a></li>
+                       
+                         <li><a href="/rest.li/how_data_is_represented_in_memory">How Data is Represented in Memory</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Main concepts</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-Filters">Filters</a></li>
+                       
+                         <li><a href="/rest.li/Projections">Projections</a></li>
+                       
+                         <li><a href="/rest.li/pathspec">PathSpecs</a></li>
+                       
+                         <li><a href="/rest.li/Validation-in-Rest_li">Validation</a></li>
+                       
+                         <li><a href="/rest.li/Attachment-Streaming">Attachment Streaming</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Mutli-language</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/multi_language_compatibility_matrix">Compatibility Matrix</a></li>
+                       
+                         <li><a href="/rest.li/test_suite">Test Suite</a></li>
+                       
+                         <li><a href="https://github.com/mchen07/restli-csharp">C#</a></li>
+                       
+                         <li><a href="/rest.li/Scala-Integration">Scala Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Testing</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers">Writing Unit Tests</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">How to</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Send-Rest_li-Request-Query-In-Request-Body">Send Request Query in the Body</a></li>
+                       
+                         <li><a href="/rest.li/How-to-use-projections-in-Java">Use Projections</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li_Avro_conversions">Avro Conversion</a></li>
+                       
+                         <li><a href="/rest.li/Compression">Compression</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_x-upgrade-instructions">Migrate to Rest.li 2.x</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_how_to">Test Suite</a></li>
+                       
+                         <li><a href="/rest.li/howto_add_new_language">Test Suite - Add New Language</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/service_errors_java">Configure Service Errors in Java</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">FAQ</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Data-FAQ">Rest.li - FAQ</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_troubleshooting">Test Suite - Troubleshooting</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="attachment-streaming">Attachment Streaming</h1>
+
+<p><strong>This is an experimental feature at this point. Please consult Rest.li
+team before using it.</strong></p>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#goals">Goals</a></li>
+  <li><a href="#inspiration">Inspiration</a></li>
+  <li><a href="#new-wire-format">New Wire Format</a></li>
+  <li><a href="#data-modeling">Data Modeling</a></li>
+  <li><a href="#creating-attachments">Creating Attachments</a></li>
+  <li><a href="#reading-attachments">Reading Attachments</a></li>
+  <li><a href="#chaining-proxying-attachments-across-services">Chaining (Proxying) Attachments Across Services</a></li>
+  <li><a href="#client-streaming-apis">Client Streaming APIs</a></li>
+  <li><a href="#server-streaming-apis">Server Streaming APIs</a></li>
+  <li><a href="#good-programming-practice">Good Programming Practice</a></li>
+  <li><a href="#additional-developer-notes">Additional Developer Notes</a></li>
+  <li><a href="#attachment-streaming-without-restli">Attachment Streaming without Rest.li</a></li>
+  <li><a href="#future-enhancements">Future Enhancements</a></li>
+</ul>
+
+<h2 id="goals">Goals</h2>
+
+<p>Rest.li is the high performance platform on which web services operate
+at LinkedIn. As our company moved closer to the formal adoption of large
+unstructured blobs of data, such as media, we needed a highly performant
+way to move all this data around. Therefore it became apparent that we
+needed to perform an overhaul of our existing service-to-service
+architecture.</p>
+
+<p>The goals of Rest.li attachment streaming therefore are the following:</p>
+
+<ul>
+  <li>Provide the ability to pass large blobs of bytes around our data
+centers between multiple services seamlessly</li>
+  <li>No one service should hold the entire payload in memory at once</li>
+  <li>Fully asynchronous and event driven</li>
+  <li>Zero copy write and read for high performance</li>
+  <li>Leverage existing web services infrastructure, namely R2/D2/Rest.li</li>
+  <li>Allow multiple blobs to be sent in a single request or response</li>
+  <li>Establish a wire format that can foster a high adoption rate for
+external members and platforms</li>
+  <li>Solve the immediate business need of our services interacting with
+our custom distributed object store - LinkedIn’s version of S3 -
+<a href="https://github.com/linkedin/ambry">Ambry</a></li>
+  <li>Provide clean and intuitive async APIs for our engineers</li>
+</ul>
+
+<h2 id="inspiration">Inspiration</h2>
+
+<p>Rest.li attachment streaming is inspired by the <a href="http://www.reactive-streams.org/">Reactive Streaming
+Manifesto</a></p>
+
+<p>Therefore attachment streaming in Rest.li, from the bottom (R2) to the
+top, is based on the following:</p>
+
+<ul>
+  <li>Allow processing a potentially unbounded number of elements</li>
+  <li>Ensure that data elements are handled in sequence</li>
+  <li>Asynchronously pass elements between components</li>
+  <li>Mandatory non-blocking backpressure from the bottom (TCP) up</li>
+  <li>The reader should never be forced to buffer data</li>
+</ul>
+
+<h2 id="new-wire-format">New Wire Format</h2>
+
+<p>In order to support attachment streaming, Rest.li leverages a different
+wire format then what traditional Rest.li traffic uses. This is for a
+number of reasons:</p>
+
+<ul>
+  <li>The current wire formats JSON and PSON do not work well for
+expressing binary attachments. They were meant for structured data,
+so providing big blobs of bytes in them violates the spirit of their
+original intent.</li>
+  <li>Multiple attachments need to be supported, which is not possible in
+the current state of Rest.li.</li>
+  <li>The regular Rest.li payload (JSON/PSON) needs to continue to be
+supported and to be fully read/written before attachments are
+read/written by developer code.</li>
+  <li>Arbitrarily large attachments need to be supported. This requires a
+format that is welcoming to very large blobs of bytes.</li>
+  <li>Each attachment needs some metadata associated with it as well. This
+is outside of the regular Rest.li payload.</li>
+  <li>It is desirable to have a wire format that is set up for easy
+adoption by external consumers and platforms.</li>
+</ul>
+
+<p>In order to satisfy these requirements, Rest.li makes use of
+<code class="highlighter-rouge">multipart/mime</code> as the streaming wire format. Therefore
+Rest.li attachment streaming’s implementation is build upon the formal
+adoption of the <a href="https://tools.ietf.org/html/rfc2046">RFC.</a></p>
+
+<p>Within <code class="highlighter-rouge">multipart/mime</code> there are several <code class="highlighter-rouge">mime</code>
+subtypes that can be chosen. Rest.li attachment streaming uses
+<code class="highlighter-rouge">multipart/related</code> as the value for the
+<code class="highlighter-rouge">Content-Type</code> header since the JSON/PSON payload will be the
+first part in the mime envelope. A more detailed explanation as to the
+justification of <code class="highlighter-rouge">multipart/related</code> is explained
+<a href="https://en.wikipedia.org/wiki/MIME#Related">here.</a></p>
+
+<h3 id="sample-traditional-restli-wire-format">Sample Traditional Rest.li Wire Format</h3>
+
+<p>For reference, here are examples of sample regular Rest.li payloads.</p>
+
+<div class="language-http highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">POST</span> <span class="nn">/widgets?action=purge</span> <span class="k">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<span class="na">Content-Type</span><span class="p">:</span> <span class="s">application/json</span>
+
+<span class="p">{</span><span class="w">
+  </span><span class="nl">"reason"</span><span class="p">:</span><span class="w"> </span><span class="s2">"spam"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"purgedByAdminId"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<div class="language-http highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">POST</span> <span class="nn">/widgets?ids=List(1,2)</span> <span class="k">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<span class="na">Content-Type</span><span class="p">:</span> <span class="s">application/json</span>
+<span class="na">X-RestLi-Method</span><span class="p">:</span> <span class="s">BATCH_PARTIAL_UPDATE</span>
+
+<span class="p">{</span><span class="w">
+  </span><span class="nl">"entities"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"1"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"patch"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"$set"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="p">:</span><span class="s2">"Sam"</span><span class="p">}}},</span><span class="w">
+    </span><span class="nl">"2"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"patch"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"$delete"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"name"</span><span class="p">]}}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="wire-format-for-attachment-streaming">Wire Format for Attachment Streaming</h3>
+
+<p>Note that the current wire format described above will still be
+supported as there are no backward incompatible changes being made.</p>
+
+<p>However for clients sending requests with attachments present or for
+servers responding with attachments, the wire protocol will change.</p>
+
+<p>If attachments are present in either a request or a response, the
+content type becomes <code class="highlighter-rouge">multipart/related</code>. If a client can
+handle attachments back from a server, then an accept type of
+<code class="highlighter-rouge">multipart/related</code> is also added to the <code class="highlighter-rouge">Accept</code>
+header.</p>
+
+<p>For example:</p>
+
+<div class="language-http highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">PUT</span> <span class="nn">/widgets?ids=List(1,2,3)</span> <span class="k">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<span class="na">X-RestLi-Method</span><span class="p">:</span> <span class="s">BATCH_UPDATE</span>
+<span class="na">Content-Type</span><span class="p">:</span> <span class="s">multipart/related; boundary=--km6cltxBQgkYRIwT8lAgFGfNV0AmQFwDB</span>
+<span class="na">Accept</span><span class="p">:</span> <span class="s">multipart/related; application/json</span>
+
+--km6cltxBQgkYRIwT8lAgFGfNV0AmQFwDB
+Content-Type: application/json
+{
+  "entities": {
+    "1": {
+      "widgetName": "Trebuchet",
+      "myVideo": "cid:725c0319-b1f1-4b9c-b618-7ee9468870f0"
+    },
+    "2": {
+      "widgetName": "Gear",
+      "myVideo": "cid:a4d4133b-0546-4f7b-8104-ffdd644168c6"
+    }
+    "3": {
+      "widgetName": "Slider",
+      "myVideo": "cid:725c0319-b1f1-4b9c-b618-7ee9468870f0"
+    }
+  }
+}
+--km6cltxBQgkYRIwT8lAgFGfNV0AmQFwDB
+Content-ID: &lt;725c0319-b1f1-4b9c-b618-7ee9468870f0&gt;
+binary data...
+--km6cltxBQgkYRIwT8lAgFGfNV0AmQFwDB
+Content-ID: &lt;a4d4133b-0546-4f7b-8104-ffdd644168c6&gt;
+binary data...
+--km6cltxBQgkYRIwT8lAgFGfNV0AmQFwDB--
+</code></pre></div></div>
+
+<p>Note that the regular Rest.li payload becomes the first part in a
+<code class="highlighter-rouge">multipart/related</code> envelope. Each attachment then becomes
+its own subsequent part separated by the multipart boundary. Since each
+part in a multipart envelope can have its own headers, the
+<code class="highlighter-rouge">Content-Type</code> header from the regular payload now appears as
+a header in the first part. Both JSON and PSON are supported as valid
+<code class="highlighter-rouge">Content-Types</code> for the first part.</p>
+
+<p>Each part after the regular Rest.li payload represents a blob of data
+attached to the request or response. Each attachment part has a
+<code class="highlighter-rouge">Content-ID</code> header which uniquely identifies that attachment
+in the payload. References to this unique identifier should then be
+placed as fields in the JSON (RecordTemplate backing) payload as
+pointers to the blobs in the attachments. In this particular example we
+have two attachments. <code class="highlighter-rouge">Trebuchet</code> and <code class="highlighter-rouge">Slider</code>
+both point to the same attachment while <code class="highlighter-rouge">Gear</code> points to the
+other attachment.</p>
+
+<h2 id="data-modeling">Data Modeling</h2>
+
+<p>Data modeling is no different for streaming, with the exception of the
+following recommendation. This recommendation is simply to serve as a
+visual cue and does not impact the generated RecordTemplates or the
+processing of a streaming request or response.</p>
+
+<p>Our recommendation is that anytime you have a field in a schema
+referencing an attachment, that an <code class="highlighter-rouge">@attachment</code> annotation is present.
+This should further be expanded to include documentation mentioning that
+this field represents a pointer to an attachment. Once again it is important
+to note that the purpose of these fields is simply to convey that an
+attachment could be present.</p>
+
+<div class="language-pdl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">namespace</span> <span class="n">com.linkedin.greetings.api</span><span class="p">
+
+</span><span class="cm">/**
+ * A greeting
+ */</span><span class="p">
+</span><span class="kr">record</span><span class="p"> </span><span class="n">Greeting</span><span class="p"> {
+  </span><span class="nl">id</span><span class="p">:</span> <span class="kt">long</span><span class="p">
+
+  </span><span class="cm">/**
+   * Type 1 UUID representing a video attachment
+   */</span><span class="p">
+  </span><span class="nd">@attachment</span><span class="p">
+  </span><span class="nl">content</span><span class="p">:</span> <span class="kt">string</span><span class="p">
+}
+</span></code></pre></div></div>
+
+<p>In terms of the actual data supplied at runtime we suggest using Type 1
+UUIDs.</p>
+
+<p><a href="https://en.wikipedia.org/wiki/Universally_unique_identifier#Version_1_.28date-time_.26_MAC_address.29">Technical Details on Type 1
+UUIDs</a></p>
+
+<p>The reason for suggesting Type 1 UUIDs is because it provides the best
+guarantee of producing a globally unique identifier. This is important
+since, as shown further below, attachments can be coalesced from
+different machines/services which may lead to an identifier collision.</p>
+
+<h2 id="creating-attachments">Creating Attachments</h2>
+
+<p>In order to create an attachment, developers must implement the
+following interface(s):</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/**
+ * Represents a custom data source that can serve as an attachment.
+ */</span>
+<span class="kd">public</span> <span class="kd">interface</span> <span class="nc">RestLiAttachmentDataSourceWriter</span> <span class="kd">extends</span> <span class="nc">Writer</span>
+<span class="o">{</span>
+  <span class="cm">/**
+   * Denotes a unique identifier for this attachment. It is recommended to choose 
+   * identifiers with a high degree of uniqueness, such as Type 1 UUIDs. 
+   * For most use cases there should be a corresponding String field in a PDSC
+   * to indicate affiliation.
+   *
+   * @return the {@link java.lang.String} representing this attachment.
+   */</span>
+  <span class="kd">public</span> <span class="nc">String</span> <span class="nf">getAttachmentID</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>You’ll notice this extends <code class="highlighter-rouge">Writer</code> which is defined as the
+following:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/**
+ * Writer is the producer of data for an EntityStream.
+ */</span>
+<span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Writer</span>
+<span class="o">{</span>
+  <span class="cm">/**
+   * This is called when a Reader is set for the EntityStream.
+   *
+   * @param wh the handle to write data to the EntityStream.
+   */</span>
+  <span class="kt">void</span> <span class="nf">onInit</span><span class="o">(</span><span class="kd">final</span> <span class="nc">WriteHandle</span> <span class="n">wh</span><span class="o">);</span>
+
+  <span class="cm">/**
+   * Invoked when it it possible to write data.
+   *
+   * This method will be invoked the first time as soon as data can be written to the WriteHandle.
+   * Subsequent invocations will only occur if a call to {@link WriteHandle#remaining()} has returned 0
+   * and it has since become possible to write data.
+   */</span>
+  <span class="kt">void</span> <span class="nf">onWritePossible</span><span class="o">();</span>
+
+  <span class="cm">/**
+   * Invoked when the entity stream is aborted.
+   * Usually writer could do clean up to release any resource it has acquired.
+   *
+   * @param e the throwable that caused the entity stream to abort
+   */</span>
+  <span class="kt">void</span> <span class="nf">onAbort</span><span class="o">(</span><span class="nc">Throwable</span> <span class="n">e</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>The <code class="highlighter-rouge">Writer</code> class leverages an interface called
+<code class="highlighter-rouge">WriteHandle</code> which is defined as follows:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/**
+ * This is the handle to write data to an EntityStream.
+ */</span>
+<span class="kd">public</span> <span class="kd">interface</span> <span class="nc">WriteHandle</span>
+<span class="o">{</span>
+  <span class="cm">/**
+   * This writes data into the EntityStream. This call may have no effect if the stream has been aborted
+   * @param data the data chunk to be written
+   * @throws java.lang.IllegalStateException if remaining capacity is 0, or done() or error() has been called
+   * @throws java.lang.IllegalStateException if called after done() or error() has been called
+   */</span>
+  <span class="kt">void</span> <span class="nf">write</span><span class="o">(</span><span class="kd">final</span> <span class="nc">ByteString</span> <span class="n">data</span><span class="o">);</span>
+
+  <span class="cm">/**
+   * Signals that Writer has finished writing.
+   * This call has no effect if the stream has been aborted or done() or error() has been called
+   */</span>
+  <span class="kt">void</span> <span class="nf">done</span><span class="o">();</span>
+
+  <span class="cm">/**
+   * Signals that the Writer has encountered an error.
+   * This call has no effect if the stream has been aborted or done() or error() has been called
+   * @param throwable the cause of the error.
+   */</span>
+  <span class="kt">void</span> <span class="nf">error</span><span class="o">(</span><span class="kd">final</span> <span class="nc">Throwable</span> <span class="n">throwable</span><span class="o">);</span>
+
+  <span class="cm">/**
+   * Returns the remaining capacity in number of data chunks. Always returns 0 if the stream is aborted or 
+   * finished with done() or error()
+   *
+   * @return the remaining capacity in number of data chunks
+   */</span>
+  <span class="kt">int</span> <span class="nf">remaining</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>These are the essential interfaces to keep in mind when defining an
+attachment as they represent how your custom data source will be asked
+to produce both the metadata as well as the raw bytes for your
+attachment.</p>
+
+<p>When it is time for a <code class="highlighter-rouge">RestLiAttachmentDataSourceWriter</code> to
+produce data, it will first be invoked on
+<code class="highlighter-rouge">RestLiAttachmentDataSourceWriter\#getAttachmentID()</code>.
+Implementations should return a unique identifier that should be the
+same identifier placed in the strongly typed <code class="highlighter-rouge">RecordTemplate</code>
+payload as described earlier.</p>
+
+<p>Next, the attachment will be invoked on
+<code class="highlighter-rouge">onInit(WriteHandle)</code>. The provided <code class="highlighter-rouge">WriteHandle</code>
+is the object that will be used to perform the actual writing of bytes
+later, so implementations should save a reference to it.</p>
+
+<p>Subsequently, at some point in time in the future, the attachment will
+be invoked on <code class="highlighter-rouge">Writer\#onWritePossible()</code>. It is at this
+point that implementations should write raw bytes on
+<code class="highlighter-rouge">WriteHandle\#write(ByteString)</code>. The amount of times that
+the writer may write will be based on what is returned from
+<code class="highlighter-rouge">WriteHandle\#remaining()</code>. Once the number of writes
+remaining has been honored, then again at some time in the future, the
+attachment will be invoked again on
+<code class="highlighter-rouge">Writer\#onWritePossible()</code>. Then the attachment simply
+repeats the logic above. The Javadoc is clear about this behavior for
+developers to follow.</p>
+
+<p>The size of the chunk written is up to the developer but keep in mind
+that the larger the chunks written, the more memory that may be used by
+the application at any given time. Furthermore, in order to minimize
+copies, developers should use
+<code class="highlighter-rouge">ByteString\#unsafeWrap(byte\[\])</code> to wrap byte arrays that
+need to be written out.</p>
+
+<h2 id="reading-attachments">Reading Attachments</h2>
+
+<p>Reading attachments is a multi-step callback driven process which allows
+developers to asynchronously walk through each attachment. It begins
+with a top level <code class="highlighter-rouge">RestLiAttachmentReader</code> and a
+<code class="highlighter-rouge">SingleRestLiAttachmentReader</code> for each individual attachment
+encountered. This applies whether a client is reading a server’s
+response attachments or a server reading a client’s incoming request
+attachments.</p>
+
+<p>There are two callbacks involved, one for the
+<code class="highlighter-rouge">RestLiAttachmentReader</code> and one for the
+<code class="highlighter-rouge">SingleRestLiAttachmentReader</code>. The relevant interfaces are
+as follows:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/**
+ * Used to register with {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader}
+ * to asynchronously drive through the reading of multiple attachments.
+ */</span>
+<span class="kd">public</span> <span class="kd">interface</span> <span class="nc">RestLiAttachmentReaderCallback</span>
+<span class="o">{</span>
+  <span class="cm">/**
+   * Invoked (at some time in the future) upon a registration with a {@link RestLiAttachmentReader}.
+   * Also invoked when previous attachments are finished and new attachments are available.
+   *
+   * @param singleRestLiAttachmentReader the {@link RestLiAttachmentReader.SingleRestLiAttachmentReader}
+   *                                     which can be used to walk through this attachment.
+   */</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onNewAttachment</span><span class="o">(</span><span class="nc">RestLiAttachmentReader</span><span class="o">.</span><span class="na">SingleRestLiAttachmentReader</span> <span class="n">singleRestLiAttachmentReader</span><span class="o">);</span>
+
+  <span class="cm">/**
+   * Invoked when this reader is finished which means all attachments have been consumed.
+   */</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onFinished</span><span class="o">();</span>
+
+  <span class="cm">/**
+   * Invoked as a result of calling {@link RestLiAttachmentReader#drainAllAttachments()}.
+   * This will be invoked at some time in the future when all the attachments in this
+   * reader have been drained.
+   */</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onDrainComplete</span><span class="o">();</span>
+
+  <span class="cm">/**
+   * Invoked when there was an error reading attachments.
+   *
+   * @param throwable the Throwable that caused this to happen.
+   */</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onStreamError</span><span class="o">(</span><span class="nc">Throwable</span> <span class="n">throwable</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/**
+ * Used to register with
+ * {@link com.linkedin.restli.common.attachments.RestLiAttachmentReader.SingleRestLiAttachmentReader}
+ * to asynchronously drive through the reading of a single attachment.
+ */</span>
+<span class="kd">public</span> <span class="kd">interface</span> <span class="nc">SingleRestLiAttachmentReaderCallback</span>
+<span class="o">{</span>
+  <span class="cm">/**
+   * Invoked when data is available to be read on the attachment.
+   *
+   * @param attachmentData the {@link com.linkedin.data.ByteString} representing the current
+   *                       window of attachment data.
+   */</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onAttachmentDataAvailable</span><span class="o">(</span><span class="nc">ByteString</span> <span class="n">attachmentData</span><span class="o">);</span>
+
+  <span class="cm">/**
+   * Invoked when the current attachment is finished being read.
+   */</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onFinished</span><span class="o">();</span>
+
+  <span class="cm">/**
+   * Invoked when the current attachment is finished being drained.
+   */</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onDrainComplete</span><span class="o">();</span>
+
+  <span class="cm">/**
+   * Invoked when there was an error reading the attachments.
+   *
+   * @param throwable the Throwable that caused this to happen.
+   */</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">onAttachmentError</span><span class="o">(</span><span class="nc">Throwable</span> <span class="n">throwable</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>The process begins by registering a callback of type
+<code class="highlighter-rouge">RestLiAttachmentReaderCallback</code> as shown above with the
+provided <code class="highlighter-rouge">RestLiAttachmentReader</code>. At some point in time in
+the future, the <code class="highlighter-rouge">RestLiAttachmentReaderCallback</code> will be
+invoked on
+<code class="highlighter-rouge">RestLiAttachmentReaderCallback\#onNewAttachment(SingleRestLiAttachmentReader)</code>.
+This <code class="highlighter-rouge">SingleRestLiAttachmentReader</code> is what is used to
+traverse through each individual attachment.</p>
+
+<p>The process then continues for each attachment as developers must
+register a <code class="highlighter-rouge">SingleRestLiAttachmentReaderCallback</code> with the
+provided <code class="highlighter-rouge">SingleRestLiAttachmentReader</code>. Once registered, the
+<code class="highlighter-rouge">SingleRestLiAttachmentReader</code> can then be told to produce
+attachment data via
+<code class="highlighter-rouge">SingleRestLiAttachmentReader\#requestAttachmentData()</code>. Once
+this is invoked, at some point in time in the future, the
+<code class="highlighter-rouge">SingleRestLiAttachmentReaderCallback</code> will be invoked on
+<code class="highlighter-rouge">SingleRestLiAttachmentReaderCallback\#onAttachmentDataAvailable(ByteString)</code>
+representing the data for the reader to consume. Once the attachment
+data is consumed, another call may be made to
+<code class="highlighter-rouge">SingleRestLiAttachmentReader\#requestAttachmentData()</code>
+thereby driving through all the data in that attachment.</p>
+
+<p>Refer to the Javadocs provided for each class to obtain technical
+details as to how to use each API. Additional features, such as
+attachment draining and exception handling, are also described.</p>
+
+<h2 id="chaining-proxying-attachments-across-services">Chaining (Proxying) Attachments Across Services</h2>
+
+<p>Rest.li streaming supports the ability to proxy attachments meaning
+that:</p>
+
+<ul>
+  <li>A server can take an incoming request and send one or more of its
+attachments as a request further downstream.</li>
+  <li>A server can take one or more attachments from a response to a
+downstream request, and then send them back to the original request.</li>
+  <li>Clients and servers can coalesce multiple attachments from different
+sources.</li>
+  <li>This then becomes useful for observer or authentication patterns.</li>
+</ul>
+
+<p>Here is an outline of what it may look like across multiple
+services:</p>
+
+<p><img src="https://cloud.githubusercontent.com/assets/8562437/15308616/1a858502-1b94-11e6-90e2-1d315dfc6c0d.png" alt="" /></p>
+
+<p>Note how these big blobs of data move seamlessly between multiple
+services without any one service holding the entire blob in memory at
+once.</p>
+
+<p>The APIs listed below in the client and server API sections highlight
+how to perform attachment chaining across multiple services.</p>
+
+<h2 id="client-streaming-apis">Client Streaming APIs</h2>
+
+<h3 id="specifying-outgoing-attachments-on-the-client">Specifying Outgoing Attachments on the Client</h3>
+
+<p>The generated request builders have been augmented to allow developers
+to append attachments to outgoing requests. These APIs are:</p>
+
+<p>1.
+<code class="highlighter-rouge">appendSingleAttachment(RestLiAttachmentDataSourceWriter)</code> to
+append a single attachment or to proxy an incoming
+<code class="highlighter-rouge">SingleRestLiAttachmentReader</code> further downstream.<br />
+2. <code class="highlighter-rouge">appendMultipleAttachments(RestLiDataSourceIterator)</code> to
+append multiple attachments (as defined by the
+<code class="highlighter-rouge">RestLiDataSourceIterator</code> interface) or to proxy an incoming
+<code class="highlighter-rouge">RestLiAttachmentReader</code> further downstream.</p>
+
+<p>Here is sample code on the client side on what attachment creation would
+look like when constructing a request:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">final</span> <span class="kt">byte</span><span class="o">[]</span> <span class="n">clientSuppliedBytes</span> <span class="o">=</span> <span class="s">"ClientSupplied"</span><span class="o">.</span><span class="na">getBytes</span><span class="o">();</span>
+<span class="kd">final</span> <span class="nc">GreetingWriter</span> <span class="n">greetingAttachment</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">GreetingWriter</span><span class="o">(</span><span class="nc">ByteString</span><span class="o">.</span><span class="na">copy</span><span class="o">(</span><span class="n">clientSuppliedBytes</span><span class="o">));</span>
+<span class="kd">final</span> <span class="nc">StreamingGreetingsCreateBuilder</span> <span class="n">createBuilder</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">StreamingGreetingsBuilders</span><span class="o">().</span><span class="na">create</span><span class="o">();</span>
+<span class="n">createBuilder</span><span class="o">.</span><span class="na">appendSingleAttachment</span><span class="o">(</span><span class="n">greetingAttachment</span><span class="o">);</span>
+<span class="kd">final</span> <span class="nc">Greeting</span> <span class="n">greeting</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">Greeting</span><span class="o">().</span><span class="na">setMessage</span><span class="o">(</span><span class="s">"A greeting with an attachment"</span><span class="o">);</span>
+<span class="kd">final</span> <span class="nc">Request</span><span class="o">&lt;</span><span class="nc">EmptyRecord</span><span class="o">&gt;</span> <span class="n">createRequest</span> <span class="o">=</span> <span class="n">createBuilder</span><span class="o">.</span><span class="na">input</span><span class="o">(</span><span class="n">greeting</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+<span class="k">try</span>
+<span class="o">{</span>
+  <span class="kd">final</span> <span class="nc">Response</span><span class="o">&lt;</span><span class="nc">EmptyRecord</span><span class="o">&gt;</span> <span class="n">createResponse</span> <span class="o">=</span> <span class="n">getClient</span><span class="o">().</span><span class="na">sendRequest</span><span class="o">(</span><span class="n">createRequest</span><span class="o">).</span><span class="na">getResponse</span><span class="o">();</span>
+  <span class="nc">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="n">createResponse</span><span class="o">.</span><span class="na">getStatus</span><span class="o">(),</span> <span class="mi">201</span><span class="o">);</span>
+<span class="o">}</span>
+<span class="k">catch</span> <span class="o">(</span><span class="kd">final</span> <span class="nc">RestLiResponseException</span> <span class="n">responseException</span><span class="o">)</span>
+<span class="o">{</span>
+  <span class="nc">Assert</span><span class="o">.</span><span class="na">fail</span><span class="o">(</span><span class="s">"We should not reach here!"</span><span class="o">,</span> <span class="n">responseException</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>The implementation of <code class="highlighter-rouge">GreetingWriter</code> has not been provided
+but it is a trivial implementation of
+<code class="highlighter-rouge">RestLiAttachmentDataSourceWriter</code>.</p>
+
+<h3 id="accessing-response-attachments-on-the-client">Accessing Response Attachments on the Client</h3>
+
+<p>By default the server will not send response attachments back unless a
+client specifies it can handle them. To explicitly allow response
+attachments to come back, developers will need to use
+<code class="highlighter-rouge">RestLiRequestOptions</code> as follows when constructing the
+request builders:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">final</span> <span class="nc">RestliRequestOptions</span> <span class="n">defaultOptions</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">RestliRequestOptionsBuilder</span><span class="o">()</span>
+  <span class="o">.</span><span class="na">setProtocolVersionOption</span><span class="o">(</span><span class="nc">ProtocolVersionOption</span><span class="o">.</span><span class="na">USE_LATEST_IF_AVAILABLE</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">setAcceptResponseAttachments</span><span class="o">(</span><span class="kc">true</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+<span class="kd">final</span> <span class="nc">StreamingGreetingsBuilders</span> <span class="n">builders</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">StreamingGreetingsBuilders</span><span class="o">(</span><span class="n">defaultOptions</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p>Without specifying this explicitly, a server will not be able to send
+any attachments back. This is because by default the
+<code class="highlighter-rouge">Accept-Type</code> header will not include
+<code class="highlighter-rouge">multipart/related</code> as a valid accept type for the client to
+handle.</p>
+
+<p>Subsequently, in order for the client to access any response attachments
+from the server, the <code class="highlighter-rouge">Response</code> object has been augmented
+with two new APIs, <code class="highlighter-rouge">Response\#hasAttachments()</code> and
+<code class="highlighter-rouge">Response\#getAttachmentReader()</code>.</p>
+
+<p>Clients should first see if the response has any attachments, and if so,
+call <code class="highlighter-rouge">getAttachmentReader()</code> to return the
+<code class="highlighter-rouge">RestLiAttachmentReader</code> to walk through all the attachment
+data.</p>
+
+<h2 id="server-streaming-apis">Server Streaming APIs</h2>
+
+<h3 id="specifying-response-attachments-on-the-server">Specifying Response Attachments on the Server</h3>
+
+<p>Even before assigning response attachments, the resource method should
+first check to see if the client can handle any response attachments.
+This is done via:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="o">(</span><span class="n">getContext</span><span class="o">().</span><span class="na">responseAttachmentsSupported</span><span class="o">())</span>
+<span class="o">{</span>
+   <span class="c1">//Client can handle response attachments</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Since the server does not have response builders or any opposite
+equivalent of the client side, resource methods must assign response
+attachments using an instance of <code class="highlighter-rouge">RestLiResponseAttachments</code>.
+The APIs exposed by <code class="highlighter-rouge">RestLiResponseAttachments</code> are very
+similar to the client side request builders:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/**
+ * Append a {@link com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter}
+ * to be placed as an attachment.
+ *
+ * @param dataSource the data source to be added.
+ * @return the builder to continue building.
+ */</span>
+<span class="kd">public</span> <span class="nc">Builder</span> <span class="nf">appendSingleAttachment</span><span class="o">(</span><span class="kd">final</span> <span class="nc">RestLiAttachmentDataSourceWriter</span> <span class="n">dataSource</span><span class="o">)</span>
+<span class="o">{</span>
+  <span class="nc">AttachmentUtils</span><span class="o">.</span><span class="na">appendSingleAttachmentToBuilder</span><span class="o">(</span><span class="n">_responseAttachmentsBuilder</span><span class="o">,</span> <span class="n">dataSource</span><span class="o">);</span>
+  <span class="k">return</span> <span class="k">this</span><span class="o">;</span>
+<span class="o">}</span>
+
+<span class="cm">/**
+ * Append a {@link com.linkedin.restli.common.attachments.RestLiDataSourceIterator} to be used
+ * as a data source within the newly constructed attachment list. All the individual attachments
+ * produced from the {@link com.linkedin.restli.common.attachments.RestLiDataSourceIterator}
+ * will be chained and placed as attachments in the new attachment list.
+ *
+ * @param dataSourceIterator
+ * @return the builder to continue building.
+ */</span>
+<span class="kd">public</span> <span class="nc">Builder</span> <span class="nf">appendMultipleAttachments</span><span class="o">(</span><span class="kd">final</span> <span class="nc">RestLiDataSourceIterator</span> <span class="n">dataSourceIterator</span><span class="o">)</span>
+<span class="o">{</span>
+  <span class="nc">AttachmentUtils</span><span class="o">.</span><span class="na">appendMultipleAttachmentsToBuilder</span><span class="o">(</span><span class="n">_responseAttachmentsBuilder</span><span class="o">,</span> <span class="n">dataSourceIterator</span><span class="o">);</span>
+  <span class="k">return</span> <span class="k">this</span><span class="o">;</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Once this is created, the <code class="highlighter-rouge">RestLiResponseAttachments</code> can be
+assigned to the response via
+<code class="highlighter-rouge">ResourceContext\#setResponseAttachments</code>.</p>
+
+<p>Here is a complete example on how a server might respond with
+attachments:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="o">(</span><span class="n">getContext</span><span class="o">().</span><span class="na">responseAttachmentsSupported</span><span class="o">())</span>
+<span class="o">{</span>
+    <span class="kd">final</span> <span class="nc">GreetingWriter</span> <span class="n">greetingWriter</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">GreetingWriter</span><span class="o">(</span><span class="nc">ByteString</span><span class="o">.</span><span class="na">copy</span><span class="o">(</span><span class="n">greetingBytes</span><span class="o">));</span>
+    <span class="kd">final</span> <span class="nc">RestLiResponseAttachments</span> <span class="n">streamingAttachments</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">RestLiResponseAttachments</span><span class="o">.</span><span class="na">Builder</span><span class="o">()</span>
+      <span class="o">.</span><span class="na">appendSingleAttachment</span><span class="o">(</span><span class="n">greetingWriter</span><span class="o">)</span>
+      <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+    <span class="n">getContext</span><span class="o">().</span><span class="na">setResponseAttachments</span><span class="o">(</span><span class="n">streamingAttachments</span><span class="o">);</span>
+    <span class="n">callback</span><span class="o">.</span><span class="na">onSuccess</span><span class="o">(</span><span class="k">new</span> <span class="nc">Greeting</span><span class="o">().</span><span class="na">setMessage</span><span class="o">(</span><span class="s">"Your greeting has an attachment since you were kind and "</span>
+      <span class="o">+</span> <span class="s">"decided you wanted to read it!"</span><span class="o">).</span><span class="na">setId</span><span class="o">(</span><span class="n">key</span><span class="o">));</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Once again, the implementation of <code class="highlighter-rouge">GreetingWriter</code> has not
+been provided but it is a trivial implementation of
+<code class="highlighter-rouge">RestLiAttachmentDataSourceWriter</code>.</p>
+
+<h3 id="accepting-request-attachments-on-the-server">Accepting Request Attachments on the Server</h3>
+
+<p>A resource method expresses that it can accept request attachments by
+declaring <code class="highlighter-rouge">RestLiAttachmentReader</code> as a parameter in it’s
+method signature. This parameter must be accompanied by the presence of
+a new annotation: <code class="highlighter-rouge">RestLiAttachmentsParam</code>. Note that only
+one parameter of this type can be declared and the
+<code class="highlighter-rouge">RestLiAttachmentsParam</code> cannot be used with any other
+parameter type.</p>
+
+<p>Here is an example of what a method signature may look like:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kt">void</span> <span class="nf">create</span><span class="o">(</span><span class="nc">Greeting</span> <span class="n">greeting</span><span class="o">,</span> <span class="nd">@CallbackParam</span> <span class="nc">Callback</span><span class="o">&lt;</span><span class="nc">CreateResponse</span><span class="o">&gt;</span> <span class="n">callback</span><span class="o">,</span>
+                   <span class="nd">@RestLiAttachmentsParam</span> <span class="nc">RestLiAttachmentReader</span> <span class="n">attachmentReader</span><span class="o">)</span>
+</code></pre></div></div>
+
+<p>If the provided <code class="highlighter-rouge">RestLiAttachmentReader</code> is not null, the
+resource method may walk through it absorbing attachment data as
+described earlier above.</p>
+
+<p>It is important to note that attachments cannot be sent to the server
+for that endpoint if the resource method does explicitly allow for them
+via the parameter declaration shown above. Therefore:<br />
+1. If resource method asks for them and client sends them, then there
+is no problem and this is completely normal.<br />
+2. If resource method asks for them and client does not send them, the
+resource method will see null for the
+<code class="highlighter-rouge">RestLiAttachmentReader</code>.<br />
+3. If resource method does not ask for them and client sends them, a
+bad request is sent back and the attachments are drained by the Rest.li
+framework.<br />
+4. If resource method does not ask for them and client does not send
+them, then there is no problem and this is completely normal.</p>
+
+<h2 id="good-programming-practice">Good Programming Practice</h2>
+
+<p>Given that attachment streaming will be a new experience for Rest.li
+developers, we encourage all engineers to consider the following when
+writing their services:</p>
+
+<ul>
+  <li>On the server side, application developers need to fully drain any
+incoming multipart requests. The Rest.li framework will only abosrb
+the first part of the incoming request (the regular Rest.li
+payload). The rest of the payload will need to be consumed by the
+resource method. Failure to do so can lead to resource leaks (open
+connections) which can cause server instability.</li>
+  <li>Similarly on the client side, application developers should fully
+drain response attachments, otherwise the connection pool on the
+client side will hit its limit.</li>
+  <li>In the event of an exception thrown by the resource method, the
+Rest.li framework will attempt to drain all the request bytes.
+However such behavior should not be relied upon. Server developers
+should make every attempt to fully drain the incoming request even
+in the face of an exception.</li>
+  <li>If an exception is thrown (i.e bad URL in the request) before a
+resource method is invoked, Rest.li will fully absorb and drop the
+payload on the ground.</li>
+  <li>Reduce bandwidth when possible; i.e use partial update to avoid
+resending unnecessary data across the wire.</li>
+</ul>
+
+<h2 id="additional-developer-notes">Additional Developer Notes</h2>
+
+<ul>
+  <li>There is an <code class="highlighter-rouge">InputStream</code> wrapper available that can
+allow a user specified Java <code class="highlighter-rouge">InputStream</code> to function as
+a data source for a <code class="highlighter-rouge">RestLiAttachmentDataSourceWriter</code>.
+Although its use is discouraged since it is an async wrapper around
+a synchronous library.</li>
+  <li>For clients issuing requests, only HTTP PUT or POST methods are
+allowed for attachment streaming:
+    <ol>
+      <li>Create</li>
+      <li>Batch Create</li>
+      <li>Update</li>
+      <li>Batch Update</li>
+      <li>Partial Update</li>
+      <li>Batch Partial Update</li>
+      <li>Actions</li>
+    </ol>
+  </li>
+  <li>Servers are allowed to send back attachments for ALL types of
+endpoints</li>
+  <li>A streaming supported server will need to be deployed</li>
+  <li>Client must explicitly specify that they can handle response
+attachments. Request builders by default will not specify
+attachments should be sent back.</li>
+</ul>
+
+<h2 id="attachment-streaming-without-restli">Attachment Streaming without Rest.li</h2>
+
+<p>Rest.li attachment streaming is built atop of a general purpose
+multipart/mime layer. This layer allows application developers to:</p>
+
+<ul>
+  <li>Deploy a service to receive and send back attachments directly on
+top of R2</li>
+  <li>Deploy clients to send and receive attachments directly on top of R2</li>
+  <li>Create multipart/mime requests (client) and responses (server) that
+conform to the RFC</li>
+  <li>Read multipart/mime responses (client) and requests (server) that
+conform to the RFC</li>
+</ul>
+
+<p>Please see source, tests and examples in the <code class="highlighter-rouge">multipart-mime</code>
+module for more details.</p>
+
+<h2 id="future-enhancements">Future Enhancements</h2>
+
+<p>LinkedIn will continue to improve and enhance the Rest.li streaming
+experience. We have plans for:</p>
+
+<ul>
+  <li>Full parseq integration - The current APIs are callback centric</li>
+  <li>Streaming support for Rest.li filters - Allow the filters to view
+windows of bytes as attachments flow in an out of the server</li>
+  <li>IDL integration + request builders - Elevating the
+<code class="highlighter-rouge">RestLiAttachmentReader</code> parameter on the server side to
+the IDL and providing a request builder specifically targeted for
+this parameter. This would require the compat checker to detect any
+backward incompatible changes as well.</li>
+</ul>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

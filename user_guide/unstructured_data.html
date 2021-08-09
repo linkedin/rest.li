@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Unstructured data (blob) user guide</title>
+    <meta name="description" content="This user guide is about working with unstructured data (BLOB) in Rest.li framework." />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/user_guide/unstructured_data" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">User Guide</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/user_guide/server_architecture">Rest.li Architecture</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_server">Rest.li Server</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_client">Rest.li Client Framework</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/unstructured_data">Unstructured Data</a></li>
+                       
+                         <li><a href="/rest.li/Components">Components</a></li>
+                       
+                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous in Rest.li</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data Schemas</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/pdl_schema">PDL Schema</a></li>
+                       
+                         <li><a href="/rest.li/pdsc_syntax">PDSC Syntax</a></li>
+                       
+                         <li><a href="/rest.li/pdl_migration">Migrating from PDSC to PDL</a></li>
+                       
+                         <li><a href="/rest.li/avro_translation">Avro Translation</a></li>
+                       
+                         <li><a href="/rest.li/java_binding">Java Binding</a></li>
+                       
+                         <li><a href="/rest.li/annotation_processor">Schema Annotation Processor</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Modeling Resources</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
+                       
+                         <li><a href="/rest.li/modeling/compatibility_check">Snapshots and Resource Compatibility Checking</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/how_data_is_serialized_for_transport">How Data is Serialized for Transport</a></li>
+                       
+                         <li><a href="/rest.li/how_data_is_represented_in_memory">How Data is Represented in Memory</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Main concepts</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-Filters">Filters</a></li>
+                       
+                         <li><a href="/rest.li/Projections">Projections</a></li>
+                       
+                         <li><a href="/rest.li/pathspec">PathSpecs</a></li>
+                       
+                         <li><a href="/rest.li/Validation-in-Rest_li">Validation</a></li>
+                       
+                         <li><a href="/rest.li/Attachment-Streaming">Attachment Streaming</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Mutli-language</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/multi_language_compatibility_matrix">Compatibility Matrix</a></li>
+                       
+                         <li><a href="/rest.li/test_suite">Test Suite</a></li>
+                       
+                         <li><a href="https://github.com/mchen07/restli-csharp">C#</a></li>
+                       
+                         <li><a href="/rest.li/Scala-Integration">Scala Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Testing</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers">Writing Unit Tests</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">How to</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Send-Rest_li-Request-Query-In-Request-Body">Send Request Query in the Body</a></li>
+                       
+                         <li><a href="/rest.li/How-to-use-projections-in-Java">Use Projections</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li_Avro_conversions">Avro Conversion</a></li>
+                       
+                         <li><a href="/rest.li/Compression">Compression</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_x-upgrade-instructions">Migrate to Rest.li 2.x</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_how_to">Test Suite</a></li>
+                       
+                         <li><a href="/rest.li/howto_add_new_language">Test Suite - Add New Language</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/service_errors_java">Configure Service Errors in Java</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">FAQ</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Data-FAQ">Rest.li - FAQ</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_troubleshooting">Test Suite - Troubleshooting</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="unstructured-data-blob-user-guide">Unstructured Data (BLOB) User Guide</h1>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#summary">Summary</a></li>
+  <li><a href="#about">About Unstructured Data</a></li>
+  <li><a href="#features">Features Overview</a></li>
+  <li><a href="#create">Unstructured Data Resources</a></li>
+  <li><a href="#consume">Consume Unstructured Data</a></li>
+  <li><a href="#faq">FAQs</a></li>
+</ul>
+
+<h2 id="summary">Summary</h2>
+
+<p>Rest.li applications are built around <em>Resources</em>. The key ingredient to creating a resource is <em>data model</em>, whose internal structure is defined by <a href="/rest.li/pdl_schema">Pegasus Data Schema</a> in key-values style. A fundamental presumption was that such structure exists for every Rest.li data model. However, it’s not the case for <em>unstructured</em> data such as images or PDFs, which are usually consumed in raw binary forms without a containing data structure.</p>
+
+<p>This user guide is about working with <em>unstructured data</em> in Rest.li framework. This is <em>not</em> a comprehensive guide to building Rest.li resources in general, which is already covered in great details at <a href="/rest.li/user_guide/restli_server#writing-resources">Writing Resources</a>. This guide focuses on the differences of unstructured data resource.</p>
+
+<p>See also <a href="/rest.li/start/unstructured">Unstructured Data in Rest.li Quick Start</a>.</p>
+
+<h2 id="about-unstructured-data">About Unstructured Data</h2>
+
+<p>To Rest.li, the key difference about unstructured data is that they don’t have any defined schema and don’t have to be represented by a single generated class in Rest.li like schema-base data does (RecordTemplate). Unstructured data can be handled in the rawest form as a bytes array or a more advanced form as InputStream/ByteBuffer in Java for example.</p>
+
+<p>Additionally, there are several other differences that set them apart from the typical structured data:</p>
+
+<ul>
+  <li><strong>Different Wire Protocol.</strong> Rest.li transports <em>structured</em> data as JSON content. But <em>unstructured</em> data should be transported in their own MIME type with the body contains only the binaries.</li>
+  <li><strong>Larger Data Size.</strong> Unstructured data are usually larger in sheer size. Buffering the entire payload in system memory may not be a good idea and not as necessary as for structured data (in order for the codec to work).</li>
+  <li><strong>Different Data Handling.</strong> Application logic is much less likely to have reasons to peek into or even mutate unstructured data on the fly. Once the data is minted or fetched, they should remain immutable during transportation. (except maybe for special handling like compression/decompression which is taken care by the framework anyway)</li>
+  <li><strong>Different Types of Client.</strong> The query for unstructured data is usually initiated by end-user clients in some native manner. A good example is that a web browser could initiate a binary upload/download without invoking any JavaScript logic.</li>
+  <li><strong>Breakable.</strong> Unstructured data can be broken down and processed as a series of byte chunks. This is perfect for streaming which is necessary to reduce the memory footprint.</li>
+</ul>
+
+<h2 id="features-overview">Features Overview</h2>
+
+<p>By default, unstructured data enjoys the same level of support as structured data in Rest.li: they can be modeled as various resource types and most resource-supporting features and tooling should work. <strong>However</strong>, because of the lack of RecordTemplate-based data model, any feature that works on the structure of the resource value, such as Field Projections, Entity Validation etc, do <em>not</em> apply to unstructured data resources, although they will continue to work with structured data resources that live in the same Rest.li application.</p>
+
+<p><strong>Features Highlights:</strong></p>
+
+<ul>
+  <li>Model as Collection, Association or Simple (Singleton) with both Sync and Async I/O</li>
+  <li>Model as sub-resource of structured data resources</li>
+  <li>Download/Get, Post/Upload, Put and Delete methods</li>
+  <li>Rest.li and R2 Filters</li>
+  <li>Unstructured Data Streaming</li>
+  <li>Generated Rest APIs documentation (limited)</li>
+</ul>
+
+<p><strong>Not Supported Features:</strong></p>
+
+<ul>
+  <li>Model as Action or Free-Form resource</li>
+  <li>Model as parent-resource</li>
+  <li>APIs of BATCH_*, FINDERS, PARTIAL_UPDATES</li>
+  <li>Field projections (skipped)</li>
+  <li>Decoration</li>
+</ul>
+
+<p><strong>Streaming Support</strong></p>
+
+<p>In this context, <em>streaming</em> means the ability to transport and process <em>unstructured data</em> in small chunks without the need to buffering the whole content in memory. It sounds appealing, but it introduces complexities for the app developers that might be unnecessary in most simple use cases. Therefore, Rest.li supports both non-streaming and streaming method.</p>
+
+<h2 id="unstructured-data-resources">Unstructured Data Resources</h2>
+
+<h3 id="base-resource-interfaces">Base Resource Interfaces</h3>
+
+<p>Base interface determines the resource type, the resource key and value type. Unstructured data has its own set of base interfaces. The main difference is the absence of the resource value type. Each resource type has two variants: Non-Streaming and Streaming version. Non-streaming comes with synchronous and asynchronous style, while there is no such distinction for streaming.</p>
+
+<p><strong>Non-Streaming base interfaces</strong></p>
+<ul>
+  <li>Collection
+    <ul>
+      <li><code class="highlighter-rouge">UnstructuredDataCollectionResource</code></li>
+      <li>Async
+        <ul>
+          <li><code class="highlighter-rouge">UnstructuredDataCollectionResourceAsync</code></li>
+          <li><code class="highlighter-rouge">UnstructuredDataCollectionResourceTask</code></li>
+          <li><code class="highlighter-rouge">UnstructuredDataCollectionResourcePromise</code></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>Association
+    <ul>
+      <li><code class="highlighter-rouge">UnstructuredDataAssociationResource</code></li>
+      <li>Async
+        <ul>
+          <li><code class="highlighter-rouge">UnstructuredDataAssociationResourceAsync</code></li>
+          <li><code class="highlighter-rouge">UnstructuredDataAssociationResourceTask</code></li>
+          <li><code class="highlighter-rouge">UnstructuredDataAssociationResourcePromise</code></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>Simple
+    <ul>
+      <li><code class="highlighter-rouge">UnstructuredDataSimpleResource</code></li>
+      <li>Async
+        <ul>
+          <li><code class="highlighter-rouge">UnstructuredDataSimpleResourceAsync</code></li>
+          <li><code class="highlighter-rouge">UnstructuredDataSimpleResourceTask</code></li>
+          <li><code class="highlighter-rouge">UnstructuredDataSimpleResourcePromise</code></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<p><strong>Streaming base interfaces</strong></p>
+<ul>
+  <li><code class="highlighter-rouge">UnstructuredDataCollectionResourceReactive</code></li>
+  <li><code class="highlighter-rouge">UnstructuredDataAssociationResourceReactive</code></li>
+  <li><code class="highlighter-rouge">UnstructuredDataSimpleResourceReactive</code></li>
+</ul>
+
+<h3 id="working-with-streaming-resources">Working with Streaming Resources</h3>
+
+<p><strong>Highlights:</strong></p>
+<ul>
+  <li>Streaming resources are <em>relatively</em> more complicated to write, maintain and debug. It’s recommended for high performance demand. Still, performance gain with using streaming is not guaranteed. Benchmarking is the best way to tell.</li>
+  <li>Creating a streaming resource doesn’t automatically make it end-to-end streaming across network nodes. It only guarantees that no buffering will happen within the Rest.li application that host this resource. For example, the data source must provide a way to allow partial data fetching, same to the other end: the destination node must be able to consume the data partially.</li>
+  <li>Rest.li streaming adapts the <a href="https://github.com/linkedin/rest.li/wiki/EntityStream">EntityStream interface</a></li>
+</ul>
+
+<h4 id="resource-definition">Resource Definition</h4>
+
+<p>The definition of streaming unstructured data resource is similar to a regular resource. However, no value type is needed.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RestLiCollection</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"resumes"</span><span class="o">,</span> <span class="n">namespace</span> <span class="o">=</span> <span class="s">"com.mycompany"</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">ResumesResource</span> <span class="kd">extends</span> <span class="nc">UnstructuredDataCollectionResourceReactiveTemplate</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+</code></pre></div></div>
+
+<h4 id="downloadget-api">Download/Get API</h4>
+
+<p>The interface of streaming resource is similar to the <a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">asynchronous resources</a> with a callback parameter that’s used to return the result.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Override</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">get</span><span class="o">(</span><span class="nc">String</span> <span class="n">resumeId</span><span class="o">,</span> <span class="nd">@CallbackParam</span> <span class="nc">Callback</span><span class="o">&lt;</span><span class="nc">UnstructuredDataReactiveResult</span><span class="o">&gt;</span> <span class="n">callback</span><span class="o">)</span> <span class="o">{</span>
+    <span class="nc">Writer</span><span class="o">&lt;</span><span class="nc">ByteString</span><span class="o">&gt;</span> <span class="n">writer</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">SingletonWriter</span><span class="o">&lt;&gt;(</span><span class="nc">ByteString</span><span class="o">.</span><span class="na">copy</span><span class="o">(</span><span class="no">UNSTRUCTURED_DATA_BYTES</span><span class="o">));</span>
+    <span class="n">callback</span><span class="o">.</span><span class="na">onSuccess</span><span class="o">(</span><span class="k">new</span> <span class="nc">UnstructuredDataReactiveResult</span><span class="o">(</span><span class="nc">EntityStreams</span><span class="o">.</span><span class="na">newEntityStream</span><span class="o">(</span><span class="n">writer</span><span class="o">),</span> <span class="no">MIME_TYPE</span><span class="o">));</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p><strong>Get Response</strong></p>
+
+<p><em>UnstructuredDataReactiveResult</em> represents the download response which encapsulates the unstructured data EntityStream as well as the metadata needed to return a successful response. Its merely a container and could be subclassed if desires.</p>
+
+<p><strong>Writing Unstructured Data</strong></p>
+
+<p>Streaming requires the data to be read/write in continuous chunks manner. Simple bytes array or InputStream won’t do the job. Rest.li adopt the <a href="https://github.com/linkedin/rest.li/wiki/EntityStream">EntityStream interface</a></p>
+
+<p>ByteString is essentially Rest.li’s immutable bytes array implementation and is used here to represent a single <em>chunk</em>. EntityStream is the interface that provides the chunks when they are requested. Note that the chunk size is not enforced, however, it’s recommended to make the size reasonable and consistent.</p>
+
+<p><em>Writing Unstructured Data w. R2 Writer</em></p>
+
+<p>Rest.li’s R2 layer has its own similar EntityStream implementation. If a writer is already provided, it can be easily converted to Rest.Li Writer using <a href="https://github.com/linkedin/rest.li/blob/master/r2-core/src/main/java/com/linkedin/r2/message/stream/entitystream/adapter/EntityStreamAdapters.java">EntityStreamAdapters</a> util.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">Writer</span> <span class="n">dataWriter</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ResumeDataWriter</span><span class="o">(</span><span class="n">id</span><span class="o">);</span>
+<span class="n">com</span><span class="o">.</span><span class="na">linkedin</span><span class="o">.</span><span class="na">entitystream</span><span class="o">.</span><span class="na">Writer</span><span class="o">&lt;</span><span class="nc">ByteString</span><span class="o">&gt;</span> <span class="n">writer</span> <span class="o">=</span> <span class="nc">EntityStreamAdapters</span><span class="o">.</span><span class="na">toGenericWriterx</span><span class="o">(</span><span class="n">dataWriter</span><span class="o">);</span>
+</code></pre></div></div>
+
+<p><strong>Setting the Content-Type</strong></p>
+
+<p>A content-specific <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types">MIME content-type</a> is required for the unstructured response to be handled correctly by its clients. It is required as part of the <em>UnstructuredDataReactiveResult</em> and is used <em>as it-is</em> in the HTTP response header. No validation is done by Rest.li.</p>
+
+<p><strong>Setting Additional Headers</strong></p>
+
+<p>More headers/metadata can be set using the ResourceContext. Here is an example to add a ‘disposition’ header to the response:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">getContext</span><span class="o">().</span><span class="na">setResponseHeader</span><span class="o">(</span><span class="s">"Content-Disposition"</span><span class="o">,</span> <span class="s">"attachment; filename=\"filename.jpg\""</span><span class="o">);</span>
+</code></pre></div></div>
+
+<h3 id="restli-filters-and-unstructured-data">Rest.li Filters and Unstructured Data</h3>
+
+<p>Rest.li <a href="/rest.li/Rest_li-Filters">filters</a> currently don’t support access to the unstructured data payload. Any existing or new filter that tries to access the payload will get an empty record. (No, they won’t just fail.)</p>
+
+<h3 id="resource-idl-for-unstructured-data">Resource IDL for Unstructured Data</h3>
+
+<p>Resource IDLs are also generated for unstructured data resources, with a few minor differences in the generated IDL and Restspec files:</p>
+
+<ul>
+  <li>A new “entityType” field to indicate the resource entity type being UNSTRUCTURED_DATA</li>
+  <li>The existing “schema” field is empty when the “entityType” field is UNSTRUCTURED_DATA</li>
+</ul>
+
+<h3 id="online-documentation">Online Documentation</h3>
+
+<p>Rest.li generates online <a href="/rest.li/user_guide/restli_server#online-documentation">API documentation</a> for every resource. It also works for unstructured data resource, however, in the API page, unstructured data is currently treated as an empty missing model.</p>
+
+<h2 id="consume-unstructured-data">Consume Unstructured Data</h2>
+
+<p><strong>Highlights</strong></p>
+<ul>
+  <li>Unstructured data resources are designed to be invoked by any HTTP client natively without the need of decoding/unwrapping by a <em>rich client</em> like Rest.li’s RestClient. In fact, no request builders are generated at all for unstructured data resources.</li>
+  <li>Use a D2 client directly for use cases that need the dynamic host feature from RestClient.</li>
+</ul>
+
+<h3 id="response-anatomy">Response Anatomy</h3>
+
+<p>A simple unstructured data GET response:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl <span class="s1">'http://myhost/resumes/1'</span>
+
+HTTP/1.1 200 OK
+Content-Type: application/pdf
+Content:
+<span class="o">&lt;&lt;&lt;</span> bytes <span class="o">&gt;&gt;&gt;</span>
+</code></pre></div></div>
+
+<h3 id="using-an-http-client">Using an Http Client</h3>
+
+<p>One common Http client is a native browser (not the JavaScript client <em>lives</em> in a browser). Unstructured data resource endpoints can be used in place wherever a standard web resource link is expected.</p>
+
+<div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
+  <span class="nt">&lt;a</span> <span class="na">src=</span><span class="s">"http://myhost/resumes/1"</span><span class="nt">&gt;</span>Download Resume<span class="nt">&lt;/a&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre></div></div>
+
+<h3 id="using-a-d2-client">Using a D2 Client</h3>
+
+<p><a href="/rest.li/Dynamic_Discovery">D2</a> is what powers the host finding capability of RestClient under the hood. With a <a href="/rest.li/start/d2_quick_start#step-3-create-a-client">D2 client</a>, you can send a request without having to specify the actual hostname of your resources:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="no">URI</span> <span class="n">uri</span> <span class="o">=</span> <span class="no">URI</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="s">"d2://resumes/1"</span><span class="o">);</span>
+<span class="nc">StreamRequest</span> <span class="n">req</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">StreamRequestBuilder</span><span class="o">(</span><span class="n">uri</span><span class="o">).</span><span class="na">build</span><span class="o">(...);</span>
+<span class="n">d2Client</span><span class="o">.</span><span class="na">streamRequest</span><span class="o">(</span><span class="n">req</span><span class="o">,</span> <span class="n">responseCallback</span><span class="o">)</span>
+<span class="o">...</span>
+</code></pre></div></div>
+
+<h3 id="error-handlings">Error Handlings</h3>
+
+<p>A request to unstructured data resource could fail in the <a href="/rest.li/user_guide/restli_server#returning-errors">same ways</a> a regular resource does. Moreover, even when a request such as Get is successful, the data flow could still be interrupted or timeout. When that happens, you could receive a successful HTTP status like 200 and still get an incomplete response or long hanging that results in a client timeout.</p>
+
+<h2 id="faqs">FAQs</h2>
+
+<ul>
+  <li>
+    <p><em>Q: Is there a size limit on how large an unstructured data could be served by Rest.li resource?</em>
+A: No. But practically, the size will be cap base on your server’s timeout value. If you are seeing incompleted content on the client, it could be caused by an undersize server timeout value.</p>
+  </li>
+  <li>
+    <p><em>Q: What should be a reasonable server timeout?</em>
+A: It depends on if the Rest.li application hosts a mix of structured and unstructured resources. Currently, Rest.li only allow one timeout setting for the entire app. You may not want a long timeout for APIs that serve small structured data. On the other hand, a short timeout for APIs that serve large unstructured data.</p>
+  </li>
+  <li>
+    <p><em>Q: Should I create a streaming or non-streaming resource for my unstructured data?</em>
+A: First of all, streaming doesn’t come for free and true end-to-end streaming also depends on your other nodes in the network, so make sure you understand what you are getting into. Secondly, the performance depends on many factors such as the size of the data and I/O performances etc.</p>
+  </li>
+  <li>
+    <p><em>Q: What is reactive streaming and how can I leverage it?</em>
+A: <a href="https://github.com/linkedin/rest.li/wiki/EntityStream">EntityStream</a></p>
+  </li>
+</ul>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

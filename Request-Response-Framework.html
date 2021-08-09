@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Rest.li Request Response Framework</title>
+    <meta name="description" content="Pegasus&#39;s request/response framework, often called R2, includes abstractions for REST and RPC requests and responses, filter chains for customized processing..." />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/Request-Response-Framework" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Spec</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/spec/protocol">Rest.li Protocol</a></li>
+                       
+                         <li><a href="/rest.li/spec/restspec_format">Restspec JSON format</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_0-response-API">Rest.li 2.0 response-API</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Rest.li Server</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/spec/service_errors">Service Errors</a></li>
+                       
+                         <li><a href="/rest.li/spec/return_entity">Return Entity</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Rest.li Resource Method</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/batch_finder_resource_method">Batch Finder</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">R2D2</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Dynamic_Discovery">Dynamic Discovery</a></li>
+                       
+                         <li><a href="/rest.li/D2-Zookeeper-Properties">D2 Zookeeper properties</a></li>
+                       
+                         <li><a href="/rest.li/Request-Response-API-(R2)">Request-Response API</a></li>
+                       
+                         <li><a href="/rest.li/Request-Response-Framework">Request-Response framework</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">HTTP Frameworks</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-with-Netty">Netty</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-with-Servlet-Containers">Servlet containers</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Dependency injection</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Spring-Dependency-Injection">Spring dependency injection</a></li>
+                       
+                         <li><a href="/rest.li/Guice-Dependency-Injection">Guice dependency injection</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="restli-request-response-framework">Rest.li Request Response Framework</h1>
+
+<p>Pegasus’s request/response framework, often called R2,  includes abstractions for REST and RPC requests and responses, filter chains for customized processing, and transport abstraction.</p>
+
+<p>R2 can be used in conjunction with the Dynamic Discovery system (also known as D2). The combined stack can be referred to as “R2D2”. R2 can be used independently as well.</p>
+
+<h3 id="filters">Filters</h3>
+<p>The R2 framework in Rest.li contains a filter chain layer. This allows developers to process and modify the content, the associated wire attributes, and the local attributes for each request/response.</p>
+
+<p>To implement a filter, simply implement the relevant Filter interface (for REST, this is <code class="highlighter-rouge">RestFilter</code>; for RPC, use <code class="highlighter-rouge">RpcFilter</code>).</p>
+
+<p>To use a filter, instantiate a Rest.li server/client with a <code class="highlighter-rouge">FilterChain</code> that contains the filters you want to use in the order that you would like to use them in. Note that the order of processing is as follows:</p>
+<ul>
+  <li>Requests are processed <strong>starting from the beginning of the chain and move towards the end</strong> of the filter chain.</li>
+  <li>Responses are processed <strong>from the end of the filter chain and move back towards the beginning</strong> of the filter chain.</li>
+</ul>
+
+<h3 id="filter-example">Filter Example</h3>
+
+<p>Consider the example given in the Rest.li client tutorial:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">final</span> <span class="nc">HttpClientFactory</span> <span class="n">http</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">HttpClientFactory</span><span class="o">();</span>
+<span class="kd">final</span> <span class="nc">Client</span> <span class="n">r2Client</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">TransportClientAdapter</span><span class="o">(</span>
+                                      <span class="n">http</span><span class="o">.</span><span class="na">getClient</span><span class="o">(</span><span class="nc">Collections</span><span class="o">.&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">String</span><span class="o">&gt;</span><span class="n">emptyMap</span><span class="o">()));</span>
+</code></pre></div></div>
+
+<p>Suppose your filter was implemented in some class <code class="highlighter-rouge">MyClientFilter</code>. To add this filter, you might do something like this:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">FilterChain</span> <span class="n">fc</span> <span class="o">=</span> <span class="nc">FilterChains</span><span class="o">.</span><span class="na">empty</span><span class="o">().</span><span class="na">addFilter</span><span class="o">(</span><span class="k">new</span> <span class="nc">MyClientFilter</span><span class="o">());</span>
+<span class="kd">final</span> <span class="nc">HttpClientFactory</span> <span class="n">http</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">HttpClientFactory</span><span class="o">(</span><span class="n">fc</span><span class="o">);</span>
+<span class="kd">final</span> <span class="nc">Client</span> <span class="n">r2Client</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">TransportClientAdapter</span><span class="o">(</span>
+                                      <span class="n">http</span><span class="o">.</span><span class="na">getClient</span><span class="o">(</span><span class="nc">Collections</span><span class="o">.&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">String</span><span class="o">&gt;</span><span class="n">emptyMap</span><span class="o">()));</span>
+</code></pre></div></div>
+
+<p>So how would one go about writing a filter?
+As an example, suppose we wanted to use filters to compress the responses we receive from the server.</p>
+
+<p>A client filter could do this:</p>
+<ul>
+  <li>Add an HTTP Accept-Encoding header to its outbound requests.</li>
+  <li>On inbound responses, the filter would read the Content-Encoding header and decompress the payload accordingly.</li>
+</ul>
+
+<p>A corresponding server might do this:</p>
+<ul>
+  <li>The server’s compression filter can read the inbound request’s Accept-Encoding header and store it as a local attribute.</li>
+  <li>When the server response is ready to go, the filter can intercept the outbound response, compress it, and send the compressed payload off with the corresponding HTTP Content-Encoding header.</li>
+</ul>
+
+<p>See an implementation example here: https://github.com/linkedin/rest.li/tree/master/r2/src/main/java/com/linkedin/r2/filter/compression</p>
+
+<p>For a full list of filters, see: List-of-R2-filters</p>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

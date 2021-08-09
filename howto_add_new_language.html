@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>How To - Add new language</title>
+    <meta name="description" content="A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs" />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/howto_add_new_language" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">User Guide</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/user_guide/server_architecture">Rest.li Architecture</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_server">Rest.li Server</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_client">Rest.li Client Framework</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/unstructured_data">Unstructured Data</a></li>
+                       
+                         <li><a href="/rest.li/Components">Components</a></li>
+                       
+                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous in Rest.li</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data Schemas</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/pdl_schema">PDL Schema</a></li>
+                       
+                         <li><a href="/rest.li/pdsc_syntax">PDSC Syntax</a></li>
+                       
+                         <li><a href="/rest.li/pdl_migration">Migrating from PDSC to PDL</a></li>
+                       
+                         <li><a href="/rest.li/avro_translation">Avro Translation</a></li>
+                       
+                         <li><a href="/rest.li/java_binding">Java Binding</a></li>
+                       
+                         <li><a href="/rest.li/annotation_processor">Schema Annotation Processor</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Modeling Resources</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
+                       
+                         <li><a href="/rest.li/modeling/compatibility_check">Snapshots and Resource Compatibility Checking</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/how_data_is_serialized_for_transport">How Data is Serialized for Transport</a></li>
+                       
+                         <li><a href="/rest.li/how_data_is_represented_in_memory">How Data is Represented in Memory</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Main concepts</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-Filters">Filters</a></li>
+                       
+                         <li><a href="/rest.li/Projections">Projections</a></li>
+                       
+                         <li><a href="/rest.li/pathspec">PathSpecs</a></li>
+                       
+                         <li><a href="/rest.li/Validation-in-Rest_li">Validation</a></li>
+                       
+                         <li><a href="/rest.li/Attachment-Streaming">Attachment Streaming</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Mutli-language</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/multi_language_compatibility_matrix">Compatibility Matrix</a></li>
+                       
+                         <li><a href="/rest.li/test_suite">Test Suite</a></li>
+                       
+                         <li><a href="https://github.com/mchen07/restli-csharp">C#</a></li>
+                       
+                         <li><a href="/rest.li/Scala-Integration">Scala Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Testing</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers">Writing Unit Tests</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">How to</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Send-Rest_li-Request-Query-In-Request-Body">Send Request Query in the Body</a></li>
+                       
+                         <li><a href="/rest.li/How-to-use-projections-in-Java">Use Projections</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li_Avro_conversions">Avro Conversion</a></li>
+                       
+                         <li><a href="/rest.li/Compression">Compression</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_x-upgrade-instructions">Migrate to Rest.li 2.x</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_how_to">Test Suite</a></li>
+                       
+                         <li><a href="/rest.li/howto_add_new_language">Test Suite - Add New Language</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/service_errors_java">Configure Service Errors in Java</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">FAQ</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Data-FAQ">Rest.li - FAQ</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_troubleshooting">Test Suite - Troubleshooting</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h2 id="how-to-add-tests-to-a-new-client-language-binding">How to Add Tests to a New Client Language Binding</h2>
+<p>This page explains how to follow the Rest.li Test Suite Specification to validate a new Rest.li client binding.
+This guide is based on experience with Python, and your language implementation may diverge from this guide.</p>
+
+<p>For a broader overview of code structure and test coverage, refer to <a href="testsuite_overview.md">test suite overview</a>.
+For Java client binding example, please refer to the provided Java TestNG suite, which follows the Rest.li Test Suite
+Specification to validate a Java Rest.li client implementation.</p>
+
+<h3 id="new-language-set-up">New Language Set Up</h3>
+<p>To use the Rest.li Test Suite Specification for a new language implementation of Rest.li, you must set up code
+generation within the project so you can test Rest.li client’s code generation.
+You must also write methods in the new language so you can use the language-independent data included in the
+Rest.li Test Suite Specification.</p>
+
+<p>Here is a step-by-step guide on how to set up a test suite for a new language implementation of Rest.li:</p>
+<ol>
+  <li>
+    <p>In client-testsuite’s <code class="highlighter-rouge">build.gradle</code>, apply the plugin for your new implementation of Rest.li to enable code generation.</p>
+
+    <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apply plugin: 'li-python-restli'
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Run the Rest.li code generators against all the files in the <code class="highlighter-rouge">schemas/</code> directory (for data
+bindings) and/or the <code class="highlighter-rouge">restspecs/</code> directory (for rest client bindings). 
+For Python and Java, this means running a <code class="highlighter-rouge">gradle build</code>. In Java, the code is generated in <code class="highlighter-rouge">src/</code>. In Python, 
+the code is generated  in <code class="highlighter-rouge">build/</code></p>
+
+    <p>The generated code will be tested later in the testsuite.</p>
+  </li>
+  <li>
+    <p>Select a test framework.  You should use the same test framework you usually use for the language your Rest.li
+client is written in. For the Python test suite, we use pytest.</p>
+  </li>
+  <li>
+    <p>In your test framework, load the <code class="highlighter-rouge">manifest.json</code> file into a convenient in-memory representation before running the tests.</p>
+
+    <p>In Python, a Manifest class is generated from the <code class="highlighter-rouge">.pdsc</code> provided by the test suite. 
+The <code class="highlighter-rouge">manifest.json</code> file is loaded into a Manifest representation that is used by the Python test suite.</p>
+  </li>
+  <li>
+    <p>Based on your test framework, decide how you want to use your Manifest representation to drive your automated tests.</p>
+
+    <p>For example, consider json tests in the Python test suite, shown below. We get the list of manifest tests from the
+Manifest representation in json_test_data(). Then we use the pytest @parametrize decorator to pass the test names
+and data files into the function test_json(), which contains the testing logic.</p>
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">json_test_data</span><span class="p">():</span>
+    <span class="s">"""Data provider for json_test"""</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">test</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">get_json_test_data</span><span class="p">():</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">results</span>
+    
+    
+<span class="n">json_data</span> <span class="o">=</span> <span class="n">json_test_data</span><span class="p">()</span>
+    
+    
+<span class="o">@</span><span class="n">pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s">"json_test"</span><span class="p">,</span> <span class="n">json_test_data</span><span class="p">(),</span> <span class="n">ids</span><span class="o">=</span><span class="p">[</span><span class="n">test</span><span class="o">.</span><span class="n">data_</span> <span class="k">for</span> <span class="n">test</span> <span class="ow">in</span> <span class="n">json_data</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">test_json</span><span class="p">(</span><span class="n">json_test</span><span class="p">):</span>
+    <span class="s">"""Tests for correct serialization/deserialization of provided 'data' files"""</span>
+    <span class="o">...</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Set up utility methods in your new language. These methods should provide a way to read in the files referenced by
+<code class="highlighter-rouge">manifest.json</code>. You also need methods to compare and load flat HTTP requests and responses from the test suite’s
+provided test data.</p>
+
+    <p>In the Java TestNG suite, these utility methods are part of a test suite base class that is extended by the classes
+containing actual tests. The Python pytest suite has no subclass/superclass structure because it makes pytest harder to use.</p>
+  </li>
+</ol>
+
+<p>Now your test suite is set up to generate code and read language-independent files from the Rest.li Test Suite
+Specification.</p>
+
+<h3 id="writing-tests-with-the-provided-test-data">Writing Tests with the Provided Test Data</h3>
+<p>The next step is to implement tests using the spec’s guidelines and provided test data. 
+This will be a combination of manual assertions and data driven tests specified by <code class="highlighter-rouge">manifest.json</code>.</p>
+<h4 id="data-driven-tests">Data Driven Tests</h4>
+<p>The tests are driven by <code class="highlighter-rouge">manifest.json</code> and cover three main categories:</p>
+<ul>
+  <li>JSON: serialization/deserialization of JSON</li>
+  <li>schema: data template generation from schema</li>
+  <li>wire protocol: building HTTP requests and decoding Rest.li responses from HTTP responses</li>
+</ul>
+
+<h5 id="json-tests">JSON Tests</h5>
+
+<p>Json tests ensure that Rest.li correctly serializes/deserializes all the provided <code class="highlighter-rouge">data/</code> files. 
+These files include corner cases to check that they are supported.</p>
+
+<p>One possible approach, which is used by the Java and Python test suites:</p>
+
+<ol>
+  <li>deserialize a JSON file to an in-memory representation</li>
+  <li>serialize the in-memory representation back to bytes (or a file)</li>
+  <li>deserialize the bytes again into another in-memory representation</li>
+  <li>comparing the two in-memory representations
+(Note that comparing the serialized representations isn’t always an option since JSON map entries are unordered)</li>
+</ol>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">test_json</span><span class="p">(</span><span class="n">json_test</span><span class="p">):</span>
+    <span class="s">"""Tests for correct serialization/deserialization of provided 'data' files"""</span>
+    <span class="n">deserialized</span> <span class="o">=</span> <span class="n">load_json_file</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="o">*</span><span class="n">json_test</span><span class="o">.</span><span class="n">get_data_</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">"/"</span><span class="p">)))</span>
+    <span class="n">serialized</span> <span class="o">=</span> <span class="n">JSONRestliCodec</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">deserialized</span><span class="p">)</span>
+    <span class="n">twice_deserialized</span> <span class="o">=</span> <span class="n">JSONRestliCodec</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">serialized</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">deserialized</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">assert</span> <span class="n">deserialized</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">==</span> <span class="n">twice_deserialized</span><span class="p">[</span><span class="n">field</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">deserialized</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">twice_deserialized</span><span class="p">)</span> 
+</code></pre></div></div>
+
+<h5 id="schema-tests">Schema Tests</h5>
+
+<p>Schema tests ensure that Rest.li correctly generates language-specific data templates from language-independent data schemas.</p>
+
+<p>For implementations that use data schemas to provide convenience data bindings from data schemas (either dynamically or
+via code generation):</p>
+
+<ol>
+  <li>Make sure you have run <code class="highlighter-rouge">gradle build</code> to construct data bindings for all the <code class="highlighter-rouge">schema/</code> files.</li>
+  <li>Load instance data for each accessor according to the ‘data’ fields of the ‘schemas’ in <code class="highlighter-rouge">manifest.json</code>.</li>
+  <li>Verify the accessor is correctly constructed and provides access to the data correctly, writing custom asserts as needed</li>
+  <li>If the schema contains default fields, validate that they are defaulted correctly</li>
+</ol>
+
+<p>For implementations that provide validation:</p>
+
+<ol>
+  <li>load instance data for each ‘schemas.data’ file and validate it against the ‘schemas.schema’ files.  Note that some data
+files should fail to validate (and be marked as such in manifest.json).</li>
+</ol>
+
+<h5 id="wire-protocol-tests">Wire Protocol Tests</h5>
+
+<p>When testing wire protocol, we want to ensure that the generated request builders can build correct HTTP responses.
+We also want to ensure that the Rest.li client can correctly create a Rest.li Response representation from an 
+HTTP response.</p>
+
+<p>To test requests and responses, flat files containing HTTP requests and responses are provided in
+Rest.li Test Suite Specification’s <code class="highlighter-rouge">requests/</code> and <code class="highlighter-rouge">responses/</code> folders, which are for Rest.li protocol 1.0.0.
+These flat files have counterparts in <code class="highlighter-rouge">requests-v2/</code> and <code class="highlighter-rouge">responses-v2/</code> that use Rest.li protocol version 2.0.0.
+but are otherwise identical.</p>
+
+<p>A few possible approaches one might take to use these test files:</p>
+
+<ol>
+  <li>Organize the Rest.li client code such that a HTTP request can be produced and tested without actually sending it
+and such that a HTTP response stored in a flat file can be handled as though it was received in response to a request.</li>
+  <li>Create a simple mock HTTP server that uses the flat files to send the appropriate response back for each request, and
+returns a clear error message back if the client sends an incorrect request.</li>
+</ol>
+
+<p>The Java and Python test suites use approach 1.</p>
+
+<p>For Rest.li implementations that use restspecs to provide convenience rest client bindings from restspecs (either dynamically
+or via code generation):</p>
+
+<ol>
+  <li>Construct rest client bindings for all the <code class="highlighter-rouge">restspecs/</code> files.</li>
+  <li>
+    <p>Use the constructed rest client bindings to produce HTTP requests.  Do this for all the ‘restspecs.operations.request’
+entries in <code class="highlighter-rouge">manifest.json</code>.  Instead of sending the requests,  keep the request in an in-memory representation (a string,
+or basic HTTP representation) or write it to a file.</p>
+
+    <p>In Python, the logic for this is as follows:</p>
+    <ol>
+      <li>Using the generated request builders, build all the Rest.li requests specified by Manifest.</li>
+      <li>For each Rest.li request, use a RequestsRestClient to build an HTTP PreparedRequest. In the next step, we will compare
+this with the expected HTTP request.</li>
+    </ol>
+  </li>
+  <li>
+    <p>Verify the HTTP request created by the rest client bindings matches the expected HTTP as found in the
+‘restspecs.operations.request’ files.  This may require writing a routine to compare HTTP requests that ignores header
+order, and does not fail for optional headers. For instance, Python includes an optional “User-Agent” header, which 
+the flat requests do not include. You may want to ignore such differences in wire protocol.</p>
+  </li>
+  <li>For each of the ‘restspecs.operations.response’ files, verify the constructed rest client bindings are able to
+handle the response correctly (as if it were sent as an actual HTTP response).  Write custom assertions to verify all the
+fields in the HTTP response are correctly marshaled to the response representation provided by the constructed rest client
+bindings. See “Manual Assertions” for more details about custom test cases.</li>
+</ol>
+
+<p>For implementations that do not provide convenience rest client bindings:</p>
+
+<ol>
+  <li>At a minimum, you should provide utilities to serialize data to request URLs and deserialize data from response headers
+  and batch map keys. Write tests to validate that all the <code class="highlighter-rouge">.req</code> files can be produced correctly using these utilities.</li>
+</ol>
+
+<h4 id="manual-assertions">Manual Assertions</h4>
+<p>Some tests cannot be easily automated. For instance, if you want to check the correct value of a field of an in-memory 
+representation, you do not want to validate it against another in-memory representation.
+Instead, you can use manual assertions.</p>
+
+<p>Examples of test cases for manual assertions:</p>
+<ul>
+  <li>Test for properly generated data template accessors: The generated templates are filled using test data in <code class="highlighter-rouge">data/</code>, 
+so assert that the accessors return the correct test data.</li>
+  <li>Test for properly decoded HTTP responses: Rest.li decodes a Rest.li response from an HTTP response. Assert that the
+decoded fields have the correct data. For instance, check that a returned entity has the proper fields.</li>
+</ul>
+
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

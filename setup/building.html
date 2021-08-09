@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Building Rest.li from Source</title>
+    <meta name="description" content="How to build Rest.li from Source" />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/setup/building" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Getting Started</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/get_started/quick_start">Quick Start Guide</a></li>
+                       
+                         <li><a href="/rest.li/start/step_by_step">Step by Step Tutorial</a></li>
+                       
+                         <li><a href="/rest.li/start/d2_quick_start">Dynamic Discovery</a></li>
+                       
+                         <li><a href="/rest.li/start/unstructured">Unstructured Data (BLOB)</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Installation</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/setup/building">Building Rest.li from Source</a></li>
+                       
+                         <li><a href="/rest.li/setup/gradle">Gradle Build Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Presentations</span></li>
+                        <ul>
+                       
+                         <li><a href="https://www.slideshare.net/minchencm/saturn-2018-restli">Rest.li, R2D2, Deco, and ParSeq at Saturn 2018.</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="building-restli-from-source">Building Rest.li from Source</h1>
+
+<h2 id="contents">Contents</h2>
+
+<p>You can use the latest released version of Rest.li or build your own
+local version:</p>
+
+<ul>
+  <li><a href="#using-restli-jars">Using Rest.li JARs</a></li>
+  <li><a href="#building-your-own-copy-of-restli">Building Your Own Copy of Rest.li</a></li>
+</ul>
+
+<h2 id="using-restli-jars">Using Rest.li JARs</h2>
+
+<p>If you are not modifying the Rest.li source code, you don’t need to
+build Rest.li. You can simply depend on the
+<a href="http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.linkedin.pegasus%22">artifacts in the maven central repository</a></p>
+
+<p>For details on how to use Rest.li from its maven central artifacts, see:
+<a href="/rest.li/start/step_by_step">Quickstart</a></p>
+
+<h2 id="building-your-own-copy-of-restli">Building Your Own Copy of Rest.li</h2>
+
+<p>You can also checkout, modify, or build your own copy of Rest.li.</p>
+
+<h3 id="checking-out-source">Checking Out Source</h3>
+
+<p>You can get your own copy of the Rest.li repository with:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git clone https://github.com/linkedin/rest.li.git
+</code></pre></div></div>
+
+<p>Or if you already have a copy of the repository, you can update it with:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>git pull
+</code></pre></div></div>
+
+<h3 id="building-restli">Building Rest.li</h3>
+
+<p>To do a clean build type, do this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gradle clean build
+</code></pre></div></div>
+
+<p>To install the gradle JARs in your own local repository, do this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gradle install
+</code></pre></div></div>
+
+<h4 id="out-of-memory-while-trying-to-build">Out of Memory While Trying to Build?</h4>
+
+<p>If the build fails with an error message saying that there isn’t enough
+memory, increase the memory using the following command and try again:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>export GRADLE_OPTS=“-Xms512M -Xmx1536M -Xss1M -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=1024M”  
+</code></pre></div></div>
+
+                     </div>
+                     <!-- <div class="col l3">
+                            <div class="row">
+                                    <div class="col l12">
+                                      <div class="card blue-grey darken-1">
+                                        <div class="card-content white-text">
+                                          <span class="card-title">Card Title</span>
+                                          <p>I am a very simple card. I am good at containing small bits of information.
+                                          I am convenient because I require little markup to use effectively.</p>
+                                        </div>
+                                        <div class="card-action">
+                                          <a href="#">This is a link</a>
+                                          <a href="#">This is a link</a>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                     </div> -->
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

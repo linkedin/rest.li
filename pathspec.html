@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Rest.Li PathSpecs</title>
+    <meta name="description" content="Rest.Li PathSpecs" />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/pathspec" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">User Guide</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/user_guide/server_architecture">Rest.li Architecture</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_server">Rest.li Server</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_client">Rest.li Client Framework</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/unstructured_data">Unstructured Data</a></li>
+                       
+                         <li><a href="/rest.li/Components">Components</a></li>
+                       
+                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous in Rest.li</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data Schemas</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/pdl_schema">PDL Schema</a></li>
+                       
+                         <li><a href="/rest.li/pdsc_syntax">PDSC Syntax</a></li>
+                       
+                         <li><a href="/rest.li/pdl_migration">Migrating from PDSC to PDL</a></li>
+                       
+                         <li><a href="/rest.li/avro_translation">Avro Translation</a></li>
+                       
+                         <li><a href="/rest.li/java_binding">Java Binding</a></li>
+                       
+                         <li><a href="/rest.li/annotation_processor">Schema Annotation Processor</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Modeling Resources</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
+                       
+                         <li><a href="/rest.li/modeling/compatibility_check">Snapshots and Resource Compatibility Checking</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/how_data_is_serialized_for_transport">How Data is Serialized for Transport</a></li>
+                       
+                         <li><a href="/rest.li/how_data_is_represented_in_memory">How Data is Represented in Memory</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Main concepts</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-Filters">Filters</a></li>
+                       
+                         <li><a href="/rest.li/Projections">Projections</a></li>
+                       
+                         <li><a href="/rest.li/pathspec">PathSpecs</a></li>
+                       
+                         <li><a href="/rest.li/Validation-in-Rest_li">Validation</a></li>
+                       
+                         <li><a href="/rest.li/Attachment-Streaming">Attachment Streaming</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Mutli-language</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/multi_language_compatibility_matrix">Compatibility Matrix</a></li>
+                       
+                         <li><a href="/rest.li/test_suite">Test Suite</a></li>
+                       
+                         <li><a href="https://github.com/mchen07/restli-csharp">C#</a></li>
+                       
+                         <li><a href="/rest.li/Scala-Integration">Scala Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Testing</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers">Writing Unit Tests</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">How to</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Send-Rest_li-Request-Query-In-Request-Body">Send Request Query in the Body</a></li>
+                       
+                         <li><a href="/rest.li/How-to-use-projections-in-Java">Use Projections</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li_Avro_conversions">Avro Conversion</a></li>
+                       
+                         <li><a href="/rest.li/Compression">Compression</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_x-upgrade-instructions">Migrate to Rest.li 2.x</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_how_to">Test Suite</a></li>
+                       
+                         <li><a href="/rest.li/howto_add_new_language">Test Suite - Add New Language</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/service_errors_java">Configure Service Errors in Java</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">FAQ</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Data-FAQ">Rest.li - FAQ</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_troubleshooting">Test Suite - Troubleshooting</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="restli-pathspecs">Rest.li PathSpecs</h1>
+<ul>
+  <li><a href="#restli-pathspecs">Rest.li PathSpecs</a>
+    <ul>
+      <li><a href="#what-is-pathspec">What is PathSpec</a></li>
+      <li><a href="#applications">Applications</a>
+        <ul>
+          <li><a href="#specifying-projections">Specifying Projections</a></li>
+          <li><a href="#request-validation">Request Validation</a></li>
+        </ul>
+      </li>
+      <li><a href="#pathspec-syntax-in-its-string-form">PathSpec Syntax in its string form</a>
+        <ul>
+          <li><a href="#primitive-type-fields">Primitive type fields</a></li>
+          <li><a href="#record-type-fields">Record type fields</a></li>
+          <li><a href="#map-and-array-type-fields">Map and Array type fields</a>
+            <ul>
+              <li><a href="#map-type">Map type</a></li>
+              <li><a href="#array-type">Array type</a></li>
+            </ul>
+          </li>
+          <li><a href="#union-and-unionarray-alias-and-alias-in-unions">Union and UnionArray, Alias and Alias in Unions</a>
+            <ul>
+              <li><a href="#union">Union</a></li>
+              <li><a href="#unionarray">UnionArray</a></li>
+              <li><a href="#alias">Alias</a></li>
+              <li><a href="#alias-in-unions">Alias in Unions</a></li>
+            </ul>
+          </li>
+          <li><a href="#typeref-and-fixed">TypeRef and Fixed</a>
+            <ul>
+              <li><a href="#typeref">TypeRef</a></li>
+              <li><a href="#fixed">Fixed</a></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li><a href="#pathspec-syntax-in-its-java-binded-class-form">PathSpec Syntax in its java binded class form</a></li>
+      <li><a href="#more-resources-and-examples">More resources and examples</a></li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="what-is-pathspec">What is PathSpec</h2>
+<p>In Rest.li framework, PathSpec represents a path to a component within a complex data object. It generates uniform references in hierarchical <a href="https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/DataMap.java">datamap</a> components. It is an abstract path concept and has its specification. It currently has two concrete forms in Rest.li, but PathSpec itself should not be language-specific.</p>
+
+<ol>
+  <li>
+    <p>The PathSpec path can be represented as a string, current example usages of its string form can be found in <a href="/rest.li/Validation-in-Rest_li#specifying-restli-validation-annotations">Validation annotation</a>, where the PathSpec string is used in annotation and the <a href="https://github.com/linkedin/rest.li/blob/master/restli-server/src/main/java/com/linkedin/restli/internal/server/model/RestLiAnnotationReader.java#L185">Annotation Reader</a> would interpret it.</p>
+  </li>
+  <li>
+    <p>The PathSpec path also have a binded java class: <a href="https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/PathSpec.java">PathSpec.java</a>. This java class can be passed as arguments in Rest.li Framework. Its Java class form is now mainly used for <a href="/rest.li/How-to-use-projections-in-Java">Projection in Rest.li framework</a>. The PathSpec java class has convenient method to return the correct pathspec string by calling <code class="highlighter-rouge">toString()</code>, which returns the string form.</p>
+  </li>
+</ol>
+
+<p>For example:
+given a data schema</p>
+<div class="language-pdl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">record</span><span class="p"> </span><span class="n">User</span><span class="p"> {
+  </span><span class="nl">firstName</span><span class="p">:</span> <span class="kt">string</span><span class="p">
+  </span><span class="nl">birthday</span><span class="p">:</span> <span class="kr">optional</span><span class="p"> </span><span class="n">Date</span><span class="p">
+  </span><span class="nl">isActive</span><span class="p">:</span> <span class="kt">boolean</span><span class="p"> =</span><span class="w"> </span><span class="kc">true</span><span class="p">
+  </span><span class="nl">address</span><span class="p">:</span> <span class="kr">record</span><span class="p"> </span><span class="n">Address</span><span class="p"> {
+    </span><span class="nl">state</span><span class="p">:</span> <span class="kt">string</span><span class="p">
+    </span><span class="nl">zipcode</span><span class="p">:</span> <span class="kt">string</span><span class="p">
+  }
+}
+</span></code></pre></div></div>
+<p>both <code class="highlighter-rouge">/address/zipcode</code> and <code class="highlighter-rouge">new PathSpec("addressa", "zipcodeb")</code> are pathspecs referring to the inner <code class="highlighter-rouge">zipcode</code> field.</p>
+<h2 id="applications">Applications</h2>
+<h3 id="specifying-projections">Specifying Projections</h3>
+<p>PathSpec’s java class binding can be used for projection. Users can get PathSpec object that represents the fields in data object. For example, it could be obtained from generated RecordTemplate subclasses using the .fields() method. 
+For example:</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">PathSpec</span> <span class="n">pathSpec</span> <span class="o">=</span> <span class="nc">Foo</span><span class="o">.</span><span class="na">fields</span><span class="o">().</span><span class="na">bar</span><span class="o">();</span>
+</code></pre></div></div>
+
+<p>More concrete examples can be found <a href="/rest.li/How-to-use-projections-in-Java#getting-the-pathspec-of-a-field">here in the wiki</a>.</p>
+
+<p>This capability is provided by Rest.li auto-generated code, as data object representation for data in Pegasus schema should extend <a href="/rest.li/blob/master/data/src/main/java/com/linkedin/data/template/RecordTemplate.java">RecordTemplate.java</a>, and will define a inner class called “fields”, which extended PathSpec.java. By passing PathSpec object to the reqeust builder, the PathSpec is then used by <a href="https://github.com/linkedin/rest.li/blob/master/data-transform/src/main/java/com/linkedin/data/transform/filter/request/MaskCreator.java">MaskCreator</a> to create a <a href="https://github.com/linkedin/rest.li/blob/master/data-transform/src/main/java/com/linkedin/data/transform/filter/request/MaskTree.java">MaskTree</a>. Thus, PathSpec can be used to control the projection behavior.</p>
+
+<h3 id="request-validation">Request Validation</h3>
+<p>PathSpec’s string form is used for <a href="/rest.li/Validation-in-Rest_li">Request Validation</a> in Rest.li Resource. A string path can be added in annotation such as “CreateOnly” and “ReadOnly”. For example:</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@CreateOnly</span><span class="o">({</span><span class="s">"/id"</span><span class="o">,</span> <span class="s">"/EXIF"</span><span class="o">})</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">PhotoResource</span> <span class="kd">extends</span> <span class="nc">CollectionResourceTemplate</span><span class="o">&lt;</span><span class="nc">Long</span><span class="o">,</span> <span class="nc">Photo</span><span class="o">&gt;</span>
+<span class="o">{</span>
+    <span class="c1">// ...</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>This string is then parsed by <a href="https://github.com/linkedin/rest.li/blob/master/restli-server/src/main/java/com/linkedin/restli/internal/server/model/RestLiAnnotationReader.java">RestLiAnnotationReader</a>, and <a href="https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/schema/DataSchemaUtil.java">DataSchemaUtil</a> will do corresponding validation against this path within the DataMap.</p>
+
+<p>You can also invoke <a href="https://github.com/linkedin/rest.li/blob/master/restli-common/src/main/java/com/linkedin/restli/common/validation/RestLiDataValidator.java">RestliDataValidator</a> and pass PathSpec string to it. <a href="https://github.com/linkedin/rest.li/blob/master/restli-int-test/src/test/java/com/linkedin/restli/examples/TestRestLiValidation.java">TestRestLiValidation.java</a>’s testCustomValidatorMap() is such an example</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="o">...</span>
+
+    <span class="nc">Map</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">,</span> <span class="nc">List</span><span class="o">&lt;</span><span class="nc">String</span><span class="o">&gt;&gt;</span> <span class="n">annotations</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">HashMap</span><span class="o">&lt;&gt;();</span>
+    <span class="n">annotations</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">"createOnly"</span><span class="o">,</span> <span class="nc">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="s">"stringB"</span><span class="o">,</span> 
+        <span class="s">"intB"</span><span class="o">,</span> <span class="s">"UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo2"</span><span class="o">,</span> <span class="s">"MapWithTyperefs/*/id"</span><span class="o">));</span>
+    <span class="n">annotations</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="s">"readOnly"</span><span class="o">,</span> <span class="nc">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="s">"stringA"</span><span class="o">,</span> 
+        <span class="s">"intA"</span><span class="o">,</span> <span class="s">"UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1"</span><span class="o">,</span> <span class="s">"ArrayWithInlineRecord/*/bar1"</span><span class="o">,</span> <span class="s">"validationDemoNext/stringB"</span><span class="o">,</span> <span class="s">"validationDemoNext/UnionFieldWithInlineRecord"</span><span class="o">));</span>
+    <span class="o">...</span>
+
+    <span class="n">validator</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">RestLiDataValidator</span><span class="o">(</span><span class="n">annotations</span><span class="o">,</span> <span class="nc">ValidationDemo</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="nc">ResourceMethod</span><span class="o">.</span><span class="na">CREATE</span><span class="o">,</span> <span class="n">validatorClassMap</span><span class="o">);</span>
+
+</code></pre></div></div>
+
+<h2 id="pathspec-syntax-in-its-string-form">PathSpec Syntax in its string form</h2>
+
+<p>Each PathSpec has a corresponding string form. PathSpec has been defined as a path to a component within a complex data object path. This provides a way to traverse the Pegasus data object. The abstract data object, in most case, is a form of <a href="https://github.com/linkedin/rest.li/blob/master/data/src/main/java/com/linkedin/data/DataMap.java">DataMap</a> internally in Rest.li framework, but PathSpec should be meaningful for the same data object in other forms, for example, it could provide path reference to a json representing the data object.</p>
+
+<p>The PathSpec string format is represented by separators(<code class="highlighter-rouge">'/'</code>) and segments in between.</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/demoRecord/innerRecordField/nestedInnerRecordField
+</code></pre></div></div>
+
+<p>The path segment can use the “attribute” syntax to carry meaningful attributes. These attributes added to the string form using ‘?’ and ‘&amp;’ separators. Users can add any attributes but for some types, there are reserved attributes. For example, for array type, one can specify <code class="highlighter-rouge">start</code> and <code class="highlighter-rouge">count</code> attributes and these two attributes are used in <a href="/rest.li/Projections#array">specifying the projections for array</a>.</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/arrayOfIntFieldE?start=0&amp;count=10
+</code></pre></div></div>
+
+<p>For collection types, such as maps and arrays, the path segment could also be replaced by the wildcard. A wildcard means that this segment path string can be replaced by any applicable segment string, for example.</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/mapOfRecordField/*/innerRecordField
+</code></pre></div></div>
+<p>Above examples points to the <code class="highlighter-rouge">innerRecordField</code> field of the <code class="highlighter-rouge">map</code> value in a <code class="highlighter-rouge">map</code> schema. <code class="highlighter-rouge">map</code> is a collection schema type, here <code class="highlighter-rouge">*</code> wildcarded its keys.</p>
+
+<p>Pegasus schema has defined various kinds of types, the full specification about the supported types can be found from the document <a href="/rest.li/DATA-Data-Schema-and-Templates">Rest.li Data Schema And Templates</a>. There are mainly following supported types in Pegasus and following sections list the example PathSpecs.</p>
+
+<h3 id="primitive-type-fields">Primitive type fields</h3>
+<p>Primitive types includes type such as bytes, string, boolean, double, float, long, int. In the reocrd form, they came with a name to the field in record, so the reference to the primitive types, in most cases are just a PathSpec string which specify the field name of this type.</p>
+
+<p>For example for a Pegasus pdl schema file as such</p>
+<div class="language-pdl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">namespace</span> <span class="n">com.linkedin.pegasus.examples</span><span class="p">
+
+</span><span class="cm">/**
+ * example Pegasus schema of a record containing primitive types
+ */</span><span class="p">
+</span><span class="kr">record</span><span class="p"> </span><span class="n">RecordTest</span><span class="p"> {
+  </span><span class="nl">intField</span><span class="p">:</span> <span class="kt">int</span><span class="p">
+  </span><span class="nl">intOptionalField</span><span class="p">:</span> <span class="kr">optional</span><span class="p"> </span><span class="kt">int</span><span class="p">
+  </span><span class="nl">intDefaultField</span><span class="p">:</span> <span class="kt">int</span><span class="p"> =</span><span class="w"> </span><span class="mi">17</span><span class="p">
+  </span><span class="nl">intDefaultOptionalField</span><span class="p">:</span> <span class="kr">optional</span><span class="p"> </span><span class="kt">int</span><span class="p"> =</span><span class="w"> </span><span class="mi">42</span><span class="p">
+  </span><span class="nl">longField</span><span class="p">:</span> <span class="kt">long</span><span class="p">
+  </span><span class="nl">floatField</span><span class="p">:</span> <span class="kt">float</span><span class="p">
+  </span><span class="nl">doubleField</span><span class="p">:</span> <span class="kt">double</span><span class="p">
+  </span><span class="nl">booleanField</span><span class="p">:</span> <span class="kt">boolean</span><span class="p">
+  </span><span class="nl">stringField</span><span class="p">:</span> <span class="kt">string</span><span class="p">
+  </span><span class="nl">bytesField</span><span class="p">:</span> <span class="kt">bytes</span><span class="p">
+}
+</span></code></pre></div></div>
+<p>The example PathSpec for above fields in this record example would be</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/initField
+/intOptionalField
+/intDefaultField
+/intDefaultOPtionalField
+/longField
+/floatField
+/doubleField
+/booleanField
+/stringField
+/bytesField
+</code></pre></div></div>
+
+<h3 id="record-type-fields">Record type fields</h3>
+<p>If a field in a record is of another record type, in this case  you have “nested field”, then again the reference for the nested path component is the record’s field name,</p>
+
+<p>For example the above PDL schema example now hava a record field,</p>
+
+<div class="language-pdl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">namespace</span> <span class="n">com.linkedin.pegasus.examples</span><span class="p">
+
+</span><span class="cm">/**
+ * example Pegasus schema of a record containing record field
+ */</span><span class="p">
+</span><span class="kr">record</span><span class="p"> </span><span class="n">RecordTest</span><span class="p"> {
+  </span><span class="nl">recordField</span><span class="p">:</span> <span class="n">RecordBar</span><span class="p">
+}
+</span></code></pre></div></div>
+<p>And that record expands to</p>
+<div class="language-pdl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">namespace</span> <span class="n">com.linkedin.pegasus.examples</span><span class="p">
+
+</span><span class="kr">record</span><span class="p"> </span><span class="n">RecordBar</span><span class="p"> {
+  </span><span class="nl">location</span><span class="p">:</span> <span class="kt">string</span><span class="p">
+}
+</span></code></pre></div></div>
+
+<p>Then the PathSpec reference to the nested field “location” is</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/recordField/location
+</code></pre></div></div>
+<h3 id="map-and-array-type-fields">Map and Array type fields</h3>
+<p>Map and Array are two collection type used in Pagasus.</p>
+
+<h5 id="map-type">Map type</h5>
+<p>The map has a key followed by the value referenced. Recall PathSpec’s semantic is a reference to a component within a complex data object. The map entries were referenced by their keys.</p>
+
+<p>For example, here is a example PathSpec that can be used to traverse the map.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/mapField/&lt;A-Key-In-the-Map&gt;
+</code></pre></div></div>
+<p>Note that the above PathSpec is referring to the component key-ed by the key in the map. If the value is of a primitive type, the above PathSpec can be implicitly used to refer to the primitive type value.</p>
+
+<p>If you want to specifically refer to all the key fields, the syntax is to use the keyword “$key”</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/mapField/$key
+</code></pre></div></div>
+
+<p>if the value held in the map is a record type and you want to refer to that record, the PathSpec could be</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/mapField/&lt;A-Key-In-the-Map&gt;/&lt;someRecordField&gt;
+</code></pre></div></div>
+
+<p>Another common use case is that you want to use wildcard (represented by symbol “*” ) to “select all keys”, if the interested path is to a field for all entries in this map, then it would be</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/mapField/*/&lt;recordField&gt;
+</code></pre></div></div>
+
+<p>It is worth noting that in Pegasus, the map keys are always of string types.</p>
+
+<p>Here is an concrete example of a record, containing a map field, and that map field’s map has value of record type. The example also defines a “recordInlineMap” field for similar demonstration purpose</p>
+<div class="language-pdl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">namespace</span> <span class="n">com.linkedin.pegasus.examples</span><span class="p">
+
+</span><span class="cm">/**
+ * a record containing a map field, which holds values of record type
+ */</span><span class="p">
+</span><span class="kr">record</span><span class="p"> </span><span class="n">RecordWithMapFields</span><span class="p"> {
+
+  </span><span class="nl">recordMap</span><span class="p">:</span> <span class="kr">map</span><span class="p">[</span><span class="kt">string</span><span class="p">, </span><span class="n">RecordBar</span><span class="p">]
+
+  </span><span class="nl">recordInlineMap</span><span class="p">:</span> <span class="kr">map</span><span class="p">[</span><span class="kt">string</span><span class="p">, </span><span class="kr">record</span><span class="p"> </span><span class="n">RecordInMap</span><span class="p"> {
+    </span><span class="nl">f</span><span class="p">:</span> <span class="kt">int</span><span class="p">
+  }]
+}
+</span></code></pre></div></div>
+<p>The PathSpec to refer to the record field, and the inline map field, are</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/recordMap/*/location
+/recordInlineMap/*/f
+</code></pre></div></div>
+
+<h5 id="array-type">Array type</h5>
+<p>Array type is somewhat similar to Map type in the sense that the length might not be definite. For example it could be defined as such</p>
+<div class="language-pdl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">namespace</span> <span class="n">com.linkedin.pegasus.examples</span><span class="p">
+
+</span><span class="cm">/**
+ * a record containing an array field, which holds values of record type
+ */</span><span class="p">
+</span><span class="kr">record</span><span class="p"> </span><span class="n">RecordWithArrayFields</span><span class="p"> {
+
+  </span><span class="nl">recordArray</span><span class="p">:</span> <span class="kr">array</span><span class="p">[</span><span class="n">RecordBar</span><span class="p">]
+
+  </span><span class="nl">recordInlineArray</span><span class="p">:</span> <span class="kr">array</span><span class="p">[</span><span class="kr">record</span><span class="p"> </span><span class="n">RecordInArray</span><span class="p"> {
+    </span><span class="nl">f</span><span class="p">:</span> <span class="kt">int</span><span class="p">
+  }]
+}
+</span></code></pre></div></div>
+<p>Then similarly if you are interested in some fields only, you can use wildCard to select all elements so you can refer to a field</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/recordArray/*/location
+/recordInlineArray/*/f
+</code></pre></div></div>
+
+<p>One big difference between Array and Map is that in Array, we support reference to the range. It is achieved by using the ‘start’ and ‘count’ attributes.</p>
+
+<p>Say you want to select some elements in within a range in the array, you can do so by using the “start” and “count” attribute,</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/intArray?start=10&amp;count=5
+/recordInlineArray?count=2
+</code></pre></div></div>
+
+<p>It is worth noting that single element indexing in Array’s PathSpec is currently not defined yet. For example indexing the first element of an array is currently not defined. Alternatively this can be achieved by using the range PathSpec.</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/recordArray/0 # This sytanx is not defined yet
+/recordArray?start=0&amp;count=1 # This syntax has been defined
+</code></pre></div></div>
+
+<h3 id="union-and-unionarray-alias-and-alias-in-unions">Union and UnionArray, Alias and Alias in Unions</h3>
+
+<h5 id="union">Union</h5>
+<p>The use case for the PathSpec for union would be a path to one of the types within the union.</p>
+
+<p>Here is an example of a record containa a union field, and that union is with a null type</p>
+<div class="language-pdl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">namespace</span> <span class="n">com.linkedin.pegasus.examples</span><span class="p">
+
+</span><span class="cm">/**
+ * a record that has a field contains a union with null type
+ */</span><span class="p">
+</span><span class="kr">record</span><span class="p"> </span><span class="n">UnionExample</span><span class="p"> {
+
+  </span><span class="nl">unionWithNull</span><span class="p">:</span> <span class="kr">union</span><span class="p">[
+    </span><span class="kt">int</span><span class="p">,
+    </span><span class="kt">string</span><span class="p">,
+    </span><span class="kt">bytes</span><span class="p">,
+    </span><span class="n">RecordBar</span><span class="p">,
+    </span><span class="kr">array</span><span class="p">[</span><span class="kt">string</span><span class="p">],
+    </span><span class="kr">map</span><span class="p">[</span><span class="kt">string</span><span class="p">, </span><span class="kt">long</span><span class="p">],
+    </span><span class="kt">null</span><span class="p">
+  ]
+}
+</span></code></pre></div></div>
+
+<p>The PathSpecs for types within the uinos are</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/unionWithNull/null
+/unionWithNull/int
+/unionWithNull/string
+</code></pre></div></div>
+
+<h5 id="unionarray">UnionArray</h5>
+<p>Union can be used as Array’s item type. A common use case is a reference to all the same  type within an union.</p>
+<div class="language-pdl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">namespace</span> <span class="n">com.linkedin.pegasus.examples</span><span class="p">
+
+</span><span class="cm">/**
+ * a record that has a field contains a union array
+ */</span><span class="p">
+</span><span class="kr">record</span><span class="p"> </span><span class="n">UnionArrayExample</span><span class="p"> {
+
+  </span><span class="nl">unionArray</span><span class="p">:</span> <span class="kr">array</span><span class="p">[</span><span class="kr">union</span><span class="p">[
+    </span><span class="kt">null</span><span class="p">,
+    </span><span class="kt">int</span><span class="p">,
+    </span><span class="kt">string</span><span class="p">,
+    </span><span class="kr">map</span><span class="p">[</span><span class="kt">string</span><span class="p">, </span><span class="kt">string</span><span class="p">],
+    </span><span class="kr">array</span><span class="p">[</span><span class="kt">int</span><span class="p">],
+    </span><span class="n">RecordBar</span><span class="p">,
+    </span><span class="n">FixedMD5</span><span class="p">
+  ]]
+}
+</span></code></pre></div></div>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/unionArray/*/null
+/unionArray/*/int
+/unionArray/*/string
+/unionArray/*/RecordBar
+
+</code></pre></div></div>
+<p>In this example, the union also contains array and map, and the reference to them would be</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/unionArray/*/map
+/unionArray/*/array
+</code></pre></div></div>
+<p>If the schema defines more than one array or more than one map in the union, they need to have defined alias for each (see Alias usage in next section).</p>
+
+<h5 id="alias">Alias</h5>
+<p>Alias are used for refer to types (such as record type) that cannot be directly defined in the field due to same name conflict. Here is an example PDL with name “AliasTest” in “AliasTest.pdl”</p>
+<div class="language-pdl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">namespace</span> <span class="n">com.linkedin.pegasus.examples</span><span class="p">
+
+</span><span class="cm">/**
+ * Aliase examples
+ */</span><span class="p">
+</span><span class="nd">@aliases</span> <span class="p">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"com.linkedin.pegasus.examples.AliasTest2"</span><span class="p">]
+</span><span class="kr">record</span><span class="p"> </span><span class="n">AliasTest</span><span class="p"> {
+  </span><span class="nl">a1</span><span class="p">:</span> <span class="n">AliasTest</span><span class="p">
+  </span><span class="nl">a2</span><span class="p">:</span> <span class="n">AliasTest</span><span class="p">
+}
+</span></code></pre></div></div>
+<p>Here the AliasTest2 is an alias for another record with same name “AliasTest” in “AliasTest2.pdl”</p>
+
+<p>Then here are the PathSpec can be used</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/a1/a1
+/a1/a2
+/a1/a1/a2
+</code></pre></div></div>
+
+<h5 id="alias-in-unions">Alias in Unions</h5>
+
+<p>It is worth mentioning that in most cases you will want to use alias in Union. For example in Union you can define two arrays with</p>
+<div class="language-pdl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">namespace</span> <span class="n">com.linkedin.pegasus.examples</span><span class="p">
+
+</span><span class="kr">record</span><span class="p"> </span><span class="n">RecordWithAliasedUnion</span><span class="p"> {
+
+  </span><span class="nl">result</span><span class="p">:</span> <span class="kr">union</span><span class="p">[
+    </span><span class="nl">message</span><span class="p">: </span><span class="kt">string</span><span class="p">,
+
+    </span><span class="nl">successResults</span><span class="p">: </span><span class="kr">array</span><span class="p">[</span><span class="kt">string</span><span class="p">],
+
+    </span><span class="nl">failureResults</span><span class="p">: </span><span class="kr">array</span><span class="p">[</span><span class="kt">string</span><span class="p">]
+  ]
+
+  </span><span class="nl">unionArray</span><span class="p">:</span> <span class="kr">array</span><span class="p">[</span><span class="kr">union</span><span class="p">[
+    </span><span class="kt">null</span><span class="p">,
+
+    </span><span class="nl">successResults</span><span class="p">: </span><span class="kr">array</span><span class="p">[</span><span class="kt">string</span><span class="p">],
+
+    </span><span class="nl">failureResults</span><span class="p">: </span><span class="kr">array</span><span class="p">[</span><span class="kt">string</span><span class="p">]
+  ]]
+}
+</span></code></pre></div></div>
+<p>Then the PathSpec will be</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/result/successResults
+/result/failureResults
+/unionArray/*/successResults
+/unionArray/*/failureResults
+</code></pre></div></div>
+
+<h3 id="typeref-and-fixed">TypeRef and Fixed</h3>
+<p>The reference to TypeRef and fixed are following a similar rule: Use its name in the field.</p>
+
+<h5 id="typeref">TypeRef</h5>
+<p>The “TypeRef” itself can be treated as just another type, so should use field name to refer to its path.</p>
+
+<p>For example</p>
+<div class="language-pdl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">namespace</span> <span class="n">com.linkedin.pegasus.examples</span><span class="p">
+
+</span><span class="kr">record</span><span class="p"> </span><span class="n">TyperefTest</span><span class="p"> {
+
+  </span><span class="nl">intRefField</span><span class="p">:</span> <span class="kr">optional</span><span class="p"> </span><span class="kr">typeref</span><span class="p"> </span><span class="n">IntRef</span><span class="p"> = </span><span class="kt">int</span><span class="p">
+  </span><span class="nl">intRefField2</span><span class="p">:</span> <span class="n">IntRef</span><span class="p">
+
+  </span><span class="nl">bar1</span><span class="p">:</span> <span class="kr">typeref</span><span class="p"> </span><span class="n">RecordBarRef</span><span class="p"> = </span><span class="n">RecordBar</span><span class="p">
+  </span><span class="nl">bar2</span><span class="p">:</span> <span class="n">RecordBarRef</span><span class="p">
+
+  </span><span class="nl">barRefMap</span><span class="p">:</span> <span class="kr">map</span><span class="p">[</span><span class="kt">string</span><span class="p">, </span><span class="n">RecordBarRef</span><span class="p">]
+}
+</span></code></pre></div></div>
+
+<p>The paths to the example integer fields here (used TypeRef) are</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/intRefField
+/intRefField2
+</code></pre></div></div>
+<p>And for Record field reference within TypeRefed field</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/bar1/location
+/bar2/location
+</code></pre></div></div>
+<p>In the Map type example</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/barRefMap/*/location
+</code></pre></div></div>
+
+<h4 id="fixed">Fixed#</h4>
+<p>Fixed type can be defined in a separate file and then refered in another schema by name, for example in schema files:</p>
+<div class="language-pdl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">namespace</span> <span class="n">com.linkedin.pegasus.example</span><span class="p">
+
+</span><span class="kr">fixed</span><span class="p"> </span><span class="n">FixedMD5</span><span class="p"> </span><span class="mi">16</span><span class="p">
+</span></code></pre></div></div>
+<p>Then <code class="highlighter-rouge">FixedMD5</code> can be used as a type.</p>
+<div class="language-pdl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">namespace</span> <span class="n">com.linkedin.pegasus.examples</span><span class="p">
+
+</span><span class="cm">/**
+ * a record containing a map field, which holds values of union of fix type and inline fix type
+ */</span><span class="p">
+</span><span class="kr">record</span><span class="p"> </span><span class="n">RecordExampleForFixType</span><span class="p"> {
+
+  </span><span class="nl">unionMap</span><span class="p">:</span> <span class="kr">map</span><span class="p">[</span><span class="kt">string</span><span class="p">, </span><span class="kr">union</span><span class="p">[</span><span class="kr">fixed</span><span class="p"> </span><span class="n">InlineFixedField</span><span class="p"> </span><span class="mi">1</span><span class="p">, </span><span class="n">FixedMD5</span><span class="err">]]</span><span class="p">
+</span><span class="err">}</span><span class="p">
+</span></code></pre></div></div>
+<p>As above example shows, when fixed type are defined inline, they will still have field name, so the PathSpec reference to it uses this name, therefore below are PathSpec to the types in the UnionMap defined in this record</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/unionMap/*/InlineFixedField
+/unionMap/*/FixedMD5
+</code></pre></div></div>
+
+<h2 id="pathspec-syntax-in-its-java-binded-class-form">PathSpec Syntax in its java binded class form</h2>
+<p>All auto-generated <code class="highlighter-rouge">RecordTemplate</code> class has a static nested class <code class="highlighter-rouge">Fields</code> which extends <code class="highlighter-rouge">PathSpec</code>. To find out, after you build the Rest.li project, you can check such <code class="highlighter-rouge">RecordTemplate</code> classes in <code class="highlighter-rouge">GeneratedDataTemplate</code> folder and to find following codes.</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Fields</span> <span class="kd">extends</span> <span class="nc">PathSpec</span>
+  <span class="o">{</span>
+    <span class="o">....</span>
+  <span class="o">}</span>
+</code></pre></div></div>
+<p><a href="https://github.com/linkedin/rest.li/blob/master/generator-test/src/test/java/com/linkedin/pegasus/generator/test/pdl/fixtures/CustomRecord.java#L62">Check example code here</a>.</p>
+
+<p>Therefore it is very easy to get the PathSpec java binded class. Let’s say you have a <code class="highlighter-rouge">Foo</code> schema which has <code class="highlighter-rouge">bar</code> fields. You can get the PathSpec by following</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nc">PathSpec</span> <span class="n">pathSpec</span> <span class="o">=</span> <span class="nc">Foo</span><span class="o">.</span><span class="na">fields</span><span class="o">().</span><span class="na">bar</span><span class="o">();</span>
+</code></pre></div></div>
+<p>This has also been documented in <a href="/rest.li/How-to-use-projections-in-Java#getting-the-pathspec-of-a-field">How to Use Projections in Java</a></p>
+
+<h2 id="more-resources-and-examples">More resources and examples</h2>
+<p>More example can be referred from our Rest.li Framework test code example. <a href="https://github.com/linkedin/rest.li/blob/master/generator-test/src/test/java/com/linkedin/pegasus/generator/test/TestPathSpec.java">TestPathSpec.java</a> is a very uesful file that shows and tests what string should look like for the fields defined.</p>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

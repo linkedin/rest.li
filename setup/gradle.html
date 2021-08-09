@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Gradle build integration</title>
+    <meta name="description" content="A REST framework for building scalable service architectures using dynamic discovery and simple asynchronous APIs" />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/setup/gradle" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Getting Started</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/get_started/quick_start">Quick Start Guide</a></li>
+                       
+                         <li><a href="/rest.li/start/step_by_step">Step by Step Tutorial</a></li>
+                       
+                         <li><a href="/rest.li/start/d2_quick_start">Dynamic Discovery</a></li>
+                       
+                         <li><a href="/rest.li/start/unstructured">Unstructured Data (BLOB)</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Installation</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/setup/building">Building Rest.li from Source</a></li>
+                       
+                         <li><a href="/rest.li/setup/gradle">Gradle Build Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Presentations</span></li>
+                        <ul>
+                       
+                         <li><a href="https://www.slideshare.net/minchencm/saturn-2018-restli">Rest.li, R2D2, Deco, and ParSeq at Saturn 2018.</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="gradle-build-integration">Gradle Build Integration</h1>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#an-example">An Example</a></li>
+  <li><a href="#compatibility">Compatibility</a></li>
+  <li><a href="#publishing-maven-artifacts">Publishing Maven Artifacts</a></li>
+  <li><a href="#pegasus-plugin-in-detail">Pegasus Plugin in Detail</a></li>
+  <li><a href="#underlying-java-classes-for-build-integration">Underlying Java Classes for Build Integration</a></li>
+</ul>
+
+<h2 id="introduction">Introduction</h2>
+<p>Gradle integration is provided as part of Rest.li.  Pegasus simplifies use of Rest.li’s code generators and compatibility checking by fully integrating them into the build system. (Note ‘pegasus’ is also the code name for the Rest.li project).</p>
+
+<p>The underlying Java classes that enable code generation and validation are part of the Rest.li source and could be used to integrate with other build tools.</p>
+
+<p>Adding the plugin is simple. First add a buildscript dependency on the <code class="highlighter-rouge">com.linkedin.pegasus:pegasus-plugin</code> artifact and then use <code class="highlighter-rouge">apply plugin 'pegasus'</code> in your build.gradle files.  This topic is explained in detail below.</p>
+
+<p><strong>Gradle 1.8+ is required.</strong></p>
+
+<h2 id="an-example">An Example</h2>
+
+<p>As an example,  let’s consider a simple Rest.li project with three modules:</p>
+
+<ul>
+  <li>An <code class="highlighter-rouge">/api</code> module containing pegasus schema definitions in the <code class="highlighter-rouge">src/main/pegasus</code> directory.  This is where java client bindings for the service will be generated. (The client-bindings are sometimes not a separate project, but they are put into the <code class="highlighter-rouge">/api</code> project along with the schemas.)</li>
+  <li>A <code class="highlighter-rouge">/server</code> module containing resources defined in java classes in the <code class="highlighter-rouge">src/main/java</code> directory under the <code class="highlighter-rouge">com.linkedin.restli.example.impl</code> namespace  (E.g., com.linkedin.restli.example.impl.RestLiExampleBasicServer.java).</li>
+  <li>An example java client that uses the client-bindings.</li>
+</ul>
+
+<h3 id="root-buildgradle">Root build.gradle</h3>
+
+<p>/build.gradle:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apply plugin: 'idea'
+apply plugin: 'eclipse'
+
+project.ext.externalDependency = [
+  'pegasusVersion' : '&lt;version&gt;'
+]
+
+buildscript {
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+  dependencies {
+    classpath group: 'com.linkedin.pegasus', name: 'gradle-plugins', version: '&lt;version&gt;'
+  }
+}
+
+subprojects {
+  apply plugin: 'maven'
+
+  afterEvaluate {
+    if (project.plugins.hasPlugin('java')) {
+      sourceCompatibility = JavaVersion.VERSION_1_6
+    }
+
+    // add the standard pegasus dependencies wherever the plugin is used
+    if (project.plugins.hasPlugin('pegasus')) {
+      dependencies {
+        dataTemplateCompile spec.product.pegasus.data
+        restClientCompile spec.product.pegasus.restliClient
+
+        // needed for Gradle 1.9+
+        restClientCompile spec.product.pegasus.restliCommon
+      }
+    }
+  }
+
+  repositories {
+    mavenLocal()
+    mavenCentral()
+  }
+}
+</code></pre></div></div>
+
+<p>/settings.gradle:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>include 'api'
+include 'server'
+include 'client'
+</code></pre></div></div>
+
+<h3 id="buildgradle-for-data-api-project">build.gradle for Data API Project</h3>
+
+<p>/api/build.gradle:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apply plugin: 'pegasus'
+</code></pre></div></div>
+
+<p>In <code class="highlighter-rouge">/api</code>, pegasus data schemas (<code class="highlighter-rouge">.pdl</code> files) should be added under <code class="highlighter-rouge">/src/main/pegasus</code>.  E.g.
+<code class="highlighter-rouge">/src/main/pegasus/com/linkedin/restli/example/Hello.pdl</code>.</p>
+
+<p>The pegasus plugin will detect the presence of <code class="highlighter-rouge">.pdl</code> files and automatically use the <code class="highlighter-rouge">dataTemplateGenerator</code> task to
+generate Java bindings for them.  In this example,  a <code class="highlighter-rouge">Hello.java</code> class would be generated.</p>
+
+<p>The <code class="highlighter-rouge">dataTemplateCompile</code> task automatically adds pegasus schemas that <code class="highlighter-rouge">Hello.pdl</code> depends on, in this case, <code class="highlighter-rouge">Hello.pdl</code>
+depends only on the core data libraries of pegasus, but projects containing other <code class="highlighter-rouge">.pdl</code> files could be depended on.</p>
+
+<p>Pegasus will detect when a project contains interface definitions (called IDL and located in <code class="highlighter-rouge">.restspec.json</code> files) in
+it’s <code class="highlighter-rouge">/src/mainGeneratedRest/idl</code> directory (usually copied in from an idl extraction task from the server, see below)
+and will generate java bindings.   For example, <code class="highlighter-rouge">HelloBuilder.java</code> is generated from the idl of the hello resource
+(<code class="highlighter-rouge">/src/main/idl/com/linkedin/restli/example/impl/Hello.restspec.json) and it written to the
+</code>/src/mainGeneratedRest/java’ directory of the <code class="highlighter-rouge">/api</code> project.</p>
+
+<h3 id="buildgradle-for-server-project">build.gradle for Server project</h3>
+
+<p>/server/build.gradle:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apply plugin: 'java'
+apply plugin: 'pegasus'
+
+ext.apiProject = project(':api')
+pegasus.main.idlOptions.addIdlItem(['com.linkedin.restli.example.impl']) // optional, if not set, all packages are scanned for resource classes
+
+dependencies {
+  compile project(path: ':api', configuration: 'dataTemplate')
+  compile "com.linkedin.pegasus:restli-server:&lt;version&gt;"
+  // ...
+}
+</code></pre></div></div>
+
+<p>In <code class="highlighter-rouge">/server</code>, pegasus “Resource” java classes should be defined and should be in the package(s) referred to by
+<code class="highlighter-rouge">pegasus.main.idlOptions</code>.  E.g.  <code class="highlighter-rouge">/src/main/java/com/linkedin/restli/example/impl.HelloResource.java</code>.</p>
+
+<p>Pegasus will extract an interface definition (.restspec.json) from the resource class and write it to
+<code class="highlighter-rouge">/src/mainGeneratedRest/idl</code> directory.</p>
+
+<p>Once the idl has been generated, it will be copied to the project identified by <code class="highlighter-rouge">ext.apiProject</code>.  In this example, it
+will be copied to <code class="highlighter-rouge">/api/src/main/idl</code>.  Before it is copied, <code class="highlighter-rouge">api/src/main/idl</code> is scanned for pre-existing idl.  If any
+is found,  it is compared with the replacement idl that will be copied in and a compatibility checker is run that will
+return errors if the replacement idl is not backward compatible with the existing idl.  The compatibility checks can be
+disabled by setting (but be warned, compatibility errors mean that a server running the new interface definition is now
+incompatible with clients running older versions, and should not be pushed to production systems).  If the compatibility
+checks pass, the idl is copied into the client directories.  Once copied, new ‘Client Bindings’ may be generated for the
+client, see below.</p>
+
+<p>The compile dependency on <code class="highlighter-rouge">:api</code> is required if the HelloResource.java depends on <code class="highlighter-rouge">Hello.pdl</code> and it’s generated binding
+Hello.java.   Note that the dependency includes a ‘configuration’ identifying this as a ‘dataTemplate’ dependency.</p>
+
+<h3 id="buildgradle-for-example-java-client">build.gradle for Example Java Client</h3>
+
+<p>/client/build.gradle:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apply plugin: 'java'
+
+dependencies {
+  compile project(path: ':api', configuration: 'restClient')
+}
+</code></pre></div></div>
+
+<p>Once rest client bindings in the api project have been generated,  it is trivial for a engineer to depend on the api project and use the generated client bindings to make calls to the new rest.li interface from any remote service.</p>
+
+<p>One must add a compile dependency the ‘api’ project (or depend on it’s published artifacts, more about this below) and be sure to set the dependency configuration to ‘restClient’.  Once this is done, it’s easy to use the <code class="highlighter-rouge">HelloBuilder</code> class to construct a request.</p>
+
+<h2 id="compatibility">Compatibility</h2>
+
+<p>To manage compatibility checking use the rest.model.compatibility flag.   There are 4 different options:  <code class="highlighter-rouge">off</code>, <code class="highlighter-rouge">equivalent</code>, <code class="highlighter-rouge">backwards</code> and <code class="highlighter-rouge">ignore</code>.</p>
+
+<p>By default, the compatibility strategy is <code class="highlighter-rouge">backwards</code>. It will only fail on backwards incompatible changes and is the recommended setting to run during normal development.</p>
+
+<p>If you are building rest.li services in a continuous integration environment, we suggest that you set builds to run on <code class="highlighter-rouge">equivalent</code>, meaning that ALL changes to an interface will cause a build failure. This will ensure that checked in code exactly corresponds with the interface.</p>
+
+<p>If set to <code class="highlighter-rouge">off</code>, the compatibility check is skipped entirely. <code class="highlighter-rouge">ignore</code> will run the compatibility checker but will not fail for backward incompatible changes (and will print out the incompatibilities).</p>
+
+<p>If desired, you may set a local default compatibility level. To do so, modify or create a ~/.gradle/gradle.properties to include:</p>
+
+<p><strong>~/.gradle/gradle.properties:</strong></p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Prest.model.compatibility=&lt;desired compatibility level here&gt;
+</code></pre></div></div>
+
+<p>For example, to run a build ignoring backward incompatable interface changes (WARNING: remember that backward incompatible changes could break your clients):</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gradle build -Prest.model.compatibility=ignore
+</code></pre></div></div>
+
+<p>To acknowledge a backwards compatible interface change use:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gradle build -Prest.model.compatibility=backwards
+</code></pre></div></div>
+
+<p>For additional details on compatibility checking, see <a href="/rest.li/modeling/compatibility_check">Resource Compatibility Checking</a>.</p>
+
+<h2 id="publishing-maven-artifacts">Publishing Maven Artifacts</h2>
+
+<p>Often, the client bindings need to be accessible to developers outside the project workspace where the service is developed.</p>
+
+<p>To publish rest client bindings to any maven repo first modify the api project’s gradle to look like:</p>
+
+<p>/api/build.gradle:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// ... /api/build.gradle code from above ...
+
+artifacts {
+  archives mainRestClientJar
+  archives mainDataTemplateJar
+} 
+
+configure(install.repositories.mavenInstaller) {
+  addFilter('rest-client') {artifact, file -&gt;
+    artifact.name == 'api-rest-client'
+  }.artifactId = 'rest-client'
+  
+  addFilter('data-template') {artifact, file -&gt;
+    artifact.name == 'api-data-template'
+  }.artifactId = 'data-template'
+  // artifact names for 'data-model', 'avro-schema' and 'rest-model' may be added as well if needed
+}
+</code></pre></div></div>
+
+<p>The <code class="highlighter-rouge">artifacts</code> section tells gradle to build jar files for the rest client bindings and the data templates.</p>
+
+<p>The configure part instructs gradle to publish both artifacts into maven. Set names for each. (By default, gradle names the artifact publish to maven to <code class="highlighter-rouge">api</code>. Since there are two artifacts, they need to be given distinct names.)</p>
+
+<p>Next, update the root build.gradle file to include project information withing the subprojects section:</p>
+
+<p>/build.gradle</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// ... /build.gradle code from above ...
+
+subprojects {
+  // ...
+
+  project.group = 'org.example'
+  project.version = '0.1'
+}
+</code></pre></div></div>
+
+<p>Once the api build.gradle is updated, one can publish the maven artifacts. To publish to the maven local repo, simply run:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gradle install
+</code></pre></div></div>
+
+<p>to publish to a remove maven repository follow the <a href="http://www.gradle.org/docs/current/userguide/artifact_management.html">gradle documentation</a></p>
+
+<p>Once published, other projects may import the client bindings by depending on the two maven artifacts. For example:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dependencies {
+  compile "org.example:rest-client:0.1"
+  compile "org.example:data-template:0.1"
+}
+</code></pre></div></div>
+
+<h2 id="pegasus-plugin-in-detail">Pegasus Plugin in Detail</h2>
+
+<p>The gradle tasks for pegasus are provided by the ‘pegasus’ plugin.  The source for this plugin is in
+<code class="highlighter-rouge">PegasusGeneratorV2Plugin.groovy</code>.  This plugin defines custom of gradle <code class="highlighter-rouge">SourceDirectorySet</code>s for the ‘idl’, ‘pegasus’
+source types and <code class="highlighter-rouge">tasks</code> for the rest.li code generators.  It also defines custom published artifact “configurations”
+and dependencies on between these custom published artifact “configurations”.</p>
+
+<h3 id="source-directory-sets">Source Directory Sets</h3>
+
+<p>The plugin recognizes a number of source directories in rest.li projects.  When any of these directories are detected (and they contain at least one source file), the plugin dynamically adds tasks the gradle build dependency tree for these directories.</p>
+
+<p>In this section we below refers to gradle <code class="highlighter-rouge">sourceSets</code>.  The most common sourceSets are <code class="highlighter-rouge">main</code> and <code class="highlighter-rouge">test</code>.</p>
+
+<h4 id="srcsourcesetpegasus"><code class="highlighter-rouge">src/{sourceSet}/pegasus</code></h4>
+
+<p>Used by ‘api’ modules.</p>
+
+<p>Contains data schemas (<code class="highlighter-rouge">.pdl</code>) files.  If data schema files are present in this directory, the
+<code class="highlighter-rouge">generate{sourceSet}DataTemplate</code> tasks (e.g. <code class="highlighter-rouge">generateMainDataTemplate</code>) will generate java data templates
+(RecordTemplate java classes) in the <code class="highlighter-rouge">src/{sourceSet}GeneratedDataTemplate</code> directory.</p>
+
+<p>The data schemas files are published into a <code class="highlighter-rouge">*-data-template.jar</code> artifact.  If ivy is used this artifact is published with the module name and under the ‘data-template’ classification.</p>
+
+<p>The generated java data templates (RecordTemplate java classes) are are published as a <code class="highlighter-rouge">-data-model.jar</code> artifact.   If ivy is used this artifact is published with the module name and under the ‘data-model’ classification.</p>
+
+<h4 id="srcsourcesetgeneratedrestidl"><code class="highlighter-rouge">src/{sourceSet}GeneratedRest/idl</code></h4>
+
+<p>Used by ‘server’ modules.</p>
+
+<p>These files are generated by the <code class="highlighter-rouge">generateRestModel</code> task, for modules containing {*Resource.java} files (which must be
+in a package referenced by <code class="highlighter-rouge">pegasus.{sourceSet}.idlOptions.addIdlItem(namespaces)</code>).   One important aspect of idl is
+that by convention they are generated by a ‘server’ module (and written to the <code class="highlighter-rouge">src/{sourceSet}GeneratedRest/idl</code>) and
+then are copied to the <code class="highlighter-rouge">/src/{sourceSet}/idl</code> directory of an api module (via the <code class="highlighter-rouge">ext.apiProject</code> property).</p>
+
+<p>No artifacts are published directly from the server for these files,  see <code class="highlighter-rouge">src/{sourceSet}/idl</code> for details on how they are published from the ‘api’ project.</p>
+
+<h4 id="srcsourcesetidl"><code class="highlighter-rouge">src/{sourceSet}/idl</code></h4>
+
+<p>Used by ‘api’ modules.</p>
+
+<p>Contains published idl (.restspec.json) files.  These files represent the interface definition of the rest.li resources
+provided by some service.   They should be checked in to source control.   They are copied into the idl directory from
+server module by the <code class="highlighter-rouge">publishRestliIdl</code> task.  For this copy to happen the server module must contain a <code class="highlighter-rouge">ext.apiProject</code>
+property referencing this ‘api’ module.  As part of this copy, idl compatibility validation will be run (see above for
+details).</p>
+
+<p>The idl is published as a <code class="highlighter-rouge">*-rest-model.jar</code> artifact.  If ivy is used this artifact is published with the module name and under the ‘rest-model’ classification.</p>
+
+<h4 id="srcsourcesetgeneratedavroschemaavro"><code class="highlighter-rouge">src/{sourceSet}GeneratedAvroSchema/avro</code></h4>
+
+<p>Used by ‘api’ modules.</p>
+
+<p>Avro schema files (.avsc) generated from pegasus data schema files (<code class="highlighter-rouge">.pdl</code>) by the <code class="highlighter-rouge">generateAvroSchema</code> task.</p>
+
+<h3 id="generator-tasks">Generator Tasks</h3>
+
+<p>All the following tasks are automatically added by the ‘pegasus’ gradle plugin into the gradle task dependency
+hierarchy.  They run automatically and in the correct order run as part of ‘gradle build’, ‘gradle jar’ and ‘gradle
+compileJava’ when the plugin detects that they are needed.</p>
+
+<h4 id="generaterestmodel"><code class="highlighter-rouge">generateRestModel</code></h4>
+
+<p>Generates .restspec.json files from java files annotated as rest.li resources in the namespaces that have been added to
+the idl list using <code class="highlighter-rouge">pegasus.{sourceSet}.idlOptions.addIdlItem()</code>. Writes these <code class="highlighter-rouge">.restspec.json</code> files into the
+<code class="highlighter-rouge">src/{sourceSet}GeneratedRest/idl</code> directory.  This tasks is depended on by the <code class="highlighter-rouge">publishRestliIdl</code> task.</p>
+
+<h4 id="publishrestliidl"><code class="highlighter-rouge">publishRestliIdl</code></h4>
+
+<p>Copies idl (restspec.json) from server to api project (or whatever the ext.apiProject property is set to).  These files
+are normally located in the <code class="highlighter-rouge">src/mainGeneratedRest/idl</code> directory in the server project and the <code class="highlighter-rouge">src/main/idl</code> direcotry
+in the api project.  This tasks runs compatibility validation (see above).  While not strictly a ‘generate’ task, it is
+a essential part of the generator flow.  It is depended on by the jar task.</p>
+
+<h4 id="publishrestlisnapshot"><code class="highlighter-rouge">publishRestliSnapshot</code></h4>
+
+<p>Works the same as <code class="highlighter-rouge">publishRestliIdl</code> except that it copies “snapshot.json” files usually located in <code class="highlighter-rouge">src/mainGeneratedRest/snapshot</code> from the server project to the <code class="highlighter-rouge">src/main/snapshot</code> directory in the api project.</p>
+
+<p>Snapshot files are used for compatibility checking whereas idl files are the formal interface definition and are used to generate client bindings.</p>
+
+<h4 id="generatesourcesetgeneratedrestrestclient"><code class="highlighter-rouge">generate{sourceSet}GeneratedRestRestClient</code></h4>
+
+<p>Generates java client bindings (<code class="highlighter-rouge">*Builders.java</code> classes) into the <code class="highlighter-rouge">src/{sourceSet}GeneratedRest/java</code>.  It depends on
+the .restspec.json  files in <code class="highlighter-rouge">src/{sourceSet}/idl</code> directory and the pegasus schemas (<code class="highlighter-rouge">.pdl</code> files) in
+<code class="highlighter-rouge">src/{sourceSet}/pegasus</code> as well as from ‘dataModel’ dependencies (in ivy, these are dependencies from the “data-model”
+classification).   Depended on by the compileJava task.</p>
+
+<h4 id="generatedatatemplate"><code class="highlighter-rouge">generateDataTemplate</code></h4>
+
+<p>Generates java data template bindings (RecordTemplate java classes).  It depends on the pegasus schemas (<code class="highlighter-rouge">.pdl</code> files)
+in <code class="highlighter-rouge">src/{sourceSet}/pegasus</code> as well as from ‘dataModel’ dependencies (in ivy, these are dependencies from the
+“data-model” classification).  Depended on by the compileJava task.</p>
+
+<h4 id="generateavroschema"><code class="highlighter-rouge">generateAvroSchema</code></h4>
+
+<p>Generates avro schemas (.avsc files) from the pegasus schemas (<code class="highlighter-rouge">.pdl</code> files) in <code class="highlighter-rouge">src/{sourceSet}/pegasus</code>.  Requires the
+same ‘dataModel’ dependencies as required by the pegasus schemas (in ivy, these are dependencies from the “data-model”
+classification).  Depended on by generateDataTemplate task.</p>
+
+<p>To run this task, the <code class="highlighter-rouge">avroSchemaGenerator</code> “configuration” must be configured with rest.li’s <code class="highlighter-rouge">data-avro-generator</code> artifact.  This is done by adding the follow dependency:</p>
+
+<div class="language-groovy highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="n">dependencies</span> <span class="o">{</span>
+  <span class="n">avroSchemaGenerator</span> <span class="s2">"com.linkedin.pegasus:data-avro-generator:&lt;pegasus-version&gt;"</span>
+<span class="o">}</span>
+</code></pre></div></div>
+<p>And then adding the following configuration in build.gradle to enable avro schema generation:</p>
+<div class="language-groovy highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">pegasus</span><span class="o">.</span><span class="na">main</span><span class="o">.</span><span class="na">generationModes</span> <span class="o">=</span> <span class="o">[</span><span class="n">PegasusGenerationMode</span><span class="o">.</span><span class="na">AVRO</span><span class="o">]</span>
+</code></pre></div></div>
+
+<h3 id="published-artifacts-and-their-classifications">Published artifacts and their classifications</h3>
+
+<h3 id="-data-modeljar-artifact"><code class="highlighter-rouge">*-data-model.jar</code> artifact</h3>
+
+<p>Contains data schema files, generated by the <code class="highlighter-rouge">generateDataModel</code> task.   This is only generated from a project if it contains one or more schema files in it’s <code class="highlighter-rouge">src/{sourceSet}/pegasus</code> directory.</p>
+
+<ul>
+  <li>Ivy coordinates: use module’s group, name and version, use ‘data-model’ as classification</li>
+  <li>Maven coordinates: use module’s group and version.  Use whatever name was configured for the mavenInstaller, which by convention should be ‘{modulename}-data-model’ (see above section about publish maven artifacts).</li>
+</ul>
+
+<h4 id="-data-templatejar-artifact"><code class="highlighter-rouge">*-data-template.jar</code> artifact</h4>
+
+<p>Contains java generated bindings (<code class="highlighter-rouge">.class</code> files) for accessing the pegasus schemas (<code class="highlighter-rouge">.pdl</code> files) in the module’s
+<code class="highlighter-rouge">src/{sourceSet}/pegasus</code> directory.  This artifact is generated by the <code class="highlighter-rouge">generateDataTemplate</code> task.  This artifact is
+only generated from a project if it contains one or more schema files in it’s <code class="highlighter-rouge">src/{sourceSet}/pegasus</code> directory.</p>
+
+<p>This artifact will also define dependencies in its <code class="highlighter-rouge">.pom</code> or <code class="highlighter-rouge">.ivy</code> file to data-template artifacts it depends on (these are specified as <code class="highlighter-rouge">dataTemplate</code> dependencies in the module’s build.gradle).</p>
+
+<ul>
+  <li>Ivy coordinates: use module’s group, name and version, use ‘data-template’ as classification</li>
+  <li>Maven coordinates: use module’s group and version.  Use whatever name was configured for the mavenInstaller, which by convention should be ‘{modulename}-data-template’ (see above section about publish maven artifacts).</li>
+</ul>
+
+<h4 id="-avro-schemajar-artifact"><code class="highlighter-rouge">*-avro-schema.jar</code> artifact</h4>
+
+<p>Contains .avro schema files for the pegasus schemas (<code class="highlighter-rouge">.pdl</code> files) in this module’s <code class="highlighter-rouge">src/{sourceSet}/pegasus</code> directory.  This .avro files are generated by the <code class="highlighter-rouge">generateAvroSchema</code> task.</p>
+
+<p>This artifact will also define dependencies in it’s <code class="highlighter-rouge">.pom</code> or <code class="highlighter-rouge">.ivy</code> file to avro-schemas artifacts it depends on (these are specified as <code class="highlighter-rouge">dataTemplate</code> dependencies in the module’s build.gradle).</p>
+
+<ul>
+  <li>Ivy coordinates: use module’s group, name and version, use ‘avro-schema’ as classification</li>
+  <li>Maven coordinates: use module’s group and version.  Use whatever name was configured for the mavenInstaller, which by convention should be ‘{modulename}-avro-schema’ (see above section about publish maven artifacts).</li>
+</ul>
+
+<h4 id="-rest-modeljar-artifact"><code class="highlighter-rouge">*-rest-model.jar</code> artifact</h4>
+
+<p>Contains .idl (<code class="highlighter-rouge">restspec.json</code>) files for the idl in the module’s `src/{sourceSet}/idl’ directory.  These .idl files are generated by the generateRestModel task from a server then copied to an api project by the publishRestliIdl task (via the ext.apiProject property).</p>
+
+<ul>
+  <li>Ivy coordinates: use module’s group, name and version, use ‘rest-model’ as classification</li>
+  <li>Maven coordinates: use module’s group and version.  Use whatever name was configured for the mavenInstaller, which by convention should be ‘{modulename}-rest-model’ (see above section about publish maven artifacts).</li>
+</ul>
+
+<h4 id="-rest-clientjar"><code class="highlighter-rouge">*-rest-client.jar</code></h4>
+
+<p>Contains rest client java bindings (<code class="highlighter-rouge">*Builders.java</code> classes) generated from the idl of the source module.</p>
+
+<p>This artifact will also define dependencies in its <code class="highlighter-rouge">.pom</code> or <code class="highlighter-rouge">.ivy</code> file to java data template binding artifacts
+(<code class="highlighter-rouge">*-data-model.jar</code>) it requires, including the one for the module itself and for any other pegasus schemas it depends
+on (these are specified as <code class="highlighter-rouge">dataModel</code> dependencies in the module’s build.gradle).</p>
+
+<ul>
+  <li>Ivy coordinates: use module’s group, name and version, use ‘rest-client’ as classification</li>
+  <li>Maven coordinates: use module’s group and version.  Use whatever name was configured for the mavenInstaller, which by convention should be ‘{modulename}-rest-client’ (see above section about publish maven artifacts).</li>
+</ul>
+
+<h3 id="dependency-types">Dependency types</h3>
+
+<p>There are two types of pegasus plugin dependency types.  The first type is one required by the plugin for running code
+generators and compiling code.  The second type is those developers can use to define different sorts dependencies
+between the various source languages, primarily pegasus schemas (<code class="highlighter-rouge">.pdl</code> files).</p>
+
+<h4 id="dependencies-used-by-build-tooling">Dependencies used by build tooling</h4>
+
+<p><code class="highlighter-rouge">restTools</code> - required by ‘api’ and ‘server’ modules to generate rest client bindings (*Builders.java files), run compatibility checks, and use rest.li document generation (docgen).   The dependency must refer to a compatible version of the pegasus:rest-tools artifact.</p>
+
+<p><code class="highlighter-rouge">dataTemplateCompile</code> - Required by ‘api’ modules to do data template compilation.  The dependency must refer to a compatible version of the pegasus:data artifact.</p>
+
+<p><code class="highlighter-rouge">dataTemplateGenerator</code> - Required by ‘api’ modules to do data template generation. The dependency must refer to a compatible version of the pegasus:generator artifact.</p>
+
+<p><code class="highlighter-rouge">restClientCompile</code> - Required by ‘api’ modules to compile client java bindings (*Builders.java files) to .class files. The dependency must refer to a compatible version of the pegasus:restli-client artifact.</p>
+
+<p>Example build.gradle for an ‘api’ module:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>...
+dependencies {
+  compile "com.linkedin.pegasus:restli-client:&lt;version&gt;"
+
+  dataTemplateCompile "com.linkedin.pegasus:data:&lt;version&gt;"
+  dataTemplateGenerator "com.linkedin.pegasus:generator:&lt;version&gt;"
+  restTools "com.linkedin.pegasus:restli-tools:&lt;version&gt;"
+  restClientCompile "com.linkedin.pegasus:restli-client:&lt;version&gt;"
+}
+</code></pre></div></div>
+
+<h4 id="pegasus-schema-dependencies">Pegasus Schema Dependencies</h4>
+
+<p><code class="highlighter-rouge">dataTemplate</code> - Adds a dependency on the pegasus schemas from another module or artifact.  This is required when the current module’s data schema files refer to schema types that reside in another module or artifact.</p>
+
+<p>Example build.gradle:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>...
+dependencies {
+  // for ivy:
+  dataTemplate group: 'org.example', name: 'common-pegasus-schemas', version: '1.0', classifier: 'dataTemplate'
+  // for maven, remove the classifier and change the name to match the artifact name of the published dataTemplate, by convention it should be '{modulename}-data-template}'
+  ...
+}
+</code></pre></div></div>
+
+<h2 id="underlying-java-classes-for-build-integration">Underlying Java Classes for Build Integration</h2>
+
+<p>This is provided for reference only.  A understanding of these classes is not required to use pegasus.  These classes would be useful primarily if one were deeply integrating pegasus with a build system not already supported by pegasus.</p>
+
+<h3 id="avro-schema-generator">Avro Schema Generator</h3>
+
+<p>Generate Avro avsc files from Pegasus data schemas (<code class="highlighter-rouge">.pdl</code> files):</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>java [-Dgenerator.resolver.path=&lt;dataSchemaRelativePath&gt;] \
+  [-Dgenerator.avro.optional.default=&lt;optionalDefault&gt;] \
+  [-Dgenerator.avro.namespace.override=&lt;overrideNamespace&gt;] \
+  -cp &lt;CLASSPATH&gt; com.linkedin.data.avro.generator.AvroSchemaGenerator \
+  &lt;outputDir&gt; [&lt;inputFileOrDir&gt; ...]
+</code></pre></div></div>
+
+<ul>
+  <li>dataSchemaRelativePath - Path to <code class="highlighter-rouge">.pdl</code> files. (e.g., <code class="highlighter-rouge">/src/main/pegasus</code>).</li>
+  <li>optionalDefault - Specifies how an optional field with a default value should be translated (see <a href="/rest.li/Rest_li_Avro_conversions#converting-restli-to-avro">Converting Rest.li to Avro</a>).</li>
+  <li>overrideNamespace - If <code class="highlighter-rouge">true</code>, each translated <code class="highlighter-rouge">.avsc</code> file will have its namespace prepended with <code class="highlighter-rouge">"avro."</code> (see <a href="/rest.li/Rest_li_Avro_conversions#converting-restli-to-avro">Converting Rest.li to Avro</a>).</li>
+  <li>CLASSPATH - <code class="highlighter-rouge">com.linkedin.pegasus:data:[CURRENT_VERSION]</code> AND <code class="highlighter-rouge">com.linkedin.pegasus:data-avro:[CURRENT_VERSION]</code> artifacts and all their dependencies.</li>
+  <li>outputDir - output directory for generated <code class="highlighter-rouge">.avsc</code> files.</li>
+  <li>inputFileOrDir - file name of a Pegasus data schema file, a directory containing Pegasus data schema files, or a fully qualified schema name.</li>
+</ul>
+
+<p>Build integration: for builds requiring avro schemas, assembly (creation of jar) should depend on this task</p>
+
+<h3 id="pegasus-data-template-generator">Pegasus Data Template Generator</h3>
+
+<p>Generates Java data templates (<code class="highlighter-rouge">.java</code> files) from Pegasus Data Model schemas (<code class="highlighter-rouge">.pdl</code> files):</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>java [-Dgenerator.resolver.path=&lt;dataSchemaRelativePath&gt;] -cp &lt;CLASSPATH&gt; \
+  com.linkedin.pegasus.generator.PegasusDataTemplateGenerator \
+  &lt;outputDir&gt; [&lt;inputFileOrDir&gt; ...]
+</code></pre></div></div>
+
+<ul>
+  <li>dataSchemaRelativePath - Path to data schema files. (e.g., <code class="highlighter-rouge">/src/main/pegasus</code>).</li>
+  <li>CLASSPATH - <code class="highlighter-rouge">com.linkedin.pegasus:generator:[CURRENT_VERSION]</code> artifact and all its dependencies.</li>
+  <li>outputDir - output directory for generated java source files</li>
+  <li>inputFileOrDir - file name of a Pegasus data schema file, a directory containing Pegasus data schema files, or a fully qualified schema name</li>
+</ul>
+
+<h3 id="generate-rest-model-idl">Generate Rest Model IDL</h3>
+
+<p>Serializes a set of resource models to a RESTspec IDL file:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>java -cp &lt;CLASSPATH&gt; com.linkedin.restli.tools.idlgen.RestLiResourceModelExporterCmdLineApp \
+  -outdir &lt;outputDirPath&gt; -sourcepath &lt;sourcePath&gt; -resourcepackages &lt;resourcePackages&gt;
+</code></pre></div></div>
+
+<ul>
+  <li>CLASSPATH - <code class="highlighter-rouge">com.linkedin.pegasus:restli-tools:[CURRENT_VERSION]</code> artifact and all its dependencies. Compiled classes within the java packages referred to by <code class="highlighter-rouge">resourcePackages</code></li>
+  <li>outputDirPath - Directory in which to output the generated IDL files (default=current working dir)</li>
+  <li>sourcePath - Space-delimited list of directories in which to find resource Java source files</li>
+  <li>resourcePackages - Space-delimited list of packages to scan for resource classes</li>
+</ul>
+
+<p>Build integration: assembly (creation of jar) should depend on this task. This task depends on compilation of classes within the java packages referred to by <code class="highlighter-rouge">resourcePackages</code>.</p>
+
+<h3 id="validate-and-publish-idl">Validate and Publish IDL</h3>
+
+<p>Copies IDL (.restspec.json) files to client module and check backwards compatibility between pairs of idl (.restspec.json) files. The check result messages are categorized:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>java [-Dgenerator.resolver.path=&lt;dataSchemaRelativePath&gt;] -cp CLASSPATH \
+  com.linkedin.restli.tools.idlcheck.RestLiResourceModelCompatibilityChecker \
+  [--compat OFF|IGNORE|BACKWARDS|EQUIVALENT] [pairs of &lt;prevRestspecPath currRestspecPath&gt;]
+</code></pre></div></div>
+
+<ul>
+  <li>dataSchemaRelativePath - Path to data schema files required by the interface definition (e.g.  /src/main/pegasus).</li>
+  <li>CLASSPATH - <code class="highlighter-rouge">com.linkedin.pegasus:restli-tools:[CURRENT_VERSION]</code> artifact and all it’s dependencies.</li>
+  <li>prevRestspecPath -</li>
+  <li>currRestspecPath -</li>
+</ul>
+
+<p>Build integration: assembly (creation of jar) should depend on this task. If compatibility checker passes, all
+.restspec.json files should be copied from the server module to the module where client bindings are generated.  This
+task depends on the <code class="highlighter-rouge">Generate Rest Model IDL</code> task.  A property named <code class="highlighter-rouge">rest.model.compatibility</code> should be overridable
+by the developer (allowing them to set it to <code class="highlighter-rouge">ignore</code> or <code class="highlighter-rouge">backwards</code>) and should default to ‘equivalent’ if they do not
+provide it.</p>
+
+<h3 id="rest-client-generation">Rest Client Generation</h3>
+<p>Generates Java request builders from Rest.li idl:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>java [-Dgenerator.resolver.path=&lt;dataSchemaRelativePath&gt;] \
+     [-Dgenerator.rest.generate.datatemplates=&lt;true|false&gt;] \
+  -cp &lt;CLASSPATH&gt; com.linkedin.restli.tools.clientgen.RestRequestBuilderGenerator \
+  &lt;targetDirectoryPath&gt; [&lt;sourceFileOrDir&gt; ...]
+</code></pre></div></div>
+
+<ul>
+  <li>dataSchemaRelativePath - Path to data schema files required by the interface definition.</li>
+  <li>generator.rest.generate.datatemplates - false unless task should also generate java data template bindings</li>
+  <li>CLASSPATH - <code class="highlighter-rouge">com.linkedin.pegasus:restli-tools:[CURRENT_VERSION]</code> artifact and all its dependencies.</li>
+  <li>targetDirectoryPath - path to target root java source directory</li>
+  <li>sourceFileOrDir - paths to IDL files or directories</li>
+</ul>
+
+<p>Build integration: Compilation of java source should depend on this task.</p>
+
+<h3 id="config-build-script">Config Build Script</h3>
+
+<p>To construct these build tasks, it can help to add a utility task that constructs a list of all the source paths used for <code class="highlighter-rouge">data template generation</code>, <code class="highlighter-rouge">avro schema generation</code>, <code class="highlighter-rouge">rest model generation</code> and <code class="highlighter-rouge">rest client generation</code>.</p>
+
+<h3 id="clean-generated">Clean Generated</h3>
+
+<p>No java class for this.  All directories written to by <code class="highlighter-rouge">data template generation</code>, <code class="highlighter-rouge">avro schema generation</code>, <code class="highlighter-rouge">rest model generation</code> and <code class="highlighter-rouge">rest client generation</code> should be deleted.</p>
+
+<p>Build integration: clean task should depend on this</p>
+
+                     </div>
+                     <!-- <div class="col l3">
+                            <div class="row">
+                                    <div class="col l12">
+                                      <div class="card blue-grey darken-1">
+                                        <div class="card-content white-text">
+                                          <span class="card-title">Card Title</span>
+                                          <p>I am a very simple card. I am good at containing small bits of information.
+                                          I am convenient because I require little markup to use effectively.</p>
+                                        </div>
+                                        <div class="card-action">
+                                          <a href="#">This is a link</a>
+                                          <a href="#">This is a link</a>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                     </div> -->
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

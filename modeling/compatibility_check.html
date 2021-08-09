@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Rest.li Snapshots and Resource Compatibility Checking</title>
+    <meta name="description" content="Rest.li uses a form of expanded IDLs, called Snapshots, to keep track of the state of resources and check compatibility between resource iterations." />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/modeling/compatibility_check" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">User Guide</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/user_guide/server_architecture">Rest.li Architecture</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_server">Rest.li Server</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_client">Rest.li Client Framework</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/unstructured_data">Unstructured Data</a></li>
+                       
+                         <li><a href="/rest.li/Components">Components</a></li>
+                       
+                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous in Rest.li</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data Schemas</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/pdl_schema">PDL Schema</a></li>
+                       
+                         <li><a href="/rest.li/pdsc_syntax">PDSC Syntax</a></li>
+                       
+                         <li><a href="/rest.li/pdl_migration">Migrating from PDSC to PDL</a></li>
+                       
+                         <li><a href="/rest.li/avro_translation">Avro Translation</a></li>
+                       
+                         <li><a href="/rest.li/java_binding">Java Binding</a></li>
+                       
+                         <li><a href="/rest.li/annotation_processor">Schema Annotation Processor</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Modeling Resources</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
+                       
+                         <li><a href="/rest.li/modeling/compatibility_check">Snapshots and Resource Compatibility Checking</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/how_data_is_serialized_for_transport">How Data is Serialized for Transport</a></li>
+                       
+                         <li><a href="/rest.li/how_data_is_represented_in_memory">How Data is Represented in Memory</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Main concepts</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-Filters">Filters</a></li>
+                       
+                         <li><a href="/rest.li/Projections">Projections</a></li>
+                       
+                         <li><a href="/rest.li/pathspec">PathSpecs</a></li>
+                       
+                         <li><a href="/rest.li/Validation-in-Rest_li">Validation</a></li>
+                       
+                         <li><a href="/rest.li/Attachment-Streaming">Attachment Streaming</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Mutli-language</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/multi_language_compatibility_matrix">Compatibility Matrix</a></li>
+                       
+                         <li><a href="/rest.li/test_suite">Test Suite</a></li>
+                       
+                         <li><a href="https://github.com/mchen07/restli-csharp">C#</a></li>
+                       
+                         <li><a href="/rest.li/Scala-Integration">Scala Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Testing</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers">Writing Unit Tests</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">How to</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Send-Rest_li-Request-Query-In-Request-Body">Send Request Query in the Body</a></li>
+                       
+                         <li><a href="/rest.li/How-to-use-projections-in-Java">Use Projections</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li_Avro_conversions">Avro Conversion</a></li>
+                       
+                         <li><a href="/rest.li/Compression">Compression</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_x-upgrade-instructions">Migrate to Rest.li 2.x</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_how_to">Test Suite</a></li>
+                       
+                         <li><a href="/rest.li/howto_add_new_language">Test Suite - Add New Language</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/service_errors_java">Configure Service Errors in Java</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">FAQ</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Data-FAQ">Rest.li - FAQ</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_troubleshooting">Test Suite - Troubleshooting</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="restli-snapshots-and-resource-compatibility-checking">Rest.li Snapshots and Resource Compatibility Checking</h1>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#running-the-compatibility-checker">Running the Compatibility Checker</a></li>
+  <li><a href="#compatibility-levels">Compatibility Levels</a></li>
+  <li><a href="#why-is-adding-to-an-enum-considered-backwards-incompatible">Why is Adding to an Enum Considered Backwards Incompatible?</a></li>
+  <li><a href="#error-messages">Error Messages</a></li>
+  <li><a href="#location-of-snapshotsidls">Location of Snapshots/IDLs</a></li>
+  <li><a href="#the-compatibility-checker-and-idls">The Compatibility Checker and IDLs</a></li>
+  <li><a href="#continuous-integration-environments">Continuous Integration Environments</a></li>
+</ul>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Due to the fact that resources and clients can be upgraded separately, it is very important to developers
+that they be notified of any changes they make that could cause backwards or forwards compatibility issues.
+To that end, Rest.li uses a form of expanded <a href="http://en.wikipedia.org/wiki/Interface_description_language">IDLs</a>,
+called Snapshots, to keep track of the state of resources and check compatibility between resource iterations.</p>
+
+<h2 id="running-the-compatibility-checker">Running the Compatibility Checker</h2>
+
+<p>The Snapshot Compatibility checker will be automatically run during a basic gradle build. However, if you
+wish to run the compatibility checker as a stand-alone on a particular target, you can do so by running
+<code class="highlighter-rouge">gradle :[target]:checkRestModel</code>. Additionally, there are four compatibility levels that the checker
+can be run on, by adding the argument <code class="highlighter-rouge">-Prest.model.compatibility=[compatibility-level]</code> to the <code class="highlighter-rouge">gradle</code> command.</p>
+
+<p>The compatibility checker generates <code class="highlighter-rouge">.snapshot.json</code> files.</p>
+
+<h2 id="compatibility-levels">Compatibility Levels</h2>
+
+<p>There are four levels of compatibility. From least permissive to most, they are:</p>
+
+<p><strong>equivalent</strong> - If the check is run in equivalent mode, no changes to Resources or schemas will pass.</p>
+
+<p><strong>backwards</strong> - Changes that are considered backwards compatible will pass, otherwise, changes will fail.</p>
+
+<p><strong>ignore</strong> - The compatibility checker is run, but all changes will pass. All changes, backwards compatible
+and backwards incompatible, will be printed.</p>
+
+<p><strong>off</strong> - The compatibility checker will not be run at all.</p>
+
+<p>By default, the compatibility checker will be run on backwards compatibility mode. There are two ways to
+change the mode the compatibility checker is run on. For one, you can add a flag to the gradle build itself:
+<code class="highlighter-rouge">--Prest.model.compatibility=&lt;compatLevel&gt;</code></p>
+
+<p>Alternately, if you want to change the default compatibility level for all builds on a machine, you can
+create or edit the file <code class="highlighter-rouge">~/.gradle/gradle.properties</code> to contain the line <code class="highlighter-rouge">rest.model.compatibility=&lt;compatLevel&gt;</code></p>
+
+<h2 id="why-is-adding-to-an-enum-considered-backwards-incompatible">Why is Adding to an Enum Considered Backwards Incompatible?</h2>
+
+<p>Many developers are surprised that adding to an enum is considered a backwards incompatible change.</p>
+
+<p>But, while Rest.li is designed with features to make it easier to add symbols to enums, it cannot possibly
+guarantee that adding a enum symbols is backward compatible.</p>
+
+<p>To make it easier to add values in the enum data schema, java enum classes generated by Rest.li that correspond to enum
+data schema always contains a special “$UNKNOWN” symbol. Whenever Rest.li deserializes enum data that contains a symbol
+that is not present in the java enum, Rest.li maps it to “$UNKNOWN”. When the enum is accessed via accessor implemented
+by a data template, the accessor will return the new symbol as the java “$UNKNOWN” symbol. This gives readers of the
+enum the opportunity to check if the enum is “$UNKNOWN”, and if it is, handle is in the best possible way.</p>
+
+<p>However, it’s still not possible to guarantee backward compatibility, even with the “$UNKNOWN” symbol available. It’s
+possible that clients did not handle the “$UNKNOWN” symbol in the best possible way,  and even if they did it may be
+that they cannot do anything other than fail if they encounter a enum symbol they do not recognize. In many practical
+applications,  it is not feasible to assess how all clients have been coded to handle new enum symbols, particularly
+when there are many clients.  In such cases, adding a new enum symbol might break a unknown number of clients.</p>
+
+<p>It’s true that there may be well controlled use case were an enum is used only by a single client and server that are
+maintained by the same developers.   In these very specific cases, it may be easy for the developers to know that new
+enum symbols can be safely added at any time.  But if additional clients might be added in the future, it is still risky
+to get in the habit of adding enum symbols “as-if” they are backward compatible changes. Once additional clients start
+using the API,  adding a symbol could break them.</p>
+
+<p>Given all these potential issues with adding a enum symbol, it’s important to think of adding enum symbols as backward
+incompatible.  If a new symbols is to be added, a migration strategy for adding the enum symbol(s) must be performed
+just as for any other backward incompatible change.  Note that this is only possible when all clients are known and it
+is possible to coordinate changes with them.  If this is not the case,  one should consider making a backward compatible
+change (such as adding a new optional field containing a new enum field with more symbols) and supporting the existing
+clients, with the existing enum symbols, indefinitely.</p>
+
+<p>One possible backwards incompatible migration strategy for adding a enum symbol might be:</p>
+
+<ul>
+  <li>Add the symbol as a backward incompatible change to the data schema,  use the rest.li
+<a href="/rest.li/setup/gradle#compatibility">gradle <code class="highlighter-rouge">rest.model.compatibility</code> flag</a> to “ignore”
+the backward incompatible change.  If you are using <a href="http://semver.org/">semantic versioning</a>,
+you should also increment your MAJOR version number.  Do NOT start writing data that contains
+the new enum value yet.</li>
+  <li>Once the backward incompatible change has been published, REST API clients must be notified to the change.
+They should be provided with details on the enum symbol that has been added and how to migrate their applications.
+Clients should NOT write using the new symbol yet (the resource implementation may choose to reject requests to POST
+or PUT data with the new symbol).</li>
+  <li>Only once all clients have migrated to the new (backward incompatible version) of the API, clients and the resource
+implementation may start writing data using the new symbol.</li>
+</ul>
+
+<p>Some things to watch out for when adding enum symbols:</p>
+
+<ul>
+  <li>Rest.li provides schema and data translation to avro.  While unknown symbols can be deserialized by older Rest.li
+consumers (because rest.li does not require the schema to de-serialize), it doesn’t work for data persisted as Avro.
+Any attempt to deserialize an avro record containing the new enumeration value with an older schema lacking that enum
+will fail.</li>
+</ul>
+
+<p>It is safe to ignore the incompatibility message if you are sure this will not happen, or you can work with your clients
+to make sure that it doesn’t. In general, we only provide notifications about backwards incompatible changes as a tool
+for the developer.  You are always free to ignore backwards-incompatible change messages if you know that the change
+will not cause problems, or are willing to take steps to ensure that it will not.</p>
+
+<h2 id="error-messages">Error Messages</h2>
+
+<p>There are a number of error messages that can appear during compatibility checking. They will look something like this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>idl compatibility report between published "/publishedlocation/com.namespace.resource.snapshot.json" and current "/currentlocation/com.namespace.resource.snapshot.json":
+  Incompatible changes:
+    1) /location : detailed error message
+</code></pre></div></div>
+
+<p>This will tell you what resource is causing the problem, whether the change is backwards incompatible or not, and where
+exactly in the resource the problem is. You can then either use this information to fix the problem, or ignore it and
+re-run the build with a compatibility level that will cause it to pass.</p>
+
+<h2 id="location-of-snapshotsidls">Location of Snapshots/IDLs</h2>
+
+<p>The canonical snapshots for a set of resources will be located in the api project associated with those resources. If
+this project is located in some directory project-api, then the snapshots will be located in
+<code class="highlighter-rouge">project-api/src/main/snapshot</code>. Similarly, canonical IDLs will be located in <code class="highlighter-rouge">project-api/src/main/idl</code>. Though the
+files in these directories are generated, we strongly suggest that they be checked in. The IDLs must be checked in to
+correctly generate builders, and checking in the snapshots ensures that developers will receive accurate compatibility
+messages when making changes.</p>
+
+<p>The temporary snapshots for a set of resources will be located within the same project as the java Resource files
+themselves. If the project for the Resource file is in a directory <code class="highlighter-rouge">project-impl</code>, then the snapshots will be located in
+<code class="highlighter-rouge">project-impl/src/mainGeneratedRest/snapshot</code>. Again, similarly, the temporary IDLs will be located in
+<code class="highlighter-rouge">project-impl/src/mainGeneratedRest/idl</code>. Unlike the canonical files, these generated files should <strong>NOT</strong> be checked
+in.</p>
+
+<h2 id="the-compatibility-checker-and-idls">The Compatibility Checker and IDLs</h2>
+
+<p>The compatibility checker will also do limited IDL checks. By default, IDLs will only be checked to make sure there are
+no orphan IDLs from newly removed Resources and no missing IDLs from newly added Resources. A compatibility message may
+be printed saying that a resource has been added or removed. If a resource has been removed, you will need to remove the
+canonical IDL yourself. (This is also true for Snapshots).</p>
+
+<h2 id="continuous-integration-environments">Continuous Integration Environments</h2>
+
+<p>If you are running a continuous integration environment on a Rest.li project, you will want to run your compatibility
+checker on <code class="highlighter-rouge">equivalent</code>. This will prevent your canonical IDLs and Snapshots from getting out of sync with the Resources
+they represent. You can do this either by running each build with the flag <code class="highlighter-rouge">-Prest.model.compatibility=equivalent</code>, or
+by creating or editing the <code class="highlighter-rouge">~/.gradle/gradle.properties</code> file to contain the line <code class="highlighter-rouge">rest.model.compatibility=equivalent</code></p>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

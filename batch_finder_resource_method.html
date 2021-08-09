@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Batch Finder Resource Method</title>
+    <meta name="description" content="This documentation describes how restli framework support batch of search requirement." />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/batch_finder_resource_method" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Spec</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/spec/protocol">Rest.li Protocol</a></li>
+                       
+                         <li><a href="/rest.li/spec/restspec_format">Restspec JSON format</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_0-response-API">Rest.li 2.0 response-API</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Rest.li Server</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/spec/service_errors">Service Errors</a></li>
+                       
+                         <li><a href="/rest.li/spec/return_entity">Return Entity</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Rest.li Resource Method</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/batch_finder_resource_method">Batch Finder</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">R2D2</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Dynamic_Discovery">Dynamic Discovery</a></li>
+                       
+                         <li><a href="/rest.li/D2-Zookeeper-Properties">D2 Zookeeper properties</a></li>
+                       
+                         <li><a href="/rest.li/Request-Response-API-(R2)">Request-Response API</a></li>
+                       
+                         <li><a href="/rest.li/Request-Response-Framework">Request-Response framework</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">HTTP Frameworks</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-with-Netty">Netty</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-with-Servlet-Containers">Servlet containers</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Dependency injection</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Spring-Dependency-Injection">Spring dependency injection</a></li>
+                       
+                         <li><a href="/rest.li/Guice-Dependency-Injection">Guice dependency injection</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="batch-finder-resource-method">Batch Finder Resource Method</h1>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#overview">Overview</a></li>
+  <li><a href="#protocol">Protocol</a>
+    <ul>
+      <li><a href="#request">Request</a></li>
+      <li><a href="#response">Response</a></li>
+    </ul>
+  </li>
+  <li><a href="#client">Client</a>
+    <ul>
+      <li><a href="#java-request-builders">Java Request Builders</a></li>
+    </ul>
+  </li>
+  <li><a href="#resource-api">Resource API</a>
+    <ul>
+      <li><a href="#criteria-filter">Criteria Filter</a></li>
+      <li><a href="#method-annotation-and-parameters">Method Annotation and Parameters</a></li>
+      <li><a href="#batchfinderresult">BatchFinderResult</a></li>
+      <li><a href="#error-handling">Error Handling</a></li>
+    </ul>
+  </li>
+  <li><a href="#faq">FAQ</a></li>
+</ul>
+
+<h2 id="overview">Overview</h2>
+<p>The BATCH_FINDER resource method accepts a list of filters set. 
+Instead of callings multiple finders with different filter values, we call 1 BATCH_FINDER method with a list of filters.</p>
+
+<p>For example, a client might want to call the same FINDER with different search criteria.
+Combining multiple individual requests into a single batch request can save the application significant network latency.
+Also, the server can execute searches more efficiently if they are combined as a single query.</p>
+
+<p>BATCH FINDER should not have any visible side effects.
+For example, it should be safe to call whenever the client wishes.
+However, this is not something enforced by the framework, and it is up to the application developer that there are no side effects.</p>
+
+<p>It is important to note that:</p>
+<ul>
+  <li>the operations may execute on the server out of order</li>
+  <li>the response objects are expected to be returned in the same order and position as the respective input search criteria.</li>
+  <li>The BATCH_FINDER will require implementing a resource method to handle a BATCH_FINDER requests. It won’t behave like a multiplexer that will call automatically existing finders</li>
+</ul>
+
+<h2 id="protocol">Protocol</h2>
+
+<h3 id="request">Request</h3>
+
+<p>See more details here <a href="/rest.li/spec/protocol#batch-finders">BatchFinderUri</a>.</p>
+
+<h3 id="response">Response</h3>
+
+<p>See more details here <a href="/rest.li/spec/protocol#batch-collection-response">BatchCollectionResponse</a>.</p>
+
+<h2 id="client">Client</h2>
+
+<h3 id="java-request-builders">Java Request Builders</h3>
+
+<p>The client framework includes a code-generation tool that reads the IDL (see <a href="/rest.li/user_guide/restli_client#restspec-idl">Restspec IDL</a> for details) and generates type-safe Java binding for each resource and its supported methods.
+The bindings are represented as RequestBuilder classes.<br />
+For each resource described in an IDL file, a corresponding builder factory will be generated.
+The factory contains a factory method for each resource method supported by the resource. 
+The factory method returns a request builder object with type-safe bindings for the given method.
+More details in <a href="/rest.li/user_guide/restli_client#resource-builder-factory">Resource Builder Factory</a>.</p>
+
+<p>For example:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Request builders factory class</span>
+<span class="c1">// which provides all the specific request builders to corresponding resource method in defined resource class</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">GreetingsRequestBuilders</span> <span class="kd">extends</span> <span class="nc">BuilderBase</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="nf">GreetingsRequestBuilders</span><span class="o">()</span>
+    <span class="kd">public</span> <span class="nf">GreetingsRequestBuilders</span><span class="o">(</span><span class="nc">String</span> <span class="n">primaryResourceName</span><span class="o">)</span>
+    <span class="kd">public</span> <span class="nc">GreetingsCreateRequestBuilder</span> <span class="nf">create</span><span class="o">()</span>
+    <span class="kd">public</span> <span class="nc">GreetingsGetRequestBuilder</span> <span class="nf">get</span><span class="o">()</span>
+    <span class="o">...</span>
+    <span class="kd">public</span> <span class="nc">GreetingsFindBySearchRequestBuilder</span> <span class="nf">findBySearch</span><span class="o">()</span>
+    <span class="c1">// the BATCH_FINDER resource method named "SearchGreetings"</span>
+    <span class="kd">public</span> <span class="nc">GreetingsBatchFindBySearchGreetingsRequestBuilder</span> <span class="nf">batchFindBySearchGreetings</span><span class="o">()</span> 
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>The request builders factory class provides a method to generate the corresponding BATCH_FINDER request builder.
+More details about generated class and method declaration in
+<a href="/rest.li/user_guide/restli_client#batch-finder-request-builder">BATCH FINDER Request Builder</a>.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@Generated</span><span class="o">(</span><span class="n">value</span> <span class="o">=</span> <span class="s">"com.linkedin.pegasus.generator.JavaCodeUtil"</span><span class="o">,</span> <span class="n">comments</span> <span class="o">=</span> <span class="s">"Rest.li Request Builder"</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">BatchfindersBatchFindBySearchGreetingsBuilder</span>
+    <span class="kd">extends</span> <span class="nc">BatchFindRequestBuilderBase</span><span class="o">&lt;</span><span class="nc">Long</span><span class="o">,</span> <span class="nc">Greeting</span><span class="o">,</span> <span class="nc">BatchfindersBatchFindBySearchGreetingsBuilder</span><span class="o">&gt;</span>
+<span class="o">{</span>
+
+    <span class="kd">public</span> <span class="nf">BatchfindersBatchFindBySearchGreetingsBuilder</span><span class="o">(</span><span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">String</span> <span class="n">baseUriTemplate</span><span class="o">,</span> <span class="nc">ResourceSpec</span> <span class="n">resourceSpec</span><span class="o">,</span> <span class="nc">RestliRequestOptions</span> <span class="n">requestOptions</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">super</span><span class="o">(</span><span class="n">baseUriTemplate</span><span class="o">,</span> <span class="nc">Greeting</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">resourceSpec</span><span class="o">,</span> <span class="n">requestOptions</span><span class="o">);</span>
+        <span class="kd">super</span><span class="o">.</span><span class="na">name</span><span class="o">(</span><span class="s">"searchGreetings"</span><span class="o">);</span>
+    <span class="o">}</span>
+    
+    <span class="c1">// the 1st way to set the batch query parameter</span>
+    <span class="kd">public</span> <span class="nc">BatchfindersBatchFindBySearchGreetingsBuilder</span> <span class="nf">criteriaParam</span><span class="o">(</span><span class="nc">Iterable</span><span class="o">&lt;</span><span class="nc">GreetingCriteria</span><span class="o">&gt;</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">super</span><span class="o">.</span><span class="na">setReqParam</span><span class="o">(</span><span class="s">"criteria"</span><span class="o">,</span> <span class="n">value</span><span class="o">,</span> <span class="nc">GreetingCriteria</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+        <span class="k">return</span> <span class="k">this</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="c1">// the 2nd way to set the batch query parameter</span>
+    <span class="kd">public</span> <span class="nc">BatchfindersBatchFindBySearchGreetingsBuilder</span> <span class="nf">addCriteriaParam</span><span class="o">(</span><span class="nc">GreetingCriteria</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">super</span><span class="o">.</span><span class="na">addReqParam</span><span class="o">(</span><span class="s">"criteria"</span><span class="o">,</span> <span class="n">value</span><span class="o">,</span> <span class="nc">GreetingCriteria</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+        <span class="k">return</span> <span class="k">this</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="c1">// set common query parameter</span>
+    <span class="kd">public</span> <span class="nc">BatchfindersBatchFindBySearchGreetingsBuilder</span> <span class="nf">messageParam</span><span class="o">(</span><span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">String</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">super</span><span class="o">.</span><span class="na">setReqParam</span><span class="o">(</span><span class="s">"message"</span><span class="o">,</span> <span class="n">value</span><span class="o">,</span> <span class="n">java</span><span class="o">.</span><span class="na">lang</span><span class="o">.</span><span class="na">String</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+        <span class="k">return</span> <span class="k">this</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Here is an example to show how to use request builder to build BATCH_FINDER request.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nd">@Test</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">testUsingResourceBuilder</span><span class="o">()</span> <span class="kd">throws</span> <span class="nc">RemoteInvocationException</span> <span class="o">{</span>
+    <span class="c1">// define batch search criteria</span>
+    <span class="nc">GreetingCriteria</span> <span class="n">c1</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">GreetingCriteria</span><span class="o">().</span><span class="na">setId</span><span class="o">(</span><span class="mi">1L</span><span class="o">).</span><span class="na">setTone</span><span class="o">(</span><span class="nc">Tone</span><span class="o">.</span><span class="na">SINCERE</span><span class="o">);</span>
+    <span class="nc">GreetingCriteria</span> <span class="n">c2</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">GreetingCriteria</span><span class="o">().</span><span class="na">setId</span><span class="o">(</span><span class="mi">2L</span><span class="o">).</span><span class="na">setTone</span><span class="o">(</span><span class="nc">Tone</span><span class="o">.</span><span class="na">FRIENDLY</span><span class="o">);</span>
+    <span class="nc">GreetingCriteria</span> <span class="n">c3</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">GreetingCriteria</span><span class="o">().</span><span class="na">setId</span><span class="o">(</span><span class="mi">100</span><span class="o">);</span>
+    
+    <span class="c1">//set batch query parameter and common query parameter</span>
+    <span class="nc">Request</span><span class="o">&lt;</span><span class="nc">BatchCollectionResponse</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;&gt;</span> <span class="n">req</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">GreetingsRequestBuilders</span><span class="o">().</span><span class="na">batchFindBySearchGreetings</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">criteriaParam</span><span class="o">(</span><span class="nc">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="n">c1</span><span class="o">,</span> <span class="n">c2</span><span class="o">,</span> <span class="n">c3</span><span class="o">)).</span><span class="na">messageParam</span><span class="o">(</span><span class="s">"hello world"</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+    <span class="nc">Response</span><span class="o">&lt;</span><span class="nc">BatchCollectionResponse</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;&gt;</span> <span class="n">resp</span> <span class="o">=</span> <span class="no">REST_CLIENT</span><span class="o">.</span><span class="na">sendRequest</span><span class="o">(</span><span class="n">req</span><span class="o">).</span><span class="na">getResponse</span><span class="o">();</span>
+    <span class="nc">BatchCollectionResponse</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">response</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="na">getEntity</span><span class="o">();</span>
+  
+    <span class="nc">List</span><span class="o">&lt;</span><span class="nc">BatchFinderCriteriaResult</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;&gt;</span> <span class="n">batchResult</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="na">getResults</span><span class="o">();</span>
+  
+    <span class="nc">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="n">batchResult</span><span class="o">.</span><span class="na">size</span><span class="o">(),</span> <span class="mi">3</span><span class="o">);</span>
+  
+    <span class="c1">// on success</span>
+    <span class="nc">List</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">greetings1</span> <span class="o">=</span> <span class="n">batchResult</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="mi">0</span><span class="o">).</span><span class="na">getElements</span><span class="o">();</span>
+    <span class="nc">Assert</span><span class="o">.</span><span class="na">assertTrue</span><span class="o">(</span><span class="n">greetings1</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="mi">0</span><span class="o">).</span><span class="na">hasTone</span><span class="o">());</span>
+    <span class="nc">Assert</span><span class="o">.</span><span class="na">assertTrue</span><span class="o">(</span><span class="n">greetings1</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="mi">0</span><span class="o">).</span><span class="na">getTone</span><span class="o">().</span><span class="na">equals</span><span class="o">(</span><span class="nc">Tone</span><span class="o">.</span><span class="na">SINCERE</span><span class="o">));</span>
+  
+    <span class="c1">// on error</span>
+    <span class="nc">ErrorResponse</span> <span class="n">error</span> <span class="o">=</span> <span class="n">batchResult</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="mi">2</span><span class="o">).</span><span class="na">getError</span><span class="o">();</span>
+    <span class="nc">Assert</span><span class="o">.</span><span class="na">assertTrue</span><span class="o">(</span><span class="n">batchResult</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="mi">2</span><span class="o">).</span><span class="na">isError</span><span class="o">());</span>
+    <span class="nc">Assert</span><span class="o">.</span><span class="na">assertEquals</span><span class="o">(</span><span class="n">error</span><span class="o">.</span><span class="na">getMessage</span><span class="o">(),</span> <span class="s">"Fail to find Greeting!"</span><span class="o">);</span>
+  <span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="resource-api">Resource API</h2>
+<p>BATCH_FINDER is supported on Collection and Association Resources only(See more details about
+<a href="/rest.li/spec/protocol#collection-resources">Collection Resource</a> and
+<a href="/rest.li/spec/protocol#association-resources">Association Resource</a>).
+Resources may provide zero or more BATCH_FINDER resource methods. Each BATCH_FINDER method must
+be annotated with the <code class="highlighter-rouge">@BatchFinder</code> annotation.</p>
+
+<p>Pagination default to start=0 and count=10. Clients may set both of these parameters to any desired value.</p>
+
+<h3 id="criteria-filter">Criteria Filter</h3>
+<p>To implement a batch finder, the resource owner has to define a <code class="highlighter-rouge">RecordTemplate</code> to define a criteria filter parameter.
+The batch finder method will have to accept a array of this criteria filter.</p>
+
+<p>Example:</p>
+
+<p>The resource owner need to define their own search criteria <code class="highlighter-rouge">GreetingCriteria.pdl</code> file.</p>
+
+<div class="language-pdl highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kr">namespace</span> <span class="n">com.linkedin.restli.examples.greetings.api</span><span class="p">
+
+</span><span class="cm">/**
+ * A search criteria to filter greetings.
+ */</span><span class="p">
+</span><span class="kr">record</span><span class="p"> </span><span class="n">GreetingCriteria</span><span class="p"> {
+
+  </span><span class="cm">/**
+   * Greeting ID to filter on
+   */</span><span class="p">
+  </span><span class="nl">id</span><span class="p">:</span> <span class="kt">long</span><span class="p">
+
+  </span><span class="cm">/**
+   * Greeting tone to filter on
+   */</span><span class="p">
+  </span><span class="nl">tone</span><span class="p">:</span> <span class="n">Tone</span><span class="p">
+}
+</span></code></pre></div></div>
+
+<p>The <code class="highlighter-rouge">GreetingCriteria</code> class represents a set of criteria (<code class="highlighter-rouge">id</code> and <code class="highlighter-rouge">tone</code>) by which to filter.
+This Java class is auto-generated from the schema.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">GreetingCriteria</span> <span class="kd">extends</span> <span class="nc">RecordTemplate</span>
+<span class="o">{</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="kd">static</span> <span class="nc">GreetingCriteria</span><span class="o">.</span><span class="na">Fields</span> <span class="n">_fields</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">GreetingCriteria</span><span class="o">.</span><span class="na">Fields</span><span class="o">();</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="kd">static</span> <span class="nc">RecordDataSchema</span> <span class="no">SCHEMA</span> <span class="o">=</span> <span class="o">((</span><span class="nc">RecordDataSchema</span><span class="o">)</span> <span class="nc">DataTemplateUtil</span><span class="o">.</span><span class="na">parseSchema</span><span class="o">(</span><span class="s">"{\"type\":\"record\",\"name\":\"GreetingCriteria\",\"namespace\":\"com.linkedin.restli.examples.greetings.api\",\"doc\":\"A search criteria to filter greetings.\",\"fields\":[{\"name\":\"id\",\"type\":\"long\",\"doc\":\"Greeting ID to filter on\"},{\"name\":\"tone\",\"type\":{\"type\":\"enum\",\"name\":\"Tone\",\"symbols\":[\"FRIENDLY\",\"SINCERE\",\"INSULTING\"]},\"doc\":\"Greeting tone to filter on\"}]}"</span><span class="o">));</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="kd">static</span> <span class="nc">RecordDataSchema</span><span class="o">.</span><span class="na">Field</span> <span class="n">FIELD_Id</span> <span class="o">=</span> <span class="no">SCHEMA</span><span class="o">.</span><span class="na">getField</span><span class="o">(</span><span class="s">"id"</span><span class="o">);</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="kd">static</span> <span class="nc">RecordDataSchema</span><span class="o">.</span><span class="na">Field</span> <span class="n">FIELD_Tone</span> <span class="o">=</span> <span class="no">SCHEMA</span><span class="o">.</span><span class="na">getField</span><span class="o">(</span><span class="s">"tone"</span><span class="o">);</span>
+    <span class="o">...</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="method-annotation-and-parameters">Method Annotation and Parameters</h3>
+
+<p>The <code class="highlighter-rouge">@BatchFinder</code> annotation takes 2 required parameter:</p>
+<ul>
+  <li><code class="highlighter-rouge">value</code> : which indicates the BATCH_FINDER method name</li>
+  <li><code class="highlighter-rouge">batchParam</code> : which indicates the name of the batch criteria parameter, each BATCH_FINDER method must have and can only have one batch parameter</li>
+</ul>
+
+<p>For example:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// eg. The curl call for this resource method is like:</span>
+<span class="c1">// curl -v -X GET http://localhost:8080/greetings?bq=searchGreetings&amp;criteria=List((id:1,tone:SINCERE),(id:2,tone:FRIENDLY))&amp;message=hello -H 'X-RestLi-Protocol-Version: 2.0.0' </span>
+
+<span class="nd">@BatchFinder</span><span class="o">(</span><span class="n">value</span> <span class="o">=</span> <span class="s">"searchGreetings"</span><span class="o">,</span> <span class="n">batchParam</span> <span class="o">=</span> <span class="s">"criteria"</span><span class="o">)</span>
+<span class="kd">public</span> <span class="nc">Task</span><span class="o">&lt;</span><span class="nc">BatchFinderResult</span><span class="o">&lt;</span><span class="nc">GreetingCriteria</span><span class="o">,</span> <span class="nc">Greeting</span><span class="o">,</span> <span class="nc">EmptyRecord</span><span class="o">&gt;&gt;</span> <span class="nf">searchGreetings</span><span class="o">(</span><span class="nd">@PagingContextParam</span> <span class="nc">PagingContext</span> <span class="n">context</span><span class="o">,</span>
+                                                             <span class="nd">@QueryParam</span><span class="o">(</span><span class="s">"criteria"</span><span class="o">)</span> <span class="nc">GreetingCriteria</span><span class="o">[]</span> <span class="n">criteria</span><span class="o">,</span>
+                                                             <span class="nd">@QueryParam</span><span class="o">(</span><span class="s">"message"</span><span class="o">)</span> <span class="nc">String</span> <span class="n">message</span><span class="o">)</span>
+<span class="o">{</span>
+ <span class="k">return</span> <span class="nc">Task</span><span class="o">.</span><span class="na">blocking</span><span class="o">(</span><span class="s">"searchGreetings"</span><span class="o">,</span> <span class="o">()</span> <span class="o">-&gt;</span> <span class="o">{</span>
+     <span class="nc">BatchFinderResult</span><span class="o">&lt;</span><span class="nc">GreetingCriteria</span><span class="o">,</span> <span class="nc">Greeting</span><span class="o">,</span> <span class="nc">EmptyRecord</span><span class="o">&gt;</span> <span class="n">batchFinderResult</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">BatchFinderResult</span><span class="o">&lt;&gt;();</span>
+ 
+     <span class="k">for</span> <span class="o">(</span><span class="nc">GreetingCriteria</span> <span class="nl">currentCriteria:</span> <span class="n">criteria</span><span class="o">)</span> <span class="o">{</span>
+       <span class="k">if</span> <span class="o">(</span><span class="n">currentCriteria</span><span class="o">.</span><span class="na">getId</span><span class="o">()</span> <span class="o">==</span> <span class="mi">1L</span><span class="o">)</span> <span class="o">{</span>
+         <span class="c1">// on success</span>
+         <span class="nc">CollectionResult</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">,</span> <span class="nc">EmptyRecord</span><span class="o">&gt;</span> <span class="n">c1</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">CollectionResult</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">,</span> <span class="nc">EmptyRecord</span><span class="o">&gt;(</span><span class="nc">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="n">g1</span><span class="o">),</span> <span class="mi">1</span><span class="o">);</span>
+         <span class="n">batchFinderResult</span><span class="o">.</span><span class="na">putResult</span><span class="o">(</span><span class="n">currentCriteria</span><span class="o">,</span> <span class="n">c1</span><span class="o">);</span>
+       <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">currentCriteria</span><span class="o">.</span><span class="na">getId</span><span class="o">()</span> <span class="o">==</span> <span class="mi">2L</span><span class="o">)</span> <span class="o">{</span>
+         <span class="nc">CollectionResult</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">,</span> <span class="nc">EmptyRecord</span><span class="o">&gt;</span> <span class="n">c2</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">CollectionResult</span><span class="o">&lt;</span><span class="nc">Greeting</span><span class="o">,</span> <span class="nc">EmptyRecord</span><span class="o">&gt;(</span><span class="nc">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="n">g2</span><span class="o">),</span> <span class="mi">1</span><span class="o">);</span>
+         <span class="n">batchFinderResult</span><span class="o">.</span><span class="na">putResult</span><span class="o">(</span><span class="n">currentCriteria</span><span class="o">,</span> <span class="n">c2</span><span class="o">);</span>
+       <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(</span><span class="n">currentCriteria</span><span class="o">.</span><span class="na">getId</span><span class="o">()</span> <span class="o">==</span> <span class="mi">100L</span><span class="o">){</span>
+         <span class="c1">// on error: to construct error response for test</span>
+         <span class="n">batchFinderResult</span><span class="o">.</span><span class="na">putError</span><span class="o">(</span><span class="n">currentCriteria</span><span class="o">,</span> <span class="k">new</span> <span class="nc">RestLiServiceException</span><span class="o">(</span><span class="nc">HttpStatus</span><span class="o">.</span><span class="na">S_404_NOT_FOUND</span><span class="o">,</span> <span class="s">"Fail to find Greeting!"</span><span class="o">));</span>
+       <span class="o">}</span>
+     <span class="o">}</span>
+ 
+     <span class="k">return</span> <span class="n">batchFinderResult</span><span class="o">;</span>
+ <span class="o">},</span> <span class="n">_executor</span><span class="o">);</span>
+
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Every parameter of a BATCH_FINDER method must be annotated with one of:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">@Context</code> - indicates that the parameter provides framework context
+   to the method. Currently all <code class="highlighter-rouge">@Context</code> parameters must be of type
+   <code class="highlighter-rouge">PagingContext</code>.</li>
+  <li><code class="highlighter-rouge">@QueryParam</code> - indicates that the value of the parameter is
+   obtained from a request query parameter. The value of the annotation
+   indicates the name of the query parameter. Duplicate names are not
+   allowed for the same BATCH_FINDER method.
+   For the batch parameter, the name must match the name in the method annotation.</li>
+  <li><code class="highlighter-rouge">@AssocKey</code> - indicates that the value of the parameter is a partial
+   association key, obtained from the request. The value of the
+   annotation indicates the name of the association key, which must
+   match the name of an <code class="highlighter-rouge">@Key</code> provided in the <code class="highlighter-rouge">assocKeys</code> field of the
+   <code class="highlighter-rouge">@RestLiAssociation</code> annotation.</li>
+</ul>
+
+<p>Parameters marked with <code class="highlighter-rouge">@QueryParam</code> and <code class="highlighter-rouge">@AssocKey</code>
+may also be annotated with <code class="highlighter-rouge">@Optional</code>, which indicates that the
+parameter is not required. <em>caution</em>: the batch parameter can not be optional.
+The <code class="highlighter-rouge">@Optional</code> annotation may specify a String value, indicating the default value to be used if the parameter
+is not provided in the request. If the method parameter is of primitive
+type, a default value must be specified in the <code class="highlighter-rouge">@Optional</code> annotation.</p>
+
+<p>Valid types for regular query parameters are:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">String</code></li>
+  <li><code class="highlighter-rouge">boolean</code> / <code class="highlighter-rouge">Boolean</code></li>
+  <li><code class="highlighter-rouge">int</code> / <code class="highlighter-rouge">Integer</code></li>
+  <li><code class="highlighter-rouge">long</code> / <code class="highlighter-rouge">Long</code></li>
+  <li><code class="highlighter-rouge">float</code> / <code class="highlighter-rouge">Float</code></li>
+  <li><code class="highlighter-rouge">double</code> / <code class="highlighter-rouge">Double</code></li>
+  <li>A Pegasus Enum (any enum defined in a <code class="highlighter-rouge">.pdl</code> schema)</li>
+  <li>Custom types (see the bottom of this section)</li>
+  <li>Record template types (any subclass of <code class="highlighter-rouge">RecordTemplate</code> generated
+   from a <code class="highlighter-rouge">.pdl</code> schema)</li>
+  <li>Arrays of one of the types above, e.g. <code class="highlighter-rouge">String[]</code>, <code class="highlighter-rouge">long[]</code>, …</li>
+</ul>
+
+<p>Valid type for batch criteria parameter:</p>
+
+<ul>
+  <li>Can only be Arrays of Record template type, if have to use some other data types like Pegasus Enum, etc as the array item,
+need to wrap it into a Record Template (<code class="highlighter-rouge">.pdl</code> schema)</li>
+</ul>
+
+<p>Please note that “q” cannot be used as QueryParam name for batch finder. It is reserved for passing Finder’s method name.</p>
+
+<h3 id="batchfinderresult">BatchFinderResult</h3>
+
+<p>BATCH_Finder methods must return <code class="highlighter-rouge">BatchFinderResult&lt;QK extends RecordTemplate, V extends RecordTemplate, MD extends RecordTemplate&gt;</code>:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">QK</code> : The type of the BATCH_FINDER criteria filter</li>
+  <li><code class="highlighter-rouge">V</code> :  The type of the resource, aka, the entity type</li>
+  <li><code class="highlighter-rouge">MD</code> : The type of the meta data, if do not need metadata, just set it <code class="highlighter-rouge">EmptyRecord</code></li>
+</ul>
+
+<p>For each search criteria in the BatchFinderRequest, it can get either a successful reponse
+which is a <code class="highlighter-rouge">CollectionResult</code>(a list of entities), Or an error/failure which maybe represented by
+a <code class="highlighter-rouge">RestLiServiceException</code>, which will be wrapped into an <code class="highlighter-rouge">ErrorResponse</code> later when building BatchFinderResponse
+to return to client.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">BatchFinderResult</span><span class="o">&lt;</span><span class="no">QK</span><span class="o">,</span><span class="no">V</span> <span class="kd">extends</span> <span class="nc">RecordTemplate</span><span class="o">,</span><span class="no">MD</span> <span class="kd">extends</span> <span class="nc">RecordTemplate</span><span class="o">&gt;</span>
+<span class="o">{</span>
+   <span class="kd">private</span> <span class="kd">final</span> <span class="nc">Map</span><span class="o">&lt;</span><span class="no">QK</span><span class="o">,</span><span class="nc">CollectionResult</span><span class="o">&lt;</span><span class="no">V</span><span class="o">,</span><span class="no">R</span><span class="o">&gt;&gt;</span> <span class="n">_elements</span><span class="o">;</span>
+   <span class="kd">private</span> <span class="kd">final</span> <span class="nc">Map</span><span class="o">&lt;</span><span class="no">QK</span><span class="o">,</span><span class="nc">RestLiServiceException</span><span class="o">&gt;</span> <span class="n">_errors</span><span class="o">;</span>
+   <span class="o">...</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="error-handling">Error Handling</h3>
+
+<h4 id="1-custom-error-per-search-criteria">1) Custom error per search criteria</h4>
+
+<p>For each input criteria, the developer is responsible to update either the “_elements” or the “_errors” map in <code class="highlighter-rouge">BatchFinderResult</code>.
+If the developers set a customized error which is wrapped into a <code class="highlighter-rouge">RestLiServiceException</code> for one search criteria,
+Rest.li framework will not treat it as a failure for the whole BATCH_FINDER request, but just the failure for that specific criteria.
+The return http status for the BATCH_FINDER request is still 200. An example is below
+<a href="/rest.li/batch_finder_resource_method#resource-api">Resource API</a>.</p>
+
+<h4 id="2-restli-framework-will-cover-the-non-present-criteria-error">2) Rest.li framework will cover the non-present criteria error</h4>
+
+<p>When processing the <code class="highlighter-rouge">BatchFinderResult</code> in the ResponseBuilder, if a criteria is not present, either in _elements, nor in _errors, 
+the framework will generate a “404” error for this criteria.
+The whole http status is still 200.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">new</span> <span class="nc">RestLiServiceException</span><span class="o">(</span><span class="no">S_404_NOT_FOUND</span><span class="o">,</span> <span class="s">"The server didn't find a representation for this criteria"</span><span class="o">));</span>
+</code></pre></div></div>
+
+<h4 id="3-return-nulls">3) Return nulls</h4>
+
+<p>In some situation, the return results may contain null value. Resource methods should never explicitly return null. 
+If the Rest.li framework detects this, it will return an HTTP 500 back to the client with a message indicating
+‘Unexpected null encountered’. See more details in <a href="/rest.li/user_guide/restli_server#returning-nulls">Returning Nulls</a>.</p>
+
+<p>Here are some possible cases:</p>
+<ul>
+  <li><code class="highlighter-rouge">BatchFinderResult</code> is null.</li>
+  <li>Element is null in the returned list of entities in the successful case.</li>
+  <li>For one criteria, the whole list of entities is null.</li>
+</ul>
+
+<h2 id="faq">FAQ</h2>
+
+<h4 id="does-batch_finder-support-primitive-type-like-string-integer-as-a-batch-criteria-filter">Does Batch_Finder support primitive type like String, Integer as a batch criteria filter?</h4>
+
+<p>No. 
+We currently don’t support primitive data type as batch criteria, even <code class="highlighter-rouge">Enum</code> type.
+That criteria must be a type which extends from <code class="highlighter-rouge">RecordTemplate</code> which is actually a record.
+The reason is that using a record will be easier to support any evolution .i.e. adding additional criteria to the same batch finder method.</p>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

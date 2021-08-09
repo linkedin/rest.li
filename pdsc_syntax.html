@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>PDSC Syntax</title>
+    <meta name="description" content="Rest.li PDSC Syntax." />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/pdsc_syntax" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">User Guide</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/user_guide/server_architecture">Rest.li Architecture</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_server">Rest.li Server</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_client">Rest.li Client Framework</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/unstructured_data">Unstructured Data</a></li>
+                       
+                         <li><a href="/rest.li/Components">Components</a></li>
+                       
+                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous in Rest.li</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data Schemas</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/pdl_schema">PDL Schema</a></li>
+                       
+                         <li><a href="/rest.li/pdsc_syntax">PDSC Syntax</a></li>
+                       
+                         <li><a href="/rest.li/pdl_migration">Migrating from PDSC to PDL</a></li>
+                       
+                         <li><a href="/rest.li/avro_translation">Avro Translation</a></li>
+                       
+                         <li><a href="/rest.li/java_binding">Java Binding</a></li>
+                       
+                         <li><a href="/rest.li/annotation_processor">Schema Annotation Processor</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Modeling Resources</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
+                       
+                         <li><a href="/rest.li/modeling/compatibility_check">Snapshots and Resource Compatibility Checking</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/how_data_is_serialized_for_transport">How Data is Serialized for Transport</a></li>
+                       
+                         <li><a href="/rest.li/how_data_is_represented_in_memory">How Data is Represented in Memory</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Main concepts</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-Filters">Filters</a></li>
+                       
+                         <li><a href="/rest.li/Projections">Projections</a></li>
+                       
+                         <li><a href="/rest.li/pathspec">PathSpecs</a></li>
+                       
+                         <li><a href="/rest.li/Validation-in-Rest_li">Validation</a></li>
+                       
+                         <li><a href="/rest.li/Attachment-Streaming">Attachment Streaming</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Mutli-language</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/multi_language_compatibility_matrix">Compatibility Matrix</a></li>
+                       
+                         <li><a href="/rest.li/test_suite">Test Suite</a></li>
+                       
+                         <li><a href="https://github.com/mchen07/restli-csharp">C#</a></li>
+                       
+                         <li><a href="/rest.li/Scala-Integration">Scala Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Testing</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers">Writing Unit Tests</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">How to</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Send-Rest_li-Request-Query-In-Request-Body">Send Request Query in the Body</a></li>
+                       
+                         <li><a href="/rest.li/How-to-use-projections-in-Java">Use Projections</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li_Avro_conversions">Avro Conversion</a></li>
+                       
+                         <li><a href="/rest.li/Compression">Compression</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_x-upgrade-instructions">Migrate to Rest.li 2.x</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_how_to">Test Suite</a></li>
+                       
+                         <li><a href="/rest.li/howto_add_new_language">Test Suite - Add New Language</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/service_errors_java">Configure Service Errors in Java</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">FAQ</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Data-FAQ">Rest.li - FAQ</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_troubleshooting">Test Suite - Troubleshooting</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="pdsc-syntax">PDSC Syntax</h1>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#pdsc-schema-definition">PDSC Schema Definition</a></li>
+  <li><a href="#creating-a-schema">Creating a Schema</a></li>
+  <li><a href="#typeref">Typeref</a></li>
+  <li><a href="#record-field-attributes">Record Field Attributes</a></li>
+  <li><a href="#optional-fields">Optional Fields</a></li>
+  <li><a href="#union">Union</a></li>
+  <li><a href="#default-values">Default Values</a></li>
+  <li><a href="#including-fields-from-another-record">Including Fields from Another Record</a></li>
+  <li><a href="#deprecation">Deprecation</a></li>
+</ul>
+
+<h2 id="pdsc-schema-definition">PDSC Schema Definition</h2>
+
+<p>PDSC is a Pegasus schema definition language, and it is inspired by the <a href="http://avro.apache.org/docs/1.4.1/spec.html">Avro 1.4.1
+specification</a>.The Pegasus schema definition language is inspired by the <a href="http://avro.apache.org/docs/1.4.1/spec.html">Avro 1.4.1
+specification</a>.</p>
+
+<ul>
+  <li>Pegasus leverages Avro’s JSON-based schema definition syntax, type
+system, and JSON serialization format.</li>
+  <li>Pegasus does not implement or use Avro’s binary data serialization
+format, object container files, protocol wire format, and schema
+resolution.</li>
+  <li>Pegasus does not require or re-use any Avro implementation.</li>
+  <li>The code generator supports all of Avro’s types: primitive types,
+records, enums, arrays, maps, unions, fixed.</li>
+</ul>
+
+<p>The Pegasus schema differs from Avro in the following ways:</p>
+
+<ul>
+  <li>Pegasus uses “optional” to indicate that a field in a record is
+optional. Union with null should not be used to indicate an optional
+field. Future versions of Pegasus may remove the null type from the
+schema definition language.</li>
+  <li>Pegasus unions can have more than one member of the same type. This
+is supported by specifying an alias for each member which is unique
+within that union.</li>
+  <li>Pegasus default values for union types must include the member
+discriminator. Avro default values for union types do not include
+the member discriminator. The type of the Avro union default value
+is always the 1st member type of the union.</li>
+  <li>Pegasus implements a mechanism for including all the fields from
+another record into the current record.</li>
+  <li>Pegasus schema files have file names that ends with <code class="highlighter-rouge">.pdsc</code> instead
+of <code class="highlighter-rouge">.avsc</code>.</li>
+  <li>The Pegasus code generator also implements resolvers similar to Java
+class loaders that allow each named schema to be specified in a
+different source file.<br />
+(Note the Avro code generator requires all referenced named schemas
+to be in the same source file. The schema resolver of the Pegasus
+code generator is unrelated to the schema resolution feature of
+Avro.)</li>
+  <li>Pegasus ignores the aliases (but allows them in the schema
+definition). Future versions of Pegasus may remove aliases.</li>
+  <li>Pegasus schema resolution and compatibility rules are different.</li>
+  <li>Pegasus named schema provides option to override language binding
+namespace for generated data model from the schema. <strong>Note that this
+binding namespace override will not change how data is transported
+over the wire.</strong></li>
+</ul>
+
+<h2 id="creating-a-schema">Creating a Schema</h2>
+
+<p>Each schema should be stored in its own file with a <code class="highlighter-rouge">.pdsc</code> extension.
+The Pegasus code generator implements a resolver that is similar to Java
+class loaders. If there is a reference to a named schema, the code
+generator will try to look for a file in the code generator’s resolver
+path. The resolver path is similar to a Java classpath. The fully
+qualified name of the named schema will be translated to a relative file
+name. The relative file name is computed by replacing dots (“.”) in the
+fully qualified name by the directory path separator (typically “/”) and
+appending a <code class="highlighter-rouge">.pdsc</code> extension. This relative file name is appended to
+each path in the resolver path. The resolver opens each of these files
+until it finds a file that contains the named schema.</p>
+
+<p>The named schema declarations support the following attributes:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">type</code> a JSON string providing the type of the named schema
+(required).</li>
+  <li><code class="highlighter-rouge">name</code> a JSON string providing the name of the named schema
+(required).</li>
+  <li><code class="highlighter-rouge">namespace</code> a JSON string that qualifies the namespace for the named
+schema.</li>
+  <li><code class="highlighter-rouge">package</code> a JSON string that qualifies the language binding
+namespace for the named schema (optional). If this is not specified,
+language binding class for the named schema will use <code class="highlighter-rouge">namespace</code> as
+its default namespace.</li>
+  <li><code class="highlighter-rouge">doc</code> a JSON string providing documentation to the user of this
+named schema (optional).</li>
+</ul>
+
+<p>The named schemas with type “enum” also supports a <code class="highlighter-rouge">symbolDocs</code>
+attribute to provide documentation for each enum symbol.</p>
+
+<p><strong>Note:</strong> Due to the addition of doclint in JDK8, anything under the
+<code class="highlighter-rouge">doc</code> or <code class="highlighter-rouge">symbolDocs</code> attribute must be W3C HTML 4.01 compliant. This is
+because the contents of this string will appear as Javadocs in the
+generated Java ‘data template’ classes later. Please take this into
+consideration when writing your documentation.</p>
+
+<p>The following are a few example schemas and their file names.</p>
+
+<p>com/linkedin/pegasus/generator/examples/Foo.pdsc</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"record"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"Foo"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"namespace"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"com.linkedin.pegasus.generator.examples"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"doc"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"A foo record"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"fields"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"intField"</span><span class="p">,</span><span class="w">       </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"int"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"longField"</span><span class="p">,</span><span class="w">      </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"long"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"floatField"</span><span class="p">,</span><span class="w">     </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"float"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"doubleField"</span><span class="p">,</span><span class="w">    </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"double"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"bytesField"</span><span class="p">,</span><span class="w">     </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"bytes"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"stringField"</span><span class="p">,</span><span class="w">    </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"fruitsField"</span><span class="p">,</span><span class="w">    </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"Fruits"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"intArrayField"</span><span class="p">,</span><span class="w">  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"array"</span><span class="p">,</span><span class="w"> </span><span class="nl">"items"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"int"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"stringMapField"</span><span class="p">,</span><span class="w"> </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"map"</span><span class="p">,</span><span class="w"> </span><span class="nl">"values"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"unionField"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="s2">"int"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"Fruits"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"Foo"</span><span class="p">,</span><span class="w">
+        </span><span class="p">{</span><span class="w"> </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"array"</span><span class="p">,</span><span class="w"> </span><span class="nl">"items"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="w"> </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"map"</span><span class="p">,</span><span class="w"> </span><span class="nl">"values"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"long"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="s2">"null"</span><span class="w">
+      </span><span class="p">]</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>com/linkedin/pegasus/generator/examples/FooWithNamespaceOverride.pdsc
+(please see Java Binding section to see how this “package” affects
+generated java class.)</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"record"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"FooWithNamespaceOverride"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"namespace"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"com.linkedin.pegasus.generator.examples"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"package"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"com.linkedin.pegasus.generator.examples.record"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"doc"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"A foo record"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"fields"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"intField"</span><span class="p">,</span><span class="w">       </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"int"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"longField"</span><span class="p">,</span><span class="w">      </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"long"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"floatField"</span><span class="p">,</span><span class="w">     </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"float"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"doubleField"</span><span class="p">,</span><span class="w">    </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"double"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"bytesField"</span><span class="p">,</span><span class="w">     </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"bytes"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"stringField"</span><span class="p">,</span><span class="w">    </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"fruitsField"</span><span class="p">,</span><span class="w">    </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"Fruits"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"intArrayField"</span><span class="p">,</span><span class="w">  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"array"</span><span class="p">,</span><span class="w"> </span><span class="nl">"items"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"int"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"stringMapField"</span><span class="p">,</span><span class="w"> </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"map"</span><span class="p">,</span><span class="w"> </span><span class="nl">"values"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"unionField"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="s2">"int"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"Fruits"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"Foo"</span><span class="p">,</span><span class="w">
+        </span><span class="p">{</span><span class="w"> </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"array"</span><span class="p">,</span><span class="w"> </span><span class="nl">"items"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="w"> </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"map"</span><span class="p">,</span><span class="w"> </span><span class="nl">"values"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"long"</span><span class="w"> </span><span class="p">},</span><span class="w">
+        </span><span class="s2">"null"</span><span class="w">
+      </span><span class="p">]</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>com/linkedin/pegasus/generator/examples/Fruits.pdsc</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"enum"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"Fruits"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"namespace"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"com.linkedin.pegasus.generator.examples"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"doc"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"A fruit"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"symbols"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="s2">"APPLE"</span><span class="p">,</span><span class="w"> </span><span class="s2">"BANANA"</span><span class="p">,</span><span class="w"> </span><span class="s2">"ORANGE"</span><span class="p">,</span><span class="w"> </span><span class="s2">"PINEAPPLE"</span><span class="w"> </span><span class="p">],</span><span class="w">
+  </span><span class="nl">"symbolDocs"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"APPLE"</span><span class="p">:</span><span class="s2">"A red, yellow or green fruit."</span><span class="p">,</span><span class="w"> </span><span class="nl">"BANANA"</span><span class="p">:</span><span class="s2">"A yellow fruit."</span><span class="p">,</span><span class="w"> </span><span class="nl">"ORANGE"</span><span class="p">:</span><span class="s2">"An orange fruit."</span><span class="p">,</span><span class="w"> </span><span class="nl">"PINEAPPLE"</span><span class="p">:</span><span class="s2">"A yellow fruit."</span><span class="p">}</span><span class="w"> 
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>com/linkedin/pegasus/generator/examples/MD5.pdsc</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"fixed"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"MD5"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"namespace"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"com.linkedin.pegasus.generator.examples"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"doc"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"MD5"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"size"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="mi">16</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>com/linkedin/pegasus/generator/examples/StringList.pdsc</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"record"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"StringList"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"namespace"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"com.linkedin.pegasus.generator.examples"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"doc"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"A list of strings"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"fields"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"element"</span><span class="p">,</span><span class="w"> </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="w"> </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w"> </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"next"</span><span class="w">   </span><span class="p">,</span><span class="w"> </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"StringList"</span><span class="p">,</span><span class="w"> </span><span class="nl">"optional"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>com/linkedin/pegasus/generator/examples/InlinedExample.pdsc</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"record"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"InlinedExample"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"namespace"</span><span class="p">:</span><span class="w"> </span><span class="s2">"com.linkedin.pegasus.generator.examples"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"doc"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Example on how you can declare an enum and a record inside another record"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"fields"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"myEnumField"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"enum"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"EnumDeclarationInTheSameFile"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"symbols"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"FOO"</span><span class="p">,</span><span class="w"> </span><span class="s2">"BAR"</span><span class="p">,</span><span class="w"> </span><span class="s2">"BAZ"</span><span class="p">]</span><span class="w">
+      </span><span class="p">},</span><span class="w">
+      </span><span class="nl">"doc"</span><span class="p">:</span><span class="w"> </span><span class="s2">"This is how we inline enum declaration without creating a new pdsc file"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"symbolDocs"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"FOO"</span><span class="p">:</span><span class="s2">"It's a foo!"</span><span class="p">,</span><span class="w"> </span><span class="nl">"HASH"</span><span class="p">:</span><span class="s2">"It's a bar!"</span><span class="p">,</span><span class="w"> </span><span class="nl">"NONE"</span><span class="p">:</span><span class="s2">"It's a baz!"</span><span class="p">}</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"stringField"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"doc"</span><span class="p">:</span><span class="w"> </span><span class="s2">"A regular string"</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"intField"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"int"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"doc"</span><span class="p">:</span><span class="w"> </span><span class="s2">"A regular int"</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"UnionFieldWithInlineRecordAndEnum"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"doc"</span><span class="p">:</span><span class="w"> </span><span class="s2">"In this example we will declare a record and an enum inside a union"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="p">{</span><span class="w">
+          </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"record"</span><span class="p">,</span><span class="w">
+          </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"myRecord"</span><span class="p">,</span><span class="w">
+          </span><span class="nl">"fields"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+            </span><span class="p">{</span><span class="w">
+              </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"foo1"</span><span class="p">,</span><span class="w">
+              </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"int"</span><span class="p">,</span><span class="w">
+              </span><span class="nl">"doc"</span><span class="p">:</span><span class="w"> </span><span class="s2">"random int field"</span><span class="w">
+            </span><span class="p">},</span><span class="w">
+            </span><span class="p">{</span><span class="w">
+              </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"foo2"</span><span class="p">,</span><span class="w">
+              </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"int"</span><span class="p">,</span><span class="w">
+              </span><span class="nl">"doc"</span><span class="p">:</span><span class="w"> </span><span class="s2">"random int field"</span><span class="w">
+            </span><span class="p">}</span><span class="w">
+          </span><span class="p">]</span><span class="w">
+        </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="w">
+          </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"anotherEnum"</span><span class="p">,</span><span class="w">
+          </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"enum"</span><span class="p">,</span><span class="w">
+          </span><span class="nl">"symbols"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"FOOFOO"</span><span class="p">,</span><span class="w"> </span><span class="s2">"BARBAR"</span><span class="p">],</span><span class="w">
+          </span><span class="nl">"doc"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Random enum"</span><span class="p">,</span><span class="w">
+          </span><span class="nl">"symbolDocs"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nl">"FOOFOO"</span><span class="p">:</span><span class="s2">"description about FOOFOO"</span><span class="p">,</span><span class="w"> </span><span class="nl">"BARBAR"</span><span class="p">:</span><span class="s2">"description about BARBAR"</span><span class="p">}</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+      </span><span class="p">],</span><span class="w">
+      </span><span class="nl">"optional"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h2 id="typeref">Typeref</h2>
+
+<p>Pegasus supports a new schema type known as a typeref. A typeref is like
+a typedef in C. It does not declare a new type but declares an alias to
+an existing type.</p>
+
+<ul>
+  <li>Typerefs are useful for differentiating different uses of the same
+type. For example, we can use to a typeref to differentiate a string
+field that holds an URN (uniform resource name) from an arbitrary
+string value or a long field that holds an epoch time in
+milliseconds from a generic long value.</li>
+  <li>A typeref allows additional meta-data to be associated with
+primitive and unnamed types. This meta-data can be used to provide
+documentation or support custom properties.</li>
+  <li>A typeref provides a way to refer to common unnamed types such as
+arrays, maps, and unions. Without typerefs, users may have to wrap
+these unnamed types with a record in order to address them.
+Alternatively, users may cut-and-paste common type declarations,
+resulting in unnecessary duplication and potentially causing
+inconsistencies if future changes are not propagated correctly to
+all copies.</li>
+</ul>
+
+<p>Typerefs use the type name <code class="highlighter-rouge">typeref</code> and support the following attributes:</p>
+
+<ul>
+  <li><code class="highlighter-rouge">name</code> a JSON string providing the name of the typeref (required).</li>
+  <li><code class="highlighter-rouge">namespace</code> a JSON string that qualifies the name;</li>
+  <li><code class="highlighter-rouge">package</code> a JSON string that qualifies the language binding
+namespace for this typeref (optional). If this is not specified,
+language binding class for the typeref will use <code class="highlighter-rouge">namespace</code> as its
+default namespace.</li>
+  <li><code class="highlighter-rouge">doc</code> a JSON string providing documentation to the user of this
+schema (optional).</li>
+  <li><code class="highlighter-rouge">ref</code> the schema that the typeref refers to.</li>
+</ul>
+
+<p><strong>Note:</strong> Due to the addition of doclint in JDK8, anything under the
+<code class="highlighter-rouge">doc</code> attribute must be W3C HTML 4.01 compliant. This is because the
+contents of this string will appear as Javadocs in the generated Java
+‘data template’ classes later. Please take this into consideration
+when writing your documentation.</p>
+
+<p>Here are a few examples:</p>
+
+<p>Differentiate URN from string</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"typeref"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"URN"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"ref"</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"doc"</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="s2">"A URN, the format is defined by RFC 2141"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Differentiate time from long</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"typeref"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"time"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"ref"</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="s2">"long"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"doc"</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="s2">"Time in milliseconds since Jan 1, 1970 UTC"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Typerefs (by default) do not alter the serialization format or in-memory
+representation.</p>
+
+<h2 id="record-field-attributes">Record Field Attributes</h2>
+
+<p>You can use the following record field attributes to annotate fields
+with metadata.</p>
+
+<ul>
+  <li><code class="highlighter-rouge">optional</code> - marks the field as optional, meaning it doesn’t require
+a value. See <a href="#OptionalFields">Optional Fields</a>.</li>
+</ul>
+
+<p><a name="OptionalFields"></a></p>
+
+<h2 id="optional-fields">Optional Fields</h2>
+
+<p>Pegasus supports optional fields implicitly through the “optional” flag
+in the field definition. A field is required unless the field is
+declared with the optional flag set to true. A field without the
+optional flag is required. A field with the optional flag set to false
+is also required. An optional field may be present or absent in the
+in-memory data structure or serialized data.</p>
+
+<p>The Java binding provides methods to determine if an optional field is
+present and a specialized get accessor allows the caller to specify
+whether the default value or null should be returned when an absent
+optional field is accessed. The has field accessor may also be used to
+determine if an optional field is present.</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"record"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"Optional"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"namespace"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"com.linkedin.pegasus.generator.examples"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"fields"</span><span class="w"> </span><span class="p">:</span><span class="w">
+  </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"foo"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"optional"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Optional field present</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"foo"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"abcd"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Optional field absent</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>See <a href="#GetMode">GetMode</a> for more detailed information on how the code
+generated data stubs access optional/default fields.</p>
+
+<h3 id="avros-approach-to-declaring-optional-fields">Avro’s Approach to Declaring Optional Fields</h3>
+
+<p>DO NOT USE UNION WITH NULL TO DECLARE AN OPTIONAL FIELD IN PEGASUS.</p>
+
+<p>Avro’s approach to declaring an optional field is to use a union type
+whose values may be null or the desired value type. Pegasus discourages
+this practice and may remove support for union with null as well as the
+null type in the future. The reason for this is that declaring an
+optional field using a union causes the optional field to be always
+present in the underlying in-memory data structure and serialized data.
+Absence of a value is represented by a null value. Presence of a value
+is represented by a value in the union of the value’s type.</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"record"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"OptionalWithUnion"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"namespace"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"com.linkedin.pegasus.generator.examples"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"fields"</span><span class="w"> </span><span class="p">:</span><span class="w">
+  </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"foo"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"string"</span><span class="p">,</span><span class="w"> </span><span class="s2">"null"</span><span class="p">]</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>optional field present</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"foo"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nl">"string"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"abcd"</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>optional field absent</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"foo"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>Note Avro uses the union approach because Avro serialization is
+optimized to not include a field identifier in the serialized data.</p>
+
+<h2 id="union">Union</h2>
+
+<p>Union is a powerful way to model data that can be of different types at
+different scenarios. Record fields that have this behavior can be
+defined as a Union type with the expected value types as its members.
+Here is an example of a record field defined an a union with <code class="highlighter-rouge">string</code>
+and <code class="highlighter-rouge">array</code> as its members.</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"record"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"RecordWithUnion"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"namespace"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"com.linkedin.pegasus.examples"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"fields"</span><span class="w"> </span><span class="p">:</span><span class="w">
+  </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"result"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+        </span><span class="p">{</span><span class="w">
+          </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"array"</span><span class="p">,</span><span class="w">
+          </span><span class="nl">"items"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"Result"</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+      </span><span class="p">]</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="union-with-members-of-the-same-type">Union With Members Of The Same Type</h3>
+
+<p>In addition to the unions with disparate member types, Pegasus unions
+can have more than one member of the same type inside a single union
+definition. For example a union can have multiple members that are of,</p>
+
+<ul>
+  <li>same primitive type</li>
+  <li>same named complex type</li>
+  <li>array of same or different item types</li>
+  <li>map of same or different value types</li>
+  <li>typeref dereferenced to same type.</li>
+</ul>
+
+<p>Such unions <strong>must</strong> specify an unique alias for each member in the
+union definition. When an alias is specified, it acts as the member’s
+discriminator unlike the member type name on the standard unions
+<a href="#union">defined above</a>.</p>
+
+<p>In the example below, the union definition has a <code class="highlighter-rouge">string</code> and two
+<code class="highlighter-rouge">array</code> members with unique aliases for each of them.</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"record"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"RecordWithAliasedUnion"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"namespace"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"com.linkedin.pegasus.examples"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"fields"</span><span class="w"> </span><span class="p">:</span><span class="w">
+  </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"result"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="p">{</span><span class="w">
+          </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+          </span><span class="nl">"alias"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"message"</span><span class="w">
+        </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="w">
+          </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"array"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"items"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"Result"</span><span class="w">
+          </span><span class="p">},</span><span class="w">
+          </span><span class="nl">"alias"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"successResults"</span><span class="w">
+        </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="w">
+          </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"array"</span><span class="p">,</span><span class="w">
+            </span><span class="nl">"items"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"Result"</span><span class="w">
+          </span><span class="p">},</span><span class="w">
+          </span><span class="nl">"alias"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"failureResults"</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+      </span><span class="p">]</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>There are few constraints that must be taken in consideration while
+specifying aliases for union members,</p>
+
+<ol>
+  <li>Aliases must be unique for each member in a union definition.</li>
+  <li>Aliases must be specified for either all or none of the members in a
+union definition.</li>
+  <li>Aliases cannot be specified for <code class="highlighter-rouge">null</code> member types which means
+there can only be one null member inside a union definition.</li>
+</ol>
+
+<h2 id="default-values">Default Values</h2>
+
+<p>A field may be declared to have a default value. The default value will
+be validated against the schema type of the field. For example, if the
+type is record and it has non-optional fields, then the default value
+must include the non-optional fields in the default value.</p>
+
+<p>A default value may be declared for a required or an optional field. The
+default value is used by the get accessor. Unlike Avro, default values
+are not assigned to absent fields on de-serialization.</p>
+
+<p>If a default value is declared for a required field, for all three
+<a href="#GetMode">GetMode</a>, the get accessor behaves the same as that for an
+optional field with a default value. More specifically, the get accessor
+doesn’t fail even if the field is absent. However, in this case, <a href="#data-to-schema-validation">data
+validation</a> may fail if
+<a href="#requiredmode">RequiredMode</a> is set to <code class="highlighter-rouge">MUST_BE_PRESENT</code>.</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"record"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"Default"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"namespace"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"com.linkedin.pegasus.generator.examples"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"fields"</span><span class="w"> </span><span class="p">:</span><span class="w">
+  </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"mandatoryWithDefault"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"default"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"this is the default string"</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"optionalWithDefault"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"optional"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"default"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"this is the default string"</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>See <a href="#GetMode">GetMode</a> for more detailed information on how the code
+generated data stubs access optional/default fields.</p>
+
+<h3 id="default-values-for-union-types">Default Values for Union Types</h3>
+
+<p>An Avro default value for a union type does not include the member
+discriminator and the type of the default value must be the first member
+type in the list of member types.</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="p">...</span>
+  <span class="dl">"</span><span class="s2">fields</span><span class="dl">"</span> <span class="p">:</span>
+  <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">name</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">foo</span><span class="dl">"</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">type</span><span class="dl">"</span> <span class="p">:</span> <span class="p">[</span> <span class="dl">"</span><span class="s2">int</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">string</span><span class="dl">"</span> <span class="p">],</span>
+      <span class="dl">"</span><span class="s2">default</span><span class="dl">"</span>  <span class="p">:</span> <span class="mi">42</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>A Pegasus default value for a union type must include the member
+discriminator. This allows the same typeref’ed union to have default
+values of different member types.</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="p">...</span>
+  <span class="dl">"</span><span class="s2">fields</span><span class="dl">"</span> <span class="p">:</span>
+  <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">name</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">foo</span><span class="dl">"</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">type</span><span class="dl">"</span> <span class="p">:</span> <span class="p">[</span> <span class="dl">"</span><span class="s2">int</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">string</span><span class="dl">"</span> <span class="p">]</span>
+      <span class="dl">"</span><span class="s2">default</span><span class="dl">"</span> <span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">int</span><span class="dl">"</span> <span class="p">:</span> <span class="mi">42</span> <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>For unions with aliased members, the specified alias is used as member
+discriminator instead of the type name.</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="p">...</span>
+  <span class="dl">"</span><span class="s2">fields</span><span class="dl">"</span> <span class="p">:</span>
+  <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">name</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">foo</span><span class="dl">"</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">type</span><span class="dl">"</span> <span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span> <span class="dl">"</span><span class="s2">type</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">int</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">alias</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">count</span><span class="dl">"</span> <span class="p">},</span>
+        <span class="p">{</span> <span class="dl">"</span><span class="s2">type</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">string</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">alias</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">message</span><span class="dl">"</span> <span class="p">}</span>
+      <span class="p">],</span>
+      <span class="dl">"</span><span class="s2">default</span><span class="dl">"</span> <span class="p">:</span> <span class="p">{</span> <span class="dl">"</span><span class="s2">count</span><span class="dl">"</span> <span class="p">:</span> <span class="mi">42</span> <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Note the Avro syntax optimizes the most common union with null pattern
+that is used to represent optional fields to be less verbose. However,
+Pegasus has explicit support for optional fields and discourages the use
+of union with null. This significantly reduces the syntactical sugar
+benefit of the Avro optimization.</p>
+
+<p>If a union type may be translated to Avro, all default values provided
+for the union type must be of the first member type in the list of
+member types. This restriction is because Avro requires default values
+of a union type to be of the first member type of the union.</p>
+
+<h2 id="including-fields-from-another-record">Including Fields from Another Record</h2>
+
+<p>Pegasus implements the “include” attribute. It is used to include all
+fields from another record into the current record. It does not include
+any other attribute of the record. Include is transitive, if record A
+includes record B and record B includes record C, record A contains all
+the fields declared in record A, record B and record C.</p>
+
+<p>The value of the “include” attribute should be a list of records or
+typerefs of records. It is an error to specify non-record types in this
+list.</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"doc"</span><span class="w">  </span><span class="p">:</span><span class="w"> </span><span class="s2">"Bar includes fields of Foo, Bar will have fields f1 from itself and b1 from Bar"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"record"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"Bar"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"include"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="s2">"Foo"</span><span class="w"> </span><span class="p">],</span><span class="w">
+  </span><span class="nl">"fields"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"b1"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+
+</span><span class="p">{</span><span class="w">
+  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"record"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"Foo"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"fields"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"f1"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h2 id="deprecation">Deprecation</h2>
+
+<p>Named schema, record field, and enum symbol can be deprecated using
+<code class="highlighter-rouge">deprecated</code> property or <code class="highlighter-rouge">deprecatedSymbols</code> property in enum
+declaration. The property value can be a string describing why the
+schema element is deprecated or an alternative, or simply boolean
+<code class="highlighter-rouge">true</code>. However, the latter use is discouraged and may be removed in the
+future. The Java binding generated for these elements will be marked as
+deprecated.</p>
+
+<h3 id="named-schema">Named Schema</h3>
+
+<p>To deprecate a named schema, add <code class="highlighter-rouge">deprecated</code> property to its
+declaration.</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"record"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"Deprecated"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"namespace"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"com.linkedin.pegasus.generator.test"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"deprecated"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Use Foo instead."</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"fields"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="err">...</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="record-field">Record Field</h3>
+
+<p>To deprecate a record field, add <code class="highlighter-rouge">deprecated</code> property to its
+declaration.</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"record"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"Foo"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"namespace"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"com.linkedin.pegasus.generator.test"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"fields"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"deprecatedInt"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"int"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"deprecated"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Reason for int deprecation."</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<h3 id="enum-symbol">Enum Symbol</h3>
+
+<p>To deprecate an enum symbol, add <code class="highlighter-rouge">deprecatedSymbols</code> property to the
+enum declaration. The value of the property is a map from the symbol
+name to a string description.</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"name"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"Planet"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"namespace"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"com.linkedin.pegasus.generator.test"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"type"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s2">"enum"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"symbols"</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w"> </span><span class="s2">"MERCURY"</span><span class="p">,</span><span class="w"> </span><span class="s2">"VENUS"</span><span class="p">,</span><span class="w"> </span><span class="s2">"EARTH"</span><span class="p">,</span><span class="w"> </span><span class="s2">"MARS"</span><span class="p">,</span><span class="w"> </span><span class="s2">"JUPITER"</span><span class="p">,</span><span class="w"> </span><span class="s2">"SATURN"</span><span class="p">,</span><span class="w"> </span><span class="s2">"URANUS"</span><span class="p">,</span><span class="w"> </span><span class="s2">"NEPTUNE"</span><span class="p">,</span><span class="w"> </span><span class="s2">"PLUTO"</span><span class="w"> </span><span class="p">],</span><span class="w">
+  </span><span class="nl">"deprecatedSymbols"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"PLUTO"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Reclassified as dwarf planet."</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

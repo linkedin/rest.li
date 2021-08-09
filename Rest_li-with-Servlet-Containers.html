@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128576866-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128576866-1');
+    </script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Rest.li with servlet containers</title>
+    <meta name="description" content="Rest.li may be run in a variety of http frameworks. Out of the box, Rest.li supports both Netty and Servlet containers, such as Jetty." />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/Rest_li-with-Servlet-Containers" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Spec</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/spec/protocol">Rest.li Protocol</a></li>
+                       
+                         <li><a href="/rest.li/spec/restspec_format">Restspec JSON format</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_0-response-API">Rest.li 2.0 response-API</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Rest.li Server</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/spec/service_errors">Service Errors</a></li>
+                       
+                         <li><a href="/rest.li/spec/return_entity">Return Entity</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Rest.li Resource Method</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/batch_finder_resource_method">Batch Finder</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">R2D2</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Dynamic_Discovery">Dynamic Discovery</a></li>
+                       
+                         <li><a href="/rest.li/D2-Zookeeper-Properties">D2 Zookeeper properties</a></li>
+                       
+                         <li><a href="/rest.li/Request-Response-API-(R2)">Request-Response API</a></li>
+                       
+                         <li><a href="/rest.li/Request-Response-Framework">Request-Response framework</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">HTTP Frameworks</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-with-Netty">Netty</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-with-Servlet-Containers">Servlet containers</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Dependency injection</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Spring-Dependency-Injection">Spring dependency injection</a></li>
+                       
+                         <li><a href="/rest.li/Guice-Dependency-Injection">Guice dependency injection</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="restli-with-servlet-containers">Rest.li With Servlet Containers</h1>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#step-1-creating-a-webxml-file">Step 1. Creating a web.xml File</a></li>
+  <li><a href="#step-2-building-a-war">Step 2. Building a War</a></li>
+  <li><a href="#jetty">Jetty</a></li>
+</ul>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>Rest.li may be run in a variety of http frameworks. Out of the box,
+Rest.li supports both <a href="Rest_li-with-Netty">Netty</a> and Servlet
+containers, such as Jetty.</p>
+
+<p>This describes how to run Rest.li on a servlet container by building a
+war containing a rest.li servlet. It also covers how to run Rest.li with
+Jetty.</p>
+
+<h2 id="step-1-creating-a-webxml-file">Step 1. Creating a web.xml File</h2>
+
+<p>Rest.li provides a RestliServlet class to integrate rest.li into any
+Java servlet container.</p>
+
+<p>To use RestliServlet, you will add a web.xml file.</p>
+
+<p>For example, below is
+<code class="highlighter-rouge">example-standalone-app/server/src/main/webapp/WEB-INF/web.xml</code>, an
+extremely simple web.xml example that creates a RestliServlet and
+configures it to load all rest.li resources in the
+<code class="highlighter-rouge">com.example.fortune.impl</code> package.</p>
+
+<p>Notice that RestliServlet automatically scans all resource classes in
+the specified package and initializes the REST endpoints/routes without
+any hard-coded connection. Adding additional resources or operations can
+be done simply by expanding your data schema and providing additional
+functionality in your Resource
+class(es).</p>
+
+<h5 id="file-example-standalone-appserversrcmainwebappweb-infwebxml">file: example-standalone-app/server/src/main/webapp/WEB-INF/web.xml</h5>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+
+\<span class="err">&lt;</span>\!DOCTYPE web-app PUBLIC ‘-//Sun Microsystems, Inc.//DTD Web
+Application 2.3//EN’ ‘http://java.sun.com/dtd/web-app_2_3.dtd’\&gt;
+
+<span class="nt">&lt;web-app&gt;</span>  
+<span class="nt">&lt;display-name&gt;</span>Fortunes App<span class="nt">&lt;/display-name&gt;</span>  
+<span class="nt">&lt;description&gt;</span>Tells
+fortunes<span class="nt">&lt;/description&gt;</span>
+
+<span class="c">&lt;!-- servlet definitions --&gt;</span>
+
+<span class="nt">&lt;servlet&gt;</span>  
+<span class="nt">&lt;servlet-name&gt;</span>FortunesServlet<span class="nt">&lt;/servlet-name&gt;</span>  
+<span class="nt">&lt;servlet-class&gt;</span>com.linkedin.restli.server.RestliServlet<span class="nt">&lt;/servlet-class&gt;</span>  
+<span class="nt">&lt;init-param&gt;</span>  
+<span class="nt">&lt;param-name&gt;</span>resourcePackages<span class="nt">&lt;/param-name&gt;</span>  
+<span class="nt">&lt;param-value&gt;</span>com.example.fortune.impl<span class="nt">&lt;/param-value&gt;</span>  
+<span class="nt">&lt;/init-param&gt;</span>  
+<span class="nt">&lt;load-on-startup&gt;</span>1<span class="nt">&lt;/load-on-startup&gt;</span>  
+<span class="nt">&lt;/servlet&gt;</span>
+
+<span class="c">&lt;!-- servlet mappings --&gt;</span>
+
+<span class="nt">&lt;servlet-mapping&gt;</span>  
+<span class="nt">&lt;servlet-name&gt;</span>FortunesServlet<span class="nt">&lt;/servlet-name&gt;</span>  
+<span class="nt">&lt;url-pattern&gt;</span>/\*<span class="nt">&lt;/url-pattern&gt;</span>  
+<span class="nt">&lt;/servlet-mapping&gt;</span>
+
+<span class="nt">&lt;/web-app&gt;</span>  
+</code></pre></div></div>
+
+<p>The parseq thread count (use to make outbound requests) may optionally
+be configured by setting the parSeqThreadPoolSize servlet init param,
+for example:</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;init-param&gt;</span>  
+<span class="nt">&lt;param-name&gt;</span>parseqThreadPoolSize<span class="nt">&lt;/param-name&gt;</span>  
+<span class="nt">&lt;param-value&gt;</span>10<span class="nt">&lt;/param-value&gt;</span>  
+<span class="nt">&lt;/init-param&gt;</span>  
+</code></pre></div></div>
+
+<p>To configure jetty’s inbound request thread pool size, see Jetty’s
+documentation.</p>
+
+<h2 id="step-2-building-a-war">Step 2. Building a War</h2>
+
+<p>To build a war, we need a <code class="highlighter-rouge">build.gradle</code> file in the server directory,
+which should look like this:</p>
+
+<h5 id="file-example-standalone-appserverbuildgradle">file: example-standalone-app/server/build.gradle</h5>
+
+<div class="language-groovy highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">apply</span> <span class="nl">plugin:</span> <span class="err">‘</span><span class="n">war</span><span class="err">’</span>  
+<span class="n">apply</span> <span class="nl">plugin:</span> <span class="err">‘</span><span class="n">pegasus</span><span class="err">’</span>
+
+<span class="n">ext</span><span class="o">.</span><span class="na">apiProject</span> <span class="o">=</span> <span class="n">project</span><span class="o">(</span><span class="err">‘</span><span class="o">:</span><span class="n">api</span><span class="err">’</span><span class="o">)</span>
+
+<span class="n">dependencies</span> <span class="o">{</span>  
+<span class="n">compile</span> <span class="nf">project</span><span class="o">(</span><span class="nl">path:</span> <span class="err">‘</span><span class="o">:</span><span class="n">api</span><span class="err">’</span><span class="o">,</span> <span class="nl">configuration:</span> <span class="err">‘</span><span class="n">dataTemplate</span><span class="err">’</span><span class="o">)</span>  
+<span class="n">compile</span> <span class="n">spec</span><span class="o">.</span><span class="na">product</span><span class="o">.</span><span class="na">pegasus</span><span class="o">.</span><span class="na">restliServer</span>  
+<span class="o">}</span>  
+</code></pre></div></div>
+
+<p>For on the gradle ‘war’ plugin, see: <a href="http://www.gradle.org/docs/current/userguide/war_plugin.html">Gradle War
+Plugin</a></p>
+
+<h2 id="jetty">Jetty</h2>
+
+<p>To run Rest.li on Jetty, use the war plugin like you would for any other
+servlet (above). For convenience, you can optionally setup a Gradle task
+to run your application in Jetty. Here’s an example:</p>
+
+<h5 id="file-example-standalone-appserverbuildgradle-1">file: example-standalone-app/server/build.gradle</h5>
+
+<div class="language-groovy highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">apply</span> <span class="nl">plugin:</span> <span class="err">‘</span><span class="n">war</span><span class="err">’</span>  
+<span class="n">apply</span> <span class="nl">plugin:</span> <span class="err">‘</span><span class="n">pegasus</span><span class="err">’</span>
+
+<span class="n">ext</span><span class="o">.</span><span class="na">apiProject</span> <span class="o">=</span> <span class="n">project</span><span class="o">(</span><span class="err">‘</span><span class="o">:</span><span class="n">api</span><span class="err">’</span><span class="o">)</span>
+
+<span class="n">dependencies</span> <span class="o">{</span>  
+<span class="n">compile</span> <span class="nf">project</span><span class="o">(</span><span class="nl">path:</span> <span class="err">‘</span><span class="o">:</span><span class="n">api</span><span class="err">’</span><span class="o">,</span> <span class="nl">configuration:</span> <span class="err">‘</span><span class="n">dataTemplate</span><span class="err">’</span><span class="o">)</span>  
+<span class="n">compile</span> <span class="n">spec</span><span class="o">.</span><span class="na">product</span><span class="o">.</span><span class="na">pegasus</span><span class="o">.</span><span class="na">restliServer</span>  
+<span class="o">}</span>
+
+<span class="n">configurations</span> <span class="o">{</span>  
+<span class="n">jetty8</span>  
+<span class="o">}</span>
+
+<span class="n">dependencies</span> <span class="o">{</span>  
+<span class="n">jetty8</span> <span class="err">“</span><span class="n">org</span><span class="o">.</span><span class="na">mortbay</span><span class="o">.</span><span class="na">jetty</span><span class="o">:</span><span class="n">jetty</span><span class="o">-</span><span class="nl">runner:</span><span class="mf">8.1</span><span class="o">.</span><span class="mi">15</span><span class="o">.</span><span class="na">v20140411</span><span class="err">”</span> <span class="c1">// set to</span>
+<span class="n">whatever</span> <span class="n">version</span> <span class="n">of</span> <span class="n">jetty</span> <span class="n">you</span> <span class="n">want</span> <span class="n">to</span> <span class="n">test</span> <span class="n">with</span>  
+<span class="o">}</span>
+
+<span class="n">task</span> <span class="nf">JettyRunWar</span><span class="o">(</span><span class="nl">type:</span> <span class="n">JavaExec</span><span class="o">)</span> <span class="o">{</span>  
+<span class="n">main</span> <span class="o">=</span> <span class="err">“</span><span class="n">org</span><span class="o">.</span><span class="na">mortbay</span><span class="o">.</span><span class="na">jetty</span><span class="o">.</span><span class="na">runner</span><span class="o">.</span><span class="na">Runner</span><span class="err">”</span>  
+<span class="n">args</span> <span class="o">=</span> <span class="err">\</span><span class="o">[</span><span class="n">war</span><span class="o">.</span><span class="na">archivePath</span><span class="err">\</span><span class="o">]</span>  
+<span class="n">classpath</span> <span class="n">configurations</span><span class="o">.</span><span class="na">jetty8</span>  
+<span class="o">}</span>  
+</code></pre></div></div>
+
+<p>To start Rest.li on Jetty run:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gradle JettyRunWar  
+</code></pre></div></div>
+
+<p>The server will start on port 8080 under the /server context path, for
+example:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curli http://localhost:8080/fortunes/1  
+</code></pre></div></div>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>
