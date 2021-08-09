@@ -28,7 +28,7 @@ to configure service errors in Rest.li Java.
 ## Error Responses
 
 All error responses are returned by Rest.li in a format conforming to the
-[ErrorResponse schema]({{site.data.urls.repo}}/restli-common/src/main/pegasus/com/linkedin/restli/common/ErrorResponse.pdsc),
+[ErrorResponse schema]({{site.data.urls.repo}}/restli-common/src/main/pegasus/com/linkedin/restli/common/ErrorResponse.pdl),
 which contains various fields describing the service failure.
 
 ### Fields
