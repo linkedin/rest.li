@@ -2,6 +2,7 @@ package com.linkedin.restli.internal.server.util;
 
 import com.linkedin.restli.server.InvalidMimeTypeException;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -9,6 +10,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 
@@ -204,8 +207,7 @@ public final class MIMEParse
       if ((target.type.equals(range.type) || range.type.equals("*") || target.type
               .equals("*"))
               && (target.subType.equals(range.subType)
-              || range.subType.equals("*") || target.subType
-              .equals("*")))
+              || range.subType.equals("*") || target.subType.equals("*")))
       {
         for (String k : target.params.keySet())
         {
@@ -221,8 +223,7 @@ public final class MIMEParse
           if (fitness > bestFitness)
           {
             bestFitness = fitness;
-            bestFitQ = NumberUtils
-                    .toFloat(range.params.get(QUALITY_PARAM), 0);
+            bestFitQ = NumberUtils.toFloat(range.params.get(QUALITY_PARAM), 0);
             bestFitParams = range.params;
           }
         }
@@ -276,23 +277,32 @@ public final class MIMEParse
    */
   public static String bestMatch(Collection<String> supported, String header)
   {
-    List<ParseResults> parseResults = new LinkedList<>();
-    List<FitnessAndQuality> weightedMatches = new LinkedList<>();
-    for (String r : StringUtils.split(header, ','))
-      parseResults.add(parseMediaRange(r));
+    return bestMatch(supported.stream(), header);
+  }
 
-    for (String s : supported)
-    {
-      FitnessAndQuality fitnessAndQuality = fitnessAndQualityParsed(s,
-                                                                    parseResults);
-      weightedMatches.add(fitnessAndQuality);
-    }
-    Collections.sort(weightedMatches);
+  /**
+   * Takes a list of supported mime-types and finds the best match for all the
+   * media-ranges listed in header. The value of header must be a string that
+   * conforms to the format of the HTTP Accept: header. The value of
+   * 'supported' is a list of mime-types.
+   *
+   * MimeParse.bestMatch(Arrays.asList(new String[]{"application/xbel+xml",
+   * "text/xml"}), "text/*;q=0.5,*; q=0.1") 'text/xml'
+   *
+   * @return content-type
+   */
+  public static String bestMatch(Stream<String> supported, String header)
+  {
+    List<ParseResults> parseResults = Arrays.stream(StringUtils.split(header, ','))
+        .map(MIMEParse::parseMediaRange)
+        .collect(Collectors.toList());
 
-    FitnessAndQuality lastOne = weightedMatches
-            .get(weightedMatches.size() - 1);
-    return NumberUtils.compare(lastOne.quality, 0) != 0 ? lastOne.mimeType
-            : "";
+    FitnessAndQuality lastOne = supported.map(s -> fitnessAndQualityParsed(s, parseResults))
+        .sorted()
+        .reduce((first, second) -> second)
+        .orElseThrow(() -> new InvalidMimeTypeException(header));
+
+    return NumberUtils.compare(lastOne.quality, 0) != 0 ? lastOne.mimeType : "";
   }
 
   /**
@@ -306,13 +316,23 @@ public final class MIMEParse
    */
   public static List<String> parseAcceptType(final String header)
   {
-    List<String> acceptTypes = new LinkedList<>();
-    for (String acceptType : StringUtils.split(header, ','))
-    {
-      final ParseResults parseResults = parseMimeType(acceptType);
-      acceptTypes.add(parseResults.type + "/" + parseResults.subType);
-    }
-    return acceptTypes;
+    return parseAcceptTypeStream(header).collect(Collectors.toList());
+  }
+
+  /**
+   * Returns a {@link Stream} of {@link String}s representing all possible accept types from the provided header.
+   * The provided header should be the value of the 'Accept' header. This method simply returns the primary type
+   * followed by the subtype, meaning 'primaryType/subType'. For example it will return 'application/json' or
+   * 'multipart/related'. Therefore no quality factor information is preserved in the returned list of accept types.
+   *
+   * @param header the header to parse
+   * @return a Stream of Strings representing all possible accept types
+   */
+  public static Stream<String> parseAcceptTypeStream(final String header)
+  {
+    return Arrays.stream(StringUtils.split(header, ','))
+        .map(MIMEParse::parseMimeType)
+        .map(parseResults -> parseResults.type + "/" + parseResults.subType);
   }
 
   //Disable instantiation

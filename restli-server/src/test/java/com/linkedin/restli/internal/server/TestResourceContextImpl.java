@@ -26,9 +26,11 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
+import com.linkedin.restli.server.LocalRequestProjectionMask;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.test.TestResourceContext;
 
+import java.net.HttpCookie;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
@@ -116,6 +118,22 @@ public class TestResourceContextImpl
     context.getPathKeys().getKeyMap().put("should", "puke");
   }
 
+  @Test
+  public void testCookiesLocalAttr() throws Exception
+  {
+    URI uri = URI.create("resources");
+
+    RequestContext requestContext = new RequestContext();
+    List<HttpCookie> localCookies = Collections.singletonList(new HttpCookie("test", "value"));
+    requestContext.putLocalAttr(ServerResourceContext.CONTEXT_COOKIES_KEY, localCookies);
+
+    ServerResourceContext resourceContext = new ResourceContextImpl(
+        new PathKeysImpl(), new TestResourceContext.MockRequest(uri), requestContext);
+
+    // Assert that request cookies are retrieved from the local attribute.
+    Assert.assertSame(resourceContext.getRequestCookies(), localCookies);
+  }
+
   @DataProvider
   private static Object[][] overrideMaskData()
   {
@@ -169,6 +187,28 @@ public class TestResourceContextImpl
     Assert.assertEquals(maskOperations.size(), 1);
     Assert.assertTrue(maskOperations.containsKey(new PathSpec("state")));
     Assert.assertEquals(maskOperations.get(new PathSpec("state")), MaskOperation.POSITIVE_MASK_OP);
+  }
+
+  @Test
+  public void testProjectionMaskLocalAttr() throws Exception
+  {
+    URI uri = URI.create("resources");
+
+    RequestContext requestContext = new RequestContext();
+    MaskTree projectionMask = new MaskTree();
+    MaskTree metadataProjectionMask = new MaskTree();
+    MaskTree pagingProjectionMask = new MaskTree();
+    LocalRequestProjectionMask localRequestProjectionMask =
+        new LocalRequestProjectionMask(projectionMask, metadataProjectionMask, pagingProjectionMask);
+    requestContext.putLocalAttr(ServerResourceContext.CONTEXT_PROJECTION_MASKS_KEY, localRequestProjectionMask);
+
+    ServerResourceContext resourceContext = new ResourceContextImpl(
+        new PathKeysImpl(), new TestResourceContext.MockRequest(uri), requestContext);
+
+    // Assert that projection mask is retrieved from the local attribute.
+    Assert.assertSame(resourceContext.getProjectionMask(), projectionMask);
+    Assert.assertSame(resourceContext.getMetadataProjectionMask(), metadataProjectionMask);
+    Assert.assertSame(resourceContext.getPagingProjectionMask(), pagingProjectionMask);
   }
 
   private enum ProjectionType

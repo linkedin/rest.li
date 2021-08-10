@@ -14,8 +14,13 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+
 ## [29.19.16] - 2021-08-09
 - Fix bug in ConstantQpsDarkClusterStrategy that would call ConstantRateLimiter.setRate with an invalid burst value
+
+## [29.19.15] - 2021-08-09
+- Provide the ability to set cookies and projection params in request context's local attributes to avoid
+serializing/deserializing them for requests that are executed in-process.
 
 ## [29.19.14] - 2021-07-29
 - Bump netty version to use ALPN support needed for JDK8u282.
@@ -5039,7 +5044,8 @@ patch operations can re-use these classes for generating patch messages.
 ## [0.14.1]
 
 [Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.16...master
-[29.19.16]: https://github.com/linkedin/rest.li/compare/v29.19.14...v29.19.16
+[29.19.16]: https://github.com/linkedin/rest.li/compare/v29.19.15...v29.19.16
+[29.19.15]: https://github.com/linkedin/rest.li/compare/v29.19.14...v29.19.15
 [29.19.14]: https://github.com/linkedin/rest.li/compare/v29.19.13...v29.19.14
 [29.19.13]: https://github.com/linkedin/rest.li/compare/v29.19.12...v29.19.13
 [29.19.12]: https://github.com/linkedin/rest.li/compare/v29.19.11...v29.19.12
