@@ -1469,6 +1469,7 @@ public class SimpleLoadBalancerStateTest
     assertNull(client, "shouldn't pick an https uri");
 
     _state.refreshClients(serviceProperties);
+
   }
 
   @Test(groups = { "small", "back-end" })
