@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.19.16] - 2021-08-09
 - Add support for resolving from multiple schema source directories.
   - This change also introduces the concept of "source" and "resolver" directories when 
     creating a `DataSchemaParser`. "Source" directories are used to parse/load the input
@@ -5044,7 +5046,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.15...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.16...master
+[29.19.16]: https://github.com/linkedin/rest.li/compare/v29.19.15...v29.19.16
 [29.19.15]: https://github.com/linkedin/rest.li/compare/v29.19.14...v29.19.15
 [29.19.14]: https://github.com/linkedin/rest.li/compare/v29.19.13...v29.19.14
 [29.19.13]: https://github.com/linkedin/rest.li/compare/v29.19.12...v29.19.13
