@@ -1571,11 +1571,16 @@ public class DegraderLoadBalancerTest
     myConfig.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING, 100d);
     DegraderLoadBalancerStrategyV3 strategy = getStrategy(myConfig);
     List<DegraderTrackerClient> clients = new ArrayList<>();
+    Map<URI, Integer> pointsMap = new HashMap<>();
     long clusterCallCount = 15;
     RingFactory<URI> ringFactory = new DelegatingRingFactory<>(new DegraderLoadBalancerStrategyConfig(1L));
 
-    clients.add(getClient(URI.create("http://test.linkedin.com:3242/fdsaf")));
-    clients.add(getClient(URI.create("http://test.linkedin.com:3243/fdsaf")));
+    URI uri1 = URI.create("http://test.linkedin.com:3242/fdsaf");
+    URI uri2 = URI.create("http://test.linkedin.com:3243/fdsaf");
+    clients.add(getClient(uri1));
+    clients.add(getClient(uri2));
+    pointsMap.put(uri1, 1);
+    pointsMap.put(uri2, 1);
 
     // state is default initialized, new cluster generation
     assertTrue(DegraderLoadBalancerStrategyV3.shouldUpdatePartition(0,
@@ -1589,7 +1594,7 @@ public class DegraderLoadBalancerTest
             testClock._currentTimeMillis,
             true,
             ringFactory,
-            new HashMap<>(),
+            pointsMap,
             PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
             0.0,
             -1,
@@ -1613,7 +1618,7 @@ public class DegraderLoadBalancerTest
             testClock._currentTimeMillis,
             true,
             ringFactory,
-            new HashMap<>(),
+            pointsMap,
             PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
             0.0,
             -1,
@@ -1637,7 +1642,7 @@ public class DegraderLoadBalancerTest
             testClock._currentTimeMillis,
             true,
             ringFactory,
-            new HashMap<>(),
+            pointsMap,
             PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
             0.0,
             -1,
@@ -1660,7 +1665,7 @@ public class DegraderLoadBalancerTest
             testClock._currentTimeMillis,
             true,
             ringFactory,
-            new HashMap<>(),
+            pointsMap,
             PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
             0.0,
             -1,
@@ -1691,10 +1696,15 @@ public class DegraderLoadBalancerTest
     myConfig.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_ONLY_AT_INTERVAL, true);
     DegraderLoadBalancerStrategyV3 strategy = getStrategy(myConfig);
     List<DegraderTrackerClient> clients = new ArrayList<>();
+    Map<URI, Integer> pointsMap = new HashMap<>();
     long clusterCallCount = 15;
 
-    clients.add(getClient(URI.create("http://test.linkedin.com:3242/fdsaf")));
-    clients.add(getClient(URI.create("http://test.linkedin.com:3243/fdsaf")));
+    URI uri1 = URI.create("http://test.linkedin.com:3242/fdsaf");
+    URI uri2 = URI.create("http://test.linkedin.com:3243/fdsaf");
+    clients.add(getClient(uri1));
+    clients.add(getClient(uri2));
+    pointsMap.put(uri1, 1);
+    pointsMap.put(uri2, 1);
 
     // state is default initialized, new cluster generation
     assertFalse(DegraderLoadBalancerStrategyV3.shouldUpdatePartition(0,
@@ -1717,7 +1727,7 @@ public class DegraderLoadBalancerTest
             testClock._currentTimeMillis,
             true,
             new DelegatingRingFactory<>(new DegraderLoadBalancerStrategyConfig(1L)),
-            new HashMap<>(),
+            pointsMap,
             PartitionDegraderLoadBalancerState.Strategy.LOAD_BALANCE,
             0.0,
             -1,
