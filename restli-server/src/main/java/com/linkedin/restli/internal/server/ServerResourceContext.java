@@ -28,6 +28,7 @@ import com.linkedin.entitystream.EntityStream;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
+import com.linkedin.restli.server.LocalRequestProjectionMask;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 
@@ -46,6 +47,17 @@ import java.util.Set;
  */
 public interface ServerResourceContext extends ResourceContext
 {
+  /**
+   * Local attribute key for request cookies. Value should be a {@link List} of {@link HttpCookie} objects.
+   */
+  String CONTEXT_COOKIES_KEY = ServerResourceContext.class.getName() + ".cookie";
+
+  /**
+   * Local attribute key for projection masks. Value should be a
+   * {@link LocalRequestProjectionMask} instance.
+   */
+  String CONTEXT_PROJECTION_MASKS_KEY = ServerResourceContext.class.getName() + ".projectionMasks";
+
   /**
    * @return {@link DataMap} of request parameters.
    */

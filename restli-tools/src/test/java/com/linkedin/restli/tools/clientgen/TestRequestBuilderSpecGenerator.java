@@ -75,7 +75,7 @@ public class TestRequestBuilderSpecGenerator
 
   private Set<BuilderSpec> generateBuilderSpec(String[] sources)
   {
-    final DataSchemaParser schemaParser = new DataSchemaParser(RESOLVER_DIR);
+    final DataSchemaParser schemaParser = new DataSchemaParser.Builder(RESOLVER_DIR).build();
     final TemplateSpecGenerator specGenerator = new TemplateSpecGenerator(schemaParser.getSchemaResolver());
     final RestSpecParser parser = new RestSpecParser();
     final Map<ResourceMethod, String> builderBaseMap = new HashMap<>();

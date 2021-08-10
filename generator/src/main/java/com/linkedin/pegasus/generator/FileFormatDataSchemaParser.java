@@ -24,6 +24,7 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.InJarFileDataSchemaLocation;
+import com.linkedin.data.schema.resolver.SchemaDirectory;
 import com.linkedin.data.schema.resolver.SchemaDirectoryName;
 import com.linkedin.util.FileUtil;
 
@@ -49,16 +50,21 @@ import java.util.jar.JarFile;
 public class FileFormatDataSchemaParser
 {
   static final String SCHEMA_PATH_PREFIX = SchemaDirectoryName.PEGASUS.getName() + "/";
-  static final String EXTENSION_PATH_ENTRY = SchemaDirectoryName.EXTENSIONS.getName() + "/";
-  private final String _resolverPath;
   private final DataSchemaResolver _schemaResolver;
   private final DataSchemaParserFactory _schemaParserFactory;
+  private final List<SchemaDirectory> _sourceDirectories;
 
   public FileFormatDataSchemaParser(String resolverPath, DataSchemaResolver schemaResolver, DataSchemaParserFactory schemaParserFactory)
   {
-    _resolverPath = resolverPath;
+    this(schemaResolver, schemaParserFactory, schemaResolver.getSchemaDirectories());
+  }
+
+  public FileFormatDataSchemaParser(DataSchemaResolver schemaResolver,
+      DataSchemaParserFactory schemaParserFactory, List<SchemaDirectory> sourceDirectories)
+  {
     _schemaResolver = schemaResolver;
     _schemaParserFactory = schemaParserFactory;
+    _sourceDirectories = sourceDirectories;
   }
 
   public DataSchemaParser.ParseResult parseSources(String[] sources) throws IOException
@@ -98,7 +104,7 @@ public class FileFormatDataSchemaParser
                 final JarEntry entry = entries.nextElement();
                 if (!entry.isDirectory() &&
                     entry.getName().endsWith(_schemaParserFactory.getLanguageExtension()) &&
-                    (entry.getName().startsWith(_schemaResolver.getSchemasDirectoryName().getName() + "/")))
+                    shouldParseFile(entry.getName()))
                 {
                   parseJarEntry(jarFile, entry, result);
                   result.getSourceFiles().add(sourceFile);
@@ -150,6 +156,17 @@ public class FileFormatDataSchemaParser
     }
   }
 
+  private boolean shouldParseFile(String path)
+  {
+    for (SchemaDirectory schemaDirectory : _sourceDirectories)
+    {
+      if (schemaDirectory.matchesJarFilePath(path))
+      {
+        return true;
+      }
+    }
+    return false;
+  }
   /**
    * Parse a source that specifies a file (not a fully qualified schema name).
    *

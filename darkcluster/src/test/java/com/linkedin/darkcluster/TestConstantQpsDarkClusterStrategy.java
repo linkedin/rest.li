@@ -52,6 +52,7 @@ public class TestConstantQpsDarkClusterStrategy
     return new Object[][]{
         // numIterations, qps, numSourceInstances, numDarkInstances
         {0, 0, 10, 10},
+        {10, 10, 10, 0},
         {0, 100, 10, 10},
         {1000, 10, 10, 10},
         {1000, 30, 10, 10},

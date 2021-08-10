@@ -126,7 +126,7 @@ public class PegasusDataTemplateGenerator
       String targetDirectoryPath, String[] sources, boolean generateLowercasePath, boolean generateFieldMask)
       throws IOException
   {
-    final DataSchemaParser schemaParser = new DataSchemaParser(resolverPath);
+    final DataSchemaParser schemaParser = new DataSchemaParser.Builder(resolverPath).build();
     final TemplateSpecGenerator specGenerator = new TemplateSpecGenerator(schemaParser.getSchemaResolver());
     JavaDataTemplateGenerator.Config config = new JavaDataTemplateGenerator.Config();
     config.setDefaultPackage(defaultPackage);

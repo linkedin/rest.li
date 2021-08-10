@@ -76,7 +76,7 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
   {
     float sendRate = getSendRate();
     // set burst in such a way that requests are dispatched evenly across the ONE_SECOND_PERIOD
-    int burst = (int) Math.ceil(sendRate / ONE_SECOND_PERIOD);
+    int burst = (int) Math.max(1, Math.ceil(sendRate / ONE_SECOND_PERIOD));
     _rateLimiter.setRate(sendRate, ONE_SECOND_PERIOD, burst);
     return addRequest(originalRequest, darkRequest, requestContext);
   }

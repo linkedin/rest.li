@@ -14,8 +14,32 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.20.0] - 2021-07-27
+## [29.20.0] - 2021-08-10
 - Fixed race condition when switching d2 load balancer strategies.
+
+## [29.19.17] - 2021-08-09
+- Fix bug in ConstantQpsDarkClusterStrategy that would call ConstantRateLimiter.setRate with an invalid burst value
+
+## [29.19.16] - 2021-08-09
+- Add support for resolving from multiple schema source directories.
+  - This change also introduces the concept of "source" and "resolver" directories when 
+    creating a `DataSchemaParser`. "Source" directories are used to parse/load the input
+    schemas, while the "resolver" directories will only be used for resolving referenced
+    schemas.
+
+## [29.19.15] - 2021-08-09
+- Provide the ability to set cookies and projection params in request context's local attributes to avoid
+serializing/deserializing them for requests that are executed in-process.
+
+## [29.19.14] - 2021-07-29
+- Bump netty version to use ALPN support needed for JDK8u282.
+
+## [29.19.13] - 2021-07-26
+- Add support for validating aliased union members.
+  - Union members originally didn't support custom properties and thus custom validation
+    was not supported for union members. With aliased unions, members now support custom
+    properties and thus can specify custom validation. Validation logic is updated to
+    include custom validations on union members.
 
 ## [29.19.12] - 2021-07-22
 - Add a predicate based bulk remove method for checkedMap.
@@ -5029,7 +5053,12 @@ patch operations can re-use these classes for generating patch messages.
 ## [0.14.1]
 
 [Unreleased]: https://github.com/linkedin/rest.li/compare/v29.20.0...master
-[29.20.0]: https://github.com/linkedin/rest.li/compare/v29.19.12...v29.20.0
+[29.20.0]: https://github.com/linkedin/rest.li/compare/v29.19.17...v29.20.0
+[29.19.17]: https://github.com/linkedin/rest.li/compare/v29.19.16...v29.19.17
+[29.19.16]: https://github.com/linkedin/rest.li/compare/v29.19.15...v29.19.16
+[29.19.15]: https://github.com/linkedin/rest.li/compare/v29.19.14...v29.19.15
+[29.19.14]: https://github.com/linkedin/rest.li/compare/v29.19.13...v29.19.14
+[29.19.13]: https://github.com/linkedin/rest.li/compare/v29.19.12...v29.19.13
 [29.19.12]: https://github.com/linkedin/rest.li/compare/v29.19.11...v29.19.12
 [29.19.11]: https://github.com/linkedin/rest.li/compare/v29.19.10...v29.19.11
 [29.19.10]: https://github.com/linkedin/rest.li/compare/v29.19.9...v29.19.10
