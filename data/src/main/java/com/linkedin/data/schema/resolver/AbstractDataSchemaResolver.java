@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -54,7 +55,7 @@ import java.util.Set;
  * <li> the locations to search for the named DataSchema
  *      (by implementing {@link #possibleLocations(String)},
  * <li> how transform the name and a search path into a location
- *      (by implementing {@link AbstractIterator#transform(String)}, and
+ *      (by implementing {@link AbstractPathAndSchemaDirectoryIterator#transform(String, SchemaDirectory)}, and
  * <li> how to obtain an {@link InputStream} from a location
  *      (by implementing {@link #locationToInputStream(DataSchemaLocation, StringBuilder)}.
  * </ul>
@@ -85,7 +86,10 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
    * Abstract class to help implement iterator returned by {@link #possibleLocations(String)}.
    *
    * @author slim
+   * @deprecated This class was intended for internal use and was replaced with {@link AbstractPathAndSchemaDirectoryIterator}.
+   * Recommend not depending on this class.
    */
+  @Deprecated
   public abstract static class AbstractIterator implements Iterator<DataSchemaLocation>
   {
     protected abstract DataSchemaLocation transform(String input);
@@ -154,6 +158,88 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
      * The underlying {@link Iterator}.
      */
     private final Iterator<String> _it;
+  }
+
+  /**
+   * Abstract class to help implement iterator returned by {@link #possibleLocations(String)}.
+   *
+   * @author kbalasub
+   */
+  abstract static class AbstractPathAndSchemaDirectoryIterator implements Iterator<DataSchemaLocation>
+  {
+    protected abstract DataSchemaLocation transform(String path, SchemaDirectory schemaDirectory);
+
+    /**
+     * Constructor.
+     *
+     * @param paths is the ordered list of search paths.
+     * @param schemaDirectories List of schema directories to use as possible schema locations.
+     */
+    protected AbstractPathAndSchemaDirectoryIterator(
+        Iterable<String> paths, List<SchemaDirectory> schemaDirectories)
+    {
+      _it = paths.iterator();
+      _schemaDirectories = schemaDirectories;
+    }
+
+    /**
+     * Return whether there is another location to search. True when there is another path to search or schema
+     * directories to search for the current/last path.
+     *
+     * @return true if there is another location to search.
+     */
+    @Override
+    public boolean hasNext()
+    {
+      if (_currentPath == null || !_directoryNameIterator.hasNext())
+      {
+        if (_it.hasNext())
+        {
+          _currentPath = _it.next();
+          _directoryNameIterator = _schemaDirectories.iterator();
+        }
+        else
+        {
+          return false;
+        }
+      }
+      return _directoryNameIterator.hasNext();
+    }
+
+    /**
+     * Obtains the next element, invokes and returns the output of {@link #transform(String, SchemaDirectory)}.
+     *
+     * @return the next location to search.
+     */
+    @Override
+    public DataSchemaLocation next()
+    {
+      if (_currentPath == null || !_directoryNameIterator.hasNext())
+      {
+        _currentPath = _it.next();
+        _directoryNameIterator = _schemaDirectories.iterator();
+      }
+      return transform(_currentPath, _directoryNameIterator.next());
+    }
+
+    /**
+     * Not implemented.
+     *
+     * @throws UnsupportedOperationException always.
+     */
+    @Override
+    public void remove()
+    {
+      throw new UnsupportedOperationException();
+    }
+
+    /**
+     * The underlying {@link Iterator} for paths.
+     */
+    private final Iterator<String> _it;
+    private String _currentPath;
+    private Iterator<SchemaDirectory> _directoryNameIterator;
+    private final List<SchemaDirectory> _schemaDirectories;
   }
 
   private final DataSchemaResolver _dependencyResolver;
@@ -264,6 +350,22 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
     return _resolvedLocations.contains(location);
   }
 
+  @Override
+  public List<SchemaDirectory> getSchemaDirectories()
+  {
+    return _schemaDirectories;
+  }
+
+  /**
+   * Sets the file directory names of all locations the resolver should use for resolving schemas.
+   *
+   * @param schemaDirectories schema directory names.
+   */
+  void setSchemaDirectories(List<SchemaDirectory> schemaDirectories)
+  {
+    _schemaDirectories = schemaDirectories;
+  }
+
   /**
    * Locate a {@link NamedDataSchema} with the specified name.
    *
@@ -370,6 +472,13 @@ public abstract class AbstractDataSchemaResolver implements DataSchemaResolver
   private final Set<DataSchemaLocation> _resolvedLocations = new HashSet<>();
   // Map of pending records with the boolean flag indicating if includes are being processed for that schema.
   private final LinkedHashMap<String, Boolean> _pendingSchemas = new LinkedHashMap<>();
+  /**
+   * The top level directory names in which the resolver would look for schemas. Default is a single directory
+   * {@link SchemaDirectoryName#PEGASUS}.
+   *
+   * Ex "pegasus" for data or "extensions" for relationship extension schema files
+   */
+  private List<SchemaDirectory> _schemaDirectories = Collections.singletonList(SchemaDirectoryName.PEGASUS);
 
   protected static final PrintStream out = new PrintStream(new FileOutputStream(FileDescriptor.out));
 }

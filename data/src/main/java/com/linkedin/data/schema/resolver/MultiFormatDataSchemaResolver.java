@@ -17,6 +17,7 @@
 package com.linkedin.data.schema.resolver;
 
 import com.linkedin.data.schema.DataSchemaParserFactory;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -50,11 +51,30 @@ public class MultiFormatDataSchemaResolver extends AbstractMultiFormatDataSchema
       String resolverPath,
       List<DataSchemaParserFactory> parsersForFormats)
   {
+    this(resolverPath, parsersForFormats, Collections.singletonList(SchemaDirectoryName.PEGASUS));
+  }
+
+  /**
+   * Initializes a new resolver with a specific set of file format parsers.  Use @{link withBuiltinFormats}
+   * instead to initialize with the default file format parsers.
+   *
+   * @param resolverPath provides the search paths separated by the provided separator, or null for no search paths.
+   * @param parsersForFormats provides a list of parser factories, one for each file format (e.g. PDSC, PDL)
+   *                          this resolver supports.
+   * @param schemaDirectories List of schema directories to use for resolving schemas.
+   */
+  public MultiFormatDataSchemaResolver(
+      String resolverPath,
+      List<DataSchemaParserFactory> parsersForFormats,
+      List<SchemaDirectory> schemaDirectories)
+  {
     for (DataSchemaParserFactory parserForFormat: parsersForFormats)
     {
       FileDataSchemaResolver resolver = new FileDataSchemaResolver(parserForFormat, resolverPath, this);
       resolver.setExtension("." + parserForFormat.getLanguageExtension());
+      resolver.setSchemaDirectories(schemaDirectories);
       addResolver(resolver);
     }
+    setSchemaDirectories(schemaDirectories);
   }
 }

@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.JarOutputStream;
@@ -60,10 +61,11 @@ public class TestFileDataSchemaResolver
 
   /**
    * Ensures that the resolver only detects schemas packaged under the default root 'pegasus'
-   * or {@link FileDataSchemaResolver#getSchemasDirectoryName()} directory in data template JARs.
+   * or {@link FileDataSchemaResolver#getSchemaDirectories()} list of directories in data template JARs.
    * Any schemas placed at the root or under some alternative root directory should be ignored by the resolver.
    */
   @Test
+  @SuppressWarnings("deprecation")
   public void testJarResolution() throws IOException
   {
     FileDataSchemaResolver resolver = new FileDataSchemaResolver(PdlSchemaParserFactory.instance(), _tempJar.getCanonicalPath());
@@ -79,6 +81,21 @@ public class TestFileDataSchemaResolver
 
     // Assert that schemas are resolved from provided directory path
     resolver.setSchemasDirectoryName(SchemaDirectoryName.EXTENSIONS);
+    schema = resolver.findDataSchema("com.example.models.FooExtension", new StringBuilder());
+    Assert.assertTrue(schema.getProperties().containsKey("legit"));
+
+    // Assert that alternative root directories are not searched
+    schema = resolver.findDataSchema("com.example.models.IgnoreAlternative", new StringBuilder());
+    Assert.assertNull(schema);
+
+    // Assert that the resolver doesn't search from the root
+    schema = resolver.findDataSchema("com.example.models.IgnoreRoot", new StringBuilder());
+    Assert.assertNull(schema);
+
+    // Assert that schemas are resolved from provided directory path when using list of schema directories
+    resolver = new FileDataSchemaResolver(PdlSchemaParserFactory.instance(), _tempJar.getCanonicalPath());
+    resolver.setExtension(".pdl");
+    resolver.setSchemaDirectories(Collections.singletonList(SchemaDirectoryName.EXTENSIONS));
     schema = resolver.findDataSchema("com.example.models.FooExtension", new StringBuilder());
     Assert.assertTrue(schema.getProperties().containsKey("legit"));
 
