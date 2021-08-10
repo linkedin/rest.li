@@ -14,9 +14,15 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.19.17] - 2021-08-09
+- Fix bug in ConstantQpsDarkClusterStrategy that would call ConstantRateLimiter.setRate with an invalid burst value
 
 ## [29.19.16] - 2021-08-09
-- Fix bug in ConstantQpsDarkClusterStrategy that would call ConstantRateLimiter.setRate with an invalid burst value
+- Add support for resolving from multiple schema source directories.
+  - This change also introduces the concept of "source" and "resolver" directories when 
+    creating a `DataSchemaParser`. "Source" directories are used to parse/load the input
+    schemas, while the "resolver" directories will only be used for resolving referenced
+    schemas.
 
 ## [29.19.15] - 2021-08-09
 - Provide the ability to set cookies and projection params in request context's local attributes to avoid
@@ -5043,7 +5049,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.16...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.19.17...master
+[29.19.17]: https://github.com/linkedin/rest.li/compare/v29.19.16...v29.19.17
 [29.19.16]: https://github.com/linkedin/rest.li/compare/v29.19.15...v29.19.16
 [29.19.15]: https://github.com/linkedin/rest.li/compare/v29.19.14...v29.19.15
 [29.19.14]: https://github.com/linkedin/rest.li/compare/v29.19.13...v29.19.14

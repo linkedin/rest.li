@@ -49,6 +49,7 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 import org.mockito.Mockito;
+import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -109,10 +110,10 @@ public class TestDataSchemaResolver
     {
       final String transformedName = name.replace('.', File.separatorChar) + _extension;
 
-      return new AbstractIterator(_paths)
+      return new AbstractPathAndSchemaDirectoryIterator(_paths, Collections.singletonList(SchemaDirectoryName.PEGASUS))
       {
         @Override
-        protected DataSchemaLocation transform(String path)
+        protected DataSchemaLocation transform(String path, SchemaDirectory schemaDirectoryName)
         {
           return new MapResolverLocation(path + File.separator + transformedName);
         }
@@ -200,37 +201,37 @@ public class TestDataSchemaResolver
         "referrer",
         FOUND,
         "\"name\" : \"referrer\"",
-        buildSystemIndependentPath("referrer.pdsc").toString()
+        buildSystemIndependentPath("referrer.pdsc")
       },
       {
         "x.y.z",
         FOUND,
         "\"size\" : 7",
-        buildSystemIndependentPath("x", "y", "z.pdsc").toString()
+        buildSystemIndependentPath("x", "y", "z.pdsc")
       },
       {
         "foo",
         FOUND,
         "\"size\" : 4",
-        buildSystemIndependentPath("foo.pdsc").toString()
+        buildSystemIndependentPath("foo.pdsc")
       },
       {
         "bar",
         FOUND,
         "\"size\" : 5",
-        buildSystemIndependentPath("bar.pdsc").toString()
+        buildSystemIndependentPath("bar.pdsc")
       },
       {
         "baz",
         FOUND,
         "\"size\" : 6",
-        buildSystemIndependentPath("baz.pdsc").toString()
+        buildSystemIndependentPath("baz.pdsc")
       },
       {
         "circular1",
         FOUND,
         "\"name\" : \"circular1\"",
-        buildSystemIndependentPath("circular1.pdsc").toString()
+        buildSystemIndependentPath("circular1.pdsc")
       },
       {
         "apple",
@@ -864,6 +865,31 @@ public class TestDataSchemaResolver
   }
 
   @Test
+  public void testClasspathResourceDataSchemaResolverMultipleSchemaDirectories()
+  {
+    // Tests for data schemas
+    ClasspathResourceDataSchemaResolver resolver = new ClasspathResourceDataSchemaResolver(
+        Thread.currentThread().getContextClassLoader(),
+        Arrays.asList(SchemaDirectoryName.EXTENSIONS, SchemaDirectoryName.PEGASUS)
+    );
+    PegasusSchemaParser parser = new SchemaParser(resolver);
+
+    final List<String> expectedSchemas = new ArrayList<>();
+    Collections.addAll(expectedSchemas, "com.linkedin.data.schema.ValidationDemo",
+        "com.linkedin.restli.example.Album",
+        "com.linkedin.restli.example.AlbumExtensions",
+        "com.linkedin.restli.example.FruitsPdl",
+        "com.linkedin.data.schema.RecordWithPdlReference");
+
+    for (String expectedSchemaName : expectedSchemas)
+    {
+      final DataSchema existSchema = parser.lookupName(expectedSchemaName);
+      assertNotNull(existSchema, "Failed parsing : " + expectedSchemaName);
+      assertEquals(((NamedDataSchema) existSchema).getFullName(), expectedSchemaName);
+    }
+  }
+
+  @Test
   public void testAddBadLocation()
   {
     MapDataSchemaResolver resolver = new MapDataSchemaResolver(SchemaParserFactory.instance(), _testPaths, _testSchemas);
@@ -940,6 +966,40 @@ public class TestDataSchemaResolver
       {
         assertTrue(false);
       }
+    }
+  }
+
+  @Test
+  public void testPathAndSchemaDirectoryIterator() throws Exception
+  {
+    List<String> paths = Arrays.asList("path1", "path2");
+    Iterator<DataSchemaLocation> iterator = new TestIterator(
+        paths, Arrays.asList(SchemaDirectoryName.PEGASUS, SchemaDirectoryName.EXTENSIONS));
+
+    List<String> expected = Arrays.asList("pegasus/path1", "extensions/path1", "pegasus/path2", "extensions/path2");
+    List<String> actualList = new ArrayList<>();
+    iterator.forEachRemaining(location -> actualList.add(location.getSourceFile().getPath()));
+
+    Assert.assertEquals(actualList, expected);
+
+    iterator = new TestIterator(paths, Collections.emptyList());
+    assertFalse(iterator.hasNext());
+
+    iterator = new TestIterator(Collections.emptyList(), Collections.singletonList(SchemaDirectoryName.EXTENSIONS));
+    assertFalse(iterator.hasNext());
+  }
+
+  static class TestIterator extends AbstractDataSchemaResolver.AbstractPathAndSchemaDirectoryIterator
+  {
+    TestIterator(Iterable<String> iterable, List<SchemaDirectory> schemaDirectories)
+    {
+      super(iterable, schemaDirectories);
+    }
+
+    @Override
+    protected DataSchemaLocation transform(String path, SchemaDirectory schemaDirectory)
+    {
+      return () -> new File(schemaDirectory.getName() + "/" + path);
     }
   }
 }
