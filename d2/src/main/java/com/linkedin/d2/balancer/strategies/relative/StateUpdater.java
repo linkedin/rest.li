@@ -118,7 +118,8 @@ public class StateUpdater
       }
 
     }
-    else if (shouldForceUpdate || clusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId())
+    else if (shouldForceUpdate || clusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId()
+        || trackerClients.size() != _partitionLoadBalancerStateMap.get(partitionId).getPointsMap().size())
     {
       // Asynchronously update the state if it is from uri properties change
       _executorService.execute(() -> updateStateDueToClusterChange(trackerClients, partitionId, clusterGenerationId,
@@ -223,7 +224,8 @@ public class StateUpdater
   void updateStateDueToClusterChange(Set<TrackerClient> trackerClients, int partitionId, Long newClusterGenerationId,
       boolean shouldForceUpdate)
   {
-    if (shouldForceUpdate || newClusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId())
+    if (shouldForceUpdate || newClusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId()
+        || trackerClients.size() != _partitionLoadBalancerStateMap.get(partitionId).getPointsMap().size())
     {
       PartitionState oldPartitionState = _partitionLoadBalancerStateMap.get(partitionId);
       updateStateForPartition(trackerClients, partitionId, oldPartitionState, newClusterGenerationId);

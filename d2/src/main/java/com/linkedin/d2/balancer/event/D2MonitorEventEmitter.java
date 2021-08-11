@@ -132,6 +132,10 @@ public class D2MonitorEventEmitter
 
     for (TrackerClient client : trackerClients)
     {
+      if (!pointsMap.containsKey(client.getUri()))
+      {
+        continue;
+      }
       if (isClientHealthy(client, pointsMap))
       {
         healthyClients.add(client);

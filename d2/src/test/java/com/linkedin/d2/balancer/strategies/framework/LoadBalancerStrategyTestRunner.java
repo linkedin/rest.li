@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -169,9 +170,30 @@ public class LoadBalancerStrategyTestRunner
     runWait(Arrays.asList(DEFAULT_PARTITION_ID));
   }
 
+  public void runWaitInconsistentTrackerClients(int numTrackerClients)
+  {
+    runWaitInconsistentTrackerClients(Arrays.asList(DEFAULT_PARTITION_ID), numTrackerClients);
+  }
+
   public void runWait(List<Integer> partitionIds)
   {
     Future<Void> running = run(partitionIds);
+    if (running != null)
+    {
+      try
+      {
+        running.get();
+      }
+      catch (InterruptedException | ExecutionException e)
+      {
+        _log.error("Test running interrupted", e);
+      }
+    }
+  }
+
+  public void runWaitInconsistentTrackerClients(List<Integer> partitionIds, int numTrackerClients)
+  {
+    Future<Void> running = scheduleInconsistentTrackerClients(partitionIds, numTrackerClients);
     if (running != null)
     {
       try
@@ -202,6 +224,30 @@ public class LoadBalancerStrategyTestRunner
     return _clockedExecutor.runFor(LoadBalancerStrategyTestRunnerBuilder.INTERVAL_IN_MILLIS * _numIntervals);
   }
 
+  private Future<Void> scheduleInconsistentTrackerClients(List<Integer> partitionIds, int numTrackerClients)
+  {
+    // 1st interval with partial number of trackerClients
+    _clockedExecutor.scheduleWithFixedDelay(new Runnable()
+    {
+      @Override
+      public void run()
+      {
+        runInconsistencyTrackerClients(partitionIds, numTrackerClients);
+      }
+    }, 0, LoadBalancerStrategyTestRunnerBuilder.INTERVAL_IN_MILLIS, TimeUnit.MILLISECONDS);
+
+    // Rest of the intervals have all tracker clients
+    _clockedExecutor.scheduleWithFixedDelay(new Runnable()
+    {
+      @Override
+      public void run()
+      {
+        runInterval(partitionIds);
+      }
+    }, LoadBalancerStrategyTestRunnerBuilder.INTERVAL_IN_MILLIS, LoadBalancerStrategyTestRunnerBuilder.INTERVAL_IN_MILLIS, TimeUnit.MILLISECONDS);
+    return _clockedExecutor.runFor(LoadBalancerStrategyTestRunnerBuilder.INTERVAL_IN_MILLIS * _numIntervals);
+  }
+
   /**
    * Execute one interval with the given request count
    */
@@ -221,8 +267,15 @@ public class LoadBalancerStrategyTestRunner
       Map<URI, TrackerClient> trackerClientMap = _partitionTrackerClientsMap.get(partitionId);
 
       // Get client with default generation id and cluster id
-      TrackerClient trackerClient =
-          _strategy.getTrackerClient(restRequest, requestContext, DEFAULT_GENERATION_ID, partitionId, trackerClientMap);
+      TrackerClient trackerClient = null;
+      try
+      {
+        trackerClient =
+            _strategy.getTrackerClient(restRequest, requestContext, DEFAULT_GENERATION_ID, partitionId, trackerClientMap);
+      } catch (NullPointerException ex)
+      {
+        System.out.println("Encountered error " + ex);
+      }
       partitionIndex = partitionIndex >= partitionIds.size() - 1 ? 0 : partitionIndex + 1;
 
       TransportCallback<RestResponse> restCallback = (response) ->
@@ -243,6 +296,74 @@ public class LoadBalancerStrategyTestRunner
         }
       }
     }
+    updateState();
+  }
+
+  private void runInconsistencyTrackerClients(List<Integer> partitionIds, int numTrackerClients)
+  {
+    int currentIntervalIndex = (int) (_clockedExecutor.currentTimeMillis() / LoadBalancerStrategyTestRunnerBuilder.INTERVAL_IN_MILLIS);
+    int requestCount = _requestsManager.getRequestCount(currentIntervalIndex);
+    int partitionIndex = 0;
+
+    for (int i = 0; i < requestCount; i++)
+    {
+      // construct the requests
+      URIRequest uriRequest = new URIRequest("d2://" + _serviceName + "/" + i);
+      RestRequest restRequest = new RestRequestBuilder(uriRequest.getURI()).build();
+      RequestContext requestContext = new RequestContext();
+      int partitionId = partitionIds.get(partitionIndex);
+
+      Map<URI, TrackerClient> partialTrackerClientsMap = new HashMap<>();
+      int index = 0;
+      for(Map.Entry<URI, TrackerClient> entry : _partitionTrackerClientsMap.get(partitionId).entrySet())
+      {
+        if (index < numTrackerClients)
+        {
+          partialTrackerClientsMap.put(entry.getKey(), entry.getValue());
+        }
+        index ++;
+        if (index >= numTrackerClients)
+        {
+          break;
+        }
+      }
+
+      // Get client with default generation id and cluster id
+      TrackerClient trackerClient = null;
+      try
+      {
+        trackerClient =
+            _strategy.getTrackerClient(restRequest, requestContext, DEFAULT_GENERATION_ID, partitionId, partialTrackerClientsMap);
+      } catch (NullPointerException ex)
+      {
+        System.out.println("Encountered error " + ex);
+      }
+
+      partitionIndex = partitionIndex >= partitionIds.size() - 1 ? 0 : partitionIndex + 1;
+
+      TransportCallback<RestResponse> restCallback = (response) ->
+      {
+      };
+      if (trackerClient != null)
+      {
+        // Send the request to the picked host if the decision is not DROP
+        trackerClient.restRequest(restRequest, requestContext, Collections.emptyMap(), restCallback);
+
+        // Increase the count in the current request count map
+        URI uri = trackerClient.getUri();
+        if (_currentRequestCountMap.containsKey(trackerClient.getUri()))
+        {
+          _currentRequestCountMap.put(uri, _currentRequestCountMap.get(uri) + 1);
+        } else {
+          _currentRequestCountMap.put(uri, 1);
+        }
+      }
+    }
+    updateState();
+  }
+
+  private void updateState()
+  {
     _currentErrorMap.clear();
     _lastRequestCountMap.clear();
     _lastRequestCountMap.putAll(_currentRequestCountMap);

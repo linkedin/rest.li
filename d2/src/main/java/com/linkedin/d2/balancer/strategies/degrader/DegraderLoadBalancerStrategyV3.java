@@ -350,7 +350,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         lock.unlock();
       }
     }
-    else if(shouldUpdatePartition(clusterGenerationId, partition.getState(), config, _updateEnabled, shouldForceUpdate))
+    else if(shouldUpdatePartition(clusterGenerationId, partition.getState(), config, _updateEnabled, shouldForceUpdate, trackerClients))
     {
       // threads attempt to update the state would return immediately if some thread is already in the updating process
       // NOTE: possible racing condition -- if tryLock() fails and the current updating process does not pick up the
@@ -362,7 +362,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       {
         try
         {
-          if(shouldUpdatePartition(clusterGenerationId, partition.getState(), config, _updateEnabled, shouldForceUpdate))
+          if(shouldUpdatePartition(clusterGenerationId, partition.getState(), config, _updateEnabled, shouldForceUpdate, trackerClients))
           {
             debug(_log, "updating for cluster generation id: ", clusterGenerationId, ", partitionId: ", partitionId);
             debug(_log, "old state was: ", partition.getState());
@@ -700,8 +700,9 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     // Also remove the clients from recoveryMap if they are gone
     newRecoveryMap.entrySet().removeIf(e -> !activeClients.contains(e.getKey()));
 
+    boolean trackerClientInconsistency = degraderTrackerClientUpdaters.size() != oldState.getPointsMap().size();
     if (oldState.getClusterGenerationId() == clusterGenerationId && totalClusterCallCount <= 0
-        && !recoveryMapChanges && !quarantineMapChanged)
+        && !recoveryMapChanges && !quarantineMapChanged && !trackerClientInconsistency)
     {
       // if the cluster has not been called recently (total cluster call count is <= 0)
       // and we already have a state with the same set of URIs (same cluster generation),
@@ -992,6 +993,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   {
     for (DegraderTrackerClientUpdater clientUpdater : degraderTrackerClientUpdaters)
     {
+      if (!pointsMap.containsKey(clientUpdater.getTrackerClient().getUri()))
+      {
+        continue;
+      }
       DegraderTrackerClient client = clientUpdater.getTrackerClient();
       DegraderControl degraderControl = client.getDegraderControl(partitionId);
       int currentOverrideMinCallCount = client.getDegraderControl(partitionId).getOverrideMinCallCount();
@@ -1044,13 +1049,15 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
    * @return True if we should update, and false otherwise.
    */
   protected static boolean shouldUpdatePartition(long clusterGenerationId, PartitionDegraderLoadBalancerState partitionState,
-      DegraderLoadBalancerStrategyConfig config, boolean updateEnabled, boolean shouldForceUpdate)
+      DegraderLoadBalancerStrategyConfig config, boolean updateEnabled, boolean shouldForceUpdate, List<DegraderTrackerClient> trackerClients)
   {
+    boolean trackerClientInconsistency = trackerClients.size() != partitionState.getPointsMap().size();
     return  updateEnabled
         && (shouldForceUpdate
         || (
             !config.isUpdateOnlyAtInterval() && partitionState.getClusterGenerationId() != clusterGenerationId ||
-            config.getClock().currentTimeMillis() - partitionState.getLastUpdated() >= config.getUpdateIntervalMs()));
+            config.getClock().currentTimeMillis() - partitionState.getLastUpdated() >= config.getUpdateIntervalMs())
+            || trackerClientInconsistency);
   }
 
   /**
