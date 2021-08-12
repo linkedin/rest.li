@@ -31,15 +31,19 @@ import com.linkedin.pegasus.generator.test.RecordBarArrayArray;
 import com.linkedin.pegasus.generator.test.RecordBarMap;
 import com.linkedin.pegasus.generator.test.TyperefTest;
 import com.linkedin.pegasus.generator.test.UnionTest;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.server.LinkedListNode;
 import com.linkedin.restli.server.RestLiServiceException;
+import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -162,6 +166,24 @@ public class TestRestUtils
     ServerResourceContext resourceContext = new ResourceContextImpl();
     RestUtils.validateRequestHeadersAndUpdateResourceContext(headers, Collections.emptySet(), resourceContext);
     Assert.assertEquals(resourceContext.getResponseMimeType(), "application/json");
+  }
+
+  @Test()
+  public void testValidateRequestHeadersForInProcessRequest() throws Exception
+  {
+    Map<String, String> headers = new AbstractMap<String, String>()
+    {
+      @Override
+      public Set<Entry<String, String>> entrySet() {
+        throw new IllegalStateException("Didn't expect headers to be accessed.");
+      }
+    };
+    RequestContext requestContext = new RequestContext();
+    requestContext.putLocalAttr(ServerResourceContext.CONTEXT_IN_PROCESS_RESOLUTION_KEY, true);
+    ServerResourceContext resourceContext = new ResourceContextImpl();
+    RestUtils.validateRequestHeadersAndUpdateResourceContext(headers, Collections.emptySet(), resourceContext,
+        requestContext);
+    Assert.assertEquals(resourceContext.getResponseMimeType(), ContentType.JSON.getHeaderKey());
   }
 
   @Test

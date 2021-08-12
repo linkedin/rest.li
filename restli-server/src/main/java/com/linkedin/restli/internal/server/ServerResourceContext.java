@@ -59,6 +59,17 @@ public interface ServerResourceContext extends ResourceContext
   String CONTEXT_PROJECTION_MASKS_KEY = ServerResourceContext.class.getName() + ".projectionMasks";
 
   /**
+   * Local attribute key to indicate that this request will be served by an in-process Rest.li server. Value must
+   * be a {@link Boolean}.
+   */
+  String CONTEXT_IN_PROCESS_RESOLUTION_KEY = ServerResourceContext.class.getName() + ".inProcessResolution";
+
+  /**
+   * Local attribute key for protocol version used by the request. Value must be a {@link ProtocolVersion}.
+   */
+  String CONTEXT_PROTOCOL_VERSION_KEY = ServerResourceContext.class.getName() + ".protocolVersion";
+
+  /**
    * @return {@link DataMap} of request parameters.
    */
   DataMap getParameters();

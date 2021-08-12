@@ -29,6 +29,7 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.RestRequestHandler;
 import com.linkedin.r2.transport.common.StreamRequestHandler;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.model.RestLiApiBuilder;
@@ -38,6 +39,7 @@ import com.linkedin.restli.internal.server.util.MIMEParse;
 import com.linkedin.restli.server.resources.PrototypeResourceFactory;
 import com.linkedin.restli.server.resources.ResourceFactory;
 
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,7 +129,7 @@ public class RestLiServer implements RestRequestHandler, RestToRestLiRequestHand
     //This code path cannot accept content types or accept types that contain
     //multipart/related. This is because these types of requests will usually have very large payloads and therefore
     //would degrade server performance since RestRequest reads everything into memory.
-    if (!isMultipart(request, callback))
+    if (!isMultipart(request, requestContext, callback))
     {
       _restRestLiServer.handleRequest(request, requestContext, callback);
     }
@@ -136,7 +138,7 @@ public class RestLiServer implements RestRequestHandler, RestToRestLiRequestHand
   @Override
   public void handleRequestWithRestLiResponse(RestRequest request, RequestContext requestContext, Callback<RestLiResponse> callback)
   {
-    if (!isMultipart(request, callback))
+    if (!isMultipart(request, requestContext, callback))
     {
       _restRestLiServer.handleRequestWithRestLiResponse(request, requestContext, callback);
     }
@@ -154,8 +156,13 @@ public class RestLiServer implements RestRequestHandler, RestToRestLiRequestHand
     _streamRestLiServer.handleRequestWithRestLiResponse(request, requestContext, callback);
   }
 
-  private boolean isMultipart(final Request request, final Callback<?> callback)
+  private boolean isMultipart(final Request request, final RequestContext requestContext, final Callback<?> callback)
   {
+    // In process requests don't support multipart.
+    if (Boolean.TRUE.equals(requestContext.getLocalAttr(ServerResourceContext.CONTEXT_IN_PROCESS_RESOLUTION_KEY))) {
+      return false;
+    }
+
     final Map<String, String> requestHeaders = request.getHeaders();
     try
     {
