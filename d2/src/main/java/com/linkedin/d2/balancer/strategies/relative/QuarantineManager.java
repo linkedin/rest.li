@@ -101,10 +101,8 @@ public class QuarantineManager {
   {
     long quarantineLatency = Math.max((long) (clusterAvgLatency * _relativeLatencyLowThresholdFactor),
         MIN_QUARANTINE_LATENCY_MS);
-    if (quarantineLatency > MAX_QUARANTINE_LATENCY_MS)
-    {
-      quarantineLatency = MAX_QUARANTINE_LATENCY_MS;
-    }
+    quarantineLatency = Math.min(MAX_QUARANTINE_LATENCY_MS, quarantineLatency);
+
     long currentTime = _clock.currentTimeMillis();
     // Step 0: Pre-check if quarantine method works for clients, if it works, we will mark _quarantineEnabled as true
     preCheckQuarantine(newPartitionState, quarantineLatency);
