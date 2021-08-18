@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.21.0] - 2021-08-17
+- Fixed relative load balancer executor schedule cancellation due to silent runtime exception.
+
 ## [29.20.1] - 2021-08-12
 - Minimize computations for requests resolved via in-process Rest.li servers
 
@@ -5055,7 +5058,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.20.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.21.0...master
+[29.21.0]: https://github.com/linkedin/rest.li/compare/v29.20.1...v29.21.0
 [29.20.1]: https://github.com/linkedin/rest.li/compare/v29.20.0...v29.20.1
 [29.20.0]: https://github.com/linkedin/rest.li/compare/v29.19.17...v29.20.0
 [29.19.17]: https://github.com/linkedin/rest.li/compare/v29.19.16...v29.19.17

@@ -18,6 +18,7 @@ package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.test.util.retry.ThreeRetries;
 import java.net.URI;
 import java.util.Arrays;
@@ -60,7 +61,7 @@ public class StateUpdaterTest
 
   private StateUpdater _stateUpdater;
   private ScheduledExecutorService _executorService = Mockito.mock(ScheduledExecutorService.class);
-  private final QuarantineManager _quarantineManager = Mockito.mock(QuarantineManager.class);
+  private QuarantineManager _quarantineManager = Mockito.mock(QuarantineManager.class);
 
   private void setup(D2RelativeStrategyProperties relativeStrategyProperties,
       ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap)
@@ -68,6 +69,41 @@ public class StateUpdaterTest
     RelativeLoadBalancerStrategyFactory.putDefaultValues(relativeStrategyProperties);
     _stateUpdater = new StateUpdater(relativeStrategyProperties, _quarantineManager, _executorService,
         partitionLoadBalancerStateMap, Collections.emptyList(), SERVICE_NAME);
+  }
+
+  private void setup(D2RelativeStrategyProperties relativeStrategyProperties,
+      ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap, ScheduledExecutorService executorService)
+  {
+    RelativeLoadBalancerStrategyFactory.putDefaultValues(relativeStrategyProperties);
+    _stateUpdater = new StateUpdater(relativeStrategyProperties, _quarantineManager, executorService,
+        partitionLoadBalancerStateMap, Collections.emptyList(), SERVICE_NAME);
+  }
+
+  @Test
+  public void testExecutorScheduleWithError() throws InterruptedException {
+    D2RelativeStrategyProperties relativeStrategyProperties = new D2RelativeStrategyProperties()
+        .setInitialHealthScore(0.01)
+        .setUpdateIntervalMs(10);
+    ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 TestExecutor"));
+    setup(relativeStrategyProperties, new ConcurrentHashMap<>(), executor);
+
+    List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
+        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 200L), Arrays.asList(100L, 100L), Arrays.asList(0, 0));
+    _stateUpdater.updateState(new HashSet<>(trackerClients), 0, DEFAULT_CLUSTER_GENERATION_ID, false);
+
+    Mockito.doThrow(new NullPointerException())
+          .when(_quarantineManager).updateQuarantineState(Mockito.any(PartitionState.class), Mockito.any(PartitionState.class), anyLong());
+
+    assertEquals(_stateUpdater.getPointsMap(0).get(trackerClients.get(0).getUri()).intValue(), 1);
+    Thread.sleep(21);
+
+    assertEquals(_stateUpdater.getPointsMap(0).get(trackerClients.get(0).getUri()).intValue(), 1,
+        "The points did not change due to the failure in each interval execution");
+    // Verify that the quarantine manager is invoked in each interval, so the tasks are not cancelled
+    Mockito.verify(_quarantineManager, Mockito.atLeast(3))
+        .updateQuarantineState(Mockito.any(PartitionState.class), Mockito.any(PartitionState.class), anyLong());
+
+    executor.shutdown();
   }
 
   @Test(dataProvider = "partitionId")
