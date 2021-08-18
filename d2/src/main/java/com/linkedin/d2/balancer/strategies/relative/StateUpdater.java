@@ -176,7 +176,7 @@ public class StateUpdater
       }
     } catch (Exception ex)
     {
-      LOG.error("Failed to update the state for service:" + _serviceName, ex);
+      LOG.error("Failed to update the state for service: " + _serviceName, ex);
     }
   }
 
