@@ -591,9 +591,10 @@ public class ExampleRequestResponseGenerator
   {
     try
     {
-      ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), restRequest, new RequestContext());
+      RequestContext requestContext = new RequestContext();
+      ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), restRequest, requestContext);
       RestUtils.validateRequestHeadersAndUpdateResourceContext(
-          restRequest.getHeaders(), Collections.emptySet(), context);
+          restRequest.getHeaders(), Collections.emptySet(), context, requestContext);
       method.setResourceModel(_resourceModel);
       final RoutingResult routingResult = new RoutingResult(context, method);
 

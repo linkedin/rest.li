@@ -28,7 +28,9 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.CopyFilter;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.jersey.api.uri.UriBuilder;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.common.CollectionMetadata;
+import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.Link;
 import com.linkedin.restli.common.LinkArray;
@@ -309,17 +311,43 @@ public class RestUtils
   }
 
   /**
-   * Validate request headers.
+   * Validate request headers and set response mime type in the server resource context.
    *
-   * @param headers
-   *          Request headers.
-   * @throws RestLiServiceException
-   *           if any of the headers are invalid.
+   * @param headers                    Request headers.
+   * @param customMimeTypesSupported   Set of supported custom mime types.
+   * @param resourceContext            Server resource context.
+   *
+   * @throws RestLiServiceException if any of the headers are invalid.
    */
   public static void validateRequestHeadersAndUpdateResourceContext(final Map<String, String> headers,
                                                                     final Set<String> customMimeTypesSupported,
                                                                     ServerResourceContext resourceContext)
   {
+    validateRequestHeadersAndUpdateResourceContext(headers, customMimeTypesSupported, resourceContext,
+        new RequestContext());
+  }
+
+  /**
+   * Validate request headers and set response mime type in the server resource context.
+   *
+   * @param headers                    Request headers.
+   * @param customMimeTypesSupported   Set of supported custom mime types.
+   * @param resourceContext            Server resource context.
+   * @param requestContext             Incoming request context.
+   *
+   * @throws RestLiServiceException if any of the headers are invalid.
+   */
+  public static void validateRequestHeadersAndUpdateResourceContext(final Map<String, String> headers,
+                                                                    final Set<String> customMimeTypesSupported,
+                                                                    ServerResourceContext resourceContext,
+                                                                    RequestContext requestContext)
+  {
+    // In process requests don't serialize the response, so just set response mime-type to JSON.
+    if (Boolean.TRUE.equals(requestContext.getLocalAttr(ServerResourceContext.CONTEXT_IN_PROCESS_RESOLUTION_KEY))) {
+      resourceContext.setResponseMimeType(ContentType.JSON.getHeaderKey());
+      return;
+    }
+
     // Validate whether the accept headers have at least one type that we support.
     // Fail the validation if we will be unable to support the requested accept type.
     String mimeType = pickBestEncoding(headers.get(RestConstants.HEADER_ACCEPT), customMimeTypesSupported);

@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -117,9 +118,14 @@ abstract class BaseRestLiServer
    *           if the protocol version used by the client is not valid based on the rules described
    *           above
    */
-  private void ensureRequestUsesValidRestliProtocol(final Request request) throws RestLiServiceException
+  private void ensureRequestUsesValidRestliProtocol(final Request request, final RequestContext requestContext)
+      throws RestLiServiceException
   {
-    ProtocolVersion clientProtocolVersion = ProtocolVersionUtil.extractProtocolVersion(request.getHeaders());
+    ProtocolVersion clientProtocolVersion =
+        Optional.ofNullable(requestContext.getLocalAttr(ServerResourceContext.CONTEXT_PROTOCOL_VERSION_KEY))
+        .map(ProtocolVersion.class::cast)
+        .orElseGet(() -> ProtocolVersionUtil.extractProtocolVersion(request.getHeaders()));
+
     ProtocolVersion lowerBound = AllProtocolVersions.OLDEST_SUPPORTED_PROTOCOL_VERSION;
     ProtocolVersion upperBound = AllProtocolVersions.NEXT_PROTOCOL_VERSION;
     if (!isSupportedProtocolVersion(clientProtocolVersion, lowerBound, upperBound))
@@ -131,12 +137,13 @@ abstract class BaseRestLiServer
 
   protected RoutingResult getRoutingResult(Request request, RequestContext requestContext)
   {
-    ensureRequestUsesValidRestliProtocol(request);
+    ensureRequestUsesValidRestliProtocol(request, requestContext);
 
     try
     {
       ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, requestContext);
-      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(), _customContentTypes, context);
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(
+          request.getHeaders(), _customContentTypes, context, requestContext);
 
       ResourceMethodDescriptor method = _router.process(context);
       ResourceMethodConfig methodConfig = _methodConfigProvider.apply(method);
