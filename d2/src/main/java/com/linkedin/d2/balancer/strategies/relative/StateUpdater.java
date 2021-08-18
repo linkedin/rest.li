@@ -167,12 +167,18 @@ public class StateUpdater
    */
   void updateState()
   {
-    // Update state for each partition
-    for (Integer partitionId : _partitionLoadBalancerStateMap.keySet())
+    try {
+      // Update state for each partition
+      for (Integer partitionId : _partitionLoadBalancerStateMap.keySet())
+      {
+        PartitionState partitionState = _partitionLoadBalancerStateMap.get(partitionId);
+        updateStateForPartition(partitionState.getTrackerClients(), partitionId, partitionState, partitionState.getClusterGenerationId());
+      }
+    } catch (Exception ex)
     {
-      PartitionState partitionState = _partitionLoadBalancerStateMap.get(partitionId);
-      updateStateForPartition(partitionState.getTrackerClients(), partitionId, partitionState, partitionState.getClusterGenerationId());
+      LOG.error("Failed update the event.", ex);
     }
+
   }
 
   /**
