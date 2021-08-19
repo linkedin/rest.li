@@ -26,6 +26,7 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.IdResponse;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.UpdateEntityStatus;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.filter.FilterResourceModelImpl;
@@ -110,6 +111,7 @@ public class TestRestLiValidationFilter
   public void setUpMocks()
   {
     MockitoAnnotations.initMocks(this);
+    when(filterRequestContext.getRequestHeaders()).thenReturn(Collections.emptyMap());
     when(filterRequestContext.getFilterResourceModel()).thenReturn(new FilterResourceModelImpl(RestLiAnnotationReader.processResource(CollectionResource.class)));
     when(filterRequestContext.getCustomAnnotations()).thenReturn(new DataMap());
     when(filterRequestContext.isReturnEntityMethod()).thenReturn(false);
@@ -425,6 +427,115 @@ public class TestRestLiValidationFilter
             { BATCH_PARTIAL_UPDATE, batchPartialUpdateResponseData, false, true },
             { BATCH_PARTIAL_UPDATE, batchPartialUpdateResponseData, false, false }
         };
+  }
+
+  @DataProvider(name = "invalidRequests")
+  public Object[][] invalidRequests()
+  {
+    String invalidValue = "aaaaaaaaaaaaaaaa";
+    return new Object[][]
+        {
+            // Resource model
+            // Resource method
+            // RestLi request data
+            { RestLiAnnotationReader.processResource(CollectionResource.class), CREATE,
+                new RestLiRequestDataImpl.Builder().entity(makeTestRecordWithValidation(invalidValue)).build() },
+            { RestLiAnnotationReader.processResource(CollectionResource.class), UPDATE,
+                new RestLiRequestDataImpl.Builder().entity(makeTestRecordWithValidation(invalidValue)).build() },
+            { RestLiAnnotationReader.processResource(CollectionResource.class), BATCH_CREATE,
+                new RestLiRequestDataImpl.Builder().batchEntities(
+                    Collections.singleton(makeTestRecordWithValidation(invalidValue))).build()},
+            { RestLiAnnotationReader.processResource(CollectionResource.class), BATCH_UPDATE,
+                new RestLiRequestDataImpl.Builder().batchKeyEntityMap(
+                    Collections.singletonMap("Key", makeTestRecordWithValidation(invalidValue))).build()},
+        };
+  }
+
+  /**
+   * Ensures that the validation filter skips request validation by feeding it with invalid data, and ensuring that it
+   * never throws an error.
+   */
+  @Test(dataProvider = "invalidRequests")
+  @SuppressWarnings({"unchecked"})
+  public void testSkipRequestValidation(ResourceModel resourceModel, ResourceMethod resourceMethod,
+      RestLiRequestData restLiRequestData)
+  {
+    when(filterRequestContext.getRequestHeaders()).thenReturn(
+        Collections.singletonMap(RestConstants.HEADER_SKIP_REQUEST_VALIDATION, "true"));
+    when(filterRequestContext.getRequestData()).thenReturn(restLiRequestData);
+    when(filterRequestContext.getMethodType()).thenReturn(resourceMethod);
+    when(filterRequestContext.getFilterResourceModel()).thenReturn(new FilterResourceModelImpl(resourceModel));
+    when(filterRequestContext.getRestliProtocolVersion()).thenReturn(AllProtocolVersions.LATEST_PROTOCOL_VERSION);
+
+    RestLiValidationFilter validationFilter = new RestLiValidationFilter(Collections.emptyList(), new MockValidationErrorHandler());
+
+    try
+    {
+      validationFilter.onRequest(filterRequestContext);
+    }
+    catch (RestLiServiceException ex)
+    {
+      Assert.fail("An unexpected exception was thrown on request in the validation filter.", ex);
+    }
+  }
+
+  @DataProvider(name = "invalidResponses")
+  public Object[][] invalidResponses()
+  {
+    RestLiResponseData<CreateResponseEnvelope> createResponseData =
+        ResponseDataBuilderUtil.buildCreateResponseData(HttpStatus.S_201_CREATED, makeInvalidTestRecord());
+    RestLiResponseData<GetResponseEnvelope> getResponseData =
+        ResponseDataBuilderUtil.buildGetResponseData(HttpStatus.S_200_OK, makeInvalidTestRecord());
+    RestLiResponseData<ActionResponseEnvelope> actionResponseData =
+        ResponseDataBuilderUtil.buildActionResponseData(HttpStatus.S_200_OK, makeInvalidTestRecord());
+
+    String invalidValue = "aaaaaaaaaaaaaaaa";
+    return new Object[][]
+        {
+            // Resource model
+            // Resource method
+            // RestLi request data
+            // Response data
+            { RestLiAnnotationReader.processResource(CollectionResource.class), CREATE,
+                new RestLiRequestDataImpl.Builder().entity(makeTestRecordWithValidation(invalidValue)).build(),
+                createResponseData},
+            { RestLiAnnotationReader.processResource(CollectionResource.class), GET,
+                new RestLiRequestDataImpl.Builder().key("123").build(),
+                getResponseData},
+            { RestLiAnnotationReader.processResource(CollectionResource.class), ACTION,
+                new RestLiRequestDataImpl.Builder().build(),
+                actionResponseData}
+        };
+  }
+
+  /**
+   * Ensures that the validation filter skips response validation by feeding it with invalid data, and ensuring that it
+   * never throws an error.
+   */
+  @Test(dataProvider = "invalidResponses")
+  @SuppressWarnings({"unchecked"})
+  public void testSkipResponseValidation(ResourceModel resourceModel, ResourceMethod resourceMethod,
+      RestLiRequestData restLiRequestData, RestLiResponseData<RestLiResponseEnvelope> responseData)
+  {
+    when(filterRequestContext.getRequestHeaders()).thenReturn(
+        Collections.singletonMap(RestConstants.HEADER_SKIP_RESPONSE_VALIDATION, "true"));
+    when(filterRequestContext.getRequestData()).thenReturn(restLiRequestData);
+    when(filterRequestContext.getMethodType()).thenReturn(resourceMethod);
+    when(filterRequestContext.getFilterResourceModel()).thenReturn(new FilterResourceModelImpl(resourceModel));
+    when(filterRequestContext.getRestliProtocolVersion()).thenReturn(AllProtocolVersions.LATEST_PROTOCOL_VERSION);
+    when(filterResponseContext.getResponseData()).thenReturn((RestLiResponseData) responseData);
+
+    RestLiValidationFilter validationFilter =
+        new RestLiValidationFilter(Collections.emptyList(), new MockValidationErrorHandler());
+
+    try
+    {
+      validationFilter.onResponse(filterRequestContext, filterResponseContext);
+    }
+    catch (RestLiServiceException ex)
+    {
+      Assert.fail("An unexpected exception was thrown on response in the validation filter.", ex);
+    }
   }
 
   private TestRecord makeTestRecord()
