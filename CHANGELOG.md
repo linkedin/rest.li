@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.21.1] - 2021-08-18
+- Added 2 simulation tests to explicitly reproduce the issue when the quarantine latency is bigger than 1000ms and verify the fix.
+
 ## [29.21.0] - 2021-08-17
 - Fixed relative load balancer executor schedule cancellation due to silent runtime exception.
 
@@ -5058,7 +5061,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.21.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.21.1...master
+[29.21.1]: https://github.com/linkedin/rest.li/compare/v29.21.0...v29.21.1
 [29.21.0]: https://github.com/linkedin/rest.li/compare/v29.20.1...v29.21.0
 [29.20.1]: https://github.com/linkedin/rest.li/compare/v29.20.0...v29.20.1
 [29.20.0]: https://github.com/linkedin/rest.li/compare/v29.19.17...v29.20.0
