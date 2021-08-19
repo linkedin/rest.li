@@ -460,14 +460,20 @@ public class TestRestLiValidationFilter
   public void testSkipRequestValidation(ResourceModel resourceModel, ResourceMethod resourceMethod,
       RestLiRequestData restLiRequestData)
   {
-    when(filterRequestContext.getRequestHeaders()).thenReturn(
-        Collections.singletonMap(RestConstants.HEADER_SKIP_REQUEST_VALIDATION, "true"));
     when(filterRequestContext.getRequestData()).thenReturn(restLiRequestData);
     when(filterRequestContext.getMethodType()).thenReturn(resourceMethod);
     when(filterRequestContext.getFilterResourceModel()).thenReturn(new FilterResourceModelImpl(resourceModel));
     when(filterRequestContext.getRestliProtocolVersion()).thenReturn(AllProtocolVersions.LATEST_PROTOCOL_VERSION);
 
-    RestLiValidationFilter validationFilter = new RestLiValidationFilter(Collections.emptyList(), new MockValidationErrorHandler());
+    RestLiValidationFilter validationFilter =
+        new RestLiValidationFilter(Collections.emptyList(), new MockValidationErrorHandler())
+        {
+          @Override
+          protected boolean shouldValidateOnRequest(FilterRequestContext requestContext)
+          {
+            return false;
+          }
+        };
 
     try
     {

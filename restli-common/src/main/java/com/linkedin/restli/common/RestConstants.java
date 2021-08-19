@@ -62,11 +62,6 @@ public interface RestConstants
   String HEADER_FETCH_SYMBOL_TABLE = "x-restli-symbol-table-request";
 
   /**
-   * This header if set to true will cause the validation filter to skip request validation.
-   */
-  String HEADER_SKIP_REQUEST_VALIDATION = "x-restli-skip-request-validation";
-
-  /**
    * This header if set to true will cause the validation filter to skip response validation.
    */
   String HEADER_SKIP_RESPONSE_VALIDATION = "x-restli-skip-response-validation";

@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.21.2] - 2021-08-18
+- Remove support for disabling request validation via headers since doing so can have dangerous side effects.
+
 ## [29.21.1] - 2021-08-18
 - Enable skipping request and response validation via the use of request headers.
 
@@ -5061,7 +5064,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.21.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.21.2...master
+[29.21.2]: https://github.com/linkedin/rest.li/compare/v29.21.1...v29.21.2
 [29.21.1]: https://github.com/linkedin/rest.li/compare/v29.21.0...v29.21.1
 [29.21.0]: https://github.com/linkedin/rest.li/compare/v29.20.1...v29.21.0
 [29.20.1]: https://github.com/linkedin/rest.li/compare/v29.20.0...v29.20.1

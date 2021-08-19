@@ -455,13 +455,17 @@ public class RestLiValidationFilter implements Filter
     }
   }
 
+  /**
+   * @return True to validate request, false otherwise.
+   */
   protected boolean shouldValidateOnRequest(FilterRequestContext requestContext)
   {
-    // Skip request validation if the header to skip request validation is set.
-    return !(Boolean.TRUE.toString().equals(
-        requestContext.getRequestHeaders().get(RestConstants.HEADER_SKIP_REQUEST_VALIDATION)));
+    return true;
   }
 
+  /**
+   * @return True to validate response, false otherwise.
+   */
   protected boolean shouldValidateOnResponse(FilterRequestContext requestContext)
   {
     // Skip response validation if the header to skip response validation is set.
