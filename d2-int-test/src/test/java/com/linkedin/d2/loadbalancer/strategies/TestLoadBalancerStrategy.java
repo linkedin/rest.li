@@ -30,6 +30,7 @@ import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy
 import com.linkedin.d2.loadBalancerStrategyType;
 import com.linkedin.test.util.retry.SingleRetry;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -512,6 +513,72 @@ public class TestLoadBalancerStrategy
   }
 
   @Test
+  public void testConstantBadHostForQuarantine()
+  {
+    long avgClusterLatencyThreshold = 250L;
+    D2RelativeStrategyProperties relativePropertiesWithQuarantineEnabled = new D2RelativeStrategyProperties();
+    D2QuarantineProperties quarantineProperties = new D2QuarantineProperties().setQuarantineMaxPercent(DEFAULT_QUARANTINE_PERCENTAGE);
+    relativePropertiesWithQuarantineEnabled.setQuarantineProperties(quarantineProperties)
+        .setRelativeLatencyHighThresholdFactor(5.0).setRelativeLatencyLowThresholdFactor(4.0);
+
+    LoadBalancerStrategyTestRunner testRunner =
+        new LoadBalancerStrategyTestRunnerBuilder(loadBalancerStrategyType.RELATIVE, DEFAULT_SERVICE_NAME, 10)
+            .setRelativeLoadBalancerStrategies(relativePropertiesWithQuarantineEnabled)
+            .setConstantRequestCount(DEFAULT_REQUESTS_PER_INTERVAL)
+            .setNumIntervals(20)
+            // Make sure the quarantine latency is longer than 1000 ms (avg latency is longer than 250 ms)
+            // This is to test that QuarantineManager will not throw runtime exception
+            .setConstantLatency(Arrays.asList(avgClusterLatencyThreshold * 10,
+                avgClusterLatencyThreshold, avgClusterLatencyThreshold, avgClusterLatencyThreshold, avgClusterLatencyThreshold,
+                avgClusterLatencyThreshold, avgClusterLatencyThreshold, avgClusterLatencyThreshold, avgClusterLatencyThreshold,
+                avgClusterLatencyThreshold))
+            .build();
+    testRunner.runWait();
+    Map<URI, Integer> pointsMap = testRunner.getPoints();
+
+    assertEquals(pointsMap.get(testRunner.getUri(0)).intValue(), 0, "The bad host should be quarantined");
+  }
+
+  @Test
+  public void testBadHostRecoverFromQuarantine()
+  {
+    long avgClusterLatencyThreshold = 250L;
+    int numHosts = 10;
+    D2RelativeStrategyProperties relativePropertiesWithQuarantineEnabled = new D2RelativeStrategyProperties();
+    D2QuarantineProperties quarantineProperties = new D2QuarantineProperties().setQuarantineMaxPercent(DEFAULT_QUARANTINE_PERCENTAGE);
+    relativePropertiesWithQuarantineEnabled.setQuarantineProperties(quarantineProperties)
+        .setRelativeLatencyHighThresholdFactor(5.0).setRelativeLatencyLowThresholdFactor(4.0);
+
+    List<LatencyCorrelation> latencyCorrelationList = new ArrayList<>();
+    // The bad host has long latency in the first 7 intervals, that's enough time for it to be quarantined. Then recovery starts.
+    latencyCorrelationList.add((callCount, intervalIndex) ->
+    {
+      if (intervalIndex <= 7) return avgClusterLatencyThreshold * 10;
+      return avgClusterLatencyThreshold;
+    });
+    for (int i = 0; i < numHosts - 1; i ++)
+    {
+      latencyCorrelationList.add((callCount, intervalIndex) -> avgClusterLatencyThreshold);
+    }
+
+    LoadBalancerStrategyTestRunner testRunner =
+        new LoadBalancerStrategyTestRunnerBuilder(loadBalancerStrategyType.RELATIVE, DEFAULT_SERVICE_NAME, numHosts)
+            .setRelativeLoadBalancerStrategies(relativePropertiesWithQuarantineEnabled)
+            .setConstantRequestCount(DEFAULT_REQUESTS_PER_INTERVAL)
+            .setNumIntervals(20)
+            // Make sure the quarantine latency is longer than 1000 ms (avg latency is longer than 250 ms)
+            // This is to test that QuarantineManager will not throw runtime exception
+            .setDynamicLatency(latencyCorrelationList)
+            .build();
+    testRunner.runWait();
+    Map<URI, Integer> pointsMap = testRunner.getPoints();
+    List<Integer> pointsList = testRunner.getPointHistory().get(testRunner.getUri(0));
+
+    assertEquals(pointsList.get(6).intValue(), 0, "The bad host should be in quarantine state in 7th interval");
+    assertTrue(pointsMap.get(testRunner.getUri(0)) > 0, "The bad host should be recovered");
+  }
+
+  @Test
   public void testMostHostWithHighLatency()
   {
     LoadBalancerStrategyTestRunner testRunner = new LoadBalancerStrategyTestRunnerBuilder(loadBalancerStrategyType.RELATIVE,
@@ -732,6 +799,17 @@ public class TestLoadBalancerStrategy
         .setConstantLatency(Arrays.asList(UNHEALTHY_HOST_CONSTANT_LATENCY,
             HEALTHY_HOST_CONSTANT_LATENCY, HEALTHY_HOST_CONSTANT_LATENCY, HEALTHY_HOST_CONSTANT_LATENCY,
             HEALTHY_HOST_CONSTANT_LATENCY))
+        .build();
+  }
+
+  private static LoadBalancerStrategyTestRunner create1Unhealthy4HealthyHostWithLargeAvgClusterLatency()
+  {
+    long avgClusterLatencyThreshold = 250L;
+    return new LoadBalancerStrategyTestRunnerBuilder(loadBalancerStrategyType.RELATIVE, DEFAULT_SERVICE_NAME, DEFAULT_NUM_HOSTS)
+        .setConstantRequestCount(DEFAULT_REQUESTS_PER_INTERVAL)
+        .setNumIntervals(20)
+        .setConstantLatency(Arrays.asList(UNHEALTHY_HOST_CONSTANT_LATENCY,
+            avgClusterLatencyThreshold, avgClusterLatencyThreshold, avgClusterLatencyThreshold, avgClusterLatencyThreshold))
         .build();
   }
 
