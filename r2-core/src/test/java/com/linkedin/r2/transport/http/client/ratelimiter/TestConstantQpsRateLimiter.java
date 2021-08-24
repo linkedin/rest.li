@@ -53,6 +53,20 @@ public class TestConstantQpsRateLimiter
   }
 
   @Test(timeOut = TEST_TIMEOUT)
+  public void lowNonWholeRate()
+  {
+    ClockedExecutor executor = new ClockedExecutor();
+    ConstantQpsRateLimiter rateLimiter =
+        new ConstantQpsRateLimiter(executor, executor, executor, TestEvictingCircularBuffer.getBuffer(executor));
+    rateLimiter.setRate(0.05d, ONE_SECOND, UNLIMITED_BURST);
+    rateLimiter.setBufferCapacity(1);
+    TattlingCallback<None> tattler = new TattlingCallback<>();
+    rateLimiter.submit(tattler);
+    executor.runFor(ONE_SECOND * TEST_NUM_CYCLES);
+    Assert.assertTrue(tattler.getInteractCount() > 1);
+  }
+
+  @Test(timeOut = TEST_TIMEOUT)
   public void eventLoopStopsWhenTtlExpiresAllRequests()
   {
     ClockedExecutor executor = new ClockedExecutor();
