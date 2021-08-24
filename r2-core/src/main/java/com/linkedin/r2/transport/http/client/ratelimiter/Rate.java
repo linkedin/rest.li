@@ -16,8 +16,6 @@
 
 package com.linkedin.r2.transport.http.client.ratelimiter;
 
-import java.util.Arrays;
-
 
 /**
  * An immutable implementation of rate as number of events per period of time in milliseconds.
@@ -30,7 +28,6 @@ public class Rate
 {
   public static final Rate MAX_VALUE = new Rate(Integer.MAX_VALUE, 1, Integer.MAX_VALUE);
   public static final Rate ZERO_VALUE = new Rate(0, 1, 1);
-  public static final float PRECISION_TARGET = 0.95f;
 
   private final double _events;
   private final double _period;
@@ -66,10 +63,16 @@ public class Rate
       _period = newPeriod;
 
     }
-    else
-    {
-      _events = events;
-      _period = period;
+    else {
+      if (events > 0 && events < 1) {
+        _period = period / events;
+        _events = 1;
+      }
+      else
+      {
+        _events = events;
+        _period = period;
+      }
     }
   }
 
@@ -83,7 +86,7 @@ public class Rate
    */
   public int getEvents()
   {
-    return (int) (_events * getPrecisionMultiplier());
+    return (int) _events;
   }
 
   /**
@@ -106,7 +109,7 @@ public class Rate
    */
   public long getPeriod()
   {
-    return Math.round(_period * getPrecisionMultiplier());
+    return Math.round(_period);
   }
 
   /**
@@ -117,26 +120,5 @@ public class Rate
   public double getPeriodRaw()
   {
     return _period;
-  }
-
-  /**
-   * Determines multiplier to apply to results of getEvents and getPeriod
-   * in an effort to maintain precision while returning int representations
-   * of the underlying floats
-   * @return multiplier that best achieves the PRECISION_TARGET such that
-   *         the int representation of (events * multiplier) divided by
-   *         the raw float of (events * multiplier) is greater than PRECISION_TARGET.
-   */
-  private int getPrecisionMultiplier()
-  {
-    for (int multiplier: Arrays.asList(1, 10, 100))
-    {
-      double eventsCandidate = _events * multiplier;
-      if ((int) eventsCandidate / eventsCandidate > PRECISION_TARGET)
-      {
-        return multiplier;
-      }
-    }
-    return 100;
   }
 }
