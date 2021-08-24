@@ -62,10 +62,18 @@ public class Rate
       _period = newPeriod;
 
     }
-    else
-    {
-      _events = events;
-      _period = period;
+    else {
+      // For events values lower than 1, adjust the period to prevent getEvents() from always returning 0
+      if (events < 1)
+      {
+        _period = period / events;
+        _events = 1;
+      }
+      else
+      {
+        _events = events;
+        _period = period;
+      }
     }
   }
 
