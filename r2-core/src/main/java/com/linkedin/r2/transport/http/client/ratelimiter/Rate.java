@@ -62,10 +62,16 @@ public class Rate
       _period = newPeriod;
 
     }
-    else
-    {
-      _events = events;
-      _period = period;
+    else {
+      if (events > 0 && events < 1) {
+        _period = period / events;
+        _events = 1;
+      }
+      else
+      {
+        _events = events;
+        _period = period;
+      }
     }
   }
 

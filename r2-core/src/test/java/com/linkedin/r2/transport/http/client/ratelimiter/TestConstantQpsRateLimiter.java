@@ -40,8 +40,9 @@ public class TestConstantQpsRateLimiter
   public void submitOnceGetMany()
   {
     ClockedExecutor executor = new ClockedExecutor();
+    ClockedExecutor circularBufferExecutor = new ClockedExecutor();
     ConstantQpsRateLimiter rateLimiter =
-        new ConstantQpsRateLimiter(executor, executor, executor, TestEvictingCircularBuffer.getBuffer(executor));
+        new ConstantQpsRateLimiter(executor, executor, executor, TestEvictingCircularBuffer.getBuffer(circularBufferExecutor));
 
     rateLimiter.setRate(TEST_QPS, ONE_SECOND, UNLIMITED_BURST);
     rateLimiter.setBufferCapacity(1);
@@ -50,6 +51,21 @@ public class TestConstantQpsRateLimiter
     rateLimiter.submit(tattler);
     executor.runFor(ONE_SECOND * TEST_NUM_CYCLES);
     Assert.assertTrue(tattler.getInteractCount() > 1);
+  }
+
+  @Test(timeOut = TEST_TIMEOUT)
+  public void lowNonWholeRate()
+  {
+    ClockedExecutor executor = new ClockedExecutor();
+    ClockedExecutor circularBufferExecutor = new ClockedExecutor();
+    ConstantQpsRateLimiter rateLimiter =
+        new ConstantQpsRateLimiter(executor, executor, executor, TestEvictingCircularBuffer.getBuffer(circularBufferExecutor));
+    rateLimiter.setRate(0.05d, ONE_SECOND, UNLIMITED_BURST);
+    rateLimiter.setBufferCapacity(1);
+    TattlingCallback<None> tattler = new TattlingCallback<>();
+    rateLimiter.submit(tattler);
+    executor.runFor(59000);
+    Assert.assertTrue(tattler.getInteractCount() == 3);
   }
 
   @Test(timeOut = TEST_TIMEOUT)

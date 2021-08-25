@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.21.3] - 2021-08-25
+- Fix a bug in SmoothRateLimiter where getEvents will always return 0
+
 ## [29.21.2] - 2021-08-18
 - Remove support for disabling request validation via headers since doing so can have dangerous side effects.
 
@@ -5064,7 +5067,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.21.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.21.3...master
+[29.21.3]: https://github.com/linkedin/rest.li/compare/v29.21.2...v29.21.3
 [29.21.2]: https://github.com/linkedin/rest.li/compare/v29.21.1...v29.21.2
 [29.21.1]: https://github.com/linkedin/rest.li/compare/v29.21.0...v29.21.1
 [29.21.0]: https://github.com/linkedin/rest.li/compare/v29.20.1...v29.21.0
