@@ -68,7 +68,8 @@ public class TestConstantQpsDarkClusterStrategy
         {1000, 100, 40, 3},
         {1000, 200, 10, 1},
         {1000, 250, 10, 1},
-        {1000, 400, 10, 1}
+        {1000, 400, 10, 1},
+        {1000, 10, 400, 2}
     };
   }
 
@@ -104,7 +105,7 @@ public class TestConstantQpsDarkClusterStrategy
         strategy.handleRequest(dummyRestRequest, dummyRestRequest, new RequestContext());
       }
       executor.runFor(1000);
-      int expectedCount = ((numIterations == 0 ? 0 : 1) * qps * numDarkInstances)/(numSourceInstances);
+      int expectedCount = (int) Math.ceil(((numIterations == 0 ? 0 : 1) * qps * numDarkInstances)/ (double) (numSourceInstances));
       int actualCount = baseDispatcher.getRequestCount();
       Assert.assertEquals(actualCount, expectedCount, expectedCount * ERR_PCT, "count not within expected range");
     });
