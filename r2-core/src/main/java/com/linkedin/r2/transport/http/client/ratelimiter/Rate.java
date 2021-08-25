@@ -16,7 +16,6 @@
 
 package com.linkedin.r2.transport.http.client.ratelimiter;
 
-
 /**
  * An immutable implementation of rate as number of events per period of time in milliseconds.
  * In addition, a {@code burst} parameter is used to indicate the maximum number of permits can
@@ -78,9 +77,6 @@ public class Rate
 
   /**
    * Gets the number of events to be executed in a period.
-   * Result of getEvents and getPeriod calls will be adjusted if the
-   * int representation of the underlying _events float is less than
-   * the PRECISION_TARGET.
    *
    * @return Events in period.
    */
@@ -101,9 +97,6 @@ public class Rate
 
   /**
    * Gets period in Milliseconds.
-   * Result of getEvents and getPeriod calls will be adjusted if the
-   * int representation of the underlying _events float is less than
-   * the PRECISION_TARGET.
    *
    * @return Period in milliseconds.
    */
