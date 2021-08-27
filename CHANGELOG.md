@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.21.3-rc.1] - 2021-08-26
+- Hotfix that changes the netty version from 4.1.52 to 4.1.41 to unblock LinkedIn internal service Espresso.
+
 ## [29.21.3] - 2021-08-25
 - Fix a bug in SmoothRateLimiter where getEvents will always return 0
 
@@ -5067,7 +5070,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.21.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.21.3-rc.1...master
+[29.21.3-rc.1]: https://github.com/linkedin/rest.li/compare/v29.21.3...v29.21.3-rc.1
 [29.21.3]: https://github.com/linkedin/rest.li/compare/v29.21.2...v29.21.3
 [29.21.2]: https://github.com/linkedin/rest.li/compare/v29.21.1...v29.21.2
 [29.21.1]: https://github.com/linkedin/rest.li/compare/v29.21.0...v29.21.1
