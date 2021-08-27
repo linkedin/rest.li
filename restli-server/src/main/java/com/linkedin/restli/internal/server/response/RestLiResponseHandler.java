@@ -28,6 +28,7 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
+import com.linkedin.restli.internal.server.methods.DefaultMethodAdapterRegistry;
 import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.restspec.ResourceEntityType;
@@ -70,7 +71,7 @@ public class RestLiResponseHandler
 
   public RestLiResponseHandler(ErrorResponseBuilder errorResponseBuilder)
   {
-    this(new MethodAdapterRegistry(errorResponseBuilder), errorResponseBuilder);
+    this(new DefaultMethodAdapterRegistry(errorResponseBuilder), errorResponseBuilder);
   }
 
   public RestLiResponseHandler(MethodAdapterRegistry methodAdapterRegistry, ErrorResponseBuilder errorResponseBuilder)
@@ -108,7 +109,7 @@ public class RestLiResponseHandler
       }
       if (_methodAdapterRegistry == null)
       {
-        _methodAdapterRegistry = new MethodAdapterRegistry(_errorResponseBuilder);
+        _methodAdapterRegistry = new DefaultMethodAdapterRegistry(_errorResponseBuilder);
       }
       return new RestLiResponseHandler(_methodAdapterRegistry, _errorResponseBuilder);
     }

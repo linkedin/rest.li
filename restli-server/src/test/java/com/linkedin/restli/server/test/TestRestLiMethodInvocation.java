@@ -60,6 +60,8 @@ import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
 import com.linkedin.restli.internal.server.filter.FilterChainDispatcher;
 import com.linkedin.restli.internal.server.filter.FilterChainDispatcherImpl;
+import com.linkedin.restli.internal.server.methods.DefaultMethodAdapterRegistry;
+import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.response.RestLiResponse;
 import com.linkedin.restli.internal.server.response.ResponseUtils;
 import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
@@ -70,7 +72,6 @@ import com.linkedin.restli.internal.server.filter.FilterChainCallbackImpl;
 import com.linkedin.restli.internal.server.filter.FilterRequestContextInternalImpl;
 import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
 import com.linkedin.restli.internal.server.filter.RestLiFilterResponseContextFactory;
-import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
@@ -196,7 +197,7 @@ public class TestRestLiMethodInvocation
     _resourceFactory  = new EasyMockResourceFactory();
 
     _errorResponseBuilder = new ErrorResponseBuilder();
-    _methodAdapterRegistry = new MethodAdapterRegistry(_errorResponseBuilder);
+    _methodAdapterRegistry = new DefaultMethodAdapterRegistry(_errorResponseBuilder);
 
     // Add filters to the invoker.
     _invoker = new RestLiMethodInvoker(_resourceFactory, _engine, ErrorResponseBuilder.DEFAULT_INTERNAL_ERROR_MESSAGE);

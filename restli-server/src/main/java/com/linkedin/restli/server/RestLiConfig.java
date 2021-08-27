@@ -18,6 +18,8 @@ package com.linkedin.restli.server;
 
 import com.linkedin.data.codec.DataCodec;
 import com.linkedin.restli.common.ContentType;
+import com.linkedin.restli.internal.server.methods.DefaultMethodAdapterRegistry;
+import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.server.config.RestLiMethodConfig;
 import com.linkedin.restli.server.config.RestLiMethodConfigBuilder;
@@ -102,6 +104,7 @@ public class RestLiConfig
 
   /** configuration for whether to attach stacktrace for {@link com.linkedin.r2.message.rest.RestException} */
   private boolean _writableStackTrace = true;
+  private MethodAdapterRegistry _methodAdapterRegistry = null;
 
   /**
    * Constructor.
@@ -592,5 +595,23 @@ public class RestLiConfig
   public void setFillInDefaultValues(boolean fillInDefaultValues)
   {
     _fillInDefaultValues = fillInDefaultValues;
+  }
+
+  /**
+   * Set a custom {@link MethodAdapterRegistry} in the config.
+   *
+   * @param methodAdapterRegistry a custom to be set in the config.
+   */
+  public void setMethodAdapterRegistry(MethodAdapterRegistry methodAdapterRegistry) {
+    _methodAdapterRegistry = methodAdapterRegistry;
+  }
+
+  /**
+   * @return Return the custom {@link MethodAdapterRegistry} in the config. Return null if no custom
+   * {@link MethodAdapterRegistry} is provided, then the {@link DefaultMethodAdapterRegistry} will be used for setting
+   * up rest.li server.
+   */
+  public MethodAdapterRegistry getMethodAdapterRegistry() {
+    return _methodAdapterRegistry;
   }
 }

@@ -28,6 +28,7 @@ import com.linkedin.restli.internal.server.filter.FilterChainDispatcherImpl;
 import com.linkedin.restli.internal.server.filter.FilterRequestContextInternalImpl;
 import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
 import com.linkedin.restli.internal.server.filter.RestLiFilterResponseContextFactory;
+import com.linkedin.restli.internal.server.methods.DefaultMethodAdapterRegistry;
 import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
@@ -71,6 +72,7 @@ abstract class BaseRestLiServer
   private final Set<String> _customContentTypes;
   private final ResourceMethodConfigProvider _methodConfigProvider;
   private final boolean _fillInDefaultValueConfigured;
+  private final MethodAdapterRegistry _methodAdapterRegistry;
 
   BaseRestLiServer(RestLiConfig config,
       ResourceFactory resourceFactory,
@@ -87,7 +89,10 @@ abstract class BaseRestLiServer
     _methodInvoker = new RestLiMethodInvoker(resourceFactory, engine, config.getInternalErrorMessage());
 
     _errorResponseBuilder = errorResponseBuilder;
-    _responseHandler = new RestLiResponseHandler(_errorResponseBuilder);
+    _methodAdapterRegistry = Optional
+            .ofNullable(config.getMethodAdapterRegistry())
+            .orElse(new DefaultMethodAdapterRegistry(_errorResponseBuilder));
+    _responseHandler = new RestLiResponseHandler(_methodAdapterRegistry, _errorResponseBuilder);
 
     _filters = config.getFilters() != null ? config.getFilters() : new ArrayList<>();
     _fillInDefaultValueConfigured = config.shouldFillInDefaultValues();
@@ -198,7 +203,7 @@ abstract class BaseRestLiServer
     RestLiArgumentBuilder argumentBuilder;
     try
     {
-      argumentBuilder = lookupArgumentBuilder(method, _errorResponseBuilder);
+      argumentBuilder = lookupArgumentBuilder(method);
       // Unstructured data is not available in the Rest.Li filters
       RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, entityDataMap);
       filterContext = new FilterRequestContextInternalImpl(context, method, requestData);
@@ -229,11 +234,9 @@ abstract class BaseRestLiServer
     filterChain.onRequest(filterContext, filterResponseContextFactory);
   }
 
-  private RestLiArgumentBuilder lookupArgumentBuilder(ResourceMethodDescriptor method,
-      ErrorResponseBuilder errorResponseBuilder)
+  private RestLiArgumentBuilder lookupArgumentBuilder(ResourceMethodDescriptor method)
   {
-    RestLiArgumentBuilder argumentBuilder = new MethodAdapterRegistry(errorResponseBuilder)
-        .getArgumentBuilder(method.getType());
+    RestLiArgumentBuilder argumentBuilder = _methodAdapterRegistry.getArgumentBuilder(method.getType());
     if (argumentBuilder == null)
     {
       throw new IllegalArgumentException("Unsupported method type: " + method.getType());
