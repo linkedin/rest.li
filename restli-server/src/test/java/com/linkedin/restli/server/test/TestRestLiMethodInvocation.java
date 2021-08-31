@@ -323,7 +323,7 @@ public class TestRestLiMethodInvocation
     RestLiFilterChain filterChain = new RestLiFilterChain(Arrays.asList(mockFilter, mockFilter), filterChainDispatcher,
         filterChainCallback);
     filterChain.onRequest(mockFilterContext,
-                          new RestLiFilterResponseContextFactory(request, routingResult, new RestLiResponseHandler()));
+                          new RestLiFilterResponseContextFactory(request, routingResult, new RestLiResponseHandler(_methodAdapterRegistry, _errorResponseBuilder)));
 
     verifyRecording(mockArgumentBuilder, mockFilterContext, mockFilter);
     if (throwExceptionFromFirstFilter)
@@ -4488,7 +4488,7 @@ public class TestRestLiMethodInvocation
     RestRequest request = builder.build();
     final RestLiAttachmentReader attachmentReader = new RestLiAttachmentReader(null);
     final CountDownLatch latch = new CountDownLatch(1);
-    RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler();
+    RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler(_methodAdapterRegistry, _errorResponseBuilder);
 
     ServerResourceContext resourceContext = new ResourceContextImpl(new PathKeysImpl(),
         new RestRequestBuilder(URI.create(""))
@@ -4552,7 +4552,7 @@ public class TestRestLiMethodInvocation
         .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
     RestRequest request = builder.build();
     final CountDownLatch latch = new CountDownLatch(1);
-    RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler();
+    RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler(_methodAdapterRegistry, _errorResponseBuilder);
 
     Callback<RestLiResponse> executionCallback = new Callback<RestLiResponse>()
     {
@@ -5315,7 +5315,7 @@ public class TestRestLiMethodInvocation
           requestData);
       final CountDownLatch latch = new CountDownLatch(1);
       final CountDownLatch expectedRoutingExceptionLatch = new CountDownLatch(1);
-      RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler();
+      RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler(_methodAdapterRegistry, _errorResponseBuilder);
 
       Callback<RestLiResponse> executionCallback = new Callback<RestLiResponse>()
       {

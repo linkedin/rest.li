@@ -89,9 +89,7 @@ abstract class BaseRestLiServer
     _methodInvoker = new RestLiMethodInvoker(resourceFactory, engine, config.getInternalErrorMessage());
 
     _errorResponseBuilder = errorResponseBuilder;
-    _methodAdapterRegistry = Optional
-            .ofNullable(config.getMethodAdapterRegistry())
-            .orElse(new DefaultMethodAdapterRegistry(_errorResponseBuilder));
+    _methodAdapterRegistry = config.getMethodAdapterRegistry();
     _responseHandler = new RestLiResponseHandler(_methodAdapterRegistry, _errorResponseBuilder);
 
     _filters = config.getFilters() != null ? config.getFilters() : new ArrayList<>();

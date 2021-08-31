@@ -64,55 +64,10 @@ public class RestLiResponseHandler
   private final MethodAdapterRegistry _methodAdapterRegistry;
   private final ErrorResponseBuilder _errorResponseBuilder;
 
-  public RestLiResponseHandler()
-  {
-    this(new ErrorResponseBuilder());
-  }
-
-  public RestLiResponseHandler(ErrorResponseBuilder errorResponseBuilder)
-  {
-    this(new DefaultMethodAdapterRegistry(errorResponseBuilder), errorResponseBuilder);
-  }
-
   public RestLiResponseHandler(MethodAdapterRegistry methodAdapterRegistry, ErrorResponseBuilder errorResponseBuilder)
   {
     _methodAdapterRegistry = methodAdapterRegistry;
     _errorResponseBuilder = errorResponseBuilder;
-  }
-
-  /**
-   * @deprecated Use appropriate constructors.
-   */
-  @Deprecated
-  public static class Builder
-  {
-    private MethodAdapterRegistry _methodAdapterRegistry = null;
-    private ErrorResponseBuilder _errorResponseBuilder = null;
-
-    public Builder setMethodAdapterRegistry(MethodAdapterRegistry methodAdapterRegistry)
-    {
-      _methodAdapterRegistry = methodAdapterRegistry;
-      return this;
-    }
-
-    public Builder setErrorResponseBuilder(ErrorResponseBuilder errorResponseBuilder)
-    {
-      _errorResponseBuilder = errorResponseBuilder;
-      return this;
-    }
-
-    public RestLiResponseHandler build()
-    {
-      if (_errorResponseBuilder == null)
-      {
-        _errorResponseBuilder = new ErrorResponseBuilder();
-      }
-      if (_methodAdapterRegistry == null)
-      {
-        _methodAdapterRegistry = new DefaultMethodAdapterRegistry(_errorResponseBuilder);
-      }
-      return new RestLiResponseHandler(_methodAdapterRegistry, _errorResponseBuilder);
-    }
   }
 
   /**
