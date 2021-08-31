@@ -13,7 +13,7 @@ record DarkClusterConfig {
   /**
    * Desired query rate to be maintained to the dark cluster per dark cluster host by the CONSTANT_QPS strategy. Measured in qps.
    */
-  dispatcherOutboundTargetRate: int = 0
+  dispatcherOutboundTargetRate: float = 0
 
   /**
    * Number of requests to store in the circular buffer used for asynchronous dispatching by the CONSTANT_QPS strategy.
