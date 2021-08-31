@@ -16,11 +16,9 @@
 
 package com.linkedin.restli.client.uribuilders;
 
-
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.client.GetRequest;
 import com.linkedin.restli.common.ProtocolVersion;
-import java.net.URI;
 
 
 /**
@@ -34,12 +32,11 @@ class GetRequestUriBuilder extends AbstractRestliRequestUriBuilder<GetRequest<?>
   }
 
   @Override
-  public URI build()
+  protected UriBuilder getUriBuilderWithoutQueryParams()
   {
     GetRequest<?> getRequest = getRequest();
-    UriBuilder b = UriBuilder.fromUri(buildBaseUriWithPrefix());
+    UriBuilder b = super.getUriBuilderWithoutQueryParams();
     appendKeyToPath(b, getRequest.getObjectId());
-    appendQueryParams(b);
-    return b.build();
+    return b;
   }
 }

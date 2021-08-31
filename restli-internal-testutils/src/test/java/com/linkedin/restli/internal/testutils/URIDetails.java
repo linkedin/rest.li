@@ -125,26 +125,40 @@ public class URIDetails
    * Tests the deprecated API for getting the URI of a request, as well as the new way of constructing the URI using
    * a builder. Requires an URIDetails object with the broken down URI to make sure that out of URIs are still considered
    * valid.
-   *
-   * @param request
-   * @param expectedURIDetails
    */
   @SuppressWarnings({"deprecation"})
   public static void testUriGeneration(Request<?> request, URIDetails expectedURIDetails)
   {
     final ProtocolVersion version = expectedURIDetails.getProtocolVersion();
     final String createdURIString = RestliUriBuilderUtil.createUriBuilder(request, version).build().toString();
-    testUriGeneration(createdURIString, expectedURIDetails);
+    testUriGeneration(createdURIString, expectedURIDetails, true);
+
+    final String createdURIStringWithoutQueryParams =
+        RestliUriBuilderUtil.createUriBuilder(request, version).buildWithoutQueryParams().toString();
+    testUriGeneration(createdURIStringWithoutQueryParams, expectedURIDetails, false);
+  }
+
+  /**
+   * Tests the construction and validity of the provided URI. Requires an URIDetails object with the broken down URI.
+   */
+  public static void testUriGeneration(String createdURIString, URIDetails expectedURIDetails)
+  {
+    testUriGeneration(createdURIString, expectedURIDetails, true);
   }
 
   /**
    * Tests the construction and validity of the provided URI. Requires an URIDetails object with the broken down URI.
    *
-   * @param createdURIString
-   * @param expectedURIDetails
+   * @param createdURIString        The created URI string.
+   * @param expectedURIDetails      URIDetails object with the broken down URI to make sure that out of URIs are still
+   *                                considered valid.
+   * @param includesQueryParams     Whether the created URI includes query params or not. If true, we will verify that
+   *                                params match the ones in URI details. If false, we will validate that params is
+   *                                empty.
    */
   @SuppressWarnings({"unchecked"})
-  public static void testUriGeneration(String createdURIString, URIDetails expectedURIDetails)
+  private static void testUriGeneration(String createdURIString, URIDetails expectedURIDetails,
+      boolean includesQueryParams)
   {
     final ProtocolVersion version = expectedURIDetails.getProtocolVersion();
 
@@ -157,6 +171,13 @@ public class URIDetails
     final URI createdURI = URI.create(createdURIString);
     //We will parse the created URI into memory and compare it to what's inside the URI details
     final DataMap actualURIDataMap;
+
+    // If query params are not included, verify that the raw query is null.
+    if (!includesQueryParams)
+    {
+      Assert.assertNull(createdURI.getRawQuery());
+      return;
+    }
 
     //Compare the DataMaps created by parsing the URI into memory vs the ones created in the test.
     //Note that the actualURIDataMap that is created is composed of query parameters (including ids) and fields

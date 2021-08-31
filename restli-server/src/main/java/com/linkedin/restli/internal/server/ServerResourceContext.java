@@ -53,6 +53,11 @@ public interface ServerResourceContext extends ResourceContext
   String CONTEXT_COOKIES_KEY = ServerResourceContext.class.getName() + ".cookie";
 
   /**
+   * Local attribute key for query params datamap. Value should be a {@link DataMap}.
+   */
+  String CONTEXT_QUERY_PARAMS_KEY = ServerResourceContext.class.getName() + ".queryParams";
+
+  /**
    * Local attribute key for projection masks. Value should be a
    * {@link LocalRequestProjectionMask} instance.
    */

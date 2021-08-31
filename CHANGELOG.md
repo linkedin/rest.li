@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.21.4] - 2021-08-30
+- Expose an API to build a URI without query params. Expose a local attr for passing query params for in-process calls. 
+
 ## [29.21.3] - 2021-08-25
 - Fix a bug in SmoothRateLimiter where getEvents will always return 0
 
@@ -5067,7 +5070,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.21.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.21.4...master
+[29.21.4]: https://github.com/linkedin/rest.li/compare/v29.21.3...v29.21.4
 [29.21.3]: https://github.com/linkedin/rest.li/compare/v29.21.2...v29.21.3
 [29.21.2]: https://github.com/linkedin/rest.li/compare/v29.21.1...v29.21.2
 [29.21.1]: https://github.com/linkedin/rest.li/compare/v29.21.0...v29.21.1
