@@ -169,7 +169,12 @@ public class ResourceContextImpl implements ServerResourceContext
 
     try
     {
-      if (_protocolVersion.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
+      DataMap contextQueryParams = (DataMap) requestContext.getLocalAttr(CONTEXT_QUERY_PARAMS_KEY);
+      if (contextQueryParams != null)
+      {
+        _parameters = contextQueryParams;
+      }
+      else if (_protocolVersion.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
       {
         TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_RESTLI_URI_PARSE_2.key());
 

@@ -112,21 +112,41 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request<?>> implements 
   }
 
   @Override
-  public URI buildBaseUri()
+  public final URI buildBaseUri()
   {
     return URI.create(bindPathKeys());
   }
 
-  public URI buildBaseUriWithPrefix()
+  @Override
+  public final URI buildWithoutQueryParams()
   {
+    return getUriBuilderWithoutQueryParams().build();
+  }
+
+  @Override
+  public final URI build()
+  {
+    UriBuilder b = getUriBuilderWithoutQueryParams();
+    appendQueryParams(b);
+    return b.build();
+  }
+
+  /**
+   * @return The URI builder (without query params) for this request.
+   */
+  protected UriBuilder getUriBuilderWithoutQueryParams()
+  {
+    final URI uri;
     if (_request.getPathKeys().isEmpty())
     {
       // if path keys are empty we don't need to bind the path keys, we can directly use the request base uri template.
-      return URI_TEMPLATE_STRING_TO_URI_CACHE.get(addPrefix(_request.getBaseUriTemplate()), template -> URI.create(template));
+      uri = URI_TEMPLATE_STRING_TO_URI_CACHE.get(addPrefix(_request.getBaseUriTemplate()), URI::create);
     }
     else
     {
-      return URI.create(addPrefix(bindPathKeys()));
+      uri = URI.create(addPrefix(bindPathKeys()));
     }
+
+    return UriBuilder.fromUri(uri);
   }
 }
