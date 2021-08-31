@@ -134,6 +134,22 @@ public class TestResourceContextImpl
     Assert.assertSame(resourceContext.getRequestCookies(), localCookies);
   }
 
+  @Test
+  public void testQueryParamsLocalAttr() throws Exception
+  {
+    URI uri = URI.create("resources");
+
+    RequestContext requestContext = new RequestContext();
+    DataMap queryParams = new DataMap(Collections.singletonMap("testKey", "testValue"));
+    requestContext.putLocalAttr(ServerResourceContext.CONTEXT_QUERY_PARAMS_KEY, queryParams);
+
+    ServerResourceContext resourceContext = new ResourceContextImpl(
+        new PathKeysImpl(), new TestResourceContext.MockRequest(uri), requestContext);
+
+    // Assert that query params are retrieved from the local attribute.
+    Assert.assertSame(resourceContext.getParameters(), queryParams);
+  }
+
   @DataProvider
   private static Object[][] overrideMaskData()
   {

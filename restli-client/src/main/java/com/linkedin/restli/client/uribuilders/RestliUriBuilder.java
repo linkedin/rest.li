@@ -27,14 +27,21 @@ import java.util.List;
 public interface RestliUriBuilder
 {
   /**
-   * Build the complete URI (including query parameters)
+   * Build the complete URI (including query parameters and path keys)
    *
    * @return the complete URI
    */
   URI build();
 
   /**
-   * Build the base URI, i.e. the URI without query params
+   * Build the URI (including path keys but excluding query params)
+   *
+   * @return the built URI
+   */
+  URI buildWithoutQueryParams();
+
+  /**
+   * Build the base URI, i.e. the URI without path keys or query params
    *
    * @return the base URI
    */

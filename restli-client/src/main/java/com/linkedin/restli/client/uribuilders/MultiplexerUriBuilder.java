@@ -44,6 +44,12 @@ public class MultiplexerUriBuilder implements RestliUriBuilder
   }
 
   @Override
+  public URI buildWithoutQueryParams()
+  {
+    return build();
+  }
+
+  @Override
   public URI build()
   {
     return URI.create(_uriPrefix + MUX_ENDPOINT);
