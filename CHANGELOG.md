@@ -15,7 +15,9 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.21.5] - 2021-08-31
-- DarkClusterConfig's dispatcherOutboundTargetRate: int -> float
+- ConstantQpsDarkClusterStrategy post-prod fixes
+  - DarkClusterConfig's dispatcherOutboundTargetRate: int -> float
+  - ConstantQpsRateLimiter - Introduce randomness while maintaining constant per period rate
 
 ## [29.21.4] - 2021-08-30
 - Expose an API to build a URI without query params. Expose a local attr for passing query params for in-process calls. 
