@@ -53,4 +53,9 @@ public interface RateLimiterExecutionTracker
      * @return maximum number of callbacks that can be stored in the RateLimiter
      */
     int getMaxBuffered();
+
+    /**
+     * @return amount of delay to be incurred before executing the next callback, based on provided rate
+     */
+    int getNextExecutionDelay(Rate rate);
 }
