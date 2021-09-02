@@ -224,7 +224,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     private int _permitAvailableCount;
     private int _permitsInTimeFrame;
     private long _nextScheduled;
-    private boolean _wasDelayed;
+    private boolean _wasDelayed = false;
 
     EventLoop(Clock clock)
     {
