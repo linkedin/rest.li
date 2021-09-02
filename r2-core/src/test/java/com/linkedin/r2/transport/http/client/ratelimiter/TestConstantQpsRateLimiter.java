@@ -24,6 +24,8 @@ import com.linkedin.test.util.ClockedExecutor;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.testng.annotations.Test;
@@ -102,21 +104,21 @@ public class TestConstantQpsRateLimiter
     rateLimiter.submit(tattler);
     executor.runFor(ONE_SECOND * TEST_NUM_CYCLES);
     long prevTime = 0;
-    ArrayList<Long> timeDeltas = new ArrayList<>();
+    List<Long> timeDeltas = new ArrayList<>();
     for (Long stamp : tattler.getOccurrences())
     {
       timeDeltas.add(stamp - prevTime);
       prevTime = stamp;
     }
     // Ensure variance up to 10 possible time deltas given a rate of 200 requests per second
-    HashSet<Long> uniqueTimeDeltas = new HashSet<>(timeDeltas);
+    Set<Long> uniqueTimeDeltas = new HashSet<>(timeDeltas);
     assert(uniqueTimeDeltas.size() > 5 && uniqueTimeDeltas.size() < 11);
   }
 
   private static class TattlingCallback<T> implements Callback<T>
   {
     private AtomicInteger _interactCount = new AtomicInteger();
-    private ArrayList<Long> _occurrences = new ArrayList<>();
+    private List<Long> _occurrences = new ArrayList<>();
     private ClockedExecutor _clock;
 
     TattlingCallback(ClockedExecutor clock)
@@ -138,7 +140,7 @@ public class TestConstantQpsRateLimiter
       return _interactCount.intValue();
     }
 
-    public ArrayList<Long> getOccurrences()
+    public List<Long> getOccurrences()
     {
       return _occurrences;
     }

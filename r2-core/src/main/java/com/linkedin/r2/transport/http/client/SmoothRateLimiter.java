@@ -416,10 +416,5 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     {
       return _maxBuffered;
     }
-
-    public int getNextExecutionDelay(Rate rate)
-    {
-      return 0;
-    }
   }
 }

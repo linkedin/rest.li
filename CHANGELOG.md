@@ -16,7 +16,7 @@ and what APIs have changed, if applicable.
 
 ## [29.21.5] - 2021-08-31
 - ConstantQpsDarkClusterStrategy post-prod fixes
-  - DarkClusterConfig's dispatcherOutboundTargetRate: int -> float
+  - Change the type of dispatcherOutboundTargetRate in DarkClusterConfig.pdl from int to float.
   - ConstantQpsRateLimiter - Introduce randomness while maintaining constant per period rate
 
 ## [29.21.4] - 2021-08-30

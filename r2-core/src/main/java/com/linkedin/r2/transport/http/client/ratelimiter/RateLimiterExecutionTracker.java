@@ -57,5 +57,7 @@ public interface RateLimiterExecutionTracker
     /**
      * @return amount of delay to be incurred before executing the next callback, based on provided rate
      */
-    int getNextExecutionDelay(Rate rate);
+    default int getNextExecutionDelay(Rate rate) {
+        return 0;
+    }
 }
