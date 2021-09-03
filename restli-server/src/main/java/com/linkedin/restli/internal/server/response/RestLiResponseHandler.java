@@ -28,8 +28,8 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
-import com.linkedin.restli.internal.server.methods.DefaultMethodAdapterRegistry;
-import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
+import com.linkedin.restli.internal.server.methods.DefaultMethodBuildersRegistry;
+import com.linkedin.restli.internal.server.methods.MethodBuildersRegistry;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.server.RestLiResponseData;
@@ -61,13 +61,64 @@ import java.util.TreeMap;
  */
 public class RestLiResponseHandler
 {
-  private final MethodAdapterRegistry _methodAdapterRegistry;
+  private final MethodBuildersRegistry _methodBuildersRegistry;
   private final ErrorResponseBuilder _errorResponseBuilder;
 
-  public RestLiResponseHandler(MethodAdapterRegistry methodAdapterRegistry, ErrorResponseBuilder errorResponseBuilder)
+  /**
+   * @deprecated Use {@link #RestLiResponseHandler(MethodBuildersRegistry, ErrorResponseBuilder)}.
+   */
+  @Deprecated
+  public RestLiResponseHandler() {
+    this(new ErrorResponseBuilder());
+  }
+
+  /**
+   * @deprecated Use {@link #RestLiResponseHandler(MethodBuildersRegistry, ErrorResponseBuilder)}.
+   */
+  @Deprecated
+  public RestLiResponseHandler(ErrorResponseBuilder errorResponseBuilder) {
+    this(new DefaultMethodBuildersRegistry(errorResponseBuilder), errorResponseBuilder);
+  }
+
+  public RestLiResponseHandler(MethodBuildersRegistry methodBuildersRegistry, ErrorResponseBuilder errorResponseBuilder)
   {
-    _methodAdapterRegistry = methodAdapterRegistry;
+    _methodBuildersRegistry = methodBuildersRegistry;
     _errorResponseBuilder = errorResponseBuilder;
+  }
+
+  /**
+   * @deprecated Use appropriate constructors.
+   */
+  @Deprecated
+  public static class Builder
+  {
+    private MethodBuildersRegistry _methodBuildersRegistry = null;
+    private ErrorResponseBuilder _errorResponseBuilder = null;
+
+    public Builder setMethodBuildersRegistry(MethodBuildersRegistry methodBuildersRegistry)
+    {
+      _methodBuildersRegistry = methodBuildersRegistry;
+      return this;
+    }
+
+    public Builder setErrorResponseBuilder(ErrorResponseBuilder errorResponseBuilder)
+    {
+      _errorResponseBuilder = errorResponseBuilder;
+      return this;
+    }
+
+    public RestLiResponseHandler build()
+    {
+      if (_errorResponseBuilder == null)
+      {
+        _errorResponseBuilder = new ErrorResponseBuilder();
+      }
+      if (_methodBuildersRegistry == null)
+      {
+        _methodBuildersRegistry = new DefaultMethodBuildersRegistry(_errorResponseBuilder);
+      }
+      return new RestLiResponseHandler(_methodBuildersRegistry, _errorResponseBuilder);
+    }
   }
 
   /**
@@ -100,7 +151,7 @@ public class RestLiResponseHandler
 
     // The resource method in the routingResult must agree with that of responseData.
     @SuppressWarnings("unchecked")
-    RestLiResponseBuilder<D> responseBuilder = (RestLiResponseBuilder<D>) _methodAdapterRegistry.getResponseBuilder(
+    RestLiResponseBuilder<D> responseBuilder = (RestLiResponseBuilder<D>) _methodBuildersRegistry.getResponseBuilder(
         routingResult.getResourceMethod().getType());
     RestLiResponse restLiResponse = responseBuilder.buildResponse(routingResult, responseData);
     injectResponseMetadata(restLiResponse.getEntity(), responseData.getResponseEnvelope().getResponseMetadata());
@@ -172,7 +223,7 @@ public class RestLiResponseHandler
       return _errorResponseBuilder.buildRestLiResponseData(routingResult, (RestLiServiceException) responseObject, responseHeaders, responseCookies);
     }
 
-    RestLiResponseBuilder<?> responseBuilder = _methodAdapterRegistry.getResponseBuilder(
+    RestLiResponseBuilder<?> responseBuilder = _methodBuildersRegistry.getResponseBuilder(
         routingResult.getResourceMethod().getType());
 
     if (responseBuilder == null)

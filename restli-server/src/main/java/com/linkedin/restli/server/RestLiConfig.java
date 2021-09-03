@@ -18,8 +18,8 @@ package com.linkedin.restli.server;
 
 import com.linkedin.data.codec.DataCodec;
 import com.linkedin.restli.common.ContentType;
-import com.linkedin.restli.internal.server.methods.DefaultMethodAdapterRegistry;
-import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
+import com.linkedin.restli.internal.server.methods.DefaultMethodBuildersRegistry;
+import com.linkedin.restli.internal.server.methods.MethodBuildersRegistry;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.server.config.RestLiMethodConfig;
 import com.linkedin.restli.server.config.RestLiMethodConfigBuilder;
@@ -105,7 +105,7 @@ public class RestLiConfig
 
   /** configuration for whether to attach stacktrace for {@link com.linkedin.r2.message.rest.RestException} */
   private boolean _writableStackTrace = true;
-  private MethodAdapterRegistry _methodAdapterRegistry = null;
+  private MethodBuildersRegistry _methodBuildersRegistry = null;
 
   /**
    * Constructor.
@@ -599,21 +599,21 @@ public class RestLiConfig
   }
 
   /**
-   * Set a custom {@link MethodAdapterRegistry} in the config.
+   * Set a custom {@link MethodBuildersRegistry} in the config.
    *
-   * @param methodAdapterRegistry a custom to be set in the config.
+   * @param methodBuildersRegistry a custom to be set in the config.
    */
-  public void setMethodAdapterRegistry(MethodAdapterRegistry methodAdapterRegistry) {
-    _methodAdapterRegistry = methodAdapterRegistry;
+  public void setMethodBuildersRegistry(MethodBuildersRegistry methodBuildersRegistry) {
+    _methodBuildersRegistry = methodBuildersRegistry;
   }
 
   /**
-   * @return Return the custom {@link MethodAdapterRegistry} in the config. Return null if no custom
-   * {@link MethodAdapterRegistry} is provided, then the {@link DefaultMethodAdapterRegistry} will be used for setting
-   * up rest.li server.
+   * @return Return the custom {@link MethodBuildersRegistry} in the config. Return null if no custom
+   *   {@link MethodBuildersRegistry} is provided, then the {@link DefaultMethodBuildersRegistry} will be used for
+   *   setting up rest.li server.
    */
-  public MethodAdapterRegistry getMethodAdapterRegistry() {
-    return Optional.ofNullable(_methodAdapterRegistry)
-            .orElse(new DefaultMethodAdapterRegistry(new ErrorResponseBuilder(_errorResponseFormat)));
+  public MethodBuildersRegistry getMethodBuildersRegistry() {
+    return Optional.ofNullable(_methodBuildersRegistry)
+            .orElse(new DefaultMethodBuildersRegistry(new ErrorResponseBuilder(_errorResponseFormat)));
   }
 }

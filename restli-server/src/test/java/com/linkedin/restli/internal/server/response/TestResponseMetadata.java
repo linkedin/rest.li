@@ -28,7 +28,7 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.ServerResourceContext;
-import com.linkedin.restli.internal.server.methods.DefaultMethodAdapterRegistry;
+import com.linkedin.restli.internal.server.methods.DefaultMethodBuildersRegistry;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.server.BatchCreateResult;
 import com.linkedin.restli.server.BatchUpdateResult;
@@ -104,7 +104,7 @@ public class TestResponseMetadata {
 
     final ErrorResponseBuilder errorResponseBuilder = new ErrorResponseBuilder();
     final RestLiResponseHandler responseHandler = new RestLiResponseHandler(
-            new DefaultMethodAdapterRegistry(errorResponseBuilder), errorResponseBuilder);
+            new DefaultMethodBuildersRegistry(errorResponseBuilder), errorResponseBuilder);
 
     // Test success path
 

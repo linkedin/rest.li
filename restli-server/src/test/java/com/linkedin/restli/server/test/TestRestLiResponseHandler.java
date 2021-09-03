@@ -50,7 +50,7 @@ import com.linkedin.restli.internal.common.CookieUtil;
 import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
-import com.linkedin.restli.internal.server.methods.DefaultMethodAdapterRegistry;
+import com.linkedin.restli.internal.server.methods.DefaultMethodBuildersRegistry;
 import com.linkedin.restli.internal.server.response.ActionResponseEnvelope;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.response.GetResponseEnvelope;
@@ -115,7 +115,7 @@ import static org.testng.Assert.*;
 public class TestRestLiResponseHandler
 {
   private final ErrorResponseBuilder _errorResponseBuilder = new ErrorResponseBuilder();
-  private final RestLiResponseHandler _responseHandler = new RestLiResponseHandler(new DefaultMethodAdapterRegistry(_errorResponseBuilder), _errorResponseBuilder);
+  private final RestLiResponseHandler _responseHandler = new RestLiResponseHandler(new DefaultMethodBuildersRegistry(_errorResponseBuilder), _errorResponseBuilder);
 
   private static final String APPLICATION_JSON = "application/json";
   private static final String APPLICATION_PSON = "application/x-pson";

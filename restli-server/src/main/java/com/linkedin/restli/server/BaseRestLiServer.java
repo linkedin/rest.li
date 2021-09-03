@@ -28,8 +28,7 @@ import com.linkedin.restli.internal.server.filter.FilterChainDispatcherImpl;
 import com.linkedin.restli.internal.server.filter.FilterRequestContextInternalImpl;
 import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
 import com.linkedin.restli.internal.server.filter.RestLiFilterResponseContextFactory;
-import com.linkedin.restli.internal.server.methods.DefaultMethodAdapterRegistry;
-import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
+import com.linkedin.restli.internal.server.methods.MethodBuildersRegistry;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
@@ -72,7 +71,7 @@ abstract class BaseRestLiServer
   private final Set<String> _customContentTypes;
   private final ResourceMethodConfigProvider _methodConfigProvider;
   private final boolean _fillInDefaultValueConfigured;
-  private final MethodAdapterRegistry _methodAdapterRegistry;
+  private final MethodBuildersRegistry _methodBuildersRegistry;
 
   BaseRestLiServer(RestLiConfig config,
       ResourceFactory resourceFactory,
@@ -89,8 +88,8 @@ abstract class BaseRestLiServer
     _methodInvoker = new RestLiMethodInvoker(resourceFactory, engine, config.getInternalErrorMessage());
 
     _errorResponseBuilder = errorResponseBuilder;
-    _methodAdapterRegistry = config.getMethodAdapterRegistry();
-    _responseHandler = new RestLiResponseHandler(_methodAdapterRegistry, _errorResponseBuilder);
+    _methodBuildersRegistry = config.getMethodBuildersRegistry();
+    _responseHandler = new RestLiResponseHandler(_methodBuildersRegistry, _errorResponseBuilder);
 
     _filters = config.getFilters() != null ? config.getFilters() : new ArrayList<>();
     _fillInDefaultValueConfigured = config.shouldFillInDefaultValues();
@@ -234,7 +233,7 @@ abstract class BaseRestLiServer
 
   private RestLiArgumentBuilder lookupArgumentBuilder(ResourceMethodDescriptor method)
   {
-    RestLiArgumentBuilder argumentBuilder = _methodAdapterRegistry.getArgumentBuilder(method.getType());
+    RestLiArgumentBuilder argumentBuilder = _methodBuildersRegistry.getArgumentBuilder(method.getType());
     if (argumentBuilder == null)
     {
       throw new IllegalArgumentException("Unsupported method type: " + method.getType());
