@@ -19,6 +19,7 @@ package com.linkedin.d2.jmx;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.servers.ZooKeeperServer;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
@@ -95,6 +96,31 @@ public class ZooKeeperServerJmx implements ZooKeeperServerJmxMXBean
   {
     FutureCallback<None> callback = new FutureCallback<>();
     _server.changeWeight(clusterName, URI.create(uri), partitionDataMap, doNotSlowStart, callback);
+    try
+    {
+      callback.get(10, TimeUnit.SECONDS);
+    }
+    catch (Exception e)
+    {
+      throw new PropertyStoreException(e);
+    }
+  }
+
+  @Override
+  public void setDoNotLoadBalance(String clusterName,
+                                  String uri,
+                                  Map<Integer, PartitionData> partitionDataMap,
+                                  boolean doNotLoadBalance)
+    throws PropertyStoreException
+  {
+    FutureCallback<None> callback = new FutureCallback<>();
+    _server.addUriSpecificProperty(clusterName,
+                                   "doNotLoadBalance",
+                                   URI.create(uri),
+                                   partitionDataMap,
+                                   PropertyKeys.DO_NOT_LOAD_BALANCE,
+                                   doNotLoadBalance,
+                                   callback);
     try
     {
       callback.get(10, TimeUnit.SECONDS);

@@ -107,6 +107,22 @@ public class ZooKeeperAnnouncerJmx implements ZooKeeperAnnouncerJmxMXBean
   }
 
   @Override
+  public void doNotLoadBalance(boolean doNotLoadBalance)
+    throws PropertyStoreException
+  {
+    FutureCallback<None> callback = new FutureCallback<>();
+    _announcer.doNotLoadBalance(callback, doNotLoadBalance);
+    try
+    {
+      callback.get(10, TimeUnit.SECONDS);
+    }
+    catch (Exception e)
+    {
+      throw new PropertyStoreException(e);
+    }
+  }
+
+  @Override
   public String getCluster()
   {
     return _announcer.getCluster();

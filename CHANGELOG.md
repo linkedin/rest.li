@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Server side changes for feature to allow disabling of load balancing for a specific host.
 
 ## [29.21.4] - 2021-08-30
 - Expose an API to build a URI without query params. Expose a local attr for passing query params for in-process calls. 
