@@ -65,6 +65,28 @@ class StreamRestLiServer extends BaseRestLiServer implements StreamRequestHandle
   StreamRestLiServer(RestLiConfig config,
       ResourceFactory resourceFactory,
       Engine engine,
+      Map<String, ResourceModel> rootResources)
+  {
+    super(config,
+        resourceFactory,
+        engine,
+        rootResources);
+
+    _useStreamCodec = config.isUseStreamCodec();
+    _fallback = new RestRestLiServer(config,
+        resourceFactory, engine,
+        rootResources);
+    _writableStackTrace = config.isWritableStackTrace();
+  }
+
+  /**
+   * @deprecated Use the constructor without {@link ErrorResponseBuilder}, because it should be built from the
+   * {@link ErrorResponseFormat} in the {@link RestLiConfig}.
+   */
+  @Deprecated
+  StreamRestLiServer(RestLiConfig config,
+      ResourceFactory resourceFactory,
+      Engine engine,
       Map<String, ResourceModel> rootResources,
       ErrorResponseBuilder errorResponseBuilder)
   {

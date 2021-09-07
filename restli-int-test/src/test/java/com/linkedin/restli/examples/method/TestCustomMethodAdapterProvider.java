@@ -28,8 +28,8 @@ import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
 import com.linkedin.restli.internal.server.RoutingResult;
-import com.linkedin.restli.internal.server.methods.DefaultMethodBuildersRegistry;
-import com.linkedin.restli.internal.server.methods.MethodBuildersRegistry;
+import com.linkedin.restli.internal.server.methods.DefaultMethodAdapterProvider;
+import com.linkedin.restli.internal.server.methods.MethodAdapterProvider;
 import com.linkedin.restli.internal.server.methods.arguments.CreateArgumentBuilder;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
@@ -44,9 +44,9 @@ import org.testng.annotations.Test;
 
 
 /**
- * Integration tests for a custom {@link MethodBuildersRegistry}.
+ * Integration tests for a custom {@link MethodAdapterProvider}.
  */
-public class TestCustomMethodBuildersRegistry extends RestLiIntegrationTest
+public class TestCustomMethodAdapterProvider extends RestLiIntegrationTest
 {
   private static final Greeting FRIENDLY = new Greeting().setMessage("Friendly").setTone(Tone.FRIENDLY);
 
@@ -54,23 +54,31 @@ public class TestCustomMethodBuildersRegistry extends RestLiIntegrationTest
   public void initClass() throws Exception
   {
     RestLiConfig config = new RestLiConfig();
-    config.setMethodBuildersRegistry(new DefaultMethodBuildersRegistry(new ErrorResponseBuilder(ErrorResponseFormat.MESSAGE_AND_SERVICECODE)) {
-      @Override
-      public RestLiArgumentBuilder getArgumentBuilder(ResourceMethod resourceMethod) {
-        // Override the behavior of the CREATE argument builder
-        if (resourceMethod == ResourceMethod.CREATE) {
-          return new CreateArgumentBuilder() {
-            @Override
-            public RestLiRequestData extractRequestData(RoutingResult routingResult, DataMap dataMap) {
-                // Always use the FRIENDLY record regardless of the actual data
-                return new RestLiRequestDataImpl.Builder().entity(FRIENDLY).build();
+    config.setMethodAdapterProvider(
+        new DefaultMethodAdapterProvider(new ErrorResponseBuilder(ErrorResponseFormat.MESSAGE_AND_SERVICECODE))
+        {
+          @Override
+          public RestLiArgumentBuilder getArgumentBuilder(ResourceMethod resourceMethod)
+          {
+            // Override the behavior of the CREATE argument builder
+            if (resourceMethod == ResourceMethod.CREATE)
+            {
+              return new CreateArgumentBuilder()
+              {
+                @Override
+                public RestLiRequestData extractRequestData(RoutingResult routingResult, DataMap dataMap)
+                {
+                    // Always use the FRIENDLY record regardless of the actual data
+                    return new RestLiRequestDataImpl.Builder().entity(FRIENDLY).build();
+                }
+              };
             }
-          };
-        } else {
-          return super.getArgumentBuilder(resourceMethod);
-        }
-      }
-    });
+            else
+            {
+              return super.getArgumentBuilder(resourceMethod);
+            }
+          }
+        });
     super.init(false, config);
   }
 

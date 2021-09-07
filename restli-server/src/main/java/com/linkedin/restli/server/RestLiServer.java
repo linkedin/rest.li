@@ -109,18 +109,14 @@ public class RestLiServer implements RestRequestHandler, RestToRestLiRequestHand
       }
     }
 
-    ErrorResponseBuilder errorResponseBuilder = new ErrorResponseBuilder(config.getErrorResponseFormat());
-
     _restRestLiServer = new RestRestLiServer(config,
         resourceFactory,
         engine,
-        rootResources,
-        errorResponseBuilder);
+        rootResources);
     _streamRestLiServer = new AttachmentHandlingRestLiServer(config,
         resourceFactory,
         engine,
-        rootResources,
-        errorResponseBuilder);
+        rootResources);
   }
 
   @Override

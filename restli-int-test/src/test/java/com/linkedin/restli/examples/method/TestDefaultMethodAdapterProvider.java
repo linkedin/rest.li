@@ -25,7 +25,7 @@ import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
 import com.linkedin.restli.examples.greetings.client.GreetingsRequestBuilders;
-import com.linkedin.restli.internal.server.methods.DefaultMethodBuildersRegistry;
+import com.linkedin.restli.internal.server.methods.DefaultMethodAdapterProvider;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -33,9 +33,9 @@ import org.testng.annotations.Test;
 
 
 /**
- * Integration tests for {@link DefaultMethodBuildersRegistry}.
+ * Integration tests for {@link DefaultMethodAdapterProvider}.
  */
-public class TestDefaultMethodBuildersRegistry extends RestLiIntegrationTest
+public class TestDefaultMethodAdapterProvider extends RestLiIntegrationTest
 {
   @BeforeClass
   public void initClass() throws Exception

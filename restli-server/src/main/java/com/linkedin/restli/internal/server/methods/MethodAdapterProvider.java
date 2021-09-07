@@ -4,9 +4,14 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.response.RestLiResponseBuilder;
 
-public interface MethodBuildersRegistry {
+
+/**
+ * An interface for getting {@link RestLiArgumentBuilder} and {@link RestLiResponseBuilder}.
+ */
+public interface MethodAdapterProvider
+{
   /**
-   * Lookup {@link RestLiArgumentBuilder} for the given {@link ResourceMethod}.
+   * Get the {@link RestLiArgumentBuilder} for the given {@link ResourceMethod}.
    *
    * @param resourceMethod {@link ResourceMethod}
    * @return The {@link RestLiArgumentBuilder} for the provided {@link ResourceMethod}.

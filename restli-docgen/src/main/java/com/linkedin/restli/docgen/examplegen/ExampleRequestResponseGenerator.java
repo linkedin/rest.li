@@ -97,7 +97,7 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.methods.AnyRecord;
-import com.linkedin.restli.internal.server.methods.DefaultMethodBuildersRegistry;
+import com.linkedin.restli.internal.server.methods.DefaultMethodAdapterProvider;
 import com.linkedin.restli.internal.server.model.AnnotationSet;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.response.RestLiResponse;
@@ -212,7 +212,7 @@ public class ExampleRequestResponseGenerator
     _resourceModel = buildPlaceholderResourceModel(resourceSchema);
     ErrorResponseBuilder errorResponseBuilder = new ErrorResponseBuilder();
     _responseHandler = new RestLiResponseHandler(
-            new DefaultMethodBuildersRegistry(errorResponseBuilder), errorResponseBuilder);
+            new DefaultMethodAdapterProvider(errorResponseBuilder), errorResponseBuilder);
     _uriTemplate = _resourceSchema.getResourceSchema().getPath();
     _schemaResolver = schemaResolver;
     _dataGenerator = dataGenerator;

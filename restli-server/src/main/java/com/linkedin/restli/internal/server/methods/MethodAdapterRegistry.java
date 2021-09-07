@@ -22,13 +22,14 @@ import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
  * @author Josh Walker
  * @version $Revision: $
  *
- * @deprecated renamed to {@link DefaultMethodBuildersRegistry}. Keep this class for backward compatibility, like
+ * @deprecated renamed to {@link DefaultMethodAdapterProvider}. Keep this class for backward compatibility, like
  *   explicit construction of this class.
  */
-
 @Deprecated
-public class MethodAdapterRegistry extends DefaultMethodBuildersRegistry {
-  public MethodAdapterRegistry(ErrorResponseBuilder errorResponseBuilder) {
+public class MethodAdapterRegistry extends DefaultMethodAdapterProvider
+{
+  public MethodAdapterRegistry(ErrorResponseBuilder errorResponseBuilder)
+  {
     super(errorResponseBuilder);
   }
 }

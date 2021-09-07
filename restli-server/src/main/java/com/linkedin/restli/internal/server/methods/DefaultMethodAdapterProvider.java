@@ -56,11 +56,12 @@ import java.util.Map;
  * @version $Revision: $
  */
 
-public class DefaultMethodBuildersRegistry implements MethodBuildersRegistry {
+public class DefaultMethodAdapterProvider implements MethodAdapterProvider
+{
   private final Map<ResourceMethod, RestLiArgumentBuilder> _adapters;
   private final Map<ResourceMethod, RestLiResponseBuilder<?>> _responseBuilders;
 
-  public DefaultMethodBuildersRegistry(ErrorResponseBuilder errorResponseBuilder)
+  public DefaultMethodAdapterProvider(ErrorResponseBuilder errorResponseBuilder)
   {
     _adapters = buildAdapterRegistry();
     _responseBuilders = buildResponseBuilders(errorResponseBuilder);

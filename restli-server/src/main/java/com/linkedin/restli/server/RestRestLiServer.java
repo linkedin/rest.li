@@ -63,6 +63,11 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler, R
   private final List<NonResourceRequestHandler> _nonResourceRequestHandlers;
   private final boolean _writableStackTrace;
 
+  /**
+   * @deprecated Use the constructor without {@link ErrorResponseBuilder}, because it should be built from the
+   * {@link ErrorResponseFormat} in the {@link RestLiConfig}.
+   */
+  @Deprecated
   RestRestLiServer(RestLiConfig config,
       ResourceFactory resourceFactory,
       Engine engine,
@@ -96,6 +101,48 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler, R
         config.getMultiplexerSingletonFilter(),
         config.getMultiplexerRunMode(),
         errorResponseBuilder));
+
+    // Add debug request handlers
+    config.getDebugRequestHandlers().stream()
+        .map(handler -> new DelegatingDebugRequestHandler(handler, this))
+        .forEach(_nonResourceRequestHandlers::add);
+
+    // Add custom request handlers
+    config.getCustomRequestHandlers().forEach(_nonResourceRequestHandlers::add);
+    _writableStackTrace = config.isWritableStackTrace();
+  }
+
+  RestRestLiServer(RestLiConfig config,
+      ResourceFactory resourceFactory,
+      Engine engine,
+      Map<String, ResourceModel> rootResources)
+  {
+    super(config,
+        resourceFactory,
+        engine,
+        rootResources);
+
+    _nonResourceRequestHandlers = new ArrayList<>();
+
+    // Add documentation request handler
+    RestLiDocumentationRequestHandler docReqHandler = config.getDocumentationRequestHandler();
+    if (docReqHandler != null)
+    {
+      docReqHandler.initialize(config, rootResources);
+      _nonResourceRequestHandlers.add(docReqHandler);
+    }
+
+    // Add symbol table request handler
+    _nonResourceRequestHandlers.add(new RestLiSymbolTableRequestHandler());
+
+    // Add multiplexed request handler
+    _nonResourceRequestHandlers.add(new MultiplexedRequestHandlerImpl(this,
+        engine,
+        config.getMaxRequestsMultiplexed(),
+        config.getMultiplexedIndividualRequestHeaderWhitelist(),
+        config.getMultiplexerSingletonFilter(),
+        config.getMultiplexerRunMode(),
+        new ErrorResponseBuilder(config.getErrorResponseFormat())));
 
     // Add debug request handlers
     config.getDebugRequestHandlers().stream()

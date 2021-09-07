@@ -60,8 +60,8 @@ import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
 import com.linkedin.restli.internal.server.filter.FilterChainDispatcher;
 import com.linkedin.restli.internal.server.filter.FilterChainDispatcherImpl;
-import com.linkedin.restli.internal.server.methods.DefaultMethodBuildersRegistry;
-import com.linkedin.restli.internal.server.methods.MethodBuildersRegistry;
+import com.linkedin.restli.internal.server.methods.DefaultMethodAdapterProvider;
+import com.linkedin.restli.internal.server.methods.MethodAdapterProvider;
 import com.linkedin.restli.internal.server.response.RestLiResponse;
 import com.linkedin.restli.internal.server.response.ResponseUtils;
 import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
@@ -182,7 +182,7 @@ public class TestRestLiMethodInvocation
   private Engine _engine;
   private EasyMockResourceFactory _resourceFactory;
   private ErrorResponseBuilder _errorResponseBuilder;
-  private MethodBuildersRegistry _methodBuildersRegistry;
+  private MethodAdapterProvider _methodAdapterProvider;
   private RestLiMethodInvoker _invoker;
 
   @BeforeTest
@@ -197,7 +197,7 @@ public class TestRestLiMethodInvocation
     _resourceFactory  = new EasyMockResourceFactory();
 
     _errorResponseBuilder = new ErrorResponseBuilder();
-    _methodBuildersRegistry = new DefaultMethodBuildersRegistry(_errorResponseBuilder);
+    _methodAdapterProvider = new DefaultMethodAdapterProvider(_errorResponseBuilder);
 
     // Add filters to the invoker.
     _invoker = new RestLiMethodInvoker(_resourceFactory, _engine, ErrorResponseBuilder.DEFAULT_INTERNAL_ERROR_MESSAGE);
@@ -323,7 +323,8 @@ public class TestRestLiMethodInvocation
     RestLiFilterChain filterChain = new RestLiFilterChain(Arrays.asList(mockFilter, mockFilter), filterChainDispatcher,
         filterChainCallback);
     filterChain.onRequest(mockFilterContext,
-                          new RestLiFilterResponseContextFactory(request, routingResult, new RestLiResponseHandler(_methodBuildersRegistry, _errorResponseBuilder)));
+                          new RestLiFilterResponseContextFactory(request, routingResult, new RestLiResponseHandler(
+                              _methodAdapterProvider, _errorResponseBuilder)));
 
     verifyRecording(mockArgumentBuilder, mockFilterContext, mockFilter);
     if (throwExceptionFromFirstFilter)
@@ -2810,9 +2811,9 @@ public class TestRestLiMethodInvocation
       RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
           Collections.emptySet(),
           routingResult.getContext());
-      _methodBuildersRegistry.getArgumentBuilder(methodDescriptor.getMethodType())
+      _methodAdapterProvider.getArgumentBuilder(methodDescriptor.getMethodType())
           .extractRequestData(routingResult, DataMapUtils.readMapWithExceptions(request));
-      _invoker.invoke(null, routingResult, _methodBuildersRegistry.getArgumentBuilder(methodDescriptor.getMethodType()),
+      _invoker.invoke(null, routingResult, _methodAdapterProvider.getArgumentBuilder(methodDescriptor.getMethodType()),
                       null);
       Assert.fail("expected routing exception");
     }
@@ -2842,7 +2843,7 @@ public class TestRestLiMethodInvocation
 
     RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request,
                                                                             new RequestContext()), methodDescriptor);
-    RestLiArgumentBuilder argumentBuilder = _methodBuildersRegistry.getArgumentBuilder(methodDescriptor.getType());
+    RestLiArgumentBuilder argumentBuilder = _methodAdapterProvider.getArgumentBuilder(methodDescriptor.getType());
 
     try {
       RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
@@ -2851,7 +2852,7 @@ public class TestRestLiMethodInvocation
       RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult,
           DataMapUtils.readMapWithExceptions(request));
       _invoker.invoke(requestData, routingResult,
-                      _methodBuildersRegistry.getArgumentBuilder(methodDescriptor.getMethodType()), null);
+                      _methodAdapterProvider.getArgumentBuilder(methodDescriptor.getMethodType()), null);
       Assert.fail("expected routing exception");
     }
     catch (RoutingException e)
@@ -4488,7 +4489,7 @@ public class TestRestLiMethodInvocation
     RestRequest request = builder.build();
     final RestLiAttachmentReader attachmentReader = new RestLiAttachmentReader(null);
     final CountDownLatch latch = new CountDownLatch(1);
-    RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler(_methodBuildersRegistry, _errorResponseBuilder);
+    RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler(_methodAdapterProvider, _errorResponseBuilder);
 
     ServerResourceContext resourceContext = new ResourceContextImpl(new PathKeysImpl(),
         new RestRequestBuilder(URI.create(""))
@@ -4552,7 +4553,7 @@ public class TestRestLiMethodInvocation
         .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
     RestRequest request = builder.build();
     final CountDownLatch latch = new CountDownLatch(1);
-    RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler(_methodBuildersRegistry, _errorResponseBuilder);
+    RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler(_methodAdapterProvider, _errorResponseBuilder);
 
     Callback<RestLiResponse> executionCallback = new Callback<RestLiResponse>()
     {
@@ -5306,7 +5307,7 @@ public class TestRestLiMethodInvocation
         resourceContext.setResponseAttachments(expectedResponseAttachments);
       }
       RoutingResult routingResult = new RoutingResult(resourceContext, resourceMethodDescriptor, resourceMethodConfig);
-      RestLiArgumentBuilder argumentBuilder = _methodBuildersRegistry.getArgumentBuilder(resourceMethodDescriptor.getType());
+      RestLiArgumentBuilder argumentBuilder = _methodAdapterProvider.getArgumentBuilder(resourceMethodDescriptor.getType());
       RestLiRequestData requestData = argumentBuilder.extractRequestData(
           routingResult,
           entityBody != null && !entityBody.isEmpty() ? DataMapUtils.readMapWithExceptions(request) : null);
@@ -5315,7 +5316,7 @@ public class TestRestLiMethodInvocation
           requestData);
       final CountDownLatch latch = new CountDownLatch(1);
       final CountDownLatch expectedRoutingExceptionLatch = new CountDownLatch(1);
-      RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler(_methodBuildersRegistry, _errorResponseBuilder);
+      RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler(_methodAdapterProvider, _errorResponseBuilder);
 
       Callback<RestLiResponse> executionCallback = new Callback<RestLiResponse>()
       {
@@ -5470,7 +5471,7 @@ public class TestRestLiMethodInvocation
           new RoutingResult(new ResourceContextImpl(pathkeys, request,
                                                     new RequestContext()), methodDescriptor);
 
-      RestLiArgumentBuilder argumentBuilder = _methodBuildersRegistry.getArgumentBuilder(methodDescriptor.getType());
+      RestLiArgumentBuilder argumentBuilder = _methodAdapterProvider.getArgumentBuilder(methodDescriptor.getType());
       RestLiRequestData requestData = argumentBuilder.extractRequestData(
           routingResult, entityBody != null ? DataMapUtils.readMapWithExceptions(request) : null);
 
