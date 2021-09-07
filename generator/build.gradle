@@ -3,6 +3,7 @@ dependencies {
   compile project(':data-transform')
   compile project(':r2-core')
   compile project(':pegasus-common')
+  compile externalDependency.commonsCli
   compile externalDependency.commonsIo
   compile externalDependency.codemodel
   compile externalDependency.jsr305

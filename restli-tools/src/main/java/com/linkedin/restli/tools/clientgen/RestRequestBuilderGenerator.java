@@ -21,11 +21,11 @@ import com.linkedin.common.Version;
 import com.linkedin.internal.tools.ArgumentFileProcessor;
 import com.linkedin.pegasus.generator.CaseSensitiveFileCodeWriter;
 import com.linkedin.pegasus.generator.CodeUtil;
+import com.linkedin.pegasus.generator.DataTemplatePersistentClassChecker;
 import com.linkedin.pegasus.generator.DefaultGeneratorResult;
 import com.linkedin.pegasus.generator.GeneratorResult;
 import com.linkedin.pegasus.generator.JavaCodeGeneratorBase;
 import com.linkedin.pegasus.generator.JavaCodeUtil;
-import com.linkedin.pegasus.generator.PegasusDataTemplateGenerator;
 import com.linkedin.restli.internal.common.RestliVersion;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import com.linkedin.restli.restspec.ResourceEntityType;
@@ -55,6 +55,10 @@ public class RestRequestBuilderGenerator
   static final String GENERATOR_REST_GENERATE_VERSION = "generator.rest.generate.version";
   public static final String GENERATOR_REST_GENERATE_LOWERCASE_PATH = "generator.rest.generate.lowercase.path";
   private static final String GENERATOR_REST_GENERATE_DEPRECATED_VERSION = "generator.rest.generate.deprecated.version";
+  /**
+   * The system property that specifies whether to generate classes for externally resolved schemas
+   */
+  static final String GENERATOR_GENERATE_IMPORTED = "generator.generate.imported";
   private static final Logger _log = LoggerFactory.getLogger(RestRequestBuilderGenerator.class);
 
   /**
@@ -86,7 +90,7 @@ public class RestRequestBuilderGenerator
       sources = Arrays.copyOfRange(args, 1, args.length);
     }
 
-    final String generateImported = System.getProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_IMPORTED);
+    final String generateImported = System.getProperty(GENERATOR_GENERATE_IMPORTED);
     final String generateDataTemplates = System.getProperty(GENERATOR_REST_GENERATE_DATATEMPLATES);
     final String versionString = System.getProperty(GENERATOR_REST_GENERATE_VERSION);
     final String generateLowercasePath = System.getProperty(GENERATOR_REST_GENERATE_LOWERCASE_PATH);
@@ -221,11 +225,9 @@ public class RestRequestBuilderGenerator
       throw new IOException(message.toString());
     }
 
-    final PegasusDataTemplateGenerator.DataTemplatePersistentClassChecker dataTemplateChecker =
-        new PegasusDataTemplateGenerator.DataTemplatePersistentClassChecker(generateImported,
-                                                                            generator.getSpecGenerator(),
-                                                                            generator.getJavaDataTemplateGenerator(),
-                                                                            Collections.<File>emptySet());
+    final DataTemplatePersistentClassChecker dataTemplateChecker =
+        new DataTemplatePersistentClassChecker(generateImported, generator.getSpecGenerator(),
+            generator.getJavaDataTemplateGenerator(), Collections.<File>emptySet());
     final JavaCodeUtil.PersistentClassChecker checker = new JavaCodeUtil.PersistentClassChecker()
     {
       @Override

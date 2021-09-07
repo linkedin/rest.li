@@ -16,8 +16,10 @@ and what APIs have changed, if applicable.
 - Enable customizing MethodAdapterRegistry
   - Rename MethodAdapterRegistry to DefaultMethodAdapterProvider and abstract an interface MethodAdapterProvider
   - Deprecate the constructors with ErrorResponseBuilder for BaseRestLiServer and its dependent classes
-
-## [29.21.6] - 2021-09-09
+- Update the data template generator command-line app to accept a list of resolver directories
+  to use for resolving schema references.
+  - Also refactored the app to use a CLI library instead of passing arguments using system properties.
+  - Update `GenerateDataTemplateTask` to use the refactored command line app.
 - ConstantQpsDarkClusterStrategy post-prod fixes
    - Change the type of dispatcherOutboundTargetRate in DarkClusterConfig.pdl from int to float.
    - ConstantQpsRateLimiter - Introduce randomness while maintaining constant per period rate
@@ -29,7 +31,7 @@ and what APIs have changed, if applicable.
 - Expose an API to build a URI without query params. Expose a local attr for passing query params for in-process calls. 
 
 ## [29.21.3] - 2021-08-25
-- Fix a bug in SmoothRateLimiter where getEvents will always return 0
+- Fix a bug in `SmoothRateLimiter` where `getEvents` will always return `0`.
 
 ## [29.21.2] - 2021-08-18
 - Remove support for disabling request validation via headers since doing so can have dangerous side effects.
@@ -47,7 +49,7 @@ and what APIs have changed, if applicable.
 - Fixed race condition when switching d2 load balancer strategies.
 
 ## [29.19.17] - 2021-08-09
-- Fix bug in ConstantQpsDarkClusterStrategy that would call ConstantRateLimiter.setRate with an invalid burst value
+- Fix bug in `ConstantQpsDarkClusterStrategy` that would call `ConstantRateLimiter.setRate` with an invalid burst value.
 
 ## [29.19.16] - 2021-08-09
 - Add support for resolving from multiple schema source directories.
@@ -5081,8 +5083,7 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.21.6...master
-[29.21.6]: https://github.com/linkedin/rest.li/compare/v29.21.5...v29.21.6
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.21.5...master
 [29.21.5]: https://github.com/linkedin/rest.li/compare/v29.21.4...v29.21.5
 [29.21.4]: https://github.com/linkedin/rest.li/compare/v29.21.3...v29.21.4
 [29.21.3]: https://github.com/linkedin/rest.li/compare/v29.21.2...v29.21.3
