@@ -96,8 +96,9 @@ public class TestConstantQpsRateLimiter
   public void ensureRandomButConstantRate()
   {
     ClockedExecutor executor = new ClockedExecutor();
+    ClockedExecutor circularBufferExecutor = new ClockedExecutor();
     ConstantQpsRateLimiter rateLimiter =
-        new ConstantQpsRateLimiter(executor, executor, executor, TestEvictingCircularBuffer.getBuffer(executor));
+        new ConstantQpsRateLimiter(executor, executor, executor, TestEvictingCircularBuffer.getBuffer(circularBufferExecutor));
     rateLimiter.setRate(200d, ONE_SECOND, 1);
     rateLimiter.setBufferCapacity(1);
     TattlingCallback<None> tattler = new TattlingCallback<>(executor);
