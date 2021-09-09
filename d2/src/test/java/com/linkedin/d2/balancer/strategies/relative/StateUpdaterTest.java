@@ -133,7 +133,7 @@ public class StateUpdaterTest
         };
   }
 
-  @Test(dataProvider = "doNotSlowStart")
+  @Test(dataProvider = "trueFalse")
   public void testInitializePartitionWithSlowStartInitialHealthScore(boolean doNotSlowStart)
   {
     double initialHealthScore = 0.01;
@@ -142,7 +142,7 @@ public class StateUpdaterTest
     setup(relativeStrategyProperties, new ConcurrentHashMap<>());
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
-        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0), doNotSlowStart);
+        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0), doNotSlowStart, Arrays.asList(false, false));
 
     assertTrue(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).isEmpty(), "There should be no state before initialization");
 
@@ -163,8 +163,38 @@ public class StateUpdaterTest
 
   }
 
-  @DataProvider(name = "doNotSlowStart")
-  public Object[][] doNotSlowStart()
+  @Test(dataProvider = "trueFalse")
+  public void testInitializePartitionWithDoNotLoadBalance(boolean doNotLoadBalance)
+  {
+    double initialHealthScore = 0.01;
+    D2RelativeStrategyProperties relativeStrategyProperties = new D2RelativeStrategyProperties()
+      .setInitialHealthScore(initialHealthScore);
+    setup(relativeStrategyProperties, new ConcurrentHashMap<>());
+
+    List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
+                                                                                    Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0), false, Arrays.asList(doNotLoadBalance, doNotLoadBalance));
+
+    assertTrue(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).isEmpty(), "There should be no state before initialization");
+
+    _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, DEFAULT_CLUSTER_GENERATION_ID, false);
+
+    if (!doNotLoadBalance)
+    {
+      assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(0).getUri()).intValue(),
+                   (int) (initialHealthScore * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT));
+      assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(1).getUri()).intValue(),
+                   (int) (initialHealthScore * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT));
+    }
+    else
+    {
+      assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
+      assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
+    }
+
+  }
+
+  @DataProvider(name = "trueFalse")
+  public Object[][] trueFalse()
   {
     return new Object[][]
         {
@@ -303,6 +333,38 @@ public class StateUpdaterTest
     assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
     assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(),
         (int) (HEALTHY_POINTS - RelativeLoadBalancerStrategyFactory.DEFAULT_DOWN_STEP * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT));
+  }
+
+  @Test
+  public void testUpdateTrackerClientWithDoNotLoadBalance()
+  {
+    List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
+                                                                                    Arrays.asList(20, 20),
+                                                                                    Arrays.asList(10, 10),
+                                                                                    Arrays.asList(1000L, 1000L),
+                                                                                    Arrays.asList(500L, 500L),
+                                                                                    Arrays.asList(0, 0),
+                                                                                    Arrays.asList(false, true));
+
+
+    PartitionState state = new PartitionStateTestDataBuilder()
+      .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
+      .setTrackerClientStateMap(trackerClients,
+                                Arrays.asList(1.0, 1.0),
+                                Arrays.asList(TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY),
+                                Arrays.asList(30, 30))
+      .build();
+
+    ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
+    partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
+    setup(new D2RelativeStrategyProperties(), partitionLoadBalancerStateMap);
+
+    _stateUpdater.updateState();
+    Map<URI, Integer> pointsMap = _stateUpdater.getPointsMap(DEFAULT_PARTITION_ID);
+
+    assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(),
+                 (int) (HEALTHY_POINTS - RelativeLoadBalancerStrategyFactory.DEFAULT_DOWN_STEP * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT));
+    assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
   }
 
   @Test

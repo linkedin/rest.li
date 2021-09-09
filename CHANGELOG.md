@@ -14,6 +14,8 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.22.2] - 2021-09-17
+- Allow disabling of load balancing for a specific host.
 
 ## [29.22.1] - 2021-09-13
 - Mark the `extensions` directory as a resource root in the Gradle plugin.
@@ -47,6 +49,7 @@ and what APIs have changed, if applicable.
 - Enable skipping request and response validation via the use of request headers.
 
 ## [29.21.0] - 2021-08-17
+
 - Fixed relative load balancer executor schedule cancellation due to silent runtime exception.
 
 ## [29.20.1] - 2021-08-12
@@ -5090,7 +5093,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.2...master
+[29.22.2]: https://github.com/linkedin/rest.li/compare/v29.22.1...v29.22.2
 [29.22.1]: https://github.com/linkedin/rest.li/compare/v29.22.0...v29.22.1
 [29.22.0]: https://github.com/linkedin/rest.li/compare/v29.21.5...v29.22.0
 [29.21.5]: https://github.com/linkedin/rest.li/compare/v29.21.4...v29.21.5

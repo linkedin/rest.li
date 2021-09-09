@@ -31,6 +31,7 @@ import java.util.concurrent.CancellationException;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
@@ -343,6 +344,27 @@ public class ZooKeeperAnnouncer
       }
     });
     _log.info("changeWeight called for uri = {}.", _uri);
+  }
+
+  public synchronized void doNotLoadBalance(final Callback<None> callback, boolean doNotLoadBalance)
+  {
+    _server.addUriSpecificProperty(_cluster, "doNotLoadBalance", _uri, _partitionDataMap, PropertyKeys.DO_NOT_LOAD_BALANCE, doNotLoadBalance, new Callback<None>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        _log.warn("doNotLoadBalance for uri = {} failed.", _uri);
+        callback.onError(e);
+      }
+
+      @Override
+      public void onSuccess(None result)
+      {
+        _log.info("doNotLoadBalance for uri = {} succeeded.", _uri);
+        callback.onSuccess(result);
+      }
+    });
+    _log.info("doNotLoadBalance called for uri = {}.", _uri);
   }
 
   public String getCluster()

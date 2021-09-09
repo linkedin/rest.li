@@ -20,7 +20,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
-import com.linkedin.d2.balancer.clients.TrackerClientTest.TestCallback;
+import com.linkedin.d2.balancer.clients.DegraderTrackerClientTest.TestCallback;
 import com.linkedin.d2.balancer.clients.stub.DirectoryProviderMock;
 import com.linkedin.d2.balancer.clients.stub.KeyMapperProviderMock;
 import com.linkedin.d2.balancer.clients.stub.LoadBalancerMock;

@@ -61,7 +61,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-public class TrackerClientTest
+public class DegraderTrackerClientTest
 {
   @Test(groups = { "small", "back-end" })
   public void testClientStreamRequest() throws URISyntaxException

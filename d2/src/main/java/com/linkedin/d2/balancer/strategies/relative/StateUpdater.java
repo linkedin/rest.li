@@ -318,13 +318,18 @@ public class StateUpdater
         {
           trackerClientState.setHealthState(TrackerClientState.HealthState.NEUTRAL);
         }
+
+        if (trackerClient.doNotLoadBalance())
+        {
+          newHealthScore = MAX_HEALTH_SCORE;
+        }
         trackerClientState.setHealthScore(newHealthScore);
         trackerClientState.setCallCount(callCount);
       }
       else
       {
         // Initializing a new client score
-        if (trackerClient.doNotSlowStart())
+        if (trackerClient.doNotSlowStart() || trackerClient.doNotLoadBalance())
         {
           trackerClientStateMap.put(trackerClient, new TrackerClientState(MAX_HEALTH_SCORE,
               _relativeStrategyProperties.getMinCallCount()));

@@ -49,6 +49,23 @@ public interface LoadBalancerServer
                     boolean doNotSlowStart,
                     Callback<None> callback);
 
+  /**
+   * 1. Gets existing {@link UriProperties} for given cluster and add doNotSlowStart property
+   * for given uri.
+   * 2. Mark down existing node.
+   * 3. Mark up new node for uri with modified UriProperties and given partitionDataMap.
+   *
+   * @param uriSpecificPropertiesName Name of uri specific property to add.
+   * @param uriSpecificPropertiesValue Value of uri specific property to add.
+   */
+  void addUriSpecificProperty(String clusterName,
+                              String operationName,
+                              URI uri,
+                              Map<Integer, PartitionData> partitionDataMap,
+                              String uriSpecificPropertiesName,
+                              Object uriSpecificPropertiesValue,
+                              Callback<None> callback);
+
   void start(Callback<None> callback);
 
   void shutdown(Callback<None> callback);

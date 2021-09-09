@@ -58,6 +58,11 @@ public interface TrackerClient extends LoadBalancerClient
   boolean doNotSlowStart();
 
   /**
+   * @return Whether the host should receive any health score updates.
+   */
+  boolean doNotLoadBalance();
+
+  /**
    * @param partitionId Partition ID key.
    * @return Weight of specified partition or null if no partition with the ID exists.
    */

@@ -87,11 +87,15 @@ public class TrackerClientFactory
     TrackerClient trackerClient;
 
     boolean doNotSlowStart = false;
+    boolean doNotLoadBalance = false;
     Map<String, Object> uriSpecificProperties = uriProperties.getUriSpecificProperties().get(uri);
-    if (uriSpecificProperties != null && uriSpecificProperties.containsKey(PropertyKeys.DO_NOT_SLOW_START)
-        && Boolean.parseBoolean(uriSpecificProperties.get(PropertyKeys.DO_NOT_SLOW_START).toString()))
-    {
-      doNotSlowStart = true;
+    if (uriSpecificProperties != null) {
+      if (Boolean.parseBoolean(String.valueOf(uriSpecificProperties.get(PropertyKeys.DO_NOT_SLOW_START)))) {
+        doNotSlowStart = true;
+      }
+      if (Boolean.parseBoolean(String.valueOf(uriSpecificProperties.get(PropertyKeys.DO_NOT_LOAD_BALANCE)))) {
+        doNotLoadBalance = true;
+      }
     }
 
     switch (loadBalancerStrategyName)
@@ -101,11 +105,11 @@ public class TrackerClientFactory
         break;
       case (RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME):
         trackerClient = createTrackerClientImpl(uri, uriProperties, serviceProperties, loadBalancerStrategyName,
-            transportClient, clock, false, doNotSlowStart);
+            transportClient, clock, false, doNotSlowStart, doNotLoadBalance);
         break;
       default:
         trackerClient = createTrackerClientImpl(uri, uriProperties, serviceProperties, loadBalancerStrategyName,
-            transportClient, clock, true, doNotSlowStart);
+            transportClient, clock, true, doNotSlowStart, doNotLoadBalance);
     }
 
     return trackerClient;
@@ -222,7 +226,8 @@ public class TrackerClientFactory
                                                            TransportClient transportClient,
                                                            Clock clock,
                                                            boolean percentileTrackingEnabled,
-                                                           boolean doNotSlowStart)
+                                                           boolean doNotSlowStart,
+                                                           boolean doNotLoadBalance)
   {
     List<HttpStatusCodeRange> errorStatusCodeRanges = getErrorStatusRanges(serviceProperties);
     Predicate<Integer> isErrorStatus = (status) -> {
@@ -243,6 +248,7 @@ public class TrackerClientFactory
                                  getInterval(loadBalancerStrategyName, serviceProperties),
                                  isErrorStatus,
                                  percentileTrackingEnabled,
-                                 doNotSlowStart);
+                                 doNotSlowStart,
+                                 doNotLoadBalance);
   }
 }
