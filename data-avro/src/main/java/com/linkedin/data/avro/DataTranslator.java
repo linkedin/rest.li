@@ -336,18 +336,28 @@ public class DataTranslator implements DataTranslatorContext
           break;
         case RECORD:
           GenericRecord record = (GenericRecord) value;
+          Schema recordAvroSchema = record.getSchema();
           RecordDataSchema recordDataSchema = (RecordDataSchema) dereferencedDataSchema;
           dataMap = new DataMap(avroSchema.getFields().size());
           for (RecordDataSchema.Field field : recordDataSchema.getFields())
           {
             String fieldName = field.getName();
-            Object fieldValue = record.get(fieldName);
             // fieldValue could be null if the Avro schema does not contain the named field or
             // the field is present with a null value. In either case we do not add a value
             // to the translated DataMap. We do not consider optional/required/default here
             // either (i.e. it is not an error if a required field is missing); the user can
             // later call ValidateDataAgainstSchema with various
             // settings for RequiredMode to obtain the desired behaviour.
+
+            //explicitly check the avro record schema has this field as accessing a non-existent field throws
+            //under avro 1.10+
+            Schema.Field avroSchemaField = recordAvroSchema.getField(fieldName);
+            if (avroSchemaField == null)
+            {
+              continue;
+            }
+
+            Object fieldValue = record.get(avroSchemaField.pos());
             if (fieldValue == null)
             {
               continue;
