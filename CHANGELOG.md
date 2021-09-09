@@ -14,10 +14,8 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.21.5] - 2021-08-31
-- ConstantQpsDarkClusterStrategy post-prod fixes
-  - Change the type of dispatcherOutboundTargetRate in DarkClusterConfig.pdl from int to float.
-  - ConstantQpsRateLimiter - Introduce randomness while maintaining constant per period rate
+## [29.21.5] - 2021-09-09
+- Fix a bug in DataTranslator where accessing non-existent fields under avro 1.10+ throws
 
 ## [29.21.4] - 2021-08-30
 - Expose an API to build a URI without query params. Expose a local attr for passing query params for in-process calls. 
