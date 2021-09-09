@@ -13,6 +13,9 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Enable customizing MethodAdapterRegistry
+  - Rename MethodAdapterRegistry to DefaultMethodAdapterProvider and abstract an interface MethodAdapterProvider
+  - Deprecate the constructors with ErrorResponseBuilder for BaseRestLiServer and its dependent classes
 
 ## [29.21.3] - 2021-08-25
 - Fix a bug in SmoothRateLimiter where getEvents will always return 0
