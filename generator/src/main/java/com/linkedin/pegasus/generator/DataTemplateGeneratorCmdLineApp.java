@@ -59,46 +59,45 @@ public class DataTemplateGeneratorCmdLineApp
     OPTIONS.addOption("h", "help", false, "Show help.");
     OptionBuilder.withArgName("Generate imported schemas");
     OptionBuilder.withLongOpt("generateImported");
-    OptionBuilder.hasArgs(0);
+    OptionBuilder.hasArg(false);
     OptionBuilder.withDescription("Specifies whether to generate classes for externally resolved schemas.");
     OPTIONS.addOption(OptionBuilder.create('i'));
     OptionBuilder.withArgName("Generate lower case path");
     OptionBuilder.withLongOpt("generateLowercasePath");
-    OptionBuilder.hasArgs(0);
+    OptionBuilder.hasArg(false);
     OptionBuilder.withDescription("Specifies if generated directories should be created in lower case.");
     OPTIONS.addOption(OptionBuilder.create('l'));
     OptionBuilder.withArgName("Generate field mask");
     OptionBuilder.withLongOpt("generateFieldMask");
-    OptionBuilder.hasArgs(0);
+    OptionBuilder.hasArg(false);
     OptionBuilder.withDescription("Specifies if field mask classes should be generated for templates.");
     OPTIONS.addOption(OptionBuilder.create('m'));
     OptionBuilder.withArgName("Target directory");
     OptionBuilder.withLongOpt("targetDir");
-    OptionBuilder.hasArgs(1);
+    OptionBuilder.hasArg();
     OptionBuilder.isRequired();
     OptionBuilder.withDescription("Target directory in which the classes should be generated.");
     OPTIONS.addOption(OptionBuilder.create('d'));
     OptionBuilder.withArgName("Resolver Path/ArgFile");
     OptionBuilder.withLongOpt("resolverPath");
-    OptionBuilder.hasArgs(1);
+    OptionBuilder.hasArg();
     OptionBuilder.withDescription("Resolver path for loading data schemas. This can also be an arg file with path written per "
         + "line in the file. Use the syntax @[filename] for this arg when using the arg file.");
     OPTIONS.addOption(OptionBuilder.create('p'));
     OptionBuilder.withArgName("Root path");
     OptionBuilder.withLongOpt("rootPath");
-    OptionBuilder.hasArgs(1);
+    OptionBuilder.hasArg();
     OptionBuilder.withDescription("Root path used to generate the relative location for including in java doc.");
     OPTIONS.addOption(OptionBuilder.create('t'));
     OptionBuilder.withArgName("Default package");
     OptionBuilder.withLongOpt("defaultPackage");
-    OptionBuilder.hasArgs(1);
+    OptionBuilder.hasArg();
     OptionBuilder.withDescription("Default package to use when a PDL schema has no namespace.");
     OPTIONS.addOption(OptionBuilder.create('n'));
     OptionBuilder.withArgName("Resolver schema directories");
     OptionBuilder.withLongOpt("resolverSchemaDirectories");
-    OptionBuilder.hasArgs(1);
-    OptionBuilder.withValueSeparator(',');
-    OptionBuilder.withDescription("Comma separated list of schema directory names within the resolver path to use for"
+    OptionBuilder.hasArg();
+    OptionBuilder.withDescription("Comma-separated list of schema directory names within the resolver path to use for "
         + "resolving schemas. Optional, defaults to 'pegasus'.");
     OPTIONS.addOption(OptionBuilder.create('r'));
   }
@@ -141,7 +140,11 @@ public class DataTemplateGeneratorCmdLineApp
       }
       LOGGER.debug("Resolver Path: " + resolverPath);
       final String rootPath = cl.getOptionValue('t');
-      String[] resolverSchemaDirectories = cl.getOptionValues('r');
+      String[] resolverSchemaDirectories = null;
+      if (cl.hasOption('r'))
+      {
+        resolverSchemaDirectories = cl.getOptionValue('r').split(",");
+      }
       String[] sources = cl.getArgs();
       if (sources.length == 1 && ArgumentFileProcessor.isArgFile(sources[0]))
       {

@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -263,26 +264,42 @@ public class TestDataTemplateGeneratorCmdLineApp
   @Test
   public void testGeneratorWithCustomResolverDirectory() throws Exception
   {
-    String tempDirectoryPath = _tempDir.getAbsolutePath();
-    String jarFile = tempDirectoryPath + "/testWithResolverDirectory.jar";
+    // Add PDL entries to the JAR under multiple resolver directories
+    File jarFile = new File(_tempDir, "testWithResolverDirectory.jar");
+    Map<String, String> jarEntries = new HashMap<>();
+    jarEntries.put("custom/CustomResolverFoo.pdl", "record CustomResolverFoo {}");
+    createJarFile(jarFile, jarEntries);
 
-    Map<String, String> jarFiles = new HashMap<>();
-
-    // Add the type referenced from BRecord.pdl to the jar file under "custom" directory.
-    String resolverDirectory = "custom";
-    String pdlFile = PEGASUS_DIR + FS + "BField.pdl";
-    String pdlJarDestination = resolverDirectory + FS + "BField.pdl";
-    jarFiles.put(pdlFile, pdlJarDestination);
-
-    createTempJarFile(jarFiles, jarFile);
-
+    // Define the expected output
     Map<String, String> expectedTypeNamesToSourceFileMap = new HashMap<>();
-    expectedTypeNamesToSourceFileMap.put("BRecord", PEGASUS_DIR + FS + "BRecord.pdl");
-    expectedTypeNamesToSourceFileMap.put("InlineRecord", PEGASUS_DIR + FS + "BRecord.pdl");
-    expectedTypeNamesToSourceFileMap.put("BField", jarFile + ":" + resolverDirectory + "/BField.pdl");
+    expectedTypeNamesToSourceFileMap.put("NeedsCustomResolver", PEGASUS_DIR + FS + "NeedsCustomResolver.pdl");
+    expectedTypeNamesToSourceFileMap.put("CustomResolverFoo", jarFile + ":custom/CustomResolverFoo.pdl");
 
-    testRunGenerator("BRecord.pdl", expectedTypeNamesToSourceFileMap, jarFile,
-        Collections.singletonList(resolverDirectory), null);
+    testRunGenerator("NeedsCustomResolver.pdl", expectedTypeNamesToSourceFileMap, jarFile.getCanonicalPath(),
+        Collections.singletonList("custom"), null);
+  }
+
+  @Test
+  public void testGeneratorWithMultipleCustomResolverDirectories() throws Exception
+  {
+    // Add PDL entries to the JAR under multiple resolver directories
+    File jarFile = new File(_tempDir, "testWithResolverDirectories.jar");
+    Map<String, String> jarEntries = new HashMap<>();
+    jarEntries.put("custom1/CustomResolverFoo.pdl", "record CustomResolverFoo { ref: CustomResolverBar }");
+    jarEntries.put("custom2/CustomResolverBar.pdl", "record CustomResolverBar { ref: CustomTransitive }");
+    // This entry is transitively referenced (not referenced by the source model)
+    jarEntries.put("custom3/CustomTransitive.pdl", "record CustomTransitive {}");
+    createJarFile(jarFile, jarEntries);
+
+    // Define the expected output
+    Map<String, String> expectedTypeNamesToSourceFileMap = new HashMap<>();
+    expectedTypeNamesToSourceFileMap.put("NeedsCustomResolvers", PEGASUS_DIR + FS + "NeedsCustomResolvers.pdl");
+    expectedTypeNamesToSourceFileMap.put("CustomResolverFoo", jarFile + ":custom1/CustomResolverFoo.pdl");
+    expectedTypeNamesToSourceFileMap.put("CustomResolverBar", jarFile + ":custom2/CustomResolverBar.pdl");
+    expectedTypeNamesToSourceFileMap.put("CustomTransitive", jarFile + ":custom3/CustomTransitive.pdl");
+
+    testRunGenerator("NeedsCustomResolvers.pdl", expectedTypeNamesToSourceFileMap, jarFile.getCanonicalPath(),
+        Arrays.asList("custom1", "custom2", "custom3"), null);
   }
 
   private File[] generateDataTemplateFiles(File targetDir, String[] pegasusFilenames) throws Exception
@@ -323,33 +340,28 @@ public class TestDataTemplateGeneratorCmdLineApp
     return Arrays.equals(content1, content2);
   }
 
-  private void createTempJarFile(Map<String, String> sourceFileToJarLocationMap, String target) throws Exception
+  /**
+   * Creates the specified JAR file containing the given text entries.
+   * @param target file to write to
+   * @param jarEntries entries to write in plaintext, keyed by entry name
+   */
+  private void createJarFile(File target, Map<String, String> jarEntries) throws IOException
   {
-    // Create a buffer for reading the files
-    byte[] buf = new byte[1024];
+    if (!target.exists())
+    {
+      target.createNewFile();
+    }
 
     // Create the ZIP file
     try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(target)))
     {
-
-      // Compress the files
-      for (Map.Entry<String, String> sourceFileAndJarLocation : sourceFileToJarLocationMap.entrySet())
+      for (String entryName : jarEntries.keySet())
       {
-        try (FileInputStream in = new FileInputStream(sourceFileAndJarLocation.getKey()))
-        {
-
-          // Add ZIP entry to output stream at the given location.
-          out.putNextEntry(new ZipEntry(sourceFileAndJarLocation.getValue()));
-
-          // Transfer bytes from the file to the ZIP file
-          int len;
-          while ((len = in.read(buf)) > 0) {
-            out.write(buf, 0, len);
-          }
-
-          // Complete the entry
-          out.closeEntry();
-        }
+        // Add ZIP entry to output stream at the given location.
+        out.putNextEntry(new ZipEntry(entryName));
+        // Write the file contents to this entry and close
+        out.write(jarEntries.get(entryName).getBytes(Charset.defaultCharset()));
+        out.closeEntry();
       }
     }
   }
