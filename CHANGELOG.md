@@ -13,19 +13,21 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
-- Enable customizing MethodAdapterRegistry
-  - Rename MethodAdapterRegistry to DefaultMethodAdapterProvider and abstract an interface MethodAdapterProvider
-  - Deprecate the constructors with ErrorResponseBuilder for BaseRestLiServer and its dependent classes
+
+## [29.22.0] - 2021-09-09
+- Allow customizing `MethodAdapterRegistry` (now called `MethodAdapterProvider`) via `RestLiConfig`.
+  - Rename `MethodAdapterRegistry` to `DefaultMethodAdapterProvider` and add interface `MethodAdapterProvider`.
+  - Deprecate the constructors with `ErrorResponseBuilder` for `BaseRestLiServer` and its dependent classes
 - Update the data template generator command-line app to accept a list of resolver directories
   to use for resolving schema references.
   - Also refactored the app to use a CLI library instead of passing arguments using system properties.
-  - Update `GenerateDataTemplateTask` to use the refactored command line app.
-- ConstantQpsDarkClusterStrategy post-prod fixes
-   - Change the type of dispatcherOutboundTargetRate in DarkClusterConfig.pdl from int to float.
-   - ConstantQpsRateLimiter - Introduce randomness while maintaining constant per period rate
+  - Update `GenerateDataTemplateTask` to use the refactored command-line app `DataTemplateGeneratorCmdLineApp`.
+- `ConstantQpsDarkClusterStrategy` post-prod fixes.
+  - Change the type of `dispatcherOutboundTargetRate` in `DarkClusterConfig.pdl` from `int` to `float`.
+  - `ConstantQpsRateLimiter` - Introduce randomness while maintaining constant per-period rate.
 
 ## [29.21.5] - 2021-09-09
-- Fix a bug in DataTranslator where accessing non-existent fields under avro 1.10+ throws
+- Fix a bug in `DataTranslator` where accessing non-existent fields under avro 1.10+ throws an exception.
 
 ## [29.21.4] - 2021-08-30
 - Expose an API to build a URI without query params. Expose a local attr for passing query params for in-process calls. 
@@ -5083,7 +5085,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.21.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.0...master
+[29.22.0]: https://github.com/linkedin/rest.li/compare/v29.21.5...v29.22.0
 [29.21.5]: https://github.com/linkedin/rest.li/compare/v29.21.4...v29.21.5
 [29.21.4]: https://github.com/linkedin/rest.li/compare/v29.21.3...v29.21.4
 [29.21.3]: https://github.com/linkedin/rest.li/compare/v29.21.2...v29.21.3
