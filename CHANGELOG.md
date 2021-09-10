@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.22.1] - 2021-09-09
 - ConstantQpsDarkClusterStrategy post-prod fixes
    - Change the type of dispatcherOutboundTargetRate in DarkClusterConfig.pdl from int to float.
    - ConstantQpsRateLimiter - Introduce randomness while maintaining constant per period rate
@@ -5088,7 +5090,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.1...master
+[29.22.1]: https://github.com/linkedin/rest.li/compare/v29.22.0...v29.22.1
 [29.22.0]: https://github.com/linkedin/rest.li/compare/v29.21.5...v29.22.0
 [29.21.5]: https://github.com/linkedin/rest.li/compare/v29.21.4...v29.21.5
 [29.21.4]: https://github.com/linkedin/rest.li/compare/v29.21.3...v29.21.4
