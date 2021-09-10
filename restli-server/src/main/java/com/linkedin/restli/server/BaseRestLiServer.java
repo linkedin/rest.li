@@ -28,7 +28,7 @@ import com.linkedin.restli.internal.server.filter.FilterChainDispatcherImpl;
 import com.linkedin.restli.internal.server.filter.FilterRequestContextInternalImpl;
 import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
 import com.linkedin.restli.internal.server.filter.RestLiFilterResponseContextFactory;
-import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
+import com.linkedin.restli.internal.server.methods.MethodAdapterProvider;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
@@ -71,7 +71,36 @@ abstract class BaseRestLiServer
   private final Set<String> _customContentTypes;
   private final ResourceMethodConfigProvider _methodConfigProvider;
   private final boolean _fillInDefaultValueConfigured;
+  private final MethodAdapterProvider _methodAdapterProvider;
 
+  BaseRestLiServer(RestLiConfig config,
+      ResourceFactory resourceFactory,
+      Engine engine,
+      Map<String, ResourceModel> rootResources)
+  {
+    _customContentTypes = config.getCustomContentTypes().stream()
+        .map(ContentType::getHeaderKey)
+        .collect(Collectors.toSet());
+
+    _router = new RestLiRouter(rootResources, config);
+    resourceFactory.setRootResources(rootResources);
+    _methodInvoker = new RestLiMethodInvoker(resourceFactory, engine, config.getInternalErrorMessage());
+
+    _errorResponseBuilder = new ErrorResponseBuilder(config.getErrorResponseFormat());
+    _methodAdapterProvider = config.getMethodAdapterProvider();
+    _responseHandler = new RestLiResponseHandler(_methodAdapterProvider, _errorResponseBuilder);
+
+    _filters = config.getFilters() != null ? config.getFilters() : new ArrayList<>();
+    _fillInDefaultValueConfigured = config.shouldFillInDefaultValues();
+
+    _methodConfigProvider = ResourceMethodConfigProvider.build(config.getMethodConfig());
+  }
+
+  /**
+   * @deprecated Use the constructor without {@link ErrorResponseBuilder}, because it should be built from the
+   * {@link ErrorResponseFormat} in the {@link RestLiConfig}.
+   */
+  @Deprecated
   BaseRestLiServer(RestLiConfig config,
       ResourceFactory resourceFactory,
       Engine engine,
@@ -87,7 +116,8 @@ abstract class BaseRestLiServer
     _methodInvoker = new RestLiMethodInvoker(resourceFactory, engine, config.getInternalErrorMessage());
 
     _errorResponseBuilder = errorResponseBuilder;
-    _responseHandler = new RestLiResponseHandler(_errorResponseBuilder);
+    _methodAdapterProvider = config.getMethodAdapterProvider();
+    _responseHandler = new RestLiResponseHandler(_methodAdapterProvider, _errorResponseBuilder);
 
     _filters = config.getFilters() != null ? config.getFilters() : new ArrayList<>();
     _fillInDefaultValueConfigured = config.shouldFillInDefaultValues();
@@ -198,7 +228,7 @@ abstract class BaseRestLiServer
     RestLiArgumentBuilder argumentBuilder;
     try
     {
-      argumentBuilder = lookupArgumentBuilder(method, _errorResponseBuilder);
+      argumentBuilder = lookupArgumentBuilder(method);
       // Unstructured data is not available in the Rest.Li filters
       RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult, entityDataMap);
       filterContext = new FilterRequestContextInternalImpl(context, method, requestData);
@@ -229,11 +259,9 @@ abstract class BaseRestLiServer
     filterChain.onRequest(filterContext, filterResponseContextFactory);
   }
 
-  private RestLiArgumentBuilder lookupArgumentBuilder(ResourceMethodDescriptor method,
-      ErrorResponseBuilder errorResponseBuilder)
+  private RestLiArgumentBuilder lookupArgumentBuilder(ResourceMethodDescriptor method)
   {
-    RestLiArgumentBuilder argumentBuilder = new MethodAdapterRegistry(errorResponseBuilder)
-        .getArgumentBuilder(method.getType());
+    RestLiArgumentBuilder argumentBuilder = _methodAdapterProvider.getArgumentBuilder(method.getType());
     if (argumentBuilder == null)
     {
       throw new IllegalArgumentException("Unsupported method type: " + method.getType());

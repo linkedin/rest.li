@@ -65,6 +65,22 @@ class AttachmentHandlingRestLiServer extends StreamRestLiServer
   AttachmentHandlingRestLiServer(RestLiConfig config,
       ResourceFactory resourceFactory,
       Engine engine,
+      Map<String, ResourceModel> rootResources)
+  {
+    super(config,
+        resourceFactory,
+        engine,
+        rootResources);
+  }
+
+  /**
+   * @deprecated Use the constructor without {@link ErrorResponseBuilder}, because it should be built from the
+   * {@link ErrorResponseFormat} in the {@link RestLiConfig}.
+   */
+  @Deprecated
+  AttachmentHandlingRestLiServer(RestLiConfig config,
+      ResourceFactory resourceFactory,
+      Engine engine,
       Map<String, ResourceModel> rootResources,
       ErrorResponseBuilder errorResponseBuilder)
   {
