@@ -49,7 +49,6 @@ and what APIs have changed, if applicable.
 - Enable skipping request and response validation via the use of request headers.
 
 ## [29.21.0] - 2021-08-17
-
 - Fixed relative load balancer executor schedule cancellation due to silent runtime exception.
 
 ## [29.20.1] - 2021-08-12

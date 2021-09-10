@@ -89,11 +89,14 @@ public class TrackerClientFactory
     boolean doNotSlowStart = false;
     boolean doNotLoadBalance = false;
     Map<String, Object> uriSpecificProperties = uriProperties.getUriSpecificProperties().get(uri);
-    if (uriSpecificProperties != null) {
-      if (Boolean.parseBoolean(String.valueOf(uriSpecificProperties.get(PropertyKeys.DO_NOT_SLOW_START)))) {
+    if (uriSpecificProperties != null)
+    {
+      if (Boolean.parseBoolean(String.valueOf(uriSpecificProperties.get(PropertyKeys.DO_NOT_SLOW_START))))
+      {
         doNotSlowStart = true;
       }
-      if (Boolean.parseBoolean(String.valueOf(uriSpecificProperties.get(PropertyKeys.DO_NOT_LOAD_BALANCE)))) {
+      if (Boolean.parseBoolean(String.valueOf(uriSpecificProperties.get(PropertyKeys.DO_NOT_LOAD_BALANCE))))
+      {
         doNotLoadBalance = true;
       }
     }
