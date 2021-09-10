@@ -13,6 +13,9 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Enable customizing MethodAdapterRegistry
+  - Rename MethodAdapterRegistry to DefaultMethodAdapterProvider and abstract an interface MethodAdapterProvider
+  - Deprecate the constructors with ErrorResponseBuilder for BaseRestLiServer and its dependent classes
 
 ## [29.21.5] - 2021-09-09
 - Fix a bug in DataTranslator where accessing non-existent fields under avro 1.10+ throws
