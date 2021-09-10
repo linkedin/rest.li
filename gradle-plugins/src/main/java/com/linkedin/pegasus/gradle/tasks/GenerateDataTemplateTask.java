@@ -48,6 +48,7 @@ public class GenerateDataTemplateTask extends DefaultTask
   private boolean _enableArgFile;
   private Boolean _generateLowercasePath;
   private boolean _generateFieldMask;
+  private List<String> _resolverDirectories;
 
   // Output Task Property
   private File _destinationDir;
@@ -168,6 +169,18 @@ public class GenerateDataTemplateTask extends DefaultTask
     _generateLowercasePath = enable;
   }
 
+  @Optional
+  @Input
+  public List<String> getResolverDirectories()
+  {
+    return _resolverDirectories;
+  }
+
+  public void setResolverDirectories(List<String> resolverDirectories)
+  {
+    _resolverDirectories = resolverDirectories;
+  }
+
   @TaskAction
   public void generate()
   {
@@ -211,19 +224,23 @@ public class GenerateDataTemplateTask extends DefaultTask
             "generateDataTemplate_resolverPath", Collections.singletonList(resolverPathArg), getTemporaryDir()));
       }
 
-      javaExecSpec.setMain("com.linkedin.pegasus.generator.PegasusDataTemplateGenerator");
+      javaExecSpec.setMain("com.linkedin.pegasus.generator.DataTemplateGeneratorCmdLineApp");
       javaExecSpec.setClasspath(_pathedCodegenClasspath);
-      javaExecSpec.jvmArgs("-Dgenerator.resolver.path=" + resolverPathArg);
+      javaExecSpec.args("--resolverPath", resolverPathArg);
       if (_generateLowercasePath != null)
       {
-        javaExecSpec.jvmArgs("-Dgenerator.generate.lowercase.path=" + _generateLowercasePath); //.run(generateLowercasePath)
+        javaExecSpec.args("--generateLowercasePath");
       }
       if (_generateFieldMask)
       {
-        javaExecSpec.jvmArgs("-Dgenerator.generate.field.mask=true");
+        javaExecSpec.args("--generateFieldMask");
       }
-      javaExecSpec.jvmArgs("-Droot.path=" + getProject().getRootDir().getPath());
-      javaExecSpec.args(_destinationDir.getPath());
+      if (_resolverDirectories != null)
+      {
+        javaExecSpec.args("--resolverSchemaDirectories", String.join(",", _resolverDirectories));
+      }
+      javaExecSpec.args("--rootPath", getProject().getRootDir().getPath());
+      javaExecSpec.args("--targetDir", _destinationDir.getPath());
       javaExecSpec.args(_inputDir);
     });
   }

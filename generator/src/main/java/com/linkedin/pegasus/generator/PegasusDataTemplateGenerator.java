@@ -33,7 +33,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +40,9 @@ import org.slf4j.LoggerFactory;
  * Generate Java data template files from Pegasus Data Model schema files.
  *
  * @author Eran Leshem
+ * @deprecated Use {@link DataTemplateGeneratorCmdLineApp} instead.
  */
+@Deprecated
 public class PegasusDataTemplateGenerator
 {
   /**
@@ -52,41 +53,6 @@ public class PegasusDataTemplateGenerator
   public static final String GENERATOR_GENERATE_FIELD_MASK = "generator.generate.field.mask";
 
   private static final Logger _log = LoggerFactory.getLogger(PegasusDataTemplateGenerator.class);
-
-  public static class DataTemplatePersistentClassChecker implements JavaCodeUtil.PersistentClassChecker
-  {
-    private final boolean _generateImported;
-    private final TemplateSpecGenerator _specGenerator;
-    private final JavaDataTemplateGenerator _dataTemplateGenerator;
-    private final Set<File> _sourceFiles;
-
-    public DataTemplatePersistentClassChecker(boolean generateImported,
-                                              TemplateSpecGenerator specGenerator,
-                                              JavaDataTemplateGenerator dataTemplateGenerator,
-                                              Set<File> sourceFiles)
-    {
-      _generateImported = generateImported;
-      _specGenerator = specGenerator;
-      _dataTemplateGenerator = dataTemplateGenerator;
-      _sourceFiles = sourceFiles;
-    }
-
-    @Override
-    public boolean isPersistent(JDefinedClass clazz)
-    {
-      if (_generateImported)
-      {
-        return true;
-      }
-      else
-      {
-        final ClassTemplateSpec spec = _dataTemplateGenerator.getGeneratedClasses().get(clazz);
-        final DataSchemaLocation location = _specGenerator.getClassLocation(spec);
-        return location == null  // assume local
-            || _sourceFiles.contains(location.getSourceFile());
-      }
-    }
-  }
 
   public static void main(String[] args)
       throws IOException
