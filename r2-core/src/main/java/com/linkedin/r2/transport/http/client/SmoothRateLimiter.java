@@ -98,7 +98,6 @@ public class SmoothRateLimiter implements AsyncRateLimiter
    *                           dropping the request might not be backward compatible
    * @param rateLimiterName    Name assigned for logging purposes
    * @param executionTracker   Adjusts the behavior of the rate limiter based on policies/state of RateLimiterExecutionTracker
-
    */
   SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock, CallbackBuffer pendingCallbacks,
                     BufferOverflowMode bufferOverflowMode, String rateLimiterName, RateLimiterExecutionTracker executionTracker)
@@ -225,6 +224,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     private int _permitAvailableCount;
     private int _permitsInTimeFrame;
     private long _nextScheduled;
+    private boolean _wasDelayed = false;
 
     EventLoop(Clock clock)
     {
@@ -272,6 +272,13 @@ public class SmoothRateLimiter implements AsyncRateLimiter
 
       if (_permitAvailableCount > 0)
       {
+        if (!_wasDelayed)
+        {
+          _wasDelayed = true;
+          _scheduler.schedule(this::loop, _executionTracker.getNextExecutionDelay(_rate), TimeUnit.MILLISECONDS);
+          return;
+        }
+        _wasDelayed = false;
         _permitAvailableCount--;
         Callback<None> callback = null;
         try

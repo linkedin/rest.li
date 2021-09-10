@@ -104,7 +104,7 @@ public class DarkClustersConverterTest
 
     DarkClusterConfig resultConfig = DarkClustersConverter.toConfig(DarkClustersConverter.toProperties(configMap)).get(DARK_CLUSTER_KEY);
     Assert.assertEquals(resultConfig.getMultiplier(), DARK_CLUSTER_DEFAULT_MULTIPLIER);
-    Assert.assertEquals((int)resultConfig.getDispatcherOutboundTargetRate(), DARK_CLUSTER_DEFAULT_TARGET_RATE);
+    Assert.assertEquals(resultConfig.getDispatcherOutboundTargetRate(), DARK_CLUSTER_DEFAULT_TARGET_RATE);
     Assert.assertEquals((int)resultConfig.getDispatcherMaxRequestsToBuffer(), DARK_CLUSTER_DEFAULT_MAX_REQUESTS_TO_BUFFER);
     Assert.assertEquals((int)resultConfig.getDispatcherBufferedRequestExpiryInSeconds(), DARK_CLUSTER_DEFAULT_BUFFERED_REQUEST_EXPIRY_IN_SECONDS);
     Assert.assertEquals(resultConfig.getDarkClusterStrategyPrioritizedList().size(), 1, "default strategy list should be size 1");

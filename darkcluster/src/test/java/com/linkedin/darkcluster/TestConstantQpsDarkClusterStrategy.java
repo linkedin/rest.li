@@ -60,6 +60,7 @@ public class TestConstantQpsDarkClusterStrategy
         {1000, 100, 10, 10},
         {1000, 150, 10, 10},
         {100, 200, 10, 10},
+        {1000, 9.5f, 400, 10},
         // now test typical case of differing qps with different instance sizes
         {1000, 100, 10, 1},
         {1000, 90, 10, 1},
@@ -74,7 +75,7 @@ public class TestConstantQpsDarkClusterStrategy
   }
 
   @Test(dataProvider = "qpsKeys")
-  public void testStrategy(int numIterations, int qps, int numSourceInstances, int numDarkInstances)
+  public void testStrategy(int numIterations, float qps, int numSourceInstances, int numDarkInstances)
   {
     IntStream.of(1, 1000, 1000000).forEach(capacity ->
     {

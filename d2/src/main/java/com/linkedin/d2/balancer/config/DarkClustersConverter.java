@@ -126,7 +126,7 @@ public class DarkClustersConverter
       if (props.containsKey(PropertyKeys.DARK_CLUSTER_OUTBOUND_TARGET_RATE))
       {
         darkClusterConfig.setDispatcherOutboundTargetRate(
-            PropertyUtil.coerce(props.get(PropertyKeys.DARK_CLUSTER_OUTBOUND_TARGET_RATE), Integer.class));
+            PropertyUtil.coerce(props.get(PropertyKeys.DARK_CLUSTER_OUTBOUND_TARGET_RATE), Float.class));
       }
       else
       {

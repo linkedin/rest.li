@@ -17,6 +17,11 @@ and what APIs have changed, if applicable.
   - Rename MethodAdapterRegistry to DefaultMethodAdapterProvider and abstract an interface MethodAdapterProvider
   - Deprecate the constructors with ErrorResponseBuilder for BaseRestLiServer and its dependent classes
 
+## [29.21.6] - 2021-09-09
+- ConstantQpsDarkClusterStrategy post-prod fixes
+   - Change the type of dispatcherOutboundTargetRate in DarkClusterConfig.pdl from int to float.
+   - ConstantQpsRateLimiter - Introduce randomness while maintaining constant per period rate
+
 ## [29.21.5] - 2021-09-09
 - Fix a bug in DataTranslator where accessing non-existent fields under avro 1.10+ throws
 
@@ -5076,7 +5081,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.21.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.21.6...master
+[29.21.6]: https://github.com/linkedin/rest.li/compare/v29.21.5...v29.21.6
 [29.21.5]: https://github.com/linkedin/rest.li/compare/v29.21.4...v29.21.5
 [29.21.4]: https://github.com/linkedin/rest.li/compare/v29.21.3...v29.21.4
 [29.21.3]: https://github.com/linkedin/rest.li/compare/v29.21.2...v29.21.3
