@@ -595,10 +595,10 @@ public class PegasusPlugin implements Plugin<Project>
   // Enable the generation of fluent APIs
   private static final String ENABLE_FLUENT_API = "pegasusPlugin.enableFluentApi";
 
-  // Impact GenerateDataTemplateTask and GenerateRestClientTask;
+  // This config impacts GenerateDataTemplateTask and GenerateRestClientTask;
   // If not set, by default all paths generated in these two tasks will be lower-case.
-  // This is needed because Linux, MacOS, Windows treat case sensitive paths differently,
-  // and we want to be consistent
+  // This default behavior is needed because Linux, MacOS, Windows treat case sensitive paths differently,
+  // and we want to be consistent, so we choose lower-case as default case for path generated
   private static final String CODE_GEN_PATH_CASE_SENSITIVE = "pegasusPlugin.generateCaseSensitivePath";
 
   private static final String PEGASUS_PLUGIN_CONFIGURATION = "pegasusPlugin";
