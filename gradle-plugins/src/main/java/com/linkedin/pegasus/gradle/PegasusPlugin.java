@@ -2296,11 +2296,18 @@ public class PegasusPlugin implements Plugin<Project>
       sourceDirectorySet.srcDir(dataSchemaPath);
       project.getLogger().info("Adding resource root '{}'", dataSchemaPath);
 
-      // Exclude the data schema directory from being copied into the default Jar task
+      final String extensionsSchemaPath = getExtensionSchemaPath(project, sourceSet);
+      final File extensionsSchemaRoot = project.file(extensionsSchemaPath);
+      sourceDirectorySet.srcDir(extensionsSchemaPath);
+      project.getLogger().info("Adding resource root '{}'", extensionsSchemaPath);
+
+      // Exclude the data schema and extensions schema directory from being copied into the default Jar task
       sourceDirectorySet.getFilter().exclude(fileTreeElement -> {
         final File file = fileTreeElement.getFile();
         // Traversal starts with the children of a resource root, so checking the direct parent is sufficient
-        final boolean exclude = dataSchemaRoot.equals(file.getParentFile());
+        final boolean underDataSchemaRoot = dataSchemaRoot.equals(file.getParentFile());
+        final boolean underExtensionsSchemaRoot = extensionsSchemaRoot.equals(file.getParentFile());
+        final boolean exclude = (underDataSchemaRoot || underExtensionsSchemaRoot);
         if (exclude)
         {
           project.getLogger().info("Excluding resource directory '{}'", file);
