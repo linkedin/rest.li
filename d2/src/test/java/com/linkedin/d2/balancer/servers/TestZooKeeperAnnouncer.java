@@ -33,13 +33,13 @@ public class TestZooKeeperAnnouncer
   }
 
   @Test
-  public void testDoNotLoadBalance()
+  public void testSetDoNotLoadBalance()
   {
-    _announcer.doNotLoadBalance(_callback, true);
+    _announcer.setDoNotLoadBalance(_callback, true);
 
     verify(_server).addUriSpecificProperty(any(), any(), any(), any(), eq(PropertyKeys.DO_NOT_LOAD_BALANCE), eq(true), any());
 
-    _announcer.doNotLoadBalance(_callback, false);
+    _announcer.setDoNotLoadBalance(_callback, false);
 
     verify(_server).addUriSpecificProperty(any(), any(), any(), any(), eq(PropertyKeys.DO_NOT_LOAD_BALANCE), eq(false), any());
   }

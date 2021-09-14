@@ -52,7 +52,7 @@ public interface ZooKeeperAnnouncerJmxMXBean
    *
    * @param doNotLoadBalance Flag to let clients know if load balancing should be disabled for a host.
    */
-  void doNotLoadBalance(boolean doNotLoadBalance) throws PropertyStoreException;
+  void setDoNotLoadBalance(boolean doNotLoadBalance) throws PropertyStoreException;
 
   String getCluster();
 

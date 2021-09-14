@@ -43,6 +43,7 @@ import org.testng.annotations.Test;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -178,17 +179,23 @@ public class StateUpdaterTest
 
     _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, DEFAULT_CLUSTER_GENERATION_ID, false);
 
+    final TrackerClient trackerClient0 = trackerClients.get(0);
+    final TrackerClient trackerClient1 = trackerClients.get(1);
+
+    assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClient0.getUri()).intValue(),
+                 (int) (initialHealthScore * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT));
+    assertFalse(_stateUpdater.getPartitionState(DEFAULT_PARTITION_ID).getTrackerClientStateMap().get(trackerClient0).isUnhealthy());
+
     if (!doNotLoadBalance)
     {
-      assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(0).getUri()).intValue(),
+      assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClient1.getUri()).intValue(),
                    (int) (initialHealthScore * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT));
-      assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(1).getUri()).intValue(),
-                   (int) (initialHealthScore * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT));
+      assertFalse(_stateUpdater.getPartitionState(DEFAULT_PARTITION_ID).getTrackerClientStateMap().get(trackerClient0).isUnhealthy());
     }
     else
     {
-      assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
-      assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
+      assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClient1.getUri()).intValue(), HEALTHY_POINTS);
+      assertTrue(_stateUpdater.getPartitionState(DEFAULT_PARTITION_ID).getTrackerClientStateMap().get(trackerClient1).isUnhealthy());
     }
 
   }

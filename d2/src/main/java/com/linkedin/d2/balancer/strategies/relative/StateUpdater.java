@@ -321,6 +321,7 @@ public class StateUpdater
 
         if (trackerClient.doNotLoadBalance())
         {
+          trackerClientState.setHealthState(TrackerClientState.HealthState.HEALTHY);
           newHealthScore = MAX_HEALTH_SCORE;
         }
         trackerClientState.setHealthScore(newHealthScore);

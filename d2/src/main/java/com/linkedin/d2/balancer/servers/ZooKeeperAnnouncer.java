@@ -346,7 +346,7 @@ public class ZooKeeperAnnouncer
     _log.info("changeWeight called for uri = {}.", _uri);
   }
 
-  public synchronized void doNotLoadBalance(final Callback<None> callback, boolean doNotLoadBalance)
+  public synchronized void setDoNotLoadBalance(final Callback<None> callback, boolean doNotLoadBalance)
   {
     _server.addUriSpecificProperty(_cluster, "doNotLoadBalance", _uri, _partitionDataMap, PropertyKeys.DO_NOT_LOAD_BALANCE, doNotLoadBalance, new Callback<None>()
     {
