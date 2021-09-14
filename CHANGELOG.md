@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add a pegasus plugin config to use case sensitive path in dataTemplate generation and rest client generation
+
 
 ## [29.22.0] - 2021-09-09
 - Allow customizing `MethodAdapterRegistry` (now called `MethodAdapterProvider`) via `RestLiConfig`.
