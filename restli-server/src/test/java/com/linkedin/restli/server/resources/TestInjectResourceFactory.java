@@ -23,15 +23,18 @@ import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+import com.linkedin.restli.server.resources.fixtures.ConstructorArgResource;
+import com.linkedin.restli.server.resources.fixtures.DefaultConstructorArgResource;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import org.easymock.EasyMock;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.linkedin.restli.internal.server.model.ResourceModel;
-import com.linkedin.restli.server.resources.fixtures.ConstructorArgResource;
+import com.linkedin.restli.server.resources.fixtures.PublicConstructorArgResource;
 import com.linkedin.restli.server.resources.fixtures.SomeDependency1;
 import com.linkedin.restli.server.resources.fixtures.SomeDependency2;
 import com.linkedin.restli.server.resources.fixtures.SomeResource1;
@@ -186,11 +189,11 @@ public class TestInjectResourceFactory
     EasyMock.verify(ctx);
   }
 
-  @Test
-  public void testInjectConstructorArgs()
+  @Test(dataProvider = "constructorClasses")
+  public void testInjectConstructorArgs(Class<? extends ConstructorArgResource> constructorResourceClass)
   {
     Map<String, ResourceModel> pathRootResourceMap =
-            buildResourceModels(ConstructorArgResource.class);
+            buildResourceModels(constructorResourceClass);
 
     // set up mock ApplicationContext
     BeanProvider ctx = createMock(BeanProvider.class);
@@ -211,10 +214,18 @@ public class TestInjectResourceFactory
     factory.setRootResources(pathRootResourceMap);
 
     // #1 happy path
-    ConstructorArgResource r1 = factory.create(ConstructorArgResource.class);
+    ConstructorArgResource r1 = factory.create(constructorResourceClass);
     assertNotNull(r1);
     assertNotNull(r1.getDependency1());
     assertNotNull(r1.getDependency2());
     assertNull(r1.getNonInjectedDependency());
+  }
+
+  @DataProvider(parallel = true)
+  public static Object[] constructorClasses() {
+    return new Object[] {
+        PublicConstructorArgResource.class,
+        DefaultConstructorArgResource.class
+    };
   }
 }

@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Improve support for JSR330 by allowing package protected constructors annotated with @Inject
 
 ## [29.22.2] - 2021-09-20
 - Add server config support to define supported accept types
@@ -37,7 +38,7 @@ and what APIs have changed, if applicable.
 - Fix a bug in `DataTranslator` where accessing non-existent fields under avro 1.10+ throws an exception.
 
 ## [29.21.4] - 2021-08-30
-- Expose an API to build a URI without query params. Expose a local attr for passing query params for in-process calls. 
+- Expose an API to build a URI without query params. Expose a local attr for passing query params for in-process calls.
 
 ## [29.21.3] - 2021-08-25
 - Fix a bug in `SmoothRateLimiter` where `getEvents` will always return `0`.
@@ -62,7 +63,7 @@ and what APIs have changed, if applicable.
 
 ## [29.19.16] - 2021-08-09
 - Add support for resolving from multiple schema source directories.
-  - This change also introduces the concept of "source" and "resolver" directories when 
+  - This change also introduces the concept of "source" and "resolver" directories when
     creating a `DataSchemaParser`. "Source" directories are used to parse/load the input
     schemas, while the "resolver" directories will only be used for resolving referenced
     schemas.
@@ -86,16 +87,16 @@ serializing/deserializing them for requests that are executed in-process.
 
 ## [29.19.11] - 2021-07-20
 - Add compatibility level config for extension schema compatibility check.
-   - "pegasusPlugin.extensionSchema.compatibility" is the compatibility level config for extension schema compatibility check. 
+   - "pegasusPlugin.extensionSchema.compatibility" is the compatibility level config for extension schema compatibility check.
       It supports following 4 levels:
      - "off": the extension schema compatibility check will not be run.
      - "ignore": the extension schema compatibility check will run, but it allows backward incompatible changes.
      - "backwards": Changes that are considered backwards compatible will pass the check, otherwise changes will fail the check.
      - "equivalent": No changes to extension schemas will pass.
    - If this config is not provided by users, by default the extension schema compatibility check is using "backwards".
-   - How to use it: users could add 'pegasusPlugin.extensionSchema.compatibility=<compatibility level>' in the gradle.properties file 
+   - How to use it: users could add 'pegasusPlugin.extensionSchema.compatibility=<compatibility level>' in the gradle.properties file
      or directly add this property '-PpegasusPlugin.extensionSchema.compatibility=<compatibility level>' to the gradle build.
-   
+
 - Revert "Relax extension schema check to make '@extension' annotation is optional for 1-to-1 injections."
 
 ## [29.19.10] - 2021-07-16
@@ -255,7 +256,7 @@ serializing/deserializing them for requests that are executed in-process.
 - Add `UnionTemplate.memberKeyName()` to directly return the key name for a union member.
 
 ## [29.15.1] - 2021-02-18
-- Cleanup compression code to reduce duplication and minimize memcopies 
+- Cleanup compression code to reduce duplication and minimize memcopies
 
 ## [29.15.0] - 2021-02-17
 - Always enable client compression filter so that responses can be decompressed. If the request already has an accept encoding header set do not overwrite it.
