@@ -130,8 +130,11 @@ public class ZooKeeperConnectionManager
     this(zkConnectString, zkSessionTimeout, zkBasePath, factory, servers);
   }
 
-  public void start(Callback<None> callback)
+  public synchronized void start(Callback<None> callback)
   {
+    if (_managerStarted != false){
+      return;
+    } 
     _managerStarted = true;
     if (!_startupCallback.compareAndSet(null, callback))
     {
@@ -152,8 +155,11 @@ public class ZooKeeperConnectionManager
     }
   }
 
-  public void shutdown(final Callback<None> callback)
+  public synchronized void shutdown(final Callback<None> callback)
   {
+    if (_managerStarted != true){
+      return;
+    }
     _managerStarted = false;
     for (ZooKeeperAnnouncer server : _servers)
     {
