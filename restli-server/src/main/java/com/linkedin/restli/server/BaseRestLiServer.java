@@ -69,6 +69,7 @@ abstract class BaseRestLiServer
   private final ErrorResponseBuilder _errorResponseBuilder;
   private final List<Filter> _filters;
   private final Set<String> _customContentTypes;
+  private final List<String> _supportedAcceptTypes;
   private final ResourceMethodConfigProvider _methodConfigProvider;
   private final boolean _fillInDefaultValueConfigured;
   private final MethodAdapterProvider _methodAdapterProvider;
@@ -81,6 +82,7 @@ abstract class BaseRestLiServer
     _customContentTypes = config.getCustomContentTypes().stream()
         .map(ContentType::getHeaderKey)
         .collect(Collectors.toSet());
+    _supportedAcceptTypes = config.getSupportedAcceptTypes();
 
     _router = new RestLiRouter(rootResources, config);
     resourceFactory.setRootResources(rootResources);
@@ -110,6 +112,7 @@ abstract class BaseRestLiServer
     _customContentTypes = config.getCustomContentTypes().stream()
         .map(ContentType::getHeaderKey)
         .collect(Collectors.toSet());
+    _supportedAcceptTypes = config.getSupportedAcceptTypes();
 
     _router = new RestLiRouter(rootResources, config);
     resourceFactory.setRootResources(rootResources);
@@ -172,8 +175,8 @@ abstract class BaseRestLiServer
     try
     {
       ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, requestContext);
-      RestUtils.validateRequestHeadersAndUpdateResourceContext(
-          request.getHeaders(), _customContentTypes, context, requestContext);
+      RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(), _supportedAcceptTypes,
+              _customContentTypes, context, requestContext);
 
       ResourceMethodDescriptor method = _router.process(context);
       ResourceMethodConfig methodConfig = _methodConfigProvider.apply(method);
