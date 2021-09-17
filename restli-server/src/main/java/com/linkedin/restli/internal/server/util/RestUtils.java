@@ -229,9 +229,9 @@ public class RestUtils
         return RestConstants.HEADER_VALUE_APPLICATION_JSON;
       }
 
-      return MIMEParse.bestMatch(supportedAcceptTypes != null ? supportedAcceptTypes.stream() :
-              Stream.concat(customMimeTypesSupported.stream(), RestConstants.SUPPORTED_MIME_TYPES.stream()),
-              acceptHeader);
+      return MIMEParse.bestMatch(supportedAcceptTypes != null && supportedAcceptTypes.isEmpty() ? supportedAcceptTypes.stream() :
+          Stream.concat(customMimeTypesSupported.stream(), RestConstants.SUPPORTED_MIME_TYPES.stream()),
+          acceptHeader);
     }
 
     // Handle the case when an accept MIME type that was passed in along with the
@@ -239,7 +239,7 @@ public class RestUtils
     catch (InvalidMimeTypeException e)
     {
       throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, String
-              .format("Encountered invalid MIME type '%s' in accept header.", e.getType()));
+        .format("Encountered invalid MIME type '%s' in accept header.", e.getType()));
     }
   }
 

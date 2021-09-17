@@ -176,7 +176,7 @@ abstract class BaseRestLiServer
     {
       ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(), request, requestContext);
       RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(), _supportedAcceptTypes,
-              _customContentTypes, context, requestContext);
+          _customContentTypes, context, requestContext);
 
       ResourceMethodDescriptor method = _router.process(context);
       ResourceMethodConfig methodConfig = _methodConfigProvider.apply(method);
