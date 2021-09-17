@@ -1,6 +1,7 @@
 package com.linkedin.d2.balancer.clients;
 
 import java.net.URI;
+import java.util.HashMap;
 
 import com.linkedin.util.clock.SystemClock;
 
@@ -18,12 +19,12 @@ public class TrackerClientImplTest
   public void testDoNotLoadBalance()
   {
     boolean doNotLoadBalance = true;
-    _trackerClient = new TrackerClientImpl(URI.create("uri"), null, null, SystemClock.instance(), 1000, (test) -> false, false, false, doNotLoadBalance);
+    _trackerClient = new TrackerClientImpl(URI.create("uri"), new HashMap<>(), null, SystemClock.instance(), 1000, (test) -> false, false, false, doNotLoadBalance);
 
     Assert.assertEquals(_trackerClient.doNotLoadBalance(), doNotLoadBalance);
 
     doNotLoadBalance = false;
-    _trackerClient = new TrackerClientImpl(URI.create("uri"), null, null, SystemClock.instance(), 1000, (test) -> false, false, false, doNotLoadBalance);
+    _trackerClient = new TrackerClientImpl(URI.create("uri"), new HashMap<>(), null, SystemClock.instance(), 1000, (test) -> false, false, false, doNotLoadBalance);
 
     Assert.assertEquals(_trackerClient.doNotLoadBalance(), doNotLoadBalance);
   }

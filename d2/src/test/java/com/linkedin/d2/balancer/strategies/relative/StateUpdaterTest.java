@@ -173,7 +173,7 @@ public class StateUpdaterTest
     setup(relativeStrategyProperties, new ConcurrentHashMap<>());
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
-                                                                                    Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0), false, Arrays.asList(doNotLoadBalance, doNotLoadBalance));
+                                                                                    Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0), false, Arrays.asList(false, doNotLoadBalance));
 
     assertTrue(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).isEmpty(), "There should be no state before initialization");
 
@@ -195,7 +195,7 @@ public class StateUpdaterTest
     else
     {
       assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClient1.getUri()).intValue(), HEALTHY_POINTS);
-      assertTrue(_stateUpdater.getPartitionState(DEFAULT_PARTITION_ID).getTrackerClientStateMap().get(trackerClient1).isUnhealthy());
+      assertFalse(_stateUpdater.getPartitionState(DEFAULT_PARTITION_ID).getTrackerClientStateMap().get(trackerClient1).isUnhealthy());
     }
 
   }
@@ -350,7 +350,7 @@ public class StateUpdaterTest
                                                                                     Arrays.asList(20, 1, 20),
                                                                                     Arrays.asList(0, 0, 0),
                                                                                     Arrays.asList(1000L, 5000L, 100000L),
-                                                                                    Arrays.asList(0L, 0L),
+                                                                                    Arrays.asList(0L, 0L, 0L),
                                                                                     Arrays.asList(0, 0, 10),
                                                                                     Arrays.asList(false, false, doNotLoadBalance));
 
@@ -370,8 +370,7 @@ public class StateUpdaterTest
     _stateUpdater.updateState();
     Map<URI, Integer> pointsMap = _stateUpdater.getPointsMap(DEFAULT_PARTITION_ID);
 
-    assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(),
-                 (int) (HEALTHY_POINTS - RelativeLoadBalancerStrategyFactory.DEFAULT_DOWN_STEP * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT), "Healthy client should not have health score reduced.");
+    assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS, "Healthy client should not have health score reduced.");
     assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(),
                  (int) (HEALTHY_POINTS - RelativeLoadBalancerStrategyFactory.DEFAULT_DOWN_STEP * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT), "This should be considered unhealthy because its latency exceeds the threshold "
                    + "(the client with load balancing disabled should not affect the average latency calculation).");
