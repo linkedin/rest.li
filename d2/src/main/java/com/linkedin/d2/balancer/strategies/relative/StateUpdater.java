@@ -277,55 +277,59 @@ public class StateUpdater
       {
         TrackerClientState trackerClientState = trackerClientStateMap.get(trackerClient);
         int callCount = latestCallStats.getCallCount() + latestCallStats.getOutstandingCount();
-        double errorRate = getErrorRate(latestCallStats.getErrorTypeCounts(), callCount);
-        long avgLatency = getAvgHostLatency(latestCallStats);
-        double oldHealthScore = trackerClientState.getHealthScore();
-        double newHealthScore = oldHealthScore;
-
-        clusterCallCount += callCount;
-        clusterErrorCount += errorRate * callCount;
-
-        if (isUnhealthy(trackerClientState, avgClusterLatency, callCount, avgLatency, errorRate))
-        {
-          // If it is above high latency, we reduce the health score by down step
-          newHealthScore = Double.max(trackerClientState.getHealthScore() - _relativeStrategyProperties.getDownStep(), MIN_HEALTH_SCORE);
-          trackerClientState.setHealthState(TrackerClientState.HealthState.UNHEALTHY);
-
-          LOG.debug("Host is unhealthy. Host: " + trackerClient.toString()
-                  + ", errorRate: " + errorRate
-                  + ", latency: " + avgClusterLatency
-                  + ", callCount: " + callCount
-                  + ", healthScore dropped from " + trackerClientState.getHealthScore() + " to " + newHealthScore);
-        }
-        else if (trackerClientState.getHealthScore() < MAX_HEALTH_SCORE
-            && isHealthy(trackerClientState, avgClusterLatency, callCount, avgLatency, errorRate))
-        {
-          if (oldHealthScore < _relativeStrategyProperties.getSlowStartThreshold())
-          {
-            // If the client is healthy and slow start is enabled, we double the health score
-            newHealthScore = oldHealthScore > MIN_HEALTH_SCORE
-                ? Math.min(MAX_HEALTH_SCORE, SLOW_START_RECOVERY_FACTOR * oldHealthScore)
-                : SLOW_START_INITIAL_HEALTH_SCORE;
-          }
-          else
-          {
-            // If slow start is not enabled, we just increase the health score by up step
-            newHealthScore = Math.min(MAX_HEALTH_SCORE, oldHealthScore + _relativeStrategyProperties.getUpStep());
-          }
-          trackerClientState.setHealthState(TrackerClientState.HealthState.HEALTHY);
-        }
-        else
-        {
-          trackerClientState.setHealthState(TrackerClientState.HealthState.NEUTRAL);
-        }
 
         if (trackerClient.doNotLoadBalance())
         {
           trackerClientState.setHealthState(TrackerClientState.HealthState.HEALTHY);
-          newHealthScore = MAX_HEALTH_SCORE;
+          trackerClientState.setHealthScore(MAX_HEALTH_SCORE);
+          trackerClientState.setCallCount(callCount);
         }
-        trackerClientState.setHealthScore(newHealthScore);
-        trackerClientState.setCallCount(callCount);
+        else
+        {
+          double errorRate = getErrorRate(latestCallStats.getErrorTypeCounts(), callCount);
+          long avgLatency = getAvgHostLatency(latestCallStats);
+          double oldHealthScore = trackerClientState.getHealthScore();
+          double newHealthScore = oldHealthScore;
+
+          clusterCallCount += callCount;
+          clusterErrorCount += errorRate * callCount;
+
+          if (isUnhealthy(trackerClientState, avgClusterLatency, callCount, avgLatency, errorRate))
+          {
+            // If it is above high latency, we reduce the health score by down step
+            newHealthScore = Double.max(trackerClientState.getHealthScore() - _relativeStrategyProperties.getDownStep(), MIN_HEALTH_SCORE);
+            trackerClientState.setHealthState(TrackerClientState.HealthState.UNHEALTHY);
+
+            LOG.debug("Host is unhealthy. Host: " + trackerClient.toString()
+                        + ", errorRate: " + errorRate
+                        + ", latency: " + avgClusterLatency
+                        + ", callCount: " + callCount
+                        + ", healthScore dropped from " + trackerClientState.getHealthScore() + " to " + newHealthScore);
+          }
+          else if (trackerClientState.getHealthScore() < MAX_HEALTH_SCORE
+            && isHealthy(trackerClientState, avgClusterLatency, callCount, avgLatency, errorRate))
+          {
+            if (oldHealthScore < _relativeStrategyProperties.getSlowStartThreshold())
+            {
+              // If the client is healthy and slow start is enabled, we double the health score
+              newHealthScore = oldHealthScore > MIN_HEALTH_SCORE
+                ? Math.min(MAX_HEALTH_SCORE, SLOW_START_RECOVERY_FACTOR * oldHealthScore)
+                : SLOW_START_INITIAL_HEALTH_SCORE;
+            }
+            else
+            {
+              // If slow start is not enabled, we just increase the health score by up step
+              newHealthScore = Math.min(MAX_HEALTH_SCORE, oldHealthScore + _relativeStrategyProperties.getUpStep());
+            }
+            trackerClientState.setHealthState(TrackerClientState.HealthState.HEALTHY);
+          }
+          else
+          {
+            trackerClientState.setHealthState(TrackerClientState.HealthState.NEUTRAL);
+          }
+          trackerClientState.setHealthScore(newHealthScore);
+          trackerClientState.setCallCount(callCount);
+        }
       }
       else
       {
@@ -359,6 +363,11 @@ public class StateUpdater
     {
       CallTracker.CallStats latestCallStats = trackerClient.getCallTracker().getCallStats();
       latestCallStatsMap.put(trackerClient, latestCallStats);
+
+      if (trackerClient.doNotLoadBalance())
+      {
+        continue;
+      }
 
       int callCount = latestCallStats.getCallCount();
       int outstandingCallCount = latestCallStats.getOutstandingCount();
