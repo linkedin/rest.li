@@ -46,14 +46,11 @@ import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
-
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 
@@ -212,6 +209,11 @@ public class RestUtils
 
   public static String pickBestEncoding(String acceptHeader, Set<String> customMimeTypesSupported)
   {
+    return pickBestEncoding(acceptHeader, null, customMimeTypesSupported);
+  }
+
+  public static String pickBestEncoding(String acceptHeader, List<String> supportedAcceptTypes, Set<String> customMimeTypesSupported)
+  {
     if (acceptHeader == null || acceptHeader.isEmpty())
     {
       return RestConstants.HEADER_VALUE_APPLICATION_JSON;
@@ -227,7 +229,7 @@ public class RestUtils
         return RestConstants.HEADER_VALUE_APPLICATION_JSON;
       }
 
-      return MIMEParse.bestMatch(
+      return MIMEParse.bestMatch(supportedAcceptTypes != null && supportedAcceptTypes.isEmpty() ? supportedAcceptTypes.stream() :
           Stream.concat(customMimeTypesSupported.stream(), RestConstants.SUPPORTED_MIME_TYPES.stream()),
           acceptHeader);
     }
@@ -237,7 +239,7 @@ public class RestUtils
     catch (InvalidMimeTypeException e)
     {
       throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, String
-          .format("Encountered invalid MIME type '%s' in accept header.", e.getType()));
+        .format("Encountered invalid MIME type '%s' in accept header.", e.getType()));
     }
   }
 
@@ -342,6 +344,26 @@ public class RestUtils
                                                                     ServerResourceContext resourceContext,
                                                                     RequestContext requestContext)
   {
+    validateRequestHeadersAndUpdateResourceContext(headers, null, customMimeTypesSupported, resourceContext, requestContext);
+  }
+
+  /**
+   * Validate request headers and set response mime type in the server resource context.
+   *
+   * @param headers                    Request headers.
+   * @param supportedAcceptTypes       List of supported content type header keys for response payload.
+   * @param customMimeTypesSupported   Set of supported custom mime types.
+   * @param resourceContext            Server resource context.
+   * @param requestContext             Incoming request context.
+   *
+   * @throws RestLiServiceException if any of the headers are invalid.
+   */
+  public static void validateRequestHeadersAndUpdateResourceContext(final Map<String, String> headers,
+                                                                    final List<String> supportedAcceptTypes,
+                                                                    final Set<String> customMimeTypesSupported,
+                                                                    ServerResourceContext resourceContext,
+                                                                    RequestContext requestContext)
+  {
     // In process requests don't serialize the response, so just set response mime-type to JSON.
     if (Boolean.TRUE.equals(requestContext.getLocalAttr(ServerResourceContext.CONTEXT_IN_PROCESS_RESOLUTION_KEY))) {
       resourceContext.setResponseMimeType(ContentType.JSON.getHeaderKey());
@@ -350,7 +372,7 @@ public class RestUtils
 
     // Validate whether the accept headers have at least one type that we support.
     // Fail the validation if we will be unable to support the requested accept type.
-    String mimeType = pickBestEncoding(headers.get(RestConstants.HEADER_ACCEPT), customMimeTypesSupported);
+    String mimeType = pickBestEncoding(headers.get(RestConstants.HEADER_ACCEPT), supportedAcceptTypes, customMimeTypesSupported);
     if (StringUtils.isEmpty(mimeType))
     {
       throw new RestLiServiceException(HttpStatus.S_406_NOT_ACCEPTABLE,

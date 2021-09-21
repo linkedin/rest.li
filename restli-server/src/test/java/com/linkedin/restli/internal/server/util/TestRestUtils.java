@@ -40,10 +40,12 @@ import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.server.LinkedListNode;
 import com.linkedin.restli.server.RestLiServiceException;
 import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -68,6 +70,7 @@ public class TestRestUtils
   private static final String UNKNOWN_TYPE_HEADER_WITH_INVALID_PARAMS_JSON = "foo/bar; baz, application/json";
   private static final String UNKNOWN_TYPE_HEADER_WITH_UNKNOWN_PARAMS_JSON = "foo/bar; baz=bark, application/json";
   private static final String UNKNOWN_TYPE_HEADER_WITH_VALID_PARAMS_JSON = "foo/bar; level=1, application/json";
+  private static final String PSON_TYPE_HEADER_WITH_VALID_PARAMS_JSON = "application/x-pson; level=1, application/json";
   private static final String JSON_HEADER = "application/json";
   private static final String PSON_HEADER = "application/x-pson";
   private static final String INVALID_TYPE_HEADER_1 = "foo";
@@ -94,7 +97,8 @@ public class TestRestUtils
         { UNKNOWN_TYPE_HEADER_WITH_INVALID_PARAMS_JSON, JSON_TYPE },
         { UNKNOWN_TYPE_HEADER_WITH_UNKNOWN_PARAMS_JSON, JSON_TYPE },
         { UNKNOWN_TYPE_HEADER_WITH_VALID_PARAMS_JSON, JSON_TYPE },
-        { MULTIPART_MIME_RELATED_TYPE, JSON_TYPE}
+        { MULTIPART_MIME_RELATED_TYPE, JSON_TYPE},
+        { PSON_TYPE_HEADER_WITH_VALID_PARAMS_JSON, PSON_TYPE }
     };
   }
 
@@ -114,6 +118,13 @@ public class TestRestUtils
   public void testPickBestEncodingWithValidMimeTypes(String header, String result)
   {
     Assert.assertEquals(RestUtils.pickBestEncoding(header, Collections.emptySet()), result);
+  }
+
+  @Test
+  public void testPickBestEncodingWithSupportedMimeTypes()
+  {
+    Assert.assertEquals(RestUtils.pickBestEncoding(PSON_TYPE_HEADER_WITH_VALID_PARAMS_JSON, Arrays.asList(JSON_HEADER),Collections.emptySet()), JSON_HEADER);
+    Assert.assertEquals(RestUtils.pickBestEncoding(PSON_TYPE_HEADER_WITH_VALID_PARAMS_JSON, Collections.EMPTY_LIST,Collections.emptySet()), PSON_HEADER);
   }
 
   @Test

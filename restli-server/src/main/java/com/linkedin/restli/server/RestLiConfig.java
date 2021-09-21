@@ -91,6 +91,7 @@ public class RestLiConfig
   private MultiplexerSingletonFilter _multiplexerSingletonFilter;
   private MultiplexerRunMode _multiplexerRunMode = MultiplexerRunMode.MULTIPLE_PLANS;
   private final List<ContentType> _customContentTypes = new LinkedList<>();
+  private List<String> _supportedAcceptTypes;
   private final List<ResourceDefinitionListener> _resourceDefinitionListeners = new ArrayList<>();
   private boolean _useStreamCodec = false;
 
@@ -617,5 +618,23 @@ public class RestLiConfig
   {
     return Optional.ofNullable(_methodAdapterProvider)
             .orElse(new DefaultMethodAdapterProvider(new ErrorResponseBuilder(_errorResponseFormat)));
+  }
+
+  /**
+   * Get list of supported mime types for response serialization.
+   * @return list of mime types.
+   */
+  public List<String> getSupportedAcceptTypes()
+  {
+    return _supportedAcceptTypes;
+  }
+
+  /**
+   * Sets list of supported mime types for response serialization.
+   * @param supportedAcceptTypes list of mime types.
+   */
+  public void setSupportedAcceptTypes(List<String> supportedAcceptTypes)
+  {
+    _supportedAcceptTypes = supportedAcceptTypes;
   }
 }
