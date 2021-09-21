@@ -182,22 +182,22 @@ public class StateUpdaterTest
     final TrackerClient trackerClient0 = trackerClients.get(0);
     final TrackerClient trackerClient1 = trackerClients.get(1);
 
-    assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClient0.getUri()).intValue(),
-                 (int) (initialHealthScore * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT));
-    assertFalse(_stateUpdater.getPartitionState(DEFAULT_PARTITION_ID).getTrackerClientStateMap().get(trackerClient0).isUnhealthy());
+    assertTrackerClientState(DEFAULT_PARTITION_ID, trackerClient0, (int) (initialHealthScore * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT), false);
 
     if (!doNotLoadBalance)
     {
-      assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClient1.getUri()).intValue(),
-                   (int) (initialHealthScore * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT));
-      assertFalse(_stateUpdater.getPartitionState(DEFAULT_PARTITION_ID).getTrackerClientStateMap().get(trackerClient0).isUnhealthy());
+      assertTrackerClientState(DEFAULT_PARTITION_ID, trackerClient1, (int) (initialHealthScore * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT), false);
     }
     else
     {
-      assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClient1.getUri()).intValue(), HEALTHY_POINTS);
-      assertFalse(_stateUpdater.getPartitionState(DEFAULT_PARTITION_ID).getTrackerClientStateMap().get(trackerClient1).isUnhealthy());
+      assertTrackerClientState(DEFAULT_PARTITION_ID, trackerClient1, HEALTHY_POINTS, false);
     }
+  }
 
+  private void assertTrackerClientState(int partitionId, TrackerClient trackerClient, int expectedPoints, boolean expectedIsUnhealthy)
+  {
+    assertEquals(_stateUpdater.getPointsMap(partitionId).get(trackerClient.getUri()).intValue(), expectedPoints);
+    assertEquals(_stateUpdater.getPartitionState(partitionId).getTrackerClientStateMap().get(trackerClient).isUnhealthy(), expectedIsUnhealthy);
   }
 
   @DataProvider(name = "trueFalse")

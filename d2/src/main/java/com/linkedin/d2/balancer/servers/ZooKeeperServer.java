@@ -245,7 +245,7 @@ public class
    * 1. Gets existing {@link UriProperties} for given cluster and add/remove property
    * for given uri.
    * 2. Mark down existing node.
-   * 3. Mark up new node for uri with modified UriProperties.
+   * 3. Mark up new node for uri with modified UriProperties and given partitionDataMap.
    */
   @Override
   public void addUriSpecificProperty(String clusterName,

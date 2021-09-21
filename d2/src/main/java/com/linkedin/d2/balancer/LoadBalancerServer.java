@@ -50,7 +50,7 @@ public interface LoadBalancerServer
                     Callback<None> callback);
 
   /**
-   * 1. Gets existing {@link UriProperties} for given cluster and add doNotSlowStart property
+   * 1. Gets existing {@link UriProperties} for given cluster and add property
    * for given uri.
    * 2. Mark down existing node.
    * 3. Mark up new node for uri with modified UriProperties and given partitionDataMap.
