@@ -118,7 +118,7 @@ public class Jsr330Adapter
   private void scanInjectableConstructors(Class<?> beanClazz)
   {
     int annotatedConstructors = 0;
-    for (Constructor<?> constructor : beanClazz.getConstructors())
+    for (Constructor<?> constructor : beanClazz.getDeclaredConstructors())
     {
       Inject injectAnnotation = constructor.getAnnotation(Inject.class);
       if (injectAnnotation != null)
@@ -156,7 +156,7 @@ public class Jsr330Adapter
     {
       try
       {
-        Constructor<?> defaultConstructor = beanClazz.getConstructor();
+        Constructor<?> defaultConstructor = beanClazz.getDeclaredConstructor();
         defaultConstructor.setAccessible(true);
         _constructorParameterDependencies.put(beanClazz,
                                               new InjectableConstructor(defaultConstructor,
