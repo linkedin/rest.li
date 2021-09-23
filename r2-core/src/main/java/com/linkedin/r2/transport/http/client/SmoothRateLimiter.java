@@ -224,7 +224,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     private int _permitAvailableCount;
     private int _permitsInTimeFrame;
     private long _nextScheduled;
-    private boolean _wasDelayed = false;
+    private long _delayUntil;
 
     EventLoop(Clock clock)
     {
@@ -243,8 +243,14 @@ public class SmoothRateLimiter implements AsyncRateLimiter
       // before entering the next period
       _permitAvailableCount = Math.max(rate.getEvents() - (_permitsInTimeFrame - _permitAvailableCount), 0);
       _permitsInTimeFrame = rate.getEvents();
+      _delayUntil = _clock.currentTimeMillis() + _executionTracker.getNextExecutionDelay(_rate);
 
       loop();
+    }
+
+    private int getRemainingTimeInPeriod()
+    {
+      return (int) (_rate.getPeriod() - (_clock.currentTimeMillis() - _permitTime));
     }
 
     public void loop()
@@ -257,6 +263,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
         _permitTime = now;
         _permitAvailableCount = rate.getEvents();
         _permitsInTimeFrame = rate.getEvents();
+        _delayUntil = now + _executionTracker.getNextExecutionDelay(_rate);
       }
 
       if (_executionTracker.isPaused())
@@ -270,15 +277,9 @@ public class SmoothRateLimiter implements AsyncRateLimiter
         _permitAvailableCount++;
       }
 
-      if (_permitAvailableCount > 0)
+      if (_permitAvailableCount > 0 && _delayUntil <= now)
       {
-        if (!_wasDelayed)
-        {
-          _wasDelayed = true;
-          _scheduler.schedule(this::loop, _executionTracker.getNextExecutionDelay(_rate), TimeUnit.MILLISECONDS);
-          return;
-        }
-        _wasDelayed = false;
+        _delayUntil = now + _executionTracker.getNextExecutionDelay(_rate);
         _permitAvailableCount--;
         Callback<None> callback = null;
         try
@@ -317,12 +318,12 @@ public class SmoothRateLimiter implements AsyncRateLimiter
         try
         {
           // avoids executing too many duplicate tasks
-          long nextRunRelativeTime = Math.max(0, _permitTime + rate.getPeriod() - _clock.currentTimeMillis());
-          long nextRunAbsolute = _clock.currentTimeMillis() + nextRunRelativeTime;
-          if (_nextScheduled > nextRunAbsolute || _nextScheduled <= _clock.currentTimeMillis())
+          // reschedule next iteration of the event loop to the next delay, or the beginning of the next period
+          long nextRunRelativeTime = _permitAvailableCount > 0 ? _delayUntil - now : Math.max(0, _permitTime + rate.getPeriod() - now);
+          long nextRunAbsolute = now + nextRunRelativeTime;
+          if (_nextScheduled > nextRunAbsolute || _nextScheduled <= now)
           {
             _nextScheduled = nextRunAbsolute;
-
             _scheduler.schedule(this::loop, nextRunRelativeTime, TimeUnit.MILLISECONDS);
           }
         }
