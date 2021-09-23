@@ -104,7 +104,7 @@ public class RetryClientTest
         false);
     URI uri = URI.create("d2://retryService?arg1arg2");
     RestRequest restRequest = new RestRequestBuilder(uri).setEntity(CONTENT).build();
-    TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<>();
+    DegraderTrackerClientTest.TestCallback<RestResponse> restCallback = new DegraderTrackerClientTest.TestCallback<>();
     client.restRequest(restRequest, restCallback);
 
     assertNull(restCallback.e);
@@ -129,7 +129,7 @@ public class RetryClientTest
         true);
     URI uri = URI.create("d2://retryService?arg1arg2");
     StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.newEntityStream(new ByteStringWriter(CONTENT)));
-    TrackerClientTest.TestCallback<StreamResponse> restCallback = new TrackerClientTest.TestCallback<>();
+    DegraderTrackerClientTest.TestCallback<StreamResponse> restCallback = new DegraderTrackerClientTest.TestCallback<>();
     client.streamRequest(streamRequest, restCallback);
 
     assertNull(restCallback.e);
@@ -154,7 +154,7 @@ public class RetryClientTest
         false);
     URI uri = URI.create("d2://retryService?arg1arg2");
     StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.newEntityStream(new ByteStringWriter(CONTENT)));
-    TrackerClientTest.TestCallback<StreamResponse> restCallback = new TrackerClientTest.TestCallback<>();
+    DegraderTrackerClientTest.TestCallback<StreamResponse> restCallback = new DegraderTrackerClientTest.TestCallback<>();
     client.streamRequest(streamRequest, restCallback);
 
     assertNull(restCallback.t);
@@ -180,7 +180,7 @@ public class RetryClientTest
         false);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     RestRequest restRequest = new RestRequestBuilder(uri).build();
-    TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<>();
+    DegraderTrackerClientTest.TestCallback<RestResponse> restCallback = new DegraderTrackerClientTest.TestCallback<>();
 
     RequestContext context = new RequestContext();
     KeyMapper.TargetHostHints.setRequestContextTargetHost(context, URI.create("http://test.linkedin.com/bad"));
@@ -209,7 +209,7 @@ public class RetryClientTest
         true);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.emptyStream());
-    TrackerClientTest.TestCallback<StreamResponse> streamCallback = new TrackerClientTest.TestCallback<>();
+    DegraderTrackerClientTest.TestCallback<StreamResponse> streamCallback = new DegraderTrackerClientTest.TestCallback<>();
 
     RequestContext context = new RequestContext();
     KeyMapper.TargetHostHints.setRequestContextTargetHost(context, URI.create("http://test.linkedin.com/bad"));
@@ -238,7 +238,7 @@ public class RetryClientTest
         false);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     RestRequest restRequest = new RestRequestBuilder(uri).build();
-    TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<>();
+    DegraderTrackerClientTest.TestCallback<RestResponse> restCallback = new DegraderTrackerClientTest.TestCallback<>();
     client.restRequest(restRequest, restCallback);
 
     assertNull(restCallback.t);
@@ -264,7 +264,7 @@ public class RetryClientTest
         true);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.emptyStream());
-    TrackerClientTest.TestCallback<StreamResponse> streamCallback = new TrackerClientTest.TestCallback<>();
+    DegraderTrackerClientTest.TestCallback<StreamResponse> streamCallback = new DegraderTrackerClientTest.TestCallback<>();
     client.streamRequest(streamRequest, streamCallback);
 
     assertNull(streamCallback.t);
@@ -290,7 +290,7 @@ public class RetryClientTest
         false);
     URI uri = URI.create("d2://retryService?arg1=empty&arg2=empty");
     RestRequest restRequest = new RestRequestBuilder(uri).build();
-    TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<>();
+    DegraderTrackerClientTest.TestCallback<RestResponse> restCallback = new DegraderTrackerClientTest.TestCallback<>();
     client.restRequest(restRequest, restCallback);
 
     assertNull(restCallback.t);
@@ -352,7 +352,7 @@ public class RetryClientTest
     RestRequest restRequest2 = new RestRequestBuilder(uri2).build();
 
     // This request will be retried and route to the good host
-    TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<>();
+    DegraderTrackerClientTest.TestCallback<RestResponse> restCallback = new DegraderTrackerClientTest.TestCallback<>();
     client.restRequest(restRequest1, restCallback);
 
     assertNull(restCallback.e);
@@ -361,7 +361,7 @@ public class RetryClientTest
     // This request will not be retried because the retry ratio is exceeded
     clock.addDuration(RetryClient.DEFAULT_UPDATE_INTERVAL_MS);
 
-    restCallback = new TrackerClientTest.TestCallback<>();
+    restCallback = new DegraderTrackerClientTest.TestCallback<>();
     client.restRequest(restRequest1, restCallback);
 
     assertNull(restCallback.t);
@@ -369,7 +369,7 @@ public class RetryClientTest
     assertTrue(restCallback.e.getMessage().contains("Data not available"));
 
     // If the client sends request to a different service endpoint, the retry ratio should not interfere
-    restCallback = new TrackerClientTest.TestCallback<>();
+    restCallback = new DegraderTrackerClientTest.TestCallback<>();
     client.restRequest(restRequest2, restCallback);
 
     assertNull(restCallback.e);
@@ -378,7 +378,7 @@ public class RetryClientTest
     // After 5s interval, retry counter is reset and this request will be retried again
     clock.addDuration(RetryClient.DEFAULT_UPDATE_INTERVAL_MS * RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM);
 
-    restCallback = new TrackerClientTest.TestCallback<>();
+    restCallback = new DegraderTrackerClientTest.TestCallback<>();
     client.restRequest(restRequest1, restCallback);
 
     assertNull(restCallback.e);
@@ -406,7 +406,7 @@ public class RetryClientTest
 
     clock.scheduleWithFixedDelay(() ->
     {
-      TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<>();
+      DegraderTrackerClientTest.TestCallback<RestResponse> restCallback = new DegraderTrackerClientTest.TestCallback<>();
       client.restRequest(restRequest, restCallback);
 
       // This request will be retried and route to the good host

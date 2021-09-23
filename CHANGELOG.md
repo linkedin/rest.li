@@ -15,6 +15,9 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 - Improve support for JSR330 by allowing package protected constructors annotated with @Inject
 
+## [29.22.3] - 2021-09-21
+- Allow disabling of load balancing for a specific host.
+
 ## [29.22.2] - 2021-09-20
 - Add server config support to define supported accept types
 
@@ -5093,7 +5096,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.3...master
+[29.22.3]: https://github.com/linkedin/rest.li/compare/v29.22.2...v29.22.3
 [29.22.2]: https://github.com/linkedin/rest.li/compare/v29.22.1...v29.22.2
 [29.22.1]: https://github.com/linkedin/rest.li/compare/v29.22.0...v29.22.1
 [29.22.0]: https://github.com/linkedin/rest.li/compare/v29.21.5...v29.22.0

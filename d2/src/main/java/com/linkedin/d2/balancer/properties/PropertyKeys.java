@@ -213,6 +213,7 @@ public class PropertyKeys
 
   // used by uri specific properties
   public static final String DO_NOT_SLOW_START = "doNotSlowStart";
+  public static final String DO_NOT_LOAD_BALANCE = "doNotLoadBalance";
 
   // used by dark clusters
   public static final String DARK_CLUSTER_MULTIPLIER = "multiplier";

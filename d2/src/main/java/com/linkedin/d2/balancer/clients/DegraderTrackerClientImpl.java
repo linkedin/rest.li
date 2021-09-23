@@ -63,7 +63,7 @@ public class DegraderTrackerClientImpl extends TrackerClientImpl implements Degr
                                boolean doNotSlowStart)
   {
     super(uri, partitionDataMap, wrappedClient, clock, interval,
-        (status) -> errorStatusPattern.matcher(Integer.toString(status)).matches(), true, doNotSlowStart);
+        (status) -> errorStatusPattern.matcher(Integer.toString(status)).matches(), true, doNotSlowStart, false);
 
     if (config == null)
     {

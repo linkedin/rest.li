@@ -75,6 +75,7 @@ public class TrackerClientImpl implements TrackerClient
   private final URI _uri;
   private final Predicate<Integer> _isErrorStatus;
   private final ConcurrentMap<Integer, Double> _subsetWeightMap;
+  private final boolean _doNotLoadBalance;
   final CallTracker _callTracker;
 
   private boolean _doNotSlowStart;
@@ -84,11 +85,11 @@ public class TrackerClientImpl implements TrackerClient
   public TrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient transportClient,
       Clock clock, long interval, Predicate<Integer> isErrorStatus)
   {
-    this(uri, partitionDataMap, transportClient, clock, interval, isErrorStatus, true, false);
+    this(uri, partitionDataMap, transportClient, clock, interval, isErrorStatus, true, false, false);
   }
 
   public TrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient transportClient,
-      Clock clock, long interval, Predicate<Integer> isErrorStatus, boolean percentileTrackingEnabled, boolean doNotSlowStart)
+      Clock clock, long interval, Predicate<Integer> isErrorStatus, boolean percentileTrackingEnabled, boolean doNotSlowStart, boolean doNotLoadBalance)
   {
     _uri = uri;
     _transportClient = transportClient;
@@ -98,6 +99,7 @@ public class TrackerClientImpl implements TrackerClient
     _latestCallStats = _callTracker.getCallStats();
     _doNotSlowStart = doNotSlowStart;
     _subsetWeightMap = new ConcurrentHashMap<>();
+    _doNotLoadBalance = doNotLoadBalance;
 
     _callTracker.addStatsRolloverEventListener(event -> _latestCallStats = event.getCallStats());
 
@@ -214,6 +216,12 @@ public class TrackerClientImpl implements TrackerClient
   public boolean doNotSlowStart()
   {
     return _doNotSlowStart;
+  }
+
+  @Override
+  public boolean doNotLoadBalance()
+  {
+    return _doNotLoadBalance;
   }
 
   private class TrackerClientStreamCallback implements TransportCallback<StreamResponse>

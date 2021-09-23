@@ -15,7 +15,6 @@
 */
 package com.linkedin.d2.balancer.clients;
 
-import com.linkedin.util.degrader.CallTracker;
 import com.linkedin.util.degrader.Degrader;
 import com.linkedin.util.degrader.DegraderControl;
 

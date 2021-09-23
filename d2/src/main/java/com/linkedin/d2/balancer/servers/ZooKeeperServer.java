@@ -232,6 +232,30 @@ public class
                            boolean doNotSlowStart,
                            Callback<None> callback)
   {
+    addUriSpecificProperty(clusterName,
+                           "changeWeight",
+                           uri,
+                           partitionDataMap,
+                           PropertyKeys.DO_NOT_SLOW_START,
+                           doNotSlowStart,
+                           callback);
+  }
+
+  /**
+   * 1. Gets existing {@link UriProperties} for given cluster and add/remove property
+   * for given uri.
+   * 2. Mark down existing node.
+   * 3. Mark up new node for uri with modified UriProperties and given partitionDataMap.
+   */
+  @Override
+  public void addUriSpecificProperty(String clusterName,
+                                     String operationName,
+                                     URI uri,
+                                     Map<Integer, PartitionData> partitionDataMap,
+                                     String uriSpecificPropertiesName,
+                                     Object uriSpecificPropertiesValue,
+                                     Callback<None> callback)
+  {
     Callback<UriProperties> getCallback = new Callback<UriProperties>()
     {
       @Override
@@ -239,13 +263,17 @@ public class
       {
         if (uriProperties == null)
         {
-          warn(_log, "changeWeight called on a cluster that doesn't exist in zookeeper: ", clusterName);
+          warn(_log,
+               operationName,
+               " called on a cluster that doesn't exist in zookeeper: ",
+               clusterName);
           callback.onError(new ServiceUnavailableException("cluster: " + clusterName, "Cluster does not exist in zookeeper."));
         }
         else if (!uriProperties.Uris().contains(uri))
         {
           warn(_log,
-               "changeWeight called on a uri that doesn't exist in cluster ",
+               operationName,
+               " called on a uri that doesn't exist in cluster ",
                clusterName,
                ": ",
                uri);
@@ -254,7 +282,7 @@ public class
         else
         {
           Map<String, Object> uriSpecificProperties = uriProperties.getUriSpecificProperties().getOrDefault(uri, new HashMap<>());
-          uriSpecificProperties.put(PropertyKeys.DO_NOT_SLOW_START, doNotSlowStart);
+          uriSpecificProperties.put(uriSpecificPropertiesName, uriSpecificPropertiesValue);
 
           Callback<None> markUpCallback = new Callback<None>()
           {

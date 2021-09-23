@@ -43,6 +43,7 @@ import org.testng.annotations.Test;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -133,7 +134,7 @@ public class StateUpdaterTest
         };
   }
 
-  @Test(dataProvider = "doNotSlowStart")
+  @Test(dataProvider = "trueFalse")
   public void testInitializePartitionWithSlowStartInitialHealthScore(boolean doNotSlowStart)
   {
     double initialHealthScore = 0.01;
@@ -142,7 +143,7 @@ public class StateUpdaterTest
     setup(relativeStrategyProperties, new ConcurrentHashMap<>());
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
-        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0), doNotSlowStart);
+        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0), doNotSlowStart, Arrays.asList(false, false));
 
     assertTrue(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).isEmpty(), "There should be no state before initialization");
 
@@ -163,8 +164,44 @@ public class StateUpdaterTest
 
   }
 
-  @DataProvider(name = "doNotSlowStart")
-  public Object[][] doNotSlowStart()
+  @Test(dataProvider = "trueFalse")
+  public void testInitializePartitionWithDoNotLoadBalance(boolean doNotLoadBalance)
+  {
+    double initialHealthScore = 0.01;
+    D2RelativeStrategyProperties relativeStrategyProperties = new D2RelativeStrategyProperties()
+      .setInitialHealthScore(initialHealthScore);
+    setup(relativeStrategyProperties, new ConcurrentHashMap<>());
+
+    List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
+                                                                                    Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0), false, Arrays.asList(false, doNotLoadBalance));
+
+    assertTrue(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).isEmpty(), "There should be no state before initialization");
+
+    _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, DEFAULT_CLUSTER_GENERATION_ID, false);
+
+    final TrackerClient trackerClient0 = trackerClients.get(0);
+    final TrackerClient trackerClient1 = trackerClients.get(1);
+
+    assertTrackerClientState(DEFAULT_PARTITION_ID, trackerClient0, (int) (initialHealthScore * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT), false);
+
+    if (!doNotLoadBalance)
+    {
+      assertTrackerClientState(DEFAULT_PARTITION_ID, trackerClient1, (int) (initialHealthScore * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT), false);
+    }
+    else
+    {
+      assertTrackerClientState(DEFAULT_PARTITION_ID, trackerClient1, HEALTHY_POINTS, false);
+    }
+  }
+
+  private void assertTrackerClientState(int partitionId, TrackerClient trackerClient, int expectedPoints, boolean expectedIsUnhealthy)
+  {
+    assertEquals(_stateUpdater.getPointsMap(partitionId).get(trackerClient.getUri()).intValue(), expectedPoints);
+    assertEquals(_stateUpdater.getPartitionState(partitionId).getTrackerClientStateMap().get(trackerClient).isUnhealthy(), expectedIsUnhealthy);
+  }
+
+  @DataProvider(name = "trueFalse")
+  public Object[][] trueFalse()
   {
     return new Object[][]
         {
@@ -303,6 +340,42 @@ public class StateUpdaterTest
     assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
     assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(),
         (int) (HEALTHY_POINTS - RelativeLoadBalancerStrategyFactory.DEFAULT_DOWN_STEP * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT));
+  }
+
+  @Test
+  public void testUpdateTrackerClientWithDoNotLoadBalance()
+  {
+    final boolean doNotLoadBalance = true;
+    List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(3,
+                                                                                    Arrays.asList(20, 1, 20),
+                                                                                    Arrays.asList(0, 0, 0),
+                                                                                    Arrays.asList(1000L, 5000L, 100000L),
+                                                                                    Arrays.asList(0L, 0L, 0L),
+                                                                                    Arrays.asList(0, 0, 10),
+                                                                                    Arrays.asList(false, false, doNotLoadBalance));
+
+
+    PartitionState state = new PartitionStateTestDataBuilder()
+      .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
+      .setTrackerClientStateMap(trackerClients,
+                                Arrays.asList(1.0, 1.0, 1.0),
+                                Arrays.asList(TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY),
+                                Arrays.asList(30, 30, 30))
+      .build();
+
+    ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
+    partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
+    setup(new D2RelativeStrategyProperties(), partitionLoadBalancerStateMap);
+
+    _stateUpdater.updateState();
+    Map<URI, Integer> pointsMap = _stateUpdater.getPointsMap(DEFAULT_PARTITION_ID);
+
+    assertEquals(pointsMap.get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS, "Healthy client should not have health score reduced.");
+    assertEquals(pointsMap.get(trackerClients.get(1).getUri()).intValue(),
+                 (int) (HEALTHY_POINTS - RelativeLoadBalancerStrategyFactory.DEFAULT_DOWN_STEP * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT), "This should be considered unhealthy because its latency exceeds the threshold "
+                   + "(the client with load balancing disabled should not affect the average latency calculation).");
+    assertEquals(pointsMap.get(trackerClients.get(2).getUri()).intValue(), HEALTHY_POINTS, "The client with load balancing disabled "
+      + "should not have health score reduced.");
   }
 
   @Test

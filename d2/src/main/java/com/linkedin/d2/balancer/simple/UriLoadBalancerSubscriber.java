@@ -25,6 +25,7 @@ import com.linkedin.d2.discovery.event.PropertyEventBus;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -75,7 +76,16 @@ class UriLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<UriProper
           {
             Map<Integer, PartitionData> partitionDataMap = uriProperties.getPartitionDataMap(uri);
             TrackerClient client = trackerClients.get(uri);
-            if (client == null || !client.getPartitionDataMap().equals(partitionDataMap))
+
+            Optional<Map<String, Object>> newUriSpecificProperties = Optional.ofNullable(uriProperties.getUriSpecificProperties())
+              .map(uriSpecificProperties -> uriSpecificProperties.get(uri));
+
+            Optional<Map<String, Object>> oldUriSpecificProperties = Optional.ofNullable(_simpleLoadBalancerState.getUriProperties(clusterName))
+              .map(LoadBalancerStateItem::getProperty)
+              .map(UriProperties::getUriSpecificProperties)
+              .map(uriSpecificProperties -> uriSpecificProperties.get(uri));
+
+            if (client == null || !client.getPartitionDataMap().equals(partitionDataMap) || !newUriSpecificProperties.equals(oldUriSpecificProperties))
             {
               client = _simpleLoadBalancerState.buildTrackerClient(uri, uriProperties, serviceName);
 
