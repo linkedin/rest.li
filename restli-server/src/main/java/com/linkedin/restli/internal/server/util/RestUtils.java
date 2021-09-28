@@ -229,7 +229,7 @@ public class RestUtils
         return RestConstants.HEADER_VALUE_APPLICATION_JSON;
       }
 
-      return MIMEParse.bestMatch(supportedAcceptTypes != null && supportedAcceptTypes.isEmpty() ? supportedAcceptTypes.stream() :
+      return MIMEParse.bestMatch(supportedAcceptTypes != null && !supportedAcceptTypes.isEmpty() ? supportedAcceptTypes.stream() :
           Stream.concat(customMimeTypesSupported.stream(), RestConstants.SUPPORTED_MIME_TYPES.stream()),
           acceptHeader);
     }
