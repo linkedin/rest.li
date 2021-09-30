@@ -46,7 +46,7 @@ GetRequest<Greeting> expectedRequest = GREETINGS_BUILDERS.get().id(id).build();
 // we are testing
 Greeting mockGreeting = new Greeting().setId(1L).setMessage("test message");
 MockSuccessfulResponseFutureBuilder<Greeting> responseFutureBuilder = 
-  new MockSuccessfulResponseFutureBuilder<Greeting>().setEntity(expectedGreeting);
+  new MockSuccessfulResponseFutureBuilder<Greeting>().setEntity(mockGreeting);
 ResponseFuture<Greeting> mockResponse = responseFutureBuilder.build();
 
 // assume myApplication is an instance of MyApplication
