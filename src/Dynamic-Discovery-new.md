@@ -18,11 +18,11 @@ excerpt: Dynamic Discovery (D2) is a framework for service discovery and load ba
   * [Load Balancing Algorithms](#load-balancing-algorithms)
   * [Partitioning](#partitioning)
   * [Sticky Routing](#sticky-routing)
-* [Configuration Properties](#configuration-properties)
-* [Additional Features](#additional-features)
-  * [Client Retry](#client-retry)
   * [Cluster Subsetting](#cluster-subsetting)
-  * [Dark Cluster](#dark-cluster)
+* [Client]
+  * [Client Retry](#client-retry)
+  * + more
+* [Dark Cluster](#dark-cluster)
 
 ## What is D2
 
