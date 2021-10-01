@@ -248,11 +248,6 @@ public class SmoothRateLimiter implements AsyncRateLimiter
       loop();
     }
 
-    private int getRemainingTimeInPeriod()
-    {
-      return (int) (_rate.getPeriod() - (_clock.currentTimeMillis() - _permitTime));
-    }
-
     public void loop()
     {
       // Checks if permits should be refreshed
