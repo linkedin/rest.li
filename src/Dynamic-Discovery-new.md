@@ -16,6 +16,7 @@ excerpt: Dynamic Discovery (D2) is a framework for service discovery and load ba
   * [ZooKeeper Stores](#zookeeper-stores)
 * [Load Balancer](#load-balancer)
   * [Load Balancing Algorithms](#load-balancing-algorithms)
+  * [Quarantine](#quarantine)
   * [Partitioning](#partitioning)
   * [Sticky Routing](#sticky-routing)
   * [Cluster Subsetting](#cluster-subsetting)
@@ -38,29 +39,17 @@ excerpt: Dynamic Discovery (D2) is a framework for service discovery and load ba
 
 ### Load Balancing Algorithms
 
+### Quarantine
+
 ### Partitioning
 
 ### Sticky Routing
 
-## Configuration Properties
+### Cluster Subsetting
 
-[Cluster Properties](https://github.com/linkedin/rest.li/blob/master/d2-schemas/src/main/pegasus/com/linkedin/d2/D2Cluster.pdl)
-
-[Service Properties](https://github.com/linkedin/rest.li/blob/master/d2-schemas/src/main/pegasus/com/linkedin/d2/D2Service.pdl)
-
-[Transport Client Properties](https://github.com/linkedin/rest.li/blob/master/d2-schemas/src/main/pegasus/com/linkedin/d2/D2TransportClientProperties.pdl)
-
-[Relative Properties](https://github.com/linkedin/rest.li/blob/master/d2-schemas/src/main/pegasus/com/linkedin/d2/D2RelativeStrategyProperties.pdl)
-
-[Degrader Properties](https://github.com/linkedin/rest.li/blob/master/d2-schemas/src/main/pegasus/com/linkedin/d2/D2DegraderProperties.pdl)
-
-[LoadBalancerStrategy Properties](https://github.com/linkedin/rest.li/blob/master/d2-schemas/src/main/pegasus/com/linkedin/d2/D2LoadBalancerStrategyProperties.pdl)
-
-## Additional Features
+## Client
 
 ### Client Retry
-
-### Cluster Subsetting
 
 ### Dark Cluster
 
