@@ -47,7 +47,7 @@ public class GenerateDataTemplateTask extends DefaultTask
   private FileCollection _codegenClasspath;
   private boolean _enableArgFile;
   private Boolean _generateLowercasePath;
-  private boolean _generateFieldMask;
+  private Boolean _generateFieldMask;
   private Boolean _generateImported;
   private List<String> _resolverDirectories;
 
@@ -136,13 +136,14 @@ public class GenerateDataTemplateTask extends DefaultTask
     return isGenerateFieldMask();
   }
 
+  @Optional
   @Input
-  public boolean isGenerateFieldMask()
+  public Boolean isGenerateFieldMask()
   {
     return _generateFieldMask;
   }
 
-  public void setGenerateFieldMask(boolean generateFieldMask)
+  public void setGenerateFieldMask(Boolean generateFieldMask)
   {
     _generateFieldMask = generateFieldMask;
   }
@@ -239,17 +240,17 @@ public class GenerateDataTemplateTask extends DefaultTask
       javaExecSpec.setMain("com.linkedin.pegasus.generator.DataTemplateGeneratorCmdLineApp");
       javaExecSpec.setClasspath(_pathedCodegenClasspath);
       javaExecSpec.args("--resolverPath", resolverPathArg);
-      if (_generateLowercasePath != null)
+      if (_generateLowercasePath != null && _generateLowercasePath == false)
       {
-        javaExecSpec.args("--generateLowercasePath", Boolean.toString(_generateLowercasePath));
+        javaExecSpec.args("--generateCaseSensitivePath");
       }
-      if (_generateImported!= null)
+      if (_generateImported != null && _generateImported == false)
       {
-        javaExecSpec.args("--generateImported", Boolean.toString(_generateImported));
+        javaExecSpec.args("--skipImportedSchemas");
       }
-      if (_generateFieldMask)
+      if (_generateFieldMask != null && _generateFieldMask == false)
       {
-        javaExecSpec.args("--generateFieldMask", Boolean.toString(_generateFieldMask));
+        javaExecSpec.args("--skipFieldMask");
       }
       if (_resolverDirectories != null)
       {

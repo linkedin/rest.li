@@ -57,20 +57,20 @@ public class DataTemplateGeneratorCmdLineApp
   static
   {
     OPTIONS.addOption("h", "help", false, "Show help.");
-    OptionBuilder.withArgName("Generate imported schemas");
-    OptionBuilder.withLongOpt("generateImported");
-    OptionBuilder.hasArg();
-    OptionBuilder.withDescription("Specifies whether to generate classes for externally resolved schemas.");
+    OptionBuilder.withArgName("Skip generating imported schemas");
+    OptionBuilder.withLongOpt("skipImportedSchemas");
+    OptionBuilder.hasArg(false);
+    OptionBuilder.withDescription("Specifies whether to skip generating classes for externally resolved schemas.");
     OPTIONS.addOption(OptionBuilder.create('i'));
-    OptionBuilder.withArgName("Generate lower case path");
-    OptionBuilder.withLongOpt("generateLowercasePath");
-    OptionBuilder.hasArg();
-    OptionBuilder.withDescription("Specifies if generated directories should be created in lower case.");
+    OptionBuilder.withArgName("Generate case sensitive path");
+    OptionBuilder.withLongOpt("generateCaseSensitivePath");
+    OptionBuilder.hasArg(false);
+    OptionBuilder.withDescription("Specifies if generated directories should be created using case sensitive path.");
     OPTIONS.addOption(OptionBuilder.create('l'));
-    OptionBuilder.withArgName("Generate field mask");
-    OptionBuilder.withLongOpt("generateFieldMask");
-    OptionBuilder.hasArg();
-    OptionBuilder.withDescription("Specifies if field mask classes should be generated for templates.");
+    OptionBuilder.withArgName("Skip generating field mask");
+    OptionBuilder.withLongOpt("skipFieldMask");
+    OptionBuilder.hasArg(false);
+    OptionBuilder.withDescription("Specifies if field mask classes should not be generated for templates.");
     OPTIONS.addOption(OptionBuilder.create('m'));
     OptionBuilder.withArgName("Target directory");
     OptionBuilder.withLongOpt("targetDir");
@@ -127,9 +127,9 @@ public class DataTemplateGeneratorCmdLineApp
         help();
         System.exit(0);
       }
-      final boolean generateImported = Boolean.parseBoolean(cl.getOptionValue('i', "true"));
-      final boolean generateLowercasePath = Boolean.parseBoolean(cl.getOptionValue('l', "true"));
-      final boolean generateFieldMask = Boolean.parseBoolean(cl.getOptionValue('m', "true"));
+      final boolean generateImported = !Boolean.parseBoolean(cl.getOptionValue('i', "false"));
+      final boolean generateLowercasePath = !Boolean.parseBoolean(cl.getOptionValue('l', "false"));
+      final boolean generateFieldMask = !Boolean.parseBoolean(cl.getOptionValue('m', "false"));
       final String targetDirectory = cl.getOptionValue('d');
       final String defaultPackage = cl.getOptionValue('n');
       String resolverPath = cl.getOptionValue('p');
