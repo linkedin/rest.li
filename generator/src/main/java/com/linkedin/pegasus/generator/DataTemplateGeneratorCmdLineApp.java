@@ -66,7 +66,7 @@ public class DataTemplateGeneratorCmdLineApp
     OptionBuilder.withLongOpt("generateCaseSensitivePath");
     OptionBuilder.hasArg(false);
     OptionBuilder.withDescription("Specifies if generated directories should be created using case sensitive path.");
-    OPTIONS.addOption(OptionBuilder.create('l'));
+    OPTIONS.addOption(OptionBuilder.create('c'));
     OptionBuilder.withArgName("Skip generating field mask");
     OptionBuilder.withLongOpt("skipFieldMask");
     OptionBuilder.hasArg(false);
@@ -128,7 +128,8 @@ public class DataTemplateGeneratorCmdLineApp
         System.exit(0);
       }
       final boolean generateImported = !Boolean.parseBoolean(cl.getOptionValue('i', "false"));
-      final boolean generateLowercasePath = !Boolean.parseBoolean(cl.getOptionValue('l', "false"));
+      // If not case sensitive, we will use lower case always
+      final boolean generateLowercasePath = !Boolean.parseBoolean(cl.getOptionValue('c', "false"));
       final boolean generateFieldMask = !Boolean.parseBoolean(cl.getOptionValue('m', "false"));
       final String targetDirectory = cl.getOptionValue('d');
       final String defaultPackage = cl.getOptionValue('n');
