@@ -48,6 +48,7 @@ public class GenerateDataTemplateTask extends DefaultTask
   private boolean _enableArgFile;
   private Boolean _generateLowercasePath;
   private boolean _generateFieldMask;
+  private Boolean _generateImported;
   private List<String> _resolverDirectories;
 
   // Output Task Property
@@ -169,6 +170,17 @@ public class GenerateDataTemplateTask extends DefaultTask
     _generateLowercasePath = enable;
   }
 
+
+  @Optional
+  @Input
+  public Boolean isGenerateImported() {
+    return _generateImported;
+  }
+
+  public void setGenerateImported(Boolean generateImported) {
+    _generateImported = generateImported;
+  }
+
   @Optional
   @Input
   public List<String> getResolverDirectories()
@@ -229,11 +241,15 @@ public class GenerateDataTemplateTask extends DefaultTask
       javaExecSpec.args("--resolverPath", resolverPathArg);
       if (_generateLowercasePath != null)
       {
-        javaExecSpec.args("--generateLowercasePath");
+        javaExecSpec.args("--generateLowercasePath", Boolean.toString(_generateLowercasePath));
+      }
+      if (_generateImported!= null)
+      {
+        javaExecSpec.args("--generateImported", Boolean.toString(_generateImported));
       }
       if (_generateFieldMask)
       {
-        javaExecSpec.args("--generateFieldMask");
+        javaExecSpec.args("--generateFieldMask", Boolean.toString(_generateFieldMask));
       }
       if (_resolverDirectories != null)
       {
