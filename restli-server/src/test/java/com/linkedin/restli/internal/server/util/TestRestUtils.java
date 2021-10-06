@@ -70,7 +70,7 @@ public class TestRestUtils
   private static final String UNKNOWN_TYPE_HEADER_WITH_INVALID_PARAMS_JSON = "foo/bar; baz, application/json";
   private static final String UNKNOWN_TYPE_HEADER_WITH_UNKNOWN_PARAMS_JSON = "foo/bar; baz=bark, application/json";
   private static final String UNKNOWN_TYPE_HEADER_WITH_VALID_PARAMS_JSON = "foo/bar; level=1, application/json";
-  private static final String PSON_TYPE_HEADER_WITH_VALID_PARAMS_JSON = "application/x-pson; level=1, application/json";
+  private static final String PSON_TYPE_HEADER_WITH_VALID_PARAMS_JSON = "application/x-pson, application/json; q=.9";
   private static final String JSON_HEADER = "application/json";
   private static final String PSON_HEADER = "application/x-pson";
   private static final String INVALID_TYPE_HEADER_1 = "foo";
@@ -124,7 +124,7 @@ public class TestRestUtils
   public void testPickBestEncodingWithSupportedMimeTypes()
   {
     Assert.assertEquals(RestUtils.pickBestEncoding(PSON_TYPE_HEADER_WITH_VALID_PARAMS_JSON, Arrays.asList(JSON_HEADER),Collections.emptySet()), JSON_HEADER);
-    Assert.assertEquals(RestUtils.pickBestEncoding(PSON_TYPE_HEADER_WITH_VALID_PARAMS_JSON, Collections.EMPTY_LIST,Collections.emptySet()), PSON_HEADER);
+    Assert.assertEquals(RestUtils.pickBestEncoding(PSON_TYPE_HEADER_WITH_VALID_PARAMS_JSON, Arrays.asList(), Collections.emptySet()), PSON_HEADER);
   }
 
   @Test
