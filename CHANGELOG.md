@@ -15,10 +15,10 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.22.5] - 2021-10-08
-- Make PegasusPlugin#getDataSchemaPath public.
+- Make `PegasusPlugin#getDataSchemaPath` public.
 
 ## [29.22.4] - 2021-09-28
-- Improve support for JSR330 by allowing package protected constructors annotated with @Inject
+- Improve support for JSR330 by allowing package protected constructors annotated with `@Inject`.
 - Fix Supported mime type config for response payload.
 
 ## [29.22.3] - 2021-09-21
