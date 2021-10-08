@@ -1080,7 +1080,7 @@ public class PegasusPlugin implements Plugin<Project>
     return base + File.separatorChar + sourceSetName;
   }
 
-  private static String getDataSchemaPath(Project project, SourceSet sourceSet)
+  public static String getDataSchemaPath(Project project, SourceSet sourceSet)
   {
     String override = getOverridePath(project, sourceSet, "overridePegasusDir");
     if (override == null)

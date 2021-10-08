@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.22.5] - 2021-10-08
+- Make PegasusPlugin#getDataSchemaPath public.
+
 ## [29.22.4] - 2021-09-28
 - Improve support for JSR330 by allowing package protected constructors annotated with @Inject
 - Fix Supported mime type config for response payload.
@@ -5099,7 +5102,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.5...master
+[29.22.5]: https://github.com/linkedin/rest.li/compare/v29.22.4...v29.22.5
 [29.22.4]: https://github.com/linkedin/rest.li/compare/v29.22.3...v29.22.4
 [29.22.3]: https://github.com/linkedin/rest.li/compare/v29.22.2...v29.22.3
 [29.22.2]: https://github.com/linkedin/rest.li/compare/v29.22.1...v29.22.2
