@@ -26,7 +26,7 @@ If you are adding new major feature, we suggest that you add a design document a
 
 If you’re only fixing a bug, or updating the documentation, you can submit a pull request right away.
 
-## Udpate the documentation
+## Update the documentation
 
 Please ensure your code is adequately documented. Add a summary of your contribution to the top of the CHANGELOG file.
 
