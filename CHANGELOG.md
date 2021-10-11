@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.22.7] - 2021-10-11
 - Fix bug for generateDataTemplateTask to consume command line option correctly
 
 ## [29.22.6] - 2021-10-08
@@ -5109,7 +5111,8 @@ patch operations can re-use these classes for generating patch messages.
 <<<<<<< HEAD
 [Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.5...master
 =======
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.7...master
+[29.22.7]: https://github.com/linkedin/rest.li/compare/v29.22.6...v29.22.7
 [29.22.6]: https://github.com/linkedin/rest.li/compare/v29.22.5...v29.22.6
 >>>>>>> master
 [29.22.5]: https://github.com/linkedin/rest.li/compare/v29.22.4...v29.22.5
