@@ -93,6 +93,7 @@ public class TestConstantQpsDarkClusterStrategy
       ConstantQpsRateLimiter rateLimiter =
         new ConstantQpsRateLimiter(executor, executor, executor, buffer);
       rateLimiter.setBufferCapacity(capacity);
+      rateLimiter.setBufferTtl(Integer.MAX_VALUE, ChronoUnit.DAYS);
       ConstantQpsDarkClusterStrategy strategy = new ConstantQpsDarkClusterStrategy(SOURCE_CLUSTER_NAME,
           DARK_CLUSTER_NAME,
           qps,
@@ -105,8 +106,9 @@ public class TestConstantQpsDarkClusterStrategy
         RestRequest dummyRestRequest = new RestRequestBuilder(URI.create("foo")).build();
         strategy.handleRequest(dummyRestRequest, dummyRestRequest, new RequestContext());
       }
-      executor.runFor(1000);
-      int expectedCount = (int) Math.ceil(((numIterations == 0 ? 0 : 1) * qps * numDarkInstances)/ (double) (numSourceInstances));
+      // must simulate 20 seconds of time in order to collect qps on the low-rate tests.
+      executor.runFor(1000 * 20);
+      int expectedCount = (int) (((numIterations == 0 ? 0 : 1) * qps * numDarkInstances * 20)/ (double) (numSourceInstances));
       int actualCount = baseDispatcher.getRequestCount();
       Assert.assertEquals(actualCount, expectedCount, expectedCount * ERR_PCT, "count not within expected range");
     });

@@ -13,12 +13,16 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
-
-## [29.22.5] - 2021-10-06
 - Fix bug for generateDataTemplateTask to consume command line option correctly
 
+## [29.22.6] - 2021-10-08
+- Fix bug in SmoothRateLimiter where executionDelay is not honored
+
+## [29.22.5] - 2021-10-08
+- Make `PegasusPlugin#getDataSchemaPath` public.
+
 ## [29.22.4] - 2021-09-28
-- Improve support for JSR330 by allowing package protected constructors annotated with @Inject
+- Improve support for JSR330 by allowing package protected constructors annotated with `@Inject`.
 - Fix Supported mime type config for response payload.
 
 ## [29.22.3] - 2021-09-21
@@ -5102,7 +5106,12 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
+<<<<<<< HEAD
 [Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.5...master
+=======
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.6...master
+[29.22.6]: https://github.com/linkedin/rest.li/compare/v29.22.5...v29.22.6
+>>>>>>> master
 [29.22.5]: https://github.com/linkedin/rest.li/compare/v29.22.4...v29.22.5
 [29.22.4]: https://github.com/linkedin/rest.li/compare/v29.22.3...v29.22.4
 [29.22.3]: https://github.com/linkedin/rest.li/compare/v29.22.2...v29.22.3
