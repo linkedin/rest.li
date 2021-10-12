@@ -13,6 +13,11 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.22.9] - 2021-10-12
+- Make client timeout to fetch remote symbol table configurable in `RestLiSymbolTableProvider`
+
+## [29.22.8] - 2021-10-12
 - No changes; re-releasing because the previous release (`29.22.7`) was corrupted.
 
 ## [29.22.7] - 2021-10-11
@@ -5109,7 +5114,9 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.9...master
+[29.22.9]: https://github.com/linkedin/rest.li/compare/v29.22.8...v29.22.9
+[29.22.8]: https://github.com/linkedin/rest.li/compare/v29.22.7...v29.22.8
 [29.22.7]: https://github.com/linkedin/rest.li/compare/v29.22.6...v29.22.7
 [29.22.6]: https://github.com/linkedin/rest.li/compare/v29.22.5...v29.22.6
 [29.22.5]: https://github.com/linkedin/rest.li/compare/v29.22.4...v29.22.5
