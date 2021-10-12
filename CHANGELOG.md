@@ -13,12 +13,13 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- No changes; re-releasing because the previous release (`29.22.7`) was corrupted.
 
 ## [29.22.7] - 2021-10-11
-- Fix bug for generateDataTemplateTask to consume command line option correctly
+- Fix bug for `generateDataTemplateTask` to consume command line option correctly.
 
 ## [29.22.6] - 2021-10-08
-- Fix bug in SmoothRateLimiter where executionDelay is not honored
+- Fix bug in `SmoothRateLimiter` where `executionDelay` is not honored.
 
 ## [29.22.5] - 2021-10-08
 - Make `PegasusPlugin#getDataSchemaPath` public.
