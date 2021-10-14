@@ -31,6 +31,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -49,6 +51,9 @@ public class TestDataTemplateGeneratorCmdLineApp
   private static final String TEST_DIR = System.getProperty("testDir", new File("src/test").getAbsolutePath());
   private static final String RESOURCES_DIR = "resources" + FS + "generator";
   private static final String PEGASUS_DIR = TEST_DIR + FS + RESOURCES_DIR;
+
+  private static final Pattern GENERATED_ANNOTATION_PATTERN = Pattern.compile("@Generated\\(value\\s*=\\s*\"[^\"]+\","
+      + "\\s*comments\\s*=\\s*\"Rest\\.li Data Template\\. (Generated from [^\"]+)\\.\"\\)");
 
   private File _tempDir;
   private File _dataTemplateTargetDir1;
@@ -172,9 +177,13 @@ public class TestDataTemplateGeneratorCmdLineApp
       String generatedSource = FileUtils.readFileToString(generated);
       Assert.assertTrue(generatedSource.contains("class " + pegasusTypeName),
           "Incorrect generated class name.");
-      String expectedGeneratedAnnotation = "Generated from " + expectedTypeNamesToSourceFileMap.get(pegasusTypeName);
-      Assert.assertTrue(generatedSource.contains(expectedGeneratedAnnotation),
-          "Incorrect @Generated annotation, expected: " + expectedGeneratedAnnotation);
+
+      // Match the generated annotation (use regex since this is error-prone)
+      final Matcher generatedAnnotationMatcher = GENERATED_ANNOTATION_PATTERN.matcher(generatedSource);
+      Assert.assertTrue(generatedAnnotationMatcher.find(), "Unable to find a valid @Generated annotation in the generated source file.");
+      final String expectedGeneratedAnnotation = "Generated from " + expectedTypeNamesToSourceFileMap.get(pegasusTypeName);
+      Assert.assertEquals(generatedAnnotationMatcher.group(1), expectedGeneratedAnnotation, "Unexpected @Generated annotation.");
+
       SchemaFormatType schemaFormatType = SchemaFormatType.fromFilename(
           expectedTypeNamesToSourceFileMap.get(pegasusTypeName));
       Assert.assertNotNull(schemaFormatType, "Indeterminable schema format type.");
