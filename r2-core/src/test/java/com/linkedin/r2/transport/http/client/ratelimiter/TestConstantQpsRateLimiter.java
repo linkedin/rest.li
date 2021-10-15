@@ -45,7 +45,7 @@ public class TestConstantQpsRateLimiter
   private static final int LARGE_TEST_MAX_BURST_MULTIPLE = 3;
   private static final int LARGE_TEST_MAX_BURST_FREQUENCY_COUNT = 5;
   private static final int LARGE_TEST_MAX_ZERO_FREQUENCY_COUNT = 5;
-  private static final float LARGE_TEST_QUERY_VOLUME_CONSISTENCY_CONFIDENCE = 0.95f;
+  private static final float LARGE_TEST_QUERY_VOLUME_CONSISTENCY_CONFIDENCE = 0.99f;
 
 
   @Test(timeOut = TEST_TIMEOUT)
@@ -125,7 +125,7 @@ public class TestConstantQpsRateLimiter
     }
     // Ensure variance up to 10 possible time deltas given a rate of 200 requests per second
     Set<Long> uniqueTimeDeltas = new HashSet<>(timeDeltas);
-    assert(uniqueTimeDeltas.size() > 5 && uniqueTimeDeltas.size() < 11);
+    assert(uniqueTimeDeltas.size() > 8 && uniqueTimeDeltas.size() < 11);
   }
 
   @Test
@@ -202,7 +202,7 @@ public class TestConstantQpsRateLimiter
     }
     // Query volume stability assertions should be true within the defined confidence value
     int acceptableFailCount =
-        (int) (TEST_NUM_CYCLES * (1 - LARGE_TEST_QUERY_VOLUME_CONSISTENCY_CONFIDENCE));
+        Math.round((TEST_NUM_CYCLES * (1 - LARGE_TEST_QUERY_VOLUME_CONSISTENCY_CONFIDENCE)));
     assert(maxBurstFailCount <= acceptableFailCount);
     assert(burstFreqFailCount <= acceptableFailCount);
     assert(zeroFreqFailCount <= acceptableFailCount);
