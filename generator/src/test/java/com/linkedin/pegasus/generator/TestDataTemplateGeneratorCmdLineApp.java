@@ -178,11 +178,17 @@ public class TestDataTemplateGeneratorCmdLineApp
       Assert.assertTrue(generatedSource.contains("class " + pegasusTypeName),
           "Incorrect generated class name.");
 
-      // Match the generated annotation (use regex since this is error-prone)
+      // Validate the generated annotation (use a strange regex-based comparison since temp files can be weird e.g. /var vs. /private/var)
       final Matcher generatedAnnotationMatcher = GENERATED_ANNOTATION_PATTERN.matcher(generatedSource);
       Assert.assertTrue(generatedAnnotationMatcher.find(), "Unable to find a valid @Generated annotation in the generated source file.");
-      final String expectedGeneratedAnnotation = "Generated from " + expectedTypeNamesToSourceFileMap.get(pegasusTypeName);
-      Assert.assertEquals(generatedAnnotationMatcher.group(1), expectedGeneratedAnnotation, "Unexpected @Generated annotation.");
+      final String expectedPath = expectedTypeNamesToSourceFileMap.get(pegasusTypeName);
+      final String actualPath = generatedAnnotationMatcher.group(1);
+      // If the origin file is in the temp folder, truncate all the parent directories off the path
+      final String expectedRelativePath = expectedPath.substring(Math.max(0, expectedPath.indexOf(_tempDir.getName())));
+      Assert.assertTrue(actualPath.contains(expectedRelativePath),
+          String.format("Unexpected @Generated annotation. Expected to find \"%s\" in \"%s\".",
+              expectedRelativePath,
+              actualPath));
 
       SchemaFormatType schemaFormatType = SchemaFormatType.fromFilename(
           expectedTypeNamesToSourceFileMap.get(pegasusTypeName));
