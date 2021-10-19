@@ -50,32 +50,32 @@ public class TestConstantQpsDarkClusterStrategy
   public Object[][] qpsKeys()
   {
     return new Object[][]{
-        // duration, qps, numSourceInstances, numDarkInstances
-        {0, 0, 10, 10},
-        {10, 10, 10, 0},
-        {0, 100, 10, 10},
-        {1000, 10, 10, 10},
-        {1000, 30, 10, 10},
-        {1000, 50, 10, 10},
-        {1000, 100, 10, 10},
-        {1000, 150, 10, 10},
-        {100, 200, 10, 10},
-        {3600000, 9.5f, 400, 10},
+        // duration, inboundQps, outboundQps, numSourceInstances, numDarkInstances
+        {0, 10, 0, 10, 10},
+        {10, 10, 10, 10, 0},
+        {0, 10, 100, 10, 10},
+        {1000, 10, 10, 10, 10},
+        {1000, 10, 30, 10, 10},
+        {1000, 10, 50, 10, 10},
+        {1000, 10, 100, 10, 10},
+        {1000, 10, 150, 10, 10},
+        {100, 10, 200, 10, 10},
+        {3600000, 10, 9.5f, 400, 10},
         // now test typical case of differing qps with different instance sizes
-        {1000, 100, 10, 1},
-        {1000, 90, 10, 1},
-        {1000, 120, 10, 1},
-        {1000, 100, 10, 2},
-        {1000, 100, 40, 3},
-        {1000, 200, 10, 1},
-        {1000, 250, 10, 1},
-        {1000, 400, 10, 1},
-        {3600000, 10, 400, 2}
+        {1000, 10, 100, 10, 1},
+        {1000, 10, 90, 10, 1},
+        {1000, 10, 120, 10, 1},
+        {1000, 10, 100, 10, 2},
+        {1000, 10, 100, 40, 3},
+        {1000, 10, 200, 10, 1},
+        {1000, 10, 250, 10, 1},
+        {1000, 10, 400, 10, 1},
+        {3600000, 10, 10, 400, 2}
     };
   }
 
   @Test(dataProvider = "qpsKeys")
-  public void testStrategy(int duration, float qps, int numSourceInstances, int numDarkInstances)
+  public void testStrategy(int duration, float inboundQps, float outboundQps, int numSourceInstances, int numDarkInstances)
   {
     IntStream.of(1, 1000, 1000000).forEach(capacity ->
     {
@@ -96,20 +96,21 @@ public class TestConstantQpsDarkClusterStrategy
       rateLimiter.setBufferTtl(Integer.MAX_VALUE, ChronoUnit.DAYS);
       ConstantQpsDarkClusterStrategy strategy = new ConstantQpsDarkClusterStrategy(SOURCE_CLUSTER_NAME,
           DARK_CLUSTER_NAME,
-          qps,
+          outboundQps,
           baseDispatcher,
           new DoNothingNotifier(),
           mockClusterInfoProvider,
           rateLimiter);
 
-      // simulate receiving 10 qps while dispatching over the duration
-      for (int runTime=0; runTime<duration; runTime=runTime+100)
+      // simulate receiving the configured qps while dispatching over the duration
+      int msBetweenEachInboundRequest = (int) (1000 / inboundQps);
+      for (int runTime=0; runTime<duration; runTime=runTime+msBetweenEachInboundRequest)
       {
         RestRequest dummyRestRequest = new RestRequestBuilder(URI.create("foo")).build();
         strategy.handleRequest(dummyRestRequest, dummyRestRequest, new RequestContext());
-        executor.runFor(100);
+        executor.runFor(msBetweenEachInboundRequest);
       }
-      int expectedCount = (int) (((duration == 0 ? 0 : duration / 1000.0) * qps * numDarkInstances)/ (double) (numSourceInstances));
+      int expectedCount = (int) (((duration == 0 ? 0 : duration / 1000.0) * outboundQps * numDarkInstances)/ (double) (numSourceInstances));
       int actualCount = baseDispatcher.getRequestCount();
       Assert.assertEquals(actualCount, expectedCount, expectedCount * ERR_PCT, "count not within expected range");
     });

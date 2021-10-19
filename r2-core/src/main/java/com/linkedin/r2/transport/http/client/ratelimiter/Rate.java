@@ -16,8 +16,6 @@
 
 package com.linkedin.r2.transport.http.client.ratelimiter;
 
-import java.util.Objects;
-
 
 /**
  * An immutable implementation of rate as number of events per period of time in milliseconds.

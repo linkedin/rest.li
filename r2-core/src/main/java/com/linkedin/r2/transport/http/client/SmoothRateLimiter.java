@@ -179,14 +179,9 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     ArgumentUtil.checkArgument(permitsPerPeriod >= 0, "permitsPerPeriod");
     ArgumentUtil.checkArgument(periodMilliseconds > 0, "periodMilliseconds");
     ArgumentUtil.checkArgument(burst > 0, "burst");
-    Rate newRate = new Rate(permitsPerPeriod, periodMilliseconds, burst);
-    // only set rate and schedule another iteration of the eventLoop if the rate changed
-    // to handle use cases that frequently call setRate
-    if (!_rate.equals(newRate))
-    {
-      _rate = newRate;
-      _scheduler.execute(_eventLoop::updateWithNewRate);
-    }
+
+    _rate = new Rate(permitsPerPeriod, periodMilliseconds, burst);
+    _scheduler.execute(_eventLoop::updateWithNewRate);
   }
 
   @Override
