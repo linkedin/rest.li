@@ -16,7 +16,6 @@
 
 package com.linkedin.r2.transport.http.client.ratelimiter;
 
-
 /**
  * An immutable implementation of rate as number of events per period of time in milliseconds.
  * In addition, a {@code burst} parameter is used to indicate the maximum number of permits can
