@@ -178,17 +178,22 @@ public class TestDataTemplateGeneratorCmdLineApp
       Assert.assertTrue(generatedSource.contains("class " + pegasusTypeName),
           "Incorrect generated class name.");
 
-      // Validate the generated annotation (use a strange regex-based comparison since temp files can be weird e.g. /var vs. /private/var)
+      // First, validate that a valid @Generated annotation exists on the class
       final Matcher generatedAnnotationMatcher = GENERATED_ANNOTATION_PATTERN.matcher(generatedSource);
       Assert.assertTrue(generatedAnnotationMatcher.find(), "Unable to find a valid @Generated annotation in the generated source file.");
-      final String expectedPath = expectedTypeNamesToSourceFileMap.get(pegasusTypeName);
-      final String actualPath = generatedAnnotationMatcher.group(1);
-      // If the origin file is in the temp folder, truncate all the parent directories off the path
-      final String expectedRelativePath = expectedPath.substring(Math.max(0, expectedPath.indexOf(_tempDir.getName())));
-      Assert.assertTrue(actualPath.contains(expectedRelativePath),
+      // The expected "source location" is the location of the PDL file used to generate the template class
+      final String expectedSourceLocation = expectedTypeNamesToSourceFileMap.get(pegasusTypeName);
+      // The actual "source location" is the URL in the @Generated annotation comment
+      final String actualSourceLocation = generatedAnnotationMatcher.group(1);
+      // If the origin file is in the temp folder, truncate to just the relative path within the temp folder
+      // (we do this because some temp folder locations can be unpredictable e.g. /var vs. /private/var on MacOS)
+      final String expectedRelativeLocation =
+          expectedSourceLocation.substring(Math.max(0, expectedSourceLocation.indexOf(_tempDir.getName())));
+      // Finally, assert that the @Generated annotation comment contains the expected relative path
+      Assert.assertTrue(actualSourceLocation.contains(expectedRelativeLocation),
           String.format("Unexpected @Generated annotation. Expected to find \"%s\" in \"%s\".",
-              expectedRelativePath,
-              actualPath));
+              expectedRelativeLocation,
+              actualSourceLocation));
 
       SchemaFormatType schemaFormatType = SchemaFormatType.fromFilename(
           expectedTypeNamesToSourceFileMap.get(pegasusTypeName));
