@@ -77,6 +77,17 @@ public class ClusterPropertiesJsonSerializer implements
     return (T) map.get(key);
   }
 
+  @SuppressWarnings("unchecked")
+  private static <T> T mapGetOrDefault(Map<String, Object> map, String key, T defaultValue)
+  {
+    T value = (T) map.get(key);
+    if (value == null)
+    {
+      value = defaultValue;
+    }
+    return value;
+  }
+
   @Override
   public ClusterProperties fromMap(Map<String, Object> map)
   {
@@ -155,6 +166,21 @@ public class ClusterPropertiesJsonSerializer implements
     boolean delegated = false;
     if (map.containsKey(PropertyKeys.DELEGATED)) {
       delegated = mapGet(map, PropertyKeys.DELEGATED);
+    }
+
+    // get canary cluster properties and canary distribution strategy, if exist
+    Map<String, Object> canaryConfigsMap = mapGetOrDefault(map, PropertyKeys.CANARY_CONFIGS, Collections.emptyMap());
+    Map<String, Object> distributionStrategyMap = mapGetOrDefault(map, PropertyKeys.CANARY_DISTRIBUTION_STRATEGY, Collections.emptyMap());
+    if (!canaryConfigsMap.isEmpty() && !distributionStrategyMap.isEmpty()) {
+      ClusterProperties canaryServiceProperties = fromMap(canaryConfigsMap);
+      CanaryDistributionStrategy distributionStrategy = new CanaryDistributionStrategy(
+        mapGetOrDefault(distributionStrategyMap, PropertyKeys.CANARY_STRATEGY, CanaryDistributionStrategy.DEFAULT_STRATEGY_LABEL),
+        mapGetOrDefault(distributionStrategyMap, PropertyKeys.PERCENTAGE_STRATEGY_PROPERTIES, Collections.emptyMap()),
+        mapGetOrDefault(distributionStrategyMap, PropertyKeys.TARGET_HOSTS_STRATEGY_PROPERTIES, Collections.emptyMap()),
+        mapGetOrDefault(distributionStrategyMap, PropertyKeys.TARGET_APPLICATIONS_STRATEGY_PROPERTIES, Collections.emptyMap())
+      );
+      return new ClusterPropertiesWithCanary(clusterName, prioritizedSchemes, properties, banned, partitionProperties,
+                                             validationList, darkClusterProperty, delegated, distributionStrategy, canaryServiceProperties);
     }
 
     return new ClusterProperties(clusterName, prioritizedSchemes, properties, banned, partitionProperties, validationList,

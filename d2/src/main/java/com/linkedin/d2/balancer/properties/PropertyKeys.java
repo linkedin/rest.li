@@ -227,6 +227,19 @@ public class PropertyKeys
   public static final String HTTP_SCHEME = "http";
   public static final String HTTPS_SCHEME = "https";
 
+  // used by ServicePropertiesWithCanary
+  public static final String CANARY_CONFIGS = "canaryConfigs";
+  public static final String CANARY_DISTRIBUTION_STRATEGY = "canaryDistributionStrategy";
+
+  // used by CanaryDistributionStrategy
+  public static final String CANARY_STRATEGY = "strategy";
+  public static final String PERCENTAGE_STRATEGY_PROPERTIES = "percentageStrategyProperties";
+  public static final String PERCENTAGE_SCOPE = "scope";
+  public static final String TARGET_HOSTS_STRATEGY_PROPERTIES = "targetHostsStrategyProperties";
+  public static final String TARGET_HOSTS = "targetHosts";
+  public static final String TARGET_APPLICATIONS_STRATEGY_PROPERTIES = "targetApplicationsStrategyProperties";
+  public static final String TARGET_APPLICATIONS = "targetApplications";
+
   private static String getFieldName(PathSpec pathSpec)
   {
     if (pathSpec.getPathComponents().size() != 1)

@@ -1,0 +1,74 @@
+namespace com.linkedin.d2
+
+/**
+ * Configuration for a D2 canary distribution strategy. Canaries are used to ramp new D2 configs
+ * with a portion of clients before being fully deployed to all. This is in contrast to stable
+ * configs that are verified to be correct, which are picked up by clients by default.
+ */
+record D2CanaryDistributionStrategy {
+  /**
+   * Canary distribution strategy to determine which clients will use the canary configs.
+   */
+  strategy : enum StrategyType {
+
+    /**
+     * Basic percentage based ramp strategy. Allows specifying the percentage among all clients that will use the canary configs.
+     */
+    PERCENTAGE
+
+    /**
+     * A targeted ramp strategy by allowing selection of specific hosts to ramp canary on.
+     */
+    TARGET_HOSTS
+
+    /**
+     * A targeted ramp strategy by allowing selection of specific applications to ramp canary on.
+     */
+    TARGET_APPLICATIONS
+
+    /**
+     * Default disabled strategy. All clients will use the stable config.
+     */
+    DISABLED
+  } = "DISABLED"
+
+  /**
+   * Percentage based ramp strategy properties. Allows specifying the percentage among all clients that will use the canary configs.
+   */
+  percentageStrategyProperties : optional record PercentageStrategyProperties {
+    scope : double = 0
+  }
+
+  /**
+   * Target hosts based ramp strategy properties. Allows selection of specific hosts to ramp canary on.
+   */
+  targetHostsStrategyProperties : optional record TargetHostsStrategyProperties {
+    /**
+     * A list of client hosts to canary on.
+     *
+     * eg ["lva1-001.prod.linkedin.com", "lva1-002.prod.linkedin.com", ...]
+     * Defaults to empty list.
+     */
+    targetHosts : array[string] = []
+  }
+
+  /**
+   * Target applications based ramp strategy properties. Allows selection of specific applications to ramp canary on.
+   */
+  targetApplicationsStrategyProperties : optional record TargetApplicationsStrategyProperties {
+    /**
+     * A list of client applications to canary on. The application name is the config “com.linkedin.app.name” defined in the application.
+     *
+     * eg ["khronos-facade", "Kairos-facade", ...]
+     * Defaults to empty list.
+     */
+    targetApplications : array[string] = []
+    /**
+     * The percentage of hosts in client applications specified in targetApplications which will use the canary configs.
+     *
+     * 0 <= scope < 1.
+     * Defaults to 0.
+     */
+    scope : double = 0
+  }
+}
