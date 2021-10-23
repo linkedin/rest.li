@@ -130,9 +130,10 @@ public class SubsettingState
           Map<Integer, Map<URI, TrackerClient>> serviceWeightedSubset = new HashMap<>();
           servicePotentialClients.put(partitionId, potentialClients.keySet());
           serviceWeightedSubset.put(partitionId, subsetClients);
+          subsetCache = new SubsetCache(version, metadata.getPeerClusterVersion(),
+              minClusterSubsetSize, servicePotentialClients, serviceWeightedSubset);
 
-          _subsetCache.put(serviceName, new SubsetCache(version, metadata.getPeerClusterVersion(),
-              minClusterSubsetSize, servicePotentialClients, serviceWeightedSubset));
+          _subsetCache.put(serviceName, subsetCache);
         }
 
         LOG.debug("Subset cache updated for service " + serviceName + ": " + subsetCache);

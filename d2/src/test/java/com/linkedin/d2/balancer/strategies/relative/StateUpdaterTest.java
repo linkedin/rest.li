@@ -446,7 +446,7 @@ public class StateUpdaterTest
     Set<TrackerClient> newTrackerClientSet = new HashSet<>();
     newTrackerClientSet.add(trackerClients.get(0));
     newTrackerClientSet.add(trackerClients.get(1));
-    _stateUpdater.updateStateForPartition(newTrackerClientSet, DEFAULT_PARTITION_ID, state, 1L);
+    _stateUpdater.updateStateForPartition(newTrackerClientSet, DEFAULT_PARTITION_ID, state, 1L, false);
 
     Map<URI, Integer> pointsMap = _stateUpdater.getPointsMap(DEFAULT_PARTITION_ID);
     assertEquals(pointsMap.size(), 2, "There should only be 2 uris after cluster id change");
