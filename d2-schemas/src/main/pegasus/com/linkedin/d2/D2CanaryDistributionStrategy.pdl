@@ -46,7 +46,7 @@ record D2CanaryDistributionStrategy {
     /**
      * A list of client hosts to canary on.
      *
-     * eg ["lva1-001.prod.linkedin.com", "lva1-002.prod.linkedin.com", ...]
+     * eg ["host1", "host2", ...]
      * Defaults to empty list.
      */
     targetHosts : array[string] = []
@@ -57,9 +57,9 @@ record D2CanaryDistributionStrategy {
    */
   targetApplicationsStrategyProperties : optional record TargetApplicationsStrategyProperties {
     /**
-     * A list of client applications to canary on. The application name is the config “com.linkedin.app.name” defined in the application.
+     * A list of client applications to canary on. For example, for LI apps, the app name is the config “com.linkedin.app.name” defined in the application.
      *
-     * eg ["khronos-facade", "Kairos-facade", ...]
+     * eg ["app1", "app2", ...]
      * Defaults to empty list.
      */
     targetApplications : array[string] = []
