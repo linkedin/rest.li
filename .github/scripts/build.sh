@@ -73,8 +73,8 @@ fi
 ./gradlew build $EXTRA_ARGS
 EXIT_CODE=$?
 
-# Kill the waiter job
 # TODO: Figure out if this can be removed as well for GitHub Actions
+# Kill the waiter job
 # kill $WAITER_PID
 
 if [ $EXIT_CODE != 0 ]; then
