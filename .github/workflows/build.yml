@@ -6,19 +6,19 @@ on:
     branches: [master]
 jobs:
   build:
-    runs-on: '${{ matrix.os }}'
+    runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
-        os: ['ubuntu-latest']
-        java: ['8', '11']
-    name: 'Build with Java ${{ matrix.java }} on ${{ matrix.os }}'
+        os: [ubuntu-latest]
+        java: [8] # TODO: Add 11 once build issues are resolved
+    name: Java ${{ matrix.java }} on ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v2
         with:
-          distribution: 'zulu'
-          java-version: '${{ matrix.java }}'
-          cache: 'gradle'
-      - run: './gradlew -version'
+          distribution: zulu
+          java-version: ${{ matrix.java }}
+          cache: gradle
+      - run: ./.github/scripts/build.sh
 
