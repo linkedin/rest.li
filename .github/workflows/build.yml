@@ -16,7 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          fetch-depth: 10
+          # Need to fetch 2 commits so we can compute the diff for a PR
+          fetch-depth: 2
       - uses: actions/setup-java@v2
         with:
           distribution: zulu
