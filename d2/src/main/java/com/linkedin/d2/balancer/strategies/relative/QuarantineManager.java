@@ -286,9 +286,7 @@ public class QuarantineManager {
     }
     else if (trackerClientState.isUnhealthy() || trackerClientState.getHealthScore() > FAST_RECOVERY_HEALTH_SCORE_THRESHOLD)
     {
-      /**
-       * Remove the client from the map if the client is unhealthy or he health score is beyond 0.5
-       */
+      // Remove the client from the map if the client is unhealthy or the health score is beyond 0.5
       recoverySet.remove(trackerClient);
     }
   }
@@ -380,7 +378,8 @@ public class QuarantineManager {
     // Also enroll new client into the recovery set if slow start is enabled
     if (!recoverySet.contains(trackerClient)
         && !oldPartitionState.getTrackerClients().contains(trackerClient)
-        && _slowStartEnabled)
+        && _slowStartEnabled
+        && !trackerClient.doNotSlowStart())
     {
       recoverySet.add(trackerClient);
     }

@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.22.11] - 2021-10-25
+- Fix an issue in D2 StateUpdater to force update PartitionState
+
 ## [29.22.10] - 2021-10-20
 - SmoothRateLimiter - do not double-count execution delays on setRate
 
@@ -5117,7 +5120,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.10...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.11...master
+[29.22.11]: https://github.com/linkedin/rest.li/compare/v29.22.10...v29.22.11
 [29.22.10]: https://github.com/linkedin/rest.li/compare/v29.22.9...v29.22.10
 [29.22.9]: https://github.com/linkedin/rest.li/compare/v29.22.8...v29.22.9
 [29.22.8]: https://github.com/linkedin/rest.li/compare/v29.22.7...v29.22.8

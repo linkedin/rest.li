@@ -172,7 +172,8 @@ public class StateUpdater
       for (Integer partitionId : _partitionLoadBalancerStateMap.keySet())
       {
         PartitionState partitionState = _partitionLoadBalancerStateMap.get(partitionId);
-        updateStateForPartition(partitionState.getTrackerClients(), partitionId, partitionState, partitionState.getClusterGenerationId());
+        updateStateForPartition(partitionState.getTrackerClients(), partitionId, partitionState, partitionState.getClusterGenerationId(),
+            false);
       }
     } catch (Exception ex)
     {
@@ -186,22 +187,22 @@ public class StateUpdater
    * 2. Handle quarantine and recovery of each host, which may adjust the healthscore further
    * 3. Update the hash ring for this partition
    * 4. Log and notify listeners after the update is done
-   *
-   * @param  trackerClients Hosts that belong to this partition
+   *  @param  trackerClients Hosts that belong to this partition
    * @param partitionId Identifies the partition to be updated
    * @param oldPartitionState The partition state of the last interval
-   * @param  clusterGenerationId The id that identifies the cluster version
+   * @param clusterGenerationId The id that identifies the cluster version
+   * @param shouldForceUpdate Whether or not to force update
    */
-  void updateStateForPartition(Set<TrackerClient> trackerClients, int partitionId,
-      PartitionState oldPartitionState, Long clusterGenerationId)
+  void updateStateForPartition(Set<TrackerClient> trackerClients, int partitionId, PartitionState oldPartitionState,
+      Long clusterGenerationId, boolean shouldForceUpdate)
   {
-    LOG.debug("Updating for partition: ", partitionId, ", state: ", oldPartitionState);
+    LOG.debug("Updating for partition: " + partitionId + ", state: " + oldPartitionState);
     PartitionState newPartitionState = new PartitionState(oldPartitionState);
 
     // Step 1: Update the base health scores for each {@link TrackerClient} in the cluster
     Map<TrackerClient, CallTracker.CallStats> latestCallStatsMap = new HashMap<>();
     long avgClusterLatency = getAvgClusterLatency(trackerClients, latestCallStatsMap);
-    boolean clusterUpdated = clusterGenerationId != oldPartitionState.getClusterGenerationId();
+    boolean clusterUpdated = shouldForceUpdate || (clusterGenerationId != oldPartitionState.getClusterGenerationId());
     updateBaseHealthScoreAndState(trackerClients, newPartitionState, avgClusterLatency, clusterUpdated, latestCallStatsMap);
 
     // Step 2: Handle quarantine and recovery for all tracker clients in this cluster
@@ -233,7 +234,7 @@ public class StateUpdater
         || trackerClients.size() != _partitionLoadBalancerStateMap.get(partitionId).getPointsMap().size())
     {
       PartitionState oldPartitionState = _partitionLoadBalancerStateMap.get(partitionId);
-      updateStateForPartition(trackerClients, partitionId, oldPartitionState, newClusterGenerationId);
+      updateStateForPartition(trackerClients, partitionId, oldPartitionState, newClusterGenerationId, shouldForceUpdate);
     }
   }
 
@@ -441,7 +442,7 @@ public class StateUpdater
           _relativeStrategyProperties.getRingProperties().getPointsPerWeight(),
           _listenerFactories.stream().map(factory -> factory.create(partitionId)).collect(Collectors.toList()));
 
-      updateStateForPartition(trackerClients, partitionId, partitionState, clusterGenerationId);
+      updateStateForPartition(trackerClients, partitionId, partitionState, clusterGenerationId, false);
 
       if (_firstPartitionId < 0)
       {
