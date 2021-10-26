@@ -35,7 +35,7 @@ fi
 if [ ! -z "$GITHUB_HEAD_REF" ] && [ ! -z "$GITHUB_BASE_REF" ]; then
   echo "Base: ${GITHUB_BASE_REF}, Head: ${GITHUB_HEAD_REF}"
   # Fetch the PR base ref so it can be used to generate diffs
-  git fetch origin $GITHUB_BASE_REF:$GITHUB_BASE_REF
+  git fetch origin ${GITHUB_BASE_REF}:${GITHUB_BASE_REF}
   # If the project version is being bumped in this PR, assert that the changelog contains an entry for it
   if (! $RELEASE_CANDIDATE) &&
       (git diff ${GITHUB_BASE_REF}...${GITHUB_HEAD_REF} -- gradle.properties | grep -F "+version=$VERSION" > /dev/null) &&
