@@ -16,6 +16,9 @@
 
 package com.linkedin.r2.transport.http.client.ratelimiter;
 
+import java.util.Objects;
+
+
 /**
  * An immutable implementation of rate as number of events per period of time in milliseconds.
  * In addition, a {@code burst} parameter is used to indicate the maximum number of permits can
@@ -113,5 +116,26 @@ public class Rate
   public double getPeriodRaw()
   {
     return _period;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+    {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass())
+    {
+      return false;
+    }
+    Rate rate = (Rate) o;
+    return Double.compare(rate.getEventsRaw(), getEventsRaw()) == 0
+        && Double.compare(rate.getPeriodRaw(), getPeriodRaw()) == 0;
+  }
+
+  @Override
+  public int hashCode()
+  {
+    return Objects.hash(getEventsRaw(), getPeriodRaw());
   }
 }
