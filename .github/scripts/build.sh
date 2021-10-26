@@ -33,11 +33,12 @@ fi
 
 # For PR builds only...
 if [ ! -z "$GITHUB_HEAD_REF" ] && [ ! -z "$GITHUB_BASE_REF" ]; then
+  echo "Base: ${GITHUB_BASE_REF}, Head: ${GITHUB_HEAD_REF}"
   # Fetch the PR base ref so it can be used to generate diffs
   git fetch origin $GITHUB_BASE_REF
   # If the project version is being bumped in this PR, assert that the changelog contains an entry for it
   if (! $RELEASE_CANDIDATE) &&
-      (git diff ${GITHUB_BASE_REF}...HEAD -- gradle.properties | grep -F "+version=$VERSION" > /dev/null) &&
+      (git diff ${GITHUB_BASE_REF}...${GITHUB_HEAD_REF} -- gradle.properties | grep -F "+version=$VERSION" > /dev/null) &&
       ! ( (cat CHANGELOG.md | grep -F "## [$VERSION] -" > /dev/null) &&
           (cat CHANGELOG.md | grep -F "[$VERSION]: https" > /dev/null) ); then
     echo "This change bumps the project version to $VERSION, but no changelog entry could be found for this version!"
@@ -49,7 +50,7 @@ if [ ! -z "$GITHUB_HEAD_REF" ] && [ ! -z "$GITHUB_BASE_REF" ]; then
   CONDITIONAL_TESTING_MODULES='d2 r2-int-test restli-int-test'
   echo "This is a PR build, so testing will be conditional for these subprojects: [${CONDITIONAL_TESTING_MODULES// /,}]"
   # If any Gradle file was touched, run all tests just to be safe
-  if (git diff ${GITHUB_BASE_REF}...HEAD --name-only | grep '\.gradle' > /dev/null); then
+  if (git diff ${GITHUB_BASE_REF}...${GITHUB_HEAD_REF} --name-only | grep '\.gradle' > /dev/null); then
     echo "This PR touches a file matching *.gradle, so tests will be run for all subprojects."
   else
     # Have to prime the comma-separated list with a dummy value because list construction in bash is hard...
@@ -60,7 +61,7 @@ if [ ! -z "$GITHUB_HEAD_REF" ] && [ ! -z "$GITHUB_BASE_REF" ]; then
       MODULE_DEPENDENCIES="$(./scripts/get-module-dependencies $MODULE testRuntimeClasspath | tr '\n' ' ')"
       # Create regex to capture lines in the diff's paths, e.g. 'a b c' -> '^\(a\|b\|c\)/'
       PATH_MATCHING_REGEX="^\\($(echo $MODULE_DEPENDENCIES | sed -z 's/ \+/\\|/g;s/\\|$/\n/g')\\)/"
-      if [ ! -z "$PATH_MATCHING_REGEX" ] && ! (git diff ${GITHUB_BASE_REF}...HEAD --name-only | grep "$PATH_MATCHING_REGEX" > /dev/null); then
+      if [ ! -z "$PATH_MATCHING_REGEX" ] && ! (git diff ${GITHUB_BASE_REF}...${GITHUB_HEAD_REF} --name-only | grep "$PATH_MATCHING_REGEX" > /dev/null); then
         echo "Computed as... [${MODULE_DEPENDENCIES// /,}]"
         echo "None of $MODULE's module dependencies have been touched, skipping tests for $MODULE."
         EXTRA_ARGS="${EXTRA_ARGS},$MODULE"
