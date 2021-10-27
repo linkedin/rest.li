@@ -159,6 +159,7 @@ public class TestConstantQpsRateLimiter
         // Intermix inbound queries while running clock at the defined rate
         for (int x = 0; x < totalRuntime; x = x + ONE_SECOND / LARGE_TEST_INBOUND_QPS_PER_REPLICA)
         {
+          // ensure that calling setRate before submitting a new callback does not detrimentally affect random distribution
           rateLimiter.setRate(TEST_QPS / LARGE_TEST_NUM_REPLICAS, ONE_SECOND, 1);
           rateLimiter.submit(tattler);
           executor.runFor(ONE_SECOND / LARGE_TEST_INBOUND_QPS_PER_REPLICA);
