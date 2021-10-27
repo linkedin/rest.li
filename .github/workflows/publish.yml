@@ -23,4 +23,6 @@ jobs:
           java-version: ${{ matrix.java }}
           # Do NOT use caching, since we want to ensure published artifacts are fresh
       - run: ./.github/scripts/publish.sh
-
+        env:
+          JFROG_USER: ${{ secrets.JFROG_USER }}
+          JFROG_KEY: ${{ secrets.JFROG_KEY }}
