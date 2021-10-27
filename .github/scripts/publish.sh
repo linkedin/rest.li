@@ -8,7 +8,7 @@ fi
 
 # Ensure that the tag is named properly as a semver tag
 if [[ ! "$GITHUB_REF" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?$ ]]; then
-  echo "Tag $TRAVIS_TAG is NOT a valid semver tag (vX.Y.Z), please delete this tag."
+  echo "Tag $GITHUB_REF is NOT a valid semver tag (vX.Y.Z), please delete this tag."
   exit 1
 fi
 
