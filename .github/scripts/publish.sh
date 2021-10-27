@@ -60,8 +60,17 @@ fi
 # while sleep 9m; do echo "[Ping] Keeping Travis job alive ($((SECONDS / 60)) minutes)"; done &
 # WAITER_PID=$!
 
+# Build the artifacts (skip testing to prevent flaky releases)
+echo 'All checks passed, building artifacts for release...'
+./gradlew build -x check
+if [ $? != 0 ]; then
+  echo 'Failed to build before publishing.'
+  echo 'Please either address the problem or retry by restarting this GitHub Actions job.'
+  exit 1
+fi
+
 # Publish to JFrog Artifactory
-echo "All checks passed, attempting to publish Rest.li $VERSION to JFrog Artifactory..."
+echo "Build succeeded, attempting to publish Rest.li $VERSION to JFrog Artifactory..."
 ./gradlew artifactoryPublish
 EXIT_CODE=$?
 
