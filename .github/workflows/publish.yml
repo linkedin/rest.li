@@ -22,5 +22,5 @@ jobs:
           distribution: zulu
           java-version: ${{ matrix.java }}
           # Do NOT use caching, since we want to ensure published artifacts are fresh
-      - run: ./gradlew -version  # TODO: Use actual publishing script
+      - run: ./.github/scripts/publish.sh
 

@@ -294,14 +294,15 @@ subprojects {
     }
   }
 
-  // Exclude tests which are known to be flaky in the Travis CI environment. Since all test tasks are TestNG tasks
-  // EXCEPT the integTest task, exclude the options from being evaluated by travis for the integTest task.
-  if (System.getenv('TRAVIS') == 'true' && System.getenv('USER') == 'travis') {
+  // Do some special test configuration for the CI environment
+  if (System.getenv('CI') == 'true' && System.getenv('GITHUB_ACTIONS') == 'true') {
     afterEvaluate {
       project.tasks.withType(Test).forEach {
+        // Exclude tests which are known to be flaky (only TestNG tests, not other tests e.g. Gradle int tests)
         if (it.options instanceof TestNGOptions) {
           it.options.excludeGroups 'ci-flaky'
         }
+        // Increase the Rest.li int test timeout
         it.systemProperties['test.httpRequestTimeout'] = '20000'
         // Make the build fail fast in CI (may have unintended consequences locally)
         it.failFast = true
