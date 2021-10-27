@@ -118,8 +118,8 @@ public class Rate
     return _period;
   }
 
-  @Override
-  public boolean equals(Object o) {
+  public boolean equals(Object o)
+  {
     if (this == o)
     {
       return true;
@@ -129,8 +129,7 @@ public class Rate
       return false;
     }
     Rate rate = (Rate) o;
-    return Double.compare(rate.getEventsRaw(), getEventsRaw()) == 0
-        && Double.compare(rate.getPeriodRaw(), getPeriodRaw()) == 0;
+    return rate.getEventsRaw() == getEventsRaw() && rate.getPeriodRaw() == getPeriodRaw();
   }
 
   @Override

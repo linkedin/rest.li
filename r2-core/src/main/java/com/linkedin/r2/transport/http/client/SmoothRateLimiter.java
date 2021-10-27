@@ -25,8 +25,6 @@ import com.linkedin.r2.transport.http.client.ratelimiter.Rate;
 import com.linkedin.util.ArgumentUtil;
 import com.linkedin.util.RateLimitedLogger;
 import com.linkedin.util.clock.Clock;
-import java.time.Instant;
-import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.concurrent.Executor;
@@ -308,12 +306,6 @@ public class SmoothRateLimiter implements AsyncRateLimiter
         }
         finally
         {
-          if (!_executionTracker.isPaused())
-          {
-            // System.out.println(_clock.currentTimeMillis());
-            Date derp = Date.from(Instant.ofEpochMilli(_clock.currentTimeMillis()));
-            System.out.println(derp.getSeconds());
-          }
           if (!_executionTracker.decrementAndGetPaused())
           {
             _scheduler.execute(this::loop);
