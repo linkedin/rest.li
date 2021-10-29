@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.22.12] - 2021-10-28
+- add canaries to service and cluster properties
+
 ## [29.22.11] - 2021-10-25
 - Fix an issue in D2 StateUpdater to force update PartitionState
 
@@ -5120,7 +5123,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.11...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.12...master
+[29.22.12]: https://github.com/linkedin/rest.li/compare/v29.22.11...v29.22.12
 [29.22.11]: https://github.com/linkedin/rest.li/compare/v29.22.10...v29.22.11
 [29.22.10]: https://github.com/linkedin/rest.li/compare/v29.22.9...v29.22.10
 [29.22.9]: https://github.com/linkedin/rest.li/compare/v29.22.8...v29.22.9

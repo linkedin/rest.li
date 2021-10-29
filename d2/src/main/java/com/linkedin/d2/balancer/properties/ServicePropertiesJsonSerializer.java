@@ -37,6 +37,9 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.linkedin.d2.balancer.properties.util.PropertyUtil.mapGet;
+import static com.linkedin.d2.balancer.properties.util.PropertyUtil.mapGetOrDefault;
+
 
 public class ServicePropertiesJsonSerializer implements
     PropertySerializer<ServiceProperties>, PropertyBuilder<ServiceProperties>
@@ -186,17 +189,6 @@ public class ServicePropertiesJsonSerializer implements
     }
   }
 
-  @SuppressWarnings("unchecked")
-  private static <T> T mapGetOrDefault(Map<String, Object> map, String key, T defaultValue)
-  {
-    T value = (T) map.get(key);
-    if (value == null)
-    {
-      value = defaultValue;
-    }
-    return value;
-  }
-
   public ServiceProperties fromMap(Map<String,Object> map)
   {
     Map<String,Object> loadBalancerStrategyProperties = mapGetOrDefault(map, PropertyKeys.LB_STRATEGY_PROPERTIES, Collections.emptyMap());
@@ -232,6 +224,36 @@ public class ServicePropertiesJsonSerializer implements
     }
 
     List<Map<String, Object>> backupRequests = mapGetOrDefault(map, PropertyKeys.BACKUP_REQUESTS, Collections.emptyList());
+
+    // get canary service properties and canary distribution strategy, if exist
+    if (map.containsKey(PropertyKeys.CANARY_CONFIGS) && map.containsKey(PropertyKeys.CANARY_DISTRIBUTION_STRATEGY))
+    {
+      Map<String, Object> canaryConfigsMap = mapGet(map, PropertyKeys.CANARY_CONFIGS);
+      Map<String, Object> distributionStrategyMap = mapGet(map, PropertyKeys.CANARY_DISTRIBUTION_STRATEGY);
+      ServiceProperties canaryServiceProperties = fromMap(canaryConfigsMap);
+      CanaryDistributionStrategy distributionStrategy = new CanaryDistributionStrategy(
+          mapGetOrDefault(distributionStrategyMap, PropertyKeys.CANARY_STRATEGY, CanaryDistributionStrategy.DEFAULT_STRATEGY_LABEL),
+          mapGetOrDefault(distributionStrategyMap, PropertyKeys.PERCENTAGE_STRATEGY_PROPERTIES, Collections.emptyMap()),
+          mapGetOrDefault(distributionStrategyMap, PropertyKeys.TARGET_HOSTS_STRATEGY_PROPERTIES, Collections.emptyMap()),
+          mapGetOrDefault(distributionStrategyMap, PropertyKeys.TARGET_APPLICATIONS_STRATEGY_PROPERTIES, Collections.emptyMap())
+          );
+      return new ServicePropertiesWithCanary((String) map.get(PropertyKeys.SERVICE_NAME),
+          (String) map.get(PropertyKeys.CLUSTER_NAME),
+          (String) map.get(PropertyKeys.PATH),
+          loadBalancerStrategyList,
+          loadBalancerStrategyProperties,
+          getTransportClientPropertiesWithClientOverrides((String) map.get(PropertyKeys.SERVICE_NAME), transportClientProperties),
+          degraderProperties,
+          prioritizedSchemes,
+          banned,
+          metadataProperties,
+          backupRequests,
+          relativeStrategyProperties,
+          enableClusterSubsetting,
+          minClusterSubsetSize,
+          distributionStrategy,
+          canaryServiceProperties);
+    }
 
     return new ServiceProperties((String) map.get(PropertyKeys.SERVICE_NAME),
                                  (String) map.get(PropertyKeys.CLUSTER_NAME),
