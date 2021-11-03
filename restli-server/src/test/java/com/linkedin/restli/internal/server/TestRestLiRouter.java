@@ -24,17 +24,12 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.internal.server.model.RestLiAnnotationReader;
-import com.linkedin.restli.restspec.RestSpecAnnotation;
 import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.RoutingException;
 import com.linkedin.restli.server.annotations.PathKeyParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -155,26 +150,11 @@ public class TestRestLiRouter
         String.format("Expected an exception of type '%s' but none was caught", clazz.getSimpleName()));
   }
 
-  @Retention(RetentionPolicy.RUNTIME)
-  @Target(ElementType.METHOD)
-  @RestSpecAnnotation(name = "Versioned")
-  public @interface Versioned {
-    int fromVersion() default Integer.MIN_VALUE;
-    int toVersion() default Integer.MAX_VALUE;
-  }
-
   @RestLiCollection(name = "root", keyName = "rootId")
   private static class RootResource extends CollectionResourceTemplate<Long, EmptyRecord>
   {
     @RestMethod.Get
     public EmptyRecord get(@PathKeyParam("rootId") Long id)
-    {
-      return new EmptyRecord();
-    }
-
-    @RestMethod.Get
-    @Versioned(fromVersion = 20211001, toVersion = 20211101)
-    public EmptyRecord getV20211001(@PathKeyParam("rootId") Long id)
     {
       return new EmptyRecord();
     }
