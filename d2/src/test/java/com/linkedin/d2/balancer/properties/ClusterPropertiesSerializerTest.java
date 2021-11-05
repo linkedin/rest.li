@@ -23,6 +23,8 @@ import com.linkedin.d2.discovery.PropertySerializationException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
+
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -39,6 +41,17 @@ public class ClusterPropertiesSerializerTest
 {
   private static String DARK_CLUSTER1_KEY = "foobar1dark";
   private static String DARK_CLUSTER2_KEY = "foobar2dark";
+
+  private static final DarkClusterConfigMap DARK_CLUSTER_CONFIG_MAP = new DarkClusterConfigMap();
+
+  static {
+    DarkClusterConfig darkCluster1 = new DarkClusterConfig()
+      .setMultiplier(1.5f)
+      .setDispatcherBufferedRequestExpiryInSeconds(10)
+      .setDispatcherMaxRequestsToBuffer(100)
+      .setDispatcherOutboundTargetRate(50);
+    DARK_CLUSTER_CONFIG_MAP.put(DARK_CLUSTER1_KEY, darkCluster1);
+  }
 
   public static void main(String[] args) throws PropertySerializationException
   {
@@ -95,15 +108,9 @@ public class ClusterPropertiesSerializerTest
   {
     ClusterPropertiesJsonSerializer jsonSerializer = new ClusterPropertiesJsonSerializer();
 
-    DarkClusterConfig darkCluster1 = new DarkClusterConfig()
-        .setMultiplier(1.5f)
-        .setDispatcherBufferedRequestExpiryInSeconds(10)
-        .setDispatcherMaxRequestsToBuffer(100)
-        .setDispatcherOutboundTargetRate(50);
-    DarkClusterConfigMap darkClusterConfigMap = new DarkClusterConfigMap();
-    darkClusterConfigMap.put(DARK_CLUSTER1_KEY, darkCluster1);
     ClusterProperties property = new ClusterProperties("test", new ArrayList<>(), Collections.emptyMap(), new HashSet<>(), NullPartitionProperties.getInstance(),
-        Arrays.asList("principal1", "principal2"), DarkClustersConverter.toProperties(darkClusterConfigMap), false);
+                                                       Arrays.asList("principal1", "principal2"), DarkClustersConverter.toProperties(
+      DARK_CLUSTER_CONFIG_MAP), false);
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
   }
 
@@ -154,5 +161,41 @@ public class ClusterPropertiesSerializerTest
                                                        Arrays.asList("principal1", "principal2"),
                                                        (Map<String, Object>) null, false);
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
+  }
+
+  @DataProvider(name = "distributionStrategies")
+  public Object[][] getDistributionStrategies() {
+    Map<String, Object> percentageProperties = new HashMap<>();
+    percentageProperties.put("scope", 0.1);
+
+    Map<String, Object> targetHostsProperties = new HashMap<>();
+    targetHostsProperties.put("targetHosts", Arrays.asList("hostA", "hostB"));
+
+    Map<String, Object> targetApplicationsProperties = new HashMap<>();
+    targetApplicationsProperties.put("targetApplications", Arrays.asList("appA", "appB"));
+    targetApplicationsProperties.put("scope", 0.1);
+
+    return new Object[][] {
+      {new CanaryDistributionStrategy("percentage", percentageProperties, Collections.emptyMap(), Collections.emptyMap())},
+      {new CanaryDistributionStrategy("targetHosts", Collections.emptyMap(), targetHostsProperties, Collections.emptyMap())},
+      {new CanaryDistributionStrategy("targetApplications", Collections.emptyMap(), Collections.emptyMap(), targetApplicationsProperties)}
+    };
+  }
+
+  @Test(dataProvider = "distributionStrategies")
+  public void testClusterPropertiesWithCanary(CanaryDistributionStrategy distributionStrategy) throws PropertySerializationException
+  {
+    ClusterPropertiesJsonSerializer serializer = new ClusterPropertiesJsonSerializer();
+
+    // canary configs adds dark cluster  properties
+    ClusterProperties canaryProperty = new ClusterProperties("test", Collections.emptyList(), Collections.emptyMap(), Collections.emptySet(),
+                                                             NullPartitionProperties.getInstance(), Arrays.asList("principal1", "principal2"),
+                                                             DarkClustersConverter.toProperties(DARK_CLUSTER_CONFIG_MAP), false);
+
+    ClusterPropertiesWithCanary propertyWithCanary = new ClusterPropertiesWithCanary("test", Collections.emptyList(), Collections.emptyMap(),
+                                                                                     Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(),
+                                                                                     (Map<String, Object>) null, false, distributionStrategy, canaryProperty);
+
+    assertEquals(serializer.fromBytes(serializer.toBytes(propertyWithCanary)), propertyWithCanary);
   }
 }

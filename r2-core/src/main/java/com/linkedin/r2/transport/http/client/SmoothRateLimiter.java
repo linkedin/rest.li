@@ -247,7 +247,10 @@ public class SmoothRateLimiter implements AsyncRateLimiter
       // before entering the next period
       _permitAvailableCount = Math.max(rate.getEvents() - (_permitsInTimeFrame - _permitAvailableCount), 0);
       _permitsInTimeFrame = rate.getEvents();
-      _delayUntil = _clock.currentTimeMillis() + _executionTracker.getNextExecutionDelay(_rate);
+      long now = _clock.currentTimeMillis();
+      // ensure to recalculate the delay, discounting any time already delayed
+      long timeSinceLastPermit = now - _permitTime;
+      _delayUntil = now + Math.max(0, (_executionTracker.getNextExecutionDelay(_rate) - timeSinceLastPermit));
 
       loop();
     }

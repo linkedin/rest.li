@@ -25,6 +25,7 @@ import com.linkedin.d2.HttpMethod;
 import com.linkedin.d2.HttpStatusCodeRange;
 import com.linkedin.d2.HttpStatusCodeRangeArray;
 import com.linkedin.d2.balancer.config.RelativeStrategyPropertiesConverter;
+import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -33,6 +34,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -75,6 +77,42 @@ public class ServicePropertiesSerializerTest
                                      Collections.<URI>emptySet(),
                                      arbitraryProperties);
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
+  }
+
+  @DataProvider(name = "distributionStrategies")
+  public Object[][] getDistributionStrategies() {
+    Map<String, Object> percentageProperties = new HashMap<>();
+    percentageProperties.put("scope", 0.1);
+
+    Map<String, Object> targetHostsProperties = new HashMap<>();
+    targetHostsProperties.put("targetHosts", Arrays.asList("hostA", "hostB"));
+
+    Map<String, Object> targetApplicationsProperties = new HashMap<>();
+    targetApplicationsProperties.put("targetApplications", Arrays.asList("appA", "appB"));
+    targetApplicationsProperties.put("scope", 0.1);
+
+    return new Object[][] {
+        {new CanaryDistributionStrategy("percentage", percentageProperties, Collections.emptyMap(), Collections.emptyMap())},
+        {new CanaryDistributionStrategy("targetHosts", Collections.emptyMap(), targetHostsProperties, Collections.emptyMap())},
+        {new CanaryDistributionStrategy("targetApplications", Collections.emptyMap(), Collections.emptyMap(), targetApplicationsProperties)}
+    };
+  }
+
+  @Test(dataProvider = "distributionStrategies")
+  public void testServicePropertiesWithCanary(CanaryDistributionStrategy distributionStrategy) throws PropertySerializationException
+  {
+    ServicePropertiesJsonSerializer serializer = new ServicePropertiesJsonSerializer();
+
+    // canary configs has a different cluster name (migrating the service) and adds relative strategy properties
+    ServiceProperties canaryProperty = new ServiceProperties("servicename2", "clustername3",
+        "/path2", Arrays.asList("rr"), new HashMap<>(),
+        null, null, Arrays.asList("HTTPS"), Collections.emptySet(),
+        Collections.emptyMap(), Collections.emptyList(), RelativeStrategyPropertiesConverter.toMap(createRelativeStrategyProperties()));
+
+    ServicePropertiesWithCanary propertyWithCanary = new ServicePropertiesWithCanary("servicename2",
+        "clustername2", "/path2", Arrays.asList("strategy2"), distributionStrategy, canaryProperty);
+
+    assertEquals(serializer.fromBytes(serializer.toBytes(propertyWithCanary)), propertyWithCanary);
   }
 
   @Test
