@@ -20,6 +20,7 @@ buildscript {
   }
   dependencies {
     classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.21.0'
+    classpath 'org.jacoco:org.jacoco.core:0.8.7'
   }
 }
 
@@ -162,6 +163,7 @@ subprojects {
   apply plugin: 'java'
   apply plugin: 'eclipse'
   apply from: "${buildScriptDirPath}/cleanGenerated.gradle"
+  apply plugin: 'jacoco'
 
   afterEvaluate {
     if (project.plugins.hasPlugin('pegasus')) {
@@ -442,3 +444,4 @@ project.gradle.buildFinished { BuildResult result ->
     logger.warn msgBuilder.toString()
   }
 }
+
