@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- For entity level action request builders, issue a sensible error if the id is null.
 
 ## [29.22.10] - 2021-10-20
 - SmoothRateLimiter - do not double-count execution delays on setRate

@@ -241,6 +241,11 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
 
   }
 
+  protected boolean hasId()
+  {
+    return _id != null;
+  }
+
   private Map<FieldDef<?>, Object> buildReadOnlyActionParameters()
   {
     return buildReadOnlyActionParameters(_actionParams);

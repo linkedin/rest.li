@@ -121,6 +121,14 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     Assert.assertEquals(request.getRequestOptions(), builders.getRequestOptions());
   }
 
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider",
+    expectedExceptions = { IllegalStateException.class },
+    expectedExceptionsMessageRegExp = "Entity-level action request is missing required id value\\.")
+  public void testEntityActionRequiresIdInBuild(RootBuilderWrapper<Long, Greeting> builders)
+  {
+    builders.action("SomeAction").build();
+  }
+
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testGetRequestOptionsPropagation(RootBuilderWrapper<Long, Greeting> builders)
   {
