@@ -22,8 +22,6 @@ Follow the steps below to try Rest.li quickly and get a basic idea of how it wor
 
 JDK: You will need a Java 1.8 JDK to build the code. Using Java 1.9 or later will fail because Rest.li uses some APIs that were deprecated in 1.9 and the build treats warnings as error in order to ensure high code quality. On Linux systems openjdk-8-jdk is known to work.
 
-Gradle: You will need to install [Gradle](http://www.gradle.org/) before you can build Rest.li. Gradle 5.2.1 is known to work.
-
 ## Build
 
 Rest.li uses [Gradle](http://www.gradle.org/) as the build system. The following points summarize some basic tasks that can be run:
