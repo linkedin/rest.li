@@ -207,7 +207,7 @@ public class TestRestLiRouter
       doReturn(null).when(_pathKeys).getBatchIds();
       doReturn(new URI(path)).when(_context).getRequestURI();
       doReturn("GET").when(_context).getRequestMethod(); // http method
-      doReturn("GET").when(_context).getRestLiRequestMethod(); // header value
+      doReturn("GET").when(_context).getRestLiRequestMethod(); // from the X-RestLi-Method header
       doReturn(null).when(_context).getMethodName(eq(ResourceMethod.GET));
     }
 
@@ -216,7 +216,7 @@ public class TestRestLiRouter
       doReturn(null).when(_pathKeys).getBatchIds();
       doReturn(new URI(path)).when(_context).getRequestURI();
       doReturn("POST").when(_context).getRequestMethod(); // http method
-      doReturn("CREATE").when(_context).getRestLiRequestMethod(); // header value
+      doReturn("CREATE").when(_context).getRestLiRequestMethod(); // from the X-RestLi-Method header
       doReturn(null).when(_context).getMethodName(eq(ResourceMethod.CREATE));
     }
 
@@ -225,7 +225,7 @@ public class TestRestLiRouter
       doReturn(null).when(_pathKeys).getBatchIds();
       doReturn(new URI(path)).when(_context).getRequestURI();
       doReturn("POST").when(_context).getRequestMethod(); // http method
-      doReturn("CREATE").when(_context).getRestLiRequestMethod(); // header value
+      doReturn("CREATE").when(_context).getRestLiRequestMethod(); // from the X-RestLi-Method header
       doReturn("create").when(_context).getMethodName(eq(ResourceMethod.CREATE));
     }
   }
