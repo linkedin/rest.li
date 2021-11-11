@@ -178,7 +178,7 @@ class SampleResources
     namespace = "com.linkedin.restli.internal.server.model",
     parent = ParentResource.class
   )
-  static class TestResource extends CollectionResourceTemplate<String, EmptyRecord>
+  class TestResource extends CollectionResourceTemplate<String, EmptyRecord>
   {
     @Action(name = "testResourceAction")
     public void takeAction() {}
@@ -188,7 +188,7 @@ class SampleResources
     name = "ParentResource",
     namespace = "com.linkedin.restli.internal.server.model"
   )
-  static class ParentResource extends CollectionResourceTemplate<String, EmptyRecord> {}
+  class ParentResource extends CollectionResourceTemplate<String, EmptyRecord> {}
 
   @RestLiCollection(
     name = "BadResource",
@@ -310,7 +310,7 @@ class SampleResources
   }
 
   @RestLiActions(name = "actionReturnTypeInteger")
-  static class ActionReturnTypeIntegerResource
+  class ActionReturnTypeIntegerResource
   {
     @Action(name = "int")
     public int doInt()
@@ -347,7 +347,7 @@ class SampleResources
   }
 
   @RestLiActions(name = "actionReturnTypeRecord")
-  static class ActionReturnTypeRecordResource
+  class ActionReturnTypeRecordResource
   {
     @Action(name = "record")
     public EmptyRecord doRecord()
@@ -372,7 +372,7 @@ class SampleResources
   }
 
   @RestLiActions(name = "actionReturnTypeVoid")
-  static class ActionReturnTypeVoidResource
+  class ActionReturnTypeVoidResource
   {
     @Action(name = "void")
     public void doVoid() {}
@@ -382,7 +382,7 @@ class SampleResources
    * The following resource is used by {@link TestRestLiApiBuilder#testPathKeyParamAnnotations()}.
    */
   @RestLiCollection(name = "pathKeyParamAnnotations")
-  static class PathKeyParamAnnotationsResource implements KeyValueResource<Long, EmptyRecord>
+  class PathKeyParamAnnotationsResource implements KeyValueResource<Long, EmptyRecord>
   {
     @Action(name = "withPathKeyParam", resourceLevel = ResourceLevel.ENTITY)
     public void withPathKeyParam(@PathKeyParam("pathKeyParamAnnotationsId") Long id) {}
@@ -829,7 +829,7 @@ class SampleResources
   }
 
   @RestLiCollection(name="collectionComplexKey")
-  public static class FinderSupportedComplexKeyDataResource extends ComplexKeyResourceTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
+  public class FinderSupportedComplexKeyDataResource extends ComplexKeyResourceTemplate<EmptyRecord, EmptyRecord, EmptyRecord>
   {
     @Finder("complex")
     public List<EmptyRecord> find(@PagingContextParam final PagingContext context,

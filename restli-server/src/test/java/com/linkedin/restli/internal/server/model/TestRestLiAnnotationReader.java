@@ -59,7 +59,7 @@ import org.junit.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static com.linkedin.restli.internal.server.model.SampleResources.*;
+import com.linkedin.restli.internal.server.model.SampleResources.*;
 
 
 public class TestRestLiAnnotationReader
