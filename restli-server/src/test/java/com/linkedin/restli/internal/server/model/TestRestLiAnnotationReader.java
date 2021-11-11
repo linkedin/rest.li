@@ -30,7 +30,6 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.Link;
-import com.linkedin.restli.restspec.RestSpecAnnotation;
 import com.linkedin.restli.server.BatchFinderResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.ResourceConfigException;
@@ -44,7 +43,6 @@ import com.linkedin.restli.server.annotations.Optional;
 import com.linkedin.restli.server.annotations.PathKeyParam;
 import com.linkedin.restli.server.annotations.PathKeysParam;
 import com.linkedin.restli.server.annotations.QueryParam;
-import com.linkedin.restli.server.annotations.RestLiActions;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.annotations.RestLiSimpleResource;
@@ -52,10 +50,6 @@ import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import com.linkedin.restli.server.resources.SimpleResourceTemplate;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -65,29 +59,17 @@ import org.junit.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import static com.linkedin.restli.internal.server.model.SampleResources.*;
+
 
 public class TestRestLiAnnotationReader
 {
 
-  @Test(description = "resource: action; type: root; annotations: {name}; model: none; key: none]")
+  @Test(description = "verifies actions resource method annotations for required and optional actions param")
   public void actionRootResource()
   {
-
     final String expectedNamespace = "com.linkedin.model.actions";
-    final String expectedName = "actionsOnly";
-
-    @RestLiActions(
-        name = "actionsOnly",
-        namespace = "com.linkedin.model.actions"
-    )
-    class ActionsOnlyResource {
-
-      @Action(name = "addValues")
-      public long sum(@ActionParam("left") Long left, @Optional("55") @ActionParam("right") Long right)
-      {
-        return left + right;
-      }
-    }
+    final String expectedName = "actionsMethod";
 
     final ResourceModel model = RestLiAnnotationReader.processResource(ActionsOnlyResource.class);
 
@@ -143,8 +125,7 @@ public class TestRestLiAnnotationReader
     Assert.assertEquals("55", rightParamAnnotations.get(Optional.class).value());
   }
 
-  @Test(description = "resource: action; type: root; annotations: {name}; model: none; key: none]",
-      dataProvider = "actionReturnTypeData")
+  @Test(description = "verifies return types of action resource methods", dataProvider = "actionReturnTypeData")
   public void actionResourceMethodReturnTypes(final Class<?> resourceClass, final Class<?> expectedActionReturnType)
   {
     final ResourceModel model = RestLiAnnotationReader.processResource(resourceClass);
@@ -157,29 +138,18 @@ public class TestRestLiAnnotationReader
     }
   }
 
-  @Test(description = "resource: collection; type: root; annotations: {name}; model: empty; key: {long}]")
+  @Test(description = "verifies that custom method level annotations and members are processed correctly")
   public void collectionRootResourceWithCustomMethodAnnotation()
   {
-
-    @RestLiCollection(name = "foo")
-    class LocalClass extends CollectionResourceTemplate<Long, EmptyRecord>
-    {
-      @Versioned(fromVersion = 10)
-      @RestMethod.Get
-      public EmptyRecord get(@PathKeyParam("fooId") Long id) {
-        return new EmptyRecord();
-      }
-    }
-
     final String expectedNamespace = "";
 
-    final String expectedName = "foo";
+    final String expectedName = "customAnnotatedMethod";
     final Class<? extends RecordTemplate> expectedValueClass = EmptyRecord.class;
 
-    final String expectedKeyName = "fooId";
+    final String expectedKeyName = "customAnnotatedMethodId";
     final Class<?> expectedKeyClass = Long.class;
 
-    final ResourceModel model = RestLiAnnotationReader.processResource(LocalClass.class);
+    final ResourceModel model = RestLiAnnotationReader.processResource(CustomAnnotatedMethodResource.class);
 
     Assert.assertNotNull(model);
 
@@ -232,10 +202,9 @@ public class TestRestLiAnnotationReader
     Assert.assertEquals((int) versionAnnotationFields.getInteger("toVersion"), Integer.MAX_VALUE);
   }
 
-  @Test(description = "resource: collection; type: root; annotations: {name}; model: empty; key: {long}]")
+  @Test(description = "verifies collection resource for keys and value class")
   public void collectionRootResource()
   {
-
     final String expectedNamespace = "";
 
     final String expectedName = "foo";
@@ -244,7 +213,7 @@ public class TestRestLiAnnotationReader
     final String expectedKeyName = "fooId";
     final Class<?> expectedKeyClass = Long.class;
 
-    final ResourceModel model = RestLiAnnotationReader.processResource(SampleResources.FooResource1.class);
+    final ResourceModel model = RestLiAnnotationReader.processResource(FooResource1.class);
 
     Assert.assertNotNull(model);
 
@@ -278,10 +247,10 @@ public class TestRestLiAnnotationReader
     Assert.assertEquals(expectedValueClass, model.getValueClass());
   }
 
-  @Test(description = "resource: collection; type: root; annotations: {name}; model: empty; key: {long}]")
+  @Test(description = "verifies path key and path keys parameters for entity level actions")
   public void collectionRootResourceMethodPathKeyParameters()
   {
-    final ResourceModel model = RestLiAnnotationReader.processResource(SampleResources.PathKeyParamAnnotationsResource.class);
+    final ResourceModel model = RestLiAnnotationReader.processResource(PathKeyParamAnnotationsResource.class);
     Assert.assertNotNull(model);
 
     final Map<String, ResourceMethodDescriptor> nameToDescriptor = model.getResourceMethodDescriptors()
@@ -326,7 +295,7 @@ public class TestRestLiAnnotationReader
     Assert.assertNotNull(pathKeysParam);
   }
 
-  @Test(description = "resource: collection; type: subresource; annotations: {name}; model: empty; key: {string}]")
+  @Test(description = "verifies collection resources for parent/child relationship")
   public void collectionSubresource()
   {
 
@@ -338,8 +307,8 @@ public class TestRestLiAnnotationReader
     final String expectedKeyName = "TestResourceId";
     final Class<?> expectedKeyClass = String.class;
 
-    final ResourceModel parent = RestLiAnnotationReader.processResource(SampleResources.ParentResource.class);
-    final ResourceModel model = RestLiAnnotationReader.processResource(SampleResources.TestResource.class, parent);
+    final ResourceModel parent = RestLiAnnotationReader.processResource(ParentResource.class);
+    final ResourceModel model = RestLiAnnotationReader.processResource(TestResource.class, parent);
 
     Assert.assertNotNull(model);
 
@@ -374,7 +343,7 @@ public class TestRestLiAnnotationReader
     Assert.assertEquals(expectedValueClass, model.getValueClass());
   }
 
-  @Test(description = "resource: collection; type: complex key; annotations: {name}; model: empty; key: {string}]")
+  @Test(description = "verifies collection resources for complex keys")
   public void complexKeyCollectionResource()
   {
 
@@ -389,7 +358,7 @@ public class TestRestLiAnnotationReader
     final Class<? extends RecordTemplate> expectedKeyKeyClass = EmptyRecord.class;
     final Class<? extends RecordTemplate> expectedKeyParamsClass = EmptyRecord.class;
 
-    final ResourceModel model = RestLiAnnotationReader.processResource(SampleResources.FinderSupportedComplexKeyDataResource.class);
+    final ResourceModel model = RestLiAnnotationReader.processResource(FinderSupportedComplexKeyDataResource.class);
 
     Assert.assertNotNull(model);
 
@@ -426,16 +395,15 @@ public class TestRestLiAnnotationReader
     Assert.assertEquals(expectedValueClass, model.getValueClass());
   }
 
-  @Test(description = "resource: simple; type: root; annotations: {name}; model: empty; key: none]")
+  @Test(description = "verifies simple resource for main properties")
   public void simpleRootResource()
   {
-
     final String expectedNamespace = "";
 
     final String expectedName = "foo";
     final Class<? extends RecordTemplate> expectedValueClass = EmptyRecord.class;
 
-    final ResourceModel model = RestLiAnnotationReader.processResource(SampleResources.FooResource3.class);
+    final ResourceModel model = RestLiAnnotationReader.processResource(FooResource3.class);
 
     Assert.assertNotNull(model);
 
@@ -926,31 +894,6 @@ public class TestRestLiAnnotationReader
     }
   }
 
-  /**
-   * To define a custom RestLi method, a method annotation must
-   * be defined and annotated with both this annotation and the
-   * {@link RestSpecAnnotation} annotation.
-   *
-   * A RestLi method may have at most one custom method annotation.
-   */
-  @Retention(RetentionPolicy.RUNTIME)
-  @Target(ElementType.TYPE)
-  public @interface RestSpecCustomMethod { }
-
-  /**
-   * Custom RestLi method version annotation. Methods annotated
-   * with this annotation are processed as custom methods.
-   */
-  @Retention(RetentionPolicy.RUNTIME)
-  @Target(ElementType.METHOD)
-  @RestSpecAnnotation(name = "Versioned", skipDefault = false)
-  @RestSpecCustomMethod
-  public @interface Versioned
-  {
-    int fromVersion() default Integer.MIN_VALUE;
-    int toVersion() default Integer.MAX_VALUE;
-  }
-
   // ----------------------------------------------------------------------
   // data providers
   // ----------------------------------------------------------------------
@@ -959,8 +902,8 @@ public class TestRestLiAnnotationReader
   private Object[][] provideActionReturnTypeData()
   {
     return new Object[][]{
-        {SampleResources.ActionReturnTypeVoidResource.class, Void.TYPE},
-        {SampleResources.ActionReturnTypeIntegerResource.class, Integer.class},
-        {SampleResources.ActionReturnTypeRecordResource.class, EmptyRecord.class}};
+        {ActionReturnTypeVoidResource.class, Void.TYPE},
+        {ActionReturnTypeIntegerResource.class, Integer.class},
+        {ActionReturnTypeRecordResource.class, EmptyRecord.class}};
   }
 }

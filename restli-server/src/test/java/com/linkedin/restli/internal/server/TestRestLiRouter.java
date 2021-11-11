@@ -35,6 +35,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static com.linkedin.restli.internal.common.AllProtocolVersions.*;
@@ -44,13 +45,21 @@ import static org.mockito.Mockito.*;
 public class TestRestLiRouter
 {
 
+  private TestSetup _setup;
+
+  @BeforeMethod
+  public void beforeMethod()
+  {
+    _setup = new TestSetup();
+    _setup.mockCommon();
+  }
+
   @Test
   public void succeedsOnRootResourceGet() throws URISyntaxException
   {
-    final TestSetup setup = new TestSetup();
-    setup.mockContextForRootResourceGetRequest(setup._rootPath + "/12345");
-    final RestLiRouter router = setup._router;
-    final ServerResourceContext context = setup._context;
+    _setup.mockContextForRootResourceGetRequest(_setup._rootPath + "/12345");
+    final RestLiRouter router = _setup._router;
+    final ServerResourceContext context = _setup._context;
 
     final ResourceMethodDescriptor method = router.process(context);
 
@@ -64,10 +73,9 @@ public class TestRestLiRouter
   @Test
   public void failsOnChildResourceNotFound() throws URISyntaxException
   {
-    final TestSetup setup = new TestSetup();
-    setup.mockContextForRootResourceGetRequest(setup._rootPath + "/12345" + setup._childPath + "/54321");
-    final RestLiRouter router = setup._router;
-    final ServerResourceContext context = setup._context;
+    _setup.mockContextForRootResourceGetRequest(_setup._rootPath + "/12345" + _setup._childPath + "/54321");
+    final RestLiRouter router = _setup._router;
+    final ServerResourceContext context = _setup._context;
 
     final RoutingException e = runAndCatch(() -> router.process(context), RoutingException.class);
 
@@ -77,10 +85,9 @@ public class TestRestLiRouter
   @Test
   public void failsOnRootResourceMethodNotFound() throws URISyntaxException
   {
-    final TestSetup setup = new TestSetup();
-    setup.mockContextForMethodNotFound(setup._rootPath);
-    final RestLiRouter router = setup._router;
-    final ServerResourceContext context = setup._context;
+    _setup.mockContextForMethodNotFound(_setup._rootPath);
+    final RestLiRouter router = _setup._router;
+    final ServerResourceContext context = _setup._context;
 
     final RoutingException e = runAndCatch(() -> router.process(context), RoutingException.class);
 
@@ -90,10 +97,9 @@ public class TestRestLiRouter
   @Test
   public void failsOnRootResourceOperationNotFound() throws URISyntaxException
   {
-    final TestSetup setup = new TestSetup();
-    setup.mockContextForOperationNotFound(setup._rootPath);
-    final RestLiRouter router = setup._router;
-    final ServerResourceContext context = setup._context;
+    _setup.mockContextForOperationNotFound(_setup._rootPath);
+    final RestLiRouter router = _setup._router;
+    final ServerResourceContext context = _setup._context;
 
     final RoutingException e = runAndCatch(() -> router.process(context), RoutingException.class);
 
@@ -103,10 +109,8 @@ public class TestRestLiRouter
   @Test
   public void failsOnRootResourceNotFound() throws URISyntaxException
   {
-
-    final TestSetup setup = new TestSetup();
-    final RestLiRouter router = setup._router;
-    final ServerResourceContext context = setup._context;
+    final RestLiRouter router = _setup._router;
+    final ServerResourceContext context = _setup._context;
 
     doReturn(new URI("/root")).when(context).getRequestURI();
 
@@ -118,10 +122,8 @@ public class TestRestLiRouter
   @Test
   public void failsOnVeryShortUriPath() throws URISyntaxException
   {
-
-    final TestSetup setup = new TestSetup();
-    final RestLiRouter router = setup._router;
-    final ServerResourceContext context = setup._context;
+    final RestLiRouter router = _setup._router;
+    final ServerResourceContext context = _setup._context;
 
     doReturn(new URI("/")).when(context).getRequestURI();
 
@@ -202,7 +204,6 @@ public class TestRestLiRouter
 
     private void mockContextForRootResourceGetRequest(String path) throws URISyntaxException
     {
-      mockCommon();
       doReturn(null).when(_pathKeys).getBatchIds();
       doReturn(new URI(path)).when(_context).getRequestURI();
       doReturn("GET").when(_context).getRequestMethod(); // http method
@@ -212,7 +213,6 @@ public class TestRestLiRouter
 
     private void mockContextForOperationNotFound(String path) throws URISyntaxException
     {
-      mockCommon();
       doReturn(null).when(_pathKeys).getBatchIds();
       doReturn(new URI(path)).when(_context).getRequestURI();
       doReturn("POST").when(_context).getRequestMethod(); // http method
@@ -222,7 +222,6 @@ public class TestRestLiRouter
 
     private void mockContextForMethodNotFound(String path) throws URISyntaxException
     {
-      mockCommon();
       doReturn(null).when(_pathKeys).getBatchIds();
       doReturn(new URI(path)).when(_context).getRequestURI();
       doReturn("POST").when(_context).getRequestMethod(); // http method
