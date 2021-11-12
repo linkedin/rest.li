@@ -19,6 +19,8 @@ package com.linkedin.r2.transport.http.client;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.ratelimiter.CallbackBuffer;
+import com.linkedin.r2.transport.http.client.ratelimiter.CallbackWrapper;
+import com.linkedin.r2.transport.http.client.ratelimiter.NoOpCallbackWrapper;
 import com.linkedin.util.clock.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -52,6 +54,7 @@ public class EvictingCircularBuffer implements CallbackBuffer
   private final AtomicInteger _readerPosition = new AtomicInteger();
   private final AtomicInteger _writerPosition = new AtomicInteger();
   private final Clock _clock;
+  private final CallbackWrapper _callbackWrapper;
 
   /**
    * @param capacity initial value for the maximum number of Callbacks storable by this buffer
@@ -61,9 +64,15 @@ public class EvictingCircularBuffer implements CallbackBuffer
    */
   public EvictingCircularBuffer(int capacity, int ttl, ChronoUnit ttlUnit, Clock clock)
   {
+    this(capacity, ttl, ttlUnit, clock, new NoOpCallbackWrapper());
+  }
+
+  public EvictingCircularBuffer(int capacity, int ttl, ChronoUnit ttlUnit, Clock clock, CallbackWrapper wrapper)
+  {
     setCapacity(capacity);
     setTtl(ttl, ttlUnit);
     _clock = clock;
+    _callbackWrapper = wrapper;
   }
 
   /**
@@ -75,6 +84,7 @@ public class EvictingCircularBuffer implements CallbackBuffer
    */
   public void put(Callback<None> toAdd)
   {
+    toAdd = _callbackWrapper.wrap(toAdd);
     int writerPosition = getAndBumpWriterPosition();
     ReentrantReadWriteLock thisLock = _elementLocks.get(writerPosition);
     thisLock.writeLock().lock();
