@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.22.13] - 2021-11-05
+- Make SmoothRateLimiter setRate idempotent
+
 ## [29.22.12] - 2021-10-28
 - add canaries to service and cluster properties
 
@@ -5123,7 +5126,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.12...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.13...master
+[29.22.13]: https://github.com/linkedin/rest.li/compare/v29.22.12...v29.22.13
 [29.22.12]: https://github.com/linkedin/rest.li/compare/v29.22.11...v29.22.12
 [29.22.11]: https://github.com/linkedin/rest.li/compare/v29.22.10...v29.22.11
 [29.22.10]: https://github.com/linkedin/rest.li/compare/v29.22.9...v29.22.10
