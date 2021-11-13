@@ -18,7 +18,6 @@ package com.linkedin.darkcluster.impl;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.r2.transport.http.client.ConstantQpsRateLimiter;
-import com.linkedin.r2.transport.http.client.CallbackWrappingConstantQpsRateLimiterFactory;
 import com.linkedin.r2.transport.http.client.ConstantQpsRateLimiterFactory;
 import com.linkedin.r2.transport.http.client.SharedBufferConstantQpsRateLimiterFactory;
 import java.time.temporal.ChronoUnit;

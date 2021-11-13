@@ -28,7 +28,7 @@ public class CallbackWrappingConstantQpsRateLimiterFactory implements ConstantQp
 
   public ConstantQpsRateLimiter getRateLimiter(int bufferCapacity, int bufferTtl, ChronoUnit bufferTtlUnit)
   {
-    EvictingCircularBuffer buffer = new EvictingCircularBuffer(bufferCapacity, bufferTtl, bufferTtlUnit, _clock, _callbackWrapper);
-    return new ConstantQpsRateLimiter(_scheduler, _executor, _clock, buffer);
+    return new ConstantQpsRateLimiter(_scheduler, _executor, _clock,
+        new EvictingCircularBuffer(bufferCapacity, bufferTtl, bufferTtlUnit, _clock, _callbackWrapper));
   }
 }

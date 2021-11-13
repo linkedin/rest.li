@@ -17,8 +17,11 @@
 package com.linkedin.darkcluster;
 
 import com.linkedin.darkcluster.impl.ConstantQpsDarkClusterStrategy;
+import com.linkedin.r2.transport.http.client.CallbackWrappingConstantQpsRateLimiterFactory;
 import com.linkedin.r2.transport.http.client.ConstantQpsRateLimiter;
 import com.linkedin.r2.transport.http.client.EvictingCircularBuffer;
+import com.linkedin.r2.transport.http.client.SharedBufferConstantQpsRateLimiterFactory;
+import com.linkedin.r2.transport.http.client.ratelimiter.NoOpCallbackWrapper;
 import com.linkedin.test.util.ClockedExecutor;
 import com.linkedin.util.clock.Clock;
 import java.net.URI;
@@ -31,6 +34,8 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.IntStream;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -40,6 +45,8 @@ public class TestConstantQpsDarkClusterStrategy
 {
   private static final String SOURCE_CLUSTER_NAME = "FooCluster";
   private static final String DARK_CLUSTER_NAME = "fooCluster-dark";
+  private static final String DARK_CLUSTER_NAME_TWO = "fooCluster-darkAlso";
+  private static final String DARK_CLUSTER_NAME_THREE = "fooCluster-darkAlsoAsWell";
   private static final float ERR_PCT = 0.99f; // 1%
 
   private static final int TEST_CAPACITY = 5;
@@ -89,28 +96,54 @@ public class TestConstantQpsDarkClusterStrategy
       mockClusterInfoProvider.putHttpsClusterCount(SOURCE_CLUSTER_NAME, numSourceInstances);
       ClockedExecutor executor = new ClockedExecutor();
 
+      CallbackWrappingConstantQpsRateLimiterFactory rateLimiterFactory =
+          new CallbackWrappingConstantQpsRateLimiterFactory(executor, executor, executor, new NoOpCallbackWrapper());
+
       EvictingCircularBuffer buffer = TestConstantQpsDarkClusterStrategy.getBuffer(executor);
       ConstantQpsRateLimiter rateLimiter =
-        new ConstantQpsRateLimiter(executor, executor, executor, buffer);
+          new ConstantQpsRateLimiter(executor, executor, executor, buffer);
       rateLimiter.setBufferCapacity(capacity);
       rateLimiter.setBufferTtl(Integer.MAX_VALUE, ChronoUnit.DAYS);
-      ConstantQpsDarkClusterStrategy strategy = new ConstantQpsDarkClusterStrategy(SOURCE_CLUSTER_NAME,
+
+      SharedBufferConstantQpsRateLimiterFactory sharedRateLimiterFactory =
+          new SharedBufferConstantQpsRateLimiterFactory(rateLimiter);
+
+      List<ConstantQpsDarkClusterStrategy> strategies = new ArrayList<>();
+      strategies.add(new ConstantQpsDarkClusterStrategy(SOURCE_CLUSTER_NAME,
           DARK_CLUSTER_NAME,
           outboundQps,
           baseDispatcher,
           new DoNothingNotifier(),
           mockClusterInfoProvider,
-          rateLimiter);
+          sharedRateLimiterFactory.getRateLimiter(TEST_CAPACITY, TEST_TTL, TEST_TTL_UNIT)));
+      strategies.add(new ConstantQpsDarkClusterStrategy(SOURCE_CLUSTER_NAME,
+          DARK_CLUSTER_NAME_TWO,
+          outboundQps,
+          baseDispatcher,
+          new DoNothingNotifier(),
+          mockClusterInfoProvider,
+          sharedRateLimiterFactory.getRateLimiter(TEST_CAPACITY, TEST_TTL, TEST_TTL_UNIT)));
+      strategies.add(new ConstantQpsDarkClusterStrategy(SOURCE_CLUSTER_NAME,
+          DARK_CLUSTER_NAME_THREE,
+          outboundQps,
+          baseDispatcher,
+          new DoNothingNotifier(),
+          mockClusterInfoProvider,
+          rateLimiterFactory.getRateLimiter(TEST_CAPACITY, TEST_TTL, TEST_TTL_UNIT)));
 
       // simulate receiving the configured qps while dispatching over the duration
       int msBetweenEachInboundRequest = (int) (1000 / inboundQps);
       for (int runTime=0; runTime<duration; runTime=runTime+msBetweenEachInboundRequest)
       {
         RestRequest dummyRestRequest = new RestRequestBuilder(URI.create("foo")).build();
-        strategy.handleRequest(dummyRestRequest, dummyRestRequest, new RequestContext());
+        for (ConstantQpsDarkClusterStrategy strategy : strategies)
+        {
+          strategy.handleRequest(dummyRestRequest, dummyRestRequest, new RequestContext());
+        }
         executor.runFor(msBetweenEachInboundRequest);
       }
-      int expectedCount = (int) (((duration == 0 ? 0 : duration / 1000.0) * outboundQps * numDarkInstances)/ (double) (numSourceInstances));
+      // Multiply by 2. Even though we are dispatching for 3 ConstantQpsDarkClusterStrategies, two of them are sharing a common ratelimiter.
+      int expectedCount = (int) (2 * (((duration == 0 ? 0 : duration / 1000.0) * outboundQps * numDarkInstances)/ (double) (numSourceInstances)));
       int actualCount = baseDispatcher.getRequestCount();
       Assert.assertEquals(actualCount, expectedCount, expectedCount * ERR_PCT, "count not within expected range");
     });
