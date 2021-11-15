@@ -22,6 +22,7 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.Tone;
+import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Action;
@@ -94,6 +95,24 @@ public class RootSimpleResource extends SimpleResourceTemplate<Greeting>
   public int exampleAction(@ActionParam("param1") int param1)
   {
     return param1 * 10;
+  }
+
+  /**
+   * An example action on the greeting which is explicitly set to entity-level.
+   */
+  @Action(name="exampleActionThatIsExplicitlyEntityLevel", resourceLevel=ResourceLevel.ENTITY)
+  public int exampleActionThatIsExplicitlyEntityLevel(@ActionParam("param1") int param1)
+  {
+    return param1 * 11;
+  }
+
+  /**
+   * An example action on the greeting which is explicitly set to any-level.
+   */
+  @Action(name="exampleActionThatIsExplicitlyAnyLevel", resourceLevel=ResourceLevel.ANY)
+  public int exampleActionThatIsExplicitlyAnyLevel(@ActionParam("param1") int param1)
+  {
+    return param1 * 12;
   }
 
   /**
