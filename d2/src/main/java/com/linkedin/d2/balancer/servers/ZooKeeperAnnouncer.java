@@ -27,6 +27,8 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
@@ -37,11 +39,15 @@ import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.util.ArgumentUtil;
 
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.linkedin.d2.discovery.util.LogUtil.*;
 
 /**
  * ZooKeeperAnnouncer combines a ZooKeeperServer with a configured "desired state", and
@@ -71,6 +77,10 @@ public class ZooKeeperAnnouncer
   private Runnable _nextOperation;
   private boolean _isRunningMarkUpOrMarkDown;
   private volatile boolean _shuttingDown;
+
+  private boolean _isEnabledD2WarmupCluster = true;  //temporary - for testing flow
+  private String _warmupClusterName = "JobsMatchingMidTierRegressionVerifier"; //temporary - for testing flow
+  private int _warmupDuration = 120000; //temporary - for testing flow
 
   public ZooKeeperAnnouncer(ZooKeeperServer server)
   {
@@ -162,11 +172,10 @@ public class ZooKeeperAnnouncer
 
   private synchronized void doMarkUp(Callback<None> callback)
   {
-    _server.markUp(_cluster, _uri, _partitionDataMap, _uriSpecificProperties, new Callback<None>()
-    {
+
+    final Callback<None> markUpCallback = new Callback<None>() {
       @Override
-      public void onError(Throwable e)
-      {
+      public void onError(Throwable e) {
         if (e instanceof KeeperException.ConnectionLossException || e instanceof KeeperException.SessionExpiredException)
         {
           _log.debug("failed to mark up uri {} due to {}.", _uri, e.getClass().getSimpleName());
@@ -185,8 +194,7 @@ public class ZooKeeperAnnouncer
       }
 
       @Override
-      public void onSuccess(None result)
-      {
+      public void onSuccess(None result) {
         _log.info("markUp for uri = {} succeeded.", _uri);
         // Note that the pending callbacks we see at this point are
         // from the requests that are filed before us because zookeeper
@@ -211,8 +219,102 @@ public class ZooKeeperAnnouncer
         }
         runNextMarkUpOrMarkDown();
       }
-    });
+    };
+
+    final Callback<None> doMarkUpCallback = new Callback<None>() {
+      @Override
+      public void onError(Throwable e)
+      {
+        // this would ideally never happen
+        callback.onError(e);
+      }
+
+      @Override
+      public void onSuccess(None result)
+      {
+        _log.info("doing mark up of main cluster " + _cluster);
+        _server.markUp(_cluster, _uri, _partitionDataMap, _uriSpecificProperties, markUpCallback);
+      }
+    };
+
+    final Callback<None> warmupMarkDownCallback = new Callback<None>() {
+      @Override
+      public void onError(Throwable e) {
+        _log.info("mark down warm up cluster " + _warmupClusterName + " has failed");
+        // what to do here ? - go ahead continue to announce main cluster
+        // doAnnounceCallback.onSuccess(None.none());
+      }
+
+      @Override
+      public void onSuccess(None result) {
+        _log.info("mark down warm up cluster " + _warmupClusterName +
+            " has completed, now mark up of main cluster " + _cluster);
+        doMarkUpCallback.onSuccess(None.none());
+      }
+    };
+
+    final Callback<None> doWarmupMarkDownCallback = new Callback<None>() {
+      @Override
+      public void onError(Throwable e) {
+        _log.info("failure in scheduling warm up mark down");
+        // what to do here ? - go ahead continue to announce main cluster
+        // doAnnounceCallback.onSuccess(None.none());
+      }
+
+      @Override
+      public void onSuccess(None result) {
+        _log.info("warm up for cluster " + _warmupClusterName + " completed, now calling mark down on the warm up cluster");
+        _server.markDown(_warmupClusterName, _uri, warmupMarkDownCallback);
+      }
+    };
+
+    final Callback<None> doWarmupWaitCallback = new Callback<None>() {
+      @Override
+      public void onError(Throwable e)
+      {
+        _log.info("failure in mark up of warm up cluster " + _warmupClusterName);
+        // what to do here
+        // 1. go ahead continue to announce main cluster
+        // doAnnounceCallback.onSuccess(None.none());
+        // OR 2. mark announcement fail, move on to next pending mark up / mark down
+        // announceCallback.onError(e);
+      }
+
+      @Override
+      public void onSuccess(None result)
+      {
+        _log.info("mark up for warm up cluster " + _warmupClusterName + " succeeded");
+        ScheduledExecutorService warmup = Executors.newSingleThreadScheduledExecutor();
+        _log.info("scheduled executor service to run after warmup");
+        warmup.schedule(() -> doWarmupMarkDownCallback.onSuccess(None.none()), _warmupDuration, TimeUnit.MILLISECONDS);
+      }
+    };
+
+    final Callback<None> doWarmupMarkUpCallback = new Callback<None>() {
+      @Override
+      public void onError(Throwable e)
+      {
+        // this would ideally never happen
+        callback.onError(e);
+      }
+
+      @Override
+      public void onSuccess(None result)
+      {
+        _log.info("Calling ZooKeeperServer's mark up for warm up cluster " + _warmupClusterName);
+        _server.markUp(_warmupClusterName, _uri, _partitionDataMap, _uriSpecificProperties, doWarmupWaitCallback);
+      }
+    };
+
     _log.info("overrideMarkUp is called for uri = " + _uri);
+    if (_isEnabledD2WarmupCluster) {
+      _log.info("Calling mark up for warm up cluster " + _warmupClusterName);
+      doWarmupMarkUpCallback.onSuccess(None.none());
+    } else {
+      _log.info("Calling mark up of main cluster " + _cluster);
+      doMarkUpCallback.onSuccess(None.none());
+    }
+
   }
 
   public synchronized void markDown(final Callback<None> callback)
