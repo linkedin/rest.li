@@ -14,10 +14,6 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.restli.client.base;
 
 import com.linkedin.restli.client.ActionRequest;
@@ -26,6 +22,11 @@ import com.linkedin.restli.common.ResourceSpec;
 
 /**
  * The abstract base class for all generated request builders classes for entity-level actions.
+ *
+ * For entity-level actions the action is being performed against a specific record which means
+ * that the key/id must be present in the request to identify which record to perform the action
+ * on. This class adds validation when the request is built that the id was set to a non-null
+ * value.
  */
 public abstract class EntityActionRequestBuilderBase<K, V, RB extends ActionRequestBuilderBase<K, V, RB>>
         extends ActionRequestBuilderBase<K, V, RB>
