@@ -723,6 +723,8 @@ Clients should make requests to a batch resource using `buildKV()` (not
 new FortunesBuilders().batchGet().ids(...).buildKV();
 ```
 
+The batch size of requests for a BATCH_GET method can be limited and validated by configuring a [max batch size](/rest.li/max_batch_size).
+
 <a id="GET_ALL"></a>
 
 #### GET_ALL
@@ -986,7 +988,7 @@ Please note that "q" cannot be used as QueryParam name for batch finder, because
 
 See more details about BATCH_FINDER resource method api here: [BatchFinder Resource API](/rest.li/batch_finder_resource_method#resource-api)
 
-
+The batch size of requests for a BATCH_FINDER method can be limited and validated by configuring a [max batch size](/rest.li/max_batch_size).
 
 <a id="CREATE"></a>
 
@@ -1172,6 +1174,8 @@ curl -X POST 'localhost:/greetings?$returnEntity=false' \
   -d '{"elements":[{"message": "Hello, world!", "tone": "FRIENDLY"},{"message": "Again!", "tone": "FRIENDLY"}]}'
 ```
 
+The batch size of requests for a BATCH_CREATE method can be limited and validated by configuring a [max batch size](/rest.li/max_batch_size).
+
 <a id="UPDATE"></a>
 
 #### UPDATE
@@ -1276,6 +1280,8 @@ public UpdateResponse update(Long key, Greeting entity)
   return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);
 }
 ```
+
+The batch size of requests for a BATCH_UPDATE method can be limited and validated by configuring a [max batch size](/rest.li/max_batch_size).
 
 <a id="PARTIAL_UPDATE"></a>
 
@@ -1606,6 +1612,8 @@ curl -X POST 'localhost:/greetings?ids=List(1)&$returnEntity=false' \
   -H 'X-RestLi-Protocol-Version: 2.0.0'
 ```
 
+The batch size of requests for a BATCH_PARTIAL_UPDATE method can be limited and validated by configuring a [max batch size](/rest.li/max_batch_size).
+
 <a id="DELETE"></a>
 
 #### DELETE
@@ -1693,6 +1701,8 @@ public UpdateResponse delete(Long key)
   return new UpdateResponse(removed ? HttpStatus.S_204_NO_CONTENT : HttpStatus.S_404_NOT_FOUND);
 }
 ```
+
+The batch size of requests for a BATCH_DELETE method can be limited and validated by configuring a [max batch size](/rest.li/max_batch_size).
 
 <a id="ACTION"></a>
 
