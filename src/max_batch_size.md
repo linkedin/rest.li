@@ -31,15 +31,7 @@ The `@MaxBatchSize` annotation contains two elements: `value` and `validate`.
 `value` is an integer specifying the max batch size.
 `validate` is a boolean flag for validating the request batch size, which is an optional field. If the `validate` is not provided, the value of `validate` is `false` by default, which means there is no request batch size validation. 
 
-List of methods which can use `@MaxBatchSize` annotation:
-| Method                |
-|-----------------------|
-| `BATCH_GET`           |
-| `BATCH_UPDATE`        |
-| `BATCH_PARTIAL_UPDATE`|
-| `BATCH_DELETE`        |
-| `BATCH_CREATE`        |
-| `BATCH_FINDER`        |
+List of methods which can use `@MaxBatchSize` annotation: `BATCH_GET`, `BATCH_UPDATE`, `BATCH_PARTIAL_UPDATE`, `BATCH_DELETE`, `BATCH_CREATE` and `BATCH_FINDER`.
 
 *Note*: for `BATCH_FINDER`, the batch size means the number of criteria, ***not*** the collection size for each criteria.
 
