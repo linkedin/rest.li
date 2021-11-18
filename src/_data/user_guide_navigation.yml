@@ -83,6 +83,8 @@ toc:
         url: /rest.li/howto_add_new_language
       - page: Configure Service Errors in Java
         url: /rest.li/user_guide/service_errors_java
+      - page: Configure Max Batch Size in Java
+        url: /rest.li/max_batch_size
   - title: FAQ
     subfolderitems:
       - page: Rest.li - FAQ
