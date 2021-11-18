@@ -12,10 +12,15 @@ index: 1
 
 Follow the steps below to try Rest.li quickly and get a basic idea of how it works:
 
-* [Build](#Build)
+* [Setup](#setup)
+* [Build](#build)
 * [Run the Examples](#run-the-examples)
 * [API](#api)
 * [Code Generator](#code-generator)
+
+## Setup
+
+JDK: You will need a Java 1.8 JDK to build the code. Using Java 1.9 or later will fail because Rest.li uses some APIs that were deprecated in 1.9 and the build treats warnings as error in order to ensure high code quality. On Linux systems openjdk-8-jdk is known to work.
 
 ## Build
 
