@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Configure Max Batch Size in Java</title>
+    <meta name="description" content="This page describes how to set up max batch size limitation for resource batch methods in Java." />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/max_batch_size" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">User Guide</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/user_guide/server_architecture">Rest.li Architecture</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_server">Rest.li Server</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/restli_client">Rest.li Client Framework</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/unstructured_data">Unstructured Data</a></li>
+                       
+                         <li><a href="/rest.li/Components">Components</a></li>
+                       
+                         <li><a href="/rest.li/Asynchronous-Servers-and-Clients-in-Rest_li">Asynchronous in Rest.li</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data Schemas</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/pdl_schema">PDL Schema</a></li>
+                       
+                         <li><a href="/rest.li/pdsc_syntax">PDSC Syntax</a></li>
+                       
+                         <li><a href="/rest.li/pdl_migration">Migrating from PDSC to PDL</a></li>
+                       
+                         <li><a href="/rest.li/avro_translation">Avro Translation</a></li>
+                       
+                         <li><a href="/rest.li/java_binding">Java Binding</a></li>
+                       
+                         <li><a href="/rest.li/annotation_processor">Schema Annotation Processor</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Modeling Resources</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/modeling/modeling">Modeling Resources</a></li>
+                       
+                         <li><a href="/rest.li/modeling/compatibility_check">Snapshots and Resource Compatibility Checking</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Data</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/how_data_is_serialized_for_transport">How Data is Serialized for Transport</a></li>
+                       
+                         <li><a href="/rest.li/how_data_is_represented_in_memory">How Data is Represented in Memory</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Main concepts</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-Filters">Filters</a></li>
+                       
+                         <li><a href="/rest.li/Projections">Projections</a></li>
+                       
+                         <li><a href="/rest.li/pathspec">PathSpecs</a></li>
+                       
+                         <li><a href="/rest.li/Validation-in-Rest_li">Validation</a></li>
+                       
+                         <li><a href="/rest.li/Attachment-Streaming">Attachment Streaming</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Mutli-language</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/multi_language_compatibility_matrix">Compatibility Matrix</a></li>
+                       
+                         <li><a href="/rest.li/test_suite">Test Suite</a></li>
+                       
+                         <li><a href="https://github.com/mchen07/restli-csharp">C#</a></li>
+                       
+                         <li><a href="/rest.li/Scala-Integration">Scala Integration</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Testing</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Writing-unit-tests-for-Rest_li-clients-and-servers">Writing Unit Tests</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">How to</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Send-Rest_li-Request-Query-In-Request-Body">Send Request Query in the Body</a></li>
+                       
+                         <li><a href="/rest.li/How-to-use-projections-in-Java">Use Projections</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li_Avro_conversions">Avro Conversion</a></li>
+                       
+                         <li><a href="/rest.li/Compression">Compression</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_x-upgrade-instructions">Migrate to Rest.li 2.x</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_how_to">Test Suite</a></li>
+                       
+                         <li><a href="/rest.li/howto_add_new_language">Test Suite - Add New Language</a></li>
+                       
+                         <li><a href="/rest.li/user_guide/service_errors_java">Configure Service Errors in Java</a></li>
+                       
+                         <li><a href="/rest.li/max_batch_size">Configure Max Batch Size in Java</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">FAQ</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Data-FAQ">Rest.li - FAQ</a></li>
+                       
+                         <li><a href="/rest.li/testsuite_troubleshooting">Test Suite - Troubleshooting</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="configure-max-batch-size-in-java">Configure Max Batch Size in Java</h1>
+<p>This page describes how to set up max batch size limitation for resource batch methods in Java.</p>
+
+<h2 id="contents">Contents</h2>
+<ul>
+  <li><a href="#define-max-batch-size">Define Max Batch Size</a></li>
+  <li><a href="#batch-size-validation">Batch Size Validation</a></li>
+  <li><a href="#backward_compatibility_rules">Backward Compatibility Rules</a></li>
+</ul>
+
+<p>For Rest.li resources, we provide infrastructure support that enables users to define the <code class="highlighter-rouge">@MaxBatchSize</code> annotation on the batch methods and provides the opt-in batch size validation based on the defined <code class="highlighter-rouge">@MaxBatchSize</code>.</p>
+
+<h2 id="define-max-batch-size">Define Max Batch Size</h2>
+
+<p>Users can use <code class="highlighter-rouge">@MaxBatchSize</code> annotation to define the max batch size on Rest.li batch methods.</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@MaxBatchSize</span><span class="o">(</span><span class="n">value</span> <span class="o">=</span> <span class="mi">100</span><span class="o">,</span> <span class="n">validate</span> <span class="o">=</span> <span class="kc">true</span><span class="o">)</span>
+<span class="kd">public</span> <span class="nc">BatchResult</span><span class="o">&lt;</span><span class="nc">Long</span><span class="o">,</span> <span class="nc">Photo</span><span class="o">&gt;</span> <span class="nf">batchGet</span><span class="o">(</span><span class="nc">Set</span><span class="o">&lt;</span><span class="nc">Long</span><span class="o">&gt;</span> <span class="n">ids</span><span class="o">)</span>
+<span class="o">{</span>
+ <span class="c1">// Logic here...</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+<p>The <code class="highlighter-rouge">@MaxBatchSize</code> annotation contains two elements: <code class="highlighter-rouge">value</code> and <code class="highlighter-rouge">validate</code>.
+<code class="highlighter-rouge">value</code> is an integer specifying the max batch size.
+<code class="highlighter-rouge">validate</code> is a boolean flag for validating the request batch size, which is an optional field. If the <code class="highlighter-rouge">validate</code> is not provided, the value of <code class="highlighter-rouge">validate</code> is <code class="highlighter-rouge">false</code> by default, which means there is no request batch size validation.</p>
+
+<p>List of methods which can use <code class="highlighter-rouge">@MaxBatchSize</code> annotation: <code class="highlighter-rouge">BATCH_GET</code>, <code class="highlighter-rouge">BATCH_UPDATE</code>, <code class="highlighter-rouge">BATCH_PARTIAL_UPDATE</code>, <code class="highlighter-rouge">BATCH_DELETE</code>, <code class="highlighter-rouge">BATCH_CREATE</code> and <code class="highlighter-rouge">BATCH_FINDER</code>.</p>
+
+<p><em>Note</em>: for <code class="highlighter-rouge">BATCH_FINDER</code>, the batch size means the number of criteria, <strong><em>not</em></strong> the collection size for each criteria.</p>
+
+<h3 id="documenting-max-batch-size-information-in-the-idl">Documenting max batch size information in the IDL.</h3>
+<p>Once the <code class="highlighter-rouge">@MaxBatchSize</code> annotation is defined, the batch size information will be exposed in the IDL(<code class="highlighter-rouge">restspec.json</code>), for example:</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span> <span class="dl">"</span><span class="s2">name</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">someResource</span><span class="dl">"</span><span class="p">,</span>
+   <span class="p">...</span>
+  <span class="dl">"</span><span class="s2">collection</span><span class="dl">"</span> <span class="p">:</span> <span class="p">{</span>
+	<span class="dl">"</span><span class="s2">methods</span><span class="dl">"</span> <span class="p">:</span> <span class="p">[</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">method</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">batch_get</span><span class="dl">"</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">maxBatchSize</span><span class="dl">"</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="dl">"</span><span class="s2">value</span><span class="dl">"</span> <span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="dl">"</span><span class="s2">validate</span><span class="dl">"</span> <span class="p">:</span> <span class="kc">true</span>
+      <span class="p">}</span>
+    <span class="p">},</span> <span class="p">{</span>
+      <span class="dl">"</span><span class="s2">method</span><span class="dl">"</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">batch_update</span><span class="dl">"</span><span class="p">,</span>
+      <span class="dl">"</span><span class="s2">maxBatchSize</span><span class="dl">"</span> <span class="p">:</span> <span class="p">{</span>
+        <span class="dl">"</span><span class="s2">value</span><span class="dl">"</span> <span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="dl">"</span><span class="s2">validate</span><span class="dl">"</span> <span class="p">:</span> <span class="kc">false</span>
+      <span class="p">}</span>
+    <span class="p">}</span> <span class="p">],</span>
+    <span class="p">...</span>
+  <span class="p">}</span>
+  <span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="batch-size-validation">Batch Size validation</h2>
+<p>If <code class="highlighter-rouge">validate</code> in the <code class="highlighter-rouge">@MaxBatchSize</code> is specified as <code class="highlighter-rouge">true</code>, on the Rest.li server, when it processes the request, it will check the request that has <code class="highlighter-rouge">@MaxBatchSize</code> annotation, and compare the batch size of each request with the defined max batch size of such method. If the actual batch size is larger than the defined max batch size, it will fail the request with http status <em>400</em>.</p>
+
+<p>Example of enabling batch size validation:</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RestMethod</span><span class="o">.</span><span class="na">BatchGet</span>
+<span class="nd">@MaxBatchSize</span><span class="o">(</span><span class="n">value</span> <span class="o">=</span> <span class="mi">100</span><span class="o">,</span> <span class="n">validate</span> <span class="o">=</span> <span class="kc">true</span><span class="o">)</span>
+<span class="kd">public</span> <span class="nc">Map</span><span class="o">&lt;</span><span class="nc">Long</span><span class="o">,</span> <span class="nc">Greeting</span><span class="o">&gt;</span> <span class="nf">batchGet</span><span class="o">(</span><span class="nc">Set</span><span class="o">&lt;</span><span class="nc">Long</span><span class="o">&gt;</span> <span class="n">ids</span><span class="o">)</span>
+<span class="o">{</span>
+ <span class="c1">// Logic here...</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+
+<p>Batch size validation is an opt-in feafture. If <code class="highlighter-rouge">validate</code> in the <code class="highlighter-rouge">@MaxBatchSize</code> is specified as <code class="highlighter-rouge">false</code> or <code class="highlighter-rouge">validate</code> field is not provided, the <code class="highlighter-rouge">@MaxBatchSize</code> is used to provide batch size information, the Rest.li server will not take any action based on the value of max batch size.</p>
+
+<p>Examples of disabling batch size validation:</p>
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RestMethod</span><span class="o">.</span><span class="na">BatchDelete</span>
+<span class="nd">@MaxBatchSize</span><span class="o">(</span><span class="n">value</span> <span class="o">=</span> <span class="mi">50</span><span class="o">,</span> <span class="n">validate</span> <span class="o">=</span> <span class="kc">false</span><span class="o">)</span>
+<span class="kd">public</span> <span class="nc">BatchUpdateResult</span><span class="o">&lt;</span><span class="nc">Long</span><span class="o">,</span> <span class="nc">Greeting</span><span class="o">&gt;</span> <span class="nf">batchDelete</span><span class="o">(</span><span class="nc">BatchDeleteRequest</span><span class="o">&lt;</span><span class="nc">Long</span><span class="o">,</span> <span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">deleteRequest</span><span class="o">)</span>
+<span class="o">{</span>
+ <span class="c1">// Logic here...</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">@RestMethod</span><span class="o">.</span><span class="na">BatchPartialUpdate</span>
+<span class="nd">@MaxBatchSize</span><span class="o">(</span><span class="n">value</span> <span class="o">=</span> <span class="mi">100</span><span class="o">)</span>
+<span class="kd">public</span> <span class="nc">BatchUpdateResult</span><span class="o">&lt;</span><span class="nc">Long</span><span class="o">,</span> <span class="nc">Greeting</span><span class="o">&gt;</span> <span class="nf">batchUpdate</span><span class="o">(</span><span class="nc">BatchPatchRequest</span><span class="o">&lt;</span><span class="nc">Long</span><span class="o">,</span> <span class="nc">Greeting</span><span class="o">&gt;</span> <span class="n">entityUpdates</span><span class="o">)</span>
+<span class="o">{</span>
+ <span class="c1">// Logic here...</span>
+<span class="o">}</span>
+
+</code></pre></div></div>
+<h2 id="backward-compatibility-rules">Backward Compatibility Rules</h2>
+<p>Making changes to the max batch size information in a resource’s IDL has an impact on the
+<a href="/rest.li/modeling/compatibility_check">compatibility checker</a>.</p>
+
+<p>The following changes are considered <strong>backward compatible</strong>:</p>
+
+<ul>
+  <li>Adding a <code class="highlighter-rouge">@MaxBatchSize</code> annotation with validation disabled.</li>
+  <li>Removing an existing <code class="highlighter-rouge">@MaxBatchSize</code> annotation.</li>
+  <li>Increasing the value of max batch size.</li>
+  <li>Decreasing the value of max batch size when validation is disabled.</li>
+  <li>Updating <code class="highlighter-rouge">validate</code> value from <code class="highlighter-rouge">true</code> to <code class="highlighter-rouge">false</code>.</li>
+</ul>
+
+<p>The following changes are considered <strong>backward incompatible</strong>:</p>
+
+<ul>
+  <li>Adding a <code class="highlighter-rouge">@MaxBatchSize</code> annotation with validation enabled.</li>
+  <li>Updating <code class="highlighter-rouge">validate</code> value from <code class="highlighter-rouge">false</code> to <code class="highlighter-rouge">true</code>.</li>
+  <li>Decreasing the value of max batch size when validation is enabled.</li>
+</ul>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>

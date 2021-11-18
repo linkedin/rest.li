@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0"/>
+
+    <title>Rest.li Request Response API (R2)</title>
+    <meta name="description" content="R2 is the request / response API underlying Rest.li. It includes abstractions for REST requests and responses, filter chains for customized processing, and t..." />
+
+    <link rel="icon" type="image/png" href="/rest.li/assets/images/icon_pegasus.png">
+  
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" media="screen,projection" href="/rest.li/assets/css/main.css">
+    <link rel="canonical" href="/rest.li/Request-Response-API-(R2)" />
+    <link rel="alternate" type="application/rss+xml" title="rest.li" href="/rest.li/feed.xml" />
+
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+    <script src="//code.jquery.com/jquery-3.0.0.min.js"></script>
+    <script src="/rest.li/assets/js/search-input.js"></script>
+    
+
+    <script>
+       $(function() {
+          $("h1").addClass("no_toc");
+       });
+    </script>
+</head>
+
+
+  <body>
+
+    <nav class="dark-grey" role="navigation">
+    <div class="nav-wrapper container"><a id="logo-container" class="brand-logo" href="/rest.li/">Rest.li</a>
+      <ul class="right hide-on-med-and-down">
+        
+        <li>
+          <a href="/rest.li/get_started/quick_start" >
+            Getting Started
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/user_guide/server_architecture" >
+            User Guide
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/spec/protocol" >
+            API Reference
+          </a>
+        </li>
+        
+        <li>
+          <a href="/rest.li/contribute/howto" >
+            Contribute
+          </a>
+        </li>
+        
+          <li>
+            <div class="center row" >
+              <div class="col s12 ">
+                <div class="row">
+                  <div class="input-field col s6 s12 min">
+                      <i id="search-txt" class="material-icons prefix">search</i>
+                      <input type="text" id="search-input">
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </li>
+          <li>
+              <a id="github-menu" href="http://github.com/linkedin/rest.li/" >
+                   <i class="fa fa-github"></i>
+                </a>
+          </li>
+          </ul>
+      <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+    </div>
+</nav>
+
+
+
+        <div class="container">
+        <div class="row">
+                <div class="col s12 m4 l3"> 
+               
+                    
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Spec</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/spec/protocol">Rest.li Protocol</a></li>
+                       
+                         <li><a href="/rest.li/spec/restspec_format">Restspec JSON format</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-2_0-response-API">Rest.li 2.0 response-API</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Rest.li Server</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/spec/service_errors">Service Errors</a></li>
+                       
+                         <li><a href="/rest.li/spec/return_entity">Return Entity</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Rest.li Resource Method</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/batch_finder_resource_method">Batch Finder</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">R2D2</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Dynamic_Discovery">Dynamic Discovery</a></li>
+                       
+                         <li><a href="/rest.li/D2-Zookeeper-Properties">D2 Zookeeper properties</a></li>
+                       
+                         <li><a href="/rest.li/Request-Response-API-(R2)">Request-Response API</a></li>
+                       
+                         <li><a href="/rest.li/Request-Response-Framework">Request-Response framework</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">HTTP Frameworks</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Rest_li-with-Netty">Netty</a></li>
+                       
+                         <li><a href="/rest.li/Rest_li-with-Servlet-Containers">Servlet containers</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                   
+                    
+                     <ul class="nav_items">
+                        <li><span class="nav_sub-title">Dependency injection</span></li>
+                        <ul>
+                       
+                         <li><a href="/rest.li/Spring-Dependency-Injection">Spring dependency injection</a></li>
+                       
+                         <li><a href="/rest.li/Guice-Dependency-Injection">Guice dependency injection</a></li>
+                       
+                        </ul>
+                     </ul>
+                        
+                    </div>
+                     <div class="markdown-body col s12 m3 l9">
+                            <h1 id="restli-request-response-api-r2">Rest.li Request Response API (R2)</h1>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#layers">Layers</a></li>
+  <li><a href="#requests-and-responses">Requests and Responses</a></li>
+</ul>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>R2 is the request / response API underlying Rest.li.  It includes abstractions for REST requests and responses, filter chains for customized processing, and transport abstraction. It is designed so that it can be easily customized for non-open source use cases.</p>
+
+<p>R2 can be used independently, with D2 (our Dynamic Discovery system), or with both D2 and Rest.li.</p>
+
+<h2 id="layers">Layers</h2>
+<p>The following diagram shows the layers involved in the R2 system. Each layer will be described in detail below.</p>
+
+<p><img src="/rest.li/assets/images/r2.png" /></p>
+
+<h2 id="requests-and-responses">Requests and Responses</h2>
+
+<p>In this section, we describe messages in the R2 system. The message hierarchy has been designed to make it possible to add and work with broader message abstractions when appropriate. Originally, REST was the basic type of message in R2, but with the addition of R2 Streaming, STREAM became the most basic type of messages in R2, with REST built on top of STREAM. Because REST is the most common use case, we will stick to describing the REST model here, and leave STREAM as a separate doc.</p>
+
+<p>Messages have a few properties that are worth describing here:</p>
+<ul>
+  <li>They are immutable. It is not possible to change a message after it has been created. It is, however, possible to copy a message and make changes using builders, which will be described later.</li>
+  <li>They are thread-safe due to immutability.</li>
+  <li>New messages are created using builders.</li>
+  <li>Existing messages can be copied and modified using builders.</li>
+</ul>
+
+<h3 id="messages">Messages</h3>
+
+<p>“RestMessage” is the root of the message hierarchy. All messages in R2 contain an “entity” (which may be empty), and corresponds to the request or response data. For REST, the R2 entity is equivalent to a REST entity. For Streaming, because of the nature of streaming, the R2 entity is replaced by an EntityStream. R2 Streaming will be discussed more fully in a separate doc.</p>
+
+<p>All REST messages add headers in addition to the base message properties. Headers must conform to the definition in RFC 2616 (described in section 4.2 and associated sections). The RestMessage interface is (Note: all code snippets have been simplified here for documentation purposes, and may not reflect the full complexity of the class hierarchy):</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">RestMessage</span> <span class="n">extend</span> <span class="nc">MessageHeaders</span>
+<span class="o">{</span>
+  <span class="cm">/**
+   * Returns the entity for this message.
+   *
+   * @return the entity for this message
+   */</span>
+  <span class="nc">ByteString</span> <span class="nf">getEntity</span><span class="o">();</span>
+ 
+  <span class="cm">/**
+   * Returns a {@link RestMessageBuilder}, which provides a means of constructing a new message using
+   * this message as a starting point. Changes made with the builder are not reflected by this
+   * message instance.
+   *
+   * @return a builder for this message
+   */</span>
+  <span class="nc">RestMessageBuilder</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="nc">RestMessageBuilder</span><span class="o">&lt;?&gt;&gt;</span> <span class="n">builder</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>In addition to an entity, all messages provide a builder that can be used to copy the message and modify its copy. In the case of the Message above, the builder is a RestMessageBuilder.
+RestMessages are subdivided into RestRequests and RestResponses. The interfaces for these are described below.</p>
+
+<h3 id="restrequest">RestRequest</h3>
+<p>A request has a URI. This provides information to the client about how to direct the request - for example, which protocol to use, which server to connect to, what service to invoke, etc. R2 can be used with D2 (Dynamic Discovery), so in those cases URNs will be used for the URI. These URNs will be resolved internally by the Dynamic Discovery system.
+RestRequests add a method property, which matches the semantics for a REST message (i.e. the method is one of GET, PUT, POST, DELETE):</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">RestRequest</span> <span class="kd">extends</span> <span class="nc">RestMessage</span><span class="o">,</span> <span class="nc">Request</span>
+<span class="o">{</span>
+  <span class="cm">/**
+   * Returns the URI for this request.
+   *
+   * @return the URI for this request
+   */</span>
+  <span class="no">URI</span> <span class="nf">getURI</span><span class="o">();</span>
+
+  <span class="cm">/**
+   * Returns the REST method for this request.
+   *
+   * @return the REST method for this request
+   * @see com.linkedin.r2.message.rest.RestMethod
+   */</span>
+  <span class="nc">String</span> <span class="nf">getMethod</span><span class="o">();</span>
+ 
+  <span class="cm">/**
+   * Returns a {@link RestRequestBuilder}, which provides a means of constructing a new request using
+   * this request as a starting point. Changes made with the builder are not reflected by this
+   * request instance.
+   *
+   * @return a builder for this request
+   */</span>
+  <span class="nc">RestRequestBuilder</span> <span class="nf">builder</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="restresponse">RestResponse</h3>
+
+<p>RestResponses add a status property, which matches the semantics of a REST status code (e.g. 200 - OK, see RFC 2616 for details about HTTP status codes):</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">RestResponse</span> <span class="kd">extends</span> <span class="nc">RestMessage</span><span class="o">,</span> <span class="nc">Response</span>
+<span class="o">{</span>
+  <span class="cm">/**
+   * Returns the status for this response.
+   *
+   * @return the status for this response
+   * @see com.linkedin.r2.message.rest.RestStatus
+   */</span>
+  <span class="kt">int</span> <span class="nf">getStatus</span><span class="o">();</span>
+ 
+  <span class="cm">/**
+   * Returns a {@link RestResponseBuilder}, which provides a means of constructing a new response using
+   * this response as a starting point. Changes made with the builder are not reflected by this
+   * response instance.
+   *
+   * @return a builder for this response
+   */</span>
+  <span class="nd">@Override</span>
+  <span class="nc">RestResponseBuilder</span> <span class="nf">builder</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="bytestrings">ByteStrings</h3>
+
+<p>Entities are stored as ByteStrings in R2. ByteStrings provide a mechanism to ensure that the byte data is immutable and not copied unless absolutely necessary. The ByteString interface looks like the following:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">ByteString</span>
+<span class="o">{</span>
+  <span class="cm">/**
+   * Returns an empty {@link ByteString}.
+   *
+   * @return an empty {@link ByteString}
+   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="nc">ByteString</span> <span class="nf">empty</span><span class="o">();</span>
+ 
+  <span class="cm">/**
+   * Returns a new {@link ByteString} that wraps a copy of the supplied bytes. Changes to the supplied bytes
+   * will not be reflected in the returned {@link ByteString}.
+   *
+   * @param bytes the bytes to copy
+   * @return a {@link ByteString} that wraps a copy of the supplied bytes
+   * @throws NullPointerException if {@code bytes} is {@code null}.
+   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="nc">ByteString</span> <span class="nf">copy</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">bytes</span><span class="o">);</span>
+ 
+  <span class="cm">/**
+   * Returns a new {@link ByteString} that wraps the bytes generated from the supplied string with the
+   * given charset.
+   *
+   * @param str the string to copy
+   * @param charset the charset used to encode the bytes
+   * @return a {@link ByteString} that wraps a copy of the supplied bytes
+   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="nc">ByteString</span> <span class="nf">copyString</span><span class="o">(</span><span class="nc">String</span> <span class="n">str</span><span class="o">,</span> <span class="nc">Charset</span> <span class="n">charset</span><span class="o">);</span>
+ 
+  <span class="cm">/**
+   * Returns a new {@link ByteString} with bytes read from an {@link InputStream}.
+   *
+   * If size is zero, then this method will always return the {@link ByteString#empty()},
+   * and no bytes will be read from the {@link InputStream}.
+   * If size is less than zero, then {@link NegativeArraySizeException} will be thrown
+   * when this method attempt to create an array of negative size.
+   *
+   * @param inputStream that will provide the bytes.
+   * @param size provides the number of bytes to read.
+   * @return a ByteString that contains the read bytes.
+   * @throws IOException from InputStream if requested number of bytes
+   *                     cannot be read.
+   */</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="nc">ByteString</span> <span class="nf">read</span><span class="o">(</span><span class="nc">InputStream</span> <span class="n">inputStream</span><span class="o">,</span> <span class="kt">int</span> <span class="n">size</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span><span class="o">;</span>
+ 
+  <span class="cm">/**
+   * Returns a copy of the bytes in this {@link ByteString}. Changes to the returned byte[] will not be
+   * reflected in this {@link ByteString}.
+   *
+   * Where possible prefer other methods for accessing the underlying bytes, such as
+   * {@link #asByteBuffer()}, {@link #write(java.io.OutputStream)}, or {@link #asString(Charset)}.
+   * The first two make no copy of the byte array, while the last minimizes the amount of copying
+   * (constructing a String from a byte[] always involves copying).
+   *
+   * @return a copy of the bytes in this {@link ByteString}
+   */</span>
+  <span class="kd">public</span> <span class="kt">byte</span><span class="o">[]</span> <span class="nf">copyBytes</span><span class="o">();</span>
+ 
+  <span class="cm">/**
+   * Copy the bytes in this {@link ByteString} to the provided byte[] starting at the specified offset.
+   *
+   * Where possible prefer other methods for accessing the underlying bytes, such as
+   * {@link #asByteBuffer()}, {@link #write(java.io.OutputStream)}, or {@link #asString(Charset)}.
+   * The first two make no copy of the byte array, while the last minimizes the amount of copying
+   * (constructing a String from a byte[] always involves copying).
+   *
+   * @param dest is the destination to copy the bytes in this {@link ByteString} to.
+   * @param offset is the starting offset in the destination to receive the copy.
+   */</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">copyBytes</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">dest</span><span class="o">,</span> <span class="kt">int</span> <span class="n">offset</span><span class="o">);</span>
+ 
+  <span class="cm">/**
+   * Returns a read only {@link ByteBuffer} view of this {@link ByteString}. This method makes no copy.
+   *
+   * @return read only {@link ByteBuffer} view of this {@link ByteString}.
+   */</span>
+  <span class="kd">public</span> <span class="nc">ByteBuffer</span> <span class="nf">asByteBuffer</span><span class="o">();</span>
+ 
+  <span class="cm">/**
+   * Return a String representation of the bytes in this {@link ByteString}, decoded using the supplied
+   * charset.
+   *
+   * @param charset the charset to use to decode the bytes
+   * @return the String representation of this {@link ByteString}
+   */</span>
+  <span class="kd">public</span> <span class="nc">String</span> <span class="nf">asString</span><span class="o">(</span><span class="nc">Charset</span> <span class="n">charset</span><span class="o">);</span>
+ 
+  <span class="cm">/**
+   * Return an {@link InputStream} view of the bytes in this {@link ByteString}.
+   *
+   * @return an {@link InputStream} view of the bytes in this {@link ByteString}
+   */</span>
+  <span class="kd">public</span> <span class="nc">InputStream</span> <span class="nf">asInputStream</span><span class="o">();</span>
+ 
+  <span class="cm">/**
+   * Writes this {@link ByteString} to a stream without copying the underlying byte[].
+   *
+   * @param out the stream to write the bytes to
+   *
+   * @throws IOException if an error occurs while writing to the stream
+   */</span>
+  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">write</span><span class="o">(</span><span class="nc">OutputStream</span> <span class="n">out</span><span class="o">)</span> <span class="kd">throws</span> <span class="nc">IOException</span><span class="o">;</span>
+</code></pre></div></div>
+
+<h3 id="builders">Builders</h3>
+
+<p>As mentioned previously, builders provide the following basic functionality:</p>
+
+<ul>
+  <li>Create a new message</li>
+  <li>Copy a message, modify it, and create a new immutable copy</li>
+</ul>
+
+<p>To create a new message, use RestRequestBuilder / RestResponseBuilder as appropriate. Builder methods are designed to be chained. Here is an example of chaining:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">final</span> <span class="nc">RestResponse</span> <span class="n">res</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">RestResponseBuilder</span><span class="o">()</span>
+  <span class="o">.</span><span class="na">setEntity</span><span class="o">(</span><span class="k">new</span> <span class="kt">byte</span><span class="o">[]</span> <span class="o">{</span><span class="mi">1</span><span class="o">,</span><span class="mi">2</span><span class="o">,</span><span class="mi">3</span><span class="o">,</span><span class="mi">4</span><span class="o">})</span>
+  <span class="o">.</span><span class="na">setHeader</span><span class="o">(</span><span class="s">"k1"</span><span class="o">,</span> <span class="s">"v1"</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">setStatus</span><span class="o">(</span><span class="mi">300</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">build</span><span class="o">()</span>
+</code></pre></div></div>
+
+<p>To copy a message, it is sufficient to ask the message for its builder. Typically this can be done with the builder method, but in some cases a special builder method must be used (when working with abstract messages).
+Here is an example of copying and modifying a message:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">final</span> <span class="nc">RestRequest</span> <span class="n">req</span> <span class="o">=</span> <span class="o">...;</span>
+<span class="kd">final</span> <span class="nc">RestRequest</span> <span class="n">newReq</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+                             <span class="o">.</span><span class="na">setEntity</span><span class="o">(</span><span class="k">new</span> <span class="kt">byte</span><span class="o">[]</span> <span class="o">{</span><span class="mi">5</span><span class="o">,</span><span class="mi">6</span><span class="o">,</span><span class="mi">7</span><span class="o">,</span><span class="mi">8</span><span class="o">})</span>
+                             <span class="o">.</span><span class="na">setURI</span><span class="o">(</span><span class="no">URI</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="s">"anotherURI"</span><span class="o">))</span>
+                             <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</code></pre></div></div>
+
+<p>Here is an example of copying and modifying an abstract request:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">final</span> <span class="nc">Request</span> <span class="n">req</span> <span class="o">=</span> <span class="o">...;</span>
+<span class="kd">final</span> <span class="nc">Request</span> <span class="n">newReq</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="na">requestBuilder</span><span class="o">()</span>
+                          <span class="o">.</span><span class="na">setEntity</span><span class="o">(</span><span class="k">new</span> <span class="kt">byte</span><span class="o">[]</span> <span class="o">{</span><span class="mi">5</span><span class="o">,</span><span class="mi">6</span><span class="o">,</span><span class="mi">7</span><span class="o">,</span><span class="mi">8</span><span class="o">})</span>
+                          <span class="o">.</span><span class="na">setURI</span><span class="o">(</span><span class="no">URI</span><span class="o">.</span><span class="na">create</span><span class="o">(</span><span class="s">"anotherURI"</span><span class="o">))</span>
+                          <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</code></pre></div></div>
+
+<h3 id="callbacks">Callbacks</h3>
+
+<p>R2 is, by design, asynchronous in nature. As will be shown below, R2 provides two mechanisms to wait for an asynchronous operation to complete: callbacks and Futures. Futures should be familiar to most Java developers, so we will not discuss them further in this document. Callbacks are less common in Java and warrant some quick discussion.
+In R2, the Callback interface looks like:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Callback</span>
+<span class="o">{</span>
+  <span class="cm">/**
+   * Called if the asynchronous operation completed with a successful result.
+   *
+   * @param t the result of the asynchronous operation
+   */</span>
+  <span class="kt">void</span> <span class="nf">onSuccess</span><span class="o">(</span><span class="no">T</span> <span class="n">t</span><span class="o">);</span>
+ 
+  <span class="cm">/**
+   * Called if the asynchronous operation failed with an error.
+   *
+   * @param e the error
+   */</span>
+  <span class="kt">void</span> <span class="nf">onError</span><span class="o">(</span><span class="nc">Exception</span> <span class="n">e</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>In some cases it is only possible to invoke an asynchronous operation with a callback (and not a Future). In those cases, which are not common for external users, it is possible to use a FutureCallback as shown in this example:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">final</span> <span class="nc">FutureCallback</span> <span class="n">future</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">FutureCallback</span><span class="o">();</span>
+<span class="n">asyncOp</span><span class="o">(...,</span> <span class="n">future</span><span class="o">);</span>
+<span class="k">return</span> <span class="n">future</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+</code></pre></div></div>
+
+<p>In some cases, code does not need to wait for completion of an event. In the case of the future, simply do not call get(). In the case of callbacks, use Callbacks.empty(), as shown in this example:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">asyncOp</span><span class="o">(...,</span> <span class="nc">Callbacks</span><span class="o">.</span><span class="na">empty</span><span class="o">());</span>
+</code></pre></div></div>
+
+<p>Keep in mind that it will not be possible to know when the operation completed - or even if it completed successfully.
+Sometimes code will want to know when an operation has completed, but is not concerned with the result. In this case, a SimpleCallback can be used or adapted to a Callback with Callbacks.adaptSimple(…).</p>
+
+<h3 id="client-api">Client API</h3>
+
+<p>The R2 client API provides the mechanism for sending request and responses to a remote service or resource handler. The diagram below shows where the client sits in the R2 stack.</p>
+
+<p>The main interface in this layer is the Client interface, shown here:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Client</span>
+<span class="o">{</span>
+  <span class="cm">/**
+   * Asynchronously issues the given request and returns a {@link Future} that can be used to wait
+   * for the response.
+   *
+   * @param request the request to issue
+   * @return a future to wait for the response
+   */</span>
+  <span class="nc">Future</span> <span class="nf">restRequest</span><span class="o">(</span><span class="nc">RestRequest</span> <span class="n">request</span><span class="o">);</span>
+ 
+  <span class="cm">/**
+   * Asynchronously issues the given request. The given callback is invoked when the response is
+   * received. This event driven approach is typically more complicated to use and is appropriate
+   * for building other abstractions, such as a DAG based resolver.
+   *
+   * @param request the request to issue
+   * @param callback the callback to invoke with the response
+   */</span>
+  <span class="kt">void</span> <span class="nf">restRequest</span><span class="o">(</span><span class="nc">RestRequest</span> <span class="n">request</span><span class="o">,</span> <span class="nc">Callback</span> <span class="n">callback</span><span class="o">);</span>
+ 
+  <span class="cm">/**
+   * Starts asynchronous shutdown of the client. This method should block minimally, if at all.
+   *
+   * @param callback a callback to invoke when the shutdown is complete
+   */</span>
+  <span class="kt">void</span> <span class="nf">shutdown</span><span class="o">(</span><span class="nc">Callback</span> <span class="n">callback</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p>Requests are made asynchronously using either Futures or Callbacks (see Callback section for details).</p>
+
+<h3 id="request-handler-api">Request Handler API</h3>
+
+<p>The Request Handler API is the server-side counterpart to the client, as shown in this diagram:</p>
+
+<p>Request Handlers are used for two purposes:
+Determining the rules for dispatching a request to a service / resource manager or another dispatcher
+Handling a request (as a service or a resource manager)</p>
+
+<p>The REST Request Handler interface looks like:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">interface</span> <span class="nc">RestRequestHandler</span>
+<span class="o">{</span>
+  <span class="kt">void</span> <span class="nf">handleRequest</span><span class="o">(</span><span class="nc">RestRequest</span> <span class="n">request</span><span class="o">,</span> <span class="nc">Callback</span> <span class="n">callback</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<h3 id="filter-chains">Filter Chains</h3>
+
+<p>The filter chain provides a mechanism for doing special processing for each request and response in the system. For example, logging, statistics collections, etc., are appropriate for this layer.</p>
+
+<p>The FilterChain provides methods for adding new filters and for processing requests, responses, and errors.
+Requests pass through the filter chain starting from the beginning and move towards the end. Responses and errors start from the end of the filter chain and move towards the beginning.</p>
+
+<p>If an error occurs while a request moves through the filter chain (either due to a thrown Exception or due to an onError(…) call), then the error is first sent to the filter that raised the error and then it moves back towards the beginning of the filter chain. Any filters that show up after the filter that threw the exception will not get a chance to process the request.</p>
+
+<h3 id="filters">Filters</h3>
+
+<p>R2 provides a set of interfaces that can be implemented to intercept different types of messages. They are:</p>
+
+<ul>
+  <li>Message filters</li>
+  <li>MessageFilter - intercepts both requests and responses</li>
+  <li>RequestFilter</li>
+  <li>ResponseFilter</li>
+  <li>REST filters</li>
+  <li>RestFilter - intercepts both REST requests and REST responses</li>
+  <li>RestRequestFilter</li>
+  <li>RestResponseFilter</li>
+</ul>
+
+<p>Messages filters can be used to handle messages in an abstract way (as Requests and Responses). REST filters can be used to handle messages of the specific type (REST or possibly another type, like STREAM). Different types of filters should not be used together, as they override the hooks provided by the Message filters.</p>
+
+<h4 id="clientquerytunnelfilter--serverquerytunnelfilter">ClientQueryTunnelFilter / ServerQueryTunnelFilter</h4>
+
+<p>One notable set of filters is the ClientQueryTunnelFilter and the ServerQueryTunnelFilter. These filters allow long queries to be transformed by moving the query parameters into the body, and reformulating the request as a POST. The original method is specified by the X-HTTP-Method-Override header. See QueryTunnelUtil.java for more details.</p>
+
+<h3 id="wire-attributes">Wire Attributes</h3>
+
+<p>Wire attributes provide a mechanism to send “side-band” data to a remote endpoint along with a request or response. They are exposed at the filter chain layer and can be queried or modified by filters. They are not made available at the request / response layer because the entity (and headers, for REST) should supply all of the data necessary to process a request or response.
+Wire attributes are sent as headers with the R2 HTTP transport.</p>
+
+<h3 id="local-attributes">Local Attributes</h3>
+
+<p>Local attributes are used by filters during response processing to get data stored during the request. Filters use this mechanism because responses are not guaranteed to be processed on the same thread as their requests.</p>
+
+<h3 id="transports">Transports</h3>
+
+<p>The transport bridges convert our abstract requests, response, and wire attributes into transport-specific requests. We have support for an asynchronous HTTP transport and possibly other transports at this layer.</p>
+
+<h4 id="http-transport">HTTP Transport</h4>
+
+<p>In the HTTP transport there is a standard transformation of our REST messages to equivalent HTTP messages.
+Wire attributes are transported as headers, using the attribute name.</p>
+
+<h3 id="transport-protocol">Transport Protocol</h3>
+<p>Under the hood, the request will be encoded based on the <a href="/rest.li/spec/protocol">Rest.li protocol</a> and sent over the wire to the server.</p>
+
+                     </div>
+                   </div>
+</div>
+
+
+
+      <footer class="page-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col s6">
+          <h5>Rest.li</h5>
+          <p class="text-lighten-4">Rest.li is an open source REST framework for building robust, scalable RESTful architectures using type-safe bindings and asynchronous, non-blocking IO. Rest.li fills a niche for applying RESTful principles at scale with an end-to-end developer workflow for building REST APIs, which promotes clean REST practices, uniform interface design and consistent data modeling.</p>
+        </div>
+        <div class="col s5 offset-s1">
+          <h5 class="black-text">Community</h5>
+          <ul>
+              <li>GitHub <a class="" href="https://github.com/linkedin/rest.li">Rest.li</a></li>
+              <li>LinkedIn <a class="" href="https://www.linkedin.com/groups/4855943/">Rest.li Group</a></li>
+            <li>Follow us on twitter: <a class="" href="https://twitter.com/rest_li"> @rest_li</a></li>
+            <li>Issue Tracking: <a class="" href="https://github.com/linkedin/rest.li/issues">GitHub issue tracking</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-copyright">
+        <div class="container">
+            <div class="row">
+              <div class="col s6">
+                      Copyright 2018 LinkedIn Corporation </br>
+                      This work is licensed under a <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.  </br>
+                      For clarity, no trademark is licensed.
+                      </br></br>
+              </div>
+              <div class="col s5 offset-s1">
+                      This work was made by using Jekyll (and a Jekyll Starter Template)</br>
+                      <a target="_blank" href="https://github.com/macrod68/jekyll-materialize-starter-template">https://github.com/macrod68/jekyll-materialize-starter-template</a></br>
+                      Copyright © 2017 Marco Damiani. Powered by <a target="_blank" href="http://jekyllrb.com/">Jekyll</a></br>
+                      License:<a target="_blank" href="https://opensource.org/licenses/MIT">MIT</a>
+              </div>
+            </div>
+        </div>
+    </div>
+    <script>
+      $(function() {
+        return $("h2, h3, h4, h5, h6").each(function(i, el) {
+          var $el, icon, id;
+          $el = $(el);
+          id = $el.attr('id');
+          icon = '<i class="fa fa-link"></i>';
+          if (id) {
+            return $el.append($("<a />").addClass("header-link").attr("href", "#" + id).html(icon));
+          }
+        });
+      });
+      </script>
+</footer>
+
+      
+    <!--  Scripts-->                                                                               
+<script src="/rest.li/assets/js/jquery.min.js"></script>
+<script src="/rest.li/assets/js/materialize.min.js"></script>
+<script src="/rest.li/assets/js/init.js"></script>
+
+  </body>
+
+</html>
