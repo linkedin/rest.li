@@ -70,4 +70,6 @@ public interface ZooKeeperAnnouncerJmxMXBean
       throws IOException;
 
   void setPartitionData(Map<Integer, PartitionData> partitionData);
+
+  boolean isMarkUpFailed();
 }

@@ -178,4 +178,9 @@ public class ZooKeeperAnnouncerJmx implements ZooKeeperAnnouncerJmxMXBean
   {
     return _announcer.getPartitionData();
   }
+
+  @Override
+  public boolean isMarkUpFailed() {
+    return _announcer.isMarkUpFailed();
+  }
 }
