@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import org.apache.avro.Schema;
+import org.apache.avro.Schema.Parser;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -47,6 +48,7 @@ public class TestAvroSchemaGenerator
 {
   private boolean _debug = false;
   private File _testDir;
+  private Schema.Parser parser = new Parser();
 
   @BeforeClass
   public void setupSchemaFiles() throws IOException
@@ -338,6 +340,7 @@ public class TestAvroSchemaGenerator
       Schema avroSchema;
       try
       {
+//        avroSchema = new Parser().parse(avroSchemaInputStream);
         avroSchema = Schema.parse(avroSchemaInputStream);
       }
       finally
