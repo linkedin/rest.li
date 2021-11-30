@@ -13,7 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
-Remove Guava dependency from data-avro module.
+- Remove Guava dependency from `data-avro` module.
+- Deprecate `FileFormatDataSchemaParser#new(String, DataSchemaResolver, DataSchemaParserFactory)`. 
 
 ## [29.22.14] - 2021-11-24
 - Fix bug where content type was not set for stream requests
