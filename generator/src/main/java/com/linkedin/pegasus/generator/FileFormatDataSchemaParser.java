@@ -54,17 +54,21 @@ public class FileFormatDataSchemaParser
   private final DataSchemaParserFactory _schemaParserFactory;
   private final List<SchemaDirectory> _sourceDirectories;
 
-  public FileFormatDataSchemaParser(String resolverPath, DataSchemaResolver schemaResolver, DataSchemaParserFactory schemaParserFactory)
-  {
-    this(schemaResolver, schemaParserFactory, schemaResolver.getSchemaDirectories());
-  }
-
   public FileFormatDataSchemaParser(DataSchemaResolver schemaResolver,
       DataSchemaParserFactory schemaParserFactory, List<SchemaDirectory> sourceDirectories)
   {
     _schemaResolver = schemaResolver;
     _schemaParserFactory = schemaParserFactory;
     _sourceDirectories = sourceDirectories;
+  }
+
+  /**
+   * @deprecated Use {@link #FileFormatDataSchemaParser(DataSchemaResolver, DataSchemaParserFactory, List)} instead.
+   */
+  @Deprecated
+  public FileFormatDataSchemaParser(String resolverPath, DataSchemaResolver schemaResolver, DataSchemaParserFactory schemaParserFactory)
+  {
+    this(schemaResolver, schemaParserFactory, schemaResolver.getSchemaDirectories());
   }
 
   public DataSchemaParser.ParseResult parseSources(String[] sources) throws IOException
