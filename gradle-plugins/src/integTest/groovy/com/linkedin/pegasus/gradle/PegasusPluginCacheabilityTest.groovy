@@ -96,6 +96,6 @@ class PegasusPluginCacheabilityTest extends Specification {
     preparedSchema.exists()
 
     where:
-    gradleVersion << [ '4.0', '5.2.1', '5.6.4', '6.9', '7.0.2' ]
+    gradleVersion << [ '5.2.1', '5.3', '5.6.4', '6.9', '7.0.2' ]
   }
 }

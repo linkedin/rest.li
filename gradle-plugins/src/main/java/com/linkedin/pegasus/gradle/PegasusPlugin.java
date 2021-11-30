@@ -528,8 +528,8 @@ public class PegasusPlugin implements Plugin<Project>
 {
   public static boolean debug = false;
 
-  private static final GradleVersion MIN_REQUIRED_VERSION = GradleVersion.version("1.0"); // Next: 5.2.1
-  private static final GradleVersion MIN_SUGGESTED_VERSION = GradleVersion.version("5.2.1"); // Next: 5.3
+  private static final GradleVersion MIN_REQUIRED_VERSION = GradleVersion.version("5.2.1");
+  private static final GradleVersion MIN_SUGGESTED_VERSION = GradleVersion.version("5.3");
 
   //
   // Constants for generating sourceSet names and corresponding directory names
