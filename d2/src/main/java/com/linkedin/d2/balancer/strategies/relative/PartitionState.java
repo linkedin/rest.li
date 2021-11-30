@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.strategies.relative;
 
+import com.linkedin.common.callback.Callbacks;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.PartitionStateUpdateListener;
 import com.linkedin.d2.balancer.strategies.LoadBalancerQuarantine;
@@ -196,6 +197,7 @@ public class PartitionState
     _quarantineHistory.remove(trackerClient);
     _healthCheckMap.remove(trackerClient);
     _recoveryTrackerClients.remove(trackerClient);
+    trackerClient.shutdown(Callbacks.empty());
   }
 
   int getPointsPerWeight()
