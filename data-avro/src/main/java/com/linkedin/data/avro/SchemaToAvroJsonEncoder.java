@@ -54,20 +54,23 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
   /**
    * Serialize a {@link DataSchema} to an Avro-compliant schema as a JSON encoded string.
    *
-   * @param schema is the {@link DataSchema} to build a JSON encoded output for.
-   * @param fieldOverridesProvider provides the default values for each of the fields.
+   * @param schema is the translated {@link DataSchema} to build a JSON encoded output for.
+   * @param originalSchema is the original {@link DataSchema} pre-translation. This is used to write the
+   *                       original schema to the Avro schema based on the embed schema mode.
+   * @param defaultValueOverrides provides the default values overrides (if any) for the fields.
    * @param options provides the {@link DataToAvroSchemaTranslationOptions}.
    * @return the Avro-compliant schema as JSON encoded string.
    */
   static String schemaToAvro(DataSchema schema,
-                             FieldOverridesProvider fieldOverridesProvider,
+                             DataSchema originalSchema,
+                             Map<RecordDataSchema.Field, FieldOverride> defaultValueOverrides,
                              DataToAvroSchemaTranslationOptions options)
   {
     JsonBuilder builder = null;
     try
     {
       builder = new JsonBuilder(options.getPretty());
-      final SchemaToAvroJsonEncoder serializer = new SchemaToAvroJsonEncoder(builder, schema, fieldOverridesProvider, options);
+      final SchemaToAvroJsonEncoder serializer = new SchemaToAvroJsonEncoder(builder, schema, originalSchema, defaultValueOverrides, options);
       serializer.encode(schema);
       return builder.result();
     }
@@ -86,12 +89,14 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
 
   protected SchemaToAvroJsonEncoder(JsonBuilder builder,
                                     DataSchema rootSchema,
-                                    FieldOverridesProvider fieldOverridesProvider,
+                                    DataSchema originalSchema,
+                                    Map<RecordDataSchema.Field, FieldOverride> defaultValueOverrides,
                                     DataToAvroSchemaTranslationOptions options)
   {
     super(builder);
     _rootSchema = rootSchema;
-    _fieldOverridesProvider = fieldOverridesProvider;
+    _originalSchema = originalSchema;
+    _defaultValueOverrides = defaultValueOverrides;
     _options = options;
   }
 
@@ -140,7 +145,7 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
       DataSchema dereferencedSchema = _rootSchema.getDereferencedDataSchema();
       if (schema == dereferencedSchema && schema.getType() != DataSchema.Type.UNION)
       {
-        encodePropertiesWithEmbeddedSchema(schema);
+        encodePropertiesWithEmbeddedSchema(_originalSchema.getDereferencedDataSchema());
         return;
       }
     }
@@ -148,7 +153,7 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
   }
 
   private static final Set<String> RESERVED_DATA_PROPERTIES =
-    new HashSet<String>(Arrays.asList(
+    new HashSet<>(Arrays.asList(
         SchemaTranslator.AVRO_PREFIX,
         SchemaTranslator.SCHEMA_PROPERTY,
         SchemaTranslator.OPTIONAL_DEFAULT_MODE_PROPERTY,
@@ -259,7 +264,7 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
         if (unionDataSchema == null)
         {
           addNullMemberType = true;
-          resultMemberTypes = new ArrayList<DataSchema>(1);
+          resultMemberTypes = new ArrayList<>(1);
           resultMemberTypes.add(fieldSchema);
           defaultValueSchema = (
             defaultValue != null
@@ -369,7 +374,7 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
   @Override
   protected void encodeFieldDefault(RecordDataSchema.Field field) throws IOException
   {
-    FieldOverride defaultValueOverride = _fieldOverridesProvider.getDefaultValueOverride(field);
+    FieldOverride defaultValueOverride = _defaultValueOverrides.get(field);
 
     // if field is optional, it must have a default value - either Data.NULL or translated value
     assert(!field.getOptional() || (defaultValueOverride != null && defaultValueOverride.getValue() != null));
@@ -473,19 +478,6 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
     return namespace;
   }
 
-  @Override
-  protected void encodeField(RecordDataSchema.Field field) throws IOException
-  {
-    super.encodeField(field);
-
-    // Reset the field's type and default if there is an override
-    FieldOverride schemaOverride = _fieldOverridesProvider.getSchemaOverride(field);
-    if (schemaOverride != null) {
-      field.setType(schemaOverride.getSchema());
-      field.setDefault(schemaOverride.getValue());
-    }
-  }
-
   /**
    * Do not encode "include" attribute.
    *
@@ -528,7 +520,8 @@ class SchemaToAvroJsonEncoder extends SchemaToJsonEncoder
   }
 
   private final DataSchema _rootSchema;
-  private final FieldOverridesProvider _fieldOverridesProvider;
+  private final DataSchema _originalSchema;
+  private final Map<RecordDataSchema.Field, FieldOverride> _defaultValueOverrides;
 
   private final DataToAvroSchemaTranslationOptions _options;
 

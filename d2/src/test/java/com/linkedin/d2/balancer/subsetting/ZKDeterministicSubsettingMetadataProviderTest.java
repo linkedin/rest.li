@@ -54,7 +54,7 @@ import static org.testng.Assert.assertNull;
 public class ZKDeterministicSubsettingMetadataProviderTest
 {
   private static final String CLUSTER_NAME = "cluster-1";
-  private static final URI NODE_URI = URI.create("http://cluster-1/test2");
+  private static final String HOST_NAME = "test2.linkedin.com";
 
   private MockStore<UriProperties>                                                 _uriRegistry;
   private MockStore<ClusterProperties>                                             _clusterRegistry;
@@ -64,7 +64,8 @@ public class ZKDeterministicSubsettingMetadataProviderTest
   private ZKDeterministicSubsettingMetadataProvider _metadataProvider;
 
   private static final SslSessionValidatorFactory SSL_SESSION_VALIDATOR_FACTORY =
-      validationStrings -> sslSession -> {
+      validationStrings -> sslSession ->
+      {
         if (validationStrings == null || validationStrings.isEmpty())
         {
           throw new SslSessionNotTrustedException("no validation string");
@@ -103,7 +104,7 @@ public class ZKDeterministicSubsettingMetadataProviderTest
             true, null,
             SSL_SESSION_VALIDATOR_FACTORY);
 
-    _metadataProvider = new ZKDeterministicSubsettingMetadataProvider(CLUSTER_NAME, NODE_URI, 1000, TimeUnit.MILLISECONDS);
+    _metadataProvider = new ZKDeterministicSubsettingMetadataProvider(CLUSTER_NAME, HOST_NAME, 1000, TimeUnit.MILLISECONDS);
   }
 
   @Test
@@ -115,7 +116,7 @@ public class ZKDeterministicSubsettingMetadataProviderTest
     Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
     for (int i = 0; i < 10; i++)
     {
-      uriData.put(URI.create("http://cluster-1/test" + i), partitionData);
+      uriData.put(URI.create("http://test" + i + ".linkedin.com:8888/test"), partitionData);
     }
     schemes.add("http");
 
@@ -131,15 +132,17 @@ public class ZKDeterministicSubsettingMetadataProviderTest
 
     assertEquals(metadata.getInstanceId(), 2);
     assertEquals(metadata.getTotalInstanceCount(), 10);
+    assertEquals(metadata.getPeerClusterVersion(), 5);
 
-    uriData.remove(URI.create("http://cluster-1/test0"));
+    uriData.remove(URI.create("http://test0.linkedin.com:8888/test"));
     _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
 
     metadata = _metadataProvider.getSubsettingMetadata(_state);
     assertEquals(metadata.getInstanceId(), 1);
     assertEquals(metadata.getTotalInstanceCount(), 9);
+    assertEquals(metadata.getPeerClusterVersion(), 7);
 
-    uriData.remove(URI.create("http://cluster-1/test2"));
+    uriData.remove(URI.create("http://test2.linkedin.com:8888/test"));
     _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
 
     metadata = _metadataProvider.getSubsettingMetadata(_state);

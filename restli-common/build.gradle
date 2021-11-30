@@ -18,6 +18,14 @@ dependencies {
 }
 
 apply from: "${buildScriptDirPath}/dataTemplate.gradle"
+// Enable generation of new projection mask APIs.
+project.sourceSets.all { SourceSet sourceSet ->
+  final Task dataTemplateGenerateTask = rootProject.ext.build.dataTemplateGenerateTasks[sourceSet]
+  if (dataTemplateGenerateTask != null)
+  {
+    dataTemplateGenerateTask.systemProperties(['generator.generate.field.mask': "true"])
+  }
+}
 
 testCompileDataTemplate.options.compilerArgs += '-Xlint:-deprecation'
 compileTestJava.options.compilerArgs += '-Xlint:-deprecation'

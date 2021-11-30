@@ -143,7 +143,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
         StringMap.class
     };
 
-    PredefinedJavaClasses = new HashMap<DataSchema, Class<?>>();
+    PredefinedJavaClasses = new HashMap<>();
 
     for (Class<?> clazz : predefinedClass)
     {
@@ -168,8 +168,8 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   private static final String DEPRECATED_KEY = "deprecated";
   static final String PROJECTION_MASK_CLASSNAME = "ProjectionMask";
 
-  private final Map<ClassTemplateSpec, JDefinedClass> _definedClasses = new HashMap<ClassTemplateSpec, JDefinedClass>();
-  private final Map<JDefinedClass, ClassTemplateSpec> _generatedClasses = new HashMap<JDefinedClass, ClassTemplateSpec>();
+  private final Map<ClassTemplateSpec, JDefinedClass> _definedClasses = new HashMap<>();
+  private final Map<JDefinedClass, ClassTemplateSpec> _generatedClasses = new HashMap<>();
 
   private final JClass _recordBaseClass;
   private final JClass _unionBaseClass;

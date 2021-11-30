@@ -13,68 +13,77 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *#
-  @SuppressWarnings("unchecked")
-  private static final KeyValueRecordFactory<${spec.keyClassDisplayName}, PatchRequest<${spec.entityClassName}>> PATCH_VALUE_FACTORY = new KeyValueRecordFactory<${spec.keyClassDisplayName}, PatchRequest<${spec.entityClassName}>>(
-        (TypeSpec<${spec.keyClassDisplayName}>) _resourceSpec.getKeyType(),
-        _resourceSpec.getComplexKeyType(),
-        _resourceSpec.getKeyParts(),
-        (TypeSpec<PatchRequest<${spec.entityClassName}>>) (Object) new TypeSpec<>(PatchRequest.class));
+#if($is_interface)
+  #foreach($withEG in [true, false])
+    #if($method.hasOptionalParams() || $method.hasProjectionParams())
+      #doc($method.schema.doc)
+      public CompletionStage<Map<$spec.keyClassDisplayName, UpdateStatus>> batchPartialUpdate(
+          Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if($method.hasRequiredParams() || $withEG),#end
+          #**##methodParamsWithEGroup($method, false, $withEG)##
+          );
+    #end
 
-  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
     #doc($method.schema.doc)
     public CompletionStage<Map<$spec.keyClassDisplayName, UpdateStatus>> batchPartialUpdate(
-        Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if($method.requiredParams.size() > 0),#end
-        #**##methodParams($method, false)##
-        ) {
-      return batchPartialUpdate(patches,
-          #**##optionalMethodCallArgs($method)##
-      );
-    }
-  #end
+        Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if( $method.hasParams() || $withEG),#end
+        #**##methodParamsWithEGroup($method, true, $withEG)##
+        );
+  #end ## end withEG
+#optionalParamClass($method)
+#else ## is_interface
+    @SuppressWarnings("unchecked")
+    private static final KeyValueRecordFactory<${spec.keyClassDisplayName}, PatchRequest<${spec.entityClassName}>> PATCH_VALUE_FACTORY = new KeyValueRecordFactory<${spec.keyClassDisplayName}, PatchRequest<${spec.entityClassName}>>(
+          (TypeSpec<${spec.keyClassDisplayName}>) _resourceSpec.getKeyType(),
+          _resourceSpec.getComplexKeyType(),
+          _resourceSpec.getKeyParts(),
+          (TypeSpec<PatchRequest<${spec.entityClassName}>>) (Object) new TypeSpec<>(PatchRequest.class));
+  #foreach($withEG in [true, false])
 
-  #doc($method.schema.doc)
-  public CompletionStage<Map<$spec.keyClassDisplayName, UpdateStatus>> batchPartialUpdate(
-      Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if( $method.hasParams()),#end
-      #**##methodParams($method, true)##
-      ) {
-    Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
-    Map<String, Class<?>> queryParamClasses = #if($method.hasParams() || $method.returnsEntity())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
-    #fillQueryParams($method)
-    #if($method.returnsEntity())
-      #**##returnEntityParam("false")
+    #if($method.hasOptionalParams() || $method.hasProjectionParams())
+      #doc($method.schema.doc)
+      public CompletionStage<Map<$spec.keyClassDisplayName, UpdateStatus>> batchPartialUpdate(
+          Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if($method.hasRequiredParams() || $withEG),#end
+          #**##methodParamsWithEGroup($method, false, $withEG)##
+          ) {
+        return batchPartialUpdate(patches,
+            #**##optionalMethodCallArgsWithEGroup($method, $withEG)##
+        );
+      }
     #end
-    queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, patches.keySet());
-    CollectionRequest<KeyValueRecord<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>>> inputs = FluentClientUtils.buildBatchKVInputs(
-        patches, PATCH_VALUE_FACTORY);
 
-    BatchPartialUpdateRequest<${spec.keyClassDisplayName}, ${spec.entityClassName}> request = new BatchPartialUpdateRequest<>(
-        Collections.emptyMap(),
-        Collections.emptyList(),
-        inputs,
-        queryParams,
-        queryParamClasses,
-        _resourceSpec,
-        ORIGINAL_RESOURCE_PATH,
-        buildReadOnlyPathKeys(),
-        RestliRequestOptions.DEFAULT_OPTIONS,
-        patches,
-        null);
-    CompletableFuture<Map<$spec.keyClassDisplayName, UpdateStatus>> result = new CompletableFuture<>();
-    Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
-        responseTry -> {
-          if (responseTry.isFailed()) {
-            result.completeExceptionally(responseTry.getError());
-          } else {
-            Response<BatchKVResponse<$spec.keyClassDisplayName, UpdateStatus>> response = responseTry.get();
-            if (response.hasError()) {
-              result.completeExceptionally(response.getError());
-            } else {
-              result.complete(response.getEntity().getResults());
-            }
-          }
-          return Success.of((Void) null);
-        });
-    _engine.run(responseTask);
-    return result;
-  }
-  #optionalParamClass($method)
+    #doc($method.schema.doc)
+    public CompletionStage<Map<$spec.keyClassDisplayName, UpdateStatus>> batchPartialUpdate(
+        Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if( $method.hasParams() || $withEG),#end
+        #**##methodParamsWithEGroup($method, true, $withEG)##
+        ) {
+      Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
+      Map<String, Class<?>> queryParamClasses = #if($method.hasParams() || $method.returnsEntity())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
+      #fillQueryParams($method)
+      #if($method.returnsEntity())
+        #**##returnEntityParam("false")
+      #end
+      queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, patches.keySet());
+      CollectionRequest<KeyValueRecord<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>>> inputs = FluentClientUtils.buildBatchKVInputs(
+          patches, PATCH_VALUE_FACTORY);
+
+      BatchPartialUpdateRequest<${spec.keyClassDisplayName}, ${spec.entityClassName}> request = new BatchPartialUpdateRequest<>(
+          Collections.emptyMap(),
+          Collections.emptyList(),
+          inputs,
+          queryParams,
+          queryParamClasses,
+          _resourceSpec,
+          ORIGINAL_RESOURCE_PATH,
+          buildReadOnlyPathKeys(),
+          RestliRequestOptions.DEFAULT_OPTIONS,
+          patches,
+          null);
+      #**##makeRequestAndReturn(
+        "Map<$spec.keyClassName, UpdateStatus>",
+        "BatchKVResponse<$spec.keyClassName, UpdateStatus>",
+        "resp.getEntity().getResults()",
+        $withEG
+      )##
+    }
+  #end ## end withEG
+#end ## is_interface

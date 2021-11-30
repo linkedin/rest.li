@@ -1,0 +1,7 @@
+namespace com.linkedin.data.schema.grammar
+
+/**
+ * Fixed type to test returning context locations from the source file.
+ */
+@location = {"startLine": 3, "startCol": 1, "endLine": 7, "endCol": 43}
+fixed TestFixedForParserContextLocations  4

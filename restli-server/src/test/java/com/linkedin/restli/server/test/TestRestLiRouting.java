@@ -113,7 +113,7 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "statuses");
 
     PathKeys keys = context.getPathKeys();
-    assertEquals(keys.getAsLong("statusID"), new Long(1));
+    assertEquals(keys.getAsLong("statusID"), Long.valueOf(1));
     assertNull(keys.getAsString("foo"));
   }
 
@@ -148,8 +148,8 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "follows");
 
     PathKeys keys = context.getPathKeys();
-    assertEquals(keys.getAsLong("followerID"), new Long(1L));
-    assertEquals(keys.getAsLong("followeeID"), new Long(2L));
+    assertEquals(keys.getAsLong("followerID"), Long.valueOf(1L));
+    assertEquals(keys.getAsLong("followeeID"), Long.valueOf(2L));
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "routingDetailsCollectionEntity")
@@ -173,7 +173,7 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "statuses");
 
     PathKeys keys = context.getPathKeys();
-    assertEquals(keys.getAsLong("statusID"), new Long(1));
+    assertEquals(keys.getAsLong("statusID"), Long.valueOf(1));
     assertNull(keys.getAsString("foo"));
   }
 
@@ -198,7 +198,7 @@ public class TestRestLiRouting
     assertEquals(resourceMethodDescriptor.getResourceModel().getName(), "statuses");
 
     PathKeys keys = context.getPathKeys();
-    assertEquals(keys.getAsLong("statusID"), new Long(1));
+    assertEquals(keys.getAsLong("statusID"), Long.valueOf(1));
     assertNull(keys.getAsString("foo"));
   }
 
@@ -1270,6 +1270,22 @@ public class TestRestLiRouting
           ResourceMethod.FINDER,
           "search",
           new String[0]
+        },
+        { "/statuses?q=findByAction&action=anyAction&bq=anyBqValue",
+            AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+            "GET",
+            "FINDER",
+            ResourceMethod.FINDER,
+            "findByAction",
+            new String[0]
+        },
+        { "/statuses?bq=batchFinderByAction&action=anyAction",
+            AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+            "GET",
+            "BATCH_FINDER",
+            ResourceMethod.BATCH_FINDER,
+            "batchFinderByAction",
+            new String[0]
         },
         { "/statuses?q=search&keywords=linkedin",
           AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -2676,13 +2692,16 @@ public class TestRestLiRouting
   {
     return new Object[][]
       {
-        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/accounts?action=register" },
-        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/accounts?action=register" }
+        { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/accounts?action=register", "register" },
+        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "/accounts?action=register", "register"},
+        { AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),
+            "/accounts?action=noOps&q=some_q_argument&bq=some_bq_argument",
+            "noOps" }
       };
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "actionRootRouting")
-  public void testActionRootRouting(ProtocolVersion version, String uri) throws Exception
+  public void testActionRootRouting(ProtocolVersion version, String uri, String actionName) throws Exception
   {
     Map<String, ResourceModel> pathRootResourceMap = buildResourceModels(TwitterAccountsResource.class);
     _router = new RestLiRouter(pathRootResourceMap, new RestLiConfig());
@@ -2692,7 +2711,7 @@ public class TestRestLiRouting
     ResourceMethodDescriptor method = _router.process(context);
 
     assertNotNull(method);
-    assertEquals(method.getActionName(), "register");
+    assertEquals(method.getActionName(), actionName);
     assertEquals(method.getType(), ResourceMethod.ACTION);
   }
 
@@ -2806,6 +2825,8 @@ public class TestRestLiRouting
         { "/statuses/1/badpath/2", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_404_NOT_FOUND },
         { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
         { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses?q=wrong&bq=batchFindByAction", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
+        { "/statuses?q=wrong&bq=batchFindByAction", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "GET", HttpStatus.S_400_BAD_REQUEST },
         { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "PUT", HttpStatus.S_400_BAD_REQUEST },
         { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(), "PUT", HttpStatus.S_400_BAD_REQUEST },
         { "/statuses?q=wrong&keywords=linkedin", AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "DELETE", HttpStatus.S_400_BAD_REQUEST },

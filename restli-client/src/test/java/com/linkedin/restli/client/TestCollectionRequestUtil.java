@@ -47,16 +47,16 @@ public class TestCollectionRequestUtil
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "versions")
   public void testPrimitiveKeySingleEntity(ProtocolVersion version)
   {
-    KeyValueRecordFactory<Long, TestRecord> factory = new KeyValueRecordFactory<Long, TestRecord>(Long.class,
-                                                                                                  null,
-                                                                                                  null,
-                                                                                                  null,
-                                                                                                  TestRecord.class);
+    KeyValueRecordFactory<Long, TestRecord> factory = new KeyValueRecordFactory<>(Long.class,
+        null,
+        null,
+        null,
+        TestRecord.class);
     TestRecord testRecord = buildTestRecord(1L, "message");
     KeyValueRecord<Long, TestRecord> kvRecord = factory.create(1L, testRecord);
 
     @SuppressWarnings("rawtypes")
-    CollectionRequest<KeyValueRecord> collectionRequest = new CollectionRequest<KeyValueRecord>(KeyValueRecord.class);
+    CollectionRequest<KeyValueRecord> collectionRequest = new CollectionRequest<>(KeyValueRecord.class);
     collectionRequest.getElements().add(kvRecord);
 
     @SuppressWarnings("unchecked")
@@ -79,15 +79,15 @@ public class TestCollectionRequestUtil
   public void testPrimitiveKeyMultipleEntities(ProtocolVersion version)
   {
     @SuppressWarnings("rawtypes")
-    KeyValueRecordFactory<Long, TestRecord> factory = new KeyValueRecordFactory<Long, TestRecord>(Long.class,
-                                                                                                  null,
-                                                                                                  null,
-                                                                                                  null,
-                                                                                                  TestRecord.class);
+    KeyValueRecordFactory<Long, TestRecord> factory = new KeyValueRecordFactory<>(Long.class,
+        null,
+        null,
+        null,
+        TestRecord.class);
     @SuppressWarnings("rawtypes")
-    CollectionRequest<KeyValueRecord> collectionRequest = new CollectionRequest<KeyValueRecord>(KeyValueRecord.class);
+    CollectionRequest<KeyValueRecord> collectionRequest = new CollectionRequest<>(KeyValueRecord.class);
 
-    Map<Long, TestRecord> inputs = new HashMap<Long, TestRecord>();
+    Map<Long, TestRecord> inputs = new HashMap<>();
     long[] ids = {1L, 2L, 3L};
     for (long id: ids)
     {
@@ -124,21 +124,21 @@ public class TestCollectionRequestUtil
     CompoundKey c2 = new CompoundKey().append(key1, 3L).append(key2, 4L);
     CompoundKey[] keys = {c1, c2};
 
-    Map<String, CompoundKey.TypeInfo> fieldTypes = new HashMap<String, CompoundKey.TypeInfo>();
+    Map<String, CompoundKey.TypeInfo> fieldTypes = new HashMap<>();
     fieldTypes.put(key1, new CompoundKey.TypeInfo(Long.class, Long.class));
     fieldTypes.put(key2, new CompoundKey.TypeInfo(Long.class, Long.class));
 
     @SuppressWarnings("rawtypes")
     KeyValueRecordFactory<CompoundKey, TestRecord> factory =
-        new KeyValueRecordFactory<CompoundKey, TestRecord>(CompoundKey.class,
-                                                           null,
-                                                           null,
-                                                           fieldTypes,
-                                                           TestRecord.class);
+        new KeyValueRecordFactory<>(CompoundKey.class,
+            null,
+            null,
+            fieldTypes,
+            TestRecord.class);
     @SuppressWarnings("rawtypes")
-    CollectionRequest<KeyValueRecord> collectionRequest = new CollectionRequest<KeyValueRecord>(KeyValueRecord.class);
+    CollectionRequest<KeyValueRecord> collectionRequest = new CollectionRequest<>(KeyValueRecord.class);
 
-    Map<CompoundKey, TestRecord> inputs = new HashMap<CompoundKey, TestRecord>();
+    Map<CompoundKey, TestRecord> inputs = new HashMap<>();
     for (CompoundKey key: keys)
     {
       TestRecord testRecord = buildTestRecord(1L, "message" + key.hashCode());
@@ -174,20 +174,20 @@ public class TestCollectionRequestUtil
     TestRecord kp1 = buildTestRecord(2, "key params 1");
     TestRecord kk2 = buildTestRecord(3, "key key 2");
     TestRecord kp2 = buildTestRecord(4, "key params 2");
-    ComplexResourceKey<TestRecord, TestRecord> key1 = new ComplexResourceKey<TestRecord, TestRecord>(kk1, kp1);
-    ComplexResourceKey<TestRecord, TestRecord> key2 = new ComplexResourceKey<TestRecord, TestRecord>(kk2, kp2);
+    ComplexResourceKey<TestRecord, TestRecord> key1 = new ComplexResourceKey<>(kk1, kp1);
+    ComplexResourceKey<TestRecord, TestRecord> key2 = new ComplexResourceKey<>(kk2, kp2);
     ComplexResourceKey keys[] = {key1, key2};
 
     KeyValueRecordFactory<ComplexResourceKey, TestRecord> factory =
-        new KeyValueRecordFactory<ComplexResourceKey, TestRecord>(ComplexResourceKey.class,
-                                     TestRecord.class,
-                                     TestRecord.class,
-                                     null,
-                                     TestRecord.class);
+        new KeyValueRecordFactory<>(ComplexResourceKey.class,
+            TestRecord.class,
+            TestRecord.class,
+            null,
+            TestRecord.class);
 
-    CollectionRequest<KeyValueRecord> collectionRequest = new CollectionRequest<KeyValueRecord>(KeyValueRecord.class);
+    CollectionRequest<KeyValueRecord> collectionRequest = new CollectionRequest<>(KeyValueRecord.class);
     Map<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> inputs =
-        new HashMap<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>();
+        new HashMap<>();
     for (ComplexResourceKey key: keys)
     {
       TestRecord testRecord = buildTestRecord(1L, "foo");

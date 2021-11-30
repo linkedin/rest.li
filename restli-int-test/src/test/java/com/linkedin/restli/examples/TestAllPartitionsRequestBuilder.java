@@ -114,20 +114,20 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest
   public void testSendAllPartitionsRequests(RestliRequestOptions options, RingFactory<URI> ringFactory) throws ServiceUnavailableException, URISyntaxException, RestException, InterruptedException
   {
     final int PARTITION_NUM = 5;
-    List<URI> expectedUris = new ArrayList<URI>();
+    List<URI> expectedUris = new ArrayList<>();
     ConsistentHashKeyMapper mapper = getKeyToHostMapper(PARTITION_NUM, expectedUris, ringFactory);
-    AllPartitionsRequestBuilder<Greeting> searchRB = new AllPartitionsRequestBuilder<Greeting>(mapper);
-    ActionRequestBuilder<Long, Greeting> builder = new ActionRequestBuilder<Long, Greeting>(TEST_URI,
-                                                                                            Greeting.class,
-                                                                                            _COLL_SPEC,
-                                                                                            options);
+    AllPartitionsRequestBuilder<Greeting> searchRB = new AllPartitionsRequestBuilder<>(mapper);
+    ActionRequestBuilder<Long, Greeting> builder = new ActionRequestBuilder<>(TEST_URI,
+        Greeting.class,
+        _COLL_SPEC,
+        options);
     ActionRequest<Greeting> request = builder.name("updateTone").id(1L).
-        setParam(new FieldDef<Tone>("newTone", Tone.class, DataTemplateUtil.getSchema(Tone.class)), Tone.FRIENDLY).build();
+        setParam(new FieldDef<>("newTone", Tone.class, DataTemplateUtil.getSchema(Tone.class)), Tone.FRIENDLY).build();
 
-    final Map<String, Greeting> results = new ConcurrentHashMap<String, Greeting>();
+    final Map<String, Greeting> results = new ConcurrentHashMap<>();
     final CountDownLatch latch = new CountDownLatch(PARTITION_NUM);
-    final List<Throwable> errors = new ArrayList<Throwable>();
-    final List<Greeting> responses = new ArrayList<Greeting>();
+    final List<Throwable> errors = new ArrayList<>();
+    final List<Greeting> responses = new ArrayList<>();
 
     Callback<Response<Greeting>> cb = new Callback<Response<Greeting>>()
     {
@@ -170,18 +170,18 @@ public class TestAllPartitionsRequestBuilder extends RestLiIntegrationTest
 
   private ConsistentHashKeyMapper getKeyToHostMapper(int partitionNum, List<URI> expectedUris, RingFactory<URI> ringFactory) throws  URISyntaxException
   {
-    Map<URI, Map<Integer, PartitionData>> partitionDescriptions = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> partitionDescriptions = new HashMap<>();
 
     for (int i = 0; i < partitionNum; i++)
     {
       final URI foo = new URI("http://foo" + i + ".com");
       expectedUris.add(foo);
-      Map<Integer, PartitionData> foo1Data = new HashMap<Integer, PartitionData>();
+      Map<Integer, PartitionData> foo1Data = new HashMap<>();
       foo1Data.put(i, new PartitionData(1.0));
       partitionDescriptions.put(foo, foo1Data);
     }
 
-    List<LoadBalancerState.SchemeStrategyPair> orderedStrategies = new ArrayList<LoadBalancerState.SchemeStrategyPair>();
+    List<LoadBalancerState.SchemeStrategyPair> orderedStrategies = new ArrayList<>();
     LoadBalancerStrategy strategy = new ConsistentHashKeyMapperTest.TestLoadBalancerStrategy(partitionDescriptions, ringFactory);
     orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair("http", strategy));
 

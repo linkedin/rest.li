@@ -659,6 +659,44 @@ public class TestLoadBalancerStrategy
     assertEquals(pointsMapPartition1.get(testRunner.getUri(2)).intValue(), HEALTHY_POINTS);
   }
 
+  @Test(dataProvider = "raceConditionScenario")
+  public void testRaceCondition(loadBalancerStrategyType type, int numTrackerClients)
+  {
+    Map<String, String> degraderProperties = new HashMap<>();
+    degraderProperties.put(PropertyKeys.DEGRADER_INITIAL_DROP_RATE, "0.99");
+    degraderProperties.put(PropertyKeys.DEGRADER_SLOW_START_THRESHOLD, "0.16");
+    D2RelativeStrategyProperties relativeProperties = new D2RelativeStrategyProperties()
+        .setSlowStartThreshold(0.16).setInitialHealthScore(0.01);
+
+    LoadBalancerStrategyTestRunnerBuilder builder =
+        new LoadBalancerStrategyTestRunnerBuilder(type, DEFAULT_SERVICE_NAME, 10)
+            .setConstantRequestCount(30)
+            .setNumIntervals(50)
+            .setConstantLatency(Arrays.asList(HEALTHY_HOST_CONSTANT_LATENCY, HEALTHY_HOST_CONSTANT_LATENCY,
+                HEALTHY_HOST_CONSTANT_LATENCY, HEALTHY_HOST_CONSTANT_LATENCY, HEALTHY_HOST_CONSTANT_LATENCY,
+                HEALTHY_HOST_CONSTANT_LATENCY, HEALTHY_HOST_CONSTANT_LATENCY, HEALTHY_HOST_CONSTANT_LATENCY,
+                HEALTHY_HOST_CONSTANT_LATENCY, HEALTHY_HOST_CONSTANT_LATENCY));
+    LoadBalancerStrategyTestRunner testRunner = type == loadBalancerStrategyType.DEGRADER
+        ? builder.setDegraderStrategies(new HashMap<>(), degraderProperties).build()
+        : builder.setRelativeLoadBalancerStrategies(relativeProperties).build();
+
+    testRunner.runWaitInconsistentTrackerClients(numTrackerClients);
+    assertEquals(testRunner.getPoints().size(), 10);
+    assertEquals(testRunner.getPoints().get(testRunner.getUri(0)).intValue(), 100);
+  }
+
+  @DataProvider(name = "raceConditionScenario")
+  public Object[][] getRaceConditionScenario()
+  {
+    return new Object[][]
+        {
+            {loadBalancerStrategyType.DEGRADER, 0},
+            {loadBalancerStrategyType.DEGRADER, 5},
+            {loadBalancerStrategyType.RELATIVE, 0},
+            {loadBalancerStrategyType.RELATIVE, 5},
+        };
+  }
+
   private static int getLowestPoints(List<Integer> pointHistory)
   {
     return pointHistory.stream().min(Integer::compareTo)

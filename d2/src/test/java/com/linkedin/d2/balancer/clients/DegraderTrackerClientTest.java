@@ -61,7 +61,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-public class TrackerClientTest
+public class DegraderTrackerClientTest
 {
   @Test(groups = { "small", "back-end" })
   public void testClientStreamRequest() throws URISyntaxException
@@ -79,9 +79,8 @@ public class TrackerClientTest
     Assert.assertEquals(client.getTransportClient(), wrappedClient);
 
     StreamRequest streamRequest = new StreamRequestBuilder(uri).build(EntityStreams.emptyStream());
-    Map<String, String> restWireAttrs = new HashMap<String, String>();
-    TestTransportCallback<StreamResponse> restCallback =
-        new TestTransportCallback<StreamResponse>();
+    Map<String, String> restWireAttrs = new HashMap<>();
+    TestTransportCallback<StreamResponse> restCallback = new TestTransportCallback<>();
 
     client.streamRequest(streamRequest, new RequestContext(), restWireAttrs, restCallback);
 
@@ -106,9 +105,8 @@ public class TrackerClientTest
     Assert.assertEquals(client.getTransportClient(), wrappedClient);
 
     RestRequest restRequest = new RestRequestBuilder(uri).build();
-    Map<String, String> restWireAttrs = new HashMap<String, String>();
-    TestTransportCallback<RestResponse> restCallback =
-        new TestTransportCallback<RestResponse>();
+    Map<String, String> restWireAttrs = new HashMap<>();
+    TestTransportCallback<RestResponse> restCallback = new TestTransportCallback<>();
 
     client.restRequest(restRequest, new RequestContext(), restWireAttrs, restCallback);
 

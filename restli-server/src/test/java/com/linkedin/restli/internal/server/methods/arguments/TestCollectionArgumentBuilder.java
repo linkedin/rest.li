@@ -138,13 +138,13 @@ public class TestCollectionArgumentBuilder
                 getFinderParams(),
                 finderContextParams,
                 null,
-                new Object[]{new PagingContext(33, 444), new Integer(777), null}
+                new Object[]{new PagingContext(33, 444), Integer.valueOf(777), null}
             },
             {
                 getFinderParams(),
                 finderContextParamsWithOptionalString,
                 null,
-                new Object[]{new PagingContext(33, 444), new Integer(777), "someString"}
+                new Object[]{new PagingContext(33, 444), Integer.valueOf(777), "someString"}
             },
             {
                 finderWithAssocKeyParams,

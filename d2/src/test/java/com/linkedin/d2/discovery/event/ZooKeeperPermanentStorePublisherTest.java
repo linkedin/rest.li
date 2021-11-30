@@ -39,11 +39,11 @@ public class ZooKeeperPermanentStorePublisherTest extends ZooKeeperStorePublishe
   @Override
   protected ZooKeeperStore<String> getStore()
   {
-    ZooKeeperPermanentStore<String> store = new ZooKeeperPermanentStore<String>(
+    ZooKeeperPermanentStore<String> store = new ZooKeeperPermanentStore<>(
             getConnection(), new PropertyStringSerializer(), "/testing/testPath");
     try
     {
-      FutureCallback<None> callback = new FutureCallback<None>();
+      FutureCallback<None> callback = new FutureCallback<>();
       store.start(callback);
       callback.get(30, TimeUnit.SECONDS);
     }

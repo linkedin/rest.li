@@ -67,7 +67,7 @@ public class TestStreamEcho extends AbstractServiceTest
 
   protected Map<URI, StreamRequestHandler> getHandlers()
   {
-    Map<URI, StreamRequestHandler> handlers = new HashMap<URI, StreamRequestHandler>();
+    Map<URI, StreamRequestHandler> handlers = new HashMap<>();
     handlers.put(ECHO_URI, new SteamEchoHandler());
     handlers.put(ASYNC_ECHO_URI, new SteamAsyncEchoHandler(_scheduler));
     handlers.put(DELAYED_ECHO_URI, new StreamRequestHandlerAdapter(new DelayedStoreAndForwardEchoHandler()));
@@ -115,7 +115,7 @@ public class TestStreamEcho extends AbstractServiceTest
 
     final AtomicInteger status = new AtomicInteger(-1);
     final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
+    final AtomicReference<Throwable> error = new AtomicReference<>();
 
     final Callback<None> readerCallback = getReaderCallback(latch, error);
 
@@ -140,7 +140,7 @@ public class TestStreamEcho extends AbstractServiceTest
 
     final AtomicInteger status = new AtomicInteger(-1);
     final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
+    final AtomicReference<Throwable> error = new AtomicReference<>();
 
     final Callback<None> readerCallback = getReaderCallback(latch, error);
 

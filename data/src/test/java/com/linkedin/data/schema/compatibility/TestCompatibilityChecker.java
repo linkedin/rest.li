@@ -141,12 +141,12 @@ public class TestCompatibilityChecker
   @SuppressWarnings("unchecked")
   private static final <T> List<T> list(T...args)
   {
-    return new ArrayList<T>(Arrays.asList(args));
+    return new ArrayList<>(Arrays.asList(args));
   }
 
   private static final <T> List<T> union(List<T> arg1, List<T> arg2)
   {
-    ArrayList<T> result = new ArrayList<T>(arg1);
+    ArrayList<T> result = new ArrayList<>(arg1);
     result.addAll(arg2);
     return result;
   }
@@ -155,7 +155,7 @@ public class TestCompatibilityChecker
   @SuppressWarnings("unchecked")
   private static final <T> List<T> add(List<T> arg, T... args)
   {
-    ArrayList<T> result = new ArrayList<T>(arg);
+    ArrayList<T> result = new ArrayList<>(arg);
     result.addAll(Arrays.asList(args));
     return result;
   }
@@ -164,7 +164,7 @@ public class TestCompatibilityChecker
   @SuppressWarnings("unchecked")
   private static final <T> List<T> subtract(List<T> arg, T... args)
   {
-    ArrayList<T> result = new ArrayList<T>(arg);
+    ArrayList<T> result = new ArrayList<>(arg);
     result.removeAll(Arrays.asList(args));
     return result;
   }
@@ -964,7 +964,7 @@ public class TestCompatibilityChecker
       @SuppressWarnings("unchecked")
       List<CompatibilityOptions> compatibilityOptions =
         row[i] instanceof CompatibilityOptions ?
-          new ArrayList<CompatibilityOptions>(Arrays.asList((CompatibilityOptions) row[i++])) :
+          new ArrayList<>(Arrays.asList((CompatibilityOptions) row[i++])) :
           (List<CompatibilityOptions>) row[i++];
       boolean hasError = i < row.length ? (Boolean) row[i++] : false;
 

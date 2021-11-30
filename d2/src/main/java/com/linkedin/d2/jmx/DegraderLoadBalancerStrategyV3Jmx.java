@@ -82,7 +82,7 @@ public class DegraderLoadBalancerStrategyV3Jmx implements DegraderLoadBalancerSt
   public String getUnhealthyClientsPoints(int partitionId)
   {
     int pointsPerWeight = _strategy.getConfig().getPointsPerWeight();
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     for (Map.Entry<URI, Integer> entry : _strategy.getState().getPartitionState(partitionId).getPointsMap().entrySet())
     {
       if (entry.getValue() < pointsPerWeight)

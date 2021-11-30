@@ -17,6 +17,7 @@
 package com.linkedin.restli.examples.greetings.server;
 
 
+import com.linkedin.restli.examples.greetings.api.Tone;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -70,20 +71,22 @@ public class CustomTypesResource3 extends AssociationResourceTemplate<Greeting>
   public BatchUpdateResult<CompoundKey, Greeting> batchUpdate(BatchUpdateRequest<CompoundKey, Greeting> entities)
   {
     Set<CompoundKey> keys = entities.getData().keySet();
-    Map<CompoundKey, UpdateResponse> responseMap = new HashMap<CompoundKey, UpdateResponse>();
-    Map<CompoundKey, RestLiServiceException> errorMap = new HashMap<CompoundKey, RestLiServiceException>();
+    Map<CompoundKey, UpdateResponse> responseMap = new HashMap<>();
+    Map<CompoundKey, RestLiServiceException> errorMap = new HashMap<>();
 
     for(CompoundKey key : keys)
     {
       responseMap.put(key, new UpdateResponse(HttpStatus.S_201_CREATED));
     }
-    return new BatchUpdateResult<CompoundKey, Greeting>(responseMap);
+    return new BatchUpdateResult<>(responseMap);
   }
 
   @Finder("dateOnly")
   public List<Greeting> dateOnly(@AssocKeyParam(value="dateId", typeref=DateRef.class) Date dateId)
   {
-    return Collections.emptyList();
+    return Collections.singletonList(new Greeting().setId(dateId.getTime())
+        .setMessage("date Only finder")
+        .setTone(Tone.FRIENDLY));
   }
 
 }

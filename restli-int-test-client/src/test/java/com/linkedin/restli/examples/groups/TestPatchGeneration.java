@@ -88,8 +88,8 @@ public class TestPatchGeneration
     //The ordering might be different but the URI should look something like:
     //"id,description,name";
     final String actualEncodedMaskURI = URIMaskUtil.encodeMaskForURI(mask);
-    final Set<String> maskURISet = new HashSet<String>(Arrays.asList(actualEncodedMaskURI.split(",")));
-    final Set<String> expectedURISet = new HashSet<String>();
+    final Set<String> maskURISet = new HashSet<>(Arrays.asList(actualEncodedMaskURI.split(",")));
+    final Set<String> expectedURISet = new HashSet<>();
     expectedURISet.add("id");
     expectedURISet.add("description");
     expectedURISet.add("name");
@@ -138,8 +138,8 @@ public class TestPatchGeneration
     //The ordering might be different but the URI should look something like:
     //"-id,owner:(-id),-badge";
     final String actualEncodedMaskURI = URIMaskUtil.encodeMaskForURI(mask);
-    final Set<String> maskURISet = new HashSet<String>(Arrays.asList(actualEncodedMaskURI.split(",")));
-    final Set<String> expectedURISet = new HashSet<String>();
+    final Set<String> maskURISet = new HashSet<>(Arrays.asList(actualEncodedMaskURI.split(",")));
+    final Set<String> expectedURISet = new HashSet<>();
     expectedURISet.add("-id");
     expectedURISet.add("owner:(-id)");
     expectedURISet.add("-badge");

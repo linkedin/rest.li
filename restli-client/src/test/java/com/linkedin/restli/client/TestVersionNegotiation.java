@@ -196,7 +196,7 @@ public class TestVersionNegotiation
                                                          String versionPercentageInput,
                                                          ProtocolVersion expectedAnnouncedVersion)
   {
-      Map<String, Object> properties = new HashMap<String, Object>();
+      Map<String, Object> properties = new HashMap<>();
       properties.put(RestConstants.RESTLI_PROTOCOL_VERSION_PROPERTY, versionInput);
       properties.put(RestConstants.RESTLI_PROTOCOL_VERSION_PERCENTAGE_PROPERTY, versionPercentageInput);
       ProtocolVersion announcedVersion = RestClient.getAnnouncedVersion(properties);

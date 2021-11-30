@@ -51,7 +51,8 @@ public class QuarantineManager {
   private static final double MIN_ZOOKEEPER_SERVER_WEIGHT = 0.0;
   private static final int MAX_RETRIES_TO_CHECK_QUARANTINE = 5;
   private static final int MAX_HOSTS_TO_PRE_CHECK_QUARANTINE = 10;
-  private static final long MIN_QUANRANTINE_LATENCY_MS = 300;
+  private static final long MIN_QUARANTINE_LATENCY_MS = 300;
+  private static final long MAX_QUARANTINE_LATENCY_MS = 1000;
 
   private final String _serviceName;
   private final String _servicePath;
@@ -99,7 +100,9 @@ public class QuarantineManager {
       PartitionState oldPartitionState, long clusterAvgLatency)
   {
     long quarantineLatency = Math.max((long) (clusterAvgLatency * _relativeLatencyLowThresholdFactor),
-        MIN_QUANRANTINE_LATENCY_MS);
+        MIN_QUARANTINE_LATENCY_MS);
+    quarantineLatency = Math.min(MAX_QUARANTINE_LATENCY_MS, quarantineLatency);
+
     long currentTime = _clock.currentTimeMillis();
     // Step 0: Pre-check if quarantine method works for clients, if it works, we will mark _quarantineEnabled as true
     preCheckQuarantine(newPartitionState, quarantineLatency);
@@ -219,11 +222,11 @@ public class QuarantineManager {
    *
    * @param newPartitionState The new state of the partition
    * @param oldPartitionState The old state of the partition
-   * @param clusterAvgLatency The average latency of the cluster of last interval
+   * @param quarantineLatency The latency threshold for D2 quarantine
    */
   private void enrollNewQuarantineAndRecovery(
       PartitionState newPartitionState,
-      PartitionState oldPartitionState, long clusterAvgLatency, long currentTime)
+      PartitionState oldPartitionState, long quarantineLatency, long currentTime)
   {
     int partitionId = newPartitionState.getPartitionId();
     Map<TrackerClient, LoadBalancerQuarantine> quarantineMap = newPartitionState.getQuarantineMap();
@@ -237,7 +240,7 @@ public class QuarantineManager {
       double serverWeight = trackerClient.getPartitionWeight(partitionId);
       // Check and enroll quarantine map
       boolean isQuarantined = enrollClientInQuarantineMap(trackerClient, trackerClientState, serverWeight, quarantineMap,
-          quarantineHistory, newPartitionState.getTrackerClientStateMap().size(), clusterAvgLatency, currentTime);
+          quarantineHistory, newPartitionState.getTrackerClientStateMap().size(), quarantineLatency, currentTime);
 
       if (!isQuarantined)
       {
@@ -283,9 +286,7 @@ public class QuarantineManager {
     }
     else if (trackerClientState.isUnhealthy() || trackerClientState.getHealthScore() > FAST_RECOVERY_HEALTH_SCORE_THRESHOLD)
     {
-      /**
-       * Remove the client from the map if the client is unhealthy or he health score is beyond 0.5
-       */
+      // Remove the client from the map if the client is unhealthy or the health score is beyond 0.5
       recoverySet.remove(trackerClient);
     }
   }
@@ -377,7 +378,8 @@ public class QuarantineManager {
     // Also enroll new client into the recovery set if slow start is enabled
     if (!recoverySet.contains(trackerClient)
         && !oldPartitionState.getTrackerClients().contains(trackerClient)
-        && _slowStartEnabled)
+        && _slowStartEnabled
+        && !trackerClient.doNotSlowStart())
     {
       recoverySet.add(trackerClient);
     }

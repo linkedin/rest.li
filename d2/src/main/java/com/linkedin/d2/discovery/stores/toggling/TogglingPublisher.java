@@ -40,14 +40,14 @@ public class TogglingPublisher<T>
   private final PublisherWithStatus<T> _primary;
   private final PublisherWithStatus<T> _backup;
   private final PropertyEventBus<T>       _eventBus;
-  private final PropertyEventBus<T>       _nullBus = new NullEventBus<T>();
+  private final PropertyEventBus<T>       _nullBus = new NullEventBus<>();
 
   public TogglingPublisher(PropertyEventPublisher<T> primary,
                            PropertyStore<T> backup,
                            PropertyEventBus<T> eventBus)
   {
-    _primary = new PublisherWithStatus<T>(primary);
-    _backup = new PublisherWithStatus<T>(new StoreEventPublisher<T>(backup));
+    _primary = new PublisherWithStatus<>(primary);
+    _backup = new PublisherWithStatus<>(new StoreEventPublisher<>(backup));
     _eventBus = eventBus;
   }
 

@@ -72,16 +72,16 @@ public class TestBatchCreateResponseBuilder
   @DataProvider(name = "createResultBuilderTestData")
   public Object[][] createResultBuilderTestData()
   {
-    Map<String, AlternativeKey<?, ?>> alternativeKeyMap = new HashMap<String, AlternativeKey<?, ?>>();
-    alternativeKeyMap.put("alt", new AlternativeKey<String, Long>(new TestKeyCoercer(), String.class, new StringDataSchema()));
+    Map<String, AlternativeKey<?, ?>> alternativeKeyMap = new HashMap<>();
+    alternativeKeyMap.put("alt", new AlternativeKey<>(new TestKeyCoercer(), String.class, new StringDataSchema()));
 
-    List<CreateIdStatus<Long>> expectedStatuses = new ArrayList<CreateIdStatus<Long>>(2);
-    expectedStatuses.add(new CreateIdStatus<Long>(201, 1L, "/foo/1", null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
-    expectedStatuses.add(new CreateIdStatus<Long>(201, 2L, "/foo/2", null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
+    List<CreateIdStatus<Long>> expectedStatuses = new ArrayList<>(2);
+    expectedStatuses.add(new CreateIdStatus<>(201, 1L, "/foo/1", null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
+    expectedStatuses.add(new CreateIdStatus<>(201, 2L, "/foo/2", null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
 
-    List<CreateIdStatus<String>> expectedAltStatuses = new ArrayList<CreateIdStatus<String>>(2);
-    expectedAltStatuses.add(new CreateIdStatus<String>(201, "Alt1", "/foo/Alt1?altkey=alt", null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
-    expectedAltStatuses.add(new CreateIdStatus<String>(201, "Alt2", "/foo/Alt2?altkey=alt", null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
+    List<CreateIdStatus<String>> expectedAltStatuses = new ArrayList<>(2);
+    expectedAltStatuses.add(new CreateIdStatus<>(201, "Alt1", "/foo/Alt1?altkey=alt", null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
+    expectedAltStatuses.add(new CreateIdStatus<>(201, "Alt2", "/foo/Alt2?altkey=alt", null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
 
     return new Object[][]
         {
@@ -101,7 +101,7 @@ public class TestBatchCreateResponseBuilder
   {
     List<CreateResponse> createResponses = Arrays.asList(new CreateResponse(1L), new CreateResponse(2L));
     BatchCreateResult<Long, Foo> results =
-        new BatchCreateResult<Long, Foo>(createResponses);
+        new BatchCreateResult<>(createResponses);
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(alternativeKeyMap);
@@ -122,14 +122,14 @@ public class TestBatchCreateResponseBuilder
 
     Assert.assertFalse(responseData.getResponseEnvelope().isGetAfterCreate());
 
-    List<com.linkedin.restli.common.CreateIdStatus<Object>> items = new ArrayList<CreateIdStatus<Object>>();
+    List<com.linkedin.restli.common.CreateIdStatus<Object>> items = new ArrayList<>();
     for (BatchCreateResponseEnvelope.CollectionCreateResponseItem item : responseData.getResponseEnvelope()
         .getCreateResponses())
     {
       items.add((CreateIdStatus<Object>) item.getRecord());
     }
 
-    Assert.assertEquals(restResponse.getEntity(), new BatchCreateIdResponse<Object>(items));
+    Assert.assertEquals(restResponse.getEntity(), new BatchCreateIdResponse<>(items));
     Assert.assertEquals(expectedStatuses, items);
     Assert.assertEquals(restResponse.getStatus(), HttpStatus.S_200_OK);
   }
@@ -137,23 +137,23 @@ public class TestBatchCreateResponseBuilder
   @DataProvider(name = "createKVResultBuilderTestData")
   public Object[][] createKVResultBuilderTestData()
   {
-    Map<String, AlternativeKey<?, ?>> alternativeKeyMap = new HashMap<String, AlternativeKey<?, ?>>();
-    alternativeKeyMap.put("alt", new AlternativeKey<String, Long>(new TestKeyCoercer(), String.class, new StringDataSchema()));
+    Map<String, AlternativeKey<?, ?>> alternativeKeyMap = new HashMap<>();
+    alternativeKeyMap.put("alt", new AlternativeKey<>(new TestKeyCoercer(), String.class, new StringDataSchema()));
 
     Foo foo1 = new Foo();
     foo1.setStringField("foo1");
     Foo foo2 = new Foo();
     foo2.setStringField("foo2");
 
-    List<CreateIdEntityStatus<Long, Foo>> expectedResponses = new ArrayList<CreateIdEntityStatus<Long, Foo>>(2);
-    expectedResponses.add(new CreateIdEntityStatus<Long, Foo>(201, 1L, foo1, "/foo/1", null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
-    expectedResponses.add(new CreateIdEntityStatus<Long, Foo>(201, 2L, foo2, "/foo/2", null,
+    List<CreateIdEntityStatus<Long, Foo>> expectedResponses = new ArrayList<>(2);
+    expectedResponses.add(new CreateIdEntityStatus<>(201, 1L, foo1, "/foo/1", null, AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
+    expectedResponses.add(new CreateIdEntityStatus<>(201, 2L, foo2, "/foo/2", null,
         AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
 
-    List<CreateIdEntityStatus<String, Foo>> expectedAltResponses = new ArrayList<CreateIdEntityStatus<String, Foo>>(2);
-    expectedAltResponses.add(new CreateIdEntityStatus<String, Foo>(201, "Alt1", foo1, "/foo/Alt1?altkey=alt",null,
+    List<CreateIdEntityStatus<String, Foo>> expectedAltResponses = new ArrayList<>(2);
+    expectedAltResponses.add(new CreateIdEntityStatus<>(201, "Alt1", foo1, "/foo/Alt1?altkey=alt", null,
         AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
-    expectedAltResponses.add(new CreateIdEntityStatus<String, Foo>(201, "Alt2", foo2, "/foo/Alt2?altkey=alt",null,
+    expectedAltResponses.add(new CreateIdEntityStatus<>(201, "Alt2", foo2, "/foo/Alt2?altkey=alt", null,
         AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()));
 
     return new Object[][]
@@ -168,14 +168,14 @@ public class TestBatchCreateResponseBuilder
                                         Map<String, AlternativeKey<?, ?>> alternativeKeyMap,
                                         List<CreateIdEntityStatus<?, Foo>> expectedResponses) throws URISyntaxException
   {
-    List<CreateKVResponse<Long, Foo>> createKVResponses = new ArrayList<CreateKVResponse<Long, Foo>>(2);
+    List<CreateKVResponse<Long, Foo>> createKVResponses = new ArrayList<>(2);
     Foo foo1 = new Foo();
     foo1.setStringField("foo1");
     Foo foo2 = new Foo();
     foo2.setStringField("foo2");
-    createKVResponses.add(new CreateKVResponse<Long, Foo>(1L, foo1));
-    createKVResponses.add(new CreateKVResponse<Long, Foo>(2L, foo2));
-    BatchCreateKVResult<Long, Foo> results = new BatchCreateKVResult<Long, Foo>(createKVResponses);
+    createKVResponses.add(new CreateKVResponse<>(1L, foo1));
+    createKVResponses.add(new CreateKVResponse<>(2L, foo2));
+    BatchCreateKVResult<Long, Foo> results = new BatchCreateKVResult<>(createKVResponses);
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(alternativeKeyMap);
@@ -198,7 +198,7 @@ public class TestBatchCreateResponseBuilder
 
     Assert.assertTrue(responseData.getResponseEnvelope().isGetAfterCreate());
 
-    List<CreateIdEntityStatus<Object, Foo>> items = new ArrayList<CreateIdEntityStatus<Object, Foo>>();
+    List<CreateIdEntityStatus<Object, Foo>> items = new ArrayList<>();
     for (BatchCreateResponseEnvelope.CollectionCreateResponseItem item : responseData.getResponseEnvelope()
         .getCreateResponses())
     {
@@ -331,12 +331,12 @@ public class TestBatchCreateResponseBuilder
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(null);
     RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
 
-    List<CreateKVResponse<Long, Foo>> createKVResponses = new ArrayList<CreateKVResponse<Long, Foo>>();
+    List<CreateKVResponse<Long, Foo>> createKVResponses = new ArrayList<>();
     Foo foo = new Foo();
     foo.setStringField("foo1");
     foo.setFruitsField(Fruits.APPLE);
-    createKVResponses.add(new CreateKVResponse<Long, Foo>(1L, foo));
-    BatchCreateKVResult<Long, Foo> results = new BatchCreateKVResult<Long, Foo>(createKVResponses);
+    createKVResponses.add(new CreateKVResponse<>(1L, foo));
+    BatchCreateKVResult<Long, Foo> results = new BatchCreateKVResult<>(createKVResponses);
 
     BatchCreateResponseBuilder responseBuilder = new BatchCreateResponseBuilder(new ErrorResponseBuilder());
     RestRequest request = new RestRequestBuilder(new URI("/foo")).build();

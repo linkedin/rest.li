@@ -80,12 +80,12 @@ public class QueryParamsDataMap
     Map<String, List<String>> queryStringParamsMap = queryString(dataMap);
 
     StringBuilder sb = new StringBuilder();
-    List<String> keys = new ArrayList<String>(queryStringParamsMap.keySet());
+    List<String> keys = new ArrayList<>(queryStringParamsMap.keySet());
     Collections.sort(keys);
 
     for (String key : keys)
     {
-      List<String> values = new ArrayList<String>(queryStringParamsMap.get(key));
+      List<String> values = new ArrayList<>(queryStringParamsMap.get(key));
       Collections.sort(values);
       for (String value : values)
       {
@@ -114,7 +114,7 @@ public class QueryParamsDataMap
    * @return the map of query string parameters.
    */
   public static Map<String, List<String>> queryString(DataMap dataMap){
-    Map<String, List<String>> result = new HashMap<String, List<String>>();
+    Map<String, List<String>> result = new HashMap<>();
     DataMap processedDataMap = processProjections(dataMap, result);
     iterate("", processedDataMap, result);
     return result;
@@ -230,7 +230,7 @@ public class QueryParamsDataMap
       }
       else
       {
-        result.put(keyPrefix, new ArrayList<String>(Collections.singletonList(value.toString())));
+        result.put(keyPrefix, new ArrayList<>(Collections.singletonList(value.toString())));
       }
     }
   }
@@ -403,7 +403,7 @@ public class QueryParamsDataMap
       DataList result = new DataList();
       ListMap listMap = (ListMap)map;
 
-      List<Integer> sortedKeys = new ArrayList<Integer>(listMap.keySet());
+      List<Integer> sortedKeys = new ArrayList<>(listMap.keySet());
       Collections.sort(sortedKeys);
 
       for (Integer key : sortedKeys)
@@ -429,13 +429,13 @@ public class QueryParamsDataMap
   public static void addSortedParams(UriBuilder uriBuilder,
                                      Map<String, List<String>> params)
   {
-    List<String> keysList = new ArrayList<String>(params.keySet());
+    List<String> keysList = new ArrayList<>(params.keySet());
     Collections.sort(keysList);
 
     for (String key : keysList)
     {
       // Create a new list to make sure it's modifiable and can be sorted.
-      List<String> values = new ArrayList<String>(params.get(key));
+      List<String> values = new ArrayList<>(params.get(key));
       Collections.sort(values);
       for (String value : values)
       {

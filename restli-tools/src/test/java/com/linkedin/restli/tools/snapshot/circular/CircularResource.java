@@ -31,7 +31,7 @@ import com.linkedin.restli.tools.snapshot.circular.CircularTestDataModels.*;
 @RestLiActions(name="circular")
 public class CircularResource
 {
-  @Action(name="test")
+  @Action(name="test", readOnly = true)
   public void test(@ActionParam("a") A a,
                    @ActionParam("b") B b,
                    @ActionParam("c") C c,

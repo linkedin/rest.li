@@ -278,7 +278,7 @@ public class TestStreamingGreetings extends RestLiIntegrationTest
   private static class GreetingBlobReaderCallback implements RestLiAttachmentReaderCallback
   {
     private final CountDownLatch _countDownLatch;
-    private List<ByteString> _attachmentsRead = new ArrayList<ByteString>();
+    private List<ByteString> _attachmentsRead = new ArrayList<>();
 
     private GreetingBlobReaderCallback(CountDownLatch countDownLatch)
     {

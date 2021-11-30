@@ -16,9 +16,11 @@
 
 package com.linkedin.restli.tools.clientgen.fluentspec;
 
-import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -26,16 +28,21 @@ import java.util.List;
  */
 public class CompoundKeySpec
 {
-  private List<AssocKeySpec> assocKeySpecs = new ArrayList<>(4);
+  private Map<String, AssocKeySpec> _assocKeySpecs = new HashMap<>();
 
-  public List<AssocKeySpec> getAssocKeySpecs()
+  public Collection<AssocKeySpec> getAssocKeySpecs()
   {
-    return assocKeySpecs;
+    return _assocKeySpecs.values();
   }
 
   public void addAssocKeySpec(String name, String type, String bindingType, String declaredType)
   {
-    assocKeySpecs.add(new AssocKeySpec(name,type,bindingType,declaredType));
+    _assocKeySpecs.put(name, new AssocKeySpec(name, type, bindingType, declaredType));
+  }
+
+  public AssocKeySpec getAssocKeyByName(String name)
+  {
+    return _assocKeySpecs.get(name);
   }
 
   /**

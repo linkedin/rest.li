@@ -58,7 +58,7 @@ public class AttachmentUtils
       @Override
       public Map<String, String> dataSourceHeaders()
       {
-        final Map<String, String> dataSourceHeaders = new TreeMap<String, String>();
+        final Map<String, String> dataSourceHeaders = new TreeMap<>();
         dataSourceHeaders.put(RestConstants.HEADER_CONTENT_ID, streamingAttachment.getAttachmentID());
         return dataSourceHeaders;
       }
@@ -115,7 +115,7 @@ public class AttachmentUtils
               @Override
               public Map<String, String> dataSourceHeaders()
               {
-                final Map<String, String> dataSourceHeaders = new TreeMap<String, String>();
+                final Map<String, String> dataSourceHeaders = new TreeMap<>();
                 dataSourceHeaders.put(RestConstants.HEADER_CONTENT_ID, dataSourceWriter.getAttachmentID());
                 return dataSourceHeaders;
               }
@@ -179,7 +179,7 @@ public class AttachmentUtils
       @Override
       public Map<String, String> dataSourceHeaders()
       {
-        final Map<String, String> metadataHeaders = new TreeMap<String, String>();
+        final Map<String, String> metadataHeaders = new TreeMap<>();
         metadataHeaders.put(RestConstants.HEADER_CONTENT_TYPE, firstPartContentType);
         return metadataHeaders;
       }

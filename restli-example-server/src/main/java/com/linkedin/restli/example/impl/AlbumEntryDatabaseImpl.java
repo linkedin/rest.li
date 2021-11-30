@@ -57,5 +57,5 @@ public class AlbumEntryDatabaseImpl implements AlbumEntryDatabase
   // the database variables are set through dependency injection. Thus, the underlying
   // database instances and hash maps are the same for all sessions.
   // These shared variables need synchronization for consistency.
-  private final Map<CompoundKey, AlbumEntry> _data = new ConcurrentHashMap<CompoundKey, AlbumEntry>();
+  private final Map<CompoundKey, AlbumEntry> _data = new ConcurrentHashMap<>();
 }

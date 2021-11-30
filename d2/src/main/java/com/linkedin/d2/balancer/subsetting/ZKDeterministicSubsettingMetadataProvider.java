@@ -39,24 +39,24 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
 {
   private static final Logger _log = LoggerFactory.getLogger(ZKDeterministicSubsettingMetadataProvider.class);
   private final String _clusterName;
-  private final URI _nodeUri;
+  private final String _hostName;
   private final long _timeout;
   private final TimeUnit _unit;
 
   private final Object _lock = new Object();
 
   @GuardedBy("_lock")
-  private long _clusterGenerationId = -1;
+  private long _peerCluserVersion = -1;
   @GuardedBy("_lock")
   private DeterministicSubsettingMetadata _subsettingMetadata;
 
   public ZKDeterministicSubsettingMetadataProvider(String clusterName,
-                                      URI nodeUri,
+                                      String hostName,
                                       long timeout,
                                       TimeUnit unit)
   {
     _clusterName = clusterName;
-    _nodeUri = nodeUri;
+    _hostName = hostName;
     _timeout = timeout;
     _unit = unit;
   }
@@ -72,23 +72,24 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
 
       synchronized (_lock)
       {
-        if (uriItem.getVersion() != _clusterGenerationId)
+        if (uriItem.getVersion() != _peerCluserVersion)
         {
-          _clusterGenerationId = uriItem.getVersion();
+          _peerCluserVersion = uriItem.getVersion();
           UriProperties uriProperties = uriItem.getProperty();
           if (uriProperties != null)
           {
             // Sort the URIs so each client sees the same ordering
-            List<URI> sortedUris = uriProperties.getPartitionDesc().keySet().stream()
-                .filter(uri -> uri.getScheme().equals(_nodeUri.getScheme()))
+            List<String> sortedHosts = uriProperties.getPartitionDesc().keySet().stream()
+                .map(URI::getHost)
                 .sorted()
+                .distinct()
                 .collect(Collectors.toList());
 
-            int instanceId = sortedUris.indexOf(_nodeUri);
+            int instanceId = sortedHosts.indexOf(_hostName);
 
             if (instanceId >= 0)
             {
-              _subsettingMetadata = new DeterministicSubsettingMetadata(instanceId, sortedUris.size());
+              _subsettingMetadata = new DeterministicSubsettingMetadata(instanceId, sortedHosts.size(), _peerCluserVersion);
             }
             else
             {
@@ -99,6 +100,8 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
           {
             _subsettingMetadata = null;
           }
+
+          _log.debug("Got deterministic subsetting metadata for cluster {}: {}", _clusterName, _subsettingMetadata);
         }
       }
       metadataFutureCallback.onSuccess(_subsettingMetadata);
@@ -108,7 +111,7 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
     {
       return metadataFutureCallback.get(_timeout, _unit);
     } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      _log.warn("Failed to fetch deterministic subsetting metadata from ZooKeeper", e);
+      _log.warn("Failed to fetch deterministic subsetting metadata from ZooKeeper for cluster " + _clusterName, e);
       return null;
     }
   }

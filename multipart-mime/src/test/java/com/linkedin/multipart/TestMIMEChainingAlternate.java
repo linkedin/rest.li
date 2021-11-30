@@ -121,7 +121,7 @@ public class TestMIMEChainingAlternate extends AbstractMIMEUnitTest
     final CountDownLatch _latch;
     final Callback<StreamResponse> _callbackA;
     final Callback<StreamResponse> _callbackB;
-    final List<SinglePartMIMEFullReaderCallback> _singlePartMIMEReaderCallbacks = new ArrayList<SinglePartMIMEFullReaderCallback>();
+    final List<SinglePartMIMEFullReaderCallback> _singlePartMIMEReaderCallbacks = new ArrayList<>();
     int _currentPart = 0;
 
     ServerMultiPartMIMEAlternatorCallback(final CountDownLatch latch, final Callback<StreamResponse> callbackA,

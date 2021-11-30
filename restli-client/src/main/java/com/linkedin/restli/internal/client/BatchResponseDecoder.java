@@ -53,6 +53,6 @@ public class BatchResponseDecoder<T extends RecordTemplate> extends RestResponse
   @Override
   public BatchResponse<T> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
   {
-    return dataMap == null ? null : new BatchResponse<T>(dataMap, _elementClass);
+    return dataMap == null ? null : new BatchResponse<>(dataMap, _elementClass);
   }
 }

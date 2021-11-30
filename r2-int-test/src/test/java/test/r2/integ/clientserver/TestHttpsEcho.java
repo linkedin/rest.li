@@ -56,7 +56,7 @@ public class TestHttpsEcho extends AbstractEchoServiceTest
       Bootstrap.createURI(SslContextUtil.getHttpPortFromHttps(_port), Bootstrap.getEchoURI(), false), createClient());
 
     final String msg = "This is a simple http echo message";
-    final FutureCallback<String> callback = new FutureCallback<String>();
+    final FutureCallback<String> callback = new FutureCallback<>();
     client.echo(msg, callback);
 
     Assert.assertEquals(callback.get(), msg);

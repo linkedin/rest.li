@@ -132,7 +132,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
 
   private <U> ParSeqBasedCompletionStage<U> nextStageByComposingTask(Task<U> composedTask)
   {
-    return new ParSeqBasedCompletionStage<U>(_engine, _asyncExecutor, ensureFuture(wrapException(composedTask)));
+    return new ParSeqBasedCompletionStage<>(_engine, _asyncExecutor, ensureFuture(wrapException(composedTask)));
   }
 
   @Override
@@ -561,7 +561,7 @@ public class ParSeqBasedCompletionStage<T> implements CompletionStage<T>
     return _task.toCompletionStage().toCompletableFuture();
   }
 
-  protected Task<T> getTask()
+  public Task<T> getTask()
   {
     return _task;
   }

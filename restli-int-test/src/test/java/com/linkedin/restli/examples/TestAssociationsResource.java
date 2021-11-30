@@ -209,7 +209,7 @@ public class TestAssociationsResource extends RestLiIntegrationTest
     Request<Integer> request = builders.<Integer>action("Action").setPathKey("dest", "dest").setPathKey("src", "src").build();
     Integer integer = getClient().sendRequest(request).getResponse().getEntity();
 
-    Assert.assertEquals(integer, new Integer(1));
+    Assert.assertEquals(integer, Integer.valueOf(1));
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestSubBuilderDataProvider")
@@ -247,9 +247,9 @@ public class TestAssociationsResource extends RestLiIntegrationTest
   public void testBatchPartialUpdate(RootBuilderWrapper<CompoundKey, PatchRequest<Message>> builders)
       throws RemoteInvocationException
   {
-    Map<CompoundKey, PatchRequest<Message>> patches = new HashMap<CompoundKey, PatchRequest<Message>>();
-    patches.put(URL_COMPOUND_KEY, new PatchRequest<Message>());
-    patches.put(SIMPLE_COMPOUND_KEY, new PatchRequest<Message>());
+    Map<CompoundKey, PatchRequest<Message>> patches = new HashMap<>();
+    patches.put(URL_COMPOUND_KEY, new PatchRequest<>());
+    patches.put(SIMPLE_COMPOUND_KEY, new PatchRequest<>());
 
     Request<BatchKVResponse<CompoundKey, UpdateStatus>> request = builders.batchPartialUpdate().inputs(patches).build();
 

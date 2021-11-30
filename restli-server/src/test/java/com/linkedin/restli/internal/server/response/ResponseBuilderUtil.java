@@ -41,7 +41,7 @@ public class ResponseBuilderUtil
    */
   public static Map<String, String> getHeaders()
   {
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     headers.put(KEY1, VALUE1);
     headers.put(KEY2_LOWER, VALUE2);
     headers.put(KEY2_UPPER, VALUE2);

@@ -142,9 +142,9 @@ public class RestLiRequestDataImpl implements RestLiRequestData
 
     public Builder()
     {
-      _keys = new ArrayList<Object>();
-      _entities = new ArrayList<RecordTemplate>();
-      _keyEntityMap = new HashMap<Object, RecordTemplate>();
+      _keys = new ArrayList<>();
+      _entities = new ArrayList<>();
+      _keyEntityMap = new HashMap<>();
     }
 
     public Builder key(Object key)

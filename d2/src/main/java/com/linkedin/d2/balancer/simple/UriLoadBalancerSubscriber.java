@@ -20,16 +20,12 @@ import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.PartitionData;
-import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
-import com.linkedin.d2.balancer.strategies.degrader.DegraderConfigFactory;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
-import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
-import com.linkedin.util.degrader.DegraderImpl;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -80,7 +76,16 @@ class UriLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<UriProper
           {
             Map<Integer, PartitionData> partitionDataMap = uriProperties.getPartitionDataMap(uri);
             TrackerClient client = trackerClients.get(uri);
-            if (client == null || !client.getPartitionDataMap().equals(partitionDataMap))
+
+            Optional<Map<String, Object>> newUriSpecificProperties = Optional.ofNullable(uriProperties.getUriSpecificProperties())
+              .map(uriSpecificProperties -> uriSpecificProperties.get(uri));
+
+            Optional<Map<String, Object>> oldUriSpecificProperties = Optional.ofNullable(_simpleLoadBalancerState.getUriProperties(clusterName))
+              .map(LoadBalancerStateItem::getProperty)
+              .map(UriProperties::getUriSpecificProperties)
+              .map(uriSpecificProperties -> uriSpecificProperties.get(uri));
+
+            if (client == null || !client.getPartitionDataMap().equals(partitionDataMap) || !newUriSpecificProperties.equals(oldUriSpecificProperties))
             {
               client = _simpleLoadBalancerState.buildTrackerClient(uri, uriProperties, serviceName);
 

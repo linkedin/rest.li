@@ -26,6 +26,8 @@ import com.linkedin.r2.event.EventProviderRegistry;
 import com.linkedin.r2.filter.CompressionConfig;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
+import com.linkedin.r2.filter.TimedRestFilter;
+import com.linkedin.r2.filter.TimedStreamFilter;
 import com.linkedin.r2.filter.compression.ClientCompressionFilter;
 import com.linkedin.r2.filter.compression.ClientCompressionHelper;
 import com.linkedin.r2.filter.compression.ClientStreamCompressionFilter;
@@ -309,6 +311,11 @@ public class HttpClientFactory implements TransportClientFactory
     {
       _channelPoolManagerFactory = new ConnectionSharingChannelPoolManagerFactory(_channelPoolManagerFactory);
     }
+
+    _filters.getStreamFilters().stream().filter(TimedStreamFilter.class::isInstance)
+      .map(TimedStreamFilter.class::cast).forEach(TimedStreamFilter::setShared);
+    _filters.getRestFilters().stream().filter(TimedRestFilter.class::isInstance)
+        .map(TimedRestFilter.class::cast).forEach(TimedRestFilter::setShared);
   }
 
   public static class Builder
@@ -523,7 +530,6 @@ public class HttpClientFactory implements TransportClientFactory
     properties = new HashMap<String,Object>(properties);
     sslContext = coerceAndRemoveFromMap(HTTP_SSL_CONTEXT, properties, SSLContext.class);
     sslParameters = coerceAndRemoveFromMap(HTTP_SSL_PARAMS, properties, SSLParameters.class);
-
     return getClient(properties, sslContext, sslParameters);
   }
 
@@ -747,7 +753,7 @@ public class HttpClientFactory implements TransportClientFactory
   {
     if (encodings != null)
     {
-      List<StreamEncodingType> encodingTypes = new ArrayList<StreamEncodingType>();
+      List<StreamEncodingType> encodingTypes = new ArrayList<>();
       for (String encoding : encodings)
       {
         if (StreamEncodingType.isSupported(encoding))
@@ -767,7 +773,7 @@ public class HttpClientFactory implements TransportClientFactory
   {
     if (encodings != null)
     {
-      List<EncodingType> encodingTypes = new ArrayList<EncodingType>();
+      List<EncodingType> encodingTypes = new ArrayList<>();
       for (String encoding : encodings)
       {
         if (EncodingType.isSupported(encoding))

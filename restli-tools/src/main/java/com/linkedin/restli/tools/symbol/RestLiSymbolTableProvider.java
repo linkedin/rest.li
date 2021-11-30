@@ -86,6 +86,7 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
    * Default timeout in milliseconds to use when fetching symbols from other services.
    */
   private static final long DEFAULT_TIMEOUT_MILLIS = 1000;
+  private final long _timeout;
   private final Client _client;
   private final String _uriPrefix;
   private final String _serverNodeUri;
@@ -132,19 +133,7 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
       String serverNodeUri,
       List<String> overriddenSymbols)
   {
-    _client = client;
-    _uriPrefix = uriPrefix;
-    _serverNodeUri = serverNodeUri;
-    _symbolTableNameHandler = new SymbolTableNameHandler(symbolTablePrefix, serverNodeUri);
-    _serviceNameToSymbolTableCache = Caffeine.newBuilder().maximumSize(cacheSize).build();
-    _symbolTableNameToSymbolTableCache = Caffeine.newBuilder().maximumSize(cacheSize).build();
-
-    if (serverNodeUri != null && overriddenSymbols != null)
-    {
-      String symbolTableName = _symbolTableNameHandler.generateName(overriddenSymbols);
-      _defaultResponseSymbolTable = new InMemorySymbolTable(symbolTableName, overriddenSymbols);
-      _defaultResponseSymbolTableName = _symbolTableNameHandler.extractMetadata(symbolTableName).getSymbolTableName();
-    }
+    this(client, uriPrefix, cacheSize, DEFAULT_TIMEOUT_MILLIS, symbolTablePrefix, serverNodeUri, overriddenSymbols);
   }
 
   /**
@@ -163,13 +152,69 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
       String serverNodeUri,
       SymbolTable responseSymbolTable)
   {
+    this(client, uriPrefix, cacheSize, DEFAULT_TIMEOUT_MILLIS, serverNodeUri, responseSymbolTable);
+  }
+
+  /**
+   * Constructor
+   *
+   * @param client             The {@link Client} to use to make requests to remote services to fetch their symbol tables.
+   * @param uriPrefix          The URI prefix to use when invoking remote services by name (and not by hostname:port)
+   * @param cacheSize          The size of the caches used to store symbol tables.
+   * @param timeout            The client request timeout to fetch remote symbol table.
+   * @param symbolTablePrefix  The prefix to use for symbol tables vended by this instance.
+   * @param serverNodeUri      The URI on which the current service is running. This should also include the context
+   *                           and servlet path (if applicable).
+   * @param overriddenSymbols  The list of overridden symbols to use for the symbol table.
+   */
+  public RestLiSymbolTableProvider(Client client,
+                                   String uriPrefix,
+                                   int cacheSize,
+                                   long timeout,
+                                   String symbolTablePrefix,
+                                   String serverNodeUri,
+                                   List<String> overriddenSymbols)
+  {
+    _client = client;
+    _uriPrefix = uriPrefix;
+    _serverNodeUri = serverNodeUri;
+    _symbolTableNameHandler = new SymbolTableNameHandler(symbolTablePrefix, serverNodeUri);
+    _serviceNameToSymbolTableCache = Caffeine.newBuilder().maximumSize(cacheSize).build();
+    _symbolTableNameToSymbolTableCache = Caffeine.newBuilder().maximumSize(cacheSize).build();
+    _timeout = timeout;
+    if (serverNodeUri != null && overriddenSymbols != null)
+    {
+      String symbolTableName = _symbolTableNameHandler.generateName(overriddenSymbols);
+      _defaultResponseSymbolTable = new InMemorySymbolTable(symbolTableName, overriddenSymbols);
+      _defaultResponseSymbolTableName = _symbolTableNameHandler.extractMetadata(symbolTableName).getSymbolTableName();
+    }
+  }
+
+  /**
+   * Constructor
+   *
+   * @param client               The {@link Client} to use to make requests to remote services to fetch their symbol tables.
+   * @param uriPrefix            The URI prefix to use when invoking remote services by name (and not by hostname:port)
+   * @param cacheSize            The size of the caches used to store symbol tables.
+   * @param timeout              The client request timeout to fetch remote symbol table.
+   * @param serverNodeUri        The URI on which the current service is running. This should also include the context
+   *                             and servlet path (if applicable).
+   * @param responseSymbolTable  The pre-generated response symbol table.
+   */
+  public RestLiSymbolTableProvider(Client client,
+                                   String uriPrefix,
+                                   int cacheSize,
+                                   long timeout,
+                                   String serverNodeUri,
+                                   SymbolTable responseSymbolTable)
+  {
     _client = client;
     _uriPrefix = uriPrefix;
     _serverNodeUri = serverNodeUri;
     _symbolTableNameHandler = new SymbolTableNameHandler(responseSymbolTable.getName(), serverNodeUri);
     _serviceNameToSymbolTableCache = Caffeine.newBuilder().maximumSize(cacheSize).build();
     _symbolTableNameToSymbolTableCache = Caffeine.newBuilder().maximumSize(cacheSize).build();
-    
+    _timeout = timeout;
     if (_serverNodeUri != null)
     {
       _defaultResponseSymbolTable = responseSymbolTable;
@@ -312,7 +357,7 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
       Map<String, String> headers = new HashMap<>(requestHeaders);
       headers.put(RestConstants.HEADER_FETCH_SYMBOL_TABLE, Boolean.TRUE.toString());
       Future<RestResponse> future = _client.restRequest(new RestRequestBuilder(symbolTableUri).setHeaders(headers).build());
-      RestResponse restResponse = future.get(DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+      RestResponse restResponse = future.get(_timeout, TimeUnit.MILLISECONDS);
       int status = restResponse.getStatus();
 
       if (returnEmptyOn404 && status == HttpStatus.S_404_NOT_FOUND.getCode())

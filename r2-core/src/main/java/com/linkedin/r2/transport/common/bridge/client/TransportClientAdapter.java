@@ -67,9 +67,9 @@ public class TransportClientAdapter extends AbstractClient
                           RequestContext requestContext,
                           Callback<StreamResponse> callback)
   {
-    final Map<String, String> wireAttrs = new HashMap<String, String>();
+    final Map<String, String> wireAttrs = new HashMap<>();
     //make a copy of the caller's RequestContext to ensure that we have a unique instance per-request
-    _client.streamRequest(request, new RequestContext(requestContext), wireAttrs, new TransportCallbackAdapter<StreamResponse>(callback));
+    _client.streamRequest(request, new RequestContext(requestContext), wireAttrs, new TransportCallbackAdapter<>(callback));
   }
 
   @Override
@@ -77,9 +77,9 @@ public class TransportClientAdapter extends AbstractClient
   {
     if (!_restOverStream)
     {
-      final Map<String, String> wireAttrs = new HashMap<String, String>();
+      final Map<String, String> wireAttrs = new HashMap<>();
       //make a copy of the caller's RequestContext to ensure that we have a unique instance per-request
-      _client.restRequest(request, new RequestContext(requestContext), wireAttrs, new TransportCallbackAdapter<RestResponse>(callback));
+      _client.restRequest(request, new RequestContext(requestContext), wireAttrs, new TransportCallbackAdapter<>(callback));
     }
     else
     {

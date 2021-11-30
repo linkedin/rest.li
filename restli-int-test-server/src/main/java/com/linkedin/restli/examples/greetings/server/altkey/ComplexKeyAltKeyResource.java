@@ -56,7 +56,7 @@ public class ComplexKeyAltKeyResource extends ComplexKeyResourceTemplate<TwoPart
     TwoPartKey key = new TwoPartKey();
     key.setMajor("testKey");
     key.setMinor("testKey");
-    ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<TwoPartKey, TwoPartKey>(key, new TwoPartKey());
+    ComplexResourceKey<TwoPartKey, TwoPartKey> complexKey = new ComplexResourceKey<>(key, new TwoPartKey());
     return new CreateResponse(complexKey, HttpStatus.S_201_CREATED);
   }
 
@@ -130,13 +130,13 @@ public class ComplexKeyAltKeyResource extends ComplexKeyResourceTemplate<TwoPart
       final BatchDeleteRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> ids)
   {
     Map<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateResponse> results =
-        new HashMap<ComplexResourceKey<TwoPartKey, TwoPartKey>, UpdateResponse>();
+        new HashMap<>();
 
     for (ComplexResourceKey<TwoPartKey, TwoPartKey> id : ids.getKeys())
     {
       results.put(id, delete(id));
     }
 
-    return new BatchUpdateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(results);
+    return new BatchUpdateResult<>(results);
   }
 }

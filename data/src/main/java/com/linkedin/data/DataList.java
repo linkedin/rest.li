@@ -179,7 +179,7 @@ public final class DataList extends CheckedList<Object> implements DataComplex
     _instrumented = true;
     if (_accessList == null)
     {
-      _accessList = new ArrayList<Integer>(size());
+      _accessList = new ArrayList<>(size());
     }
   }
 

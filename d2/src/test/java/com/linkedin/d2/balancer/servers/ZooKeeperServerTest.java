@@ -37,11 +37,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
@@ -51,220 +56,288 @@ public class ZooKeeperServerTest
 {
   private static final int    PORT = 11711;
   private static final String BAD_CLUSTER = "BAD CLUSTER";
+  private static final URI URI_1 = URI.create("http://cluster-1/test");
+  private static final URI URI_2 = URI.create("http://cluster-1-again/test");
+  public static final String CLUSTER_1 = "cluster-1";
 
-  private ZKServer            _zkServer;
+  private ZKServer _zkServer;
+  private ZooKeeperServer _server;
+  private ZooKeeperEphemeralStore<UriProperties> _store;
+  private Map<Integer, PartitionData> _partitionWeight;
+  private Map<String, Object> _uri1SpecificProperties;
+  private Map<String, Object> _uri2SpecificProperties;
 
-  @Test(groups = { "small", "back-end" })
-  public void testZkServer() throws InterruptedException,
-      IOException,
-      PropertyStoreException,
-      ExecutionException
+
+  @BeforeMethod
+  public void setUp() throws Exception
   {
-    URI uri1 = URI.create("http://cluster-1/test");
-    URI uri2 = URI.create("http://cluster-1-again/test");
+    try
+    {
+      _zkServer = new ZKServer(PORT);
+      _zkServer.startup();
+    }
+    catch (IOException e)
+    {
+      fail("unable to instantiate real zk server on port " + PORT);
+    }
+
     ZKConnection zkClient = new ZKConnection("localhost:" + PORT, 5000);
     zkClient.start();
 
-    ZooKeeperEphemeralStore<UriProperties> store =
-        new ZooKeeperEphemeralStore<UriProperties>(zkClient,
-                                                   new UriPropertiesJsonSerializer(),
-                                                   new UriPropertiesMerger(),
-                                                   "/echo/lb/uris");
-    FutureCallback<None> callback = new FutureCallback<None>();
-    store.start(callback);
+    _store = new ZooKeeperEphemeralStore<>(zkClient,
+                                           new UriPropertiesJsonSerializer(),
+                                           new UriPropertiesMerger(),
+                                           "/echo/lb/uris");
+    FutureCallback<None> callback = new FutureCallback<>();
+    _store.start(callback);
     callback.get();
 
-    ZooKeeperServer server = new ZooKeeperServer(store);
+    _server = new ZooKeeperServer(_store);
 
-    final String cluster = "cluster-1";
+    _partitionWeight = new HashMap<>();
+    _uri1SpecificProperties = new HashMap<>();
+    _uri2SpecificProperties = new HashMap<>();
+  }
 
-    assertNull(store.get(cluster));
-    assertNull(store.get("cluster-2"));
+  @Test(groups = { "small", "back-end" })
+  public void testZkServer() throws Exception
+  {
+    assertNull(_store.get(CLUSTER_1));
+    assertNull(_store.get("cluster-2"));
 
     // bring up uri1
-    markUp(server, cluster, uri1, 0.5d);
+    markUp(_server, CLUSTER_1, URI_1, 0.5d);
 
-    UriProperties properties = store.get(cluster);
+    UriProperties properties = _store.get(CLUSTER_1);
     assertNotNull(properties);
-    assertEquals(properties.getPartitionDataMap(uri1).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 0.5d);
+    assertEquals(properties.getPartitionDataMap(URI_1).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 0.5d);
     assertEquals(properties.Uris().size(), 1);
 
     // test mark up when already up call
-    markUp(server, cluster, uri1, 2d);
+    markUp(_server, CLUSTER_1, URI_1, 2d);
 
-    properties = store.get(cluster);
+    properties = _store.get(CLUSTER_1);
     assertNotNull(properties);
-    assertEquals(properties.getPartitionDataMap(uri1).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 2d);
+    assertEquals(properties.getPartitionDataMap(URI_1).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 2d);
     assertEquals(properties.Uris().size(), 1);
 
     // bring up uri 2
-    markUp(server, cluster, uri2, 1.5d);
+    markUp(_server, CLUSTER_1, URI_2, 1.5d);
 
-    properties = store.get(cluster);
-    assertEquals(properties.getPartitionDataMap(uri1).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 2d);
-    assertEquals(properties.getPartitionDataMap(uri2).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 1.5d);
+    properties = _store.get(CLUSTER_1);
+    assertEquals(properties.getPartitionDataMap(URI_1).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 2d);
+    assertEquals(properties.getPartitionDataMap(URI_2).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 1.5d);
     assertEquals(properties.Uris().size(), 2);
 
     // bring down uri 1
-    markDown(server, cluster, uri1);
+    markDown(_server, CLUSTER_1, URI_1);
 
-    properties = store.get(cluster);
+    properties = _store.get(CLUSTER_1);
     assertNotNull(properties);
-    assertEquals(properties.getPartitionDataMap(uri2).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 1.5d);
+    assertEquals(properties.getPartitionDataMap(URI_2).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 1.5d);
     assertEquals(properties.Uris().size(), 1);
 
     // test bring down when already down
-    markDown(server, cluster, uri1);
+    markDown(_server, CLUSTER_1, URI_1);
 
-    properties = store.get(cluster);
+    properties = _store.get(CLUSTER_1);
     assertNotNull(properties);
-    assertEquals(properties.getPartitionDataMap(uri2).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 1.5d);
+    assertEquals(properties.getPartitionDataMap(URI_2).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 1.5d);
     assertEquals(properties.Uris().size(), 1);
 
     // bring down uri 2
-    markDown(server, cluster, uri2);
+    markDown(_server, CLUSTER_1, URI_2);
 
-    properties = store.get(cluster);
+    properties = _store.get(CLUSTER_1);
     assertNotNull(properties);
     assertEquals(properties.Uris().size(), 0);
 
     // test bad cluster doesn't exist
-    markDown(server, BAD_CLUSTER, uri1);
+    markDown(_server, BAD_CLUSTER, URI_1);
 
-    properties = store.get("BAD CLUSTER");
+    properties = _store.get("BAD CLUSTER");
     assertNull(properties);
 
     // bring up uri1
-
-    Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
-    partitionWeight.put(5, new PartitionData(0.3d));
-    partitionWeight.put(15, new PartitionData(0.7d));
-    markUp(server, cluster, uri1, partitionWeight, null);
-    properties = store.get(cluster);
+    _partitionWeight.put(5, new PartitionData(0.3d));
+    _partitionWeight.put(15, new PartitionData(0.7d));
+    markUp(_server, CLUSTER_1, URI_1, _partitionWeight, null);
+    properties = _store.get(CLUSTER_1);
     assertNotNull(properties);
 
-    assertEquals(properties.getPartitionDataMap(uri1), partitionWeight);
+    assertEquals(properties.getPartitionDataMap(URI_1), _partitionWeight);
 
-    Map<String, Object> uri2SpecificProperties = new HashMap<String, Object>();
-    uri2SpecificProperties.put("foo", "fooValue");
-    uri2SpecificProperties.put("bar", 1);
+    _uri2SpecificProperties.put("foo", "fooValue");
+    _uri2SpecificProperties.put("bar", 1);
 
-    partitionWeight.put(10, new PartitionData(1d));
+    _partitionWeight.put(10, new PartitionData(1d));
 
     // bring up uri2 with uri specific properties
 
-    markUp(server, cluster, uri2, partitionWeight, uri2SpecificProperties);
+    markUp(_server, CLUSTER_1, URI_2, _partitionWeight, _uri2SpecificProperties);
 
-    properties = store.get(cluster);
+    properties = _store.get(CLUSTER_1);
     assertNotNull(properties);
     assertEquals(properties.Uris().size(), 2);
-    assertEquals(properties.getPartitionDataMap(uri2), partitionWeight);
+    assertEquals(properties.getPartitionDataMap(URI_2), _partitionWeight);
 
     assertNotNull(properties.getUriSpecificProperties());
     assertEquals(properties.getUriSpecificProperties().size(), 1);
-    assertEquals(properties.getUriSpecificProperties().get(uri2), uri2SpecificProperties);
+    assertEquals(properties.getUriSpecificProperties().get(URI_2), _uri2SpecificProperties);
 
     // bring down uri1 and bring it back up again with properties
 
-    markDown(server, cluster, uri1);
+    markDown(_server, CLUSTER_1, URI_1);
 
-    Map<String, Object> uri1SpecificProperties = new HashMap<String, Object>();
-    uri1SpecificProperties.put("baz", "bazValue");
+    _uri1SpecificProperties.put("baz", "bazValue");
 
     // use new partition data so that we can test the mapping later on
 
-    Map<Integer, PartitionData> newUri1PartitionWeights = new HashMap<Integer, PartitionData>(partitionWeight);
+    Map<Integer, PartitionData> newUri1PartitionWeights = new HashMap<>(_partitionWeight);
     newUri1PartitionWeights.remove(10);
-    markUp(server, cluster, uri1, newUri1PartitionWeights, uri1SpecificProperties);
+    markUp(_server, CLUSTER_1, URI_1, newUri1PartitionWeights, _uri1SpecificProperties);
 
-    properties = store.get(cluster);
+    properties = _store.get(CLUSTER_1);
     assertNotNull(properties);
     assertEquals(properties.Uris().size(), 2);
-    assertEquals(properties.getPartitionDataMap(uri1), newUri1PartitionWeights);
-    assertEquals(properties.getPartitionDataMap(uri2), partitionWeight);
+    assertEquals(properties.getPartitionDataMap(URI_1), newUri1PartitionWeights);
+    assertEquals(properties.getPartitionDataMap(URI_2), _partitionWeight);
 
     assertNotNull(properties.getUriSpecificProperties());
     assertEquals(properties.getUriSpecificProperties().size(), 2);
-    assertEquals(properties.getUriSpecificProperties().get(uri1), uri1SpecificProperties);
-    assertEquals(properties.getUriSpecificProperties().get(uri2), uri2SpecificProperties);
+    assertEquals(properties.getUriSpecificProperties().get(URI_1), _uri1SpecificProperties);
+    assertEquals(properties.getUriSpecificProperties().get(URI_2), _uri2SpecificProperties);
 
-    Set<URI> uriSet = new HashSet<URI>();
-    uriSet.add(uri1);
-    uriSet.add(uri2);
+    Set<URI> uriSet = new HashSet<>();
+    uriSet.add(URI_1);
+    uriSet.add(URI_2);
 
     assertEquals(properties.getUriBySchemeAndPartition("http", 5), uriSet);
 
-    uriSet.remove(uri1);
+    uriSet.remove(URI_1);
 
     assertEquals(properties.getUriBySchemeAndPartition("http", 10), uriSet);
 
     // reset uri1 and changeWeight of uri1 with no preexisting uri properties
-    markDown(server, cluster, uri1);
-    markUp(server, cluster, uri1, 0.5d);
+    markDown(_server, CLUSTER_1, URI_1);
+    markUp(_server, CLUSTER_1, URI_1, 0.5d);
 
-    changeWeight(server, cluster, uri1, true, 1d);
+    changeWeight(_server, CLUSTER_1, URI_1, true, 1d);
 
-    uri1SpecificProperties.clear();
-    uri1SpecificProperties.put(PropertyKeys.DO_NOT_SLOW_START, true);
+    _uri1SpecificProperties.clear();
+    _uri1SpecificProperties.put(PropertyKeys.DO_NOT_SLOW_START, true);
 
-    properties = store.get(cluster);
+    properties = _store.get(CLUSTER_1);
     assertNotNull(properties);
-    assertEquals(properties.getPartitionDataMap(uri1).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 1d);
-    assertEquals(properties.getUriSpecificProperties().get(uri1), uri1SpecificProperties);
+    assertEquals(properties.getPartitionDataMap(URI_1).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 1d);
+    assertEquals(properties.getUriSpecificProperties().get(URI_1), _uri1SpecificProperties);
 
     // changeWeight of uri2 with preexisting uri properties
-    changeWeight(server, cluster, uri2, true, 0.9d);
+    changeWeight(_server, CLUSTER_1, URI_2, true, 0.9d);
 
-    uri2SpecificProperties.put(PropertyKeys.DO_NOT_SLOW_START, true);
+    _uri2SpecificProperties.put(PropertyKeys.DO_NOT_SLOW_START, true);
 
-    properties = store.get(cluster);
+    properties = _store.get(CLUSTER_1);
     assertNotNull(properties);
-    assertEquals(properties.getPartitionDataMap(uri2).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 0.9d);
-    assertEquals(properties.getUriSpecificProperties().get(uri2), uri2SpecificProperties);
+    assertEquals(properties.getPartitionDataMap(URI_2).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 0.9d);
+    assertEquals(properties.getUriSpecificProperties().get(URI_2), _uri2SpecificProperties);
 
     // changeWeight on uri1 using partitionData
-    changeWeight(server, cluster, uri1, true, partitionWeight);
-    properties = store.get(cluster);
+    changeWeight(_server, CLUSTER_1, URI_1, true, _partitionWeight);
+    properties = _store.get(CLUSTER_1);
     assertNotNull(properties);
-    assertEquals(properties.getPartitionDataMap(uri1), partitionWeight);
-    assertEquals(properties.getUriSpecificProperties().get(uri1).get(PropertyKeys.DO_NOT_SLOW_START), true);
+    assertEquals(properties.getPartitionDataMap(URI_1), _partitionWeight);
+    assertEquals(properties.getUriSpecificProperties().get(URI_1).get(PropertyKeys.DO_NOT_SLOW_START), true);
 
     // changeWeight on a cluster that doesn't exist
     try
     {
-      changeWeight(server, BAD_CLUSTER, uri1, true, 0.5d);
+      changeWeight(_server, BAD_CLUSTER, URI_1, true, 0.5d);
     }
     catch (RuntimeException e)
     {
 
     }
-    properties = store.get(BAD_CLUSTER);
+    properties = _store.get(BAD_CLUSTER);
     assertNull(properties);
 
     // changeWeight on a uri that doesn't exist
-    markDown(server, cluster, uri2);
+    markDown(_server, CLUSTER_1, URI_2);
     try
     {
-      changeWeight(server, cluster, uri2, true, 0.5d);
+      changeWeight(_server, CLUSTER_1, URI_2, true, 0.5d);
     }
     catch (RuntimeException e)
     {
 
     }
-    properties = store.get(cluster);
-    assertTrue(!properties.Uris().contains(uri2));
+    properties = _store.get(CLUSTER_1);
+    assertTrue(!properties.Uris().contains(URI_2));
 
     // changeWeight properly changes existing doNotSlowStart from true to false
-    properties = store.get(cluster);
-    assertEquals(properties.getUriSpecificProperties().get(uri1).get(PropertyKeys.DO_NOT_SLOW_START), true);
-    changeWeight(server, cluster, uri1, false, 1.0d);
-    properties = store.get(cluster);
-    assertEquals(properties.getUriSpecificProperties().get(uri1).get(PropertyKeys.DO_NOT_SLOW_START), false);
+    properties = _store.get(CLUSTER_1);
+    assertEquals(properties.getUriSpecificProperties().get(URI_1).get(PropertyKeys.DO_NOT_SLOW_START), true);
+    changeWeight(_server, CLUSTER_1, URI_1, false, 1.0d);
+    properties = _store.get(CLUSTER_1);
+    assertEquals(properties.getUriSpecificProperties().get(URI_1).get(PropertyKeys.DO_NOT_SLOW_START), false);
+  }
+
+  @Test
+  public void testAddUriSpecificProperty() throws Exception
+  {
+    markUp(_server, CLUSTER_1, URI_1, 1);
+
+    // add uri specific property
+    final String propertyKey = "propertyKey";
+    final int propertyValue = 123;
+    _uri1SpecificProperties.put(propertyKey, propertyValue);
+
+    addUriSpecificProperty(CLUSTER_1, URI_1, _partitionWeight, propertyKey, propertyValue);
+
+    UriProperties properties = _store.get(CLUSTER_1);
+    assertNotNull(properties);
+    assertEquals(properties.getUriSpecificProperties().get(URI_1), _uri1SpecificProperties);
+
+    // change the value
+    final int propertyValue2 = 456;
+    _uri1SpecificProperties.put(propertyKey, propertyValue2);
+
+    addUriSpecificProperty(CLUSTER_1, URI_1, _partitionWeight, propertyKey, propertyValue2);
+
+    properties = _store.get(CLUSTER_1);
+    assertNotNull(properties);
+    assertEquals(properties.getUriSpecificProperties().get(URI_1), _uri1SpecificProperties);
+
+    boolean error = false;
+    // invoke on a cluster that doesn't exist
+    try
+    {
+      addUriSpecificProperty(BAD_CLUSTER, URI_1, _partitionWeight, propertyKey, propertyValue);
+    }
+    catch (RuntimeException e)
+    {
+      error = true;
+    }
+    Assert.assertTrue(error);
+
+    error = false;
+
+    // invoke on a uri that doesn't exist
+    markDown(_server, CLUSTER_1, URI_2);
+    try
+    {
+      addUriSpecificProperty(CLUSTER_1, URI_2, _partitionWeight, propertyKey, propertyValue);
+    }
+    catch (RuntimeException e)
+    {
+      error = true;
+    }
+    Assert.assertTrue(error);
   }
 
   private void markUp(ZooKeeperServer server, String cluster, URI uri, double weight)
   {
-    Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> partitionWeight = new HashMap<>();
     partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
     markUp(server, cluster, uri,  partitionWeight, null);
   }
@@ -275,7 +348,7 @@ public class ZooKeeperServerTest
                       Map<Integer, PartitionData> partitionDataMap,
                       Map<String, Object> uriSpecificProperties)
   {
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     if (uriSpecificProperties == null)
     {
       server.markUp(cluster, uri, partitionDataMap, callback);
@@ -296,7 +369,7 @@ public class ZooKeeperServerTest
 
   private void markDown(ZooKeeperServer server, String cluster, URI uri)
   {
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     server.markDown(cluster, uri, callback);
     try
     {
@@ -314,7 +387,7 @@ public class ZooKeeperServerTest
                             boolean doNotSlowStart,
                             double weight)
   {
-    Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> partitionWeight = new HashMap<>();
     partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
     changeWeight(server, cluster, uri, doNotSlowStart, partitionWeight);
   }
@@ -337,22 +410,26 @@ public class ZooKeeperServerTest
     }
   }
 
-  @BeforeSuite
-  public void doOneTimeSetUp() throws InterruptedException
+  private void addUriSpecificProperty(String cluster,
+                                      URI uri,
+                                      Map<Integer, PartitionData> partitionDataMap,
+                                      String uriSpecificPropertiesName,
+                                      Object uriSpecificPropertiesValue)
   {
+    FutureCallback<None> callback = new FutureCallback<>();
+    _server.addUriSpecificProperty(cluster, "addUriSpecificProperty", uri, partitionDataMap, uriSpecificPropertiesName, uriSpecificPropertiesValue, callback);
     try
     {
-      _zkServer = new ZKServer(PORT);
-      _zkServer.startup();
+      callback.get(10, TimeUnit.SECONDS);
     }
-    catch (IOException e)
+    catch (Exception e)
     {
-      fail("unable to instantiate real zk server on port " + PORT);
+      throw new RuntimeException(e);
     }
   }
 
-  @AfterSuite
-  public void doOneTimeTearDown() throws IOException
+  @AfterMethod
+  public void tearDown() throws IOException
   {
     _zkServer.shutdown();
   }

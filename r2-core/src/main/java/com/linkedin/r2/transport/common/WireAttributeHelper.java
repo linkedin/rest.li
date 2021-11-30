@@ -49,7 +49,7 @@ public class WireAttributeHelper
    */
   public static Map<String, String> removeWireAttributes(Map<String, String> map)
   {
-    final Map<String, String> wireAttrs = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    final Map<String, String> wireAttrs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
     for (Iterator<Map.Entry<String, String>> it = map.entrySet().iterator(); it.hasNext();)
     {
@@ -77,7 +77,7 @@ public class WireAttributeHelper
    */
   public static Map<String, String> toWireAttributes(Map<String, String> attrs)
   {
-    final Map<String, String> wireAttrs = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    final Map<String, String> wireAttrs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
 
     for (Map.Entry<String, String> entry : attrs.entrySet())
     {

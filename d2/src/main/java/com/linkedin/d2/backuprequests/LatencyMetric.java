@@ -53,10 +53,10 @@ public class LatencyMetric {
    * - read happens on previously put aside current, once read is completed, the histogram is reset
    *   and put back as inactive
    */
-  private AtomicReference<AbstractHistogram> _current = new AtomicReference<AbstractHistogram>(
+  private AtomicReference<AbstractHistogram> _current = new AtomicReference<>(
       new ShortCountsHistogram(LOWEST_DISCERNIBLE_VALUE, HIGHEST_TRACKABLE_VALUE, NUMBER_OF_SIGNIFICANT_VALUE_DIGITS));
 
-  private AtomicReference<AbstractHistogram> _inactive = new AtomicReference<AbstractHistogram>(
+  private AtomicReference<AbstractHistogram> _inactive = new AtomicReference<>(
       new ShortCountsHistogram(LOWEST_DISCERNIBLE_VALUE, HIGHEST_TRACKABLE_VALUE, NUMBER_OF_SIGNIFICANT_VALUE_DIGITS));
 
   /**

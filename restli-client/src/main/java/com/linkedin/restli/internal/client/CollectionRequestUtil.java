@@ -101,7 +101,7 @@ public class CollectionRequestUtil
                                                                                 TypeSpec<V> valueType,
                                                                                 ProtocolVersion version)
   {
-    BatchRequest<V> batchRequest = new BatchRequest<V>(new DataMap(), valueType);
+    BatchRequest<V> batchRequest = new BatchRequest<>(new DataMap(), valueType);
 
     for (KeyValueRecord keyValueRecord: elementList.getElements())
     {

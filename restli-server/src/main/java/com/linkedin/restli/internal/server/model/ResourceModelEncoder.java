@@ -231,14 +231,7 @@ public class ResourceModelEncoder
   {
     ResourceSchema rootNode = new ResourceSchema();
 
-    // Set the entityType only when it is a UNSTRUCTURED_DATA base resource to avoid
-    // modifying all existing resources, which by default are STRUCTURED_DATA base.
-    if (ResourceEntityType.UNSTRUCTURED_DATA == resourceModel.getResourceEntityType())
-    {
-      rootNode.setEntityType(ResourceEntityType.UNSTRUCTURED_DATA);
-    }
-
-    switch (resourceModel.getResourceType())
+     switch (resourceModel.getResourceType())
     {
       case ACTIONS:
         appendActionsModel(rootNode, resourceModel);
@@ -448,6 +441,13 @@ public class ResourceModelEncoder
   private void appendCommon(final ResourceModel resourceModel,
                             final ResourceSchema resourceSchema)
   {
+    // Set the entityType only when it is a UNSTRUCTURED_DATA base resource to avoid
+    // modifying all existing resources, which by default are STRUCTURED_DATA base.
+    if (ResourceEntityType.UNSTRUCTURED_DATA == resourceModel.getResourceEntityType())
+    {
+      resourceSchema.setEntityType(ResourceEntityType.UNSTRUCTURED_DATA);
+    }
+
     resourceSchema.setName(resourceModel.getName());
     if (!resourceModel.getNamespace().isEmpty())
     {
@@ -642,7 +642,7 @@ public class ResourceModelEncoder
                           final ResourceModel collectionModel)
   {
     AssocKeySchemaArray assocKeySchemaArray = new AssocKeySchemaArray();
-    List<Key> sortedKeys = new ArrayList<Key>(collectionModel.getKeys());
+    List<Key> sortedKeys = new ArrayList<>(collectionModel.getKeys());
     Collections.sort(sortedKeys, new Comparator<Key>()
     {
       @Override
@@ -695,6 +695,12 @@ public class ResourceModelEncoder
     ActionSchema action = new ActionSchema();
     action.setName(resourceMethodDescriptor.getActionName());
 
+    // Actions are read-write by default, so write info in the schema only for read-only actions.
+    if (resourceMethodDescriptor.isActionReadOnly())
+    {
+      action.setReadOnly(true);
+    }
+
     //We have to construct the method doc for the action which includes the action return type
     final String methodDoc = _docsProvider.getMethodDoc(resourceMethodDescriptor.getMethod());
     if (methodDoc != null)
@@ -732,7 +738,7 @@ public class ResourceModelEncoder
     final DataMap customAnnotation = resourceMethodDescriptor.getCustomAnnotationData();
     String deprecatedDoc = _docsProvider.getMethodDeprecatedTag(resourceMethodDescriptor.getMethod());
 
-    if(deprecatedDoc != null)
+    if (deprecatedDoc != null)
     {
       customAnnotation.put(DEPRECATED_ANNOTATION_NAME, deprecateDocToAnnotationMap(deprecatedDoc));
     }
@@ -1161,7 +1167,7 @@ public class ResourceModelEncoder
 
   private void buildSupportsArray(final ResourceModel resourceModel, final StringArray supportsArray)
   {
-    List<String> supportsStrings = new ArrayList<String>();
+    List<String> supportsStrings = new ArrayList<>();
     for (ResourceMethodDescriptor resourceMethodDescriptor : resourceModel.getResourceMethodDescriptors())
     {
       ResourceMethod type = resourceMethodDescriptor.getType();

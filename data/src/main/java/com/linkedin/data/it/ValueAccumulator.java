@@ -23,7 +23,7 @@ import java.util.Collection;
 
 /**
  * Accumulates data objects returned by a {@link DataIterator}.
- * 
+ *
  * @author "Joe Betz<jbetz@linkedin.com>"
  */
 public class ValueAccumulator
@@ -31,7 +31,7 @@ public class ValueAccumulator
   /**
    * Accumulates the Data objects returned by the {@link DataIterator} into the provided collection.
    * This method mutates the provided collection.
-   * 
+   *
    * @param it provides the iterator of Data objects to be accumulated.
    * @param accumulator provides the collection that the accumulated Data objects are added to.
    * @return the passed in collection, mutated to include Data objects.
@@ -44,15 +44,15 @@ public class ValueAccumulator
     }
     return accumulator;
   }
-  
+
   /**
    * Accumulates the data objects in the iterator.
-   * 
+   *
    * @param it provides the iterator of Data objects to be accumulated.
    * @return the passed in collection, mutated to include Data objects.
    */
   public static Collection<Object> accumulateValues(DataIterator it)
   {
-    return accumulateValues(it, new ArrayList<Object>());
+    return accumulateValues(it, new ArrayList<>());
   }
 }

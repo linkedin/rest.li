@@ -44,7 +44,7 @@ public class AnnotationSet
    */
   public AnnotationSet(final Annotation[] annos)
   {
-    _map = new HashMap<Class<? extends Annotation>, Annotation>();
+    _map = new HashMap<>();
     for (Annotation anno : annos)
     {
       _map.put(anno.annotationType(), anno);

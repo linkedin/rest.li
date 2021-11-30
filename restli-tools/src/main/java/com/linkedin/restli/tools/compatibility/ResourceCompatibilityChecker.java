@@ -291,7 +291,7 @@ public class ResourceCompatibilityChecker
     {
       if (container.size() > containee.size())
       {
-        final Set<Object> diff = new HashSet<Object>(container);
+        final Set<Object> diff = new HashSet<>(container);
         diff.removeAll(containee);
         _infoMap.addRestSpecInfo(field.getName(), CompatibilityInfo.Type.SUPERSET, _infoPath, diff);
       }
@@ -574,7 +574,7 @@ public class ResourceCompatibilityChecker
   private <T extends WrappingArrayTemplate<? extends RecordTemplate>>
   boolean checkComplexArrayField(RecordDataSchema.Field field, String keyName, T prevArray, T currArray)
   {
-    return checkComplexArrayField(field, keyName, prevArray, currArray, new HashMap<String, Integer>(), true);
+    return checkComplexArrayField(field, keyName, prevArray, currArray, new HashMap<>(), true);
   }
 
   /**
@@ -583,7 +583,7 @@ public class ResourceCompatibilityChecker
   private <T extends WrappingArrayTemplate<? extends RecordTemplate>>
   boolean checkEqualComplexArrayField(RecordDataSchema.Field field, String keyName, T prevArray, T currArray)
   {
-    final HashMap<String, Integer> currRemainder = new HashMap<String, Integer>();
+    final HashMap<String, Integer> currRemainder = new HashMap<>();
 
     // if prev has more than curr, array missing element
     // this should catch it
@@ -608,7 +608,7 @@ public class ResourceCompatibilityChecker
    */
   private boolean checkParameterArrayField(RecordDataSchema.Field field, ParameterSchemaArray prevArray, ParameterSchemaArray currArray)
   {
-    final HashMap<String, Integer> currRemainder = new HashMap<String, Integer>();
+    final HashMap<String, Integer> currRemainder = new HashMap<>();
 
     if (!checkComplexArrayField(field, "name", prevArray, currArray, currRemainder, false))
     {
@@ -989,6 +989,10 @@ public class ResourceCompatibilityChecker
                           prevRec.getName(GetMode.DEFAULT),
                           currRec.getName(GetMode.DEFAULT));
 
+    checkEqualSingleValue(prevRec.schema().getField("readOnly"),
+                          prevRec.isReadOnly(GetMode.DEFAULT),
+                          currRec.isReadOnly(GetMode.DEFAULT));
+
     checkDoc(prevRec.schema().getField("doc"), prevRec.getDoc(GetMode.DEFAULT), currRec.getDoc(GetMode.DEFAULT));
 
     checkAnnotationsMap(prevRec.schema().getField("annotations"),
@@ -1025,12 +1029,12 @@ public class ResourceCompatibilityChecker
     for (Class<?> annotationClass : new Class<?>[]{ReadOnly.class, CreateOnly.class})
     {
       String annotationName = annotationClass.getAnnotation(RestSpecAnnotation.class).name();
-      Set<Object> prevPaths = new HashSet<Object>();
+      Set<Object> prevPaths = new HashSet<>();
       if (prevMap != null && prevMap.containsKey(annotationName)) prevPaths.addAll((DataList) prevMap.get(annotationName).data().get("value"));
-      Set<Object> currPaths = new HashSet<Object>();
+      Set<Object> currPaths = new HashSet<>();
       if (currMap != null && currMap.containsKey(annotationName)) currPaths.addAll((DataList) currMap.get(annotationName).data().get("value"));
       // Adding an annotation is only valid if the field was newly added to the schema.
-      Set<Object> addedPaths = new HashSet<Object>(currPaths);
+      Set<Object> addedPaths = new HashSet<>(currPaths);
       addedPaths.removeAll(prevPaths);
       for (Object path : addedPaths)
       {
@@ -1046,7 +1050,7 @@ public class ResourceCompatibilityChecker
       // level incompatibilities are checked. Hence the reason that restSpecInfo is populated. Therefore we will
       // treat restSpec incompatibility in isolation from model incompatibility in order to provide fine grained
       // compatibility results.
-      Set<Object> removedPaths = new HashSet<Object>(prevPaths);
+      Set<Object> removedPaths = new HashSet<>(prevPaths);
       removedPaths.removeAll(currPaths);
       for (Object path : removedPaths)
       {
@@ -1072,7 +1076,7 @@ public class ResourceCompatibilityChecker
 
   private void checkAnnotationsMap(RecordDataSchema.Field field, CustomAnnotationContentSchemaMap prevMap, CustomAnnotationContentSchemaMap currMap)
   {
-    Set<String> allKeys = new HashSet<String>();
+    Set<String> allKeys = new HashSet<>();
     if (prevMap != null) allKeys.addAll(prevMap.keySet());
     if (currMap != null) allKeys.addAll(currMap.keySet());
     for(String key : allKeys)

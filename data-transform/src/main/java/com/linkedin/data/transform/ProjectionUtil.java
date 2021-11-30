@@ -150,7 +150,7 @@ public class ProjectionUtil
 
   private static Set<PathSpec> validate(DataMap filteredPathSpecs, Set<PathSpec> paths)
   {
-    final Set<PathSpec> result = new HashSet<PathSpec>();
+    final Set<PathSpec> result = new HashSet<>();
 
     for (PathSpec p : paths)
     {

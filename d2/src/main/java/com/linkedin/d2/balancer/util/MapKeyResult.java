@@ -88,7 +88,7 @@ public class MapKeyResult<T, K>
 
   public MapKeyResult(Map<T, Collection<K>> mapResult, Collection<UnmappedKey<K>> unMappedKeys)
   {
-    Map<T, Collection<K>> mapResultTmp = new HashMap<T, Collection<K>>(mapResult.size() * 2);
+    Map<T, Collection<K>> mapResultTmp = new HashMap<>(mapResult.size() * 2);
     for (Map.Entry<T, Collection<K>> entry : mapResult.entrySet())
     {
       mapResultTmp.put(entry.getKey(), Collections.unmodifiableCollection(entry.getValue()));

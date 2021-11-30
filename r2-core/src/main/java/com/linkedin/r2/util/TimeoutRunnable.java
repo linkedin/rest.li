@@ -57,7 +57,7 @@ public class TimeoutRunnable implements Runnable
     {
       throw new NullPointerException();
     }
-    _timeout = new Timeout<Runnable>(executor, timeout, timeoutUnit, action);
+    _timeout = new Timeout<>(executor, timeout, timeoutUnit, action);
     _timeout.addTimeoutTask(new Runnable()
     {
       @Override

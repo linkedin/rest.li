@@ -334,7 +334,7 @@ public class ObjectIterator implements DataIterator
   }
 
   private final DataElement _startElement;
-  private final Deque<State> _stack = new ArrayDeque<State>();
+  private final Deque<State> _stack = new ArrayDeque<>();
 
   private boolean _first = true;
   private DataElement _current = null;

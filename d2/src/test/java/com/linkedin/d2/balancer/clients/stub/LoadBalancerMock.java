@@ -21,7 +21,6 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.clients.TestClient;
-import com.linkedin.d2.balancer.clients.TrackerClientTest;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.discovery.event.PropertyEventThread;

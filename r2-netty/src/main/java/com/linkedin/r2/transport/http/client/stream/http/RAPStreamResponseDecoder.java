@@ -227,7 +227,7 @@ class RAPStreamResponseDecoder extends SimpleChannelInboundHandler<HttpObject>
       _lastChunkReceived = false;
       _totalBytesWritten = 0;
       _bufferedBytes = 0;
-      _buffer = new LinkedList<ByteString>();
+      _buffer = new LinkedList<>();
 
       // schedule a timeout to close the channel and inform use
       Runnable timeoutTask = new Runnable()

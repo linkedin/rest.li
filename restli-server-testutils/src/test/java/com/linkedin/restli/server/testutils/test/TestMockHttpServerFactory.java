@@ -64,7 +64,7 @@ public class TestMockHttpServerFactory
   public void testCreateUsingClassNames()
       throws IOException, RemoteInvocationException
   {
-    Set<Class<?>> resourceClasses = new HashSet<Class<?>>();
+    Set<Class<?>> resourceClasses = new HashSet<>();
     resourceClasses.add(PhotoResource.class);
     resourceClasses.add(AlbumResource.class);
 
@@ -104,7 +104,7 @@ public class TestMockHttpServerFactory
    */
   private Map<String, Object> getBeans()
   {
-    Map<String, Object> beans = new HashMap<String, Object>();
+    Map<String, Object> beans = new HashMap<>();
     final PhotoDatabase photoDb = new PhotoDatabaseImpl(10);
     beans.put("photoDb", photoDb);
     beans.put("albumDb", new AlbumDatabaseImpl(5));

@@ -13,60 +13,114 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 *#
-  #if($method.optionalParams.size() > 0 || $method.supportedProjectionParams.size() > 0)
-    #doc($method.schema.doc)
-    public CompletionStage<${spec.entityClassName}> get(
-      #if (!${spec.getResource().hasSimple()})
-        $spec.keyClassDisplayName $spec.idName#if($method.requiredParams.size() > 0),#end
-      #end
-        #**##methodParams($method, false)##
-      ) {
-      return get(#if(${spec.idName})${spec.idName},#end
-          #**##optionalMethodCallArgs($method)##
-      );
-    }
-  #end
-
-  #doc($method.schema.doc)
-  public CompletionStage<${spec.entityClassName}> get(
-    #if (!${spec.getResource().hasSimple()})
-      $spec.keyClassDisplayName $spec.idName#if( $method.hasParams()),#end
-    #end
-      #**##methodParams($method, true)##
-      ) {
-    #**##paramsRequestMap($method)##
-    GetRequest<${spec.entityClassName}> request = new GetRequest<>(
-        Collections.emptyMap(),
-        Collections.emptyList(),
-        ${spec.entityClassName}.class,
-        #if(${spec.idName})
-    #**#$spec.idName##
+#if($is_interface)
+  #foreach($withEG in [true, false])
+    #foreach($flattenAssocKey in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
+      #set($showTemplate =(!$flattenAssocKey ||  ${spec.getResource().hasAssociation()}))
+      #if ($showTemplate) 
+        #if ($flattenAssocKey)
+          #define($keyStubNoOptional)
+            #assocKeyParamsWithOptAndEg($method, false, $withEG)
+          #end ## end define
+          #define($keyStubWithOptional)
+            #assocKeyParamsWithOptAndEg($method, true, $withEG)
+          #end ## end define
         #else
-    #**#null##
-        #end,
-        queryParams,
-        queryParamClasses,
-        _resourceSpec,
-        ORIGINAL_RESOURCE_PATH,
-        buildReadOnlyPathKeys(),
-        RestliRequestOptions.DEFAULT_OPTIONS);
-    ## TODO Change this to use custom completion stage.
-    CompletableFuture<${spec.entityClassName}> result = new CompletableFuture<>();
-    Task<Void> responseTask = _client.createTask(request).transform("Task to completion stage",
-        responseTry -> {
-          if (responseTry.isFailed()) {
-            result.completeExceptionally(responseTry.getError());
-          } else {
-            Response<${spec.entityClassName}> resp = responseTry.get();
-            if (resp.hasError()) {
-              result.completeExceptionally(resp.getError());
-            } else {
-              result.complete(resp.getEntity());
-            }
+          #define($keyStubNoOptional)
+            $spec.keyClassDisplayName $spec.idName#if($method.hasRequiredParams()|| $withEG),#end
+          #end ## end define
+          #define($keyStubWithOptional)
+            $spec.keyClassDisplayName $spec.idName#if( $method.hasParams() || $withEG),#end
+          #end ## end define
+        #end ## endIf
+        #if($method.hasOptionalParams() || $method.hasProjectionParams())
+          #doc($method.schema.doc)
+          public CompletionStage<${spec.entityClassName}> get(
+            #if (!${spec.getResource().hasSimple()})
+              $keyStubNoOptional
+            #end
+              #**##methodParamsWithEGroup($method, false, $withEG)##
+            );
+        #end
+
+        #doc($method.schema.doc)
+        public CompletionStage<${spec.entityClassName}> get(
+          #if (!${spec.getResource().hasSimple()})
+            $keyStubWithOptional
+          #end
+            #**##methodParamsWithEGroup($method, true, $withEG)##
+            );
+      #end ## end if showTemplate
+    #end ## foreach flattenAssocKey
+  #end ## end withEG
+#optionalParamClass($method)
+#else ## is_interface
+  #foreach($withEG in [true, false])
+    #foreach($flattenAssocKey in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
+      #set($showTemplate =(!$flattenAssocKey ||  ${spec.getResource().hasAssociation()}))
+      #if ($showTemplate)
+        #if ($flattenAssocKey)
+          #define($keyStubNoOptional)
+            #assocKeyParamsWithOptAndEg($method, false, $withEG)
+          #end ## end define
+          #define($keyStubWithOptional)
+            #assocKeyParamsWithOptAndEg($method, true, $withEG)
+          #end ## end define
+        #else
+          #define($keyStubNoOptional)
+            $spec.keyClassDisplayName $spec.idName#if($method.hasRequiredParams()|| $withEG),#end
+          #end ## end define
+          #define($keyStubWithOptional)
+            $spec.keyClassDisplayName $spec.idName#if( $method.hasParams() || $withEG),#end
+          #end ## end define
+        #end ## endIf
+        #if($method.hasOptionalParams() || $method.hasProjectionParams())
+          #doc($method.schema.doc)
+          public CompletionStage<${spec.entityClassName}> get(
+            #if (!${spec.getResource().hasSimple()})
+              $keyStubNoOptional
+            #end
+              #**##methodParamsWithEGroup($method, false, $withEG)##
+            ) {
+            #generateAssocKeyAsId($spec, $method, $flattenAssocKey)
+            return get(#if(${spec.idName})${spec.idName},#end
+                #**##optionalMethodCallArgsWithEGroup($method, $withEG)##
+            );
           }
-          return Success.of((Void) null);
-        });
-    _engine.run(responseTask);
-    return result;
-  }
-  #optionalParamClass($method)
+        #end
+
+        #doc($method.schema.doc)
+        public CompletionStage<${spec.entityClassName}> get(
+          #if (!${spec.getResource().hasSimple()})
+            $keyStubWithOptional
+          #end
+            #**##methodParamsWithEGroup($method, true, $withEG)##
+            ) {
+          #generateAssocKeyAsId($spec, $method, $flattenAssocKey)
+          #**##paramsRequestMap($method)##
+          GetRequest<${spec.entityClassName}> request = new GetRequest<>(
+              Collections.emptyMap(),
+              Collections.emptyList(),
+              ${spec.entityClassName}.class,
+              #if(${spec.idName})
+          #**#$spec.idName##
+              #else
+          #**#null##
+              #end,
+              queryParams,
+              queryParamClasses,
+              _resourceSpec,
+              ORIGINAL_RESOURCE_PATH,
+              buildReadOnlyPathKeys(),
+              RestliRequestOptions.DEFAULT_OPTIONS);
+          #**##makeRequestAndReturn(
+          ${spec.entityClassName},
+          ${spec.entityClassName},
+          "resp.getEntity()",
+                $withEG
+              )##
+            }
+      #end ## end if show template
+    #end ## foreach flattenAssocKey
+  #end ## end withEG
+#end ## is_interface

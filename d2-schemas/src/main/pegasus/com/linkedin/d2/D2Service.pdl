@@ -100,10 +100,10 @@ record D2Service includes D2ChangeTimeStamps {
   /**
    * When enabled, client will only send requests to a subset of the hosts in the cluster. Used together with minClusterSubsetSize.
    */
-  enableClusterSubsetting: optional boolean
+  enableClusterSubsetting: boolean = false
 
   /**
-   * The minimum cluster subset size for this service. Will only take effect when enableClusterSubsetting is set to true.
+   * The minimum cluster subset size for this service. Will only take effect when it is a positive integer and enableClusterSubsetting is set to true. Will be capped at the number of hosts in the cluster.
    */
-  minClusterSubsetSize: optional int
+  minClusterSubsetSize: int = -1
 }

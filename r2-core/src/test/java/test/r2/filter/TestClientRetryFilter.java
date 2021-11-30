@@ -77,22 +77,20 @@ public class TestClientRetryFilter
   }
 
   @Test
-  public void testAddDoNotRetryOverride()
+  public void testClientSideRetriableException()
   {
     ClientRetryFilter clientRetryFilter = new ClientRetryFilter();
-    RemoteInvocationException exception = new RemoteInvocationException("exception", new RetriableRequestException("retry"));
-    Assert.assertFalse(((RetriableRequestException) exception.getCause()).getDoNotRetryOverride());
     RestFilter captureFilter = new RestFilter()
     {
       @Override
       public void onRestError(Throwable ex, RequestContext requestContext, Map<String, String> wireAttrs,
           NextFilter<RestRequest, RestResponse> nextFilter)
       {
-        Assert.assertEquals(exception, ex);
-        Assert.assertTrue(((RetriableRequestException) exception.getCause()).getDoNotRetryOverride());
+        Assert.assertTrue(ex instanceof RetriableRequestException);
+        Assert.assertFalse(((RetriableRequestException) ex).getDoNotRetryOverride());
       }
     };
     FilterChain filterChain = FilterChains.createRestChain(captureFilter, clientRetryFilter);
-    FilterUtil.fireRestError(filterChain, exception, new HashMap<>());
+    FilterUtil.fireRestError(filterChain, new RetriableRequestException("exception"), new HashMap<>());
   }
 }

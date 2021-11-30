@@ -78,11 +78,11 @@ public class ZKConnection
 
   // _countDownLatch signals when _zkRef is ready to be used
   private final CountDownLatch _zkRefLatch = new CountDownLatch(1);
-  private final AtomicReference<ZooKeeper> _zkRef = new AtomicReference<ZooKeeper>();
+  private final AtomicReference<ZooKeeper> _zkRef = new AtomicReference<>();
 
   // _mutex protects the two fields below: _listeners and _currentState
   private final Object _mutex = new Object();
-  private final Set<StateListener> _listeners = new HashSet<StateListener>();
+  private final Set<StateListener> _listeners = new HashSet<>();
   private Watcher.Event.KeeperState _currentState;
 
   public interface StateListener

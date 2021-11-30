@@ -159,7 +159,7 @@ public class SchemaAnnotationValidatorCmdLineApp
 
   private static List<DataSchema> parseSchemas(String resolverPath, String modelsLocation) throws IOException
   {
-    DataSchemaParser dataSchemaParser = new DataSchemaParser(resolverPath);
+    DataSchemaParser dataSchemaParser = new DataSchemaParser.Builder(resolverPath).build();
     DataSchemaParser.ParseResult parsedSources = dataSchemaParser.parseSources(new String[]{modelsLocation});
 
     Map<DataSchema, DataSchemaLocation> schemaLocations = parsedSources.getSchemaAndLocations();

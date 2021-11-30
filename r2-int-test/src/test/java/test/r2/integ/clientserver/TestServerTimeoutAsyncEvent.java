@@ -171,7 +171,7 @@ public class TestServerTimeoutAsyncEvent extends AbstractServiceTest
   @Override
   protected Map<String, Object> getHttpClientProperties()
   {
-    Map<String, Object> clientProperties = new HashMap<String, Object>();
+    Map<String, Object> clientProperties = new HashMap<>();
     clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, String.valueOf(ASYNC_EVENT_TIMEOUT * 20));
     clientProperties.put(HttpClientFactory.HTTP_POOL_MIN_SIZE, "1");
     clientProperties.put(HttpClientFactory.HTTP_POOL_SIZE, "1");
@@ -187,7 +187,7 @@ public class TestServerTimeoutAsyncEvent extends AbstractServiceTest
   @Override
   protected TransportDispatcher getTransportDispatcher()
   {
-    final Map<URI, StreamRequestHandler> handlers = new HashMap<URI, StreamRequestHandler>();
+    final Map<URI, StreamRequestHandler> handlers = new HashMap<>();
     handlers.put(TIMEOUT_BEFORE_SENDING_RESPONSE_SERVER_URI, new TimeoutBeforeRespondingRequestHandler());
     handlers.put(TIMEOUT_AFTER_SENDING_RESPONSE_SERVER_URI, new TimeoutAfterRespondingRequestHandler());
     handlers.put(THROW_BUT_SHOULD_NOT_TIMEOUT_URI, new ThrowHandler());
@@ -207,7 +207,7 @@ public class TestServerTimeoutAsyncEvent extends AbstractServiceTest
         StreamRequestHandler handler = handlers.get(req.getURI());
         if (handler != null)
         {
-          handler.handleRequest(req, requestContext, new TransportCallbackAdapter<StreamResponse>(callback));
+          handler.handleRequest(req, requestContext, new TransportCallbackAdapter<>(callback));
         }
         else
         {

@@ -57,7 +57,7 @@ public class TestCompressionEcho extends AbstractServiceTest
   protected static final long SMALL_BYTES_NUM = THRESHOLD - 1;
   private static final URI ECHO_URI = URI.create("/echo");
 
-  private List<Client> _clients = new ArrayList<Client>();
+  private List<Client> _clients = new ArrayList<>();
 
 
   @Factory(dataProvider = "allStreamCombinations", dataProviderClass = ClientServerConfiguration.class)
@@ -84,7 +84,7 @@ public class TestCompressionEcho extends AbstractServiceTest
   {
     for (Client compressionClient : _clients)
     {
-      final FutureCallback<None> clientShutdownCallback = new FutureCallback<None>();
+      final FutureCallback<None> clientShutdownCallback = new FutureCallback<>();
       compressionClient.shutdown(clientShutdownCallback);
       clientShutdownCallback.get();
     }
@@ -160,13 +160,13 @@ public class TestCompressionEcho extends AbstractServiceTest
     // add operation to enable sending accept encoding
     RequestContext requestContext = new RequestContext();
     requestContext.putLocalAttr(R2Constants.OPERATION, "get");
-    final FutureCallback<StreamResponse> callback = new FutureCallback<StreamResponse>();
+    final FutureCallback<StreamResponse> callback = new FutureCallback<>();
     client.streamRequest(request, requestContext, callback);
 
     final StreamResponse response = callback.get(60, TimeUnit.SECONDS);
     Assert.assertEquals(response.getStatus(), RestStatus.OK);
 
-    final FutureCallback<None> readerCallback = new FutureCallback<None>();
+    final FutureCallback<None> readerCallback = new FutureCallback<>();
     final BytesReader reader = new BytesReader(BYTE, readerCallback);
     response.getEntityStream().setReader(reader);
 
@@ -178,7 +178,7 @@ public class TestCompressionEcho extends AbstractServiceTest
   @Override
   protected Map<String, Object> getHttpClientProperties()
   {
-    Map<String, Object> clientProperties = new HashMap<String, Object>();
+    Map<String, Object> clientProperties = new HashMap<>();
     clientProperties.put(HttpClientFactory.HTTP_MAX_RESPONSE_SIZE, String.valueOf(LARGE_BYTES_NUM * 2));
     clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "60000");
     return clientProperties;

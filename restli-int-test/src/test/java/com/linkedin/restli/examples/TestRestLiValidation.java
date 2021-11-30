@@ -250,8 +250,8 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   @DataProvider
   public static Object[][] batchCreateFailureData()
   {
-    List<ValidationDemo> validationDemos = new ArrayList<ValidationDemo>();
-    List<String> errorMessages = new ArrayList<String>();
+    List<ValidationDemo> validationDemos = new ArrayList<>();
+    List<String> errorMessages = new ArrayList<>();
     Object[][] cases = createFailures();
     for (int i = 0; i < cases.length; i++)
     {
@@ -331,8 +331,8 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   @DataProvider
   public static Object[][] batchCreateAndGetFailureData()
   {
-    List<ValidationDemo> validationDemos = new ArrayList<ValidationDemo>();
-    List<String> errorMessages = new ArrayList<String>();
+    List<ValidationDemo> validationDemos = new ArrayList<>();
+    List<String> errorMessages = new ArrayList<>();
     Object[][] cases = batchCreateAndGetFailures();
     for (int i = 0; i < cases.length; i++)
     {
@@ -402,11 +402,11 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     Assert.assertEquals(response.getStatus(), HttpStatus.S_201_CREATED.getCode());
     if (response.getEntity() instanceof CreateResponse)
     {
-      Assert.assertEquals(((CreateResponse<Integer>)response.getEntity()).getId(), new Integer(1234));
+      Assert.assertEquals(((CreateResponse<Integer>)response.getEntity()).getId(), Integer.valueOf(1234));
     }
     else
     {
-      Assert.assertEquals(((IdResponse<Integer>)(Object)response.getEntity()).getId(), new Integer(1234));
+      Assert.assertEquals(((IdResponse<Integer>)(Object)response.getEntity()).getId(), Integer.valueOf(1234));
     }
   }
 
@@ -590,8 +590,8 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   {
     String[][] failures = partialUpdateFailures();
     String[] successes = partialUpdateSuccesses();
-    Map<Integer, PatchRequest<ValidationDemo>> inputs = new HashMap<Integer, PatchRequest<ValidationDemo>>();
-    Map<Integer, String> errorMessages = new HashMap<Integer, String>();
+    Map<Integer, PatchRequest<ValidationDemo>> inputs = new HashMap<>();
+    Map<Integer, String> errorMessages = new HashMap<>();
     for (int i = 0; i < failures.length; i++)
     {
       inputs.put(i, PatchBuilder.<ValidationDemo>buildPatchFromString(failures[i][0]));

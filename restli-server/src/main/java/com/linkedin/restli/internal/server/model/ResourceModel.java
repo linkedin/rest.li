@@ -117,7 +117,7 @@ public class ResourceModel implements ResourceDefinition
     _keyKeyClass = keyKeyClass;
     _keyParamsClass = keyParamsClass;
     _keys = keys;
-    _keyClasses = new HashMap<String, Class<?>>(CollectionUtils.getMapInitialCapacity(_keys.size(), 0.75f), 0.75f);
+    _keyClasses = new HashMap<>(CollectionUtils.getMapInitialCapacity(_keys.size(), 0.75f), 0.75f);
     for (Key key : _keys)
     {
       _keyClasses.put(key.getName(), key.getType());
@@ -131,7 +131,7 @@ public class ResourceModel implements ResourceDefinition
     _resourceMethodDescriptors = new ArrayList<>(5);
     _primaryKey = primaryKey;
     _resourceType = resourceType;
-    _pathSubResourceMap = new HashMap<String, ResourceModel>();
+    _pathSubResourceMap = new HashMap<>();
   }
 
   /**
@@ -221,7 +221,7 @@ public class ResourceModel implements ResourceDefinition
    */
   public Set<String> getKeyNames()
   {
-    Set<String> keyNames = new HashSet<String>();
+    Set<String> keyNames = new HashSet<>();
     for (Key key : _keys)
     {
       keyNames.add(key.getName());
@@ -313,7 +313,7 @@ public class ResourceModel implements ResourceDefinition
     return (R) _pathSubResourceMap.get(subresourceName);
   }
 
-  public Iterable<ResourceModel> getSubResources()
+  public Collection<ResourceModel> getSubResources()
   {
     return _pathSubResourceMap.values();
   }
@@ -327,27 +327,31 @@ public class ResourceModel implements ResourceDefinition
   /**
    * @return true if this resource has sub-resources, false otherwise
    */
+  @Override
   public boolean hasSubResources()
   {
     return _pathSubResourceMap.size() > 0;
   }
 
+  @Override
   public Class<?> getResourceClass()
   {
     return _resourceClass;
   }
 
-
+  @Override
   public String getName()
   {
     return _name;
   }
 
+  @Override
   public String getNamespace()
   {
     return _namespace;
   }
 
+  @Override
   public boolean isRoot()
   {
     return _root;

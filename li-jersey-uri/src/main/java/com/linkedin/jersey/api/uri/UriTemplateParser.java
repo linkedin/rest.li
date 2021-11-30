@@ -93,7 +93,7 @@ public class UriTemplateParser {
             '(',
             ')'};
 
-        Set<Character> s = new HashSet<Character>(reserved.length);
+        Set<Character> s = new HashSet<>(reserved.length);
         for (char c : reserved) s.add(c);
         return s;
     }
@@ -153,11 +153,11 @@ public class UriTemplateParser {
 
     private final Pattern pattern;
 
-    private final List<String> names = new ArrayList<String>();
+    private final List<String> names = new ArrayList<>();
 
-    private final List<Integer> groupCounts = new ArrayList<Integer>();
+    private final List<Integer> groupCounts = new ArrayList<>();
 
-    private final Map<String, Pattern> nameToPattern = new HashMap<String, Pattern>();
+    private final Map<String, Pattern> nameToPattern = new HashMap<>();
 
     /**
      * Parse a template.

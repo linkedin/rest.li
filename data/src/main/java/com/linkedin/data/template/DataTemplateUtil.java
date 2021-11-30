@@ -798,7 +798,7 @@ public class DataTemplateUtil
 
   static
   {
-    IdentityHashMap<Class<?>, DirectCoercer<?>> map = new IdentityHashMap<Class<?>, DirectCoercer<?>>();
+    IdentityHashMap<Class<?>, DirectCoercer<?>> map = new IdentityHashMap<>();
     map.put(Integer.TYPE, INTEGER_COERCER);
     map.put(Integer.class, INTEGER_COERCER);
     map.put(Long.TYPE, LONG_COERCER);
@@ -849,7 +849,7 @@ public class DataTemplateUtil
           throw new IllegalArgumentException(targetClass.getName() + " already has a coercer");
         }
       }
-      Map<Class<?>, DirectCoercer<?>> newMap = new IdentityHashMap<Class<?>, DirectCoercer<?>>(_classToCoercerMap);
+      Map<Class<?>, DirectCoercer<?>> newMap = new IdentityHashMap<>(_classToCoercerMap);
       newMap.put(targetClass, coercer);
       _classToCoercerMap = Collections.unmodifiableMap(newMap);
     }

@@ -42,7 +42,7 @@ public class UriPropertiesJsonSerializer implements PropertySerializer<UriProper
     {
       UriProperties propertyToSerialize;
       final Map<URI, Map<Integer, PartitionData>> partitionDesc = property.getPartitionDesc();
-      final Map<URI, Double> weights = new HashMap<URI, Double>(partitionDesc.size() * 2);
+      final Map<URI, Double> weights = new HashMap<>(partitionDesc.size() * 2);
       boolean isPartitioned = false;
       for (Map.Entry<URI, Map<Integer, PartitionData>> entry : partitionDesc.entrySet())
       {
@@ -112,7 +112,7 @@ public class UriPropertiesJsonSerializer implements PropertySerializer<UriProper
     if (map.containsKey(applicationPropertiesKey))
     {
       // the URI key gets serialized into a String, so we have to convert the String back into an URI
-      applicationProperties = new HashMap<URI, Map<String, Object>>();
+      applicationProperties = new HashMap<>();
       Map<String, Map<String, Object>> storedApplicationProperties =
           (Map<String, Map<String, Object>>)PropertyUtil.checkAndGetValue(map,
                                                                           applicationPropertiesKey,
@@ -128,8 +128,7 @@ public class UriPropertiesJsonSerializer implements PropertySerializer<UriProper
       applicationProperties = Collections.emptyMap();
     }
 
-    Map<URI, Map<Integer, PartitionData>> partitionDesc =
-        new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<>();
 
     @SuppressWarnings("unchecked")
     Map<String, Map<String, Object>> descMap = (Map<String, Map<String, Object>>)map.get("partitionDesc");
@@ -140,7 +139,7 @@ public class UriPropertiesJsonSerializer implements PropertySerializer<UriProper
       {
         URI uri = URI.create(entry.getKey());
         Map<String, Object> partitionMap = entry.getValue();
-        Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(partitionMap.size()* 2);
+        Map<Integer, PartitionData> partitionDataMap = new HashMap<>(partitionMap.size()* 2);
         for (Map.Entry<String, Object> partitionEntry : partitionMap.entrySet())
         {
           @SuppressWarnings("unchecked")
@@ -154,14 +153,14 @@ public class UriPropertiesJsonSerializer implements PropertySerializer<UriProper
 
     @SuppressWarnings("unchecked")
     Map<String, Object> weights = (Map<String, Object>) map.get("weights");
-    Map<URI, Map<Integer, PartitionData>> partitionDescFromWeights = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> partitionDescFromWeights = new HashMap<>();
     if (weights != null)
     {
       for(Map.Entry<String, Object> weightEntry: weights.entrySet())
       {
         String uriStr = weightEntry.getKey();
         URI uri = URI.create(uriStr);
-        Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
+        Map<Integer, PartitionData> partitionDataMap = new HashMap<>(2);
         partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
             // may be not a proper use of checkAndGetValue and uriStr is not the proper name for the value
             new PartitionData(PropertyUtil.checkAndGetValue(weights, uriStr, Number.class, clusterName).doubleValue()));

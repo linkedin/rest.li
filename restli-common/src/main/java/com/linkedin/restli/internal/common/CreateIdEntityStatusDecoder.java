@@ -61,7 +61,7 @@ public class CreateIdEntityStatusDecoder<K, V extends RecordTemplate> extends Cr
     }
     finalMap.put("entity", listElements);
 
-    return new CreateIdEntityStatus<K, V>(finalMap, key, entity);
+    return new CreateIdEntityStatus<>(finalMap, key, entity);
   }
 
 }

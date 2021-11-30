@@ -129,7 +129,7 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
 
   private void initializeCopy()
   {
-    _cache = new DataObjectToObjectCache<V>(data().size());
+    _cache = new DataObjectToObjectCache<>(data().size());
     _entrySet = new EntrySet();
   }
 
@@ -274,7 +274,7 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
           }
           Object unwrapped = (_valueClass.cast(value)).data();
           assert(unwrapped != value);
-          return new AbstractMap.SimpleImmutableEntry<String, Object>((String) key, unwrapped);
+          return new AbstractMap.SimpleImmutableEntry<>((String) key, unwrapped);
         }
       }
       return null;
@@ -282,7 +282,7 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
 
     protected Collection<Map.Entry<String, Object>> unwrapCollection(Collection<?> c)
     {
-      ArrayList<Map.Entry<String, Object>> unwrappedList = new ArrayList<Map.Entry<String, Object>>(c.size());
+      ArrayList<Map.Entry<String, Object>> unwrappedList = new ArrayList<>(c.size());
       for (Object entry : c)
       {
         Map.Entry<String, Object> unwrappedEntry = unwrapEntry(entry);

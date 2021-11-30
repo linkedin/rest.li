@@ -32,6 +32,9 @@ import java.util.List;
 import java.util.Map;
 
 import static com.linkedin.d2.balancer.properties.ClusterProperties.DARK_CLUSTER_DEFAULT_MULTIPLIER;
+import static com.linkedin.d2.balancer.properties.ClusterProperties.DARK_CLUSTER_DEFAULT_TARGET_RATE;
+import static com.linkedin.d2.balancer.properties.ClusterProperties.DARK_CLUSTER_DEFAULT_MAX_REQUESTS_TO_BUFFER;
+import static com.linkedin.d2.balancer.properties.ClusterProperties.DARK_CLUSTER_DEFAULT_BUFFERED_REQUEST_EXPIRY_IN_SECONDS;
 
 /**
  * This class converts {@link DarkClusterConfigMap} into a Map
@@ -59,6 +62,24 @@ public class DarkClustersConverter
         if (darkClusterConfig.hasMultiplier())
         {
           prop.put(PropertyKeys.DARK_CLUSTER_MULTIPLIER, darkClusterConfig.getMultiplier().toString());
+        }
+
+        if (darkClusterConfig.hasDispatcherOutboundTargetRate())
+        {
+          prop.put(PropertyKeys.DARK_CLUSTER_OUTBOUND_TARGET_RATE,
+                   darkClusterConfig.getDispatcherOutboundTargetRate().toString());
+        }
+
+        if (darkClusterConfig.hasDispatcherMaxRequestsToBuffer())
+        {
+          prop.put(PropertyKeys.DARK_CLUSTER_MAX_REQUESTS_TO_BUFFER,
+                   darkClusterConfig.getDispatcherMaxRequestsToBuffer().toString());
+        }
+
+        if (darkClusterConfig.hasDispatcherBufferedRequestExpiryInSeconds())
+        {
+          prop.put(PropertyKeys.DARK_CLUSTER_BUFFERED_REQUEST_EXPIRY_IN_SECONDS,
+                   darkClusterConfig.getDispatcherBufferedRequestExpiryInSeconds().toString());
         }
 
         if (darkClusterConfig.hasDarkClusterStrategyPrioritizedList())
@@ -100,6 +121,36 @@ public class DarkClustersConverter
       {
         // to maintain backwards compatibility with previously ser/de, set the default on deserialization
         darkClusterConfig.setMultiplier(DARK_CLUSTER_DEFAULT_MULTIPLIER);
+      }
+
+      if (props.containsKey(PropertyKeys.DARK_CLUSTER_OUTBOUND_TARGET_RATE))
+      {
+        darkClusterConfig.setDispatcherOutboundTargetRate(
+            PropertyUtil.coerce(props.get(PropertyKeys.DARK_CLUSTER_OUTBOUND_TARGET_RATE), Float.class));
+      }
+      else
+      {
+        darkClusterConfig.setDispatcherOutboundTargetRate(DARK_CLUSTER_DEFAULT_TARGET_RATE);
+      }
+
+      if (props.containsKey(PropertyKeys.DARK_CLUSTER_MAX_REQUESTS_TO_BUFFER))
+      {
+        darkClusterConfig.setDispatcherMaxRequestsToBuffer(
+            PropertyUtil.coerce(props.get(PropertyKeys.DARK_CLUSTER_MAX_REQUESTS_TO_BUFFER), Integer.class));
+      }
+      else
+      {
+        darkClusterConfig.setDispatcherMaxRequestsToBuffer(DARK_CLUSTER_DEFAULT_MAX_REQUESTS_TO_BUFFER);
+      }
+
+      if (props.containsKey(PropertyKeys.DARK_CLUSTER_BUFFERED_REQUEST_EXPIRY_IN_SECONDS))
+      {
+        darkClusterConfig.setDispatcherBufferedRequestExpiryInSeconds(
+            PropertyUtil.coerce(props.get(PropertyKeys.DARK_CLUSTER_BUFFERED_REQUEST_EXPIRY_IN_SECONDS), Integer.class));
+      }
+      else
+      {
+        darkClusterConfig.setDispatcherBufferedRequestExpiryInSeconds(DARK_CLUSTER_DEFAULT_BUFFERED_REQUEST_EXPIRY_IN_SECONDS);
       }
 
       if (props.containsKey(PropertyKeys.DARK_CLUSTER_STRATEGY_LIST))

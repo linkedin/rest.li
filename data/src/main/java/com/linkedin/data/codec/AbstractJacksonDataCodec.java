@@ -425,7 +425,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
         return null;
       }
 
-      TreeMap<DataLocation, Object> sortedMap = new TreeMap<DataLocation, Object>();
+      TreeMap<DataLocation, Object> sortedMap = new TreeMap<>();
       for (Map.Entry<Object, DataLocation> e : _locationMap.entrySet())
       {
         sortedMap.put(e.getValue(), e.getKey());

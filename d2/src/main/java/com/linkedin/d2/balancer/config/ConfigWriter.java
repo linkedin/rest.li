@@ -73,7 +73,7 @@ public class ConfigWriter<T>
   {
     long startTime = System.currentTimeMillis();
 
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _store.start(callback);
     callback.get(_timeout, _timeoutUnit);
 
@@ -116,7 +116,7 @@ public class ConfigWriter<T>
       throw new TimeoutException();
     }
 
-    FutureCallback<None> shutdownCallback = new FutureCallback<None>();
+    FutureCallback<None> shutdownCallback = new FutureCallback<>();
     _store.shutdown(shutdownCallback);
     shutdownCallback.get(_timeout, _timeoutUnit);
 
@@ -134,7 +134,7 @@ public class ConfigWriter<T>
     {
       defaultMap = Collections.emptyMap();
     }
-    Map<String,Object> result = new HashMap<String,Object>(defaultMap);
+    Map<String, Object> result = new HashMap<>(defaultMap);
     for (String key : source.keySet())
     {
       Object sourceValue = source.get(key);

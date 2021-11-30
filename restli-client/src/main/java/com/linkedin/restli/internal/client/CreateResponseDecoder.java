@@ -78,14 +78,14 @@ public class CreateResponseDecoder<K> extends EmptyResponseDecoder
     final Response<EmptyRecord> rawResponse = super.decodeResponse(restResponse);
 
     // ResponseImpl will make the headers unmodifiable
-    final Map<String, String> modifiableHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    final Map<String, String> modifiableHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     modifiableHeaders.putAll(rawResponse.getHeaders());
 
     // remove ID header to prevent user to access the weakly typed ID
     modifiableHeaders.remove(RestConstants.HEADER_ID);
     modifiableHeaders.remove(RestConstants.HEADER_RESTLI_ID);
 
-    return new ResponseImpl<EmptyRecord>(rawResponse.getStatus(), modifiableHeaders, rawResponse.getCookies(), rawResponse.getEntity(), rawResponse.getError());
+    return new ResponseImpl<>(rawResponse.getStatus(), modifiableHeaders, rawResponse.getCookies(), rawResponse.getEntity(), rawResponse.getError());
   }
 
   @Override
@@ -104,6 +104,6 @@ public class CreateResponseDecoder<K> extends EmptyResponseDecoder
       key = (K) ResponseUtils.convertKey(id, _keyType, _keyParts, _complexKeyType, version);
     }
 
-    return new CreateResponse<K>(key);
+    return new CreateResponse<>(key);
   }
 }

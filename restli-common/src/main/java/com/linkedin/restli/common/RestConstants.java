@@ -61,6 +61,11 @@ public interface RestConstants
   String HEADER_SERVICE_SCOPED_PATH = "x-restli-service-scoped-path";
   String HEADER_FETCH_SYMBOL_TABLE = "x-restli-symbol-table-request";
 
+  /**
+   * This header if set to true will cause the validation filter to skip response validation.
+   */
+  String HEADER_SKIP_RESPONSE_VALIDATION = "x-restli-skip-response-validation";
+
   // Default supported mime types.
   Set<String> SUPPORTED_MIME_TYPES = new LinkedHashSet<>(
       Arrays.asList(HEADER_VALUE_APPLICATION_LICOR_TEXT,
@@ -83,7 +88,7 @@ public interface RestConstants
   String METADATA_FIELDS_PARAM = "metadataFields";
   String PAGING_FIELDS_PARAM = "pagingFields";
   String RETURN_ENTITY_PARAM = "$returnEntity";
-  Set<String> PROJECTION_PARAMETERS = Collections.unmodifiableSet(new LinkedHashSet<String>(
+  Set<String> PROJECTION_PARAMETERS = Collections.unmodifiableSet(new LinkedHashSet<>(
       Arrays.asList(FIELDS_PARAM, METADATA_FIELDS_PARAM, PAGING_FIELDS_PARAM)));
 
   /** delimiter used for separating (name=value) parts of compound key */
@@ -98,13 +103,13 @@ public interface RestConstants
   String RESOURCE_MODEL_FILENAME_EXTENSION = ".restspec.json";
   String SNAPSHOT_FILENAME_EXTENTION = ".snapshot.json";
   Set<ResourceMethod> SIMPLE_RESOURCE_METHODS = Collections.unmodifiableSet(
-      new HashSet<ResourceMethod>(
-        Arrays.asList(
-            ResourceMethod.ACTION,
-            ResourceMethod.DELETE,
-            ResourceMethod.GET,
-            ResourceMethod.PARTIAL_UPDATE,
-            ResourceMethod.UPDATE)));
+      new HashSet<>(
+          Arrays.asList(
+              ResourceMethod.ACTION,
+              ResourceMethod.DELETE,
+              ResourceMethod.GET,
+              ResourceMethod.PARTIAL_UPDATE,
+              ResourceMethod.UPDATE)));
 
   String RESTLI_PROTOCOL_VERSION_PROPERTY = "restli.protocol";
   String RESTLI_PROTOCOL_VERSION_PERCENTAGE_PROPERTY = "restli.protocol.percentage";

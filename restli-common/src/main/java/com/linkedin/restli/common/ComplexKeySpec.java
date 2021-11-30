@@ -46,7 +46,7 @@ public class ComplexKeySpec<KK extends RecordTemplate, KP extends RecordTemplate
     else
     {
       if(keyParamsClass == null) throw new IllegalArgumentException("keyParamsClass must be non-null.");
-      return new ComplexKeySpec<KK, KP>(new TypeSpec<KK>(keyKeyClass), new TypeSpec<KP>(keyParamsClass));
+      return new ComplexKeySpec<>(new TypeSpec<>(keyKeyClass), new TypeSpec<>(keyParamsClass));
     }
   }
 

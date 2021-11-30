@@ -90,7 +90,7 @@ public class Remover
 
     // construct the list of Data objects to remove
     // don't remove in place because iterator behavior with removals while iterating is undefined
-    ArrayList<ToRemove> removeList = new ArrayList<ToRemove>();
+    ArrayList<ToRemove> removeList = new ArrayList<>();
     while ((element = it.next()) != null)
     {
       ToRemove toRemove = new ToRemove(element);

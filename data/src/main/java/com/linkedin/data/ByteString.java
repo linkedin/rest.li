@@ -566,7 +566,7 @@ public final class ByteString
    */
   public List<ByteString> decompose()
   {
-    final List<ByteString> decomposedList = new ArrayList<ByteString>();
+    final List<ByteString> decomposedList = new ArrayList<>();
 
     //Note that if this is the empty ByteString, there is still one byte array that exists.
     for (int i = 0; i < _byteArrays.getArraySize(); i++)
@@ -898,7 +898,7 @@ public final class ByteString
 
     public Builder()
     {
-      _chunks = new ArrayList<ByteString>();
+      _chunks = new ArrayList<>();
     }
 
     public Builder append(ByteString dataChunk)

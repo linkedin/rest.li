@@ -17,7 +17,7 @@ public class RestSpec extends AbstractSnapshot
   public RestSpec(InputStream inputStream) throws IOException
   {
     DataMap data = _dataCodec.readMap(inputStream);
-    _models = new HashMap<String, NamedDataSchema>();
+    _models = new HashMap<>();
     _resourceSchema = parseSchema(data);
   }
 }

@@ -30,7 +30,7 @@ import com.linkedin.restli.internal.server.model.ResourceModel;
 public class EasyMockResourceFactory implements ResourceFactory
 {
   private final Map<Class<?>, Object> _mockMap =
-    new HashMap<Class<?>, Object>();
+      new HashMap<>();
 
   /**
    * @see com.linkedin.restli.server.resources.ResourceFactory#setRootResources(java.util.Map)

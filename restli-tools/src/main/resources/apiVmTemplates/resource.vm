@@ -17,20 +17,22 @@
 package $spec.resource.namespace;
 #end
 
-import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.MaskMap;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.DynamicRecordMetadata;
-import com.linkedin.data.template.FieldDef;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.Task;
 import com.linkedin.parseq.function.Success;
+import com.linkedin.parseq.function.Failure;
+import com.linkedin.restli.client.ExecutionGroup;
+import com.linkedin.restli.client.ParSeqBasedCompletionStageFactory;
 import com.linkedin.restli.client.ParSeqRestliClient;
 import com.linkedin.restli.client.Response;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.util.FluentClientUtils;
 import com.linkedin.restli.client.AbstractRequestBuilder;
+import com.linkedin.restli.client.ParSeqBasedFluentClient;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
@@ -42,7 +44,6 @@ import com.linkedin.restli.common.TypeSpec;
 ## #importClasses($spec)
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -55,13 +56,15 @@ import java.util.function.Function;
 import javax.annotation.Generated;
 
 @Generated("Generated from $spec.sourceIdlName")
-@SuppressWarnings({"rawtypes"})
-public class ${spec.className}${class_name_suffix} implements ${spec.toImplementInterfaceName} {
+@SuppressWarnings({"rawtypes", "unchecked"})
+public class ${spec.className}${class_name_suffix} implements ${spec.toImplementInterfaceName}, ParSeqBasedFluentClient {
   private final static String ORIGINAL_RESOURCE_PATH = "$util.getResourcePath($spec.resource.path)";
   private static ResourceSpec _resourceSpec;
   #if(${spec.getPathKeys().size()} > 0)
   private Map<String, Object> _pathKeyMap = new HashMap<>();
   #end
+  private ParSeqBasedCompletionStageFactory _completionStageFactory;
+
   #if(${spec.getActions().size()} > 0)
   private final Map<String, Class<?>> _actionQueryParamsClasses = Collections.singletonMap("action", String.class);
   #foreach($method in $spec.actions)
@@ -73,8 +76,8 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
     HashMap<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<String, DynamicRecordMetadata>();
     #foreach($action in $spec.actions)
       ArrayList<FieldDef<?>> ${action.name}Params = new ArrayList<FieldDef<?>>();
-      #foreach($actionParam in $action.parameters)
-        ${action.name}Params.add(new FieldDef<${actionParam.paramClassDisplayName}>("${actionParam.paramName}", ${actionParam.paramClassDisplayName}.class, DataTemplateUtil.getSchema(#if(${actionParam.hasParamTypeRef()})${actionParam.getParamTypeRefClassDisplayName()}#else${actionParam.paramClassDisplayName}#end.class)));
+      #foreach($actionParam in $action.allParameters)
+        ${action.name}Params.add(new FieldDef<${actionParam.fieldClassDisplayName}>("${actionParam.paramName}", ${actionParam.fieldClassDisplayName}.class, DataTemplateUtil.getSchema(#if(${actionParam.hasParamTypeRef()})${actionParam.getParamTypeRefClassDisplayName()}#else${actionParam.fieldClassDisplayName}#end.class)));
       #end
       requestMetadataMap.put("${action.name}", new DynamicRecordMetadata("${action.name}", ${action.name}Params));
     #end
@@ -172,6 +175,7 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
   public ${spec.className}${class_name_suffix}(ParSeqRestliClient client, Engine engine) {
     _client = client;
     _engine = engine;
+    _completionStageFactory = new ParSeqBasedCompletionStageFactory(engine);
   }
 
   ## Merge another pathKeyMap
@@ -206,36 +210,12 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
   }
   #end
 
-  // Action methods
-    #parse("apiVmTemplates/action.vm")
-  // CRUD methods
-  #foreach($method in $spec.restMethods)
-    #parse("apiVmTemplates/rest.${method.method}.vm")
-  #end
-
-
-
+  #parseMethodsFromTemplates
 
   ## Add association key generation stub
   #if(${spec.getResource().hasAssociation()})
-  // TODO: CompoundKey may eventually need to be exposed to the resource interface
-    public static class Key
-        extends CompoundKey
-    {
-        public Key() {
-        }
-
-        #foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})
-        public ${spec.className}${class_name_suffix}.Key set$util.nameCapsCase($assoc_key.name)(${assoc_key.bindingType} ${assoc_key.name}) {
-            append("${assoc_key.name}", ${assoc_key.name}, _resourceSpec.getKeyParts().get("${assoc_key.name}"));
-            return this;
-        }
-
-        public ${assoc_key.bindingType} get${util.nameCapsCase($assoc_key.name)} () {
-            return ((${assoc_key.bindingType}) getPart("${assoc_key.name}"));
-        }
-        #end
-    }
+    #assocCompoundKeyClass($spec)
+    #assocCompoundKeyGenImpl($spec)
   #end
 
   #if(${spec.getPathKeys().size()} > 0)
@@ -249,4 +229,14 @@ public class ${spec.className}${class_name_suffix} implements ${spec.toImplement
     return Collections.emptyMap();
   }
   #end
+
+  public void runBatchOnClient(Runnable runnable) throws Exception
+  {
+    generateExecutionGroup().batchOn(runnable, this);
+  }
+
+  public Engine getEngine()
+  {
+    return _engine;
+  }
 }
