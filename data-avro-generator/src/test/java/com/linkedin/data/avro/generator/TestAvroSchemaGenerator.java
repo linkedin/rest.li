@@ -340,8 +340,7 @@ public class TestAvroSchemaGenerator
       Schema avroSchema;
       try
       {
-//        avroSchema = new Parser().parse(avroSchemaInputStream);
-        avroSchema = Schema.parse(avroSchemaInputStream);
+        avroSchema = parser.parse(avroSchemaInputStream);
       }
       finally
       {
