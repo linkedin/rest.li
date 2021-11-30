@@ -67,7 +67,7 @@ public class DelegatingTransportDispatcher implements TransportDispatcher
   {
     try
     {
-      _restHandler.handleRequest(req, requestContext, new TransportCallbackAdapter<RestResponse>(callback));
+      _restHandler.handleRequest(req, requestContext, new TransportCallbackAdapter<>(callback));
     }
     catch (Exception e)
     {
@@ -83,7 +83,7 @@ public class DelegatingTransportDispatcher implements TransportDispatcher
   {
     try
     {
-      _streamHandler.handleRequest(req, requestContext, new TransportCallbackAdapter<StreamResponse>(callback));
+      _streamHandler.handleRequest(req, requestContext, new TransportCallbackAdapter<>(callback));
     }
     catch (Exception e)
     {

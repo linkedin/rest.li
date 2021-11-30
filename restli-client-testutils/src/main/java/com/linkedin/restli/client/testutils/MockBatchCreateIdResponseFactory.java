@@ -39,6 +39,6 @@ public class MockBatchCreateIdResponseFactory
    */
   public static <K> BatchCreateIdResponse<K> create(List<CreateIdStatus<K>> elements)
   {
-    return new BatchCreateIdResponse<K>(elements);
+    return new BatchCreateIdResponse<>(elements);
   }
 }

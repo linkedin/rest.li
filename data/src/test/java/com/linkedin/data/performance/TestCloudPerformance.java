@@ -251,7 +251,7 @@ public class TestCloudPerformance
 
   private List<Edge> cloudEdgesList(int numElements)
   {
-    List<Edge> edgeList = new ArrayList<Edge>(numElements);
+    List<Edge> edgeList = new ArrayList<>(numElements);
     for (int i = 0; i < numElements; i++)
     {
       edgeList.add(cloudEdge());

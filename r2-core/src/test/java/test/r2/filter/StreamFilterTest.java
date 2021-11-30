@@ -84,7 +84,7 @@ public class StreamFilterTest
 
   private Map<String, String> createWireAttributes()
   {
-    return new HashMap<String, String>();
+    return new HashMap<>();
   }
 
   private RequestContext createRequestContext()

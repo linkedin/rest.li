@@ -231,14 +231,7 @@ public class ResourceModelEncoder
   {
     ResourceSchema rootNode = new ResourceSchema();
 
-    // Set the entityType only when it is a UNSTRUCTURED_DATA base resource to avoid
-    // modifying all existing resources, which by default are STRUCTURED_DATA base.
-    if (ResourceEntityType.UNSTRUCTURED_DATA == resourceModel.getResourceEntityType())
-    {
-      rootNode.setEntityType(ResourceEntityType.UNSTRUCTURED_DATA);
-    }
-
-    switch (resourceModel.getResourceType())
+     switch (resourceModel.getResourceType())
     {
       case ACTIONS:
         appendActionsModel(rootNode, resourceModel);
@@ -448,6 +441,13 @@ public class ResourceModelEncoder
   private void appendCommon(final ResourceModel resourceModel,
                             final ResourceSchema resourceSchema)
   {
+    // Set the entityType only when it is a UNSTRUCTURED_DATA base resource to avoid
+    // modifying all existing resources, which by default are STRUCTURED_DATA base.
+    if (ResourceEntityType.UNSTRUCTURED_DATA == resourceModel.getResourceEntityType())
+    {
+      resourceSchema.setEntityType(ResourceEntityType.UNSTRUCTURED_DATA);
+    }
+
     resourceSchema.setName(resourceModel.getName());
     if (!resourceModel.getNamespace().isEmpty())
     {
@@ -642,7 +642,7 @@ public class ResourceModelEncoder
                           final ResourceModel collectionModel)
   {
     AssocKeySchemaArray assocKeySchemaArray = new AssocKeySchemaArray();
-    List<Key> sortedKeys = new ArrayList<Key>(collectionModel.getKeys());
+    List<Key> sortedKeys = new ArrayList<>(collectionModel.getKeys());
     Collections.sort(sortedKeys, new Comparator<Key>()
     {
       @Override
@@ -1167,7 +1167,7 @@ public class ResourceModelEncoder
 
   private void buildSupportsArray(final ResourceModel resourceModel, final StringArray supportsArray)
   {
-    List<String> supportsStrings = new ArrayList<String>();
+    List<String> supportsStrings = new ArrayList<>();
     for (ResourceMethodDescriptor resourceMethodDescriptor : resourceModel.getResourceMethodDescriptors())
     {
       ResourceMethod type = resourceMethodDescriptor.getType();

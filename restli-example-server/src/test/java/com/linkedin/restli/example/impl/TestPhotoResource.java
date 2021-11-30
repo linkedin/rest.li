@@ -47,7 +47,7 @@ public class TestPhotoResource
 
   private static Map<String, ResourceModel> buildResourceModels(Class<?>... rootResourceClasses)
   {
-    final Map<String, ResourceModel> map = new HashMap<String, ResourceModel>();
+    final Map<String, ResourceModel> map = new HashMap<>();
     for (Class<?> rootResourceClass : rootResourceClasses)
     {
       final ResourceModel model = RestLiAnnotationReader.processResource(rootResourceClass);
@@ -127,7 +127,7 @@ public class TestPhotoResource
       ids[i] = createPhoto(titles[i]);
 
     // validate all data are correct
-    Set<Long> batchIds = new HashSet<Long>();
+    Set<Long> batchIds = new HashSet<>();
     batchIds.add(ids[1]);
     batchIds.add(ids[2]);
     Map<Long, Photo> batchPhotos = _res.batchGet(batchIds);

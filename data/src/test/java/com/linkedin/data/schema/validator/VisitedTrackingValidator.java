@@ -23,7 +23,7 @@ import java.util.Set;
 
 public class VisitedTrackingValidator implements Validator
 {
-  private final List<String> _visited = new ArrayList<String>();
+  private final List<String> _visited = new ArrayList<>();
   private final Validator _nextValidator;
 
   public VisitedTrackingValidator(Validator nextValidator)
@@ -48,8 +48,8 @@ public class VisitedTrackingValidator implements Validator
 
   public Set<String> getVisitedMoreThanOnce()
   {
-    Set<String> visitedMoreThanOnce = new HashSet<String>();
-    Set<String> visitedSet = new HashSet<String>();
+    Set<String> visitedMoreThanOnce = new HashSet<>();
+    Set<String> visitedSet = new HashSet<>();
     for (String path : _visited)
     {
       boolean added = visitedSet.add(path);

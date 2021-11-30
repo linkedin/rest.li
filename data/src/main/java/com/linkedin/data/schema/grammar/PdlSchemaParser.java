@@ -720,7 +720,7 @@ public class PdlSchemaParser extends AbstractSchemaParser
     TypeAssignmentContext keyType = map.typeParams.key;
     TypeAssignmentContext valueType = map.typeParams.value;
     MapDataSchema schema = new MapDataSchema(toDataSchema(valueType));
-    Map<String, Object> propsToAdd = new HashMap<String, Object>();
+    Map<String, Object> propsToAdd = new HashMap<>();
 
     if (keyType.typeReference() != null)
     {

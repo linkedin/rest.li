@@ -45,8 +45,8 @@ public class TestLinkedDeque
   @Test
   public void testAdd()
   {
-    List<Integer> control = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
-    LinkedDeque<Integer> q = new LinkedDeque<Integer>(control);
+    List<Integer> control = new ArrayList<>(Arrays.asList(1, 2, 3));
+    LinkedDeque<Integer> q = new LinkedDeque<>(control);
 
     control.add(99);
     q.add(99);
@@ -57,8 +57,8 @@ public class TestLinkedDeque
   @Test
   public void testAddLast()
   {
-    List<Integer> control = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
-    LinkedDeque<Integer> q = new LinkedDeque<Integer>(control);
+    List<Integer> control = new ArrayList<>(Arrays.asList(1, 2, 3));
+    LinkedDeque<Integer> q = new LinkedDeque<>(control);
 
     control.add(99);
     q.addLast(99);
@@ -69,8 +69,8 @@ public class TestLinkedDeque
   @Test
   public void testAddFirst()
   {
-    List<Integer> control = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
-    LinkedDeque<Integer> q = new LinkedDeque<Integer>(control);
+    List<Integer> control = new ArrayList<>(Arrays.asList(1, 2, 3));
+    LinkedDeque<Integer> q = new LinkedDeque<>(control);
 
     control.add(0, 99);
     q.addFirst(99);
@@ -81,8 +81,8 @@ public class TestLinkedDeque
   @Test
   public void testOffer()
   {
-    List<Integer> control = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
-    LinkedDeque<Integer> q = new LinkedDeque<Integer>(control);
+    List<Integer> control = new ArrayList<>(Arrays.asList(1, 2, 3));
+    LinkedDeque<Integer> q = new LinkedDeque<>(control);
 
     control.add(99);
     Assert.assertTrue(q.offer(99));
@@ -93,8 +93,8 @@ public class TestLinkedDeque
   @Test
   public void testOfferLast()
   {
-    List<Integer> control = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
-    LinkedDeque<Integer> q = new LinkedDeque<Integer>(control);
+    List<Integer> control = new ArrayList<>(Arrays.asList(1, 2, 3));
+    LinkedDeque<Integer> q = new LinkedDeque<>(control);
 
     control.add(99);
     Assert.assertTrue(q.offerLast(99));
@@ -105,8 +105,8 @@ public class TestLinkedDeque
   @Test
   public void testOfferFirst()
   {
-    List<Integer> control = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
-    LinkedDeque<Integer> q = new LinkedDeque<Integer>(control);
+    List<Integer> control = new ArrayList<>(Arrays.asList(1, 2, 3));
+    LinkedDeque<Integer> q = new LinkedDeque<>(control);
 
     control.add(0, 99);
     Assert.assertTrue(q.offerFirst(99));
@@ -117,8 +117,8 @@ public class TestLinkedDeque
   @Test
   public void testRemove()
   {
-    List<Integer> control = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
-    LinkedDeque<Integer> q = new LinkedDeque<Integer>(control);
+    List<Integer> control = new ArrayList<>(Arrays.asList(1, 2, 3));
+    LinkedDeque<Integer> q = new LinkedDeque<>(control);
 
     Assert.assertEquals(q.remove(), control.remove(0));
     Assert.assertEquals(q, control);
@@ -127,8 +127,8 @@ public class TestLinkedDeque
   @Test
   public void testRemoveFirst()
   {
-    List<Integer> control = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
-    LinkedDeque<Integer> q = new LinkedDeque<Integer>(control);
+    List<Integer> control = new ArrayList<>(Arrays.asList(1, 2, 3));
+    LinkedDeque<Integer> q = new LinkedDeque<>(control);
 
     Assert.assertEquals(q.removeFirst(), control.remove(0));
     Assert.assertEquals(q, control);
@@ -137,8 +137,8 @@ public class TestLinkedDeque
   @Test
   public void testRemoveLast()
   {
-    List<Integer> control = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
-    LinkedDeque<Integer> q = new LinkedDeque<Integer>(control);
+    List<Integer> control = new ArrayList<>(Arrays.asList(1, 2, 3));
+    LinkedDeque<Integer> q = new LinkedDeque<>(control);
 
     Assert.assertEquals(q.removeLast(), control.remove(control.size() - 1));
     Assert.assertEquals(q, control);
@@ -147,8 +147,8 @@ public class TestLinkedDeque
   @Test
   public void testPoll()
   {
-    List<Integer> control = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
-    LinkedDeque<Integer> q = new LinkedDeque<Integer>(control);
+    List<Integer> control = new ArrayList<>(Arrays.asList(1, 2, 3));
+    LinkedDeque<Integer> q = new LinkedDeque<>(control);
 
     Assert.assertEquals(q.poll(), control.remove(0));
     Assert.assertEquals(q, control);
@@ -157,8 +157,8 @@ public class TestLinkedDeque
   @Test
   public void testPollFirst()
   {
-    List<Integer> control = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
-    LinkedDeque<Integer> q = new LinkedDeque<Integer>(control);
+    List<Integer> control = new ArrayList<>(Arrays.asList(1, 2, 3));
+    LinkedDeque<Integer> q = new LinkedDeque<>(control);
 
     Assert.assertEquals(q.pollFirst(), control.remove(0));
     Assert.assertEquals(q, control);
@@ -167,8 +167,8 @@ public class TestLinkedDeque
   @Test
   public void testPollLast()
   {
-    List<Integer> control = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
-    LinkedDeque<Integer> q = new LinkedDeque<Integer>(control);
+    List<Integer> control = new ArrayList<>(Arrays.asList(1, 2, 3));
+    LinkedDeque<Integer> q = new LinkedDeque<>(control);
 
     Assert.assertEquals(q.pollLast(), control.remove(control.size() - 1));
     Assert.assertEquals(q, control);
@@ -177,8 +177,8 @@ public class TestLinkedDeque
   @Test
   public void testPeek()
   {
-    List<Integer> control = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
-    LinkedDeque<Integer> q = new LinkedDeque<Integer>(control);
+    List<Integer> control = new ArrayList<>(Arrays.asList(1, 2, 3));
+    LinkedDeque<Integer> q = new LinkedDeque<>(control);
 
     Assert.assertEquals(q.peek(), control.get(0));
     Assert.assertEquals(q, control);
@@ -187,8 +187,8 @@ public class TestLinkedDeque
   @Test
   public void testPeekFirst()
   {
-    List<Integer> control = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
-    LinkedDeque<Integer> q = new LinkedDeque<Integer>(control);
+    List<Integer> control = new ArrayList<>(Arrays.asList(1, 2, 3));
+    LinkedDeque<Integer> q = new LinkedDeque<>(control);
 
     Assert.assertEquals(q.peekFirst(), control.get(0));
     Assert.assertEquals(q, control);
@@ -197,8 +197,8 @@ public class TestLinkedDeque
   @Test
   public void testPeekLast()
   {
-    List<Integer> control = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
-    LinkedDeque<Integer> q = new LinkedDeque<Integer>(control);
+    List<Integer> control = new ArrayList<>(Arrays.asList(1, 2, 3));
+    LinkedDeque<Integer> q = new LinkedDeque<>(control);
 
     Assert.assertEquals(q.peekLast(), control.get(control.size() - 1));
     Assert.assertEquals(q, control);
@@ -207,7 +207,7 @@ public class TestLinkedDeque
   @Test
   public void testEmptyRemove()
   {
-    LinkedDeque<Object> q = new LinkedDeque<Object>();
+    LinkedDeque<Object> q = new LinkedDeque<>();
     try
     {
       q.remove();
@@ -222,7 +222,7 @@ public class TestLinkedDeque
   @Test
   public void testEmptyRemoveFirst()
   {
-    LinkedDeque<Object> q = new LinkedDeque<Object>();
+    LinkedDeque<Object> q = new LinkedDeque<>();
     try
     {
       q.removeFirst();
@@ -237,7 +237,7 @@ public class TestLinkedDeque
   @Test
   public void testEmptyRemoveLast()
   {
-    LinkedDeque<Object> q = new LinkedDeque<Object>();
+    LinkedDeque<Object> q = new LinkedDeque<>();
     try
     {
       q.removeLast();
@@ -252,49 +252,49 @@ public class TestLinkedDeque
   @Test
   public void testEmptyPoll()
   {
-    LinkedDeque<Object> q = new LinkedDeque<Object>();
+    LinkedDeque<Object> q = new LinkedDeque<>();
     Assert.assertNull(q.poll(), "poll on empty queue should return null");
   }
 
   @Test
   public void testEmptyPollFirst()
   {
-    LinkedDeque<Object> q = new LinkedDeque<Object>();
+    LinkedDeque<Object> q = new LinkedDeque<>();
     Assert.assertNull(q.pollFirst(), "pollFirst on empty queue should return null");
   }
 
   @Test
   public void testEmptyPollLast()
   {
-    LinkedDeque<Object> q = new LinkedDeque<Object>();
+    LinkedDeque<Object> q = new LinkedDeque<>();
     Assert.assertNull(q.pollLast(), "pollLast on empty queue should return null");
   }
 
   @Test
   public void testEmptyPeek()
   {
-    LinkedDeque<Object> q = new LinkedDeque<Object>();
+    LinkedDeque<Object> q = new LinkedDeque<>();
     Assert.assertNull(q.peek(), "peek on empty queue should return null");
   }
 
   @Test
   public void testEmptyPeekFirst()
   {
-    LinkedDeque<Object> q = new LinkedDeque<Object>();
+    LinkedDeque<Object> q = new LinkedDeque<>();
     Assert.assertNull(q.peekFirst(), "peekFirst on empty queue should return null");
   }
 
   @Test
   public void testEmptyPeekLast()
   {
-    LinkedDeque<Object> q = new LinkedDeque<Object>();
+    LinkedDeque<Object> q = new LinkedDeque<>();
     Assert.assertNull(q.peekLast(), "peekLast on empty queue should return null");
   }
 
   @Test
   public void testAddNull()
   {
-    LinkedDeque<Object> q = new LinkedDeque<Object>();
+    LinkedDeque<Object> q = new LinkedDeque<>();
     try
     {
       q.add(null);
@@ -309,7 +309,7 @@ public class TestLinkedDeque
   @Test
   public void testAddFirstNull()
   {
-    LinkedDeque<Object> q = new LinkedDeque<Object>();
+    LinkedDeque<Object> q = new LinkedDeque<>();
     try
     {
       q.addFirst(null);
@@ -324,7 +324,7 @@ public class TestLinkedDeque
   @Test
   public void testAddLastNull()
   {
-    LinkedDeque<Object> q = new LinkedDeque<Object>();
+    LinkedDeque<Object> q = new LinkedDeque<>();
     try
     {
       q.addLast(null);
@@ -339,7 +339,7 @@ public class TestLinkedDeque
   @Test
   public void testOfferNull()
   {
-    LinkedDeque<Object> q = new LinkedDeque<Object>();
+    LinkedDeque<Object> q = new LinkedDeque<>();
     try
     {
       q.offer(null);
@@ -354,7 +354,7 @@ public class TestLinkedDeque
   @Test
   public void testOfferFirstNull()
   {
-    LinkedDeque<Object> q = new LinkedDeque<Object>();
+    LinkedDeque<Object> q = new LinkedDeque<>();
     try
     {
       q.offerFirst(null);
@@ -369,7 +369,7 @@ public class TestLinkedDeque
   @Test
   public void testOfferLastNull()
   {
-    LinkedDeque<Object> q = new LinkedDeque<Object>();
+    LinkedDeque<Object> q = new LinkedDeque<>();
     try
     {
       q.offerLast(null);
@@ -384,8 +384,8 @@ public class TestLinkedDeque
   @Test
   public void testForwardGeneral()
   {
-    LinkedDeque<Object> q = new LinkedDeque<Object>();
-    Queue<Object> control = new ArrayDeque<Object>();
+    LinkedDeque<Object> q = new LinkedDeque<>();
+    Queue<Object> control = new ArrayDeque<>();
 
     for (int i = 0; i < 10; i++)
     {
@@ -410,8 +410,8 @@ public class TestLinkedDeque
   @Test
   public void testReverseGeneral()
   {
-    LinkedDeque<Object> q = new LinkedDeque<Object>();
-    Deque<Object> control = new ArrayDeque<Object>();
+    LinkedDeque<Object> q = new LinkedDeque<>();
+    Deque<Object> control = new ArrayDeque<>();
 
     for (int i = 0; i < 10; i++)
     {
@@ -437,7 +437,7 @@ public class TestLinkedDeque
   public void testEquals()
   {
     List<Integer> list = Arrays.asList(1, 2, 3);
-    LinkedDeque<Integer> q = new LinkedDeque<Integer>(list);
+    LinkedDeque<Integer> q = new LinkedDeque<>(list);
     Assert.assertEquals(q, list);
     Assert.assertEquals(new LinkedDeque<Integer>(), Collections.emptyList());
     Assert.assertNotSame(q, Collections.emptyList());
@@ -446,7 +446,7 @@ public class TestLinkedDeque
   @Test
   public void testEarlyRemoveFails()
   {
-    LinkedDeque<Integer> q = new LinkedDeque<Integer>(Arrays.asList(1,2,3));
+    LinkedDeque<Integer> q = new LinkedDeque<>(Arrays.asList(1, 2, 3));
     try
     {
       q.iterator().remove();
@@ -460,7 +460,7 @@ public class TestLinkedDeque
   @Test
   public void testDoubleRemoveFails()
   {
-    LinkedDeque<Integer> q = new LinkedDeque<Integer>(Arrays.asList(1,2,3));
+    LinkedDeque<Integer> q = new LinkedDeque<>(Arrays.asList(1, 2, 3));
     Iterator<Integer> i = q.iterator();
     i.next();
     i.remove();
@@ -538,12 +538,12 @@ public class TestLinkedDeque
   {
     try
     {
-      List<Integer> list = new ArrayList<Integer>(size);
+      List<Integer> list = new ArrayList<>(size);
       for (int i = 0; i < size; i++)
       {
         list.add(i);
       }
-      LinkedDeque<Integer> q = new LinkedDeque<Integer>(list);
+      LinkedDeque<Integer> q = new LinkedDeque<>(list);
       Iterator<Integer> it = (ascending ? q.iterator() : q.descendingIterator());
       for (int i = 0; i < target + 1; i++)
       {
@@ -569,10 +569,10 @@ public class TestLinkedDeque
   {
     Random rand = new Random(9939393);
 
-    List<Object> control = new ArrayList<Object>();
+    List<Object> control = new ArrayList<>();
 
-    List<LinkedDeque.Node<Object>> nodes = new ArrayList<LinkedDeque.Node<Object>>();
-    LinkedDeque<Object> queue =new LinkedDeque<Object>();
+    List<LinkedDeque.Node<Object>> nodes = new ArrayList<>();
+    LinkedDeque<Object> queue = new LinkedDeque<>();
 
     for (int i = 0; i < 100000; i++)
     {

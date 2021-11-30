@@ -76,7 +76,7 @@ public class CowMap<K,V> implements CommonMap<K,V>, Cloneable
   public CowMap()
   {
     _checker = null;
-    _refCounted = new RefCounted<HashMap<K,V>>(new HashMap<K,V>());
+    _refCounted = new RefCounted<>(new HashMap<>());
   }
 
   /**
@@ -88,7 +88,7 @@ public class CowMap<K,V> implements CommonMap<K,V>, Cloneable
   {
     _checker = null;
     checkAll(map);
-    _refCounted = new RefCounted<HashMap<K,V>>(new HashMap<K,V>(map));
+    _refCounted = new RefCounted<>(new HashMap<>(map));
   }
 
   /**
@@ -101,7 +101,7 @@ public class CowMap<K,V> implements CommonMap<K,V>, Cloneable
   public CowMap(int initialCapacity)
   {
     _checker = null;
-    _refCounted = new RefCounted<HashMap<K,V>>(new HashMap<K,V>(initialCapacity));
+    _refCounted = new RefCounted<>(new HashMap<>(initialCapacity));
   }
 
   /**
@@ -115,7 +115,7 @@ public class CowMap<K,V> implements CommonMap<K,V>, Cloneable
   public CowMap(int initialCapacity, float loadFactor)
   {
     _checker = null;
-    _refCounted = new RefCounted<HashMap<K,V>>(new HashMap<K,V>(initialCapacity, loadFactor));
+    _refCounted = new RefCounted<>(new HashMap<>(initialCapacity, loadFactor));
   }
 
   /**
@@ -126,7 +126,7 @@ public class CowMap<K,V> implements CommonMap<K,V>, Cloneable
   public CowMap(MapChecker<K,V> checker)
   {
     _checker = checker;
-    _refCounted = new RefCounted<HashMap<K,V>>(new HashMap<K,V>());
+    _refCounted = new RefCounted<>(new HashMap<>());
   }
 
   /**
@@ -142,7 +142,7 @@ public class CowMap<K,V> implements CommonMap<K,V>, Cloneable
   {
     _checker = checker;
     checkAll(map);
-    _refCounted = new RefCounted<HashMap<K,V>>(new HashMap<K,V>(map));
+    _refCounted = new RefCounted<>(new HashMap<>(map));
   }
 
   /**
@@ -157,7 +157,7 @@ public class CowMap<K,V> implements CommonMap<K,V>, Cloneable
   public CowMap(int initialCapacity, MapChecker<K,V> checker)
   {
     _checker = checker;
-    _refCounted = new RefCounted<HashMap<K,V>>(new HashMap<K,V>(initialCapacity));
+    _refCounted = new RefCounted<>(new HashMap<>(initialCapacity));
   }
 
   /**
@@ -172,7 +172,7 @@ public class CowMap<K,V> implements CommonMap<K,V>, Cloneable
   public CowMap(int initialCapacity, float loadFactor, MapChecker<K,V> checker)
   {
     _checker = checker;
-    _refCounted = new RefCounted<HashMap<K,V>>(new HashMap<K,V>(initialCapacity, loadFactor));
+    _refCounted = new RefCounted<>(new HashMap<>(initialCapacity, loadFactor));
   }
 
   @Override

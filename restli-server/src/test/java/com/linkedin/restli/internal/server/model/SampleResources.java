@@ -25,6 +25,7 @@ import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorDetails;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
+import com.linkedin.restli.restspec.RestSpecAnnotation;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.BatchDeleteRequest;
 import com.linkedin.restli.server.BatchUpdateResult;
@@ -37,11 +38,13 @@ import com.linkedin.restli.server.UnstructuredDataReactiveReader;
 import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Action;
+import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.AssocKeyParam;
 import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.MetadataProjectionParam;
+import com.linkedin.restli.server.annotations.Optional;
 import com.linkedin.restli.server.annotations.PagingContextParam;
 import com.linkedin.restli.server.annotations.PagingProjectionParam;
 import com.linkedin.restli.server.annotations.ParSeqContextParam;
@@ -78,6 +81,10 @@ import com.linkedin.restli.server.resources.SimpleResourceTemplate;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceReactiveTemplate;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataCollectionResourceTemplate;
 import com.linkedin.restli.server.resources.unstructuredData.UnstructuredDataSimpleResourceTemplate;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -374,7 +381,6 @@ class SampleResources
   /**
    * The following resource is used by {@link TestRestLiApiBuilder#testPathKeyParamAnnotations()}.
    */
-
   @RestLiCollection(name = "pathKeyParamAnnotations")
   class PathKeyParamAnnotationsResource implements KeyValueResource<Long, EmptyRecord>
   {
@@ -395,7 +401,6 @@ class SampleResources
   /**
    * The following resources are used by {@link TestRestLiParameterAnnotations}.
    */
-
   @RestLiCollection(name = "CollectionFinderAttachmentParams")
   class CollectionFinderAttachmentParams extends CollectionResourceTemplate<String, EmptyRecord>
   {
@@ -832,5 +837,54 @@ class SampleResources
     {
       return Collections.singletonList(new EmptyRecord());
     }
+  }
+
+  /**
+   * Actions resource with a single valid (action) method. The
+   * method has two action params: one required, one optional.
+   *
+   * Goal: verify the correctness of annotation processing for
+   * action method parameters.
+   */
+  @RestLiActions(
+      name = "actionsMethod",
+      namespace = "com.linkedin.model.actions"
+  )
+  public static class ActionsOnlyResource {
+
+    @Action(name = "addValues")
+    public long sum(@ActionParam("left") Long left, @Optional("55") @ActionParam("right") Long right)
+    {
+      return left + right;
+    }
+  }
+
+  /**
+   * A resource with a single valid custom annotated method.
+   *
+   * Goal: verify the correctness of annotation processing for
+   * methods having custom annotations.
+   */
+  @RestLiCollection(name = "customAnnotatedMethod")
+  public static class CustomAnnotatedMethodResource extends CollectionResourceTemplate<Long, EmptyRecord>
+  {
+    @Versioned(fromVersion = 10)
+    @RestMethod.Get
+    public EmptyRecord get(@PathKeyParam("fooId") Long id) {
+      return new EmptyRecord();
+    }
+  }
+
+  /**
+   * Custom RestLi method version annotation. Methods annotated
+   * with this annotation are processed as custom methods.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
+  @RestSpecAnnotation(name = "Versioned", skipDefault = false)
+  public @interface Versioned
+  {
+    int fromVersion() default Integer.MIN_VALUE;
+    int toVersion() default Integer.MAX_VALUE;
   }
 }

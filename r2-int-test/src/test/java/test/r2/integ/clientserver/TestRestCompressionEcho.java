@@ -56,7 +56,7 @@ public class TestRestCompressionEcho extends AbstractServiceTest
 
   protected final RestFilter _compressionFilter = new ServerCompressionFilter(EncodingType.values(), new CompressionConfig(THRESHOLD));
 
-  private List<Client> _clients = new ArrayList<Client>();
+  private List<Client> _clients = new ArrayList<>();
 
   @Factory(dataProvider = "allRestCombinations", dataProviderClass = ClientServerConfiguration.class)
   public TestRestCompressionEcho(ClientProvider clientProvider, ServerProvider serverProvider, int port)
@@ -69,7 +69,7 @@ public class TestRestCompressionEcho extends AbstractServiceTest
   {
     for (Client client : _clients)
     {
-      final FutureCallback<None> clientShutdownCallback = new FutureCallback<None>();
+      final FutureCallback<None> clientShutdownCallback = new FutureCallback<>();
       client.shutdown(clientShutdownCallback);
       clientShutdownCallback.get();
     }
@@ -166,7 +166,7 @@ public class TestRestCompressionEcho extends AbstractServiceTest
     }
     RestRequest request = builder.setEntity(content).build();
 
-    final FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    final FutureCallback<RestResponse> callback = new FutureCallback<>();
     RequestContext requestContext = new RequestContext();
 
     // OPERATION is required to enabled response compression

@@ -36,7 +36,7 @@ public class EasyMockUtils
   /**
    * Static collection of custom "eq" methods, which are required when using custom
    * argument matchers in {@link EasyMock#expect(Object)} calls.
-   * 
+   *
    * @author dellamag
    * @see IArgumentMatcher
    */
@@ -214,7 +214,7 @@ public class EasyMockUtils
      */
     public static <F> CollectionArgumentMatcher<F, F> createSizeMatcher(Collection<F> expected)
     {
-      return new CollectionArgumentMatcher<F, F>(expected, Functions.<F>identity(), MatchType.size);
+      return new CollectionArgumentMatcher<>(expected, Functions.<F>identity(), MatchType.size);
     }
 
     /**
@@ -222,7 +222,7 @@ public class EasyMockUtils
      */
     public static <F> CollectionArgumentMatcher<F, F> createUnorderedExactMatcher(Collection<F> expected)
     {
-      return new CollectionArgumentMatcher<F, F>(expected, Functions.<F>identity(), MatchType.unordered);
+      return new CollectionArgumentMatcher<>(expected, Functions.<F>identity(), MatchType.unordered);
     }
 
     /**
@@ -230,7 +230,7 @@ public class EasyMockUtils
      */
     public static <F> CollectionArgumentMatcher<F, F> createOrderedExactMatcher(Collection<F> expected)
     {
-      return new CollectionArgumentMatcher<F, F>(expected, Functions.<F>identity(), MatchType.ordered);
+      return new CollectionArgumentMatcher<>(expected, Functions.<F>identity(), MatchType.ordered);
     }
   }
 }

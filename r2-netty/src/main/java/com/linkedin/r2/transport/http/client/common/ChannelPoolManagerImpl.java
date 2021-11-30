@@ -184,7 +184,7 @@ public class ChannelPoolManagerImpl implements ChannelPoolManager
   @Override
   public Collection<Callback<Channel>> cancelWaiters()
   {
-    Collection<Callback<Channel>> cancelled = new ArrayList<Callback<Channel>>();
+    Collection<Callback<Channel>> cancelled = new ArrayList<>();
     final Collection<AsyncPool<Channel>> pools;
     synchronized (_mutex)
     {

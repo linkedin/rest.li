@@ -404,7 +404,7 @@ public class CompoundKey
   @Override
   public String toString()
   {
-    List<String> keyList = new ArrayList<String>(_keys.keySet());
+    List<String> keyList = new ArrayList<>(_keys.keySet());
     Collections.sort(keyList);
 
     StringBuilder b = new StringBuilder();

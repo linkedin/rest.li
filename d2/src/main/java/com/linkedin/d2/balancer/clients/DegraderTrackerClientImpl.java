@@ -63,7 +63,7 @@ public class DegraderTrackerClientImpl extends TrackerClientImpl implements Degr
                                boolean doNotSlowStart)
   {
     super(uri, partitionDataMap, wrappedClient, clock, interval,
-        (status) -> errorStatusPattern.matcher(Integer.toString(status)).matches(), true, doNotSlowStart);
+        (status) -> errorStatusPattern.matcher(Integer.toString(status)).matches(), true, doNotSlowStart, false);
 
     if (config == null)
     {
@@ -105,7 +105,7 @@ public class DegraderTrackerClientImpl extends TrackerClientImpl implements Degr
      * However, now it becomes harder to have different configurations for different partitions.
      */
     int mapSize = partitionDataMap.size();
-    Map<Integer, PartitionState>partitionStates = new HashMap<Integer, PartitionState>(mapSize * 2);
+    Map<Integer, PartitionState>partitionStates = new HashMap<>(mapSize * 2);
     config.setName("TrackerClient Degrader: " + uri);
     DegraderImpl degrader = new DegraderImpl(config);
     DegraderControl degraderControl = new DegraderControl(degrader);

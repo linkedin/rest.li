@@ -248,7 +248,7 @@ public class TestRestBuilders
     final String cookie1 = "cookie1";
     final String cookie2 = "cookie2";
     final String cookie3 = "cookie3";
-    List<String> cookies = new ArrayList<String>();
+    List<String> cookies = new ArrayList<>();
     cookies.add(cookie2);
     cookies.add(cookie3);
 
@@ -274,10 +274,10 @@ public class TestRestBuilders
     final String value2 = "value2";
     final String cookie1 = "cookie1";
     final String cookie2 = "cookie2";
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     headers.put(header1, value1);
     headers.put(header2, value2);
-    List<String> cookies = new ArrayList<String>();
+    List<String> cookies = new ArrayList<>();
     cookies.add(cookie1);
     cookies.add(cookie2);
 

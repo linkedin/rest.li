@@ -31,14 +31,14 @@ import static org.testng.Assert.assertEquals;
 
 public class TestBufferChain
 {
-  private final Map<String, String> _strings = new LinkedHashMap<String, String>();
+  private final Map<String, String> _strings = new LinkedHashMap<>();
   private final int[] _bufferSizes = { 17, 19, 23, 29, 31, 37, 41, 43, 47, BufferChain.DEFAULT_BUFFER_SIZE };
 
 
   @BeforeClass
   private void initStrings()
   {
-    ArrayList<Integer> lengths = new ArrayList<Integer>();
+    ArrayList<Integer> lengths = new ArrayList<>();
     for (int stringLength = 0; stringLength < 1024; stringLength += 17)
     {
       lengths.add(stringLength);

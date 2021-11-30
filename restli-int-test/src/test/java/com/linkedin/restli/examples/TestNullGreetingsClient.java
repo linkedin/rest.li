@@ -85,7 +85,7 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
         //Add a custom header to the response to make sure that 404s/500s returned by
         //nulls in resource methods are also given a chance to experience the filter
         responseContext.getResponseData().getHeaders().put("X-Null-Greetings-Filter", "Ack");
-        CompletableFuture<Void> future = new CompletableFuture<Void>();
+        CompletableFuture<Void> future = new CompletableFuture<>();
         future.completeExceptionally(t);
         return future;
       }
@@ -395,7 +395,7 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
     Assert.assertEquals(actualErrors.size(), 0, "Errors map should be empty");
 
     Map<Long, UpdateStatus> actualResults = response.getEntity().getResults();
-    Map<Long, UpdateStatus> expectedResults = new HashMap<Long, UpdateStatus>();
+    Map<Long, UpdateStatus> expectedResults = new HashMap<>();
     UpdateStatus updateStatus = new UpdateStatus().setStatus(201);
     expectedResults.put(3l, updateStatus);
     Assert.assertEquals(actualResults, expectedResults, "The results map should be correct");
@@ -427,8 +427,8 @@ public class TestNullGreetingsClient extends RestLiIntegrationTest
   {
     try
     {
-      final Map<Long, PatchRequest<Greeting>> patchedGreetingsDiffs = new HashMap<Long, PatchRequest<Greeting>>();
-      patchedGreetingsDiffs.put(id, new PatchRequest<Greeting>());
+      final Map<Long, PatchRequest<Greeting>> patchedGreetingsDiffs = new HashMap<>();
+      patchedGreetingsDiffs.put(id, new PatchRequest<>());
       final Request<BatchKVResponse<Long, UpdateStatus>> batchUpdateRequest =
           builders.batchPartialUpdate().patchInputs(patchedGreetingsDiffs).build();
       getClient().sendRequest(batchUpdateRequest).getResponse();

@@ -196,7 +196,7 @@ public class TestResponseCompression extends RestLiIntegrationTest
       throws RemoteInvocationException, CloneNotSupportedException
   {
     ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("R2 Netty Scheduler"));
-    Map<String, CompressionConfig> responseCompressionConfigs = new HashMap<String, CompressionConfig>();
+    Map<String, CompressionConfig> responseCompressionConfigs = new HashMap<>();
     if (responseCompressionConfig != null)
     {
       responseCompressionConfigs.put(SERVICE_NAME, responseCompressionConfig);
@@ -214,7 +214,7 @@ public class TestResponseCompression extends RestLiIntegrationTest
         .setResponseCompressionConfigs(responseCompressionConfigs)
         .setUseClientCompression(true)
         .build();
-    Map<String, Object> properties = new HashMap<String, Object>();
+    Map<String, Object> properties = new HashMap<>();
     properties.put(HttpClientFactory.HTTP_SERVICE_NAME, SERVICE_NAME);
     if (useResponseCompression != null)
     {
@@ -263,7 +263,7 @@ public class TestResponseCompression extends RestLiIntegrationTest
   @Test(dataProvider = "encodingsData", retryAnalyzer = SingleRetry.class) // Often fails in CI without a retry
   public void testAcceptEncodingConfiguration(String responseContentEncodings, String expectedAcceptEncoding, String expectedContentEncoding) throws RemoteInvocationException
   {
-    Map<String, Object> properties = new HashMap<String, Object>();
+    Map<String, Object> properties = new HashMap<>();
     properties.put(HttpClientFactory.HTTP_RESPONSE_CONTENT_ENCODINGS, responseContentEncodings);
     properties.put(HttpClientFactory.HTTP_USE_RESPONSE_COMPRESSION, "true");
     Client client = newTransportClient(properties);

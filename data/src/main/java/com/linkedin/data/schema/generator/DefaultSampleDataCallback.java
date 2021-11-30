@@ -145,7 +145,7 @@ public class DefaultSampleDataCallback implements SampleDataCallback
 
   private DefaultSampleDataCallback()
   {
-    _stringPool = new HashMap<String, String[]>();
+    _stringPool = new HashMap<>();
     _stringPool.put("url|link", new String[] {"http://www.example.com", "http://rest.li"});
     _stringPool.put("name", new String[] {"John", "Doe"});
     _stringPool.put("email|emailAddress|email_address", new String[] {"foo@example.com", "bar@rest.li"});
@@ -174,7 +174,7 @@ public class DefaultSampleDataCallback implements SampleDataCallback
   public static final SampleDataCallback INSTANCE = new DefaultSampleDataCallback();
   private static final Random _random = new Random();
 
-  private final Map<String, Pattern> _compiledPatterns = new HashMap<String, Pattern>();
+  private final Map<String, Pattern> _compiledPatterns = new HashMap<>();
   private final Map<String, String[]> _stringPool;
   private final String[] _defaultStrings;
 }

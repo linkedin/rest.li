@@ -43,7 +43,7 @@ public class TestDeprecated
   @Test
   public void testDeprecatedMethods() throws Exception
   {
-    Map<String, Class<?>> fields = new HashMap<String, Class<?>>();
+    Map<String, Class<?>> fields = new HashMap<>();
     fields.put("DeprecatedInt", int.class);
     fields.put("Sample", int.class);
     fields.put("SampleTyperef", Double.class);

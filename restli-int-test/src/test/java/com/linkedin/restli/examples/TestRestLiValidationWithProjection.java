@@ -88,7 +88,7 @@ public class TestRestLiValidationWithProjection extends RestLiIntegrationTest
   @Test
   public void testNoProjection() throws RemoteInvocationException
   {
-    RootBuilderWrapper<Integer, ValidationDemo> wrapper = new RootBuilderWrapper<Integer, ValidationDemo>(new AutoValidationWithProjectionBuilders());
+    RootBuilderWrapper<Integer, ValidationDemo> wrapper = new RootBuilderWrapper<>(new AutoValidationWithProjectionBuilders());
     Request<CollectionResponse<ValidationDemo>> request = wrapper.findBy("searchWithProjection").build();
 
     try {
@@ -112,7 +112,7 @@ public class TestRestLiValidationWithProjection extends RestLiIntegrationTest
         ValidationDemo.fields().validationDemoNext().intB());
 
     RootBuilderWrapper<Integer, ValidationDemo> wrapper =
-        new RootBuilderWrapper<Integer, ValidationDemo>(new AutoValidationWithProjectionBuilders());
+        new RootBuilderWrapper<>(new AutoValidationWithProjectionBuilders());
 
     Request<CollectionResponse<ValidationDemo>> findRequest =
         wrapper.findBy("searchWithProjection").fields(spec.toArray(new PathSpec[spec.size()])).build();
@@ -157,7 +157,7 @@ public class TestRestLiValidationWithProjection extends RestLiIntegrationTest
   @Test
   public void testProjectionWithInvalidFields() throws RemoteInvocationException
   {
-    RootBuilderWrapper<Integer, ValidationDemo> wrapper = new RootBuilderWrapper<Integer, ValidationDemo>(new AutoValidationWithProjectionBuilders());
+    RootBuilderWrapper<Integer, ValidationDemo> wrapper = new RootBuilderWrapper<>(new AutoValidationWithProjectionBuilders());
     Request<CollectionResponse<ValidationDemo>> request =
         wrapper.findBy("searchWithProjection")
             .fields(ValidationDemo.fields().stringA(), //invalid

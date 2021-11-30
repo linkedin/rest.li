@@ -20,6 +20,7 @@ buildscript {
   }
   dependencies {
     classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.21.0'
+    classpath 'org.jacoco:org.jacoco.core:0.8.7'
   }
 }
 
@@ -87,7 +88,7 @@ project.ext.externalDependency = [
   'log4j2Core': 'org.apache.logging.log4j:log4j-core:2.0.2',
   'log4jLog4j2': 'org.apache.logging.log4j:log4j-1.2-api:2.0.2',
   'mail': 'javax.mail:mail:1.4.4',
-  'netty': 'io.netty:netty-all:4.1.41.Final',
+  'netty': 'io.netty:netty-all:4.1.52.Final',
   'objenesis': 'org.objenesis:objenesis:1.2',
   'parseq': 'com.linkedin.parseq:parseq:5.1.2',
   'parseq_tracevis': 'com.linkedin.parseq:parseq-tracevis:5.1.2',
@@ -115,7 +116,8 @@ project.ext.externalDependency = [
   'guice': 'com.google.inject:guice:3.0',
   'guiceServlet': 'com.google.inject.extensions:guice-servlet:3.0',
 
-  'jsr305': 'com.google.code.findbugs:jsr305:3.0.0'
+  'jsr305': 'com.google.code.findbugs:jsr305:3.0.0',
+  "avroSpotBugsPlugin": "com.linkedin.avroutil1:spotbugs-plugin:0.2.56",
 ];
 
 if (!project.ext.isDefaultEnvironment)
@@ -152,6 +154,14 @@ allprojects {
   }
 }
 
+allprojects {
+  plugins.withId('li-spotbugs') {
+    dependencies {
+      spotbugsPlugins spec.external.avroSpotBugsPlugin
+    }
+  }
+}
+
 idea {
   project {
     languageLevel = '1.8'
@@ -162,6 +172,7 @@ subprojects {
   apply plugin: 'java'
   apply plugin: 'eclipse'
   apply from: "${buildScriptDirPath}/cleanGenerated.gradle"
+  apply plugin: 'jacoco'
 
   afterEvaluate {
     if (project.plugins.hasPlugin('pegasus')) {
@@ -294,14 +305,15 @@ subprojects {
     }
   }
 
-  // Exclude tests which are known to be flaky in the Travis CI environment. Since all test tasks are TestNG tasks
-  // EXCEPT the integTest task, exclude the options from being evaluated by travis for the integTest task.
-  if (System.getenv('TRAVIS') == 'true' && System.getenv('USER') == 'travis') {
+  // Do some special test configuration for the CI environment
+  if (System.getenv('CI') == 'true' && System.getenv('GITHUB_ACTIONS') == 'true') {
     afterEvaluate {
       project.tasks.withType(Test).forEach {
+        // Exclude tests which are known to be flaky (only TestNG tests, not other tests e.g. Gradle int tests)
         if (it.options instanceof TestNGOptions) {
           it.options.excludeGroups 'ci-flaky'
         }
+        // Increase the Rest.li int test timeout
         it.systemProperties['test.httpRequestTimeout'] = '20000'
         // Make the build fail fast in CI (may have unintended consequences locally)
         it.failFast = true
@@ -441,3 +453,4 @@ project.gradle.buildFinished { BuildResult result ->
     logger.warn msgBuilder.toString()
   }
 }
+

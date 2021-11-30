@@ -524,7 +524,6 @@ import org.gradle.util.GradleVersion;
  * test source sets.
  * </p>
  */
-
 public class PegasusPlugin implements Plugin<Project>
 {
   public static boolean debug = false;
@@ -555,6 +554,8 @@ public class PegasusPlugin implements Plugin<Project>
   public static final String IDL_COMPAT_REQUIREMENT = "rest.idl.compatibility";
   // Pegasus schema compatibility level configuration, which is used to define the {@link CompatibilityLevel}.
   public static final String PEGASUS_SCHEMA_SNAPSHOT_REQUIREMENT = "pegasusPlugin.pegasusSchema.compatibility";
+  // Pegasus extension schema compatibility level configuration, which is used to define the {@link CompatibilityLevel}
+  public static final String PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_REQUIREMENT = "pegasusPlugin.extensionSchema.compatibility";
   // CompatibilityOptions Mode configuration, which is used to define the {@link CompatibilityOptions#Mode} in the compatibility checker.
   private static final String PEGASUS_COMPATIBILITY_MODE = "pegasusPlugin.pegasusSchemaCompatibilityCheckMode";
 
@@ -592,6 +593,12 @@ public class PegasusPlugin implements Plugin<Project>
   // Enable the generation of fluent APIs
   private static final String ENABLE_FLUENT_API = "pegasusPlugin.enableFluentApi";
 
+  // This config impacts GenerateDataTemplateTask and GenerateRestClientTask;
+  // If not set, by default all paths generated in these two tasks will be lower-case.
+  // This default behavior is needed because Linux, MacOS, Windows treat case sensitive paths differently,
+  // and we want to be consistent, so we choose lower-case as default case for path generated
+  private static final String CODE_GEN_PATH_CASE_SENSITIVE = "pegasusPlugin.generateCaseSensitivePath";
+
   private static final String PEGASUS_PLUGIN_CONFIGURATION = "pegasusPlugin";
 
   // Enable the use of generic pegasus schema compatibility checker
@@ -615,7 +622,6 @@ public class PegasusPlugin implements Plugin<Project>
 
   private static final String COMPATIBILITY_OPTIONS_MODE_EXTENSION = "EXTENSION";
 
-  private static final String COMPATIBILITY_LEVEL_BACKWARDS = "BACKWARDS";
 
   @SuppressWarnings("unchecked")
   private Class<? extends Plugin<Project>> _thisPluginType = (Class<? extends Plugin<Project>>)
@@ -646,11 +652,9 @@ public class PegasusPlugin implements Plugin<Project>
     checkGradleVersion(project);
 
     project.getPlugins().apply(JavaPlugin.class);
-    project.getPlugins().apply(IdeaPlugin.class);
-    project.getPlugins().apply(EclipsePlugin.class);
 
     // this HashMap will have a PegasusOptions per sourceSet
-    project.getExtensions().getExtraProperties().set("pegasus", new HashMap<String, PegasusOptions>());
+    project.getExtensions().getExtraProperties().set("pegasus", new HashMap<>());
     // this map will extract PegasusOptions.GenerationMode to project property
     project.getExtensions().getExtraProperties().set("PegasusGenerationMode",
         Arrays.stream(PegasusOptions.GenerationMode.values())
@@ -1046,7 +1050,7 @@ public class PegasusPlugin implements Plugin<Project>
     return base + File.separatorChar + sourceSetName;
   }
 
-  private static String getDataSchemaPath(Project project, SourceSet sourceSet)
+  public static String getDataSchemaPath(Project project, SourceSet sourceSet)
   {
     String override = getOverridePath(project, sourceSet, "overridePegasusDir");
     if (override == null)
@@ -1436,7 +1440,8 @@ public class PegasusPlugin implements Plugin<Project>
           task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION)
               .plus(project.getConfigurations().getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION))
               .plus(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)));
-          task.setCompatibilityLevel(isExtensionSchema ? COMPATIBILITY_LEVEL_BACKWARDS
+          task.setCompatibilityLevel(isExtensionSchema ?
+                  PropertyUtil.findCompatLevel(project, FileCompatibilityType.PEGASUS_EXTENSION_SCHEMA_SNAPSHOT)
               :PropertyUtil.findCompatLevel(project, FileCompatibilityType.PEGASUS_SCHEMA_SNAPSHOT));
           task.setCompatibilityMode(isExtensionSchema ? COMPATIBILITY_OPTIONS_MODE_EXTENSION :
               PropertyUtil.findCompatMode(project, PEGASUS_COMPATIBILITY_MODE));
@@ -1445,8 +1450,10 @@ public class PegasusPlugin implements Plugin<Project>
 
           task.onlyIf(t ->
           {
-            String pegasusSnapshotCompatPropertyName = findProperty(FileCompatibilityType.PEGASUS_SCHEMA_SNAPSHOT);
-            return isExtensionSchema || !project.hasProperty(pegasusSnapshotCompatPropertyName) ||
+            String pegasusSnapshotCompatPropertyName = isExtensionSchema ?
+              findProperty(FileCompatibilityType.PEGASUS_EXTENSION_SCHEMA_SNAPSHOT)
+              : findProperty(FileCompatibilityType.PEGASUS_SCHEMA_SNAPSHOT);
+            return !project.hasProperty(pegasusSnapshotCompatPropertyName) ||
                 !"off".equalsIgnoreCase((String) project.property(pegasusSnapshotCompatPropertyName));
           });
         });
@@ -1611,6 +1618,10 @@ public class PegasusPlugin implements Plugin<Project>
           {
             task.setEnableArgFile(true);
           }
+          if (isPropertyTrue(project, CODE_GEN_PATH_CASE_SENSITIVE))
+          {
+            task.setGenerateLowercasePath(false);
+          }
 
           task.onlyIf(t ->
           {
@@ -1753,28 +1764,24 @@ public class PegasusPlugin implements Plugin<Project>
       dataTemplateJarDepends.add(prepareExtensionSchemasForPublishTask);
     }
 
+    // include pegasus files in the output of this SourceSet
+    project.getTasks().withType(ProcessResources.class).getByName(targetSourceSet.getProcessResourcesTaskName(), it ->
+    {
+      it.from(prepareSchemasForPublishTask, copy -> copy.into("pegasus"));
+      // TODO: Remove this permanently once translated PDSCs are no longer needed.
+      it.from(prepareLegacySchemasForPublishTask, copy -> copy.into(TRANSLATED_SCHEMAS_DIR));
+      Sync copyExtensionSchemasTask = project.getTasks().withType(Sync.class).findByName(sourceSet.getName() + "CopyExtensionSchemas");
+      if (copyExtensionSchemasTask != null)
+      {
+        it.from(copyExtensionSchemasTask, copy -> copy.into("extensions"));
+      }
+    });
+
     // create data template jar file
     Jar dataTemplateJarTask = project.getTasks()
         .create(sourceSet.getName() + "DataTemplateJar", Jar.class, task ->
         {
           task.dependsOn(dataTemplateJarDepends);
-
-          // Copy all schemas as-is into the root schema directory in the JAR
-          task.from(publishableSchemasBuildDir, copySpec ->
-            copySpec.eachFile(fileCopyDetails ->
-              fileCopyDetails.setPath("pegasus" + File.separatorChar + fileCopyDetails.getPath())));
-
-          // Copy the translated PDSC schemas into a separate root directory in the JAR
-          // TODO: Remove this permanently once translated PDSCs are no longer needed.
-          task.from(publishableLegacySchemasBuildDir, copySpec ->
-              copySpec.eachFile(fileCopyDetails ->
-                  fileCopyDetails.setPath(TRANSLATED_SCHEMAS_DIR + File.separatorChar + fileCopyDetails.getPath())));
-
-          // Copy all extension schemas as-is into the root extensions directory in the JAR
-          task.from(publishableExtensionSchemasBuildDir, copySpec ->
-              copySpec.eachFile(fileCopyDetails ->
-                  fileCopyDetails.setPath("extensions" + File.separatorChar + fileCopyDetails.getPath())));
-
           task.from(targetSourceSet.getOutput());
 
           // FIXME change to #getArchiveAppendix().set(...); breaks backwards-compatibility before 5.1
@@ -1840,17 +1847,6 @@ public class PegasusPlugin implements Plugin<Project>
       {
         throw new GradleException("Unable to register new feature variant", e);
       }
-
-      // include pegasus files in the output of this SourceSet
-      TaskProvider<ProcessResources> processResources = project.getTasks().named(targetSourceSet.getProcessResourcesTaskName(), ProcessResources.class);
-      processResources.configure(it -> {
-        it.from(prepareSchemasForPublishTask, copy -> copy.into("pegasus"));
-        it.from(prepareLegacySchemasForPublishTask, copy -> copy.into(TRANSLATED_SCHEMAS_DIR));
-        Sync copyExtensionSchemasTask = project.getTasks().withType(Sync.class).findByName(targetSourceSet.getName() + "CopyExtensionSchemas");
-        if (copyExtensionSchemasTask != null) {
-          it.from(copyExtensionSchemasTask, copy -> copy.into("extensions"));
-        }
-      });
 
       // expose transitive dependencies to consumers via variant configurations
       Configuration featureConfiguration = project.getConfigurations().getByName(featureName);
@@ -2001,6 +1997,10 @@ public class PegasusPlugin implements Plugin<Project>
           if (isPropertyTrue(project, ENABLE_ARG_FILE))
           {
             task.setEnableArgFile(true);
+          }
+          if (isPropertyTrue(project, CODE_GEN_PATH_CASE_SENSITIVE))
+          {
+            task.setGenerateLowercasePath(false);
           }
           if (isPropertyTrue(project, ENABLE_FLUENT_API))
           {
@@ -2220,6 +2220,9 @@ public class PegasusPlugin implements Plugin<Project>
       case PEGASUS_SCHEMA_SNAPSHOT:
         property = PEGASUS_SCHEMA_SNAPSHOT_REQUIREMENT;
         break;
+      case PEGASUS_EXTENSION_SCHEMA_SNAPSHOT:
+        property =  PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_REQUIREMENT;
+        break;
       default:
         throw new GradleException("No property defined for compatibility type " + type);
     }
@@ -2263,11 +2266,18 @@ public class PegasusPlugin implements Plugin<Project>
       sourceDirectorySet.srcDir(dataSchemaPath);
       project.getLogger().info("Adding resource root '{}'", dataSchemaPath);
 
-      // Exclude the data schema directory from being copied into the default Jar task
+      final String extensionsSchemaPath = getExtensionSchemaPath(project, sourceSet);
+      final File extensionsSchemaRoot = project.file(extensionsSchemaPath);
+      sourceDirectorySet.srcDir(extensionsSchemaPath);
+      project.getLogger().info("Adding resource root '{}'", extensionsSchemaPath);
+
+      // Exclude the data schema and extensions schema directory from being copied into the default Jar task
       sourceDirectorySet.getFilter().exclude(fileTreeElement -> {
         final File file = fileTreeElement.getFile();
         // Traversal starts with the children of a resource root, so checking the direct parent is sufficient
-        final boolean exclude = dataSchemaRoot.equals(file.getParentFile());
+        final boolean underDataSchemaRoot = dataSchemaRoot.equals(file.getParentFile());
+        final boolean underExtensionsSchemaRoot = extensionsSchemaRoot.equals(file.getParentFile());
+        final boolean exclude = (underDataSchemaRoot || underExtensionsSchemaRoot);
         if (exclude)
         {
           project.getLogger().info("Excluding resource directory '{}'", file);

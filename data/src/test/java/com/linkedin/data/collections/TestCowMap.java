@@ -36,7 +36,7 @@ public class TestCowMap
   @Test
   public void testCopyOnWrite() throws CloneNotSupportedException
   {
-    CowMap<String,String> map1 = new CowMap<String,String>(referenceMap1);
+    CowMap<String, String> map1 = new CowMap<>(referenceMap1);
     testAgainstReferenceMap1(map1);
     assertEquals(map1.getRefCounted().getRefCount(), 0);
 

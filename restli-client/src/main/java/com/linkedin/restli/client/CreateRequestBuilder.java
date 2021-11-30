@@ -142,19 +142,19 @@ public class CreateRequestBuilder<K, V extends RecordTemplate>
   public CreateRequest<V> build()
   {
     @SuppressWarnings("unchecked")
-    CreateResponseDecoder<K> createResponseDecoder = new CreateResponseDecoder<K>((TypeSpec<K>)_resourceSpec.getKeyType(),
-                                                                                  _resourceSpec.getKeyParts(),
-                                                                                  _resourceSpec.getComplexKeyType());
-    return new CreateRequest<V>(buildReadOnlyInput(),
-                                buildReadOnlyHeaders(),
-                                buildReadOnlyCookies(),
-                                createResponseDecoder,
-                                _resourceSpec,
-                                buildReadOnlyQueryParameters(),
-                                getQueryParamClasses(),
-                                getBaseUriTemplate(),
-                                buildReadOnlyPathKeys(),
-                                getRequestOptions(),
-                                _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
+    CreateResponseDecoder<K> createResponseDecoder = new CreateResponseDecoder<>((TypeSpec<K>) _resourceSpec.getKeyType(),
+        _resourceSpec.getKeyParts(),
+        _resourceSpec.getComplexKeyType());
+    return new CreateRequest<>(buildReadOnlyInput(),
+        buildReadOnlyHeaders(),
+        buildReadOnlyCookies(),
+        createResponseDecoder,
+        _resourceSpec,
+        buildReadOnlyQueryParameters(),
+        getQueryParamClasses(),
+        getBaseUriTemplate(),
+        buildReadOnlyPathKeys(),
+        getRequestOptions(),
+        _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
   }
 }

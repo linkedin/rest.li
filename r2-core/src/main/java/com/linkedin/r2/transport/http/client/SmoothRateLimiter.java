@@ -98,7 +98,6 @@ public class SmoothRateLimiter implements AsyncRateLimiter
    *                           dropping the request might not be backward compatible
    * @param rateLimiterName    Name assigned for logging purposes
    * @param executionTracker   Adjusts the behavior of the rate limiter based on policies/state of RateLimiterExecutionTracker
-
    */
   SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock, CallbackBuffer pendingCallbacks,
                     BufferOverflowMode bufferOverflowMode, String rateLimiterName, RateLimiterExecutionTracker executionTracker)
@@ -181,8 +180,12 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     ArgumentUtil.checkArgument(periodMilliseconds > 0, "periodMilliseconds");
     ArgumentUtil.checkArgument(burst > 0, "burst");
 
-    _rate = new Rate(permitsPerPeriod, periodMilliseconds, burst);
-    _scheduler.execute(_eventLoop::updateWithNewRate);
+    Rate newRate = new Rate(permitsPerPeriod, periodMilliseconds, burst);
+    if (!_rate.equals(newRate))
+    {
+      _rate = newRate;
+      _scheduler.execute(_eventLoop::updateWithNewRate);
+    }
   }
 
   @Override
@@ -225,6 +228,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     private int _permitAvailableCount;
     private int _permitsInTimeFrame;
     private long _nextScheduled;
+    private long _delayUntil;
 
     EventLoop(Clock clock)
     {
@@ -243,6 +247,10 @@ public class SmoothRateLimiter implements AsyncRateLimiter
       // before entering the next period
       _permitAvailableCount = Math.max(rate.getEvents() - (_permitsInTimeFrame - _permitAvailableCount), 0);
       _permitsInTimeFrame = rate.getEvents();
+      long now = _clock.currentTimeMillis();
+      // ensure to recalculate the delay, discounting any time already delayed
+      long timeSinceLastPermit = now - _permitTime;
+      _delayUntil = now + Math.max(0, (_executionTracker.getNextExecutionDelay(_rate) - timeSinceLastPermit));
 
       loop();
     }
@@ -257,6 +265,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
         _permitTime = now;
         _permitAvailableCount = rate.getEvents();
         _permitsInTimeFrame = rate.getEvents();
+        _delayUntil = now + _executionTracker.getNextExecutionDelay(_rate);
       }
 
       if (_executionTracker.isPaused())
@@ -270,8 +279,9 @@ public class SmoothRateLimiter implements AsyncRateLimiter
         _permitAvailableCount++;
       }
 
-      if (_permitAvailableCount > 0)
+      if (_permitAvailableCount > 0 && _delayUntil <= now)
       {
+        _delayUntil = now + _executionTracker.getNextExecutionDelay(_rate);
         _permitAvailableCount--;
         Callback<None> callback = null;
         try
@@ -310,12 +320,12 @@ public class SmoothRateLimiter implements AsyncRateLimiter
         try
         {
           // avoids executing too many duplicate tasks
-          long nextRunRelativeTime = Math.max(0, _permitTime + rate.getPeriod() - _clock.currentTimeMillis());
-          long nextRunAbsolute = _clock.currentTimeMillis() + nextRunRelativeTime;
-          if (_nextScheduled > nextRunAbsolute || _nextScheduled <= _clock.currentTimeMillis())
+          // reschedule next iteration of the event loop to the next delay, or the beginning of the next period
+          long nextRunRelativeTime = _permitAvailableCount > 0 ? _delayUntil - now : Math.max(0, _permitTime + rate.getPeriod() - now);
+          long nextRunAbsolute = now + nextRunRelativeTime;
+          if (_nextScheduled > nextRunAbsolute || _nextScheduled <= now)
           {
             _nextScheduled = nextRunAbsolute;
-
             _scheduler.schedule(this::loop, nextRunRelativeTime, TimeUnit.MILLISECONDS);
           }
         }

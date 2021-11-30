@@ -45,6 +45,7 @@ import com.linkedin.restli.internal.common.URIParamUtils;
 import com.linkedin.restli.internal.server.util.ArgumentUtils;
 import com.linkedin.restli.internal.server.util.MIMEParse;
 import com.linkedin.restli.internal.server.util.RestLiSyntaxException;
+import com.linkedin.restli.server.LocalRequestProjectionMask;
 import com.linkedin.restli.server.ProjectionMode;
 import com.linkedin.restli.server.RestLiResponseAttachments;
 import com.linkedin.restli.server.RestLiServiceException;
@@ -139,6 +140,7 @@ public class ResourceContextImpl implements ServerResourceContext
    * @throws RestLiSyntaxException if the syntax of query parameters in the request is
    *           incorrect
    */
+  @SuppressWarnings("unchecked")
   public ResourceContextImpl(final MutablePathKeys pathKeys,
                              final Request request,
                              final RequestContext requestContext) throws RestLiSyntaxException
@@ -148,7 +150,17 @@ public class ResourceContextImpl implements ServerResourceContext
     _requestHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     _requestHeaders.putAll(request.getHeaders());
     _responseHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-    _requestCookies = new ArrayList<>(CookieUtil.decodeCookies(_request.getCookies()));
+
+    List<HttpCookie> contextRequestCookies = (List<HttpCookie>) requestContext.getLocalAttr(CONTEXT_COOKIES_KEY);
+    if (contextRequestCookies != null)
+    {
+      _requestCookies = contextRequestCookies;
+    }
+    else
+    {
+      _requestCookies = CookieUtil.decodeCookies(_request.getCookies());
+    }
+
     _responseCookies = new ArrayList<>();
     _requestContext = requestContext;
     _responseAttachmentsAllowed = isResponseAttachmentsAllowed(request);
@@ -157,7 +169,12 @@ public class ResourceContextImpl implements ServerResourceContext
 
     try
     {
-      if (_protocolVersion.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
+      DataMap contextQueryParams = (DataMap) requestContext.getLocalAttr(CONTEXT_QUERY_PARAMS_KEY);
+      if (contextQueryParams != null)
+      {
+        _parameters = contextQueryParams;
+      }
+      else if (_protocolVersion.compareTo(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion()) >= 0)
       {
         TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_RESTLI_URI_PARSE_2.key());
 
@@ -184,31 +201,42 @@ public class ResourceContextImpl implements ServerResourceContext
 
     TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_RESTLI_PROJECTION_DECODE.key());
 
-    if (_parameters.containsKey(RestConstants.FIELDS_PARAM))
+    LocalRequestProjectionMask localRequestProjectionMask =
+        (LocalRequestProjectionMask) requestContext.getLocalAttr(CONTEXT_PROJECTION_MASKS_KEY);
+    if (localRequestProjectionMask != null)
     {
-      _projectionMask = ArgumentUtils.parseProjectionParameter(getParameter(RestConstants.FIELDS_PARAM));
+      _projectionMask = localRequestProjectionMask.getProjectionMask();
+      _metadataProjectionMask = localRequestProjectionMask.getMetadataProjectionMask();
+      _pagingProjectionMask = localRequestProjectionMask.getPagingProjectionMask();
     }
     else
     {
-      _projectionMask = null;
-    }
+      if (_parameters.containsKey(RestConstants.FIELDS_PARAM))
+      {
+        _projectionMask = ArgumentUtils.parseProjectionParameter(getParameter(RestConstants.FIELDS_PARAM));
+      }
+      else
+      {
+        _projectionMask = null;
+      }
 
-    if (_parameters.containsKey(RestConstants.METADATA_FIELDS_PARAM))
-    {
-      _metadataProjectionMask = ArgumentUtils.parseProjectionParameter(getParameter(RestConstants.METADATA_FIELDS_PARAM));
-    }
-    else
-    {
-      _metadataProjectionMask = null;
-    }
+      if (_parameters.containsKey(RestConstants.METADATA_FIELDS_PARAM))
+      {
+        _metadataProjectionMask = ArgumentUtils.parseProjectionParameter(getParameter(RestConstants.METADATA_FIELDS_PARAM));
+      }
+      else
+      {
+        _metadataProjectionMask = null;
+      }
 
-    if (_parameters.containsKey(RestConstants.PAGING_FIELDS_PARAM))
-    {
-      _pagingProjectionMask = ArgumentUtils.parseProjectionParameter(getParameter(RestConstants.PAGING_FIELDS_PARAM));
-    }
-    else
-    {
-      _pagingProjectionMask = null;
+      if (_parameters.containsKey(RestConstants.PAGING_FIELDS_PARAM))
+      {
+        _pagingProjectionMask = ArgumentUtils.parseProjectionParameter(getParameter(RestConstants.PAGING_FIELDS_PARAM));
+      }
+      else
+      {
+        _pagingProjectionMask = null;
+      }
     }
 
     TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.SERVER_REQUEST_RESTLI_PROJECTION_DECODE.key());
@@ -225,14 +253,8 @@ public class ResourceContextImpl implements ServerResourceContext
     final String acceptTypeHeader = request.getHeader(RestConstants.HEADER_ACCEPT);
     if (acceptTypeHeader != null)
     {
-      final List<String> acceptTypes = MIMEParse.parseAcceptType(acceptTypeHeader);
-      for (final String acceptType : acceptTypes)
-      {
-        if (acceptType.equalsIgnoreCase(RestConstants.HEADER_VALUE_MULTIPART_RELATED))
-        {
-          return true;
-        }
-      }
+      return MIMEParse.parseAcceptTypeStream(acceptTypeHeader)
+          .anyMatch(acceptType -> acceptType.equalsIgnoreCase(RestConstants.HEADER_VALUE_MULTIPART_RELATED));
     }
     return false;
   }

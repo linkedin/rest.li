@@ -510,7 +510,7 @@ public final class RecordDataSchema extends NamedDataSchema
   {
     boolean ok = true;
     _fields = Collections.unmodifiableList(fields);
-    Map<String, Integer> map = new HashMap<String, Integer>();
+    Map<String, Integer> map = new HashMap<>();
     int index = 0;
     for (Field field : _fields)
     {
@@ -622,7 +622,7 @@ public final class RecordDataSchema extends NamedDataSchema
       {
         if (startTracking)
         {
-          trackingMap = new IdentityHashMap<RecordDataSchema, RecordDataSchema>();
+          trackingMap = new IdentityHashMap<>();
           _equalsTracking.set(trackingMap);
         }
         else
@@ -662,7 +662,7 @@ public final class RecordDataSchema extends NamedDataSchema
     {
       if (startTracking)
       {
-        trackingMap = new IdentityHashMap<RecordDataSchema, Boolean>();
+        trackingMap = new IdentityHashMap<>();
         _hashCodeTracking.set(trackingMap);
       }
       if (trackingMap.containsKey(this))

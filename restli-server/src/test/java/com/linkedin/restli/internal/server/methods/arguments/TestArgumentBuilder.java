@@ -352,7 +352,7 @@ public class TestArgumentBuilder
     EasyMock.expect(mockResourceContext.getRequestAttachmentReader()).andReturn(null);
     EasyMock.replay(mockResourceContext);
 
-    List<Parameter<?>> parameters = new ArrayList<Parameter<?>>();
+    List<Parameter<?>> parameters = new ArrayList<>();
     Parameter<PagingContext> param1 = new Parameter<>(testParamKey, PagingContext.class, null,
         false, null, Parameter.ParamType.PAGING_CONTEXT_PARAM, false, AnnotationSet.EMPTY);
     Parameter<PagingContext> param2 = new Parameter<>(testParamKey, PagingContext.class, null,

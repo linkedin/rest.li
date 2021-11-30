@@ -1277,7 +1277,7 @@ public class TestCallTracker
 
    private List<CallCompletion> startCall(CallTracker callTracker, int count)
   {
-    List<CallCompletion> dones = new ArrayList<CallCompletion>();
+    List<CallCompletion> dones = new ArrayList<>();
     for (int x = 0; x < count; x++)
     {
        dones.add(callTracker.startCall());
@@ -1300,7 +1300,7 @@ public class TestCallTracker
 
     private Listener()
     {
-      _intervalRecords = new ArrayList<CallTracker.StatsRolloverEvent>();
+      _intervalRecords = new ArrayList<>();
     }
 
     private List<CallTracker.StatsRolloverEvent> getRecords()

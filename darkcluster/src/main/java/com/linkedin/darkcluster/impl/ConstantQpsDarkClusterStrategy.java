@@ -49,7 +49,7 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
 {
   private final String _originalClusterName;
   private final String _darkClusterName;
-  private final Integer _darkClusterPerHostQps;
+  private final Float _darkClusterPerHostQps;
   private final BaseDarkClusterDispatcher _baseDarkClusterDispatcher;
   private final Notifier _notifier;
   private final ClusterInfoProvider _clusterInfoProvider;
@@ -59,7 +59,7 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
   private static final int NUM_REQUESTS_TO_SEND_PER_RATE_LIMITER_CYCLE = 1;
 
   public ConstantQpsDarkClusterStrategy(@Nonnull String originalClusterName, @Nonnull String darkClusterName,
-      @Nonnull Integer darkClusterPerHostQps, @Nonnull BaseDarkClusterDispatcher baseDarkClusterDispatcher,
+      @Nonnull Float darkClusterPerHostQps, @Nonnull BaseDarkClusterDispatcher baseDarkClusterDispatcher,
       @Nonnull Notifier notifier, @Nonnull ClusterInfoProvider clusterInfoProvider, @Nonnull ConstantQpsRateLimiter rateLimiter)
   {
     _originalClusterName = originalClusterName;
@@ -76,7 +76,7 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
   {
     float sendRate = getSendRate();
     // set burst in such a way that requests are dispatched evenly across the ONE_SECOND_PERIOD
-    int burst = (int) Math.ceil(sendRate / ONE_SECOND_PERIOD);
+    int burst = (int) Math.max(1, Math.ceil(sendRate / ONE_SECOND_PERIOD));
     _rateLimiter.setRate(sendRate, ONE_SECOND_PERIOD, burst);
     return addRequest(originalRequest, darkRequest, requestContext);
   }
@@ -132,7 +132,7 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
       int numSourceClusterInstances = _clusterInfoProvider.getHttpsClusterCount(_originalClusterName);
       if (numSourceClusterInstances != 0)
       {
-        return (float) (numDarkClusterInstances * _darkClusterPerHostQps) / numSourceClusterInstances;
+        return (numDarkClusterInstances * _darkClusterPerHostQps) / numSourceClusterInstances;
       }
 
       return 0F;

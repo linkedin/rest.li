@@ -75,13 +75,13 @@ public class TestAsyncPool
   @Test
   public void testMustStart() throws TimeoutException, InterruptedException
   {
-    AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool",
-                                                       new SynchronousLifecycle(),
-                                                       1,
-                                                       100,
-                                                       _executor
-                                                       );
-    FutureCallback<Object> cb = new FutureCallback<Object>();
+    AsyncPool<Object> pool = new AsyncPoolImpl<>("object pool",
+        new SynchronousLifecycle(),
+        1,
+        100,
+        _executor
+    );
+    FutureCallback<Object> cb = new FutureCallback<>();
     pool.get(cb);
     try
     {
@@ -97,14 +97,14 @@ public class TestAsyncPool
   @Test
   public void testCreate()
   {
-    AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool",
-                                                       new SynchronousLifecycle(),
-                                                       1,
-                                                       100,
-                                                       _executor
-                                                       );
+    AsyncPool<Object> pool = new AsyncPoolImpl<>("object pool",
+        new SynchronousLifecycle(),
+        1,
+        100,
+        _executor
+    );
     pool.start();
-    FutureCallback<Object> cb = new FutureCallback<Object>();
+    FutureCallback<Object> cb = new FutureCallback<>();
     pool.get(cb);
     try
     {
@@ -126,12 +126,12 @@ public class TestAsyncPool
     final int POOL_SIZE = 25;
     final int DELAY = 1;
     SynchronousLifecycle lifecycle = new SynchronousLifecycle();
-    final AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool",
-                                                             lifecycle,
-                                                             POOL_SIZE,
-                                                             100,
-                                                             _executor
-                                                             );
+    final AsyncPool<Object> pool = new AsyncPoolImpl<>("object pool",
+        lifecycle,
+        POOL_SIZE,
+        100,
+        _executor
+    );
     pool.start();
 
     Runnable r = new Runnable()
@@ -141,7 +141,7 @@ public class TestAsyncPool
       {
         for (int i = 0; i < ITERATIONS; i++)
         {
-          FutureCallback<Object> cb = new FutureCallback<Object>();
+          FutureCallback<Object> cb = new FutureCallback<>();
           pool.get(cb);
           try
           {
@@ -159,7 +159,7 @@ public class TestAsyncPool
         }
       }
     };
-    List<Thread> threads = new ArrayList<Thread>(THREADS);
+    List<Thread> threads = new ArrayList<>(THREADS);
     for (int i = 0; i < THREADS; i++)
     {
       Thread t = new Thread(r);
@@ -186,18 +186,18 @@ public class TestAsyncPool
     final int POOL_SIZE = 25;
     final int CHECKOUT = POOL_SIZE;
     SynchronousLifecycle lifecycle = new SynchronousLifecycle();
-    final AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool",
-                                                             lifecycle,
-                                                             POOL_SIZE,
-                                                             100,
-                                                             _executor
-                                                             );
+    final AsyncPool<Object> pool = new AsyncPoolImpl<>("object pool",
+        lifecycle,
+        POOL_SIZE,
+        100,
+        _executor
+    );
     pool.start();
 
-    List<Object> objects = new ArrayList<Object>(CHECKOUT);
+    List<Object> objects = new ArrayList<>(CHECKOUT);
     for (int i = 0; i < CHECKOUT; i++)
     {
-      FutureCallback<Object> cb = new FutureCallback<Object>();
+      FutureCallback<Object> cb = new FutureCallback<>();
       pool.get(cb);
 
       try
@@ -211,7 +211,7 @@ public class TestAsyncPool
         Assert.fail("unexpected error", e);
       }
     }
-    FutureCallback<None> shutdown = new FutureCallback<None>();
+    FutureCallback<None> shutdown = new FutureCallback<>();
     pool.shutdown(shutdown);
 
     for (Object o : objects)
@@ -238,7 +238,7 @@ public class TestAsyncPool
   public void testCancelTriggerShutdown() throws Exception
   {
     SynchronousLifecycle lifecycle = new SynchronousLifecycle();
-    AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool", lifecycle, 1, 100, _executor);
+    AsyncPool<Object> pool = new AsyncPoolImpl<>("object pool", lifecycle, 1, 100, _executor);
     pool.start();
 
     FutureCallback<Object> callback1 = new FutureCallback<>();
@@ -267,16 +267,16 @@ public class TestAsyncPool
     final int POOL_SIZE = 25;
     final int GET = 15;
     SynchronousLifecycle lifecycle = new SynchronousLifecycle();
-    final AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool",
+    final AsyncPool<Object> pool = new AsyncPoolImpl<>("object pool",
         lifecycle, POOL_SIZE, 1000, _executor, _executor, Integer.MAX_VALUE, AsyncPoolImpl.Strategy.LRU, 0);
 
     pool.start();
 
-    ArrayList<Object> objects = new ArrayList<Object>();
+    ArrayList<Object> objects = new ArrayList<>();
 
     for(int i = 0; i < GET; i++)
     {
-      FutureCallback<Object>cb = new FutureCallback<Object>();
+      FutureCallback<Object>cb = new FutureCallback<>();
       pool.get(cb);
       objects.add(cb.get());
     }
@@ -290,7 +290,7 @@ public class TestAsyncPool
     // we should get the same objects back in FIFO order
     for(int i = 0; i < GET; i++)
     {
-      FutureCallback<Object> cb = new FutureCallback<Object>();
+      FutureCallback<Object> cb = new FutureCallback<>();
       pool.get(cb);
       Assert.assertEquals(cb.get(), objects.get(i));
     }
@@ -308,18 +308,18 @@ public class TestAsyncPool
     for(AsyncPoolImpl.Strategy strategy : AsyncPoolImpl.Strategy.values()) {
 
       SynchronousLifecycle lifecycle = new SynchronousLifecycle();
-      final AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool",
+      final AsyncPool<Object> pool = new AsyncPoolImpl<>("object pool",
           lifecycle, POOL_SIZE, 100, _executor, _executor, Integer.MAX_VALUE, strategy, MIN_SIZE);
 
       pool.start();
 
       Assert.assertEquals(lifecycle.getLive(), MIN_SIZE);
 
-      ArrayList<Object> objects = new ArrayList<Object>();
+      ArrayList<Object> objects = new ArrayList<>();
 
       for(int i = 0; i < GET; i++)
       {
-        FutureCallback<Object>cb = new FutureCallback<Object>();
+        FutureCallback<Object>cb = new FutureCallback<>();
         pool.get(cb);
         objects.add(cb.get());
       }
@@ -353,11 +353,11 @@ public class TestAsyncPool
     final int DELAY = 1200;
 
     final UnreliableLifecycle lifecycle = new UnreliableLifecycle();
-    final AsyncPool<AtomicBoolean> pool = new AsyncPoolImpl<AtomicBoolean>(
+    final AsyncPool<AtomicBoolean> pool = new AsyncPoolImpl<>(
         "object pool", lifecycle, POOL_SIZE, TIMEOUT, WAITER_TIMEOUT, _executor, MAX_WAITER_SIZE, AsyncPoolImpl.Strategy.MRU,
         MIN_SIZE, new NoopRateLimiter(), clock, waitTimeTracker);
     PoolStats stats;
-    final List<AtomicBoolean> objects = new ArrayList<AtomicBoolean>();
+    final List<AtomicBoolean> objects = new ArrayList<>();
 
     pool.start();
 
@@ -380,7 +380,7 @@ public class TestAsyncPool
     // do a few gets
     for(int i = 0; i < GET; i++)
     {
-      FutureCallback<AtomicBoolean> cb = new FutureCallback<AtomicBoolean>();
+      FutureCallback<AtomicBoolean> cb = new FutureCallback<>();
       pool.get(cb);
       AtomicBoolean obj = cb.get();
       objects.add(obj);
@@ -494,18 +494,18 @@ public class TestAsyncPool
     final int TIMEOUT = 100;
 
     final UnreliableLifecycle lifecycle = new UnreliableLifecycle();
-    final AsyncPool<AtomicBoolean> pool = new AsyncPoolImpl<AtomicBoolean>(
+    final AsyncPool<AtomicBoolean> pool = new AsyncPoolImpl<>(
         "object pool", lifecycle, POOL_SIZE, TIMEOUT, _executor
     );
     PoolStats stats;
-    final List<AtomicBoolean> objects = new ArrayList<AtomicBoolean>();
+    final List<AtomicBoolean> objects = new ArrayList<>();
 
     pool.start();
 
     // do a few gets
     for(int i = 0; i < GET; i++)
     {
-      FutureCallback<AtomicBoolean> cb = new FutureCallback<AtomicBoolean>();
+      FutureCallback<AtomicBoolean> cb = new FutureCallback<>();
       pool.get(cb);
       AtomicBoolean obj = cb.get();
       objects.add(obj);
@@ -533,7 +533,7 @@ public class TestAsyncPool
     // create some with errors
     for(int i = 0; i < CREATE_BAD; i++)
     {
-      FutureCallback<AtomicBoolean> cb = new FutureCallback<AtomicBoolean>();
+      FutureCallback<AtomicBoolean> cb = new FutureCallback<>();
       try
       {
         pool.get(cb);
@@ -559,7 +559,7 @@ public class TestAsyncPool
     final long DELAY = 100;
     final double DELTA = 0.1;
     DelayedLifecycle lifecycle = new DelayedLifecycle(DELAY);
-    final AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool",
+    final AsyncPool<Object> pool = new AsyncPoolImpl<>("object pool",
         lifecycle,
         POOL_SIZE,
         100,
@@ -568,10 +568,10 @@ public class TestAsyncPool
     pool.start();
 
     PoolStats stats;
-    List<Object> objects = new ArrayList<Object>(CHECKOUT);
+    List<Object> objects = new ArrayList<>(CHECKOUT);
     for (int i = 0; i < CHECKOUT; i++)
     {
-      FutureCallback<Object> cb = new FutureCallback<Object>();
+      FutureCallback<Object> cb = new FutureCallback<>();
       pool.get(cb);
       Object o = cb.get();
       objects.add(o);
@@ -614,7 +614,7 @@ public class TestAsyncPool
     ExponentialBackOffRateLimiter rateLimiter = new ExponentialBackOffRateLimiter(0, 5000,
         10, executor, concurrency);
 
-    final AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool",
+    final AsyncPool<Object> pool = new AsyncPoolImpl<>("object pool",
         blockableObjectCreator,
         poolSize,
         Integer.MAX_VALUE,
@@ -718,7 +718,7 @@ public class TestAsyncPool
 
     ClockedExecutor clockedExecutor = new ClockedExecutor();
 
-    final AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool",
+    final AsyncPool<Object> pool = new AsyncPoolImpl<>("object pool",
         blockableObjectCreator,
         poolSize,
         Integer.MAX_VALUE,
@@ -796,7 +796,7 @@ public class TestAsyncPool
     ClockedExecutor clockedExecutor = new ClockedExecutor();
     ExponentialBackOffRateLimiter rateLimiter = new ExponentialBackOffRateLimiter(0, 5000,
         10, clockedExecutor, concurrency);
-    final AsyncPool<Object> pool = new AsyncPoolImpl<Object>("object pool",
+    final AsyncPool<Object> pool = new AsyncPoolImpl<>("object pool",
         objectCreatorThatNeverCreates,
         poolSize,
         Integer.MAX_VALUE,

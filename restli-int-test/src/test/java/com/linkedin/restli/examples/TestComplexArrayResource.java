@@ -62,7 +62,7 @@ public class TestComplexArrayResource extends RestLiIntegrationTest
   public void initClass(ITestContext ctx) throws Exception
   {
     Set<String> includedGroups =
-        new HashSet<String>(ctx.getCurrentXmlTest().getIncludedGroups());
+        new HashSet<>(ctx.getCurrentXmlTest().getIncludedGroups());
     super.init(includedGroups.contains("async"));
   }
 
@@ -81,7 +81,7 @@ public class TestComplexArrayResource extends RestLiIntegrationTest
     ComplexArray next = new ComplexArray().setArray(singleton);
     ComplexArray key = new ComplexArray().setArray(singleton).setNext(next);
     ComplexArray params = new ComplexArray().setArray(singleton).setNext(next);
-    ComplexResourceKey<ComplexArray, ComplexArray> complexKey = new ComplexResourceKey<ComplexArray, ComplexArray>(key, params);
+    ComplexResourceKey<ComplexArray, ComplexArray> complexKey = new ComplexResourceKey<>(key, params);
 
     Request<Greeting> request = builders.get().id(complexKey).build();
 
@@ -176,17 +176,17 @@ public class TestComplexArrayResource extends RestLiIntegrationTest
     ComplexArray key1 = new ComplexArray().setArray(singleton1).setNext(next1);
     ComplexArray params1 = new ComplexArray().setArray(singleton1).setNext(next1);
     ComplexResourceKey<ComplexArray, ComplexArray> complexKey1 =
-      new ComplexResourceKey<ComplexArray, ComplexArray>(key1, params1);
+        new ComplexResourceKey<>(key1, params1);
 
     LongArray singleton2 = new LongArray(2L);
     ComplexArray next2 = new ComplexArray().setArray(singleton2);
     ComplexArray key2 = new ComplexArray().setArray(singleton2).setNext(next2);
     ComplexArray params2 = new ComplexArray().setArray(singleton2).setNext(next2);
     ComplexResourceKey<ComplexArray, ComplexArray> complexKey2 =
-      new ComplexResourceKey<ComplexArray, ComplexArray>(key2, params2);
+        new ComplexResourceKey<>(key2, params2);
 
     List<ComplexResourceKey<ComplexArray, ComplexArray>> complexKeys =
-      new ArrayList<ComplexResourceKey<ComplexArray, ComplexArray>>();
+        new ArrayList<>();
     complexKeys.add(complexKey1);
     complexKeys.add(complexKey2);
 

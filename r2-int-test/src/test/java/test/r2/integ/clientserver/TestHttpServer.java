@@ -144,7 +144,7 @@ public class TestHttpServer extends AbstractServiceTest
     // check the number of header values received at client side
     // we know the headers are going to be folded into one line its way back.
     List<String> echoValues = RestUtil.getHeaderValues(c.getHeaderField(MULTI_VALUE_HEADER_NAME));
-    assertEquals(new HashSet<String>(echoValues), new HashSet<String>(values));
+    assertEquals(new HashSet<>(echoValues), new HashSet<>(values));
   }
 
   @Test
@@ -170,7 +170,7 @@ public class TestHttpServer extends AbstractServiceTest
       c.addRequestProperty(HttpConstants.REQUEST_COOKIE_HEADER_NAME, cookie);
     }
     List<String> cookiesEcho = c.getHeaderFields().get(HttpConstants.RESPONSE_COOKIE_HEADER_NAME);
-    assertEquals(new HashSet<String>(cookiesEcho), new HashSet<String>(cookies));
+    assertEquals(new HashSet<>(cookiesEcho), new HashSet<>(cookies));
   }
 
   protected static class ErrorHandler implements RestRequestHandler

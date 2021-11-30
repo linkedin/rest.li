@@ -31,15 +31,21 @@ import com.linkedin.pegasus.generator.test.RecordBarArrayArray;
 import com.linkedin.pegasus.generator.test.RecordBarMap;
 import com.linkedin.pegasus.generator.test.TyperefTest;
 import com.linkedin.pegasus.generator.test.UnionTest;
+import com.linkedin.r2.message.RequestContext;
+import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.ResourceContextImpl;
 import com.linkedin.restli.internal.server.ServerResourceContext;
 import com.linkedin.restli.server.LinkedListNode;
 import com.linkedin.restli.server.RestLiServiceException;
+import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -64,6 +70,7 @@ public class TestRestUtils
   private static final String UNKNOWN_TYPE_HEADER_WITH_INVALID_PARAMS_JSON = "foo/bar; baz, application/json";
   private static final String UNKNOWN_TYPE_HEADER_WITH_UNKNOWN_PARAMS_JSON = "foo/bar; baz=bark, application/json";
   private static final String UNKNOWN_TYPE_HEADER_WITH_VALID_PARAMS_JSON = "foo/bar; level=1, application/json";
+  private static final String PSON_TYPE_HEADER_WITH_VALID_PARAMS_JSON = "application/x-pson, application/json; q=.9";
   private static final String JSON_HEADER = "application/json";
   private static final String PSON_HEADER = "application/x-pson";
   private static final String INVALID_TYPE_HEADER_1 = "foo";
@@ -90,7 +97,8 @@ public class TestRestUtils
         { UNKNOWN_TYPE_HEADER_WITH_INVALID_PARAMS_JSON, JSON_TYPE },
         { UNKNOWN_TYPE_HEADER_WITH_UNKNOWN_PARAMS_JSON, JSON_TYPE },
         { UNKNOWN_TYPE_HEADER_WITH_VALID_PARAMS_JSON, JSON_TYPE },
-        { MULTIPART_MIME_RELATED_TYPE, JSON_TYPE}
+        { MULTIPART_MIME_RELATED_TYPE, JSON_TYPE},
+        { PSON_TYPE_HEADER_WITH_VALID_PARAMS_JSON, PSON_TYPE }
     };
   }
 
@@ -110,6 +118,13 @@ public class TestRestUtils
   public void testPickBestEncodingWithValidMimeTypes(String header, String result)
   {
     Assert.assertEquals(RestUtils.pickBestEncoding(header, Collections.emptySet()), result);
+  }
+
+  @Test
+  public void testPickBestEncodingWithSupportedMimeTypes()
+  {
+    Assert.assertEquals(RestUtils.pickBestEncoding(PSON_TYPE_HEADER_WITH_VALID_PARAMS_JSON, Arrays.asList(JSON_HEADER),Collections.emptySet()), JSON_HEADER);
+    Assert.assertEquals(RestUtils.pickBestEncoding(PSON_TYPE_HEADER_WITH_VALID_PARAMS_JSON, Arrays.asList(), Collections.emptySet()), PSON_HEADER);
   }
 
   @Test
@@ -136,7 +151,7 @@ public class TestRestUtils
   @Test()
   public void testValidateRequestHeadersWithValidAcceptHeaderAndNoMatch() throws Exception
   {
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     headers.put("Accept", "text/html");
     ServerResourceContext resourceContext = new ResourceContextImpl();
     try
@@ -157,11 +172,29 @@ public class TestRestUtils
   @Test()
   public void testValidateRequestHeadersWithValidAcceptHeaderAndMatch() throws Exception
   {
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     headers.put("Accept", "application/json");
     ServerResourceContext resourceContext = new ResourceContextImpl();
     RestUtils.validateRequestHeadersAndUpdateResourceContext(headers, Collections.emptySet(), resourceContext);
     Assert.assertEquals(resourceContext.getResponseMimeType(), "application/json");
+  }
+
+  @Test()
+  public void testValidateRequestHeadersForInProcessRequest() throws Exception
+  {
+    Map<String, String> headers = new AbstractMap<String, String>()
+    {
+      @Override
+      public Set<Entry<String, String>> entrySet() {
+        throw new IllegalStateException("Didn't expect headers to be accessed.");
+      }
+    };
+    RequestContext requestContext = new RequestContext();
+    requestContext.putLocalAttr(ServerResourceContext.CONTEXT_IN_PROCESS_RESOLUTION_KEY, true);
+    ServerResourceContext resourceContext = new ResourceContextImpl();
+    RestUtils.validateRequestHeadersAndUpdateResourceContext(headers, Collections.emptySet(), resourceContext,
+        requestContext);
+    Assert.assertEquals(resourceContext.getResponseMimeType(), ContentType.JSON.getHeaderKey());
   }
 
   @Test

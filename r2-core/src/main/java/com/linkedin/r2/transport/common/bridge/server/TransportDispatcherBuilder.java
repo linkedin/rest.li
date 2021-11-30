@@ -45,14 +45,14 @@ public class TransportDispatcherBuilder
 
   public TransportDispatcherBuilder(boolean restOverStream)
   {
-    this(new HashMap<URI, RestRequestHandler>(), new HashMap<URI, StreamRequestHandler>(), restOverStream);
+    this(new HashMap<>(), new HashMap<>(), restOverStream);
   }
 
   public TransportDispatcherBuilder(Map<URI, RestRequestHandler> restHandlers, Map<URI, StreamRequestHandler> streamHandlers, boolean restOverStream)
   {
-    _restHandlers = new HashMap<URI, RestRequestHandler>(restHandlers);
-    _streamHandlers = new HashMap<URI, StreamRequestHandler>(streamHandlers);
-    _adaptedHandlers = new HashMap<URI, StreamRequestHandler>();
+    _restHandlers = new HashMap<>(restHandlers);
+    _streamHandlers = new HashMap<>(streamHandlers);
+    _adaptedHandlers = new HashMap<>();
     _restOverStream = restOverStream;
   }
 
@@ -98,7 +98,7 @@ public class TransportDispatcherBuilder
 
   public TransportDispatcher build()
   {
-    Map<URI, StreamRequestHandler> mergedStreamHandlers = new HashMap<URI, StreamRequestHandler>(_adaptedHandlers);
+    Map<URI, StreamRequestHandler> mergedStreamHandlers = new HashMap<>(_adaptedHandlers);
     mergedStreamHandlers.putAll(_streamHandlers);
     return new TransportDispatcherImpl(_restHandlers, mergedStreamHandlers);
   }

@@ -16,11 +16,9 @@
 
 package com.linkedin.restli.client.uribuilders;
 
-
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.client.PartialUpdateRequest;
 import com.linkedin.restli.common.ProtocolVersion;
-import java.net.URI;
 
 
 /**
@@ -34,12 +32,11 @@ class PartialUpdateRequestUriBuilder extends AbstractRestliRequestUriBuilder<Par
   }
 
   @Override
-  public URI build()
+  protected UriBuilder getUriBuilderWithoutQueryParams()
   {
     PartialUpdateRequest<?> partialUpdateRequest = getRequest();
-    UriBuilder b = UriBuilder.fromUri(buildBaseUriWithPrefix());
+    UriBuilder b = super.getUriBuilderWithoutQueryParams();
     appendKeyToPath(b, partialUpdateRequest.getId());
-    appendQueryParams(b);
-    return b.build();
+    return b;
   }
 }

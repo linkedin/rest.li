@@ -50,7 +50,7 @@ public class MultiCallback implements Callback<None>
       throw new IllegalArgumentException();
     }
     _count = new AtomicInteger(count);
-    _exceptions = new ConcurrentLinkedQueue<Throwable>();
+    _exceptions = new ConcurrentLinkedQueue<>();
     _callback = orig;
   }
 

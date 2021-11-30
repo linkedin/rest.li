@@ -116,23 +116,23 @@ public class AssociationAltKeyResource extends AssociationResourceTemplate<Greet
   @Override
   public BatchUpdateResult<CompoundKey, Greeting> batchUpdate(BatchUpdateRequest<CompoundKey, Greeting> entities)
   {
-    Map<CompoundKey, UpdateResponse> responseMap = new HashMap<CompoundKey, UpdateResponse>();
+    Map<CompoundKey, UpdateResponse> responseMap = new HashMap<>();
     for (Map.Entry<CompoundKey, Greeting> entry : entities.getData().entrySet())
     {
       responseMap.put(entry.getKey(), update(entry.getKey(), entry.getValue()));
     }
-    return new BatchUpdateResult<CompoundKey, Greeting>(responseMap);
+    return new BatchUpdateResult<>(responseMap);
   }
 
   @Override
   public BatchUpdateResult<CompoundKey, Greeting> batchUpdate(BatchPatchRequest<CompoundKey, Greeting> entityUpdates)
   {
-    Map<CompoundKey, UpdateResponse> responseMap = new HashMap<CompoundKey, UpdateResponse>();
+    Map<CompoundKey, UpdateResponse> responseMap = new HashMap<>();
     for (Map.Entry<CompoundKey, PatchRequest<Greeting>> entry : entityUpdates.getData().entrySet())
     {
       responseMap.put(entry.getKey(), update(entry.getKey(), entry.getValue()));
     }
-    return new BatchUpdateResult<CompoundKey, Greeting>(responseMap);
+    return new BatchUpdateResult<>(responseMap);
   }
 
   @Override
@@ -146,11 +146,11 @@ public class AssociationAltKeyResource extends AssociationResourceTemplate<Greet
   @Override
   public BatchUpdateResult<CompoundKey, Greeting> batchDelete(BatchDeleteRequest<CompoundKey, Greeting> deleteRequest)
   {
-    Map<CompoundKey, UpdateResponse> responseMap = new HashMap<CompoundKey, UpdateResponse>();
+    Map<CompoundKey, UpdateResponse> responseMap = new HashMap<>();
     for (CompoundKey id : deleteRequest.getKeys())
     {
       responseMap.put(id, delete(id));
     }
-    return new BatchUpdateResult<CompoundKey, Greeting>(responseMap);
+    return new BatchUpdateResult<>(responseMap);
   }
 }

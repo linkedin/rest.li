@@ -206,7 +206,7 @@ public class SchemaFormatTranslator
   private Map<String, SchemaInfo> getTopLevelSchemaToTranslatedSchemaMap() throws IOException
   {
     Map<String, SchemaInfo> topLevelTranslatedSchemas = new HashMap<>();
-    DataSchemaParser dataSchemaParser = new DataSchemaParser(_resolverPath);
+    DataSchemaParser dataSchemaParser = new DataSchemaParser.Builder(_resolverPath).build();
     DataSchemaParser.ParseResult parsedSources = dataSchemaParser.parseSources(
         new String[]{_sourceDir.getAbsolutePath()});
 

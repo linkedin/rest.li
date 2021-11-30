@@ -77,7 +77,7 @@ public class ComplexKeysResource extends ComplexKeyResourceTemplate<TwoPartKey, 
   @Override
   public BatchCreateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> batchCreate(final BatchCreateRequest<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message> entities)
   {
-    List<CreateResponse> createResponses = new ArrayList<CreateResponse>(entities.getInput().size());
+    List<CreateResponse> createResponses = new ArrayList<>(entities.getInput().size());
 
     for(Message message : entities.getInput())
     {
@@ -86,7 +86,7 @@ public class ComplexKeysResource extends ComplexKeyResourceTemplate<TwoPartKey, 
       createResponses.add(createResponse);
     }
 
-    return new BatchCreateResult<ComplexResourceKey<TwoPartKey, TwoPartKey>, Message>(createResponses);
+    return new BatchCreateResult<>(createResponses);
   }
 
   @Override

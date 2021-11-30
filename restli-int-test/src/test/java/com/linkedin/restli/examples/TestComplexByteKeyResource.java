@@ -67,7 +67,7 @@ public class TestComplexByteKeyResource extends RestLiIntegrationTest
 
   private static ComplexResourceKey<TyperefRecord, TwoPartKey> getComplexKey(ByteString bytes)
   {
-    return new ComplexResourceKey<TyperefRecord, TwoPartKey>(
+    return new ComplexResourceKey<>(
         new TyperefRecord().setBytes(bytes),
         new TwoPartKey());
   }

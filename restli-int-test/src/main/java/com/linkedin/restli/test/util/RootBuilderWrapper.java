@@ -301,7 +301,7 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
         @SuppressWarnings("unchecked")
         final RequestBuilder<? extends Request<R>> builder =
             (RequestBuilder<? extends Request<R>>) method.invoke(_methodBuilder, args);
-        return new MethodBuilderWrapper<K, V, R>(builder, _isRestLi2Builder, _valueClass);
+        return new MethodBuilderWrapper<>(builder, _isRestLi2Builder, _valueClass);
       }
       catch (IllegalAccessException e)
       {
@@ -476,7 +476,7 @@ public class RootBuilderWrapper<K, V extends RecordTemplate>
       @SuppressWarnings("unchecked")
       final RequestBuilder<? extends Request<R>> builder =
           (RequestBuilder<? extends Request<R>>) _rootBuilder.getClass().getMethod(methodName).invoke(_rootBuilder);
-      return new MethodBuilderWrapper<K, V, R>(
+      return new MethodBuilderWrapper<>(
           builder,
           areRestLi2Builders(),
           _valueClass);

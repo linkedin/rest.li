@@ -35,7 +35,7 @@ public class UnionTemplateSpec extends ClassTemplateSpec
   public UnionTemplateSpec(UnionDataSchema schema)
   {
     setSchema(schema);
-    _members = new ArrayList<Member>();
+    _members = new ArrayList<>();
   }
 
   @Override

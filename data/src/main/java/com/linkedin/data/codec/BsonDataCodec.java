@@ -219,7 +219,7 @@ public class BsonDataCodec implements DataCodec
   protected static class BsonTraverseCallback implements Data.TraverseCallback
   {
     private final BufferChain _buffer;
-    private final Deque<BufferChain.Position> _positionStack = new ArrayDeque<BufferChain.Position>();
+    private final Deque<BufferChain.Position> _positionStack = new ArrayDeque<>();
     private String _currentName = null;
 
     BsonTraverseCallback()

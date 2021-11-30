@@ -113,15 +113,15 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     final Map<String, Object> batchQueryParams =
         getReadOnlyQueryParameters(BatchGetRequestUtil.getBatchQueryParam(requests, batchFields));
 
-    return new BatchGetRequest<RT>(getReadOnlyHeaders(firstRequest.getHeaders()),
-                                   getReadOnlyCookies(firstRequest.getCookies()),
-                                   firstRequest.getResponseDecoder(),
-                                   batchQueryParams,
-                                   firstRequest.getQueryParamClasses(),
-                                   firstResourceSpec,
-                                   firstRequest.getBaseUriTemplate(),
-                                   getReadOnlyPathKeys(firstRequest.getPathKeys()),
-                                   firstRequest.getRequestOptions());
+    return new BatchGetRequest<>(getReadOnlyHeaders(firstRequest.getHeaders()),
+        getReadOnlyCookies(firstRequest.getCookies()),
+        firstRequest.getResponseDecoder(),
+        batchQueryParams,
+        firstRequest.getQueryParamClasses(),
+        firstResourceSpec,
+        firstRequest.getBaseUriTemplate(),
+        getReadOnlyPathKeys(firstRequest.getPathKeys()),
+        firstRequest.getRequestOptions());
   }
 
   /**
@@ -182,16 +182,16 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     final Map<String, Object> batchQueryParams =
         getReadOnlyQueryParameters(BatchGetRequestUtil.getBatchQueryParam(requests, batchFields));
 
-    return new BatchGetKVRequest<K, RT>(
-                                   getReadOnlyHeaders(firstRequest.getHeaders()),
-                                   getReadOnlyCookies(firstRequest.getCookies()),
-                                   firstRequest.getResponseDecoder(),
-                                   batchQueryParams,
-                                   Collections.<String, Class<?>>emptyMap(),
-                                   firstResourceSpec,
-                                   firstRequest.getBaseUriTemplate(),
-                                   getReadOnlyPathKeys(firstRequest.getPathKeys()),
-                                   firstRequest.getRequestOptions());
+    return new BatchGetKVRequest<>(
+        getReadOnlyHeaders(firstRequest.getHeaders()),
+        getReadOnlyCookies(firstRequest.getCookies()),
+        firstRequest.getResponseDecoder(),
+        batchQueryParams,
+        Collections.<String, Class<?>>emptyMap(),
+        firstResourceSpec,
+        firstRequest.getBaseUriTemplate(),
+        getReadOnlyPathKeys(firstRequest.getPathKeys()),
+        firstRequest.getRequestOptions());
   }
 
   /**
@@ -211,36 +211,36 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
           "It is not possible to create a batch get request from a get request without an id.");
     }
 
-    Map<String, Object> queryParams = new HashMap<String, Object>(request.getQueryParamsObjects());
+    Map<String, Object> queryParams = new HashMap<>(request.getQueryParamsObjects());
     queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM,
                     new HashSet<>(Arrays.asList(id)));
 
-    return new BatchGetKVRequest<K, RT>(getReadOnlyHeaders(request.getHeaders()),
-                                        getReadOnlyCookies(request.getCookies()),
-                                        new BatchKVResponseDecoder<K, RT>(
-                                            request.getEntityClass(),
-                                            (Class<K>)request.getResourceProperties().getKeyType().getType(),
-                                            request.getResourceProperties().getKeyParts(),
-                                            request.getResourceProperties().getComplexKeyType() == null ?
-                                                null :
-                                                request.
-                                                    getResourceProperties().
-                                                    getComplexKeyType().
-                                                    getKeyType().
-                                                    getType(),
-                                            request.getResourceProperties().getComplexKeyType() == null ?
-                                                null :
-                                                request.
-                                                    getResourceProperties().
-                                                    getComplexKeyType().
-                                                    getParamsType().
-                                                    getType()),
-                                        getReadOnlyQueryParameters(queryParams),
-                                        request.getQueryParamClasses(),
-                                        request.getResourceSpec(),
-                                        request.getBaseUriTemplate(),
-                                        getReadOnlyPathKeys(request.getPathKeys()),
-                                        request.getRequestOptions());
+    return new BatchGetKVRequest<>(getReadOnlyHeaders(request.getHeaders()),
+        getReadOnlyCookies(request.getCookies()),
+        new BatchKVResponseDecoder<>(
+            request.getEntityClass(),
+            (Class<K>) request.getResourceProperties().getKeyType().getType(),
+            request.getResourceProperties().getKeyParts(),
+            request.getResourceProperties().getComplexKeyType() == null ?
+                null :
+                request.
+                    getResourceProperties().
+                    getComplexKeyType().
+                    getKeyType().
+                    getType(),
+            request.getResourceProperties().getComplexKeyType() == null ?
+                null :
+                request.
+                    getResourceProperties().
+                    getComplexKeyType().
+                    getParamsType().
+                    getType()),
+        getReadOnlyQueryParameters(queryParams),
+        request.getQueryParamClasses(),
+        request.getResourceSpec(),
+        request.getBaseUriTemplate(),
+        getReadOnlyPathKeys(request.getPathKeys()),
+        request.getRequestOptions());
   }
 
   /**
@@ -264,19 +264,19 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
 
     throwIfClassCompoundOrComplex(keyClass, "batch", "batchKV");
 
-    Map<String, Object> queryParams = new HashMap<String, Object>(request.getQueryParamsObjects());
+    Map<String, Object> queryParams = new HashMap<>(request.getQueryParamsObjects());
     queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM,
                     new HashSet<>(Arrays.asList(id)));
 
-    return new BatchGetRequest<RT>(getReadOnlyHeaders(request.getHeaders()),
-                                   getReadOnlyCookies(request.getCookies()),
-                                   new BatchResponseDecoder<RT>(request.getEntityClass()),
-                                   getReadOnlyQueryParameters(queryParams),
-                                   Collections.<String, Class<?>>emptyMap(),
-                                   request.getResourceSpec(),
-                                   request.getBaseUriTemplate(),
-                                   getReadOnlyPathKeys(request.getPathKeys()),
-                                   request.getRequestOptions());
+    return new BatchGetRequest<>(getReadOnlyHeaders(request.getHeaders()),
+        getReadOnlyCookies(request.getCookies()),
+        new BatchResponseDecoder<>(request.getEntityClass()),
+        getReadOnlyQueryParameters(queryParams),
+        Collections.<String, Class<?>>emptyMap(),
+        request.getResourceSpec(),
+        request.getBaseUriTemplate(),
+        getReadOnlyPathKeys(request.getPathKeys()),
+        request.getRequestOptions());
   }
 
   public BatchGetRequestBuilder(String baseUriTemplate,
@@ -284,7 +284,7 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
                                 ResourceSpec resourceSpec,
                                 RestliRequestOptions requestOptions)
   {
-    this(baseUriTemplate, new BatchResponseDecoder<V>(modelClass), resourceSpec, requestOptions);
+    this(baseUriTemplate, new BatchResponseDecoder<>(modelClass), resourceSpec, requestOptions);
   }
 
   public BatchGetRequestBuilder(String baseUriTemplate,
@@ -378,15 +378,15 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
 
     throwIfClassCompoundOrComplex(keyClass, "build", "buildKV");
 
-    return new BatchGetRequest<V>(buildReadOnlyHeaders(),
-                                  buildReadOnlyCookies(),
-                                  _decoder,
-                                  buildReadOnlyQueryParameters(),
-                                  Collections.<String, Class<?>>emptyMap(),
-                                  _resourceSpec,
-                                  getBaseUriTemplate(),
-                                  buildReadOnlyPathKeys(),
-                                  getRequestOptions());
+    return new BatchGetRequest<>(buildReadOnlyHeaders(),
+        buildReadOnlyCookies(),
+        _decoder,
+        buildReadOnlyQueryParameters(),
+        Collections.<String, Class<?>>emptyMap(),
+        _resourceSpec,
+        getBaseUriTemplate(),
+        buildReadOnlyPathKeys(),
+        getRequestOptions());
   }
 
   public BatchGetKVRequest<K, V> buildKV()
@@ -396,20 +396,20 @@ public class BatchGetRequestBuilder<K, V extends RecordTemplate> extends
     //Framework code should ensure that the ResourceSpec matches the static types of these parameters
     @SuppressWarnings("unchecked")
     BatchKVResponseDecoder<K, V> decoder =
-        new BatchKVResponseDecoder<K, V>((TypeSpec<V>) _resourceSpec.getValueType(),
-                                         (TypeSpec<K>) _resourceSpec.getKeyType(),
-                                         _resourceSpec.getKeyParts(),
-                                         _resourceSpec.getComplexKeyType());
+        new BatchKVResponseDecoder<>((TypeSpec<V>) _resourceSpec.getValueType(),
+            (TypeSpec<K>) _resourceSpec.getKeyType(),
+            _resourceSpec.getKeyParts(),
+            _resourceSpec.getComplexKeyType());
 
-    return new BatchGetKVRequest<K, V>(buildReadOnlyHeaders(),
-                                       buildReadOnlyCookies(),
-                                      decoder,
-                                      buildReadOnlyQueryParameters(),
-                                      getQueryParamClasses(),
-                                      _resourceSpec,
-                                      getBaseUriTemplate(),
-                                      buildReadOnlyPathKeys(),
-                                      getRequestOptions());
+    return new BatchGetKVRequest<>(buildReadOnlyHeaders(),
+        buildReadOnlyCookies(),
+        decoder,
+        buildReadOnlyQueryParameters(),
+        getQueryParamClasses(),
+        _resourceSpec,
+        getBaseUriTemplate(),
+        buildReadOnlyPathKeys(),
+        getRequestOptions());
   }
 
   public BatchGetRequestBuilder<K, V> fields(PathSpec... fieldPaths)

@@ -38,7 +38,7 @@ public class TestSslTimingKey extends AbstractEchoServiceTest
     final EchoService client = new RestEchoClient( Bootstrap.createURI(_port, Bootstrap.getEchoURI(), true),createClient());
 
     final String msg = "This is a simple http echo message";
-    final FutureCallback<String> callback = new FutureCallback<String>();
+    final FutureCallback<String> callback = new FutureCallback<>();
     client.echo(msg, callback);
     Assert.assertEquals(callback.get(), msg);
     RequestContext  context = _clientCaptureFilter.getRequestContext();

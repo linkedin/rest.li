@@ -87,15 +87,7 @@ public class ClientRetryFilter implements RestFilter, StreamFilter
         ex = new RetriableRequestException(retryAttr, ex);
       }
     }
-    else {
-      Throwable[] throwables = ExceptionUtils.getThrowables(ex);
-      for (Throwable throwable : throwables) {
-        if (throwable instanceof RetriableRequestException) {
-          ((RetriableRequestException) throwable).setDoNotRetryOverride(true);
-          break;
-        }
-      }
-    }
+
     nextFilter.onError(ex, requestContext, wireAttrs);
   }
 }

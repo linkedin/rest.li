@@ -41,7 +41,7 @@ public class RestUtil
   public static List<String> getHeaderValues(String headerValue)
   {
     final String[] elems = COMMA_PATTERN.split(headerValue);
-    final List<String> values = new ArrayList<String>();
+    final List<String> values = new ArrayList<>();
 
     // Per RFC 2616, section 2.1, a null list element should not be treated as a value.
     for (String elem : elems)

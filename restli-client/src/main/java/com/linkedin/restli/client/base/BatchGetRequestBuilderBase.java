@@ -47,7 +47,7 @@ public abstract class BatchGetRequestBuilderBase<
                                        ResourceSpec resourceSpec,
                                        RestliRequestOptions requestOptions)
   {
-    super(baseUriTemplate, new BatchResponseDecoder<V>(modelClass), resourceSpec, requestOptions);
+    super(baseUriTemplate, new BatchResponseDecoder<>(modelClass), resourceSpec, requestOptions);
   }
 
   @SuppressWarnings({"unchecked"})

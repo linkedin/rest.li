@@ -127,4 +127,4 @@ if [ $? != 0 ]; then
   exit 1
 fi
 
-echo "Tag push complete. You can view the $TAG_NAME publish job here: https://travis-ci.com/github/linkedin/rest.li/builds"
+echo "Tag push complete. You can view the $TAG_NAME publish job here: https://github.com/linkedin/rest.li/actions/workflows/publish.yml"

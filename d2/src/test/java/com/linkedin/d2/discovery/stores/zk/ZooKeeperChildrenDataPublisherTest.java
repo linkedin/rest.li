@@ -72,7 +72,7 @@ public class ZooKeeperChildrenDataPublisherTest
 
   private void generateTestData()
   {
-    _testData = new HashMap<String, String>();
+    _testData = new HashMap<>();
     _testData.put("bucket/child-1", "1");
     _testData.put("bucket/child-2", "2");
     _testData.put("bucket/child-3", "3");
@@ -85,10 +85,10 @@ public class ZooKeeperChildrenDataPublisherTest
     generateTestData();
     for (Map.Entry<String, String> entry : _testData.entrySet())
     {
-      FutureCallback<None> callback = new FutureCallback<None>();
+      FutureCallback<None> callback = new FutureCallback<>();
       _zkClient.ensurePersistentNodeExists("/" + entry.getKey(), callback);
       callback.get(30, TimeUnit.SECONDS);
-      FutureCallback<None> callback2 = new FutureCallback<None>();
+      FutureCallback<None> callback2 = new FutureCallback<>();
       _zkClient.setDataUnsafe("/" + entry.getKey(), entry.getValue().getBytes(), callback2);
       callback2.get(30, TimeUnit.SECONDS);
     }
@@ -96,7 +96,7 @@ public class ZooKeeperChildrenDataPublisherTest
 
   @AfterMethod
   public void tearDownMethod() throws ExecutionException, InterruptedException {
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _zkClient.removeNodeUnsafeRecursive("/bucket", callback);
     callback.get();
   }
@@ -109,7 +109,7 @@ public class ZooKeeperChildrenDataPublisherTest
     client.start();
 
     final ZooKeeperChildrenDataPublisher<Map<String, String>, String> publisher =
-        new ZooKeeperChildrenDataPublisher<Map<String, String>, String>(client, new PropertyStringSerializer(), "/");
+        new ZooKeeperChildrenDataPublisher<>(client, new PropertyStringSerializer(), "/");
 
     final CountDownLatch initLatch = new CountDownLatch(1);
     final CountDownLatch startLatch = new CountDownLatch(1);
@@ -137,7 +137,7 @@ public class ZooKeeperChildrenDataPublisherTest
 
       @Override
       public void onSuccess(None result) {
-        _eventBus = new PropertyEventBusImpl<Map<String, String>>(_executor, publisher);
+        _eventBus = new PropertyEventBusImpl<>(_executor, publisher);
         _eventBus.register(Collections.singleton("bucket"), subscriber);
         startLatch.countDown();
       }
@@ -162,7 +162,7 @@ public class ZooKeeperChildrenDataPublisherTest
     client.start();
 
     final ZooKeeperChildrenDataPublisher<Map<String, String>, String> publisher =
-        new ZooKeeperChildrenDataPublisher<Map<String, String>, String>(client, new PropertyStringSerializer(), "/");
+        new ZooKeeperChildrenDataPublisher<>(client, new PropertyStringSerializer(), "/");
 
     final CountDownLatch initLatch = new CountDownLatch(1);
     final CountDownLatch addLatch = new CountDownLatch(1);
@@ -190,7 +190,7 @@ public class ZooKeeperChildrenDataPublisherTest
 
       @Override
       public void onSuccess(None result) {
-        _eventBus = new PropertyEventBusImpl<Map<String, String>>(_executor, publisher);
+        _eventBus = new PropertyEventBusImpl<>(_executor, publisher);
         _eventBus.register(Collections.singleton("bucket"), subscriber);
         startLatch.countDown();
       }
@@ -205,7 +205,7 @@ public class ZooKeeperChildrenDataPublisherTest
       Assert.fail("unable to publish initial property value");
     }
 
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _zkClient.setDataUnsafe("/bucket/child-1", "4".getBytes(), callback);
     callback.get();
 
@@ -224,7 +224,7 @@ public class ZooKeeperChildrenDataPublisherTest
     client.start();
 
     final ZooKeeperChildrenDataPublisher<Map<String, String>, String> publisher =
-        new ZooKeeperChildrenDataPublisher<Map<String, String>, String>(client, new PropertyStringSerializer(), "/");
+        new ZooKeeperChildrenDataPublisher<>(client, new PropertyStringSerializer(), "/");
 
     final CountDownLatch initLatch = new CountDownLatch(1);
     final CountDownLatch addLatch = new CountDownLatch(1);
@@ -252,7 +252,7 @@ public class ZooKeeperChildrenDataPublisherTest
 
       @Override
       public void onSuccess(None result) {
-        _eventBus = new PropertyEventBusImpl<Map<String, String>>(_executor, publisher);
+        _eventBus = new PropertyEventBusImpl<>(_executor, publisher);
         _eventBus.register(Collections.singleton("bucket"), subscriber);
         startLatch.countDown();
       }
@@ -267,7 +267,7 @@ public class ZooKeeperChildrenDataPublisherTest
       Assert.fail("unable to publish initial property value");
     }
 
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _zkClient.removeNodeUnsafe("/bucket/child-1", callback);
     callback.get();
 
@@ -286,7 +286,7 @@ public class ZooKeeperChildrenDataPublisherTest
     client.start();
 
     final ZooKeeperChildrenDataPublisher<Map<String, String>, String> publisher =
-        new ZooKeeperChildrenDataPublisher<Map<String, String>, String>(client, new PropertyStringSerializer(), "/");
+        new ZooKeeperChildrenDataPublisher<>(client, new PropertyStringSerializer(), "/");
 
     final CountDownLatch initLatch = new CountDownLatch(1);
     final CountDownLatch addLatch = new CountDownLatch(1);
@@ -314,7 +314,7 @@ public class ZooKeeperChildrenDataPublisherTest
 
       @Override
       public void onSuccess(None result) {
-        _eventBus = new PropertyEventBusImpl<Map<String, String>>(_executor, publisher);
+        _eventBus = new PropertyEventBusImpl<>(_executor, publisher);
         _eventBus.register(Collections.singleton("bucket"), subscriber);
         startLatch.countDown();
       }
@@ -329,7 +329,7 @@ public class ZooKeeperChildrenDataPublisherTest
       Assert.fail("unable to publish initial property value");
     }
 
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _zkClient.ensurePersistentNodeExists("/bucket/child-4", callback);
     callback.get();
 

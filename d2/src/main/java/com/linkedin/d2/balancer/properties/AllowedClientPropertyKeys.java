@@ -48,7 +48,7 @@ public enum AllowedClientPropertyKeys
   private static final Set<String> _allowedKeys;
   static
   {
-    _allowedKeys = new HashSet<String>();
+    _allowedKeys = new HashSet<>();
     for (AllowedClientPropertyKeys propertyKey: AllowedClientPropertyKeys.values())
     {
       _allowedKeys.add(propertyKey._keyName);

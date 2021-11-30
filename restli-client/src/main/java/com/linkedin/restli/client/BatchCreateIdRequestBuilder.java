@@ -39,7 +39,7 @@ import java.util.Map;
  */
 public class BatchCreateIdRequestBuilder<K, V extends RecordTemplate> extends RestfulRequestBuilder<K, V, BatchCreateIdRequest<K, V>>
 {
-  private final List<V> _entities = new ArrayList<V>();
+  private final List<V> _entities = new ArrayList<>();
   private final Class<V> _valueClass;
   private List<Object> _streamingAttachments; //We initialize only when we need to.
 
@@ -146,21 +146,21 @@ public class BatchCreateIdRequestBuilder<K, V extends RecordTemplate> extends Re
   public BatchCreateIdRequest<K, V> build()
   {
     @SuppressWarnings("unchecked")
-    BatchCreateIdDecoder<K> decoder = new BatchCreateIdDecoder<K>((TypeSpec<K>)_resourceSpec.getKeyType(),
-                                                                  _resourceSpec.getKeyParts(),
-                                                                  _resourceSpec.getComplexKeyType());
+    BatchCreateIdDecoder<K> decoder = new BatchCreateIdDecoder<>((TypeSpec<K>) _resourceSpec.getKeyType(),
+        _resourceSpec.getKeyParts(),
+        _resourceSpec.getComplexKeyType());
 
-    return new BatchCreateIdRequest<K, V>(buildReadOnlyHeaders(),
-                                          buildReadOnlyCookies(),
-                                          decoder,
-                                          buildReadOnlyInput(),
-                                          _resourceSpec,
-                                          buildReadOnlyQueryParameters(),
-                                          getQueryParamClasses(),
-                                          getBaseUriTemplate(),
-                                          buildReadOnlyPathKeys(),
-                                          getRequestOptions(),
-                                          _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
+    return new BatchCreateIdRequest<>(buildReadOnlyHeaders(),
+        buildReadOnlyCookies(),
+        decoder,
+        buildReadOnlyInput(),
+        _resourceSpec,
+        buildReadOnlyQueryParameters(),
+        getQueryParamClasses(),
+        getBaseUriTemplate(),
+        buildReadOnlyPathKeys(),
+        getRequestOptions(),
+        _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
   }
 
   private CollectionRequest<V> buildReadOnlyInput()
@@ -168,7 +168,7 @@ public class BatchCreateIdRequestBuilder<K, V extends RecordTemplate> extends Re
     try
     {
       DataMap map = new DataMap();
-      CollectionRequest<V> input = new CollectionRequest<V>(map, _valueClass);
+      CollectionRequest<V> input = new CollectionRequest<>(map, _valueClass);
 
       for (V entity : _entities)
       {

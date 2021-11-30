@@ -19,6 +19,7 @@ package com.linkedin.d2.jmx;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.servers.ZooKeeperServer;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
@@ -41,7 +42,7 @@ public class ZooKeeperServerJmx implements ZooKeeperServerJmxMXBean
   @Override
   public void setMarkDown(String clusterName, String uri) throws PropertyStoreException
   {
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _server.markDown(clusterName, URI.create(uri), callback);
     try
     {
@@ -56,9 +57,9 @@ public class ZooKeeperServerJmx implements ZooKeeperServerJmxMXBean
   @Override
   public void setMarkUp(String clusterName, String uri, double weight) throws PropertyStoreException
   {
-    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(1);
+    Map<Integer, PartitionData> partitionDataMap = new HashMap<>(1);
     partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
-    setMarkup(clusterName, uri, partitionDataMap, Collections.<String, Object>emptyMap());
+    setMarkup(clusterName, uri, partitionDataMap, Collections.emptyMap());
   }
 
   @Override
@@ -74,7 +75,7 @@ public class ZooKeeperServerJmx implements ZooKeeperServerJmxMXBean
                         Map<String, Object> uriSpecificProperties)
       throws PropertyStoreException
   {
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _server.markUp(clusterName, URI.create(uri), partitionDataMap, uriSpecificProperties, callback);
     try
     {
@@ -95,6 +96,31 @@ public class ZooKeeperServerJmx implements ZooKeeperServerJmxMXBean
   {
     FutureCallback<None> callback = new FutureCallback<>();
     _server.changeWeight(clusterName, URI.create(uri), partitionDataMap, doNotSlowStart, callback);
+    try
+    {
+      callback.get(10, TimeUnit.SECONDS);
+    }
+    catch (Exception e)
+    {
+      throw new PropertyStoreException(e);
+    }
+  }
+
+  @Override
+  public void setDoNotLoadBalance(String clusterName,
+                                  String uri,
+                                  Map<Integer, PartitionData> partitionDataMap,
+                                  boolean doNotLoadBalance)
+    throws PropertyStoreException
+  {
+    FutureCallback<None> callback = new FutureCallback<>();
+    _server.addUriSpecificProperty(clusterName,
+                                   "doNotLoadBalance",
+                                   URI.create(uri),
+                                   partitionDataMap,
+                                   PropertyKeys.DO_NOT_LOAD_BALANCE,
+                                   doNotLoadBalance,
+                                   callback);
     try
     {
       callback.get(10, TimeUnit.SECONDS);

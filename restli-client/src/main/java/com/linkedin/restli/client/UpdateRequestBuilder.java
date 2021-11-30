@@ -136,16 +136,16 @@ public class UpdateRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public UpdateRequest<V> build()
   {
-    return new UpdateRequest<V>(buildReadOnlyInput(),
-                                buildReadOnlyHeaders(),
-                                buildReadOnlyCookies(),
-                                _resourceSpec,
-                                buildReadOnlyQueryParameters(),
-                                getQueryParamClasses(),
-                                getBaseUriTemplate(),
-                                buildReadOnlyPathKeys(),
-                                getRequestOptions(),
-                                buildReadOnlyId(),
-                                _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
+    return new UpdateRequest<>(buildReadOnlyInput(),
+        buildReadOnlyHeaders(),
+        buildReadOnlyCookies(),
+        _resourceSpec,
+        buildReadOnlyQueryParameters(),
+        getQueryParamClasses(),
+        getBaseUriTemplate(),
+        buildReadOnlyPathKeys(),
+        getRequestOptions(),
+        buildReadOnlyId(),
+        _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
   }
 }

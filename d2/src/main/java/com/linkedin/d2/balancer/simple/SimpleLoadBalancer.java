@@ -270,7 +270,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         }
         catch (PartitionAccessException e)
         {
-          unmappedKeys.add(new MapKeyResult.UnmappedKey<K>(key, MapKeyResult.ErrorType.FAIL_TO_FIND_PARTITION));
+          unmappedKeys.add(new MapKeyResult.UnmappedKey<>(key, MapKeyResult.ErrorType.FAIL_TO_FIND_PARTITION));
           continue;
         }
 
@@ -538,18 +538,18 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
     List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
             _state.getStrategiesForService(serviceName, service.getPrioritizedSchemes());
-    Map<Integer, Integer> partitionWithoutEnoughHost = new HashMap<Integer, Integer>();
+    Map<Integer, Integer> partitionWithoutEnoughHost = new HashMap<>();
 
     if (! orderedStrategies.isEmpty())
     {
       // get the partitionId -> keys mapping
       final PartitionAccessor accessor = getPartitionAccessor(serviceName, clusterName);
       int maxPartitionId = accessor.getMaxPartitionId();
-      List<K> unmappedKeys = new ArrayList<K>();
+      List<K> unmappedKeys = new ArrayList<>();
       Map<Integer, Set<K>> partitionSet = getPartitionSet(keys, accessor, unmappedKeys);
 
       // get the partitionId -> host URIs list
-      Map<Integer, KeysAndHosts<K>> partitionDataMap = new HashMap<Integer, KeysAndHosts<K>>();
+      Map<Integer, KeysAndHosts<K>> partitionDataMap = new HashMap<>();
       for (Integer partitionId : partitionSet.keySet())
       {
         for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
@@ -587,7 +587,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         }
       }
 
-      return new HostToKeyMapper<K>(unmappedKeys, partitionDataMap, limitHostPerPartition, maxPartitionId + 1, partitionWithoutEnoughHost);
+      return new HostToKeyMapper<>(unmappedKeys, partitionDataMap, limitHostPerPartition, maxPartitionId + 1, partitionWithoutEnoughHost);
     }
     else
     {
@@ -598,12 +598,12 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
   private <K> Map<Integer, Set<K>> getPartitionSet(Collection<K> keys, PartitionAccessor accessor, Collection<K> unmappedKeys)
   {
-    Map<Integer, Set<K>> partitionSet = new TreeMap<Integer, Set<K>>();
+    Map<Integer, Set<K>> partitionSet = new TreeMap<>();
     if (keys == null)
     {
       for (int i = 0; i <= accessor.getMaxPartitionId(); i++)
       {
-        partitionSet.put(i, new HashSet<K>());
+        partitionSet.put(i, new HashSet<>());
       }
     }
     else
@@ -624,7 +624,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         Set<K> set = partitionSet.get(partitionId);
         if (set == null)
         {
-          set = new HashSet<K>();
+          set = new HashSet<>();
           partitionSet.put(partitionId, set);
         }
         set.add(key);

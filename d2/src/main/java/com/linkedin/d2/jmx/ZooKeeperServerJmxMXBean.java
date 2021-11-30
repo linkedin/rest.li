@@ -38,4 +38,11 @@ public interface ZooKeeperServerJmxMXBean
    * @param doNotSlowStart Flag to let clients know if slow start should be avoided for a host.
    */
   void setChangeWeight(String clusterName, String uri, Map<Integer, PartitionData> partitionDataMap, boolean doNotSlowStart) throws PropertyStoreException;
+
+  /**
+   * Set {@link com.linkedin.d2.balancer.properties.PropertyKeys#DO_NOT_LOAD_BALANCE} for a given uri.
+   *
+   * @param doNotLoadBalance Flag to let clients know if load balancing should be disabled for a host.
+   */
+  void setDoNotLoadBalance(String clusterName, String uri, Map<Integer, PartitionData> partitionDataMap, boolean doNotLoadBalance) throws PropertyStoreException;
 }

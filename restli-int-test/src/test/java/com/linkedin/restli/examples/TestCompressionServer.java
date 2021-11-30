@@ -170,7 +170,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
     int index = entries * 4 - 1;
     for (String operation: compressionOperations)
     {
-      Map<String, String> clientProperties = new HashMap<String, String>();
+      Map<String, String> clientProperties = new HashMap<>();
       clientProperties.put(HttpClientFactory.HTTP_RESPONSE_COMPRESSION_OPERATIONS, operation);
       RestClient client = new RestClient(newTransportClient(clientProperties), URI_PREFIX, getClientConfig());
       result[index--] = new Object[]{ client, operation, RestliRequestOptions.DEFAULT_OPTIONS, Arrays.asList(1000L, 2000L), 0 };
@@ -199,7 +199,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
     int index = entries * 4 - 1;
     for (String operation: compressionOperations)
     {
-      Map<String, String> clientProperties = new HashMap<String, String>();
+      Map<String, String> clientProperties = new HashMap<>();
       clientProperties.put(HttpClientFactory.HTTP_RESPONSE_COMPRESSION_OPERATIONS, operation);
       RestClient client = new RestClient(newTransportClient(clientProperties), URI_PREFIX, getClientConfig());
       result[index--] = new Object[]{ client, operation, new RootBuilderWrapper<Long, Greeting>(new GreetingsBuilders()),
@@ -715,7 +715,7 @@ public class TestCompressionServer extends RestLiIntegrationTest
 
     //Query parameter order is non deterministic
     //greetings?count=5&start=5&q=searchWithPostFilter"
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("count", "5");
     queryParamsMap.put("start", "5");
     queryParamsMap.put("q", "searchWithPostFilter");
@@ -875,9 +875,9 @@ public class TestCompressionServer extends RestLiIntegrationTest
    */
   private Map<String, Set<String>> getCompressionMethods(String operationsConfig)
   {
-    Map<String, Set<String>> methodsAndFamilies = new HashMap<String, Set<String>>();
-    methodsAndFamilies.put("methods", new HashSet<String>());
-    methodsAndFamilies.put("families", new HashSet<String>());
+    Map<String, Set<String>> methodsAndFamilies = new HashMap<>();
+    methodsAndFamilies.put("methods", new HashSet<>());
+    methodsAndFamilies.put("families", new HashSet<>());
     for (String operation: operationsConfig.split(","))
     {
       operation = operation.trim();

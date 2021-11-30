@@ -136,19 +136,19 @@ public class CreateIdRequestBuilder<K, V extends RecordTemplate>
   public CreateIdRequest<K, V> build()
   {
     @SuppressWarnings("unchecked")
-    IdResponseDecoder<K> idResponseDecoder = new IdResponseDecoder<K>((TypeSpec<K>)_resourceSpec.getKeyType(),
-                                                                       _resourceSpec.getKeyParts(),
-                                                                       _resourceSpec.getComplexKeyType());
-    return new CreateIdRequest<K, V>(buildReadOnlyInput(),
-                                     buildReadOnlyHeaders(),
-                                     buildReadOnlyCookies(),
-                                     idResponseDecoder,
-                                     _resourceSpec,
-                                     buildReadOnlyQueryParameters(),
-                                     getQueryParamClasses(),
-                                     getBaseUriTemplate(),
-                                     buildReadOnlyPathKeys(),
-                                     getRequestOptions(),
-                                     _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
+    IdResponseDecoder<K> idResponseDecoder = new IdResponseDecoder<>((TypeSpec<K>) _resourceSpec.getKeyType(),
+        _resourceSpec.getKeyParts(),
+        _resourceSpec.getComplexKeyType());
+    return new CreateIdRequest<>(buildReadOnlyInput(),
+        buildReadOnlyHeaders(),
+        buildReadOnlyCookies(),
+        idResponseDecoder,
+        _resourceSpec,
+        buildReadOnlyQueryParameters(),
+        getQueryParamClasses(),
+        getBaseUriTemplate(),
+        buildReadOnlyPathKeys(),
+        getRequestOptions(),
+        _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
   }
 }

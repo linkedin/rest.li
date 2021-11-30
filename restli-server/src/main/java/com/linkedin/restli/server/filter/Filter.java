@@ -130,7 +130,7 @@ public interface Filter
   default CompletableFuture<Void> onError(Throwable th, final FilterRequestContext requestContext,
                                           final FilterResponseContext responseContext)
   {
-    CompletableFuture<Void> future = new CompletableFuture<Void>();
+    CompletableFuture<Void> future = new CompletableFuture<>();
     future.completeExceptionally(th);
     return future;
   }

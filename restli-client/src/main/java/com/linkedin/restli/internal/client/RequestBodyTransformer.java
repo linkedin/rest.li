@@ -72,7 +72,7 @@ public class RequestBodyTransformer
                                   resourceProperties.getKeyType(),
                                   resourceProperties.getComplexKeyType(),
                                   resourceProperties.getKeyParts(),
-                                  new TypeSpec<PatchRequest>(PatchRequest.class),
+                new TypeSpec<>(PatchRequest.class),
                                   version).data();
       default:
         return request.getInputRecord().data();

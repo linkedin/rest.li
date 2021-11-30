@@ -408,7 +408,7 @@ public final class MultiPartMIMEInputStream implements MultiPartMIMEDataSourceWr
   {
     _inputStream = inputStream;
     _executorService = executorService;
-    _headers = new HashMap<String, String>(headers); //defensive copy
+    _headers = new HashMap<>(headers); //defensive copy
     _maximumBlockingTime = maximumBlockingTime;
     _writeChunkSize = writeChunkSize;
     _abortTimeout = abortTimeout;

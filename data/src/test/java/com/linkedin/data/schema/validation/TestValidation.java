@@ -116,6 +116,15 @@ public class TestValidation
                       (coercionMode == CoercionMode.STRING_TO_PRIMITIVE && clazz == String.class));
   }
 
+  /**
+   * Returns true if the provided value is "NaN", "Infinity", or "-Infinity".
+   */
+  private static boolean isNonNumericFloatString(Object value) {
+    return String.valueOf(Float.NaN).equals(value) ||
+        String.valueOf(Float.POSITIVE_INFINITY).equals(value) ||
+        String.valueOf(Float.NEGATIVE_INFINITY).equals(value);
+  }
+
   public void testCoercionValidation(String schemaText,
                                      String key,
                                      Object[][] inputs,
@@ -135,7 +144,7 @@ public class TestValidation
     {
       map.put(key, row[0]);
       ValidationResult result = validate(map, schema, options);
-      Assert.assertTrue(result.isValid());
+      Assert.assertTrue(result.isValid(), result.getMessages().toString());
       if (result.hasFix())
       {
         DataMap fixedMap = (DataMap) result.getFixed();
@@ -169,13 +178,21 @@ public class TestValidation
           case FLOAT:
             // convert numbers to Float
             Assert.assertNotSame(goodClass, fixedClass);
-            assertAllowedClass(coercionMode, goodClass);
+            // Validate the input class, except for non-numeric values like "NaN" where String is allowed
+            if (!isNonNumericFloatString(row[0]))
+            {
+              assertAllowedClass(coercionMode, goodClass);
+            }
             Assert.assertSame(fixedClass, Float.class);
             break;
           case DOUBLE:
             // convert numbers to Double
             Assert.assertNotSame(goodClass, fixedClass);
-            assertAllowedClass(coercionMode, goodClass);
+            // Validate the input class, except for non-numeric values like "NaN" where String is allowed
+            if (!isNonNumericFloatString(row[0]))
+            {
+              assertAllowedClass(coercionMode, goodClass);
+            }
             Assert.assertSame(fixedClass, Double.class);
             break;
           case BOOLEAN:
@@ -369,7 +386,10 @@ public class TestValidation
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
-        new DataList()
+        new DataList(),
+        Float.NaN,
+        Double.POSITIVE_INFINITY,
+        Float.NEGATIVE_INFINITY
     };
 
     testCoercionValidation(schemaText, "bar", goodObjects, badObjects, noCoercionValidationOption());
@@ -391,7 +411,10 @@ public class TestValidation
         { Integer.MAX_VALUE - 1, Integer.MAX_VALUE - 1 },
         { Long.valueOf(1), Integer.valueOf(1) },
         { Float.valueOf(1f), Integer.valueOf(1) },
-        { Double.valueOf(1), Integer.valueOf(1) }
+        { Double.valueOf(1), Integer.valueOf(1) },
+        { Double.NaN, 0 },
+        { Float.POSITIVE_INFINITY, Integer.MAX_VALUE },
+        { Double.NEGATIVE_INFINITY, Integer.MIN_VALUE }
       };
 
     Object badObjects[] =
@@ -400,7 +423,10 @@ public class TestValidation
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
-        new DataList()
+        new DataList(),
+        String.valueOf(Float.NaN),
+        String.valueOf(Double.POSITIVE_INFINITY),
+        String.valueOf(Float.NEGATIVE_INFINITY)
       };
 
     testNormalCoercionValidation(schemaText, "bar", input, badObjects);
@@ -428,7 +454,11 @@ public class TestValidation
             { Integer.MAX_VALUE - 1, Integer.MAX_VALUE - 1 },
             { Long.valueOf(1), Integer.valueOf(1) },
             { Float.valueOf(1f), Integer.valueOf(1) },
-            { Double.valueOf(1), Integer.valueOf(1) }
+            { Double.valueOf(1), Integer.valueOf(1) },
+
+            { Double.NaN, 0 },
+            { Float.POSITIVE_INFINITY, Integer.MAX_VALUE },
+            { Double.NEGATIVE_INFINITY, Integer.MIN_VALUE }
         };
 
     Object badObjects[] =
@@ -437,7 +467,10 @@ public class TestValidation
             new String("abc"),
             ByteString.copyAvroString("bytes", false),
             new DataMap(),
-            new DataList()
+            new DataList(),
+            String.valueOf(Float.NaN),
+            String.valueOf(Double.POSITIVE_INFINITY),
+            String.valueOf(Float.NEGATIVE_INFINITY)
         };
 
     testStringToPrimitiveCoercionValidation(schemaText, "bar", input, badObjects);
@@ -465,7 +498,10 @@ public class TestValidation
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
-        new DataList()
+        new DataList(),
+        Double.NaN,
+        Float.POSITIVE_INFINITY,
+        Double.NEGATIVE_INFINITY
     };
 
     testCoercionValidation(schemaText, "bar", goodObjects, badObjects, noCoercionValidationOption());
@@ -484,7 +520,10 @@ public class TestValidation
         { Long.valueOf(-1), Long.valueOf(-1) },
         { Integer.valueOf(1), Long.valueOf(1) },
         { Float.valueOf(1f), Long.valueOf(1) },
-        { Double.valueOf(1), Long.valueOf(1) }
+        { Double.valueOf(1), Long.valueOf(1) },
+        { Float.NaN, 0L },
+        { Double.POSITIVE_INFINITY, Long.MAX_VALUE },
+        { Float.NEGATIVE_INFINITY, Long.MIN_VALUE }
       };
 
     Object badObjects[] =
@@ -493,7 +532,10 @@ public class TestValidation
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
-        new DataList()
+        new DataList(),
+        String.valueOf(Double.NaN),
+        String.valueOf(Float.POSITIVE_INFINITY),
+        String.valueOf(Double.NEGATIVE_INFINITY)
       };
 
     testNormalCoercionValidation(schemaText, "bar", inputs, badObjects);
@@ -511,12 +553,19 @@ public class TestValidation
             { new String("1"), Long.valueOf(1) },
             { new String("-1"), Long.valueOf(-1) },
             { new String("" + Long.MAX_VALUE), Long.MAX_VALUE },
+            { String.valueOf(Long.MAX_VALUE - 1), Long.MAX_VALUE - 1},
+            {"1.5", Long.valueOf(1)},
+            {"-1.5", Long.valueOf(-1)},
 
             { Long.valueOf(1), Long.valueOf(1) },
             { Long.valueOf(-1), Long.valueOf(-1) },
             { Integer.valueOf(1), Long.valueOf(1) },
             { Float.valueOf(1f), Long.valueOf(1) },
-            { Double.valueOf(1), Long.valueOf(1) }
+            { Double.valueOf(1), Long.valueOf(1) },
+
+            { Float.NaN, 0L },
+            { Double.POSITIVE_INFINITY, Long.MAX_VALUE },
+            { Float.NEGATIVE_INFINITY, Long.MIN_VALUE }
         };
 
 
@@ -526,7 +575,10 @@ public class TestValidation
             new String("abc"),
             ByteString.copyAvroString("bytes", false),
             new DataMap(),
-            new DataList()
+            new DataList(),
+            String.valueOf(Double.NaN),
+            String.valueOf(Float.POSITIVE_INFINITY),
+            String.valueOf(Double.NEGATIVE_INFINITY)
         };
 
     testStringToPrimitiveCoercionValidation(schemaText, "bar", inputs, badObjects);
@@ -542,7 +594,10 @@ public class TestValidation
     Object goodObjects[] =
     {
         Float.valueOf(1f),
-        Float.valueOf(-1f)
+        Float.valueOf(-1f),
+        Float.NaN,
+        Float.POSITIVE_INFINITY,
+        Float.NEGATIVE_INFINITY
     };
 
     Object badObjects[] =
@@ -554,7 +609,12 @@ public class TestValidation
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
-        new DataList()
+        new DataList(),
+        "1.1",
+        "-1.1",
+        String.valueOf(Float.NaN),
+        String.valueOf(Float.POSITIVE_INFINITY),
+        String.valueOf(Float.NEGATIVE_INFINITY)
     };
 
     testCoercionValidation(schemaText, "bar", goodObjects, badObjects, noCoercionValidationOption());
@@ -573,8 +633,14 @@ public class TestValidation
         { Float.valueOf(-1f), Float.valueOf(-1f) },
         { Integer.valueOf(1), Float.valueOf(1f) },
         { Long.valueOf(1), Float.valueOf(1f) },
-        { Double.valueOf(1), Float.valueOf(1f) }
-      };
+        { Double.valueOf(1), Float.valueOf(1f) },
+        { String.valueOf(Float.NaN), Float.NaN },
+        { String.valueOf(Float.POSITIVE_INFINITY), Float.POSITIVE_INFINITY },
+        { String.valueOf(Float.NEGATIVE_INFINITY), Float.NEGATIVE_INFINITY },
+        { Double.NaN, Float.NaN },
+        { Double.POSITIVE_INFINITY, Float.POSITIVE_INFINITY },
+        { Double.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY }
+    };
 
     Object badObjects[] =
       {
@@ -582,7 +648,9 @@ public class TestValidation
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
-        new DataList()
+        new DataList(),
+        "1.1",
+        "-1.1"
       };
 
     testNormalCoercionValidation(schemaText, "bar", inputs, badObjects);
@@ -608,7 +676,14 @@ public class TestValidation
             { Float.valueOf(-1f), Float.valueOf(-1f) },
             { Integer.valueOf(1), Float.valueOf(1f) },
             { Long.valueOf(1), Float.valueOf(1f) },
-            { Double.valueOf(1), Float.valueOf(1f) }
+            { Double.valueOf(1), Float.valueOf(1f) },
+
+            { String.valueOf(Float.NaN), Float.NaN },
+            { String.valueOf(Float.POSITIVE_INFINITY), Float.POSITIVE_INFINITY },
+            { String.valueOf(Float.NEGATIVE_INFINITY), Float.NEGATIVE_INFINITY },
+            { Double.NaN, Float.NaN },
+            { Double.POSITIVE_INFINITY, Float.POSITIVE_INFINITY },
+            { Double.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY }
         };
 
     Object badObjects[] =
@@ -633,7 +708,10 @@ public class TestValidation
     Object goodObjects[] =
     {
         Double.valueOf(1),
-        Double.valueOf(-1)
+        Double.valueOf(-1),
+        Double.NaN,
+        Double.POSITIVE_INFINITY,
+        Double.NEGATIVE_INFINITY
     };
 
     Object badObjects[] =
@@ -645,7 +723,12 @@ public class TestValidation
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
-        new DataList()
+        new DataList(),
+        "1.1",
+        "-1.1",
+        String.valueOf(Double.NaN),
+        String.valueOf(Double.POSITIVE_INFINITY),
+        String.valueOf(Double.NEGATIVE_INFINITY)
     };
 
     testCoercionValidation(schemaText, "bar", goodObjects, badObjects, noCoercionValidationOption());
@@ -664,7 +747,13 @@ public class TestValidation
         { Double.valueOf(-1), Double.valueOf(-1) },
         { Integer.valueOf(1), Double.valueOf(1) },
         { Long.valueOf(1), Double.valueOf(1) },
-        { Float.valueOf(1f), Double.valueOf(1) }
+        { Float.valueOf(1f), Double.valueOf(1) },
+        { String.valueOf(Double.NaN), Double.NaN },
+        { String.valueOf(Double.POSITIVE_INFINITY), Double.POSITIVE_INFINITY },
+        { String.valueOf(Double.NEGATIVE_INFINITY), Double.NEGATIVE_INFINITY },
+        { Float.NaN, Double.NaN },
+        { Float.POSITIVE_INFINITY, Double.POSITIVE_INFINITY },
+        { Float.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY }
       };
 
     Object badObjects[] =
@@ -673,7 +762,9 @@ public class TestValidation
         new String("abc"),
         ByteString.copyAvroString("bytes", false),
         new DataMap(),
-        new DataList()
+        new DataList(),
+        "1.1",
+        "-1.1",
       };
 
     testNormalCoercionValidation(schemaText, "bar", inputs, badObjects);
@@ -698,7 +789,14 @@ public class TestValidation
             { Double.valueOf(-1), Double.valueOf(-1) },
             { Integer.valueOf(1), Double.valueOf(1) },
             { Long.valueOf(1), Double.valueOf(1) },
-            { Float.valueOf(1f), Double.valueOf(1) }
+            { Float.valueOf(1f), 1d},
+
+            { String.valueOf(Double.NaN), Double.NaN },
+            { String.valueOf(Double.POSITIVE_INFINITY), Double.POSITIVE_INFINITY },
+            { String.valueOf(Double.NEGATIVE_INFINITY), Double.NEGATIVE_INFINITY },
+            { Float.NaN, Double.NaN },
+            { Float.POSITIVE_INFINITY, Double.POSITIVE_INFINITY },
+            { Float.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY }
         };
 
     Object badObjects[] =

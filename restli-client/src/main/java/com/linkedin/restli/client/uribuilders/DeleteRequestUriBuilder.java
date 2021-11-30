@@ -16,11 +16,9 @@
 
 package com.linkedin.restli.client.uribuilders;
 
-
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.client.DeleteRequest;
 import com.linkedin.restli.common.ProtocolVersion;
-import java.net.URI;
 
 
 /**
@@ -34,12 +32,11 @@ class DeleteRequestUriBuilder extends AbstractRestliRequestUriBuilder<DeleteRequ
   }
 
   @Override
-  public URI build()
+  protected UriBuilder getUriBuilderWithoutQueryParams()
   {
     DeleteRequest<?> deleteRequest = getRequest();
-    UriBuilder b = UriBuilder.fromUri(buildBaseUriWithPrefix());
+    UriBuilder b = super.getUriBuilderWithoutQueryParams();
     appendKeyToPath(b, deleteRequest.getId());
-    appendQueryParams(b);
-    return b.build();
+    return b;
   }
 }

@@ -79,13 +79,13 @@ public class ContextDispatcher implements TransportDispatcher
    */
   public ContextDispatcher(Map<String, RestRequestHandler> restDispatcher)
   {
-    _streamHandlers = new HashMap<String, StreamRequestHandler>();
+    _streamHandlers = new HashMap<>();
     for (Map.Entry<String, RestRequestHandler> entry : restDispatcher.entrySet())
     {
       _streamHandlers.put(entry.getKey(), new StreamRequestHandlerAdapter(entry.getValue()));
     }
 
-    _restHandlers = new HashMap<String, RestRequestHandler>(restDispatcher);
+    _restHandlers = new HashMap<>(restDispatcher);
   }
 
   @Override
@@ -95,7 +95,7 @@ public class ContextDispatcher implements TransportDispatcher
     final RestRequestHandler handler = getHandler(req.getURI(), _restHandlers, DEFAULT_REST_HANDLER);
     try
     {
-      handler.handleRequest(req, requestContext, new TransportCallbackAdapter<RestResponse>(callback));
+      handler.handleRequest(req, requestContext, new TransportCallbackAdapter<>(callback));
     }
     catch (Exception e)
     {
@@ -113,7 +113,7 @@ public class ContextDispatcher implements TransportDispatcher
 
     try
     {
-      handler.handleRequest(req, requestContext, new TransportCallbackAdapter<StreamResponse>(callback));
+      handler.handleRequest(req, requestContext, new TransportCallbackAdapter<>(callback));
     }
     catch (Exception e)
     {

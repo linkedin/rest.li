@@ -34,6 +34,21 @@
     "entity" : {
       "path" : "/greeting",
       "subresources" : [ {
+        "name" : "subGreetingSimpleUnstructuredData",
+        "namespace" : "com.linkedin.restli.examples.greetings.client",
+        "path" : "/greeting/subGreetingSimpleUnstructuredData",
+        "entityType" : "UNSTRUCTURED_DATA",
+        "doc" : "This resource models an simple sub resource that produces unstructured data entities as results.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.UnstructuredDataSimpleResourceUnderSimpleResource",
+        "simple" : {
+          "supports" : [ "get" ],
+          "methods" : [ {
+            "method" : "get"
+          } ],
+          "entity" : {
+            "path" : "/greeting/subGreetingSimpleUnstructuredData"
+          }
+        }
+      }, {
         "name" : "subgreetings",
         "namespace" : "com.linkedin.restli.examples.greetings.client",
         "path" : "/greeting/subgreetings",

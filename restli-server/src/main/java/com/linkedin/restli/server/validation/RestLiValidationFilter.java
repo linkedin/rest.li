@@ -29,6 +29,7 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.UpdateEntityStatus;
 import com.linkedin.restli.common.util.ProjectionMaskApplier;
 import com.linkedin.restli.common.util.ProjectionMaskApplier.InvalidProjectionException;
@@ -141,6 +142,11 @@ public class RestLiValidationFilter implements Filter
           throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, TEMPLATE_RUNTIME_EXCEPTION_MESSAGE);
         }
       }
+    }
+
+    if (!shouldValidateOnRequest(requestContext))
+    {
+      return CompletableFuture.completedFuture(null);
     }
 
     Class<?> resourceClass = requestContext.getFilterResourceModel().getResourceClass();
@@ -449,8 +455,26 @@ public class RestLiValidationFilter implements Filter
     }
   }
 
-  private boolean shouldValidateOnResponse(FilterRequestContext requestContext)
+  /**
+   * @return True to validate request, false otherwise.
+   */
+  protected boolean shouldValidateOnRequest(FilterRequestContext requestContext)
   {
+    return true;
+  }
+
+  /**
+   * @return True to validate response, false otherwise.
+   */
+  protected boolean shouldValidateOnResponse(FilterRequestContext requestContext)
+  {
+    // Skip response validation if the header to skip response validation is set.
+    if (Boolean.TRUE.toString().equals(
+        requestContext.getRequestHeaders().get(RestConstants.HEADER_SKIP_RESPONSE_VALIDATION)))
+    {
+      return false;
+    }
+
     MaskTree projectionMask = requestContext.getProjectionMask();
 
     // Make sure the request is for one of the methods to be validated and has either null or a non-empty projection

@@ -273,7 +273,7 @@ public class TestRestLiResourceModels
     ResourceModel resourceModel = buildResourceModel(TwitterAccountsResource.class);
     assertEquals(resourceModel.getResourceType(), ResourceType.ACTIONS);
 
-    assertEquals(resourceModel.getResourceMethodDescriptors().size(), 5);
+    assertEquals(resourceModel.getResourceMethodDescriptors().size(), 6);
 
     ResourceMethodDescriptor methodDescriptor = resourceModel.findActionMethod("register", ResourceLevel.COLLECTION);
     assertNotNull(methodDescriptor);

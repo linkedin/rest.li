@@ -143,8 +143,8 @@ public class RestLiApiBuilder implements RestApiBuilder
 
   public static Map<String, ResourceModel> buildResourceModels(final Set<Class<?>> restliAnnotatedClasses)
   {
-    Map<String, ResourceModel> rootResourceModels = new HashMap<String, ResourceModel>();
-    Map<Class<?>, ResourceModel> resourceModels = new HashMap<Class<?>, ResourceModel>();
+    Map<String, ResourceModel> rootResourceModels = new HashMap<>();
+    Map<Class<?>, ResourceModel> resourceModels = new HashMap<>();
 
     for (Class<?> annotatedClass : restliAnnotatedClasses)
     {

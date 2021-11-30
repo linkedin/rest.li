@@ -560,7 +560,7 @@ public class ArgumentBuilder
       return null;
     }
 
-    BatchRequest<R> batchRequest = new BatchRequest<>(data, new TypeSpec<R>(valueClass));
+    BatchRequest<R> batchRequest = new BatchRequest<>(data, new TypeSpec<>(valueClass));
 
     Map<Object, R> result =
         new HashMap<>(CollectionUtils.getMapInitialCapacity(batchRequest.getEntities().size(), 0.75f), 0.75f);

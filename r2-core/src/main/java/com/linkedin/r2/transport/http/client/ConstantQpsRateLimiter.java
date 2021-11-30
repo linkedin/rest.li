@@ -16,9 +16,11 @@
 
 package com.linkedin.r2.transport.http.client;
 
+import com.linkedin.r2.transport.http.client.ratelimiter.Rate;
 import com.linkedin.r2.transport.http.client.ratelimiter.RateLimiterExecutionTracker;
 import com.linkedin.util.clock.Clock;
 import java.time.temporal.ChronoUnit;
+import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -67,6 +69,7 @@ public class ConstantQpsRateLimiter extends SmoothRateLimiter
   private static class UnboundedRateLimiterExecutionTracker implements RateLimiterExecutionTracker
   {
     private final AtomicBoolean _paused = new AtomicBoolean(true);
+    private final Random _random = new Random();
 
     public int getPending()
     {
@@ -96,6 +99,11 @@ public class ConstantQpsRateLimiter extends SmoothRateLimiter
     public int getMaxBuffered()
     {
       return Integer.MAX_VALUE;
+    }
+
+    public int getNextExecutionDelay(Rate rate)
+    {
+      return _random.nextInt(Math.max(1, (int) (rate.getPeriodRaw() / rate.getEventsRaw())));
     }
   }
 }

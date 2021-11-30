@@ -33,7 +33,7 @@ public class ChainedIterator<T> implements Iterator<T>
   @SafeVarargs
   public ChainedIterator(Iterator<? extends T>... iterators)
   {
-    final List<Iterator<? extends T>> list = new ArrayList<Iterator<? extends T>>();
+    final List<Iterator<? extends T>> list = new ArrayList<>();
     for (Iterator<? extends T> itr : iterators)
     {
       list.add(itr);

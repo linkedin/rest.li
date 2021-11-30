@@ -289,22 +289,22 @@ public class TestActionsResource extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProviderForParseqActions()
   {
     return new Object[][] {
-        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders()), "parseq" },
+        {new RootBuilderWrapper<>(new ActionsBuilders()), "parseq" },
         //  This test cannot be compiled until we build with Java 8 by default.
         //{ new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders()), "parseq2" },
-        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders()), "parseq3" },
-        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "parseq" },
+        {new RootBuilderWrapper<>(new ActionsBuilders()), "parseq3" },
+        {new RootBuilderWrapper<>(new ActionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "parseq" },
         //  This test cannot be compiled until we build with Java 8 by default.
         //{ new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "parseq2" },
-        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "parseq3" },
-        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders()), "parseq" },
+        {new RootBuilderWrapper<>(new ActionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "parseq3" },
+        {new RootBuilderWrapper<>(new ActionsRequestBuilders()), "parseq" },
         //  This test cannot be compiled until we build with Java 8 by default.
         //{ new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders()), "parseq2" },
-        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders()), "parseq3" },
-        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "parseq" },
+        {new RootBuilderWrapper<>(new ActionsRequestBuilders()), "parseq3" },
+        {new RootBuilderWrapper<>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "parseq" },
         //  This test cannot be compiled until we build with Java 8 by default.
         //{ new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "parseq2" },
-        { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "parseq3" }
+        {new RootBuilderWrapper<>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)), "parseq3" }
     };
   }
 
@@ -312,10 +312,10 @@ public class TestActionsResource extends RestLiIntegrationTest
   private static Object[][] requestBuilderDataProvider()
   {
     return new Object[][] {
-      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders()) },
-      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
-      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders()) },
-      { new RootBuilderWrapper<Object, RecordTemplate>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
+      {new RootBuilderWrapper<>(new ActionsBuilders()) },
+      {new RootBuilderWrapper<>(new ActionsBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) },
+      {new RootBuilderWrapper<>(new ActionsRequestBuilders()) },
+      {new RootBuilderWrapper<>(new ActionsRequestBuilders(TestConstants.FORCE_USE_NEXT_OPTIONS)) }
     };
   }
 }

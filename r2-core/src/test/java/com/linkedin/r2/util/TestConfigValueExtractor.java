@@ -31,7 +31,7 @@ public class TestConfigValueExtractor
   @Test
   public void testListObject()
   {
-    List<String> inputList = new ArrayList<String>();
+    List<String> inputList = new ArrayList<>();
     inputList.add("foo");
     inputList.add("bar");
     inputList.add("baz");
@@ -43,7 +43,7 @@ public class TestConfigValueExtractor
   @Test
   public void testListAndString()
   {
-    List<String> inputList = new ArrayList<String>();
+    List<String> inputList = new ArrayList<>();
     inputList.add("foo");
     inputList.add("bar");
     inputList.add("baz");

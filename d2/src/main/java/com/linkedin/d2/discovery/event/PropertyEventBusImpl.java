@@ -43,9 +43,9 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
 {
   private final PropertyEventThread _thread;
   private PropertyEventPublisher<T> _publisher;
-  private final Map<String,T> _properties = new HashMap<String,T>();
-  private final Map<String,List<PropertyEventSubscriber<T>>> _subscribers = new HashMap<String,List<PropertyEventSubscriber<T>>>();
-  private final List<PropertyEventSubscriber<T>> _allPropertySubscribers = new ArrayList<PropertyEventSubscriber<T>>();
+  private final Map<String, T> _properties = new HashMap<>();
+  private final Map<String, List<PropertyEventSubscriber<T>>> _subscribers = new HashMap<>();
+  private final List<PropertyEventSubscriber<T>> _allPropertySubscribers = new ArrayList<>();
   private static final Logger _log = LoggerFactory.getLogger(PropertyEventBusImpl.class);
 
   /*
@@ -109,7 +109,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
           List<PropertyEventSubscriber<T>> listeners = _subscribers.get(prop);
           if (listeners == null)
           {
-            listeners = new ArrayList<PropertyEventSubscriber<T>>();
+            listeners = new ArrayList<>();
             _subscribers.put(prop, listeners);
           }
           if (listeners.isEmpty())
@@ -269,9 +269,8 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
     {
       return subscribers;
     }
-    List<PropertyEventSubscriber<T>> all =
-        new ArrayList<PropertyEventSubscriber<T>>(subscribers.size()
-            + _allPropertySubscribers.size());
+    List<PropertyEventSubscriber<T>> all = new ArrayList<>(subscribers.size()
+        + _allPropertySubscribers.size());
     all.addAll(_allPropertySubscribers);
     all.addAll(subscribers);
     return all;

@@ -164,7 +164,7 @@ public class ResourceSchemaToResourceSpecTranslator
       DataSchema keyParamsType = RestSpecCodec.textToSchema(identifier.getParams(), _schemaResolver);
       ComplexKeySpec<?, ?> complexKeyType = toComplexKey(keyKeyType, keyParamsType);
       return buildResourceSpec(supports,
-                               new TypeSpec<ComplexResourceKey>(ComplexResourceKey.class, null),
+          new TypeSpec<>(ComplexResourceKey.class, null),
                                complexKeyType,
                                Collections.<String, Object>emptyMap(),
                                schema,
@@ -188,14 +188,14 @@ public class ResourceSchemaToResourceSpecTranslator
     String schema = resourceSchema.getSchema();
     AssocKeySchemaArray assocKeys = association.getAssocKeys();
 
-    Map<String, CompoundKey.TypeInfo> keyParts = new HashMap<String, CompoundKey.TypeInfo>();
+    Map<String, CompoundKey.TypeInfo> keyParts = new HashMap<>();
     for (AssocKeySchema assocKey : assocKeys)
     {
       TypeSpec<?> type = toTypeSpec(RestSpecCodec.textToSchema(assocKey.getType(), _schemaResolver));
       keyParts.put(assocKey.getName(), new CompoundKey.TypeInfo(type, type));
     }
     return buildResourceSpec(supports,
-                             new TypeSpec<CompoundKey>(CompoundKey.class, null),
+        new TypeSpec<>(CompoundKey.class, null),
                              null,
                              keyParts,
                              schema,
@@ -211,7 +211,7 @@ public class ResourceSchemaToResourceSpecTranslator
       actions = actionsSet.getActions();
     }
     return buildResourceSpec(new StringArray(0),
-                             new TypeSpec<Void>(Void.class),
+        new TypeSpec<>(Void.class),
                              null,
                              Collections.<String, Object>emptyMap(),
                              null,
@@ -265,7 +265,7 @@ public class ResourceSchemaToResourceSpecTranslator
   private Set<ResourceMethod> toResourceMethods(StringArray supports)
   {
     if(supports == null) return Collections.emptySet();
-    Set<ResourceMethod> resourceMethods = new HashSet<ResourceMethod>();
+    Set<ResourceMethod> resourceMethods = new HashSet<>();
     for(String method : supports)
     {
       resourceMethods.add(ResourceMethod.fromString(method));
@@ -304,8 +304,8 @@ public class ResourceSchemaToResourceSpecTranslator
 
   private ActionCollectionMetadata toDynamicRecordMetadata(ActionSchemaArray actions, ActionSchemaArray entityActions)
   {
-    Map<String, DynamicRecordMetadata> response = new HashMap<String, DynamicRecordMetadata>();
-    Map<String, DynamicRecordMetadata> request = new HashMap<String, DynamicRecordMetadata>();
+    Map<String, DynamicRecordMetadata> response = new HashMap<>();
+    Map<String, DynamicRecordMetadata> request = new HashMap<>();
 
     ActionSchemaArray[] actionGroups = new ActionSchemaArray[] { actions, entityActions };
     for(ActionSchemaArray actionGroup: actionGroups)
@@ -326,7 +326,7 @@ public class ResourceSchemaToResourceSpecTranslator
   @SuppressWarnings({"unchecked", "rawtypes"}) // this is dynamic, don't have concrete classes for the FieldDef
   private ActionMetadata toActionMetadata(ActionSchema action)
   {
-    ArrayList<FieldDef<?>> fieldDefs = new ArrayList<FieldDef<?>>();
+    ArrayList<FieldDef<?>> fieldDefs = new ArrayList<>();
     if(action.hasParameters())
     {
       for(ParameterSchema parameterSchema : action.getParameters())

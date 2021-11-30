@@ -491,7 +491,7 @@ public class RestClientTest
     Request<EmptyRecord> request = mockRequest(EmptyRecord.class, versionOption, contentType);
     RequestBuilder<Request<EmptyRecord>> requestBuilder = mockRequestBuilder(request);
 
-    FutureCallback<Response<EmptyRecord>> callback = new FutureCallback<Response<EmptyRecord>>();
+    FutureCallback<Response<EmptyRecord>> callback = new FutureCallback<>();
     try
     {
       sendRequest(option, client, request, requestBuilder, callback);
@@ -524,7 +524,7 @@ public class RestClientTest
       RestException re = (RestException)cause;
       RestResponse r = re.getResponse();
 
-      ErrorResponse er = new EntityResponseDecoder<ErrorResponse>(ErrorResponse.class).decodeResponse(r).getEntity();
+      ErrorResponse er = new EntityResponseDecoder<>(ErrorResponse.class).decodeResponse(r).getEntity();
 
       Assert.assertEquals(HTTP_CODE, r.getStatus());
       Assert.assertEquals(ERR_VALUE, er.getErrorDetails().data().getString(ERR_KEY));
@@ -549,7 +549,7 @@ public class RestClientTest
     Request<EmptyRecord> request = mockRequest(EmptyRecord.class, versionOption, contentType);
     RequestBuilder<Request<EmptyRecord>> requestBuilder = mockRequestBuilder(request);
 
-    FutureCallback<Response<EmptyRecord>> callback = new FutureCallback<Response<EmptyRecord>>();
+    FutureCallback<Response<EmptyRecord>> callback = new FutureCallback<>();
     try
     {
       sendRequest(option, client, request, requestBuilder, callback);
@@ -781,16 +781,16 @@ public class RestClientTest
         .setAcceptTypes(Collections.singletonList(contentType))
         .build();
 
-    return new GetRequest<T>(Collections.<String, String> emptyMap(),
-                             Collections.<HttpCookie>emptyList(),
-                             clazz,
-                             null,
-                             new DataMap(),
-                             Collections.<String, Class<?>>emptyMap(),
-                             new ResourceSpecImpl(),
-                             "/foo",
-                             Collections.<String, Object>emptyMap(),
-                             restliRequestOptions);
+    return new GetRequest<>(Collections.<String, String>emptyMap(),
+        Collections.<HttpCookie>emptyList(),
+        clazz,
+        null,
+        new DataMap(),
+        Collections.<String, Class<?>>emptyMap(),
+        new ResourceSpecImpl(),
+        "/foo",
+        Collections.<String, Object>emptyMap(),
+        restliRequestOptions);
   }
 
   private static class MyMockClient extends MockClient
@@ -814,7 +814,7 @@ public class RestClientTest
     @Override
     protected Map<String, String> headers()
     {
-      Map<String, String> headers = new HashMap<String, String>(super.headers());
+      Map<String, String> headers = new HashMap<>(super.headers());
       for (Map.Entry<String, Object> attr : _requestContext.getLocalAttrs().entrySet())
       {
         if (!attr.getKey().startsWith("__attr"))
@@ -852,7 +852,7 @@ public class RestClientTest
     er.setDocUrl(docUrl);
     er.setRequestId(requestId);
 
-    Map<String,String> headers = new HashMap<String,String>();
+    Map<String,String> headers = new HashMap<>();
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
     headers.put(errorResponseHeaderName, RestConstants.HEADER_VALUE_ERROR);
 
@@ -881,7 +881,7 @@ public class RestClientTest
       throw new RuntimeException(e);
     }
 
-    Map<String,String> headers = new HashMap<String,String>();
+    Map<String,String> headers = new HashMap<>();
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
 
     return new RestClient(new MyMockClient(httpCode, headers, mapBytes), "http://localhost");

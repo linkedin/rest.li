@@ -171,8 +171,8 @@ public class DataTranslator implements DataTranslatorContext
 
   private static final GenericData _genericData = GenericData.get();
 
-  protected final Deque<Object> _path = new ArrayDeque<Object>();
-  protected final MessageList<Message> _messageList = new MessageList<Message>();
+  protected final Deque<Object> _path = new ArrayDeque<>();
+  protected final MessageList<Message> _messageList = new MessageList<>();
   protected final AvroOverrideFactory _avroOverrideFactory = new AvroOverrideFactory()
   {
     {
@@ -336,18 +336,28 @@ public class DataTranslator implements DataTranslatorContext
           break;
         case RECORD:
           GenericRecord record = (GenericRecord) value;
+          Schema recordAvroSchema = record.getSchema();
           RecordDataSchema recordDataSchema = (RecordDataSchema) dereferencedDataSchema;
           dataMap = new DataMap(avroSchema.getFields().size());
           for (RecordDataSchema.Field field : recordDataSchema.getFields())
           {
             String fieldName = field.getName();
-            Object fieldValue = record.get(fieldName);
             // fieldValue could be null if the Avro schema does not contain the named field or
             // the field is present with a null value. In either case we do not add a value
             // to the translated DataMap. We do not consider optional/required/default here
             // either (i.e. it is not an error if a required field is missing); the user can
             // later call ValidateDataAgainstSchema with various
             // settings for RequiredMode to obtain the desired behaviour.
+
+            //explicitly check the avro record schema has this field as accessing a non-existent field throws
+            //under avro 1.10+
+            Schema.Field avroSchemaField = recordAvroSchema.getField(fieldName);
+            if (avroSchemaField == null)
+            {
+              continue;
+            }
+
+            Object fieldValue = record.get(avroSchemaField.pos());
             if (fieldValue == null)
             {
               continue;
@@ -448,7 +458,7 @@ public class DataTranslator implements DataTranslatorContext
         appendMessage("cannot find %1$s in union %2$s for value %3$s", key, unionDataSchema, value);
         return null;
       }
-      return new AbstractMap.SimpleEntry<DataSchema, Schema>(memberDataSchema, memberAvroSchema);
+      return new AbstractMap.SimpleEntry<>(memberDataSchema, memberAvroSchema);
     }
 
     private Object translateAvroRecordToPegasusUnionWithAliases(Object value, UnionDataSchema unionDataSchema, Schema avroSchema)
@@ -564,7 +574,7 @@ public class DataTranslator implements DataTranslatorContext
           DataMap map = (DataMap) value;
           DataSchema valueDataSchema = ((MapDataSchema) dereferencedDataSchema).getValues();
           Schema valueAvroSchema = avroSchema.getValueType();
-          Map<String, Object> avroMap = new HashMap<String, Object>(map.size());
+          Map<String, Object> avroMap = new HashMap<>(map.size());
           for (Map.Entry<String, Object> entry : map.entrySet())
           {
             String key = entry.getKey();
@@ -579,7 +589,7 @@ public class DataTranslator implements DataTranslatorContext
           DataList list = (DataList) value;
           DataSchema elementDataSchema = ((ArrayDataSchema) dereferencedDataSchema).getItems();
           Schema elementAvroSchema = avroSchema.getElementType();
-          GenericData.Array<Object> avroList = new GenericData.Array<Object>(list.size(), avroSchema);
+          GenericData.Array<Object> avroList = new GenericData.Array<>(list.size(), avroSchema);
           for (int i = 0; i < list.size(); i++)
           {
             _path.addLast(i);
@@ -812,7 +822,7 @@ public class DataTranslator implements DataTranslatorContext
           name = member.getType().toString().toLowerCase();
       }
       if (name.equals(key))
-        return new AbstractMap.SimpleEntry<String, Schema>(name, member);
+        return new AbstractMap.SimpleEntry<>(name, member);
     }
     appendMessage("cannot find %1$s in union %2$s", key, avroSchema);
     return null;

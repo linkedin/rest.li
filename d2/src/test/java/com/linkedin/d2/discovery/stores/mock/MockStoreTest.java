@@ -26,7 +26,7 @@ public class MockStoreTest extends PropertyStoreTest
   @Override
   public PropertyStore<String> getStore()
   {
-    return new MockStore<String>();
+    return new MockStore<>();
   }
 
   @Test(groups = { "small", "back-end" })

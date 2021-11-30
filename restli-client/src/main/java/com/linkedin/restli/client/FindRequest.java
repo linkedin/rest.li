@@ -59,7 +59,7 @@ public class FindRequest<T extends RecordTemplate>
           null,
           headers,
           cookies,
-          new CollectionResponseDecoder<T>(templateClass),
+        new CollectionResponseDecoder<>(templateClass),
           resourceSpec,
           queryParams,
           queryParamClasses,

@@ -256,7 +256,7 @@ public abstract class AbstractFilter
   {
     assert opNode != null;
 
-    final Map<String, Object> result = new HashMap<String, Object>();
+    final Map<String, Object> result = new HashMap<>();
     for (Map.Entry<String, Object> entry : valueDataMap.entrySet())
     {
       final String name = entry.getKey();

@@ -47,13 +47,13 @@ public class ZooKeeperEphemeralStorePublisherTest extends ZooKeeperStorePublishe
   @Override
   protected ZooKeeperStore<String> getStore()
   {
-    ZooKeeperEphemeralStore<String> store = new ZooKeeperEphemeralStore<String>(
+    ZooKeeperEphemeralStore<String> store = new ZooKeeperEphemeralStore<>(
             getConnection(), new PropertyStringSerializer(),
             _merger, "/testing/testPath",
             false, true);
     try
     {
-      FutureCallback<None> callback = new FutureCallback<None>();
+      FutureCallback<None> callback = new FutureCallback<>();
       store.start(callback);
       callback.get(30, TimeUnit.SECONDS);
     }

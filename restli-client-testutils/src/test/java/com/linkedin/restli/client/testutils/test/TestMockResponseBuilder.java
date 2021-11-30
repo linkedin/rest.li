@@ -44,7 +44,7 @@ public class TestMockResponseBuilder
   @Test
   public void testBuild()
   {
-    MockResponseBuilder<Long, Greeting> mockResponseBuilder = new MockResponseBuilder<Long, Greeting>();
+    MockResponseBuilder<Long, Greeting> mockResponseBuilder = new MockResponseBuilder<>();
     Greeting greeting = new Greeting().setId(1L).setMessage("message");
     Map<String, String> headers = Collections.singletonMap("foo", "bar");
     RestLiResponseException restLiResponseException = EasyMock.createMock(RestLiResponseException.class);
@@ -64,7 +64,7 @@ public class TestMockResponseBuilder
     Response<Greeting> response = mockResponseBuilder.build();
 
     // when we build the Response the ID is put into the headers
-    Map<String, String> builtHeaders = new HashMap<String, String>(headers);
+    Map<String, String> builtHeaders = new HashMap<>(headers);
     builtHeaders.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
 
     Assert.assertEquals(response.getEntity(), greeting);
@@ -77,8 +77,8 @@ public class TestMockResponseBuilder
   @Test
   public void testCreateResponse()
   {
-    final MockResponseBuilder<Long, CreateResponse<Long>> mockResponseBuilder = new MockResponseBuilder<Long, CreateResponse<Long>>();
-    mockResponseBuilder.setEntity(new CreateResponse<Long>(1L));
+    final MockResponseBuilder<Long, CreateResponse<Long>> mockResponseBuilder = new MockResponseBuilder<>();
+    mockResponseBuilder.setEntity(new CreateResponse<>(1L));
     final Response<CreateResponse<Long>> response = mockResponseBuilder.build();
 
     final CreateResponse<Long> createResponse = response.getEntity();
@@ -91,8 +91,8 @@ public class TestMockResponseBuilder
   @Test
   public void testIdResponse()
   {
-    final MockResponseBuilder<Long, IdResponse<Long>> mockResponseBuilder = new MockResponseBuilder<Long, IdResponse<Long>>();
-    mockResponseBuilder.setEntity(new IdResponse<Long>(1L));
+    final MockResponseBuilder<Long, IdResponse<Long>> mockResponseBuilder = new MockResponseBuilder<>();
+    mockResponseBuilder.setEntity(new IdResponse<>(1L));
     final Response<IdResponse<Long>> response = mockResponseBuilder.build();
 
     final IdResponse<Long> idResponse = response.getEntity();

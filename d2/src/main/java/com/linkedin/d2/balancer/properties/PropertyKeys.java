@@ -213,17 +213,32 @@ public class PropertyKeys
 
   // used by uri specific properties
   public static final String DO_NOT_SLOW_START = "doNotSlowStart";
+  public static final String DO_NOT_LOAD_BALANCE = "doNotLoadBalance";
 
   // used by dark clusters
   public static final String DARK_CLUSTER_MULTIPLIER = "multiplier";
   public static final String DARK_CLUSTER_OUTBOUND_TARGET_RATE = "dispatcherOutboundTargetRate";
-  public static final String DARK_CLUSTER_OUTBOUND_MAX_RATE = "dispatcherOutboundMaxRate";
+  public static final String DARK_CLUSTER_MAX_REQUESTS_TO_BUFFER = "dispatcherMaxRequestsToBuffer";
+  public static final String DARK_CLUSTER_BUFFERED_REQUEST_EXPIRY_IN_SECONDS = "dispatcherBufferedRequestExpiryInSeconds";
   public static final String DARK_CLUSTER_STRATEGY_LIST = "darkClusterStrategyList";
   public static final String DARK_CLUSTER_TRANSPORT_CLIENT_PROPERTIES = "transportClientProperties";
 
   // used by ClusterInfoProvider
   public static final String HTTP_SCHEME = "http";
   public static final String HTTPS_SCHEME = "https";
+
+  // used by ServicePropertiesWithCanary and ClusterPropertiesWithCanary
+  public static final String CANARY_CONFIGS = "canaryConfigs";
+  public static final String CANARY_DISTRIBUTION_STRATEGY = "canaryDistributionStrategy";
+
+  // used by CanaryDistributionStrategy
+  public static final String CANARY_STRATEGY = "strategy";
+  public static final String PERCENTAGE_STRATEGY_PROPERTIES = "percentageStrategyProperties";
+  public static final String PERCENTAGE_SCOPE = "scope";
+  public static final String TARGET_HOSTS_STRATEGY_PROPERTIES = "targetHostsStrategyProperties";
+  public static final String TARGET_HOSTS = "targetHosts";
+  public static final String TARGET_APPLICATIONS_STRATEGY_PROPERTIES = "targetApplicationsStrategyProperties";
+  public static final String TARGET_APPLICATIONS = "targetApplications";
 
   private static String getFieldName(PathSpec pathSpec)
   {

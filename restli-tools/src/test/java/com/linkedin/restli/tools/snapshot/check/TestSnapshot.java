@@ -50,7 +50,7 @@ public class TestSnapshot
     Map<String, NamedDataSchema> models = snapshot.getModels();
     Assert.assertEquals(models.size(), 4);
 
-    List<String> expectedModelNames = new ArrayList<String>();
+    List<String> expectedModelNames = new ArrayList<>();
     expectedModelNames.add("com.linkedin.restli.tools.snapshot.circular.A");
     expectedModelNames.add("com.linkedin.restli.tools.snapshot.circular.B");
     expectedModelNames.add("com.linkedin.restli.tools.snapshot.circular.C");

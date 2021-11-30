@@ -42,7 +42,7 @@ public class LazyClientTest
   public void testClientRest()
   {
     LazyClientTestFactory factory = new LazyClientTestFactory();
-    Map<String, String> properties = new HashMap<String, String>();
+    Map<String, String> properties = new HashMap<>();
     LazyClient client = new LazyClient(properties, factory);
 
     properties.put("test", "exists");
@@ -70,7 +70,7 @@ public class LazyClientTest
   public void testClientStream()
   {
     LazyClientTestFactory factory = new LazyClientTestFactory();
-    Map<String, String> properties = new HashMap<String, String>();
+    Map<String, String> properties = new HashMap<>();
     LazyClient client = new LazyClient(properties, factory);
 
     properties.put("test", "exists");
