@@ -57,7 +57,7 @@ public class BatchCreateDecoder<K> extends CollectionResponseDecoder<CreateStatu
   public BatchCreateResponse<K> wrapResponse(DataMap dataMap, Map<String, String> headers, ProtocolVersion version)
       throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException
   {
-    CreateIdStatusDecoder<K> decoder = new CreateIdStatusDecoder<K>(_keyType, _keyParts, _complexKeyType, version);
-    return dataMap == null ? null : new BatchCreateResponse<K>(dataMap, decoder);
+    CreateIdStatusDecoder<K> decoder = new CreateIdStatusDecoder<>(_keyType, _keyParts, _complexKeyType, version);
+    return dataMap == null ? null : new BatchCreateResponse<>(dataMap, decoder);
   }
 }

@@ -37,10 +37,10 @@ public class UriPropertiesSerializerTest
   // However, it has the same signature as the new one after type erasure if it is still a constructor
   public static UriProperties getInstanceWithOldArguments(String clusterName, Map<URI, Double> weights)
   {
-    Map<URI, Map<Integer, PartitionData>> partitionData = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> partitionData = new HashMap<>();
     for (URI uri : weights.keySet())
     {
-      Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
+      Map<Integer, PartitionData> partitionWeight = new HashMap<>();
       partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weights.get(uri)));
       partitionData.put(uri,partitionWeight);
     }
@@ -52,7 +52,7 @@ public class UriPropertiesSerializerTest
           PropertySerializationException
   {
     UriPropertiesJsonSerializer jsonSerializer = new UriPropertiesJsonSerializer();
-    Map<URI, Double> uriWeights = new HashMap<URI, Double>();
+    Map<URI, Double> uriWeights = new HashMap<>();
 
     UriProperties property = getInstanceWithOldArguments("test", uriWeights);
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
@@ -67,10 +67,10 @@ public class UriPropertiesSerializerTest
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property2)), property2);
 
     // test new way of constructing uri property
-    final Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<URI, Map<Integer, PartitionData>>();
+    final Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<>();
     property = new UriProperties("test 3", partitionDesc);
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
-    final Map<Integer, PartitionData> partitions = new HashMap<Integer, PartitionData>();
+    final Map<Integer, PartitionData> partitions = new HashMap<>();
     partitions.put(0, new PartitionData(0.3d));
     partitions.put(700, new PartitionData(0.3d));
     partitions.put(1200, new PartitionData(0.4d));
@@ -116,14 +116,14 @@ public class UriPropertiesSerializerTest
   public UriProperties fromOldFormatMap(Map<String, Object> map)
   {
     String clusterName = (String)map.get("clusterName");
-    Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<>();
     Map<String, Double> weights = (Map<String, Double>) map.get("weights");
     if (weights != null)
     {
       for(Map.Entry<String, Double> weight: weights.entrySet())
       {
         URI uri = URI.create(weight.getKey());
-        Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>();
+        Map<Integer, PartitionData> partitionDataMap = new HashMap<>();
         partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight.getValue()));
         partitionDesc.put(uri, partitionDataMap);
       }
@@ -141,13 +141,13 @@ public class UriPropertiesSerializerTest
 
     // new constructor
 
-    Map<String, Object> applicationProperties = new HashMap<String, Object>();
+    Map<String, Object> applicationProperties = new HashMap<>();
     applicationProperties.put("foo", "fooValue");
     applicationProperties.put("bar", "barValue");
     applicationProperties.put("baz", 1);
 
-    Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<URI, Map<Integer, PartitionData>>();
-    Map<Integer, PartitionData> partitions = new HashMap<Integer, PartitionData>();
+    Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<>();
+    Map<Integer, PartitionData> partitions = new HashMap<>();
     partitions.put(0, new PartitionData(0.3d));
     partitions.put(1000, new PartitionData(0.3d));
 
@@ -159,8 +159,8 @@ public class UriPropertiesSerializerTest
 
     // from bytes that were stored using an old constructor
 
-    partitionDesc = new HashMap<URI, Map<Integer, PartitionData>>();
-    partitions = new HashMap<Integer, PartitionData>();
+    partitionDesc = new HashMap<>();
+    partitions = new HashMap<>();
     partitions.put(0, new PartitionData(0.3d));
     partitions.put(1000, new PartitionData(0.3d));
     partitionDesc.put(uri, partitions);

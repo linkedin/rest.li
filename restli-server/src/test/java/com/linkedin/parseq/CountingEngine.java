@@ -32,7 +32,13 @@ public class CountingEngine extends Engine
   public CountingEngine(Executor taskExecutor, DelayedExecutor timerExecutor, ILoggerFactory loggerFactory,
       Map<String, Object> properties)
   {
-    super(taskExecutor, timerExecutor, loggerFactory, properties, planContext -> {}, planContext -> {}, FIFOPriorityQueue::new);
+    super(taskExecutor,
+          timerExecutor,
+          loggerFactory, properties,
+          planContext -> {},
+          planContext -> {},
+          FIFOPriorityQueue::new,
+          null);
   }
 
   @Override

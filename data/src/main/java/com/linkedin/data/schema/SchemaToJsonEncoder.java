@@ -284,7 +284,7 @@ public class SchemaToJsonEncoder extends AbstractSchemaEncoder
     }
 
     encodeProperties(schema);
-    List<String> aliases = new ArrayList<String>();
+    List<String> aliases = new ArrayList<>();
     for (Name name : schema.getAliases())
     {
       aliases.add(name.getFullName());

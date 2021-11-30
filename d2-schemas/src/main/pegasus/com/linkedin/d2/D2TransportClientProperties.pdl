@@ -141,4 +141,10 @@ record D2TransportClientProperties {
      */
     HTTP_2
   }
+
+  /**
+   * Service desired maximum ratio of retry requests to total requests per client. The retry ratio is applied
+   * only when D2 RetryClient is enabled.
+   */
+  maxClientRequestRetryRatio: optional double
 }

@@ -145,16 +145,16 @@ public class PartialUpdateRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public PartialUpdateRequest<V> build()
   {
-    return new PartialUpdateRequest<V>(buildReadOnlyInput(),
-                                       buildReadOnlyHeaders(),
-                                       buildReadOnlyCookies(),
-                                       _resourceSpec,
-                                       buildReadOnlyQueryParameters(),
-                                       getQueryParamClasses(),
-                                       getBaseUriTemplate(),
-                                       buildReadOnlyPathKeys(),
-                                       getRequestOptions(),
-                                       buildReadOnlyId(),
-                                       _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
+    return new PartialUpdateRequest<>(buildReadOnlyInput(),
+        buildReadOnlyHeaders(),
+        buildReadOnlyCookies(),
+        _resourceSpec,
+        buildReadOnlyQueryParameters(),
+        getQueryParamClasses(),
+        getBaseUriTemplate(),
+        buildReadOnlyPathKeys(),
+        getRequestOptions(),
+        buildReadOnlyId(),
+        _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
   }
 }

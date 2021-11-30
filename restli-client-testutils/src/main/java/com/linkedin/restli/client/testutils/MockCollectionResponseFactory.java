@@ -48,7 +48,7 @@ public class MockCollectionResponseFactory
   public static <T extends RecordTemplate> CollectionResponse<T> create(Class<T> entryClass,
                                                                         Collection<T> recordTemplates)
   {
-    List<DataMap> dataMapsOfRecordTemplates = new ArrayList<DataMap>();
+    List<DataMap> dataMapsOfRecordTemplates = new ArrayList<>();
     for (T recordTemplate : recordTemplates)
     {
       dataMapsOfRecordTemplates.add(recordTemplate.data());
@@ -56,7 +56,7 @@ public class MockCollectionResponseFactory
     DataMap dataMapCollection = new DataMap();
     dataMapCollection.put(CollectionResponse.ELEMENTS,
                           new DataList(dataMapsOfRecordTemplates));
-    return new CollectionResponse<T>(dataMapCollection, entryClass);
+    return new CollectionResponse<>(dataMapCollection, entryClass);
   }
 
   /**

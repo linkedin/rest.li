@@ -41,10 +41,10 @@ public class PerfClient
 
   public void run() throws Exception
   {
-    final AtomicReference<Stats> statsRef = new AtomicReference<Stats>();
+    final AtomicReference<Stats> statsRef = new AtomicReference<>();
     statsRef.set(new Stats(System.currentTimeMillis()));
     final CountDownLatch startLatch = new CountDownLatch(1);
-    final List<Thread> workers = new ArrayList<Thread>();
+    final List<Thread> workers = new ArrayList<>();
     for (int i = 0; i < _numThreads; i++)
     {
       final Thread t = new Thread(_runnableFactory.create(statsRef,

@@ -149,20 +149,20 @@ public class CreateIdEntityRequestBuilder<K, V extends RecordTemplate>
   public CreateIdEntityRequest<K, V> build()
   {
     @SuppressWarnings("unchecked")
-    IdEntityResponseDecoder<K, V> idEntityResponseDecoder = new IdEntityResponseDecoder<K, V>((TypeSpec<K>)_resourceSpec.getKeyType(),
-                                                                                              _resourceSpec.getKeyParts(),
-                                                                                              _resourceSpec.getComplexKeyType(),
-                                                                                              getValueClass());
-    return new CreateIdEntityRequest<K, V>(buildReadOnlyInput(),
-                                           buildReadOnlyHeaders(),
-                                           buildReadOnlyCookies(),
-                                           idEntityResponseDecoder,
-                                           _resourceSpec,
-                                           buildReadOnlyQueryParameters(),
-                                           getQueryParamClasses(),
-                                           getBaseUriTemplate(),
-                                           buildReadOnlyPathKeys(),
-                                           getRequestOptions(),
-                                           _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
+    IdEntityResponseDecoder<K, V> idEntityResponseDecoder = new IdEntityResponseDecoder<>((TypeSpec<K>) _resourceSpec.getKeyType(),
+        _resourceSpec.getKeyParts(),
+        _resourceSpec.getComplexKeyType(),
+        getValueClass());
+    return new CreateIdEntityRequest<>(buildReadOnlyInput(),
+        buildReadOnlyHeaders(),
+        buildReadOnlyCookies(),
+        idEntityResponseDecoder,
+        _resourceSpec,
+        buildReadOnlyQueryParameters(),
+        getQueryParamClasses(),
+        getBaseUriTemplate(),
+        buildReadOnlyPathKeys(),
+        getRequestOptions(),
+        _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
   }
 }

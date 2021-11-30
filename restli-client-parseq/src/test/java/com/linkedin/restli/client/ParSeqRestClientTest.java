@@ -90,10 +90,11 @@ public class ParSeqRestClientTest
     final ParSeqRestClient client = mockClient(id, httpCode, protocolVersion);
     final Request<TestRecord> req = mockRequest(TestRecord.class, versionOption);
 
-    final Promise<Response<TestRecord>> promise = client.sendRequest(req);
-    promise.await();
-    Assert.assertFalse(promise.isFailed());
-    final Response<TestRecord> record = promise.get();
+    final Task<Response<TestRecord>> task = client.createTask(req);
+    _engine.run(task);
+    task.await();
+    Assert.assertFalse(task.isFailed());
+    final Response<TestRecord> record = task.get();
     Assert.assertEquals(id, record.getEntity().getId().longValue());
   }
 
@@ -143,10 +144,11 @@ public class ParSeqRestClientTest
         REQUEST_ID, protocolVersion, errorResponseHeaderName);
     final Request<EmptyRecord> req = mockRequest(EmptyRecord.class, versionOption);
 
-    final Promise<Response<EmptyRecord>> promise = client.sendRequest(req);
-    promise.await();
-    Assert.assertTrue(promise.isFailed());
-    final Throwable t = promise.getError();
+    final Task<Response<EmptyRecord>> task = client.createTask(req);
+    _engine.run(task);
+    task.await();
+    Assert.assertTrue(task.isFailed());
+    final Throwable t = task.getError();
     Assert.assertTrue(t instanceof RestLiResponseException);
     final RestLiResponseException e = (RestLiResponseException) t;
     Assert.assertEquals(HTTP_CODE, e.getStatus());

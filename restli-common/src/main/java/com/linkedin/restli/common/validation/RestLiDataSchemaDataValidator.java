@@ -18,6 +18,8 @@ package com.linkedin.restli.common.validation;
 
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.validation.ValidationResult;
+import com.linkedin.data.schema.validator.DataSchemaAnnotationValidator;
+import com.linkedin.data.schema.validator.Validator;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.restli.common.ResourceMethod;
@@ -27,11 +29,13 @@ import java.util.Collections;
 
 /**
  * Extension of {@link RestLiDataValidator} to allow for validation against a provided data schema.
+ * This validator is only used for output validation.
  *
  * @author Evan Williams
  */
 public class RestLiDataSchemaDataValidator extends RestLiDataValidator {
   private final DataSchema _validatingSchema;
+  private final DataSchemaAnnotationValidator _outputSchemaValidator;
 
   /**
    * Constructor.
@@ -53,6 +57,7 @@ public class RestLiDataSchemaDataValidator extends RestLiDataValidator {
     }
 
     _validatingSchema = validatingSchema;
+    _outputSchemaValidator = new DataSchemaAnnotationValidator(_validatingSchema);
   }
 
   /**
@@ -64,6 +69,28 @@ public class RestLiDataSchemaDataValidator extends RestLiDataValidator {
   public ValidationResult validateOutput(RecordTemplate dataTemplate)
   {
     return super.validateOutputAgainstSchema(dataTemplate, _validatingSchema);
+  }
+
+  /**
+   * Validator to use to validate the output.
+   * The validator is instantiated in the constructor, so directly returns that if input is equal to _validatingSchema.
+   * @param validatingSchema schema to validate against
+   * @return validator
+   */
+  @Override
+  protected Validator getValidatorForOutputEntityValidation(DataSchema validatingSchema)
+  {
+    // Validates that the schema passed in is the same as the schema used in the constructor
+    // Intentionally does an == check to avoid a more computational heavy .equals for larger schemas
+    // Only if this is true, return the validator created in the constructor
+    if (_validatingSchema == validatingSchema)
+    {
+      return _outputSchemaValidator;
+    }
+    else
+    {
+      return super.getValidatorForOutputEntityValidation(validatingSchema);
+    }
   }
 
   /**

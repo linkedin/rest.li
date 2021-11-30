@@ -18,6 +18,8 @@ package com.linkedin.restli.server;
 
 import com.linkedin.data.codec.DataCodec;
 import com.linkedin.restli.common.ContentType;
+import com.linkedin.restli.internal.server.methods.DefaultMethodAdapterProvider;
+import com.linkedin.restli.internal.server.methods.MethodAdapterProvider;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.server.config.RestLiMethodConfig;
 import com.linkedin.restli.server.config.RestLiMethodConfigBuilder;
@@ -33,6 +35,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -88,6 +91,7 @@ public class RestLiConfig
   private MultiplexerSingletonFilter _multiplexerSingletonFilter;
   private MultiplexerRunMode _multiplexerRunMode = MultiplexerRunMode.MULTIPLE_PLANS;
   private final List<ContentType> _customContentTypes = new LinkedList<>();
+  private List<String> _supportedAcceptTypes;
   private final List<ResourceDefinitionListener> _resourceDefinitionListeners = new ArrayList<>();
   private boolean _useStreamCodec = false;
 
@@ -102,6 +106,7 @@ public class RestLiConfig
 
   /** configuration for whether to attach stacktrace for {@link com.linkedin.r2.message.rest.RestException} */
   private boolean _writableStackTrace = true;
+  private MethodAdapterProvider _methodAdapterProvider = null;
 
   /**
    * Constructor.
@@ -258,7 +263,7 @@ public class RestLiConfig
    */
   public void setDebugRequestHandlers(final List<RestLiDebugRequestHandler> handlers)
   {
-    _debugRequestHandlers = new ArrayList<RestLiDebugRequestHandler>(handlers);
+    _debugRequestHandlers = new ArrayList<>(handlers);
   }
 
   /**
@@ -592,5 +597,44 @@ public class RestLiConfig
   public void setFillInDefaultValues(boolean fillInDefaultValues)
   {
     _fillInDefaultValues = fillInDefaultValues;
+  }
+
+  /**
+   * Set a custom {@link MethodAdapterProvider} in the config.
+   *
+   * @param methodAdapterProvider a custom to be set in the config.
+   */
+  public void setMethodAdapterProvider(MethodAdapterProvider methodAdapterProvider)
+  {
+    _methodAdapterProvider = methodAdapterProvider;
+  }
+
+  /**
+   * @return Return the custom {@link MethodAdapterProvider} in the config. Return null if no custom
+   *   {@link MethodAdapterProvider} is provided, then the {@link DefaultMethodAdapterProvider} will be used for
+   *   setting up rest.li server.
+   */
+  public MethodAdapterProvider getMethodAdapterProvider()
+  {
+    return Optional.ofNullable(_methodAdapterProvider)
+            .orElse(new DefaultMethodAdapterProvider(new ErrorResponseBuilder(_errorResponseFormat)));
+  }
+
+  /**
+   * Get list of supported mime types for response serialization.
+   * @return list of mime types.
+   */
+  public List<String> getSupportedAcceptTypes()
+  {
+    return _supportedAcceptTypes;
+  }
+
+  /**
+   * Sets list of supported mime types for response serialization.
+   * @param supportedAcceptTypes list of mime types.
+   */
+  public void setSupportedAcceptTypes(List<String> supportedAcceptTypes)
+  {
+    _supportedAcceptTypes = supportedAcceptTypes;
   }
 }

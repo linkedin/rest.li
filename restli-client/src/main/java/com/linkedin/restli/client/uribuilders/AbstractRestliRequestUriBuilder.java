@@ -105,32 +105,48 @@ abstract class AbstractRestliRequestUriBuilder<R extends Request<?>> implements 
 
   protected final void appendAssocKeys(UriBuilder uriBuilder)
   {
-    if (_assocKey == null)
-    {
-      throw new IllegalArgumentException("_assocKey is null");
-    }
-    if (_assocKey.getNumParts() != 0)
+    if (_assocKey != null && _assocKey.getNumParts() != 0)
     {
       uriBuilder.path(URIParamUtils.encodeKeyForUri(_assocKey, UriComponent.Type.PATH_SEGMENT, _version));
     }
   }
 
   @Override
-  public URI buildBaseUri()
+  public final URI buildBaseUri()
   {
     return URI.create(bindPathKeys());
   }
 
-  public URI buildBaseUriWithPrefix()
+  @Override
+  public final URI buildWithoutQueryParams()
   {
+    return getUriBuilderWithoutQueryParams().build();
+  }
+
+  @Override
+  public final URI build()
+  {
+    UriBuilder b = getUriBuilderWithoutQueryParams();
+    appendQueryParams(b);
+    return b.build();
+  }
+
+  /**
+   * @return The URI builder (without query params) for this request.
+   */
+  protected UriBuilder getUriBuilderWithoutQueryParams()
+  {
+    final URI uri;
     if (_request.getPathKeys().isEmpty())
     {
       // if path keys are empty we don't need to bind the path keys, we can directly use the request base uri template.
-      return URI_TEMPLATE_STRING_TO_URI_CACHE.get(addPrefix(_request.getBaseUriTemplate()), template -> URI.create(template));
+      uri = URI_TEMPLATE_STRING_TO_URI_CACHE.get(addPrefix(_request.getBaseUriTemplate()), URI::create);
     }
     else
     {
-      return URI.create(addPrefix(bindPathKeys()));
+      uri = URI.create(addPrefix(bindPathKeys()));
     }
+
+    return UriBuilder.fromUri(uri);
   }
 }

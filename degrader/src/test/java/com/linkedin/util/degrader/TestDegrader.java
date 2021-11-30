@@ -234,6 +234,7 @@ public class TestDegrader
     assertTrue(config.getLowOutstanding() == DegraderImpl.DEFAULT_LOW_OUTSTANDING);
     assertTrue(config.getMinOutstandingCount() == DegraderImpl.DEFAULT_MIN_OUTSTANDING_COUNT);
     assertTrue(config.getPreemptiveRequestTimeoutRate() == DegraderImpl.DEFAULT_PREEMPTIVE_REQUEST_TIMEOUT_RATE);
+    assertTrue(config.getLogger() == DegraderImpl.DEFAULT_LOGGER);
 
     String testName = "aaaa";
     config.setName(testName);

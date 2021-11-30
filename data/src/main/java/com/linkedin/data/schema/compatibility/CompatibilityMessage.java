@@ -18,6 +18,7 @@ package com.linkedin.data.schema.compatibility;
 
 
 import com.linkedin.data.message.Message;
+import com.linkedin.data.schema.PathSpec;
 import java.util.Formatter;
 
 
@@ -52,7 +53,23 @@ public class CompatibilityMessage extends Message
     /**
      * Numeric promotion.
      */
-    VALUES_MAY_BE_TRUNCATED_OR_OVERFLOW(false);
+    VALUES_MAY_BE_TRUNCATED_OR_OVERFLOW(false),
+    /**
+     * Adding new schema is compatible change.
+     */
+    NEW_SCHEMA_ADDED(false),
+    /**
+     * Deleting an schema is incompatible change, it breaks old clients.
+     */
+    BREAK_OLD_CLIENTS(true),
+    /**
+     * Annotation incompatible change, which can be used in custom annotation compatibility check
+     */
+    ANNOTATION_INCOMPATIBLE_CHANGE(true),
+    /**
+     * Annotation compatible change, which can be used in custom annotation compatibility check
+     */
+    ANNOTATION_COMPATIBLE_CHANGE(false);
 
     private final boolean _error;
 
@@ -72,6 +89,12 @@ public class CompatibilityMessage extends Message
   public CompatibilityMessage(Object[] path, Impact impact, String format, Object... args)
   {
     super(path, impact.isError(), format, args);
+    _impact = impact;
+  }
+
+  public CompatibilityMessage(PathSpec pathSpec, Impact impact, String format, Object... args)
+  {
+    super(pathSpec.getPathComponents().toArray(), impact.isError(), format, args);
     _impact = impact;
   }
 

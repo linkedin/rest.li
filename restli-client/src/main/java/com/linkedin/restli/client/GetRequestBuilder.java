@@ -111,16 +111,16 @@ public class GetRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public GetRequest<V> build()
   {
-    return new GetRequest<V>(buildReadOnlyHeaders(),
-                             buildReadOnlyCookies(),
-                             getValueClass(),
-                             buildReadOnlyId(),
-                             buildReadOnlyQueryParameters(),
-                             getQueryParamClasses(),
-                             _resourceSpec,
-                             getBaseUriTemplate(),
-                             buildReadOnlyPathKeys(),
-                             getRequestOptions());
+    return new GetRequest<>(buildReadOnlyHeaders(),
+        buildReadOnlyCookies(),
+        getValueClass(),
+        buildReadOnlyId(),
+        buildReadOnlyQueryParameters(),
+        getQueryParamClasses(),
+        _resourceSpec,
+        getBaseUriTemplate(),
+        buildReadOnlyPathKeys(),
+        getRequestOptions());
   }
 
   public GetRequestBuilder<K, V> fields(PathSpec... fieldPaths)

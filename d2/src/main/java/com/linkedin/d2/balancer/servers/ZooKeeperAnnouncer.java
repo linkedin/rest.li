@@ -31,6 +31,7 @@ import java.util.concurrent.CancellationException;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
@@ -326,23 +327,34 @@ public class ZooKeeperAnnouncer
 
   public synchronized void changeWeight(final Callback<None> callback, boolean doNotSlowStart)
   {
-    _server.changeWeight(_cluster, _uri, _partitionDataMap, doNotSlowStart, new Callback<None>()
+    _server.changeWeight(_cluster, _uri, _partitionDataMap, doNotSlowStart, getOperationCallback(callback, "changeWeight"));
+    _log.info("changeWeight called for uri = {}.", _uri);
+  }
+
+  public synchronized void setDoNotLoadBalance(final Callback<None> callback, boolean doNotLoadBalance)
+  {
+    _server.addUriSpecificProperty(_cluster, "setDoNotLoadBalance", _uri, _partitionDataMap, PropertyKeys.DO_NOT_LOAD_BALANCE, doNotLoadBalance, getOperationCallback(callback, "setDoNotLoadBalance"));
+    _log.info("setDoNotLoadBalance called for uri = {}.", _uri);
+  }
+
+  private Callback<None> getOperationCallback(Callback<None> callback, String operation)
+  {
+    return new Callback<None>()
     {
       @Override
       public void onError(Throwable e)
       {
-        _log.warn("changeWeight for uri = {} failed.", _uri);
+        _log.warn(operation + " for uri = {} failed.", _uri);
         callback.onError(e);
       }
 
       @Override
       public void onSuccess(None result)
       {
-        _log.info("changeWeight for uri = {} succeeded.", _uri);
+        _log.info(operation + " for uri = {} succeeded.", _uri);
         callback.onSuccess(result);
       }
-    });
-    _log.info("changeWeight called for uri = {}.", _uri);
+    };
   }
 
   public String getCluster()

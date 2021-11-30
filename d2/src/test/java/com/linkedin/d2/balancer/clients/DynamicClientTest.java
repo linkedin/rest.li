@@ -20,7 +20,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
-import com.linkedin.d2.balancer.clients.TrackerClientTest.TestCallback;
+import com.linkedin.d2.balancer.clients.DegraderTrackerClientTest.TestCallback;
 import com.linkedin.d2.balancer.clients.stub.DirectoryProviderMock;
 import com.linkedin.d2.balancer.clients.stub.KeyMapperProviderMock;
 import com.linkedin.d2.balancer.clients.stub.LoadBalancerMock;
@@ -60,7 +60,7 @@ public class DynamicClientTest
     DynamicClient client = new DynamicClient(balancer, facilities, restOverStream);
     URI uri = URI.create("d2://test");
     RestRequest restRequest = new RestRequestBuilder(uri).build();
-    TestCallback<RestResponse> restCallback = new TestCallback<RestResponse>();
+    TestCallback<RestResponse> restCallback = new TestCallback<>();
 
     client.restRequest(restRequest, restCallback);
 
@@ -78,7 +78,7 @@ public class DynamicClientTest
     DynamicClient client = new DynamicClient(balancer, null, restOverStream);
     URI uri = URI.create("d2://test");
     RestRequest restRequest = new RestRequestBuilder(uri).build();
-    TestCallback<RestResponse> restCallback = new TestCallback<RestResponse>();
+    TestCallback<RestResponse> restCallback = new TestCallback<>();
 
     client.restRequest(restRequest, restCallback);
 

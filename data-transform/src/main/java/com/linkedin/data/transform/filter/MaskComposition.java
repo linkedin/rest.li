@@ -438,7 +438,7 @@ public class MaskComposition implements Interpreter
   private void prunePositiveMask(final DataMap complex)
   {
     removeArrayRanges(complex);
-    final List<String> toBeRemoved = new ArrayList<String>();
+    final List<String> toBeRemoved = new ArrayList<>();
     for (Entry<String, Object> entry : complex.entrySet())
     {
       Object v = entry.getValue();

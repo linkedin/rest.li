@@ -23,15 +23,16 @@ package com.linkedin.data.transform.filter;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
+import com.linkedin.data.schema.PathSpecSet;
 import com.linkedin.data.transform.filter.request.MaskCreator;
 import com.linkedin.data.transform.filter.request.MaskOperation;
 import com.linkedin.data.transform.filter.request.MaskTree;
 
 import java.io.IOException;
 
-import java.nio.file.Path;
 import java.util.Map;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.dataMapFromString;
@@ -372,4 +373,36 @@ public class TestMaskCreation
     mask.addOperation(new PathSpec("a"), MaskOperation.NEGATIVE_MASK_OP);
     Assert.assertEquals(mask.toString(), "{a=0}");
   }
+
+  @Test(dataProvider = "pathSpecSetProvider")
+  public void testPositiveMaskWithPathSpecSet(PathSpecSet input, MaskTree expected)
+  {
+    Assert.assertEquals(MaskCreator.createPositiveMask(input).getOperations(), expected.getOperations());
+  }
+
+  @DataProvider
+  public static Object[][] pathSpecSetProvider()
+  {
+    MaskTree simpleMaskTree = new MaskTree();
+    simpleMaskTree.addOperation(new PathSpec("myField"), MaskOperation.POSITIVE_MASK_OP);
+    MaskTree fullMaskTree = new MaskTree();
+    fullMaskTree.addOperation(new PathSpec(PathSpec.WILDCARD), MaskOperation.POSITIVE_MASK_OP);
+
+    return new Object[][] {
+        {
+            PathSpecSet.of(new PathSpec("myField")),
+            simpleMaskTree
+        },
+        {
+            PathSpecSet.empty(),
+            new MaskTree()
+        },
+        {
+            PathSpecSet.allInclusive(),
+            fullMaskTree
+        }
+    };
+  }
+
+
 }

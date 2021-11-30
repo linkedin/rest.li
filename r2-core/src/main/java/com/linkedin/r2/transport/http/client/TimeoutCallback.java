@@ -21,6 +21,7 @@ import com.linkedin.r2.util.SingleTimeout;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 
 /**
@@ -55,7 +56,7 @@ public class TimeoutCallback<T> implements Callback<T>
   public TimeoutCallback(ScheduledExecutorService executor, long timeout, TimeUnit timeoutUnit,
                                final Callback<T> callback, final String timeoutMessage)
   {
-    this(executor, timeout, timeoutUnit, callback, new TimeoutException(
+    this(executor, timeout, timeoutUnit, callback, () -> new TimeoutException(
         "Exceeded request timeout of " + timeoutUnit.toMillis(timeout) + "ms: " + timeoutMessage));
   }
 
@@ -72,6 +73,21 @@ public class TimeoutCallback<T> implements Callback<T>
       final Callback<T> callback, final Throwable timeoutThrowable)
   {
     _timeout = new SingleTimeout<>(executor, timeout, timeoutUnit, callback, (callbackIfTimeout) -> callbackIfTimeout.onError(timeoutThrowable));
+  }
+
+  /**
+   * Construct a new instance.
+   *
+   * @param executor the {@link ScheduledExecutorService} used to schedule the timeout
+   * @param timeout the timeout delay, in the specified {@link TimeUnit}.
+   * @param timeoutUnit the {@link TimeUnit} for the timeout parameter.
+   * @param callback the {@link Callback} to be invoked on success or error.
+   * @param timeoutThrowableSupplier the custom exception supplier that will be used during the timeout
+   */
+  public TimeoutCallback(ScheduledExecutorService executor, long timeout, TimeUnit timeoutUnit,
+      final Callback<T> callback, final Supplier<Throwable> timeoutThrowableSupplier)
+  {
+    _timeout = new SingleTimeout<>(executor, timeout, timeoutUnit, callback, callbackIfTimeout -> callbackIfTimeout.onError(timeoutThrowableSupplier.get()));
   }
 
   @Override

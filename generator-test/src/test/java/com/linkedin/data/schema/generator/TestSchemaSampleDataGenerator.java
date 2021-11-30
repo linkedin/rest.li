@@ -53,6 +53,7 @@ import com.linkedin.data.template.LongMap;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.StringMap;
 import com.linkedin.pegasus.generator.test.Certification;
+import com.linkedin.pegasus.generator.test.EnumEmpty;
 import com.linkedin.pegasus.generator.test.EnumFruits;
 import com.linkedin.pegasus.generator.test.FixedMD5;
 import com.linkedin.pegasus.generator.test.InvalidSelfReference;
@@ -132,6 +133,15 @@ public class TestSchemaSampleDataGenerator
   }
 
   @Test
+  public void testEmptyEnumSchema()
+  {
+    final EnumDataSchema schema = (EnumDataSchema) DataTemplateUtil.getSchema(EnumEmpty.class);
+    final String value = (String) SchemaSampleDataGenerator.buildData(schema, _spec);
+    Assert.assertSame(schema.getSymbols().size(), EnumEmpty.class.getEnumConstants().length - 1/*The $UNKNOWN value*/);
+    Assert.assertEquals("EmptyEnum", value);
+  }
+
+  @Test
   public void testRecordSchema()
   {
     final RecordDataSchema schema = (RecordDataSchema) DataTemplateUtil.getSchema(Certification.class);
@@ -144,7 +154,7 @@ public class TestSchemaSampleDataGenerator
   public void testUnionSchema()
   {
     final UnionDataSchema schema = (UnionDataSchema) DataTemplateUtil.getSchema(UnionTest.UnionWithNull.class);
-    final Set<String> memberKeys = new HashSet<String>();
+    final Set<String> memberKeys = new HashSet<>();
     for (UnionDataSchema.Member member: schema.getMembers())
     {
       memberKeys.add(member.getUnionMemberKey());
@@ -221,11 +231,11 @@ public class TestSchemaSampleDataGenerator
   }
 
   private static final Map<DataSchema.Type, Class<?>> _dataSchemaTypeToPrimitiveJavaTypeMap =
-      new IdentityHashMap<DataSchema.Type, Class<?>>();
+      new IdentityHashMap<>();
   private static final Map<DataSchema.Type, Class<? extends DirectArrayTemplate<?>>> _dataSchemaTypeToprimitiveArrayMap =
-      new IdentityHashMap<DataSchema.Type, Class<? extends DirectArrayTemplate<?>>>();
+      new IdentityHashMap<>();
   private static final Map<DataSchema.Type, Class<? extends DirectMapTemplate<?>>> _dataSchemaTypeToprimitiveMapMap =
-      new IdentityHashMap<DataSchema.Type, Class<? extends DirectMapTemplate<?>>>();
+      new IdentityHashMap<>();
   private static final SchemaSampleDataGenerator.DataGenerationOptions _spec =
       new SchemaSampleDataGenerator.DataGenerationOptions();
   static

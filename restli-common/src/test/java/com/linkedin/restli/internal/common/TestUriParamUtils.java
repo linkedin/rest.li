@@ -199,7 +199,7 @@ public class TestUriParamUtils
     myComplexKey2.setA("anotherStringVal");
     myComplexKey2.setB(4);
     ComplexResourceKey<MyComplexKey, MyComplexKey> complexKey =
-      new ComplexResourceKey<MyComplexKey, MyComplexKey>(myComplexKey1, myComplexKey2);
+        new ComplexResourceKey<>(myComplexKey1, myComplexKey2);
     String complexKeyString = URIParamUtils.keyToString(complexKey, NO_ESCAPING, null, true, version);
     Assert.assertEquals(complexKeyString, full);
 

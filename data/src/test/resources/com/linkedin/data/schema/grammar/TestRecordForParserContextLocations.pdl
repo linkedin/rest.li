@@ -1,0 +1,88 @@
+namespace com.linkedin.data.schema.grammar
+
+/**
+ * Record to test returning context locations from the source file.
+ */
+@location = {"startLine": 3, "startCol": 1, "endLine": 88, "endCol": 1}
+record TestRecordForParserContextLocations {
+  @location = {"startLine": 8, "startCol": 3, "endLine": 9, "endCol": 39}
+  stringField: string = "default value"  // Field with default.
+  /**
+   * This field has a comment, location includes the comments.
+   */
+  @location = {"startLine": 10, "startCol": 3, "endLine": 14, "endCol": 24}
+  arrayField: array[int]
+  @location = {"startLine": 15, "startCol": 3, "endLine": 25, "endCol": 5}
+  inlineRecord:
+    @location = {"startLine": 17, "startCol": 5, "endLine": 25, "endCol": 5}
+    record InlineRecord {
+      // Non doc comment, this is not included in the location of the field.
+      // Properties are included.
+      @location = {"startLine": 21, "startCol": 7, "endLine": 22, "endCol": 12}
+      a: int
+      @location = {"startLine": 23, "startCol": 7, "endLine": 24, "endCol": 13}
+      b: long
+    }
+
+  // Field location includes the entire inline definition
+  @location = {"startLine": 28, "startCol": 3, "endLine": 44, "endCol": 5}
+  inlineEnum:
+    @location = {"startLine": 30, "startCol": 5, "endLine": 44, "endCol": 5}
+    enum InlineEnum {
+      /**
+       * Symbol docs and properties are included in the location of the enum symbol
+       */
+      @location = {"startLine": 32, "startCol": 7, "endLine": 36, "endCol": 13}
+      SYMBOLA
+      /**
+       * Commas are optional in the grammar and thus are not included.
+       */
+      @location = {"startLine": 37, "startCol": 7, "endLine": 41, "endCol": 13}
+      SYMBOLB,
+      @location = {"startLine": 42, "startCol": 7, "endLine": 43, "endCol": 13}
+      SYMBOLC  // Non doc comments like this are not included in the location.
+    }
+
+  @location = {"startLine": 46, "startCol": 3, "endLine": 55, "endCol": 3}
+  inlineNamespacedField: {
+    namespace com.linkedin.test.inline  // The location for this namespace will be keyed by the namespace string.
+
+    @location = {"startLine": 50, "startCol": 5, "endLine": 54, "endCol": 5}
+    record Nested {
+      @location = {"startLine": 52, "startCol": 7, "endLine": 53, "endCol": 11}
+      a:int
+    }
+  }
+
+  @location = {"startLine": 57, "startCol": 3, "endLine": 62, "endCol": 37}
+  unionField:
+    @location = {"startLine": 59, "startCol": 5, "endLine": 62, "endCol": 37}
+    @location.`com.linkedin.data.schema.grammar.InlineEnum` = {"startLine": 62, "startCol": 12, "endLine": 62, "endCol": 21}
+    @location.`com.linkedin.data.schema.grammar.InlineRecord` = {"startLine": 62, "startCol": 24, "endLine": 62, "endCol": 35}
+    union[ InlineEnum, InlineRecord ]
+
+  @location = {"startLine": 64, "startCol": 3, "endLine": 75, "endCol": 5}
+  aliasedUnionField:
+    @location = {"startLine": 66, "startCol": 5, "endLine": 75, "endCol": 5}
+    union [
+      /**
+       * Only aliased union members can have doc and properties
+       */
+      @location = {"startLine": 68, "startCol": 7, "endLine": 72, "endCol": 17}
+      aliasA: int,
+      @location = {"startLine": 73, "startCol": 7, "endLine": 74, "endCol": 18}
+      aliasB: long
+    ]
+
+  @location = {"startLine": 77, "startCol": 3, "endLine": 78, "endCol": 50}
+  enumReference: TestEnumForParserContextLocations
+
+  @location = {"startLine": 80, "startCol": 3, "endLine": 81, "endCol": 54}
+  typerefRerence: TestTyperefForParserContextLocations
+
+  @location = {"startLine": 83, "startCol": 3, "endLine": 84, "endCol": 44}
+  recordReference: ComplexTypeWithProperties
+
+  @location = {"startLine": 86, "startCol": 3, "endLine": 87, "endCol": 59}
+  mapField: map[string, TestFixedForParserContextLocations]
+}

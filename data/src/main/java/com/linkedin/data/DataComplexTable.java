@@ -18,9 +18,14 @@ package com.linkedin.data;
 
 import java.util.HashMap;
 
+
+/**
+ * Custom hash table when {@link DataComplex} objects are used as keys. This utilizes the custom
+ * {@link DataComplex#dataComplexHashCode()} as the hash for improved performance.
+ */
 class DataComplexTable
 {
-  private final HashMap<Integer, DataComplex> _map;
+  private final HashMap<DataComplexKey, DataComplex> _map;
 
   DataComplexTable()
   {
@@ -29,11 +34,38 @@ class DataComplexTable
 
   public DataComplex get(DataComplex index)
   {
-    return _map.get(index.dataComplexHashCode());
+    return _map.get(new DataComplexKey(index));
   }
 
   public void put(DataComplex src, DataComplex clone)
   {
-    _map.put(src.dataComplexHashCode(), clone);
+    _map.put(new DataComplexKey(src), clone);
   }
+
+  private static class DataComplexKey
+  {
+    private final DataComplex _dataObject;
+    private final int _hashCode;
+
+    DataComplexKey(DataComplex dataObject)
+    {
+      _hashCode = dataObject.dataComplexHashCode();
+      _dataObject = dataObject;
+    }
+
+    @Override
+    public int hashCode()
+    {
+      return _hashCode;
+    }
+
+    @Override
+    public boolean equals(Object other)
+    {
+      // "other" is guaranteed to be DataComplex as this class is "private" scoped within DataComplexTable, which only
+      // supports DataComplex objects.
+      return _dataObject == ((DataComplexKey) other)._dataObject;
+    }
+  }
+
 }

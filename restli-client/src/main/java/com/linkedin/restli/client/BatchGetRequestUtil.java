@@ -47,11 +47,11 @@ public class BatchGetRequestUtil
     }
 
     final BatchRequest<T> firstRequest = requests.get(0);
-    final BatchingKey<T,? extends BatchRequest<T>> batchKey = new BatchingKey<T,BatchRequest<T>>(firstRequest, batchFields);
-    final Set<Object> ids = new HashSet<Object>();
+    final BatchingKey<T,? extends BatchRequest<T>> batchKey = new BatchingKey<>(firstRequest, batchFields);
+    final Set<Object> ids = new HashSet<>();
 
     // Default to no fields or to first request's fields, depending on batchFields flag
-    Set<PathSpec> fields = batchFields ? new HashSet<PathSpec>() : firstRequest.getFields();
+    Set<PathSpec> fields = batchFields ? new HashSet<>() : firstRequest.getFields();
 
     for (BatchRequest<T> request : requests)
     {
@@ -101,7 +101,7 @@ public class BatchGetRequestUtil
    */
   public static Map<String, Object> getQueryParamsForBatchingKey(BatchRequest<?> request)
   {
-    final Map<String, Object> params = new HashMap<String, Object>(request.getQueryParamsObjects());
+    final Map<String, Object> params = new HashMap<>(request.getQueryParamsObjects());
     params.remove(RestConstants.QUERY_BATCH_IDS_PARAM);
     params.remove(RestConstants.FIELDS_PARAM);
     return params;
@@ -132,7 +132,7 @@ public class BatchGetRequestUtil
                                              ". Verify that the batchGet endpoint returns response keys that match batchGet request IDs.", null);
     }
 
-    return new ResponseImpl<V>(batchResponse, entityResult);
+    return new ResponseImpl<>(batchResponse, entityResult);
   }
 
   /**
@@ -160,6 +160,6 @@ public class BatchGetRequestUtil
                                              ". Verify that the batchGet endpoint returns response keys that match batchGet request IDs.", null);
     }
 
-    return new ResponseImpl<T>(batchResponse, entityResult);
+    return new ResponseImpl<>(batchResponse, entityResult);
   }
 }

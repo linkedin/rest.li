@@ -28,6 +28,7 @@ import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.UpdateResponse;
 import com.linkedin.restli.server.annotations.Action;
+import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.AlternativeKey;
 import com.linkedin.restli.server.annotations.Key;
 import com.linkedin.restli.server.annotations.RestLiAssociation;
@@ -108,29 +109,30 @@ public class AssociationAltKeyResource extends AssociationResourceTemplate<Greet
       return new UpdateResponse(HttpStatus.S_400_BAD_REQUEST);
     }
 
+    update(key, g);
     return new UpdateResponse(HttpStatus.S_204_NO_CONTENT);
   }
 
   @Override
   public BatchUpdateResult<CompoundKey, Greeting> batchUpdate(BatchUpdateRequest<CompoundKey, Greeting> entities)
   {
-    Map<CompoundKey, UpdateResponse> responseMap = new HashMap<CompoundKey, UpdateResponse>();
+    Map<CompoundKey, UpdateResponse> responseMap = new HashMap<>();
     for (Map.Entry<CompoundKey, Greeting> entry : entities.getData().entrySet())
     {
       responseMap.put(entry.getKey(), update(entry.getKey(), entry.getValue()));
     }
-    return new BatchUpdateResult<CompoundKey, Greeting>(responseMap);
+    return new BatchUpdateResult<>(responseMap);
   }
 
   @Override
   public BatchUpdateResult<CompoundKey, Greeting> batchUpdate(BatchPatchRequest<CompoundKey, Greeting> entityUpdates)
   {
-    Map<CompoundKey, UpdateResponse> responseMap = new HashMap<CompoundKey, UpdateResponse>();
+    Map<CompoundKey, UpdateResponse> responseMap = new HashMap<>();
     for (Map.Entry<CompoundKey, PatchRequest<Greeting>> entry : entityUpdates.getData().entrySet())
     {
       responseMap.put(entry.getKey(), update(entry.getKey(), entry.getValue()));
     }
-    return new BatchUpdateResult<CompoundKey, Greeting>(responseMap);
+    return new BatchUpdateResult<>(responseMap);
   }
 
   @Override
@@ -144,11 +146,11 @@ public class AssociationAltKeyResource extends AssociationResourceTemplate<Greet
   @Override
   public BatchUpdateResult<CompoundKey, Greeting> batchDelete(BatchDeleteRequest<CompoundKey, Greeting> deleteRequest)
   {
-    Map<CompoundKey, UpdateResponse> responseMap = new HashMap<CompoundKey, UpdateResponse>();
+    Map<CompoundKey, UpdateResponse> responseMap = new HashMap<>();
     for (CompoundKey id : deleteRequest.getKeys())
     {
       responseMap.put(id, delete(id));
     }
-    return new BatchUpdateResult<CompoundKey, Greeting>(responseMap);
+    return new BatchUpdateResult<>(responseMap);
   }
 }

@@ -215,6 +215,11 @@ public class ProjectionMaskApplier
 
     UnionDataSchema newUnionDataSchema = new UnionDataSchema();
     newUnionDataSchema.setMembers(newUnionMembers, errorMessageBuilder);
+    if (unionDataSchema.getMembers().size() > newUnionMembers.size())
+    {
+      newUnionDataSchema.setPartialSchema(true);
+    }
+
     if (unionDataSchema.getProperties() != null)
     {
       newUnionDataSchema.setProperties(unionDataSchema.getProperties());
@@ -229,7 +234,7 @@ public class ProjectionMaskApplier
       Collection<String> nonSchemaFieldsToAllowInProjectionMask)
   {
     RecordDataSchema newRecordSchema = new RecordDataSchema(new Name(originalSchema.getFullName()), RecordDataSchema.RecordType.RECORD);
-    List<RecordDataSchema.Field> newFields = new ArrayList<RecordDataSchema.Field>();
+    List<RecordDataSchema.Field> newFields = new ArrayList<>();
     for (Map.Entry<String, Object> maskEntry : maskMap.entrySet())
     {
       String maskFieldName = Escaper.unescapePathSegment(maskEntry.getKey());

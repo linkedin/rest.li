@@ -78,7 +78,7 @@ public class CountFilter implements Filter
    */
   protected CompletableFuture<Void> completedFutureWithError(Throwable t)
   {
-    CompletableFuture<Void> future = new CompletableFuture<Void>();
+    CompletableFuture<Void> future = new CompletableFuture<>();
     future.completeExceptionally(t);
     return future;
   }

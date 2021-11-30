@@ -70,8 +70,522 @@ public class TestSchemaTranslator
     assertSame(DataToAvroSchemaTranslationOptions.DEFAULT_OPTIONAL_DEFAULT_MODE, OptionalDefaultMode.TRANSLATE_DEFAULT);
   }
 
+  @DataProvider
+  public Object[][] toAvroSchemaDataTestTypeRefAnnotationPropagationUnionWithAlias()
+  {
+    return new Object[][]
+        {
+            // Test : field properties will be present
+            {
+                "record test {" +
+                    "  @customAnnotation = {" +
+                    "    \"/annotationKey\": \"annotationValue\"" +
+                    "  }" +
+                    "  unionWithAliasField:" +
+                    "  union[a1:int, a2:string]" +
+                    "}"
+                ,
+                "{" +
+                    "  \"type\": \"record\"," +
+                    "  \"name\": \"test\"," +
+                    "  \"fields\": [" +
+                    "    {" +
+                    "      \"name\": \"unionWithAliasField\"," +
+                    "      \"type\": {" +
+                    "        \"type\": \"record\"," +
+                    "        \"name\": \"testUnionWithAliasField\"," +
+                    "        \"fields\": [" +
+                    "          {" +
+                    "            \"name\": \"a1\"," +
+                    "            \"type\": [" +
+                    "              \"null\"," +
+                    "              \"int\"" +
+                    "            ]," +
+                    "            \"default\": null" +
+                    "          }," +
+                    "          {" +
+                    "            \"name\": \"a2\"," +
+                    "            \"type\": [" +
+                    "              \"null\"," +
+                    "              \"string\"" +
+                    "            ]," +
+                    "            \"default\": null" +
+                    "          }," +
+                    "          {" +
+                    "            \"name\": \"fieldDiscriminator\"," +
+                    "            \"type\": {" +
+                    "              \"type\": \"enum\"," +
+                    "              \"name\": \"testUnionWithAliasFieldDiscriminator\"," +
+                    "              \"symbols\": [" +
+                    "                \"a1\"," +
+                    "                \"a2\"" +
+                    "              ]" +
+                    "            }," +
+                    "            \"doc\": \"Contains the name of the field that has its value set.\"" +
+                    "          }" +
+                    "        ]" +
+                    "      }," +
+                    "      \"customAnnotation\": {" +
+                    "        \"/annotationKey\": \"annotationValue\"" +
+                    "      }" +
+                    "    }" +
+                    "  ]" +
+                    "}"
+            },
+             // Test : field properties merged with Typeref properties
+            {
+                "record test {" +
+                    "  @compliance.`/fieldDiscriminator` = \"NONE\" " +
+                    "  unionTyperef:" +
+                    "  @compliance = {" +
+                    "    \"/string\": \"NONE\"" +
+                    "  }" +
+                    "  typeref unionRefWithAlias =" +
+                    "  union[a:int, b:string]" +
+                    "}"
+              ,
+                "{" +
+                    "  \"type\": \"record\"," +
+                    "  \"name\": \"test\"," +
+                    "  \"fields\": [" +
+                    "    {" +
+                    "      \"name\": \"unionTyperef\"," +
+                    "      \"type\": {" +
+                    "        \"type\": \"record\"," +
+                    "        \"name\": \"testUnionTyperef\"," +
+                    "        \"fields\": [" +
+                    "          {" +
+                    "            \"name\": \"a\"," +
+                    "            \"type\": [" +
+                    "              \"null\"," +
+                    "              \"int\"" +
+                    "            ]," +
+                    "            \"default\": null" +
+                    "          }," +
+                    "          {" +
+                    "            \"name\": \"b\"," +
+                    "            \"type\": [" +
+                    "              \"null\"," +
+                    "              \"string\"" +
+                    "            ]," +
+                    "            \"default\": null" +
+                    "          }," +
+                    "          {" +
+                    "            \"name\": \"fieldDiscriminator\"," +
+                    "            \"type\": {" +
+                    "              \"type\": \"enum\"," +
+                    "              \"name\": \"testUnionTyperefDiscriminator\"," +
+                    "              \"symbols\": [" +
+                    "                \"a\"," +
+                    "                \"b\"" +
+                    "              ]" +
+                    "            }," +
+                    "            \"doc\": \"Contains the name of the field that has its value set.\"" +
+                    "          }" +
+                    "        ]" +
+                    "      }," +
+                    "      \"compliance\": {" +
+                    "        \"/fieldDiscriminator\": \"NONE\"," +
+                    "        \"/string\": \"NONE\"" +
+                    "      }" +
+                    "    }" +
+                    "  ]" +
+                    "}"
+            },
+            // Test : field properties overrides Typeref properties
+            {
+                "record test {" +
+                    "  @compliance = {" +
+                    "  \"/fieldDiscriminator\" : \"NONE\" ," +
+                    "  \"/string\" : \"Overriden\"" +
+                    "  }" +
+                    "" +
+                    "  unionTyperef:" +
+                    "  @compliance = {" +
+                    "    \"/string\": \"NONE\"" +
+                    "  }" +
+                    "  typeref unionRefWithAlias =" +
+                    "  union[a:int, b:string]" +
+                    "}"
+              ,
+                "{" +
+                    "  \"type\": \"record\"," +
+                    "  \"name\": \"test\"," +
+                    "  \"fields\": [" +
+                    "    {" +
+                    "      \"name\": \"unionTyperef\"," +
+                    "      \"type\": {" +
+                    "        \"type\": \"record\"," +
+                    "        \"name\": \"testUnionTyperef\"," +
+                    "        \"fields\": [" +
+                    "          {" +
+                    "            \"name\": \"a\"," +
+                    "            \"type\": [" +
+                    "              \"null\"," +
+                    "              \"int\"" +
+                    "            ]," +
+                    "            \"default\": null" +
+                    "          }," +
+                    "          {" +
+                    "            \"name\": \"b\"," +
+                    "            \"type\": [" +
+                    "              \"null\"," +
+                    "              \"string\"" +
+                    "            ]," +
+                    "            \"default\": null" +
+                    "          }," +
+                    "          {" +
+                    "            \"name\": \"fieldDiscriminator\"," +
+                    "            \"type\": {" +
+                    "              \"type\": \"enum\"," +
+                    "              \"name\": \"testUnionTyperefDiscriminator\"," +
+                    "              \"symbols\": [" +
+                    "                \"a\"," +
+                    "                \"b\"" +
+                    "              ]" +
+                    "            }," +
+                    "            \"doc\": \"Contains the name of the field that has its value set.\"" +
+                    "          }" +
+                    "        ]" +
+                    "      }," +
+                    "      \"compliance\": {" +
+                    "        \"/fieldDiscriminator\": \"NONE\"," +
+                    "        \"/string\": \"Overriden\"" +
+                    "      }" +
+                    "    }" +
+                    "  ]" +
+                    "}"
+            },
+            // Test : different annotation namespace are not conflicting each other
+            {
+                "record test {" +
+                    "  @customAnnotation= {" +
+                    "  \"/string\" : \"WillNotOverride\"" +
+                    "  }" +
+                    "" +
+                    "  unionTyperef:" +
+                    "  @compliance = {" +
+                    "    \"/string\": \"NONE\"" +
+                    "  }" +
+                    "  typeref unionRefWithAlias =" +
+                    "  union[a:int, b:string]" +
+                    "}"
+                ,
+                "{" +
+                    "  \"type\": \"record\"," +
+                    "  \"name\": \"test\"," +
+                    "  \"fields\": [" +
+                    "    {" +
+                    "      \"name\": \"unionTyperef\"," +
+                    "      \"type\": {" +
+                    "        \"type\": \"record\"," +
+                    "        \"name\": \"testUnionTyperef\"," +
+                    "        \"fields\": [" +
+                    "          {" +
+                    "            \"name\": \"a\"," +
+                    "            \"type\": [" +
+                    "              \"null\"," +
+                    "              \"int\"" +
+                    "            ]," +
+                    "            \"default\": null" +
+                    "          }," +
+                    "          {" +
+                    "            \"name\": \"b\"," +
+                    "            \"type\": [" +
+                    "              \"null\"," +
+                    "              \"string\"" +
+                    "            ]," +
+                    "            \"default\": null" +
+                    "          }," +
+                    "          {" +
+                    "            \"name\": \"fieldDiscriminator\"," +
+                    "            \"type\": {" +
+                    "              \"type\": \"enum\"," +
+                    "              \"name\": \"testUnionTyperefDiscriminator\"," +
+                    "              \"symbols\": [" +
+                    "                \"a\"," +
+                    "                \"b\"" +
+                    "              ]" +
+                    "            }," +
+                    "            \"doc\": \"Contains the name of the field that has its value set.\"" +
+                    "          }" +
+                    "        ]" +
+                    "      }," +
+                    "      \"compliance\": {" +
+                    "        \"/string\": \"NONE\"" +
+                    "      }," +
+                    "      \"customAnnotation\": {" +
+                    "        \"/string\": \"WillNotOverride\"" +
+                    "      }" +
+                    "    }" +
+                    "  ]" +
+                    "}"
+            },
+            {
+                "record test {" +
+                    "  unionTyperef:" +
+                    "  @compliance = {" +
+                    "    \"/string\": \"NONE\"" +
+                    "  }" +
+                    "  typeref unionRefWithAlias =" +
+                    "  union[int, string]" +
+                    "}",
+                "{" +
+                    "    \"type\": \"record\"," +
+                    "    \"name\": \"test\"," +
+                    "    \"fields\": [" +
+                    "        {" +
+                    "            \"name\": \"unionTyperef\"," +
+                    "            \"type\": [" +
+                    "                \"int\"," +
+                    "                \"string\"" +
+                    "            ]," +
+                    "            \"compliance\": {" +
+                    "                \"/string\": \"NONE\"" +
+                    "            }" +
+                    "        }" +
+                    "    ]" +
+                    "}"
+            },
+            {
+                "record test {" +
+                    "  unionTyperef:" +
+                    "  @compliance = {" +
+                    "    \"/*/f1\": \"NONE\"" +
+                    "  }" +
+                    "  typeref arrayToUnionWithAlias = array[" +
+                    "  union[f1:int, f2:string]" +
+                    "  ]" +
+                    "}",
+                "{" +
+                    "    \"type\": \"record\"," +
+                    "    \"name\": \"test\"," +
+                    "    \"fields\": [" +
+                    "        {" +
+                    "            \"name\": \"unionTyperef\"," +
+                    "            \"type\": {" +
+                    "                \"type\": \"array\"," +
+                    "                \"items\": {" +
+                    "                    \"type\": \"record\"," +
+                    "                    \"name\": \"testUnionTyperef\"," +
+                    "                    \"fields\": [" +
+                    "                        {" +
+                    "                            \"name\": \"f1\"," +
+                    "                            \"type\": [" +
+                    "                                \"null\"," +
+                    "                                \"int\"" +
+                    "                            ]," +
+                    "                            \"default\": null" +
+                    "                        }," +
+                    "                        {" +
+                    "                            \"name\": \"f2\"," +
+                    "                            \"type\": [" +
+                    "                                \"null\"," +
+                    "                                \"string\"" +
+                    "                            ]," +
+                    "                            \"default\": null" +
+                    "                        }," +
+                    "                        {" +
+                    "                            \"name\": \"fieldDiscriminator\"," +
+                    "                            \"type\": {" +
+                    "                                \"type\": \"enum\"," +
+                    "                                \"name\": \"testUnionTyperefDiscriminator\"," +
+                    "                                \"symbols\": [" +
+                    "                                    \"f1\"," +
+                    "                                    \"f2\"" +
+                    "                                ]" +
+                    "                            }," +
+                    "                            \"doc\": \"Contains the name of the field that has its value set.\"" +
+                    "                        }" +
+                    "                    ]" +
+                    "                }" +
+                    "            }," +
+                    "            \"compliance\": {" +
+                    "                \"/*/f1\": \"NONE\"" +
+                    "            }" +
+                    "        }" +
+                    "    ]" +
+                    "}"
+            },
+            {
+                "record test {" +
+                    "  unionTyperef:" +
+                    "  @compliance = {" +
+                    "    \"/$key\": \"None\"," +
+                    "    \"/*/f1\": \"NONE\"" +
+                    "  }" +
+                    "  typeref unionRefNoAlias = map[string, " +
+                    "  union[f1:int, f2:string]" +
+                    "  ]" +
+                    "}",
+                "{" +
+                    "    \"type\": \"record\"," +
+                    "    \"name\": \"test\"," +
+                    "    \"fields\": [" +
+                    "        {" +
+                    "            \"name\": \"unionTyperef\"," +
+                    "            \"type\": {" +
+                    "                \"type\": \"map\"," +
+                    "                \"values\": {" +
+                    "                    \"type\": \"record\"," +
+                    "                    \"name\": \"testUnionTyperef\"," +
+                    "                    \"fields\": [" +
+                    "                        {" +
+                    "                            \"name\": \"f1\"," +
+                    "                            \"type\": [" +
+                    "                                \"null\"," +
+                    "                                \"int\"" +
+                    "                            ]," +
+                    "                            \"default\": null" +
+                    "                        }," +
+                    "                        {" +
+                    "                            \"name\": \"f2\"," +
+                    "                            \"type\": [" +
+                    "                                \"null\"," +
+                    "                                \"string\"" +
+                    "                            ]," +
+                    "                            \"default\": null" +
+                    "                        }," +
+                    "                        {" +
+                    "                            \"name\": \"fieldDiscriminator\"," +
+                    "                            \"type\": {" +
+                    "                                \"type\": \"enum\"," +
+                    "                                \"name\": \"testUnionTyperefDiscriminator\"," +
+                    "                                \"symbols\": [" +
+                    "                                    \"f1\"," +
+                    "                                    \"f2\"" +
+                    "                                ]" +
+                    "                            }," +
+                    "                            \"doc\": \"Contains the name of the field that has its value set.\"" +
+                    "                        }" +
+                    "                    ]" +
+                    "                }" +
+                    "            }," +
+                    "            \"compliance\": {" +
+                    "                \"/$key\": \"None\"," +
+                    "                \"/*/f1\": \"NONE\"" +
+                    "            }" +
+                    "        }" +
+                    "    ]" +
+                    "}"
+            },
+            {
+                "record test {" +
+                    "  unionTyperef:" +
+                    "  @compliance = {" +
+                    "    \"/f1\": \"NONE\"" +
+                    "  }" +
+                    "  typeref unionRefWithAlias =" +
+                    "  union[f1:int, f2:string]" +
+                    "}",
+                "{" +
+                    "    \"type\": \"record\"," +
+                    "    \"name\": \"test\"," +
+                    "    \"fields\": [" +
+                    "        {" +
+                    "            \"name\": \"unionTyperef\"," +
+                    "            \"type\": {" +
+                    "                \"type\": \"record\"," +
+                    "                \"name\": \"testUnionTyperef\"," +
+                    "                \"fields\": [" +
+                    "                    {" +
+                    "                        \"name\": \"f1\"," +
+                    "                        \"type\": [" +
+                    "                            \"null\"," +
+                    "                            \"int\"" +
+                    "                        ]," +
+                    "                        \"default\": null" +
+                    "                    }," +
+                    "                    {" +
+                    "                        \"name\": \"f2\"," +
+                    "                        \"type\": [" +
+                    "                            \"null\"," +
+                    "                            \"string\"" +
+                    "                        ]," +
+                    "                        \"default\": null" +
+                    "                    }," +
+                    "                    {" +
+                    "                        \"name\": \"fieldDiscriminator\"," +
+                    "                        \"type\": {" +
+                    "                            \"type\": \"enum\"," +
+                    "                            \"name\": \"testUnionTyperefDiscriminator\"," +
+                    "                            \"symbols\": [" +
+                    "                                \"f1\"," +
+                    "                                \"f2\"" +
+                    "                            ]" +
+                    "                        }," +
+                    "                        \"doc\": \"Contains the name of the field that has its value set.\"" +
+                    "                    }" +
+                    "                ]" +
+                    "            }," +
+                    "            \"compliance\": {" +
+                    "                \"/f1\": \"NONE\"" +
+                    "            }" +
+                    "        }" +
+                    "    ]" +
+                    "}"
+             },
+            {
+                "record test {" +
+                    "  unionTyperef:" +
+                    "  typeref unionRefWithAlias =" +
+                    "  @compliance = {" +
+                    "    \"/f1\": \"NONE\"" +
+                    "  }" +
+                    "  union[f1:int, f2:string]" +
+                    "}",
+                "{" +
+                    "    \"type\": \"record\"," +
+                    "    \"name\": \"test\"," +
+                    "    \"fields\": [" +
+                    "        {" +
+                    "            \"name\": \"unionTyperef\"," +
+                    "            \"type\": {" +
+                    "                \"type\": \"record\"," +
+                    "                \"name\": \"testUnionTyperef\"," +
+                    "                \"fields\": [" +
+                    "                    {" +
+                    "                        \"name\": \"f1\"," +
+                    "                        \"type\": [" +
+                    "                            \"null\"," +
+                    "                            \"int\"" +
+                    "                        ]," +
+                    "                        \"default\": null" +
+                    "                    }," +
+                    "                    {" +
+                    "                        \"name\": \"f2\"," +
+                    "                        \"type\": [" +
+                    "                            \"null\"," +
+                    "                            \"string\"" +
+                    "                        ]," +
+                    "                        \"default\": null" +
+                    "                    }," +
+                    "                    {" +
+                    "                        \"name\": \"fieldDiscriminator\"," +
+                    "                        \"type\": {" +
+                    "                            \"type\": \"enum\"," +
+                    "                            \"name\": \"testUnionTyperefDiscriminator\"," +
+                    "                            \"symbols\": [" +
+                    "                                \"f1\"," +
+                    "                                \"f2\"" +
+                    "                            ]" +
+                    "                        }," +
+                    "                        \"doc\": \"Contains the name of the field that has its value set.\"" +
+                    "                    }" +
+                    "                ]," +
+                    "                \"compliance\": {" +
+                    "                    \"/f1\": \"NONE\"" +
+                    "                }" +
+                    "            }" +
+                    "        }" +
+                    "    ]" +
+                    "}"
+            }
+            };
+ }
+
  @DataProvider
- public Object[][] toAvroSchemaData_testTypeRefAnnotationPropagation()
+ public Object[][] toAvroSchemaDataTestTypeRefAnnotationPropagation()
  {
    //These test were specially moved out from "toAvroSchemaData" tests because custom logic needed to validate the correctness
    //of those properties
@@ -308,19 +822,33 @@ public class TestSchemaTranslator
 
  }
 
- @Test(dataProvider = "toAvroSchemaData_testTypeRefAnnotationPropagation")
- public void testToAvroSchema_testTypeRefAnnotationPropagation(String schemaBeforeTranslation,
+ @Test(dataProvider = "toAvroSchemaDataTestTypeRefAnnotationPropagationUnionWithAlias")
+ public void testToAvroSchemaTestTypeRefAnnotationPropagationUnionWithAlias(String schemaBeforeTranslation,
                                                                String expectedAvroSchemaAsString) throws Exception
  {
-   DataSchema schema = TestUtil.dataSchemaFromString(schemaBeforeTranslation);
+   DataSchema schema = TestUtil.dataSchemaFromPdlString(schemaBeforeTranslation);
    DataToAvroSchemaTranslationOptions transOptions = new DataToAvroSchemaTranslationOptions(OptionalDefaultMode.TRANSLATE_DEFAULT, JsonBuilder.Pretty.SPACES, EmbedSchemaMode.NONE);
    transOptions.setTyperefPropertiesExcludeSet(new HashSet<>(Arrays.asList("validate", "java")));
 
    String avroSchemaText = SchemaTranslator.dataToAvroSchemaJson(schema, transOptions);
    DataMap avroSchemaAsDataMap = TestUtil.dataMapFromString(avroSchemaText);
    DataMap fieldsPropertiesMap = TestUtil.dataMapFromString(expectedAvroSchemaAsString);
-   assertEquals(fieldsPropertiesMap, avroSchemaAsDataMap);
+   assertEquals(avroSchemaAsDataMap, fieldsPropertiesMap);
  }
+
+  @Test(dataProvider = "toAvroSchemaDataTestTypeRefAnnotationPropagation")
+  public void testToAvroSchemaTestTypeRefAnnotationPropagation(String schemaBeforeTranslation,
+      String expectedAvroSchemaAsString) throws Exception
+  {
+    DataSchema schema = TestUtil.dataSchemaFromString(schemaBeforeTranslation);
+    DataToAvroSchemaTranslationOptions transOptions = new DataToAvroSchemaTranslationOptions(OptionalDefaultMode.TRANSLATE_DEFAULT, JsonBuilder.Pretty.SPACES, EmbedSchemaMode.NONE);
+    transOptions.setTyperefPropertiesExcludeSet(new HashSet<>(Arrays.asList("validate", "java")));
+
+    String avroSchemaText = SchemaTranslator.dataToAvroSchemaJson(schema, transOptions);
+    DataMap avroSchemaAsDataMap = TestUtil.dataMapFromString(avroSchemaText);
+    DataMap fieldsPropertiesMap = TestUtil.dataMapFromString(expectedAvroSchemaAsString);
+    assertEquals(fieldsPropertiesMap, avroSchemaAsDataMap);
+  }
 
 
   @DataProvider
@@ -1778,10 +2306,10 @@ public class TestSchemaTranslator
         DataSchema schema = TestUtil.dataSchemaFromString(schemaText);
         String preTranslateSchemaText = schema.toString();
         String avroTextFromSchema = null;
-        DataToAvroSchemaTranslationOptions transOptions = new DataToAvroSchemaTranslationOptions(optionalDefaultMode, JsonBuilder.Pretty.SPACES, embedSchemaMode);
+        DataToAvroSchemaTranslationOptions transOptions =
+            new DataToAvroSchemaTranslationOptions(optionalDefaultMode, JsonBuilder.Pretty.SPACES, embedSchemaMode);
         transOptions.setTyperefPropertiesExcludeSet(new HashSet<>(Arrays.asList("validate", "java")));
-        avroTextFromSchema = SchemaTranslator.dataToAvroSchemaJson(
-          schema, transOptions);
+        avroTextFromSchema = SchemaTranslator.dataToAvroSchemaJson(schema, transOptions);
 
         if (embedSchemaMode == EmbedSchemaMode.ROOT_ONLY && hasEmbeddedSchema(schema))
         {

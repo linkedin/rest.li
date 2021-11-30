@@ -49,8 +49,8 @@ public class TestRestliSnapshotCompatibilityChecker
   @Test
   public void testIncompatibleRestSpecVsSnapshot()
   {
-    final Collection<CompatibilityInfo> restSpecErrors = new HashSet<CompatibilityInfo>();
-    final Collection<CompatibilityInfo> restSpecDiffs = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> restSpecErrors = new HashSet<>();
+    final Collection<CompatibilityInfo> restSpecDiffs = new HashSet<>();
     restSpecErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "identifier", "type"),
                                             CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from int to long"));
     restSpecErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "alternativeKeys"),
@@ -60,11 +60,11 @@ public class TestRestliSnapshotCompatibilityChecker
     restSpecErrors.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "alternativeKeys", "alt", "keyCoercer"),
                                              CompatibilityInfo.Type.VALUE_NOT_EQUAL, "com.linkedin.restli.tools.twitter.IntLongCoercer", "com.linkedin.restli.tools.twitter.StringLongCoercer"));
     restSpecDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "supports"),
-                                            CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("create"))));
+                                            CompatibilityInfo.Type.SUPERSET, new HashSet<>(Arrays.asList("create"))));
     restSpecDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "methods"),
-                                            CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("create"))));
+                                            CompatibilityInfo.Type.SUPERSET, new HashSet<>(Arrays.asList("create"))));
     restSpecDiffs.add(new CompatibilityInfo(Arrays.<Object>asList("", "collection", "alternativeKeys"),
-                                            CompatibilityInfo.Type.SUPERSET, new HashSet<String>(Arrays.asList("newAlt"))));
+                                            CompatibilityInfo.Type.SUPERSET, new HashSet<>(Arrays.asList("newAlt"))));
 
     final RestLiSnapshotCompatibilityChecker checker = new RestLiSnapshotCompatibilityChecker();
     final CompatibilityInfoMap incompatibleInfoMap = checker.checkRestSpecVsSnapshot(RESOURCES_DIR + FS + "idls" + FS + "twitter-statuses-incompatible.restspec.json",
@@ -103,7 +103,7 @@ public class TestRestliSnapshotCompatibilityChecker
   @Test
   public void testIncompatibleRestLiDataAnnotations()
   {
-    final Collection<CompatibilityInfo> errors = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> errors = new HashSet<>();
     errors.add(new CompatibilityInfo(Arrays.<Object>asList("", "annotations", "intB"),
                                      CompatibilityInfo.Type.ANNOTATION_CHANGE_BREAKS_OLD_CLIENT, "Cannot add ReadOnly annotation"));
     errors.add(new CompatibilityInfo(Arrays.<Object>asList("", "annotations", "validationDemoNext/intA"),
@@ -140,8 +140,8 @@ public class TestRestliSnapshotCompatibilityChecker
   {
     final String nonExistentFilename1 = "NonExistentFile1";
     final String nonExistentFilename2 = "NonExistentFile2";
-    final Collection<CompatibilityInfo> testIncompatibles = new HashSet<CompatibilityInfo>();
-    final Collection<CompatibilityInfo> testCompatibles = new HashSet<CompatibilityInfo>();
+    final Collection<CompatibilityInfo> testIncompatibles = new HashSet<>();
+    final Collection<CompatibilityInfo> testCompatibles = new HashSet<>();
 
     testIncompatibles.add(new CompatibilityInfo(Arrays.<Object>asList(""),
                                                 CompatibilityInfo.Type.RESOURCE_MISSING,
@@ -157,8 +157,8 @@ public class TestRestliSnapshotCompatibilityChecker
                                                CompatibilityLevel.BACKWARDS);
     Assert.assertFalse(infoMap.isCompatible(CompatibilityLevel.BACKWARDS));
 
-    final Collection<CompatibilityInfo> incompatibles = new HashSet<CompatibilityInfo>(infoMap.getIncompatibles());
-    final Collection<CompatibilityInfo> compatibles = new HashSet<CompatibilityInfo>(infoMap.getCompatibles());
+    final Collection<CompatibilityInfo> incompatibles = new HashSet<>(infoMap.getIncompatibles());
+    final Collection<CompatibilityInfo> compatibles = new HashSet<>(infoMap.getCompatibles());
 
     for (CompatibilityInfo te : incompatibles)
     {

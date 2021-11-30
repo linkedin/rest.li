@@ -310,14 +310,14 @@ public class TestFilters extends RestLiIntegrationTest
         new GreetingsTaskBuilders(FORCE_USE_NEXT_OPTIONS),
         new GreetingsTaskRequestBuilders(FORCE_USE_NEXT_OPTIONS)
     };
-    Set<Object> builderWrapperSet = new HashSet<Object>();
+    Set<Object> builderWrapperSet = new HashSet<>();
     for (Object builder : builders)
     {
       builderWrapperSet.add(new RootBuilderWrapper<Long, Greeting>(builder));
     }
-    Set<Tone> toneSet = new HashSet<Tone>(Arrays.asList(Tone.FRIENDLY, Tone.INSULTING));
-    Set<Boolean> responseFilterSet = new HashSet<Boolean>(Arrays.asList(false, true));
-    Set<Exception> exceptionSet = new HashSet<Exception>(Arrays.asList(
+    Set<Tone> toneSet = new HashSet<>(Arrays.asList(Tone.FRIENDLY, Tone.INSULTING));
+    Set<Boolean> responseFilterSet = new HashSet<>(Arrays.asList(false, true));
+    Set<Exception> exceptionSet = new HashSet<>(Arrays.asList(
         new RestLiServiceException(RESP_FILTER_ERROR_STATUS, RESP_FILTER_ERROR_MESSAGE),
         new RestLiServiceException(RESP_FILTER_ERROR_STATUS, RESP_FILTER_ERROR_MESSAGE, new RuntimeException("Original cause")),
         new RoutingException(RESP_FILTER_ERROR_MESSAGE, RESP_FILTER_ERROR_STATUS.getCode())
@@ -336,7 +336,7 @@ public class TestFilters extends RestLiIntegrationTest
   // Filter for testing purposes. Keeps track of number of calls to each function and verifies data in each call
   private class TestFilter implements Filter
   {
-    protected final Integer spValue = new Integer(100);
+    protected final Integer spValue = Integer.valueOf(100);
     protected final String spKey = "Counter";
     protected int numRequests;
     protected int numResponses;
@@ -444,7 +444,7 @@ public class TestFilters extends RestLiIntegrationTest
       {
         throw _responseFilterException;
       }
-      CompletableFuture<Void> future = new CompletableFuture<Void>();
+      CompletableFuture<Void> future = new CompletableFuture<>();
       future.completeExceptionally(t);
       return future;
     }

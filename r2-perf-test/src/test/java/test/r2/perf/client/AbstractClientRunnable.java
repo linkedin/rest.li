@@ -61,7 +61,7 @@ import test.r2.perf.Generator;
     REQ nextMsg;
     while ((nextMsg = _workGen.nextMessage()) != null)
     {
-      final FutureCallback<RES> callback = new FutureCallback<RES>();
+      final FutureCallback<RES> callback = new FutureCallback<>();
 
       long start = System.nanoTime();
 

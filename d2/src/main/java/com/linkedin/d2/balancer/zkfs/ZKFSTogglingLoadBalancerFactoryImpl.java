@@ -34,6 +34,7 @@ import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
 import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
 import com.linkedin.d2.balancer.util.FileSystemDirectory;
 import com.linkedin.d2.balancer.util.TogglingLoadBalancer;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
@@ -87,6 +88,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   private final boolean _useNewEphemeralStoreWatcher;
   private final PartitionAccessorRegistry _partitionAccessorRegistry;
   private final SslSessionValidatorFactory _sslSessionValidatorFactory;
+  private final DeterministicSubsettingMetadataProvider _deterministicSubsettingMetadataProvider;
 
   private static final Logger _log = LoggerFactory.getLogger(ZKFSTogglingLoadBalancerFactoryImpl.class);
 
@@ -175,6 +177,47 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                              D2ClientJmxManager d2ClientJmxManager,
                                              int zookeeperReadWindowMs)
   {
+    this(factory,
+        timeout,
+        timeoutUnit,
+        baseZKPath,
+        fsBasePath,
+        clientFactories,
+        loadBalancerStrategyFactories,
+        d2ServicePath,
+        sslContext,
+        sslParameters,
+        isSSLEnabled,
+        clientServicesConfig,
+        useNewEphemeralStoreWatcher,
+        partitionAccessorRegistry,
+        enableSaveUriDataOnDisk,
+        sslSessionValidatorFactory,
+        d2ClientJmxManager,
+        zookeeperReadWindowMs,
+        null);
+  }
+
+  public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
+      long timeout,
+      TimeUnit timeoutUnit,
+      String baseZKPath,
+      String fsBasePath,
+      Map<String, TransportClientFactory> clientFactories,
+      Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+      String d2ServicePath,
+      SSLContext sslContext,
+      SSLParameters sslParameters,
+      boolean isSSLEnabled,
+      Map<String, Map<String, Object>> clientServicesConfig,
+      boolean useNewEphemeralStoreWatcher,
+      PartitionAccessorRegistry partitionAccessorRegistry,
+      boolean enableSaveUriDataOnDisk,
+      SslSessionValidatorFactory sslSessionValidatorFactory,
+      D2ClientJmxManager d2ClientJmxManager,
+      int zookeeperReadWindowMs,
+      DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider)
+  {
     _factory = factory;
     _lbTimeout = timeout;
     _lbTimeoutUnit = timeoutUnit;
@@ -193,6 +236,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     _sslSessionValidatorFactory = sslSessionValidatorFactory;
     _d2ClientJmxManager = d2ClientJmxManager;
     _zookeeperReadWindowMs = zookeeperReadWindowMs;
+    _deterministicSubsettingMetadataProvider = deterministicSubsettingMetadataProvider;
   }
 
   @Override
@@ -250,7 +294,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     SimpleLoadBalancerState state = new SimpleLoadBalancerState(
             executorService, uriBus, clusterBus, serviceBus, _clientFactories, _loadBalancerStrategyFactories,
             _sslContext, _sslParameters, _isSSLEnabled, _partitionAccessorRegistry,
-            _sslSessionValidatorFactory);
+            _sslSessionValidatorFactory, _deterministicSubsettingMetadataProvider);
     _d2ClientJmxManager.setSimpleLoadBalancerState(state);
 
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, _lbTimeout, _lbTimeoutUnit, executorService);
@@ -280,9 +324,8 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                                                 ScheduledExecutorService executorService,
                                                                 int zookeeperReadWindowMs)
   {
-    ZooKeeperPermanentStore<T> store = new ZooKeeperPermanentStore<T>(zkConnection, serializer, nodePath,
-                                                                      executorService, zookeeperReadWindowMs);
-    return store;
+    return new ZooKeeperPermanentStore<>(zkConnection, serializer, nodePath,
+                                         executorService, zookeeperReadWindowMs);
   }
 
   protected <T> ZooKeeperEphemeralStore<T> createEphemeralStore(ZKConnection zkConnection, String nodePath,
@@ -292,15 +335,13 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                                                 ScheduledExecutorService executorService,
                                                                 int readWindow)
   {
-    ZooKeeperEphemeralStore<T> store = new ZooKeeperEphemeralStore<T>(zkConnection, serializer, merger, nodePath,
+    return new ZooKeeperEphemeralStore<>(zkConnection, serializer, merger, nodePath,
       false, useNewWatcher, backupStoreFilePath, executorService, readWindow);
-    return store;
   }
 
   protected <T> FileStore<T> createFileStore(String path, PropertySerializer<T> serializer)
   {
-    FileStore<T> store = new FileStore<>(path, FileSystemDirectory.FILE_STORE_EXTENSION, serializer);
-    return store;
+    return new FileStore<>(path, FileSystemDirectory.FILE_STORE_EXTENSION, serializer);
   }
 
   public interface ComponentFactory

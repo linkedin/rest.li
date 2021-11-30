@@ -35,6 +35,7 @@ import org.testng.annotations.Test;
  *
  * @author Aman Gupta
  */
+@SuppressWarnings("deprecation")
 public class TestExtensionsDataSchemaResolver
 {
   // Mapping of JAR entry names (resource names) to the content to be written at that entry

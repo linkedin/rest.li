@@ -233,11 +233,11 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
     final DataMap resultsRaw = data.getDataMap(RESULTS);
     if (resultsRaw == null)
     {
-      _results = new ParamlessKeyHashMap<V>(complexKeyType);
+      _results = new ParamlessKeyHashMap<>(complexKeyType);
     }
     else
     {
-      _results = new ParamlessKeyHashMap<V>(
+      _results = new ParamlessKeyHashMap<>(
           CollectionUtils.getMapInitialCapacity(resultsRaw.size(), 0.75f), 0.75f, complexKeyType);
       for (Map.Entry<String, Object> entry : resultsRaw.entrySet())
       {
@@ -251,11 +251,11 @@ public class BatchKVResponse<K, V extends RecordTemplate> extends RecordTemplate
     final DataMap errorsRaw = data.getDataMap(ERRORS);
     if (errorsRaw == null)
     {
-      _errors = new ParamlessKeyHashMap<ErrorResponse>(complexKeyType);
+      _errors = new ParamlessKeyHashMap<>(complexKeyType);
     }
     else
     {
-      _errors = new ParamlessKeyHashMap<ErrorResponse>(
+      _errors = new ParamlessKeyHashMap<>(
           CollectionUtils.getMapInitialCapacity(errorsRaw.size(), 0.75f), 0.75f, complexKeyType);
       for (Map.Entry<String, Object> entry : errorsRaw.entrySet())
       {

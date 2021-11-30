@@ -19,6 +19,7 @@ package com.linkedin.data.template;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.MapDataSchema;
+import com.linkedin.util.ArgumentUtil;
 import java.util.Map;
 
 
@@ -65,5 +66,18 @@ public final class BytesMap extends DirectMapTemplate<ByteString>
   public BytesMap copy() throws CloneNotSupportedException
   {
     return (BytesMap) super.copy();
+  }
+
+  @Override
+  protected Object coerceInput(ByteString object) throws ClassCastException
+  {
+    ArgumentUtil.notNull(object, "object");
+    return object;
+  }
+
+  @Override
+  protected ByteString coerceOutput(Object object) throws TemplateOutputCastException
+  {
+    return DataTemplateUtil.coerceBytesOutput(object);
   }
 }

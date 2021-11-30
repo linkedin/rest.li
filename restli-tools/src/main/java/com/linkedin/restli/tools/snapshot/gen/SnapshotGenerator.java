@@ -77,8 +77,8 @@ public class SnapshotGenerator
 
   public List<NamedDataSchema> generateModelList()
   {
-    List<NamedDataSchema> result = new ArrayList<NamedDataSchema>();
-    Map<String, NamedDataSchema> map = new HashMap<String, NamedDataSchema>();
+    List<NamedDataSchema> result = new ArrayList<>();
+    Map<String, NamedDataSchema> map = new HashMap<>();
     findModelsResource(_topLevelSchema, map, result);
     return result;
   }

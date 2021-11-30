@@ -31,8 +31,8 @@ public class TestDataObjectToObjectCache
   @Test
   public void testPutAndGet()
   {
-    IdentityHashMap<Object, DataTemplate<?>> controlCache = new IdentityHashMap<Object, DataTemplate<?>>();
-    DataObjectToObjectCache<DataTemplate<?>> testCache = new DataObjectToObjectCache<DataTemplate<?>>();
+    IdentityHashMap<Object, DataTemplate<?>> controlCache = new IdentityHashMap<>();
+    DataObjectToObjectCache<DataTemplate<?>> testCache = new DataObjectToObjectCache<>();
 
     populateTestData(controlCache, testCache);
     crossCheckTestData(controlCache, testCache);
@@ -41,8 +41,8 @@ public class TestDataObjectToObjectCache
   @Test
   public void testClone() throws CloneNotSupportedException
   {
-    IdentityHashMap<Object, DataTemplate<?>> controlCache = new IdentityHashMap<Object, DataTemplate<?>>();
-    DataObjectToObjectCache<DataTemplate<?>> testCache = new DataObjectToObjectCache<DataTemplate<?>>();
+    IdentityHashMap<Object, DataTemplate<?>> controlCache = new IdentityHashMap<>();
+    DataObjectToObjectCache<DataTemplate<?>> testCache = new DataObjectToObjectCache<>();
 
     populateTestData(controlCache, testCache);
     testCache = testCache.clone();
@@ -52,7 +52,7 @@ public class TestDataObjectToObjectCache
   @Test
   public void testKeyNotFound()
   {
-    DataObjectToObjectCache<DataTemplate<?>> testCache = new DataObjectToObjectCache<DataTemplate<?>>();
+    DataObjectToObjectCache<DataTemplate<?>> testCache = new DataObjectToObjectCache<>();
 
     Assert.assertNull(testCache.get(new Object()));
     Assert.assertNull(testCache.get(new DataMap()));
@@ -62,7 +62,7 @@ public class TestDataObjectToObjectCache
   @Test
   public void testValueOverwrite()
   {
-    DataObjectToObjectCache<DataTemplate<?>> testCache = new DataObjectToObjectCache<DataTemplate<?>>();
+    DataObjectToObjectCache<DataTemplate<?>> testCache = new DataObjectToObjectCache<>();
     DataMap mapKey = new DataMap();
     DataList listKey = new DataList();
     Object objKey = new Object();

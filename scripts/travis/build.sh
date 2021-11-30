@@ -49,6 +49,33 @@ else
   EXTRA_ARGS=''
 fi
 
+# For PR builds, Skip module-specific tests if its module dependencies haven't been touched
+if [ "$TRAVIS_PULL_REQUEST" != 'false' ]; then
+  CONDITIONAL_TESTING_MODULES='d2 r2-int-test restli-int-test'
+  echo "This is a PR build, so testing will be conditional for these subprojects: [${CONDITIONAL_TESTING_MODULES// /,}]"
+  # If any Gradle file was touched, run all tests just to be safe
+  if (git diff ${TRAVIS_BRANCH}...HEAD --name-only | grep '\.gradle' > /dev/null); then
+    echo "This PR touches a file matching *.gradle, so tests will be run for all subprojects."
+  else
+    # Have to prime the comma-separated list with a dummy value because list construction in bash is hard...
+    EXTRA_ARGS="${EXTRA_ARGS} -Ppegasus.skipTestsForSubprojects=primer"
+    # For all the following modules (which have lengthy tests), determine if they can be skipped
+    for MODULE in $CONDITIONAL_TESTING_MODULES; do
+      echo "Checking test dependencies for subproject $MODULE..."
+      MODULE_DEPENDENCIES="$(./scripts/get-module-dependencies $MODULE testRuntimeClasspath | tr '\n' ' ')"
+      # Create regex to capture lines in the diff's paths, e.g. 'a b c' -> '^\(a\|b\|c\)/'
+      PATH_MATCHING_REGEX="^\\($(echo $MODULE_DEPENDENCIES | sed -z 's/ \+/\\|/g;s/\\|$/\n/g')\\)/"
+      if [ ! -z "$PATH_MATCHING_REGEX" ] && ! (git diff ${TRAVIS_BRANCH}...HEAD --name-only | grep "$PATH_MATCHING_REGEX" > /dev/null); then
+        echo "Computed as... [${MODULE_DEPENDENCIES// /,}]"
+        echo "None of $MODULE's module dependencies have been touched, skipping tests for $MODULE."
+        EXTRA_ARGS="${EXTRA_ARGS},$MODULE"
+      else
+        echo "Some of $MODULE's module dependencies have been touched, tests for $MODULE will remain enabled."
+      fi
+    done
+  fi
+fi
+
 # Run the actual build
 ./gradlew build $EXTRA_ARGS
 EXIT_CODE=$?

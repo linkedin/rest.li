@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 public class PartitionState
 {
   private static final long INITIAL_CLUSTER_GENERATION_ID = -1;
+  private static final int LOG_SIZE_LIMIT = 10;
   private int _partitionId;
   private int _pointsPerWeight;
   private RingFactory<URI> _ringFactory;
@@ -166,7 +167,10 @@ public class PartitionState
         .collect(Collectors.toMap(TrackerClient::getUri, TrackerClient::getCallTracker)));
     _pointsMap = _trackerClientStateMap.entrySet().stream()
         .collect(Collectors.toMap(entry -> entry.getKey().getUri(),
-            entry -> (int) Math.round(entry.getValue().getHealthScore() * entry.getKey().getPartitionWeight(_partitionId) * _pointsPerWeight)));
+            entry -> (int) Math.round(entry.getValue().getHealthScore()
+                * entry.getKey().getPartitionWeight(_partitionId)
+                * entry.getKey().getSubsetWeight(_partitionId)
+                * _pointsPerWeight)));
     _ring = _ringFactory.createRing(_pointsMap, callTrackerMap);
   }
 
@@ -182,7 +186,7 @@ public class PartitionState
 
   List<PartitionStateUpdateListener<PartitionState>> getListeners()
   {
-    return Collections.unmodifiableList(_listeners);
+    return _listeners;
   }
 
   void removeTrackerClient(TrackerClient trackerClient)
@@ -202,14 +206,16 @@ public class PartitionState
   @Override
   public String toString()
   {
-    return "PartitionRelativeLoadBalancerState{" + "_partitionId=" + _partitionId
+    return "PartitionRelativeLoadBalancerState={" + "_partitionId=" + _partitionId
         + ", _clusterGenerationId=" + _clusterGenerationId
         + ", _numHostsInCluster=" + (getTrackerClients().size())
-        + ", _recoveryTrackerClients=" + _recoveryTrackerClients
-        + ", _quarantineMap=" + _quarantineMap.keySet().stream().map(TrackerClient::getUri).collect(Collectors.toList())
-        + ", _pointsMap=" + _pointsMap
-        + ", _trackerClientStateMap=" + _trackerClientStateMap
-        + ", _partitionStats={" + _partitionStats + "}}";
+        + ", _partitionStats={" + _partitionStats + "}"
+        + ", _recoveryTrackerClients={" + _recoveryTrackerClients
+            .stream().limit(LOG_SIZE_LIMIT).map(client -> client.getUri().toString()).collect(Collectors.joining(","))
+        + (_recoveryTrackerClients.size() > LOG_SIZE_LIMIT ? "...(total " + _recoveryTrackerClients.size() + ")" : "") + "}"
+        + ", _quarantineMap={" + _quarantineMap.keySet()
+            .stream().limit(LOG_SIZE_LIMIT).map(client -> client.getUri().toString()).collect(Collectors.joining(","))
+        + (_quarantineMap.size() > LOG_SIZE_LIMIT ? "...(total " + _quarantineMap.size() + ")" : "") + "}}";
   }
 
   class PartitionStats
@@ -244,7 +250,7 @@ public class PartitionState
     {
       return "_avgClusterLatency=" + _avgClusterLatency
           +", _clusterCallCount=" + _clusterCallCount
-          +", _clusterErrorCount= " + _clusterCallCount;
+          +", _clusterErrorCount= " + _clusterErrorCount;
     }
   }
 }

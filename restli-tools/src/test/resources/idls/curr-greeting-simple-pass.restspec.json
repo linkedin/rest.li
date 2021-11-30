@@ -71,6 +71,9 @@
           "doc" : "this action is deprecated"
         }
       }
+    }, {
+      "name" : "threeAction",
+      "doc" : "an action to be marked read-only"
     } ],
     "entity" : {
       "path" : "/greetings/{id}"

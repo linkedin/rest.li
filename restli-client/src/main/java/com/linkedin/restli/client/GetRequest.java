@@ -40,7 +40,7 @@ public class GetRequest<T extends RecordTemplate> extends Request<T>
   private final Class<T> _templateClass;
   private final Object   _id;
 
-  GetRequest(Map<String, String> headers,
+  public GetRequest(Map<String, String> headers,
              List<HttpCookie> cookies,
              Class<T> templateClass,
              Object id,
@@ -55,7 +55,7 @@ public class GetRequest<T extends RecordTemplate> extends Request<T>
           null,
           headers,
           cookies,
-          new EntityResponseDecoder<T>(templateClass),
+        new EntityResponseDecoder<>(templateClass),
           resourceSpec,
           queryParams,
           queryParamClasses,

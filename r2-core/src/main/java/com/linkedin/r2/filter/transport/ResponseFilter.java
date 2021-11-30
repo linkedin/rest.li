@@ -107,7 +107,7 @@ public class ResponseFilter implements StreamFilter, RestFilter
     if (callback == null)
     {
       _log.error("No callback registered in local attributes. Caller will not get response. Attributes: " + context);
-      callback = new NullTransportCallback<T>();
+      callback = new NullTransportCallback<>();
     }
     return callback;
   }

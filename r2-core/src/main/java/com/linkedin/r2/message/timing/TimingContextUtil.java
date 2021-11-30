@@ -205,7 +205,10 @@ public class TimingContextUtil
    */
   private static void logWarning(String message)
   {
-    LOG.debug(message, new RuntimeException(message));
+    if (LOG.isDebugEnabled())
+    {
+      LOG.debug(message, new RuntimeException(message));
+    }
   }
 
   /**

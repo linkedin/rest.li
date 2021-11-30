@@ -34,19 +34,19 @@ public class UriPropertiesTest
     URI uri2 = URI.create("http://linkedin.com");
     URI uri3 = URI.create("https://linkedin.com");
 
-    Map<Integer, PartitionData> map1 = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> map1 = new HashMap<>();
     map1.put(0, new PartitionData(1));
     map1.put(1, new PartitionData(2));
 
-    Map<Integer, PartitionData> map2 = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> map2 = new HashMap<>();
     map2.put(1, new PartitionData(0.5));
 
-    Map<Integer, PartitionData> map3 = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> map3 = new HashMap<>();
     map3.put(1, new PartitionData(2));
     map3.put(3, new PartitionData(3.5));
     map3.put(4, new PartitionData(1));
 
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
     uriData.put(uri1, map1);
     uriData.put(uri2, map2);
     uriData.put(uri3, map3);
@@ -63,7 +63,7 @@ public class UriPropertiesTest
     Assert.assertEquals(properties.getPartitionDataMap(uri3), map3);
 
     // test getUriBySchemeAndPartition
-    Set<URI> set = new HashSet<URI>(1);
+    Set<URI> set = new HashSet<>(1);
     set.add(uri1);
     Assert.assertEquals(properties.getUriBySchemeAndPartition("http", 0), set);
     set.add(uri2);
@@ -73,7 +73,7 @@ public class UriPropertiesTest
     Assert.assertEquals(properties.getUriBySchemeAndPartition("https", 1), set);
     Assert.assertNull(properties.getUriBySchemeAndPartition("rtp", 0));
     Assert.assertNull(properties.getUriBySchemeAndPartition("http", 2));
-    
+
     // test unmodifiability
     Map<URI, Map<Integer, PartitionData>> partitionDesc = properties.getPartitionDesc();
     Map<Integer, PartitionData> partitionDataMap = properties.getPartitionDataMap(uri1);

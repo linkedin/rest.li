@@ -17,6 +17,7 @@
 package com.linkedin.restli.internal.server;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.data.DataList;
 import com.linkedin.parseq.Context;
 import com.linkedin.parseq.Engine;
 import com.linkedin.parseq.Task;
@@ -31,8 +32,10 @@ import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
+import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.Parameter.ParamType;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
+import com.linkedin.restli.restspec.MaxBatchSizeSchema;
 import com.linkedin.restli.server.NonResourceRequestHandler;
 import com.linkedin.restli.server.ResourceContext;
 import com.linkedin.restli.server.RestLiRequestData;
@@ -41,8 +44,10 @@ import com.linkedin.restli.server.UnstructuredDataReactiveResult;
 import com.linkedin.restli.server.config.ResourceMethodConfig;
 import com.linkedin.restli.server.resources.BaseResource;
 import com.linkedin.restli.server.resources.ResourceFactory;
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 
@@ -322,6 +327,8 @@ public class RestLiMethodInvoker
       }
 
       Object[] args = restLiArgumentBuilder.buildArguments(requestData, invokableMethod);
+      // Validate the batch size for batch requests
+      validateMaxBatchSize(requestData, resourceMethodDescriptor, resourceContext);
       // Now invoke the resource implementation.
       doInvoke(resourceMethodDescriptor, resourceMethodConfig, callback, resource, resourceContext, args);
     }
@@ -329,6 +336,60 @@ public class RestLiMethodInvoker
     {
       callback.onError(e);
     }
+  }
+
+  /**
+   * Method is used to validate if the request's batch size is under
+   * the allowed max batch size which is defined in the server resource.
+   *
+   * @throws RestLiServiceException if request's batch size is larger than the allowed max batch size.
+   */
+  private void validateMaxBatchSize(RestLiRequestData requestData, ResourceMethodDescriptor method,
+                                    ServerResourceContext resourceContext) throws RestLiServiceException
+  {
+    MaxBatchSizeSchema maxBatchSizeAnnotation = method.getMaxBatchSize();
+    if (maxBatchSizeAnnotation == null || !maxBatchSizeAnnotation.isValidate())
+    {
+      return;
+    }
+
+    int requestBatchSize = getRequestBatchSize(requestData, method, resourceContext);
+    int maxBatchSize = maxBatchSizeAnnotation.getValue();
+
+    if (requestBatchSize > maxBatchSizeAnnotation.getValue())
+    {
+      throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST,
+              String.format("The request batch size: %s is larger than the allowed max batch size: %s for method: %s",
+                      requestBatchSize, maxBatchSize, method.getMethodName()));
+    }
+  }
+
+  private int getRequestBatchSize(RestLiRequestData requestData, ResourceMethodDescriptor method, ServerResourceContext resourceContext)
+  {
+    switch (method.getMethodType())
+    {
+      case BATCH_GET:
+      case BATCH_DELETE:
+        return requestData.getBatchKeys().size();
+      case BATCH_UPDATE:
+      case BATCH_PARTIAL_UPDATE:
+        return requestData.getBatchKeyEntityMap().size();
+      case BATCH_CREATE:
+        return requestData.getBatchEntities().size();
+      case BATCH_FINDER:
+        return getBatchFinderCriteriaNumber(method, resourceContext);
+      default:
+        return 0;
+    }
+  }
+
+  private int getBatchFinderCriteriaNumber(ResourceMethodDescriptor method, ServerResourceContext resourceContext)
+  {
+    List<Parameter<?>> parameterList = method.getParameters();
+    Integer criteriaParamIndex = method.getBatchFinderCriteriaParamIndex();
+    Parameter<?> criteriaParam = parameterList.get(criteriaParamIndex);
+    DataList criteriaList = (DataList) resourceContext.getStructuredParameter(criteriaParam.getName());
+    return criteriaList.size();
   }
 
   /**

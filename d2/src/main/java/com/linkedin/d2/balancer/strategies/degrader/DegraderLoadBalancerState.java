@@ -58,8 +58,8 @@ public class DegraderLoadBalancerState
       DegraderLoadBalancerStrategyConfig config,
       List<PartitionDegraderLoadBalancerStateListener.Factory> degraderStateListenerFactories)
   {
-    _degraderProperties = degraderProperties != null ? degraderProperties : Collections.<String, String>emptyMap();
-    _partitions = new ConcurrentHashMap<Integer, Partition>();
+    _degraderProperties = degraderProperties != null ? degraderProperties : Collections.emptyMap();
+    _partitions = new ConcurrentHashMap<>();
     _serviceName = serviceName;
     _config = config;
     _degraderStateListenerFactories = degraderStateListenerFactories;
@@ -84,7 +84,7 @@ public class DegraderLoadBalancerState
           new PartitionDegraderLoadBalancerState
               (-1, _config.getClock().currentTimeMillis(), false,
                   new DelegatingRingFactory<>(_config),
-                  new HashMap<URI, Integer>(),
+                  new HashMap<>(),
                   PartitionDegraderLoadBalancerState.Strategy.
                       LOAD_BALANCE,
                   0, 0,

@@ -35,7 +35,7 @@ import java.util.Map;
  */
 public class CreateIdRequest<K, T extends RecordTemplate> extends Request<IdResponse<K>>
 {
-  CreateIdRequest(T input,
+  public CreateIdRequest(T input,
                   Map<String, String> headers,
                   List<HttpCookie> cookies,
                   RestResponseDecoder<IdResponse<K>> decoder,

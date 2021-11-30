@@ -20,6 +20,7 @@ import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.server.ResourceConfigException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +58,7 @@ public class TestRestLiApiBuilder
   @Test(dataProvider = "resourcesWithClashingNamesDataProvider")
   public void testResourceNameClash(Class<?>[] classes)
   {
-    Set<Class<?>> resourceClasses = new HashSet<Class<?>>(Arrays.<Class<?>>asList(classes));
+    Set<Class<?>> resourceClasses = new HashSet<>(Arrays.<Class<?>>asList(classes));
     try
     {
       RestLiApiBuilder.buildResourceModels(resourceClasses);
@@ -103,20 +104,30 @@ public class TestRestLiApiBuilder
     Assert.assertNotNull(parentResource.getSubResource("TestResource"));
   }
 
-  @Test
-  public void testBadResource()
+  @DataProvider(name = "badResources")
+  public Object[][] badResources()
+  {
+    return new Object[][]
+        {
+            { BadResource.class, "bogusKey not found in path keys"},
+            { SymbolsResource.class, "\"symbolTable\" is reserved for internal use"},
+        };
+  }
+
+  @Test(dataProvider = "badResources")
+  public void testBadResource(Class<?> resourceClass, String errorMsg)
   {
     Set<Class<?>> set = new HashSet<>();
     set.add(ParentResource.class);
-    set.add(BadResource.class);
-
+    set.add(resourceClass);
     try
     {
       RestLiApiBuilder.buildResourceModels(set);
       Assert.fail("Building api with BadResource should throw " + ResourceConfigException.class);
     }
-    catch (ResourceConfigException e)  {
-      Assert.assertTrue(e.getMessage().contains("bogusKey not found in path keys"));
+    catch (ResourceConfigException e)
+    {
+      Assert.assertTrue(e.getMessage().contains(errorMsg));
     }
   }
 
@@ -245,6 +256,42 @@ public class TestRestLiApiBuilder
     {
       Assert.fail(String.format("Unexpected exception:  class: %s, message: \"%s\"",
               resourceClass.getSimpleName(), exception.getMessage()));
+    }
+  }
+
+  /**
+   * Tests usage of {@link com.linkedin.restli.server.annotations.PathKeysParam} and
+   * {@link com.linkedin.restli.server.annotations.PathKeyParam} when processing the resource implementation.
+   */
+  @Test
+  public void testPathKeyParamAnnotations()
+  {
+    // Test correct use of both @PathKeyParam and @PathKeysParam
+    final Map<String, ResourceModel> resourceModels = new HashMap<>();
+    try
+    {
+      resourceModels.putAll(RestLiApiBuilder.buildResourceModels(Collections.singleton(SampleResources.PathKeyParamAnnotationsResource.class)));
+    }
+    catch (Exception exception)
+    {
+      Assert.fail(String.format("Unexpected exception: class: %s, message: \"%s\"",
+          SampleResources.PathKeyParamAnnotationsResource.class.getSimpleName(), exception.getMessage()));
+    }
+    Assert.assertEquals(1, resourceModels.size());
+    Assert.assertTrue(resourceModels.containsKey("/pathKeyParamAnnotations"));
+
+    // Test incorrect usage of @PathKeyParam (unrecognized path key name)
+    try
+    {
+      RestLiApiBuilder.buildResourceModels(Collections.singleton(SampleResources.BadPathKeyParamAnnotationsResource.class));
+      Assert.fail("Expected a ResourceConfigException due to unrecognized path key names.");
+    }
+    catch (Exception exception)
+    {
+      Assert.assertTrue(exception instanceof ResourceConfigException);
+      Assert.assertEquals("Parameter unknownId not found in path keys of class class "
+          + "com.linkedin.restli.internal.server.model.SampleResources$BadPathKeyParamAnnotationsResource",
+          exception.getMessage());
     }
   }
 }

@@ -551,7 +551,7 @@ public class DefaultScatterGatherStrategy implements ScatterGatherStrategy
       {
         return (T) new BatchKVResponse(mergedData,
                 request.getResourceSpec().getKeyType(),
-                new TypeSpec<UpdateStatus>(UpdateStatus.class), request.getResourceSpec().getKeyParts(),
+            new TypeSpec<>(UpdateStatus.class), request.getResourceSpec().getKeyParts(),
                 request.getResourceSpec().getComplexKeyType(), protocolVersion);
       }
     }

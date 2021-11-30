@@ -17,7 +17,6 @@
 package com.linkedin.data;
 
 import com.linkedin.data.collections.CheckedList;
-import com.linkedin.data.collections.CommonList;
 import com.linkedin.data.collections.ListChecker;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -96,7 +95,8 @@ public final class DataList extends CheckedList<Object> implements DataComplex
     o._madeReadOnly = false;
     o._instrumented = false;
     o._accessList = null;
-    o._dataComplexHashCode = DataComplexHashCode.nextHashCode();
+    o._dataComplexHashCode = 0;
+    o._isTraversing = null;
 
     return o;
   }
@@ -179,7 +179,7 @@ public final class DataList extends CheckedList<Object> implements DataComplex
     _instrumented = true;
     if (_accessList == null)
     {
-      _accessList = new ArrayList<Integer>(size());
+      _accessList = new ArrayList<>(size());
     }
   }
 
@@ -222,6 +222,19 @@ public final class DataList extends CheckedList<Object> implements DataComplex
   @Override
   public int dataComplexHashCode()
   {
+    if (_dataComplexHashCode != 0)
+    {
+      return _dataComplexHashCode;
+    }
+
+    synchronized (this)
+    {
+      if (_dataComplexHashCode == 0)
+      {
+        _dataComplexHashCode = DataComplexHashCode.nextHashCode();
+      }
+    }
+
     return _dataComplexHashCode;
   }
 
@@ -257,17 +270,36 @@ public final class DataList extends CheckedList<Object> implements DataComplex
     }
   }
 
-  private final static ListChecker<Object> _checker = new ListChecker<Object>()
+  private final static ListChecker<Object> _checker = (list, e) -> Data.checkAllowed((DataComplex) list, e);
+
+  ThreadLocal<Object> isTraversing()
   {
-    @Override
-    public void check(CommonList<Object> list, Object e)
+    if (_isTraversing == null)
     {
-      Data.checkAllowed((DataComplex) list, e);
+      synchronized (this)
+      {
+        if (_isTraversing == null)
+        {
+          _isTraversing = new ThreadLocal<>();
+        }
+      }
     }
-  };
+
+    return _isTraversing;
+  }
+
+  /**
+   * Indicates if this {@link DataList} is currently being traversed by a {@link Data.TraverseCallback} if this value is
+   * not null, or not if this value is null. This is internally marked package private, used for cycle detection and
+   * not meant for use by external callers. This is maintained as a {@link ThreadLocal} to allow for concurrent
+   * traversals of the same {@link DataList} from multiple threads.
+   *
+   * <p>This variable is lazy instantiated since ThreadLocal instantiation can be expensive under thread contention.</p>
+   */
+  private volatile ThreadLocal<Object> _isTraversing = null;
 
   private boolean _madeReadOnly = false;
   private boolean _instrumented = false;
   private ArrayList<Integer> _accessList;
-  private int _dataComplexHashCode = DataComplexHashCode.nextHashCode();
+  private int _dataComplexHashCode = 0;
 }

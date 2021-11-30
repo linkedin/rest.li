@@ -228,7 +228,7 @@ public class TestRestLiResponseEnvelope
           RecordTemplate newResponseRecord = new EmptyRecord();
           RestLiServiceException newResponseException = new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR);
           Map<String, BatchResponseEnvelope.BatchResponseEntry> newBatchResponses =
-              new HashMap<String, BatchResponseEnvelope.BatchResponseEntry>();
+              new HashMap<>();
           newBatchResponses.put("id1",
               new BatchResponseEnvelope.BatchResponseEntry(HttpStatus.S_200_OK, newResponseRecord));
           newBatchResponses.put("id2",
@@ -258,7 +258,7 @@ public class TestRestLiResponseEnvelope
 
           List<BatchFinderResponseEnvelope.BatchFinderEntry> oldItems = batchFinderResponseEnvelope.getItems();
 
-          List<BatchFinderResponseEnvelope.BatchFinderEntry> newItems = new ArrayList<BatchFinderResponseEnvelope.BatchFinderEntry>(2);
+          List<BatchFinderResponseEnvelope.BatchFinderEntry> newItems = new ArrayList<>(2);
 
           RestLiServiceException newBFResponseException = new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR);
           newItems.add(new BatchFinderResponseEnvelope.BatchFinderEntry(newBFResponseException));

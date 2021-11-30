@@ -61,8 +61,8 @@ public class MockActionResponseFactory
    */
   public static <T> ActionResponse<T> create(Class<T> clazz, DataSchema schema, T value)
   {
-    final FieldDef<T> fieldDef = new FieldDef<T>(ActionResponse.VALUE_NAME, clazz, schema);
+    final FieldDef<T> fieldDef = new FieldDef<>(ActionResponse.VALUE_NAME, clazz, schema);
     final RecordDataSchema entitySchema = DynamicRecordMetadata.buildSchema(ActionResponse.class.getName(), Collections.<FieldDef<?>>singletonList(fieldDef));
-    return new ActionResponse<T>(value, fieldDef, entitySchema);
+    return new ActionResponse<>(value, fieldDef, entitySchema);
   }
 }

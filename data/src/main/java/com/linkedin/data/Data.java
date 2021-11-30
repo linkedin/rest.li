@@ -16,19 +16,17 @@
 
 package com.linkedin.data;
 
-
 import com.linkedin.util.ArgumentUtil;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 
 /**
@@ -105,6 +103,49 @@ import java.util.Map;
 public class Data
 {
   /**
+   * Placeholder object populated inside {@link DataList#isTraversing()} or {@link DataMap#isTraversing()} by the
+   * default implementation of {@link CycleChecker} to indicate that the given {@link DataList} or {@link DataMap}
+   * is being traversed.
+   */
+  private static final Object TRAVERSAL_INDICATOR = new Object();
+
+  /**
+   * A no-op cycle checker.
+   */
+  private static final CycleChecker NO_OP_CYCLE_CHECKER = new CycleChecker() {};
+
+  /**
+   * Supplier for cycle checker used when traversing instances using a {@link Data.TraverseCallback}. Applications can
+   * choose to replace this with a supplier vending custom implementations, at their own risk of ensuring correctness.
+   *
+   * <p>The default implementation uses a {@link ThreadLocal} in every {@link DataList} and {@link DataMap} to detect
+   * and record cycles when assertions are enabled, and does NO checks when assertions are disabled.</p>
+   */
+  private static Supplier<CycleChecker> CYCLE_CHECKER_SUPPLIER = () -> {
+    boolean assertionsEnabled = false;
+    assert assertionsEnabled = true;
+    return assertionsEnabled ? DefaultCycleChecker.SHARED_INSTANCE : NO_OP_CYCLE_CHECKER;
+  };
+
+  /**
+   * Override the default cycle checker supplier. Applications using this assume responsibility for correctness of their
+   * {@link CycleChecker} implementations provided by this supplier.
+   *
+   * @param supplier The cycle checker supplier to use. Should not be null.
+   *
+   * @throws IllegalArgumentException if a null supplier is passed in.
+   */
+  public static void setCycleCheckerSupplier(Supplier<CycleChecker> supplier)
+  {
+    if (supplier == null)
+    {
+      throw new IllegalArgumentException("Cycle checker supplier cannot be null");
+    }
+
+    CYCLE_CHECKER_SUPPLIER = supplier;
+  }
+
+  /**
    * Constant value used to indicate that a null value was de-serialized.
    */
   public static final Null NULL = Null.getInstance();
@@ -112,7 +153,7 @@ public class Data
   /**
    * Charset UTF-8
    */
-  public static final Charset UTF_8_CHARSET = Charset.forName("UTF-8");
+  public static final Charset UTF_8_CHARSET = StandardCharsets.UTF_8;
 
   /**
    * A map of all underlying types supported by Data objects.
@@ -129,6 +170,103 @@ public class Data
     TYPE_MAP.put(Float.class, (byte) 7);
     TYPE_MAP.put(Double.class, (byte) 8);
     TYPE_MAP.put(ByteString.class, (byte) 9);
+  }
+
+  /**
+   * Interface to be implemented by cycle checkers.
+   */
+  public interface CycleChecker
+  {
+    /**
+     * Invoked when the start of {@link DataMap} is traversed.
+     *
+     * @param map provides the {@link DataMap} to be traversed.
+     *
+     * @throws IOException If a cycle was detected when processing this.
+     */
+    default void startMap(DataMap map) throws IOException
+    {
+
+    }
+
+    /**
+     * Invoked when the end of {@link DataMap} is traversed.
+     *
+     * @param map provides the {@link DataMap} that ended traversal.
+     *
+     * @throws IOException If a cycle was detected when processing this.
+     */
+    default void endMap(DataMap map) throws IOException
+    {
+
+    }
+
+    /**
+     * Invoked when the start of {@link DataList} is traversed.
+     *
+     * @param list provides the {@link DataList} to be traversed.
+     *
+     * @throws IOException If a cycle was detected when processing this.
+     */
+    default void startList(DataList list) throws IOException
+    {
+
+    }
+
+    /**
+     * Invoked when the end of {@link DataList} is traversed.
+     *
+     * @param list provides the {@link DataList} that ended traversal.
+     *
+     * @throws IOException If a cycle was detected when processing this.
+     */
+    default void endList(DataList list) throws IOException
+    {
+
+    }
+  }
+
+  /**
+   * The default {@link CycleChecker} implementation that leverages {@link DataList#isTraversing()} and
+   * {@link DataMap#isTraversing()} to detect cycles.
+   */
+  private static class DefaultCycleChecker implements CycleChecker
+  {
+    private static final CycleChecker SHARED_INSTANCE = new DefaultCycleChecker();
+
+    @Override
+    public void startMap(DataMap map) throws IOException
+    {
+      if (map.isTraversing().get() == TRAVERSAL_INDICATOR)
+      {
+        throw new IOException("Cycle detected!");
+      }
+
+      map.isTraversing().set(TRAVERSAL_INDICATOR);
+    }
+
+    @Override
+    public void endMap(DataMap map) throws IOException
+    {
+      map.isTraversing().set(null);
+    }
+
+    @Override
+    public void startList(DataList list) throws IOException
+    {
+      if (list.isTraversing().get() == TRAVERSAL_INDICATOR)
+      {
+        throw new IOException("Cycle detected!");
+      }
+
+      list.isTraversing().set(TRAVERSAL_INDICATOR);
+    }
+
+    @Override
+    public void endList(DataList list) throws IOException
+    {
+      list.isTraversing().set(null);
+    }
   }
 
   /**
@@ -150,18 +288,14 @@ public class Data
      * Return an {@link Iterable} with the
      * desired output order of the entries in the traversed {@link DataMap}.
      *
-     * If the order is not significant, then this method should return
-     * the result of {@link DataMap#entrySet()}.
-     *
-     * This interface provides default NoOp for all operations except
-     * {@link TraverseCallback#orderMap(DataMap)}.
+     * If the order is not significant, then this method should return null.
      *
      * @param map provides the {@link DataMap}.
-     * @return entries of the {@link DataMap} entries in the desired output order.
+     * @return entries of the {@link DataMap} entries in the desired output order, null to use the default map ordering.
      */
     default Iterable<Map.Entry<String, Object>> orderMap(DataMap map)
     {
-      return map.entrySet();
+      return null;
     }
 
     /**
@@ -331,21 +465,40 @@ public class Data
    */
   public static void traverse(Object obj, TraverseCallback callback) throws IOException
   {
+    CycleChecker cycleChecker = CYCLE_CHECKER_SUPPLIER.get();
+    if (cycleChecker == null)
+    {
+      throw new IllegalArgumentException("Supplier returned a null cycle checker");
+    }
+
+    traverse(obj, callback, cycleChecker);
+  }
+
+  /**
+   * Traverse object and invoke the callback object with parse events with the given cycle checker.
+   *
+   * @param obj object to parse
+   * @param callback to receive parse events.
+   * @param cycleChecker to detect cycles when processing the object
+   */
+  private static void traverse(Object obj, TraverseCallback callback, CycleChecker cycleChecker) throws IOException
+  {
     if (obj == null || obj == Data.NULL)
     {
       callback.nullValue();
       return;
     }
 
-    switch (Data.TYPE_MAP.get(obj.getClass()))
+    // We intentionally use a string switch here for performance.
+    switch (obj.getClass().getName())
     {
-      case 1:
+      case "java.lang.String":
         callback.stringValue((String) obj);
         return;
-      case 2:
+      case "java.lang.Integer":
         callback.integerValue((Integer) obj);
         return;
-      case 3:
+      case "com.linkedin.data.DataMap":
       {
         DataMap map = (DataMap) obj;
         if (map.isEmpty())
@@ -354,19 +507,64 @@ public class Data
         }
         else
         {
-          callback.startMap(map);
-          Iterable<Map.Entry<String, Object>> orderedEntrySet = callback.orderMap(map);
-          for (Map.Entry<String, Object> entry : orderedEntrySet)
+          try
           {
-            callback.key(entry.getKey());
-            traverse(entry.getValue(), callback);
-          }
-          callback.endMap();
-        }
+            cycleChecker.startMap(map);
+            callback.startMap(map);
+            Iterable<Map.Entry<String, Object>> orderedEntrySet = callback.orderMap(map);
 
+            //
+            // If the ordered entry set is null, use Java 8 forEach to avoid intermediary object
+            // creation for better performance.
+            //
+            if (orderedEntrySet == null)
+            {
+              try
+              {
+                map.forEach((key, value) ->
+                {
+                  try
+                  {
+                    callback.key(key);
+                    traverse(value, callback, cycleChecker);
+                  }
+                  catch (IOException e)
+                  {
+                    throw new IllegalStateException(e);
+                  }
+                });
+              }
+              catch (IllegalStateException e)
+              {
+                if (e.getCause() instanceof IOException)
+                {
+                  throw (IOException) e.getCause();
+                }
+                else
+                {
+                  throw new IOException(e);
+                }
+              }
+            }
+            else
+            {
+              for (Map.Entry<String, Object> entry : orderedEntrySet)
+              {
+                callback.key(entry.getKey());
+                traverse(entry.getValue(), callback, cycleChecker);
+              }
+            }
+
+            callback.endMap();
+          }
+          finally
+          {
+            cycleChecker.endMap(map);
+          }
+        }
         return;
       }
-      case 4:
+      case "com.linkedin.data.DataList":
       {
         DataList list = (DataList) obj;
         if (list.isEmpty())
@@ -375,30 +573,62 @@ public class Data
         }
         else
         {
-          callback.startList(list);
-          for (int index = 0; index < list.size(); index++)
+          try
           {
-            callback.index(index);
-            traverse(list.get(index), callback);
-          }
-          callback.endList();
-        }
+            cycleChecker.startList(list);
+            callback.startList(list);
 
+            // Use Java 8 forEach to minimize intermediary object creation for better performance.
+            final int[] index = {0};
+            try
+            {
+              list.forEach((element) ->
+              {
+                try
+                {
+                  callback.index(index[0]);
+                  traverse(element, callback, cycleChecker);
+                  index[0]++;
+                }
+                catch (IOException e)
+                {
+                  throw new IllegalStateException(e);
+                }
+              });
+            }
+            catch (IllegalStateException e)
+            {
+              if (e.getCause() instanceof IOException)
+              {
+                throw (IOException) e.getCause();
+              }
+              else
+              {
+                throw new IOException(e);
+              }
+            }
+            callback.endList();
+          }
+          finally
+          {
+            cycleChecker.endList(list);
+          }
+        }
         return;
       }
-      case 5:
+      case "java.lang.Boolean":
         callback.booleanValue((Boolean) obj);
         return;
-      case 6:
+      case "java.lang.Long":
         callback.longValue((Long) obj);
         return;
-      case 7:
+      case "java.lang.Float":
         callback.floatValue((Float) obj);
         return;
-      case 8:
+      case "java.lang.Double":
         callback.doubleValue((Double) obj);
         return;
-      case 9:
+      case "com.linkedin.data.ByteString":
         callback.byteStringValue((ByteString) obj);
         return;
     }
@@ -448,20 +678,9 @@ public class Data
    * @param map provide the {@link DataMap}.
    * @return a list of the entries of the {@link DataMap} sorted by the map's keys.
    */
-  public static List<Map.Entry<String,Object>> orderMapEntries(DataMap map)
+  public static List<Map.Entry<String, Object>> orderMapEntries(DataMap map)
   {
-    List<Map.Entry<String,Object>> copy = new ArrayList<Map.Entry<String,Object>>(map.entrySet());
-    Collections.sort(copy,
-                     new Comparator<Map.Entry<String, Object>>()
-                     {
-                       @Override
-                       public int compare(Map.Entry<String, Object> o1,
-                                          Map.Entry<String, Object> o2)
-                       {
-                         return o1.getKey().compareTo(o2.getKey());
-                       }
-                     });
-    return copy;
+    return map.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(Collectors.toList());
   }
 
   /**
@@ -991,61 +1210,38 @@ public class Data
   /**
    * Validate that the Data object is acyclic, i.e. has no loops.
    *
-   * @param o is the Data object to validate.
+   * @param object is the Data object to validate.
    * @return true if the Data object is a acyclic, else return false.
    */
-  static boolean objectIsAcyclic(Object o)
+  static boolean objectIsAcyclic(Object object)
   {
-    return new Object()
+    if (object == null)
     {
-      private IdentityHashMap<DataComplex, Boolean> _visited = new IdentityHashMap<DataComplex, Boolean>();
-      private IdentityHashMap<DataComplex, Boolean> _path = new IdentityHashMap<DataComplex, Boolean>();
+      return true;
+    }
 
-      boolean objectIsAcyclic(Object object)
+    Class<?> klass = object.getClass();
+    if (isPrimitiveClass(klass))
+    {
+      return true;
+    }
+    else if (isComplexClass(klass))
+    {
+      DataComplex complex = (DataComplex) object;
+      try
       {
-        if (object == null)
-        {
-          return true;
-        }
-        Class<?> clas = object.getClass();
-        if (isPrimitiveClass(clas))
-        {
-          return true;
-        }
-        else if (isComplex(object))
-        {
-          DataComplex mutable = (DataComplex) object;
-          Collection<Object> values = mutable.values();
-          Boolean loop = _path.put(mutable, Boolean.TRUE);
-          if (loop == Boolean.TRUE)
-          {
-            // already seen this object in path to root
-            // must be in a loop
-            return false;
-          }
-          // mark as visited to avoid traversing again
-          Boolean visited = _visited.put(mutable, Boolean.TRUE);
-          if (visited == null)
-          {
-            // have not visited this object
-            for (Object value : values)
-            {
-              if (objectIsAcyclic(value) == false)
-              {
-                return false;
-              }
-            }
-            // remove object from path to root
-          }
-          _path.remove(mutable);
-          return true;
-        }
-        else
-        {
-          throw new IllegalStateException("Object of unknown type: " + object);
-        }
+        Data.traverse(complex, new TraverseCallback() {});
+        return true;
       }
-    }.objectIsAcyclic(o);
+      catch (IOException e)
+      {
+        return false;
+      }
+    }
+    else
+    {
+      throw new IllegalStateException("Object of unknown type: " + object);
+    }
   }
 
   /**

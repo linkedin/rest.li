@@ -45,7 +45,7 @@ public abstract class PropertyEventBusTest
   {
     PropertyEventBus<String> bus = getBus();
     PropertyEventTestSubscriber listener = new PropertyEventTestSubscriber();
-    Set<String> listenTos = new HashSet<String>();
+    Set<String> listenTos = new HashSet<>();
 
     listenTos.add("test");
     listenTos.add("test2");
@@ -88,7 +88,7 @@ public abstract class PropertyEventBusTest
   {
     PropertyEventBus<String> bus = getBus();
     PropertyEventTestSubscriber listener = new PropertyEventTestSubscriber();
-    Set<String> listenTos = new HashSet<String>();
+    Set<String> listenTos = new HashSet<>();
 
     listenTos.add("test");
     listenTos.add("test2");
@@ -124,7 +124,7 @@ public abstract class PropertyEventBusTest
     PropertyEventBus<String> bus = getBus();
     PropertyEventTestSubscriber listener1 = new PropertyEventTestSubscriber();
     PropertyEventTestSubscriber listener2 = new PropertyEventTestSubscriber();
-    Set<String> listenTos = new HashSet<String>();
+    Set<String> listenTos = new HashSet<>();
 
     listenTos.add("dtest");
     listenTos.add("dtest2");
@@ -207,10 +207,10 @@ public abstract class PropertyEventBusTest
 
     // Now, switch to a new publisher that does have a value for this property; the
     // subscription should be maintained, and clients should receive an update.
-    MockStore<String> newStore = new MockStore<String>();
+    MockStore<String> newStore = new MockStore<>();
     newStore.put(TEST_PROP, TEST_VALUE);
 
-    bus.setPublisher(new StoreEventPublisher<String>(newStore));
+    bus.setPublisher(new StoreEventPublisher<>(newStore));
 
     // Now, should have received an update with the new value.
     assertEquals(subscriber.properties.get("add-" + TEST_PROP), TEST_VALUE);

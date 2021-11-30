@@ -94,7 +94,7 @@ public class TestDataAssert
     expected.put("key3", "value33");
 
     // values are different at "key3"
-    DataAssert.assertDataMapsEqual(actual, expected, new HashSet<String>(Collections.singletonList("key3")), false);
+    DataAssert.assertDataMapsEqual(actual, expected, new HashSet<>(Collections.singletonList("key3")), false);
   }
 
   @Test

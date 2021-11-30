@@ -71,7 +71,7 @@ public class TestResponseDecoder extends RestLiIntegrationTest
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "dataProvider", retryAnalyzer = ThreeRetries.class)
   public void testNonRestliServerErrorHandling(RestliRequestOptions requestOptions) throws Exception
   {
-    Set<String> keys = new HashSet<String>();
+    Set<String> keys = new HashSet<>();
     keys.add(createDataSize(SERVER_HEADER_OVERLOAD_SIZE));
     BatchGetEntityRequest<String, Message> req = new StringKeysRequestBuilders(requestOptions).batchGet().ids(keys).build();
     ResponseFuture<BatchKVResponse<String, EntityResponse<Message>>> batchKVResponseResponseFuture = getClient().sendRequest(req);

@@ -98,15 +98,15 @@ public class DataSchemaConstants
                                                DataSchema.Type.TYPEREF);
     NAMED_DATA_SCHEMA_TYPE_SET = Collections.unmodifiableSet(namedSet);
 
-    Set<String> schemaKeys = new HashSet<String>(Arrays.asList(ALIASES_KEY, DOC_KEY, FIELDS_KEY, INCLUDE_KEY, ITEMS_KEY, NAME_KEY,
+    Set<String> schemaKeys = new HashSet<>(Arrays.asList(ALIASES_KEY, DOC_KEY, FIELDS_KEY, INCLUDE_KEY, ITEMS_KEY, NAME_KEY,
                                                                NAMESPACE_KEY, PACKAGE_KEY, REF_KEY,
                                                                SIZE_KEY, SYMBOLS_KEY, SYMBOL_DOCS_KEY, TYPE_KEY, VALUES_KEY));
     SCHEMA_KEYS = Collections.unmodifiableSet(schemaKeys);
 
-    Set<String> fieldKeys = new HashSet<String>(Arrays.asList(ALIASES_KEY, DEFAULT_KEY, DOC_KEY, NAME_KEY, OPTIONAL_KEY, ORDER_KEY, TYPE_KEY));
+    Set<String> fieldKeys = new HashSet<>(Arrays.asList(ALIASES_KEY, DEFAULT_KEY, DOC_KEY, NAME_KEY, OPTIONAL_KEY, ORDER_KEY, TYPE_KEY));
     FIELD_KEYS = Collections.unmodifiableSet(fieldKeys);
 
-    Set<String> memberKeys = new HashSet<String>(Arrays.asList(DOC_KEY, ALIAS_KEY, TYPE_KEY));
+    Set<String> memberKeys = new HashSet<>(Arrays.asList(DOC_KEY, ALIAS_KEY, TYPE_KEY));
     MEMBER_KEYS = Collections.unmodifiableSet(memberKeys);
 
     Set<String> restrictedUnionAliases = new HashSet<>(Arrays.asList(DISCRIMINATOR_FIELD));

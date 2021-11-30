@@ -1,0 +1,3 @@
+record FuzzExtensions includes Fuzz {
+  ext1: string
+}

@@ -70,7 +70,7 @@ public class TestChannelPoolStreamHandler
   private static EmbeddedChannel getChannel()
   {
     EmbeddedChannel ch =  new EmbeddedChannel(new RAPStreamResponseDecoder(1000), new RAPStreamResponseHandler(), new ChannelPoolStreamHandler());
-    ch.attr(RAPStreamResponseDecoder.TIMEOUT_ATTR_KEY).set(new Timeout<None>(Executors.newSingleThreadScheduledExecutor(), 1000, TimeUnit.MILLISECONDS, None.none()));
+    ch.attr(RAPStreamResponseDecoder.TIMEOUT_ATTR_KEY).set(new Timeout<>(Executors.newSingleThreadScheduledExecutor(), 1000, TimeUnit.MILLISECONDS, None.none()));
     ch.attr(RAPStreamResponseHandler.CALLBACK_ATTR_KEY).set(response -> {
       StreamResponse streamResponse = response.getResponse();
       streamResponse.getEntityStream().setReader(new DrainReader());

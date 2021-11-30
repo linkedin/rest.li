@@ -98,7 +98,7 @@ public class TestStreamResponse extends AbstractServiceTest
     StreamRequest request = builder.build(EntityStreams.emptyStream());
     final AtomicInteger status = new AtomicInteger(-1);
     final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
+    final AtomicReference<Throwable> error = new AtomicReference<>();
 
     final Callback<None> readerCallback = getReaderCallback(latch, error);
     final BytesReader reader = new BytesReader(BYTE, readerCallback);
@@ -124,7 +124,7 @@ public class TestStreamResponse extends AbstractServiceTest
     StreamRequest request = builder.build(EntityStreams.emptyStream());
     final AtomicInteger status = new AtomicInteger(-1);
     final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
+    final AtomicReference<Throwable> error = new AtomicReference<>();
 
     final Callback<None> readerCallback = getReaderCallback(latch, error);
 
@@ -139,11 +139,11 @@ public class TestStreamResponse extends AbstractServiceTest
     System.out.println(_serverProvider.getClass());
     Assert.assertNotNull(throwable);
 
-    final FutureCallback<None> clientShutdownCallback = new FutureCallback<None>();
+    final FutureCallback<None> clientShutdownCallback = new FutureCallback<>();
     client.shutdown(clientShutdownCallback);
     clientShutdownCallback.get();
 
-    final FutureCallback<None> factoryShutdownCallback = new FutureCallback<None>();
+    final FutureCallback<None> factoryShutdownCallback = new FutureCallback<>();
     clientFactory.shutdown(factoryShutdownCallback);
     factoryShutdownCallback.get();
   }
@@ -155,7 +155,7 @@ public class TestStreamResponse extends AbstractServiceTest
     StreamRequest request = builder.build(EntityStreams.emptyStream());
     final AtomicInteger status = new AtomicInteger(-1);
     final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
+    final AtomicReference<Throwable> error = new AtomicReference<>();
 
     final Callback<None> readerCallback = getReaderCallback(latch, error);
     final TimedBytesReader reader = new TimedBytesReader(BYTE, readerCallback)

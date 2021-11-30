@@ -17,6 +17,8 @@
 package com.linkedin.d2.balancer.properties;
 
 
+import com.linkedin.d2.balancer.properties.util.PropertyUtil;
+import com.linkedin.d2.balancer.subsetting.SubsettingStrategy;
 import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializationException;
@@ -34,6 +36,9 @@ import java.util.Map;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.linkedin.d2.balancer.properties.util.PropertyUtil.mapGet;
+import static com.linkedin.d2.balancer.properties.util.PropertyUtil.mapGetOrDefault;
 
 
 public class ServicePropertiesJsonSerializer implements
@@ -184,17 +189,6 @@ public class ServicePropertiesJsonSerializer implements
     }
   }
 
-  @SuppressWarnings("unchecked")
-  private static <T> T mapGetOrDefault(Map<String, Object> map, String key, T defaultValue)
-  {
-    T value = (T) map.get(key);
-    if (value == null)
-    {
-      value = defaultValue;
-    }
-    return value;
-  }
-
   public ServiceProperties fromMap(Map<String,Object> map)
   {
     Map<String,Object> loadBalancerStrategyProperties = mapGetOrDefault(map, PropertyKeys.LB_STRATEGY_PROPERTIES, Collections.emptyMap());
@@ -202,12 +196,16 @@ public class ServicePropertiesJsonSerializer implements
     Map<String, Object> transportClientProperties = mapGetOrDefault(map, PropertyKeys.TRANSPORT_CLIENT_PROPERTIES, Collections.emptyMap());
     Map<String, String> degraderProperties = mapGetOrDefault(map, PropertyKeys.DEGRADER_PROPERTIES, Collections.emptyMap());
     Map<String, Object> relativeStrategyProperties = mapGetOrDefault(map, PropertyKeys.RELATIVE_STRATEGY_PROPERTIES, Collections.emptyMap());
+    boolean enableClusterSubsetting = map.containsKey(PropertyKeys.ENABLE_CLUSTER_SUBSETTING) ? PropertyUtil.coerce(
+        map.get(PropertyKeys.ENABLE_CLUSTER_SUBSETTING), Boolean.class) : SubsettingStrategy.DEFAULT_ENABLE_CLUSTER_SUBSETTING;
+    int minClusterSubsetSize = map.containsKey(PropertyKeys.MIN_CLUSTER_SUBSET_SIZE) ? PropertyUtil.coerce(
+        map.get(PropertyKeys.MIN_CLUSTER_SUBSET_SIZE), Integer.class) : SubsettingStrategy.DEFAULT_CLUSTER_SUBSET_SIZE;
 
     List<URI> bannedList = mapGetOrDefault(map, PropertyKeys.BANNED_URIS, Collections.emptyList());
     Set<URI> banned = new HashSet<>(bannedList);
     List<String> prioritizedSchemes = mapGetOrDefault(map, PropertyKeys.PRIORITIZED_SCHEMES, Collections.emptyList());
 
-    Map<String, Object> metadataProperties = new HashMap<String,Object>();
+    Map<String, Object> metadataProperties = new HashMap<>();
     String isDefaultService = mapGetOrDefault(map, PropertyKeys.IS_DEFAULT_SERVICE, null);
     if ("true".equalsIgnoreCase(isDefaultService))
     {
@@ -227,6 +225,36 @@ public class ServicePropertiesJsonSerializer implements
 
     List<Map<String, Object>> backupRequests = mapGetOrDefault(map, PropertyKeys.BACKUP_REQUESTS, Collections.emptyList());
 
+    // get canary service properties and canary distribution strategy, if exist
+    if (map.containsKey(PropertyKeys.CANARY_CONFIGS) && map.containsKey(PropertyKeys.CANARY_DISTRIBUTION_STRATEGY))
+    {
+      Map<String, Object> canaryConfigsMap = mapGet(map, PropertyKeys.CANARY_CONFIGS);
+      Map<String, Object> distributionStrategyMap = mapGet(map, PropertyKeys.CANARY_DISTRIBUTION_STRATEGY);
+      ServiceProperties canaryServiceProperties = fromMap(canaryConfigsMap);
+      CanaryDistributionStrategy distributionStrategy = new CanaryDistributionStrategy(
+          mapGetOrDefault(distributionStrategyMap, PropertyKeys.CANARY_STRATEGY, CanaryDistributionStrategy.DEFAULT_STRATEGY_LABEL),
+          mapGetOrDefault(distributionStrategyMap, PropertyKeys.PERCENTAGE_STRATEGY_PROPERTIES, Collections.emptyMap()),
+          mapGetOrDefault(distributionStrategyMap, PropertyKeys.TARGET_HOSTS_STRATEGY_PROPERTIES, Collections.emptyMap()),
+          mapGetOrDefault(distributionStrategyMap, PropertyKeys.TARGET_APPLICATIONS_STRATEGY_PROPERTIES, Collections.emptyMap())
+          );
+      return new ServicePropertiesWithCanary((String) map.get(PropertyKeys.SERVICE_NAME),
+          (String) map.get(PropertyKeys.CLUSTER_NAME),
+          (String) map.get(PropertyKeys.PATH),
+          loadBalancerStrategyList,
+          loadBalancerStrategyProperties,
+          getTransportClientPropertiesWithClientOverrides((String) map.get(PropertyKeys.SERVICE_NAME), transportClientProperties),
+          degraderProperties,
+          prioritizedSchemes,
+          banned,
+          metadataProperties,
+          backupRequests,
+          relativeStrategyProperties,
+          enableClusterSubsetting,
+          minClusterSubsetSize,
+          distributionStrategy,
+          canaryServiceProperties);
+    }
+
     return new ServiceProperties((String) map.get(PropertyKeys.SERVICE_NAME),
                                  (String) map.get(PropertyKeys.CLUSTER_NAME),
                                  (String) map.get(PropertyKeys.PATH),
@@ -238,6 +266,8 @@ public class ServicePropertiesJsonSerializer implements
                                  banned,
                                  metadataProperties,
                                  backupRequests,
-                                 relativeStrategyProperties);
+                                 relativeStrategyProperties,
+                                 enableClusterSubsetting,
+                                 minClusterSubsetSize);
   }
 }

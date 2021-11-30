@@ -25,7 +25,6 @@ import com.linkedin.util.FileUtil;
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JPackage;
-import com.sun.codemodel.writer.FileCodeWriter;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -34,7 +33,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,50 +40,19 @@ import org.slf4j.LoggerFactory;
  * Generate Java data template files from Pegasus Data Model schema files.
  *
  * @author Eran Leshem
+ * @deprecated Use {@link DataTemplateGeneratorCmdLineApp} instead.
  */
+@Deprecated
 public class PegasusDataTemplateGenerator
 {
   /**
    * The system property that specifies whether to generate classes for externally resolved schemas
    */
   public static final String GENERATOR_GENERATE_IMPORTED = "generator.generate.imported";
+  public static final String GENERATOR_GENERATE_LOWERCASE_PATH = "generator.generate.lowercase.path";
+  public static final String GENERATOR_GENERATE_FIELD_MASK = "generator.generate.field.mask";
 
   private static final Logger _log = LoggerFactory.getLogger(PegasusDataTemplateGenerator.class);
-
-  public static class DataTemplatePersistentClassChecker implements JavaCodeUtil.PersistentClassChecker
-  {
-    private final boolean _generateImported;
-    private final TemplateSpecGenerator _specGenerator;
-    private final JavaDataTemplateGenerator _dataTemplateGenerator;
-    private final Set<File> _sourceFiles;
-
-    public DataTemplatePersistentClassChecker(boolean generateImported,
-                                              TemplateSpecGenerator specGenerator,
-                                              JavaDataTemplateGenerator dataTemplateGenerator,
-                                              Set<File> sourceFiles)
-    {
-      _generateImported = generateImported;
-      _specGenerator = specGenerator;
-      _dataTemplateGenerator = dataTemplateGenerator;
-      _sourceFiles = sourceFiles;
-    }
-
-    @Override
-    public boolean isPersistent(JDefinedClass clazz)
-    {
-      if (_generateImported)
-      {
-        return true;
-      }
-      else
-      {
-        final ClassTemplateSpec spec = _dataTemplateGenerator.getGeneratedClasses().get(clazz);
-        final DataSchemaLocation location = _specGenerator.getClassLocation(spec);
-        return location == null  // assume local
-            || _sourceFiles.contains(location.getSourceFile());
-      }
-    }
-  }
 
   public static void main(String[] args)
       throws IOException
@@ -98,6 +65,10 @@ public class PegasusDataTemplateGenerator
 
     final String generateImportedProperty = System.getProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_IMPORTED);
     final boolean generateImported = generateImportedProperty == null ? true : Boolean.parseBoolean(generateImportedProperty);
+    final String generateLowercasePathProperty = System.getProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_LOWERCASE_PATH);
+    final boolean generateLowercasePath = generateLowercasePathProperty == null ?  true : Boolean.parseBoolean(generateLowercasePathProperty);
+    final String generateFieldMaskProperty = System.getProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_FIELD_MASK);
+    final boolean generateFieldMask = Boolean.parseBoolean(generateFieldMaskProperty);
     String resolverPath = System.getProperty(AbstractGenerator.GENERATOR_RESOLVER_PATH);
     if (resolverPath != null && ArgumentFileProcessor.isArgFile(resolverPath))
     {
@@ -112,15 +83,21 @@ public class PegasusDataTemplateGenerator
                                      System.getProperty(JavaCodeGeneratorBase.ROOT_PATH),
                                      generateImported,
                                      args[0],
-                                     schemaFiles);
+                                     schemaFiles,
+                                     generateLowercasePath,
+                                     generateFieldMask);
   }
 
-  public static GeneratorResult run(String resolverPath, String defaultPackage, String rootPath, final boolean generateImported, String targetDirectoryPath, String[] sources)
+  public static GeneratorResult run(String resolverPath, String defaultPackage, String rootPath, final boolean generateImported,
+      String targetDirectoryPath, String[] sources, boolean generateLowercasePath, boolean generateFieldMask)
       throws IOException
   {
-    final DataSchemaParser schemaParser = new DataSchemaParser(resolverPath);
+    final DataSchemaParser schemaParser = new DataSchemaParser.Builder(resolverPath).build();
     final TemplateSpecGenerator specGenerator = new TemplateSpecGenerator(schemaParser.getSchemaResolver());
-    final JavaDataTemplateGenerator dataTemplateGenerator = new JavaDataTemplateGenerator(defaultPackage, rootPath);
+    JavaDataTemplateGenerator.Config config = new JavaDataTemplateGenerator.Config();
+    config.setDefaultPackage(defaultPackage);
+    config.setRootPath(rootPath);
+    config.setFieldMaskMethods(generateFieldMask);
 
     for (DataSchema predefinedSchema : JavaDataTemplateGenerator.PredefinedJavaClasses.keySet())
     {
@@ -133,6 +110,10 @@ public class PegasusDataTemplateGenerator
     {
       specGenerator.generate(entry.getKey(), entry.getValue());
     }
+    config.setProjectionMaskApiChecker(new ProjectionMaskApiChecker(
+        specGenerator, parseResult.getSourceFiles(),
+        JavaCodeUtil.classLoaderFromResolverPath(schemaParser.getResolverPath())));
+    final JavaDataTemplateGenerator dataTemplateGenerator = new JavaDataTemplateGenerator(config);
     for (ClassTemplateSpec spec : specGenerator.getGeneratedSpecs())
     {
       dataTemplateGenerator.generate(spec);
@@ -141,7 +122,7 @@ public class PegasusDataTemplateGenerator
     final JavaCodeUtil.PersistentClassChecker checker = new DataTemplatePersistentClassChecker(generateImported, specGenerator, dataTemplateGenerator, parseResult.getSourceFiles());
 
     final File targetDirectory = new File(targetDirectoryPath);
-    final List<File> targetFiles = JavaCodeUtil.targetFiles(targetDirectory, dataTemplateGenerator.getCodeModel(), JavaCodeUtil.classLoaderFromResolverPath(schemaParser.getResolverPath()), checker);
+    final List<File> targetFiles = JavaCodeUtil.targetFiles(targetDirectory, dataTemplateGenerator.getCodeModel(), JavaCodeUtil.classLoaderFromResolverPath(schemaParser.getResolverPath()), checker, generateLowercasePath);
 
     final List<File> modifiedFiles;
     if (FileUtil.upToDate(parseResult.getSourceFiles(), targetFiles))
@@ -156,7 +137,7 @@ public class PegasusDataTemplateGenerator
       _log.debug("Files: "+ targetFiles);
       validateDefinedClassRegistration(dataTemplateGenerator.getCodeModel(), dataTemplateGenerator.getGeneratedClasses().keySet());
       targetDirectory.mkdirs();
-      dataTemplateGenerator.getCodeModel().build(new FileCodeWriter(targetDirectory, true));
+      dataTemplateGenerator.getCodeModel().build(new CaseSensitiveFileCodeWriter(targetDirectory, true, generateLowercasePath));
     }
 
     return new DefaultGeneratorResult(parseResult.getSourceFiles(), targetFiles, modifiedFiles);

@@ -122,7 +122,7 @@ public class TestConvertSimpleValue
 
     Assert.assertTrue(convertedCustomLong.getClass().equals(customLongClass));
     CustomLong customLong = (CustomLong) convertedCustomLong;
-    Assert.assertTrue(customLong.toLong().equals(new Long(100)));
+    Assert.assertTrue(customLong.toLong().equals(Long.valueOf(100)));
   }
 
   @Test

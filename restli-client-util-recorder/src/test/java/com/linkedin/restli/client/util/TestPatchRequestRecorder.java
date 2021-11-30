@@ -39,7 +39,7 @@ public class TestPatchRequestRecorder
     t2.setMessage("Foo Bar Baz");
     PatchRequest<TestRecord> patchFromGenerator = PatchGenerator.diff(t1, t2);
 
-    PatchRequestRecorder<TestRecord> patchRecorder = new PatchRequestRecorder<TestRecord>(TestRecord.class);
+    PatchRequestRecorder<TestRecord> patchRecorder = new PatchRequestRecorder<>(TestRecord.class);
     patchRecorder.getRecordingProxy().setId(1L).setMessage("Foo Bar Baz");
     PatchRequest<TestRecord> patchFromRecorder = patchRecorder.generatePatchRequest();
 

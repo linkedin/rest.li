@@ -39,6 +39,6 @@ public class BatchFinderCriteriaResultDecoder<T extends RecordTemplate>
   @SuppressWarnings("unchecked")
   public BatchFinderCriteriaResult<T> makeValue(DataMap dataMap)
   {
-    return new BatchFinderCriteriaResult<T>(dataMap, _elementClass);
+    return new BatchFinderCriteriaResult<>(dataMap, _elementClass);
   }
 }

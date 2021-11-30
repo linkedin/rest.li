@@ -71,17 +71,17 @@ public class AvroSchemaGenerator extends AbstractGenerator
 
   private static final Logger _log = LoggerFactory.getLogger(AvroSchemaGenerator.class);
 
-  private final Set<DataSchemaLocation> _sourceLocations = new HashSet<DataSchemaLocation>();
+  private final Set<DataSchemaLocation> _sourceLocations = new HashSet<>();
 
   /**
    * Sources as set.
    */
-  private final Set<String> _sources = new HashSet<String>();
+  private final Set<String> _sources = new HashSet<>();
 
   /**
    * Map of output file and the schema that should be written in the output file.
    */
-  private final Map<File, String> _fileToAvroSchemaMap = new HashMap<File, String>();
+  private final Map<File, String> _fileToAvroSchemaMap = new HashMap<>();
 
   /**
    * Options that specify how Avro schema should be generated.
@@ -244,7 +244,7 @@ public class AvroSchemaGenerator extends AbstractGenerator
 
   protected List<File> targetFiles(File targetDirectory)
   {
-    ArrayList<File> generatedFiles = new ArrayList<File>();
+    ArrayList<File> generatedFiles = new ArrayList<>();
 
     DataSchemaResolver resolver = getSchemaResolver();
     Map<String, DataSchemaLocation> nameToLocations = resolver.nameToDataSchemaLocations();

@@ -85,7 +85,7 @@ public class DirectoryDbSource implements DbSource
 
   private Map<RestRequest, RestResponse> loadDb(File dir, MessageSerializer serializer) throws IOException
   {
-    final Map<RestRequest, RestResponse> db = new HashMap<RestRequest, RestResponse>();
+    final Map<RestRequest, RestResponse> db = new HashMap<>();
 
     final String[] ids = DirectoryDbUtil.listRequestIds(dir);
     Arrays.sort(ids);

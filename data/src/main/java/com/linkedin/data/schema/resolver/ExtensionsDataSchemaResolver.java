@@ -18,23 +18,39 @@ package com.linkedin.data.schema.resolver;
 
 import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
-import com.linkedin.data.schema.grammar.PdlSchemaParser;
-import com.linkedin.data.schema.grammar.PdlSchemaParserFactory;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
  * Combines schema resolver for pegasus data and extensions schema directory.
  *
  * @author Aman Gupta
+ * @deprecated Recommended way to handle parsing extension schemas is by using DataSchemaParser initialized with correct
+ * source and resolver directories. Correct way to build the parser:
+ * <p/>
+ * <pre>{@code
+ * List<SchemaDirectoryName> resolverDirectories = Arrays.asList(
+ *     SchemaDirectoryName.EXTENSIONS, SchemaDirectoryName.PEGASUS);
+ * List<SchemaDirectoryName> sourceDirectories =
+ *     Collections.singletonList(SchemaDirectoryName.EXTENSIONS);
+ * DataSchemaParser parser = new DataSchemaParser.Builder(jarFile)
+ *     .setResolverDirectories(resolverDirectories)
+ *     .setSourceDirectories(sourceDirectories)
+ *     .build();
+ * }</pre>
  */
+@Deprecated
 public class ExtensionsDataSchemaResolver extends AbstractMultiFormatDataSchemaResolver
 {
+  private static final List<SchemaDirectory> RESOLVER_SCHEMA_DIRECTORIES =
+      Arrays.asList(SchemaDirectoryName.PEGASUS, SchemaDirectoryName.EXTENSIONS);
   public ExtensionsDataSchemaResolver(String resolverPath)
   {
     for (DataSchemaParserFactory parserFactory : AbstractMultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES)
     {
-      addResolver(createSchemaResolver(resolverPath, SchemaDirectoryName.PEGASUS, this, parserFactory));
-      addResolver(createSchemaResolver(resolverPath, SchemaDirectoryName.EXTENSIONS, this, parserFactory));
+      addResolver(createSchemaResolver(resolverPath, this, parserFactory));
     }
   }
 
@@ -42,24 +58,26 @@ public class ExtensionsDataSchemaResolver extends AbstractMultiFormatDataSchemaR
   {
     for (DataSchemaParserFactory parserFactory : AbstractMultiFormatDataSchemaResolver.BUILTIN_FORMAT_PARSER_FACTORIES)
     {
-      addResolver(createSchemaResolver(resolverPath, SchemaDirectoryName.PEGASUS, dependencyResolver, parserFactory));
-      addResolver(createSchemaResolver(resolverPath, SchemaDirectoryName.EXTENSIONS, dependencyResolver, parserFactory));
+      addResolver(createSchemaResolver(resolverPath, dependencyResolver, parserFactory));
     }
   }
 
-  private FileDataSchemaResolver createSchemaResolver(String resolverPath, SchemaDirectoryName schemaDirectoryName,
+  private FileDataSchemaResolver createSchemaResolver(String resolverPath,
       DataSchemaResolver dependencyResolver, DataSchemaParserFactory parserFactory)
   {
     FileDataSchemaResolver resolver =
         new FileDataSchemaResolver(parserFactory, resolverPath, dependencyResolver);
     resolver.setExtension("." + parserFactory.getLanguageExtension());
-    resolver.setSchemasDirectoryName(schemaDirectoryName);
+    resolver.setSchemaDirectories(RESOLVER_SCHEMA_DIRECTORIES);
     return resolver;
   }
 
   @Override
-  public SchemaDirectoryName getSchemasDirectoryName()
+  public List<SchemaDirectory> getSchemaDirectories()
   {
-    return SchemaDirectoryName.EXTENSIONS;
+    // This override is to maintain backwards compatibility with the old behavior which used the schema directory name
+    // to parse the source files. Limiting the extension resolver to load only the extension schemas by using only
+    // the extension schema directory.
+    return Collections.singletonList(SchemaDirectoryName.EXTENSIONS);
   }
 }

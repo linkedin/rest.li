@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class TransientDb implements DbSource, DbSink
 {
-  private final ConcurrentMap<RestRequest, RestResponse> _db = new ConcurrentHashMap<RestRequest, RestResponse>();
+  private final ConcurrentMap<RestRequest, RestResponse> _db = new ConcurrentHashMap<>();
 
   @Override
   public void record(RestRequest req, RestResponse res)

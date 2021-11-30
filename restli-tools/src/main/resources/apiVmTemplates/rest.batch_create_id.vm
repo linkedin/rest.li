@@ -1,0 +1,86 @@
+#*
+   Copyright (c) 2021 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*#
+#if($is_interface)
+  #foreach($withEG in [true, false])
+    #if($method.hasOptionalParams() || $method.hasProjectionParams())
+      #doc($method.schema.doc)
+      public CompletionStage<List<CreateIdStatus<${spec.keyClassDisplayName}>>> batchCreate(
+          List<${spec.entityClassName}> entities#if($method.hasRequiredParams() || $withEG),#end
+          #**##methodParamsWithEGroup($method, false, $withEG)##
+            );
+    #end
+
+    #doc($method.schema.doc)
+    public CompletionStage<List<CreateIdStatus<${spec.keyClassDisplayName}>>> batchCreate(
+        List<${spec.entityClassName}> entities#if( $method.hasParams() || $withEG),#end
+        #**##methodParamsWithEGroup($method, true, $withEG)##
+        );
+  #end ## end withEG
+#optionalParamClass($method)
+#else ## is_interface
+  #foreach($withEG in [true, false])
+    #if($method.hasOptionalParams() || $method.hasProjectionParams())
+      #doc($method.schema.doc)
+      public CompletionStage<List<CreateIdStatus<${spec.keyClassDisplayName}>>> batchCreate(
+          List<${spec.entityClassName}> entities#if($method.hasRequiredParams() || $withEG),#end
+          #**##methodParamsWithEGroup($method, false, $withEG)##
+            ){
+        return batchCreate(entities,
+            #**##optionalMethodCallArgsWithEGroup($method, $withEG)##
+        );
+      }
+    #end
+
+    #doc($method.schema.doc)
+    public CompletionStage<List<CreateIdStatus<${spec.keyClassDisplayName}>>> batchCreate(
+        List<${spec.entityClassName}> entities#if( $method.hasParams() || $withEG),#end
+        #**##methodParamsWithEGroup($method, true, $withEG)##
+        ) {
+      Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
+      Map<String, Class<?>> queryParamClasses = #if($method.hasParams() || $method.returnsEntity())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
+      #fillQueryParams($method)
+      #if($method.returnsEntity())
+        #**##returnEntityParam("false")
+      #end
+      @SuppressWarnings("unchecked")
+      BatchCreateIdDecoder<${spec.keyClassDisplayName}> idResponseDecoder = new BatchCreateIdDecoder<>(
+          (TypeSpec<${spec.keyClassDisplayName}>) _resourceSpec.getKeyType(),
+          _resourceSpec.getKeyParts(),
+          _resourceSpec.getComplexKeyType());
+      CollectionRequest<${spec.entityClassName}> input = FluentClientUtils.buildBatchEntityInputs(entities, ${spec.entityClassName}.class);
+
+      BatchCreateIdRequest<${spec.keyClassDisplayName}, ${spec.entityClassName}> request = new BatchCreateIdRequest<>(
+          Collections.emptyMap(),
+          Collections.emptyList(),
+          idResponseDecoder,
+          input,
+          _resourceSpec,
+          queryParams,
+          queryParamClasses,
+          ORIGINAL_RESOURCE_PATH,
+          buildReadOnlyPathKeys(),
+          RestliRequestOptions.DEFAULT_OPTIONS,
+          ## Streaming attachments
+          null);
+      #**##makeRequestAndReturn(
+        "List<CreateIdStatus<${spec.keyClassName}>>",
+        "BatchCreateIdResponse<${spec.keyClassName}>",
+        "resp.getEntity().getElements()",
+        $withEG
+      )##
+    }
+  #end ## end withEG
+#end ## is_interface

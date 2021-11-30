@@ -1,0 +1,9 @@
+namespace com.linkedin.pegasus.generator.test.unnamed
+
+record UnionNameConflict {
+  // Inner class will be named UnionNameConflict$Union to avoid name conflict with record's class
+  unionNameConflict: union [int, string]
+
+  // Inner class will be named UnionNameConflictUnion
+  unionNameConflictUnion: union [int, string]
+}

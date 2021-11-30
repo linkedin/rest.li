@@ -49,7 +49,7 @@ public class BatchPartialUpdateRequest<K, V extends RecordTemplate> extends
   private final Map<K, PatchRequest<V>> _partialUpdateInputMap;
 
   @SuppressWarnings("unchecked")
-  BatchPartialUpdateRequest(Map<String, String> headers,
+  public BatchPartialUpdateRequest(Map<String, String> headers,
                             List<HttpCookie> cookies,
                             CollectionRequest<KeyValueRecord<K, PatchRequest<V>>> entities,
                             Map<String, Object> queryParams,
@@ -65,9 +65,9 @@ public class BatchPartialUpdateRequest<K, V extends RecordTemplate> extends
           entities,
           headers,
           cookies,
-          new BatchUpdateResponseDecoder<K>((TypeSpec<K>) resourceSpec.getKeyType(),
-                                            resourceSpec.getKeyParts(),
-                                            resourceSpec.getComplexKeyType()),
+        new BatchUpdateResponseDecoder<>((TypeSpec<K>) resourceSpec.getKeyType(),
+            resourceSpec.getKeyParts(),
+            resourceSpec.getComplexKeyType()),
           resourceSpec,
           queryParams,
           queryParamClasses,

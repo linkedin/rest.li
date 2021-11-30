@@ -1,0 +1,10 @@
+Usage: ./scripts/get-module-dependencies [OPTION]... MODULE CONFIGURATION
+Calculates the inter-module dependencies for a given module (i.e. subproject) for a given configuration
+(e.g. compile, testRuntimeClasspath). This script must be run from the root project directory.
+
+Options:
+  -h, --help                    print this help text and exit
+
+Examples:
+  ./scripts/get-module-dependencies data testRuntimeClasspath
+                                print the modules which :data depends on in the testRuntimeClasspath configuration

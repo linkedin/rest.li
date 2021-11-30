@@ -14,13 +14,10 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
-
 package com.linkedin.data.transform.filter.request;
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.MaskMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.transform.DataComplexProcessor;
 import com.linkedin.data.transform.DataProcessingException;
@@ -47,14 +44,14 @@ import java.util.Optional;
  * The semantics of applying a MaskTree to a DataMap are documented in {@link com.linkedin.data.transform.DataComplexProcessor}
  */
 
-public class MaskTree
+public class MaskTree extends MaskMap
 {
   /**
    * Initialize a new {@link MaskTree}.
    */
   public MaskTree()
   {
-    _representation = new DataMap();
+    super();
   }
 
   /**
@@ -64,7 +61,7 @@ public class MaskTree
    */
   public MaskTree(DataMap rep)
   {
-    _representation = rep;
+    super(rep);
   }
 
   /**
@@ -130,18 +127,9 @@ public class MaskTree
    */
   public Map<PathSpec, MaskOperation> getOperations()
   {
-    Map<PathSpec, MaskOperation> result = new HashMap<PathSpec, MaskOperation>();
+    Map<PathSpec, MaskOperation> result = new HashMap<>();
     getOperationsImpl(_representation, PathSpec.emptyPath(), result);
     return result;
-  }
-
-  /**
-   * Returning the underlying representation of this {@link MaskTree}.
-   * @return the {@link DataMap} representing this MaskTree
-   */
-  public DataMap getDataMap()
-  {
-    return _representation;
   }
 
   private void getOperationsImpl(DataMap data, PathSpec path, Map<PathSpec, MaskOperation> result)
@@ -208,12 +196,4 @@ public class MaskTree
 
     return (start != null || count != null) ? Optional.of(pathSpec) : Optional.empty();
   }
-
-  @Override
-  public String toString()
-  {
-    return _representation.toString();
-  }
-
-  private DataMap _representation;
 }

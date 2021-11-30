@@ -122,6 +122,10 @@ public class SyncIOHandler implements Writer, Reader
   public void onError(Throwable e)
   {
     _eventQueue.add(new Event(EventType.ResponseDataError, e));
+    if (!(e instanceof AbortedException))
+    {
+      LOG.error("Error while reading Response EntityStream", e);
+    }
   }
 
   public void loop() throws ServletException, IOException
@@ -144,7 +148,7 @@ public class SyncIOHandler implements Writer, Reader
 
   private void handleException(Exception ex)
   {
-    if (_logServletExceptions || ex instanceof RuntimeException)
+    if (_logServletExceptions || ex instanceof RuntimeException || ex instanceof TimeoutException)
     {
       final String message = String.format("Encountered exception, remote=%s", _remoteAddress);
       LOG.info(message, ex);

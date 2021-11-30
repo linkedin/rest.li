@@ -70,7 +70,7 @@ public class AllPartitionsRequestBuilder <T>
       throw new IllegalArgumentException(e);
     }
 
-    final Collection<RequestContext> queryAllRequestContext = new ArrayList<RequestContext>();
+    final Collection<RequestContext> queryAllRequestContext = new ArrayList<>();
     final HostSet uriResult = _mapper.getAllPartitionsMultipleHosts(serviceUri, 1);
     for (URI targetHost : uriResult.getAllHosts())
     {

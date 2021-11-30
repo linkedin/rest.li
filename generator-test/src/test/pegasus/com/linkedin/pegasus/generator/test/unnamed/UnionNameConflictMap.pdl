@@ -1,0 +1,8 @@
+namespace com.linkedin.pegasus.generator.test.unnamed
+
+record UnionNameConflictMap {
+  // Union's inner class should be UnionNameConflict, the map class will be UnionNameConflictMap$Map
+  unionNameConflict: map[string, union[int, string]]
+  // Union's inner class should be UnionNameConflictMap$Union, the map class will be UnionNameConflictMap$UnionMap
+  unionNameConflictMap: map[string, union[int, string]]
+}

@@ -9,4 +9,6 @@ record BatchFinderSchema includes FinderSchema {
    * Indicates the parameter name that contains the criteria list
    */
   batchParam: string
+
+  maxBatchSize: optional MaxBatchSizeSchema
 }

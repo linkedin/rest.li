@@ -126,7 +126,7 @@ public class BatchFinderCriteriaResult<T extends RecordTemplate> extends RecordT
   public List<T> getElements()
   {
     DataList value = (DataList) data().get(ELEMENTS);
-    return new DynamicRecordArray<T>(value, _arraySchema, _elementClass);
+    return new DynamicRecordArray<>(value, _arraySchema, _elementClass);
   }
 
   /**

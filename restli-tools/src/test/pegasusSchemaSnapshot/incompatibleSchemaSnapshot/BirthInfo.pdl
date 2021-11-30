@@ -1,0 +1,15 @@
+/**
+ * This schema is used as a genereted pegasus schema snapshot(.pdl)
+ * to test pegasusSchemaSnapshotCompatibilityChecker
+ * This one represents incompatible changes
+ */
+record BirthInfo {
+  day: string
+  month: long
+  location: optional record Location {
+    latitude: float
+    longitude: float
+    name: optional string
+  }
+  name: string
+}

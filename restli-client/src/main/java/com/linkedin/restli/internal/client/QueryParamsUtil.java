@@ -20,6 +20,7 @@ package com.linkedin.restli.internal.client;
 import com.linkedin.data.DataComplex;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.DataMapBuilder;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.DataTemplate;
 import com.linkedin.data.template.DataTemplateUtil;
@@ -65,7 +66,7 @@ public class QueryParamsUtil
   public static DataMap convertToDataMap(Map<String, Object> queryParams, Map<String, Class<?>> queryParamClasses,
       ProtocolVersion version, ProjectionDataMapSerializer projectionDataMapSerializer)
   {
-    DataMap result = new DataMap(queryParams.size());
+    DataMap result = new DataMap(DataMapBuilder.getOptimumHashMapCapacityFromSize(queryParams.size()));
     for (Map.Entry<String, Object> entry: queryParams.entrySet())
     {
       String key = entry.getKey();
@@ -73,6 +74,13 @@ public class QueryParamsUtil
 
       if (RestConstants.PROJECTION_PARAMETERS.contains(key))
       {
+        // Short-circuit already serialized projection params or projection params already represented as simplified mask tree.
+        if (value instanceof String || value instanceof DataMap)
+        {
+          result.put(key, value);
+          continue;
+        }
+
         @SuppressWarnings("unchecked")
         Set<PathSpec> pathSpecs = (Set<PathSpec>)value;
         DataMap serializedDataMap = projectionDataMapSerializer.toDataMap(key, pathSpecs);
@@ -194,7 +202,7 @@ public class QueryParamsUtil
   {
     assert array != null && array.getClass().isArray();
     int len = Array.getLength(array);
-    List<String> strings = new ArrayList<String>(len);
+    List<String> strings = new ArrayList<>(len);
     for (int i = 0; i < len; ++i)
     {
       Object value = Array.get(array, i);

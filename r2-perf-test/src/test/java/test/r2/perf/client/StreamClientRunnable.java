@@ -41,7 +41,7 @@ public class StreamClientRunnable extends AbstractClientRunnable<StreamRequest, 
       @Override
       public void onSuccess(StreamResponse result)
       {
-        result.getEntityStream().setReader(new PerfStreamReader<StreamResponse>(timingCallback, result));
+        result.getEntityStream().setReader(new PerfStreamReader<>(timingCallback, result));
       }
     };
     _client.streamRequest(nextMsg, callback);

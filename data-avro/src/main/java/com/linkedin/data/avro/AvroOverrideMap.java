@@ -29,7 +29,7 @@ class AvroOverrideMap
 {
   private static final AvroOverride NO_AVRO_OVERRIDE = new AvroOverride(null, null, null, null);
 
-  protected final IdentityHashMap<DataSchema, AvroOverride> _dataSchemaToAvroOverrideMap = new IdentityHashMap<DataSchema, AvroOverride>();
+  protected final IdentityHashMap<DataSchema, AvroOverride> _dataSchemaToAvroOverrideMap = new IdentityHashMap<>();
   protected final AvroOverrideFactory _avroOverrideFactory;
 
   AvroOverrideMap(AvroOverrideFactory avroOverrideFactory)

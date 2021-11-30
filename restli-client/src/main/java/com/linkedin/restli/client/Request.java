@@ -19,8 +19,10 @@ package com.linkedin.restli.client;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.jersey.api.uri.UriTemplate;
 import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.ResourceMethod;
@@ -28,7 +30,9 @@ import com.linkedin.restli.common.ResourceProperties;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.RestResponseDecoder;
+import com.linkedin.restli.internal.common.IllegalMaskException;
 import com.linkedin.restli.internal.common.ResourcePropertiesImpl;
+import com.linkedin.restli.internal.common.URIMaskUtil;
 import com.linkedin.restli.internal.common.URIParamUtils;
 import java.net.HttpCookie;
 import java.util.Collections;
@@ -297,15 +301,37 @@ public class Request<T>
   /**
    * This method is to be exposed in the extending classes when appropriate
    */
+  @SuppressWarnings("unchecked")
   protected Set<PathSpec> getFields()
   {
-    @SuppressWarnings("unchecked")
-    Set<PathSpec> fieldsSet = (Set<PathSpec>) _queryParams.get(RestConstants.FIELDS_PARAM);
-    if (fieldsSet == null)
-    {
+    Object fields = _queryParams.get(RestConstants.FIELDS_PARAM);
+    if (fields == null) {
       return Collections.emptySet();
     }
-    return fieldsSet;
+
+    if (fields instanceof Set)
+    {
+      return (Set<PathSpec>) fields;
+    }
+    else if (fields instanceof String)
+    {
+      try
+      {
+        MaskTree tree = URIMaskUtil.decodeMaskUriFormat((String) fields);
+        return tree.getOperations().keySet();
+      }
+      catch (IllegalMaskException e)
+      {
+        throw new IllegalArgumentException("Field param was a string and it did not represent a serialized mask tree", e);
+      }
+    }
+    else if (fields instanceof DataMap)
+    {
+      MaskTree tree = new MaskTree((DataMap) fields);
+      return tree.getOperations().keySet();
+    }
+
+    throw new IllegalArgumentException("Fields param is of unrecognized type: " + fields.getClass());
   }
 
   /**

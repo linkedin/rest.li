@@ -1,0 +1,17 @@
+namespace com.linkedin.restli.restspec
+
+/**
+ * Schema representing a max batch size.
+ */
+record MaxBatchSizeSchema {
+
+ /**
+  * Value of the max batch size.
+  */
+ value: int
+
+ /**
+  * Flag which is used to specify whether valid request batch size based on the max batch size value.
+  */
+ validate: optional boolean = false
+}

@@ -1,0 +1,8 @@
+namespace com.linkedin.restli.example
+
+/**
+ * Extensions for album
+ */
+record AlbumExtensions includes Album {
+  locations: array[string]
+}

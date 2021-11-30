@@ -37,7 +37,7 @@ public class TestMockBatchResponseFactory
     Greeting g1 = new Greeting().setId(1L).setMessage("g1");
     Greeting g2 = new Greeting().setId(2L).setMessage("g2");
 
-    Map<String, Greeting> recordTemplates = new HashMap<String, Greeting>();
+    Map<String, Greeting> recordTemplates = new HashMap<>();
     recordTemplates.put("1", g1);
     recordTemplates.put("2", g2);
 

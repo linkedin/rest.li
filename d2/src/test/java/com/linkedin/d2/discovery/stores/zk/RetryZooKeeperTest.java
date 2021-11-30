@@ -44,8 +44,8 @@ public class RetryZooKeeperTest {
   private static final String _dummyPath = "/dummy/path";
   private static final String _dummyParentPath = "/dummy";
   private static final int _dummyVersion = 1;
-  private static final List<String> _dummyList = new ArrayList<String>();
-  private static final List<ACL> _dummyACL = new ArrayList<ACL>();
+  private static final List<String> _dummyList = new ArrayList<>();
+  private static final List<ACL> _dummyACL = new ArrayList<>();
   private static final Object _dummyCtx = new Object();
   private static final Stat _dummyStat = new Stat();
 
@@ -408,7 +408,7 @@ public class RetryZooKeeperTest {
     // connection loss in create
     expectCreateCallbackWithCode(_connectionLossRC);
 
-    List<String> children = new ArrayList<String>();
+    List<String> children = new ArrayList<>();
     children.add("ephemeral-3.14159");
     children.add("ephemeral-6.26");
     rzkPartialMock.zkGetChildren(
@@ -430,7 +430,7 @@ public class RetryZooKeeperTest {
     // connection loss in create, again
     expectCreateCallbackWithCode(_connectionLossRC);
 
-    List<String> childrenWithOurChild = new ArrayList<String>();
+    List<String> childrenWithOurChild = new ArrayList<>();
     childrenWithOurChild.add("ephemeral-3.14159");
     childrenWithOurChild.add("ephemeral-6.26");
     childrenWithOurChild.add("ephemeral" + rzkPartialMock.getUuid() + "1");
@@ -465,7 +465,7 @@ public class RetryZooKeeperTest {
     // connection loss in create, again
     expectCreateCallbackWithCode(_connectionLossRC);
 
-    List<String> childrenWithThatKid = new ArrayList<String>();
+    List<String> childrenWithThatKid = new ArrayList<>();
     childrenWithThatKid.add("ephemeral-3.14159");
     childrenWithThatKid.add("ephemeral-6.26");
     childrenWithThatKid.add("ephemeral" + rzkPartialMock.getUuid() + "1");

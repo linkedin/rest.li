@@ -2,6 +2,7 @@ package com.linkedin.restli.internal.server.util;
 
 import com.linkedin.restli.server.InvalidMimeTypeException;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -9,6 +10,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 
@@ -52,6 +55,8 @@ import org.apache.commons.lang.math.NumberUtils;
 public final class MIMEParse
 {
 
+  private static final String QUALITY_PARAM = "q";
+
   /**
    * Parse results container
    */
@@ -67,11 +72,25 @@ public final class MIMEParse
     @Override
     public String toString()
     {
-      StringBuffer s = new StringBuffer("('" + type + "', '" + subType
-                                                + "', {");
-      for (String k : params.keySet())
-        s.append("'" + k + "':'" + params.get(k) + "',");
+      StringBuilder s = new StringBuilder("('").append(type).append("', '").append(subType).append("', {");
+      params.forEach((k, v) -> s.append("'").append(k).append("':'").append(v).append("',"));
       return s.append("})").toString();
+    }
+
+    /**
+     * Build the String for the content type header
+     */
+    String toContentType() {
+      StringBuilder s = new StringBuilder(type).append("/").append(subType);
+      params.forEach((k, v) ->
+      {
+        // Exclude accept type's "q" param from the content type
+        if (!k.equals(QUALITY_PARAM))
+        {
+          s.append("; ").append(k).append("=").append(v);
+        }
+      });
+      return s.toString();
     }
   }
 
@@ -87,14 +106,16 @@ public final class MIMEParse
   {
     String[] parts = StringUtils.split(mimeType, ";");
     ParseResults results = new ParseResults();
-    results.params = new HashMap<String, String>();
+    results.params = new HashMap<>();
 
     for (int i = 1; i < parts.length; ++i)
     {
       String p = parts[i];
       String[] subParts = StringUtils.split(p, '=');
       if (subParts.length == 2)
+      {
         results.params.put(subParts[0].trim(), subParts[1].trim());
+      }
     }
     String fullType = parts[0].trim();
 
@@ -126,10 +147,10 @@ public final class MIMEParse
   protected static ParseResults parseMediaRange(String range)
   {
     ParseResults results = parseMimeType(range);
-    String q = results.params.get("q");
+    String q = results.params.get(QUALITY_PARAM);
     float f = NumberUtils.toFloat(q, 1);
     if (StringUtils.isBlank(q) || f < 0 || f > 1)
-      results.params.put("q", "1");
+      results.params.put(QUALITY_PARAM, "1");
     return results;
   }
 
@@ -178,6 +199,7 @@ public final class MIMEParse
   {
     int bestFitness = -1;
     float bestFitQ = 0;
+    Map<String, String> bestFitParams = Collections.emptyMap();
     ParseResults target = parseMediaRange(mimeType);
 
     for (ParseResults range : parsedRanges)
@@ -185,13 +207,12 @@ public final class MIMEParse
       if ((target.type.equals(range.type) || range.type.equals("*") || target.type
               .equals("*"))
               && (target.subType.equals(range.subType)
-              || range.subType.equals("*") || target.subType
-              .equals("*")))
+              || range.subType.equals("*") || target.subType.equals("*")))
       {
         for (String k : target.params.keySet())
         {
           int paramMatches = 0;
-          if (!k.equals("q") && range.params.containsKey(k)
+          if (!k.equals(QUALITY_PARAM) && range.params.containsKey(k)
                   && target.params.get(k).equals(range.params.get(k)))
           {
             paramMatches++;
@@ -202,13 +223,17 @@ public final class MIMEParse
           if (fitness > bestFitness)
           {
             bestFitness = fitness;
-            bestFitQ = NumberUtils
-                    .toFloat(range.params.get("q"), 0);
+            bestFitQ = NumberUtils.toFloat(range.params.get(QUALITY_PARAM), 0);
+            bestFitParams = range.params;
           }
         }
       }
     }
-    return new FitnessAndQuality(bestFitness, bestFitQ);
+    FitnessAndQuality fitnessAndQuality = new FitnessAndQuality(bestFitness, bestFitQ);
+    target.params = bestFitParams;
+    fitnessAndQuality.mimeType = target.toContentType();
+
+    return fitnessAndQuality;
   }
 
   /**
@@ -233,7 +258,7 @@ public final class MIMEParse
    */
   public static float quality(String mimeType, String ranges)
   {
-    List<ParseResults> results = new LinkedList<ParseResults>();
+    List<ParseResults> results = new LinkedList<>();
     for (String r : StringUtils.split(ranges, ','))
       results.add(parseMediaRange(r));
     return qualityParsed(mimeType, results);
@@ -247,27 +272,37 @@ public final class MIMEParse
    *
    * MimeParse.bestMatch(Arrays.asList(new String[]{"application/xbel+xml",
    * "text/xml"}), "text/*;q=0.5,*; q=0.1") 'text/xml'
+   *
+   * @return content-type
    */
   public static String bestMatch(Collection<String> supported, String header)
   {
-    List<ParseResults> parseResults = new LinkedList<ParseResults>();
-    List<FitnessAndQuality> weightedMatches = new LinkedList<FitnessAndQuality>();
-    for (String r : StringUtils.split(header, ','))
-      parseResults.add(parseMediaRange(r));
+    return bestMatch(supported.stream(), header);
+  }
 
-    for (String s : supported)
-    {
-      FitnessAndQuality fitnessAndQuality = fitnessAndQualityParsed(s,
-                                                                    parseResults);
-      fitnessAndQuality.mimeType = s;
-      weightedMatches.add(fitnessAndQuality);
-    }
-    Collections.sort(weightedMatches);
+  /**
+   * Takes a list of supported mime-types and finds the best match for all the
+   * media-ranges listed in header. The value of header must be a string that
+   * conforms to the format of the HTTP Accept: header. The value of
+   * 'supported' is a list of mime-types.
+   *
+   * MimeParse.bestMatch(Arrays.asList(new String[]{"application/xbel+xml",
+   * "text/xml"}), "text/*;q=0.5,*; q=0.1") 'text/xml'
+   *
+   * @return content-type
+   */
+  public static String bestMatch(Stream<String> supported, String header)
+  {
+    List<ParseResults> parseResults = Arrays.stream(StringUtils.split(header, ','))
+        .map(MIMEParse::parseMediaRange)
+        .collect(Collectors.toList());
 
-    FitnessAndQuality lastOne = weightedMatches
-            .get(weightedMatches.size() - 1);
-    return NumberUtils.compare(lastOne.quality, 0) != 0 ? lastOne.mimeType
-            : "";
+    FitnessAndQuality lastOne = supported.map(s -> fitnessAndQualityParsed(s, parseResults))
+        .sorted()
+        .reduce((first, second) -> second)
+        .orElseThrow(() -> new InvalidMimeTypeException(header));
+
+    return NumberUtils.compare(lastOne.quality, 0) != 0 ? lastOne.mimeType : "";
   }
 
   /**
@@ -281,13 +316,23 @@ public final class MIMEParse
    */
   public static List<String> parseAcceptType(final String header)
   {
-    List<String> acceptTypes = new LinkedList<String>();
-    for (String acceptType : StringUtils.split(header, ','))
-    {
-      final ParseResults parseResults = parseMimeType(acceptType);
-      acceptTypes.add(parseResults.type + "/" + parseResults.subType);
-    }
-    return acceptTypes;
+    return parseAcceptTypeStream(header).collect(Collectors.toList());
+  }
+
+  /**
+   * Returns a {@link Stream} of {@link String}s representing all possible accept types from the provided header.
+   * The provided header should be the value of the 'Accept' header. This method simply returns the primary type
+   * followed by the subtype, meaning 'primaryType/subType'. For example it will return 'application/json' or
+   * 'multipart/related'. Therefore no quality factor information is preserved in the returned list of accept types.
+   *
+   * @param header the header to parse
+   * @return a Stream of Strings representing all possible accept types
+   */
+  public static Stream<String> parseAcceptTypeStream(final String header)
+  {
+    return Arrays.stream(StringUtils.split(header, ','))
+        .map(MIMEParse::parseMimeType)
+        .map(parseResults -> parseResults.type + "/" + parseResults.subType);
   }
 
   //Disable instantiation

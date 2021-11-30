@@ -67,5 +67,5 @@ public class PhotoDatabaseImpl implements PhotoDatabase
   // database instances and hash maps are the same for all sessions.
   // These shared variables need synchronization for consistency.
   private final AtomicLong _currId = new AtomicLong();
-  private final Map<Long, Photo> _data = new ConcurrentHashMap<Long, Photo>();
+  private final Map<Long, Photo> _data = new ConcurrentHashMap<>();
 }

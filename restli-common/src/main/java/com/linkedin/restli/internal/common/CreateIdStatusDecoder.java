@@ -63,6 +63,6 @@ public class CreateIdStatusDecoder<K>
     {
       key = (K) ResponseUtils.convertKey(id, _keyType, _keyParts, _complexKeyType, _version);
     }
-    return new CreateIdStatus<K>(dataMap, key);
+    return new CreateIdStatus<>(dataMap, key);
   }
 }

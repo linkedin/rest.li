@@ -81,14 +81,14 @@ public class ZooKeeperEphemeralStoreTest
     client.start();
 
 
-    ZooKeeperEphemeralStore<String> store = new ZooKeeperEphemeralStore<String>(
+    ZooKeeperEphemeralStore<String> store = new ZooKeeperEphemeralStore<>(
             client,
             new PropertyStringSerializer(),
             new PropertyStringMerger(),
             "/test-path",
             false,
             true);
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     store.start(callback);
     callback.get();
     return store;

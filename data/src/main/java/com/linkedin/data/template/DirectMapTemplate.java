@@ -18,6 +18,7 @@ package com.linkedin.data.template;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.util.ArgumentUtil;
@@ -72,7 +73,7 @@ public abstract class DirectMapTemplate<V> extends AbstractMapTemplate<V>
       {
         @SuppressWarnings("unchecked")
         V v = (V) value;
-        value = coerceInput(v);
+        value = safeCoerceInput(v);
       }
       catch (ClassCastException exc)
       {
@@ -97,7 +98,7 @@ public abstract class DirectMapTemplate<V> extends AbstractMapTemplate<V>
   @Override
   public V put(String key, V value) throws ClassCastException, TemplateOutputCastException
   {
-    return coerceOutput(_map.put(key, coerceInput(value)));
+    return coerceOutput(CheckedUtil.putWithoutChecking(_map, key, safeCoerceInput(value)));
   }
 
   @Override
@@ -112,7 +113,7 @@ public abstract class DirectMapTemplate<V> extends AbstractMapTemplate<V>
     @Override
     public boolean add(Map.Entry<String, V> entry) throws ClassCastException
     {
-      coerceInput(entry.getValue());
+      safeCoerceInput(entry.getValue());
       return _map.entrySet().add((Map.Entry<String, Object>) entry);
     }
 
@@ -137,7 +138,7 @@ public abstract class DirectMapTemplate<V> extends AbstractMapTemplate<V>
       }
       if (valueClass.isEnum())
       {
-        return _map.entrySet().contains(new AbstractMap.SimpleImmutableEntry<String, String>((String) key, value.toString()));
+        return _map.entrySet().contains(new AbstractMap.SimpleImmutableEntry<>((String) key, value.toString()));
       }
       else
       {
@@ -181,7 +182,7 @@ public abstract class DirectMapTemplate<V> extends AbstractMapTemplate<V>
               @Override
               public V setValue(V value) throws ClassCastException, TemplateOutputCastException
               {
-                V ret = coerceOutput(_entry.setValue(coerceInput(value)));
+                V ret = coerceOutput(_entry.setValue(safeCoerceInput(value)));
                 _value = null;
                 return ret;
               }
@@ -217,6 +218,24 @@ public abstract class DirectMapTemplate<V> extends AbstractMapTemplate<V>
     public boolean retainAll(Collection<?> c)
     {
       return _map.entrySet().retainAll(c);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private Object safeCoerceInput(Object object) throws ClassCastException
+  {
+    //
+    // This UGLY hack is needed because we have code that expects some types to be artificially inter-fungible
+    // and even tests for it, for example coercing between number types.
+    //
+    ArgumentUtil.notNull(object, "object");
+    if (object.getClass() != _valueClass)
+    {
+      return DataTemplateUtil.coerceInput((V) object, _valueClass, _dataClass);
+    }
+    else
+    {
+      return coerceInput((V) object);
     }
   }
 

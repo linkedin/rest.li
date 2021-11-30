@@ -158,10 +158,10 @@ public class TestMapTemplate
       assertTrue(map1.equals(input));
       assertFalse(map1.equals(null));
       assertFalse(map1.equals(adds));
-      assertFalse(map1.equals(new HashMap<String,E>()));
+      assertFalse(map1.equals(new HashMap<>()));
       map2.clear();
-      Map<String,E> hashMap2 = new HashMap<String,E>();
-      List<Map.Entry<String,E>> inputList = new ArrayList<Map.Entry<String, E>>(input.entrySet());
+      Map<String,E> hashMap2 = new HashMap<>();
+      List<Map.Entry<String,E>> inputList = new ArrayList<>(input.entrySet());
       int lastHash = 0;
       for (int i = 0; i < inputList.size(); ++i)
       {
@@ -206,7 +206,7 @@ public class TestMapTemplate
         E got = map3.get(key);
         assertTrue(got != null);
         assertEquals(value, got);
-        assertSame(value, got);
+        assertSame(map3.get(key), got);
         assertTrue(map3.containsKey(key));
         assertTrue(map3.containsValue(value));
         assertTrue(map3.toString().contains(key + "=" + value));
@@ -230,7 +230,8 @@ public class TestMapTemplate
         E replaced = map3.put(key, newValue);
         assertTrue(replaced != null);
         assertEquals(replaced, value);
-        assertSame(replaced, value);
+        E got = map3.get(key);
+        assertSame(map3.get(key), got);
         assertTrue(map3.containsKey(key));
         assertTrue(map3.containsValue(newValue));
         assertTrue(map3.toString().contains(key));
@@ -264,7 +265,6 @@ public class TestMapTemplate
         E removed = map4.remove(key);
         assertTrue(removed != null);
         assertEquals(value, removed);
-        assertSame(value, removed);
         assertFalse(map4.containsKey(key));
         assertFalse(map4.containsValue(value));
         map4Size--;
@@ -401,10 +401,10 @@ public class TestMapTemplate
       assertFalse(entrySet6.contains(null));
       assertFalse(entrySet6.contains(1));
       assertFalse(entrySet6.contains(new Object()));
-      assertFalse(entrySet6.contains(new AbstractMap.SimpleEntry<String, Object>(null, null)));
-      assertFalse(entrySet6.contains(new AbstractMap.SimpleEntry<String, Object>("xxxx", null)));
-      assertFalse(entrySet6.contains(new AbstractMap.SimpleEntry<String, Object>("xxxx", "xxxx")));
-      assertFalse(entrySet6.contains(new AbstractMap.SimpleEntry<String, Object>("xxxx", new Object())));
+      assertFalse(entrySet6.contains(new AbstractMap.SimpleEntry<>(null, null)));
+      assertFalse(entrySet6.contains(new AbstractMap.SimpleEntry<>("xxxx", null)));
+      assertFalse(entrySet6.contains(new AbstractMap.SimpleEntry<>("xxxx", "xxxx")));
+      assertFalse(entrySet6.contains(new AbstractMap.SimpleEntry<>("xxxx", new Object())));
 
       // entrySet iterator
       for (Map.Entry<String, E> e : map6.entrySet())
@@ -538,7 +538,7 @@ public class TestMapTemplate
       map8.putAll(input);
       Set<Map.Entry<String, E>> entrySet7 = map7.entrySet();
       assertTrue(entrySet7.isEmpty());
-      Map<String, E> hashMap7 = new HashMap<String, E>();
+      Map<String, E> hashMap7 = new HashMap<>();
       lastHash = 0;
       for (int i = 0; i < inputList.size(); ++i)
       {
@@ -782,7 +782,7 @@ public class TestMapTemplate
         String key = e.getKey();
         E castToValue = castTo.get(key);
         assertEquals(e.getValue(), castToValue);
-        assertTrue(e.equals(new AbstractMap.SimpleEntry<String,E>(key, castToValue)));
+        assertTrue(e.equals(new AbstractMap.SimpleEntry<>(key, castToValue)));
         assertFalse(e.equals(null));
         assertFalse(e.equals(new Object()));
 
@@ -1076,14 +1076,14 @@ public class TestMapTemplate
   @Test
   public void testMapOfStringMap()
   {
-    Map<String, StringMap> input = new HashMap<String, StringMap>();
+    Map<String, StringMap> input = new HashMap<>();
     for (int i = 0; i < 5; ++i)
     {
       String key = "input" + i;
       input.put(key, new StringMap());
       input.get(key).put("subinput" + i, "subinputvalue" + i);
     }
-    Map<String, StringMap> adds = new HashMap<String, StringMap>();
+    Map<String, StringMap> adds = new HashMap<>();
     for (int i = 0; i < 5; ++i)
     {
       String key = "add" + i;
@@ -1185,14 +1185,14 @@ public class TestMapTemplate
   @Test
   public void testFooRecordMap()
   {
-    Map<String, FooRecord> input = new HashMap<String, FooRecord>();
+    Map<String, FooRecord> input = new HashMap<>();
     for (int i = 0; i < 5; ++i)
     {
       String key = "input" + i;
       input.put(key, new FooRecord());
       input.get(key).setBar("subinputvalue" + i);
     }
-    Map<String, FooRecord> adds = new HashMap<String, FooRecord>();
+    Map<String, FooRecord> adds = new HashMap<>();
     for (int i = 0; i < 5; ++i)
     {
       String key = "add" + i;
@@ -1255,7 +1255,7 @@ public class TestMapTemplate
     {
       MapDataSchema schema = (MapDataSchema) DataTemplateUtil.parseSchema("{ \"type\" : \"map\", \"values\" : \"" + e.getKey() + "\" }");
       @SuppressWarnings("unchecked")
-      PrimitiveLegacyMap<?> map = new PrimitiveLegacyMap<Object>(new DataMap(), schema, (Class)e.getValue());
+      PrimitiveLegacyMap<?> map = new PrimitiveLegacyMap<>(new DataMap(), schema, (Class<?>)e.getValue());
     }
     EnumLegacyMap enumMap = new EnumLegacyMap(new DataMap());
   }

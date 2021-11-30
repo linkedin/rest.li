@@ -16,11 +16,20 @@
 
 package com.linkedin.data.collections;
 
+import com.linkedin.data.Data;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+
 
 /**
  * Checked Map.
@@ -53,7 +62,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   public CheckedMap()
   {
     _checker = null;
-    _map = new HashMap<K,V>();
+    _map = new HashMap<>();
   }
 
   /**
@@ -65,7 +74,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   {
     _checker = null;
     checkAll(map);
-    _map = new HashMap<K,V>(map);
+    _map = new HashMap<>(map);
   }
 
   /**
@@ -78,7 +87,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   public CheckedMap(int initialCapacity)
   {
     _checker = null;
-    _map = new HashMap<K,V>(initialCapacity);
+    _map = new HashMap<>(initialCapacity);
   }
 
   /**
@@ -92,7 +101,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   public CheckedMap(int initialCapacity, float loadFactor)
   {
     _checker = null;
-    _map = new HashMap<K,V>(initialCapacity, loadFactor);
+    _map = new HashMap<>(initialCapacity, loadFactor);
   }
 
   /**
@@ -103,7 +112,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   public CheckedMap(MapChecker<K,V> checker)
   {
     _checker = checker;
-    _map = new HashMap<K,V>();
+    _map = new HashMap<>();
   }
 
   /**
@@ -119,7 +128,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   {
     _checker = checker;
     checkAll(map);
-    _map = new HashMap<K,V>(map);
+    _map = new HashMap<>(map);
   }
 
   /**
@@ -134,7 +143,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   public CheckedMap(int initialCapacity, MapChecker<K,V> checker)
   {
     _checker = checker;
-    _map = new HashMap<K,V>(initialCapacity);
+    _map = new HashMap<>(initialCapacity);
   }
 
   /**
@@ -149,14 +158,23 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   public CheckedMap(int initialCapacity, float loadFactor, MapChecker<K,V> checker)
   {
     _checker = checker;
-    _map = new HashMap<K,V>(initialCapacity, loadFactor);
+    _map = new HashMap<>(initialCapacity, loadFactor);
   }
 
   @Override
   public void clear()
   {
     checkMutability();
+    Set<K> keys = null;
+    if (_changeListenerHead != null)
+    {
+      keys = new HashSet<>(keySet());
+    }
     _map.clear();
+    if (keys != null)
+    {
+      notifyChangeListenersOnClear(keys);
+    }
   }
 
   @Override
@@ -166,6 +184,8 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
     CheckedMap<K,V> o = (CheckedMap<K,V>) super.clone();
     o._map = (HashMap<K,V>) _map.clone();
     o._readOnly = false;
+    o._changeListenerHead = null;
+    o._changeListenerReferenceQueue = null;
     return o;
   }
 
@@ -232,7 +252,9 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   {
     checkKeyValue(key, value);
     checkMutability();
-    return _map.put(key, value);
+    V oldValue = _map.put(key, value);
+    notifyChangeListenersOnPut(key, value);
+    return oldValue;
   }
 
   @Override
@@ -241,19 +263,47 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
     checkAll(m);
     checkMutability();
     _map.putAll(m);
+    notifyChangeListenersOnPutAll(m);
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public V remove(Object key)
   {
     checkMutability();
-    return _map.remove(key);
+    V oldValue = _map.remove(key);
+
+    if (!(oldValue == null || oldValue == Data.NULL))
+    {
+      notifyChangeListenersOnPut((K) key, null);
+    }
+
+    return oldValue;
   }
 
   @Override
   public String toString()
   {
     return _map.toString();
+  }
+
+  @Override
+  public void forEach(BiConsumer<? super K, ? super V> action)
+  {
+    _map.forEach(action);
+  }
+
+  /**
+   * Removes all of the entries of this map that satisfy the given predicate.
+   *
+   * @param filter a predicate which returns {@code true} for elements to be
+   *        removed
+   * @return {@code true} if any elements were removed
+   */
+  public boolean removeIf(Predicate<? super Entry<K, V>> filter)
+  {
+    checkMutability();
+    return _map.entrySet().removeIf(filter);
   }
 
   @Override
@@ -299,6 +349,37 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
     }
   }
 
+  /**
+   * Add a change listener to be notified of changes to the underlying map.
+   *
+   * <p>This class internally maintains weak references to the listeners to avoid leaking them.</p>
+   *
+   * @param listener The listener to register.
+   */
+  public final void addChangeListener(ChangeListener<K, V> listener)
+  {
+    //
+    // Read only maps cannot be mutated, so they don't need change listeners.
+    //
+    if (_readOnly)
+    {
+      return;
+    }
+
+    if (_changeListenerReferenceQueue == null)
+    {
+      _changeListenerReferenceQueue = new ReferenceQueue<>();
+    }
+    else
+    {
+      purgeStaleChangeListeners();
+    }
+    // Maintain a weak reference to to the listener to avoid leaking the wrapper beyond its
+    // lifetime.
+    _changeListenerHead = new  WeakListNode<>(
+        new WeakReference<>(listener, _changeListenerReferenceQueue), _changeListenerHead);
+  }
+
   final private void checkKeyValue(K key, V value)
   {
     if (_checker != null)
@@ -332,13 +413,33 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   protected V putWithoutChecking(K key, V value)
   {
     checkMutability();
-    return _map.put(key, value);
+    V oldValue = _map.put(key, value);
+    notifyChangeListenersOnPut(key, value);
+    return oldValue;
   }
 
   V putWithAssertedChecking(K key, V value)
   {
     assert(assertCheckKeyValue(key, value)) : "Check is failed";
     return putWithoutChecking(key, value);
+  }
+
+  /**
+   * Put that does not invoke checker or change notifications but does check for read-only, use with extreme caution.
+   *
+   * This method skips all checks.
+   *
+   * @param key key with which the specified value is to be associated.
+   * @param value to be associated with the specified key.
+   * @return the previous value associated with key, or null if there was no mapping for key.
+   *         A null return can also indicate that the map previously associated null with key.
+   * @throws UnsupportedOperationException if the map is read-only.
+   */
+  V putWithoutCheckingOrChangeNotification(K key, V value)
+  {
+    checkMutability();
+    assert(assertCheckKeyValue(key, value)) : "Check is failed";
+    return _map.put(key, value);
   }
 
   /**
@@ -350,6 +451,7 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
   {
     checkMutability();
     _map.putAll(src);
+    notifyChangeListenersOnPutAll(src);
   }
 
   void putAllWithAssertedChecking(Map<? extends K, ? extends V> src)
@@ -394,7 +496,120 @@ public class CheckedMap<K,V> implements CommonMap<K,V>, Cloneable
     }
   }
 
+  private void notifyChangeListenersOnPut(K key, V value)
+  {
+    purgeStaleChangeListeners();
+    if (_changeListenerHead == null)
+    {
+      return;
+    }
+    forEachChangeListener(listener -> listener.onUnderlyingMapChanged(key, value));
+  }
+
+  private void notifyChangeListenersOnPutAll(Map<? extends K, ? extends V> map)
+  {
+    purgeStaleChangeListeners();
+    if (_changeListenerHead == null)
+    {
+      return;
+    }
+    forEachChangeListener(listener -> map.forEach(listener::onUnderlyingMapChanged));
+  }
+
+  private void notifyChangeListenersOnClear(Set<? extends K> keys)
+  {
+    purgeStaleChangeListeners();
+    if (_changeListenerHead == null)
+    {
+      return;
+    }
+
+    forEachChangeListener(listener -> keys.forEach(key -> listener.onUnderlyingMapChanged(key, null)));
+  }
+
+  /**
+   * Change listener interface invoked when the underlying map changes.
+   */
+  public interface ChangeListener<K, V>
+  {
+    /**
+     * Listener method called whenever an entry in the underlying map is updated or removed.
+     *
+     * @param key Key being updated.
+     * @param value Updated value, can be null when entries are removed.
+     */
+    void onUnderlyingMapChanged(K key, V value);
+  }
+
+  private void purgeStaleChangeListeners()
+  {
+    if (_changeListenerReferenceQueue != null && _changeListenerReferenceQueue.poll() != null)
+    {
+      // Clear finalized weak references.
+      while (_changeListenerReferenceQueue.poll() != null)
+      {
+        // Do nothing, as we are just clearing the reference queue.
+      }
+      // Now iterate over change listeners and purge stale references.
+      WeakListNode<ChangeListener<K, V>> node = _changeListenerHead,  prev = null;
+      while (node != null)
+      {
+        if (node._object.get() == null)
+        {
+          if (prev == null)
+          {
+            _changeListenerHead = node._next;
+          }
+          else
+          {
+            prev._next = node._next;
+          }
+        }
+        else
+        {
+          prev = node;
+        }
+        node = node._next;
+      }
+    }
+  }
+
+  private void forEachChangeListener(Consumer<ChangeListener<K, V>> listenerConsumer)
+  {
+    WeakListNode<ChangeListener<K, V>> node = _changeListenerHead;
+    while (node != null)
+    {
+      WeakReference<ChangeListener<K, V>> listenerRef = node._object;
+      ChangeListener<K, V> listener = listenerRef.get();
+      if (listener != null)
+      {
+        listenerConsumer.accept(listener);
+      }
+      node = node._next;
+    }
+  }
+
   private boolean _readOnly = false;
   protected MapChecker<K,V> _checker;
+  // Change listeners are mostly used by map wrappers, and we always iterate through them
+  // linearly, so use a linked list.
+  protected WeakListNode<ChangeListener<K, V>> _changeListenerHead;
+  // Reference queue holds any change listener weak references finalized by GC. It being non-empty is a signal
+  // to purge change listeners of stale entries.
+  private ReferenceQueue<ChangeListener<K, V>> _changeListenerReferenceQueue;
   private HashMap<K,V> _map;
+
+  /**
+   * A singly-linked list node that holds weak references to objects.
+   */
+  static class WeakListNode<T> {
+    final WeakReference<T> _object;
+    WeakListNode<T> _next;
+
+    WeakListNode(WeakReference<T> object, WeakListNode<T> next)
+    {
+      this._object = object;
+      this._next = next;
+    }
+  }
 }

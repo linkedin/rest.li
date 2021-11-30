@@ -16,11 +16,9 @@
 
 package com.linkedin.restli.client.uribuilders;
 
-
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.client.FindRequest;
 import com.linkedin.restli.common.ProtocolVersion;
-import java.net.URI;
 
 
 /**
@@ -34,11 +32,10 @@ class FindRequestUriBuilder extends AbstractRestliRequestUriBuilder<FindRequest<
   }
 
   @Override
-  public URI build()
+  protected UriBuilder getUriBuilderWithoutQueryParams()
   {
-    UriBuilder b = UriBuilder.fromUri(buildBaseUriWithPrefix());
+    UriBuilder b = super.getUriBuilderWithoutQueryParams();
     appendAssocKeys(b);
-    appendQueryParams(b);
-    return b.build();
+    return b;
   }
 }

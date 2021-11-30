@@ -21,8 +21,6 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.ProtobufCodecOptions;
 import com.linkedin.data.codec.ProtobufDataCodec;
-import com.linkedin.data.codec.symbol.EmptySymbolTable;
-import com.linkedin.data.codec.symbol.SymbolTable;
 import com.linkedin.data.protobuf.ProtoWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -46,12 +44,12 @@ public class ProtobufDataEncoder extends AbstractDataEncoder
 
   public ProtobufDataEncoder(DataMap dataMap, int bufferSize)
   {
-    this(dataMap, bufferSize, new ProtobufCodecOptions.Builder().build());
+    this(dataMap, bufferSize, new ProtobufCodecOptions.Builder().setProtoWriterBufferSize(bufferSize).build());
   }
 
   public ProtobufDataEncoder(DataList dataList, int bufferSize)
   {
-    this(dataList, bufferSize, new ProtobufCodecOptions.Builder().build());
+    this(dataList, bufferSize, new ProtobufCodecOptions.Builder().setProtoWriterBufferSize(bufferSize).build());
   }
 
   public ProtobufDataEncoder(DataMap dataMap, int bufferSize, ProtobufCodecOptions options)

@@ -1,0 +1,9 @@
+/**
+ * Invalid extension schema:
+ * The name of the extension schema is not end with "Extensions".
+ */
+record FooExtend includes Foo {
+  @extension.versionSuffix = "V2"
+  @extension.using = "finder: test"
+  injectedField: DummyKey
+}

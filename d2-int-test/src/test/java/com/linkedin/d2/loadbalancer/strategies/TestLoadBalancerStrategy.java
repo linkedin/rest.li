@@ -28,6 +28,7 @@ import com.linkedin.d2.balancer.strategies.framework.LoadBalancerStrategyTestRun
 import com.linkedin.d2.balancer.strategies.framework.LoadBalancerStrategyTestRunnerBuilder;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
 import com.linkedin.d2.loadBalancerStrategyType;
+import com.linkedin.test.util.retry.SingleRetry;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -386,7 +387,7 @@ public class TestLoadBalancerStrategy
     assertTrue(hasPointsInHistory(pointHistory, Arrays.asList(2)), "Fast recovery should recover the points from 1 to 2 initially");
   }
 
-  @Test(dataProvider = "strategy")
+  @Test(dataProvider = "strategy", retryAnalyzer = SingleRetry.class)
   public void testSlowStart(loadBalancerStrategyType type) {
     Map<String, String> degraderPropertiesWithSlowStart = new HashMap<>();
     D2RelativeStrategyProperties relativePropertiesWithSlowStart = new D2RelativeStrategyProperties();
@@ -533,7 +534,7 @@ public class TestLoadBalancerStrategy
     assertEquals(pointsMap.get(testRunner.getUri(4)).intValue(), HEALTHY_POINTS);
   }
 
-  @Test(dataProvider = "highFactor")
+  @Test(dataProvider = "highFactor", retryAnalyzer = SingleRetry.class)
   public void testDifferentHighLatencyFactors(double highFactor)
   {
     long unhealthyLatency = 800L;
@@ -656,6 +657,44 @@ public class TestLoadBalancerStrategy
         (int) (HEALTHY_POINTS - RelativeLoadBalancerStrategyFactory.DEFAULT_DOWN_STEP * HEALTHY_POINTS * 2));
     assertEquals(pointsMapPartition1.get(testRunner.getUri(1)).intValue(), HEALTHY_POINTS);
     assertEquals(pointsMapPartition1.get(testRunner.getUri(2)).intValue(), HEALTHY_POINTS);
+  }
+
+  @Test(dataProvider = "raceConditionScenario")
+  public void testRaceCondition(loadBalancerStrategyType type, int numTrackerClients)
+  {
+    Map<String, String> degraderProperties = new HashMap<>();
+    degraderProperties.put(PropertyKeys.DEGRADER_INITIAL_DROP_RATE, "0.99");
+    degraderProperties.put(PropertyKeys.DEGRADER_SLOW_START_THRESHOLD, "0.16");
+    D2RelativeStrategyProperties relativeProperties = new D2RelativeStrategyProperties()
+        .setSlowStartThreshold(0.16).setInitialHealthScore(0.01);
+
+    LoadBalancerStrategyTestRunnerBuilder builder =
+        new LoadBalancerStrategyTestRunnerBuilder(type, DEFAULT_SERVICE_NAME, 10)
+            .setConstantRequestCount(30)
+            .setNumIntervals(50)
+            .setConstantLatency(Arrays.asList(HEALTHY_HOST_CONSTANT_LATENCY, HEALTHY_HOST_CONSTANT_LATENCY,
+                HEALTHY_HOST_CONSTANT_LATENCY, HEALTHY_HOST_CONSTANT_LATENCY, HEALTHY_HOST_CONSTANT_LATENCY,
+                HEALTHY_HOST_CONSTANT_LATENCY, HEALTHY_HOST_CONSTANT_LATENCY, HEALTHY_HOST_CONSTANT_LATENCY,
+                HEALTHY_HOST_CONSTANT_LATENCY, HEALTHY_HOST_CONSTANT_LATENCY));
+    LoadBalancerStrategyTestRunner testRunner = type == loadBalancerStrategyType.DEGRADER
+        ? builder.setDegraderStrategies(new HashMap<>(), degraderProperties).build()
+        : builder.setRelativeLoadBalancerStrategies(relativeProperties).build();
+
+    testRunner.runWaitInconsistentTrackerClients(numTrackerClients);
+    assertEquals(testRunner.getPoints().size(), 10);
+    assertEquals(testRunner.getPoints().get(testRunner.getUri(0)).intValue(), 100);
+  }
+
+  @DataProvider(name = "raceConditionScenario")
+  public Object[][] getRaceConditionScenario()
+  {
+    return new Object[][]
+        {
+            {loadBalancerStrategyType.DEGRADER, 0},
+            {loadBalancerStrategyType.DEGRADER, 5},
+            {loadBalancerStrategyType.RELATIVE, 0},
+            {loadBalancerStrategyType.RELATIVE, 5},
+        };
   }
 
   private static int getLowestPoints(List<Integer> pointHistory)

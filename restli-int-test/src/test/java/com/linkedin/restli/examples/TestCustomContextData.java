@@ -86,7 +86,7 @@ public class TestCustomContextData extends RestLiIntegrationTest
       if (customData.isPresent() && customData.get().equals("newbar")) {
         return CompletableFuture.completedFuture(null);
       }
-      CompletableFuture<Void> future = new CompletableFuture<Void>();
+      CompletableFuture<Void> future = new CompletableFuture<>();
       future.completeExceptionally(new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR));
       return future;
     }

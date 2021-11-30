@@ -48,6 +48,15 @@ public @interface Action
   ResourceLevel resourceLevel() default ResourceLevel.ANY;
 
   /**
+   * Optional placeholder attribute used to indicate whether the action is read-only
+   * or not. Default is false which indicates that this action can result in writes. This
+   * parameter is a placeholder to provide a hint to metadata introspection systems. The
+   * framework itself does not and cannot actually enforce read-only behavior in actions
+   * annotated as such.
+   */
+  boolean readOnly() default false;
+
+  /**
    * Optional attribute used to indicate the desired typeref to use for primitive types.
    */
   Class<? extends TyperefInfo> returnTyperef() default RestAnnotations.NULL_TYPEREF_INFO.class;

@@ -16,6 +16,8 @@
 
 package com.linkedin.darkcluster;
 
+import com.linkedin.r2.transport.http.client.ConstantQpsRateLimiter;
+import com.linkedin.test.util.ClockedExecutor;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,6 +61,7 @@ public class TestDarkClusterStrategyFactory
   private static final int SEED = 2;
   private DarkClusterStrategyFactory _strategyFactory;
   private MockClusterInfoProvider _clusterInfoProvider;
+  private ConstantQpsRateLimiter _rateLimiter;
 
   @BeforeMethod
   public void setup()
@@ -68,12 +71,15 @@ public class TestDarkClusterStrategyFactory
     DarkClusterConfig darkClusterConfigOld = createRelativeTrafficMultiplierConfig(0.5f);
     _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, PREEXISTING_DARK_CLUSTER_NAME, darkClusterConfigOld);
     DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcher(new MockClient(false));
+    ClockedExecutor executor = new ClockedExecutor();
+    _rateLimiter = new ConstantQpsRateLimiter(executor, executor, executor, TestConstantQpsDarkClusterStrategy.getBuffer(executor));
     _strategyFactory = new DarkClusterStrategyFactoryImpl(facilities,
                                                           SOURCE_CLUSTER_NAME,
                                                           darkClusterDispatcher,
                                                           new DoNothingNotifier(),
                                                           new Random(SEED),
-                                                          new CountingVerifierManager());
+                                                          new CountingVerifierManager(),
+                                                          _rateLimiter);
     _strategyFactory.start();
   }
 

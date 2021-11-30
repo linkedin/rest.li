@@ -33,8 +33,10 @@ import com.linkedin.restli.server.BatchUpdateResult;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.PagingContext;
+import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.UpdateResponse;
+import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.AssocKeyParam;
 import com.linkedin.restli.server.annotations.BatchFinder;
 import com.linkedin.restli.server.annotations.Finder;
@@ -53,7 +55,7 @@ import java.util.Set;
 
 import static com.linkedin.restli.examples.AssociationResourceHelpers.DB;
 import static com.linkedin.restli.examples.AssociationResourceHelpers.SIMPLE_COMPOUND_KEY;
-
+import static com.linkedin.restli.examples.AssociationResourceHelpers.URL_COMPOUND_KEY;
 
 /**
  * Demonstrates an assocation resource keyed by string.
@@ -82,7 +84,7 @@ public class AssociationsResource extends AssociationResourceTemplate<Message>
   @Override
   public Map<CompoundKey, Message> batchGet(Set<CompoundKey> ids)
   {
-    Map<CompoundKey, Message> result = new HashMap<CompoundKey, Message>();
+    Map<CompoundKey, Message> result = new HashMap<>();
     for (CompoundKey key: ids)
     {
       result.put(key, DB.get(key));
@@ -114,17 +116,25 @@ public class AssociationsResource extends AssociationResourceTemplate<Message>
 
   private BatchUpdateResult<CompoundKey, Message> buildUpdateResult(Set<CompoundKey> keys)
   {
-    Map<CompoundKey, UpdateResponse> result = new HashMap<CompoundKey, UpdateResponse>();
+    Map<CompoundKey, UpdateResponse> result = new HashMap<>();
     for (CompoundKey key: keys)
     {
       result.put(key, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
     }
-    return new BatchUpdateResult<CompoundKey, Message>(result);
+    return new BatchUpdateResult<>(result);
   }
 
   @Finder("assocKeyFinder")
   public List<Message> assocKeyFinder(@AssocKeyParam("src") String src)
   {
+    if (src.equals(SIMPLE_COMPOUND_KEY.getPartAsString("src")))
+    {
+      return Collections.singletonList(DB.get(SIMPLE_COMPOUND_KEY));
+    }
+    else if (src.equals(URL_COMPOUND_KEY.getPartAsString("src")))
+    {
+      return Collections.singletonList(DB.get(URL_COMPOUND_KEY));
+    }
     return Collections.emptyList();
   }
 
@@ -157,4 +167,11 @@ public class AssociationsResource extends AssociationResourceTemplate<Message>
 
     return batchFinderResult;
   }
+
+  @Action(name = "testAction", resourceLevel = ResourceLevel.ENTITY)
+  public String testAction()
+  {
+    return "Hello!";
+  }
+
 }

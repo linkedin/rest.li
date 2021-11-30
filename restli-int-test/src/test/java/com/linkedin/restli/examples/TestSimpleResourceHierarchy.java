@@ -357,14 +357,14 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
     greeting.setMessage("Message2");
     greeting.setTone(Tone.FRIENDLY);
 
-    ArrayList<Greeting> greetings = new ArrayList<Greeting>();
+    ArrayList<Greeting> greetings = new ArrayList<>();
     greetings.add(greeting);
     greetings.add(greeting2);
 
     //POST
     List<CreateIdStatus<Long>> statuses = BatchCreateHelper.batchCreate(getClient(), builders, greetings, false);
 
-    ArrayList<Long> ids = new ArrayList<Long>();
+    ArrayList<Long> ids = new ArrayList<>();
 
     for(CreateIdStatus<Long> status : statuses)
     {

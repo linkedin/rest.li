@@ -193,7 +193,7 @@ public class PointBasedConsistentHashRingFactory<T> implements RingFactory<T>
       }
       int hashInt = buf.getInt();
 
-      pointList.add(new Point<T>(t, hashInt));
+      pointList.add(new Point<>(t, hashInt));
     }
 
     return pointList;

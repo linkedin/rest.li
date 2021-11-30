@@ -161,7 +161,7 @@ public class TestMIMEReaderR2Error extends AbstractMIMEUnitTest
 
   private class MultiPartMIMEReaderCallbackImpl implements MultiPartMIMEReaderCallback
   {
-    final List<SinglePartMIMEReaderCallbackImpl> _singlePartMIMEReaderCallbacks = new ArrayList<SinglePartMIMEReaderCallbackImpl>();
+    final List<SinglePartMIMEReaderCallbackImpl> _singlePartMIMEReaderCallbacks = new ArrayList<>();
     Throwable _streamError = null;
     final CountDownLatch _latch;
 

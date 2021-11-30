@@ -23,7 +23,6 @@ import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.Null;
 import com.linkedin.data.element.DataElement;
-import com.linkedin.data.element.DataElementUtil;
 import com.linkedin.data.element.MutableDataElement;
 import com.linkedin.data.element.SimpleDataElement;
 import com.linkedin.data.it.IterationOrder;
@@ -44,6 +43,8 @@ import com.linkedin.data.schema.validator.Validator;
 import com.linkedin.data.schema.validator.ValidatorContext;
 import com.linkedin.data.template.DataTemplate;
 
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.TemplateOutputCastException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -125,7 +126,7 @@ public final class ValidateDataAgainstSchema
     private Object _fixed = null;
     private boolean _valid = true;
     private final Context _context;
-    private List<FieldToTrim> _toTrim = new ArrayList<FieldToTrim>(0);
+    private List<FieldToTrim> _toTrim = new ArrayList<>(0);
 
     private State(ValidationOptions options, Validator validator)
     {
@@ -166,9 +167,22 @@ public final class ValidateDataAgainstSchema
       _fixed = element.getValue();
       UnrecognizedFieldMode unrecognizedFieldMode = _options.getUnrecognizedFieldMode();
       ObjectIterator it = new ObjectIterator(element, IterationOrder.POST_ORDER);
-      DataElement nextElement;
-      while ((nextElement = it.next()) != null)
+      DataElement nextElement = null;
+      while (true)
       {
+        try
+        {
+          if ((nextElement = it.next()) == null)
+          {
+            break;
+          }
+        }
+        catch (IllegalArgumentException e)
+        {
+          addMessage(nextElement, e.getMessage());
+          return;
+        }
+
         DataSchema nextElementSchema = nextElement.getSchema();
         if (nextElementSchema != null)
         {
@@ -492,11 +506,12 @@ public final class ValidateDataAgainstSchema
       {
         // Pegasus mode
         DataMap map = (DataMap) object;
-        if (map.size() != 1)
+        // we allow empty union
+        if (map.size() > 1)
         {
-          addMessage(element, "DataMap should have exactly one entry for a union type");
+          addMessage(element, "DataMap should have no more than one entry for a union type");
         }
-        else
+        else if (map.size() == 1)
         {
           Map.Entry<String, Object> entry = map.entrySet().iterator().next();
           String key = entry.getKey();
@@ -511,6 +526,10 @@ public final class ValidateDataAgainstSchema
             MutableDataElement memberElement = new MutableDataElement(value, key, memberSchema, element);
             validate(memberElement, memberSchema, value);
           }
+        }
+        else if (!schema.isPartialSchema())
+        {
+          addMessage(element, "DataMap should have at least one entry for a union type");
         }
       }
       else
@@ -724,34 +743,23 @@ public final class ValidateDataAgainstSchema
         switch (schemaType)
         {
           case INT:
-            return
-              (object instanceof Number) ?
-                (((Number) object).intValue()) :
-                (object.getClass() == String.class && _options.getCoercionMode() == CoercionMode.STRING_TO_PRIMITIVE) ?
-                  (new BigDecimal((String) object)).intValue() :
-                  object;
+          return (object instanceof String && _options.getCoercionMode() == CoercionMode.STRING_TO_PRIMITIVE) ?
+              (new BigDecimal((String) object)).intValue() :
+              DataTemplateUtil.coerceIntOutput(object);
           case LONG:
-            return
-              (object instanceof Number) ?
-                (((Number) object).longValue()) :
-                (object.getClass() == String.class && _options.getCoercionMode() == CoercionMode.STRING_TO_PRIMITIVE) ?
-                  (new BigDecimal((String) object)).longValue() :
-                  object;
+          return (object instanceof String && _options.getCoercionMode() == CoercionMode.STRING_TO_PRIMITIVE) ?
+              (new BigDecimal((String) object)).longValue() :
+              DataTemplateUtil.coerceLongOutput(object);
           case FLOAT:
-            return
-              (object instanceof Number) ?
-                (((Number) object).floatValue()) :
-                (object.getClass() == String.class && _options.getCoercionMode() == CoercionMode.STRING_TO_PRIMITIVE) ?
-                  (new BigDecimal((String) object)).floatValue() :
-                  object;
+            return (object instanceof String && _options.getCoercionMode() == CoercionMode.STRING_TO_PRIMITIVE) ?
+                Float.valueOf((String) object) :
+                DataTemplateUtil.coerceFloatOutput(object);
           case DOUBLE:
-            return
-              (object instanceof Number) ?
-                (((Number) object).doubleValue()) :
-                (object.getClass() == String.class && _options.getCoercionMode() == CoercionMode.STRING_TO_PRIMITIVE) ?
-                  (new BigDecimal((String) object)).doubleValue() :
-                  object;
+            return (object instanceof String && _options.getCoercionMode() == CoercionMode.STRING_TO_PRIMITIVE) ?
+                Double.valueOf((String) object) :
+                DataTemplateUtil.coerceDoubleOutput(object);
           case BOOLEAN:
+            // Note that Boolean#parseBoolean cannot be used because it coerces invalid strings into "false"
             if (object.getClass() == String.class && _options.getCoercionMode() == CoercionMode.STRING_TO_PRIMITIVE)
             {
               String string = (String) object;
@@ -771,7 +779,7 @@ public final class ValidateDataAgainstSchema
             return object;
         }
       }
-      catch (NumberFormatException exc)
+      catch (NumberFormatException | TemplateOutputCastException exc)
       {
         return object;
       }
@@ -789,7 +797,7 @@ public final class ValidateDataAgainstSchema
       _valid = false;
     }
 
-    private MessageList<Message> _messages = new MessageList<Message>();
+    private MessageList<Message> _messages = new MessageList<>();
 
     @Override
     public boolean hasFix()

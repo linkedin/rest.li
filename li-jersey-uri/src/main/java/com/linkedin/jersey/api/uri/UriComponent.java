@@ -384,7 +384,7 @@ public class UriComponent {
     private static boolean[][] creatingEncodingTables() {
         boolean[][] tables = new boolean[Type.values().length][];
 
-        List<String> l = new ArrayList<String>();
+        List<String> l = new ArrayList<>();
         l.addAll(Arrays.asList(SCHEME));
         tables[Type.SCHEME.ordinal()] = creatingEncodingTable(l);
 
@@ -666,7 +666,7 @@ public class UriComponent {
      * @return the list of path segments.
      */
     public static List<PathSegment> decodePath(String path, boolean decode) {
-        List<PathSegment> segments = new LinkedList<PathSegment>();
+        List<PathSegment> segments = new LinkedList<>();
 
         if (path == null) {
             return segments;

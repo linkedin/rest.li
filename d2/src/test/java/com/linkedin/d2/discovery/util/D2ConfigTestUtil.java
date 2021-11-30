@@ -45,15 +45,15 @@ public class D2ConfigTestUtil
   private static double _defaultSuccessfulTransmissionWeight = 1.0;
   private static int _pointsPerWeight = 100;
   private static String _prioritizedSchemes = "http";
-  private static List<String> _loadBalancerStrategyList = Arrays.asList(new String[]{"degrader","degraderV3"});
-  private Map<String,Object> _clusterProperties = new HashMap<String,Object>();
-  private Map<String, Object> _clusterDefaults = new HashMap<String, Object>();
-  private Map<String, Object> _serviceDefaults = new HashMap<String, Object>();
-  private Map<String,Object> _loadBalancerStrategyProperties = new HashMap<String, Object>();
+  private static List<String> _loadBalancerStrategyList = Arrays.asList("degrader", "degraderV3");
+  private Map<String,Object> _clusterProperties = new HashMap<>();
+  private Map<String, Object> _clusterDefaults = new HashMap<>();
+  private Map<String, Object> _serviceDefaults = new HashMap<>();
+  private Map<String,Object> _loadBalancerStrategyProperties = new HashMap<>();
 
-  private Map<String, Object> _clusterServiceConfigurations = new HashMap<String, Object>();
-  private Map<String, Object> _extraClusterServiceConfigurations = new HashMap<String, Object>();
-  private Map<String, Object> _serviceVariants = new HashMap<String, Object>();
+  private Map<String, Object> _clusterServiceConfigurations = new HashMap<>();
+  private Map<String, Object> _extraClusterServiceConfigurations = new HashMap<>();
+  private Map<String, Object> _serviceVariants = new HashMap<>();
 
   private boolean _useDeltaWrite = false;
   private int _maxOutstandingWrites = 1;
@@ -78,7 +78,7 @@ public class D2ConfigTestUtil
                           Map<String,Map<String,Object>> extraClusterProperties,
                           Set<String> servicesWithDefaultRoutingToMaster)
   {
-    this(clustersData, defaultColo, extraClusterProperties, new HashMap<String,List<String>>(),
+    this(clustersData, defaultColo, extraClusterProperties, new HashMap<>(),
          servicesWithDefaultRoutingToMaster);
   }
 
@@ -341,7 +341,7 @@ public class D2ConfigTestUtil
     for (int i=1; i <= totalClusters+1; i++)
     {
       _log.info("Creating cluster data: cluster"+i);
-      Map<String,Object> services = new HashMap<String,Object>();
+      Map<String, Object> services = new HashMap<>();
       services.put("services",generateServicesMap(servicesPerCluster, serviceNamePrefix+i, null));
 
       _clusterServiceConfigurations.put(clusterNamePrefix+i, services);
@@ -350,7 +350,7 @@ public class D2ConfigTestUtil
 
   public void generateClusters(Map<String,List<String>> clustersData)
   {
-    generateClusters(clustersData, null, new HashMap<String,List<String>>());
+    generateClusters(clustersData, null, new HashMap<>());
   }
 
   public void generateClusters(Map<String,List<String>> clustersData, Map<String,Map<String,Object>> clustersProperties,
@@ -368,12 +368,12 @@ public class D2ConfigTestUtil
     for (String clusterName : clustersData.keySet())
     {
       _log.info("Creating cluster data:"+clusterName);
-      Map<String,Object> services = new HashMap<String,Object>();
-      Map<String,Object> tmps = new HashMap<String,Object>();
+      Map<String, Object> services = new HashMap<>();
+      Map<String, Object> tmps = new HashMap<>();
 
       for (String serviceName : clustersData.get(clusterName))
       {
-        Map<String,Object> service = new HashMap<String,Object>();
+        Map<String, Object> service = new HashMap<>();
         service.put("path","/"+serviceName);
         if (excludeServiceList != null && excludeServiceList.contains(serviceName))
         {
@@ -402,7 +402,7 @@ public class D2ConfigTestUtil
       // Service variants
       for (String serviceGroupName : serviceGroupsData.keySet())
       {
-        Map<String,Object> serviceGroup = new HashMap<String,Object>();
+        Map<String, Object> serviceGroup = new HashMap<>();
         serviceGroup.put("type", "clusterVariantsList");
         serviceGroup.put("clusterList", serviceGroupsData.get(serviceGroupName));
         _serviceVariants.put(serviceGroupName, serviceGroup);
@@ -417,12 +417,12 @@ public class D2ConfigTestUtil
     for (String clusterName : clustersData.keySet())
     {
       _log.info("Creating cluster data:"+clusterName);
-      final Map<String,Object> services = new HashMap<String,Object>();
-      final Map<String,Object> tmps = new HashMap<String,Object>();
+      final Map<String, Object> services = new HashMap<>();
+      final Map<String, Object> tmps = new HashMap<>();
 
       for (String serviceName : clustersData.get(clusterName))
       {
-        final Map<String,Object> service = new HashMap<String,Object>();
+        final Map<String, Object> service = new HashMap<>();
         service.put("path","/"+serviceName);
         tmps.put(serviceName, service);
       }
@@ -440,12 +440,12 @@ public class D2ConfigTestUtil
   {
     //Cluster Service Configurations
     // Services
-    Map<String,Object> services = new HashMap<String,Object>();
-    Map<String,Object> sp = new HashMap<String,Object>();
+    Map<String, Object> services = new HashMap<>();
+    Map<String, Object> sp = new HashMap<>();
 
     for (String serviceName : servicesData.keySet())
     {
-      Map<String,Object> service = new HashMap<String,Object>();
+      Map<String, Object> service = new HashMap<>();
       service.put("path","/"+servicesData.get(serviceName));
       if (servicesWithDefaultRoutingToMaster.contains(serviceName))
       {
@@ -456,11 +456,11 @@ public class D2ConfigTestUtil
     services.put("services",sp);
 
     // Cluster Variants
-    Map<String,Object> clusterVariants = new HashMap<String,Object>();
+    Map<String, Object> clusterVariants = new HashMap<>();
 
     for (String clusterName : serviceGroupsData.values())
     {
-      clusterVariants.put(clusterName, new HashMap<String,Object>());
+      clusterVariants.put(clusterName, new HashMap<>());
     }
     services.put("clusterVariants",clusterVariants);
 
@@ -470,21 +470,21 @@ public class D2ConfigTestUtil
     // Service variants
     for (String serviceGroupName : serviceGroupsData.keySet())
     {
-      Map<String,Object> serviceGroup = new HashMap<String,Object>();
+      Map<String, Object> serviceGroup = new HashMap<>();
       serviceGroup.put("type", "clusterVariantsList");
-      serviceGroup.put("clusterList", Arrays.asList(new String[]{serviceGroupsData.get(serviceGroupName)}));
+      serviceGroup.put("clusterList", Arrays.asList(serviceGroupsData.get(serviceGroupName)));
       _serviceVariants.put(serviceGroupName, serviceGroup);
     }
   }
 
   public static Map<String,Object> generateServicesMap(int totalServices, String serviceNamePrefix, String servicePath)
   {
-    Map<String,Object> services = new HashMap<String,Object>();
+    Map<String, Object> services = new HashMap<>();
 
     for (int j=1; j <= totalServices+1; j++)
     {
       String serviceName = serviceNamePrefix+"_"+j;
-      Map<String,Object> service = new HashMap<String,Object>();
+      Map<String, Object> service = new HashMap<>();
       if (servicePath == null)
       {
         servicePath = serviceName;

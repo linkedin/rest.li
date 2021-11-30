@@ -92,7 +92,7 @@ public class AlbumEntryResource extends AssociationResourceTemplate<AlbumEntry>
   @Override
   public Map<CompoundKey, AlbumEntry> batchGet(Set<CompoundKey> ids)
   {
-    Map<CompoundKey, AlbumEntry> result = new HashMap<CompoundKey, AlbumEntry>();
+    Map<CompoundKey, AlbumEntry> result = new HashMap<>();
     for (CompoundKey key : ids)
       result.put(key, get(key));
     return result;
@@ -231,7 +231,7 @@ public class AlbumEntryResource extends AssociationResourceTemplate<AlbumEntry>
   public List<AlbumEntry> search(@Optional @QueryParam("albumId") Long albumId,
                                  @Optional @QueryParam("photoId") Long photoId)
   {
-    List<AlbumEntry> result = new ArrayList<AlbumEntry>();
+    List<AlbumEntry> result = new ArrayList<>();
     for (Map.Entry<CompoundKey, AlbumEntry> entry : _db.getData().entrySet())
     {
       CompoundKey key = entry.getKey();

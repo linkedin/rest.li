@@ -16,10 +16,13 @@
 
 package com.linkedin.data.schema;
 
+import com.linkedin.data.schema.resolver.SchemaDirectory;
 import com.linkedin.data.schema.resolver.SchemaDirectoryName;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+
 
 /**
  * A {@link DataSchemaResolver} is used to resolve names to {@link NamedDataSchema}s.
@@ -97,6 +100,21 @@ public interface DataSchemaResolver
   NamedDataSchema existingDataSchema(String name);
 
   /**
+   * Lookup existing {@link NamedDataSchema}'s location with the specified name.
+   *
+   * This is a pure lookup operation. If a {@link NamedDataSchema} with the specified
+   * name does not already exist, then this method will return null, else it
+   * returns the location of the existing {@link NamedDataSchema}.
+   *
+   * @param name of the schema to find.
+   * @return the {@link DataSchemaLocation} if the schema already exists, else return null.
+   */
+  default DataSchemaLocation existingSchemaLocation(String name)
+  {
+    return nameToDataSchemaLocations().get(name);
+  }
+
+  /**
    * Return whether the specified {@link DataSchemaLocation} has been associated with a name.
    *
    * @param location provides the {@link DataSchemaLocation} to check.
@@ -132,9 +150,20 @@ public interface DataSchemaResolver
 
   /**
    * Returns the schema file directory name for schemas location
+   * @deprecated use {@link #getSchemaDirectories()} instead.
    */
+  @Deprecated
   default SchemaDirectoryName getSchemasDirectoryName()
   {
     return SchemaDirectoryName.PEGASUS;
+  }
+
+  /**
+   * Returns the list of schema directories this resolver will check when resolving schemas.
+   * Defaults to the single {@link SchemaDirectoryName#PEGASUS} directory.
+   */
+  default List<SchemaDirectory> getSchemaDirectories()
+  {
+    return Collections.singletonList(SchemaDirectoryName.PEGASUS);
   }
 }

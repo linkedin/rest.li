@@ -16,7 +16,12 @@
 
 package com.linkedin.darkcluster;
 
+import com.linkedin.r2.transport.http.client.ConstantQpsRateLimiter;
+import com.linkedin.r2.transport.http.client.EvictingCircularBuffer;
+import com.linkedin.util.clock.Clock;
+import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -66,6 +71,9 @@ public class TestDarkClusterFilter
   private ExecutorService _executorService = Executors.newSingleThreadExecutor();
   private DarkClusterVerifier _darkClusterVerifier = new NoOpDarkClusterVerifier();
   private DarkClusterVerifierManager _verifierManager = new DarkClusterVerifierManagerImpl(_darkClusterVerifier, _executorService);
+  Clock clock = SystemClock.instance();
+  private ConstantQpsRateLimiter _rateLimiter = new ConstantQpsRateLimiter(
+      _scheduledExecutorService, _executorService, clock, new EvictingCircularBuffer(1, 1, ChronoUnit.SECONDS, clock));
   private Random _random = new Random();
   private DarkClusterFilter _darkClusterFilter;
   private DarkClusterStrategyFactory _darkClusterStrategyFactory;
@@ -80,7 +88,7 @@ public class TestDarkClusterFilter
     _darkClusterStrategyFactory = new DarkClusterStrategyFactoryImpl(_facilities, SOURCE_CLUSTER_NAME,
                                                                                                _darkClusterDispatcher,
                                                                                                _notifier, _random,
-                                                                                               _verifierManager);
+                                                                                               _verifierManager, _rateLimiter);
 
     DarkClusterManager darkClusterManager = new DarkClusterManagerImpl(SOURCE_CLUSTER_NAME,
                                                                        _facilities,
@@ -113,7 +121,7 @@ public class TestDarkClusterFilter
     _darkClusterStrategyFactory = new DarkClusterStrategyFactoryImpl(_facilities, SOURCE_CLUSTER_NAME,
                                                                      _darkClusterDispatcher,
                                                                      _notifier, _random,
-                                                                     _verifierManager);
+                                                                     _verifierManager, _rateLimiter);
     _darkClusterStrategyFactory.start();
     DarkClusterManager darkClusterManager = new DarkClusterManagerImpl(SOURCE_CLUSTER_NAME,
                                                                        _facilities,

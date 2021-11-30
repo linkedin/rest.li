@@ -29,21 +29,21 @@ public class TestIdEntityResponse
   @Test
   public void testToString()
   {
-    IdEntityResponse<Long, AnyRecord> longIdEntityResponse = new IdEntityResponse<Long, AnyRecord>(6L, new AnyRecord());
+    IdEntityResponse<Long, AnyRecord> longIdEntityResponse = new IdEntityResponse<>(6L, new AnyRecord());
     Assert.assertEquals(longIdEntityResponse.toString(), "id: 6, entity: {}");
 
-    IdEntityResponse<Long, AnyRecord> nullIdEntityResponse = new IdEntityResponse<Long, AnyRecord>(null, new AnyRecord());
+    IdEntityResponse<Long, AnyRecord> nullIdEntityResponse = new IdEntityResponse<>(null, new AnyRecord());
     Assert.assertEquals(nullIdEntityResponse.toString(), "id: , entity: {}");
   }
 
   @Test
   public void testEquals()
   {
-    IdEntityResponse<Long, AnyRecord> longIdEntityResponse1 = new IdEntityResponse<Long, AnyRecord>(1L, new AnyRecord());
-    IdEntityResponse<Long, AnyRecord> longIdEntityResponse2 = new IdEntityResponse<Long, AnyRecord>(1L, new AnyRecord());
-    IdEntityResponse<Long, AnyRecord> nullLongResponse = new IdEntityResponse<Long, AnyRecord>(null, new AnyRecord());
-    IdEntityResponse<String, AnyRecord> nullStringResponse = new IdEntityResponse<String, AnyRecord>(null, new AnyRecord());
-    IdEntityResponse<String, AnyRecord> stringResponse = new IdEntityResponse<String, AnyRecord>("hello", new AnyRecord());
+    IdEntityResponse<Long, AnyRecord> longIdEntityResponse1 = new IdEntityResponse<>(1L, new AnyRecord());
+    IdEntityResponse<Long, AnyRecord> longIdEntityResponse2 = new IdEntityResponse<>(1L, new AnyRecord());
+    IdEntityResponse<Long, AnyRecord> nullLongResponse = new IdEntityResponse<>(null, new AnyRecord());
+    IdEntityResponse<String, AnyRecord> nullStringResponse = new IdEntityResponse<>(null, new AnyRecord());
+    IdEntityResponse<String, AnyRecord> stringResponse = new IdEntityResponse<>("hello", new AnyRecord());
 
     // equals and non-null.
     Assert.assertTrue(longIdEntityResponse1.equals(longIdEntityResponse2));
@@ -63,10 +63,10 @@ public class TestIdEntityResponse
   @Test
   public void testHashCode()
   {
-    IdEntityResponse<Long, AnyRecord> longIdEntityResponse1 = new IdEntityResponse<Long, AnyRecord>(1L, new AnyRecord());
-    IdEntityResponse<Long, AnyRecord> longIdEntityResponse2 = new IdEntityResponse<Long, AnyRecord>(1L, new AnyRecord());
-    IdEntityResponse<Long, AnyRecord> nullLongResponse = new IdEntityResponse<Long, AnyRecord>(null, new AnyRecord());
-    IdEntityResponse<String, AnyRecord> nullStringResponse = new IdEntityResponse<String, AnyRecord>(null, new AnyRecord());
+    IdEntityResponse<Long, AnyRecord> longIdEntityResponse1 = new IdEntityResponse<>(1L, new AnyRecord());
+    IdEntityResponse<Long, AnyRecord> longIdEntityResponse2 = new IdEntityResponse<>(1L, new AnyRecord());
+    IdEntityResponse<Long, AnyRecord> nullLongResponse = new IdEntityResponse<>(null, new AnyRecord());
+    IdEntityResponse<String, AnyRecord> nullStringResponse = new IdEntityResponse<>(null, new AnyRecord());
 
     Assert.assertEquals(longIdEntityResponse1.hashCode(), longIdEntityResponse2.hashCode());
     Assert.assertEquals(nullLongResponse.hashCode(), nullStringResponse.hashCode());

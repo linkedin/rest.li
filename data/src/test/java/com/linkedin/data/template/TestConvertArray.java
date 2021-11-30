@@ -108,8 +108,8 @@ public class TestConvertArray
     Assert.assertSame(result.getClass(), TestFixedTemplate.Fixed5[].class);
 
     result = convert("[{\"A\": 3}, {\"B\": 4}]", IntegerMap[].class);
-    final Map<String, Integer> integerFixture1 = new HashMap<String, Integer>();
-    final Map<String, Integer> integerFixture2 = new HashMap<String, Integer>();
+    final Map<String, Integer> integerFixture1 = new HashMap<>();
+    final Map<String, Integer> integerFixture2 = new HashMap<>();
     integerFixture1.put("A", 3);
     integerFixture2.put("B", 4);
     Assert.assertEquals(result, new IntegerMap[] { new IntegerMap(integerFixture1), new IntegerMap(integerFixture2) });

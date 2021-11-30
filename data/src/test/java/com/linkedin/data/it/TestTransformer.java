@@ -48,11 +48,11 @@ public class TestTransformer
   public void testTransformByPredicateAtPath() throws Exception
   {
     SimpleTestData data = IteratorTestData.createSimpleTestData();
-    
+
     Builder.create(data.getDataElement(), IterationOrder.PRE_ORDER)
       .filterBy(Predicates.pathMatchesPattern("foo", Wildcard.ANY_ONE, "id"))
       .transform(plusTenTransform);
-    
+
     assertEquals(data.getValue().getDataList("foo").getDataMap(0).getInteger("id").intValue(), 11);
     assertEquals(data.getValue().getDataList("foo").getDataMap(1).getInteger("id").intValue(), 12);
     assertEquals(data.getValue().getDataList("foo").getDataMap(2).getInteger("id").intValue(), 13);
@@ -62,11 +62,11 @@ public class TestTransformer
   public void testReplaceByPredicateAtPath() throws Exception
   {
     SimpleTestData data = IteratorTestData.createSimpleTestData();
-    
+
     Builder.create(data.getDataElement(), IterationOrder.PRE_ORDER)
     .filterBy(Predicates.and(Predicates.pathMatchesPathSpec(IteratorTestData.PATH_TO_ID), IteratorTestData.LESS_THAN_3_CONDITION))
     .replace(50);
-    
+
     assertEquals(data.getValue().getDataList("foo").getDataMap(0).getInteger("id").intValue(), 50);
     assertEquals(data.getValue().getDataList("foo").getDataMap(1).getInteger("id").intValue(), 50);
   }
@@ -75,16 +75,16 @@ public class TestTransformer
   public void testReplaceByPredicate() throws Exception
   {
     SimpleTestData data = IteratorTestData.createSimpleTestData();
-    
+
     Builder.create(data.getDataElement(), IterationOrder.PRE_ORDER)
     .filterBy(Predicates.pathMatchesPathSpec(IteratorTestData.PATH_TO_ID))
     .replace(100);
-    
+
     assertEquals(data.getValue().getDataList("foo").getDataMap(0).getInteger("id").intValue(), 100);
     assertEquals(data.getValue().getDataList("foo").getDataMap(1).getInteger("id").intValue(), 100);
     assertEquals(data.getValue().getDataList("foo").getDataMap(2).getInteger("id").intValue(), 100);
   }
-  
+
   @Test
   public void testReplaceAtPathNested() throws Exception
   {
@@ -100,7 +100,7 @@ public class TestTransformer
 
     assertEquals(count, 0);
   }
-  
+
   /**
    * Removes multiple nodes in a complex type, including non-leaf nodes.
    */
@@ -108,56 +108,56 @@ public class TestTransformer
   public void testReplaceByNameNested() throws Exception
   {
     SimpleTestData data = IteratorTestData.createSimpleTestData();
-    
+
     Builder.create(data.getDataElement(), IterationOrder.PRE_ORDER)
     .filterBy(Predicates.nameEquals("foo"))
     .replace(new DataList());
-    
+
     assertEquals(Builder.create(data.getDataElement(), IterationOrder.PRE_ORDER)
       .filterBy(Predicates.pathMatchesPathSpec(new PathSpec("nested", "nested", "foo", PathSpec.WILDCARD)))
       .count(), 0);
-    
+
     assertEquals(Builder.create(data.getDataElement(), IterationOrder.PRE_ORDER)
       .filterBy(Predicates.pathMatchesPathSpec(new PathSpec("foo", PathSpec.WILDCARD)))
       .count(), 0);
   }
-  
+
   @Test
   public void testReplaceBySchemaNameNested() throws Exception
   {
     SimpleTestData data = IteratorTestData.createSimpleTestData();
-    
+
     Builder.create(data.getDataElement(), IterationOrder.PRE_ORDER)
         .filterBy(Predicates.dataSchemaNameEquals("Bar"))
         .replace(500);
-    
-    List<Object> accumulate = new ArrayList<Object>(Builder.create(data.getDataElement(), IterationOrder.PRE_ORDER)
+
+    List<Object> accumulate = new ArrayList<>(Builder.create(data.getDataElement(), IterationOrder.PRE_ORDER)
         .filterBy(Predicates.pathMatchesPathSpec(new PathSpec("nested", "nested", "foo", PathSpec.WILDCARD)))
         .accumulateValues());
 
     assertEquals(accumulate.size(), 2);
     assertEquals(accumulate.get(0), 500);
     assertEquals(accumulate.get(1), 500);
-    
-    accumulate = new ArrayList<Object>(Builder.create(data.getDataElement(), IterationOrder.PRE_ORDER)
+
+    accumulate = new ArrayList<>(Builder.create(data.getDataElement(), IterationOrder.PRE_ORDER)
         .filterBy(Predicates.pathMatchesPathSpec(new PathSpec("foo", PathSpec.WILDCARD)))
         .accumulateValues());
-    
+
     assertEquals(accumulate.size(), 3);
     assertEquals(accumulate.get(0), 500);
     assertEquals(accumulate.get(1), 500);
     assertEquals(accumulate.get(2), 500);
   }
-  
+
   @Test
   public void testReplaceRoot() throws Exception
   {
     SimpleTestData data = IteratorTestData.createSimpleTestData();
-    
+
     Object result = Builder.create(data.getDataElement(), IterationOrder.PRE_ORDER)
         .filterBy(Predicates.dataSchemaNameEquals("Foo"))
         .replace(new DataMap());
-    
+
     assertTrue(result instanceof DataMap);
     assertEquals(((DataMap)result).size(), 0);
   }

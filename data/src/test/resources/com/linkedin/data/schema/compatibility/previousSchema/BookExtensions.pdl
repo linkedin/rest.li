@@ -1,0 +1,13 @@
+record BookExtensions includes
+record Book {
+  name: string,
+  id: long
+}
+{
+  @extension.using = "finder:test"
+  @extension.params = {"id" : "$URN.bookId"}
+  testField: array[typeref TestUrn = string]
+
+  @extension.params = {"id" : "$URN.bookId"}
+  barField: typeref BarUrn = string
+}

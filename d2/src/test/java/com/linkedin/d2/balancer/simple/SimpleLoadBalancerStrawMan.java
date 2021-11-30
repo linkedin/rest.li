@@ -47,24 +47,23 @@ public class SimpleLoadBalancerStrawMan
   {
     // define the load balancing strategies that we support (round robin, etc)
     Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-        new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
+        new HashMap<>();
 
     loadBalancerStrategyFactories.put("rr", new RandomLoadBalancerStrategyFactory());
     loadBalancerStrategyFactories.put("degrader",
                                       new DegraderLoadBalancerStrategyFactoryV3());
 
     // define the clients that we support (http, etc)
-    Map<String, TransportClientFactory> clientFactories =
-        new HashMap<String, TransportClientFactory>();
+    Map<String, TransportClientFactory> clientFactories = new HashMap<>();
 
     clientFactories.put("http", new HttpClientFactory.Builder().build());
 
     // listen for service updates (could be a glu discovery client, zk discovery client,
     // config discovery client, etc)
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-    MockStore<ServiceProperties> serviceRegistry = new MockStore<ServiceProperties>();
-    MockStore<ClusterProperties> clusterRegistry = new MockStore<ClusterProperties>();
-    MockStore<UriProperties> uriRegistry = new MockStore<UriProperties>();
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
 
     SimpleLoadBalancerState state =
         new SimpleLoadBalancerState(executorService,

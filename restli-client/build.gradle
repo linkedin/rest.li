@@ -8,6 +8,8 @@ dependencies {
   compile project(':restli-disruptor')
   compile project(':li-jersey-uri')
   compile project(':multipart-mime')
+  compile externalDependency.parseq
+  compile externalDependency.parseq_restClient
   compile externalDependency.mail
   compile externalDependency.commonsLang
   implementation externalDependency.caffeine
@@ -20,6 +22,7 @@ dependencies {
   testCompile externalDependency.easymock
   testCompile externalDependency.commonsHttpClient
   testCompile externalDependency.mockito
+  testCompile externalDependency.parseq_testApi
   testRuntime externalDependency.objenesis
 }
 
@@ -29,4 +32,13 @@ compileTestJava.options.compilerArgs += '-Xlint:-deprecation'
 
 test {
   systemProperties['test.projectDir'] = projectDir.toString()
+}
+
+// generate pdsc files under "unionPegasus" directory with explicit ordering
+project.sourceSets.all { SourceSet sourceSet ->
+  final Task dataTemplateGenerateTask = rootProject.ext.build.dataTemplateGenerateTasks[sourceSet]
+  if (dataTemplateGenerateTask != null)
+  {
+    dataTemplateGenerateTask.systemProperties(['generator.generate.field.mask': "true"])
+  }
 }

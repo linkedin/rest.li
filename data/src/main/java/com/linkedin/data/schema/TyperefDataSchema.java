@@ -17,6 +17,7 @@
 package com.linkedin.data.schema;
 
 import com.linkedin.data.DataMap;
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -110,9 +111,13 @@ public class TyperefDataSchema extends NamedDataSchema
     {
       propertiesToBeMerged = ((TyperefDataSchema) getRef()).getMergedTyperefProperties();
     }
-    else
+    else if (getRef().isPrimitive())
     {
       propertiesToBeMerged = getRef().getProperties();
+    }
+    else
+    {
+      propertiesToBeMerged = new HashMap<>();
     }
     Map<String, Object> mergedMap = new DataMap(getProperties());
     // Merge rule for same name property conflicts:

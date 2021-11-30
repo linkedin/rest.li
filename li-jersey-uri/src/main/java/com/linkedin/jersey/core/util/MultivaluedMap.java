@@ -183,7 +183,7 @@ public class MultivaluedMap
         ArrayList<A> l = null;
         List<String> values = get(key);
         if (values != null) {
-            l = new ArrayList<A>();
+            l = new ArrayList<>();
             for (String value: values) {
                 try {
                     l.add(c.newInstance(value));
@@ -238,7 +238,7 @@ public class MultivaluedMap
     private List<String> getList(String key) {
         List<String> l = get(key);
         if (l == null) {
-            l = new LinkedList<String>();
+            l = new LinkedList<>();
             put(key, l);
         }
         return l;

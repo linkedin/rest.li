@@ -534,7 +534,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
 
     //Query parameter order is non deterministic
     //"/" + resourceName + "?count=5&start=5&q=searchWithPostFilter";
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("count", "5");
     queryParamsMap.put("start", "5");
     queryParamsMap.put("q", "searchWithPostFilter");
@@ -682,7 +682,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   private List<Greeting> getBatchTestDataSerially(RootBuilderWrapper<Long, Greeting> builders, List<Long> idsToGet)
       throws RemoteInvocationException
   {
-    List<Greeting> fetchedGreetings = new ArrayList<Greeting>();
+    List<Greeting> fetchedGreetings = new ArrayList<>();
     for (int i = 0; i < idsToGet.size(); i++)
     {
       try
@@ -769,7 +769,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
    */
   private List<Greeting> generateBatchTestData(int numItems, String baseMessage, Tone tone)
   {
-    List<Greeting> greetings = new ArrayList<Greeting>();
+    List<Greeting> greetings = new ArrayList<>();
     for (int i = 0; i < numItems; i++)
     {
       greetings.add(generateTestGreeting(baseMessage + " " + i, tone));
@@ -788,7 +788,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
   private List<Long> createBatchTestDataSerially(RootBuilderWrapper<Long, Greeting> builders, List<Greeting> greetings)
       throws RemoteInvocationException
   {
-    List<Long> createdIds = new ArrayList<Long>();
+    List<Long> createdIds = new ArrayList<>();
 
     for (Greeting greeting: greetings)
     {
@@ -840,7 +840,7 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     List<Greeting> greetings = generateBatchTestData(3, "BatchCreate", Tone.FRIENDLY);
 
     List<CreateIdStatus<Long>> statuses = BatchCreateHelper.batchCreate(getClient(), builders, greetings, false);
-    List<Long> createdIds = new ArrayList<Long>(statuses.size());
+    List<Long> createdIds = new ArrayList<>(statuses.size());
 
     for (CreateIdStatus<Long> status: statuses)
     {
@@ -909,8 +909,8 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     addIdsToGeneratedGreetings(createdIds, greetings);
 
     // Update the created greetings
-    List<Greeting> updatedGreetings = new ArrayList<Greeting>();
-    Map<Long, Greeting> updateGreetingsRequestMap = new HashMap<Long, Greeting>();
+    List<Greeting> updatedGreetings = new ArrayList<>();
+    Map<Long, Greeting> updateGreetingsRequestMap = new HashMap<>();
 
     for (Greeting greeting: greetings)
     {
@@ -946,8 +946,8 @@ public class TestGreetingsClient extends RestLiIntegrationTest
     addIdsToGeneratedGreetings(createdIds, greetings);
 
     // Patch the created Greetings
-    Map<Long, PatchRequest<Greeting>> patchedGreetingsDiffs = new HashMap<Long, PatchRequest<Greeting>>();
-    List<Greeting> patchedGreetings = new ArrayList<Greeting>();
+    Map<Long, PatchRequest<Greeting>> patchedGreetingsDiffs = new HashMap<>();
+    List<Greeting> patchedGreetings = new ArrayList<>();
 
     for (Greeting greeting: greetings)
     {

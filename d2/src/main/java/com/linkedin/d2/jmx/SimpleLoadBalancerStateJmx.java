@@ -68,13 +68,13 @@ public class SimpleLoadBalancerStateJmx implements SimpleLoadBalancerStateJmxMBe
   @Override
   public List<String> getSupportedSchemes()
   {
-    return new ArrayList<String>(_state.getSupportedSchemes());
+    return new ArrayList<>(_state.getSupportedSchemes());
   }
 
   @Override
   public List<String> getSupportedStrategies()
   {
-    return new ArrayList<String>(_state.getSupportedStrategies());
+    return new ArrayList<>(_state.getSupportedStrategies());
   }
 
   @Override

@@ -60,22 +60,26 @@ public class StateUpdater
   private final ScheduledExecutorService _executorService;
   private final Lock _lock;
   private final List<PartitionStateUpdateListener.Factory<PartitionState>> _listenerFactories;
+  private final String _serviceName;
 
   private ConcurrentMap<Integer, PartitionState> _partitionLoadBalancerStateMap;
+  private int _firstPartitionId = -1;
 
   StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
                        QuarantineManager quarantineManager,
                        ScheduledExecutorService executorService,
-                       List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories)
+                       List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories,
+                       String serviceName)
   {
-    this(relativeStrategyProperties, quarantineManager, executorService, new ConcurrentHashMap<>(), listenerFactories);
+    this(relativeStrategyProperties, quarantineManager, executorService, new ConcurrentHashMap<>(), listenerFactories, serviceName);
   }
 
   StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
       QuarantineManager quarantineManager,
       ScheduledExecutorService executorService,
       ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap,
-      List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories)
+      List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories,
+      String serviceName)
   {
     _relativeStrategyProperties = relativeStrategyProperties;
     _quarantineManager = quarantineManager;
@@ -83,6 +87,7 @@ public class StateUpdater
     _listenerFactories = listenerFactories;
     _partitionLoadBalancerStateMap = partitionLoadBalancerStateMap;
     _lock = new ReentrantLock();
+    _serviceName = serviceName;
 
     _executorService.scheduleWithFixedDelay(this::updateState, EXECUTOR_INITIAL_DELAY,
         _relativeStrategyProperties.getUpdateIntervalMs(), TimeUnit.MILLISECONDS);
@@ -91,12 +96,13 @@ public class StateUpdater
   /**
    * Update the state of the partition if necessary
    * This update is triggered by the request. If the cluster is not initialized or the uris changed, we will update the state.
-   *
-   * @param trackerClients The set of hosts for this partition
+   *  @param trackerClients The set of hosts for this partition
    * @param partitionId The id of the partition
    * @param clusterGenerationId The id that uniquely identifies a set of hosts in the cluster
+   * @param shouldForceUpdate Whether or not to force update
    */
-  public void updateState(Set<TrackerClient> trackerClients, int partitionId, long clusterGenerationId)
+  public void updateState(Set<TrackerClient> trackerClients, int partitionId, long clusterGenerationId,
+      boolean shouldForceUpdate)
   {
     if (!_partitionLoadBalancerStateMap.containsKey(partitionId))
     {
@@ -112,10 +118,12 @@ public class StateUpdater
       }
 
     }
-    else if (clusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId())
+    else if (shouldForceUpdate || clusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId()
+        || trackerClients.size() != _partitionLoadBalancerStateMap.get(partitionId).getPointsMap().size())
     {
       // Asynchronously update the state if it is from uri properties change
-      _executorService.execute(() -> updateStateDueToClusterChange(trackerClients, partitionId, clusterGenerationId));
+      _executorService.execute(() -> updateStateDueToClusterChange(trackerClients, partitionId, clusterGenerationId,
+          shouldForceUpdate));
     }
   }
 
@@ -140,12 +148,17 @@ public class StateUpdater
         : _partitionLoadBalancerStateMap.get(partitionId).getPointsMap();
   }
 
-  /**
-   * Exposed for testings
-   */
   PartitionState getPartitionState(int partitionId)
   {
     return _partitionLoadBalancerStateMap.get(partitionId);
+  }
+
+  /**
+   * Return the first valid partition id. This is mainly used for monitoring at least one valid partition.
+   */
+  int getFirstValidPartitionId()
+  {
+    return _firstPartitionId;
   }
 
   /**
@@ -154,11 +167,17 @@ public class StateUpdater
    */
   void updateState()
   {
-    // Update state for each partition
-    for (Integer partitionId : _partitionLoadBalancerStateMap.keySet())
+    try {
+      // Update state for each partition
+      for (Integer partitionId : _partitionLoadBalancerStateMap.keySet())
+      {
+        PartitionState partitionState = _partitionLoadBalancerStateMap.get(partitionId);
+        updateStateForPartition(partitionState.getTrackerClients(), partitionId, partitionState, partitionState.getClusterGenerationId(),
+            false);
+      }
+    } catch (Exception ex)
     {
-      PartitionState partitionState = _partitionLoadBalancerStateMap.get(partitionId);
-      updateStateForPartition(partitionState.getTrackerClients(), partitionId, partitionState, partitionState.getClusterGenerationId());
+      LOG.error("Failed to update the state for service: " + _serviceName, ex);
     }
   }
 
@@ -168,22 +187,22 @@ public class StateUpdater
    * 2. Handle quarantine and recovery of each host, which may adjust the healthscore further
    * 3. Update the hash ring for this partition
    * 4. Log and notify listeners after the update is done
-   *
-   * @param  trackerClients Hosts that belong to this partition
+   *  @param  trackerClients Hosts that belong to this partition
    * @param partitionId Identifies the partition to be updated
    * @param oldPartitionState The partition state of the last interval
-   * @param  clusterGenerationId The id that identifies the cluster version
+   * @param clusterGenerationId The id that identifies the cluster version
+   * @param shouldForceUpdate Whether or not to force update
    */
-  void updateStateForPartition(Set<TrackerClient> trackerClients, int partitionId,
-      PartitionState oldPartitionState, Long clusterGenerationId)
+  void updateStateForPartition(Set<TrackerClient> trackerClients, int partitionId, PartitionState oldPartitionState,
+      Long clusterGenerationId, boolean shouldForceUpdate)
   {
-    LOG.debug("Updating for partition: ", partitionId, ", state: ", oldPartitionState);
+    LOG.debug("Updating for partition: " + partitionId + ", state: " + oldPartitionState);
     PartitionState newPartitionState = new PartitionState(oldPartitionState);
 
     // Step 1: Update the base health scores for each {@link TrackerClient} in the cluster
     Map<TrackerClient, CallTracker.CallStats> latestCallStatsMap = new HashMap<>();
     long avgClusterLatency = getAvgClusterLatency(trackerClients, latestCallStatsMap);
-    boolean clusterUpdated = clusterGenerationId != oldPartitionState.getClusterGenerationId();
+    boolean clusterUpdated = shouldForceUpdate || (clusterGenerationId != oldPartitionState.getClusterGenerationId());
     updateBaseHealthScoreAndState(trackerClients, newPartitionState, avgClusterLatency, clusterUpdated, latestCallStatsMap);
 
     // Step 2: Handle quarantine and recovery for all tracker clients in this cluster
@@ -208,12 +227,14 @@ public class StateUpdater
    * We will check the cluster generation id again before performing the actual update to make sure only one updates got executed
    * This can be guaranteed because the executor service has has 1 thread
    */
-  void updateStateDueToClusterChange(Set<TrackerClient> trackerClients, int partitionId, Long newClusterGenerationId)
+  void updateStateDueToClusterChange(Set<TrackerClient> trackerClients, int partitionId, Long newClusterGenerationId,
+      boolean shouldForceUpdate)
   {
-    if (newClusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId())
+    if (shouldForceUpdate || newClusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId()
+        || trackerClients.size() != _partitionLoadBalancerStateMap.get(partitionId).getPointsMap().size())
     {
       PartitionState oldPartitionState = _partitionLoadBalancerStateMap.get(partitionId);
-      updateStateForPartition(trackerClients, partitionId, oldPartitionState, newClusterGenerationId);
+      updateStateForPartition(trackerClients, partitionId, oldPartitionState, newClusterGenerationId, shouldForceUpdate);
     }
   }
 
@@ -257,49 +278,73 @@ public class StateUpdater
       {
         TrackerClientState trackerClientState = trackerClientStateMap.get(trackerClient);
         int callCount = latestCallStats.getCallCount() + latestCallStats.getOutstandingCount();
-        double errorRate = getErrorRate(latestCallStats.getErrorTypeCounts(), callCount);
-        long avgLatency = getAvgHostLatency(latestCallStats);
-        double oldHealthScore = trackerClientState.getHealthScore();
-        double newHealthScore = oldHealthScore;
 
-        clusterCallCount += callCount;
-        clusterErrorCount += errorRate * callCount;
-
-        if (isUnhealthy(trackerClientState, avgClusterLatency, callCount, avgLatency, errorRate))
+        if (trackerClient.doNotLoadBalance())
         {
-          // If it is above high latency, we reduce the health score by down step
-          newHealthScore = Double.max(trackerClientState.getHealthScore() - _relativeStrategyProperties.getDownStep(), MIN_HEALTH_SCORE);
-          trackerClientState.setHealthState(TrackerClientState.HealthState.UNHEALTHY);
-        }
-        else if (trackerClientState.getHealthScore() < MAX_HEALTH_SCORE
-            && isHealthy(trackerClientState, avgClusterLatency, callCount, avgLatency, errorRate))
-        {
-          if (oldHealthScore < _relativeStrategyProperties.getSlowStartThreshold())
-          {
-            // If the client is healthy and slow start is enabled, we double the health score
-            newHealthScore = oldHealthScore > MIN_HEALTH_SCORE
-                ? Math.min(MAX_HEALTH_SCORE, SLOW_START_RECOVERY_FACTOR * oldHealthScore)
-                : SLOW_START_INITIAL_HEALTH_SCORE;
-          }
-          else
-          {
-            // If slow start is not enabled, we just increase the health score by up step
-            newHealthScore = Math.min(MAX_HEALTH_SCORE, oldHealthScore + _relativeStrategyProperties.getUpStep());
-          }
           trackerClientState.setHealthState(TrackerClientState.HealthState.HEALTHY);
+          trackerClientState.setHealthScore(MAX_HEALTH_SCORE);
+          trackerClientState.setCallCount(callCount);
         }
         else
         {
-          trackerClientState.setHealthState(TrackerClientState.HealthState.NEUTRAL);
+          double errorRate = getErrorRate(latestCallStats.getErrorTypeCounts(), callCount);
+          long avgLatency = getAvgHostLatency(latestCallStats);
+          double oldHealthScore = trackerClientState.getHealthScore();
+          double newHealthScore = oldHealthScore;
+
+          clusterCallCount += callCount;
+          clusterErrorCount += errorRate * callCount;
+
+          if (isUnhealthy(trackerClientState, avgClusterLatency, callCount, avgLatency, errorRate))
+          {
+            // If it is above high latency, we reduce the health score by down step
+            newHealthScore = Double.max(trackerClientState.getHealthScore() - _relativeStrategyProperties.getDownStep(), MIN_HEALTH_SCORE);
+            trackerClientState.setHealthState(TrackerClientState.HealthState.UNHEALTHY);
+
+            LOG.debug("Host is unhealthy. Host: " + trackerClient.toString()
+                        + ", errorRate: " + errorRate
+                        + ", latency: " + avgClusterLatency
+                        + ", callCount: " + callCount
+                        + ", healthScore dropped from " + trackerClientState.getHealthScore() + " to " + newHealthScore);
+          }
+          else if (trackerClientState.getHealthScore() < MAX_HEALTH_SCORE
+            && isHealthy(trackerClientState, avgClusterLatency, callCount, avgLatency, errorRate))
+          {
+            if (oldHealthScore < _relativeStrategyProperties.getSlowStartThreshold())
+            {
+              // If the client is healthy and slow start is enabled, we double the health score
+              newHealthScore = oldHealthScore > MIN_HEALTH_SCORE
+                ? Math.min(MAX_HEALTH_SCORE, SLOW_START_RECOVERY_FACTOR * oldHealthScore)
+                : SLOW_START_INITIAL_HEALTH_SCORE;
+            }
+            else
+            {
+              // If slow start is not enabled, we just increase the health score by up step
+              newHealthScore = Math.min(MAX_HEALTH_SCORE, oldHealthScore + _relativeStrategyProperties.getUpStep());
+            }
+            trackerClientState.setHealthState(TrackerClientState.HealthState.HEALTHY);
+          }
+          else
+          {
+            trackerClientState.setHealthState(TrackerClientState.HealthState.NEUTRAL);
+          }
+          trackerClientState.setHealthScore(newHealthScore);
+          trackerClientState.setCallCount(callCount);
         }
-        trackerClientState.setHealthScore(newHealthScore);
-        trackerClientState.setCallCount(callCount);
       }
       else
       {
-        // If it is a new client, we directly set health score as the initial health score to initialize
-        trackerClientStateMap.put(trackerClient, new TrackerClientState(_relativeStrategyProperties.getInitialHealthScore(),
-            _relativeStrategyProperties.getMinCallCount()));
+        // Initializing a new client score
+        if (trackerClient.doNotSlowStart() || trackerClient.doNotLoadBalance())
+        {
+          trackerClientStateMap.put(trackerClient, new TrackerClientState(MAX_HEALTH_SCORE,
+              _relativeStrategyProperties.getMinCallCount()));
+        }
+        else
+        {
+          trackerClientStateMap.put(trackerClient,
+              new TrackerClientState(_relativeStrategyProperties.getInitialHealthScore(), _relativeStrategyProperties.getMinCallCount()));
+        }
       }
     }
     partitionState.setPartitionStats(avgClusterLatency, clusterCallCount, clusterErrorCount);
@@ -319,6 +364,11 @@ public class StateUpdater
     {
       CallTracker.CallStats latestCallStats = trackerClient.getCallTracker().getCallStats();
       latestCallStatsMap.put(trackerClient, latestCallStats);
+
+      if (trackerClient.doNotLoadBalance())
+      {
+        continue;
+      }
 
       int callCount = latestCallStats.getCallCount();
       int outstandingCallCount = latestCallStats.getOutstandingCount();
@@ -392,11 +442,16 @@ public class StateUpdater
           _relativeStrategyProperties.getRingProperties().getPointsPerWeight(),
           _listenerFactories.stream().map(factory -> factory.create(partitionId)).collect(Collectors.toList()));
 
-      updateStateForPartition(trackerClients, partitionId, partitionState, clusterGenerationId);
+      updateStateForPartition(trackerClients, partitionId, partitionState, clusterGenerationId, false);
+
+      if (_firstPartitionId < 0)
+      {
+        _firstPartitionId = partitionId;
+      }
     }
   }
 
-  private static void logState(PartitionState oldState,
+  private void logState(PartitionState oldState,
       PartitionState newState,
       int partitionId)
   {
@@ -411,17 +466,27 @@ public class StateUpdater
 
     if (LOG.isDebugEnabled())
     {
-      LOG.debug("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", unhealthyClients = ["
-          + (newUnhealthyClients.stream().map(client -> getClientStats(client, newTrackerClientStateMap))
-          .collect(Collectors.joining(","))) + "]");
+      LOG.debug("Strategy updated: service=" + _serviceName
+          + ", partitionId=" + partitionId
+          + ", unhealthyClientNumber=" + newUnhealthyClients.size()
+          + ", newState=" + newState
+          + ", unhealthyClients={" + (newUnhealthyClients.stream().limit(LOG_UNHEALTHY_CLIENT_NUMBERS)
+          .map(client -> getClientStats(client, newTrackerClientStateMap)).collect(Collectors.joining(",")))
+          + (newUnhealthyClients.size() > LOG_UNHEALTHY_CLIENT_NUMBERS ? "...(total "
+          + newUnhealthyClients.size() + ")" : "") + "},"
+          + ", oldState=" + oldState);
     }
     else if (allowToLog(oldState, newState, newUnhealthyClients, oldUnhealthyClients))
     {
-      LOG.info("Strategy updated: partitionId= " + partitionId + ", newState=" + newState + ", unhealthyClients = ["
-          + (newUnhealthyClients.stream().limit(LOG_UNHEALTHY_CLIENT_NUMBERS)
+      LOG.info("Strategy updated: service=" + _serviceName
+          + ", partitionId=" + partitionId
+          + ", unhealthyClientNumber=" + newUnhealthyClients.size()
+          + ", newState=" + newState
+          + ", unhealthyClients={" + (newUnhealthyClients.stream().limit(LOG_UNHEALTHY_CLIENT_NUMBERS)
           .map(client -> getClientStats(client, newTrackerClientStateMap)).collect(Collectors.joining(",")))
           + (newUnhealthyClients.size() > LOG_UNHEALTHY_CLIENT_NUMBERS ? "...(total "
-          + newUnhealthyClients.size() + ")" : "") + "]");
+          + newUnhealthyClients.size() + ")" : "") + "},"
+          + ", oldState=" + oldState);
     }
   }
 

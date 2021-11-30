@@ -435,6 +435,7 @@ public class TestRecord
   {
     RecordTest record = new RecordTest();
     record.setIntField(52);
+    record.setIntOptionalField(500);
     RecordTest recordClone = record.clone();
     assertEquals(recordClone, record);
     assertNotSame(recordClone.data(), record.data());
@@ -443,6 +444,10 @@ public class TestRecord
     recordClone.setIntField(99);
     assertEquals(record.getIntField().intValue(), 52);
     assertEquals(recordClone.getIntField().intValue(), 99);
+
+    recordClone.removeIntOptionalField();
+    assertEquals(record.getIntOptionalField().intValue(), 500);
+    assertNull(recordClone.getIntOptionalField());
   }
 
   @Test
@@ -451,6 +456,9 @@ public class TestRecord
     RecordTest record = new RecordTest();
     record.setRecordField(new RecordBar());
     record.getRecordField().setLocation("near");
+    record.setRecordOptionalField(new RecordBar());
+    record.getRecordOptionalField().setLocation("near");
+    record.getRecordOptionalField().setOptionalLocation("maybeNear");
     RecordTest recordClone = record.clone();
     assertEquals(recordClone, record);
     assertNotSame(recordClone.data(), record.data());
@@ -459,6 +467,17 @@ public class TestRecord
     recordClone.getRecordField().setLocation("far");
     assertEquals(record.getRecordField().getLocation(), "far");
     assertEquals(recordClone.getRecordField().getLocation(), "far");
+
+    recordClone.getRecordOptionalField().removeOptionalLocation();
+    assertEquals(record.getRecordOptionalField().getLocation(), "near");
+    assertNull(record.getRecordOptionalField().getOptionalLocation());
+    assertEquals(recordClone.getRecordOptionalField().getLocation(), "near");
+    assertNull(recordClone.getRecordOptionalField().getOptionalLocation());
+
+    recordClone.removeRecordOptionalField();
+    assertEquals(record.getRecordOptionalField().getLocation(), "near");
+    assertNull(record.getRecordOptionalField().getOptionalLocation());
+    assertNull(recordClone.getRecordOptionalField());
   }
 
   @Test
@@ -466,6 +485,7 @@ public class TestRecord
   {
     RecordTest record = new RecordTest();
     record.setIntField(52);
+    record.setIntOptionalField(500);
     RecordTest recordCopy = record.copy();
     assertEquals(recordCopy, record);
     assertTrue(TestUtil.noCommonDataComplex(recordCopy, record));
@@ -475,6 +495,10 @@ public class TestRecord
     recordCopy.setIntField(99);
     assertEquals(record.getIntField().intValue(), 52);
     assertEquals(recordCopy.getIntField().intValue(), 99);
+
+    recordCopy.removeIntOptionalField();
+    assertEquals(record.getIntOptionalField().intValue(), 500);
+    assertNull(recordCopy.getIntOptionalField());
   }
 
   @Test
@@ -483,6 +507,9 @@ public class TestRecord
     RecordTest record = new RecordTest();
     record.setRecordField(new RecordBar());
     record.getRecordField().setLocation("near");
+    record.setRecordOptionalField(new RecordBar());
+    record.getRecordOptionalField().setLocation("near");
+    record.getRecordOptionalField().setOptionalLocation("maybeNear");
     RecordTest recordCopy = record.copy();
     assertEquals(recordCopy, record);
     assertTrue(TestUtil.noCommonDataComplex(recordCopy.data(), record.data()));
@@ -493,5 +520,25 @@ public class TestRecord
     recordCopy.getRecordField().setLocation("far");
     assertEquals(record.getRecordField().getLocation(), "near");
     assertEquals(recordCopy.getRecordField().getLocation(), "far");
+
+    recordCopy.getRecordOptionalField().removeOptionalLocation();
+    assertEquals(record.getRecordOptionalField().getLocation(), "near");
+    assertEquals(recordCopy.getRecordOptionalField().getLocation(), "near");
+    assertNull(recordCopy.getRecordOptionalField().getOptionalLocation());
+
+    recordCopy.removeRecordOptionalField();
+    assertEquals(record.getRecordOptionalField().getLocation(), "near");
+    assertNull(recordCopy.getRecordOptionalField());
+  }
+
+  @Test
+  public void testSetOnRecordWrappingSameMap()
+  {
+    RecordBar bar = new RecordBar();
+    bar.setLocation("some");
+    RecordBar copy = new RecordBar(bar.data());
+    assertEquals(copy.getLocation(), "some");
+    copy.setLocation("other");
+    assertEquals(bar.getLocation(), "other");
   }
 }

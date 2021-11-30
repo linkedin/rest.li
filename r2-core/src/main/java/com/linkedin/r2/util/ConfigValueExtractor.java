@@ -19,7 +19,7 @@ public class ConfigValueExtractor
    */
   public static List<String> buildList(Object propertyValue, String listSeparator)
   {
-    List<String> valueList = new ArrayList<String>();
+    List<String> valueList = new ArrayList<>();
     if (propertyValue != null)
     {
       if (propertyValue instanceof List<?>)

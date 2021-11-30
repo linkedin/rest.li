@@ -25,7 +25,7 @@ public class DegraderLoadBalancerStrategyConfigTest
   @Test
   public void testCreateHttpConfigFromMap()
   {
-    Map<String,Object> properties = new HashMap<String, Object>();
+    Map<String,Object> properties = new HashMap<>();
 
     long httpUpdateIntervalMs = 5231;
     boolean updateOnlyAtInterval = false;
@@ -42,8 +42,8 @@ public class DegraderLoadBalancerStrategyConfigTest
     double hashRingPointCleanUpRate = 0.1;
     String consistentHashAlgo = "multiProbe";
     int numProbes = 1024;
-    Map<String,Object> httpHashConfig = new HashMap<String,Object>();
-    List<String> httpRegexes = new LinkedList<String>();
+    Map<String, Object> httpHashConfig = new HashMap<>();
+    List<String> httpRegexes = new LinkedList<>();
     httpRegexes.add("httphashToken=(\\d+)");
     httpHashConfig.put("regexes", httpRegexes);
 
@@ -110,7 +110,7 @@ public class DegraderLoadBalancerStrategyConfigTest
   @Test
   public void testCreateHttpConfigFromMapWithExtraArguments()
   {
-    Map<String,Object> properties = new HashMap<String, Object>();
+    Map<String, Object> properties = new HashMap<>();
 
     long httpUpdateIntervalMs = 5231;
     boolean updateOnlyAtInterval = false;
@@ -128,8 +128,8 @@ public class DegraderLoadBalancerStrategyConfigTest
     String consistentHashAlgo = "multiProbe";
     int numProbes = 1024;
     long quarantineLatency = 50;
-    Map<String,Object> httpHashConfig = new HashMap<String,Object>();
-    List<String> httpRegexes = new LinkedList<String>();
+    Map<String, Object> httpHashConfig = new HashMap<>();
+    List<String> httpRegexes = new LinkedList<>();
     httpRegexes.add("httphashToken=(\\d+)");
     httpHashConfig.put("regexes", httpRegexes);
 

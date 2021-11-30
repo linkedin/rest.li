@@ -30,7 +30,7 @@ import java.util.Map;
  */
 public class PrimitiveTemplateSpec extends ClassTemplateSpec
 {
-  private static Map<DataSchema.Type, PrimitiveTemplateSpec> _schemaTypeToAst = new HashMap<DataSchema.Type, PrimitiveTemplateSpec>();
+  private static Map<DataSchema.Type, PrimitiveTemplateSpec> _schemaTypeToAst = new HashMap<>();
 
   static
   {

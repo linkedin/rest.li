@@ -77,8 +77,8 @@ public class CompatibilityChecker
     private final DataSchema _newer;
   }
 
-  private final ArrayDeque<String> _path = new ArrayDeque<String>();
-  private final HashSet<Checked> _checked = new HashSet<Checked>();
+  private final ArrayDeque<String> _path = new ArrayDeque<>();
+  private final HashSet<Checked> _checked = new HashSet<>();
   private Result _result;
   private CompatibilityOptions _options;
 
@@ -111,7 +111,7 @@ public class CompatibilityChecker
     }
 
     int pathCount = 1;
-    if (_options.getMode() == CompatibilityOptions.Mode.DATA)
+    if (_options.getMode() == CompatibilityOptions.Mode.DATA || _options.getMode() == CompatibilityOptions.Mode.EXTENSION )
     {
       older = older.getDereferencedDataSchema();
       while (newer.getType() == DataSchema.Type.TYPEREF)
@@ -293,18 +293,18 @@ public class CompatibilityChecker
   {
     checkName(older, newer);
 
-    List<RecordDataSchema.Field> commonFields = new ArrayList<RecordDataSchema.Field>(newer.getFields().size());
-    List<String> newerRequiredAdded = new CheckerArrayList<String>();
+    List<RecordDataSchema.Field> commonFields = new ArrayList<>(newer.getFields().size());
+    List<String> newerRequiredAdded = new CheckerArrayList<>();
     List<String> newerRequiredWithDefaultAdded = new CheckerArrayList<>();
-    List<String> newerOptionalAdded = new CheckerArrayList<String>();
-    List<String> requiredToOptional = new CheckerArrayList<String>();
-    List<String> requiredWithDefaultToOptional = new CheckerArrayList<String>();
-    List<String> optionalToRequired = new CheckerArrayList<String>();
-    List<String> optionalToRequiredWithDefault = new CheckerArrayList<String>();
-    List<String> newerRequiredRemoved = new CheckerArrayList<String>();
-    List<String> newerOptionalRemoved = new CheckerArrayList<String>();
-    List<String> requiredWithDefaultToRequired = new CheckerArrayList<String>();
-    List<String> requiredToRequiredWithDefault = new CheckerArrayList<String>();
+    List<String> newerOptionalAdded = new CheckerArrayList<>();
+    List<String> requiredToOptional = new CheckerArrayList<>();
+    List<String> requiredWithDefaultToOptional = new CheckerArrayList<>();
+    List<String> optionalToRequired = new CheckerArrayList<>();
+    List<String> optionalToRequiredWithDefault = new CheckerArrayList<>();
+    List<String> newerRequiredRemoved = new CheckerArrayList<>();
+    List<String> newerOptionalRemoved = new CheckerArrayList<>();
+    List<String> requiredWithDefaultToRequired = new CheckerArrayList<>();
+    List<String> requiredToRequiredWithDefault = new CheckerArrayList<>();
 
     for (RecordDataSchema.Field newerField : newer.getFields())
     {
@@ -370,7 +370,7 @@ public class CompatibilityChecker
       }
     }
 
-    if (newerRequiredAdded.isEmpty() == false)
+    if (newerRequiredAdded.isEmpty() == false && _options.getMode() != CompatibilityOptions.Mode.EXTENSION)
     {
       appendMessage(CompatibilityMessage.Impact.BREAKS_NEW_READER,
                     "new record added required fields %s",
@@ -497,8 +497,8 @@ public class CompatibilityChecker
 
     // using list to preserve union member order
     List<UnionDataSchema.Member> commonMembers = new CheckerArrayList<>(newer.getMembers().size());
-    List<String> newerAdded = new CheckerArrayList<String>();
-    List<String> olderAdded = new CheckerArrayList<String>();
+    List<String> newerAdded = new CheckerArrayList<>();
+    List<String> olderAdded = new CheckerArrayList<>();
 
     computeAddedUnionMembers(older, newer, newerAdded, commonMembers);
     computeAddedUnionMembers(newer, older, olderAdded, null);
@@ -545,10 +545,10 @@ public class CompatibilityChecker
     _path.addLast(DataSchemaConstants.SYMBOLS_KEY);
 
     // using list to preserve symbol order
-    List<String> newerOnlySymbols = new CheckerArrayList<String>(newer.getSymbols());
+    List<String> newerOnlySymbols = new CheckerArrayList<>(newer.getSymbols());
     newerOnlySymbols.removeAll(older.getSymbols());
 
-    List<String> olderOnlySymbols = new CheckerArrayList<String>(older.getSymbols());
+    List<String> olderOnlySymbols = new CheckerArrayList<>(older.getSymbols());
     olderOnlySymbols.removeAll(newer.getSymbols());
 
     if (newerOnlySymbols.isEmpty() == false)
@@ -660,7 +660,7 @@ public class CompatibilityChecker
   {
     private Result()
     {
-      _messages = new MessageList<CompatibilityMessage>();
+      _messages = new MessageList<>();
     }
 
     @Override

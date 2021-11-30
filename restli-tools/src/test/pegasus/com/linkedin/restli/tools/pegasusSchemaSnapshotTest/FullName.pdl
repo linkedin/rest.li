@@ -1,0 +1,5 @@
+record FullName {
+  firstName: string
+
+  lastName: string
+}

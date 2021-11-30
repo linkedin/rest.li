@@ -1,0 +1,5 @@
+namespace com.linkedin.restli.examples.greetings.api
+
+record ValidateEmptyUnion {
+  foo: union[bar: string, fuzz: int]
+}

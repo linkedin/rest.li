@@ -32,7 +32,7 @@ import java.util.Map;
 public class FortunesResource extends CollectionResourceTemplate<Long, Fortune>
 {
   // Create trivial db for fortunes
-  static Map<Long, String> fortunes = new HashMap<Long, String>();
+  static Map<Long, String> fortunes = new HashMap<>();
   static {
     fortunes.put(1L, "Today is your lucky day.");
     fortunes.put(2L, "There's no time like the present.");

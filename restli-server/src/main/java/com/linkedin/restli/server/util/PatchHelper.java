@@ -89,7 +89,7 @@ public class PatchHelper
   {
     DataMap toAddDoc = new DataMap();
     Set<String> fields = doc.keySet();
-    List<String> toRemoveDoc = new ArrayList<String>(fields.size());
+    List<String> toRemoveDoc = new ArrayList<>(fields.size());
     for (String  f : fields)
     {
       Object v = doc.get(f);
@@ -114,7 +114,7 @@ public class PatchHelper
       {
         DataMap setFields = (DataMap)v;
         Set<String> setFieldNames = setFields.keySet();
-        List<String> toRemove = new LinkedList<String>();
+        List<String> toRemove = new LinkedList<>();
         DataMap filteredSetFields = new DataMap();
         for (String setFieldName: setFieldNames)
         {

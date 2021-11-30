@@ -246,6 +246,7 @@ public class HttpNettyClient implements TransportClient
     {
       callback.onError(new IllegalStateException("Shutdown has already been requested."));
     }
+    TimingKey.unregisterKey(TIMING_KEY);
   }
 
   private void sendStreamRequestAsRestRequest(StreamRequest request, RequestContext requestContext,

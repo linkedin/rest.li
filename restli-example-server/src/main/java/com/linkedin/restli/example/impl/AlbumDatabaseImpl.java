@@ -61,5 +61,5 @@ public class AlbumDatabaseImpl implements AlbumDatabase
   // database instances and hash maps are the same for all sessions.
   // These shared variables need synchronization for consistency.
   private final AtomicLong       _currId = new AtomicLong();
-  private final Map<Long, Album> _data   = new ConcurrentHashMap<Long, Album>();
+  private final Map<Long, Album> _data   = new ConcurrentHashMap<>();
 }

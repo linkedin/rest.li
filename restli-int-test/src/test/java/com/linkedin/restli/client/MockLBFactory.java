@@ -58,20 +58,20 @@ public class MockLBFactory
   {
     // define the load balancing strategies that we support (round robin, etc)
     Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-        new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
+        new HashMap<>();
 
     loadBalancerStrategyFactories.put("degrader",
                                       new DegraderLoadBalancerStrategyFactoryV3());
 
     Map<String, TransportClientFactory> clientFactories =
-        new HashMap<String, TransportClientFactory>();
+        new HashMap<>();
 
     clientFactories.put("http", new HttpClientFactory.Builder().build());
 
     SynchronousExecutorService executorService = new SynchronousExecutorService();
-    MockStore<ServiceProperties> serviceRegistry = new MockStore<ServiceProperties>();
-    MockStore<ClusterProperties> clusterRegistry = new MockStore<ClusterProperties>();
-    MockStore<UriProperties> uriRegistry = new MockStore<UriProperties>();
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
 
     SimpleLoadBalancerState state =
         new SimpleLoadBalancerState(executorService,
@@ -85,9 +85,9 @@ public class MockLBFactory
     state.listenToService("groups", new LoadBalancerState.NullStateListenerCallback());
     state.listenToCluster("testcluster", new LoadBalancerState.NullStateListenerCallback());
     state.listenToCluster("badcluster", new LoadBalancerState.NullStateListenerCallback());
-    List<String> schemes = new ArrayList<String>();
+    List<String> schemes = new ArrayList<>();
     schemes.add("http");
-    Map<String, Object> metadataProperties = new HashMap<String, Object>();
+    Map<String, Object> metadataProperties = new HashMap<>();
     metadataProperties.put(RestConstants.RESTLI_PROTOCOL_VERSION_PROPERTY,
                            AllProtocolVersions.BASELINE_PROTOCOL_VERSION.toString());
     serviceRegistry.put("greetings", new ServiceProperties("greetings", "testcluster", "/greetings",
@@ -121,9 +121,9 @@ public class MockLBFactory
   private static Map<URI, Map<Integer, PartitionData>> createUriData(String uriString)
   {
     URI uri = URI.create(uriString);
-    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(1);
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>(1);
     uriData.put(uri, partitionData);
     return uriData;
   }

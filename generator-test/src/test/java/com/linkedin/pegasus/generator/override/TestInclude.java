@@ -45,13 +45,13 @@ public class TestInclude
     // fields defined in IncludeA are present in IncludeB
     b.setA1(1);
     b.setA2("a2");
-    assertEquals(b.getA1(), new Integer(1));
+    assertEquals(b.getA1(), Integer.valueOf(1));
     assertEquals(b.getA2(), "a2");
 
     // fields defined in IncludeB.
     b.setB1(2);
     b.setB2("b2");
-    assertEquals(b.getB1(), new Integer(2));
+    assertEquals(b.getB1(), Integer.valueOf(2));
     assertEquals(b.getB2(), "b2");
 
     // include has IncludeA.
@@ -81,19 +81,19 @@ public class TestInclude
     // fields defined in IncludeA are present in IncludeB
     c.setA1(1);
     c.setA2("a2");
-    assertEquals(c.getA1(), new Integer(1));
+    assertEquals(c.getA1(), Integer.valueOf(1));
     assertEquals(c.getA2(), "a2");
 
     // fields defined in IncludeB.
     c.setB1(2);
     c.setB2("b2");
-    assertEquals(c.getB1(), new Integer(2));
+    assertEquals(c.getB1(), Integer.valueOf(2));
     assertEquals(c.getB2(), "b2");
 
     // fields defined in IncludeC.
     c.setC1(3);
     c.setC2("c2");
-    assertEquals(c.getC1(), new Integer(3));
+    assertEquals(c.getC1(), Integer.valueOf(3));
     assertEquals(c.getC2(), "c2");
 
     // include contains IncludeB
@@ -131,31 +131,31 @@ public class TestInclude
     // fields defined in IncludeA are present in IncludeB
     m.setA1(1);
     m.setA2("a2");
-    assertEquals(m.getA1(), new Integer(1));
+    assertEquals(m.getA1(), Integer.valueOf(1));
     assertEquals(m.getA2(), "a2");
 
     // fields defined in IncludeB.
     m.setB1(2);
     m.setB2("b2");
-    assertEquals(m.getB1(), new Integer(2));
+    assertEquals(m.getB1(), Integer.valueOf(2));
     assertEquals(m.getB2(), "b2");
 
     // fields defined in IncludeC.
     m.setC1(3);
     m.setC2("c2");
-    assertEquals(m.getC1(), new Integer(3));
+    assertEquals(m.getC1(), Integer.valueOf(3));
     assertEquals(m.getC2(), "c2");
 
     // fields defined in IncludeD.
     m.setD1(4);
     m.setD2("d2");
-    assertEquals(m.getD1(), new Integer(4));
+    assertEquals(m.getD1(), Integer.valueOf(4));
     assertEquals(m.getD2(), "d2");
 
     // fields defined in IncludeMultiple.
     m.setM1(5);
     m.setM2("m2");
-    assertEquals(m.getM1(), new Integer(5));
+    assertEquals(m.getM1(), Integer.valueOf(5));
     assertEquals(m.getM2(), "m2");
 
     // include contains IncludeC and IncludeD
@@ -206,25 +206,25 @@ public class TestInclude
     // fields defined in IncludeA are present in IncludeB
     t.setA1(1);
     t.setA2("a2");
-    assertEquals(t.getA1(), new Integer(1));
+    assertEquals(t.getA1(), Integer.valueOf(1));
     assertEquals(t.getA2(), "a2");
 
     // fields defined in IncludeB.
     t.setB1(2);
     t.setB2("b2");
-    assertEquals(t.getB1(), new Integer(2));
+    assertEquals(t.getB1(), Integer.valueOf(2));
     assertEquals(t.getB2(), "b2");
 
     // fields defined in IncludeC.
     t.setC1(3);
     t.setC2("c2");
-    assertEquals(t.getC1(), new Integer(3));
+    assertEquals(t.getC1(), Integer.valueOf(3));
     assertEquals(t.getC2(), "c2");
 
     // fields defined in IncludeTypeRef.
     t.setT1(4);
     t.setT2("t2");
-    assertEquals(t.getT1(), new Integer(4));
+    assertEquals(t.getT1(), Integer.valueOf(4));
     assertEquals(t.getT2(), "t2");
 
     // include contains IncludeRef

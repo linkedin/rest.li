@@ -45,8 +45,8 @@ import org.testng.annotations.Test;
 
 public class TestMultiplexedRequestBuilder extends MultiplexerTestBase
 {
-  private final NoOpCallback<TestRecord> callback1 = new NoOpCallback<TestRecord>();
-  private final NoOpCallback<TestRecord> callback2 = new NoOpCallback<TestRecord>();
+  private final NoOpCallback<TestRecord> callback1 = new NoOpCallback<>();
+  private final NoOpCallback<TestRecord> callback2 = new NoOpCallback<>();
 
   @Test(expectedExceptions = {IllegalStateException.class})
   public void testEmpty() throws RestLiEncodingException
@@ -117,7 +117,7 @@ public class TestMultiplexedRequestBuilder extends MultiplexerTestBase
   {
     TestRecord entity = fakeEntity(0);
     CreateRequest<TestRecord> request = fakeCreateRequest(entity);
-    NoOpCallback<EmptyRecord> callback = new NoOpCallback<EmptyRecord>();
+    NoOpCallback<EmptyRecord> callback = new NoOpCallback<>();
 
     MultiplexedRequest multiplexedRequest = MultiplexedRequestBuilder
         .createSequentialRequest()

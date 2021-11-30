@@ -55,7 +55,7 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
   private Class<V>                       _elementClass;
   private K                              _id;
   private String                         _name;
-  private final Map<FieldDef<?>, Object> _actionParams = new HashMap<FieldDef<?>, Object>();
+  private final Map<FieldDef<?>, Object> _actionParams = new HashMap<>();
   private List<Object>                   _streamingAttachments; //We initialize only when we need to.
 
   public ActionRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
@@ -207,7 +207,7 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
       }
       else
       {
-        responseFieldDef = new FieldDef<V>(ActionResponse.VALUE_NAME, _elementType.getType(), _elementType.getSchema());
+        responseFieldDef = new FieldDef<>(ActionResponse.VALUE_NAME, _elementType.getType(), _elementType.getSchema());
         responseFieldDefCollection = Collections.<FieldDef<?>>singleton(responseFieldDef);
       }
       actionResponseDataSchema = DynamicRecordMetadata.buildSchema(_name,responseFieldDefCollection);
@@ -221,33 +221,38 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
 
     @SuppressWarnings("unchecked")
     ActionResponseDecoder<V> actionResponseDecoder =
-        new ActionResponseDecoder<V>(responseFieldDef, actionResponseDataSchema);
+        new ActionResponseDecoder<>(responseFieldDef, actionResponseDataSchema);
     DynamicRecordTemplate inputParameters =
         new DynamicRecordTemplate(requestDataSchema, buildReadOnlyActionParameters());
     inputParameters.data().setReadOnly();
-    return new ActionRequest<V>(inputParameters,
-                                buildReadOnlyHeaders(),
-                                buildReadOnlyCookies(),
-                                actionResponseDecoder,
-                                _resourceSpec,
-                                buildReadOnlyQueryParameters(),
-                                getQueryParamClasses(),
-                                _name,
-                                getBaseUriTemplate(),
-                                buildReadOnlyPathKeys(),
-                                getRequestOptions(),
-                                buildReadOnlyId(),
-                                _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
+    return new ActionRequest<>(inputParameters,
+        buildReadOnlyHeaders(),
+        buildReadOnlyCookies(),
+        actionResponseDecoder,
+        _resourceSpec,
+        buildReadOnlyQueryParameters(),
+        getQueryParamClasses(),
+        _name,
+        getBaseUriTemplate(),
+        buildReadOnlyPathKeys(),
+        getRequestOptions(),
+        buildReadOnlyId(),
+        _streamingAttachments == null ? null : Collections.unmodifiableList(_streamingAttachments));
 
   }
 
   private Map<FieldDef<?>, Object> buildReadOnlyActionParameters()
   {
+    return buildReadOnlyActionParameters(_actionParams);
+  }
+
+  private static Map<FieldDef<?>, Object> buildReadOnlyActionParameters(Map<FieldDef<?>, Object> actionParams)
+  {
     try
     {
-      Map<FieldDef<?>, Object> readOnlyParameters = new HashMap<FieldDef<?>, Object>(_actionParams.size());
+      Map<FieldDef<?>, Object> readOnlyParameters = new HashMap<>(actionParams.size());
 
-      for (Map.Entry<FieldDef<?>, Object> originalParameterEntry : _actionParams.entrySet())
+      for (Map.Entry<FieldDef<?>, Object> originalParameterEntry : actionParams.entrySet())
       {
         readOnlyParameters.put(
             originalParameterEntry.getKey(),
@@ -262,7 +267,7 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
     }
   }
 
-  private Object getReadOnlyActionParameter(Object original) throws CloneNotSupportedException
+  private static Object getReadOnlyActionParameter(Object original) throws CloneNotSupportedException
   {
     if (original == null){
       return null;
