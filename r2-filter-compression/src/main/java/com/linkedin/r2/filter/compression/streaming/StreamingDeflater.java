@@ -143,7 +143,7 @@ abstract class StreamingDeflater implements Reader, Writer
   {
     private static final int BUF_SIZE = R2Constants.DEFAULT_DATA_CHUNK_SIZE;
 
-    private final Queue<ByteString> _data = new ConcurrentLinkedQueue<ByteString>();
+    private final Queue<ByteString> _data = new ConcurrentLinkedQueue<>();
     private final byte[] _buffer = new byte[BUF_SIZE];
     private int _writeIndex = 0;
     private boolean _done = false;

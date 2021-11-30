@@ -26,6 +26,8 @@ import com.linkedin.r2.event.EventProviderRegistry;
 import com.linkedin.r2.filter.CompressionConfig;
 import com.linkedin.r2.filter.FilterChain;
 import com.linkedin.r2.filter.FilterChains;
+import com.linkedin.r2.filter.TimedRestFilter;
+import com.linkedin.r2.filter.TimedStreamFilter;
 import com.linkedin.r2.filter.compression.ClientCompressionFilter;
 import com.linkedin.r2.filter.compression.ClientCompressionHelper;
 import com.linkedin.r2.filter.compression.ClientStreamCompressionFilter;
@@ -131,6 +133,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_MAX_CONCURRENT_CONNECTIONS = "http.maxConcurrentConnections";
   public static final String HTTP_TCP_NO_DELAY = "http.tcpNoDelay";
   public static final String HTTP_PROTOCOL_VERSION = "http.protocolVersion";
+  public static final String HTTP_MAX_CLIENT_REQUEST_RETRY_RATIO = "http.maxClientRequestRetryRatio";
 
   public static final int DEFAULT_QUERY_POST_THRESHOLD = Integer.MAX_VALUE;
   public static final int DEFAULT_POOL_WAITER_SIZE = Integer.MAX_VALUE;
@@ -152,6 +155,8 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_CONNECT_TIMEOUT = 30000;
   public static final int DEFAULT_SSL_HANDSHAKE_TIMEOUT = 10000;
   public static final int DEFAULT_CHANNELPOOL_WAITER_TIMEOUT = Integer.MAX_VALUE;
+  public static final double DEFAULT_MAX_CLIENT_REQUEST_RETRY_RATIO = 0.2;
+  public static final double UNLIMITED_CLIENT_REQUEST_RETRY_RATIO = 1.0;
   /**
    * Helper constant to allow specify which version of pipeline v2 the code is running on. Since it is a feature in active development,
    * we want to be able to enable the pipeline through configs, only for clients that have loaded a specific version of code
@@ -682,6 +687,11 @@ public class HttpClientFactory implements TransportClientFactory
     {
       _channelPoolManagerFactory = new ConnectionSharingChannelPoolManagerFactory(_channelPoolManagerFactory);
     }
+
+    _filters.getStreamFilters().stream().filter(TimedStreamFilter.class::isInstance)
+      .map(TimedStreamFilter.class::cast).forEach(TimedStreamFilter::setShared);
+    _filters.getRestFilters().stream().filter(TimedRestFilter.class::isInstance)
+        .map(TimedRestFilter.class::cast).forEach(TimedRestFilter::setShared);
   }
 
   public static class Builder
@@ -955,7 +965,6 @@ public class HttpClientFactory implements TransportClientFactory
     properties = new HashMap<String,Object>(properties);
     sslContext = coerceAndRemoveFromMap(HTTP_SSL_CONTEXT, properties, SSLContext.class);
     sslParameters = coerceAndRemoveFromMap(HTTP_SSL_PARAMS, properties, SSLParameters.class);
-
     return getClient(properties, sslContext, sslParameters);
   }
 
@@ -1077,6 +1086,14 @@ public class HttpClientFactory implements TransportClientFactory
             _responseCompressionConfigs.get(httpServiceName),
             httpResponseCompressionOperations));
       }
+      else
+      {
+        filters = filters.addLastRest(new ClientCompressionFilter(EncodingType.IDENTITY,
+            _defaultRequestCompressionConfig,
+            null,
+            null,
+            Collections.emptyList()));
+      }
 
       if (streamRequestContentEncoding != StreamEncodingType.IDENTITY || !httpResponseCompressionOperations.isEmpty())
       {
@@ -1086,6 +1103,15 @@ public class HttpClientFactory implements TransportClientFactory
             buildStreamAcceptEncodingSchemas(responseEncodings),
             _responseCompressionConfigs.get(httpServiceName),
             httpResponseCompressionOperations,
+            _compressionExecutor));
+      }
+      else
+      {
+        filters = filters.addLast(new ClientStreamCompressionFilter(StreamEncodingType.IDENTITY,
+            _defaultRequestCompressionConfig,
+            null,
+            null,
+            Collections.emptyList(),
             _compressionExecutor));
       }
     }
@@ -1162,7 +1188,7 @@ public class HttpClientFactory implements TransportClientFactory
   {
     if (encodings != null)
     {
-      List<StreamEncodingType> encodingTypes = new ArrayList<StreamEncodingType>();
+      List<StreamEncodingType> encodingTypes = new ArrayList<>();
       for (String encoding : encodings)
       {
         if (StreamEncodingType.isSupported(encoding))
@@ -1182,7 +1208,7 @@ public class HttpClientFactory implements TransportClientFactory
   {
     if (encodings != null)
     {
-      List<EncodingType> encodingTypes = new ArrayList<EncodingType>();
+      List<EncodingType> encodingTypes = new ArrayList<>();
       for (String encoding : encodings)
       {
         if (EncodingType.isSupported(encoding))

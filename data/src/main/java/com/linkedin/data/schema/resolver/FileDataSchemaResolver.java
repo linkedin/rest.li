@@ -67,12 +67,6 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
   public static final String DEFAULT_EXTENSION = SchemaParser.FILE_EXTENSION;
 
   /**
-   * The file directory name for different types of schemas. Default is {@link SchemaDirectoryName#PEGASUS}
-   * Ex "pegasus" for data or "extensions" for relationship extension schema files
-   */
-  private SchemaDirectoryName _schemasDirectoryName = SchemaDirectoryName.PEGASUS;
-
-  /**
    * Constructor.
    *
    * @param parserFactory to be used to construct {@link SchemaParser}'s to parse located files.
@@ -191,9 +185,11 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
   /**
    * Return the current schema file directory name for schemas location
    */
+  @SuppressWarnings("deprecation")
   public SchemaDirectoryName getSchemasDirectoryName()
   {
-    return _schemasDirectoryName;
+    assert getSchemaDirectories().size() == 1;
+    return (SchemaDirectoryName) getSchemaDirectories().get(0);
   }
 
   /**
@@ -201,10 +197,12 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
    * If not set Defaults to {@link SchemaDirectoryName#PEGASUS}
    *
    * @param schemasDirectoryName schema directory name.
+   * @deprecated Use {@link #setSchemaDirectories(List)} instead.
    */
+  @Deprecated
   void setSchemasDirectoryName(SchemaDirectoryName schemasDirectoryName)
   {
-    _schemasDirectoryName = schemasDirectoryName;
+    setSchemaDirectories(Collections.singletonList(schemasDirectoryName));
   }
 
   /**
@@ -240,10 +238,10 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
     }
     final String transformedName = name;
 
-    return new AbstractIterator(_paths)
+    return new AbstractPathAndSchemaDirectoryIterator(_paths, getSchemaDirectories())
     {
       @Override
-      protected DataSchemaLocation transform(String path)
+      protected DataSchemaLocation transform(String path, SchemaDirectory schemaDirectory)
       {
         boolean isJar = path.endsWith(JAR_EXTENSION);
         if (isJar)
@@ -264,7 +262,7 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
           StringBuilder builder = new StringBuilder();
           // within a JAR file, files are treated as resources. Thus, we should lookup using the resource separator
           // character, which is '/'
-          builder.append(_schemasDirectoryName.getName())
+          builder.append(schemaDirectory.getName())
               .append('/')
               .append(transformedName.replace(File.separatorChar, '/'));
           return new InJarFileDataSchemaLocation(jarFile, builder.toString());
@@ -294,7 +292,7 @@ public class FileDataSchemaResolver extends AbstractDataSchemaResolver
 
   private List<String> _paths = _emptyPaths;
   private String _extension = DEFAULT_EXTENSION;
-  private final Map<String, JarFile> _pathToJarFile = new HashMap<String, JarFile>();
+  private final Map<String, JarFile> _pathToJarFile = new HashMap<>();
 
   private static final List<String> _emptyPaths = Collections.emptyList();
 

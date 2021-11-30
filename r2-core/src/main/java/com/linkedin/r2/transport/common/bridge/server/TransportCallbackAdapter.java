@@ -45,14 +45,14 @@ public class TransportCallbackAdapter<T> implements Callback<T>
   @Override
   public void onSuccess(T res)
   {
-    final Map<String, String> wireAttrs = new HashMap<String, String>();
+    final Map<String, String> wireAttrs = new HashMap<>();
     _callback.onResponse(TransportResponseImpl.success(res, wireAttrs));
   }
 
   @Override
   public void onError(Throwable e)
   {
-    final Map<String, String> wireAttrs = new HashMap<String, String>();
+    final Map<String, String> wireAttrs = new HashMap<>();
     _callback.onResponse(TransportResponseImpl.<T>error(e, wireAttrs));
   }
 }

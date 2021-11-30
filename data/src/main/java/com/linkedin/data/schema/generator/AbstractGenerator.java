@@ -110,7 +110,7 @@ public abstract class AbstractGenerator
   {
     try
     {
-      List<File> sourceFiles = new ArrayList<File>();
+      List<File> sourceFiles = new ArrayList<>();
 
       for (String source : sources)
       {

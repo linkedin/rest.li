@@ -42,7 +42,7 @@ public class ActionRequest<T> extends Request<T>
 {
   private final Object _id;
 
-  ActionRequest(RecordTemplate input,
+  public ActionRequest(RecordTemplate input,
                 Map<String, String> headers,
                 List<HttpCookie> cookies,
                 ActionResponseDecoder<T> decoder,

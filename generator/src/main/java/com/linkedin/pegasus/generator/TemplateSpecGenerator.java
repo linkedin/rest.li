@@ -29,7 +29,6 @@ import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PrimitiveDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.schema.SchemaFormatType;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.template.DataTemplate;
@@ -70,26 +69,30 @@ public class TemplateSpecGenerator
   private static final Logger _log = LoggerFactory.getLogger(TemplateSpecGenerator.class);
   private static final String ARRAY_SUFFIX = "Array";
   private static final String MAP_SUFFIX = "Map";
+  private static final String UNION_SUFFIX = "Union";
+  // Separator to add with the suffix for unnamed types. This should be a character allowed in java type names but not
+  // allowed in pdl identifiers.
+  private static final String CLASS_NAME_SUFFIX_SEPARATOR = "$";
   private static final String[] SPECIAL_SUFFIXES = {ARRAY_SUFFIX, MAP_SUFFIX};
 
   private final Collection<ClassTemplateSpec> _classTemplateSpecs = new LinkedHashSet<>();
   /**
    * Map of {@link ClassTemplateSpec} to {@link DataSchemaLocation}.
    */
-  private final Map<ClassTemplateSpec, DataSchemaLocation> _classToDataSchemaLocationMap = new HashMap<ClassTemplateSpec, DataSchemaLocation>();
+  private final Map<ClassTemplateSpec, DataSchemaLocation> _classToDataSchemaLocationMap = new HashMap<>();
   /**
    * Map of Java class name to a {@link DataSchema}.
    */
-  private final Map<String, DataSchema> _classNameToSchemaMap = new HashMap<String, DataSchema>(100);
+  private final Map<String, DataSchema> _classNameToSchemaMap = new HashMap<>(100);
   /**
    * Map of {@link DataSchema} to {@link ClassTemplateSpec}.
    */
-  private final IdentityHashMap<DataSchema, ClassTemplateSpec> _schemaToClassMap = new IdentityHashMap<DataSchema, ClassTemplateSpec>(100);
+  private final IdentityHashMap<DataSchema, ClassTemplateSpec> _schemaToClassMap = new IdentityHashMap<>(100);
   /**
    * Map of {@link DataSchema} to the information about the immediate dereferenced {@link DataSchema} with custom Java class binding.
    */
-  private final Deque<DataSchemaLocation> _locationStack = new ArrayDeque<DataSchemaLocation>();
-  private final Map<DataSchema, CustomInfoSpec> _immediateCustomMap = new IdentityHashMap<DataSchema, CustomInfoSpec>();
+  private final Deque<DataSchemaLocation> _locationStack = new ArrayDeque<>();
+  private final Map<DataSchema, CustomInfoSpec> _immediateCustomMap = new IdentityHashMap<>();
 
   private final DataSchemaResolver _schemaResolver;
   private final String _customTypeLanguage;
@@ -655,7 +658,7 @@ public class TemplateSpecGenerator
 
   private UnionTemplateSpec generateUnion(UnionDataSchema schema, UnionTemplateSpec unionClass)
   {
-    final Map<CustomInfoSpec, Object> customInfoMap = new IdentityHashMap<CustomInfoSpec, Object>(schema.getMembers().size() * 2);
+    final Map<CustomInfoSpec, Object> customInfoMap = new IdentityHashMap<>(schema.getMembers().size() * 2);
 
     for (UnionDataSchema.Member member: schema.getMembers())
     {
@@ -744,7 +747,7 @@ public class TemplateSpecGenerator
       processSchema(includedSchema, null, null);
     }
 
-    final Map<CustomInfoSpec, Object> customInfoMap = new IdentityHashMap<CustomInfoSpec, Object>(schema.getFields().size() * 2);
+    final Map<CustomInfoSpec, Object> customInfoMap = new IdentityHashMap<>(schema.getFields().size() * 2);
 
     for (RecordDataSchema.Field field : schema.getFields())
     {
@@ -792,7 +795,7 @@ public class TemplateSpecGenerator
         // enclosingClass flag indicates whether a class is nested or not.
         classTemplateSpec.setEnclosingClass(enclosingClass);
         classTemplateSpec.setClassName(classInfo.name);
-        classTemplateSpec.setModifiers(ModifierSpec.PUBLIC, ModifierSpec.STATIC, ModifierSpec.FINAL);
+        classTemplateSpec.setModifiers(ModifierSpec.PUBLIC, ModifierSpec.STATIC);
       }
       else
       {
@@ -827,7 +830,15 @@ public class TemplateSpecGenerator
         else
         {
           final ClassInfo classInfo = classNameForUnnamedTraverse(enclosingClass, memberName, arraySchema.getItems());
-          classInfo.name += ARRAY_SUFFIX;
+          // Add just the "Array" suffix first. This is to ensure backwards compatibility with the old codegen logic.
+          String className = classInfo.name + ARRAY_SUFFIX;
+          // If this array is for an unnamed inner type (e.g, union) then this will be inner class. So, ensure the Array
+          // class name doesn't conflict with ancestor class names.
+          if (enclosingClass != null && classInfo.namespace.equals(enclosingClass.getFullName()))
+          {
+            className = resolveInnerClassName(enclosingClass, className, ARRAY_SUFFIX);
+          }
+          classInfo.name = className;
           return classInfo;
         }
       case MAP:
@@ -840,7 +851,15 @@ public class TemplateSpecGenerator
         else
         {
           final ClassInfo classInfo = classNameForUnnamedTraverse(enclosingClass, memberName, mapSchema.getValues());
-          classInfo.name += MAP_SUFFIX;
+          // Add just the "Map" suffix first. This is to ensure backwards compatibility with the old codegen logic.
+          String className = classInfo.name + MAP_SUFFIX;
+          // If this map is for an unnamed inner type (e.g, union), then ensure the Map's class name doesn't conflict
+          // with ancestor class names.
+          if (enclosingClass != null && classInfo.namespace.equals(enclosingClass.getFullName()))
+          {
+            className = resolveInnerClassName(enclosingClass, className, MAP_SUFFIX);
+          }
+          classInfo.name = className;
           return classInfo;
         }
 
@@ -857,7 +876,8 @@ public class TemplateSpecGenerator
         }
         else
         {
-          return new ClassInfo(enclosingClass.getFullName(), CodeUtil.capitalize(memberName));
+          String className = resolveInnerClassName(enclosingClass, CodeUtil.capitalize(memberName), UNION_SUFFIX);
+          return new ClassInfo(enclosingClass.getFullName(), className);
         }
 
       case FIXED:
@@ -894,6 +914,34 @@ public class TemplateSpecGenerator
       default:
         throw unrecognizedSchemaType(enclosingClass, memberName, dereferencedDataSchema);
     }
+  }
+
+  /**
+   * Java doesn't allow inner-classnames to be same as the enclosing or ancestor class. This method takes a candidate
+   * class name for an inner class and its enclosing class and resolves to a name that doesn't conflict. It does this
+   * by adding a special separator {@link #CLASS_NAME_SUFFIX_SEPARATOR} and the provided suffix to the classname
+   * whenever a conflict is detected.
+   * The special separator is needed to ensure the new name does not conflict with classes generated from other fields.
+   * @param enclosingClass Class enclosing the inner class.
+   * @param className Candidate name for the innerclass
+   * @param suffix Suffix to add to the className if a conflict is found.
+   * @return a class name that doesn't conflict with any of the ancestor classes.
+   */
+  private String resolveInnerClassName(ClassTemplateSpec enclosingClass, String className, String suffix) {
+    ClassTemplateSpec ancestorClass = enclosingClass;
+    while (ancestorClass != null)
+    {
+      if (ancestorClass.getClassName().equals(className))
+      {
+        className = className + CLASS_NAME_SUFFIX_SEPARATOR + suffix;
+        break;
+      }
+      else
+      {
+        ancestorClass = ancestorClass.getEnclosingClass();
+      }
+    }
+    return className;
   }
 
   private static class CustomClasses

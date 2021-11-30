@@ -60,6 +60,8 @@ import com.linkedin.restli.internal.server.RestLiCallback;
 import com.linkedin.restli.internal.server.RestLiMethodInvoker;
 import com.linkedin.restli.internal.server.filter.FilterChainDispatcher;
 import com.linkedin.restli.internal.server.filter.FilterChainDispatcherImpl;
+import com.linkedin.restli.internal.server.methods.DefaultMethodAdapterProvider;
+import com.linkedin.restli.internal.server.methods.MethodAdapterProvider;
 import com.linkedin.restli.internal.server.response.RestLiResponse;
 import com.linkedin.restli.internal.server.response.ResponseUtils;
 import com.linkedin.restli.internal.server.response.RestLiResponseHandler;
@@ -70,7 +72,6 @@ import com.linkedin.restli.internal.server.filter.FilterChainCallbackImpl;
 import com.linkedin.restli.internal.server.filter.FilterRequestContextInternalImpl;
 import com.linkedin.restli.internal.server.filter.RestLiFilterChain;
 import com.linkedin.restli.internal.server.filter.RestLiFilterResponseContextFactory;
-import com.linkedin.restli.internal.server.methods.MethodAdapterRegistry;
 import com.linkedin.restli.internal.server.methods.arguments.RestLiArgumentBuilder;
 import com.linkedin.restli.internal.server.response.ErrorResponseBuilder;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
@@ -181,7 +182,7 @@ public class TestRestLiMethodInvocation
   private Engine _engine;
   private EasyMockResourceFactory _resourceFactory;
   private ErrorResponseBuilder _errorResponseBuilder;
-  private MethodAdapterRegistry _methodAdapterRegistry;
+  private MethodAdapterProvider _methodAdapterProvider;
   private RestLiMethodInvoker _invoker;
 
   @BeforeTest
@@ -196,7 +197,7 @@ public class TestRestLiMethodInvocation
     _resourceFactory  = new EasyMockResourceFactory();
 
     _errorResponseBuilder = new ErrorResponseBuilder();
-    _methodAdapterRegistry = new MethodAdapterRegistry(_errorResponseBuilder);
+    _methodAdapterProvider = new DefaultMethodAdapterProvider(_errorResponseBuilder);
 
     // Add filters to the invoker.
     _invoker = new RestLiMethodInvoker(_resourceFactory, _engine, ErrorResponseBuilder.DEFAULT_INTERNAL_ERROR_MESSAGE);
@@ -322,7 +323,8 @@ public class TestRestLiMethodInvocation
     RestLiFilterChain filterChain = new RestLiFilterChain(Arrays.asList(mockFilter, mockFilter), filterChainDispatcher,
         filterChainCallback);
     filterChain.onRequest(mockFilterContext,
-                          new RestLiFilterResponseContextFactory(request, routingResult, new RestLiResponseHandler()));
+                          new RestLiFilterResponseContextFactory(request, routingResult, new RestLiResponseHandler(
+                              _methodAdapterProvider, _errorResponseBuilder)));
 
     verifyRecording(mockArgumentBuilder, mockFilterContext, mockFilter);
     if (throwExceptionFromFirstFilter)
@@ -627,7 +629,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = followsAssociationResourceModel.findMethod(ResourceMethod.BATCH_GET);
     followsResource = getMockResource(AsyncFollowsAssociativeResource.class);
 
-    Set<CompoundKey> expectedKeys = new HashSet<CompoundKey>();
+    Set<CompoundKey> expectedKeys = new HashSet<>();
     CompoundKey key1 = new CompoundKey();
     key1.append("followeeID", 1L);
     key1.append("followerID", 1L);
@@ -1567,7 +1569,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = followsAssociationResourceModel.findMethod(ResourceMethod.BATCH_GET);
     followsResource = getMockResource(PromiseFollowsAssociativeResource.class);
 
-    Set<CompoundKey> expectedKeys = new HashSet<CompoundKey>();
+    Set<CompoundKey> expectedKeys = new HashSet<>();
     CompoundKey key1 = new CompoundKey();
     key1.append("followeeID", 1L);
     key1.append("followerID", 1L);
@@ -2182,7 +2184,7 @@ public class TestRestLiMethodInvocation
 
     ResourceMethodDescriptor  batchGetMethodDescriptor = statusResourceModel.findMethod(ResourceMethod.BATCH_GET);
     statusResource = getMockResource(StatusCollectionResource.class);
-    Set<Long> batchKeys = new HashSet<Long>(3);
+    Set<Long> batchKeys = new HashSet<>(3);
     batchKeys.add(1L);
     batchKeys.add(2L);
     batchKeys.add(3L);
@@ -2409,7 +2411,7 @@ public class TestRestLiMethodInvocation
     methodDescriptor = followsAssociationResourceModel.findMethod(ResourceMethod.BATCH_GET);
     followsResource = getMockResource(FollowsAssociativeResource.class);
 
-    Set<CompoundKey> expectedKeys = new HashSet<CompoundKey>();
+    Set<CompoundKey> expectedKeys = new HashSet<>();
     CompoundKey key1 = new CompoundKey();
     key1.append("followeeID", 1L);
     key1.append("followerID", 1L);
@@ -2809,9 +2811,9 @@ public class TestRestLiMethodInvocation
       RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
           Collections.emptySet(),
           routingResult.getContext());
-      _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getMethodType())
+      _methodAdapterProvider.getArgumentBuilder(methodDescriptor.getMethodType())
           .extractRequestData(routingResult, DataMapUtils.readMapWithExceptions(request));
-      _invoker.invoke(null, routingResult, _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getMethodType()),
+      _invoker.invoke(null, routingResult, _methodAdapterProvider.getArgumentBuilder(methodDescriptor.getMethodType()),
                       null);
       Assert.fail("expected routing exception");
     }
@@ -2841,7 +2843,7 @@ public class TestRestLiMethodInvocation
 
     RoutingResult routingResult = new RoutingResult(new ResourceContextImpl(null, request,
                                                                             new RequestContext()), methodDescriptor);
-    RestLiArgumentBuilder argumentBuilder = _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getType());
+    RestLiArgumentBuilder argumentBuilder = _methodAdapterProvider.getArgumentBuilder(methodDescriptor.getType());
 
     try {
       RestUtils.validateRequestHeadersAndUpdateResourceContext(request.getHeaders(),
@@ -2850,7 +2852,7 @@ public class TestRestLiMethodInvocation
       RestLiRequestData requestData = argumentBuilder.extractRequestData(routingResult,
           DataMapUtils.readMapWithExceptions(request));
       _invoker.invoke(requestData, routingResult,
-                      _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getMethodType()), null);
+                      _methodAdapterProvider.getArgumentBuilder(methodDescriptor.getMethodType()), null);
       Assert.fail("expected routing exception");
     }
     catch (RoutingException e)
@@ -3228,14 +3230,14 @@ public class TestRestLiMethodInvocation
   @Test
   public void testHeuristicKeySyntaxDetection() throws PathSegment.PathSegmentSyntaxException
   {
-    Set<Key> keys = new HashSet<Key>(2);
+    Set<Key> keys = new HashSet<>(2);
     keys.add(new Key("foo", Integer.class));
     keys.add(new Key("bar", String.class));
 
     // heuristic key syntax detection only occurs in Protocol Version 1.0.0
     ProtocolVersion v1 = AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion();
 
-    Set<String> expectedKeys = new HashSet<String>(Arrays.asList("foo", "bar"));
+    Set<String> expectedKeys = new HashSet<>(Arrays.asList("foo", "bar"));
     Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo:42;bar:abcd", keys, v1).getPartKeys());
     Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo:42;bar:abcd=1&efg=2", keys, v1).getPartKeys());
     Assert.assertEquals(expectedKeys, ArgumentUtils.parseCompoundKey("foo=42&bar=abcd", keys, v1).getPartKeys());
@@ -3251,26 +3253,26 @@ public class TestRestLiMethodInvocation
   public Object[][] dataMapToCompoundKey()
   {
     CompoundKey compoundKey1 = new CompoundKey();
-    compoundKey1.append("foo", new Integer(1));
+    compoundKey1.append("foo", Integer.valueOf(1));
     compoundKey1.append("bar", "hello");
 
     DataMap dataMap1 = new DataMap();
     dataMap1.put("foo", "1");
     dataMap1.put("bar", "hello");
 
-    Set<Key> keys1 = new HashSet<Key>(2);
+    Set<Key> keys1 = new HashSet<>(2);
     keys1.add(new Key("foo", Integer.class));
     keys1.add(new Key("bar", String.class));
 
     CompoundKey compoundKey2 = new CompoundKey();
-    compoundKey2.append("a", new Long(6));
-    compoundKey2.append("b", new Double(3.14));
+    compoundKey2.append("a", Long.valueOf(6));
+    compoundKey2.append("b", Double.valueOf(3.14));
 
     DataMap dataMap2 = new DataMap();
     dataMap2.put("a", "6");
     dataMap2.put("b", "3.14");
 
-    Set<Key> keys2 = new HashSet<Key>(2);
+    Set<Key> keys2 = new HashSet<>(2);
     keys2.add(new Key("a", Long.class));
     keys2.add(new Key("b", Double.class));
 
@@ -4487,7 +4489,7 @@ public class TestRestLiMethodInvocation
     RestRequest request = builder.build();
     final RestLiAttachmentReader attachmentReader = new RestLiAttachmentReader(null);
     final CountDownLatch latch = new CountDownLatch(1);
-    RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler();
+    RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler(_methodAdapterProvider, _errorResponseBuilder);
 
     ServerResourceContext resourceContext = new ResourceContextImpl(new PathKeysImpl(),
         new RestRequestBuilder(URI.create(""))
@@ -4551,7 +4553,7 @@ public class TestRestLiMethodInvocation
         .setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
     RestRequest request = builder.build();
     final CountDownLatch latch = new CountDownLatch(1);
-    RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler();
+    RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler(_methodAdapterProvider, _errorResponseBuilder);
 
     Callback<RestLiResponse> executionCallback = new Callback<RestLiResponse>()
     {
@@ -5106,7 +5108,7 @@ public class TestRestLiMethodInvocation
   public MutablePathKeys buildBatchPathKeys(Object... batchKeys) throws RestLiSyntaxException
   {
     MutablePathKeys result = new PathKeysImpl();
-    Set<Object> keys = new HashSet<Object>();
+    Set<Object> keys = new HashSet<>();
 
     for (Object batchKey : batchKeys)
     {
@@ -5305,7 +5307,7 @@ public class TestRestLiMethodInvocation
         resourceContext.setResponseAttachments(expectedResponseAttachments);
       }
       RoutingResult routingResult = new RoutingResult(resourceContext, resourceMethodDescriptor, resourceMethodConfig);
-      RestLiArgumentBuilder argumentBuilder = _methodAdapterRegistry.getArgumentBuilder(resourceMethodDescriptor.getType());
+      RestLiArgumentBuilder argumentBuilder = _methodAdapterProvider.getArgumentBuilder(resourceMethodDescriptor.getType());
       RestLiRequestData requestData = argumentBuilder.extractRequestData(
           routingResult,
           entityBody != null && !entityBody.isEmpty() ? DataMapUtils.readMapWithExceptions(request) : null);
@@ -5314,7 +5316,7 @@ public class TestRestLiMethodInvocation
           requestData);
       final CountDownLatch latch = new CountDownLatch(1);
       final CountDownLatch expectedRoutingExceptionLatch = new CountDownLatch(1);
-      RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler();
+      RestLiResponseHandler restLiResponseHandler = new RestLiResponseHandler(_methodAdapterProvider, _errorResponseBuilder);
 
       Callback<RestLiResponse> executionCallback = new Callback<RestLiResponse>()
       {
@@ -5469,7 +5471,7 @@ public class TestRestLiMethodInvocation
           new RoutingResult(new ResourceContextImpl(pathkeys, request,
                                                     new RequestContext()), methodDescriptor);
 
-      RestLiArgumentBuilder argumentBuilder = _methodAdapterRegistry.getArgumentBuilder(methodDescriptor.getType());
+      RestLiArgumentBuilder argumentBuilder = _methodAdapterProvider.getArgumentBuilder(methodDescriptor.getType());
       RestLiRequestData requestData = argumentBuilder.extractRequestData(
           routingResult, entityBody != null ? DataMapUtils.readMapWithExceptions(request) : null);
 

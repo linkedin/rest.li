@@ -16,10 +16,11 @@
 
 package com.linkedin.pegasus.generator;
 
-
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedUtil;
+import com.linkedin.data.schema.MaskMap;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.Custom;
@@ -27,20 +28,20 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.GetMode;
 import com.linkedin.data.template.SetMode;
 
+import com.sun.codemodel.JClass;
+import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JExpr;
 import com.sun.codemodel.JExpression;
+import com.sun.codemodel.JFieldRef;
 import com.sun.codemodel.JInvocation;
+import com.sun.codemodel.JPackage;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import com.sun.codemodel.JClass;
-import com.sun.codemodel.JCodeModel;
-import com.sun.codemodel.JFieldRef;
-import com.sun.codemodel.JPackage;
 
 
 /**
@@ -76,13 +77,16 @@ public class JavaCodeGeneratorBase
   protected final JClass _byteStringClass;
   protected final JClass _collectionClass;
   protected final JClass _arraysClass;
+  protected final JClass _checkedUtilClass;
   protected final JClass _customClass;
   protected final JClass _dataListClass;
   protected final JClass _dataMapClass;
   protected final JClass _dataTemplateUtilClass;
   protected final JClass _getModeClass;
   protected final JClass _mapClass;
+  protected final JClass _objectClass;
   protected final JClass _pathSpecClass;
+  protected final JClass _maskMapClass;
   protected final JClass _setModeClass;
   protected final JClass _stringBuilderClass;
   protected final JClass _stringClass;
@@ -103,13 +107,16 @@ public class JavaCodeGeneratorBase
     _byteStringClass = getCodeModel().ref(ByteString.class);
     _collectionClass = getCodeModel().ref(Collection.class);
     _arraysClass = getCodeModel().ref(Arrays.class);
+    _checkedUtilClass = getCodeModel().ref(CheckedUtil.class);
     _customClass = getCodeModel().ref(Custom.class);
     _dataListClass = getCodeModel().ref(DataList.class);
     _dataMapClass = getCodeModel().ref(DataMap.class);
     _dataTemplateUtilClass = getCodeModel().ref(DataTemplateUtil.class);
     _getModeClass = getCodeModel().ref(GetMode.class);
     _mapClass = getCodeModel().ref(Map.class);
+    _objectClass = getCodeModel().ref(Object.class);
     _pathSpecClass = getCodeModel().ref(PathSpec.class);
+    _maskMapClass = getCodeModel().ref(MaskMap.class);
     _setModeClass = getCodeModel().ref(SetMode.class);
     _stringBuilderClass = getCodeModel().ref(StringBuilder.class);
     _stringClass = getCodeModel().ref(String.class);

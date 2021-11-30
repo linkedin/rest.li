@@ -143,7 +143,7 @@ public class PatchFilterValidator extends AbstractValidator
   private final Object[] _patchedPath;
   private final DataMap _opMap;
   private final Mode _mode;
-  private final ArrayList<Object> _path = new ArrayList<Object>();
+  private final ArrayList<Object> _path = new ArrayList<>();
   private static final Object[] _emptyPath = {};
 
   protected static enum Status

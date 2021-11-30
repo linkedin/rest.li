@@ -16,7 +16,6 @@
 
 package com.linkedin.pegasus.generator.test;
 
-
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
@@ -27,24 +26,16 @@ import com.linkedin.data.template.GetMode;
 import com.linkedin.data.template.SetMode;
 import com.linkedin.data.template.TestCustom.CustomPoint;
 import com.linkedin.data.template.TestCustom.CustomPoint.CustomPointCoercer;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
-
-import org.mockito.Mockito;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
-import static com.linkedin.data.TestUtil.asMap;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static com.linkedin.data.TestUtil.*;
+import static org.testng.Assert.*;
 
 public class TestCustomPoint
 {
@@ -120,7 +111,7 @@ public class TestCustomPoint
   @Test
   public void testCustomPointRecordArray() throws CloneNotSupportedException
   {
-    final List<String> input = new ArrayList<String>(Arrays.asList("1,1", "2,2", "3,3"));
+    final List<String> input = new ArrayList<>(Arrays.asList("1,1", "2,2", "3,3"));
     final DataList inputDataList = new DataList(input);
 
     CustomPointRecord record = new CustomPointRecord();
@@ -154,7 +145,7 @@ public class TestCustomPoint
   @Test
   public void testCustomPointArray() throws IOException
   {
-    final List<String> input = new ArrayList<String>(Arrays.asList("1,1", "2,2", "3,3"));
+    final List<String> input = new ArrayList<>(Arrays.asList("1,1", "2,2", "3,3"));
     final DataList inputDataList = new DataList(input);
     final String customPointArraySchemaText = "{\"type\":\"array\",\"items\":{\"type\":\"typeref\",\"name\":\"CustomPoint\",\"namespace\":\"com.linkedin.pegasus.generator.test\",\"ref\":\"string\",\"java\":{\"class\":\"com.linkedin.data.template.TestCustom.CustomPoint\"}}}";
 
@@ -272,27 +263,6 @@ public class TestCustomPoint
     {
       return super.obtainCustomType(field, valueClass, mode);
     }
-  }
-
-  @Test
-  public void testObtainCustomTypeFirstField()
-  {
-    CustomPointRecordWithPublicObtainCustomType record = Mockito.mock(CustomPointRecordWithPublicObtainCustomType.class);
-    testObtainCustomType(record, record::getCustomPoint);
-  }
-
-  @Test
-  public void testObtainCustomTypeSecondField()
-  {
-    CustomPointRecordWithPublicObtainCustomType record = Mockito.mock(CustomPointRecordWithPublicObtainCustomType.class);
-    testObtainCustomType(record, record::getAnotherCustomPoint);
-  }
-
-  private void testObtainCustomType(CustomPointRecordWithPublicObtainCustomType record,
-                                    Supplier<CustomPoint> getter) {
-    Mockito.when(getter.get()).thenCallRealMethod();
-    getter.get();
-    Mockito.verify(record).obtainCustomType(Mockito.any(), Mockito.any(), Mockito.any());
   }
 
   private static class CustomPointCoercer2 extends CustomPointCoercer

@@ -1,0 +1,4 @@
+record NeedsCustomResolvers {
+  x: CustomResolverFoo,
+  y: CustomResolverBar
+}

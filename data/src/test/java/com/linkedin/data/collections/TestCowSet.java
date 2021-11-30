@@ -31,7 +31,7 @@ public class TestCowSet
   @Test
   public void testAdd()
   {
-    final CowSet<String> set = new CowSet<String>();
+    final CowSet<String> set = new CowSet<>();
 
     Assert.assertEquals(set.size(), 0);
     Assert.assertFalse(set.contains("test"));
@@ -48,7 +48,7 @@ public class TestCowSet
   @Test
   public void testRemove()
   {
-    final CowSet<String> set = new CowSet<String>();
+    final CowSet<String> set = new CowSet<>();
     set.add("test");
 
     Assert.assertTrue(set.remove("test"));
@@ -63,7 +63,7 @@ public class TestCowSet
   @Test
   public void testReadOnly()
   {
-    final CowSet<String> set = new CowSet<String>();
+    final CowSet<String> set = new CowSet<>();
     Assert.assertFalse(set.isReadOnly());
 
     set.add("test");
@@ -101,7 +101,7 @@ public class TestCowSet
   @Test
   public void testClone() throws CloneNotSupportedException
   {
-    final CowSet<String> set1 = new CowSet<String>();
+    final CowSet<String> set1 = new CowSet<>();
     set1.add("test");
 
     @SuppressWarnings("unchecked")
@@ -137,7 +137,7 @@ public class TestCowSet
   @Test
   public void testModifyThroughIterator()
   {
-    final CowSet<String> set = new CowSet<String>();
+    final CowSet<String> set = new CowSet<>();
     set.add("test");
     set.setReadOnly();
 

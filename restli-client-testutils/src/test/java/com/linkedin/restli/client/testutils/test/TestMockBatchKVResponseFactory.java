@@ -48,7 +48,7 @@ public class TestMockBatchKVResponseFactory
 
   private EntityResponse<Greeting> buildEntityResponse(Greeting recordTemplate, HttpStatus status, ErrorResponse errorResponse)
   {
-    return new EntityResponse<Greeting>(Greeting.class).setEntity(recordTemplate, SetMode.IGNORE_NULL).
+    return new EntityResponse<>(Greeting.class).setEntity(recordTemplate, SetMode.IGNORE_NULL).
                                                         setStatus(status, SetMode.IGNORE_NULL).
                                                         setError(errorResponse, SetMode.IGNORE_NULL);
   }
@@ -56,20 +56,20 @@ public class TestMockBatchKVResponseFactory
   @DataProvider(name = "primitiveKey")
   public Object[][] primitiveKeyData()
   {
-    Map<Long, Greeting> recordTemplates = new HashMap<Long, Greeting>();
-    Map<Long, ErrorResponse> errorResponses = new HashMap<Long, ErrorResponse>();
+    Map<Long, Greeting> recordTemplates = new HashMap<>();
+    Map<Long, ErrorResponse> errorResponses = new HashMap<>();
 
     recordTemplates.put(1L, buildGreeting(1L));
     recordTemplates.put(2L, buildGreeting(2L));
 
     errorResponses.put(3L, new ErrorResponse().setMessage("3"));
 
-    Map<Long, HttpStatus> statuses = new HashMap<Long, HttpStatus>();
+    Map<Long, HttpStatus> statuses = new HashMap<>();
     statuses.put(1L, HttpStatus.S_200_OK);
     statuses.put(2L, HttpStatus.S_200_OK);
     statuses.put(3L, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
 
-    Map<Long, EntityResponse<Greeting>> expectedResults = new HashMap<Long, EntityResponse<Greeting>>();
+    Map<Long, EntityResponse<Greeting>> expectedResults = new HashMap<>();
     expectedResults.put(1L, buildEntityResponse(recordTemplates.get(1L), HttpStatus.S_200_OK, null));
     expectedResults.put(2L, buildEntityResponse(recordTemplates.get(2L), HttpStatus.S_200_OK, null));
     expectedResults.put(3L, buildEntityResponse(null, HttpStatus.S_500_INTERNAL_SERVER_ERROR, errorResponses.get(3L)));
@@ -120,19 +120,19 @@ public class TestMockBatchKVResponseFactory
     MyCustomString m2 = new MyCustomString("2");
     MyCustomString m3 = new MyCustomString("3");
 
-    Map<MyCustomString, Greeting> recordTemplates = new HashMap<MyCustomString, Greeting>();
-    Map<MyCustomString, ErrorResponse> errorResponses = new HashMap<MyCustomString, ErrorResponse>();
+    Map<MyCustomString, Greeting> recordTemplates = new HashMap<>();
+    Map<MyCustomString, ErrorResponse> errorResponses = new HashMap<>();
 
     recordTemplates.put(m1, buildGreeting(1L));
     recordTemplates.put(m2, buildGreeting(2L));
     errorResponses.put(m3, new ErrorResponse().setMessage("3"));
 
-    Map<MyCustomString, HttpStatus> statuses = new HashMap<MyCustomString, HttpStatus>();
+    Map<MyCustomString, HttpStatus> statuses = new HashMap<>();
     statuses.put(m1, HttpStatus.S_200_OK);
     statuses.put(m2, HttpStatus.S_200_OK);
     statuses.put(m3, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
 
-    Map<MyCustomString, EntityResponse<Greeting>> expectedResults = new HashMap<MyCustomString, EntityResponse<Greeting>>();
+    Map<MyCustomString, EntityResponse<Greeting>> expectedResults = new HashMap<>();
     expectedResults.put(m1, buildEntityResponse(recordTemplates.get(m1), HttpStatus.S_200_OK, null));
     expectedResults.put(m2, buildEntityResponse(recordTemplates.get(m2), HttpStatus.S_200_OK, null));
     expectedResults.put(m3, buildEntityResponse(null, HttpStatus.S_500_INTERNAL_SERVER_ERROR, errorResponses.get(m3)));
@@ -191,23 +191,23 @@ public class TestMockBatchKVResponseFactory
     CompoundKey c2 = buildCompoundKey("c2", 2);
     CompoundKey c3 = buildCompoundKey("c3", 3);
 
-    Map<CompoundKey, Greeting> recordTemplates = new HashMap<CompoundKey, Greeting>();
+    Map<CompoundKey, Greeting> recordTemplates = new HashMap<>();
     recordTemplates.put(c1, buildGreeting(1L));
     recordTemplates.put(c2, buildGreeting(2L));
 
-    Map<CompoundKey, ErrorResponse> errorResponses = new HashMap<CompoundKey, ErrorResponse>();
+    Map<CompoundKey, ErrorResponse> errorResponses = new HashMap<>();
     errorResponses.put(c3, new ErrorResponse().setMessage("3"));
 
-    Map<CompoundKey, HttpStatus> statuses = new HashMap<CompoundKey, HttpStatus>();
+    Map<CompoundKey, HttpStatus> statuses = new HashMap<>();
     statuses.put(c1, HttpStatus.S_200_OK);
     statuses.put(c2, HttpStatus.S_200_OK);
     statuses.put(c3, HttpStatus.S_500_INTERNAL_SERVER_ERROR);
 
-    Map<String, CompoundKey.TypeInfo> keyParts = new HashMap<String, CompoundKey.TypeInfo>();
+    Map<String, CompoundKey.TypeInfo> keyParts = new HashMap<>();
     keyParts.put("part1", new CompoundKey.TypeInfo(String.class, String.class));
     keyParts.put("part2", new CompoundKey.TypeInfo(Integer.class, Integer.class));
 
-    Map<CompoundKey, EntityResponse<Greeting>> expectedResults = new HashMap<CompoundKey, EntityResponse<Greeting>>();
+    Map<CompoundKey, EntityResponse<Greeting>> expectedResults = new HashMap<>();
     expectedResults.put(c1, buildEntityResponse(recordTemplates.get(c1), HttpStatus.S_200_OK, null));
     expectedResults.put(c2, buildEntityResponse(recordTemplates.get(c2), HttpStatus.S_200_OK, null));
     expectedResults.put(c3, buildEntityResponse(null, HttpStatus.S_500_INTERNAL_SERVER_ERROR, errorResponses.get(c3)));
@@ -259,46 +259,46 @@ public class TestMockBatchKVResponseFactory
   public Object[][] complexKeyData()
   {
     Map<ComplexResourceKey<Greeting, Greeting>, Greeting> recordTemplates =
-        new HashMap<ComplexResourceKey<Greeting, Greeting>, Greeting>();
+        new HashMap<>();
     Map<ComplexResourceKey<Greeting, Greeting>, ErrorResponse> errorResponses =
-        new HashMap<ComplexResourceKey<Greeting, Greeting>, ErrorResponse>();
+        new HashMap<>();
 
     Greeting g1 = buildGreeting(1L);
     Greeting g2 = buildGreeting(2L);
     Greeting g3 = buildGreeting(3L);
 
-    recordTemplates.put(new ComplexResourceKey<Greeting, Greeting>(g1, g1), g1);
-    recordTemplates.put(new ComplexResourceKey<Greeting, Greeting>(g2, g2), g2);
+    recordTemplates.put(new ComplexResourceKey<>(g1, g1), g1);
+    recordTemplates.put(new ComplexResourceKey<>(g2, g2), g2);
 
-    errorResponses.put(new ComplexResourceKey<Greeting, Greeting>(g3, g3), new ErrorResponse().setMessage("3"));
+    errorResponses.put(new ComplexResourceKey<>(g3, g3), new ErrorResponse().setMessage("3"));
 
-    Map<ComplexResourceKey<Greeting, Greeting>, HttpStatus> statuses = new HashMap<ComplexResourceKey<Greeting, Greeting>, HttpStatus>();
-    statuses.put(new ComplexResourceKey<Greeting, Greeting>(g1, g1), HttpStatus.S_200_OK);
-    statuses.put(new ComplexResourceKey<Greeting, Greeting>(g2, g2), HttpStatus.S_200_OK);
-    statuses.put(new ComplexResourceKey<Greeting, Greeting>(g3, g3), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
+    Map<ComplexResourceKey<Greeting, Greeting>, HttpStatus> statuses = new HashMap<>();
+    statuses.put(new ComplexResourceKey<>(g1, g1), HttpStatus.S_200_OK);
+    statuses.put(new ComplexResourceKey<>(g2, g2), HttpStatus.S_200_OK);
+    statuses.put(new ComplexResourceKey<>(g3, g3), HttpStatus.S_500_INTERNAL_SERVER_ERROR);
 
     // Strip the parameters from complex keys in expected results and expected errors.
 
     Map<ComplexResourceKey<Greeting, Greeting>, Greeting> expectedRecordTemplates =
-        new HashMap<ComplexResourceKey<Greeting, Greeting>, Greeting>();
-    expectedRecordTemplates.put(new ComplexResourceKey<Greeting, Greeting>(g1, new Greeting()),
-        recordTemplates.get(new ComplexResourceKey<Greeting, Greeting>(g1, g1)));
-    expectedRecordTemplates.put(new ComplexResourceKey<Greeting, Greeting>(g2, new Greeting()),
-        recordTemplates.get(new ComplexResourceKey<Greeting, Greeting>(g2, g2)));
+        new HashMap<>();
+    expectedRecordTemplates.put(new ComplexResourceKey<>(g1, new Greeting()),
+        recordTemplates.get(new ComplexResourceKey<>(g1, g1)));
+    expectedRecordTemplates.put(new ComplexResourceKey<>(g2, new Greeting()),
+        recordTemplates.get(new ComplexResourceKey<>(g2, g2)));
 
     Map<ComplexResourceKey<Greeting, Greeting>, EntityResponse<Greeting>> expectedResults =
-        new HashMap<ComplexResourceKey<Greeting, Greeting>, EntityResponse<Greeting>>();
-    expectedResults.put(new ComplexResourceKey<Greeting, Greeting>(g1, new Greeting()),
-        buildEntityResponse(recordTemplates.get(new ComplexResourceKey<Greeting, Greeting>(g1, g1)), HttpStatus.S_200_OK, null));
-    expectedResults.put(new ComplexResourceKey<Greeting, Greeting>(g2, new Greeting()),
-        buildEntityResponse(recordTemplates.get(new ComplexResourceKey<Greeting, Greeting>(g2, g2)), HttpStatus.S_200_OK, null));
-    expectedResults.put(new ComplexResourceKey<Greeting, Greeting>(g3, new Greeting()),
-        buildEntityResponse(null, HttpStatus.S_500_INTERNAL_SERVER_ERROR, errorResponses.get(new ComplexResourceKey<Greeting, Greeting>(g3, g3))));
+        new HashMap<>();
+    expectedResults.put(new ComplexResourceKey<>(g1, new Greeting()),
+        buildEntityResponse(recordTemplates.get(new ComplexResourceKey<>(g1, g1)), HttpStatus.S_200_OK, null));
+    expectedResults.put(new ComplexResourceKey<>(g2, new Greeting()),
+        buildEntityResponse(recordTemplates.get(new ComplexResourceKey<>(g2, g2)), HttpStatus.S_200_OK, null));
+    expectedResults.put(new ComplexResourceKey<>(g3, new Greeting()),
+        buildEntityResponse(null, HttpStatus.S_500_INTERNAL_SERVER_ERROR, errorResponses.get(new ComplexResourceKey<>(g3, g3))));
 
     Map<ComplexResourceKey<Greeting, Greeting>, ErrorResponse> expectedErrors =
-        new HashMap<ComplexResourceKey<Greeting, Greeting>, ErrorResponse>();
-    expectedErrors.put(new ComplexResourceKey<Greeting, Greeting>(g3, new Greeting()),
-        errorResponses.get(new ComplexResourceKey<Greeting, Greeting>(g3, g3)));
+        new HashMap<>();
+    expectedErrors.put(new ComplexResourceKey<>(g3, new Greeting()),
+        errorResponses.get(new ComplexResourceKey<>(g3, g3)));
 
     return new Object[][]
     {

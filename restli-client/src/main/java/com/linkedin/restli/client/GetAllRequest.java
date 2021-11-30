@@ -36,7 +36,7 @@ public class GetAllRequest<T extends RecordTemplate> extends
 {
   private final CompoundKey _assocKey;
 
-  GetAllRequest(Map<String, String> headers,
+  public GetAllRequest(Map<String, String> headers,
                 List<HttpCookie> cookies,
                 Class<T> templateClass,
                 ResourceSpec resourceSpec,
@@ -51,7 +51,7 @@ public class GetAllRequest<T extends RecordTemplate> extends
           null,
           headers,
           cookies,
-          new CollectionResponseDecoder<T>(templateClass),
+        new CollectionResponseDecoder<>(templateClass),
           resourceSpec,
           queryParams,
           queryParamClasses,

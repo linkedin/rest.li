@@ -17,7 +17,6 @@
 package com.linkedin.restli.tools.clientgen;
 
 import com.linkedin.data.schema.generator.AbstractGenerator;
-import com.linkedin.pegasus.generator.PegasusDataTemplateGenerator;
 import com.linkedin.restli.internal.common.RestliVersion;
 import com.linkedin.restli.tools.ExporterTestUtils;
 import org.testng.Assert;
@@ -57,7 +56,7 @@ public class TestRestRequestBuilderGeneratorEntryPoint
 
     // backup original system properties
     originalGeneratorResolverPath = backupOriginalValueAndOverride(AbstractGenerator.GENERATOR_RESOLVER_PATH, "");
-    originalGenerateImported = backupOriginalValueAndOverride(PegasusDataTemplateGenerator.GENERATOR_GENERATE_IMPORTED, "true");
+    originalGenerateImported = backupOriginalValueAndOverride(RestRequestBuilderGenerator.GENERATOR_GENERATE_IMPORTED, "true");
     originalGenerateDataTemplates = backupOriginalValueAndOverride(RestRequestBuilderGenerator.GENERATOR_REST_GENERATE_DATATEMPLATES, "false");
     originalVersionString = System.clearProperty(RestRequestBuilderGenerator.GENERATOR_REST_GENERATE_VERSION);
   }
@@ -69,7 +68,7 @@ public class TestRestRequestBuilderGeneratorEntryPoint
     ExporterTestUtils.rmdir(outdir2);
 
     restoreOriginalValue(AbstractGenerator.GENERATOR_RESOLVER_PATH, originalGeneratorResolverPath);
-    restoreOriginalValue(PegasusDataTemplateGenerator.GENERATOR_GENERATE_IMPORTED, originalGenerateImported);
+    restoreOriginalValue(RestRequestBuilderGenerator.GENERATOR_GENERATE_IMPORTED, originalGenerateImported);
     restoreOriginalValue(RestRequestBuilderGenerator.GENERATOR_REST_GENERATE_DATATEMPLATES, originalGenerateDataTemplates);
     restoreOriginalValue(RestRequestBuilderGenerator.GENERATOR_REST_GENERATE_VERSION, originalVersionString);
   }

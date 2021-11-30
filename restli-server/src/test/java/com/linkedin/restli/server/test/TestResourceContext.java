@@ -74,7 +74,7 @@ public class TestResourceContext
   public void testResourceContextGetProjectionMask(ProtocolVersion version, String stringUri) throws Exception
   {
     URI uri = URI.create(stringUri);
-    Map<String, String> headers = new HashMap<String, String>(1);
+    Map<String, String> headers = new HashMap<>(1);
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
 
     ResourceContext context = new ResourceContextImpl(new PathKeysImpl(),
@@ -120,7 +120,7 @@ public class TestResourceContext
   public void testResourceContextWithQueryParamsGetProjectionMaskWithMaskSyntax(ProtocolVersion version, String stringUri) throws Exception
   {
     URI uri = URI.create(stringUri);
-    Map<String, String> headers = new HashMap<String, String>(1);
+    Map<String, String> headers = new HashMap<>(1);
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
 
     ResourceContext context = new ResourceContextImpl(new PathKeysImpl(),
@@ -174,7 +174,7 @@ public class TestResourceContext
   public void testResourceContextGetProjectionMaskWithSyntax(ProtocolVersion version, String stringUri) throws Exception
   {
     URI uri = URI.create(stringUri);
-    Map<String, String> headers = new HashMap<String, String>(1);
+    Map<String, String> headers = new HashMap<>(1);
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
 
     ResourceContext context = new ResourceContextImpl(new PathKeysImpl(),
@@ -251,7 +251,7 @@ public class TestResourceContext
   public void testResourceContextURIDecoding(ProtocolVersion version, String stringUri) throws Exception
   {
     URI uri = URI.create(stringUri);
-    Map<String, String> headers = new HashMap<String, String>(1);
+    Map<String, String> headers = new HashMap<>(1);
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, version.toString());
 
     ServerResourceContext context = new ResourceContextImpl(new PathKeysImpl(),
@@ -347,15 +347,15 @@ public class TestResourceContext
     public MockRequest(URI uri)
     {
       _uri = uri;
-      _headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
-      _cookies = new ArrayList<String>();
+      _headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+      _cookies = new ArrayList<>();
     }
 
     public MockRequest(URI uri, Map<String, String> headers)
     {
       _uri = uri;
       _headers = headers;
-      _cookies = new ArrayList<String>();
+      _cookies = new ArrayList<>();
     }
 
     @Override

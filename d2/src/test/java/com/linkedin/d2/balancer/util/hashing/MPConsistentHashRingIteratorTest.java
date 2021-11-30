@@ -45,7 +45,7 @@ public class MPConsistentHashRingIteratorTest
   @Test
   public void testFirstItem()
   {
-    Ring<URI> ring = new MPConsistentHashRing<URI>(buildPointsMap(100, 100), 21, 10);
+    Ring<URI> ring = new MPConsistentHashRing<>(buildPointsMap(100, 100), 21, 10);
     int key = _random.nextInt();
     Iterator<URI> iter = ring.getIterator(key);
     Assert.assertTrue(iter.hasNext());
@@ -56,7 +56,7 @@ public class MPConsistentHashRingIteratorTest
   public void testOtherItems()
   {
     Map<URI, Integer> pointsMap = buildPointsMap(100, 100);
-    Ring<URI> ring = new MPConsistentHashRing<URI>(pointsMap, 21, 10);
+    Ring<URI> ring = new MPConsistentHashRing<>(pointsMap, 21, 10);
     int key = _random.nextInt();
     Iterator<URI> iter = ring.getIterator(key);
     int iterations = 0;
@@ -80,7 +80,7 @@ public class MPConsistentHashRingIteratorTest
   public void testAgainstOldIterator()
   {
     Map<URI, Integer> pointsMap = buildPointsMap(100, 100);
-    Ring<URI> ring = new MPConsistentHashRing<URI>(pointsMap, 21, 10);
+    Ring<URI> ring = new MPConsistentHashRing<>(pointsMap, 21, 10);
     int key = _random.nextInt();
 
     Iterator<URI> oldIter = ((MPConsistentHashRing<URI>) ring).getOrderedIterator(key);
@@ -97,10 +97,10 @@ public class MPConsistentHashRingIteratorTest
     Map<URI, Integer> pointsMap = buildPointsMap(100, 100);
     int key = 123456;
 
-    Ring<URI> firstRing = new MPConsistentHashRing<URI>(pointsMap, 21, 10);
+    Ring<URI> firstRing = new MPConsistentHashRing<>(pointsMap, 21, 10);
     Iterator<URI> firstIter = firstRing.getIterator(key);
 
-    Ring<URI> secondRing = new MPConsistentHashRing<URI>(pointsMap, 21, 10);
+    Ring<URI> secondRing = new MPConsistentHashRing<>(pointsMap, 21, 10);
     Iterator<URI> secondIter = secondRing.getIterator(key);
 
     while (firstIter.hasNext() || secondIter.hasNext())
@@ -119,7 +119,7 @@ public class MPConsistentHashRingIteratorTest
     {
       int numHosts = Math.abs(_random.nextInt()) % 100;
       Map<URI, Integer> pointsMap = buildPointsMap(numHosts, 100);
-      Ring<URI> ring = new MPConsistentHashRing<URI>(pointsMap, 21, 10);
+      Ring<URI> ring = new MPConsistentHashRing<>(pointsMap, 21, 10);
 
       Iterator<URI> iter = ring.getIterator(_random.nextInt());
       int iteration = 0;
@@ -137,7 +137,7 @@ public class MPConsistentHashRingIteratorTest
   {
     int repeat = 10;
     Map<URI, Integer> pointsMap = buildPointsMap(4, 100);
-    Ring<URI> ring = new MPConsistentHashRing<URI>(pointsMap, 21, 10);
+    Ring<URI> ring = new MPConsistentHashRing<>(pointsMap, 21, 10);
     long start = 0;
     long end = 0;
 

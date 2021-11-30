@@ -78,7 +78,7 @@ public class SimpleRootBuilderSpec extends RootBuilderSpec
   @Override
   public List<RootBuilderMethodSpec> getMethods()
   {
-    List<RootBuilderMethodSpec> methods = new ArrayList<RootBuilderMethodSpec>();
+    List<RootBuilderMethodSpec> methods = new ArrayList<>();
     if (_restMethods != null)
     {
       methods.addAll(_restMethods);

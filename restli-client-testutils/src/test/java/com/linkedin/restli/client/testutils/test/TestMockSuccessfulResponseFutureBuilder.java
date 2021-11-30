@@ -38,7 +38,7 @@ public class TestMockSuccessfulResponseFutureBuilder
   public void testBuild()
       throws RemoteInvocationException
   {
-    MockSuccessfulResponseFutureBuilder<Long, Greeting> builder = new MockSuccessfulResponseFutureBuilder<Long, Greeting>();
+    MockSuccessfulResponseFutureBuilder<Long, Greeting> builder = new MockSuccessfulResponseFutureBuilder<>();
     Greeting greeting = new Greeting().setId(1L).setMessage("foo");
     ResponseFuture<Greeting> future = builder.setEntity(greeting).setStatus(200).build();
 
@@ -50,8 +50,8 @@ public class TestMockSuccessfulResponseFutureBuilder
   public void testCreateResponse()
     throws RemoteInvocationException
   {
-    MockSuccessfulResponseFutureBuilder<Long, CreateResponse<Long>> builder = new MockSuccessfulResponseFutureBuilder<Long, CreateResponse<Long>>();
-    ResponseFuture<CreateResponse<Long>> future = builder.setEntity(new CreateResponse<Long>(1L)).setStatus(HttpStatus.S_200_OK.getCode()).build();
+    MockSuccessfulResponseFutureBuilder<Long, CreateResponse<Long>> builder = new MockSuccessfulResponseFutureBuilder<>();
+    ResponseFuture<CreateResponse<Long>> future = builder.setEntity(new CreateResponse<>(1L)).setStatus(HttpStatus.S_200_OK.getCode()).build();
 
     Assert.assertEquals(future.getResponseEntity().getId().longValue(), 1L);
     Assert.assertEquals(future.getResponse().getStatus(), 200);
@@ -61,8 +61,8 @@ public class TestMockSuccessfulResponseFutureBuilder
   public void testIdResponse()
     throws RemoteInvocationException
   {
-    MockSuccessfulResponseFutureBuilder<Long, IdResponse<Long>> builder = new MockSuccessfulResponseFutureBuilder<Long, IdResponse<Long>>();
-    ResponseFuture<IdResponse<Long>> future = builder.setEntity(new IdResponse<Long>(1L)).setStatus(HttpStatus.S_200_OK.getCode()).build();
+    MockSuccessfulResponseFutureBuilder<Long, IdResponse<Long>> builder = new MockSuccessfulResponseFutureBuilder<>();
+    ResponseFuture<IdResponse<Long>> future = builder.setEntity(new IdResponse<>(1L)).setStatus(HttpStatus.S_200_OK.getCode()).build();
 
     Assert.assertEquals(future.getResponseEntity().getId().longValue(), 1L);
     Assert.assertEquals(future.getResponse().getStatus(), 200);

@@ -231,7 +231,7 @@ public class DataElementUtil
       return Collections.emptyList();
     }
 
-    List<Object> list = new ArrayList<Object>(path.length() / 4);
+    List<Object> list = new ArrayList<>(path.length() / 4);
     int len = path.length();
     int index = 0;
     if (path.charAt(index) != separator)

@@ -67,7 +67,7 @@ public class TestMIMEReaderExceptions extends AbstractMIMEUnitTest
   @DataProvider(name = "multiplePartsDataSource")
   public Object[][] multiplePartsDataSource() throws Exception
   {
-    final List<MimeBodyPart> bodyPartList = new ArrayList<MimeBodyPart>();
+    final List<MimeBodyPart> bodyPartList = new ArrayList<>();
     bodyPartList.add(MIMETestUtils.SMALL_DATA_SOURCE);
     bodyPartList.add(MIMETestUtils.BODY_LESS_BODY);
 
@@ -167,7 +167,7 @@ public class TestMIMEReaderExceptions extends AbstractMIMEUnitTest
       final BodyPart currentExpectedPart = multiPartMimeBody.getBodyPart(i);
 
       //Construct expected headers and verify they match
-      final Map<String, String> expectedHeaders = new HashMap<String, String>();
+      final Map<String, String> expectedHeaders = new HashMap<>();
       @SuppressWarnings("unchecked")
       final Enumeration<Header> allHeaders = currentExpectedPart.getAllHeaders();
       while (allHeaders.hasMoreElements())
@@ -256,7 +256,7 @@ public class TestMIMEReaderExceptions extends AbstractMIMEUnitTest
       final BodyPart currentExpectedPart = multiPartMimeBody.getBodyPart(i);
 
       //Construct expected headers and verify they match
-      final Map<String, String> expectedHeaders = new HashMap<String, String>();
+      final Map<String, String> expectedHeaders = new HashMap<>();
       @SuppressWarnings("unchecked")
       final Enumeration<Header> allHeaders = currentExpectedPart.getAllHeaders();
       while (allHeaders.hasMoreElements())
@@ -519,7 +519,7 @@ public class TestMIMEReaderExceptions extends AbstractMIMEUnitTest
   {
     final CountDownLatch _latch;
     final MultiPartMIMEReader _reader;
-    final List<SinglePartMIMEExceptionReaderCallbackImpl> _singlePartMIMEReaderCallbacks = new ArrayList<SinglePartMIMEExceptionReaderCallbackImpl>();
+    final List<SinglePartMIMEExceptionReaderCallbackImpl> _singlePartMIMEReaderCallbacks = new ArrayList<>();
     Throwable _streamError = null;
 
     MultiPartMIMEExceptionReaderCallbackImpl(final CountDownLatch latch, final MultiPartMIMEReader reader)

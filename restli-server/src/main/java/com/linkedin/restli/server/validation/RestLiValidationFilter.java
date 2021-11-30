@@ -29,6 +29,7 @@ import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.PatchRequest;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.common.UpdateEntityStatus;
 import com.linkedin.restli.common.util.ProjectionMaskApplier;
 import com.linkedin.restli.common.util.ProjectionMaskApplier.InvalidProjectionException;
@@ -143,6 +144,11 @@ public class RestLiValidationFilter implements Filter
       }
     }
 
+    if (!shouldValidateOnRequest(requestContext))
+    {
+      return CompletableFuture.completedFuture(null);
+    }
+
     Class<?> resourceClass = requestContext.getFilterResourceModel().getResourceClass();
     if (UnstructuredDataUtil.isUnstructuredDataClass(resourceClass))
     {
@@ -150,8 +156,7 @@ public class RestLiValidationFilter implements Filter
     }
 
     ResourceMethod method = requestContext.getMethodType();
-    RestLiDataValidator validator = new RestLiDataValidator(resourceClass.getAnnotations(),
-        requestContext.getFilterResourceModel().getValueClass(), method);
+    RestLiDataValidator validator = createRequestRestLiDataValidator(requestContext);
     RestLiRequestData requestData = requestContext.getRequestData();
 
     ValidationResult result;
@@ -280,28 +285,9 @@ public class RestLiValidationFilter implements Filter
 
     if (shouldValidateOnResponse(requestContext))
     {
-      // Get validating schema if it was already built in onRequest
-      DataSchema validatingSchema = (DataSchema) requestContext.getFilterScratchpad().get(VALIDATING_SCHEMA_KEY);
 
-      // Otherwise, build validating schema from original schema
-      if (validatingSchema == null)
-      {
-        try
-        {
-          // Value class from resource model is the only source of truth for record schema.
-          // Schema from the record template itself should not be used.
-          validatingSchema = DataTemplateUtil.getSchema(requestContext.getFilterResourceModel().getValueClass());
-        }
-        catch (TemplateRuntimeException e)
-        {
-          throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, TEMPLATE_RUNTIME_EXCEPTION_MESSAGE);
-        }
-      }
-
-      Class<?> resourceClass = requestContext.getFilterResourceModel().getResourceClass();
       ResourceMethod method = requestContext.getMethodType();
-      RestLiDataValidator validator = new RestLiDataSchemaDataValidator(resourceClass.getAnnotations(),
-          method, validatingSchema);
+      RestLiDataValidator validator = createResponseRestLiDataValidator(requestContext);
 
       switch (method)
       {
@@ -469,8 +455,26 @@ public class RestLiValidationFilter implements Filter
     }
   }
 
-  private boolean shouldValidateOnResponse(FilterRequestContext requestContext)
+  /**
+   * @return True to validate request, false otherwise.
+   */
+  protected boolean shouldValidateOnRequest(FilterRequestContext requestContext)
   {
+    return true;
+  }
+
+  /**
+   * @return True to validate response, false otherwise.
+   */
+  protected boolean shouldValidateOnResponse(FilterRequestContext requestContext)
+  {
+    // Skip response validation if the header to skip response validation is set.
+    if (Boolean.TRUE.toString().equals(
+        requestContext.getRequestHeaders().get(RestConstants.HEADER_SKIP_RESPONSE_VALIDATION)))
+    {
+      return false;
+    }
+
     MaskTree projectionMask = requestContext.getProjectionMask();
 
     // Make sure the request is for one of the methods to be validated and has either null or a non-empty projection
@@ -486,5 +490,49 @@ public class RestLiValidationFilter implements Filter
     CompletableFuture<Void> future = new CompletableFuture<>();
     future.completeExceptionally(t);
     return future;
+  }
+
+  /**
+   * Creates a {@link RestLiDataValidator} to use for validation onRequest.
+   * Other implementations that extend this class can override this method to gain access to the validator.
+   *
+   * @param requestContext {@link FilterRequestContext} to provide input to the data validator
+   * @return a {@link RestLiDataValidator}
+   */
+  protected RestLiDataValidator createRequestRestLiDataValidator(FilterRequestContext requestContext)
+  {
+    return new RestLiDataValidator(requestContext.getFilterResourceModel().getResourceClass().getAnnotations(),
+        requestContext.getFilterResourceModel().getValueClass(), requestContext.getMethodType());
+  }
+
+  /**
+   * Creates a {@link RestLiDataValidator} to use for validation onResponse.
+   * Other implementations that extend this class can override this method to gain access to the validator.
+   *
+   * @param requestContext {@link FilterRequestContext} to provide input to the data validator
+   * @return a {@link RestLiDataValidator}
+   */
+  protected RestLiDataValidator createResponseRestLiDataValidator(FilterRequestContext requestContext)
+  {
+    // Get validating schema if it was already built in onRequest
+    DataSchema validatingSchema = (DataSchema) requestContext.getFilterScratchpad().get(VALIDATING_SCHEMA_KEY);
+
+    // Otherwise, build validating schema from original schema
+    if (validatingSchema == null)
+    {
+      try
+      {
+        // Value class from resource model is the only source of truth for record schema.
+        // Schema from the record template itself should not be used.
+        validatingSchema = DataTemplateUtil.getSchema(requestContext.getFilterResourceModel().getValueClass());
+      }
+      catch (TemplateRuntimeException e)
+      {
+        throw new RestLiServiceException(HttpStatus.S_500_INTERNAL_SERVER_ERROR, TEMPLATE_RUNTIME_EXCEPTION_MESSAGE);
+      }
+    }
+
+    return new RestLiDataSchemaDataValidator(requestContext.getFilterResourceModel().getResourceClass().getAnnotations(),
+        requestContext.getMethodType(), validatingSchema);
   }
 }

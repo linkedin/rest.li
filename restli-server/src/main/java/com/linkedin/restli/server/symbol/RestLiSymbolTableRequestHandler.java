@@ -90,19 +90,20 @@ public class RestLiSymbolTableRequestHandler implements NonResourceRequestHandle
       return false;
     }
 
-    //
     // When path is service scoped, URI is in the form of /<SERVICE>/symbolTable, else it
     // is in the form of /symbolTable or /symbolTable/<TABLENAME>
-    //
+    boolean isSymbolTableRequest = request.getHeaders().containsKey(RestConstants.HEADER_FETCH_SYMBOL_TABLE);
+    if (isSymbolTableRequest)
+    {
+      return pathSegments.get(pathSegments.size() - 1).getPath().equals(SYMBOL_TABLE_URI_PATH)
+              || pathSegments.get(pathSegments.size() - 2).getPath().equals(SYMBOL_TABLE_URI_PATH);
+    }
     boolean isServiceScopedPath = request.getHeaders().containsKey(RestConstants.HEADER_SERVICE_SCOPED_PATH);
     if (isServiceScopedPath)
     {
-      return (pathSegments.size() == 3 && pathSegments.get(2).getPath().equals(SYMBOL_TABLE_URI_PATH));
+      return (pathSegments.size() == 3) && pathSegments.get(2).getPath().equals(SYMBOL_TABLE_URI_PATH);
     }
-    else
-    {
-      return ((pathSegments.size() == 2 || pathSegments.size() == 3) && pathSegments.get(1).getPath().equals(SYMBOL_TABLE_URI_PATH));
-    }
+    return ((pathSegments.size() == 2 || pathSegments.size() == 3) && pathSegments.get(1).getPath().equals(SYMBOL_TABLE_URI_PATH));
   }
 
   @Override
@@ -141,27 +142,29 @@ public class RestLiSymbolTableRequestHandler implements NonResourceRequestHandle
 
     final SymbolTableProvider provider = SymbolTableProviderHolder.INSTANCE.getSymbolTableProvider();
     SymbolTable symbolTable = null;
-    try
-    {
-      boolean isServiceScopedPath = request.getHeaders().containsKey(RestConstants.HEADER_SERVICE_SCOPED_PATH);
-      if (isServiceScopedPath)
+
+    // at this point, `handleRequest` has verified that the incoming request is a symbolTable request.
+    // The URL can be one of two options:
+    // .../symbolTable/tableName
+    // .../symbolTable
+    // We check if the last path segments is "symbolTable", and if it is, we call provider.getResponseSymbolTable
+    // because we do not know the table name.
+    // Otherwise, we call provider.getSymbolTable
+    int pathSize = pathSegments.size();
+    try {
+      if (pathSegments.get(pathSize - 1).getPath().equals(SYMBOL_TABLE_URI_PATH))
       {
         symbolTable = provider.getResponseSymbolTable(request.getURI(), request.getHeaders());
       }
+      else if (pathSegments.get(pathSize - 2).getPath().equals(SYMBOL_TABLE_URI_PATH))
+      {
+        symbolTable = provider.getSymbolTable(pathSegments.get(pathSize - 1).getPath());
+      }
       else
       {
-        if (pathSegments.size() == 2)
-        {
-          symbolTable = provider.getResponseSymbolTable(request.getURI(), request.getHeaders());
-        }
-        else if (pathSegments.size() == 3)
-        {
-          symbolTable = provider.getSymbolTable(pathSegments.get(2).getPath());
-        }
+        LOGGER.error("request is malformed for handling symbolTable" + request.getURI());
       }
-    }
-    catch (IllegalStateException e)
-    {
+    } catch (IllegalStateException e) {
       LOGGER.error("Exception retrieving symbol table for URI " + request.getURI());
       symbolTable = null;
     }

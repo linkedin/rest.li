@@ -25,6 +25,7 @@ import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.server.MutablePathKeys;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.ServerResourceContext;
+import com.linkedin.restli.internal.server.model.Parameter;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.ProjectionMode;
@@ -53,6 +54,7 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertSame;
+import static org.testng.Assert.assertNotSame;
 
 
 public class TestFilterRequestContextInternalImpl
@@ -79,6 +81,7 @@ public class TestFilterRequestContextInternalImpl
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testFilterRequestContextAdapter() throws Exception
   {
     final String resourceName = "resourceName";
@@ -91,7 +94,7 @@ public class TestFilterRequestContextInternalImpl
     final MaskTree metadataMaskTree = new MaskTree();
     final MaskTree pagingMaskTree = new MaskTree();
     final MutablePathKeys pathKeys = new PathKeysImpl();
-    final Map<String, String> requestHeaders = new HashMap<String, String>();
+    final Map<String, String> requestHeaders = new HashMap<>();
     requestHeaders.put("Key1", "Value1");
     final URI requestUri = new URI("foo.bar.com");
     final ProtocolVersion protoVersion = AllProtocolVersions.BASELINE_PROTOCOL_VERSION;
@@ -108,6 +111,7 @@ public class TestFilterRequestContextInternalImpl
 
     final List<ServiceError> methodServiceErrors = Collections.singletonList(TestServiceError.METHOD_LEVEL_ERROR);
     final List<ServiceError> resourceServiceErrors = Collections.singletonList(TestServiceError.RESOURCE_LEVEL_ERROR);
+    final List<Parameter<?>> methodParameters = Collections.singletonList(Mockito.mock(Parameter.class));
 
     when(resourceModel.getName()).thenReturn(resourceName);
     when(resourceModel.getNamespace()).thenReturn(resourceNamespace);
@@ -119,6 +123,7 @@ public class TestFilterRequestContextInternalImpl
     when(resourceMethod.getActionName()).thenReturn(actionName);
     when(resourceMethod.getCustomAnnotationData()).thenReturn(customAnnotations);
     when(resourceMethod.getMethod()).thenReturn(null);
+    when(resourceMethod.getParameters()).thenReturn(methodParameters);
     when(resourceMethod.getServiceErrors()).thenReturn(methodServiceErrors);
 
     when(context.getProjectionMode()).thenReturn(projectionMode);
@@ -156,6 +161,8 @@ public class TestFilterRequestContextInternalImpl
     assertEquals(filterContext.getBatchFinderName(), batchFinderName);
     assertEquals(filterContext.getRequestContextLocalAttrs(), localAttrs);
     assertNull(filterContext.getMethod());
+    assertEquals(filterContext.getMethodParameters(), methodParameters);
+    assertNotSame(filterContext.getMethodParameters(), methodParameters);
     assertEquals(filterContext.getMethodServiceErrors(), methodServiceErrors);
     filterContext.getRequestHeaders().put("header2", "value2");
     assertEquals(requestHeaders.get("header2"), "value2");
@@ -169,6 +176,7 @@ public class TestFilterRequestContextInternalImpl
     verify(resourceMethod).getBatchFinderName();
     verify(resourceMethod).getActionName();
     verify(resourceMethod).getMethod();
+    verify(resourceMethod, times(2)).getParameters();
     verify(resourceMethod).getServiceErrors();
     verify(context).getProjectionMode();
     verify(context).setProjectionMask(maskTree);

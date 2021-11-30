@@ -39,8 +39,8 @@ public abstract class RequestBuilderSpec extends BuilderSpec
   private Map<String, String> _keyPathTypes;
   private ClassTemplateSpec _keyClass;
   private ClassTemplateSpec _valueClass;
-  private List<PathKeyBindingMethodSpec> _pathKeyMethods = new ArrayList<PathKeyBindingMethodSpec>();
-  private List<QueryParamBindingMethodSpec> _queryParamMethods = new ArrayList<QueryParamBindingMethodSpec>();
+  private List<PathKeyBindingMethodSpec> _pathKeyMethods = new ArrayList<>();
+  private List<QueryParamBindingMethodSpec> _queryParamMethods = new ArrayList<>();
   private DataMap _annotations;
 
   public RequestBuilderSpec()

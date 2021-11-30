@@ -39,7 +39,7 @@ public class TestResponseUtils
                                                    null,
                                                    null,
                                                    AllProtocolVersions.BASELINE_PROTOCOL_VERSION);
-    Assert.assertEquals(longKey, new Long(1L));
+    Assert.assertEquals(longKey, Long.valueOf(1L));
   }
 
   public void testConvertCustomTyperefKey()

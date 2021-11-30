@@ -38,7 +38,7 @@ public abstract class AbstractLoadBalancerSubscriber<T> implements
   private final int                                                                     _type;
   private final PropertyEventBus<T> _eventBus;
   private final ConcurrentMap<String, ClosableQueue<LoadBalancerState.LoadBalancerStateListenerCallback>> _waiters =
-                                                                                                     new ConcurrentHashMap<String, ClosableQueue<LoadBalancerState.LoadBalancerStateListenerCallback>>();
+                                                                                                     new ConcurrentHashMap<>();
 
   public AbstractLoadBalancerSubscriber(int type, PropertyEventBus<T> eventBus)
   {
@@ -67,7 +67,7 @@ public abstract class AbstractLoadBalancerSubscriber<T> implements
     boolean register = false;
     if (waiters == null)
     {
-      waiters = new ClosableQueue<LoadBalancerState.LoadBalancerStateListenerCallback>();
+      waiters = new ClosableQueue<>();
       ClosableQueue<LoadBalancerState.LoadBalancerStateListenerCallback> previous =
           _waiters.putIfAbsent(propertyName, waiters);
       if (previous == null)

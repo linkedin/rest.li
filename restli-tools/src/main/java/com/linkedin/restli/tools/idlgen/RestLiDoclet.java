@@ -160,15 +160,15 @@ public class RestLiDoclet
       _methodIdToMethodDoc.put(methodId, methodDoc);
     }
 
-    private final Map<String, ClassDoc> _classNameToClassDoc = new HashMap<String, ClassDoc>();
-    private final Map<MethodIdentity, MethodDoc> _methodIdToMethodDoc = new HashMap<MethodIdentity, MethodDoc>();
+    private final Map<String, ClassDoc> _classNameToClassDoc = new HashMap<>();
+    private final Map<MethodIdentity, MethodDoc> _methodIdToMethodDoc = new HashMap<>();
   }
 
   private static class MethodIdentity
   {
     public static MethodIdentity create(Method method)
     {
-      final List<String> parameterTypeNames = new ArrayList<String>();
+      final List<String> parameterTypeNames = new ArrayList<>();
 
       // type parameters are not included in identity because of differences between reflection and Doclet:
       // e.g. for Collection<Void>:
@@ -184,7 +184,7 @@ public class RestLiDoclet
 
     public static MethodIdentity create(MethodDoc method)
     {
-      final List<String> parameterTypeNames = new ArrayList<String>();
+      final List<String> parameterTypeNames = new ArrayList<>();
       for (Parameter param: method.parameters())
       {
         Type type = param.type();

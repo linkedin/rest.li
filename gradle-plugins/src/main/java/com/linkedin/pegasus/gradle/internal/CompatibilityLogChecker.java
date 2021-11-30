@@ -32,6 +32,11 @@ public class CompatibilityLogChecker extends OutputStream
    */
   boolean isModelCompatible = true;
 
+  /**
+   * Holds the status of annotation compatibility.
+   */
+  boolean isAnnotationCompatible = true;
+
   @Override
   public void write(int b)
       throws IOException
@@ -77,6 +82,10 @@ public class CompatibilityLogChecker extends OutputStream
     {
       modelCompatibility.add(new FileCompatibility(message, false));
     }
+    else if (s.startsWith("[SCHEMA-ANNOTATION-COMPAT]"))
+    {
+      isAnnotationCompatible = Boolean.parseBoolean(message.trim());
+    }
   }
 
   public String getWholeText()
@@ -108,6 +117,14 @@ public class CompatibilityLogChecker extends OutputStream
   public boolean isModelCompatible()
   {
     return isModelCompatible;
+  }
+
+  /**
+   * @return if annotation was compatible.
+   */
+  public boolean isAnnotationCompatible()
+  {
+    return isAnnotationCompatible;
   }
 
   public static class FileCompatibility

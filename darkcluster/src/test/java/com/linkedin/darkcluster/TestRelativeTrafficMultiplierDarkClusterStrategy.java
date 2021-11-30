@@ -45,6 +45,7 @@ public class TestRelativeTrafficMultiplierDarkClusterStrategy
       // numIterations, multiplier, numSourceInstances, numDarkInstances
       {0, 0f, 10, 10},
       {0, 1f, 10, 10},
+      {10, 10, 10, 0},
       {1000, 0.1f, 10, 10},
       {1000, 0.25f, 10, 10},
       {1000, 0.5f, 10, 10},

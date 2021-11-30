@@ -48,7 +48,7 @@ public class ConnectionLostTest
 //    org.apache.log4j.Logger.getRootLogger().setLevel(org.apache.log4j.Level.INFO);
 
     final ZKFSLoadBalancer balancer = getBalancer();
-    final FutureCallback<None> cb = new FutureCallback<None>();
+    final FutureCallback<None> cb = new FutureCallback<>();
     new Thread(new FakeZKServer()).start();
     balancer.start(cb);
     cb.get(5, TimeUnit.SECONDS);
@@ -61,8 +61,8 @@ public class ConnectionLostTest
                                                                                      5, TimeUnit.SECONDS,
                                                                                      BASE_PATH,
                                                                                      System.getProperty("java.io.tmpdir"),
-                                                                                     new HashMap<String, TransportClientFactory>(),
-                                                                                     new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>());
+                                                                                     new HashMap<>(),
+                                                                                     new HashMap<>());
     return new ZKFSLoadBalancer("localhost:" + PORT, 60000, 5000, f2, null, BASE_PATH);
   }
 

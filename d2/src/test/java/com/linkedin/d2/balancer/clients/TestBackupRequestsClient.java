@@ -34,8 +34,9 @@ import com.linkedin.d2.backuprequests.ResponseTimeDistribution;
 import com.linkedin.d2.backuprequests.TestTrackingBackupRequestsStrategy;
 import com.linkedin.d2.backuprequests.TrackingBackupRequestsStrategy;
 import com.linkedin.d2.balancer.KeyMapper;
-import com.linkedin.d2.balancer.StaticLoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancer;
+import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.StaticLoadBalancerState;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
@@ -50,11 +51,18 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
+import com.linkedin.r2.message.stream.StreamRequest;
+import com.linkedin.r2.message.stream.StreamRequestBuilder;
+import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.message.stream.StreamResponseBuilder;
+import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
+import com.linkedin.r2.message.stream.entitystream.DrainReader;
+import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
+import com.linkedin.test.util.retry.SingleRetry;
 import com.linkedin.util.clock.SystemClock;
-
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -68,6 +76,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -80,13 +89,10 @@ import org.HdrHistogram.AbstractHistogram;
 import org.HdrHistogram.Histogram;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNotSame;
-import static org.testng.Assert.assertSame;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 
 public class TestBackupRequestsClient
@@ -96,6 +102,7 @@ public class TestBackupRequestsClient
   private static final String CLUSTER_NAME = "testCluster";
   private static final String PATH = "";
   private static final String STRATEGY_NAME = "degrader";
+  private static final String BUFFERED_HEADER = "buffered";
   private static final ByteString CONTENT = ByteString.copy(new byte[8092]);
 
   private ScheduledExecutorService _executor;
@@ -112,23 +119,122 @@ public class TestBackupRequestsClient
     _executor.shutdown();
   }
 
-  @Test
-  public void testRequest() throws Exception
+  @Test(dataProvider = "isD2Async")
+  public void testRequest(boolean isD2Async) throws Exception
   {
     AtomicReference<ServiceProperties> serviceProperties = new AtomicReference<>();
     serviceProperties.set(createServiceProperties(null));
-    BackupRequestsClient client = createClient(serviceProperties::get);
+    BackupRequestsClient client = createClient(serviceProperties::get, isD2Async);
     URI uri = URI.create("d2://testService");
     RestRequest restRequest = new RestRequestBuilder(uri).setEntity(CONTENT).build();
     Future<RestResponse> response = client.restRequest(restRequest);
     assertEquals(response.get().getStatus(), 200);
   }
 
+  @Test(invocationCount = 3, dataProvider = "isD2Async")
+  public void testStreamRequestWithNoIsFullRequest(boolean isD2Async) throws Exception {
+    int responseDelayNano = 100000000; //1s till response comes back
+    int backupDelayNano = 50000000; // make backup request after 0.5 second
+    Deque<URI> hostsReceivingRequest = new ConcurrentLinkedDeque<>();
+    BackupRequestsClient client =
+        createAlwaysBackupClientWithHosts(Arrays.asList("http://test1.com:123", "http://test2.com:123"),
+            hostsReceivingRequest, responseDelayNano, backupDelayNano, isD2Async);
+
+    URI uri = URI.create("d2://testService");
+
+    // if there is no IS_FULL_REQUEST set, backup requests will not happen
+    StreamRequest streamRequest =
+        new StreamRequestBuilder(uri).build(EntityStreams.newEntityStream(new ByteStringWriter(CONTENT)));
+    RequestContext context = new RequestContext();
+    context.putLocalAttr(R2Constants.OPERATION, "get");
+    RequestContext context1 = context.clone();
+
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicReference<AssertionError> failure = new AtomicReference<>();
+
+    client.streamRequest(streamRequest, context1, new Callback<StreamResponse>() {
+      @Override
+      public void onError(Throwable e) {
+        failure.set(new AssertionError("Callback onError"));
+        latch.countDown();
+      }
+
+      @Override
+      public void onSuccess(StreamResponse result) {
+        try {
+          assertEquals(result.getStatus(), 200);
+          assertEquals(result.getHeader("buffered"), "false");
+          assertEquals(hostsReceivingRequest.size(), 1);
+          assertEquals(new HashSet<>(hostsReceivingRequest).size(), 1);
+          hostsReceivingRequest.clear();
+        } catch (AssertionError e) {
+          failure.set(e);
+        }
+        latch.countDown();
+      }
+    });
+
+    latch.await(2, TimeUnit.SECONDS);
+    if (failure.get() != null) {
+      throw failure.get();
+    }
+  }
+
+  @Test(invocationCount = 3, dataProvider = "isD2Async")
+  public void testStreamRequestWithIsFullRequest(boolean isD2Async) throws Exception {
+    int responseDelayNano = 500000000; //5s till response comes back
+    int backupDelayNano = 100000000; // make backup request after 1 second
+    Deque<URI> hostsReceivingRequest = new ConcurrentLinkedDeque<>();
+    BackupRequestsClient client =
+        createAlwaysBackupClientWithHosts(Arrays.asList("http://test1.com:123", "http://test2.com:123"),
+            hostsReceivingRequest, responseDelayNano, backupDelayNano, isD2Async);
+
+    URI uri = URI.create("d2://testService");
+
+    // if there is IS_FULL_REQUEST set, backup requests will happen
+    StreamRequest streamRequest =
+        new StreamRequestBuilder(uri).build(EntityStreams.newEntityStream(new ByteStringWriter(CONTENT)));
+    RequestContext context = new RequestContext();
+    context.putLocalAttr(R2Constants.OPERATION, "get");
+    context.putLocalAttr(R2Constants.IS_FULL_REQUEST, true);
+    RequestContext context1 = context.clone();
+
+    CountDownLatch latch = new CountDownLatch(1);
+    AtomicReference<AssertionError> failure = new AtomicReference<>();
+
+    client.streamRequest(streamRequest, context1, new Callback<StreamResponse>() {
+      @Override
+      public void onError(Throwable e) {
+        failure.set(new AssertionError("Callback onError"));
+        latch.countDown();
+      }
+
+      @Override
+      public void onSuccess(StreamResponse result) {
+        try {
+          assertEquals(result.getStatus(), 200);
+          assertEquals(result.getHeader("buffered"), "true");
+          assertEquals(hostsReceivingRequest.size(), 2);
+          assertEquals(new HashSet<>(hostsReceivingRequest).size(), 2);
+          hostsReceivingRequest.clear();
+        } catch (AssertionError e) {
+          failure.set(e);
+        }
+        latch.countDown();
+      }
+    });
+
+    latch.await(6, TimeUnit.SECONDS);
+    if (failure.get() != null) {
+      throw failure.get();
+    }
+  }
+
   /**
    * Backup Request should still work when a hint is given together with the flag indicating that the hint is only a preference, not requirement.
    */
-  @Test(invocationCount = 3)
-  public void testRequestWithHint() throws Exception
+  @Test(invocationCount = 3, dataProvider = "isD2Async", retryAnalyzer = SingleRetry.class) // Appears to be flaky in CI
+  public void testRequestWithHint(boolean isD2Async) throws Exception
   {
     int responseDelayNano = 100000000; //1s till response comes back
     int backupDelayNano = 50000000; // make backup request after 0.5 second
@@ -137,7 +243,8 @@ public class TestBackupRequestsClient
             Arrays.asList("http://test1.com:123", "http://test2.com:123"),
             hostsReceivingRequest,
             responseDelayNano,
-            backupDelayNano
+            backupDelayNano,
+            isD2Async
         );
 
     URI uri = URI.create("d2://testService");
@@ -184,7 +291,7 @@ public class TestBackupRequestsClient
     AtomicReference<ServiceProperties> serviceProperties = new AtomicReference<>();
     TestBackupRequestsStrategyStatsConsumer statsConsumer = new TestBackupRequestsStrategyStatsConsumer();
     serviceProperties.set(createServiceProperties(null));
-    final BackupRequestsClient client = createClient(serviceProperties::get, statsConsumer);
+    final BackupRequestsClient client = createClient(serviceProperties::get, statsConsumer, false);
     final URI uri = URI.create("d2://testService");
 
     Thread loadGenerator = new Thread(() -> {
@@ -318,13 +425,13 @@ public class TestBackupRequestsClient
     }
   }
 
-  @Test
-  public void testStatsConsumerAddRemove() throws Exception
+  @Test(dataProvider = "isD2Async")
+  public void testStatsConsumerAddRemove(boolean isD2Async) throws Exception
   {
     AtomicReference<ServiceProperties> serviceProperties = new AtomicReference<>();
     TestBackupRequestsStrategyStatsConsumer statsConsumer = new TestBackupRequestsStrategyStatsConsumer();
     serviceProperties.set(createServiceProperties(null));
-    BackupRequestsClient client = createClient(serviceProperties::get, statsConsumer);
+    BackupRequestsClient client = createClient(serviceProperties::get, statsConsumer, isD2Async);
     URI uri = URI.create("d2://testService");
     RestRequest restRequest = new RestRequestBuilder(uri).setEntity(CONTENT).build();
     RequestContext requestContext = new RequestContext();
@@ -372,7 +479,7 @@ public class TestBackupRequestsClient
     serviceProperties.set(createServiceProperties(null));
 
     BackupRequestsClient client = createClient(serviceProperties::get, statsConsumer,
-        new ConstantResponseTimeDistribution(1, TimeUnit.NANOSECONDS));
+        new ConstantResponseTimeDistribution(1, TimeUnit.NANOSECONDS), false);
     URI uri = URI.create("d2://testService");
     RestRequest restRequest = new RestRequestBuilder(uri).setEntity(CONTENT).build();
     RequestContext requestContext = new RequestContext();
@@ -414,13 +521,13 @@ public class TestBackupRequestsClient
       "Expected: " + expected + "+-" + (expected * .01) + ", but actual: " + actual);
   }
 
-  @Test
-  public void testStatsConsumerRemoveOne() throws Exception
+  @Test(dataProvider = "isD2Async")
+  public void testStatsConsumerRemoveOne(boolean isD2Async) throws Exception
   {
     AtomicReference<ServiceProperties> serviceProperties = new AtomicReference<>();
     TestBackupRequestsStrategyStatsConsumer statsConsumer = new TestBackupRequestsStrategyStatsConsumer();
     serviceProperties.set(createServiceProperties(null));
-    BackupRequestsClient client = createClient(serviceProperties::get, statsConsumer);
+    BackupRequestsClient client = createClient(serviceProperties::get, statsConsumer, isD2Async);
     URI uri = URI.create("d2://testService");
     RestRequest restRequest = new RestRequestBuilder(uri).setEntity(CONTENT).build();
     RequestContext requestContext = new RequestContext();
@@ -467,13 +574,13 @@ public class TestBackupRequestsClient
     assertSame(statsProvider2, removedStatsProvider);
   }
 
-  @Test
-  public void testStatsConsumerUpdateAndRemove() throws Exception
+  @Test(dataProvider = "isD2Async")
+  public void testStatsConsumerUpdateAndRemove(boolean isD2Async) throws Exception
   {
     AtomicReference<ServiceProperties> serviceProperties = new AtomicReference<>();
     TestBackupRequestsStrategyStatsConsumer statsConsumer = new TestBackupRequestsStrategyStatsConsumer();
     serviceProperties.set(createServiceProperties(null));
-    BackupRequestsClient client = createClient(serviceProperties::get, statsConsumer);
+    BackupRequestsClient client = createClient(serviceProperties::get, statsConsumer, isD2Async);
     URI uri = URI.create("d2://testService");
     RestRequest restRequest = new RestRequestBuilder(uri).setEntity(CONTENT).build();
     RequestContext requestContext = new RequestContext();
@@ -533,6 +640,34 @@ public class TestBackupRequestsClient
     assertSame(statsProvider2, removedStatsProvider2);
   }
 
+  @Test(dataProvider = "isD2Async")
+  public void testD2ServiceUnavailable(boolean isD2Async) throws Exception
+  {
+    LoadBalancer loadBalancer = new TestLoadBalancer(new ConstantResponseTimeDistribution(1, TimeUnit.NANOSECONDS),
+        null, new ServiceUnavailableException("", ""));
+    TestBackupRequestsStrategyStatsConsumer statsConsumer = new TestBackupRequestsStrategyStatsConsumer();
+    BackupRequestsClient client = createClient(statsConsumer, loadBalancer, isD2Async);
+    URI uri = URI.create("d2://testService");
+    RestRequest restRequest = new RestRequestBuilder(uri).setEntity(CONTENT).build();
+    RequestContext requestContext = new RequestContext();
+    requestContext.putLocalAttr(R2Constants.OPERATION, "get");
+
+    Future<RestResponse> response = client.restRequest(restRequest, requestContext);
+    assertEquals(response.get().getStatus(), 200, "If D2 call fails, we should fallback to request without backup");
+    List<StatsConsumerEvent> events = statsConsumer.getEvents();
+    assertEquals(events.size(), 0);
+  }
+
+  @DataProvider(name = "isD2Async")
+  public Object[][] isD2Async()
+  {
+    return new Object[][]
+        {
+            {true},
+            {false}
+        };
+  }
+
   private ServiceProperties createServiceProperties(List<Map<String, Object>> backupRequests)
   {
     return new ServiceProperties(SERVICE_NAME, CLUSTER_NAME, PATH, Arrays.asList(STRATEGY_NAME),
@@ -541,34 +676,42 @@ public class TestBackupRequestsClient
         Collections.<String, Object> emptyMap(), backupRequests);
   }
 
-  private BackupRequestsClient createClient(Supplier<ServiceProperties> servicePropertiesSupplier)
+  private BackupRequestsClient createClient(Supplier<ServiceProperties> servicePropertiesSupplier, boolean isD2Async)
   {
-    return createClient(servicePropertiesSupplier, null);
+    return createClient(servicePropertiesSupplier, null, isD2Async);
+  }
+
+  private BackupRequestsClient createClient(TestBackupRequestsStrategyStatsConsumer statsConsumer, LoadBalancer loadBalancer,
+      boolean isD2Async)
+  {
+    DynamicClient dynamicClient = new DynamicClient(loadBalancer, null);
+    return new BackupRequestsClient(dynamicClient, loadBalancer, _executor, statsConsumer, 10, TimeUnit.SECONDS, isD2Async);
   }
 
   private BackupRequestsClient createClient(Supplier<ServiceProperties> servicePropertiesSupplier,
-      TestBackupRequestsStrategyStatsConsumer statsConsumer)
+      TestBackupRequestsStrategyStatsConsumer statsConsumer, boolean isD2Async)
   {
     ResponseTimeDistribution hiccupDistribution =
         new GaussianResponseTimeDistribution(500, 1000, 500, TimeUnit.MILLISECONDS);
     ResponseTimeDistribution responseTime =
         new GaussianWithHiccupResponseTimeDistribution(2, 10, 5, TimeUnit.MILLISECONDS, hiccupDistribution, 0.02);
 
-    return createClient(servicePropertiesSupplier, statsConsumer, responseTime);
+    return createClient(servicePropertiesSupplier, statsConsumer, responseTime, isD2Async);
   }
 
   private BackupRequestsClient createClient(Supplier<ServiceProperties> servicePropertiesSupplier,
-      TestBackupRequestsStrategyStatsConsumer statsConsumer, ResponseTimeDistribution responseTime)
+      TestBackupRequestsStrategyStatsConsumer statsConsumer, ResponseTimeDistribution responseTime, boolean isD2Async)
   {
     TestLoadBalancer loadBalancer = new TestLoadBalancer(responseTime, servicePropertiesSupplier);
     DynamicClient dynamicClient = new DynamicClient(loadBalancer, null);
-    return new BackupRequestsClient(dynamicClient, loadBalancer, _executor, statsConsumer, 10, TimeUnit.SECONDS);
+    return new BackupRequestsClient(dynamicClient, loadBalancer, _executor, statsConsumer, 10, TimeUnit.SECONDS, isD2Async);
   }
 
-  private BackupRequestsClient createAlwaysBackupClientWithHosts(List<String> uris, Deque<URI> hostsReceivingRequestList, int responseDelayNano, int backupDelayNano)
+  private BackupRequestsClient createAlwaysBackupClientWithHosts(List<String> uris, Deque<URI> hostsReceivingRequestList,
+      int responseDelayNano, int backupDelayNano, boolean isD2Async)
       throws IOException
   {
-    Map<URI,Map<Integer, PartitionData>> partitionDescriptions = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI,Map<Integer, PartitionData>> partitionDescriptions = new HashMap<>();
     uris.forEach(uri -> partitionDescriptions.put(URI.create(uri), Collections.singletonMap(0, new PartitionData(1))));
 
     StaticLoadBalancerState LbState = new StaticLoadBalancerState()
@@ -590,6 +733,31 @@ public class TestBackupRequestsClient
                 () -> callback.onResponse(TransportResponseImpl.success(new RestResponseBuilder().build())), responseDelayNano,
                 TimeUnit.NANOSECONDS);
           }
+
+          @Override
+          public void streamRequest(StreamRequest request,
+              RequestContext requestContext,
+              Map<String, String> wireAttrs,
+              TransportCallback<StreamResponse> callback) {
+            // whenever a trackerClient is used to make request, record down it's hostname
+            hostsReceivingRequestList.add(uri);
+            if (null != requestContext.getLocalAttr(R2Constants.BACKUP_REQUEST_BUFFERED_BODY)) {
+              callback.onResponse(TransportResponseImpl.success(new StreamResponseBuilder().setHeader(
+                  BUFFERED_HEADER, String.valueOf(requestContext.getLocalAttr(R2Constants.BACKUP_REQUEST_BUFFERED_BODY) != null)
+              ).build(EntityStreams.emptyStream())));
+              return;
+            }
+            request.getEntityStream().setReader(new DrainReader(){
+              public void onDone() {
+                // delay response to allow backup request to happen
+                _executor.schedule(
+                    () -> callback.onResponse(TransportResponseImpl.success(new StreamResponseBuilder().setHeader(
+                        BUFFERED_HEADER, String.valueOf(requestContext.getLocalAttr(R2Constants.BACKUP_REQUEST_BUFFERED_BODY) != null)
+                    ).build(EntityStreams.emptyStream()))), responseDelayNano,
+                    TimeUnit.NANOSECONDS);
+              }
+            });
+          }
         };
       }
     };
@@ -599,9 +767,9 @@ public class TestBackupRequestsClient
     LoadBalancer loadBalancer = new SimpleLoadBalancer(LbState, _executor);
     DynamicClient dynamicClient = new DynamicClient(loadBalancer, null);
 
-    return new BackupRequestsClient(dynamicClient, loadBalancer, _executor, null, 10, TimeUnit.SECONDS) {
+    return new BackupRequestsClient(dynamicClient, loadBalancer, _executor, null, 10, TimeUnit.SECONDS, isD2Async) {
       @Override
-      Optional<TrackingBackupRequestsStrategy> getStrategy(final String serviceName, final String operation)
+      Optional<TrackingBackupRequestsStrategy> getStrategyAfterUpdate(final String serviceName, final String operation)
       {
         // constantly enable backup request after backupDelayNano time.
         BackupRequestsStrategy alwaysBackup = new TestTrackingBackupRequestsStrategy.MockBackupRequestsStrategy(
@@ -618,11 +786,19 @@ public class TestBackupRequestsClient
 
     private final TransportClient _transportClient;
     private final Supplier<ServiceProperties> _servicePropertiesSupplier;
+    private final Exception _exception;
 
     public TestLoadBalancer(final ResponseTimeDistribution responseTime,
         Supplier<ServiceProperties> servicePropertiesSupplier)
     {
+      this(responseTime, servicePropertiesSupplier, null);
+    }
+
+    public TestLoadBalancer(final ResponseTimeDistribution responseTime,
+        Supplier<ServiceProperties> servicePropertiesSupplier, Exception exception)
+    {
       _servicePropertiesSupplier = servicePropertiesSupplier;
+      _exception = exception;
       _transportClient = new TransportClient()
       {
 
@@ -661,7 +837,12 @@ public class TestBackupRequestsClient
     @Override
     public void getLoadBalancedServiceProperties(String serviceName, Callback<ServiceProperties> clientCallback)
     {
-      clientCallback.onSuccess(_servicePropertiesSupplier.get());
+      if (_exception == null)
+      {
+        clientCallback.onSuccess(_servicePropertiesSupplier.get());
+        return;
+      }
+      clientCallback.onError(_exception);
     }
   }
 

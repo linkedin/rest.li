@@ -99,7 +99,7 @@ public class ZooKeeperEphemeralStoreChildrenWatcherTest
     throws ExecutionException, InterruptedException, TimeoutException, KeeperException
   {
     generateTestData();
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
 
     _zkClient.ensurePersistentNodeExists("/bucket", callback);
     callback.get(5, TimeUnit.SECONDS);
@@ -118,7 +118,7 @@ public class ZooKeeperEphemeralStoreChildrenWatcherTest
   @AfterMethod
   public void tearDownMethod() throws ExecutionException, InterruptedException
   {
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _zkClient.removeNodeUnsafeRecursive("/bucket", callback);
     callback.get();
   }
@@ -182,7 +182,7 @@ public class ZooKeeperEphemeralStoreChildrenWatcherTest
       Assert.fail("unable to publish initial property value");
     }
 
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _zkClient.setDataUnsafe("/bucket/child-1", "4".getBytes(), callback);
     callback.get();
 

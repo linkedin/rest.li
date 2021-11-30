@@ -1,0 +1,4 @@
+record Foo {
+  bar: typeref BarUrn = string
+  baz: typeref BazUrn = string
+}

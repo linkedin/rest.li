@@ -56,6 +56,11 @@ class SymbolTableNameHandler extends SymbolTableMetadataExtractor
    */
   String generateName(List<String> symbols)
   {
+    if (_serverNodeUri == null)
+    {
+      throw new IllegalStateException("Cannot generate symbol table name with null server node URI.");
+    }
+
     return _serverNodeUri + SERVER_NODE_URI_PREFIX_TABLENAME_SEPARATOR + _symbolTablePrefix
         + PREFIX_HASH_SEPARATOR + symbols.hashCode();
   }
@@ -63,12 +68,13 @@ class SymbolTableNameHandler extends SymbolTableMetadataExtractor
   @Override
   protected SymbolTableMetadata createMetadata(String serverNodeUri, String tableName) {
     // A table is remote if the server node URI does not match the current server node URI.
-    boolean isRemote = !_serverNodeUri.equals(serverNodeUri);
+    boolean isRemote = _serverNodeUri == null || !_serverNodeUri.equals(serverNodeUri);
     return new SymbolTableMetadata(serverNodeUri, tableName, isRemote);
   }
 
   /**
-   * Rename the original table name, replacing the existing url prefix with this instance's url prefix.
+   * Rename the original table name, replacing the existing url prefix with this instance's url prefix if it exists. If
+   * this instance doesn't have a url prefix, then this method is a no-op and returns the table name as is.
    *
    * @param existingTableName The existing table name.
    *
@@ -76,6 +82,11 @@ class SymbolTableNameHandler extends SymbolTableMetadataExtractor
    */
   String replaceServerNodeUri(String existingTableName)
   {
+    if (_serverNodeUri == null)
+    {
+      return existingTableName;
+    }
+
     int index = existingTableName.indexOf(SERVER_NODE_URI_PREFIX_TABLENAME_SEPARATOR);
 
     if (index == -1 || index == 0 || index == existingTableName.length() - 1)

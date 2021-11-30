@@ -37,7 +37,7 @@ public class DegraderConfigFactoryTest
   @Test
   public void testToDegraderConfig()
   {
-    Map<String,String> properties = new HashMap<String, String>();;
+    Map<String,String> properties = new HashMap<>();;
     Boolean logEnabled = false;
     DegraderImpl.LatencyToUse latencyToUse = DegraderImpl.LatencyToUse.PCT95;
     Double maxDropRate = 0.33;

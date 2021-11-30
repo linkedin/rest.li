@@ -50,6 +50,7 @@
     "type" : "record",
     "name" : "ValidationDemo",
     "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "doc" : "Sample record for testing Rest.li validation. Comments indicate how fields are treated in ValidationDemoResource,\nAutomaticValidationDemoResource, and AutomaticValidationWithProjectionResource.",
     "include" : [ "IncludeMe" ],
     "fields" : [ {
       "name" : "stringA",
@@ -105,6 +106,10 @@
           }, {
             "name" : "bar2",
             "type" : "string"
+          }, {
+            "name" : "bar3",
+            "type" : "string",
+            "optional" : true
           } ]
         }
       },
@@ -129,7 +134,7 @@
   "schema" : {
     "annotations" : {
       "createOnly" : {
-        "value" : [ "stringB", "intB", "UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo2", "MapWithTyperefs/*/id" ]
+        "value" : [ "stringB", "intB", "UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo2", "MapWithTyperefs/*/id", "ArrayWithInlineRecord/*/bar3" ]
       },
       "readOnly" : {
         "value" : [ "stringA", "intA", "UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1", "ArrayWithInlineRecord/*/bar1", "validationDemoNext/stringB", "validationDemoNext/UnionFieldWithInlineRecord" ]

@@ -128,7 +128,7 @@ public class TestStreamRequest extends AbstractServiceTest
     StreamRequestBuilder builder = new StreamRequestBuilder(_clientProvider.createHttpURI(_port, FOOBAR_URI));
     StreamRequest request = builder.setMethod("POST").build(entityStream);
     final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
+    final AtomicReference<Throwable> error = new AtomicReference<>();
     Callback<StreamResponse> callback = new Callback<StreamResponse>()
     {
       @Override
@@ -157,7 +157,7 @@ public class TestStreamRequest extends AbstractServiceTest
     StreamRequestBuilder builder = new StreamRequestBuilder(_clientProvider.createHttpURI(_port, ERROR_RECEIVER_URI));
     StreamRequest request = builder.setMethod("POST").build(entityStream);
     final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<Throwable> error = new AtomicReference<Throwable>();
+    final AtomicReference<Throwable> error = new AtomicReference<>();
     Callback<StreamResponse> callback = new Callback<StreamResponse>()
     {
       @Override

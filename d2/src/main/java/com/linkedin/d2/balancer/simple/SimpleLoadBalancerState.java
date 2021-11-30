@@ -32,6 +32,9 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
+import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
+import com.linkedin.d2.balancer.subsetting.SubsettingState;
+import com.linkedin.d2.balancer.subsetting.SubsettingStrategyFactoryImpl;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
@@ -60,6 +63,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
@@ -74,6 +78,7 @@ import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
 public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactoryProvider
 {
+  private static final int                                                               LOG_SUBSET_MAX_SIZE = 20;
   private static final Logger                                                            _log = LoggerFactory.getLogger(SimpleLoadBalancerState.class);
 
   private final UriLoadBalancerSubscriber _uriSubscriber;
@@ -137,6 +142,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final SSLParameters _sslParameters;
   private final boolean       _isSSLEnabled;
   private final SslSessionValidatorFactory _sslSessionValidatorFactory;
+  private final SubsettingState _subsettingState;
 
   /*
    * Concurrency considerations:
@@ -175,9 +181,9 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                  boolean isSSLEnabled)
   {
     this(executorService,
-         new PropertyEventBusImpl<UriProperties>(executorService, uriPublisher),
-         new PropertyEventBusImpl<ClusterProperties>(executorService, clusterPublisher),
-         new PropertyEventBusImpl<ServiceProperties>(executorService, servicePublisher),
+         new PropertyEventBusImpl<>(executorService, uriPublisher),
+         new PropertyEventBusImpl<>(executorService, clusterPublisher),
+         new PropertyEventBusImpl<>(executorService, servicePublisher),
          clientFactories,
          loadBalancerStrategyFactories,
          sslContext,
@@ -250,6 +256,33 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                  PartitionAccessorRegistry partitionAccessorRegistry,
                                  SslSessionValidatorFactory sessionValidatorFactory)
   {
+    this(executorService,
+        uriBus,
+        clusterBus,
+        serviceBus,
+        clientFactories,
+        loadBalancerStrategyFactories,
+        sslContext,
+        sslParameters,
+        isSSLEnabled,
+        partitionAccessorRegistry,
+        sessionValidatorFactory,
+        null);
+  }
+
+  public SimpleLoadBalancerState(ScheduledExecutorService executorService,
+      PropertyEventBus<UriProperties> uriBus,
+      PropertyEventBus<ClusterProperties> clusterBus,
+      PropertyEventBus<ServiceProperties> serviceBus,
+      Map<String, TransportClientFactory> clientFactories,
+      Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+      SSLContext sslContext,
+      SSLParameters sslParameters,
+      boolean isSSLEnabled,
+      PartitionAccessorRegistry partitionAccessorRegistry,
+      SslSessionValidatorFactory sessionValidatorFactory,
+      DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider)
+  {
     _executor = executorService;
     _uriProperties = new ConcurrentHashMap<>();
     _clusterInfo = new ConcurrentHashMap<>();
@@ -275,6 +308,14 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _isSSLEnabled = isSSLEnabled;
     _sslSessionValidatorFactory = sessionValidatorFactory;
     _clusterListeners = Collections.synchronizedList(new ArrayList<>());
+    if (deterministicSubsettingMetadataProvider != null)
+    {
+      _subsettingState = new SubsettingState(new SubsettingStrategyFactoryImpl(), deterministicSubsettingMetadataProvider);
+    }
+    else
+    {
+      _subsettingState = null;
+    }
   }
 
   public void register(final SimpleLoadBalancerStateListener listener)
@@ -628,6 +669,34 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   }
 
   @Override
+  public SubsettingState.SubsetItem getClientsSubset(String serviceName,
+                                                  int minClusterSubsetSize,
+                                                  int partitionId,
+                                                  Map<URI, TrackerClient> potentialClients,
+                                                  long version)
+  {
+    if (_subsettingState == null)
+    {
+      return new SubsettingState.SubsetItem(false, potentialClients);
+    }
+    else
+    {
+      SubsettingState.SubsetItem subsetItem = _subsettingState
+          .getClientsSubset(serviceName, minClusterSubsetSize, partitionId, potentialClients, version, this);
+
+      debug(_log, "get cluster subset for service ", serviceName, ": [",
+          subsetItem.getWeightedSubset().values().stream()
+              .limit(LOG_SUBSET_MAX_SIZE)
+              .map(client -> client.getUri() + ":" + client.getSubsetWeight(partitionId))
+              .collect(Collectors.joining(",")),
+          " (total ", subsetItem.getWeightedSubset().size(), ")], shouldForceUpdate = ", subsetItem.shouldForceUpdate()
+      );
+
+      return subsetItem;
+    }
+  }
+
+  @Override
   public TrackerClient getClient(String serviceName, URI uri)
   {
     Map<URI, TrackerClient> trackerClients = _trackerClients.get(serviceName);
@@ -710,7 +779,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     else
     {
 
-      List<SchemeStrategyPair> orderedStrategies = new ArrayList<SchemeStrategyPair>(prioritizedSchemes.size());
+      List<SchemeStrategyPair> orderedStrategies = new ArrayList<>(prioritizedSchemes.size());
       for (String scheme : prioritizedSchemes)
       {
         // if this scheme is not supported (ie https not enabled) don't add it to the list

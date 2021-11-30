@@ -106,13 +106,13 @@ public class SharedZkConnectionProviderTest {
     ZKConnection clusterZkConn = new ZKConnectionBuilder("localhost:" + ZK_PORT).setTimeout(5000).setWaitForConnected(true).build();
 
     _serviceRegistry =
-        new ZooKeeperPermanentStore<ServiceProperties>(serviceZkConn, new ServicePropertiesJsonSerializer(),
+        new ZooKeeperPermanentStore<>(serviceZkConn, new ServicePropertiesJsonSerializer(),
             ZKFSUtil.servicePath(ZKBASE_PATH));
     _clusterRegistry =
-        new ZooKeeperPermanentStore<ClusterProperties>(clusterZkConn, new ClusterPropertiesJsonSerializer(),
+        new ZooKeeperPermanentStore<>(clusterZkConn, new ClusterPropertiesJsonSerializer(),
             ZKFSUtil.clusterPath(ZKBASE_PATH));
 
-    FutureCallback<None> storesStartupCallBack = new FutureCallback<None>();
+    FutureCallback<None> storesStartupCallBack = new FutureCallback<>();
     Callback<None> multiStartupCallback = Callbacks.countDown(storesStartupCallBack, 2);
     serviceZkConn.start();
     clusterZkConn.start();
@@ -120,7 +120,7 @@ public class SharedZkConnectionProviderTest {
     _clusterRegistry.start(multiStartupCallback);
     storesStartupCallBack.get(BLOCKING_CALL_TIMEOUT, TimeUnit.MILLISECONDS);
 
-    FutureCallback<None> propertiesSetupCallback = new FutureCallback<None>();
+    FutureCallback<None> propertiesSetupCallback = new FutureCallback<>();
     Callback<None> multiPropertiesCallback = Callbacks.countDown(propertiesSetupCallback, 2);
 
     ServiceProperties serviceProps =
@@ -157,9 +157,9 @@ public class SharedZkConnectionProviderTest {
     zkClient.start();
 
     ZooKeeperEphemeralStore<UriProperties> store =
-        new ZooKeeperEphemeralStore<UriProperties>(zkClient, new UriPropertiesJsonSerializer(),
+        new ZooKeeperEphemeralStore<>(zkClient, new UriPropertiesJsonSerializer(),
             new UriPropertiesMerger(), ZKFSUtil.uriPath(ZKBASE_PATH));
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     store.start(callback);
     callback.get(BLOCKING_CALL_TIMEOUT, TimeUnit.MILLISECONDS);
     return store;
@@ -187,7 +187,7 @@ public class SharedZkConnectionProviderTest {
       ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer(server, true);
       announcer.setCluster(CLUSTER_NAME);
       announcer.setUri(uri.toString());
-      Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
+      Map<Integer, PartitionData> partitionWeight = new HashMap<>();
       partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(0.5d));
       announcer.setPartitionData(partitionWeight);
 
@@ -203,7 +203,7 @@ public class SharedZkConnectionProviderTest {
   }
 
   private void shutdownConnectionManagers(List<ZooKeeperConnectionManager> managers) throws Exception {
-    FutureCallback<None> shutdownCallback = new FutureCallback<None>();
+    FutureCallback<None> shutdownCallback = new FutureCallback<>();
     Callback<None> shutdownMulitCallback = Callbacks.countDown(shutdownCallback, managers.size());
     for (ZooKeeperConnectionManager manager : managers) {
       _threadPoolExecutor.submit(() -> manager.shutdown(shutdownMulitCallback));
@@ -373,7 +373,7 @@ public class SharedZkConnectionProviderTest {
 
 
     //start both announcers and client
-    FutureCallback<None> startUpCallback = new FutureCallback<None>();
+    FutureCallback<None> startUpCallback = new FutureCallback<>();
     Callback<None> startUpMultiCallback = Callbacks.countDown(startUpCallback, connectionManagers.size() + 1);
 
     _threadPoolExecutor.submit(() -> client.start(startUpMultiCallback));
@@ -389,7 +389,7 @@ public class SharedZkConnectionProviderTest {
 
     //fire some requests to make sure announcement is successful and hosts properties can be retrieved successfully.
     int requestRepeat = 1000;
-    FutureCallback<None> reqCallback = new FutureCallback<None>();
+    FutureCallback<None> reqCallback = new FutureCallback<>();
     fireTestRequests(client, requestRepeat, reqCallback);
     reqCallback.get(BLOCKING_CALL_TIMEOUT, TimeUnit.MILLISECONDS);
 
@@ -400,7 +400,7 @@ public class SharedZkConnectionProviderTest {
 
 
     //Markdown half of the hosts and test the results
-    FutureCallback<None> hostsMarkdownCallback = new FutureCallback<None>();
+    FutureCallback<None> hostsMarkdownCallback = new FutureCallback<>();
     Callback<None> hostsMarkdownMultiCallback = Callbacks.countDown(hostsMarkdownCallback,10);
     for (ZooKeeperConnectionManager manager : connectionManagers.subList(0,10)) {
       _threadPoolExecutor.submit(() -> manager.getAnnouncers()[0].markDown(hostsMarkdownMultiCallback));
@@ -413,7 +413,7 @@ public class SharedZkConnectionProviderTest {
     assertEquals(properties.Uris().size(), 10);
 
     //fire some requests to make sure announcement is successful and hosts properties can be retrieved successfully.
-    FutureCallback<None> secondReqCallback = new FutureCallback<None>();
+    FutureCallback<None> secondReqCallback = new FutureCallback<>();
     fireTestRequests(client, requestRepeat, secondReqCallback);
     secondReqCallback.get(BLOCKING_CALL_TIMEOUT, TimeUnit.MILLISECONDS);
 
@@ -423,7 +423,7 @@ public class SharedZkConnectionProviderTest {
     Assert.assertEquals(testClientFactory.requestCount.get(), 2000);
 
     //Mix announcements with request firing to test connection robustness.
-    FutureCallback<None> thirdReqCallback = new FutureCallback<None>();
+    FutureCallback<None> thirdReqCallback = new FutureCallback<>();
     Callback<None> thirdReqMultiCallback = Callbacks.countDown(thirdReqCallback, requestRepeat + 10);
     for (int i = 0; i < requestRepeat; i++) {
       _threadPoolExecutor.submit(() -> {
@@ -452,7 +452,7 @@ public class SharedZkConnectionProviderTest {
 
 
     //announcers can be shutdown after announcing, without affecting client. This should not happen though.
-    FutureCallback<None> announcerShutdownCallback = new FutureCallback<None>();
+    FutureCallback<None> announcerShutdownCallback = new FutureCallback<>();
     Callback<None> announcersShutdownCallback = Callbacks.countDown(announcerShutdownCallback, connectionManagers.size());
     for (ZooKeeperConnectionManager manager : connectionManagers) {
       manager.shutdown(announcersShutdownCallback);
@@ -461,7 +461,7 @@ public class SharedZkConnectionProviderTest {
 
 
     //fire some requests to make sure d2client is still usable.
-    FutureCallback<None> fourthReqCallback = new FutureCallback<None>();
+    FutureCallback<None> fourthReqCallback = new FutureCallback<>();
     fireTestRequests(client, requestRepeat, fourthReqCallback);
     thirdReqCallback.get(BLOCKING_CALL_TIMEOUT, TimeUnit.MILLISECONDS);
 
@@ -471,7 +471,7 @@ public class SharedZkConnectionProviderTest {
 
 
     //test done!
-    FutureCallback<None> clientShutdownCallback = new FutureCallback<None>();
+    FutureCallback<None> clientShutdownCallback = new FutureCallback<>();
     client.shutdown(clientShutdownCallback);
     clientShutdownCallback.get(BLOCKING_CALL_TIMEOUT, TimeUnit.MILLISECONDS);
 
@@ -489,13 +489,13 @@ public class SharedZkConnectionProviderTest {
     List<URI> hosts = prepareHostNames(5, "testZKPropertyUpdate");
     List<ZooKeeperConnectionManager> connectionManagers = prepareConnectionManagers(hosts);
 
-    Map<String, TransportClientFactory> transportClientMap = new HashMap<String, TransportClientFactory>();
+    Map<String, TransportClientFactory> transportClientMap = new HashMap<>();
     transportClientMap.put("http", new TestTransportClientFactory());
 
     // connection shared to d2client
     D2Client client = getD2Client(transportClientMap);
 
-    FutureCallback<None> startupCallback = new FutureCallback<None>();
+    FutureCallback<None> startupCallback = new FutureCallback<>();
     client.start(startupCallback);
     startupCallback.get(BLOCKING_CALL_TIMEOUT, TimeUnit.MILLISECONDS);
 
@@ -509,12 +509,12 @@ public class SharedZkConnectionProviderTest {
             Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Arrays.asList("http"),
             Collections.emptySet());
 
-    FutureCallback<None> propertyCallback = new FutureCallback<None>();
+    FutureCallback<None> propertyCallback = new FutureCallback<>();
     _serviceRegistry.put("newTestService", serviceProps, propertyCallback);
     propertyCallback.get(BLOCKING_CALL_TIMEOUT, TimeUnit.MILLISECONDS);
 
 
-    FutureCallback<None> finishCallback = new FutureCallback<None>();
+    FutureCallback<None> finishCallback = new FutureCallback<>();
     d2Directory.getServiceNames(new Callback<List<String>>() {
       @Override
       public void onError(Throwable e) {
@@ -534,7 +534,7 @@ public class SharedZkConnectionProviderTest {
     Assert.assertTrue(serviceList.contains("testService"));
 
     shutdownConnectionManagers(connectionManagers);
-    FutureCallback<None> clientShutdownCallback = new FutureCallback<None>();
+    FutureCallback<None> clientShutdownCallback = new FutureCallback<>();
     client.shutdown(clientShutdownCallback);
     clientShutdownCallback.get(BLOCKING_CALL_TIMEOUT, TimeUnit.MILLISECONDS);
   }
@@ -610,5 +610,3 @@ public class SharedZkConnectionProviderTest {
     }
   }
 }
-
-

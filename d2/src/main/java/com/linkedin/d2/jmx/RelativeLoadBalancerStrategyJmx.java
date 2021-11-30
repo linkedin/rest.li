@@ -21,7 +21,6 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerQuarantine;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.relative.StateUpdater;
 import com.linkedin.d2.balancer.strategies.relative.TrackerClientState;
-import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.util.degrader.CallTracker;
 import java.net.URI;
 import java.util.List;
@@ -32,6 +31,8 @@ import java.util.stream.Collectors;
 
 public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStrategyJmxMBean
 {
+  private static final double DEFAULT_DOUBLE_METRICS = 0;
+  private static final int DEFAULT_INT_METRICS = 0;
   private final RelativeLoadBalancerStrategy _strategy;
 
   public RelativeLoadBalancerStrategyJmx(RelativeLoadBalancerStrategy strategy)
@@ -42,8 +43,13 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
   @Override
   public double getLatencyStandardDeviation()
   {
+    if (isPartitionDataUnavailable())
+    {
+      return DEFAULT_DOUBLE_METRICS;
+    }
+
     Map<TrackerClient, TrackerClientState> stateMap =
-        _strategy.getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getTrackerClientStateMap();
+        _strategy.getPartitionState(_strategy.getFirstValidPartitionId()).getTrackerClientStateMap();
 
     return calculateStandardDeviation(stateMap.keySet());
   }
@@ -51,13 +57,18 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
   @Override
   public double getLatencyMeanAbsoluteDeviation()
   {
+    if (isPartitionDataUnavailable())
+    {
+      return DEFAULT_DOUBLE_METRICS;
+    }
+
     Map<TrackerClient, TrackerClientState> stateMap =
-        _strategy.getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getTrackerClientStateMap();
+        _strategy.getPartitionState(_strategy.getFirstValidPartitionId()).getTrackerClientStateMap();
 
     double avgLatency = getAvgClusterLatency(stateMap.keySet());
 
     return stateMap.keySet().stream()
-        .filter(this::hasTraffic)
+        .filter(RelativeLoadBalancerStrategyJmx::hasTraffic)
         .map(trackerClient -> Math.abs(StateUpdater.getAvgHostLatency(trackerClient.getCallTracker().getCallStats()) - avgLatency))
         .mapToDouble(Double::doubleValue)
         .average()
@@ -67,8 +78,13 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
   @Override
   public double getAboveAverageLatencyStandardDeviation()
   {
+    if (isPartitionDataUnavailable())
+    {
+      return DEFAULT_DOUBLE_METRICS;
+    }
+
     Map<TrackerClient, TrackerClientState> stateMap =
-        _strategy.getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getTrackerClientStateMap();
+        _strategy.getPartitionState(_strategy.getFirstValidPartitionId()).getTrackerClientStateMap();
 
     double avgLatency = getAvgClusterLatency(stateMap.keySet());
 
@@ -82,8 +98,13 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
   @Override
   public double getMaxLatencyRelativeFactor()
   {
+    if (isPartitionDataUnavailable())
+    {
+      return DEFAULT_DOUBLE_METRICS;
+    }
+
     Map<TrackerClient, TrackerClientState> stateMap =
-        _strategy.getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getTrackerClientStateMap();
+        _strategy.getPartitionState(_strategy.getFirstValidPartitionId()).getTrackerClientStateMap();
 
     double avgLatency = getAvgClusterLatency(stateMap.keySet());
     long maxLatency = stateMap.keySet().stream()
@@ -98,12 +119,17 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
   @Override
   public double getNthPercentileLatencyRelativeFactor(double pct)
   {
+    if (isPartitionDataUnavailable())
+    {
+      return DEFAULT_DOUBLE_METRICS;
+    }
+
     Map<TrackerClient, TrackerClientState> stateMap =
-        _strategy.getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getTrackerClientStateMap();
+        _strategy.getPartitionState(_strategy.getFirstValidPartitionId()).getTrackerClientStateMap();
 
     if (stateMap.size() == 0)
     {
-      return 0.0;
+      return DEFAULT_DOUBLE_METRICS;
     }
 
     double avgLatency = getAvgClusterLatency(stateMap.keySet());
@@ -122,8 +148,13 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
   @Override
   public int getUnhealthyHostsCount()
   {
+    if (isPartitionDataUnavailable())
+    {
+      return DEFAULT_INT_METRICS;
+    }
+
     Map<TrackerClient, TrackerClientState> stateMap =
-        _strategy.getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getTrackerClientStateMap();
+        _strategy.getPartitionState(_strategy.getFirstValidPartitionId()).getTrackerClientStateMap();
 
     return (int) stateMap.values().stream()
         .filter(TrackerClientState::isUnhealthy)
@@ -133,8 +164,13 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
   @Override
   public int getQuarantineHostsCount()
   {
+    if (isPartitionDataUnavailable())
+    {
+      return DEFAULT_INT_METRICS;
+    }
+
     Map<TrackerClient, LoadBalancerQuarantine> quarantineMap =
-        _strategy.getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getQuarantineMap();
+        _strategy.getPartitionState(_strategy.getFirstValidPartitionId()).getQuarantineMap();
 
     return (int) quarantineMap.values().stream()
         .filter(LoadBalancerQuarantine::isInQuarantine)
@@ -144,24 +180,29 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
   @Override
   public int getTotalPointsInHashRing()
   {
-    Map<URI, Integer> uris = _strategy.getPartitionState(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getPointsMap();
+    if (isPartitionDataUnavailable())
+    {
+      return DEFAULT_INT_METRICS;
+    }
+
+    Map<URI, Integer> uris = _strategy.getPartitionState(_strategy.getFirstValidPartitionId()).getPointsMap();
 
     return uris.values().stream()
         .mapToInt(Integer::intValue)
         .sum();
   }
 
-  private boolean hasTraffic(TrackerClient trackerClient)
+  static boolean hasTraffic(TrackerClient trackerClient)
   {
     CallTracker.CallStats stats = trackerClient.getCallTracker().getCallStats();
     return stats.getOutstandingCount() + stats.getCallCount() > 0;
   }
 
-  private double calculateStandardDeviation(Set<TrackerClient> trackerClients)
+  static double calculateStandardDeviation(Set<? extends TrackerClient> trackerClients)
   {
     double avgLatency = getAvgClusterLatency(trackerClients);
     double variance = trackerClients.stream()
-        .filter(this::hasTraffic)
+        .filter(RelativeLoadBalancerStrategyJmx::hasTraffic)
         .map(trackerClient -> Math.pow(StateUpdater.getAvgHostLatency(trackerClient.getCallTracker().getCallStats()) - avgLatency, 2))
         .mapToDouble(Double::doubleValue)
         .average()
@@ -170,7 +211,7 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
     return Math.sqrt(variance);
   }
 
-  private long getAvgClusterLatency(Set<TrackerClient> trackerClients)
+  static long getAvgClusterLatency(Set<? extends TrackerClient> trackerClients)
   {
     long latencySum = 0;
     long outstandingLatencySum = 0;
@@ -192,5 +233,10 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
     return callCountSum + outstandingCallCountSum == 0
         ? 0
         : Math.round((latencySum + outstandingLatencySum) / (double) (callCountSum + outstandingCallCountSum));
+  }
+
+  private boolean isPartitionDataUnavailable()
+  {
+    return _strategy.getPartitionState(_strategy.getFirstValidPartitionId()) == null;
   }
 }

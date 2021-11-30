@@ -17,6 +17,7 @@
 package com.linkedin.r2.filter.compression;
 
 
+import com.linkedin.data.ByteString;
 import com.linkedin.r2.filter.NextFilter;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.filter.CompressionConfig;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -125,16 +127,16 @@ public class ClientCompressionFilter implements RestFilter
   /* package private */ static String buildAcceptEncodingHeader(EncodingType[] acceptedEncodings)
   {
     //Essentially, we want to assign nonzero quality values to all those specified;
-    float delta = 1.0f/(acceptedEncodings.length+1);
+    float delta = 1.0f/(acceptedEncodings.length + 1);
     float currentQuality = 1.0f;
 
     //Special case so we don't end with an unnecessary delimiter
     StringBuilder acceptEncodingValue = new StringBuilder();
-    for(int i=0; i < acceptedEncodings.length; i++)
+    for (int i = 0; i < acceptedEncodings.length; i++)
     {
       EncodingType t = acceptedEncodings[i];
 
-      if(i > 0)
+      if (i > 0)
       {
         acceptEncodingValue.append(CompressionConstants.ENCODING_DELIMITER);
       }
@@ -149,7 +151,8 @@ public class ClientCompressionFilter implements RestFilter
   }
 
   /**
-   * Builds HTTP headers related to response compression and creates a RestRequest with those headers added.
+   * Builds HTTP headers related to response compression and creates a RestRequest with those headers added. If the
+   * request already has a {@link HttpConstants#ACCEPT_ENCODING} set, then it returns the input request as is.
    *
    * @param responseCompressionOverride compression force on/off override from the request context.
    * @param req current request.
@@ -157,6 +160,12 @@ public class ClientCompressionFilter implements RestFilter
    */
   public RestRequest addResponseCompressionHeaders(CompressionOption responseCompressionOverride, RestRequest req)
   {
+    // If the client manually set an accept encoding header, don't override and short circuit.
+    if (req.getHeader(HttpConstants.ACCEPT_ENCODING) != null)
+    {
+      return req;
+    }
+
     RestRequestBuilder builder = req.builder();
     if (responseCompressionOverride == null)
     {
@@ -192,9 +201,9 @@ public class ClientCompressionFilter implements RestFilter
         ))
         {
           Compressor compressor = _requestContentEncoding.getCompressor();
-          byte[] compressed = compressor.deflate(req.getEntity().asInputStream());
+          ByteString compressed = compressor.deflate(req.getEntity());
 
-          if (compressed.length < req.getEntity().length())
+          if (compressed.length() < req.getEntity().length())
           {
             req = req.builder().setEntity(compressed).setHeader(HttpConstants.CONTENT_ENCODING,
                 compressor.getContentEncodingName()).build();
@@ -251,10 +260,11 @@ public class ClientCompressionFilter implements RestFilter
           {
             throw new CompressionException(CompressionConstants.SERVER_ENCODING_ERROR + compressionHeader);
           }
-          byte[] inflated = encoding.getCompressor().inflate(res.getEntity().asInputStream());
-          Map<String, String> headers = new HashMap<String, String>(res.getHeaders());
+          ByteString inflated = encoding.getCompressor().inflate(res.getEntity());
+          Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+          headers.putAll(res.getHeaders());
           headers.remove(HttpConstants.CONTENT_ENCODING);
-          headers.put(HttpConstants.CONTENT_LENGTH, Integer.toString(inflated.length));
+          headers.put(HttpConstants.CONTENT_LENGTH, Integer.toString(inflated.length()));
           res = res.builder().setEntity(inflated).setHeaders(headers).build();
         }
       }

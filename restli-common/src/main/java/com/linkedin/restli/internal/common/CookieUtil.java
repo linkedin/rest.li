@@ -34,7 +34,7 @@ public class CookieUtil
    */
   public static List<String> encodeCookies(List<HttpCookie> cookies)
   {
-    List<String> cookieStrs = new ArrayList<String>();
+    List<String> cookieStrs = new ArrayList<>();
     if (cookies != null)
     {
       for (HttpCookie cookie : cookies)
@@ -53,7 +53,7 @@ public class CookieUtil
    */
   public static List<HttpCookie> decodeSetCookies(List<String> cookieStrs)
   {
-    List<HttpCookie> cookies = new ArrayList<HttpCookie>();
+    List<HttpCookie> cookies = new ArrayList<>();
     if (cookieStrs != null)
     {
       for (String cookieStr : cookieStrs)
@@ -82,7 +82,7 @@ public class CookieUtil
    */
   public static List<String> encodeSetCookies(List<HttpCookie> cookies)
   {
-    List<String> cookieStrs = new ArrayList<String>();
+    List<String> cookieStrs = new ArrayList<>();
     if (cookies != null)
     {
       for (HttpCookie cookie : cookies)
@@ -101,7 +101,7 @@ public class CookieUtil
    */
   public static List<HttpCookie> decodeCookies(List<String> cookieStrs)
   {
-    List<HttpCookie> cookies = new ArrayList<HttpCookie>();
+    List<HttpCookie> cookies = new ArrayList<>();
     if (cookieStrs == null)
     {
       return cookies;

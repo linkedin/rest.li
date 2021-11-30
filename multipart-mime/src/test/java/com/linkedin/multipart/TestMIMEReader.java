@@ -113,7 +113,7 @@ public class TestMIMEReader extends AbstractMIMEUnitTest
   @DataProvider(name = "multipleNormalBodiesDataSource")
   public Object[][] multipleNormalBodiesDataSource() throws Exception
   {
-    final List<MimeBodyPart> bodyPartList = new ArrayList<MimeBodyPart>();
+    final List<MimeBodyPart> bodyPartList = new ArrayList<>();
     bodyPartList.add(LARGE_DATA_SOURCE);
     bodyPartList.add(SMALL_DATA_SOURCE);
     bodyPartList.add(BODY_LESS_BODY);
@@ -169,7 +169,7 @@ public class TestMIMEReader extends AbstractMIMEUnitTest
   @DataProvider(name = "multipleAbnormalBodies")
   public Object[][] multipleAbnormalBodies() throws Exception
   {
-    final List<MimeBodyPart> bodyPartList = new ArrayList<MimeBodyPart>();
+    final List<MimeBodyPart> bodyPartList = new ArrayList<>();
     bodyPartList.add(HEADER_LESS_BODY);
     bodyPartList.add(BODY_LESS_BODY);
     bodyPartList.add(PURELY_EMPTY_BODY);
@@ -202,7 +202,7 @@ public class TestMIMEReader extends AbstractMIMEUnitTest
   @DataProvider(name = "allTypesOfBodiesDataSource")
   public Object[][] allTypesOfBodiesDataSource() throws Exception
   {
-    final List<MimeBodyPart> bodyPartList = new ArrayList<MimeBodyPart>();
+    final List<MimeBodyPart> bodyPartList = new ArrayList<>();
     bodyPartList.add(SMALL_DATA_SOURCE);
     bodyPartList.add(LARGE_DATA_SOURCE);
     bodyPartList.add(HEADER_LESS_BODY);
@@ -240,7 +240,7 @@ public class TestMIMEReader extends AbstractMIMEUnitTest
   @DataProvider(name = "preambleEpilogueDataSource")
   public Object[][] preambleEpilogueDataSource() throws Exception
   {
-    final List<MimeBodyPart> bodyPartList = new ArrayList<MimeBodyPart>();
+    final List<MimeBodyPart> bodyPartList = new ArrayList<>();
     bodyPartList.add(SMALL_DATA_SOURCE);
     bodyPartList.add(LARGE_DATA_SOURCE);
     bodyPartList.add(HEADER_LESS_BODY);
@@ -372,7 +372,7 @@ public class TestMIMEReader extends AbstractMIMEUnitTest
       final BodyPart currentExpectedPart = mimeMultipart.getBodyPart(i);
 
       //Construct expected headers and verify they match
-      final Map<String, String> expectedHeaders = new HashMap<String, String>();
+      final Map<String, String> expectedHeaders = new HashMap<>();
       @SuppressWarnings("unchecked")
       final Enumeration<Header> allHeaders = currentExpectedPart.getAllHeaders();
       while (allHeaders.hasMoreElements())
@@ -473,7 +473,7 @@ public class TestMIMEReader extends AbstractMIMEUnitTest
   private static class MultiPartMIMEReaderCallbackImpl implements MultiPartMIMEReaderCallback
   {
     final CountDownLatch _latch;
-    final List<SinglePartMIMEReaderCallbackImpl> _singlePartMIMEReaderCallbacks = new ArrayList<SinglePartMIMEReaderCallbackImpl>();
+    final List<SinglePartMIMEReaderCallbackImpl> _singlePartMIMEReaderCallbacks = new ArrayList<>();
 
     MultiPartMIMEReaderCallbackImpl(final CountDownLatch latch)
     {

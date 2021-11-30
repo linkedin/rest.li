@@ -1,0 +1,10 @@
+record SchoolExtensions includes
+  record School {
+    name: string,
+    id: long
+  }
+{
+  @extension.using = "finder: other"
+  @extension.params = { "id" : "$URN.schoolId"}
+  testField: array[typeref TestUrn = string]
+}

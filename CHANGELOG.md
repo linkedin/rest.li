@@ -15,21 +15,512 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 Remove Guava dependency from data-avro module.
 
+## [29.22.14] - 2021-11-24
+- Fix bug where content type was not set for stream requests
+
+## [29.22.13] - 2021-11-05
+- Make SmoothRateLimiter setRate idempotent
+
+## [29.22.12] - 2021-10-28
+- add canaries to service and cluster properties
+
+## [29.22.11] - 2021-10-25
+- Fix an issue in D2 StateUpdater to force update PartitionState
+
+## [29.22.10] - 2021-10-20
+- SmoothRateLimiter - do not double-count execution delays on setRate
+
+## [29.22.9] - 2021-10-12
+- Make client timeout to fetch remote symbol table configurable in `RestLiSymbolTableProvider`
+
+## [29.22.8] - 2021-10-12
+- No changes; re-releasing because the previous release (`29.22.7`) was corrupted.
+
+## [29.22.7] - 2021-10-11
+- Fix bug for `generateDataTemplateTask` to consume command line option correctly.
+
+## [29.22.6] - 2021-10-08
+- Fix bug in `SmoothRateLimiter` where `executionDelay` is not honored.
+
+## [29.22.5] - 2021-10-08
+- Make `PegasusPlugin#getDataSchemaPath` public.
+
+## [29.22.4] - 2021-09-28
+- Improve support for JSR330 by allowing package protected constructors annotated with `@Inject`.
+- Fix Supported mime type config for response payload.
+
+## [29.22.3] - 2021-09-21
+- Allow disabling of load balancing for a specific host.
+
+## [29.22.2] - 2021-09-20
+- Add server config support to define supported accept types
+
+## [29.22.1] - 2021-09-13
+- Mark the `extensions` directory as a resource root in the Gradle plugin.
+- Add a pegasus plugin config to use case sensitive path in dataTemplate generation and rest client generation
+
+## [29.22.0] - 2021-09-09
+- Allow customizing `MethodAdapterRegistry` (now called `MethodAdapterProvider`) via `RestLiConfig`.
+  - Rename `MethodAdapterRegistry` to `DefaultMethodAdapterProvider` and add interface `MethodAdapterProvider`.
+  - Deprecate the constructors with `ErrorResponseBuilder` for `BaseRestLiServer` and its dependent classes
+- Update the data template generator command-line app to accept a list of resolver directories
+  to use for resolving schema references.
+  - Also refactored the app to use a CLI library instead of passing arguments using system properties.
+  - Update `GenerateDataTemplateTask` to use the refactored command-line app `DataTemplateGeneratorCmdLineApp`.
+- `ConstantQpsDarkClusterStrategy` post-prod fixes.
+  - Change the type of `dispatcherOutboundTargetRate` in `DarkClusterConfig.pdl` from `int` to `float`.
+  - `ConstantQpsRateLimiter` - Introduce randomness while maintaining constant per-period rate.
+
+## [29.21.5] - 2021-09-09
+- Fix a bug in `DataTranslator` where accessing non-existent fields under avro 1.10+ throws an exception.
+
+## [29.21.4] - 2021-08-30
+- Expose an API to build a URI without query params. Expose a local attr for passing query params for in-process calls.
+
+## [29.21.3] - 2021-08-25
+- Fix a bug in `SmoothRateLimiter` where `getEvents` will always return `0`.
+
+## [29.21.2] - 2021-08-18
+- Remove support for disabling request validation via headers since doing so can have dangerous side effects.
+
+## [29.21.1] - 2021-08-18
+- Enable skipping request and response validation via the use of request headers.
+
+## [29.21.0] - 2021-08-17
+- Fixed relative load balancer executor schedule cancellation due to silent runtime exception.
+
+## [29.20.1] - 2021-08-12
+- Minimize computations for requests resolved via in-process Rest.li servers
+
+## [29.20.0] - 2021-08-10
+- Fixed race condition when switching d2 load balancer strategies.
+
+## [29.19.17] - 2021-08-09
+- Fix bug in `ConstantQpsDarkClusterStrategy` that would call `ConstantRateLimiter.setRate` with an invalid burst value.
+
+## [29.19.16] - 2021-08-09
+- Add support for resolving from multiple schema source directories.
+  - This change also introduces the concept of "source" and "resolver" directories when
+    creating a `DataSchemaParser`. "Source" directories are used to parse/load the input
+    schemas, while the "resolver" directories will only be used for resolving referenced
+    schemas.
+
+## [29.19.15] - 2021-08-09
+- Provide the ability to set cookies and projection params in request context's local attributes to avoid
+serializing/deserializing them for requests that are executed in-process.
+
+## [29.19.14] - 2021-07-29
+- Bump netty version to use ALPN support needed for JDK8u282.
+
+## [29.19.13] - 2021-07-26
+- Add support for validating aliased union members.
+  - Union members originally didn't support custom properties and thus custom validation
+    was not supported for union members. With aliased unions, members now support custom
+    properties and thus can specify custom validation. Validation logic is updated to
+    include custom validations on union members.
+
+## [29.19.12] - 2021-07-22
+- Add a predicate based bulk remove method for checkedMap.
+
+## [29.19.11] - 2021-07-20
+- Add compatibility level config for extension schema compatibility check.
+   - "pegasusPlugin.extensionSchema.compatibility" is the compatibility level config for extension schema compatibility check.
+      It supports following 4 levels:
+     - "off": the extension schema compatibility check will not be run.
+     - "ignore": the extension schema compatibility check will run, but it allows backward incompatible changes.
+     - "backwards": Changes that are considered backwards compatible will pass the check, otherwise changes will fail the check.
+     - "equivalent": No changes to extension schemas will pass.
+   - If this config is not provided by users, by default the extension schema compatibility check is using "backwards".
+   - How to use it: users could add 'pegasusPlugin.extensionSchema.compatibility=<compatibility level>' in the gradle.properties file
+     or directly add this property '-PpegasusPlugin.extensionSchema.compatibility=<compatibility level>' to the gradle build.
+
+- Revert "Relax extension schema check to make '@extension' annotation is optional for 1-to-1 injections."
+
+## [29.19.10] - 2021-07-16
+- Add hooks for customizing documentation (OPTIONS) response.
+  - Documentation renderers now get the request headers and resource models available during rendering.
+
+## [29.19.9] - 2021-07-15
+- Relax extension schema check to make '@extension' annotation is optional for 1-to-1 injections.
+- Update RestliRouter to allow "bq", "action" as query parameter name for finder, "q" as action parameter name for action
+
+## [29.19.8] - 2021-07-02
+- Define new Dark Cluster configs in d2 PropertyKeys
+
+## [29.19.7] - 2021-06-30
+- Fix equals() and hashCode() in ServiceProperties to support cluster subsetting
+
+## [29.19.6] - 2021-06-28
+- Fix validation logic for non-numeric float values (i.e. `NaN`, `Infinity`, `-Infinity`).
+  - This affects the underlying implementation for the coercion modes defined by `CoercionMode`
+    (the Javadoc for each mode has been updated accordingly).
+
+## [29.19.5] - 2021-06-24
+- Fix request builder generator to skip unstructured data sub resources correctly.
+- Use the Java 7 diamond operator everywhere.
+
+## [29.19.4] - 2021-06-23
+- Do not apply Idea and Eclipse plugins.
+
+## [29.19.3] - 2021-06-18
+- More changes for Gradle 7 compatibility.
+  - Add schemas as source set resources and rely on the Java plugin to copy them
+    into the artifact instead of doing so directly, to avoid copying duplicates.
+  - Change getter names in `GenerateDataTemplateTask` to conform to what Gradle 7
+    requires and deprecate the old ones.
+
+## [29.19.2] - 2021-06-17
+- Allow client-side `RetriableRequestException` to be retried after `ClientRetryFilter`.
+
+## [29.19.1] - 2021-06-09
+- Add support for `CONSTANT_QPS` dark canary cluster strategy.
+
+## [29.18.15] - 2021-06-02
+- Fix race conditions in D2 cluster subsetting. Refactor subsetting cache to `SubsettingState`.
+
+## [29.18.14] - 2021-05-27
+- Use `class.getClassLoader()` instead of `thread.getContextClassLoader()` to get the class loader.
+
+## [29.18.13] - 2021-05-27
+- Remove one more `"runtime"` configuration reference.
+
+## [29.18.12] - 2021-05-26
+- Use daemon threads to unregister `TimingKey` instances.
+
+## [29.18.11] - 2021-05-24
+- Add support for returning location of schema elements from the PDL schema parser.
+
+## [29.18.10] - 2021-05-24
+- Introduce a readonly attribute on the `@Action` annotation.
+
+## [29.18.9] - 2021-05-24
+- Initial support for the modern `ivy-publish` plugin when producing data-template artifacts
+  - Use of `ivy-publish` plugin requires Gradle 6.1+.
+  - When `pegasus` and `ivy-publish` plugins are applied in concert,
+    a new [Publication](https://docs.gradle.org/5.2.1/javadoc/org/gradle/api/publish/Publication.html) called `ivy` is created.
+  - This Publication name can be modified by setting the `PegasusPublicationName` project property.
+  - See [Ivy Publish Plugin](https://docs.gradle.org/5.2.1/userguide/publishing_ivy.html) for more information about the modern publishing mechanism.
+
+## [29.18.8] - 2021-05-21
+- Fix a bug in `ZKDeterministicSubsettingMetadataProvider` to make host set distinct.
+
+## [29.18.7] - 2021-05-16
+- Copy the input pegasus data schema when translating to avro.
+
+## [29.18.6] - 2021-05-13
+- Expose `getResourceClass` from `ResourceDefinition` interface.
+
+## [29.18.5] - 2021-05-13
+- Add `"http.streamingTimeout"` to `AllowedClientPropertyKeys`.
+
+## [29.18.4] - 2021-05-06
+- Replace `runtime` configuration with `runtimeClasspath` configuration in plugin for compatibility with Gradle 7.
+
+## [29.18.3] - 2021-05-03
+- Strictly enforce Gradle version compatibility in the `pegasus` Gradle plugin.
+  - Minimum required Gradle version is now `1.0` (effectively backward-compatible).
+  - Minimum suggested Gradle version is now `5.2.1`
+- Fix TimingKey Memory Leak
+- Fix bottlenecks in DataSchemaParser
+
+## [29.18.2] - 2021-04-28
+- Fix bug in generated fluent client APIs when typerefs are used as association key params
+- Add debug log for cluster subsetting updates
+
+## [29.18.1] - 2021-04-22
+- Add fluent client API for `FINDER` and `BATCH_FINDER` methods.
+- Fix a bug when converting `enableClusterSubsetting` config to Boolean in `ServicePropertiesJsonSerializer`.
+
+## [29.18.0] - 2021-04-20
+- Use host FQDN instead of nodeUri to get D2 subsetting metadata
+
+## [29.17.4] - 2021-04-16
+- Migrate the Rest.li release process from Bintray to JFrog Artifactory.
+  - As of this version, Bintray will no longer host Rest.li releases.
+  - Releases can be found on [LinkedIn's JFrog Artifactory instance](https://linkedin.jfrog.io/).
+
+## [29.17.3] - 2021-04-15
+- Releasing to test new CI behavior.
+
+## [29.17.2] - 2021-04-11
+- Fix the default value resolution logic in Avro schema translator to match the PDL behavior.
+
+## [29.17.1] - 2021-04-02
+- Add fluent client api for subresources
+- Update fluent client APIs to include projection mask as input parameter.
+- Update projection mask builder APIs to support updating the mask objects.
+- Added support for checking if a nested type supports new ProjectionMask API before generating new typesafe APIs for them.
+- Fix a typo in D2ClientConfig
+
+## [29.17.0] - 2021-03-23
+- Implement D2 cluster subsetting.
+
+## [29.16.2] - 2021-03-22
+- Fix an issue where in collection response, we did not fill in the default values in the metadata and paging metadata.
+
+## [29.16.1] - 2021-03-17
+- Add fluent client api for simple resource and association resource.
+- Add support for generating projection mask as the mask data map.
+- Fix UnmodifiableList wrap in d2 relative load balancer.
+
+## [29.16.0] - 2021-03-10
+- Add a ParSeq based CompletionStage implementation
+- Bump minor version for internal services to pick up config change
+
+## [29.15.9] - 2021-03-06
+- Add separate configuration control for retrying RestRequest and StreamRequest.
+
+## [29.15.8] - 2021-03-05
+- Exclude 3XX http status from adding error logs during build error response from restli server.
+
+## [29.15.7] - 2021-03-05
+- Include accept header params when setting the response content type.
+
+## [29.15.6] - 2021-03-04
+- Fix bug that if a schema is an enum without any symbols, doc gen should handle it instead of throwing exception.
+
+## [29.15.5] - 2021-03-03
+- Fix content type header not set in case of `RestliResponseException` from non-streaming server.
+
+## [29.15.4] - 2021-03-02
+- Fix content type header not set in case of `StreamException` from Rest.li server.
+
+## [29.15.3] - 2021-02-24
+- Add support for update, partial_update, delete and get_all methods in fluent API bindings.
+- Prevent `RetriableRequestException` from cascading to the indirect caller.
+
+## [29.15.2] - 2021-02-19
+- Add `UnionTemplate.memberKeyName()` to directly return the key name for a union member.
+
+## [29.15.1] - 2021-02-18
+- Cleanup compression code to reduce duplication and minimize memcopies
+
+## [29.15.0] - 2021-02-17
+- Always enable client compression filter so that responses can be decompressed. If the request already has an accept encoding header set do not overwrite it.
+
+## [29.14.5] - 2021-02-11
+- Shortcircuit already serialized projection params
+
+## [29.14.4] - 2021-02-10
+- Deal with status code 204, when we see 204 in error path, we will not return data (from data layer only)
+
+## [29.14.3] - 2021-02-10
+- Add PathSpecSet, an immutable set of PathSpecs that is convenient to use when building logic based on Rest.li projection
+
+## [29.14.2] - 2021-02-03
+- Exclude conflicting velocity engine dependency.
+
+## [29.14.1] - 2021-01-31
+- Gracefully degrade symbol tables when server node URI is null
+
+## [29.14.0] - 2021-01-29
+- Generate fluent client APIs get and create methods of collection resources.
+- Encode JSON values in PDLs deterministically:
+  - Annotation maps are now sorted alphabetically (to arbitrary depth).
+  - Default values of fields with record type are sorted by the field order of the record schema.
+
+## [29.13.12] - 2021-01-29
+Fix a bug of losing HTTP status code when a retriable response goes through ClientRetryFilter
+
+## [29.13.11] - 2021-01-27
+- Update 'CreateOnly' and 'ReadOnly' javadocs to be more accurate that the validation is performed by 'RestLiValidationFilter'.
+- Fix memory leak in `CheckedMap` when one map is used to create multiple record templates.
+  - Change listener list now clears finalized weak references when it detects any change listener was finalized or when listeners are notified.
+
+## [29.13.10] - 2021-01-20
+- Fix bug which prevented using the `@PathKeyParam` resource method parameter annotation for a non-parent path key (i.e. path key defined in the same resource).
+  - Users will no longer have to rely on `@PathKeysParam` as a workaround.
+- Expose resource method parameters in the `FilterRequestContext` interface.
+- Fix bug in `DataComplexTable` that breaks `Data::copy` if there are hash collisions.
+  - Hashcodes for `DataComplex` objects are generated using a thread local, and there can be collisions if multiple threads are used to construct a `DataComplex` object.
+
+## [29.13.9] - 2021-01-13
+- Add max batch size support on Rest.li server.
+  - Introduce the `@MaxBatchSize` annotation, which can be added on batch methods.
+  - Add batch size validation based on the allowed max batch size.
+  - Add resource compatibility check rules for the max batch size.
+
+## [29.13.8] - 2021-01-13
+- Fix a critical bug in `RetryClient` to set retry header instead of adding a value to retry header
+
+## [29.13.7] - 2021-01-08
+- Java does not allow inner class names to be same as enclosing classes. Detect and resolve such naming conflits for unnamed inner types (array, map and union).
+
+## [29.13.6] - 2021-01-07
+- Fix for "pegasus to avro translation of UnionWithAlias RecordFields does not have field properties"
+
+## [29.13.5] - 2021-01-06
+- Improve logging when conflicts are detected during parsing. Update translate schemas task to look in the input folder first when resolving schemas.
+
+## [29.13.4] - 2021-01-07
+- Change listeners should not be added to readonly maps.
+
+## [29.13.3] - 2021-01-06
+- Add support for accessing schema statically from generated template classes and for getting symbol properties from enum schema properties.
+- Fix extra whitespaces at the end of the line in the pegasus snapshot files.
+
+## [29.13.2] - 2020-12-23
+- Implement overload failure client-side retry.
+
+## [29.13.1] - 2020-12-14
+- Fix the restriction of empty union validation from wide open to only allow when there is a projection in the union
+
+## [29.13.0] - 2020-12-12
+- Change AvroUtil to use newCompatibleJsonDecoder from avro-util
+- Bump `javax.mail:mail` dependency from `1.4.1` to `1.4.4` to avoid classloader issues in `javax.activation` code with Java 11.
+- Bump arvo compatibility layer `avroutil` dependency from `0.1.11` to `0.2.17` for Arvo Upgrade HI.
+- Setup the base infra for generating new fluent api client bindings.
+
+## [29.12.0] - 2020-12-02
+- Add a boolean flag as header for symbol table request to avoid conflict with resource requests.
+
+## [29.11.3] - 2020-11-25
+- Enable cycle check when serializing only when assertions are enabled, to avoid severe performance degradation at high QPS due to ThreadLocal slowdown.
+
+## [29.11.2] - 2020-11-23
+- Enhance request symbol table fetch.
+  - Return null if uri prefix doesn't match.
+  - If the fetch call 404s internally store an empty symbol table and return null. This will avoid repeated invocations to services that are not yet ready to support symbol tables
+
+## [29.11.1] - 2020-11-20
+- When we do validation on response, in the past empty unions will fail the validation and client will
+  - fail. Now we do not treat empty union as a failure, and just return the empty map as is.
+  - Also, if there are projection, the projection will apply to empty union if it is projected.
+
+## [29.10.1] - 2020-11-19
+- Fix bug where records wrapping the same map were not updated when setter was invoked on one record.
+
+## [29.10.0] - 2020-11-18
+- Fix relative load balancer log. Bumping the minor version so that it can be picked up by LinkedIn internal services.
+
+## [29.9.2] - 2020-11-16
+- Implemented doNotSlowStart in relative load balancer.
+
+## [29.9.1] - 2020-11-12
+- Performance improved: add lazy instantiation of Throwable objects for timeout errors
+
+## [29.9.0] - 2020-11-10
+- By default, Pegasus Plugin's generated files (for GenerateDataTemplateTask and GenerateRestClientTask Gradle Tasks) are created with lower case file system paths. (There is an optional flag at the Gradle task level to change this behavior.)
+
+## [29.8.4] - 2020-11-09
+- Adding required record field is allowed and should be considered as backward compatible change in extension schemas.
+
+## [29.8.3] - 2020-11-09
+- Support symbolTable requests with suffixes
+
+## [29.8.2] - 2020-11-06
+- Fix bug: if there is no input schema, do not run pegasusSchemaSnapshotCheck. The check statement was wrong.
+
+## [29.8.1] - 2020-11-05
+- Check whether schemas exist or not before running pegasusSchemaSnapshotCheck task
+
+## [29.8.0] - 2020-10-29
+- Empty commit to bump pegasus minor version. LinkedIn internal service needs the new minor version to prevent client version downgrade, since the LinkedIn internal services only notice on minor version discrepancy.
+
+## [29.7.15] - 2020-10-23
+Log Streaming Error or Timeout Error in Jetty SyncIOHandler
+
+## [29.7.14] - 2020-10-22
+- Improve performance of schema format translator.
+
+## [29.7.13] - 2020-10-22
+- Check if debug logging is enabled before calling debug log message in TimingContextUtil to avoid unnecessary exception instantiation.
+- Improve relative load balancer logging.
+
+## [29.7.12] - 2020-10-20
+- Fix the bug of not propagating schema properties in typeref with UnionWithAlias during pegasus to avro translation
+
+## [29.7.11] - 2020-10-19
+- Clear the destination directory for generateRestClientTask before the task runs.
+- Add 'ExtensionSchemaAnnotationHandler' for extension schema annotation compatibility check
+- Set javac source and target compatibility of dataTemplate compile task to "1.8" as the cogen changes in 29.7.0 is using Java 8 features.
+
+## [29.7.10] - 2020-10-15
+- Minimize memory copies and object creation during encoding.
+- Use String switch instead of map lookup in traverse callback for better performance
+- Reset isTraversing when cloning
+- Cache data objects in wrapped mapped/lists lazily on get.
+- Compute dataComplexHashCode lazily for DataList and DataMap
+
+## [29.7.9] - 2020-10-15
+- Add partition validation when getting relative load balancer metrics.
+- Extend checkPegasusSchemaSnapshot task to be enable to check schema annotation compatibility.
+- The annotation compatibility will be triggered if SchemaANnotationHandler config is provided.
+- Update SchemaAnnotationHandler interface to have a new api - annotationCompatibilityCheck, which can be used to check the custom annotation compatibility check.
+
+## [29.7.8] - 2020-10-12
+- Encoding performance improvements
+
+## [29.7.7] - 2020-10-06
+- Adding dark cluster response validation metrics
+
+## [29.7.6] - 2020-10-05
+- Fix bug referring to coercer before registration.
+
+## [29.7.5] - 2020-10-05
+- Add an option to configure ProtoWriter buffer size. Set the default to 4096 to prevent thrashing.
+- Use an identity hashmap implementation that uses DataComplex#dataComplexHashCode under the hood for better performance
+
+## [29.7.4] - 2020-10-03
+- Fix bug affecting record fields named "fields".
+
+## [29.7.3] - 2020-10-02
+- Bump `parseq` dependency from `2.6.31` to `4.1.6`.
+- Add `checkPegasusSchemaSnapshot` task.
+   - The task will be used to check any pegasus schema compatible and incompatible changes.
+   - The pegasus schema may or may not be part of a Rest.li resource.
+   - The task will be triggered at build time, if user provides gradle property: `pegasusPlugin.enablePegasusSchemaCompatibilityCheck=true`.
+- Fix task caching issue by using the output file instead of task properties. Task properties will not reflect the correct state when a task is loaded from cache.
+- Add method in ParseResult class to get base schema
+- Fix collectionMetadata missing link issue when collection count is 0
+
+## [29.7.2] - 2020-09-25
+- Move from lambdas to explicit change listeners since lambda garbage collection is unreliable in Java
+
+## [29.7.1] - 2020-09-24
+- Handle setting map change listener correctly on copy and clone
+
+## [29.7.0] - 2020-09-23
+- Generate code to avoid reflection and map access to improve generated data template runtime performance.
+    - Use member variables to avoid looking in to DataMap for every read calls. ChangeListeners on Map added to invalidate these fields when underlying map changes.
+    - Use optimized coercion methods for primitive fields.
+    - Use generated constants for default values for faster lookup.
+
+## [29.6.9] - 2020-09-22
+- Mitigate schema parsing performance regression introduced in `29.5.1` by reusing `ParseResult` instances
+  in `DataSchemaParser` to avoid unnecessary `TreeMap` sorting.
+- Include `HttpStatus` code while throwing `IllegalArgumentException`.
+- Add monitoring metrics for relative strategy in DegraderLoadBalancerStrategyV3Jmx
+
+## [29.6.8] - 2020-09-22
+- Optimized logger initialization in d2 degrader.
+
+## [29.6.7] - 2020-09-18
+- Added async call to Zookeeper in backup request client.
+
+## [29.6.6] - 2020-09-17
+- Loosen `ReadOnly`/`CreateOnly` validation when setting array-descendant fields in a patch request.
+- Add `generatePegasusSchemaSnapshot` task.
+- Remove `final` from nested generated classes, such as inline unions.
+
+## [29.6.5] - 2020-09-09
+- Update `RestLiValidationFilter` and `RestLiDataValidator` to expose creation of Rest.li validators.
+
 ## [29.6.4] - 2020-09-08
 - Fix inconsistent issue in extension schema file names: from `Extension` to `Extensions`
 - Fix a bug in `FileFormatDataSchemaParser` and remove `isExtensionEntry` method call to simplify the logic.
-- Update ExtensionSchemaValidationCmdLineApp with more validations.
+- Update `ExtensionSchemaValidationCmdLineApp` with more validations.
 
 ## [29.6.3] - 2020-09-03
-- Updated HTTP/2 parent channel idle timeout logging level to info from error 
+- Updated HTTP/2 parent channel idle timeout logging level to info from error.
 
 ## [29.6.2] - 2020-08-31
 - Updated d2 client default config values.
 
 ## [29.6.1] - 2020-08-31
-- Update R2's HTTP client API to support other Netty EventLoopGroup in addition to NioEventLoopGroup
-- Fix a RetryClient bug where NullPointerException is raised when excluded hosts hint is not set at retry
-- Update ExtensionSchemaAnnotation schema: remove resource field, add versionSuffix as an optional field.
+- Update R2's HTTP client API to support other Netty `EventLoopGroup` in addition to `NioEventLoopGroup`.
+- Fix a `RetryClient` bug where `NullPointerException` is raised when excluded hosts hint is not set at retry.
+- Update `ExtensionSchemaAnnotation` schema: remove resource field, add `versionSuffix` as an optional field.
 
 ## [29.6.0] - 2020-08-28
 - Refactored the existing d2 degrader load balancer.
@@ -39,15 +530,16 @@ Remove Guava dependency from data-avro module.
 - Make `ChangedFileReportTask` gradle task compatible with Gradle 6.0
 
 ## [29.5.7] - 2020-08-26
-- Add pdsc support for ExtensionsDataSchemaResolver for support legacy files in pdsc
-- Add/patch default values in restli response, controlled by $sendDefault flag in URL or server configs
+- Add pdsc support for `ExtensionsDataSchemaResolver` for support legacy files in pdsc.
+- Add/patch default values in Rest.li responses, controlled by the `$sendDefault` flag in the URL or server configs.
 
 ## [29.5.6] - 2020-08-21
-- Add a constructor for DataSchemaParser, which is able to pass ExtensionsDataSchemaResolver to the DataSchemaParser to parse schemas from both extensions and pegasus directories.
+- Add a constructor for `DataSchemaParser`, which is able to pass `ExtensionsDataSchemaResolver` to
+  the `DataSchemaParser` to parse schemas from both `extensions` and `pegasus` directories.
 
 ## [29.5.5] - 2020-08-21
-- Updated File and class path DataSchemaResolvers to resolve extension schemas from /extensions directory if specified.
-- Added DarkGateKeeper to enable users to provide custom implementation to determine if requests are to be dispatched to dark clusters.
+- Updated File and class path DataSchemaResolvers to resolve extension schemas from `/extensions` directory if specified.
+- Added `DarkGateKeeper` to enable users to provide custom implementation to determine if requests are to be dispatched to dark clusters.
 
 ## [29.5.4] - 2020-08-17
 - Increase default timeout for symbol table fetch to 1s.
@@ -4638,7 +5130,136 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.6.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.14...master
+[29.22.14]: https://github.com/linkedin/rest.li/compare/v29.22.13...v29.22.14
+[29.22.13]: https://github.com/linkedin/rest.li/compare/v29.22.12...v29.22.13
+[29.22.12]: https://github.com/linkedin/rest.li/compare/v29.22.11...v29.22.12
+[29.22.11]: https://github.com/linkedin/rest.li/compare/v29.22.10...v29.22.11
+[29.22.10]: https://github.com/linkedin/rest.li/compare/v29.22.9...v29.22.10
+[29.22.9]: https://github.com/linkedin/rest.li/compare/v29.22.8...v29.22.9
+[29.22.8]: https://github.com/linkedin/rest.li/compare/v29.22.7...v29.22.8
+[29.22.7]: https://github.com/linkedin/rest.li/compare/v29.22.6...v29.22.7
+[29.22.6]: https://github.com/linkedin/rest.li/compare/v29.22.5...v29.22.6
+[29.22.5]: https://github.com/linkedin/rest.li/compare/v29.22.4...v29.22.5
+[29.22.4]: https://github.com/linkedin/rest.li/compare/v29.22.3...v29.22.4
+[29.22.3]: https://github.com/linkedin/rest.li/compare/v29.22.2...v29.22.3
+[29.22.2]: https://github.com/linkedin/rest.li/compare/v29.22.1...v29.22.2
+[29.22.1]: https://github.com/linkedin/rest.li/compare/v29.22.0...v29.22.1
+[29.22.0]: https://github.com/linkedin/rest.li/compare/v29.21.5...v29.22.0
+[29.21.5]: https://github.com/linkedin/rest.li/compare/v29.21.4...v29.21.5
+[29.21.4]: https://github.com/linkedin/rest.li/compare/v29.21.3...v29.21.4
+[29.21.3]: https://github.com/linkedin/rest.li/compare/v29.21.2...v29.21.3
+[29.21.2]: https://github.com/linkedin/rest.li/compare/v29.21.1...v29.21.2
+[29.21.1]: https://github.com/linkedin/rest.li/compare/v29.21.0...v29.21.1
+[29.21.0]: https://github.com/linkedin/rest.li/compare/v29.20.1...v29.21.0
+[29.20.1]: https://github.com/linkedin/rest.li/compare/v29.20.0...v29.20.1
+[29.20.0]: https://github.com/linkedin/rest.li/compare/v29.19.17...v29.20.0
+[29.19.17]: https://github.com/linkedin/rest.li/compare/v29.19.16...v29.19.17
+[29.19.16]: https://github.com/linkedin/rest.li/compare/v29.19.15...v29.19.16
+[29.19.15]: https://github.com/linkedin/rest.li/compare/v29.19.14...v29.19.15
+[29.19.14]: https://github.com/linkedin/rest.li/compare/v29.19.13...v29.19.14
+[29.19.13]: https://github.com/linkedin/rest.li/compare/v29.19.12...v29.19.13
+[29.19.12]: https://github.com/linkedin/rest.li/compare/v29.19.11...v29.19.12
+[29.19.11]: https://github.com/linkedin/rest.li/compare/v29.19.10...v29.19.11
+[29.19.10]: https://github.com/linkedin/rest.li/compare/v29.19.9...v29.19.10
+[29.19.9]: https://github.com/linkedin/rest.li/compare/v29.19.8...v29.19.9
+[29.19.8]: https://github.com/linkedin/rest.li/compare/v29.19.7...v29.19.8
+[29.19.7]: https://github.com/linkedin/rest.li/compare/v29.19.6...v29.19.7
+[29.19.6]: https://github.com/linkedin/rest.li/compare/v29.19.5...v29.19.6
+[29.19.5]: https://github.com/linkedin/rest.li/compare/v29.19.4...v29.19.5
+[29.19.4]: https://github.com/linkedin/rest.li/compare/v29.19.3...v29.19.4
+[29.19.3]: https://github.com/linkedin/rest.li/compare/v29.19.2...v29.19.3
+[29.19.2]: https://github.com/linkedin/rest.li/compare/v29.19.1...v29.19.2
+[29.19.1]: https://github.com/linkedin/rest.li/compare/v29.18.15...v29.19.1
+[29.18.15]: https://github.com/linkedin/rest.li/compare/v29.18.14...v29.18.15
+[29.18.14]: https://github.com/linkedin/rest.li/compare/v29.18.13...v29.18.14
+[29.18.13]: https://github.com/linkedin/rest.li/compare/v29.18.12...v29.18.13
+[29.18.12]: https://github.com/linkedin/rest.li/compare/v29.18.11...v29.18.12
+[29.18.11]: https://github.com/linkedin/rest.li/compare/v29.18.10...v29.18.11
+[29.18.10]: https://github.com/linkedin/rest.li/compare/v29.18.9...v29.18.10
+[29.18.9]: https://github.com/linkedin/rest.li/compare/v29.18.8...v29.18.9
+[29.18.8]: https://github.com/linkedin/rest.li/compare/v29.18.7...v29.18.8
+[29.18.7]: https://github.com/linkedin/rest.li/compare/v29.18.6...v29.18.7
+[29.18.6]: https://github.com/linkedin/rest.li/compare/v29.18.5...v29.18.6
+[29.18.5]: https://github.com/linkedin/rest.li/compare/v29.18.4...v29.18.5
+[29.18.4]: https://github.com/linkedin/rest.li/compare/v29.18.3...v29.18.4
+[29.18.3]: https://github.com/linkedin/rest.li/compare/v29.18.2...v29.18.3
+[29.18.2]: https://github.com/linkedin/rest.li/compare/v29.18.1...v29.18.2
+[29.18.1]: https://github.com/linkedin/rest.li/compare/v29.18.0...v29.18.1
+[29.18.0]: https://github.com/linkedin/rest.li/compare/v29.17.4...v29.18.0
+[29.17.4]: https://github.com/linkedin/rest.li/compare/v29.17.3...v29.17.4
+[29.17.3]: https://github.com/linkedin/rest.li/compare/v29.17.2...v29.17.3
+[29.17.2]: https://github.com/linkedin/rest.li/compare/v29.17.1...v29.17.2
+[29.17.1]: https://github.com/linkedin/rest.li/compare/v29.17.0...v29.17.1
+[29.17.0]: https://github.com/linkedin/rest.li/compare/v29.16.2...v29.17.0
+[29.16.2]: https://github.com/linkedin/rest.li/compare/v29.16.1...v29.16.2
+[29.16.1]: https://github.com/linkedin/rest.li/compare/v29.16.0...v29.16.1
+[29.16.0]: https://github.com/linkedin/rest.li/compare/v29.15.9...v29.16.0
+[29.15.9]: https://github.com/linkedin/rest.li/compare/v29.15.8...v29.15.9
+[29.15.8]: https://github.com/linkedin/rest.li/compare/v29.15.7...v29.15.8
+[29.15.7]: https://github.com/linkedin/rest.li/compare/v29.15.6...v29.15.7
+[29.15.6]: https://github.com/linkedin/rest.li/compare/v29.15.5...v29.15.6
+[29.15.5]: https://github.com/linkedin/rest.li/compare/v29.15.4...v29.15.5
+[29.15.4]: https://github.com/linkedin/rest.li/compare/v29.15.3...v29.15.4
+[29.15.3]: https://github.com/linkedin/rest.li/compare/v29.15.2...v29.15.3
+[29.15.2]: https://github.com/linkedin/rest.li/compare/v29.15.1...v29.15.2
+[29.15.1]: https://github.com/linkedin/rest.li/compare/v29.15.0...v29.15.1
+[29.15.0]: https://github.com/linkedin/rest.li/compare/v29.14.5...v29.15.0
+[29.14.5]: https://github.com/linkedin/rest.li/compare/v29.14.4...v29.14.5
+[29.14.4]: https://github.com/linkedin/rest.li/compare/v29.14.3...v29.14.4
+[29.14.3]: https://github.com/linkedin/rest.li/compare/v29.14.2...v29.14.3
+[29.14.2]: https://github.com/linkedin/rest.li/compare/v29.14.1...v29.14.2
+[29.14.1]: https://github.com/linkedin/rest.li/compare/v29.14.0...v29.14.1
+[29.14.0]: https://github.com/linkedin/rest.li/compare/v29.13.12...v29.14.0
+[29.13.12]: https://github.com/linkedin/rest.li/compare/v29.13.11...v29.13.12
+[29.13.11]: https://github.com/linkedin/rest.li/compare/v29.13.10...v29.13.11
+[29.13.10]: https://github.com/linkedin/rest.li/compare/v29.13.9...v29.13.10
+[29.13.9]: https://github.com/linkedin/rest.li/compare/v29.13.8...v29.13.9
+[29.13.8]: https://github.com/linkedin/rest.li/compare/v29.13.7...v29.13.8
+[29.13.7]: https://github.com/linkedin/rest.li/compare/v29.13.6...v29.13.7
+[29.13.6]: https://github.com/linkedin/rest.li/compare/v29.13.5...v29.13.6
+[29.13.5]: https://github.com/linkedin/rest.li/compare/v29.13.4...v29.13.5
+[29.13.4]: https://github.com/linkedin/rest.li/compare/v29.13.3...v29.13.4
+[29.13.3]: https://github.com/linkedin/rest.li/compare/v29.13.2...v29.13.3
+[29.13.2]: https://github.com/linkedin/rest.li/compare/v29.13.1...v29.13.2
+[29.13.1]: https://github.com/linkedin/rest.li/compare/v29.13.0...v29.13.1
+[29.13.0]: https://github.com/linkedin/rest.li/compare/v29.12.0...v29.13.0
+[29.12.0]: https://github.com/linkedin/rest.li/compare/v29.11.3...v29.12.0
+[29.11.3]: https://github.com/linkedin/rest.li/compare/v29.11.2...v29.11.3
+[29.11.2]: https://github.com/linkedin/rest.li/compare/v29.11.1...v29.11.2
+[29.11.1]: https://github.com/linkedin/rest.li/compare/v29.10.1...v29.11.1
+[29.10.1]: https://github.com/linkedin/rest.li/compare/v29.10.0...v29.10.1
+[29.10.0]: https://github.com/linkedin/rest.li/compare/v29.9.2...v29.10.0
+[29.9.2]: https://github.com/linkedin/rest.li/compare/v29.9.1...v29.9.2
+[29.9.1]: https://github.com/linkedin/rest.li/compare/v29.9.0...v29.9.1
+[29.9.0]: https://github.com/linkedin/rest.li/compare/v29.8.5...v29.9.0
+[29.8.5]: https://github.com/linkedin/rest.li/compare/v29.8.4...v29.8.5
+[29.8.4]: https://github.com/linkedin/rest.li/compare/v29.8.3...v29.8.4
+[29.8.3]: https://github.com/linkedin/rest.li/compare/v29.8.2...v29.8.3
+[29.8.2]: https://github.com/linkedin/rest.li/compare/v29.8.1...v29.8.2
+[29.8.1]: https://github.com/linkedin/rest.li/compare/v29.8.0...v29.8.1
+[29.8.0]: https://github.com/linkedin/rest.li/compare/v29.7.15...v29.8.0
+[29.7.15]: https://github.com/linkedin/rest.li/compare/v29.7.14...v29.7.15
+[29.7.14]: https://github.com/linkedin/rest.li/compare/v29.7.13...v29.7.14
+[29.7.13]: https://github.com/linkedin/rest.li/compare/v29.7.12...v29.7.13
+[29.7.12]: https://github.com/linkedin/rest.li/compare/v29.7.11...v29.7.12
+[29.7.11]: https://github.com/linkedin/rest.li/compare/v29.7.10...v29.7.11
+[29.7.10]: https://github.com/linkedin/rest.li/compare/v29.7.9...v29.7.10
+[29.7.9]: https://github.com/linkedin/rest.li/compare/v29.7.8...v29.7.9
+[29.7.8]: https://github.com/linkedin/rest.li/compare/v29.7.7...v29.7.8
+[29.7.7]: https://github.com/linkedin/rest.li/compare/v29.7.6...v29.7.7
+[29.7.6]: https://github.com/linkedin/rest.li/compare/v29.7.5...v29.7.6
+[29.7.5]: https://github.com/linkedin/rest.li/compare/v29.7.4...v29.7.5
+[29.7.4]: https://github.com/linkedin/rest.li/compare/v29.7.3...v29.7.4
+[29.7.3]: https://github.com/linkedin/rest.li/compare/v29.7.2...v29.7.3
+[29.7.2]: https://github.com/linkedin/rest.li/compare/v29.7.1...v29.7.2
+[29.7.1]: https://github.com/linkedin/rest.li/compare/v29.7.0...v29.7.1
+[29.7.0]: https://github.com/linkedin/rest.li/compare/v29.6.9...v29.7.0
+[29.6.9]: https://github.com/linkedin/rest.li/compare/v29.6.8...v29.6.9
+[29.6.8]: https://github.com/linkedin/rest.li/compare/v29.6.7...v29.6.8
+[29.6.7]: https://github.com/linkedin/rest.li/compare/v29.6.6...v29.6.7
+[29.6.6]: https://github.com/linkedin/rest.li/compare/v29.6.5...v29.6.6
+[29.6.5]: https://github.com/linkedin/rest.li/compare/v29.6.5...master
 [29.6.4]: https://github.com/linkedin/rest.li/compare/v29.6.3...v29.6.4
 [29.6.3]: https://github.com/linkedin/rest.li/compare/v29.6.2...v29.6.3
 [29.6.2]: https://github.com/linkedin/rest.li/compare/v29.6.1...v29.6.2
@@ -4651,7 +5272,8 @@ patch operations can re-use these classes for generating patch messages.
 [29.5.4]: https://github.com/linkedin/rest.li/compare/v29.5.3...v29.5.4
 [29.5.3]: https://github.com/linkedin/rest.li/compare/v29.5.2...v29.5.3
 [29.5.2]: https://github.com/linkedin/rest.li/compare/v29.5.1...v29.5.2
-[29.5.1]: https://github.com/linkedin/rest.li/compare/v29.4.14...v29.5.1
+[29.5.1]: https://github.com/linkedin/rest.li/compare/v29.5.0...v29.5.1
+[29.5.0]: https://github.com/linkedin/rest.li/compare/v29.4.14...v29.5.0
 [29.4.14]: https://github.com/linkedin/rest.li/compare/v29.4.13...v29.4.14
 [29.4.13]: https://github.com/linkedin/rest.li/compare/v29.4.12...v29.4.13
 [29.4.12]: https://github.com/linkedin/rest.li/compare/v29.4.11...v29.4.12

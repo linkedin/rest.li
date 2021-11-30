@@ -19,6 +19,7 @@ package com.linkedin.data.template;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.schema.ArrayDataSchema;
+import com.linkedin.util.ArgumentUtil;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -68,5 +69,19 @@ public final class BytesArray extends DirectArrayTemplate<ByteString>
   public BytesArray copy() throws CloneNotSupportedException
   {
     return (BytesArray) super.copy();
+  }
+
+  @Override
+  protected Object coerceInput(ByteString object) throws ClassCastException
+  {
+    ArgumentUtil.notNull(object, "object");
+    return object;
+  }
+
+  @Override
+  protected ByteString coerceOutput(Object object) throws TemplateOutputCastException
+  {
+    assert(object != null);
+    return DataTemplateUtil.coerceBytesOutput(object);
   }
 }

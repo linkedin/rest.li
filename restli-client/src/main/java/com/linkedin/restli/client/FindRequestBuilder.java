@@ -156,16 +156,16 @@ public class FindRequestBuilder<K, V extends RecordTemplate> extends
   @Override
   public FindRequest<V> build()
   {
-    return new FindRequest<V>(buildReadOnlyHeaders(),
-                              buildReadOnlyCookies(),
-                              _elementClass,
-                              _resourceSpec,
-                              buildReadOnlyQueryParameters(),
-                              getQueryParamClasses(),
-                              _name,
-                              getBaseUriTemplate(),
-                              buildReadOnlyPathKeys(),
-                              getRequestOptions(),
-                              buildReadOnlyAssocKey());
+    return new FindRequest<>(buildReadOnlyHeaders(),
+        buildReadOnlyCookies(),
+        _elementClass,
+        _resourceSpec,
+        buildReadOnlyQueryParameters(),
+        getQueryParamClasses(),
+        _name,
+        getBaseUriTemplate(),
+        buildReadOnlyPathKeys(),
+        getRequestOptions(),
+        buildReadOnlyAssocKey());
   }
 }

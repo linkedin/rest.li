@@ -216,7 +216,7 @@ public class D2BaseTest implements D2TestConstants
           try
           {
             response = cli.sendRequest(client, clusterName, service, msg);
-            assertTrue(response.contains(LoadBalancerEchoServer.getResponsePostfixString()),"No '"+LoadBalancerEchoServer.getResponsePostfixString()+"' found in response from "+clusterName+"/"+service+". Response:"+response); 
+            assertTrue(response.contains(LoadBalancerEchoServer.getResponsePostfixString()),"No '"+LoadBalancerEchoServer.getResponsePostfixString()+"' found in response from "+clusterName+"/"+service+". Response:"+response);
             _log.error("Assert pass. Response contains "+LoadBalancerEchoServer.getResponsePostfixString());
           }
           catch (Exception e)
@@ -248,7 +248,7 @@ public class D2BaseTest implements D2TestConstants
         try
         {
           response = cli.sendRequest(client, "cluster-"+i,"service-"+i+"_1", msg);
-          assertTrue(response.contains(LoadBalancerEchoServer.getResponsePostfixString()),"No '"+LoadBalancerEchoServer.getResponsePostfixString()+"' found in response from cluster-"+i+"/service-"+i+"_1. Response:"+response); 
+          assertTrue(response.contains(LoadBalancerEchoServer.getResponsePostfixString()),"No '"+LoadBalancerEchoServer.getResponsePostfixString()+"' found in response from cluster-"+i+"/service-"+i+"_1. Response:"+response);
           counts.get("passed").getAndIncrement();
         }
         catch (Exception e)
@@ -265,7 +265,7 @@ public class D2BaseTest implements D2TestConstants
 
   public  Map<String, List<String>> generateClusterData(String[] clusters, int addOn)
   {
-    Map<String, List<String>> clustersData = new HashMap<String, List<String>> ();
+    Map<String, List<String>> clustersData = new HashMap<>();
 
     for (int i=0; i < clusters.length; i++)
     {
@@ -276,8 +276,8 @@ public class D2BaseTest implements D2TestConstants
 
   public Map<String, Object> generatePartitionProperties(String regex, int keyRangeStart, int partitionCount, int partitionSize, String type)
   {
-    final Map<String, Object> partitionProperties = new HashMap<String, Object>();
-    Map<String, Object> map = new HashMap<String, Object>();
+    final Map<String, Object> partitionProperties = new HashMap<>();
+    Map<String, Object> map = new HashMap<>();
     map.put("partitionKeyRegex", regex);
     map.put("keyRangeStart", String.valueOf(keyRangeStart));
     map.put("partitionCount", String.valueOf(partitionCount));
@@ -290,7 +290,7 @@ public class D2BaseTest implements D2TestConstants
 
   protected <T> Map<LoadBalancerEchoServer,T> createLatencyDataHash(List<LoadBalancerEchoServer> servers, T[] latency)
   {
-    Map<LoadBalancerEchoServer,T> hash = new HashMap<LoadBalancerEchoServer,T>();
+    Map<LoadBalancerEchoServer,T> hash = new HashMap<>();
     int count = 0;
     for (LoadBalancerEchoServer server: servers)
     {
@@ -308,14 +308,14 @@ public class D2BaseTest implements D2TestConstants
 
   protected static Map<LoadBalancerEchoServer,Map<Integer, Double>> createServerWeightDataMap(List<LoadBalancerEchoServer> servers, int partitionId, Double[] weight)
   {
-    Map<LoadBalancerEchoServer,Map<Integer, Double>> hash = new HashMap<LoadBalancerEchoServer,Map<Integer, Double>>();
+    Map<LoadBalancerEchoServer,Map<Integer, Double>> hash = new HashMap<>();
     int count = 0;
     for (LoadBalancerEchoServer server: servers)
     {
       if (count < weight.length)
       {
-        Map<Integer, Double> partitionWeight = new HashMap<Integer, Double> ();
-        partitionWeight.put(new Integer(partitionId), weight[count]);
+        Map<Integer, Double> partitionWeight = new HashMap<>();
+        partitionWeight.put(Integer.valueOf(partitionId), weight[count]);
         hash.put(server, partitionWeight);
         count++;
       }
@@ -344,7 +344,7 @@ public class D2BaseTest implements D2TestConstants
 
   protected Map<Integer,AtomicInteger> generateHostResponseCountMap(Map<String,String> responses)
   {
-    Map<Integer,AtomicInteger> res = new HashMap<Integer,AtomicInteger>();
+    Map<Integer,AtomicInteger> res = new HashMap<>();
 
     res.put(Integer.valueOf(ECHO_SERVER_PORT1_1), new AtomicInteger(0));
     res.put(Integer.valueOf(ECHO_SERVER_PORT1_2), new AtomicInteger(0));

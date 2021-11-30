@@ -41,7 +41,7 @@ public class MultiLanguageDocsProvider implements DocsProvider
 
   public static List<DocsProvider> loadExternalProviders(List<DocsProvider> docsProviders)
   {
-    List<DocsProvider> providers = new ArrayList<DocsProvider>();
+    List<DocsProvider> providers = new ArrayList<>();
     for(Object provider : docsProviders)
     {
       log.info("Executing "+ provider.getClass().getSimpleName() + " tool...");
@@ -92,7 +92,7 @@ public class MultiLanguageDocsProvider implements DocsProvider
 
   private static Collection<String> filterForFileExtensions(Collection<String> filenames, Collection<String> extensions)
   {
-    List<String> filenamesMatchingExtension = new ArrayList<String>();
+    List<String> filenamesMatchingExtension = new ArrayList<>();
 
     for(String extension : extensions) // usually just one
     {
@@ -113,7 +113,7 @@ public class MultiLanguageDocsProvider implements DocsProvider
   @Override
   public Set<String> supportedFileExtensions()
   {
-    Set<String> supportedFileExtensions = new HashSet<String>();
+    Set<String> supportedFileExtensions = new HashSet<>();
     for(DocsProvider provider : _languageSpecificProviders)
     {
       supportedFileExtensions.addAll(provider.supportedFileExtensions());

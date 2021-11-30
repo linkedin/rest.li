@@ -1,0 +1,3 @@
+record NeedsCustomResolver {
+  x: CustomResolverFoo
+}

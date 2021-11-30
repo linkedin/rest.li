@@ -33,7 +33,7 @@ public class TestCowList
   @Test
   public void testCopyOnWrite() throws CloneNotSupportedException
   {
-    CowList<Integer> list1 = new CowList<Integer>(referenceList1);
+    CowList<Integer> list1 = new CowList<>(referenceList1);
     testAgainstReferenceList1(list1);
     assertEquals(list1.getRefCounted().getRefCount(), 0);
 
@@ -145,7 +145,7 @@ public class TestCowList
     assertEquals(list8.getRefCounted().getRefCount(), 0);
 
     CowList<Integer> list9 = list1.clone();
-    list9.remove(new Integer(referenceStart1 + 1));
+    list9.remove(Integer.valueOf(referenceStart1 + 1));
     assertEquals(list9.get(1).intValue(), referenceStart1 + 2);
     contains(list1, referenceStart1 + 1);
     contains(list3, referenceStart1 + 1);
@@ -444,7 +444,7 @@ public class TestCowList
     assertTrue(list3.getRefCounted() == list1.getRefCounted());
     assertTrue(list28.getRefCounted() == list1.getRefCounted());
     assertEquals(list1.getRefCounted().getRefCount(), 2);
-    List<Integer> sublist28a = new ArrayList<Integer>(referenceList1.subList(1, 4));
+    List<Integer> sublist28a = new ArrayList<>(referenceList1.subList(1, 4));
     sublist28a.remove(1);
     sublist28.retainAll(sublist28a);
     assertEquals(sublist28.size(), 2);
@@ -464,7 +464,7 @@ public class TestCowList
     assertTrue(list3.getRefCounted() == list1.getRefCounted());
     assertTrue(list29.getRefCounted() == list1.getRefCounted());
     assertEquals(list1.getRefCounted().getRefCount(), 2);
-    List<Integer> sublist29a = new ArrayList<Integer>(referenceList1.subList(1, 4));
+    List<Integer> sublist29a = new ArrayList<>(referenceList1.subList(1, 4));
     sublist29a.remove(1);
     sublist29.retainAll(sublist29a);
     assertEquals(sublist29.size(), 2);

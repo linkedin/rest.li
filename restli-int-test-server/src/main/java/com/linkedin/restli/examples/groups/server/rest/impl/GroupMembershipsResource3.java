@@ -86,8 +86,8 @@ public class GroupMembershipsResource3 extends ComplexKeyResourceTemplate<GroupM
     groupMembershipKey.setMemberID(groupMembership.getId().getMemberID());
     groupMembershipKey.setGroupID(groupMembership.getId().getGroupID());
     ComplexResourceKey<GroupMembershipKey, GroupMembershipParam> complexResourceKey =
-        new ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>(groupMembershipKey,
-                                                                         new GroupMembershipParam());
+        new ComplexResourceKey<>(groupMembershipKey,
+            new GroupMembershipParam());
     groupMembership.setId(complexResourceKey.getKey());
     _app.getMembershipMgr().save(toGroupMembership(groupMembership));
     return new CreateResponse(complexResourceKey, HttpStatus.S_201_CREATED);
@@ -98,13 +98,13 @@ public class GroupMembershipsResource3 extends ComplexKeyResourceTemplate<GroupM
   public BatchUpdateResult<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership> batchUpdate(BatchUpdateRequest<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership> entities)
   {
     Map<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, UpdateResponse> results =
-        new HashMap<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, UpdateResponse>();
+        new HashMap<>();
     for (Map.Entry<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership> entry : entities.getData()
                                                                                                                             .entrySet())
     {
       results.put(entry.getKey(), update(entry.getKey(), entry.getValue()));
     }
-    return new BatchUpdateResult<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership>(results);
+    return new BatchUpdateResult<>(results);
   }
 
   /** @see com.linkedin.restli.server.resources.ComplexKeyResourceTemplate#batchUpdate(com.linkedin.restli.server.BatchPatchRequest) */
@@ -112,25 +112,25 @@ public class GroupMembershipsResource3 extends ComplexKeyResourceTemplate<GroupM
   public BatchUpdateResult<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership> batchUpdate(BatchPatchRequest<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership> patches)
   {
     Map<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, UpdateResponse> results =
-        new HashMap<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, UpdateResponse>();
+        new HashMap<>();
     for (Map.Entry<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, PatchRequest<ComplexKeyGroupMembership>> entry : patches.getData()
                                                                                                                                .entrySet())
     {
       results.put(entry.getKey(), update(entry.getKey(), entry.getValue()));
     }
-    return new BatchUpdateResult<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership>(results);
+    return new BatchUpdateResult<>(results);
   }
 
   /** @see com.linkedin.restli.server.resources.ComplexKeyResourceTemplate#batchCreate(com.linkedin.restli.server.BatchCreateRequest) */
   @Override
   public BatchCreateResult<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership> batchCreate(BatchCreateRequest<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership> groupMemberships)
   {
-    List<CreateResponse> list = new LinkedList<CreateResponse>();
+    List<CreateResponse> list = new LinkedList<>();
     for (ComplexKeyGroupMembership groupMembership : groupMemberships.getInput())
     {
       list.add(create(groupMembership));
     }
-    return new BatchCreateResult<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership>(list);
+    return new BatchCreateResult<>(list);
   }
 
   /** @see com.linkedin.restli.server.resources.ComplexKeyResourceTemplate#batchDelete(com.linkedin.restli.server.BatchDeleteRequest) */
@@ -138,12 +138,12 @@ public class GroupMembershipsResource3 extends ComplexKeyResourceTemplate<GroupM
   public BatchUpdateResult<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership> batchDelete(BatchDeleteRequest<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership> ids)
   {
     Map<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, UpdateResponse> results =
-        new HashMap<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, UpdateResponse>();
+        new HashMap<>();
     for (ComplexResourceKey<GroupMembershipKey, GroupMembershipParam> key : ids.getKeys())
     {
       results.put(key, delete(key));
     }
-    return new BatchUpdateResult<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership>(results);
+    return new BatchUpdateResult<>(results);
   }
 
   /**
@@ -153,9 +153,9 @@ public class GroupMembershipsResource3 extends ComplexKeyResourceTemplate<GroupM
   public BatchResult<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership> batchGet(Set<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>> ids)
   {
     Map<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership> result =
-        new HashMap<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership>(ids.size());
+        new HashMap<>(ids.size());
     Map<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, RestLiServiceException> errors =
-        new HashMap<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, RestLiServiceException>();
+        new HashMap<>();
     Iterator<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>> iterator =
         ids.iterator();
     while (iterator.hasNext())
@@ -172,8 +172,8 @@ public class GroupMembershipsResource3 extends ComplexKeyResourceTemplate<GroupM
         errors.put(key, new RestLiServiceException(HttpStatus.S_404_NOT_FOUND));
       }
     }
-    return new BatchResult<ComplexResourceKey<GroupMembershipKey, GroupMembershipParam>, ComplexKeyGroupMembership>(result,
-                                                                                                          errors);
+    return new BatchResult<>(result,
+        errors);
   }
   /**
      * @see AssociationResource#get
@@ -213,7 +213,7 @@ public class GroupMembershipsResource3 extends ComplexKeyResourceTemplate<GroupM
   @Override
   public UpdateResponse update(ComplexResourceKey<GroupMembershipKey, GroupMembershipParam> id, PatchRequest<ComplexKeyGroupMembership> patch)
   {
-    
+
     ComplexKeyGroupMembership membership =
         fromGroupMembership(_app.getMembershipMgr().get(complexKeyToCompoundKey(id)));
     try
@@ -255,7 +255,7 @@ public class GroupMembershipsResource3 extends ComplexKeyResourceTemplate<GroupM
     compoundKey.append(MEMBER_ID, key.getMemberID(GetMode.NULL));
     return compoundKey;
   }
-  
+
   // This is a hack for the sample resource. So as not to write a separate persistence for this resource,
   // convert from and to GroupMembership.
   private static GroupMembership toGroupMembership(ComplexKeyGroupMembership complexKeyMembership)
@@ -272,7 +272,7 @@ public class GroupMembershipsResource3 extends ComplexKeyResourceTemplate<GroupM
     groupMembership.setGroupID(complexKey.getGroupID());
     return groupMembership;
   }
-  
+
   private static ComplexKeyGroupMembership fromGroupMembership(GroupMembership groupMembership)
   {
     if (groupMembership == null)

@@ -125,7 +125,7 @@ public class KeyValueRecordFactory<K, V extends RecordTemplate>
    */
   public KeyValueRecord<K, V> create(final K key, final V value)
   {
-    final KeyValueRecord<K, V> keyValueRecord = new KeyValueRecord<K, V>();
+    final KeyValueRecord<K, V> keyValueRecord = new KeyValueRecord<>();
 
     switch (_resourceKeyType)
     {

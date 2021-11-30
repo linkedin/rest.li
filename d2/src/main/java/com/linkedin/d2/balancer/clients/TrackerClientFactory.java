@@ -86,16 +86,33 @@ public class TrackerClientFactory
   {
     TrackerClient trackerClient;
 
+    boolean doNotSlowStart = false;
+    boolean doNotLoadBalance = false;
+    Map<String, Object> uriSpecificProperties = uriProperties.getUriSpecificProperties().get(uri);
+    if (uriSpecificProperties != null)
+    {
+      if (Boolean.parseBoolean(String.valueOf(uriSpecificProperties.get(PropertyKeys.DO_NOT_SLOW_START))))
+      {
+        doNotSlowStart = true;
+      }
+      if (Boolean.parseBoolean(String.valueOf(uriSpecificProperties.get(PropertyKeys.DO_NOT_LOAD_BALANCE))))
+      {
+        doNotLoadBalance = true;
+      }
+    }
+
     switch (loadBalancerStrategyName)
     {
       case (DegraderLoadBalancerStrategyV3.DEGRADER_STRATEGY_NAME):
-        trackerClient = createDegraderTrackerClient(uri, uriProperties, serviceProperties,  loadBalancerStrategyName, transportClient, clock);
+        trackerClient = createDegraderTrackerClient(uri, uriProperties, serviceProperties,  loadBalancerStrategyName, transportClient, clock, doNotSlowStart);
         break;
       case (RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME):
-        trackerClient = createTrackerClientImpl(uri, uriProperties, serviceProperties, loadBalancerStrategyName, transportClient, clock, false);
+        trackerClient = createTrackerClientImpl(uri, uriProperties, serviceProperties, loadBalancerStrategyName,
+            transportClient, clock, false, doNotSlowStart, doNotLoadBalance);
         break;
       default:
-        trackerClient = createTrackerClientImpl(uri, uriProperties, serviceProperties, loadBalancerStrategyName, transportClient, clock, true);
+        trackerClient = createTrackerClientImpl(uri, uriProperties, serviceProperties, loadBalancerStrategyName,
+            transportClient, clock, true, doNotSlowStart, doNotLoadBalance);
     }
 
     return trackerClient;
@@ -106,7 +123,8 @@ public class TrackerClientFactory
                                                                    ServiceProperties serviceProperties,
                                                                    String loadBalancerStrategyName,
                                                                    TransportClient transportClient,
-                                                                   Clock clock)
+                                                                   Clock clock,
+                                                                   boolean doNotSlowStart)
   {
     DegraderImpl.Config config = null;
 
@@ -133,7 +151,7 @@ public class TrackerClientFactory
                                      config,
                                      trackerClientInterval,
                                      errorStatusPattern,
-                                     uriProperties.getUriSpecificProperties().get(uri));
+                                     doNotSlowStart);
   }
 
   private static long getInterval(String loadBalancerStrategyName, ServiceProperties serviceProperties)
@@ -210,7 +228,9 @@ public class TrackerClientFactory
                                                            String loadBalancerStrategyName,
                                                            TransportClient transportClient,
                                                            Clock clock,
-                                                           boolean percentileTrackingEnabled)
+                                                           boolean percentileTrackingEnabled,
+                                                           boolean doNotSlowStart,
+                                                           boolean doNotLoadBalance)
   {
     List<HttpStatusCodeRange> errorStatusCodeRanges = getErrorStatusRanges(serviceProperties);
     Predicate<Integer> isErrorStatus = (status) -> {
@@ -230,6 +250,8 @@ public class TrackerClientFactory
                                  clock,
                                  getInterval(loadBalancerStrategyName, serviceProperties),
                                  isErrorStatus,
-                                 percentileTrackingEnabled);
+                                 percentileTrackingEnabled,
+                                 doNotSlowStart,
+                                 doNotLoadBalance);
   }
 }

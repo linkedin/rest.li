@@ -52,13 +52,13 @@ public class TestRestliRequestUriSignature
     nestedMap.put("foo", 1);
     nestedMap.put("bar", 2);
 
-    PATH_KEYS = new HashMap<String, Object>();
+    PATH_KEYS = new HashMap<>();
     PATH_KEYS.put("pathKey1", "value1");
     PATH_KEYS.put("pathKey2", nestedMap);
 
     ID = "myID";
 
-    QUERY_PARAMS_OBJECTS = new HashMap<String, Object>();
+    QUERY_PARAMS_OBJECTS = new HashMap<>();
     QUERY_PARAMS_OBJECTS.put("queryKey1", "value1");
     QUERY_PARAMS_OBJECTS.put("queryKey2", nestedMap);
   }
@@ -97,7 +97,7 @@ public class TestRestliRequestUriSignature
     Mockito.when(request.getPathKeys()).thenReturn(PATH_KEYS);
     Mockito.when(request.getQueryParamsObjects()).thenReturn(QUERY_PARAMS_OBJECTS);
 
-    final Set<SignatureField> fields = new HashSet<SignatureField>(Arrays.asList(SignatureField.BASE_URI_TEMPLATE, SignatureField.PATH_KEYS));
+    final Set<SignatureField> fields = new HashSet<>(Arrays.asList(SignatureField.BASE_URI_TEMPLATE, SignatureField.PATH_KEYS));
     final RestliRequestUriSignature signature = new RestliRequestUriSignature(request, fields);
     Assert.assertEquals(signature.getMaskFields(), fields);
 
@@ -146,9 +146,9 @@ public class TestRestliRequestUriSignature
     Assert.assertEquals(equalSignature1.hashCode(), equalSignature2.hashCode());
     Assert.assertEquals(equalSignature1, equalSignature2);
 
-    final Set<SignatureField> nonIDFields = new HashSet<SignatureField>(Arrays.asList(SignatureField.BASE_URI_TEMPLATE,
-                                                                                      SignatureField.PATH_KEYS,
-                                                                                      SignatureField.QUERY_PARAMS));
+    final Set<SignatureField> nonIDFields = new HashSet<>(Arrays.asList(SignatureField.BASE_URI_TEMPLATE,
+        SignatureField.PATH_KEYS,
+        SignatureField.QUERY_PARAMS));
     final RestliRequestUriSignature equalSignature3 = new RestliRequestUriSignature(equalRequest1, nonIDFields);
     final RestliRequestUriSignature equalSignature4 = new RestliRequestUriSignature(idDifferRequest, RestliRequestUriSignature.ALL_FIELDS);
     Assert.assertEquals(equalSignature3.hashCode(), equalSignature4.hashCode());
@@ -212,10 +212,10 @@ public class TestRestliRequestUriSignature
     Mockito.when(getRequest.getObjectId()).thenReturn(ID);
     Mockito.when(getRequest.getQueryParamsObjects()).thenReturn(QUERY_PARAMS_OBJECTS);
 
-    final List<Set<SignatureField>> maskFields = new ArrayList<Set<SignatureField>>();
+    final List<Set<SignatureField>> maskFields = new ArrayList<>();
     for (SignatureField f : SignatureField.values())
     {
-      final Set<SignatureField> maskFieldsWithout = new HashSet<SignatureField>(RestliRequestUriSignature.ALL_FIELDS);
+      final Set<SignatureField> maskFieldsWithout = new HashSet<>(RestliRequestUriSignature.ALL_FIELDS);
       maskFieldsWithout.remove(f);
       maskFields.add(maskFieldsWithout);
     }

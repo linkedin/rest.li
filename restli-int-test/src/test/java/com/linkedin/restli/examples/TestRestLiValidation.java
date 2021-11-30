@@ -250,8 +250,8 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   @DataProvider
   public static Object[][] batchCreateFailureData()
   {
-    List<ValidationDemo> validationDemos = new ArrayList<ValidationDemo>();
-    List<String> errorMessages = new ArrayList<String>();
+    List<ValidationDemo> validationDemos = new ArrayList<>();
+    List<String> errorMessages = new ArrayList<>();
     Object[][] cases = createFailures();
     for (int i = 0; i < cases.length; i++)
     {
@@ -331,8 +331,8 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   @DataProvider
   public static Object[][] batchCreateAndGetFailureData()
   {
-    List<ValidationDemo> validationDemos = new ArrayList<ValidationDemo>();
-    List<String> errorMessages = new ArrayList<String>();
+    List<ValidationDemo> validationDemos = new ArrayList<>();
+    List<String> errorMessages = new ArrayList<>();
     Object[][] cases = batchCreateAndGetFailures();
     for (int i = 0; i < cases.length; i++)
     {
@@ -402,11 +402,11 @@ public class TestRestLiValidation extends RestLiIntegrationTest
     Assert.assertEquals(response.getStatus(), HttpStatus.S_201_CREATED.getCode());
     if (response.getEntity() instanceof CreateResponse)
     {
-      Assert.assertEquals(((CreateResponse<Integer>)response.getEntity()).getId(), new Integer(1234));
+      Assert.assertEquals(((CreateResponse<Integer>)response.getEntity()).getId(), Integer.valueOf(1234));
     }
     else
     {
-      Assert.assertEquals(((IdResponse<Integer>)(Object)response.getEntity()).getId(), new Integer(1234));
+      Assert.assertEquals(((IdResponse<Integer>)(Object)response.getEntity()).getId(), Integer.valueOf(1234));
     }
   }
 
@@ -482,7 +482,7 @@ public class TestRestLiValidation extends RestLiIntegrationTest
                 "ERROR :: /validationDemoNext/stringA :: cannot delete a required field\n"},
             {"{\"patch\": {\"MapWithTyperefs\": {\"key1\": {\"$delete\": [\"message\"]}}}}",
                 "ERROR :: /MapWithTyperefs/key1/message :: cannot delete a required field\n"},
-            // Cannot set ReadOnly or CreateOnly fields in a partial update request
+            // Cannot set ReadOnly or CreateOnly fields in a partial_update request (unless the field is the descendant of an array)
             {"{\"patch\": {\"$set\": {\"stringA\": \"abc\"}}}",
                 "ERROR :: /stringA :: ReadOnly field present in a partial_update request\n"},
             {"{\"patch\": {\"$set\": {\"intA\": 123}}}",
@@ -491,8 +491,6 @@ public class TestRestLiValidation extends RestLiIntegrationTest
                 "ERROR :: /UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1 :: ReadOnly field present in a partial_update request\n"},
             {"{\"patch\": {\"$set\": {\"UnionFieldWithInlineRecord\": {\"com.linkedin.restli.examples.greetings.api.myRecord\": {\"foo1\": 1234}}}}}",
                 "ERROR :: /UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1 :: ReadOnly field present in a partial_update request\n"},
-            {"{\"patch\": {\"$set\": {\"ArrayWithInlineRecord\": [{\"bar1\": \"bbb\", \"bar2\": \"barbar\"}]}}}",
-                "ERROR :: /ArrayWithInlineRecord/0/bar1 :: ReadOnly field present in a partial_update request\n"},
             {"{\"patch\": {\"validationDemoNext\": {\"$set\": {\"stringB\": \"abc\"}}}}",
                 "ERROR :: /validationDemoNext/stringB :: ReadOnly field present in a partial_update request\n"},
             {"{\"patch\": {\"validationDemoNext\": {\"UnionFieldWithInlineRecord\": {\"$set\": {\"com.linkedin.restli.examples.greetings.api.myEnum\": \"FOOFOO\"}}}}}",
@@ -557,12 +555,18 @@ public class TestRestLiValidation extends RestLiIntegrationTest
             "{\"patch\": {\"validationDemoNext\": {\"$set\": {\"stringA\": \"some value\"}}}}",
             // A field (MapWithTyperefs/key1) containing a CreateOnly field (MapWithTyperefs/key1/id) has to be partially set
             "{\"patch\": {\"MapWithTyperefs\": {\"key1\": {\"$set\": {\"message\": \"some message\", \"tone\": \"SINCERE\"}}}}}",
-            // Okay to set a field containing a ReadOnly field by omitting the ReadOnly field
+            // Okay to set a field containing a ReadOnly field if the ReadOnly field is omitted
             "{\"patch\": {\"$set\": {\"ArrayWithInlineRecord\": [{\"bar2\": \"missing bar1\"}]}}}",
+            "{\"patch\": {\"$set\": {\"UnionFieldWithInlineRecord\": {\"com.linkedin.restli.examples.greetings.api.myRecord\": {}}}}}",
+            "{\"patch\": {\"$set\": {\"validationDemoNext\": {\"stringA\": \"no stringB\"}}}}",
             // Okay to delete a field containing a ReadOnly field
             "{\"patch\": {\"$delete\": [\"ArrayWithInlineRecord\"]}}",
             // Okay to delete a field containing a CreateOnly field
-            "{\"patch\": {\"MapWithTyperefs\": {\"$delete\": [\"key1\"]}}}"
+            "{\"patch\": {\"MapWithTyperefs\": {\"$delete\": [\"key1\"]}}}",
+            // Okay to set a ReadOnly field if it's the descendant of an array
+            "{\"patch\": {\"$set\": {\"ArrayWithInlineRecord\": [{\"bar1\": \"setting ReadOnly field\", \"bar2\": \"foo\"}]}}}",
+            // Okay to set a CreateOnly field if it's the descendant of an array
+            "{\"patch\": {\"$set\": {\"ArrayWithInlineRecord\": [{\"bar3\": \"setting CreateOnly field\", \"bar2\": \"foo\"}]}}}"
         };
   }
 
@@ -586,8 +590,8 @@ public class TestRestLiValidation extends RestLiIntegrationTest
   {
     String[][] failures = partialUpdateFailures();
     String[] successes = partialUpdateSuccesses();
-    Map<Integer, PatchRequest<ValidationDemo>> inputs = new HashMap<Integer, PatchRequest<ValidationDemo>>();
-    Map<Integer, String> errorMessages = new HashMap<Integer, String>();
+    Map<Integer, PatchRequest<ValidationDemo>> inputs = new HashMap<>();
+    Map<Integer, String> errorMessages = new HashMap<>();
     for (int i = 0; i < failures.length; i++)
     {
       inputs.put(i, PatchBuilder.<ValidationDemo>buildPatchFromString(failures[i][0]));

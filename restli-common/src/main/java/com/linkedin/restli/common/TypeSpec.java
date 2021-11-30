@@ -42,7 +42,7 @@ public class TypeSpec<T>
     }
     else
     {
-      return new TypeSpec<T>(type);
+      return new TypeSpec<>(type);
     }
   }
 

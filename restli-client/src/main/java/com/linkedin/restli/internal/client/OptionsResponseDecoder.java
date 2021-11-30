@@ -53,7 +53,7 @@ public class OptionsResponseDecoder extends RestResponseDecoder<OptionsResponse>
     DataMap resources = dataMap.getDataMap(RESOURCES);
     if(resources == null) resources = new DataMap();
 
-    HashMap<String, ResourceSchema> resourceMap = new HashMap<String, ResourceSchema>(resources.size());
+    HashMap<String, ResourceSchema> resourceMap = new HashMap<>(resources.size());
     for(Map.Entry<String, Object> entry: resources.entrySet())
     {
       resourceMap.put(entry.getKey(), new ResourceSchema((DataMap)entry.getValue()));
@@ -62,7 +62,7 @@ public class OptionsResponseDecoder extends RestResponseDecoder<OptionsResponse>
     DataMap schemas = dataMap.getDataMap(MODELS);
     if(schemas == null) schemas = new DataMap();
 
-    HashMap<String, DataSchema> dataSchemaMap = new HashMap<String, DataSchema>(schemas.size());
+    HashMap<String, DataSchema> dataSchemaMap = new HashMap<>(schemas.size());
     for(Map.Entry<String, Object> entry: schemas.entrySet())
     {
       String schemaText = CODEC.mapToString((DataMap)entry.getValue());

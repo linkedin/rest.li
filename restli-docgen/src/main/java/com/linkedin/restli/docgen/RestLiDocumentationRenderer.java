@@ -17,6 +17,9 @@
 package com.linkedin.restli.docgen;
 
 import java.io.OutputStream;
+import java.net.URI;
+import java.util.function.Function;
+
 
 /**
  * Interface of renderer for documentation generation.
@@ -26,16 +29,35 @@ import java.io.OutputStream;
 public interface RestLiDocumentationRenderer
 {
   /**
+   * Supported documentation format types.
+   */
+  enum DocumentationFormat
+  {
+    HTML,
+    JSON
+  }
+
+  /**
    * Render the homepage of documentation. The homepage is accessed at the root of the documentation URL path.
    * @param out The function will write rendered content to this stream
    */
   void renderHome(OutputStream out);
+
+  default void renderHome(RenderContext context)
+  {
+    renderHome(context.getOutputStream());
+  }
 
   /**
    * Render the homepage of documentation for resources.
    * @param out The function will write rendered content to this stream
    */
   void renderResourceHome(OutputStream out);
+
+  default void renderResourceHome(RenderContext context)
+  {
+    renderResourceHome(context.getOutputStream());
+  }
 
   /**
    * Render documentation of the given resource.
@@ -44,11 +66,21 @@ public interface RestLiDocumentationRenderer
    */
   void renderResource(String resourceName, OutputStream out);
 
+  default void renderResource(String resourceName, RenderContext context)
+  {
+    renderResource(resourceName, context.getOutputStream());
+  }
+
   /**
    * Render the homepage of documentation for data models.
    * @param out The function will write rendered content to this stream
    */
   void renderDataModelHome(OutputStream out);
+
+  default void renderDataModelHome(RenderContext context)
+  {
+    renderDataModelHome(context.getOutputStream());
+  }
 
   /**
    * Render documentation of the given data model.
@@ -56,6 +88,11 @@ public interface RestLiDocumentationRenderer
    * @param out The function will write rendered content to this stream
    */
   void renderDataModel(String dataModelName, OutputStream out);
+
+  default void renderDataModel(String dataModelName, RenderContext context)
+  {
+    renderDataModel(dataModelName, context.getOutputStream());
+  }
 
   /**
    * Handler for runtime exception in the documentation renderer. When return false,
@@ -66,8 +103,22 @@ public interface RestLiDocumentationRenderer
    */
   boolean handleException(RuntimeException e, OutputStream out);
 
+  default boolean handleException(RuntimeException e, RenderContext context)
+  {
+    return handleException(e, context.getOutputStream());
+  }
+
   /**
    * @return MIME type of the rendered content. All render function must be consistent to this MIME type
    */
   String getMIMEType();
+
+  /**
+   * Set the uri provider to get the documentation in other formats. Can be used to include links to alternate formats
+   * in the generated documentation.
+   * @param uriProvider Provides the RUI to fetch documentation in the other formats.
+   */
+  default void setFormatUriProvider(Function<DocumentationFormat, URI> uriProvider)
+  {
+  }
 }

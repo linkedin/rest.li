@@ -59,7 +59,7 @@ public class TestMIMEReaderClientCallbackExceptions extends AbstractMIMEUnitTest
   @DataProvider(name = "allTypesOfBodiesDataSource")
   public Object[][] allTypesOfBodiesDataSource() throws Exception
   {
-    final List<MimeBodyPart> bodyPartList = new ArrayList<MimeBodyPart>();
+    final List<MimeBodyPart> bodyPartList = new ArrayList<>();
     bodyPartList.add(SMALL_DATA_SOURCE);
     bodyPartList.add(LARGE_DATA_SOURCE);
     bodyPartList.add(HEADER_LESS_BODY);
@@ -454,7 +454,7 @@ public class TestMIMEReaderClientCallbackExceptions extends AbstractMIMEUnitTest
 
   private static class MultiPartMIMEExceptionReaderCallbackImpl implements MultiPartMIMEReaderCallback
   {
-    final List<SinglePartMIMEExceptionReaderCallbackImpl> _singlePartMIMEReaderCallbacks = new ArrayList<SinglePartMIMEExceptionReaderCallbackImpl>();
+    final List<SinglePartMIMEExceptionReaderCallbackImpl> _singlePartMIMEReaderCallbacks = new ArrayList<>();
     Throwable _streamError = null;
     final CountDownLatch _latch;
     final MultiPartMIMEReader _reader;

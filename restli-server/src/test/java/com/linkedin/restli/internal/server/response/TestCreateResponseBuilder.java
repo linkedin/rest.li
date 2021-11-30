@@ -68,8 +68,8 @@ public class TestCreateResponseBuilder
   public Object[][] testDataProvider()
   {
     CompoundKey compoundKey = new CompoundKey().append("a", "a").append("b", 1);
-    Map<String, AlternativeKey<?, ?>> alternativeKeyMap = new HashMap<String, AlternativeKey<?, ?>>();
-    alternativeKeyMap.put("alt", new AlternativeKey<String, CompoundKey>(new TestKeyCoercer(), String.class, new StringDataSchema()));
+    Map<String, AlternativeKey<?, ?>> alternativeKeyMap = new HashMap<>();
+    alternativeKeyMap.put("alt", new AlternativeKey<>(new TestKeyCoercer(), String.class, new StringDataSchema()));
     return new Object[][]
         {
             { AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "/foo", compoundKey, "/foo/a=a&b=1", "a=a&b=1", null, null },
@@ -92,12 +92,12 @@ public class TestCreateResponseBuilder
   {
     CompoundKey compoundKey = new CompoundKey().append("a", "a").append("b", 1);
     CreateResponse createResponse = new CreateResponse(compoundKey);
-    IdResponse<?> expectedIdResponse = new IdResponse<Object>(expectedId);
+    IdResponse<?> expectedIdResponse = new IdResponse<>(expectedId);
     RestRequest restRequest = new RestRequestBuilder(new URI(uriString)).build();
     Map<String, String> headers = ResponseBuilderUtil.getHeaders();
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
     // the headers passed in are modified
-    Map<String, String> expectedHeaders = new HashMap<String, String>(headers);
+    Map<String, String> expectedHeaders = new HashMap<>(headers);
 
     ResourceMethodDescriptor mockDescriptor = getMockResourceMethodDescriptor(alternativeKeyMap);
     ServerResourceContext mockContext = getMockResourceContext(protocolVersion, altKeyName);

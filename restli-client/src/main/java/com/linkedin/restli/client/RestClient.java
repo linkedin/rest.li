@@ -242,16 +242,16 @@ public class RestClient implements Client {
   {
     FutureCallback<Response<T>> callback = new FutureCallback<>();
     sendRequest(request, requestContext, callback);
-    return new ResponseFutureImpl<T>(callback);
+    return new ResponseFutureImpl<>(callback);
   }
 
   @Override
   public <T> ResponseFuture<T> sendRequest(Request<T> request, RequestContext requestContext,
       ErrorHandlingBehavior errorHandlingBehavior)
   {
-    FutureCallback<Response<T>> callback = new FutureCallback<Response<T>>();
+    FutureCallback<Response<T>> callback = new FutureCallback<>();
     sendRequest(request, requestContext, callback);
-    return new ResponseFutureImpl<T>(callback, errorHandlingBehavior);
+    return new ResponseFutureImpl<>(callback, errorHandlingBehavior);
   }
 
   @Override
@@ -744,7 +744,7 @@ public class RestClient implements Client {
         requestBuilder, multiplexedPayload, multiplexedRequest.getRequestOptions().getContentType(), requestUri);
     assert (type != null);
     requestBuilder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
-    requestBuilder.setEntity(type.getCodec().mapToBytes(multiplexedPayload));
+    requestBuilder.setEntity(type.getCodec().mapToByteString(multiplexedPayload));
 
     requestBuilder.setHeader(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION,
                              AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion().toString());
@@ -892,8 +892,7 @@ public class RestClient implements Client {
     if (type != null)
     {
       requestBuilder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
-      // Use unsafe wrap to avoid copying the bytes when request builder creates ByteString.
-      requestBuilder.setEntity(ByteString.unsafeWrap(type.getCodec().mapToBytes(dataMap)));
+      requestBuilder.setEntity(type.getCodec().mapToByteString(dataMap));
     }
 
     addProtocolVersionHeader(requestBuilder, protocolVersion);
@@ -941,7 +940,7 @@ public class RestClient implements Client {
       //eligible to have attachments. This is because all such requests are POST or PUTs. Even an action request
       //with empty action parameters will have an empty JSON ({}) as the body.
       assert (type != null);
-      firstPartWriter = new ByteStringWriter(ByteString.copy(type.getCodec().mapToBytes(dataMap)));
+      firstPartWriter = new ByteStringWriter(type.getCodec().mapToByteString(dataMap));
 
       //Our protocol does not use an epilogue or a preamble.
       final MultiPartMIMEWriter.Builder attachmentsBuilder = new MultiPartMIMEWriter.Builder();
@@ -974,6 +973,7 @@ public class RestClient implements Client {
     {
       if (dataMap != null && type != null && type.supportsStreaming())
       {
+        requestBuilder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
         return requestBuilder.build(EntityStreamAdapters.fromGenericEntityStream(
             type.getStreamCodec().encodeMap(dataMap)));
       }

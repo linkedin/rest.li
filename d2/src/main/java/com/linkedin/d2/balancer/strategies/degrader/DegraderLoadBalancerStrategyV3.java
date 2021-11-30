@@ -144,6 +144,17 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
                                         int partitionId,
                                         Map<URI, TrackerClient> trackerClients)
   {
+    return getTrackerClient(request, requestContext, clusterGenerationId, partitionId, trackerClients, false);
+  }
+
+  @Override
+  public TrackerClient getTrackerClient(Request request,
+                                        RequestContext requestContext,
+                                        long clusterGenerationId,
+                                        int partitionId,
+                                        Map<URI, TrackerClient> trackerClients,
+                                        boolean shouldForceUpdate)
+  {
     debug(_log,
           "getTrackerClient with generation id ",
           clusterGenerationId,
@@ -164,7 +175,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
     // only one thread will be allowed to enter updatePartitionState for any partition
     TimingContextUtil.markTiming(requestContext, TIMING_KEY);
-    checkUpdatePartitionState(clusterGenerationId, partitionId, degraderTrackerClients);
+    checkUpdatePartitionState(clusterGenerationId, partitionId, degraderTrackerClients, shouldForceUpdate);
     TimingContextUtil.markTiming(requestContext, TIMING_KEY);
 
     Ring<URI> ring =  _state.getRing(partitionId);
@@ -304,8 +315,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
    * @param clusterGenerationId
    * @param partitionId
    * @param trackerClients
+   * @param shouldForceUpdate
    */
-  private void checkUpdatePartitionState(long clusterGenerationId, int partitionId, List<DegraderTrackerClient> trackerClients)
+  private void checkUpdatePartitionState(long clusterGenerationId, int partitionId,
+      List<DegraderTrackerClient> trackerClients, boolean shouldForceUpdate)
   {
     DegraderLoadBalancerStrategyConfig config = getConfig();
     final Partition partition = _state.getPartition(partitionId);
@@ -337,7 +350,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         lock.unlock();
       }
     }
-    else if(shouldUpdatePartition(clusterGenerationId, partition.getState(), config, _updateEnabled))
+    else if(shouldUpdatePartition(clusterGenerationId, partition.getState(), config, _updateEnabled, shouldForceUpdate, trackerClients))
     {
       // threads attempt to update the state would return immediately if some thread is already in the updating process
       // NOTE: possible racing condition -- if tryLock() fails and the current updating process does not pick up the
@@ -349,7 +362,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       {
         try
         {
-          if(shouldUpdatePartition(clusterGenerationId, partition.getState(), config, _updateEnabled))
+          if(shouldUpdatePartition(clusterGenerationId, partition.getState(), config, _updateEnabled, shouldForceUpdate, trackerClients))
           {
             debug(_log, "updating for cluster generation id: ", clusterGenerationId, ", partitionId: ", partitionId);
             debug(_log, "old state was: ", partition.getState());
@@ -388,7 +401,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   {
     PartitionDegraderLoadBalancerState partitionState = partition.getState();
 
-    List<DegraderTrackerClientUpdater> clientUpdaters = new ArrayList<DegraderTrackerClientUpdater>();
+    List<DegraderTrackerClientUpdater> clientUpdaters = new ArrayList<>();
     for (DegraderTrackerClient client: trackerClients)
     {
       clientUpdaters.add(new DegraderTrackerClientUpdater(client, partition.getId()));
@@ -513,7 +526,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   {
     DegraderControl degraderControl = client.getDegraderControl(partitionId);
     return client.getUri() + ":" + pointsMap.get(client.getUri()) + "/" +
-        String.valueOf(client.getPartitionWeight(partitionId) * config.getPointsPerWeight())
+        String.valueOf(client.getPartitionWeight(partitionId) * client.getSubsetWeight(partitionId) * config.getPointsPerWeight())
         + "(" + degraderControl.getCallTimeStats().getAverage() + "ms)";
   }
 
@@ -527,7 +540,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     for (DegraderTrackerClientUpdater clientUpdater : degraderTrackerClientUpdaters)
     {
       DegraderTrackerClient client = clientUpdater.getTrackerClient();
-      int perfectHealth = (int) (client.getPartitionWeight(partitionId) * config.getPointsPerWeight());
+      int perfectHealth = (int) (client.getPartitionWeight(partitionId) * client.getSubsetWeight(partitionId) * config.getPointsPerWeight());
       URI uri = client.getUri();
       if (!pointsMap.containsKey(uri))
       {
@@ -687,8 +700,9 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     // Also remove the clients from recoveryMap if they are gone
     newRecoveryMap.entrySet().removeIf(e -> !activeClients.contains(e.getKey()));
 
+    boolean trackerClientInconsistency = degraderTrackerClientUpdaters.size() != oldState.getPointsMap().size();
     if (oldState.getClusterGenerationId() == clusterGenerationId && totalClusterCallCount <= 0
-        && !recoveryMapChanges && !quarantineMapChanged)
+        && !recoveryMapChanges && !quarantineMapChanged && !trackerClientInconsistency)
     {
       // if the cluster has not been called recently (total cluster call count is <= 0)
       // and we already have a state with the same set of URIs (same cluster generation),
@@ -710,7 +724,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     debug(_log, "average cluster latency: ", newCurrentAvgClusterLatency);
 
     // This points map stores how many hash map points to allocate for each tracker client.
-    Map<URI, Integer> points = new HashMap<URI, Integer>();
+    Map<URI, Integer> points = new HashMap<>();
     Map<URI, Integer> oldPointsMap = oldState.getPointsMap();
 
     for (DegraderTrackerClientUpdater clientUpdater : degraderTrackerClientUpdaters)
@@ -735,7 +749,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       // calculate the weight as the probability of successful transmission to this
       // node divided by the probability of successful transmission to the entire
       // cluster
-      double clientWeight = client.getPartitionWeight(partitionId);
+      double clientWeight = client.getPartitionWeight(partitionId) * client.getSubsetWeight(partitionId);
       double successfulTransmissionWeight = clientWeight * (1.0 - dropRate);
 
       // calculate the weight as the probability of a successful transmission to this node
@@ -931,7 +945,8 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         && !state.getTrackerClients().contains(client)                        // client is new
         && config.getRingRampFactor() > FAST_RECOVERY_THRESHOLD               // Fast recovery is enabled
         && degraderControl.getInitialDropRate() > SLOW_START_THRESHOLD        // Slow start is enabled
-        && !degraderControl.isHigh())                                         // current client is not degrading or QPS is too low
+        && !degraderControl.isHigh()                                          // current client is not degrading or QPS is too low
+        && !client.doNotSlowStart())                                          // doNotSlowStart is set to false
     {
       recoveryMap.put(client, clientUpdater.getMaxDropRate());
       // also set the maxDropRate to the computedDropRate if not 1;
@@ -978,6 +993,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   {
     for (DegraderTrackerClientUpdater clientUpdater : degraderTrackerClientUpdaters)
     {
+      if (!pointsMap.containsKey(clientUpdater.getTrackerClient().getUri()))
+      {
+        continue;
+      }
       DegraderTrackerClient client = clientUpdater.getTrackerClient();
       DegraderControl degraderControl = client.getDegraderControl(partitionId);
       int currentOverrideMinCallCount = client.getDegraderControl(partitionId).getOverrideMinCallCount();
@@ -1025,16 +1044,20 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
    *          Current DegraderLoadBalancerStrategyConfig
    * @param updateEnabled
    *          Whether updates to the strategy state is allowed.
-   *
+   * @param shouldForceUpdate
+   *          Whether to force update
    * @return True if we should update, and false otherwise.
    */
   protected static boolean shouldUpdatePartition(long clusterGenerationId, PartitionDegraderLoadBalancerState partitionState,
-                                                 DegraderLoadBalancerStrategyConfig config, boolean updateEnabled)
+      DegraderLoadBalancerStrategyConfig config, boolean updateEnabled, boolean shouldForceUpdate, List<DegraderTrackerClient> trackerClients)
   {
+    boolean trackerClientInconsistency = trackerClients.size() != partitionState.getPointsMap().size();
     return  updateEnabled
-        && (
+        && (shouldForceUpdate
+        || (
             !config.isUpdateOnlyAtInterval() && partitionState.getClusterGenerationId() != clusterGenerationId ||
-            config.getClock().currentTimeMillis() - partitionState.getLastUpdated() >= config.getUpdateIntervalMs());
+            config.getClock().currentTimeMillis() - partitionState.getLastUpdated() >= config.getUpdateIntervalMs())
+            || trackerClientInconsistency);
   }
 
   /**
@@ -1078,6 +1101,13 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   @Override
   public Ring<URI> getRing(long clusterGenerationId, int partitionId, Map<URI, TrackerClient> trackerClients)
   {
+    return getRing(clusterGenerationId, partitionId, trackerClients, false);
+  }
+
+  @Nonnull
+  @Override
+  public Ring<URI> getRing(long clusterGenerationId, int partitionId, Map<URI, TrackerClient> trackerClients, boolean shouldForceUpdate)
+  {
     if (trackerClients.isEmpty())
     {
       // returning empty ring (any implementation) and preventing to update the state with no trackers
@@ -1085,7 +1115,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       return new DelegatingRingFactory<URI>(_config).createRing(Collections.emptyMap(), Collections.emptyMap());
     }
 
-    checkUpdatePartitionState(clusterGenerationId, partitionId, castToDegraderTrackerClients(trackerClients));
+    checkUpdatePartitionState(clusterGenerationId, partitionId, castToDegraderTrackerClients(trackerClients), shouldForceUpdate);
     return _state.getRing(partitionId);
   }
 
@@ -1421,4 +1451,3 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
         + ", _state=" + _state + "]";
   }
 }
-

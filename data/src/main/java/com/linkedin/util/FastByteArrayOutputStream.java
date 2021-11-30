@@ -19,14 +19,11 @@
 
 package com.linkedin.util;
 
-
-import java.io.IOException;
-import java.io.InputStream;
+import com.linkedin.data.ByteString;
 import java.io.OutputStream;
-import java.lang.IllegalArgumentException;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
+
 
 /**
  * This code is derived from org.springframework.util.FastByteArrayOutputStream.
@@ -48,7 +45,7 @@ public class FastByteArrayOutputStream extends OutputStream
   private static final int DEFAULT_BUFFER_SIZE = 256;
 
   // The internal buffer list to store contents.
-  private final LinkedList<byte[]> _bufferList = new LinkedList<byte[]>();
+  private final LinkedList<byte[]> _bufferList = new LinkedList<>();
 
   // The size of the next buffer to allocate in the list.
   private int _nextBufferSize = 0;
@@ -192,6 +189,24 @@ public class FastByteArrayOutputStream extends OutputStream
       }
       return targetBuffer;
     }
+  }
+
+  /**
+   * Wrap the contents as a {@link ByteString}.
+   *
+   * <p>The internal buffers are referenced directly in the {@link ByteString}, so modifying the {@link ByteString},
+   * will cause this stream's contents to change. This is exposed primarily as a performance optimization to
+   * minimize memory copies when serializing data.</p>
+   */
+  public ByteString toUnsafeByteString()
+  {
+    if (this._bufferList.peekFirst() == null)
+    {
+      // Return an empty ByteString if the output stream is empty
+      return ByteString.empty();
+    }
+
+    return new ByteString(_bufferList, _index);
   }
 
   /**

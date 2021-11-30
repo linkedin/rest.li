@@ -65,12 +65,12 @@ public class TestWireAttributeHelper
   @Test
   public void testReversible()
   {
-    final Map<String, String> attrs = new HashMap<String, String>();
+    final Map<String, String> attrs = new HashMap<>();
     attrs.put("key1", "val1");
     attrs.put("key2", "val2");
     attrs.put("key3", "val3");
 
-    final Map<String, String> copy = new HashMap<String, String>(attrs);
+    final Map<String, String> copy = new HashMap<>(attrs);
     final Map<String, String> actual =
             WireAttributeHelper.removeWireAttributes(WireAttributeHelper.toWireAttributes(copy));
     Assert.assertEquals(actual, attrs);
@@ -79,7 +79,7 @@ public class TestWireAttributeHelper
   @Test
   public void testRemoveWireAttributes()
   {
-    final Map<String, String> headers = new HashMap<String, String>();
+    final Map<String, String> headers = new HashMap<>();
     headers.put("key1", "val1");
     headers.put("X-LI-R2-W-key2", "val2");
 
@@ -99,7 +99,7 @@ public class TestWireAttributeHelper
   @Test
   public void testRemoveWireAttributesCaseInsensitive()
   {
-    final Map<String, String> headers = new HashMap<String, String>();
+    final Map<String, String> headers = new HashMap<>();
     headers.put("X-LI-R2-W-key2", "val2");
     headers.put("x-li-r2-w-key3", "val3");
     headers.put("x-li-r2-w-kEY4", "val4");
@@ -120,7 +120,7 @@ public class TestWireAttributeHelper
   @Test
   public void testToWireAttributes()
   {
-    final Map<String, String> headers = new HashMap<String, String>();
+    final Map<String, String> headers = new HashMap<>();
     headers.put("key1", "val1");
     headers.put("key2", "val2");
 
@@ -136,7 +136,7 @@ public class TestWireAttributeHelper
   @Test
   public void testToWireAttributesCaseInsensitive()
   {
-    final Map<String, String> headers = new HashMap<String, String>();
+    final Map<String, String> headers = new HashMap<>();
     headers.put("key1", "val1");
     headers.put("key2", "val2");
 

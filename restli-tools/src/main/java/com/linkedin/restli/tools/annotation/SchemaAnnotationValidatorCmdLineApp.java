@@ -22,6 +22,7 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.annotation.SchemaAnnotationHandler;
 import com.linkedin.data.schema.annotation.SchemaAnnotationProcessor;
 import com.linkedin.pegasus.generator.DataSchemaParser;
+import com.linkedin.restli.internal.tools.ClassJarPathUtil;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import java.io.File;
 import java.io.IOException;
@@ -50,7 +51,6 @@ import org.slf4j.LoggerFactory;
  */
 public class SchemaAnnotationValidatorCmdLineApp
 {
-  private static final String DEFAULT_PATH_SEPARATOR = File.pathSeparator;
   private static final Logger _log = LoggerFactory.getLogger(SchemaAnnotationValidatorCmdLineApp.class);
 
   private static final Options _options = new Options();
@@ -116,34 +116,15 @@ public class SchemaAnnotationValidatorCmdLineApp
       System.exit(1);
     }
 
-    List<String> handlerJarPathsArray = parsePaths(handlerJarPaths);
-    // Use Jar Paths to initiate URL class loaders.
-    ClassLoader classLoader = new URLClassLoader(handlerJarPathsArray.stream().map(str -> {
-      try
-      {
-        return Paths.get(str).toUri().toURL();
-      } catch (Exception e)
-      {
-        _log.error("URL {} parsing failed", str, e);
-      }
-      return null;
-    }).filter(Objects::nonNull).toArray(URL[]::new));
-    List<SchemaAnnotationHandler> handlers = new ArrayList<>();
-    for (String className: parsePaths(handlerClassNames))
+    List<SchemaAnnotationHandler> handlers = null;
+    try
     {
-      try
-      {
-        Class<?> handlerClass = Class.forName(className, false, classLoader);
-        SchemaAnnotationHandler handler = (SchemaAnnotationHandler) handlerClass.newInstance();
-        handlers.add(handler);
-        _log.info("added handler {} for annotation namespace \"{}\"", className, handler.getAnnotationNamespace());
-      }
-      catch (Exception e)
-      {
-        _log.error("Error instantiating handler class {} ", className, e);
-        // fail even just one handler fails
-        throw new IllegalStateException("ValidateSchemaAnnotation task failed");
-      }
+      handlers = ClassJarPathUtil.getAnnotationHandlers(handlerJarPaths, handlerClassNames);
+    }
+    catch (IllegalStateException e)
+    {
+      _log.error(e.getMessage());
+      throw new IllegalStateException("ValidateSchemaAnnotation task failed");
     }
 
     boolean hasError = false;
@@ -176,23 +157,9 @@ public class SchemaAnnotationValidatorCmdLineApp
     }
   }
 
-  private static List<String> parsePaths(String pathAsStr)
-  {
-    List<String> list = new ArrayList<>();
-    if (pathAsStr != null)
-    {
-      StringTokenizer tokenizer = new StringTokenizer(pathAsStr, DEFAULT_PATH_SEPARATOR);
-      while (tokenizer.hasMoreTokens())
-      {
-        list.add(tokenizer.nextToken());
-      }
-    }
-    return list;
-  }
-
   private static List<DataSchema> parseSchemas(String resolverPath, String modelsLocation) throws IOException
   {
-    DataSchemaParser dataSchemaParser = new DataSchemaParser(resolverPath);
+    DataSchemaParser dataSchemaParser = new DataSchemaParser.Builder(resolverPath).build();
     DataSchemaParser.ParseResult parsedSources = dataSchemaParser.parseSources(new String[]{modelsLocation});
 
     Map<DataSchema, DataSchemaLocation> schemaLocations = parsedSources.getSchemaAndLocations();

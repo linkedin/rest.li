@@ -63,7 +63,7 @@ public class CowList<E> extends AbstractList<E> implements CommonList<E>, Clonea
   public CowList()
   {
     _checker = null;
-    _refCounted = new RefCounted<InternalList<E>>(new InternalList<E>());
+    _refCounted = new RefCounted<>(new InternalList<>());
   }
 
   /**
@@ -75,7 +75,7 @@ public class CowList<E> extends AbstractList<E> implements CommonList<E>, Clonea
   {
     _checker = null;
     checkAll(list);
-    _refCounted = new RefCounted<InternalList<E>>(new InternalList<E>(list));
+    _refCounted = new RefCounted<>(new InternalList<>(list));
   }
 
   /**
@@ -86,7 +86,7 @@ public class CowList<E> extends AbstractList<E> implements CommonList<E>, Clonea
   public CowList(int initialCapacity)
   {
     _checker = null;
-    _refCounted = new RefCounted<InternalList<E>>(new InternalList<E>(initialCapacity));
+    _refCounted = new RefCounted<>(new InternalList<>(initialCapacity));
   }
 
   /**
@@ -97,7 +97,7 @@ public class CowList<E> extends AbstractList<E> implements CommonList<E>, Clonea
   public CowList(ListChecker<E> checker)
   {
     _checker = checker;
-    _refCounted = new RefCounted<InternalList<E>>(new InternalList<E>());
+    _refCounted = new RefCounted<>(new InternalList<>());
   }
 
   /**
@@ -111,7 +111,7 @@ public class CowList<E> extends AbstractList<E> implements CommonList<E>, Clonea
   {
     _checker = checker;
     checkAll(list);
-    _refCounted = new RefCounted<InternalList<E>>(new InternalList<E>(list));
+    _refCounted = new RefCounted<>(new InternalList<>(list));
   }
 
   /**
@@ -123,7 +123,7 @@ public class CowList<E> extends AbstractList<E> implements CommonList<E>, Clonea
   public CowList(int initialCapacity, ListChecker<E> checker)
   {
     _checker = checker;
-    _refCounted = new RefCounted<InternalList<E>>(new InternalList<E>(initialCapacity));
+    _refCounted = new RefCounted<>(new InternalList<>(initialCapacity));
   }
 
   @Override

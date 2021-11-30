@@ -29,8 +29,8 @@ public class UriPropertiesMerger implements ZooKeeperPropertyMerger<UriPropertie
   @Override
   public UriProperties merge(String propertyName, Collection<UriProperties> propertiesToMerge)
   {
-    Map<URI, Map<Integer, PartitionData>> partitionData = new HashMap<URI, Map<Integer, PartitionData>>();
-    Map<URI, Map<String, Object>> uriSpecificProperties = new HashMap<URI, Map<String, Object>>();
+    Map<URI, Map<Integer, PartitionData>> partitionData = new HashMap<>();
+    Map<URI, Map<String, Object>> uriSpecificProperties = new HashMap<>();
 
     String clusterName = propertyName;
 

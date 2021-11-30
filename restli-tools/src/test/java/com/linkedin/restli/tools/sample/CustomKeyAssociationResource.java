@@ -60,7 +60,7 @@ public class CustomKeyAssociationResource extends AssociationResourceTemplate<Si
   public BatchUpdateResult<CompoundKey, SimpleGreeting> batchUpdate(BatchUpdateRequest<CompoundKey, SimpleGreeting> entities)
   {
     Set<CompoundKey> keys = entities.getData().keySet();
-    Map<CompoundKey, UpdateResponse> responseMap = new HashMap<CompoundKey, UpdateResponse>();
+    Map<CompoundKey, UpdateResponse> responseMap = new HashMap<>();
 
     for(CompoundKey key : keys)
     {

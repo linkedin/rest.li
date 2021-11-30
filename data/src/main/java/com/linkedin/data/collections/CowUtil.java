@@ -24,9 +24,9 @@ package com.linkedin.data.collections;
  */
 public class CowUtil
 {
-  private static final CowMap<?,?> EMPTY_MAP = new CowMap<Object, Object>();
-  private static final CowSet<?> EMPTY_SET = new CowSet<Object>();
-  private static final CowList<?> EMPTY_LIST = new CowList<Object>();
+  private static final CowMap<?,?> EMPTY_MAP = new CowMap<>();
+  private static final CowSet<?> EMPTY_SET = new CowSet<>();
+  private static final CowList<?> EMPTY_LIST = new CowList<>();
 
   static
   {

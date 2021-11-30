@@ -46,23 +46,22 @@ public class UriProperties
                        Map<URI, Map<String, Object>> uriSpecificProperties)
   {
     _clusterName = clusterName;
-    Map<URI, Map<Integer, PartitionData>> partitionDescriptionsMap = new HashMap<URI, Map<Integer, PartitionData>>(partitionDescriptions.size() * 2);
+    Map<URI, Map<Integer, PartitionData>> partitionDescriptionsMap = new HashMap<>(partitionDescriptions.size() * 2);
     for (Map.Entry<URI, Map<Integer, PartitionData>> entry : partitionDescriptions.entrySet())
     {
-      partitionDescriptionsMap.put(entry.getKey(), Collections.unmodifiableMap(
-          new HashMap<Integer, PartitionData>(entry.getValue())));
+      partitionDescriptionsMap.put(entry.getKey(), Collections.unmodifiableMap(new HashMap<>(entry.getValue())));
     }
     _partitionDesc = Collections.unmodifiableMap(partitionDescriptionsMap);
 
     // group uris by scheme and partition
-    HashMap<String, Map<Integer, Set<URI>>> urisBySchemeAndPartition = new HashMap<String, Map<Integer, Set<URI>>>();
+    HashMap<String, Map<Integer, Set<URI>>> urisBySchemeAndPartition = new HashMap<>();
     for (Map.Entry<URI, Map<Integer, PartitionData>> entry : _partitionDesc.entrySet())
     {
       final URI uri = entry.getKey();
       Map<Integer, Set<URI>> map= urisBySchemeAndPartition.get(uri.getScheme());
       if (map == null)
       {
-        map = new HashMap<Integer, Set<URI>>();
+        map = new HashMap<>();
         urisBySchemeAndPartition.put(uri.getScheme(), map);
       }
 
@@ -72,7 +71,7 @@ public class UriProperties
         Set<URI> uriSet = map.get(partitionId);
         if (uriSet == null)
         {
-          uriSet = new HashSet<URI>();
+          uriSet = new HashSet<>();
           map.put(partitionId, uriSet);
         }
         uriSet.add(uri);

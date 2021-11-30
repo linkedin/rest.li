@@ -20,6 +20,7 @@ import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.ErrorDetails;
 import com.linkedin.restli.common.ErrorResponse;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
@@ -35,6 +36,8 @@ import java.io.StringWriter;
 import java.net.HttpCookie;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -44,6 +47,7 @@ import java.util.Map;
 public final class ErrorResponseBuilder
 {
   public static final String DEFAULT_INTERNAL_ERROR_MESSAGE = "INTERNAL SERVER ERROR";
+  private static final Logger LOGGER = LoggerFactory.getLogger(ErrorResponseBuilder.class.getName());
   private final ErrorResponseFormat _errorResponseFormat;
 
   public ErrorResponseBuilder()
@@ -72,6 +76,22 @@ public final class ErrorResponseBuilder
 
   public ErrorResponse buildErrorResponse(RestLiServiceException result)
   {
+    // In some cases, people use 3XX to signal client a redirection. This falls into the category of blurred boundary
+    // whether this should be an error or not, in order to not disrupt change the behavior of existing code
+    // Thus excluding logging errors for 3XX
+    if (result.getStatus() != null && result.getStatus().getCode() < HttpStatus.S_300_MULTIPLE_CHOICES.getCode())
+    {
+      // Invalid to send an error response with success status codes. This should be converted to 500 errors.
+      // Logging an error message now to detect and fix current use cases before we start converting to 500.
+      LOGGER.error("Incorrect use of success status code with error response", result);
+    }
+
+    if (result.getStatus() == HttpStatus.S_204_NO_CONTENT)
+    {
+      // HTTP Spec requires the response body to be empty for HTTP status 204.
+      return new ErrorResponse();
+    }
+
     return buildErrorResponse(result, result.hasOverridingErrorResponseFormat() ? result.getOverridingFormat() : _errorResponseFormat);
   }
 

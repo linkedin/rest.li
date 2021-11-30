@@ -27,6 +27,7 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.timing.FrameworkTimingKeys;
 import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.r2.transport.common.RestRequestHandler;
+import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.internal.server.RoutingResult;
 import com.linkedin.restli.internal.server.model.ResourceModel;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.activation.MimeTypeParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,6 +63,11 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler, R
   private final List<NonResourceRequestHandler> _nonResourceRequestHandlers;
   private final boolean _writableStackTrace;
 
+  /**
+   * @deprecated Use the constructor without {@link ErrorResponseBuilder}, because it should be built from the
+   * {@link ErrorResponseFormat} in the {@link RestLiConfig}.
+   */
+  @Deprecated
   RestRestLiServer(RestLiConfig config,
       ResourceFactory resourceFactory,
       Engine engine,
@@ -94,6 +101,48 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler, R
         config.getMultiplexerSingletonFilter(),
         config.getMultiplexerRunMode(),
         errorResponseBuilder));
+
+    // Add debug request handlers
+    config.getDebugRequestHandlers().stream()
+        .map(handler -> new DelegatingDebugRequestHandler(handler, this))
+        .forEach(_nonResourceRequestHandlers::add);
+
+    // Add custom request handlers
+    config.getCustomRequestHandlers().forEach(_nonResourceRequestHandlers::add);
+    _writableStackTrace = config.isWritableStackTrace();
+  }
+
+  RestRestLiServer(RestLiConfig config,
+      ResourceFactory resourceFactory,
+      Engine engine,
+      Map<String, ResourceModel> rootResources)
+  {
+    super(config,
+        resourceFactory,
+        engine,
+        rootResources);
+
+    _nonResourceRequestHandlers = new ArrayList<>();
+
+    // Add documentation request handler
+    RestLiDocumentationRequestHandler docReqHandler = config.getDocumentationRequestHandler();
+    if (docReqHandler != null)
+    {
+      docReqHandler.initialize(config, rootResources);
+      _nonResourceRequestHandlers.add(docReqHandler);
+    }
+
+    // Add symbol table request handler
+    _nonResourceRequestHandlers.add(new RestLiSymbolTableRequestHandler());
+
+    // Add multiplexed request handler
+    _nonResourceRequestHandlers.add(new MultiplexedRequestHandlerImpl(this,
+        engine,
+        config.getMaxRequestsMultiplexed(),
+        config.getMultiplexedIndividualRequestHeaderWhitelist(),
+        config.getMultiplexerSingletonFilter(),
+        config.getMultiplexerRunMode(),
+        new ErrorResponseBuilder(config.getErrorResponseFormat())));
 
     // Add debug request handlers
     config.getDebugRequestHandlers().stream()
@@ -252,12 +301,25 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler, R
   {
     private final RoutingResult _routingResult;
     private final boolean _writableStackTrace;
+    private ContentType _respContentType;
 
     RestLiToRestResponseCallbackAdapter(Callback<RestResponse> callback, RoutingResult routingResult, Boolean writableStackTrace)
     {
       super(callback);
       _routingResult = routingResult;
       _writableStackTrace = writableStackTrace;
+      String respMimeType = routingResult.getContext().getResponseMimeType();
+      try
+      {
+        _respContentType = ContentType.getResponseContentType(respMimeType, routingResult.getContext().getRequestURI(), routingResult.getContext().getRequestHeaders())
+                .orElseThrow(() -> new RestLiServiceException(HttpStatus.S_406_NOT_ACCEPTABLE, "Requested mime type for encoding is not supported. Mimetype: " + respMimeType));
+      }
+      catch (MimeTypeParseException e)
+      {
+        log.error("Failed to parse mime type which should never happen at this stage. ", e);
+        _respContentType = ContentType.JSON;
+      }
+
     }
 
     @Override
@@ -279,7 +341,7 @@ class RestRestLiServer extends BaseRestLiServer implements RestRequestHandler, R
       TimingContextUtil.beginTiming(requestContext, FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_ERROR_SERIALIZATION.key());
 
       final Throwable throwable = error instanceof RestLiResponseException
-          ? ResponseUtils.buildRestException((RestLiResponseException) error, _writableStackTrace)
+          ? ResponseUtils.buildRestException((RestLiResponseException) error, _writableStackTrace, _respContentType)
           : error;
 
       TimingContextUtil.endTiming(requestContext, FrameworkTimingKeys.SERVER_RESPONSE_RESTLI_ERROR_SERIALIZATION.key());

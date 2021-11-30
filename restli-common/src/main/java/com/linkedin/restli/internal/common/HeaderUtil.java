@@ -144,9 +144,9 @@ public class HeaderUtil
     {
       return headers;
     }
-    Set<String> headersToRemove = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+    Set<String> headersToRemove = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
     headersToRemove.addAll(headerNames);
-    Map<String, String> newHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    Map<String, String> newHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     for(Map.Entry<String, String> header : headers.entrySet())
     {
       String name = header.getKey();
@@ -169,7 +169,7 @@ public class HeaderUtil
    */
   public static Map<String, String> mergeHeaders(Map<String, String> headers1, Map<String, String> headers2)
   {
-    TreeMap<String, String> combinedHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    TreeMap<String, String> combinedHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     if (headers2 != null)
     {
       combinedHeaders.putAll(headers2);

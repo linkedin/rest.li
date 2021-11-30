@@ -1,0 +1,7 @@
+record TestSchema4 {
+  @bar.foo = 1
+  @baz.foo = 2
+  field1: record Test {
+    f: int
+  }
+}

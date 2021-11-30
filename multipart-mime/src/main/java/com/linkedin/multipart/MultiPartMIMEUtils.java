@@ -127,7 +127,7 @@ public final class MultiPartMIMEUtils
     final String[] contentTypeParameters = contentTypeHeader.split(";");
 
     //In case someone used something like bOuNdArY
-    final Map<String, String> parameterMap = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    final Map<String, String> parameterMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     for (final String parameter : contentTypeParameters)
     {
       //We don't need the first bit here.

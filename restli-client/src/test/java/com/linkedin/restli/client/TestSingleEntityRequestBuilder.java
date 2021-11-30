@@ -31,7 +31,7 @@ public class TestSingleEntityRequestBuilder
   {
     SingleEntityRequestBuilder<Object, TestRecord, ?> builder = new DummySingleEntityRequestBuilder();
     ComplexResourceKey<TestRecord, TestRecord> originalKey =
-        new ComplexResourceKey<TestRecord, TestRecord>(
+        new ComplexResourceKey<>(
             new TestRecord(), new TestRecord());
     builder.id(originalKey);
 

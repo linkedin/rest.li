@@ -146,7 +146,7 @@ public class RetryZooKeeper extends AbstractZooKeeper implements Retryable
             switch(code)
             {
               case OK:
-                List<String> ourChildren = new ArrayList<String>();
+                List<String> ourChildren = new ArrayList<>();
                 for(final String child : ccChildren)
                 {
                   if(child.contains(_uuid.toString()))

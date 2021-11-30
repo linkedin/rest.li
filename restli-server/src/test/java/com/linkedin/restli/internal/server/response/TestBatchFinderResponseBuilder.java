@@ -277,7 +277,7 @@ public class TestBatchFinderResponseBuilder
 
   private static List<Criteria> generateCriteria(int nb)
   {
-    List<Criteria> criteria = new ArrayList<Criteria>(nb);
+    List<Criteria> criteria = new ArrayList<>(nb);
     for (int i = 1; i <= nb; i++)
     {
       Foo item = new Foo().setStringField("criteria_" + i)
@@ -296,7 +296,7 @@ public class TestBatchFinderResponseBuilder
 
   private static List<Foo> generateTestList(Foo criteria)
   {
-    List<Foo> items = new ArrayList<Foo>(criteria.getIntField());
+    List<Foo> items = new ArrayList<>(criteria.getIntField());
     for (int i = 0; i < criteria.getIntField(); i++)
     {
       items.add(new Foo().setStringField(criteria.getStringField()).setIntField(i));
@@ -306,11 +306,11 @@ public class TestBatchFinderResponseBuilder
 
   private static BatchFinderResult<Foo, Foo, Foo> generateResults(List<Criteria> criteria)
   {
-    BatchFinderResult<Foo, Foo, Foo> results = new BatchFinderResult<Foo, Foo, Foo>();
+    BatchFinderResult<Foo, Foo, Foo> results = new BatchFinderResult<>();
     for (int i = 0; i < criteria.size(); i++)
     {
       List<Foo> items = generateTestList(criteria.get(i).criteria);
-      results.putResult(criteria.get(i).getCriteria(), new CollectionResult<Foo, Foo>(items));
+      results.putResult(criteria.get(i).getCriteria(), new CollectionResult<>(items));
     }
 
     return results;
@@ -319,7 +319,7 @@ public class TestBatchFinderResponseBuilder
   @SuppressWarnings("deprecation")
   private static BatchFinderResult<Foo, Foo, Foo> generateResultsWithErrors(List<Criteria> criteria)
   {
-    BatchFinderResult<Foo, Foo, Foo> results = new BatchFinderResult<Foo, Foo, Foo>();
+    BatchFinderResult<Foo, Foo, Foo> results = new BatchFinderResult<>();
     for (int i = 0; i < criteria.size(); i++)
     {
       if (i % 2 == 0)
@@ -332,7 +332,7 @@ public class TestBatchFinderResponseBuilder
       else
       {
         List<Foo> items = generateTestList(criteria.get(i).criteria);
-        results.putResult(criteria.get(i).criteria, new CollectionResult<Foo, Foo>(items));
+        results.putResult(criteria.get(i).criteria, new CollectionResult<>(items));
       }
     }
 

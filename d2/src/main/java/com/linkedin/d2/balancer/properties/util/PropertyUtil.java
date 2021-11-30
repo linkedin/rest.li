@@ -57,6 +57,23 @@ public class PropertyUtil
     }
   }
 
+  @SuppressWarnings("unchecked")
+  public static <T> T mapGet(Map<String, Object> map, String key)
+  {
+    return (T) map.get(key);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T> T mapGetOrDefault(Map<String, Object> map, String key, T defaultValue)
+  {
+    T value = (T) map.get(key);
+    if (value == null)
+    {
+      value = defaultValue;
+    }
+    return value;
+  }
+
   public static Integer parseInt(String key, String intStr)
   {
     try

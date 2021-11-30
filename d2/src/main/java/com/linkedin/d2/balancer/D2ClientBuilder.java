@@ -33,6 +33,7 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategy
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
@@ -69,6 +70,7 @@ import org.slf4j.LoggerFactory;
  * Build a {@link D2Client} with basic ZooKeeper setup to connect D2 protocol.
  * The client could be further wrapped by other client classes.
  */
+@SuppressWarnings("deprecation")
 public class D2ClientBuilder
 {
   private static final Logger LOG = LoggerFactory.getLogger(D2ClientBuilder.class);
@@ -145,7 +147,11 @@ public class D2ClientBuilder
                   _config.healthCheckOperations,
                   _config._executorService,
                   _config.retry,
+                  _config.restRetryEnabled,
+                  _config.streamRetryEnabled,
                   _config.retryLimit,
+                  _config.retryUpdateIntervalMs,
+                  _config.retryAggregatedIntervalNum,
                   _config.warmUp,
                   _config.warmUpTimeoutSeconds,
                   _config.warmUpConcurrentRequests,
@@ -154,6 +160,7 @@ public class D2ClientBuilder
                   _config.backupRequestsStrategyStatsConsumer,
                   _config.backupRequestsLatencyNotificationInterval,
                   _config.backupRequestsLatencyNotificationIntervalUnit,
+                  _config.enableBackupRequestsClientAsync,
                   _config._backupRequestsExecutorService,
                   _config.eventEmitter,
                   _config.partitionAccessorRegistry,
@@ -167,7 +174,8 @@ public class D2ClientBuilder
                   _config.jmxManager,
                   _config.d2JmxManagerPrefix,
                   _config.zookeeperReadWindowMs,
-                  _config.enableRelativeLoadBalancer);
+                  _config.enableRelativeLoadBalancer,
+                  _config.deterministicSubsettingMetadataProvider);
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
@@ -196,12 +204,20 @@ public class D2ClientBuilder
       }
       d2Client = new BackupRequestsClient(d2Client, loadBalancer, executor,
           _config.backupRequestsStrategyStatsConsumer, _config.backupRequestsLatencyNotificationInterval,
-          _config.backupRequestsLatencyNotificationIntervalUnit);
+          _config.backupRequestsLatencyNotificationIntervalUnit, _config.enableBackupRequestsClientAsync);
     }
 
     if (_config.retry)
     {
-      d2Client = new RetryClient(d2Client, _config.retryLimit);
+      d2Client = new RetryClient(d2Client, loadBalancer, _config.retryLimit,
+          _config.retryUpdateIntervalMs, _config.retryAggregatedIntervalNum, SystemClock.instance(),
+          true, true);
+    }
+    else if (_config.restRetryEnabled || _config.streamRetryEnabled)
+    {
+      d2Client = new RetryClient(d2Client, loadBalancer, _config.retryLimit,
+          _config.retryUpdateIntervalMs, _config.retryAggregatedIntervalNum, SystemClock.instance(),
+          _config.restRetryEnabled, _config.streamRetryEnabled);
     }
 
     // If we created default transport client factories, we need to shut them down when d2Client
@@ -336,6 +352,18 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setRestRetryEnabled(boolean restRetryEnabled)
+  {
+    _config.restRetryEnabled = restRetryEnabled;
+    return this;
+  }
+
+  public D2ClientBuilder setStreamRetryEnabled(boolean streamRetryEnabled)
+  {
+    _config.streamRetryEnabled = streamRetryEnabled;
+    return this;
+  }
+
   public D2ClientBuilder setBackupRequestsEnabled(boolean backupRequestsEnabled)
   {
     _config.backupRequestsEnabled = backupRequestsEnabled;
@@ -360,9 +388,27 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setEnableBackupRequestsClientAsync(boolean enableBackupRequestsClientAsync)
+  {
+    _config.enableBackupRequestsClientAsync = enableBackupRequestsClientAsync;
+    return this;
+  }
+
   public D2ClientBuilder setRetryLimit(int retryLimit)
   {
     _config.retryLimit = retryLimit;
+    return this;
+  }
+
+  public D2ClientBuilder setRetryUpdateIntervalMs(long retryUpdateIntervalMs)
+  {
+    _config.retryUpdateIntervalMs = retryUpdateIntervalMs;
+    return this;
+  }
+
+  public D2ClientBuilder setRetryAggregatedIntervalNum(int retryAggregatedIntervalNum)
+  {
+    _config.retryAggregatedIntervalNum = retryAggregatedIntervalNum;
     return this;
   }
 
@@ -486,9 +532,15 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setDeterministicSubsettingMetadataProvider(DeterministicSubsettingMetadataProvider provider)
+  {
+    _config.deterministicSubsettingMetadataProvider = provider;
+    return this;
+  }
+
   private Map<String, TransportClientFactory> createDefaultTransportClientFactories()
   {
-    final Map<String, TransportClientFactory> clientFactories = new HashMap<String, TransportClientFactory>();
+    final Map<String, TransportClientFactory> clientFactories = new HashMap<>();
     TransportClientFactory transportClientFactory = new HttpClientFactory.Builder().build();
     clientFactories.put("http", transportClientFactory);
     clientFactories.put("https", transportClientFactory);

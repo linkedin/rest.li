@@ -106,7 +106,7 @@ public class TestClientBuilders
                                                                              TestRecord.class,
                                                                              Collections.<String, Class<?>> emptyMap());
 
-  private static Map<String, Object> keyParts = new HashMap<String, Object>();
+  private static Map<String, Object> keyParts = new HashMap<>();
   static
   {
     keyParts.put("part1", Long.class);
@@ -153,7 +153,7 @@ public class TestClientBuilders
     //"test/1?action=action"
     //"test/1?action=action"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("action", "action");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/1",
@@ -171,12 +171,12 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "action")
   public void testActionRequestBuilder(URIDetails expectedURIDetails)
   {
-    FieldDef<String> pParam = new FieldDef<String>("p", String.class, DataTemplateUtil.getSchema(String.class));
-    Map<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+    FieldDef<String> pParam = new FieldDef<>("p", String.class, DataTemplateUtil.getSchema(String.class));
+    Map<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<>();
     DynamicRecordMetadata requestMetadata = new DynamicRecordMetadata("action", Collections.<FieldDef<?>>singleton(pParam));
     requestMetadataMap.put("action", requestMetadata);
     DynamicRecordMetadata responseMetadata = new DynamicRecordMetadata("action", Collections.<FieldDef<?>>emptyList());
-    Map<String, DynamicRecordMetadata> responseMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+    Map<String, DynamicRecordMetadata> responseMetadataMap = new HashMap<>();
     responseMetadataMap.put("action", responseMetadata);
     ResourceSpec resourceSpec = new ResourceSpecImpl(Collections.<ResourceMethod>emptySet(),
                                                      requestMetadataMap,
@@ -185,10 +185,10 @@ public class TestClientBuilders
                                                      TestRecord.class,
                                                      Collections.<String, CompoundKey.TypeInfo> emptyMap());
 
-    ActionRequestBuilder<Long, TestRecord> builder = new ActionRequestBuilder<Long, TestRecord>(TEST_URI,
-                                                                                 TestRecord.class,
-                                                                                 resourceSpec,
-                                                                                 RestliRequestOptions.DEFAULT_OPTIONS);
+    ActionRequestBuilder<Long, TestRecord> builder = new ActionRequestBuilder<>(TEST_URI,
+        TestRecord.class,
+        resourceSpec,
+        RestliRequestOptions.DEFAULT_OPTIONS);
 
     ActionRequest<TestRecord> request = builder.name("action").setParam(pParam, "42").id(1L)
         .appendSingleAttachment(_dataSourceWriterA)
@@ -204,9 +204,9 @@ public class TestClientBuilders
             d,
             DynamicRecordMetadata.buildSchema("action",
                                               Arrays.asList(
-                                                 new FieldDef<String>("p",
-                                                                      String.class,
-                                                                      DataTemplateUtil.getSchema(String.class)))));
+                                                  new FieldDef<>("p",
+                                                      String.class,
+                                                      DataTemplateUtil.getSchema(String.class)))));
 
     URIDetails.testUriGeneration(request, expectedURIDetails);
     Assert.assertEquals(request.getMethod(), ResourceMethod.ACTION);
@@ -229,12 +229,12 @@ public class TestClientBuilders
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "action")
   public void testActionRequestNullOptionalParams(URIDetails expectedURIDetails) {
-    FieldDef<String> pParam = new FieldDef<String>("p", String.class, DataTemplateUtil.getSchema(String.class));
-    Map<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+    FieldDef<String> pParam = new FieldDef<>("p", String.class, DataTemplateUtil.getSchema(String.class));
+    Map<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<>();
     DynamicRecordMetadata requestMetadata = new DynamicRecordMetadata("action", Collections.<FieldDef<?>>singleton(pParam));
     requestMetadataMap.put("action", requestMetadata);
     DynamicRecordMetadata responseMetadata = new DynamicRecordMetadata("action", Collections.<FieldDef<?>>emptyList());
-    Map<String, DynamicRecordMetadata> responseMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+    Map<String, DynamicRecordMetadata> responseMetadataMap = new HashMap<>();
     responseMetadataMap.put("action", responseMetadata);
 
     ResourceSpec resourceSpec =
@@ -242,7 +242,7 @@ public class TestClientBuilders
             TestRecord.class, Collections.<String, CompoundKey.TypeInfo>emptyMap());
 
     ActionRequestBuilder<Long, TestRecord> builder =
-        new ActionRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
+        new ActionRequestBuilder<>(TEST_URI, TestRecord.class, resourceSpec, RestliRequestOptions.DEFAULT_OPTIONS);
 
     pParam.getField().setOptional(true);
     ActionRequest<TestRecord> requestNullOptionalValue = builder.name("action").setParam(pParam, null).id(2L).build();
@@ -257,10 +257,10 @@ public class TestClientBuilders
   @SuppressWarnings("unchecked")
   public void testActionRequestInputIsReadOnly()
   {
-    FieldDef<TestRecord> pParam = new FieldDef<TestRecord>("p",
-                                                           TestRecord.class,
-                                                           DataTemplateUtil.getSchema(TestRecord.class));
-    Map<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+    FieldDef<TestRecord> pParam = new FieldDef<>("p",
+        TestRecord.class,
+        DataTemplateUtil.getSchema(TestRecord.class));
+    Map<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<>();
 
     DynamicRecordMetadata requestMetadata =
         new DynamicRecordMetadata("action", Collections.<FieldDef<?>>singleton(pParam));
@@ -268,7 +268,7 @@ public class TestClientBuilders
 
     DynamicRecordMetadata responseMetadata =
         new DynamicRecordMetadata("action", Collections.<FieldDef<?>>emptyList());
-    Map<String, DynamicRecordMetadata> responseMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+    Map<String, DynamicRecordMetadata> responseMetadataMap = new HashMap<>();
     responseMetadataMap.put("action", responseMetadata);
 
     ResourceSpec resourceSpec = new ResourceSpecImpl(Collections.<ResourceMethod>emptySet(),
@@ -281,7 +281,7 @@ public class TestClientBuilders
                                                      Collections.<String, CompoundKey.TypeInfo> emptyMap());
 
     ActionRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
-        new ActionRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(
+        new ActionRequestBuilder<>(
             TEST_URI,
             TestRecord.class,
             resourceSpec,
@@ -289,7 +289,7 @@ public class TestClientBuilders
     TestRecord testRecord1 = new TestRecord();
     TestRecord testRecord2 = new TestRecord();
     ComplexResourceKey<TestRecord, TestRecord> key =
-        new ComplexResourceKey<TestRecord, TestRecord>(testRecord1, testRecord2);
+        new ComplexResourceKey<>(testRecord1, testRecord2);
 
     ActionRequest<TestRecord> request = builder.name("action").setParam(pParam, testRecord1).id(key).build();
 
@@ -318,11 +318,11 @@ public class TestClientBuilders
     //"test?fields=message,id&ids=1&ids=2&ids=3"
     //"test?fields=message,id&ids=List(1,2,3)"
 
-    final Set<String> fieldSet = new HashSet<String>();
+    final Set<String> fieldSet = new HashSet<>();
     fieldSet.add("message");
     fieldSet.add("id");
 
-    final Set<String> idSet = new HashSet<String>();
+    final Set<String> idSet = new HashSet<>();
     idSet.add("1");
     idSet.add("2");
     idSet.add("3");
@@ -342,7 +342,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchGetWithProjections")
   public void testBatchGetRequestBuilder(URIDetails expectedURIDetails)
   {
-    BatchGetRequestBuilder<Long, TestRecord> builder = new BatchGetRequestBuilder<Long, TestRecord>(
+    BatchGetRequestBuilder<Long, TestRecord> builder = new BatchGetRequestBuilder<>(
         TEST_URI,
         TestRecord.class,
         _COLL_SPEC,
@@ -350,8 +350,8 @@ public class TestClientBuilders
     BatchGetRequest<TestRecord> request =
         builder.ids(1L, 2L, 3L).fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
-    Assert.assertEquals(request.getObjectIds(), new HashSet<Long>(Arrays.asList(1L, 2L, 3L)));
-    Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
+    Assert.assertEquals(request.getObjectIds(), new HashSet<>(Arrays.asList(1L, 2L, 3L)));
+    Assert.assertEquals(request.getFields(), new HashSet<>(Arrays.asList(
         TestRecord.fields().id(), TestRecord.fields().message())));
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
@@ -364,7 +364,7 @@ public class TestClientBuilders
   public void testBatchGetKVInputIsReadOnly()
   {
     BatchGetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
-        new BatchGetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(
+        new BatchGetRequestBuilder<>(
             TEST_URI,
             TestRecord.class,
             _COMPLEX_KEY_SPEC,
@@ -373,7 +373,7 @@ public class TestClientBuilders
     TestRecord testRecord1 = new TestRecord();
     TestRecord testRecord2 = new TestRecord();
     ComplexResourceKey<TestRecord, TestRecord> key =
-        new ComplexResourceKey<TestRecord, TestRecord>(testRecord1, testRecord2);
+        new ComplexResourceKey<>(testRecord1, testRecord2);
 
     BatchGetKVRequest<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> request = builder.ids(key).buildKV();
 
@@ -397,7 +397,7 @@ public class TestClientBuilders
   public void testBatchGetEntityInputIsReadOnly()
   {
     BatchGetEntityRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
-        new BatchGetEntityRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(
+        new BatchGetEntityRequestBuilder<>(
             TEST_URI,
             _COMPLEX_KEY_SPEC,
             RestliRequestOptions.DEFAULT_OPTIONS);
@@ -405,7 +405,7 @@ public class TestClientBuilders
     TestRecord testRecord1 = new TestRecord();
     TestRecord testRecord2 = new TestRecord();
     ComplexResourceKey<TestRecord, TestRecord> key =
-        new ComplexResourceKey<TestRecord, TestRecord>(testRecord1, testRecord2);
+        new ComplexResourceKey<>(testRecord1, testRecord2);
 
     BatchGetEntityRequest<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> request = builder.ids(key).build();
 
@@ -431,17 +431,17 @@ public class TestClientBuilders
     //"test?fields=message,id&ids=ampersand%3D%2526%2526%26equals%3D%253D%253D&ids=ampersand%3D%2526%26equals%3D%253D"
     //"test?fields=message,id&ids=List((ampersand:%26%26,equals:%3D%3D),(ampersand:%26,equals:%3D))"
 
-    final Set<String> fieldSet = new HashSet<String>();
+    final Set<String> fieldSet = new HashSet<>();
     fieldSet.add("message");
     fieldSet.add("id");
 
     //Note that we need two different ID sets, one for V1 and one for V2 since batch operations on compound keys
     //are unique.
-    final Set<String> idSetV1 = new HashSet<String>();
+    final Set<String> idSetV1 = new HashSet<>();
     idSetV1.add("ampersand=%26%26&equals=%3D%3D");
     idSetV1.add("ampersand=%26&equals=%3D");
 
-    final Set<DataMap> idSetV2 = new HashSet<DataMap>();
+    final Set<DataMap> idSetV2 = new HashSet<>();
     final DataMap map1 = new DataMap();
     map1.put("ampersand", "&&");
     map1.put("equals", "==");
@@ -468,7 +468,7 @@ public class TestClientBuilders
   public void testBatchGetCompoundKeyRequestBuilder(URIDetails expectedURIDetails)
   {
     BatchGetRequestBuilder<CompoundKey, TestRecord> builder =
-        new BatchGetRequestBuilder<CompoundKey, TestRecord>(TEST_URI, TestRecord.class, _ASSOC_SPEC,
+        new BatchGetRequestBuilder<>(TEST_URI, TestRecord.class, _ASSOC_SPEC,
             RestliRequestOptions.DEFAULT_OPTIONS);
 
     CompoundKey key1 = new CompoundKey();
@@ -484,10 +484,10 @@ public class TestClientBuilders
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
 
     // Compare key sets. Note that have to convert keys to Strings as the request internally converts them to string
-    HashSet<CompoundKey> expectedIds = new HashSet<CompoundKey>(Arrays.asList(key1, key2));
+    HashSet<CompoundKey> expectedIds = new HashSet<>(Arrays.asList(key1, key2));
     Assert.assertEquals(request.getObjectIds(), expectedIds);
-    Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
-            TestRecord.fields().id(), TestRecord.fields().message())));
+    Assert.assertEquals(request.getFields(), new HashSet<>(Arrays.asList(
+        TestRecord.fields().id(), TestRecord.fields().message())));
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
 
@@ -506,7 +506,7 @@ public class TestClientBuilders
 
   private Map<String, CompoundKey.TypeInfo> getCompoundKeyFieldTypes()
   {
-    Map<String, CompoundKey.TypeInfo> fieldTypes = new HashMap<String, CompoundKey.TypeInfo>();
+    Map<String, CompoundKey.TypeInfo> fieldTypes = new HashMap<>();
     fieldTypes.put("part1", new CompoundKey.TypeInfo(Long.class, Long.class));
     fieldTypes.put("part2", new CompoundKey.TypeInfo(String.class, String.class));
     return fieldTypes;
@@ -536,7 +536,7 @@ public class TestClientBuilders
   public void testGetCompoundKeyRequestBuilder(URIDetails expectedURIDetails)
   {
     GetRequestBuilder<CompoundKey, TestRecord> builder =
-        new GetRequestBuilder<CompoundKey, TestRecord>(TEST_URI, TestRecord.class, _ASSOC_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
+        new GetRequestBuilder<>(TEST_URI, TestRecord.class, _ASSOC_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
 
     CompoundKey key = buildCompoundKey();
 
@@ -576,7 +576,7 @@ public class TestClientBuilders
   public void testCreateCompoundKeyRequestBuilder(URIDetails expectedURIDetails)
   {
     CreateRequestBuilder<CompoundKey, TestRecord> builder =
-        new CreateRequestBuilder<CompoundKey, TestRecord>(TEST_URI, TestRecord.class, _ASSOC_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
+        new CreateRequestBuilder<>(TEST_URI, TestRecord.class, _ASSOC_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
 
     TestRecord record = new TestRecord().setMessage("foo");
 
@@ -593,7 +593,7 @@ public class TestClientBuilders
   public void testUpdateCompoundKeyRequestBuilder(URIDetails expectedURIDetails)
   {
     UpdateRequestBuilder<CompoundKey, TestRecord> builder =
-        new UpdateRequestBuilder<CompoundKey, TestRecord>(TEST_URI, TestRecord.class, _ASSOC_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
+        new UpdateRequestBuilder<>(TEST_URI, TestRecord.class, _ASSOC_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
     TestRecord record = new TestRecord().setMessage("foo");
 
     UpdateRequest<TestRecord> request = builder.id(buildCompoundKey()).input(record).build();
@@ -613,7 +613,7 @@ public class TestClientBuilders
       throws CloneNotSupportedException
   {
     PartialUpdateRequestBuilder<CompoundKey, TestRecord> builder =
-        new PartialUpdateRequestBuilder<CompoundKey, TestRecord>(TEST_URI, TestRecord.class, _ASSOC_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
+        new PartialUpdateRequestBuilder<>(TEST_URI, TestRecord.class, _ASSOC_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
 
     TestRecord t1 = new TestRecord();
     TestRecord t2 = new TestRecord(t1.data().copy());
@@ -639,11 +639,11 @@ public class TestClientBuilders
 
     //Note that we need two different ID sets, one for V1 and one for V2 since batch operations on compound keys
     //are unique.
-    final Set<String> idSetV1 = new HashSet<String>();
+    final Set<String> idSetV1 = new HashSet<>();
     idSetV1.add("part1=1&part2=2");
     idSetV1.add("part1=11&part2=22");
 
-    final Set<DataMap> idSetV2 = new HashSet<DataMap>();
+    final Set<DataMap> idSetV2 = new HashSet<>();
     final DataMap id1 = new DataMap();
     id1.put("part1", "1");
     id1.put("part2", "2");
@@ -669,9 +669,9 @@ public class TestClientBuilders
   public void testBatchUpdateCompoundKeyRequestBuilder(URIDetails expectedURIDetails)
   {
     BatchUpdateRequestBuilder<CompoundKey, TestRecord> builder =
-        new BatchUpdateRequestBuilder<CompoundKey, TestRecord>(TEST_URI, TestRecord.class, _ASSOC_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
+        new BatchUpdateRequestBuilder<>(TEST_URI, TestRecord.class, _ASSOC_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
 
-    Map<CompoundKey, TestRecord> inputs = new HashMap<CompoundKey, TestRecord>();
+    Map<CompoundKey, TestRecord> inputs = new HashMap<>();
     CompoundKey key1 = new CompoundKey().append("part1", 1L).append("part2", "2");
     CompoundKey key2 = new CompoundKey().append("part1", 11L).append("part2", "22");
     TestRecord t1 = new TestRecord().setId(1L).setMessage("1");
@@ -679,7 +679,7 @@ public class TestClientBuilders
     inputs.put(key1, t1);
     inputs.put(key2, t2);
 
-    BatchRequest<TestRecord> expectedRequest = new BatchRequest<TestRecord>(new DataMap(), TestRecord.class);
+    BatchRequest<TestRecord> expectedRequest = new BatchRequest<>(new DataMap(), TestRecord.class);
     expectedRequest.getEntities().put(toEntityKey(key1, expectedURIDetails.getProtocolVersion()), t1);
     expectedRequest.getEntities().put(toEntityKey(key2, expectedURIDetails.getProtocolVersion()), t2);
 
@@ -690,11 +690,11 @@ public class TestClientBuilders
     Assert.assertEquals(request.isIdempotent(), true);
 
     KeyValueRecordFactory<CompoundKey, TestRecord> factory =
-        new KeyValueRecordFactory<CompoundKey, TestRecord>(CompoundKey.class,
-                                                           null,
-                                                           null,
-                                                           getCompoundKeyFieldTypes(),
-                                                           TestRecord.class);
+        new KeyValueRecordFactory<>(CompoundKey.class,
+            null,
+            null,
+            getCompoundKeyFieldTypes(),
+            TestRecord.class);
     @SuppressWarnings({"unchecked","rawtypes"})
     CollectionRequest<KeyValueRecord> collectionRequest = buildCollectionRequest(factory,
                                                                                  new CompoundKey[]{key1, key2},
@@ -714,9 +714,9 @@ public class TestClientBuilders
       throws CloneNotSupportedException
   {
     BatchPartialUpdateRequestBuilder<CompoundKey, TestRecord> builder =
-        new BatchPartialUpdateRequestBuilder<CompoundKey, TestRecord>(TEST_URI, TestRecord.class, _ASSOC_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
+        new BatchPartialUpdateRequestBuilder<>(TEST_URI, TestRecord.class, _ASSOC_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
 
-    Map<CompoundKey, PatchRequest<TestRecord>> inputs = new HashMap<CompoundKey, PatchRequest<TestRecord>>();
+    Map<CompoundKey, PatchRequest<TestRecord>> inputs = new HashMap<>();
     CompoundKey key1 = new CompoundKey().append("part1", 1L).append("part2", "2");
     CompoundKey key2 = new CompoundKey().append("part1", 11L).append("part2", "22");
     TestRecord t1 = new TestRecord().setId(1L).setMessage("1");
@@ -742,11 +742,11 @@ public class TestClientBuilders
 
     @SuppressWarnings({"unchecked","rawtypes"})
     KeyValueRecordFactory<CompoundKey, PatchRequest> factory =
-        new KeyValueRecordFactory<CompoundKey, PatchRequest>(CompoundKey.class,
-                                                             null,
-                                                             null,
-                                                             getCompoundKeyFieldTypes(),
-                                                             PatchRequest.class);
+        new KeyValueRecordFactory<>(CompoundKey.class,
+            null,
+            null,
+            getCompoundKeyFieldTypes(),
+            PatchRequest.class);
     @SuppressWarnings({"unchecked","rawtypes"})
     CollectionRequest<KeyValueRecord> collectionRequest = buildCollectionRequest(factory,
                                                                                  new CompoundKey[]{key1, key2},
@@ -764,16 +764,16 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchGetWithProjections")
   public void testBatchGetRequestBuilderCollectionIds(URIDetails expectedURIDetails)
   {
-    BatchGetRequestBuilder<Long, TestRecord> builder = new BatchGetRequestBuilder<Long, TestRecord>(TEST_URI,
-                                                                                                    TestRecord.class,
-                                                                                                    _COLL_SPEC,
-                                                                                                    RestliRequestOptions.DEFAULT_OPTIONS);
+    BatchGetRequestBuilder<Long, TestRecord> builder = new BatchGetRequestBuilder<>(TEST_URI,
+        TestRecord.class,
+        _COLL_SPEC,
+        RestliRequestOptions.DEFAULT_OPTIONS);
     List<Long> ids = Arrays.asList(1L, 2L, 3L);
     BatchGetRequest<TestRecord> request = builder.ids(ids).fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
-    Assert.assertEquals(request.getObjectIds(), new HashSet<Long>(Arrays.asList(1L, 2L, 3L)));
-    Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
-            TestRecord.fields().id(), TestRecord.fields().message())));
+    Assert.assertEquals(request.getObjectIds(), new HashSet<>(Arrays.asList(1L, 2L, 3L)));
+    Assert.assertEquals(request.getFields(), new HashSet<>(Arrays.asList(
+        TestRecord.fields().id(), TestRecord.fields().message())));
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
 
@@ -787,7 +787,7 @@ public class TestClientBuilders
     //"test?ids=1&ids=2&ids=3"
     //"test?ids=List(1,2,3)"
 
-    final Set<String> idSet = new HashSet<String>();
+    final Set<String> idSet = new HashSet<>();
     idSet.add("1");
     idSet.add("2");
     idSet.add("3");
@@ -808,8 +808,8 @@ public class TestClientBuilders
   public void testBatchUpdateRequestBuilder(URIDetails expectedURIDetails)
   {
     BatchUpdateRequestBuilder<Long, TestRecord> builder =
-            new BatchUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
-    Map<Long, TestRecord> updates = new HashMap<Long, TestRecord>();
+        new BatchUpdateRequestBuilder<>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
+    Map<Long, TestRecord> updates = new HashMap<>();
     updates.put(1L, new TestRecord());
     updates.put(2L, new TestRecord());
     updates.put(3L, new TestRecord());
@@ -819,22 +819,22 @@ public class TestClientBuilders
         .appendSingleAttachment(_dataSourceWriterB)
         .build();
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
-    Assert.assertEquals(request.getObjectIds(), new HashSet<Long>(Arrays.asList(1L, 2L, 3L)));
+    Assert.assertEquals(request.getObjectIds(), new HashSet<>(Arrays.asList(1L, 2L, 3L)));
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
 
-    BatchRequest<TestRecord> expectedRequest = new BatchRequest<TestRecord>(new DataMap(), TestRecord.class);
+    BatchRequest<TestRecord> expectedRequest = new BatchRequest<>(new DataMap(), TestRecord.class);
     expectedRequest.getEntities().put("1", new TestRecord());
     expectedRequest.getEntities().put("2", new TestRecord());
     expectedRequest.getEntities().put("3", new TestRecord());
 
     @SuppressWarnings({"unchecked","rawtypes"})
     KeyValueRecordFactory<Long, TestRecord> factory =
-        new KeyValueRecordFactory<Long, TestRecord>(Long.class,
-                                                    null,
-                                                    null,
-                                                    null,
-                                                    TestRecord.class);
+        new KeyValueRecordFactory<>(Long.class,
+            null,
+            null,
+            null,
+            TestRecord.class);
     @SuppressWarnings({"unchecked","rawtypes"})
     CollectionRequest<KeyValueRecord> collectionRequest =
         buildCollectionRequest(factory,
@@ -856,40 +856,40 @@ public class TestClientBuilders
   public void testBatchPartialUpdateRequestBuilder(URIDetails expectedURIDetails)
   {
     BatchPartialUpdateRequestBuilder<Long, TestRecord> builder =
-            new BatchPartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
+        new BatchPartialUpdateRequestBuilder<>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
 
-    builder.input(1L, new PatchRequest<TestRecord>());
-    builder.input(2L, new PatchRequest<TestRecord>());
-    builder.input(3L, new PatchRequest<TestRecord>());
+    builder.input(1L, new PatchRequest<>());
+    builder.input(2L, new PatchRequest<>());
+    builder.input(3L, new PatchRequest<>());
     BatchPartialUpdateRequest<Long, TestRecord> request = builder
         .appendSingleAttachment(_dataSourceWriterA)
         .appendMultipleAttachments(_dataSourceIterator)
         .appendSingleAttachment(_dataSourceWriterB)
         .build();
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
-    Assert.assertEquals(request.getObjectIds(), new HashSet<Long>(Arrays.asList(1L, 2L, 3L)));
+    Assert.assertEquals(request.getObjectIds(), new HashSet<>(Arrays.asList(1L, 2L, 3L)));
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
     // verify partialUpdateInputMap
     Map<Long, PatchRequest<TestRecord>> expectedPartialUpdateMap = new HashMap<>();
-    expectedPartialUpdateMap.put(1L, new PatchRequest<TestRecord>());
-    expectedPartialUpdateMap.put(2L, new PatchRequest<TestRecord>());
-    expectedPartialUpdateMap.put(3L, new PatchRequest<TestRecord>());
+    expectedPartialUpdateMap.put(1L, new PatchRequest<>());
+    expectedPartialUpdateMap.put(2L, new PatchRequest<>());
+    expectedPartialUpdateMap.put(3L, new PatchRequest<>());
     Assert.assertNotNull(request.getPartialUpdateInputMap());
     Assert.assertEquals(request.getPartialUpdateInputMap(), expectedPartialUpdateMap);
 
     @SuppressWarnings({"unchecked","rawtypes"})
     BatchRequest<PatchRequest<TestRecord>> expectedRequest = new BatchRequest(new DataMap(), PatchRequest.class);
-    expectedRequest.getEntities().put("1", new PatchRequest<TestRecord>());
-    expectedRequest.getEntities().put("2", new PatchRequest<TestRecord>());
-    expectedRequest.getEntities().put("3", new PatchRequest<TestRecord>());
+    expectedRequest.getEntities().put("1", new PatchRequest<>());
+    expectedRequest.getEntities().put("2", new PatchRequest<>());
+    expectedRequest.getEntities().put("3", new PatchRequest<>());
 
     KeyValueRecordFactory<Long, PatchRequest> factory =
-        new KeyValueRecordFactory<Long, PatchRequest>(Long.class,
-                                                      null,
-                                                      null,
-                                                      null,
-                                                      PatchRequest.class);
+        new KeyValueRecordFactory<>(Long.class,
+            null,
+            null,
+            null,
+            PatchRequest.class);
     CollectionRequest<KeyValueRecord> collectionRequest =
         buildCollectionRequest(factory,
                                new Long[]{1L, 2L, 3L},
@@ -908,10 +908,10 @@ public class TestClientBuilders
   public void testBatchDeleteRequestBuilder(URIDetails expectedURIDetails)
   {
     BatchDeleteRequestBuilder<Long, TestRecord> builder =
-            new BatchDeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
+        new BatchDeleteRequestBuilder<>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
     BatchDeleteRequest<Long, TestRecord> request = builder.ids(1L, 2L, 3L).build();
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
-    Assert.assertEquals(request.getObjectIds(), new HashSet<Long>(Arrays.asList(1L, 2L, 3L)));
+    Assert.assertEquals(request.getObjectIds(), new HashSet<>(Arrays.asList(1L, 2L, 3L)));
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
 
@@ -922,7 +922,7 @@ public class TestClientBuilders
   public void testBatchCreateRequestBuilder(URIDetails expectedURIDetails)
   {
     BatchCreateRequestBuilder<Long, TestRecord> builder =
-            new BatchCreateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
+        new BatchCreateRequestBuilder<>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
     List<TestRecord> newRecords = Arrays.asList(new TestRecord(), new TestRecord(), new TestRecord());
     BatchCreateRequest<TestRecord> request = builder.inputs(newRecords)
         .appendSingleAttachment(_dataSourceWriterA)
@@ -945,7 +945,7 @@ public class TestClientBuilders
       Assert.assertTrue(e instanceof UnsupportedOperationException);
     }
 
-    CollectionRequest<TestRecord> expectedRequest = new CollectionRequest<TestRecord>(new DataMap(), TestRecord.class);
+    CollectionRequest<TestRecord> expectedRequest = new CollectionRequest<>(new DataMap(), TestRecord.class);
     expectedRequest.getElements().addAll(newRecords);
     checkBasicRequest(request,
                       expectedURIDetails,
@@ -960,10 +960,10 @@ public class TestClientBuilders
   public void testBatchCreateRequestInputIsReadOnly()
   {
     BatchCreateRequestBuilder<Long, TestRecord> builder =
-        new BatchCreateRequestBuilder<Long, TestRecord>(TEST_URI,
-                                                        TestRecord.class,
-                                                        _COLL_SPEC,
-                                                        RestliRequestOptions.DEFAULT_OPTIONS);
+        new BatchCreateRequestBuilder<>(TEST_URI,
+            TestRecord.class,
+            _COLL_SPEC,
+            RestliRequestOptions.DEFAULT_OPTIONS);
     TestRecord testRecord = new TestRecord();
     List<TestRecord> newRecords = Arrays.asList(testRecord);
     BatchCreateRequest<TestRecord> request = builder.inputs(newRecords).build();
@@ -975,7 +975,7 @@ public class TestClientBuilders
     testRecord.data().makeReadOnly();
     request = builder.build();
     createInput = (CollectionRequest<TestRecord>) request.getInputRecord();
-    Assert.assertSame(createInput.getElements().get(0), testRecord);
+    Assert.assertEquals(createInput.getElements().get(0), testRecord);
   }
 
   @Test
@@ -983,10 +983,10 @@ public class TestClientBuilders
   public void testBatchCreateIdRequestInputIsReadOnly()
   {
     BatchCreateIdRequestBuilder<Long, TestRecord> builder =
-        new BatchCreateIdRequestBuilder<Long, TestRecord>(TEST_URI,
-                                                          TestRecord.class,
-                                                          _COLL_SPEC,
-                                                          RestliRequestOptions.DEFAULT_OPTIONS);
+        new BatchCreateIdRequestBuilder<>(TEST_URI,
+            TestRecord.class,
+            _COLL_SPEC,
+            RestliRequestOptions.DEFAULT_OPTIONS);
     TestRecord testRecord = new TestRecord();
     List<TestRecord> newRecords = Arrays.asList(testRecord);
     BatchCreateIdRequest<Long, TestRecord> request = builder.inputs(newRecords).build();
@@ -998,16 +998,16 @@ public class TestClientBuilders
     testRecord.data().makeReadOnly();
     request = builder.build();
     createInput = (CollectionRequest<TestRecord>) request.getInputRecord();
-    Assert.assertSame(createInput.getElements().get(0), testRecord);
+    Assert.assertEquals(createInput.getElements().get(0), testRecord);
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
   public void testCreateRequestBuilder(URIDetails expectedURIDetails)
   {
-    CreateRequestBuilder<Long, TestRecord> builder = new CreateRequestBuilder<Long, TestRecord>(TEST_URI,
-                                                                                                TestRecord.class,
-                                                                                                _COLL_SPEC,
-                                                                                                RestliRequestOptions.DEFAULT_OPTIONS);
+    CreateRequestBuilder<Long, TestRecord> builder = new CreateRequestBuilder<>(TEST_URI,
+        TestRecord.class,
+        _COLL_SPEC,
+        RestliRequestOptions.DEFAULT_OPTIONS);
     CreateRequest<TestRecord> request = builder.input(new TestRecord())
         .appendSingleAttachment(_dataSourceWriterA)
         .appendMultipleAttachments(_dataSourceIterator)
@@ -1055,10 +1055,10 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "singleEntity")
   public void testDeleteRequestBuilder(URIDetails expectedURIDetails)
   {
-    DeleteRequestBuilder<Long, TestRecord> builder = new DeleteRequestBuilder<Long, TestRecord>(TEST_URI,
-                                                                                                TestRecord.class,
-                                                                                                _COLL_SPEC,
-                                                                                                RestliRequestOptions.DEFAULT_OPTIONS);
+    DeleteRequestBuilder<Long, TestRecord> builder = new DeleteRequestBuilder<>(TEST_URI,
+        TestRecord.class,
+        _COLL_SPEC,
+        RestliRequestOptions.DEFAULT_OPTIONS);
     DeleteRequest<TestRecord> request = builder.id(1L).build();
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
@@ -1074,8 +1074,8 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
   public void testDeleteRequestBuilderWithKeylessResource(URIDetails expectedURIDetails)
   {
-    DeleteRequestBuilder<Long, TestRecord> builder = new DeleteRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class,
-                                                                                                _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
+    DeleteRequestBuilder<Long, TestRecord> builder = new DeleteRequestBuilder<>(TEST_URI, TestRecord.class,
+        _SIMPLE_RESOURCE_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
     DeleteRequest<TestRecord> request = builder.build();
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
@@ -1095,11 +1095,11 @@ public class TestClientBuilders
     //"test/key=a%3Ab?count=4&fields=message,id&p=42&q=search&start=1"
     //"test/(key:a%3Ab)?count=4&fields=message,id&p=42&q=search&start=1"
 
-    final Set<String> fieldSet = new HashSet<String>();
+    final Set<String> fieldSet = new HashSet<>();
     fieldSet.add("message");
     fieldSet.add("id");
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("p", "42");
     queryParamsMap.put("q", "search");
     queryParamsMap.put("start", "1");
@@ -1120,10 +1120,10 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "search1")
   public void testFindRequestBuilder1(URIDetails expectedURIDetails)
   {
-    FindRequestBuilder<Long, TestRecord> builder = new FindRequestBuilder<Long, TestRecord>(TEST_URI,
-                                                                                            TestRecord.class,
-                                                                                            _COLL_SPEC,
-                                                                                            RestliRequestOptions.DEFAULT_OPTIONS);
+    FindRequestBuilder<Long, TestRecord> builder = new FindRequestBuilder<>(TEST_URI,
+        TestRecord.class,
+        _COLL_SPEC,
+        RestliRequestOptions.DEFAULT_OPTIONS);
     FindRequest<TestRecord> request =
         builder.name("search")
                .assocKey("key", "a:b")
@@ -1133,7 +1133,7 @@ public class TestClientBuilders
                .build();
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
-    Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
+    Assert.assertEquals(request.getFields(), new HashSet<>(Arrays.asList(
         TestRecord.fields().id(), TestRecord.fields().message())));
     checkBasicRequest(request,
                       expectedURIDetails,
@@ -1150,7 +1150,7 @@ public class TestClientBuilders
     //"test/key=a%3Ab?p=42&q=search&start=1"
     //"test/(key:a%3Ab)?p=42&q=search&start=1"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("p", "42");
     queryParamsMap.put("q", "search");
     queryParamsMap.put("start", "1");
@@ -1170,10 +1170,10 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "search2")
   public void testFindRequestBuilder2(URIDetails expectedURIDetails)
   {
-    FindRequestBuilder<Long, TestRecord> builder = new FindRequestBuilder<Long, TestRecord>(TEST_URI,
-                                                                                            TestRecord.class,
-                                                                                            _COLL_SPEC,
-                                                                                            RestliRequestOptions.DEFAULT_OPTIONS);
+    FindRequestBuilder<Long, TestRecord> builder = new FindRequestBuilder<>(TEST_URI,
+        TestRecord.class,
+        _COLL_SPEC,
+        RestliRequestOptions.DEFAULT_OPTIONS);
     FindRequest<TestRecord> request = builder.name("search")
       .assocKey("key", "a:b")
       .paginateStart(1)
@@ -1197,7 +1197,7 @@ public class TestClientBuilders
     //"test/key=a%3Ab?count=4&p=42&q=search"
     //"test/(key:a%3Ab)?count=4&p=42&q=search"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("p", "42");
     queryParamsMap.put("q", "search");
     queryParamsMap.put("count", "4");
@@ -1217,10 +1217,10 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "search3")
   public void testFindRequestBuilder3(URIDetails expectedURIDetails)
   {
-    FindRequestBuilder<Long, TestRecord> builder = new FindRequestBuilder<Long, TestRecord>(TEST_URI,
-                                                                                            TestRecord.class,
-                                                                                            _COLL_SPEC,
-                                                                                            RestliRequestOptions.DEFAULT_OPTIONS);
+    FindRequestBuilder<Long, TestRecord> builder = new FindRequestBuilder<>(TEST_URI,
+        TestRecord.class,
+        _COLL_SPEC,
+        RestliRequestOptions.DEFAULT_OPTIONS);
     FindRequest<TestRecord> request = builder.name("search")
       .assocKey("key", "a:b")
       .paginateCount(4)
@@ -1244,11 +1244,11 @@ public class TestClientBuilders
     //"test?count=4&fields=message,id&start=1"
     //"test?count=4&fields=message,id&start=1"
 
-    final Set<String> fieldSet = new HashSet<String>();
+    final Set<String> fieldSet = new HashSet<>();
     fieldSet.add("message");
     fieldSet.add("id");
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("count", "4");
     queryParamsMap.put("start", "1");
 
@@ -1268,7 +1268,7 @@ public class TestClientBuilders
   public void testGetAllRequestBuilder1(URIDetails expectedURIDetails)
   {
     GetAllRequestBuilder<Long, TestRecord> builder =
-        new GetAllRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
+        new GetAllRequestBuilder<>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
 
     GetAllRequest<TestRecord> request =
         builder.paginate(1, 4)
@@ -1276,7 +1276,7 @@ public class TestClientBuilders
                .build();
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
-    Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
+    Assert.assertEquals(request.getFields(), new HashSet<>(Arrays.asList(
         TestRecord.fields().id(), TestRecord.fields().message())));
     checkBasicRequest(request,
                       expectedURIDetails,
@@ -1293,7 +1293,7 @@ public class TestClientBuilders
     //"test?start=1"
     //"test?start=1"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("start", "1");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test",
@@ -1312,7 +1312,7 @@ public class TestClientBuilders
   public void testGetAllRequestBuilder2(URIDetails expectedURIDetails)
   {
     GetAllRequestBuilder<Long, TestRecord> builder =
-        new GetAllRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
+        new GetAllRequestBuilder<>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
 
     GetAllRequest<TestRecord> request = builder.paginateStart(1).build();
     Assert.assertEquals(request.isSafe(), true);
@@ -1332,7 +1332,7 @@ public class TestClientBuilders
     //"test?count=4"
     //"test?count=4"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("count", "4");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test",
@@ -1351,7 +1351,7 @@ public class TestClientBuilders
   public void testGetAllRequestBuilder3(URIDetails expectedURIDetails)
   {
     GetAllRequestBuilder<Long, TestRecord> builder =
-        new GetAllRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
+        new GetAllRequestBuilder<>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
 
     GetAllRequest<TestRecord> request = builder.paginateCount(4).build();
     Assert.assertEquals(request.isSafe(), true);
@@ -1370,7 +1370,7 @@ public class TestClientBuilders
     //Sample URIs:
     //"test/1?fields=message,id"
     //"test/1?fields=message,id"
-    final Set<String> fieldSet = new HashSet<String>();
+    final Set<String> fieldSet = new HashSet<>();
     fieldSet.add("message");
     fieldSet.add("id");
 
@@ -1389,12 +1389,12 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "getWithProjection")
   public void testGetRequestBuilder(URIDetails expectedURIDetails)
   {
-    GetRequestBuilder<Long, TestRecord> builder = new GetRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
+    GetRequestBuilder<Long, TestRecord> builder = new GetRequestBuilder<>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
     GetRequest<TestRecord> request = builder.id(1L).fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
-    Assert.assertEquals(request.getObjectId(), new Long(1L));
-    Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
-            TestRecord.fields().id(), TestRecord.fields().message())));
+    Assert.assertEquals(request.getObjectId(), Long.valueOf(1L));
+    Assert.assertEquals(request.getFields(), new HashSet<>(Arrays.asList(
+        TestRecord.fields().id(), TestRecord.fields().message())));
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
 
@@ -1409,20 +1409,20 @@ public class TestClientBuilders
   @Test
   public void testRestliRequestOptionsDefault()
   {
-    GetRequestBuilder<Long, TestRecord> builder = new GetRequestBuilder<Long, TestRecord>(TEST_URI,
-                                                                                          TestRecord.class,
-                                                                                          _COLL_SPEC,
-                                                                                          RestliRequestOptions.DEFAULT_OPTIONS);
+    GetRequestBuilder<Long, TestRecord> builder = new GetRequestBuilder<>(TEST_URI,
+        TestRecord.class,
+        _COLL_SPEC,
+        RestliRequestOptions.DEFAULT_OPTIONS);
     Assert.assertEquals(builder.id(1L).build().getRequestOptions(), RestliRequestOptions.DEFAULT_OPTIONS);
   }
 
   @Test
   public void testRestliRequestOptionsOverride()
   {
-    GetRequestBuilder<Long, TestRecord> builder = new GetRequestBuilder<Long, TestRecord>(TEST_URI,
-                                                                                          TestRecord.class,
-                                                                                          _COLL_SPEC,
-                                                                                          RestliRequestOptions.DEFAULT_OPTIONS);
+    GetRequestBuilder<Long, TestRecord> builder = new GetRequestBuilder<>(TEST_URI,
+        TestRecord.class,
+        _COLL_SPEC,
+        RestliRequestOptions.DEFAULT_OPTIONS);
     RestliRequestOptions overrideOptions =
         new RestliRequestOptionsBuilder().setProtocolVersionOption(ProtocolVersionOption.FORCE_USE_NEXT).build();
     Assert.assertEquals(builder.id(1L).setRequestOptions(overrideOptions).build().getRequestOptions(), overrideOptions);
@@ -1449,7 +1449,7 @@ public class TestClientBuilders
     //"test?fields=message,id"
     //"test?fields=message,id"
 
-    final Set<String> fieldSet = new HashSet<String>();
+    final Set<String> fieldSet = new HashSet<>();
     fieldSet.add("message");
     fieldSet.add("id");
 
@@ -1468,14 +1468,14 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "getOnKeyless")
   public void testGetRequestBuilderWithKeylessResource(URIDetails expectedURIDetails)
   {
-    GetRequestBuilder<Void, TestRecord> builder = new GetRequestBuilder<Void, TestRecord>(TEST_URI,
-                                                                                          TestRecord.class,
-                                                                                          _SIMPLE_RESOURCE_SPEC,
-                                                                                          RestliRequestOptions.DEFAULT_OPTIONS);
+    GetRequestBuilder<Void, TestRecord> builder = new GetRequestBuilder<>(TEST_URI,
+        TestRecord.class,
+        _SIMPLE_RESOURCE_SPEC,
+        RestliRequestOptions.DEFAULT_OPTIONS);
     GetRequest<TestRecord> request = builder.fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
     Assert.assertEquals(request.getObjectId(), null);
-    Assert.assertEquals(request.getFields(), new HashSet<PathSpec>(Arrays.asList(
+    Assert.assertEquals(request.getFields(), new HashSet<>(Arrays.asList(
         TestRecord.fields().id(), TestRecord.fields().message())));
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
@@ -1495,7 +1495,7 @@ public class TestClientBuilders
     //"test/1?arrayKey1=3&arrayKey1=4&arrayKey1=5&arrayKey2=3&arrayKey2=4&arrayKey2=5&simpleKey=2"
     //"test/1?arrayKey1=List(3,4,5)&arrayKey2=List(3,4,5)&simpleKey=2"
 
-    final Map<String, Object> queryParamsMap = new HashMap<String, Object>();
+    final Map<String, Object> queryParamsMap = new HashMap<>();
     queryParamsMap.put("simpleKey", "2");
     final DataList arrayKey1List = new DataList();
     arrayKey1List.add("3");
@@ -1523,10 +1523,10 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "builderParam")
   public void testBuilderParam(URIDetails expectedURIDetails)
   {
-    final GetRequestBuilder<Long, TestRecord> builder = new GetRequestBuilder<Long, TestRecord>(TEST_URI,
-                                                                                                TestRecord.class,
-                                                                                                _COLL_SPEC,
-                                                                                                RestliRequestOptions.DEFAULT_OPTIONS);
+    final GetRequestBuilder<Long, TestRecord> builder = new GetRequestBuilder<>(TEST_URI,
+        TestRecord.class,
+        _COLL_SPEC,
+        RestliRequestOptions.DEFAULT_OPTIONS);
     final Collection<Integer> coll = Arrays.asList(3, 4, 5);
     final IntegerArray array = new IntegerArray(coll);
     final GetRequest<TestRecord> request = builder
@@ -1542,10 +1542,10 @@ public class TestClientBuilders
   public void testPartialUpdateRequestBuilder(URIDetails expectedURIDetails) throws Exception
   {
     PartialUpdateRequestBuilder<Long, TestRecord> builder =
-        new PartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI,
-                                           TestRecord.class,
-                                           _COLL_SPEC,
-                                           RestliRequestOptions.DEFAULT_OPTIONS);
+        new PartialUpdateRequestBuilder<>(TEST_URI,
+            TestRecord.class,
+            _COLL_SPEC,
+            RestliRequestOptions.DEFAULT_OPTIONS);
     TestRecord t1 = new TestRecord();
     TestRecord t2 = new TestRecord(t1.data().copy());
     t2.setId(1L);
@@ -1569,10 +1569,10 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
   public void testPartialUpdateRequestBuilderWithKeylessResource(URIDetails expectedURIDetails) throws Exception
   {
-    PartialUpdateRequestBuilder<Long, TestRecord> builder = new PartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI,
-                                                                                                              TestRecord.class,
-                                                                                                              _SIMPLE_RESOURCE_SPEC,
-                                                                                                              RestliRequestOptions.DEFAULT_OPTIONS);
+    PartialUpdateRequestBuilder<Long, TestRecord> builder = new PartialUpdateRequestBuilder<>(TEST_URI,
+        TestRecord.class,
+        _SIMPLE_RESOURCE_SPEC,
+        RestliRequestOptions.DEFAULT_OPTIONS);
     TestRecord t1 = new TestRecord();
     TestRecord t2 = new TestRecord(t1.data().copy());
     t2.setId(1L);
@@ -1593,10 +1593,10 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "singleEntity")
   public void testUpdateRequestBuilder(URIDetails expectedURIDetails)
   {
-    UpdateRequestBuilder<Long, TestRecord> builder = new UpdateRequestBuilder<Long, TestRecord>(TEST_URI,
-                                                                                                TestRecord.class,
-                                                                                                _COLL_SPEC,
-                                                                                                RestliRequestOptions.DEFAULT_OPTIONS);
+    UpdateRequestBuilder<Long, TestRecord> builder = new UpdateRequestBuilder<>(TEST_URI,
+        TestRecord.class,
+        _COLL_SPEC,
+        RestliRequestOptions.DEFAULT_OPTIONS);
     UpdateRequest<TestRecord> request = builder.id(1L).input(new TestRecord())
         .appendSingleAttachment(_dataSourceWriterA)
         .appendMultipleAttachments(_dataSourceIterator)
@@ -1616,10 +1616,10 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "noEntity")
   public void testUpdateRequestBuilderWithKeylessResource(URIDetails expectedURIDetails)
   {
-    UpdateRequestBuilder<Void, TestRecord> builder = new UpdateRequestBuilder<Void, TestRecord>(TEST_URI,
-                                                                                                TestRecord.class,
-                                                                                                _SIMPLE_RESOURCE_SPEC,
-                                                                                                RestliRequestOptions.DEFAULT_OPTIONS);
+    UpdateRequestBuilder<Void, TestRecord> builder = new UpdateRequestBuilder<>(TEST_URI,
+        TestRecord.class,
+        _SIMPLE_RESOURCE_SPEC,
+        RestliRequestOptions.DEFAULT_OPTIONS);
     UpdateRequest<TestRecord> request = builder.input(new TestRecord()).build();
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
@@ -1642,7 +1642,7 @@ public class TestClientBuilders
     final DataMap idMessageMap = new DataMap();
     idMessageMap.put("id", "123");
     idMessageMap.put("message", "ParamMessage");
-    final Map<String, DataComplex> queryParamsMap = new HashMap<String, DataComplex>();
+    final Map<String, DataComplex> queryParamsMap = new HashMap<>();
     queryParamsMap.put("testParam", idMessageMap);
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -1661,10 +1661,10 @@ public class TestClientBuilders
   public void testComplexKeyGetRequestBuilder(URIDetails expectedURIDetails) throws Exception
   {
     GetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
-        new GetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(TEST_URI,
-                                                                                      TestRecord.class,
-                                                                                      _COMPLEX_KEY_SPEC,
-                                                                                      RestliRequestOptions.DEFAULT_OPTIONS);
+        new GetRequestBuilder<>(TEST_URI,
+            TestRecord.class,
+            _COMPLEX_KEY_SPEC,
+            RestliRequestOptions.DEFAULT_OPTIONS);
     ComplexResourceKey<TestRecord, TestRecord> id =
         buildComplexKey(1L, "KeyMessage", 10L, "ParamMessage");
     RecordTemplate param1 = buildComplexParam(123, "ParamMessage");
@@ -1684,10 +1684,10 @@ public class TestClientBuilders
   public void testComplexKeyDeleteRequestBuilder(URIDetails expectedURIDetails) throws Exception
   {
     DeleteRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
-        new DeleteRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(TEST_URI,
-                                                                                         TestRecord.class,
-                                                                                         _COMPLEX_KEY_SPEC,
-                                                                                         RestliRequestOptions.DEFAULT_OPTIONS);
+        new DeleteRequestBuilder<>(TEST_URI,
+            TestRecord.class,
+            _COMPLEX_KEY_SPEC,
+            RestliRequestOptions.DEFAULT_OPTIONS);
     ComplexResourceKey<TestRecord, TestRecord> id =
         buildComplexKey(1L, "KeyMessage", 10L, "ParamMessage");
     RecordTemplate param = buildComplexParam(123, "ParamMessage");
@@ -1713,10 +1713,10 @@ public class TestClientBuilders
     final DataMap idMessageMap = new DataMap();
     idMessageMap.put("id", "123");
     idMessageMap.put("message", "ParamMessage");
-    final Map<String, DataComplex> queryParamsMap = new HashMap<String, DataComplex>();
+    final Map<String, DataComplex> queryParamsMap = new HashMap<>();
     queryParamsMap.put("testParam", idMessageMap);
 
-    final Set<DataMap> idList = new HashSet<DataMap>();
+    final Set<DataMap> idList = new HashSet<>();
     final DataMap idMapOne = new DataMap();
     idMapOne.put("id", "1");
     idMapOne.put("message", "KeyMessage1");
@@ -1750,7 +1750,7 @@ public class TestClientBuilders
   public void testComplexKeyBatchGetRequestBuilder(URIDetails expectedURIDetails) throws Exception
   {
     BatchGetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
-        new BatchGetRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(TEST_URI,
+        new BatchGetRequestBuilder<>(TEST_URI,
             TestRecord.class,
             _COMPLEX_KEY_SPEC,
             RestliRequestOptions.DEFAULT_OPTIONS);
@@ -1777,10 +1777,10 @@ public class TestClientBuilders
   public void testComplexKeyBatchUpdateRequestBuilder(URIDetails expectedURIDetails) throws Exception
   {
     BatchUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
-        new BatchUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(TEST_URI,
-                                         TestRecord.class,
-                                         _COMPLEX_KEY_SPEC,
-                                         RestliRequestOptions.DEFAULT_OPTIONS);
+        new BatchUpdateRequestBuilder<>(TEST_URI,
+            TestRecord.class,
+            _COMPLEX_KEY_SPEC,
+            RestliRequestOptions.DEFAULT_OPTIONS);
     ComplexResourceKey<TestRecord, TestRecord> id1 =
         buildComplexKey(1L, "KeyMessage1", 10L, "ParamMessage1");
     ComplexResourceKey<TestRecord, TestRecord> id2 =
@@ -1793,7 +1793,7 @@ public class TestClientBuilders
         builder.input(id1, t1).input(id2, t2).setParam("testParam", param).build();
 
     // using toStringFull (which is deprecated) because this is only used to check v1
-    BatchRequest<TestRecord> expectedRequest = new BatchRequest<TestRecord>(new DataMap(), TestRecord.class);
+    BatchRequest<TestRecord> expectedRequest = new BatchRequest<>(new DataMap(), TestRecord.class);
     expectedRequest.getEntities().put(toEntityKey(id1, expectedURIDetails.getProtocolVersion()), t1);
     expectedRequest.getEntities().put(toEntityKey(id2, expectedURIDetails.getProtocolVersion()), t2);
 
@@ -1803,11 +1803,11 @@ public class TestClientBuilders
 
     @SuppressWarnings({"unchecked","rawtypes"})
     KeyValueRecordFactory<ComplexResourceKey, TestRecord> factory =
-        new KeyValueRecordFactory<ComplexResourceKey, TestRecord>(ComplexResourceKey.class,
-                                                                  TestRecord.class,
-                                                                  TestRecord.class,
-                                                                  null,
-                                                                  TestRecord.class);
+        new KeyValueRecordFactory<>(ComplexResourceKey.class,
+            TestRecord.class,
+            TestRecord.class,
+            null,
+            TestRecord.class);
     @SuppressWarnings({"unchecked","rawtypes"})
     CollectionRequest<KeyValueRecord> collectionRequest = buildCollectionRequest(factory,
                                                                                  new ComplexResourceKey[]{id1, id2},
@@ -1827,10 +1827,10 @@ public class TestClientBuilders
   public void testBatchUpdateRequestInputIsReadOnly()
   {
     BatchUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
-        new BatchUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(TEST_URI,
-                                         TestRecord.class,
-                                         _COMPLEX_KEY_SPEC,
-                                         RestliRequestOptions.DEFAULT_OPTIONS);
+        new BatchUpdateRequestBuilder<>(TEST_URI,
+            TestRecord.class,
+            _COMPLEX_KEY_SPEC,
+            RestliRequestOptions.DEFAULT_OPTIONS);
     ComplexResourceKey<TestRecord, TestRecord> id1 =
         buildComplexKey(1L, "KeyMessage1", 10L, "ParamMessage1");
     ComplexResourceKey<TestRecord, TestRecord> id2 =
@@ -2006,10 +2006,10 @@ public class TestClientBuilders
   public void testComplexKeyUpdateRequestBuilder(URIDetails expectedURIDetails)
   {
     UpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
-        new UpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(TEST_URI,
-                                                                                         TestRecord.class,
-                                                                                         _COMPLEX_KEY_SPEC,
-                                                                                         RestliRequestOptions.DEFAULT_OPTIONS);
+        new UpdateRequestBuilder<>(TEST_URI,
+            TestRecord.class,
+            _COMPLEX_KEY_SPEC,
+            RestliRequestOptions.DEFAULT_OPTIONS);
     ComplexResourceKey<TestRecord, TestRecord> key = buildComplexKey(1L, "keyMessage", 2L, "paramMessage");
 
     UpdateRequest<TestRecord> request = builder.id(key).input(new TestRecord()).build();
@@ -2029,10 +2029,10 @@ public class TestClientBuilders
   public void testComplexKeyCreateRequestBuilder(URIDetails expectedURIDetails)
   {
     CreateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
-        new CreateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(TEST_URI,
-                                                                                         TestRecord.class,
-                                                                                         _COMPLEX_KEY_SPEC,
-                                                                                         RestliRequestOptions.DEFAULT_OPTIONS);
+        new CreateRequestBuilder<>(TEST_URI,
+            TestRecord.class,
+            _COMPLEX_KEY_SPEC,
+            RestliRequestOptions.DEFAULT_OPTIONS);
     CreateRequest<TestRecord> request = builder.input(new TestRecord()).build();
 
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
@@ -2053,7 +2053,7 @@ public class TestClientBuilders
     //"test?ids%5B0%5D.$params.id=2&ids%5B0%5D.$params.message=paramMessage1&ids%5B0%5D.id=1&ids%5B0%5D.message=keyMessage1&ids%5B1%5D.$params.id=4&ids%5B1%5D.$params.message=paramMessage2&ids%5B1%5D.id=3&ids%5B1%5D.message=keyMessage2"
     //"test?ids=List(($params:(id:2,message:paramMessage1),id:1,message:keyMessage1),($params:(id:4,message:paramMessage2),id:3,message:keyMessage2))"
 
-    final Set<DataMap> idList = new HashSet<DataMap>();
+    final Set<DataMap> idList = new HashSet<>();
     final DataMap idMapOne = new DataMap();
     idMapOne.put("id", "1");
     idMapOne.put("message", "keyMessage1");
@@ -2088,12 +2088,12 @@ public class TestClientBuilders
   public void testComplexKeyBatchPartialUpdateRequestBuilder(URIDetails expectedURIDetails)
   {
     BatchPartialUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
-        new BatchPartialUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(TEST_URI,
-                                                                                                     TestRecord.class,
-                                                                                                     _COMPLEX_KEY_SPEC,
-                                                                                                     RestliRequestOptions.DEFAULT_OPTIONS);
+        new BatchPartialUpdateRequestBuilder<>(TEST_URI,
+            TestRecord.class,
+            _COMPLEX_KEY_SPEC,
+            RestliRequestOptions.DEFAULT_OPTIONS);
     Map<ComplexResourceKey<TestRecord, TestRecord>, PatchRequest<TestRecord>> inputs =
-        new HashMap<ComplexResourceKey<TestRecord, TestRecord>, PatchRequest<TestRecord>>();
+        new HashMap<>();
     ComplexResourceKey<TestRecord, TestRecord> key1 = buildComplexKey(1L, "keyMessage1", 2L, "paramMessage1");
     ComplexResourceKey<TestRecord, TestRecord> key2 = buildComplexKey(3L, "keyMessage2", 4L, "paramMessage2");
     TestRecord t1 = new TestRecord().setId(1L);
@@ -2119,11 +2119,11 @@ public class TestClientBuilders
 
     @SuppressWarnings({"unchecked","rawtypes"})
     KeyValueRecordFactory<ComplexResourceKey, PatchRequest> factory =
-        new KeyValueRecordFactory<ComplexResourceKey, PatchRequest>(ComplexResourceKey.class,
-                                                                    TestRecord.class,
-                                                                    TestRecord.class,
-                                                                    null,
-                                                                    PatchRequest.class);
+        new KeyValueRecordFactory<>(ComplexResourceKey.class,
+            TestRecord.class,
+            TestRecord.class,
+            null,
+            PatchRequest.class);
     @SuppressWarnings({"unchecked","rawtypes"})
     CollectionRequest<KeyValueRecord> collectionRequest = buildCollectionRequest(factory,
                                                                                  new ComplexResourceKey[]{key1, key2},
@@ -2143,7 +2143,7 @@ public class TestClientBuilders
   public void testBatchPartialUpdateRequestInputIsReadOnly()
   {
     BatchPartialUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
-        new BatchPartialUpdateRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord>(
+        new BatchPartialUpdateRequestBuilder<>(
             TEST_URI,
             TestRecord.class,
             _COMPLEX_KEY_SPEC,
@@ -2185,7 +2185,7 @@ public class TestClientBuilders
     //"foo/1/bar/2/baz?action=action"
     //"foo/1/bar/2/baz?action=action"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("action", "action");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -2203,18 +2203,18 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceAction1")
   public void testBuilderPathKeys1(URIDetails expectedURIDetails)
   {
-    List<FieldDef<?>> fieldDefs = new ArrayList<FieldDef<?>>();
-    fieldDefs.add(new FieldDef<Integer>("key1", Integer.class, DataTemplateUtil.getSchema(Integer.class)));
-    fieldDefs.add(new FieldDef<Integer>("key2", Integer.class, DataTemplateUtil.getSchema(Integer.class)));
+    List<FieldDef<?>> fieldDefs = new ArrayList<>();
+    fieldDefs.add(new FieldDef<>("key1", Integer.class, DataTemplateUtil.getSchema(Integer.class)));
+    fieldDefs.add(new FieldDef<>("key2", Integer.class, DataTemplateUtil.getSchema(Integer.class)));
     DynamicRecordMetadata requestMetadata = new DynamicRecordMetadata("action", fieldDefs);
-    Map<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+    Map<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<>();
     requestMetadataMap.put("action", requestMetadata);
     DynamicRecordMetadata responseMetadata = new DynamicRecordMetadata("action", Collections.<FieldDef<?>>emptyList());
-    Map<String, DynamicRecordMetadata> responseMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+    Map<String, DynamicRecordMetadata> responseMetadataMap = new HashMap<>();
     responseMetadataMap.put("action", responseMetadata);
     ResourceSpec resourceSpec = getResourceSpecForBuilderPathKeys();
 
-    Map<String, Integer> expectedPathKeys = new HashMap<String, Integer>();
+    Map<String, Integer> expectedPathKeys = new HashMap<>();
     expectedPathKeys.put("key1", 1);
     expectedPathKeys.put("key2", 2);
 
@@ -2232,7 +2232,7 @@ public class TestClientBuilders
     //"foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar/http%3A%2F%2Fexample.com%2Fimages%2F2.png/baz?action=action"
     //"foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar/http%3A%2F%2Fexample.com%2Fimages%2F2.png/baz?action=action"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("action", "action");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -2257,7 +2257,7 @@ public class TestClientBuilders
       .name("action").pathKey("key1", "http://example.com/images/1.png").pathKey("key2", "http://example.com/images/2.png").build();
     URIDetails.testUriGeneration(request, expectedURIDetails);
 
-    Map<String, String> pathKeys1 = new HashMap<String, String>();
+    Map<String, String> pathKeys1 = new HashMap<>();
     pathKeys1.put("key1", "http://example.com/images/1.png");
     pathKeys1.put("key2", "http://example.com/images/2.png");
     testPathKeys(request, SUBRESOURCE_URI, pathKeys1);
@@ -2270,7 +2270,7 @@ public class TestClientBuilders
     //"foo/1/bar/2/baz?ids=1&ids=2"
     //"foo/1/bar/2/baz?ids=List(1,2)"
 
-    final Set<String> idSet = new HashSet<String>();
+    final Set<String> idSet = new HashSet<>();
     idSet.add("1");
     idSet.add("2");
 
@@ -2289,7 +2289,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceBatch")
   public void testBuilderPathKeys3(URIDetails expectedURIDetails)
   {
-    Map<String, Integer> expectedPathKeys = new HashMap<String, Integer>();
+    Map<String, Integer> expectedPathKeys = new HashMap<>();
     expectedPathKeys.put("key1", 1);
     expectedPathKeys.put("key2", 2);
 
@@ -2321,7 +2321,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceNoEntity")
   public void testBuilderPathKeys4(URIDetails expectedURIDetails)
   {
-    Map<String, Integer> expectedPathKeys = new HashMap<String, Integer>();
+    Map<String, Integer> expectedPathKeys = new HashMap<>();
     expectedPathKeys.put("key1", 1);
     expectedPathKeys.put("key2", 2);
 
@@ -2352,7 +2352,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceSingleEntity")
   public void testBuilderPathKeys5(URIDetails expectedURIDetails)
   {
-    Map<String, Integer> expectedPathKeys = new HashMap<String, Integer>();
+    Map<String, Integer> expectedPathKeys = new HashMap<>();
     expectedPathKeys.put("key1", 1);
     expectedPathKeys.put("key2", 2);
 
@@ -2365,7 +2365,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceNoEntity")
   public void testBuilderPathKeys6(URIDetails expectedURIDetails)
   {
-    Map<String, Integer> expectedPathKeys = new HashMap<String, Integer>();
+    Map<String, Integer> expectedPathKeys = new HashMap<>();
     expectedPathKeys.put("key1", 1);
     expectedPathKeys.put("key2", 2);
 
@@ -2378,7 +2378,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceSingleEntity")
   public void testBuilderPathKeys7(URIDetails expectedURIDetails)
   {
-    Map<String, Integer> expectedPathKeys = new HashMap<String, Integer>();
+    Map<String, Integer> expectedPathKeys = new HashMap<>();
     expectedPathKeys.put("key1", 1);
     expectedPathKeys.put("key2", 2);
 
@@ -2391,7 +2391,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceSingleEntity")
   public void testBuilderPathKeys8(URIDetails expectedURIDetails)
   {
-    Map<String, Integer> expectedPathKeys = new HashMap<String, Integer>();
+    Map<String, Integer> expectedPathKeys = new HashMap<>();
     expectedPathKeys.put("key1", 1);
     expectedPathKeys.put("key2", 2);
 
@@ -2404,7 +2404,7 @@ public class TestClientBuilders
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "subSubResourceSingleEntity")
   public void testBuilderPathKeys9(URIDetails expectedURIDetails)
   {
-    Map<String, Integer> expectedPathKeys = new HashMap<String, Integer>();
+    Map<String, Integer> expectedPathKeys = new HashMap<>();
     expectedPathKeys.put("key1", 1);
     expectedPathKeys.put("key2", 2);
 
@@ -2421,7 +2421,7 @@ public class TestClientBuilders
     //"foo/bar/1/baz?action=action"
     //"foo/bar/1/baz?action=action"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("action", "action");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/bar/1/baz",
@@ -2456,7 +2456,7 @@ public class TestClientBuilders
     //"foo/bar/http%3A%2F%2Fexample.com%2Fimages%2F1.png/baz?action=action"
     //"foo/bar/http%3A%2F%2Fexample.com%2Fimages%2F1.png/baz?action=action"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("action", "action");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -2493,7 +2493,7 @@ public class TestClientBuilders
     //"foo/bar/1/baz?ids=1&ids=2"
     //"foo/bar/1/baz?ids=List(1,2)"
 
-    final Set<String> idSet = new HashSet<String>();
+    final Set<String> idSet = new HashSet<>();
     idSet.add("1");
     idSet.add("2");
 
@@ -2623,7 +2623,7 @@ public class TestClientBuilders
     //"foo/1/bar?action=action"
     //"foo/1/bar?action=action"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("action", "action");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "foo/1/bar",
@@ -2657,7 +2657,7 @@ public class TestClientBuilders
     //"foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar?action=action"
     //"foo/http%3A%2F%2Fexample.com%2Fimages%2F1.png/bar?action=action"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("action", "action");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -2738,15 +2738,15 @@ public class TestClientBuilders
 
   private ResourceSpec getResourceSpecForBuilderPathKeys()
   {
-    List<FieldDef<?>> fieldDefs = new ArrayList<FieldDef<?>>();
-    fieldDefs.add(new FieldDef<Integer>("key1", Integer.class, DataTemplateUtil.getSchema(
-      Integer.class)));
-    fieldDefs.add(new FieldDef<Integer>("key2", Integer.class, DataTemplateUtil.getSchema(Integer.class)));
+    List<FieldDef<?>> fieldDefs = new ArrayList<>();
+    fieldDefs.add(new FieldDef<>("key1", Integer.class, DataTemplateUtil.getSchema(
+        Integer.class)));
+    fieldDefs.add(new FieldDef<>("key2", Integer.class, DataTemplateUtil.getSchema(Integer.class)));
     DynamicRecordMetadata requestMetadata = new DynamicRecordMetadata("action", fieldDefs);
-    Map<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+    Map<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<>();
     requestMetadataMap.put("action", requestMetadata);
     DynamicRecordMetadata responseMetadata = new DynamicRecordMetadata("action", Collections.<FieldDef<?>>emptyList());
-    Map<String, DynamicRecordMetadata> responseMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+    Map<String, DynamicRecordMetadata> responseMetadataMap = new HashMap<>();
     responseMetadataMap.put("action", responseMetadata);
     return new ResourceSpecImpl(Collections.<ResourceMethod>emptySet(), requestMetadataMap, responseMetadataMap);
   }
@@ -2758,7 +2758,7 @@ public class TestClientBuilders
     //"test?foo=bar"
     //"test?foo=bar"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("foo", "bar");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test",
@@ -2788,7 +2788,7 @@ public class TestClientBuilders
     //"test/3?foo=bar"
     //"test/3?foo=bar"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("foo", "bar");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/3",
@@ -2850,11 +2850,11 @@ public class TestClientBuilders
     //"test?foo=bar&ids=1&ids=2"
     //"test?foo=bar&ids=List(1,2)"
 
-    final Set<String> idSet = new HashSet<String>();
+    final Set<String> idSet = new HashSet<>();
     idSet.add("1");
     idSet.add("2");
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("foo", "bar");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test",
@@ -2899,10 +2899,10 @@ public class TestClientBuilders
     //"test?foo=bar&ids=1"
     //"test?foo=bar&ids=List(1)"
 
-    final Set<String> idSet = new HashSet<String>();
+    final Set<String> idSet = new HashSet<>();
     idSet.add("1");
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("foo", "bar");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test",
@@ -2929,7 +2929,7 @@ public class TestClientBuilders
   public void testCrudBuilderParams11(URIDetails expectedURIDetails)
   {
     Request<BatchKVResponse<Long, UpdateStatus>> request = new BatchPartialUpdateRequestBuilder<Long, TestRecord>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS)
-        .input(1L, new PatchRequest<TestRecord>()).setParam("foo", "bar").build();
+        .input(1L, new PatchRequest<>()).setParam("foo", "bar").build();
     URIDetails.testUriGeneration(request, expectedURIDetails);
   }
 
@@ -2965,7 +2965,7 @@ public class TestClientBuilders
     //"test/3?foo=bar%26baz%3Dqux"
     //"test/3?foo=bar%26baz%3Dqux"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("foo", "bar&baz=qux");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/3",
@@ -2995,7 +2995,7 @@ public class TestClientBuilders
     //"test/3?foo%26bar%3Dbaz=qux"
     //"test/3?foo%26bar%3Dbaz=qux"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("foo&bar=baz", "qux");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/3",
@@ -3025,7 +3025,7 @@ public class TestClientBuilders
     //"test/3?foo/bar=baz/qux"
     //"test/3?foo/bar=baz/qux"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("foo/bar", "baz/qux");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/3",
@@ -3055,7 +3055,7 @@ public class TestClientBuilders
     //"test/3?foo:bar=baz:qux"
     //"test/3?foo%3Abar=baz%3Aqux"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("foo:bar", "baz:qux");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/3",
@@ -3085,7 +3085,7 @@ public class TestClientBuilders
     //"test/3?foo?bar=baz?qux"
     //"test/3?foo?bar=baz?qux"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("foo?bar", "baz?qux");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "test/3",
@@ -3182,8 +3182,8 @@ public class TestClientBuilders
   private ComplexResourceKey<TestRecord, TestRecord> buildComplexKey(long keyId, String keyMessage, long paramId, String paramMessage)
   {
     ComplexResourceKey<TestRecord, TestRecord> id =
-      new ComplexResourceKey<TestRecord, TestRecord>(new TestRecord(),
-                                                     new TestRecord());
+        new ComplexResourceKey<>(new TestRecord(),
+            new TestRecord());
     id.getKey().setId(keyId);
     id.getKey().setMessage(keyMessage);
     id.getParams().setId(paramId);
@@ -3339,7 +3339,7 @@ public class TestClientBuilders
         }
       });
 
-      final List<Object> keysToEdit = new ArrayList<Object>();
+      final List<Object> keysToEdit = new ArrayList<>();
       for (Object key: pathKeys.values())
       {
         if (key instanceof CompoundKey || key instanceof ComplexResourceKey)
@@ -3372,7 +3372,7 @@ public class TestClientBuilders
       }
 
       Collection<Object> queryParamObjects = request.getQueryParamsObjects().values();
-      List<Object> readOnlyTargets = new ArrayList<Object>();
+      List<Object> readOnlyTargets = new ArrayList<>();
 
       for (Object queryParamObject: queryParamObjects)
       {
@@ -3496,7 +3496,7 @@ public class TestClientBuilders
   {
     final TypeSpec<? extends RecordTemplate> valueType =
         request.getMethod() == ResourceMethod.BATCH_PARTIAL_UPDATE ?
-          new TypeSpec<PatchRequest>(PatchRequest.class) :
+            new TypeSpec<>(PatchRequest.class) :
           request.getResourceProperties().getValueType();
 
     Assert.assertEquals(
@@ -3519,7 +3519,7 @@ public class TestClientBuilders
                                                                                                  V[] values)
   {
     CollectionRequest<KeyValueRecord> collectionRequest =
-        new CollectionRequest<KeyValueRecord>(new DataMap(), KeyValueRecord.class);
+        new CollectionRequest<>(new DataMap(), KeyValueRecord.class);
     for (int i = 0; i < keys.length; i++)
     {
       collectionRequest.getElements().add(factory.create(keys[i], values[i]));

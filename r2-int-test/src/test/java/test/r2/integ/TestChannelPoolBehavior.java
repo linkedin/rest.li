@@ -75,14 +75,14 @@ public class TestChannelPoolBehavior
   public void tearDown() throws Exception
   {
 
-    final FutureCallback<None> client1ShutdownCallback = new FutureCallback<None>();
+    final FutureCallback<None> client1ShutdownCallback = new FutureCallback<>();
     _client1.shutdown(client1ShutdownCallback);
     client1ShutdownCallback.get();
-    final FutureCallback<None> client2ShutdownCallback = new FutureCallback<None>();
+    final FutureCallback<None> client2ShutdownCallback = new FutureCallback<>();
     _client2.shutdown(client2ShutdownCallback);
     client2ShutdownCallback.get();
 
-    final FutureCallback<None> factoryShutdownCallback = new FutureCallback<None>();
+    final FutureCallback<None> factoryShutdownCallback = new FutureCallback<>();
     _clientFactory.shutdown(factoryShutdownCallback);
     factoryShutdownCallback.get();
 
@@ -165,7 +165,7 @@ public class TestChannelPoolBehavior
 
   private Map<String, String> getClientProperties()
   {
-    Map<String, String> clientProperties = new HashMap<String, String>();
+    Map<String, String> clientProperties = new HashMap<>();
     clientProperties.put(HttpClientFactory.HTTP_POOL_SIZE, "1");
     clientProperties.put(HttpClientFactory.HTTP_POOL_MIN_SIZE, "1");
     return clientProperties;

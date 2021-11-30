@@ -140,7 +140,7 @@ public class TestURIMaskUtil
 
   private List<String> getTopLevelFileds(String s)
   {
-    List<String> tlf = new ArrayList<String>();
+    List<String> tlf = new ArrayList<>();
     int i = 0;
     int openingBrackets = 0;
     int closingBrackets = 0;

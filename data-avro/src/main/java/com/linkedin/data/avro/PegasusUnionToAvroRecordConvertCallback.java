@@ -14,7 +14,6 @@ import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,15 +36,13 @@ class PegasusUnionToAvroRecordConvertCallback implements DataSchemaTraverse.Call
   private static final char CASE_MASK = 0x20;
 
   private final DataToAvroSchemaTranslationOptions _options;
-  private final IdentityHashMap<RecordDataSchema.Field, FieldOverride> _schemaOverrides;
 
-  PegasusUnionToAvroRecordConvertCallback(DataToAvroSchemaTranslationOptions options,
-      IdentityHashMap<RecordDataSchema.Field, FieldOverride> schemaOverrides)
+  PegasusUnionToAvroRecordConvertCallback(DataToAvroSchemaTranslationOptions options)
   {
     _options = options;
-    _schemaOverrides = schemaOverrides;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public void callback(List<String> path, DataSchema schema)
   {
@@ -66,6 +63,9 @@ class PegasusUnionToAvroRecordConvertCallback implements DataSchemaTraverse.Call
     {
       DataSchema fieldSchema = field.getType().getDereferencedDataSchema();
 
+      Map<String, Object> propagatedProperties =
+          (Map<String, Object>) SchemaToAvroJsonEncoder.produceFieldProperties(field, _options);
+
       // The conversion from Pegasus union type to an Avro record is performed when the union appears as either the
       // field's direct type or when the field's type is an array or a map whose (nested) elements is of union type.
       // This conversion ignores the default value when specified on an array or map typed field. Since the elements in
@@ -78,7 +78,7 @@ class PegasusUnionToAvroRecordConvertCallback implements DataSchemaTraverse.Call
 
       if (modifiedSchema != null)
       {
-        overrideUnionFieldSchemaAndDefault(field, modifiedSchema, modifiedDefaultValue);
+        overrideUnionFieldSchemaAndDefault(field, modifiedSchema, modifiedDefaultValue, propagatedProperties);
       }
     }
   }
@@ -182,18 +182,14 @@ class PegasusUnionToAvroRecordConvertCallback implements DataSchemaTraverse.Call
    * @param field Reference to the field whose schema and default value is being overridden
    * @param modifiedSchema The override schema to use for the specified field
    * @param modifiedDefaultValue The override default value to use for the specified field
+   * @param propagatedProperties The properties value to use for the specified field
    */
   private void overrideUnionFieldSchemaAndDefault(RecordDataSchema.Field field,
-      DataSchema modifiedSchema, Object modifiedDefaultValue)
+      DataSchema modifiedSchema, Object modifiedDefaultValue, Map<String, Object> propagatedProperties)
   {
-    // Stash the field's original type and default value, so that we can use this for reverting them back after
-    // the schema translation is complete. This is because we don't want the input schema to have any modifications
-    // when the control goes back to the caller.
-    FieldOverride fieldSchemaOverride = new FieldOverride(field.getType(), field.getDefault());
-    _schemaOverrides.put(field, fieldSchemaOverride);
-
     field.setType(modifiedSchema);
     field.setDefault(modifiedDefaultValue);
+    field.setProperties(propagatedProperties);
   }
 
   /**
@@ -255,6 +251,7 @@ class PegasusUnionToAvroRecordConvertCallback implements DataSchemaTraverse.Call
     fields.add(discriminatorField);
 
     recordDataSchema.setFields(fields, errorMessageBuilder);
+    recordDataSchema.setProperties(unionDataSchema.getProperties());
     return  recordDataSchema;
   }
 

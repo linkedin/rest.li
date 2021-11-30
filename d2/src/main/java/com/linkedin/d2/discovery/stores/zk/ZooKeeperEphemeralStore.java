@@ -279,7 +279,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 
   public void removePartial(String listenTo, T discoveryProperties) throws PropertyStoreException
   {
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     removePartial(listenTo, discoveryProperties, callback);
     getUninterruptibly(callback);
   }
@@ -290,10 +290,10 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 
     trace(_log, "remove partial ", prop, ": ", value);
 
-    final Callback<Map<String,T>> childrenCallback = new Callback<Map<String,T>>()
+    final Callback<Map<String, T>> childrenCallback = new Callback<Map<String, T>>()
     {
       @Override
-      public void onSuccess(Map<String,T> children)
+      public void onSuccess(Map<String, T> children)
       {
         String delete = _merger.unmerge(prop, value, children);
 
@@ -388,10 +388,10 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     if (children.size() > 0)
     {
       _log.debug("getMergedChildren: collecting {}", children);
-      ChildCollector collector = new ChildCollector(children.size(), new CallbackAdapter<T,Map<String,T>>(callback)
+      ChildCollector collector = new ChildCollector(children.size(), new CallbackAdapter<T, Map<String, T>>(callback)
       {
         @Override
-        protected T convertResponse(Map<String,T> response) throws Exception
+        protected T convertResponse(Map<String, T> response) throws Exception
         {
           return _merger.merge(propertyName, response.values());
         }
@@ -858,7 +858,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     private ChildCollector(int count, Callback<Map<String,T>> callback)
     {
       _count = count;
-      _properties = new HashMap<String,T>(_count);
+      _properties = new HashMap<>(_count);
       _callback = callback;
     }
 

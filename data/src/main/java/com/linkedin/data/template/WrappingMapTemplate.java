@@ -18,6 +18,8 @@ package com.linkedin.data.template;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.DataMapBuilder;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.template.DataObjectToObjectCache;
@@ -47,9 +49,8 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
   protected WrappingMapTemplate(DataMap map, MapDataSchema schema, Class<V> valueClass)
       throws TemplateOutputCastException
   {
-    super(map, schema, valueClass, DataMap.class);
-    _constructor = DataTemplateUtil.templateConstructor(valueClass, schema.getValues());
-    _cache = new DataObjectToObjectCache<V>(data().size());
+    super(map, schema, valueClass, DataTemplateUtil.getDataClass(schema.getValues()));
+    _cache = new DataObjectToObjectCache<>(DataMapBuilder.getOptimumHashMapCapacityFromSize(map.size()));
     _entrySet = new EntrySet();
   }
 
@@ -94,9 +95,7 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
   @Override
   public V put(String key, V value) throws ClassCastException, TemplateOutputCastException
   {
-    Object unwrapped;
-    Object found = _map.put(key, unwrapped = unwrap(value));
-    _cache.put(unwrapped, value);
+    Object found = CheckedUtil.putWithoutChecking(_map, key, unwrap(value));
     return cacheLookup(found, null);
   }
 
@@ -130,7 +129,7 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
 
   private void initializeCopy()
   {
-    _cache = new DataObjectToObjectCache<V>(data().size());
+    _cache = new DataObjectToObjectCache<>(data().size());
     _entrySet = new EntrySet();
   }
 
@@ -168,13 +167,23 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
     }
     else if ((wrapped = _cache.get(value)) == null || wrapped.data() != value)
     {
-      wrapped = DataTemplateUtil.wrap(value, _constructor);
+      wrapped = coerceOutput(value);
       if (key != null)
       {
         _cache.put(value, wrapped);
       }
     }
     return wrapped;
+  }
+
+  protected V coerceOutput(Object value) throws TemplateOutputCastException
+  {
+    if (_constructor == null)
+    {
+      _constructor = DataTemplateUtil.templateConstructor(valueClass(), schema().getValues());
+    }
+
+    return DataTemplateUtil.wrap(value, _constructor);
   }
 
   protected class EntrySet extends AbstractMapTemplate<V>.AbstractEntrySet
@@ -189,12 +198,7 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
     {
       V value = entry.getValue();
       Object unwrapped = unwrap(value);
-      boolean added = _map.entrySet().add(new AbstractMap.SimpleEntry<String, Object>(entry.getKey(), unwrapped));
-      if (added)
-      {
-        _cache.put(unwrapped, value);
-      }
-      return added;
+      return _map.entrySet().add(new AbstractMap.SimpleEntry<>(entry.getKey(), unwrapped));
     }
 
     @Override
@@ -270,7 +274,7 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
           }
           Object unwrapped = (_valueClass.cast(value)).data();
           assert(unwrapped != value);
-          return new AbstractMap.SimpleImmutableEntry<String, Object>((String) key, unwrapped);
+          return new AbstractMap.SimpleImmutableEntry<>((String) key, unwrapped);
         }
       }
       return null;
@@ -278,7 +282,7 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
 
     protected Collection<Map.Entry<String, Object>> unwrapCollection(Collection<?> c)
     {
-      ArrayList<Map.Entry<String, Object>> unwrappedList = new ArrayList<Map.Entry<String, Object>>(c.size());
+      ArrayList<Map.Entry<String, Object>> unwrappedList = new ArrayList<>(c.size());
       for (Object entry : c)
       {
         Map.Entry<String, Object> unwrappedEntry = unwrapEntry(entry);
@@ -307,9 +311,7 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
         @Override
         public V setValue(V value) throws ClassCastException, TemplateOutputCastException
         {
-          Object unwrapped;
-          Object ret =_entry.setValue(unwrapped = unwrap(value));
-          _cache.put(unwrapped, value);
+          Object ret =_entry.setValue(unwrap(value));
           _value = null;
           return cacheLookup(ret, null);
         }
@@ -318,7 +320,7 @@ public abstract class WrappingMapTemplate<V extends DataTemplate<?>> extends Abs
 
   }
 
-  protected final Constructor<V> _constructor;
+  private Constructor<V> _constructor;
   protected EntrySet _entrySet;
   protected DataObjectToObjectCache<V> _cache;
 }

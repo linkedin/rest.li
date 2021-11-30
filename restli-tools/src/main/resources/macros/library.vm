@@ -1,0 +1,352 @@
+#*
+   Copyright (c) 2021 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*#
+#macro(parseMethodsFromTemplates)
+  ## Action methods
+  #parse("apiVmTemplates/action.vm")
+  ## CRUD methods
+  #foreach($method in $spec.restMethods)
+      #parse("apiVmTemplates/rest.${method.method}.vm")
+  #end
+  ## Finders
+  #foreach($finder in $spec.finders)
+    #parse("apiVmTemplates/finder.vm")
+  #end
+  ## Batch Finders
+  #foreach($finder in $spec.batchFinders)
+    #parse("apiVmTemplates/batch_finder.vm")
+  #end
+#end
+
+#macro(doc $doc)
+  #if($doc)
+  /**
+    #foreach($line in $util.escapeJavaDocString($doc))
+   * $line
+    #end
+   */
+  #end
+#end
+
+
+#macro(associateKeyParams $spec)
+#foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})
+  ${assoc_key.bindingType} ${assoc_key.name}#if($foreach.hasNext),#end
+#end
+#end
+
+#macro(assocCompoundKeyGenInterface $spec)
+  CompoundKey generate${util.nameCapsCase($spec.className)}CompoundKey(
+    #associateKeyParams($spec)
+  );
+#end
+
+#macro(assocCompoundKeyGenImpl $spec)
+  public CompoundKey generate${util.nameCapsCase($spec.className)}CompoundKey(
+    #associateKeyParams($spec)
+  ) {
+    return new Key().
+      #foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})
+        set$util.nameCapsCase($assoc_key.name)(${assoc_key.name})#if($foreach.hasNext).#else;#end
+      #end
+  }
+#end
+
+#macro(assocCompoundKeyClass $spec)
+  public static class Key
+      extends CompoundKey
+  {
+      public Key() {
+      }
+
+      #foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})
+      public ${spec.className}${class_name_suffix}.Key set$util.nameCapsCase($assoc_key.name)(${assoc_key.bindingType} ${assoc_key.name}) {
+          append("${assoc_key.name}", ${assoc_key.name}, _resourceSpec.getKeyParts().get("${assoc_key.name}"));
+          return this;
+      }
+
+      public ${assoc_key.bindingType} get${util.nameCapsCase($assoc_key.name)} () {
+          return ((${assoc_key.bindingType}) getPart("${assoc_key.name}"));
+      }
+      #end
+  }
+#end
+
+#macro(generateAssocKeyAsId $spec $method $flattenAssocKey)
+  #if($flattenAssocKey && ${spec.idName})
+  CompoundKey ${spec.idName} = generate${util.nameCapsCase($spec.className)}CompoundKey (
+        #assocKeyCallArgs($method, false)
+      );
+  #end
+#end
+
+#macro(optionalParamClass $method)
+  #if($method.hasOptionalParams() || $method.hasProjectionParams())
+    #set($className = "${util.restMethodToClassPrefix($method.methodName)}OptionalParameters")
+
+    public static class $className {
+      #foreach($param in $method.optionalParameters)
+        $param.paramClassDisplayName $param.paramName;
+        #doc($param.schema.doc)
+        public $className set${param.paramNameCaps}($param.paramClassDisplayName $param.paramName) {
+          this.$param.paramName = $param.paramName;
+          return this;
+        }
+      #end
+      #foreach($param in $method.supportedProjectionParams)
+        MaskMap $param.paramName;
+        public $className with${param.methodName}(
+            Function<${param.paramClassDisplayName}.ProjectionMask, ${param.paramClassDisplayName}.ProjectionMask> ${param.paramName}Handler) {
+          this.$param.paramName = ${param.paramName}Handler.apply(${param.paramClassDisplayName}.createMask());
+          return this;
+        }
+      #end
+    }
+  #end
+#end
+
+
+#macro(actionOptParamClass $method)
+  #if($method.hasActionParams())
+    #set($className = "${util.nameCapsCase($method.name)}ActionOptionalParameters")
+
+    public static class $className {
+      private final Map<FieldDef<?>, Object> _actionParams = new HashMap<FieldDef<?>, Object>($method.getParameters().size());
+      #foreach($param in $method.getOptionalParameters())
+        private $param.paramClassDisplayName $param.paramName;
+      #end
+
+      #foreach($param in $method.getOptionalParameters())
+        #doc($param.schema.doc)
+        public $className set${param.paramNameCaps}($param.paramClassDisplayName $param.paramName) {
+          this.$param.paramName = $param.paramName;
+          return this;
+        }
+        public $param.paramClassDisplayName get${param.paramNameCaps}() {
+          return $param.paramName;
+        }
+      #end
+
+      public Map<FieldDef<?>, Object> buildParametersMap(ResourceSpec resourceSpec)
+      {
+        #foreach($param in $method.getOptionalParameters())
+        if ($param.paramName != null) {
+          _actionParams.put(resourceSpec.getRequestMetadata("${method.name}").getFieldDef("$param.paramName"), $param.paramName);
+        }
+        #end
+        return _actionParams;
+      }
+    }
+  #end
+#end
+
+#macro(actionAllParamClass $method)
+  #if($method.hasActionParams())
+    #set($className = "${util.nameCapsCase($method.name)}ActionParameters")
+
+    public static class $className {
+      private final Map<FieldDef<?>, Object> _actionParams = new HashMap<FieldDef<?>, Object>($method.getParameters().size());
+      #foreach($param in $method.allParameters)
+        private $param.paramClassDisplayName $param.paramName;
+      #end
+
+      #foreach($param in $method.allParameters)
+        #doc($param.schema.doc)
+        public $className set${param.paramNameCaps}($param.paramClassDisplayName $param.paramName) {
+          this.$param.paramName = $param.paramName;
+          return this;
+        }
+        public $param.paramClassDisplayName get${param.paramNameCaps}() {
+          return $param.paramName;
+        }
+      #end
+
+      public Map<FieldDef<?>, Object> buildParametersMap(ResourceSpec resourceSpec)
+      {
+        #foreach($param in $method.allParameters)
+        if ($param.paramName != null) {
+          _actionParams.put(resourceSpec.getRequestMetadata("${method.name}").getFieldDef("$param.paramName"), $param.paramName);
+        }
+        #end
+        return _actionParams;
+      }
+    }
+  #end
+#end
+
+#macro(assocKeyParamsWithOptAndEg $method $includeOptional $withEG)
+    #set($hasMoreParams = $method.hasRequiredParams() || ($includeOptional && ($method.hasOptionalParams() || $method.hasProjectionParams())) || $withEG)
+    #foreach($assocKey in $method.assocKeys)
+      $assocKey.bindingType $assocKey.name#if( $foreach.hasNext || $hasMoreParams),#end
+    #end
+#end
+
+#macro(methodParamsWithEGroup $method $includeOptional $withEG)
+  #set($hasOptionalParams = $includeOptional && ($method.hasOptionalParams() || $method.hasProjectionParams()))
+  #foreach($param in $method.requiredParameters)
+    $param.paramClassDisplayName $param.paramName#if( $foreach.hasNext || ($hasOptionalParams || $withEG)),#end
+  #end
+  #if($hasOptionalParams)
+    Function<${util.restMethodToClassPrefix($method.methodName)}OptionalParameters, ${util.restMethodToClassPrefix($method.methodName)}OptionalParameters> optionalParamsProvider #if($withEG),#end
+  #end
+  #if($withEG)ExecutionGroup executionGroup #end
+#end
+
+#macro(setIsEntityActionIdNeeded $method)
+  #set($isEntityActionIdNeeded = ${method.isEntityAction()} && !${method.getResourceSpec().getResource().hasSimple()})
+#end
+
+#macro(actionMethodParamsWithEGroup $method $includeOptional $withEG $flattenAssocKey)
+  #set($hasOptionalParams = $includeOptional && $method.hasOptionalParams())
+  #setIsEntityActionIdNeeded($method)
+  #if($isEntityActionIdNeeded)
+    #if($flattenAssocKey && ${method.getResourceSpec().getResource().hasAssociation()})
+      #associateKeyParams(${method.getResourceSpec()})
+    #else
+      $spec.keyClassName $spec.idName
+    #end #if(${method.hasActionParams()} || $withEG),#end
+  #end
+  #foreach($param in $method.getRequiredParameters())
+    $param.paramClassDisplayName $param.paramName #if($foreach.hasNext || ($hasOptionalParams || $withEG)),#end
+  #end
+
+  #if($hasOptionalParams)
+    Function<$actionOptionalParamClassName, $actionOptionalParamClassName> optionalParamsProvider #if($withEG), #end
+  #end
+  #if($withEG)ExecutionGroup executionGroup #end
+#end
+
+#macro(actionMethodProviderParamsWithEGroup $method $withEG $flattenAssocKey)
+    #set($hasParams = ($method.isEntityAction() || $method.hasActionParams()))
+    #setIsEntityActionIdNeeded($method)
+    #if($isEntityActionIdNeeded)
+      #if($flattenAssocKey && ${method.getResourceSpec().getResource().hasAssociation()})
+        #associateKeyParams(${method.getResourceSpec()})
+      #else
+        $spec.keyClassName $spec.idName
+      #end #if(${method.hasActionParams()} || $withEG),#end
+    #end
+    #if(${method.hasActionParams()})
+    Function<$actionParamClassName, $actionParamClassName> paramsProvider #if($withEG), #end
+    #end
+    #if($withEG)ExecutionGroup executionGroup #end
+#end
+
+#macro(assocKeyCallArgs $method $checkParams)
+  #foreach($assocKey in $method.assocKeys)
+    $assocKey.name#if( $foreach.hasNext || ($checkParams && ($method.parameters.size() > 0 || $method.hasProjectionParams()))),#end
+  #end
+#end
+
+#macro(optionalMethodCallArgsWithEGroup $method $withEG)
+  #foreach($param in $method.requiredParameters)
+    $param.paramName#if( $foreach.hasNext || ($method.hasOptionalParams() || $method.hasProjectionParams() || $withEG)),#end
+  #end
+  #if(($method.hasOptionalParams() || $method.hasProjectionParams()))
+    Function.identity() #if($withEG), #end
+  #end
+  #if($withEG) executionGroup #end
+#end
+
+#macro(pagingParams $method)
+  #if($method.schema.isPagingSupported())
+    int start,
+    int count
+  #end
+#end
+
+#macro(fillQueryParams $method)
+#**#
+    #if ($method.hasOptionalParams() || $method.hasProjectionParams())
+      ${util.restMethodToClassPrefix($method.methodName)}OptionalParameters optionalParams = optionalParamsProvider.apply(
+          new ${util.restMethodToClassPrefix($method.methodName)}OptionalParameters());
+    #end
+    #foreach($param in $method.requiredParameters)
+      queryParams.put("$param.paramName", $param.paramName);
+      queryParamClasses.put("$param.paramName", ${param.paramClassName}.class);
+    #end
+    #foreach($param in $method.optionalParameters)
+      if (optionalParams.$param.paramName != null) {
+        queryParams.put("$param.paramName", optionalParams.$param.paramName);
+        queryParamClasses.put("$param.paramName", ${param.paramClassName}.class);
+      }
+    #end
+    #foreach($param in $method.supportedProjectionParams)
+      if (optionalParams.$param.paramName != null) {
+        queryParams.put("$param.paramName", optionalParams.${param.paramName}.getDataMap());
+      }
+    #end
+#end
+
+#macro(paramsRequestMap $method)
+#**#Map<String, Object> queryParams = #if($method.hasParams())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
+    Map<String, Class<?>> queryParamClasses = #if($method.hasParams())new HashMap<>($method.getQueryParamMapSize());#else Collections.emptyMap();#end
+#**##fillQueryParams($method)
+#end
+
+#macro(returnEntityParam $value)
+#**#queryParams.put(RestConstants.RETURN_ENTITY_PARAM, $value);
+    queryParamClasses.put(RestConstants.RETURN_ENTITY_PARAM, Boolean.class);
+#end
+
+#macro(makeRequestAndReturn $returnClassName, $responseType, $resposneEntity, $withEG)
+#**#
+Task<$returnClassName> responseTask = _client.createTask(request).transform("Task to completion stage",
+    responseTry -> {
+      if (responseTry.isFailed()) {
+        return Failure.of(responseTry.getError());
+      } else {
+        Response<$responseType> resp = responseTry.get();
+        if (resp.hasError()) {
+          return Failure.of(resp.getError());
+        } else {
+          return Success.of($resposneEntity);
+        }
+      }
+    });
+    #if(!$withEG)
+    ExecutionGroup executionGroup = this.getExecutionGroupFromContext();
+    #end
+    if (executionGroup == null)
+    {
+      return _completionStageFactory.buildStageFromTaskToRun(responseTask);
+    }
+    else
+    {
+      executionGroup.addTaskByFluentClient(this, responseTask);
+      return _completionStageFactory.buildStageFromTask(responseTask);
+    }
+#end
+
+#macro(subResourceInterface $spec)
+#**#
+    #if(${spec.namespace.equals($spec.parentNamespace)})
+    ${spec.className} ${util.nameCamelCase($spec.className)}Of(#if(${spec.diffPathKey})${spec.parent.keyClassName} ${spec.diffPathKey}#end);
+    public interface ${spec.className} {
+      #foreach($subSpec in $spec.childSubResourceSpecs)
+            #**##subResourceInterface($subSpec)
+      #end
+
+
+      #parseMethodsFromTemplates
+
+      #if(${spec.getResource().hasAssociation()})
+        #assocCompoundKeyGenInterface($spec)
+      #end
+    }
+    #else
+    ${spec.bindingName} ${util.nameCamelCase($spec.className)}Of(#if(${spec.diffPathKey})${spec.parent.keyClassName} ${spec.diffPathKey}#end);
+    #end
+#end

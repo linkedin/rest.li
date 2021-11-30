@@ -39,6 +39,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 @Test(singleThreaded = true)
+@SuppressWarnings("deprecation")
 public class TestPegasusDataTemplateGenerator
 {
   private static final String FS = File.separator;

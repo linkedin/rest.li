@@ -17,8 +17,7 @@
 package com.linkedin.d2.balancer.clients;
 
 
-import com.linkedin.d2.balancer.clients.TestClient;
-import com.linkedin.d2.balancer.clients.TrackerClientTest.TestTransportCallback;
+import com.linkedin.d2.balancer.clients.DegraderTrackerClientTest.TestTransportCallback;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -47,9 +46,8 @@ public class RewriteLoadBalancerClientTest
     assertEquals(client.getServiceName(), serviceName);
 
     RestRequest restRequest = new RestRequestBuilder(URI.create("d2://HistoryService/getCube")).build();
-    Map<String, String> restWireAttrs = new HashMap<String, String>();
-    TestTransportCallback<RestResponse> restCallback =
-        new TestTransportCallback<RestResponse>();
+    Map<String, String> restWireAttrs = new HashMap<>();
+    TestTransportCallback<RestResponse> restCallback = new TestTransportCallback<>();
 
     client.restRequest(restRequest, new RequestContext(), restWireAttrs, restCallback);
 
@@ -76,9 +74,8 @@ public class RewriteLoadBalancerClientTest
     assertEquals(client.getServiceName(), serviceName);
 
     RestRequest restRequest = new RestRequestBuilder(URI.create("d2://HistoryService/getCube?bar=baz#fragId")).build();
-    Map<String, String> restWireAttrs = new HashMap<String, String>();
-    TestTransportCallback<RestResponse> restCallback =
-        new TestTransportCallback<RestResponse>();
+    Map<String, String> restWireAttrs = new HashMap<>();
+    TestTransportCallback<RestResponse> restCallback = new TestTransportCallback<>();
 
     client.restRequest(restRequest, new RequestContext(), restWireAttrs, restCallback);
 
@@ -127,9 +124,8 @@ public class RewriteLoadBalancerClientTest
     assertEquals(client.getServiceName(), serviceName);
 
     RestRequest restRequest = new RestRequestBuilder(URI.create("d2://" + serviceName + path)).build();
-    Map<String, String> restWireAttrs = new HashMap<String, String>();
-    TestTransportCallback<RestResponse> restCallback =
-        new TestTransportCallback<RestResponse>();
+    Map<String, String> restWireAttrs = new HashMap<>();
+    TestTransportCallback<RestResponse> restCallback = new TestTransportCallback<>();
 
     client.restRequest(restRequest, new RequestContext(), restWireAttrs, restCallback);
 
@@ -153,9 +149,8 @@ public class RewriteLoadBalancerClientTest
     assertEquals(client.getServiceName(), serviceName);
 
     RestRequest restRequest = new RestRequestBuilder(URI.create("d2://HistoryService/getCube?bar=baz#fragId")).build();
-    Map<String, String> restWireAttrs = new HashMap<String, String>();
-    TestTransportCallback<RestResponse> restCallback =
-        new TestTransportCallback<RestResponse>();
+    Map<String, String> restWireAttrs = new HashMap<>();
+    TestTransportCallback<RestResponse> restCallback = new TestTransportCallback<>();
 
     client.restRequest(restRequest, new RequestContext(), restWireAttrs, restCallback);
 
@@ -178,9 +173,8 @@ public class RewriteLoadBalancerClientTest
     assertEquals(client.getServiceName(), serviceName);
 
     RestRequest restRequest;
-    Map<String, String> restWireAttrs = new HashMap<String, String>();
-    TestTransportCallback<RestResponse> restCallback =
-            new TestTransportCallback<RestResponse>();
+    Map<String, String> restWireAttrs = new HashMap<>();
+    TestTransportCallback<RestResponse> restCallback = new TestTransportCallback<>();
 
     restRequest = new RestRequestBuilder(URI.create("d2://HistoryService")).build();
     client.restRequest(restRequest, new RequestContext(), restWireAttrs, restCallback);

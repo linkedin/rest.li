@@ -16,11 +16,9 @@
 
 package com.linkedin.data;
 
-
+import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.collections.CheckedMap;
-
-import org.testng.annotations.Test;
-
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -33,14 +31,14 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import org.testng.annotations.Test;
 
-import static com.linkedin.data.TestUtil.asMap;
-import static com.linkedin.data.TestUtil.noCommonDataComplex;
+import static com.linkedin.data.TestUtil.*;
 import static org.testng.Assert.*;
 
 public class TestData
 {
-  final static List<Object> referenceList1 = new ArrayList<Object>();
+  final static List<Object> referenceList1 = new ArrayList<>();
   final static int RL1_BOOLEAN_INDEX = 0;
   final static int RL1_INTEGER_INDEX = 1;
   final static int RL1_LONG_INDEX = 2;
@@ -66,7 +64,7 @@ public class TestData
     referenceList1.add(RL1_BYTES_INDEX, RL1_BYTES_VALUE);
   }
 
-  final static Map<String,Object> referenceMap1 = new HashMap<String,Object>();
+  final static Map<String, Object> referenceMap1 = new HashMap<>();
   final static String RM1_BOOLEAN_KEY = "boolean_key";
   final static String RM1_INTEGER_KEY = "integer_key";
   final static String RM1_LONG_KEY = "long_key";
@@ -92,7 +90,7 @@ public class TestData
     referenceMap1.put(RM1_BYTES_KEY, RM1_BYTES_VALUE);
   }
 
-  final static List<Object> illegalObjects = new ArrayList<Object>();
+  final static List<Object> illegalObjects = new ArrayList<>();
   static {
     illegalObjects.add(new AtomicInteger(-13));
     illegalObjects.add(new AtomicLong(-13));
@@ -101,12 +99,12 @@ public class TestData
     illegalObjects.add(new Byte("13"));
     illegalObjects.add(new Short("13"));
 
-    illegalObjects.add(new ArrayList<Object>());
-    illegalObjects.add(new HashMap<String,String>());
-    illegalObjects.add(new HashSet<String>());
+    illegalObjects.add(new ArrayList<>());
+    illegalObjects.add(new HashMap<>());
+    illegalObjects.add(new HashSet<>());
   }
 
-  final static Map<String,Object> illegalMap = new HashMap<String,Object>();
+  final static Map<String, Object> illegalMap = new HashMap<>();
   static
   {
     for (Object o : illegalObjects)
@@ -548,11 +546,11 @@ public class TestData
   public void testDataMapAccessors()
   {
     Object[] objects = {
-        new Boolean(true),
-        new Integer(1),
-        new Long(2),
-        new Float(1.5),
-        new Double(2.0),
+        Boolean.TRUE,
+        Integer.valueOf(1),
+        Long.valueOf(2),
+        Float.valueOf(1.5f),
+        Double.valueOf(2.0),
         new String("foo"),
         ByteString.copyAvroString("bar", false)
     };
@@ -866,6 +864,23 @@ public class TestData
       assertSame(aCopy.get("a"), aCopy);
       assertSame(bCopy.get("a"), aCopy);
     }
+  }
+
+  // Tests copy method in the presence of hash collisions in the data objects
+  @Test
+  public void testCopyHashCollisions() throws Exception
+  {
+    DataMap a = new DataMap();
+    a.put("b", new DataMap());
+    a.put("c", new DataMap());
+
+    // Use the next hashcode to cause collision.
+    a.getDataMap("c")._dataComplexHashCode = DataComplexHashCode.nextHashCode() + 1;
+    DataMap copy = a.copy();
+    assertNotNull(copy.get("b"));
+    assertNotNull(copy.get("c"));
+    assertNotSame(copy.get("b"), copy);
+    assertNotSame(copy.get("c"), copy);
   }
 
   @Test
@@ -1539,7 +1554,7 @@ public class TestData
 
   Collection<Object> asCollection(Object... objects)
   {
-    ArrayList<Object> c = new ArrayList<Object>();
+    ArrayList<Object> c = new ArrayList<>();
     for (Object o : objects)
     {
       c.add(o);
@@ -1595,7 +1610,7 @@ public class TestData
     map.get("a");
 
     StringBuilder prefix = new StringBuilder("prefix");
-    Map<String, Map<String, Object>> instrumentedData = new HashMap<String, Map<String, Object>>();
+    Map<String, Map<String, Object>> instrumentedData = new HashMap<>();
 
     map.collectInstrumentedData(prefix, instrumentedData, false);
 
@@ -1655,7 +1670,7 @@ public class TestData
     list.get(1);
 
     StringBuilder prefix = new StringBuilder("prefix");
-    Map<String, Map<String, Object>> instrumentedData = new HashMap<String, Map<String, Object>>();
+    Map<String, Map<String, Object>> instrumentedData = new HashMap<>();
 
     list.collectInstrumentedData(prefix, instrumentedData, false);
 
@@ -1731,7 +1746,7 @@ public class TestData
     containedMap.get("b");
 
     StringBuilder prefix = new StringBuilder("prefix");
-    Map<String, Map<String, Object>> instrumentedData = new HashMap<String, Map<String, Object>>();
+    Map<String, Map<String, Object>> instrumentedData = new HashMap<>();
 
     map.collectInstrumentedData(prefix, instrumentedData, false);
 
@@ -1879,5 +1894,60 @@ public class TestData
       assertEquals(noCommonDataComplex(o1, o2), expected);
       assertEquals(noCommonDataComplex(o2, o1), expected);
     }
+  }
+
+  @Test(expectedExceptions = IOException.class)
+  public void testMapCycleDetection() throws Exception
+  {
+    DataMap root = new DataMap();
+    root.getUnderlying().put("child", root);
+    new JacksonDataCodec().mapToString(root);
+  }
+
+  @Test(expectedExceptions = IOException.class)
+  public void testListCycleDetection() throws Exception
+  {
+    DataList root = new DataList();
+    root.getUnderlying().add(root);
+    new JacksonDataCodec().listToString(root);
+  }
+
+  @Test(expectedExceptions = IOException.class)
+  public void testMixedCycleDetection() throws Exception
+  {
+    DataMap root = new DataMap();
+    DataList list = new DataList();
+    list.getUnderlying().add(root);
+    root.getUnderlying().put("child", list);
+    new JacksonDataCodec().mapToString(root);
+  }
+
+  @Test
+  public void testNonCyclicDuplicates() throws Exception
+  {
+    DataMap root = new DataMap();
+    DataMap sub = new DataMap();
+    sub.put("a", "b");
+    root.put("c", sub);
+    root.put("d", sub);
+    new JacksonDataCodec().mapToString(root);
+  }
+
+  @Test
+  public void testNonCyclicMapWithClone() throws Exception
+  {
+    DataMap root = new DataMap();
+    root.put("key", "a");
+    root.put("map", root.clone());
+    new JacksonDataCodec().mapToString(root);
+  }
+
+  @Test
+  public void testNonCyclicListWithClone() throws Exception
+  {
+    DataList list = new DataList();
+    list.add("a");
+    list.add(list.clone());
+    new JacksonDataCodec().listToString(list);
   }
 }

@@ -18,6 +18,7 @@ package com.linkedin.restli.client;
 
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.MaskMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.DynamicRecordMetadata;
 import com.linkedin.restli.client.test.TestRecord;
@@ -26,6 +27,7 @@ import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.ResourceProperties;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.ResourceSpecImpl;
+import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.client.EntityResponseDecoder;
 import com.linkedin.restli.internal.common.ResourcePropertiesImpl;
 
@@ -99,7 +101,7 @@ public class TestRequest
   @Test
   public void testResourceProperties()
   {
-    Set<ResourceMethod> expectedSupportedMethods = new HashSet<ResourceMethod>();
+    Set<ResourceMethod> expectedSupportedMethods = new HashSet<>();
     expectedSupportedMethods.add(ResourceMethod.GET);
     expectedSupportedMethods.add(ResourceMethod.BATCH_PARTIAL_UPDATE);
 
@@ -113,17 +115,17 @@ public class TestRequest
                                           TestRecord.class,
                                           Collections.<String, Object>emptyMap());
 
-    Map<String, Object> pathKeys = new HashMap<String, Object>();
-    pathKeys.put("id", new ComplexResourceKey<TestRecord, TestRecord>(new TestRecord(), new TestRecord()));
+    Map<String, Object> pathKeys = new HashMap<>();
+    pathKeys.put("id", new ComplexResourceKey<>(new TestRecord(), new TestRecord()));
 
 
-    Request<TestRecord> request = new Request<TestRecord>(ResourceMethod.GET, null,
-                                                          Collections.<String, String>emptyMap(),
-                                                          Collections.<HttpCookie>emptyList(),
-                                                          new EntityResponseDecoder<TestRecord>(TestRecord.class),
-                                                          expectedResourceSpec, Collections.<String, Object>emptyMap(),
-                                                          Collections.<String, Class<?>>emptyMap(), null, "testRecord",
-                                                          pathKeys, RestliRequestOptions.DEFAULT_OPTIONS, null);
+    Request<TestRecord> request = new Request<>(ResourceMethod.GET, null,
+        Collections.<String, String>emptyMap(),
+        Collections.<HttpCookie>emptyList(),
+        new EntityResponseDecoder<>(TestRecord.class),
+        expectedResourceSpec, Collections.<String, Object>emptyMap(),
+        Collections.<String, Class<?>>emptyMap(), null, "testRecord",
+        pathKeys, RestliRequestOptions.DEFAULT_OPTIONS, null);
 
     ResourceProperties expectedResourceProperties =
         new ResourcePropertiesImpl(expectedResourceSpec.getSupportedMethods(),
@@ -243,6 +245,32 @@ public class TestRequest
     GetRequest<TestRecord> getRequest = generateDummyRequestBuilder().build();
     getRequest.setProjectionDataMapSerializer(customSerializer);
     assertEquals(getRequest.getRequestOptions().getProjectionDataMapSerializer(), customSerializer);
+  }
+
+  @Test
+  public void testStringFieldsParam()
+  {
+    GetRequest<TestRecord> getRequest =
+        generateDummyRequestBuilder().setParam(RestConstants.FIELDS_PARAM, "id").build();
+    assertEquals(getRequest.getFields(), Collections.singleton(new PathSpec("id")));
+  }
+
+  @Test
+  public void testMaskTreeFieldsParam()
+  {
+    DataMap fields = new DataMap();
+    fields.put("id", MaskMap.POSITIVE_MASK);
+    GetRequest<TestRecord> getRequest =
+        generateDummyRequestBuilder().setParam(RestConstants.FIELDS_PARAM, fields).build();
+    assertEquals(getRequest.getFields(), Collections.singleton(new PathSpec("id")));
+  }
+
+  @Test(expectedExceptions = {IllegalArgumentException.class})
+  public void testInvalidFieldsParam()
+  {
+    GetRequest<TestRecord> getRequest =
+        generateDummyRequestBuilder().setParam(RestConstants.FIELDS_PARAM, 100).build();
+    getRequest.getFields();
   }
 
   private GetRequestBuilder<Long, TestRecord> generateDummyRequestBuilder ()

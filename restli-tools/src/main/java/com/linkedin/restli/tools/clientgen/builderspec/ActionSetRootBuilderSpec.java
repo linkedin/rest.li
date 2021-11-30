@@ -56,7 +56,7 @@ public class ActionSetRootBuilderSpec extends RootBuilderSpec
   @Override
   public List<RootBuilderMethodSpec> getMethods()
   {
-    List<RootBuilderMethodSpec> methods = new ArrayList<RootBuilderMethodSpec>();
+    List<RootBuilderMethodSpec> methods = new ArrayList<>();
     if (_resourceActions != null)
     {
       methods.addAll(_resourceActions);

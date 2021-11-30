@@ -69,6 +69,6 @@ public class BatchRequest<T> extends Request<T>
     {
       return Collections.emptySet();
     }
-    return new HashSet<Object>(ids);
+    return new HashSet<>(ids);
   }
 }

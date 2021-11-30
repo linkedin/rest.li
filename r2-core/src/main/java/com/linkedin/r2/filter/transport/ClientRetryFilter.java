@@ -25,11 +25,14 @@ import com.linkedin.r2.filter.message.stream.StreamFilter;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.Response;
+import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
+import com.linkedin.r2.message.stream.StreamException;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import java.util.Map;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,11 +74,20 @@ public class ClientRetryFilter implements RestFilter, StreamFilter
     String retryAttr = wireAttrs.get(R2Constants.RETRY_MESSAGE_ATTRIBUTE_KEY);
     if (retryAttr != null)
     {
-      nextFilter.onError(new RetriableRequestException(retryAttr), requestContext, wireAttrs);
+      if (ex instanceof RestException)
+      {
+        ex = new RestException(((RestException) ex).getResponse(), new RetriableRequestException(retryAttr, ex.getCause()));
+      }
+      else if (ex instanceof StreamException)
+      {
+        ex = new StreamException(((StreamException) ex).getResponse(), new RetriableRequestException(retryAttr, ex.getCause()));
+      }
+      else
+      {
+        ex = new RetriableRequestException(retryAttr, ex);
+      }
     }
-    else
-    {
-      nextFilter.onError(ex, requestContext, wireAttrs);
-    }
+
+    nextFilter.onError(ex, requestContext, wireAttrs);
   }
 }

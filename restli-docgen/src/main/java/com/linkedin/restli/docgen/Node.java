@@ -141,5 +141,5 @@ public class Node<T>
   }
 
   private final T _object;
-  private final Set<Node<?>> _neighbors = new HashSet<Node<?>>();
+  private final Set<Node<?>> _neighbors = new HashSet<>();
 }

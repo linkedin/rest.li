@@ -64,7 +64,7 @@ public class FileClassNameScanner
     }
 
     final Collection<File> files = FileUtils.listFiles(dir, null, true);
-    final Map<String, String> classFileNames = new HashMap<String, String>();
+    final Map<String, String> classFileNames = new HashMap<>();
     final int prefixLength = sourceDirWithSeparator.length();
     for (File f : files)
     {

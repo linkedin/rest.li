@@ -30,21 +30,21 @@ public class TestIdResponse
   @Test
   public void testToString()
   {
-    IdResponse<Long> longIdResponse = new IdResponse<Long>(6L);
+    IdResponse<Long> longIdResponse = new IdResponse<>(6L);
     longIdResponse.toString();
 
-    IdResponse<Long> nullIdResponse = new IdResponse<Long>(null);
+    IdResponse<Long> nullIdResponse = new IdResponse<>(null);
     nullIdResponse.toString();
   }
 
   @Test
   public void testEquals()
   {
-    IdResponse<Long> longResponse1 = new IdResponse<Long>(1L);
-    IdResponse<Long> longResponse2 = new IdResponse<Long>(1L);
-    IdResponse<Long> nullLongResponse = new IdResponse<Long>(null);
-    IdResponse<String> stringResponse = new IdResponse<String>("hello");
-    IdResponse<String> nullStringResponse = new IdResponse<String>(null);
+    IdResponse<Long> longResponse1 = new IdResponse<>(1L);
+    IdResponse<Long> longResponse2 = new IdResponse<>(1L);
+    IdResponse<Long> nullLongResponse = new IdResponse<>(null);
+    IdResponse<String> stringResponse = new IdResponse<>("hello");
+    IdResponse<String> nullStringResponse = new IdResponse<>(null);
 
     // equals and non-null.
     Assert.assertTrue(longResponse1.equals(longResponse2));
@@ -64,10 +64,10 @@ public class TestIdResponse
   @Test
   public void testHashCode()
   {
-    IdResponse<Long> longResponse1 = new IdResponse<Long>(1L);
-    IdResponse<Long> longResponse2 = new IdResponse<Long>(1L);
-    IdResponse<Long> nullLongResponse = new IdResponse<Long>(null);
-    IdResponse<String> nullStringResponse = new IdResponse<String>(null);
+    IdResponse<Long> longResponse1 = new IdResponse<>(1L);
+    IdResponse<Long> longResponse2 = new IdResponse<>(1L);
+    IdResponse<Long> nullLongResponse = new IdResponse<>(null);
+    IdResponse<String> nullStringResponse = new IdResponse<>(null);
 
     Assert.assertEquals(longResponse1.hashCode(), longResponse2.hashCode());
     Assert.assertEquals(nullLongResponse.hashCode(), nullStringResponse.hashCode());

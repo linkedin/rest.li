@@ -23,7 +23,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
-
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -189,4 +189,14 @@ public interface FilterChain
   void onStreamError(Exception ex,
                    RequestContext requestContext,
                    Map<String, String> wireAttrs);
+
+  /**
+   * Returns a copy of a list of RestFilters
+   */
+  List<RestFilter> getRestFilters();
+
+  /**
+   * Returns a copy of a list of StreamFilters
+   */
+  List<StreamFilter> getStreamFilters();
 }

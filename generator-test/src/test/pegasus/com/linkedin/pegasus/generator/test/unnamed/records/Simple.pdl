@@ -1,0 +1,11 @@
+namespace com.linkedin.pegasus.generator.test.unnamed.records
+
+/**
+ * A simple record
+ */
+record Simple {
+  /**
+   * A simple field
+   */
+  message: optional string
+}

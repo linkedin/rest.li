@@ -32,6 +32,7 @@ import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy.ExcludedHostHints;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
+import com.linkedin.data.ByteString;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
@@ -39,6 +40,9 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.message.stream.entitystream.ByteStringWriter;
+import com.linkedin.r2.message.stream.entitystream.EntityStreams;
+import com.linkedin.r2.message.stream.entitystream.FullEntityObserver;
 import com.linkedin.r2.util.NamedThreadFactory;
 import java.net.URI;
 import java.util.List;
@@ -75,6 +79,7 @@ public class BackupRequestsClient extends D2ClientDelegator
   private final ScheduledExecutorService _executorService;
   private final ScheduledThreadPoolExecutor _latenciesNotifierExecutor;
   private final ScheduledFuture<?> _latenciesNotifier;
+  private final boolean _isD2Async;
 
   // serviceName -> operation -> BackupRequestsStrategyFromConfig
   private final Map<String, Map<String, BackupRequestsStrategyFromConfig>> _strategies = new ConcurrentHashMap<>();
@@ -96,7 +101,8 @@ public class BackupRequestsClient extends D2ClientDelegator
   private final Map<String, List<Map<String, Object>>> _configs = new ConcurrentHashMap<>();
 
   public BackupRequestsClient(D2Client d2Client, LoadBalancer loadBalancer, ScheduledExecutorService executorService,
-      BackupRequestsStrategyStatsConsumer statsConsumer, long notifyLatencyInterval, TimeUnit notifyLatencyIntervalUnit)
+      BackupRequestsStrategyStatsConsumer statsConsumer, long notifyLatencyInterval, TimeUnit notifyLatencyIntervalUnit,
+      boolean isD2Async)
   {
     super(d2Client);
     _loadBalancer = loadBalancer;
@@ -109,6 +115,7 @@ public class BackupRequestsClient extends D2ClientDelegator
     _latenciesNotifierExecutor.setRemoveOnCancelPolicy(true);
     _latenciesNotifier = _latenciesNotifierExecutor.scheduleAtFixedRate(this::notifyLatencies, notifyLatencyInterval,
         notifyLatencyInterval, notifyLatencyIntervalUnit);
+    _isD2Async = isD2Async;
   }
 
   private void notifyLatencies()
@@ -154,7 +161,7 @@ public class BackupRequestsClient extends D2ClientDelegator
   @Override
   public Future<RestResponse> restRequest(RestRequest request, RequestContext requestContext)
   {
-    final FutureCallback<RestResponse> future = new FutureCallback<RestResponse>();
+    final FutureCallback<RestResponse> future = new FutureCallback<>();
     restRequest(request, requestContext, future);
     return future;
   }
@@ -169,14 +176,18 @@ public class BackupRequestsClient extends D2ClientDelegator
   public void restRequest(final RestRequest request, final RequestContext requestContext,
       final Callback<RestResponse> callback)
   {
+    if (_isD2Async)
+    {
+      requestAsync(request, requestContext, _d2Client::restRequest, callback);
+      return;
+    }
+
     _d2Client.restRequest(request, requestContext,
-        decorateCallback(request, requestContext, _d2Client::restRequest, callback));
+        decorateCallbackSync(request, requestContext, _d2Client::restRequest, callback));
   }
 
-  /*private*/ Optional<TrackingBackupRequestsStrategy> getStrategy(final String serviceName, final String operation)
+  /*private*/ Optional<TrackingBackupRequestsStrategy> getStrategyAfterUpdate(final String serviceName, final String operation)
   {
-    updateIfNeeded(serviceName);
-
     Map<String, BackupRequestsStrategyFromConfig> strategiesForOperation = _strategies.get(serviceName);
     if (strategiesForOperation != null)
     {
@@ -190,28 +201,96 @@ public class BackupRequestsClient extends D2ClientDelegator
     return Optional.empty();
   }
 
-  /**
-   * Update backup strategies if configuration has changed (reference inequality check).
-   */
-  private void updateIfNeeded(String serviceName)
+  private void updateServiceProperties(String serviceName, ServiceProperties serviceProperties)
   {
     List<Map<String, Object>> existing = _configs.get(serviceName);
+    if (serviceProperties != null)
+    {
+      if (existing != serviceProperties.getBackupRequests())
+      { // reference inequality check
+        update(serviceName, serviceProperties.getBackupRequests());
+        _configs.put(serviceName, serviceProperties.getBackupRequests());
+      }
+    }
+  }
+
+  /**
+   * Send rest request with backup request support asynchronously
+   * This method will make the D2 property call in async manner
+   */
+  private <R extends Request, T> void requestAsync(final R request, final RequestContext requestContext,
+      DecoratorClient<R, T> client, final Callback<T> callback)
+  {
+    final String serviceName = LoadBalancerUtil.getServiceNameFromUri(request.getURI());
+    final Object operationObject = requestContext.getLocalAttr(R2Constants.OPERATION);
+    if (operationObject == null) {
+      client.doRequest(request, requestContext, callback);
+      return;
+    }
+    final String operation = operationObject.toString();
+    Callback<Optional<TrackingBackupRequestsStrategy>> maybeStrategyCallback = new Callback<Optional<TrackingBackupRequestsStrategy>>() {
+      @Override
+      public void onError(Throwable e) {
+        LOG.error("Error attempting to use backup requests, falling back to request without a backup", e);
+        client.doRequest(request, requestContext, callback);
+      }
+
+      @Override
+      public void onSuccess(Optional<TrackingBackupRequestsStrategy> maybeStrategy) {
+        if (maybeStrategy.isPresent())
+        {
+          Callback<T> decoratedCallback =
+              decorateCallbackWithBackupRequest(request, requestContext, client, callback, maybeStrategy.get(), serviceName, operation);
+          client.doRequest(request, requestContext, decoratedCallback);
+        }
+        else
+        {
+          client.doRequest(request, requestContext, callback);
+        }
+      }
+    };
+
+    getStrategyAsync(serviceName, operation, maybeStrategyCallback);
+  }
+
+  /**
+   * Get backup request strategy after the D2 Zookeeper blocking call finishes
+   * TODO: Remove this blocking call once the async path has been verified
+   */
+  private Optional<TrackingBackupRequestsStrategy> getStrategySync(final String serviceName, final String operation)
+  {
     try
     {
       ServiceProperties serviceProperties = _loadBalancer.getLoadBalancedServiceProperties(serviceName);
-      if (serviceProperties != null)
-      {
-        if (existing != serviceProperties.getBackupRequests())
-        { // reference inequality check
-          update(serviceName, serviceProperties.getBackupRequests());
-          _configs.put(serviceName, serviceProperties.getBackupRequests());
-        }
-      }
-    } catch (ServiceUnavailableException e)
+      updateServiceProperties(serviceName, serviceProperties);
+    }
+    catch (ServiceUnavailableException e)
     {
       LOG.debug("Failed to fetch backup requests strategy ", e);
     }
+
+    return getStrategyAfterUpdate(serviceName, operation);
   }
+
+  void getStrategyAsync(final String serviceName, final String operation, Callback<Optional<TrackingBackupRequestsStrategy>> callback) {
+  Callback<ServiceProperties> servicePropertiesCallback = new Callback<ServiceProperties>() {
+    @Override
+    public void onError(Throwable e) {
+      LOG.debug("Failed to fetch backup requests strategy", e);
+      // Continue the call even if properties are not updated
+      callback.onSuccess(Optional.empty());
+    }
+
+    @Override
+    public void onSuccess(ServiceProperties serviceProperties) {
+      updateServiceProperties(serviceName, serviceProperties);
+      Optional<TrackingBackupRequestsStrategy> maybeStrategy = getStrategyAfterUpdate(serviceName, operation);
+      callback.onSuccess(maybeStrategy);
+    }
+  };
+
+  _loadBalancer.getLoadBalancedServiceProperties(serviceName, servicePropertiesCallback);
+}
 
   /*
    * List<Map<String, Object>> backupRequestsConfigs is coming from
@@ -305,11 +384,40 @@ public class BackupRequestsClient extends D2ClientDelegator
   @Override
   public void streamRequest(StreamRequest request, RequestContext requestContext, Callback<StreamResponse> callback)
   {
+    // Buffering stream request raises concerns on memory usage and performance.
+    // Currently only support backup requests with IS_FULL_REQUEST.
+    if (!isFullRequest(requestContext)) {
+      _d2Client.streamRequest(request, requestContext, callback);
+      return;
+    }
+    if (!isBuffered(requestContext)) {
+      final FullEntityObserver observer = new FullEntityObserver(new Callback<ByteString>()
+      {
+        @Override
+        public void onError(Throwable e)
+        {
+          LOG.warn("Failed to record request's entity for retrying backup request.");
+        }
+
+        @Override
+        public void onSuccess(ByteString result)
+        {
+          requestContext.putLocalAttr(R2Constants.BACKUP_REQUEST_BUFFERED_BODY, result);
+        }
+      });
+      request.getEntityStream().addObserver(observer);
+    }
+    if (_isD2Async)
+    {
+      requestAsync(request, requestContext, _d2Client::streamRequest, callback);
+      return;
+    }
+
     _d2Client.streamRequest(request, requestContext,
-        decorateCallback(request, requestContext, _d2Client::streamRequest, callback));
+        decorateCallbackSync(request, requestContext, _d2Client::streamRequest, callback));
   }
 
-  private <R extends Request, T> Callback<T> decorateCallback(R request, RequestContext requestContext,
+  private <R extends Request, T> Callback<T> decorateCallbackSync(R request, RequestContext requestContext,
       DecoratorClient<R, T> client, Callback<T> callback)
   {
     try
@@ -319,58 +427,12 @@ public class BackupRequestsClient extends D2ClientDelegator
       if (operationObject != null)
       {
         final String operation = operationObject.toString();
-        final Optional<TrackingBackupRequestsStrategy> strategy = getStrategy(serviceName, operation);
+        final Optional<TrackingBackupRequestsStrategy> strategy = getStrategySync(serviceName, operation);
         if (strategy.isPresent())
         {
-
-          final TrackingBackupRequestsStrategy st = strategy.get();
-          final long startNano = System.nanoTime();
-
-          URI targetHostUri = KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext);
-          Boolean backupRequestAcceptable = KeyMapper.TargetHostHints.getRequestContextOtherHostAcceptable(requestContext);
-          if (targetHostUri == null || (backupRequestAcceptable != null && backupRequestAcceptable))
-          {
-            Optional<Long> delayNano = st.getTimeUntilBackupRequestNano();
-            if (delayNano.isPresent())
-            {
-              return new DecoratedCallback<>(request, requestContext, client, callback, st, delayNano.get(),
-                  _executorService, startNano, serviceName, operation);
-            }
-          }
-          // return callback that updates backup strategy about latency if
-          // 1. caller specified concrete target host but didn't set the flag to accept other hosts
-          // 2. backup strategy is not ready yet
-          return new Callback<T>()
-          {
-            @Override
-            public void onSuccess(T result)
-            {
-              recordLatency();
-              callback.onSuccess(result);
-            }
-
-            private void recordLatency()
-            {
-              long latency = System.nanoTime() - startNano;
-              st.recordCompletion(latency);
-              st.getLatencyWithoutBackup().record(latency,
-                  histogram -> notifyLatency(serviceName, operation, histogram, false));
-              st.getLatencyWithBackup().record(latency,
-                  histogram -> notifyLatency(serviceName, operation, histogram, true));
-            }
-
-            @Override
-            public void onError(Throwable e)
-            {
-              // disregard latency if request was not made
-              if (!(e instanceof ServiceUnavailableException))
-              {
-                recordLatency();
-              }
-              callback.onError(e);
-            }
-          };
-        } else
+          return decorateCallbackWithBackupRequest(request, requestContext, client, callback, strategy.get(), serviceName, operation);
+        }
+        else
         {
           // return original callback and don't send backup request if there is no backup requests strategy
           // defined for this request
@@ -388,6 +450,57 @@ public class BackupRequestsClient extends D2ClientDelegator
       LOG.error("Error attempting to use backup requests, falling back to request without a backup", t);
       return callback;
     }
+  }
+
+  private <R extends Request, T> Callback<T> decorateCallbackWithBackupRequest(R request, RequestContext requestContext,
+      DecoratorClient<R, T> client, Callback<T> callback, TrackingBackupRequestsStrategy strategy, String serviceName, String operation)
+  {
+    final long startNano = System.nanoTime();
+
+    URI targetHostUri = KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext);
+    Boolean backupRequestAcceptable = KeyMapper.TargetHostHints.getRequestContextOtherHostAcceptable(requestContext);
+    if (targetHostUri == null || (backupRequestAcceptable != null && backupRequestAcceptable))
+    {
+      Optional<Long> delayNano = strategy.getTimeUntilBackupRequestNano();
+      if (delayNano.isPresent())
+      {
+        return new DecoratedCallback<>(request, requestContext, client, callback, strategy, delayNano.get(),
+            _executorService, startNano, serviceName, operation);
+      }
+    }
+    // return callback that updates backup strategy about latency if
+    // 1. caller specified concrete target host but didn't set the flag to accept other hosts
+    // 2. backup strategy is not ready yet
+    return new Callback<T>()
+    {
+      @Override
+      public void onSuccess(T result)
+      {
+        recordLatency();
+        callback.onSuccess(result);
+      }
+
+      private void recordLatency()
+      {
+        long latency = System.nanoTime() - startNano;
+        strategy.recordCompletion(latency);
+        strategy.getLatencyWithoutBackup().record(latency,
+            histogram -> notifyLatency(serviceName, operation, histogram, false));
+        strategy.getLatencyWithBackup().record(latency,
+            histogram -> notifyLatency(serviceName, operation, histogram, true));
+      }
+
+      @Override
+      public void onError(Throwable e)
+      {
+        // disregard latency if request was not made
+        if (!(e instanceof ServiceUnavailableException))
+        {
+          recordLatency();
+        }
+        callback.onError(e);
+      }
+    };
   }
 
   @Override
@@ -438,6 +551,7 @@ public class BackupRequestsClient extends D2ClientDelegator
       executorService.schedule(this::maybeSendBackupRequest, delayNano, TimeUnit.NANOSECONDS);
     }
 
+    @SuppressWarnings("unchecked")
     private void maybeSendBackupRequest()
     {
       Set<URI> exclusionSet = ExcludedHostHints.getRequestContextExcludedHosts(_requestContext);
@@ -446,9 +560,25 @@ public class BackupRequestsClient extends D2ClientDelegator
       if (exclusionSet != null)
       {
         exclusionSet.forEach(uri -> ExcludedHostHints.addRequestContextExcludedHost(_backupRequestContext, uri));
+        if (_request instanceof StreamRequest && !isBuffered(_requestContext)) {
+          return;
+        }
         if (!_done.get() && _strategy.isBackupRequestAllowed())
         {
-          _client.doRequest(_request, _backupRequestContext, new Callback<T>()
+          R request = _request;
+          if (_request instanceof StreamRequest) {
+            StreamRequest req = (StreamRequest)_request;
+            req = req.builder()
+                .build(EntityStreams.newEntityStream(new ByteStringWriter(
+                    (ByteString) _requestContext.getLocalAttr(R2Constants.BACKUP_REQUEST_BUFFERED_BODY)
+                )));
+            request = (R)req;
+            if (!isBuffered(_backupRequestContext)) {
+              _backupRequestContext.putLocalAttr(R2Constants.BACKUP_REQUEST_BUFFERED_BODY,
+                  _requestContext.getLocalAttr(R2Constants.BACKUP_REQUEST_BUFFERED_BODY));
+            }
+          }
+          _client.doRequest(request, _backupRequestContext, new Callback<T>()
           {
             @Override
             public void onSuccess(T result)
@@ -635,4 +765,15 @@ public class BackupRequestsClient extends D2ClientDelegator
 
   }
 
+  private static boolean isFullRequest(RequestContext requestContext)
+  {
+    Object isFullRequest = requestContext.getLocalAttr(R2Constants.IS_FULL_REQUEST);
+    return isFullRequest != null && (Boolean)isFullRequest;
+  }
+
+  private static boolean isBuffered(RequestContext requestContext)
+  {
+    Object bufferedBody = requestContext.getLocalAttr(R2Constants.BACKUP_REQUEST_BUFFERED_BODY);
+    return bufferedBody != null;
+  }
 }

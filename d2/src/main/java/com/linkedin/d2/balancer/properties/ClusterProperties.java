@@ -40,8 +40,9 @@ import java.util.Set;
 public class ClusterProperties
 {
   public static final float DARK_CLUSTER_DEFAULT_MULTIPLIER = 0.0f;
-  public static final int DARK_CLUSTER_DEFAULT_TARGET_RATE = 0;
-  public static final int DARK_CLUSTER_DEFAULT_MAX_RATE = 2147483647;
+  public static final float DARK_CLUSTER_DEFAULT_TARGET_RATE = 0.0f;
+  public static final int DARK_CLUSTER_DEFAULT_MAX_REQUESTS_TO_BUFFER = 1;
+  public static final int DARK_CLUSTER_DEFAULT_BUFFERED_REQUEST_EXPIRY_IN_SECONDS = 1;
 
   private final String                _clusterName;
   private final Map<String, String>   _properties;

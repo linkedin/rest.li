@@ -47,7 +47,51 @@
     } ],
     "entity" : {
       "path" : "/associations/{associationsId}",
+      "actions" : [ {
+        "name" : "testAction",
+        "returns" : "string"
+      } ],
       "subresources" : [ {
+        "name" : "associationsAssociations",
+        "namespace" : "com.linkedin.restli.examples.greetings.client",
+        "path" : "/associations/{associationsId}/associationsAssociations",
+        "schema" : "com.linkedin.restli.examples.greetings.api.Message",
+        "doc" : "Association resource under a parent association resource\n\ngenerated from: com.linkedin.restli.examples.greetings.server.AssociationsAssociationsResource",
+        "association" : {
+          "identifier" : "associationsAssociationsId",
+          "assocKeys" : [ {
+            "name" : "anotherDest",
+            "type" : "string"
+          }, {
+            "name" : "anotherSrc",
+            "type" : "string"
+          } ],
+          "supports" : [ ],
+          "entity" : {
+            "path" : "/associations/{associationsId}/associationsAssociations/{associationsAssociationsId}",
+            "subresources" : [ {
+              "name" : "associationsAssociationsSub",
+              "namespace" : "com.linkedin.restli.examples.greetings.client",
+              "path" : "/associations/{associationsId}/associationsAssociations/{associationsAssociationsId}/associationsAssociationsSub",
+              "schema" : "com.linkedin.restli.examples.greetings.api.Message",
+              "doc" : "Collection resource under an association resource which is also under an association resource\n\ngenerated from: com.linkedin.restli.examples.greetings.server.AssociationsAssociationsSubResource",
+              "collection" : {
+                "identifier" : {
+                  "name" : "subKey",
+                  "type" : "string"
+                },
+                "supports" : [ "get" ],
+                "methods" : [ {
+                  "method" : "get"
+                } ],
+                "entity" : {
+                  "path" : "/associations/{associationsId}/associationsAssociations/{associationsAssociationsId}/associationsAssociationsSub/{subKey}"
+                }
+              }
+            } ]
+          }
+        }
+      }, {
         "name" : "associationsSub",
         "namespace" : "com.linkedin.restli.examples.greetings.client",
         "path" : "/associations/{associationsId}/associationsSub",

@@ -67,14 +67,14 @@ public class HostToKeyMapper<K> implements HostSet
     {
       throw new IllegalArgumentException("MaxNumHost cannot be less than 1");
     }
-    final Set<UnmappedKey<K>> unmappedKeysSet = new HashSet<UnmappedKey<K>>();
+    final Set<UnmappedKey<K>> unmappedKeysSet = new HashSet<>();
     _partitionInfoMap = Collections.unmodifiableMap(partitionInfoMap);
     _limitHostPerPartition = limitHostPerPartition;
     _partitionsWithoutEnoughHosts = partitionsWithoutEnoughHosts;
     _partitionCount = partitionCount;
     for (K key : unmappedKeys)
     {
-      unmappedKeysSet.add(new UnmappedKey<K>(key, ErrorType.FAIL_TO_FIND_PARTITION));
+      unmappedKeysSet.add(new UnmappedKey<>(key, ErrorType.FAIL_TO_FIND_PARTITION));
     }
     _unmappedKeys = Collections.unmodifiableSet(unmappedKeysSet);
   }
@@ -91,7 +91,7 @@ public class HostToKeyMapper<K> implements HostSet
    */
   public HostToKeyResult<K> getResult(int whichIteration)
   {
-    return doGetResult(whichIteration, _partitionInfoMap, new HashSet<UnmappedKey<K>>(_unmappedKeys));
+    return doGetResult(whichIteration, _partitionInfoMap, new HashSet<>(_unmappedKeys));
   }
 
   /**
@@ -106,11 +106,11 @@ public class HostToKeyMapper<K> implements HostSet
    */
   public HostToKeyResult<K> getResult(int whichIteration, Collection<K> keys)
   {
-    Map<Integer, KeysAndHosts<K>> newPartitionInfoMap = new HashMap<Integer, KeysAndHosts<K>>();
+    Map<Integer, KeysAndHosts<K>> newPartitionInfoMap = new HashMap<>();
     for (Map.Entry<Integer, KeysAndHosts<K>> entry : _partitionInfoMap.entrySet())
     {
       Collection<K> keysForPartition = entry.getValue().getKeys();
-      List<K> newKeyList = new ArrayList<K>();
+      List<K> newKeyList = new ArrayList<>();
 
       for (Iterator<K> iterator = keysForPartition.iterator(); iterator.hasNext();)
       {
@@ -121,10 +121,10 @@ public class HostToKeyMapper<K> implements HostSet
         }
       }
 
-      newPartitionInfoMap.put(entry.getKey(), new KeysAndHosts<K>(newKeyList, entry.getValue().getHosts()));
+      newPartitionInfoMap.put(entry.getKey(), new KeysAndHosts<>(newKeyList, entry.getValue().getHosts()));
     }
 
-    return doGetResult(whichIteration, newPartitionInfoMap, new HashSet<UnmappedKey<K>>(_unmappedKeys));
+    return doGetResult(whichIteration, newPartitionInfoMap, new HashSet<>(_unmappedKeys));
   }
 
   private HostToKeyResult<K> doGetResult(int whichIteration, Map<Integer, KeysAndHosts<K>> partitionInfoMap, Collection<UnmappedKey<K>> unmappedKeys)
@@ -134,7 +134,7 @@ public class HostToKeyMapper<K> implements HostSet
       return null;
     }
 
-    Map<URI, Collection<K>> hostToKeysMerge = new HashMap<URI, Collection<K>>();
+    Map<URI, Collection<K>> hostToKeysMerge = new HashMap<>();
     for (Map.Entry<Integer, KeysAndHosts<K>> entry : partitionInfoMap.entrySet())
     {
       Collection<K> keysForThisPartition = entry.getValue().getKeys();
@@ -153,7 +153,7 @@ public class HostToKeyMapper<K> implements HostSet
       }
     }
 
-    return new HostToKeyResult<K>(hostToKeysMerge, unmappedKeys);
+    return new HostToKeyResult<>(hostToKeysMerge, unmappedKeys);
   }
 
   // utility method to merge keys that maps to the same host. This method does the merging in hostToKeysMerge that
@@ -167,7 +167,7 @@ public class HostToKeyMapper<K> implements HostSet
     {
       for (K key : keys)
       {
-        unmappedKeys.add(new UnmappedKey<K>(key, ErrorType.NO_HOST_AVAILABLE_IN_PARTITION));
+        unmappedKeys.add(new UnmappedKey<>(key, ErrorType.NO_HOST_AVAILABLE_IN_PARTITION));
       }
     }
     else
@@ -176,7 +176,7 @@ public class HostToKeyMapper<K> implements HostSet
       Collection<K> keysForCurrentHost = hostToKeysMerge.get(currentHost);
       if (keysForCurrentHost == null)
       {
-        keysForCurrentHost = new HashSet<K>();
+        keysForCurrentHost = new HashSet<>();
         hostToKeysMerge.put(currentHost, keysForCurrentHost);
       }
       keysForCurrentHost.addAll(keys);
@@ -185,12 +185,12 @@ public class HostToKeyMapper<K> implements HostSet
 
   public List<URI> getAllHosts()
   {
-    Set<URI> hosts = new HashSet<URI>();
+    Set<URI> hosts = new HashSet<>();
     for (Map.Entry<Integer, KeysAndHosts<K>> entry : _partitionInfoMap.entrySet())
     {
       hosts.addAll(entry.getValue().getHosts());
     }
-    return new ArrayList<URI>(hosts);
+    return new ArrayList<>(hosts);
   }
 
   public List<URI> getHosts(int partitionId)

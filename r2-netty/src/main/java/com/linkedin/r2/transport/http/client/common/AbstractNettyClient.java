@@ -284,6 +284,7 @@ public abstract class AbstractNettyClient<Req extends Request, Res extends Respo
           _shutdownTimeout);
       _jmxManager.onProviderShutdown(_channelPoolManager);
       _jmxManager.onProviderShutdown(_sslChannelPoolManager);
+      TimingKey.unregisterKey(TIMING_KEY);
     }
     else
     {

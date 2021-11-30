@@ -4,6 +4,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.template.DataTemplate;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -59,6 +60,11 @@ public class CustomRecord implements DataTemplate<DataMap>
     return result;
   }
 
+  public static CustomRecord.Fields fields()
+  {
+    return new Fields();
+  }
+
   public static class Fields extends PathSpec
   {
     public Fields(List<String> path, String name)
@@ -69,6 +75,16 @@ public class CustomRecord implements DataTemplate<DataMap>
     public Fields()
     {
       super();
+    }
+
+    public PathSpec title()
+    {
+      return new PathSpec(getPathComponents(), "title");
+    }
+
+    public PathSpec body()
+    {
+      return new PathSpec(getPathComponents(), "body");
     }
   }
 

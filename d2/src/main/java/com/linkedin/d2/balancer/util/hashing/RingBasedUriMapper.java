@@ -115,7 +115,7 @@ public class RingBasedUriMapper implements URIMapper
     Map<URI, Integer> hostToParitionId = new HashMap<>();
     Map<URI, Set<KEY>> hostToKeySet = distributeToHosts(requestsByPartition, rings, hashFunction, hostToParitionId, unmapped);
 
-    return new URIMappingResult<KEY>(hostToKeySet, unmapped, hostToParitionId);
+    return new URIMappingResult<>(hostToKeySet, unmapped, hostToParitionId);
   }
 
   /**

@@ -22,11 +22,10 @@ import com.linkedin.data.schema.DataSchemaParserFactory;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PegasusSchemaParser;
-import com.linkedin.data.schema.resolver.ExtensionsDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaLocation;
 import com.linkedin.data.schema.resolver.InJarFileDataSchemaLocation;
+import com.linkedin.data.schema.resolver.SchemaDirectory;
 import com.linkedin.data.schema.resolver.SchemaDirectoryName;
-import com.linkedin.internal.common.InternalConstants;
 import com.linkedin.util.FileUtil;
 
 import java.io.File;
@@ -48,24 +47,35 @@ import java.util.jar.JarFile;
  * @author Keren Jin
  * @author Joe Betz
  */
-public class FileFormatDataSchemaParser {
+public class FileFormatDataSchemaParser
+{
   static final String SCHEMA_PATH_PREFIX = SchemaDirectoryName.PEGASUS.getName() + "/";
-  static final String EXTENSION_PATH_ENTRY = SchemaDirectoryName.EXTENSIONS.getName() + "/";
-  private final String _resolverPath;
   private final DataSchemaResolver _schemaResolver;
   private final DataSchemaParserFactory _schemaParserFactory;
+  private final List<SchemaDirectory> _sourceDirectories;
 
   public FileFormatDataSchemaParser(String resolverPath, DataSchemaResolver schemaResolver, DataSchemaParserFactory schemaParserFactory)
   {
-    _resolverPath = resolverPath;
-    _schemaResolver = schemaResolver;
-    _schemaParserFactory = schemaParserFactory;
+    this(schemaResolver, schemaParserFactory, schemaResolver.getSchemaDirectories());
   }
 
-  public DataSchemaParser.ParseResult parseSources(String sources[]) throws IOException
+  public FileFormatDataSchemaParser(DataSchemaResolver schemaResolver,
+      DataSchemaParserFactory schemaParserFactory, List<SchemaDirectory> sourceDirectories)
+  {
+    _schemaResolver = schemaResolver;
+    _schemaParserFactory = schemaParserFactory;
+    _sourceDirectories = sourceDirectories;
+  }
+
+  public DataSchemaParser.ParseResult parseSources(String[] sources) throws IOException
   {
     final DataSchemaParser.ParseResult result = new DataSchemaParser.ParseResult();
+    parseSources(sources, result);
+    return result;
+  }
 
+  void parseSources(String[] sources, DataSchemaParser.ParseResult result) throws IOException
+  {
     try
     {
       for (String source : sources)
@@ -94,7 +104,7 @@ public class FileFormatDataSchemaParser {
                 final JarEntry entry = entries.nextElement();
                 if (!entry.isDirectory() &&
                     entry.getName().endsWith(_schemaParserFactory.getLanguageExtension()) &&
-                    (entry.getName().startsWith(_schemaResolver.getSchemasDirectoryName().getName() + "/")))
+                    shouldParseFile(entry.getName()))
                 {
                   parseJarEntry(jarFile, entry, result);
                   result.getSourceFiles().add(sourceFile);
@@ -128,12 +138,11 @@ public class FileFormatDataSchemaParser {
         throw new IOException(result.getMessage());
       }
 
-      for (Map.Entry<String, DataSchemaLocation> entry : _schemaResolver.nameToDataSchemaLocations().entrySet()) {
-        final DataSchema schema = _schemaResolver.bindings().get(entry.getKey());
+      for (Map.Entry<String, DataSchemaLocation> entry : _schemaResolver.nameToDataSchemaLocations().entrySet())
+      {
+        final DataSchema schema = _schemaResolver.existingDataSchema(entry.getKey());
         result.getSchemaAndLocations().put(schema, entry.getValue());
       }
-
-      return result;
     }
     catch (RuntimeException e)
     {
@@ -147,6 +156,17 @@ public class FileFormatDataSchemaParser {
     }
   }
 
+  private boolean shouldParseFile(String path)
+  {
+    for (SchemaDirectory schemaDirectory : _sourceDirectories)
+    {
+      if (schemaDirectory.matchesJarFilePath(path))
+      {
+        return true;
+      }
+    }
+    return false;
+  }
   /**
    * Parse a source that specifies a file (not a fully qualified schema name).
    *

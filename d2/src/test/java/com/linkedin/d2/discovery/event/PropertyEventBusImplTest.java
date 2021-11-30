@@ -39,8 +39,8 @@ public class PropertyEventBusImplTest extends PropertyEventBusTest
     // TODO rewrite tests in the parent class so they work with either sync or async, and
     // test both modes of operation.
     ScheduledExecutorService executorService = new SynchronousExecutorService();
-    PropertyEventPublisher<String> publisher = new MockStore<String>();
-    PropertyEventBus<String> bus = new PropertyEventBusImpl<String>(executorService, publisher);
+    PropertyEventPublisher<String> publisher = new MockStore<>();
+    PropertyEventBus<String> bus = new PropertyEventBusImpl<>(executorService, publisher);
     return bus;
   }
 

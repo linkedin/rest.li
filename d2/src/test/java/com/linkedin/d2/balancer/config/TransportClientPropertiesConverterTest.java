@@ -59,6 +59,7 @@ public class TransportClientPropertiesConverterTest
     final HttpProtocolVersionType protocolVersion = HttpProtocolVersionType.HTTP_1_1;
     final StringArray allowedClientOverrideKeys = new StringArray(PropertyKeys.HTTP_REQUEST_TIMEOUT,
         PropertyKeys.HTTP_QUERY_POST_THRESHOLD);
+    final Double maxClientRequestRetryRatio = 0.2;
 
     Map<String, Object> transportClientProperties = new HashMap<>();
     transportClientProperties.put(PropertyKeys.HTTP_QUERY_POST_THRESHOLD, queryPostThreshold.toString());
@@ -87,6 +88,7 @@ public class TransportClientPropertiesConverterTest
     transportClientProperties.put(PropertyKeys.HTTP_PROTOCOL_VERSION, protocolVersion.name());
     transportClientProperties.put(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS,
         String.join(",", allowedClientOverrideKeys));
+    transportClientProperties.put(PropertyKeys.HTTP_MAX_CLIENT_REQUEST_RETRY_RATIO, maxClientRequestRetryRatio.toString());
 
     D2TransportClientProperties d2TransportClientProperties =
         new D2TransportClientProperties()
@@ -111,7 +113,8 @@ public class TransportClientPropertiesConverterTest
             .setMaxConcurrentConnections(maxConcurrentConnections)
             .setProtocolVersion(protocolVersion)
             .setTcpNoDelay(tcpNoDelay)
-            .setAllowedClientOverrideKeys(allowedClientOverrideKeys);
+            .setAllowedClientOverrideKeys(allowedClientOverrideKeys)
+            .setMaxClientRequestRetryRatio(maxClientRequestRetryRatio);
 
     Assert.assertEquals(TransportClientPropertiesConverter.toConfig(transportClientProperties), d2TransportClientProperties);
     Assert.assertEquals(TransportClientPropertiesConverter.toProperties(d2TransportClientProperties), transportClientProperties);

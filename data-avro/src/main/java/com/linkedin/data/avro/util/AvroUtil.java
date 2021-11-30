@@ -31,7 +31,7 @@ public class AvroUtil
 {
   public static String jsonFromGenericRecord(GenericRecord record) throws IOException
   {
-    GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>();
+    GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>();
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     Encoder jsonEncoder = AvroCompatibilityHelper.newJsonEncoder(record.getSchema(), outputStream, true);
     writer.setSchema(record.getSchema());
@@ -42,7 +42,7 @@ public class AvroUtil
 
   public static byte[] bytesFromGenericRecord(GenericRecord record) throws IOException
   {
-    GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<GenericRecord>();
+    GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>();
     ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
     Encoder binaryEncoder = AvroCompatibilityHelper.newBinaryEncoder(byteOutputStream, false, null);
     writer.setSchema(record.getSchema());
@@ -53,7 +53,7 @@ public class AvroUtil
 
   public static GenericRecord genericRecordFromBytes(byte[] bytes, Schema schema) throws IOException
   {
-    GenericDatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>();
+    GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>();
     Decoder binaryDecoder = AvroCompatibilityHelper.newBinaryDecoder(
         new ByteArrayInputStream(bytes), false, null);
     reader.setSchema(schema);
@@ -63,8 +63,8 @@ public class AvroUtil
 
   public static GenericRecord genericRecordFromJson(String json, Schema schema) throws IOException
   {
-    GenericDatumReader<GenericRecord> reader = new GenericDatumReader<GenericRecord>();
-    Decoder jsonDecoder = AvroCompatibilityHelper.newJsonDecoder(schema, json);
+    GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>();
+    Decoder jsonDecoder = AvroCompatibilityHelper.newCompatibleJsonDecoder(schema, json);
     reader.setSchema(schema);
     GenericRecord record = reader.read(null, jsonDecoder);
     return record;

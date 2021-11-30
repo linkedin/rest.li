@@ -43,7 +43,7 @@ import com.linkedin.restli.server.resources.CollectionResourceTemplate;
   )
 public class StringKeysSubResource extends CollectionResourceTemplate<String, Message>
 {
-  private Map<String, Message> _db = new HashMap<String, Message>();
+  private Map<String, Message> _db = new HashMap<>();
 
   public StringKeysSubResource()
   {

@@ -85,6 +85,14 @@ public class ExporterTestUtils
     }
   }
 
+  public static void comparePegasusSchemaSnapshotFiles(String actualFileName, String expectedFileName)
+      throws IOException
+  {
+    String actualContent = ExporterTestUtils.readFile(actualFileName);
+    String expectedContent = ExporterTestUtils.readFile(expectedFileName);
+    Assert.assertEquals(actualContent, expectedContent);
+  }
+
   public static File createTmpDir() throws IOException
   {
     File temp = File.createTempFile("temp", Long.toString(System.nanoTime()));

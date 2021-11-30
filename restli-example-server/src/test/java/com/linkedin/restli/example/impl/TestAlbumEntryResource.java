@@ -43,7 +43,7 @@ public class TestAlbumEntryResource
 
   private static Map<String, ResourceModel> buildResourceModels(Class<?>... rootResourceClasses)
   {
-    final Map<String, ResourceModel> map = new HashMap<String, ResourceModel>();
+    final Map<String, ResourceModel> map = new HashMap<>();
     for (Class<?> rootResourceClass : rootResourceClasses)
     {
       final ResourceModel model = RestLiAnnotationReader.processResource(rootResourceClass);
@@ -152,7 +152,7 @@ public class TestAlbumEntryResource
   public void testBatchGet()
   {
     // get keys 1-3
-    Set<CompoundKey> batchIds = new HashSet<CompoundKey>();
+    Set<CompoundKey> batchIds = new HashSet<>();
     for (int i = 1; i <= 3; i++)
     {
       batchIds.add(_keys[i]);
@@ -170,8 +170,8 @@ public class TestAlbumEntryResource
   public void testSearch()
   {
     // we previously put the first 3 entries in album 1
-    Set<AlbumEntry> result = new HashSet<AlbumEntry>(_entryRes.search(Long.valueOf(1), null));
-    Set<AlbumEntry> expected = new HashSet<AlbumEntry>();
+    Set<AlbumEntry> result = new HashSet<>(_entryRes.search(Long.valueOf(1), null));
+    Set<AlbumEntry> expected = new HashSet<>();
     for (int i = 0; i < 3; i++)
     {
       expected.add(_entries[i]);

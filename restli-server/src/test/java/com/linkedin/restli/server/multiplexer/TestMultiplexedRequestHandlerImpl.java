@@ -121,7 +121,7 @@ public class TestMultiplexedRequestHandlerImpl
   {
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null, multiplexerRunMode);
     RestRequest request = muxRequestBuilder().setMethod(HttpMethod.PUT.name()).build();
-    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> callback = new FutureCallback<>();
     multiplexer.handleRequest(request, new RequestContext(), callback);
     assertEquals(getErrorStatus(callback), HttpStatus.S_405_METHOD_NOT_ALLOWED);
   }
@@ -135,7 +135,7 @@ public class TestMultiplexedRequestHandlerImpl
         .setMethod(HttpMethod.POST.name())
         .setHeader(RestConstants.HEADER_CONTENT_TYPE, "text/plain")
         .build();
-    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> callback = new FutureCallback<>();
     multiplexer.handleRequest(request, new RequestContext(), callback);
     assertEquals(getErrorStatus(callback), HttpStatus.S_415_UNSUPPORTED_MEDIA_TYPE);
   }
@@ -165,7 +165,7 @@ public class TestMultiplexedRequestHandlerImpl
   {
     MultiplexedRequestHandlerImpl multiplexer = createMultiplexer(null, multiplexerRunMode);
     RestRequest request = fakeMuxRestRequest();
-    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> callback = new FutureCallback<>();
     multiplexer.handleRequest(request, new RequestContext(), callback);
     assertEquals(getErrorStatus(callback), HttpStatus.S_400_BAD_REQUEST);
   }
@@ -178,7 +178,7 @@ public class TestMultiplexedRequestHandlerImpl
     RestRequest request = fakeMuxRestRequest(ImmutableMap.of("0", fakeIndRequest(FOO_URL),
       "1", fakeIndRequest(FOO_URL),
       "2", fakeIndRequest(FOO_URL)));
-    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> callback = new FutureCallback<>();
     multiplexer.handleRequest(request, new RequestContext(), callback);
     assertEquals(getErrorStatus(callback), HttpStatus.S_400_BAD_REQUEST);
   }
@@ -192,7 +192,7 @@ public class TestMultiplexedRequestHandlerImpl
     IndividualRequest ir1 = fakeIndRequest(FOO_URL, ImmutableMap.of("2", ir2));
     IndividualRequest ir0 = fakeIndRequest(FOO_URL, ImmutableMap.of("1", ir1));
     RestRequest request = fakeMuxRestRequest(ImmutableMap.of("0", ir0));
-    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> callback = new FutureCallback<>();
     multiplexer.handleRequest(request, new RequestContext(), callback);
     assertEquals(getErrorStatus(callback), HttpStatus.S_400_BAD_REQUEST);
   }
@@ -224,7 +224,7 @@ public class TestMultiplexedRequestHandlerImpl
         .andReturn(individualRequestMap);
     // Map request from /modifiedRequest to FOO_URL so that mock handler will be able to handle the request.
     // Map response's body from FOO_ENTITY to BAR_JSON_BODY to simulate filtering on response
-    expect(mockMuxFilter.filterIndividualRequest(EasyMock.same(modifiedRequest)))
+    expect(mockMuxFilter.filterIndividualRequest(EasyMock.eq(modifiedRequest)))
                         .andReturn(fakeIndRequest(FOO_URL))
                         .once();
     expect(mockMuxFilter.filterIndividualResponse(EasyMock.anyObject(IndividualResponse.class)))
@@ -235,7 +235,7 @@ public class TestMultiplexedRequestHandlerImpl
     replay(mockHandler);
     replay(mockMuxFilter);
 
-    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> callback = new FutureCallback<>();
 
     multiplexer.handleRequest(request, requestContext, callback);
 
@@ -267,7 +267,7 @@ public class TestMultiplexedRequestHandlerImpl
     replay(mockHandler);
     replay(mockMuxFilter);
 
-    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> callback = new FutureCallback<>();
 
     multiplexer.handleRequest(request, requestContext, callback);
 
@@ -287,8 +287,8 @@ public class TestMultiplexedRequestHandlerImpl
     //    envelope request.
 
     // Create a mockHandler. Captures all headers and cookies found in the request.
-    final Map<String, String> headers = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
-    final Map<String, String> cookies = new HashMap<String, String>();
+    final Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    final Map<String, String> cookies = new HashMap<>();
 
     SynchronousRequestHandler mockHandler = new SynchronousRequestHandler() {
       @Override
@@ -312,7 +312,7 @@ public class TestMultiplexedRequestHandlerImpl
 
     // Create a mock MultiplexerSingletonFilter to put request headers inside another headers so
     // we can do assertion on it later.
-    final Map<String, String> headersSeenInMuxFilter = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    final Map<String, String> headersSeenInMuxFilter = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     MultiplexerSingletonFilter muxFilterWithSimulatedFailures = new MultiplexerSingletonFilter() {
       @Override
       public IndividualRequest filterIndividualRequest(IndividualRequest request)
@@ -329,7 +329,7 @@ public class TestMultiplexedRequestHandlerImpl
     };
 
     // Prepare request to mux handler
-    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> callback = new FutureCallback<>();
     RequestContext requestContext = new RequestContext();
     Map<String, IndividualRequest> individualRequests = ImmutableMap.of(
       "0", fakeIndRequest("/request",
@@ -337,7 +337,7 @@ public class TestMultiplexedRequestHandlerImpl
                                           "X-OverridableHeader", "overrideHeader"),
                           Collections.<String, IndividualRequest>emptyMap()));
 
-    Set<String> headerWhiteList = new HashSet<String>();
+    Set<String> headerWhiteList = new HashSet<>();
     headerWhiteList.add("X-IndividualHeader");
     headerWhiteList.add("X-OverridableHeader");
 
@@ -368,7 +368,7 @@ public class TestMultiplexedRequestHandlerImpl
     IndividualResponse response = muxResponseContent.getResponses().get("0");
     assertEquals(response.getStatus().intValue(), 200, "Individual request should not fail. Response body is: " + response.getBody().toString());
 
-    Map<String, String> expectedHeaders = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    Map<String, String> expectedHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     expectedHeaders.putAll(ImmutableMap.of(
       RestConstants.HEADER_CONTENT_TYPE, RestConstants.HEADER_VALUE_APPLICATION_JSON,
       "X-IndividualHeader", "individualHeader",
@@ -420,7 +420,7 @@ public class TestMultiplexedRequestHandlerImpl
       }
     };
     // Prepare request to mux handler
-    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> callback = new FutureCallback<>();
     RequestContext requestContext = new RequestContext();
     Map<String, IndividualRequest> individualRequests = ImmutableMap.of(
       "0", fakeIndRequest("/request1",
@@ -430,7 +430,7 @@ public class TestMultiplexedRequestHandlerImpl
                           ImmutableMap.of("X-Malicious-Header", "evilHeader"),
                           Collections.<String, IndividualRequest>emptyMap()));
 
-    Set<String> headerWhiteList = new HashSet<String>();
+    Set<String> headerWhiteList = new HashSet<>();
     headerWhiteList.add("X-I-AM-A-GOOD-HEADER");
 
     // Create mux handler instance
@@ -470,7 +470,7 @@ public class TestMultiplexedRequestHandlerImpl
           RestResponseBuilder restResponseBuilder = new RestResponseBuilder();
           restResponseBuilder.setStatus(HttpStatus.S_200_OK.getCode());
           restResponseBuilder.setEntity(jsonBodyToByteString(fakeIndividualBody("don't care")));
-          List<HttpCookie> cookies = new ArrayList<HttpCookie>();
+          List<HttpCookie> cookies = new ArrayList<>();
           if (uri.getPath().contains("req1"))
           {
             HttpCookie cookie = new HttpCookie("cookie1", "cookie1Value");
@@ -517,7 +517,7 @@ public class TestMultiplexedRequestHandlerImpl
     };
 
     // Prepare request to mux handler
-    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> callback = new FutureCallback<>();
     RequestContext requestContext = new RequestContext();
     Map<String, IndividualRequest> individualRequests = ImmutableMap.of(
       "0", fakeIndRequest("/req1"),
@@ -647,9 +647,9 @@ public class TestMultiplexedRequestHandlerImpl
     };
 
     // Prepare request to mux handler
-    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> callback = new FutureCallback<>();
     RequestContext requestContext = new RequestContext();
-    Map<String, IndividualRequest> individualRequests = new HashMap<String, IndividualRequest>();
+    Map<String, IndividualRequest> individualRequests = new HashMap<>();
     individualRequests.put("0", fakeIndRequest("/good_request"));
     individualRequests.put("1", fakeIndRequest("/bad_request"));
     individualRequests.put("2", fakeIndRequest("/error_request"));
@@ -705,7 +705,7 @@ public class TestMultiplexedRequestHandlerImpl
     // switch into replay mode
     replay(mockHandler);
 
-    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> callback = new FutureCallback<>();
 
     multiplexer.handleRequest(request, requestContext, callback);
 
@@ -733,7 +733,7 @@ public class TestMultiplexedRequestHandlerImpl
     // switch into replay mode
     replay(mockHandler);
 
-    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> callback = new FutureCallback<>();
 
     multiplexer.handleRequest(request, requestContext, callback);
 
@@ -763,7 +763,7 @@ public class TestMultiplexedRequestHandlerImpl
     // switch into replay mode
     replay(mockHandler);
 
-    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> callback = new FutureCallback<>();
 
     multiplexer.handleRequest(request, requestContext, callback);
 
@@ -791,7 +791,7 @@ public class TestMultiplexedRequestHandlerImpl
     // switch into replay mode
     replay(mockHandler);
 
-    FutureCallback<RestResponse> callback = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> callback = new FutureCallback<>();
 
     multiplexer.handleRequest(request, requestContext, callback);
 

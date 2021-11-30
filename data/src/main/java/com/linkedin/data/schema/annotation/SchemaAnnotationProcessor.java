@@ -72,7 +72,32 @@ public class SchemaAnnotationProcessor
   public static SchemaAnnotationProcessResult process(List<SchemaAnnotationHandler> handlers,
                                                       DataSchema dataSchema, AnnotationProcessOption options)
   {
+    return process(handlers, dataSchema, options, true);
+  }
 
+  /**
+   * This function creates  {@link DataSchemaRichContextTraverser} and use it to wrap {@link SchemaVisitor} to visit the {@link DataSchema}
+   *
+   * Note {@link SchemaAnnotationHandler}'s #resolve() and #validate() function are supposed to be called by {@link SchemaVisitor}
+   *
+   * For the given {@link DataSchema}, it will first invoke each {@link SchemaAnnotationHandler#resolve}
+   * by using the {@link SchemaVisitor} returned by {@link SchemaAnnotationHandler#getVisitor()}
+   *
+   * then it uses {@link SchemaAnnotationValidationVisitor} to invoke each {@link SchemaAnnotationHandler#validate} to validate resolved schema annotation.
+   * users would skip this validation, by passing skipValidateProcessResult as true;
+   *
+   * It will abort in case of unexpected exceptions.
+   * Otherwise will aggregate error messages after all handlers' processing, to the final {@link SchemaAnnotationProcessResult}
+   *
+   * @param handlers the handlers that can resolve the annotation on the dataSchema and validate them
+   * @param dataSchema the dataSchema to be processed
+   * @param options additional options to help schema annotation processing
+   * @param validateProcessResult if it is true, validate {@link SchemaAnnotationProcessResult} .
+   * @return result after process
+   */
+  public static SchemaAnnotationProcessResult process(List<SchemaAnnotationHandler> handlers,
+      DataSchema dataSchema, AnnotationProcessOption options, boolean validateProcessResult)
+  {
     SchemaAnnotationProcessResult processResult = new SchemaAnnotationProcessResult();
     // passed in dataSchema is not changed after processing, this variable stores dynamically constructed dataSchema after each handler.
     processResult.setResultSchema(dataSchema);
@@ -94,7 +119,7 @@ public class SchemaAnnotationProcessor
       catch (Exception e)
       {
         throw new IllegalStateException(String.format("Annotation resolution processing failed at \"%s\" handler",
-                                                      schemaAnnotationHandler.getAnnotationNamespace()), e);
+            schemaAnnotationHandler.getAnnotationNamespace()), e);
       }
       SchemaVisitorTraversalResult handlerTraverseResult = visitor.getSchemaVisitorTraversalResult();
       if (!handlerTraverseResult.isTraversalSuccessful())
@@ -102,7 +127,7 @@ public class SchemaAnnotationProcessor
         hasResolveError = true;
         String errorMsgs = handlerTraverseResult.formatToErrorMessage();
         errorMsgBuilder.append(String.format("Annotation processing encountered errors during resolution in \"%s\" handler. \n",
-                                             schemaAnnotationHandler.getAnnotationNamespace()));
+            schemaAnnotationHandler.getAnnotationNamespace()));
         errorMsgBuilder.append(errorMsgs);
       }
 
@@ -125,36 +150,43 @@ public class SchemaAnnotationProcessor
       return processResult;
     }
 
-    // validate
-    boolean hasValidationError = false;
-    for (SchemaAnnotationHandler schemaAnnotationHandler: handlers)
+    if (validateProcessResult)
     {
-      LOG.debug("DEBUG:  starting validating using \"{}\" handler", schemaAnnotationHandler.getAnnotationNamespace());
-      SchemaAnnotationValidationVisitor validationVisitor = new SchemaAnnotationValidationVisitor(schemaAnnotationHandler);
-      DataSchemaRichContextTraverser traverserBase = new DataSchemaRichContextTraverser(validationVisitor);
-      try {
-        traverserBase.traverse(processResult.getResultSchema());
-      }
-      catch (Exception e)
+      // validate
+      boolean hasValidationError = false;
+      for (SchemaAnnotationHandler schemaAnnotationHandler: handlers)
       {
-        throw new IllegalStateException(String.format("Annotation validation failed in \"%s\" handler.",
-                                                      schemaAnnotationHandler.getAnnotationNamespace()), e);
+        LOG.debug("DEBUG:  starting validating using \"{}\" handler", schemaAnnotationHandler.getAnnotationNamespace());
+        SchemaAnnotationValidationVisitor validationVisitor = new SchemaAnnotationValidationVisitor(schemaAnnotationHandler);
+        DataSchemaRichContextTraverser traverserBase = new DataSchemaRichContextTraverser(validationVisitor);
+        try {
+          traverserBase.traverse(processResult.getResultSchema());
+        }
+        catch (Exception e)
+        {
+          throw new IllegalStateException(String.format("Annotation validation failed in \"%s\" handler.",
+              schemaAnnotationHandler.getAnnotationNamespace()), e);
+        }
+        SchemaVisitorTraversalResult handlerTraverseResult = validationVisitor.getSchemaVisitorTraversalResult();
+        if (!handlerTraverseResult.isTraversalSuccessful())
+        {
+          hasValidationError = true;
+          String errorMsgs = handlerTraverseResult.formatToErrorMessage();
+          errorMsgBuilder.append(String.format("Annotation validation process failed in \"%s\" handler. \n",
+              schemaAnnotationHandler.getAnnotationNamespace()));
+          errorMsgBuilder.append(errorMsgs);
+        }
       }
-      SchemaVisitorTraversalResult handlerTraverseResult = validationVisitor.getSchemaVisitorTraversalResult();
-      if (!handlerTraverseResult.isTraversalSuccessful())
-      {
-        hasValidationError = true;
-        String errorMsgs = handlerTraverseResult.formatToErrorMessage();
-        errorMsgBuilder.append(String.format("Annotation validation process failed in \"%s\" handler. \n",
-                                             schemaAnnotationHandler.getAnnotationNamespace()));
-        errorMsgBuilder.append(errorMsgs);
-      }
+      processResult.setValidationSuccess(!hasValidationError);
+      processResult.setErrorMsgs(errorMsgBuilder.toString());
     }
-    processResult.setValidationSuccess(!hasValidationError);
-    processResult.setErrorMsgs(errorMsgBuilder.toString());
+    else
+    {
+      processResult.setValidationSuccess(true);
+    }
+
     return processResult;
   }
-
 
   /**
    * Util function to get the resolvedProperties of the field specified by the PathSpec from the dataSchema.
