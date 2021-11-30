@@ -14,6 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 - Remove deprecated HttpClientFactory constructors.
+- Deprecate `FileFormatDataSchemaParser#new(String, DataSchemaResolver, DataSchemaParserFactory)`. 
 
 ## [29.22.14] - 2021-11-24
 - Fix bug where content type was not set for stream requests
