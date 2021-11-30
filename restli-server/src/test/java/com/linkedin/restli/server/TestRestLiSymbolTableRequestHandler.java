@@ -35,10 +35,12 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.server.symbol.RestLiSymbolTableRequestHandler;
 import java.net.URI;
 import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import org.junit.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.mockito.Mockito.*;
@@ -63,40 +65,30 @@ public class TestRestLiSymbolTableRequestHandler
     SymbolTableProviderHolder.INSTANCE.setSymbolTableProvider(new SymbolTableProvider() {});
   }
 
-  @Test
-  public void testShouldNotHandleEmptyPath()
+  @DataProvider
+  public Object[][] uris()
   {
-    RestRequest request = new RestRequestBuilder(URI.create("/")).build();
-    Assert.assertFalse(_requestHandler.shouldHandle(request));
+    Map<String, String> requestHeaders = Collections.singletonMap(RestConstants.HEADER_FETCH_SYMBOL_TABLE, Boolean.TRUE.toString());
+    return new Object[][] {
+        // do not handle empty path
+        { "/", Collections.emptyMap(), false },
+        // non symbolTable path
+        { "/someResource", Collections.emptyMap(), false },
+        { "/service/someReource/foo", requestHeaders, false },
+        { "/symbolTable", Collections.emptyMap(), true },
+        { "/service/symbolTable", requestHeaders, true },
+        { "/service/symbolTable/foo", requestHeaders, true },
+    };
   }
 
-  @Test
-  public void testShouldNotHandleNonSymbolTablePath()
+  @Test(dataProvider = "uris")
+  public void testCorrectlyHandlesURIsWithHeader(String path, Map<String, String> headers, boolean expected)
   {
-    RestRequest request = new RestRequestBuilder(URI.create("/someResource")).build();
-    Assert.assertFalse(_requestHandler.shouldHandle(request));
-  }
+    RestRequest request = new RestRequestBuilder(URI.create(path))
+        .setHeaders(headers)
+        .build();
 
-  @Test
-  public void testShouldHandleSymbolTablePath()
-  {
-    RestRequest request = new RestRequestBuilder(URI.create("/symbolTable")).build();
-    Assert.assertTrue(_requestHandler.shouldHandle(request));
-  }
-
-  @Test
-  public void testShouldHandleServiceScopedSymbolTablePathWhenHeaderSet()
-  {
-    RestRequest request = new RestRequestBuilder(URI.create("/service/symbolTable"))
-        .setHeaders(Collections.singletonMap(RestConstants.HEADER_SERVICE_SCOPED_PATH, "true")).build();
-    Assert.assertTrue(_requestHandler.shouldHandle(request));
-  }
-
-  @Test
-  public void testShouldNotHandleServiceScopedSymbolTablePathWhenNoHeaderSet()
-  {
-    RestRequest request = new RestRequestBuilder(URI.create("/service/symbolTable")).build();
-    Assert.assertFalse(_requestHandler.shouldHandle(request));
+    Assert.assertEquals(_requestHandler.shouldHandle(request), expected);
   }
 
   @Test
@@ -227,8 +219,8 @@ public class TestRestLiSymbolTableRequestHandler
     SymbolTable symbolTable =
         new InMemorySymbolTable("TestName", ImmutableList.of("Haha", "Hehe", "Hoho"));
     URI uri = URI.create("/service/symbolTable");
-    RestRequest request = new RestRequestBuilder(uri).setHeader(RestConstants.HEADER_SERVICE_SCOPED_PATH, "true").build();
-    when(_symbolTableProvider.getResponseSymbolTable(eq(uri), eq(Collections.singletonMap(RestConstants.HEADER_SERVICE_SCOPED_PATH, "true")))).thenReturn(symbolTable);
+    RestRequest request = new RestRequestBuilder(uri).build();
+    when(_symbolTableProvider.getResponseSymbolTable(eq(uri), eq(Collections.emptyMap()))).thenReturn(symbolTable);
 
     CompletableFuture<RestResponse> future = new CompletableFuture<>();
     _requestHandler.handleRequest(request, mock(RequestContext.class), new Callback<RestResponse>() {

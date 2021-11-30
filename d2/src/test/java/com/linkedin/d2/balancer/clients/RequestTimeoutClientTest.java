@@ -83,7 +83,7 @@ public class RequestTimeoutClientTest
 
     int requestTimeout = isHigherThanDefault ? DEFAULT_REQUEST_TIMEOUT + 100 : DEFAULT_REQUEST_TIMEOUT - 100;
 
-    TrackerClientTest.TestCallback<RestResponse> restCallback = new TrackerClientTest.TestCallback<>();
+    DegraderTrackerClientTest.TestCallback<RestResponse> restCallback = new DegraderTrackerClientTest.TestCallback<>();
     requestContext.putLocalAttr(R2Constants.REQUEST_TIMEOUT, requestTimeout);
     if (ignoreTimeoutIfHigher)
     {
@@ -101,7 +101,7 @@ public class RequestTimeoutClientTest
 
   }
 
-  boolean checkTimeoutFired(TrackerClientTest.TestCallback<RestResponse> restCallback)
+  boolean checkTimeoutFired(DegraderTrackerClientTest.TestCallback<RestResponse> restCallback)
   {
     assertNull(restCallback.t);
     return restCallback.e instanceof TimeoutException;

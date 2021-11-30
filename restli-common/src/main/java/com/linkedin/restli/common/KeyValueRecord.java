@@ -236,7 +236,7 @@ public class KeyValueRecord<K, V extends RecordTemplate> extends RecordTemplate
     KK keyKey = obtainWrapped(keyField, complexKeyType.getKeyType().getType(), GetMode.DEFAULT);
     KP keyParams = obtainWrapped(paramsField, complexKeyType.getParamsType().getType(), GetMode.DEFAULT);
 
-    return new ComplexResourceKey<KK, KP>(keyKey, keyParams);
+    return new ComplexResourceKey<>(keyKey, keyParams);
   }
 
   /**
@@ -263,7 +263,7 @@ public class KeyValueRecord<K, V extends RecordTemplate> extends RecordTemplate
 
   public V getValue(Class<V> valueClass)
   {
-    return getValue(new TypeSpec<V>(valueClass));
+    return getValue(new TypeSpec<>(valueClass));
   }
 
   /**

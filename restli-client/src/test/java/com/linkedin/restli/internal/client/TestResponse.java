@@ -36,9 +36,9 @@ public class TestResponse
   public void testHeadersCaseInsensitiveGet()
   {
     int status = 200;
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     headers.put("header", "value");
-    Response<Long> response = new ResponseImpl<Long>(status, headers, Collections.<HttpCookie>emptyList());
+    Response<Long> response = new ResponseImpl<>(status, headers, Collections.<HttpCookie>emptyList());
     Assert.assertEquals(response.getHeader("HEADER"), "value");
   }
 
@@ -46,10 +46,10 @@ public class TestResponse
   public void testHeadersCaseInsensitiveSet()
   {
     int status = 200;
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     headers.put("header", "value");
     headers.put("HEADER", "value");
-    Response<Long> response = new ResponseImpl<Long>(status, headers, Collections.<HttpCookie>emptyList());
+    Response<Long> response = new ResponseImpl<>(status, headers, Collections.<HttpCookie>emptyList());
     Assert.assertEquals(response.getHeaders().size(), 1);
     Assert.assertEquals(response.getHeader("HEADER"), "value");
   }

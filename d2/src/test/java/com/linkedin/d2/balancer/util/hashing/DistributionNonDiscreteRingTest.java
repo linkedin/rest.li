@@ -62,7 +62,7 @@ public class DistributionNonDiscreteRingTest {
     Ring<URI> ring = new DistributionNonDiscreteRingFactory<URI>().createRing(pointsMap);
     trial(trials, countsMap, ring);
 
-    double sd = calculateStandardDeviation(new ArrayList<Integer>(countsMap.values()));
+    double sd = calculateStandardDeviation(new ArrayList<>(countsMap.values()));
     Assert.assertTrue(sd < 0.05 * trials / numHosts);
   }
 

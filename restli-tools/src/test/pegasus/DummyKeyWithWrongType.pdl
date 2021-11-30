@@ -1,0 +1,4 @@
+/**
+ * A test schema which is used as a field type in extension schema.
+ */
+record DummyKeyWithWrongType {}

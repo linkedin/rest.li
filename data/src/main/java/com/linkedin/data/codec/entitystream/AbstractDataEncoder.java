@@ -286,35 +286,36 @@ public abstract class AbstractDataEncoder implements DataEncoder
       return;
     }
 
-    switch (Data.TYPE_MAP.get(value.getClass()))
+    // We intentionally use a string switch here for performance.
+    switch (value.getClass().getName())
     {
-      case 1:
+      case "java.lang.String":
         _traverseCallback.stringValue((String) value);
         break;
-      case 2:
+      case "java.lang.Integer":
         _traverseCallback.integerValue((int) value);
         break;
-      case 3:
+      case "com.linkedin.data.DataMap":
         _stack.push((DataMap) value);
         _typeStack.push(MAP);
         break;
-      case 4:
+      case "com.linkedin.data.DataList":
         _stack.push((DataList) value);
         _typeStack.push(LIST);
         break;
-      case 5:
+      case "java.lang.Boolean":
         _traverseCallback.booleanValue((boolean) value);
         break;
-      case 6:
+      case "java.lang.Long":
         _traverseCallback.longValue((long) value);
         break;
-      case 7:
+      case "java.lang.Float":
         _traverseCallback.floatValue((float) value);
         break;
-      case 8:
+      case "java.lang.Double":
         _traverseCallback.doubleValue((double) value);
         break;
-      case 9:
+      case "com.linkedin.data.ByteString":
         _traverseCallback.byteStringValue((ByteString) value);
         break;
       default:

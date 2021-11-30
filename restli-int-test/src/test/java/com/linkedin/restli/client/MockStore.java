@@ -44,7 +44,7 @@ public class MockStore<T> implements PropertyEventPublisher<T>, PropertyStore<T>
 
   public MockStore()
   {
-    _properties = Collections.synchronizedMap(new HashMap<String, T>());
+    _properties = Collections.synchronizedMap(new HashMap<>());
     _shutdown = false;
   }
 

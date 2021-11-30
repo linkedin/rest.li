@@ -16,19 +16,17 @@
 
 package com.linkedin.r2.filter.compression;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.zip.DataFormatException;
-import java.util.zip.Deflater;
-import java.util.zip.Inflater;
+import java.io.OutputStream;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.InflaterInputStream;
 
-import org.apache.commons.io.IOUtils;
 
 /**
  * Wrapper class for zlib compression.
  * */
-public class DeflateCompressor implements Compressor
+public class DeflateCompressor extends AbstractCompressor
 {
   private final static String HTTP_NAME = "deflate";
 
@@ -39,98 +37,14 @@ public class DeflateCompressor implements Compressor
   }
 
   @Override
-  public byte[] inflate(InputStream data) throws CompressionException
+  protected InputStream createInflaterInputStream(InputStream compressedDataStream) throws IOException
   {
-    byte[] input;
-    try
-    {
-      input = IOUtils.toByteArray(data);
-    }
-    catch (IOException e)
-    {
-      throw new CompressionException(CompressionConstants.DECODING_ERROR + CompressionConstants.BAD_STREAM, e);
-    }
-
-    Inflater zlib = new Inflater();
-    zlib.setInput(input);
-
-    ByteArrayOutputStream output = new ByteArrayOutputStream();
-    byte[] temp = new byte[CompressionConstants.BUFFER_SIZE];
-
-    int bytesRead;
-    while(!zlib.finished())
-    {
-      try
-      {
-        bytesRead = zlib.inflate(temp);
-      }
-      catch (DataFormatException e)
-      {
-        throw new CompressionException(CompressionConstants.DECODING_ERROR + getContentEncodingName(), e);
-      }
-      if (bytesRead == 0)
-      {
-        if (!zlib.needsInput())
-        {
-          throw new CompressionException(CompressionConstants.DECODING_ERROR + getContentEncodingName());
-        }
-        else
-        {
-          break;
-        }
-      }
-
-      if (bytesRead > 0)
-      {
-        output.write(temp, 0, bytesRead);
-      }
-    }
-
-    zlib.end();
-    return output.toByteArray();
+    return new InflaterInputStream(compressedDataStream);
   }
 
-
   @Override
-  public byte[] deflate(InputStream data) throws CompressionException
+  protected OutputStream createDeflaterOutputStream(OutputStream decompressedDataStream) throws IOException
   {
-    byte[] input;
-    try
-    {
-      input = IOUtils.toByteArray(data);
-    }
-    catch (IOException e)
-    {
-      throw new CompressionException(CompressionConstants.DECODING_ERROR + CompressionConstants.BAD_STREAM, e);
-    }
-
-    Deflater zlib = new Deflater();
-    zlib.setInput(input);
-    zlib.finish();
-
-    ByteArrayOutputStream output = new ByteArrayOutputStream();
-    byte[] temp = new byte[CompressionConstants.BUFFER_SIZE];
-
-    int bytesRead;
-    while(!zlib.finished())
-    {
-      bytesRead = zlib.deflate(temp);
-
-      if (bytesRead == 0)
-      {
-        if (!zlib.needsInput())
-        {
-          throw new CompressionException(CompressionConstants.DECODING_ERROR + getContentEncodingName());
-        }
-        else
-        {
-          break;
-        }
-      }
-      output.write(temp, 0, bytesRead);
-    }
-    zlib.end();
-
-    return output.toByteArray();
+    return new DeflaterOutputStream(decompressedDataStream);
   }
 }

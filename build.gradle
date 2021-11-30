@@ -19,7 +19,8 @@ buildscript {
     jcenter()
   }
   dependencies {
-    classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
+    classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.21.0'
+    classpath 'org.jacoco:org.jacoco.core:0.8.7'
   }
 }
 
@@ -28,6 +29,7 @@ project.ext {
   isDefaultEnvironment = !project.hasProperty('overrideBuildEnvironment')
   privateModules = ['d2-benchmark', 'd2-int-test', 'generator-test', 'log-test-config', 'r2-int-test',
                      'r2-perf-test', 'restli-internal-testutils'] as Set
+  skipTestsForSubprojects = (project.findProperty('pegasus.skipTestsForSubprojects') ?: '').split(',') as Set
 }
 
 File getEnvironmentScript()
@@ -46,7 +48,7 @@ project.ext.externalDependency = [
   'avro': 'org.apache.avro:avro:1.4.0',
   'avro_1_6': 'org.apache.avro:avro:1.6.3',
    // avro compatibility layer
-  'avroUtil': 'com.linkedin.avroutil1:helper-all:0.1.11',
+  'avroUtil': 'com.linkedin.avroutil1:helper-all:0.2.17',
   'caffeine': 'com.github.ben-manes.caffeine:caffeine:2.7.0',
   'cglib': 'cglib:cglib-nodep:2.2',
   'codemodel': 'com.sun.codemodel:codemodel:2.2',
@@ -85,19 +87,20 @@ project.ext.externalDependency = [
   'log4j2Api': 'org.apache.logging.log4j:log4j-api:2.0.2',
   'log4j2Core': 'org.apache.logging.log4j:log4j-core:2.0.2',
   'log4jLog4j2': 'org.apache.logging.log4j:log4j-1.2-api:2.0.2',
-  'mail': 'javax.mail:mail:1.4.1',
-  'netty': 'io.netty:netty-all:4.1.41.Final',
+  'mail': 'javax.mail:mail:1.4.4',
+  'netty': 'io.netty:netty-all:4.1.52.Final',
   'objenesis': 'org.objenesis:objenesis:1.2',
-  'parseq': 'com.linkedin.parseq:parseq:2.6.31',
-  'parseq_tracevis': 'com.linkedin.parseq:parseq-tracevis:2.6.31',
-  'parseq_restClient': 'com.linkedin.parseq:parseq-restli-client:2.6.31',
+  'parseq': 'com.linkedin.parseq:parseq:5.1.2',
+  'parseq_tracevis': 'com.linkedin.parseq:parseq-tracevis:5.1.2',
+  'parseq_restClient': 'com.linkedin.parseq:parseq-restli-client:5.1.2',
+  'parseq_testApi': 'com.linkedin.parseq:parseq-test-api:5.1.2',
   'servletApi': 'javax.servlet:javax.servlet-api:3.1.0',
   'slf4jApi': 'org.slf4j:slf4j-api:1.7.30',
   'slf4jLog4j2': 'org.apache.logging.log4j:log4j-slf4j-impl:2.0.2',
   'snappy': 'org.iq80.snappy:snappy:0.4',
   'spock': 'org.spockframework:spock-core:1.3-groovy-2.5',
   'testng': 'org.testng:testng:6.13.1',
-  'velocity': 'org.apache.velocity:velocity:1.5',
+  'velocity': 'org.apache.velocity:velocity-engine-core:2.2',
   'zero_allocation_hashing': 'net.openhft:zero-allocation-hashing:0.7',
   'zookeeper': 'org.apache.zookeeper:zookeeper:3.4.14',
   'hdrhistogram': 'org.hdrhistogram:HdrHistogram:2.1.9',
@@ -113,7 +116,8 @@ project.ext.externalDependency = [
   'guice': 'com.google.inject:guice:3.0',
   'guiceServlet': 'com.google.inject.extensions:guice-servlet:3.0',
 
-  'jsr305': 'com.google.code.findbugs:jsr305:3.0.0'
+  'jsr305': 'com.google.code.findbugs:jsr305:3.0.0',
+  "avroSpotBugsPlugin": "com.linkedin.avroutil1:spotbugs-plugin:0.2.56",
 ];
 
 if (!project.ext.isDefaultEnvironment)
@@ -150,6 +154,14 @@ allprojects {
   }
 }
 
+allprojects {
+  plugins.withId('li-spotbugs') {
+    dependencies {
+      spotbugsPlugins spec.external.avroSpotBugsPlugin
+    }
+  }
+}
+
 idea {
   project {
     languageLevel = '1.8'
@@ -160,6 +172,7 @@ subprojects {
   apply plugin: 'java'
   apply plugin: 'eclipse'
   apply from: "${buildScriptDirPath}/cleanGenerated.gradle"
+  apply plugin: 'jacoco'
 
   afterEvaluate {
     if (project.plugins.hasPlugin('pegasus')) {
@@ -196,6 +209,10 @@ subprojects {
     all*.exclude group: 'javax.jms', module: 'jms'
     all*.exclude group: 'com.sun.jdmk', module: 'jmxtools'
     all*.exclude group: 'com.sun.jmx', module: 'jmxri'
+    // Exclude older versions of velocity engine under a different module name
+    // so they don't conflict with "velocity-engine-core" module used
+    // for versions >=2.0
+    all*.exclude group: 'org.apache.velocity', module: 'velocity'
   }
 
   if (!(it.name in ['data-avro', 'restli-int-test'])) {
@@ -226,7 +243,7 @@ subprojects {
       mavenLocal()
       mavenCentral()
       maven {
-        url "https://dl.bintray.com/linkedin/maven"
+        url "https://linkedin.jfrog.io/artifactory/open-source"
       }
     }
 
@@ -248,8 +265,9 @@ subprojects {
 
     // Only build and publish artifacts for consumer-facing modules
     if (!(it.name in privateModules)) {
-      // Configure the Bintray release task
-      apply from: "${buildScriptDirPath}/bintrayRelease.gradle"
+      // Configure all publications and the tasks to publish them
+      apply from: "${buildScriptDirPath}/publications.gradle"
+      apply from: "${buildScriptDirPath}/jfrog.gradle"
     }
   }
 
@@ -287,15 +305,18 @@ subprojects {
     }
   }
 
-  // Exclude tests which are known to be flaky in the Travis CI environment. Since all test tasks are TestNG tasks
-  // EXCEPT the integTest task, exclude the options from being evaluated by travis for the integTest task.
-  if (System.getenv('TRAVIS') == 'true' && System.getenv('USER') == 'travis') {
+  // Do some special test configuration for the CI environment
+  if (System.getenv('CI') == 'true' && System.getenv('GITHUB_ACTIONS') == 'true') {
     afterEvaluate {
       project.tasks.withType(Test).forEach {
+        // Exclude tests which are known to be flaky (only TestNG tests, not other tests e.g. Gradle int tests)
         if (it.options instanceof TestNGOptions) {
           it.options.excludeGroups 'ci-flaky'
         }
+        // Increase the Rest.li int test timeout
         it.systemProperties['test.httpRequestTimeout'] = '20000'
+        // Make the build fail fast in CI (may have unintended consequences locally)
+        it.failFast = true
       }
     }
   }
@@ -384,6 +405,14 @@ subprojects {
       workingDir = file(rootDir.toString())
     }
   }
+
+  // Disable tests for specific subprojects if requested
+  if (project.name in rootProject.ext.skipTestsForSubprojects) {
+    project.tasks.withType(Test) {
+      enabled = false
+    }
+    logger.lifecycle "Tests for subproject ${project.name} will be skipped."
+  }
 }
 
 final skippedTests = [:].withDefault {[]}
@@ -424,3 +453,4 @@ project.gradle.buildFinished { BuildResult result ->
     logger.warn msgBuilder.toString()
   }
 }
+

@@ -43,6 +43,7 @@ class ClusterLoadBalancerSubscriber extends
   @Override
   protected void handlePut(final String listenTo, final ClusterProperties discoveryProperties)
   {
+    // TODO: pick stable or canary configs if canary exists
     if (discoveryProperties != null)
     {
       _simpleLoadBalancerState.getClusterInfo().put(listenTo,

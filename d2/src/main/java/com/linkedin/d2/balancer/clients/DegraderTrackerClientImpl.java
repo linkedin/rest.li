@@ -49,21 +49,21 @@ public class DegraderTrackerClientImpl extends TrackerClientImpl implements Degr
                                Clock clock, DegraderImpl.Config config)
   {
     this(uri, partitionDataMap, wrappedClient, clock, config, TrackerClientImpl.DEFAULT_CALL_TRACKER_INTERVAL,
-         TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN, Collections.emptyMap());
+         TrackerClientImpl.DEFAULT_ERROR_STATUS_PATTERN, false);
   }
 
   public DegraderTrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient,
                                Clock clock, DegraderImpl.Config config, long interval, Pattern errorStatusPattern)
   {
-    this(uri, partitionDataMap, wrappedClient, clock, config, interval, errorStatusPattern, null);
+    this(uri, partitionDataMap, wrappedClient, clock, config, interval, errorStatusPattern, false);
   }
 
   public DegraderTrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient,
                                Clock clock, DegraderImpl.Config config, long interval, Pattern errorStatusPattern,
-                               Map<String, Object> uriSpecificProperties)
+                               boolean doNotSlowStart)
   {
     super(uri, partitionDataMap, wrappedClient, clock, interval,
-        (status) -> errorStatusPattern.matcher(Integer.toString(status)).matches());
+        (status) -> errorStatusPattern.matcher(Integer.toString(status)).matches(), true, doNotSlowStart, false);
 
     if (config == null)
     {
@@ -75,12 +75,7 @@ public class DegraderTrackerClientImpl extends TrackerClientImpl implements Degr
     // The overrideDropRate will be globally determined by the DegraderLoadBalancerStrategy.
     config.setOverrideDropRate(0.0);
 
-    if (uriSpecificProperties == null)
-    {
-      uriSpecificProperties = new HashMap<>();
-    }
-    if (uriSpecificProperties.containsKey(PropertyKeys.DO_NOT_SLOW_START)
-      && Boolean.parseBoolean(uriSpecificProperties.get(PropertyKeys.DO_NOT_SLOW_START).toString()))
+    if (doNotSlowStart)
     {
       config.setInitialDropRate(DegraderImpl.DEFAULT_DO_NOT_SLOW_START_INITIAL_DROP_RATE);
     }
@@ -110,7 +105,7 @@ public class DegraderTrackerClientImpl extends TrackerClientImpl implements Degr
      * However, now it becomes harder to have different configurations for different partitions.
      */
     int mapSize = partitionDataMap.size();
-    Map<Integer, PartitionState>partitionStates = new HashMap<Integer, PartitionState>(mapSize * 2);
+    Map<Integer, PartitionState>partitionStates = new HashMap<>(mapSize * 2);
     config.setName("TrackerClient Degrader: " + uri);
     DegraderImpl degrader = new DegraderImpl(config);
     DegraderControl degraderControl = new DegraderControl(degrader);

@@ -157,49 +157,49 @@ public class TestParameterDefaultValue
     Object result;
 
     result = test("{\"key1\": \"Hello\", \"key2\": \"World\"}", StringMap.class);
-    final Map<String, String> stringFixture = new HashMap<String, String>();
+    final Map<String, String> stringFixture = new HashMap<>();
     stringFixture.put("key1", "Hello");
     stringFixture.put("key2", "World");
     Assert.assertEquals(result, new StringMap(stringFixture));
     Assert.assertSame(result.getClass(), StringMap.class);
 
     result = test("{\"key1\": true, \"key2\": false}", BooleanMap.class);
-    final Map<String, Boolean> booleanFixture = new HashMap<String, Boolean>();
+    final Map<String, Boolean> booleanFixture = new HashMap<>();
     booleanFixture.put("key1", true);
     booleanFixture.put("key2", false);
     Assert.assertEquals(result, new BooleanMap(booleanFixture));
     Assert.assertSame(result.getClass(), BooleanMap.class);
 
     result = test("{\"key1\": 1, \"key2\": 2}", IntegerMap.class);
-    final Map<String, Integer> integerFixture = new HashMap<String, Integer>();
+    final Map<String, Integer> integerFixture = new HashMap<>();
     integerFixture.put("key1", 1);
     integerFixture.put("key2", 2);
     Assert.assertEquals(result, new IntegerMap(integerFixture));
     Assert.assertSame(result.getClass(), IntegerMap.class);
 
     result = test("{\"key1\": 2, \"key2\": 3}", LongMap.class);
-    final Map<String, Long> longFixture = new HashMap<String, Long>();
+    final Map<String, Long> longFixture = new HashMap<>();
     longFixture.put("key1", 2L);
     longFixture.put("key2", 3L);
     Assert.assertEquals(result, new LongMap(longFixture));
     Assert.assertSame(result.getClass(), LongMap.class);
 
     result = test("{\"key1\": 1.1, \"key2\": 2.2}", FloatMap.class);
-    final Map<String, Float> floatFixture = new HashMap<String, Float>();
+    final Map<String, Float> floatFixture = new HashMap<>();
     floatFixture.put("key1", 1.1F);
     floatFixture.put("key2", 2.2F);
     Assert.assertEquals(result, new FloatMap(floatFixture));
     Assert.assertSame(result.getClass(), FloatMap.class);
 
     result = test("{\"key1\": 2.2, \"key2\": 3.3}", DoubleMap.class);
-    final Map<String, Double> doubleFixture = new HashMap<String, Double>();
+    final Map<String, Double> doubleFixture = new HashMap<>();
     doubleFixture.put("key1", 2.2D);
     doubleFixture.put("key2", 3.3D);
     Assert.assertEquals(result, new DoubleMap(doubleFixture));
     Assert.assertSame(result.getClass(), DoubleMap.class);
 
     result = test("{\"key1\": " + _bytes16Quoted + ", \"key2\": " + _bytes16Quoted + "}", BytesMap.class);
-    final Map<String, ByteString> bytesFixture = new HashMap<String, ByteString>();
+    final Map<String, ByteString> bytesFixture = new HashMap<>();
     bytesFixture.put("key1", ByteString.copyAvroString(_bytes16, true));
     bytesFixture.put("key2", ByteString.copyAvroString(_bytes16, true));
     Assert.assertEquals(result, new BytesMap(new DataMap(bytesFixture)));
@@ -212,7 +212,7 @@ public class TestParameterDefaultValue
     dataFixture2.put("location", "MTV");
     final RecordBar record1 = new RecordBar(dataFixture1);
     final RecordBar record2 = new RecordBar(dataFixture2);
-    final Map<String, RecordBar> recordFixture = new HashMap<String, RecordBar>();
+    final Map<String, RecordBar> recordFixture = new HashMap<>();
     recordFixture.put("key1", record1);
     recordFixture.put("key2", record2);
     Assert.assertEquals(result, new RecordBarMap(recordFixture));
@@ -230,7 +230,7 @@ public class TestParameterDefaultValue
   {
     final Map<String, Object> fixture;
 
-    fixture = new HashMap<String, Object>();
+    fixture = new HashMap<>();
     fixture.put("location", "LinkedIn");
     Assert.assertEquals(test("{\"location\": \"LinkedIn\"}", RecordBar.class), new RecordBar(new DataMap(fixture)));
   }
@@ -285,12 +285,12 @@ public class TestParameterDefaultValue
 
   private static <T> Object test(String value, Class<T> type)
   {
-    return new Parameter<T>("", type, null, true, value, null, false, AnnotationSet.EMPTY).getDefaultValue();
+    return new Parameter<>("", type, null, true, value, null, false, AnnotationSet.EMPTY).getDefaultValue();
   }
 
   private static <T> Object test(String value, Class<T> type, DataSchema typrefSchema)
   {
-    return new Parameter<T>("", type, typrefSchema, true, value, null, false, AnnotationSet.EMPTY).getDefaultValue();
+    return new Parameter<>("", type, typrefSchema, true, value, null, false, AnnotationSet.EMPTY).getDefaultValue();
   }
 
   private final String _bytes16 = "\u0001\u0002\u0003\u0004" +

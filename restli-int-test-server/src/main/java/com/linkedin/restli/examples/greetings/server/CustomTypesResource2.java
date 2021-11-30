@@ -61,7 +61,7 @@ public class CustomTypesResource2 extends CollectionResourceTemplate<CustomLong,
   @Override
   public Map<CustomLong, Greeting> batchGet(Set<CustomLong> ids)
   {
-    Map<CustomLong, Greeting> result = new HashMap<CustomLong, Greeting>(ids.size());
+    Map<CustomLong, Greeting> result = new HashMap<>(ids.size());
 
     for (CustomLong id: ids)
     {
@@ -74,34 +74,34 @@ public class CustomTypesResource2 extends CollectionResourceTemplate<CustomLong,
   @Override
   public BatchUpdateResult<CustomLong, Greeting> batchDelete(BatchDeleteRequest<CustomLong, Greeting> ids)
   {
-    Map<CustomLong, UpdateResponse> results = new HashMap<CustomLong, UpdateResponse>();
+    Map<CustomLong, UpdateResponse> results = new HashMap<>();
     for (CustomLong id: ids.getKeys())
     {
       results.put(id, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
     }
-    return new BatchUpdateResult<CustomLong, Greeting>(results);
+    return new BatchUpdateResult<>(results);
   }
 
   @Override
   public BatchUpdateResult<CustomLong, Greeting> batchUpdate(BatchPatchRequest<CustomLong, Greeting> entityUpdates)
   {
-    Map<CustomLong, UpdateResponse> results = new HashMap<CustomLong, UpdateResponse>();
+    Map<CustomLong, UpdateResponse> results = new HashMap<>();
     for (CustomLong id: entityUpdates.getData().keySet())
     {
       results.put(id, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
     }
-    return new BatchUpdateResult<CustomLong, Greeting>(results);
+    return new BatchUpdateResult<>(results);
   }
 
   @Override
   public BatchUpdateResult<CustomLong, Greeting> batchUpdate(BatchUpdateRequest<CustomLong, Greeting> entities)
   {
-    Map<CustomLong, UpdateResponse> results = new HashMap<CustomLong, UpdateResponse>();
+    Map<CustomLong, UpdateResponse> results = new HashMap<>();
     for (CustomLong id: entities.getData().keySet())
     {
       results.put(id, new UpdateResponse(HttpStatus.S_204_NO_CONTENT));
     }
-    return new BatchUpdateResult<CustomLong, Greeting>(results);
+    return new BatchUpdateResult<>(results);
   }
 
   @RestMethod.Create
@@ -114,12 +114,12 @@ public class CustomTypesResource2 extends CollectionResourceTemplate<CustomLong,
   @Override
   public BatchCreateResult<CustomLong, Greeting> batchCreate(BatchCreateRequest<CustomLong, Greeting> entities)
   {
-    List<CreateResponse> results = new ArrayList<CreateResponse>();
+    List<CreateResponse> results = new ArrayList<>();
     for (Greeting greeting: entities.getInput())
     {
       // just echo back the provided ids (for testing only, this would not a be correct implementation of POST)
       results.add(new CreateResponse(new CustomLong(greeting.getId()), HttpStatus.S_204_NO_CONTENT));
     }
-    return new BatchCreateResult<CustomLong, Greeting>(results);
+    return new BatchCreateResult<>(results);
   }
 }

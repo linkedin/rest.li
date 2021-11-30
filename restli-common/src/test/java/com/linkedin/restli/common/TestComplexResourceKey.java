@@ -37,12 +37,12 @@ public class TestComplexResourceKey
     paramMap.put("paramField1", "paramValue1");
     EmptyRecord param1 = new EmptyRecord(paramMap);
     ComplexResourceKey<EmptyRecord, EmptyRecord> complexKey1 =
-        new ComplexResourceKey<EmptyRecord, EmptyRecord>(key1, param1);
+        new ComplexResourceKey<>(key1, param1);
 
     EmptyRecord key2 = key1.copy();
     EmptyRecord param2 = param1.copy();
     ComplexResourceKey<EmptyRecord, EmptyRecord> complexKey2 =
-        new ComplexResourceKey<EmptyRecord, EmptyRecord>(key2, param2);
+        new ComplexResourceKey<>(key2, param2);
 
     Assert.assertTrue(complexKey1.equals(complexKey2));
 
@@ -57,13 +57,13 @@ public class TestComplexResourceKey
     complexKey2.params.data().put("paramField1", "paramValue1");
 
     // One param null, other not
-    complexKey1 = new ComplexResourceKey<EmptyRecord, EmptyRecord>(key1, null);
-    complexKey2 = new ComplexResourceKey<EmptyRecord, EmptyRecord>(key2, param2);
+    complexKey1 = new ComplexResourceKey<>(key1, null);
+    complexKey2 = new ComplexResourceKey<>(key2, param2);
     Assert.assertFalse(complexKey1.equals(complexKey2));
     Assert.assertFalse(complexKey2.equals(complexKey1));
 
     // Both param null
-    complexKey2 = new ComplexResourceKey<EmptyRecord, EmptyRecord>(key2, null);
+    complexKey2 = new ComplexResourceKey<>(key2, null);
     Assert.assertTrue(complexKey1.equals(complexKey2));
   }
 
@@ -79,7 +79,7 @@ public class TestComplexResourceKey
     EmptyRecord params = new EmptyRecord(paramsDataMap);
 
     ComplexResourceKey<EmptyRecord, EmptyRecord> complexResourceKey =
-        new ComplexResourceKey<EmptyRecord, EmptyRecord>(key, params);
+        new ComplexResourceKey<>(key, params);
 
     complexResourceKey.makeReadOnly();
 
@@ -112,7 +112,7 @@ public class TestComplexResourceKey
     EmptyRecord key = new EmptyRecord(keyDataMap);
 
     ComplexResourceKey<EmptyRecord, EmptyRecord> complexResourceKey =
-        new ComplexResourceKey<EmptyRecord, EmptyRecord>(key, null);
+        new ComplexResourceKey<>(key, null);
 
     complexResourceKey.makeReadOnly();
 
@@ -141,10 +141,10 @@ public class TestComplexResourceKey
   @Test(dataProvider = "keySchemaValidation")
   public void testKeySchema(int keyValue, int paramValue, boolean validationFailure, Class<RecordTemplate> schemaClass)
   {
-    TypeSpec<RecordTemplate> keyType = new TypeSpec<RecordTemplate>(schemaClass);
-    TypeSpec<RecordTemplate> paramsType = new TypeSpec<RecordTemplate>(schemaClass);
+    TypeSpec<RecordTemplate> keyType = new TypeSpec<>(schemaClass);
+    TypeSpec<RecordTemplate> paramsType = new TypeSpec<>(schemaClass);
     ComplexKeySpec<RecordTemplate, RecordTemplate> keySpec =
-        new ComplexKeySpec<RecordTemplate, RecordTemplate>(keyType, paramsType);
+        new ComplexKeySpec<>(keyType, paramsType);
     DataMap paramsData = new DataMap();
     paramsData.put("int", paramValue);
     DataMap data = new DataMap();

@@ -23,6 +23,7 @@ import com.linkedin.util.degrader.CallTrackerImpl;
 import com.linkedin.util.degrader.ErrorType;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,9 +53,28 @@ public class TrackerClientMockHelper
       Mockito.when(trackerClient.getCallTracker()).thenReturn(new CallTrackerImpl(RelativeLoadBalancerStrategyFactory.DEFAULT_UPDATE_INTERVAL_MS));
       Mockito.when(trackerClient.getUri()).thenReturn(uri);
       Mockito.when(trackerClient.getPartitionWeight(anyInt())).thenReturn(1.0);
+      Mockito.when(trackerClient.getSubsetWeight(anyInt())).thenReturn(1.0);
       trackerClients.add(trackerClient);
     }
     return trackerClients;
+  }
+
+  public static List<TrackerClient> mockTrackerClients(int numTrackerClients, List<Integer> callCountList,
+      List<Integer> outstandingCallCountList, List<Long> latencyList, List<Long> outstandingLatencyList,
+      List<Integer> errorCountList)
+  {
+    return mockTrackerClients(numTrackerClients, callCountList, outstandingCallCountList, latencyList, outstandingLatencyList, errorCountList, false, Collections.nCopies(numTrackerClients, false));
+  }
+
+  public static List<TrackerClient> mockTrackerClients(int numTrackerClients,
+                                                       List<Integer> callCountList,
+                                                       List<Integer> outstandingCallCountList,
+                                                       List<Long> latencyList,
+                                                       List<Long> outstandingLatencyList,
+                                                       List<Integer> errorCountList,
+                                                       List<Boolean> doNotLoadBalance)
+  {
+    return mockTrackerClients(numTrackerClients, callCountList, outstandingCallCountList, latencyList, outstandingLatencyList, errorCountList, false, doNotLoadBalance);
   }
 
   /**
@@ -70,7 +90,7 @@ public class TrackerClientMockHelper
    */
   public static List<TrackerClient> mockTrackerClients(int numTrackerClients, List<Integer> callCountList,
       List<Integer> outstandingCallCountList, List<Long> latencyList, List<Long> outstandingLatencyList,
-      List<Integer> errorCountList)
+      List<Integer> errorCountList, boolean doNotSlowStart, List<Boolean> doNotLoadBalance)
   {
     List<TrackerClient> trackerClients = new ArrayList<>();
     for (int index = 0; index < numTrackerClients; index ++)
@@ -102,6 +122,9 @@ public class TrackerClientMockHelper
       Mockito.when(callTracker.getCallStats()).thenReturn(callStats);
       Mockito.when(trackerClient.getUri()).thenReturn(uri);
       Mockito.when(trackerClient.getPartitionWeight(anyInt())).thenReturn(1.0);
+      Mockito.when(trackerClient.getSubsetWeight(anyInt())).thenReturn(1.0);
+      Mockito.when(trackerClient.doNotSlowStart()).thenReturn(doNotSlowStart);
+      Mockito.when(trackerClient.doNotLoadBalance()).thenReturn(doNotLoadBalance.get(index));
       trackerClients.add(trackerClient);
     }
     return trackerClients;

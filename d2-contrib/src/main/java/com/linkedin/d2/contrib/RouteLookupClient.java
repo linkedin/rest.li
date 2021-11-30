@@ -103,7 +103,7 @@ public class RouteLookupClient implements RoutingAwareClient
   public Future<RestResponse> restRequest(final RestRequest request, final RequestContext requestContext,
                                           String routekey)
   {
-    final FutureCallback<String> futureCallback = new FutureCallback<String>();
+    final FutureCallback<String> futureCallback = new FutureCallback<>();
     String originalServiceName = LoadBalancerUtil.getServiceNameFromUri(request.getURI());
     String resultServiceName;
     _routeLookup.run(originalServiceName, _routingGroup, routekey, futureCallback);

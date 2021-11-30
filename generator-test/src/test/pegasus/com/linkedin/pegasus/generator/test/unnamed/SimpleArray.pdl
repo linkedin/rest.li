@@ -1,0 +1,9 @@
+namespace com.linkedin.pegasus.generator.test.unnamed
+
+import com.linkedin.pegasus.generator.test.unnamed.records.Simple
+
+record SimpleArray {
+  // This tests checks that SimpleArray will be created in the same namespace as the Simple record (not inlined here).
+  // So there is no naming conflict for the array type.
+  records: array[Simple]
+}

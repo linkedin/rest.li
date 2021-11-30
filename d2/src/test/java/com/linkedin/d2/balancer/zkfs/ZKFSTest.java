@@ -140,13 +140,12 @@ public class ZKFSTest
   {
     ZKFSComponentFactory f = new ZKFSComponentFactory();
     Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
-            new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
+        new HashMap<>();
 
     loadBalancerStrategyFactories.put("degrader",
                                       new DegraderLoadBalancerStrategyFactoryV3());
 
-    Map<String, TransportClientFactory> clientFactories =
-            new HashMap<String, TransportClientFactory>();
+    Map<String, TransportClientFactory> clientFactories = new HashMap<>();
 
     clientFactories.put("http", new HttpClientFactory.Builder().build());
 
@@ -171,7 +170,7 @@ public class ZKFSTest
     try
     {
       ZKFSLoadBalancer balancer = getBalancer();
-      FutureCallback<None> callback = new FutureCallback<None>();
+      FutureCallback<None> callback = new FutureCallback<>();
 
       balancer.start(callback);
 
@@ -189,7 +188,7 @@ public class ZKFSTest
           throws ExecutionException, TimeoutException, InterruptedException
   {
     ZKFSLoadBalancer balancer = getBalancer();
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     balancer.start(callback);
     callback.get(15, TimeUnit.SECONDS);
 
@@ -203,7 +202,7 @@ public class ZKFSTest
     try
     {
       ZKFSLoadBalancer balancer = getBalancer();
-      FutureCallback<None> callback = new FutureCallback<None>();
+      FutureCallback<None> callback = new FutureCallback<>();
       balancer.start(callback);
       callback.get(5, TimeUnit.SECONDS);
 
@@ -228,7 +227,7 @@ public class ZKFSTest
     try
     {
       ZKFSLoadBalancer balancer = getBalancer();
-      FutureCallback<None> callback = new FutureCallback<None>();
+      FutureCallback<None> callback = new FutureCallback<>();
       balancer.start(callback);
       callback.get(30, TimeUnit.SECONDS);
 
@@ -238,15 +237,15 @@ public class ZKFSTest
       conn.start();
 
       ZooKeeperPermanentStore<ServiceProperties> store =
-              new ZooKeeperPermanentStore<ServiceProperties>(conn, new ServicePropertiesJsonSerializer(), ZKFSUtil.servicePath(BASE_PATH));
-      callback = new FutureCallback<None>();
+              new ZooKeeperPermanentStore<>(conn, new ServicePropertiesJsonSerializer(), ZKFSUtil.servicePath(BASE_PATH));
+      callback = new FutureCallback<>();
       store.start(callback);
       callback.get(30, TimeUnit.SECONDS);
 
       ServiceProperties props = new ServiceProperties(TEST_SERVICE_NAME, "someCluster", "/somePath", Arrays.asList("someStrategy"));
       store.put(TEST_SERVICE_NAME, props);
 
-      FutureCallback<List<String>> serviceCallback = new FutureCallback<List<String>>();
+      FutureCallback<List<String>> serviceCallback = new FutureCallback<>();
       dir.getServiceNames(serviceCallback);
 
       Assert.assertEquals(serviceCallback.get(30, TimeUnit.SECONDS), Collections.singletonList(TEST_SERVICE_NAME));
@@ -265,7 +264,7 @@ public class ZKFSTest
     try
     {
       ZKFSLoadBalancer balancer = getBalancer();
-      FutureCallback<None> callback = new FutureCallback<None>();
+      FutureCallback<None> callback = new FutureCallback<>();
       balancer.start(callback);
       callback.get(30, TimeUnit.SECONDS);
 
@@ -275,16 +274,16 @@ public class ZKFSTest
       conn.start();
 
       ZooKeeperPermanentStore<ClusterProperties> store =
-              new ZooKeeperPermanentStore<ClusterProperties>(conn, new ClusterPropertiesJsonSerializer(),
-                                                             ZKFSUtil.clusterPath(BASE_PATH));
-      callback = new FutureCallback<None>();
+              new ZooKeeperPermanentStore<>(conn, new ClusterPropertiesJsonSerializer(),
+                                            ZKFSUtil.clusterPath(BASE_PATH));
+      callback = new FutureCallback<>();
       store.start(callback);
       callback.get(30, TimeUnit.SECONDS);
 
       ClusterProperties props = new ClusterProperties(TEST_CLUSTER_NAME);
       store.put(TEST_CLUSTER_NAME, props);
 
-      FutureCallback<List<String>> clusterCallback = new FutureCallback<List<String>>();
+      FutureCallback<List<String>> clusterCallback = new FutureCallback<>();
       dir.getClusterNames(clusterCallback);
 
       Assert.assertEquals(clusterCallback.get(30, TimeUnit.SECONDS), Collections.singletonList(TEST_CLUSTER_NAME));
@@ -308,16 +307,16 @@ public class ZKFSTest
     {
       ZKFSLoadBalancer balancer = getBalancer();
 
-      FutureCallback<None> callback = new FutureCallback<None>();
+      FutureCallback<None> callback = new FutureCallback<>();
       balancer.start(callback);
       callback.get(30, TimeUnit.SECONDS);
 
       ZKConnection conn = balancer.zkConnection();
 
       ZooKeeperPermanentStore<ServiceProperties> serviceStore =
-              new ZooKeeperPermanentStore<ServiceProperties>(conn,
-                                                             new ServicePropertiesJsonSerializer(),
-                                                             ZKFSUtil.servicePath(BASE_PATH));
+              new ZooKeeperPermanentStore<>(conn,
+                                            new ServicePropertiesJsonSerializer(),
+                                            ZKFSUtil.servicePath(BASE_PATH));
 
       ServiceProperties props = new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/test",
                                                       Arrays.asList("degrader"),
@@ -330,32 +329,32 @@ public class ZKFSTest
 
       ClusterProperties clusterProperties = new ClusterProperties(TEST_CLUSTER_NAME);
       ZooKeeperPermanentStore<ClusterProperties> clusterStore =
-              new ZooKeeperPermanentStore<ClusterProperties>(conn, new ClusterPropertiesJsonSerializer(), ZKFSUtil.clusterPath(BASE_PATH));
+              new ZooKeeperPermanentStore<>(conn, new ClusterPropertiesJsonSerializer(), ZKFSUtil.clusterPath(BASE_PATH));
       clusterStore.put(TEST_CLUSTER_NAME, clusterProperties);
 
       ZooKeeperEphemeralStore<UriProperties> uriStore =
-              new ZooKeeperEphemeralStore<UriProperties>(conn,
-                                                         new UriPropertiesJsonSerializer(),
-                                                         new UriPropertiesMerger(),
-                                                         ZKFSUtil.uriPath(BASE_PATH),
-                                                         false,
-                                                         true);
-      Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
-      Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+              new ZooKeeperEphemeralStore<>(conn,
+                                            new UriPropertiesJsonSerializer(),
+                                            new UriPropertiesMerger(),
+                                            ZKFSUtil.uriPath(BASE_PATH),
+                                            false,
+                                            true);
+      Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
+      Map<Integer, PartitionData> partitionData = new HashMap<>(1);
       partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1.0d));
       uriData.put(TEST_SERVER_URI1, partitionData);
       uriData.put(TEST_SERVER_URI2, partitionData);
 
       UriProperties uriProps = new UriProperties(TEST_CLUSTER_NAME, uriData);
 
-      callback = new FutureCallback<None>();
+      callback = new FutureCallback<>();
       uriStore.start(callback);
       callback.get(30, TimeUnit.SECONDS);
 
       uriStore.put(TEST_CLUSTER_NAME, uriProps);
 
 
-      Set<Integer> keys = new HashSet<Integer>();
+      Set<Integer> keys = new HashSet<>();
       for (int ii=0; ii<100; ++ii)
       {
         keys.add(ii);
@@ -386,7 +385,7 @@ public class ZKFSTest
     try
     {
       ZKFSLoadBalancer balancer = getBalancer();
-      FutureCallback<None> callback = new FutureCallback<None>();
+      FutureCallback<None> callback = new FutureCallback<>();
       balancer.start(callback);
       callback.get(30, TimeUnit.SECONDS);
 
@@ -410,7 +409,7 @@ public class ZKFSTest
     try
     {
       ZKFSLoadBalancer balancer = getBalancer();
-      FutureCallback<None> callback = new FutureCallback<None>();
+      FutureCallback<None> callback = new FutureCallback<>();
       balancer.start(callback);
       callback.get(30, TimeUnit.SECONDS);
 
@@ -418,8 +417,8 @@ public class ZKFSTest
       conn.start();
 
       ZooKeeperPermanentStore<ServiceProperties> store =
-              new ZooKeeperPermanentStore<ServiceProperties>(conn, new ServicePropertiesJsonSerializer(), ZKFSUtil.servicePath(BASE_PATH));
-      callback = new FutureCallback<None>();
+              new ZooKeeperPermanentStore<>(conn, new ServicePropertiesJsonSerializer(), ZKFSUtil.servicePath(BASE_PATH));
+      callback = new FutureCallback<>();
       store.start(callback);
       callback.get(30, TimeUnit.SECONDS);
 
@@ -434,8 +433,8 @@ public class ZKFSTest
       store.put(TEST_SERVICE_NAME, props);
 
       ZooKeeperPermanentStore<ClusterProperties> clusterStore =
-              new ZooKeeperPermanentStore<ClusterProperties>(conn, new ClusterPropertiesJsonSerializer(), ZKFSUtil.clusterPath(BASE_PATH));
-      callback = new FutureCallback<None>();
+              new ZooKeeperPermanentStore<>(conn, new ClusterPropertiesJsonSerializer(), ZKFSUtil.clusterPath(BASE_PATH));
+      callback = new FutureCallback<>();
       clusterStore.start(callback);
       callback.get(30, TimeUnit.SECONDS);
 
@@ -444,14 +443,14 @@ public class ZKFSTest
 
       ZKConnection serverConn = new ZKConnection("localhost:" + PORT, 30000);
       serverConn.start();
-      ZooKeeperEphemeralStore<UriProperties> uriStore = new ZooKeeperEphemeralStore<UriProperties>(serverConn, new UriPropertiesJsonSerializer(), new UriPropertiesMerger(), ZKFSUtil.uriPath(BASE_PATH));
-      callback = new FutureCallback<None>();
+      ZooKeeperEphemeralStore<UriProperties> uriStore = new ZooKeeperEphemeralStore<>(serverConn, new UriPropertiesJsonSerializer(), new UriPropertiesMerger(), ZKFSUtil.uriPath(BASE_PATH));
+      callback = new FutureCallback<>();
       uriStore.start(callback);
       callback.get(30, TimeUnit.SECONDS);
 
       ZooKeeperServer server = new ZooKeeperServer(uriStore);
-      callback = new FutureCallback<None>();
-      Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>();
+      callback = new FutureCallback<>();
+      Map<Integer, PartitionData> partitionDataMap = new HashMap<>();
       partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1.0));
       server.markUp(TEST_CLUSTER_NAME, URI.create("http://test.uri"), partitionDataMap, callback);
       callback.get(30, TimeUnit.SECONDS);

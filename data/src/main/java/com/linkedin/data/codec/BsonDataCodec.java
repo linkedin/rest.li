@@ -219,7 +219,7 @@ public class BsonDataCodec implements DataCodec
   protected static class BsonTraverseCallback implements Data.TraverseCallback
   {
     private final BufferChain _buffer;
-    private final Deque<BufferChain.Position> _positionStack = new ArrayDeque<BufferChain.Position>();
+    private final Deque<BufferChain.Position> _positionStack = new ArrayDeque<>();
     private String _currentName = null;
 
     BsonTraverseCallback()
@@ -457,7 +457,7 @@ public class BsonDataCodec implements DataCodec
             break;
           case BSON_BOOLEAN:
             byte b = _buffer.get();
-            o = new Boolean(b != ZERO_BYTE);
+            o = Boolean.valueOf(b != ZERO_BYTE);
             break;
           case BSON_64BIT_INTEGER:
             o = _buffer.getLong();

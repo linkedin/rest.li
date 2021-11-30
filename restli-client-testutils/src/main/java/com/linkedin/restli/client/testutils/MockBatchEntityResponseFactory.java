@@ -102,12 +102,12 @@ public class MockBatchEntityResponseFactory
 
     @SuppressWarnings("unchecked")
     BatchKVResponse<ComplexResourceKey<KK, KP>, EntityResponse<V>> response =
-      (BatchKVResponse<ComplexResourceKey<KK, KP>, EntityResponse<V>>) (Object) new BatchEntityResponse<ComplexResourceKey, V>(batchResponseDataMap,
-                                                                                                                               new TypeSpec<ComplexResourceKey>(ComplexResourceKey.class),
-                                                                                                                               TypeSpec.forClassMaybeNull(valueClass),
-                                                                                                                               null,
-                                                                                                                               ComplexKeySpec.forClassesMaybeNull(keyKeyClass, keyParamsClass),
-                                                                                                                               version);
+      (BatchKVResponse<ComplexResourceKey<KK, KP>, EntityResponse<V>>) (Object) new BatchEntityResponse<>(batchResponseDataMap,
+          new TypeSpec<>(ComplexResourceKey.class),
+          TypeSpec.forClassMaybeNull(valueClass),
+          null,
+          ComplexKeySpec.forClassesMaybeNull(keyKeyClass, keyParamsClass),
+          version);
     return response;
   }
 
@@ -218,11 +218,11 @@ public class MockBatchEntityResponseFactory
   {
     DataMap batchResponseDataMap = buildDataMap(recordTemplates, statuses, errorResponses, version);
 
-    return new BatchEntityResponse<K, V>(batchResponseDataMap,
-                                         TypeSpec.forClassMaybeNull(keyClass),
-                                         TypeSpec.forClassMaybeNull(valueClass),
-                                         keyParts,
-                                         null,
-                                         version);
+    return new BatchEntityResponse<>(batchResponseDataMap,
+        TypeSpec.forClassMaybeNull(keyClass),
+        TypeSpec.forClassMaybeNull(valueClass),
+        keyParts,
+        null,
+        version);
   }
 }

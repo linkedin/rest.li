@@ -83,4 +83,24 @@ public interface DegraderLoadBalancerStrategyV3JmxMBean
    */
   double getCurrentAvgClusterLatency(int partitionId);
 
+  /**
+   * Used for relative strategy monitoring mode
+   *
+   * @return the standard deviation of cluster latencies
+   */
+  double getLatencyStandardDeviation();
+
+  /**
+   * Used for relative strategy monitoring mode
+   *
+   * @return the relative ratio between max latency and average cluster latency
+   */
+  double getMaxLatencyRelativeFactor();
+
+  /**
+   * Used for relative strategy monitoring mode
+   *
+   * @return the relative ratio between nth percentile latency and average cluster latency
+   */
+  double getNthPercentileLatencyRelativeFactor(double pct);
 }

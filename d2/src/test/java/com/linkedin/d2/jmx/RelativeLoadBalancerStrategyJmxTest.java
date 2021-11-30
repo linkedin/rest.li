@@ -21,6 +21,7 @@ import com.linkedin.d2.balancer.strategies.relative.PartitionState;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.relative.TrackerClientMockHelper;
 import com.linkedin.d2.balancer.strategies.relative.TrackerClientState;
+import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -46,6 +47,7 @@ public class RelativeLoadBalancerStrategyJmxTest {
     RelativeLoadBalancerStrategy strategy = Mockito.mock(RelativeLoadBalancerStrategy.class);
     PartitionState state = Mockito.mock(PartitionState.class);
     Mockito.when(state.getTrackerClientStateMap()).thenReturn(trackerClientsMap);
+    Mockito.when(strategy.getFirstValidPartitionId()).thenReturn(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
     Mockito.when(strategy.getPartitionState(anyInt())).thenReturn(state);
 
     return new RelativeLoadBalancerStrategyJmx(strategy);
@@ -132,6 +134,24 @@ public class RelativeLoadBalancerStrategyJmxTest {
         Arrays.asList(0, 0, 0), Arrays.asList(0, 0, 0), Arrays.asList(0L, 0L, 0L), Arrays.asList(0L, 0L, 0L), Arrays.asList(0, 0, 0));
 
     RelativeLoadBalancerStrategyJmx jmx = mockRelativeLoadBalancerStrategyJmx(trackerClients);
+    assertEquals(jmx.getLatencyStandardDeviation(), 0.0);
+    assertEquals(jmx.getLatencyMeanAbsoluteDeviation(), 0.0);
+    assertEquals(jmx.getAboveAverageLatencyStandardDeviation(), 0.0);
+    assertEquals(jmx.getMaxLatencyRelativeFactor(), 0.0);
+    assertEquals(jmx.getNthPercentileLatencyRelativeFactor(0.95), 0.0);
+    assertEquals(jmx.getTotalPointsInHashRing(), 0);
+    assertEquals(jmx.getUnhealthyHostsCount(), 0);
+    assertEquals(jmx.getQuarantineHostsCount(), 0);
+  }
+
+  @Test
+  public void testNoValidPartitionData()
+  {
+    RelativeLoadBalancerStrategy strategy = Mockito.mock(RelativeLoadBalancerStrategy.class);
+    Mockito.when(strategy.getFirstValidPartitionId()).thenReturn(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
+    Mockito.when(strategy.getPartitionState(anyInt())).thenReturn(null);
+
+    RelativeLoadBalancerStrategyJmx jmx = new RelativeLoadBalancerStrategyJmx(strategy);
     assertEquals(jmx.getLatencyStandardDeviation(), 0.0);
     assertEquals(jmx.getLatencyMeanAbsoluteDeviation(), 0.0);
     assertEquals(jmx.getAboveAverageLatencyStandardDeviation(), 0.0);

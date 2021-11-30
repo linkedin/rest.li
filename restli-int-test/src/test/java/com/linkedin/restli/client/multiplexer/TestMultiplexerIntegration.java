@@ -25,6 +25,7 @@ import com.linkedin.restli.examples.RestLiIntegrationTest;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.client.GreetingsCallbackBuilders;
 
+import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -58,9 +59,9 @@ public class TestMultiplexerIntegration extends RestLiIntegrationTest
   public void singleCall() throws Exception
   {
     GetRequest<Greeting> request = new GreetingsCallbackBuilders().get().id(1L).build();
-    FutureCallback<Response<Greeting>> muxCallback = new FutureCallback<Response<Greeting>>();
-    FutureCallback<Response<Greeting>> directCallback = new FutureCallback<Response<Greeting>>();
-    FutureCallback<MultiplexedResponse> aggregatedCallback = new FutureCallback<MultiplexedResponse>();
+    FutureCallback<Response<Greeting>> muxCallback = new FutureCallback<>();
+    FutureCallback<Response<Greeting>> directCallback = new FutureCallback<>();
+    FutureCallback<MultiplexedResponse> aggregatedCallback = new FutureCallback<>();
 
     MultiplexedRequest multiplexedRequest = MultiplexedRequestBuilder
         .createParallelRequest()
@@ -81,8 +82,8 @@ public class TestMultiplexerIntegration extends RestLiIntegrationTest
   public void singleCallWithError() throws Exception
   {
     GetRequest<Greeting> request = new GreetingsCallbackBuilders().get().id(Long.MAX_VALUE).build();
-    FutureCallback<Response<Greeting>> muxCallback = new FutureCallback<Response<Greeting>>();
-    FutureCallback<Response<Greeting>> directCallback = new FutureCallback<Response<Greeting>>();
+    FutureCallback<Response<Greeting>> muxCallback = new FutureCallback<>();
+    FutureCallback<Response<Greeting>> directCallback = new FutureCallback<>();
 
     MultiplexedRequest multiplexedRequest = MultiplexedRequestBuilder
         .createParallelRequest()
@@ -99,12 +100,12 @@ public class TestMultiplexerIntegration extends RestLiIntegrationTest
   public void twoParallelCalls() throws Exception
   {
     GetRequest<Greeting> request1 = new GreetingsCallbackBuilders().get().id(1L).build();
-    FutureCallback<Response<Greeting>> muxCallback1 = new FutureCallback<Response<Greeting>>();
-    FutureCallback<Response<Greeting>> directCallback1 = new FutureCallback<Response<Greeting>>();
+    FutureCallback<Response<Greeting>> muxCallback1 = new FutureCallback<>();
+    FutureCallback<Response<Greeting>> directCallback1 = new FutureCallback<>();
 
     GetRequest<Greeting> request2 = new GreetingsCallbackBuilders().get().id(2L).build();
-    FutureCallback<Response<Greeting>> muxCallback2 = new FutureCallback<Response<Greeting>>();
-    FutureCallback<Response<Greeting>> directCallback2 = new FutureCallback<Response<Greeting>>();
+    FutureCallback<Response<Greeting>> muxCallback2 = new FutureCallback<>();
+    FutureCallback<Response<Greeting>> directCallback2 = new FutureCallback<>();
 
     MultiplexedRequest multiplexedRequest = MultiplexedRequestBuilder
         .createParallelRequest()
@@ -124,12 +125,12 @@ public class TestMultiplexerIntegration extends RestLiIntegrationTest
   public void twoParallelCallsWithOneError() throws Exception
   {
     GetRequest<Greeting> request1 = new GreetingsCallbackBuilders().get().id(1L).build();
-    FutureCallback<Response<Greeting>> muxCallback1 = new FutureCallback<Response<Greeting>>();
-    FutureCallback<Response<Greeting>> directCallback1 = new FutureCallback<Response<Greeting>>();
+    FutureCallback<Response<Greeting>> muxCallback1 = new FutureCallback<>();
+    FutureCallback<Response<Greeting>> directCallback1 = new FutureCallback<>();
 
     GetRequest<Greeting> request2 = new GreetingsCallbackBuilders().get().id(Long.MAX_VALUE).build();
-    FutureCallback<Response<Greeting>> muxCallback2 = new FutureCallback<Response<Greeting>>();
-    FutureCallback<Response<Greeting>> directCallback2 = new FutureCallback<Response<Greeting>>();
+    FutureCallback<Response<Greeting>> muxCallback2 = new FutureCallback<>();
+    FutureCallback<Response<Greeting>> directCallback2 = new FutureCallback<>();
 
     MultiplexedRequest multiplexedRequest = MultiplexedRequestBuilder
         .createParallelRequest()
@@ -149,12 +150,12 @@ public class TestMultiplexerIntegration extends RestLiIntegrationTest
   public void twoSequentialCalls() throws Exception
   {
     GetRequest<Greeting> request1 = new GreetingsCallbackBuilders().get().id(1L).build();
-    FutureCallback<Response<Greeting>> muxCallback1 = new FutureCallback<Response<Greeting>>();
-    FutureCallback<Response<Greeting>> directCallback1 = new FutureCallback<Response<Greeting>>();
+    FutureCallback<Response<Greeting>> muxCallback1 = new FutureCallback<>();
+    FutureCallback<Response<Greeting>> directCallback1 = new FutureCallback<>();
 
     GetRequest<Greeting> request2 = new GreetingsCallbackBuilders().get().id(2L).build();
-    FutureCallback<Response<Greeting>> muxCallback2 = new FutureCallback<Response<Greeting>>();
-    FutureCallback<Response<Greeting>> directCallback2 = new FutureCallback<Response<Greeting>>();
+    FutureCallback<Response<Greeting>> muxCallback2 = new FutureCallback<>();
+    FutureCallback<Response<Greeting>> directCallback2 = new FutureCallback<>();
 
     MultiplexedRequest multiplexedRequest = MultiplexedRequestBuilder
         .createSequentialRequest()
@@ -174,12 +175,12 @@ public class TestMultiplexerIntegration extends RestLiIntegrationTest
   public void twoSequentialCallsWithOneError() throws Exception
   {
     GetRequest<Greeting> request1 = new GreetingsCallbackBuilders().get().id(1L).build();
-    FutureCallback<Response<Greeting>> muxCallback1 = new FutureCallback<Response<Greeting>>();
-    FutureCallback<Response<Greeting>> directCallback1 = new FutureCallback<Response<Greeting>>();
+    FutureCallback<Response<Greeting>> muxCallback1 = new FutureCallback<>();
+    FutureCallback<Response<Greeting>> directCallback1 = new FutureCallback<>();
 
     GetRequest<Greeting> request2 = new GreetingsCallbackBuilders().get().id(Long.MAX_VALUE).build();
-    FutureCallback<Response<Greeting>> muxCallback2 = new FutureCallback<Response<Greeting>>();
-    FutureCallback<Response<Greeting>> directCallback2 = new FutureCallback<Response<Greeting>>();
+    FutureCallback<Response<Greeting>> muxCallback2 = new FutureCallback<>();
+    FutureCallback<Response<Greeting>> directCallback2 = new FutureCallback<>();
 
     MultiplexedRequest multiplexedRequest = MultiplexedRequestBuilder
         .createSequentialRequest()
@@ -201,8 +202,20 @@ public class TestMultiplexerIntegration extends RestLiIntegrationTest
     Response<Greeting> directResponse = getResult(directCallback);
     Assert.assertEquals(muxResponse.getStatus(), directResponse.getStatus());
     Assert.assertEquals(muxResponse.getEntity(), directResponse.getEntity());
-    // multiplexed response headers is a subset of direct response headers (direct response has more due to transport level headers)
-    Assert.assertTrue(directResponse.getHeaders().entrySet().containsAll(muxResponse.getHeaders().entrySet()), directResponse.getHeaders().toString() + ":" + muxResponse.getHeaders().toString());
+
+    // Multiplexed response headers are a subset of direct response headers (direct response has more due to transport-level headers)
+    Map<String, String> directResponseHeaders = directResponse.getHeaders();
+    Assert.assertTrue(directResponseHeaders.keySet().containsAll(muxResponse.getHeaders().keySet()));
+    for (Map.Entry<String, String> entry : muxResponse.getHeaders().entrySet())
+    {
+      final String header = entry.getKey();
+      Assert.assertTrue(directResponseHeaders.containsKey(header), String.format("Unexpected mux response header \"%s\".", header));
+      // In rare cases the date can be off by a second, so ignore the value
+      if (!header.equalsIgnoreCase("Date"))
+      {
+        Assert.assertEquals(entry.getValue(), directResponseHeaders.get(header), String.format("Mismatched value for header \"%s\".", header));
+      }
+    }
   }
 
   private Response<Greeting> getResult(FutureCallback<Response<Greeting>> callback) throws InterruptedException, ExecutionException, TimeoutException

@@ -111,23 +111,23 @@ public class CollectionAltKeyResource extends CollectionResourceTemplate<Long, G
   @Override
   public BatchUpdateResult<Long, Greeting> batchUpdate(BatchUpdateRequest<Long, Greeting> entities)
   {
-    Map<Long, UpdateResponse> responseMap = new HashMap<Long, UpdateResponse>();
+    Map<Long, UpdateResponse> responseMap = new HashMap<>();
     for (Map.Entry<Long, Greeting> entry : entities.getData().entrySet())
     {
       responseMap.put(entry.getKey(), update(entry.getKey(), entry.getValue()));
     }
-    return new BatchUpdateResult<Long, Greeting>(responseMap);
+    return new BatchUpdateResult<>(responseMap);
   }
 
   @Override
   public BatchUpdateResult<Long, Greeting> batchUpdate(BatchPatchRequest<Long, Greeting> entityUpdates)
   {
-    Map<Long, UpdateResponse> responseMap = new HashMap<Long, UpdateResponse>();
+    Map<Long, UpdateResponse> responseMap = new HashMap<>();
     for (Map.Entry<Long, PatchRequest<Greeting>> entry : entityUpdates.getData().entrySet())
     {
       responseMap.put(entry.getKey(), update(entry.getKey(), entry.getValue()));
     }
-    return new BatchUpdateResult<Long, Greeting>(responseMap);
+    return new BatchUpdateResult<>(responseMap);
   }
 
   @Override
@@ -141,11 +141,11 @@ public class CollectionAltKeyResource extends CollectionResourceTemplate<Long, G
   @Override
   public BatchUpdateResult<Long, Greeting> batchDelete(BatchDeleteRequest<Long, Greeting> deleteRequest)
   {
-    Map<Long, UpdateResponse> responseMap = new HashMap<Long, UpdateResponse>();
+    Map<Long, UpdateResponse> responseMap = new HashMap<>();
     for (Long id : deleteRequest.getKeys())
     {
       responseMap.put(id, delete(id));
     }
-    return new BatchUpdateResult<Long, Greeting>(responseMap);
+    return new BatchUpdateResult<>(responseMap);
   }
 }

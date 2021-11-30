@@ -1,0 +1,3 @@
+record TestSchema2 {
+  field1: string
+}

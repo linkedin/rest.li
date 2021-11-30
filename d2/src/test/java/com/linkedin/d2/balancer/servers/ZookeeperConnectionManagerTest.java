@@ -166,7 +166,7 @@ public class ZookeeperConnectionManagerTest
     ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer(new ZooKeeperServer(), false);
     announcer.setCluster(_cluster);
     announcer.setUri(_uri);
-    Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> partitionWeight = new HashMap<>();
     partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(ZookeeperConnectionManagerTest.WEIGHT));
     announcer.setPartitionData(partitionWeight);
 
@@ -176,7 +176,7 @@ public class ZookeeperConnectionManagerTest
     UriProperties properties = store.get(_cluster);
     assertNull(properties);
 
-    FutureCallback<None> markUpCallback = new FutureCallback<None>();
+    FutureCallback<None> markUpCallback = new FutureCallback<>();
     announcer.markUp(markUpCallback);
     markUpCallback.get();
 
@@ -203,7 +203,7 @@ public class ZookeeperConnectionManagerTest
     assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
     assertEquals(properties.Uris().size(), 1);
 
-    FutureCallback<None> markDownCallback = new FutureCallback<None>();
+    FutureCallback<None> markDownCallback = new FutureCallback<>();
     announcer.markDown(markDownCallback);
     markDownCallback.get();
 
@@ -255,7 +255,7 @@ public class ZookeeperConnectionManagerTest
 
     _zkServer.shutdown(false);
 
-    FutureCallback<None> markDownCallback = new FutureCallback<None>();
+    FutureCallback<None> markDownCallback = new FutureCallback<>();
     announcer.markDown(markDownCallback);
 
     // ugly, but we need to wait for a while just so that Disconnect event is propagated
@@ -287,9 +287,9 @@ public class ZookeeperConnectionManagerTest
 
     _zkServer.shutdown(false);
 
-    FutureCallback<None> markDownCallback = new FutureCallback<None>();
+    FutureCallback<None> markDownCallback = new FutureCallback<>();
     announcer.markDown(markDownCallback);
-    FutureCallback<None> markUpCallback = new FutureCallback<None>();
+    FutureCallback<None> markUpCallback = new FutureCallback<>();
     announcer.markUp(markUpCallback);
 
     // ugly, but we need to wait for a while just so that Disconnect event is propagated
@@ -445,7 +445,7 @@ public class ZookeeperConnectionManagerTest
     ZooKeeperAnnouncer announcer = getZooKeeperAnnouncer(_cluster, _uri, WEIGHT);
     ZooKeeperConnectionManager manager = createManager(true, announcer);
 
-    FutureCallback<None> managerStartCallback = new FutureCallback<None>();
+    FutureCallback<None> managerStartCallback = new FutureCallback<>();
     manager.start(managerStartCallback);
     managerStartCallback.get(10, TimeUnit.SECONDS);
 

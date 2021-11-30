@@ -117,8 +117,8 @@ public class ConsistentHashKeyMapper implements KeyMapper
     MapKeyResult<Ring<URI>, K> keyToPartitionResult = _ringProvider.getRings(serviceUri, keys);
     Map<Ring<URI>, Collection<K>> ringToKeys = keyToPartitionResult.getMapResult();
 
-    Map<URI, Collection<K>> result = new HashMap<URI, Collection<K>>();
-    Collection<MapKeyResult.UnmappedKey<K>> unmappedKeys = new ArrayList<MapKeyResult.UnmappedKey<K>>();
+    Map<URI, Collection<K>> result = new HashMap<>();
+    Collection<MapKeyResult.UnmappedKey<K>> unmappedKeys = new ArrayList<>();
 
     // first collect unmappedkeys in ditributing keys to partitions
     unmappedKeys.addAll(keyToPartitionResult.getUnmappedKeys());
@@ -136,7 +136,7 @@ public class ConsistentHashKeyMapper implements KeyMapper
         Collection<K> collection = result.get(uri);
         if (collection == null)
         {
-          collection = new ArrayList<K>();
+          collection = new ArrayList<>();
           result.put(uri, collection);
         }
         collection.addAll(hostEntry.getValue());
@@ -146,15 +146,15 @@ public class ConsistentHashKeyMapper implements KeyMapper
       unmappedKeys.addAll(keyToHostResult.getUnmappedKeys());
     }
 
-    return new MapKeyResult<URI, K>(result, unmappedKeys);
+    return new MapKeyResult<>(result, unmappedKeys);
   }
 
   private <K> MapKeyResult<URI, K> doMapKeys(Ring<URI> ring, Iterable<K> keys)
       throws ServiceUnavailableException
   {
     String[] keyTokens = new String[1];
-    List<MapKeyResult.UnmappedKey<K>> unmappedKeys = new ArrayList<MapKeyResult.UnmappedKey<K>>();
-    Map<URI, Collection<K>> result = new HashMap<URI, Collection<K>>();
+    List<MapKeyResult.UnmappedKey<K>> unmappedKeys = new ArrayList<>();
+    Map<URI, Collection<K>> result = new HashMap<>();
     for (K key : keys)
     {
       keyTokens[0] = key.toString();
@@ -163,18 +163,18 @@ public class ConsistentHashKeyMapper implements KeyMapper
       URI uri = ring.get(hashCode);
       if (uri == null)
       {
-        unmappedKeys.add(new MapKeyResult.UnmappedKey<K>(key, MapKeyResult.ErrorType.NO_HOST_AVAILABLE_IN_PARTITION));
+        unmappedKeys.add(new MapKeyResult.UnmappedKey<>(key, MapKeyResult.ErrorType.NO_HOST_AVAILABLE_IN_PARTITION));
         continue;
       }
 
       Collection<K> collection = result.get(uri);
       if (collection == null)
       {
-        collection = new ArrayList<K>();
+        collection = new ArrayList<>();
         result.put(uri, collection);
       }
       collection.add(key);
     }
-    return new MapKeyResult<URI, K>(result, unmappedKeys);
+    return new MapKeyResult<>(result, unmappedKeys);
   }
 }

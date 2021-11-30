@@ -15,6 +15,7 @@ dependencies {
   compile externalDependency.jacksonCore
   compile externalDependency.jacksonDataBind
   compile externalDependency.jdkTools
+  compile externalDependency.velocity
 
   testCompile externalDependency.mockito
   testCompile externalDependency.testng

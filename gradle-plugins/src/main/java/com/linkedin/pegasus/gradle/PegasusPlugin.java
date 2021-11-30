@@ -17,12 +17,15 @@
 package com.linkedin.pegasus.gradle;
 
 import com.linkedin.pegasus.gradle.PegasusOptions.IdlOptions;
+import com.linkedin.pegasus.gradle.internal.CompatibilityLogChecker;
 import com.linkedin.pegasus.gradle.tasks.ChangedFileReportTask;
 import com.linkedin.pegasus.gradle.tasks.CheckIdlTask;
+import com.linkedin.pegasus.gradle.tasks.CheckPegasusSnapshotTask;
 import com.linkedin.pegasus.gradle.tasks.CheckRestModelTask;
 import com.linkedin.pegasus.gradle.tasks.CheckSnapshotTask;
 import com.linkedin.pegasus.gradle.tasks.GenerateAvroSchemaTask;
 import com.linkedin.pegasus.gradle.tasks.GenerateDataTemplateTask;
+import com.linkedin.pegasus.gradle.tasks.GeneratePegasusSnapshotTask;
 import com.linkedin.pegasus.gradle.tasks.GenerateRestClientTask;
 import com.linkedin.pegasus.gradle.tasks.GenerateRestModelTask;
 import com.linkedin.pegasus.gradle.tasks.PublishRestModelTask;
@@ -32,6 +35,9 @@ import com.linkedin.pegasus.gradle.tasks.ValidateSchemaAnnotationTask;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,6 +53,8 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -57,16 +65,26 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.plugins.JavaPluginExtension;
+import org.gradle.api.publish.PublishingExtension;
+import org.gradle.api.publish.ivy.IvyPublication;
+import org.gradle.api.publish.ivy.plugins.IvyPublishPlugin;
+import org.gradle.api.tasks.Copy;
+import org.gradle.api.tasks.Delete;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.Sync;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.Jar;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.javadoc.Javadoc;
+import org.gradle.language.base.plugins.LifecycleBasePlugin;
+import org.gradle.language.jvm.tasks.ProcessResources;
 import org.gradle.plugins.ide.eclipse.EclipsePlugin;
 import org.gradle.plugins.ide.eclipse.model.EclipseModel;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModule;
+import org.gradle.util.GradleVersion;
 
 
 /**
@@ -506,10 +524,12 @@ import org.gradle.plugins.ide.idea.model.IdeaModule;
  * test source sets.
  * </p>
  */
-
 public class PegasusPlugin implements Plugin<Project>
 {
   public static boolean debug = false;
+
+  private static final GradleVersion MIN_REQUIRED_VERSION = GradleVersion.version("1.0"); // Next: 5.2.1
+  private static final GradleVersion MIN_SUGGESTED_VERSION = GradleVersion.version("5.2.1"); // Next: 5.3
 
   //
   // Constants for generating sourceSet names and corresponding directory names
@@ -529,6 +549,12 @@ public class PegasusPlugin implements Plugin<Project>
   public static final String SNAPSHOT_FILE_SUFFIX = ".snapshot.json";
   public static final String SNAPSHOT_COMPAT_REQUIREMENT = "rest.model.compatibility";
   public static final String IDL_COMPAT_REQUIREMENT = "rest.idl.compatibility";
+  // Pegasus schema compatibility level configuration, which is used to define the {@link CompatibilityLevel}.
+  public static final String PEGASUS_SCHEMA_SNAPSHOT_REQUIREMENT = "pegasusPlugin.pegasusSchema.compatibility";
+  // Pegasus extension schema compatibility level configuration, which is used to define the {@link CompatibilityLevel}
+  public static final String PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_REQUIREMENT = "pegasusPlugin.extensionSchema.compatibility";
+  // CompatibilityOptions Mode configuration, which is used to define the {@link CompatibilityOptions#Mode} in the compatibility checker.
+  private static final String PEGASUS_COMPATIBILITY_MODE = "pegasusPlugin.pegasusSchemaCompatibilityCheckMode";
 
   private static final Pattern TEST_DIR_REGEX = Pattern.compile("^(integ)?[Tt]est");
   private static final String SNAPSHOT_NO_PUBLISH = "rest.model.noPublish";
@@ -563,8 +589,38 @@ public class PegasusPlugin implements Plugin<Project>
   private static final String TRANSLATED_SCHEMAS_DIR = "legacyPegasusSchemas";
   // Enable the use of argFiles for the tasks that support them
   private static final String ENABLE_ARG_FILE = "pegasusPlugin.enableArgFile";
+  // Enable the generation of fluent APIs
+  private static final String ENABLE_FLUENT_API = "pegasusPlugin.enableFluentApi";
+
+  // This config impacts GenerateDataTemplateTask and GenerateRestClientTask;
+  // If not set, by default all paths generated in these two tasks will be lower-case.
+  // This default behavior is needed because Linux, MacOS, Windows treat case sensitive paths differently,
+  // and we want to be consistent, so we choose lower-case as default case for path generated
+  private static final String CODE_GEN_PATH_CASE_SENSITIVE = "pegasusPlugin.generateCaseSensitivePath";
 
   private static final String PEGASUS_PLUGIN_CONFIGURATION = "pegasusPlugin";
+
+  // Enable the use of generic pegasus schema compatibility checker
+  private static final String ENABLE_PEGASUS_SCHEMA_COMPATIBILITY_CHECK = "pegasusPlugin.enablePegasusSchemaCompatibilityCheck";
+
+  private static final String PEGASUS_SCHEMA_SNAPSHOT = "PegasusSchemaSnapshot";
+
+  private static final String PEGASUS_EXTENSION_SCHEMA_SNAPSHOT = "PegasusExtensionSchemaSnapshot";
+
+  private static final String PEGASUS_SCHEMA_SNAPSHOT_DIR = "pegasusSchemaSnapshot";
+
+  private static final String PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_DIR = "pegasusExtensionSchemaSnapshot";
+
+  private static final String PEGASUS_SCHEMA_SNAPSHOT_DIR_OVERRIDE = "overridePegasusSchemaSnapshotDir";
+
+  private static final String PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_DIR_OVERRIDE = "overridePegasusExtensionSchemaSnapshotDir";
+
+  private static final String SRC = "src";
+
+  private static final String SCHEMA_ANNOTATION_HANDLER_CONFIGURATION = "schemaAnnotationHandler";
+
+  private static final String COMPATIBILITY_OPTIONS_MODE_EXTENSION = "EXTENSION";
+
 
   @SuppressWarnings("unchecked")
   private Class<? extends Plugin<Project>> _thisPluginType = (Class<? extends Plugin<Project>>)
@@ -592,12 +648,12 @@ public class PegasusPlugin implements Plugin<Project>
   @Override
   public void apply(Project project)
   {
+    checkGradleVersion(project);
+
     project.getPlugins().apply(JavaPlugin.class);
-    project.getPlugins().apply(IdeaPlugin.class);
-    project.getPlugins().apply(EclipsePlugin.class);
 
     // this HashMap will have a PegasusOptions per sourceSet
-    project.getExtensions().getExtraProperties().set("pegasus", new HashMap<String, PegasusOptions>());
+    project.getExtensions().getExtraProperties().set("pegasus", new HashMap<>());
     // this map will extract PegasusOptions.GenerationMode to project property
     project.getExtensions().getExtraProperties().set("PegasusGenerationMode",
         Arrays.stream(PegasusOptions.GenerationMode.values())
@@ -614,7 +670,7 @@ public class PegasusPlugin implements Plugin<Project>
           gradle.getRootProject().subprojects(subproject ->
             UNUSED_CONFIGURATIONS.forEach(configurationName -> {
               Configuration conf = subproject.getConfigurations().findByName(configurationName);
-              if (conf != null && !conf.isEmpty()) {
+              if (conf != null && !conf.getDependencies().isEmpty()) {
                 subproject.getLogger().warn("*** Project {} declares dependency to unused configuration \"{}\". "
                     + "This configuration is deprecated and you can safely remove the dependency. ***",
                     subproject.getPath(), configurationName);
@@ -724,7 +780,7 @@ public class PegasusPlugin implements Plugin<Project>
     //
     // The configuration contains dependencies to schema annotation handlers which would process schema annotations
     // and validate.
-    Configuration schemaAnnotationHandler = configurations.maybeCreate("schemaAnnotationHandler");
+    Configuration schemaAnnotationHandler = configurations.maybeCreate(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION);
 
     // configuration for publishing jars containing rest idl and generated client builders
     // to the project artifacts for including in the ivy.xml
@@ -805,6 +861,14 @@ public class PegasusPlugin implements Plugin<Project>
       // if it can fail, fail it early
       configureRestModelGeneration(project, sourceSet);
 
+      // Do compatibility check for schemas under "pegasus" directory if the configuration property is provided.
+      if (isPropertyTrue(project, ENABLE_PEGASUS_SCHEMA_COMPATIBILITY_CHECK))
+      {
+        configurePegasusSchemaSnapshotGeneration(project, sourceSet, false);
+      }
+
+      configurePegasusSchemaSnapshotGeneration(project, sourceSet, true);
+
       configureConversionUtilities(project, sourceSet);
 
       GenerateDataTemplateTask generateDataTemplateTask = configureDataTemplateGeneration(project, sourceSet);
@@ -849,10 +913,10 @@ public class PegasusPlugin implements Plugin<Project>
                 {
                   task.setInputDir(generateDataTemplatesTask.getInputDir());
                   task.setResolverPath(getDataModelConfig(project, sourceSet)); // same resolver path as generateDataTemplatesTask
-                  task.setClassPath(project.getConfigurations() .getByName("schemaAnnotationHandler")
+                  task.setClassPath(project.getConfigurations() .getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION)
                                            .plus(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION))
-                                           .plus(project.getConfigurations().getByName("runtime")));
-                  task.setHandlerJarPath(project.getConfigurations() .getByName("schemaAnnotationHandler"));
+                                           .plus(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)));
+                  task.setHandlerJarPath(project.getConfigurations() .getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION));
                   if (isPropertyTrue(project, ENABLE_ARG_FILE))
                   {
                     task.setEnableArgFile(true);
@@ -1013,7 +1077,7 @@ public class PegasusPlugin implements Plugin<Project>
     return base + File.separatorChar + sourceSetName;
   }
 
-  private static String getDataSchemaPath(Project project, SourceSet sourceSet)
+  public static String getDataSchemaPath(Project project, SourceSet sourceSet)
   {
     String override = getOverridePath(project, sourceSet, "overridePegasusDir");
     if (override == null)
@@ -1065,6 +1129,32 @@ public class PegasusPlugin implements Plugin<Project>
     }
   }
 
+  private static String getPegasusSchemaSnapshotPath(Project project, SourceSet sourceSet)
+  {
+    String override = getOverridePath(project, sourceSet, PEGASUS_SCHEMA_SNAPSHOT_DIR_OVERRIDE);
+    if (override == null)
+    {
+      return SRC + File.separatorChar + sourceSet.getName() + File.separatorChar + PEGASUS_SCHEMA_SNAPSHOT_DIR;
+    }
+    else
+    {
+      return override;
+    }
+  }
+
+  private static String getPegasusExtensionSchemaSnapshotPath(Project project, SourceSet sourceSet)
+  {
+    String override = getOverridePath(project, sourceSet, PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_DIR_OVERRIDE);
+    if (override == null)
+    {
+      return SRC + File.separatorChar + sourceSet.getName() + File.separatorChar + PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_DIR;
+    }
+    else
+    {
+      return override;
+    }
+  }
+
   private static String getOverridePath(Project project, SourceSet sourceSet, String overridePropertyName)
   {
     String sourceSetPropertyName = sourceSet.getName() + '.' + overridePropertyName;
@@ -1092,7 +1182,30 @@ public class PegasusPlugin implements Plugin<Project>
 
   private static boolean isTaskSuccessful(Task task)
   {
-    return task.getState().getExecuted() && !task.getState().getSkipped() && task.getState().getFailure() == null;
+    return task.getState().getExecuted()
+            // Task is not successful if it is not upto date and is skipped.
+            && !(task.getState().getSkipped() && !task.getState().getUpToDate())
+            && task.getState().getFailure() == null;
+  }
+
+  private static boolean isResultEquivalent(File compatibilityLogFile)
+  {
+      return isResultEquivalent(compatibilityLogFile, false);
+  }
+
+  private static boolean isResultEquivalent(File compatibilityLogFile, boolean restSpecOnly)
+  {
+    CompatibilityLogChecker logChecker = new CompatibilityLogChecker();
+    try
+    {
+      logChecker.write(Files.readAllBytes(compatibilityLogFile.toPath()));
+    }
+    catch (IOException e)
+    {
+      throw new GradleException("Error while processing compatibility report: " + e.getMessage());
+    }
+    return logChecker.getRestSpecCompatibility().isEmpty() &&
+            (restSpecOnly || logChecker.getModelCompatibility().isEmpty());
   }
 
   protected void configureRestModelGeneration(Project project, SourceSet sourceSet)
@@ -1143,7 +1256,7 @@ public class PegasusPlugin implements Plugin<Project>
 
       // generate the rest model
       FileCollection restModelCodegenClasspath = project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION)
-          .plus(project.getConfigurations().getByName("runtime"))
+          .plus(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME))
           .plus(sourceSet.getRuntimeClasspath());
       String destinationDirPrefix = getGeneratedDirPath(project, sourceSet, REST_GEN_TYPE) + File.separatorChar;
       FileCollection restModelResolverPath = apiProject.files(getDataSchemaPath(project, sourceSet))
@@ -1254,45 +1367,19 @@ public class PegasusPlugin implements Plugin<Project>
             task.setSuffix(SNAPSHOT_FILE_SUFFIX);
 
             task.onlyIf(t ->
-            {
-              project.getLogger().info(
-                  "IDL_NO_PUBLISH: {}\n" +
-                  "SNAPSHOT_NO_PUBLISH: {}\n" +
-                  "checkRestModelTask:" +
-                  " Executed: {}" +
-                  ", Not Skipped: {}" +
-                  ", No Failure: {}" +
-                  ", Is Not Equivalent: {}\n" +
-                  "checkSnapshotTask:" +
-                  " Executed: {}" +
-                  ", Not Skipped: {}" +
-                  ", No Failure: {}" +
-                  ", Is Not Equivalent: {}\n",
-                  isPropertyTrue(project, IDL_NO_PUBLISH),
-                  isPropertyTrue(project, SNAPSHOT_NO_PUBLISH),
-                  checkRestModelTask.getState().getExecuted(),
-                  !checkRestModelTask.getState().getSkipped(),
-                  checkRestModelTask.getState().getFailure() == null,
-                  !checkRestModelTask.isEquivalent(),
-                  checkSnapshotTask.getState().getExecuted(),
-                  !checkSnapshotTask.getState().getSkipped(),
-                  checkSnapshotTask.getState().getFailure() == null,
-                  !checkSnapshotTask.isEquivalent());
-
-              return !isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) &&
-              (
-                (
-                   isPropertyTrue(project, SKIP_IDL_CHECK) &&
-                   isTaskSuccessful(checkSnapshotTask) &&
-                   !(checkSnapshotTask.isEquivalent())
-                ) ||
-                (
-                  !isPropertyTrue(project, SKIP_IDL_CHECK) &&
-                  isTaskSuccessful(checkRestModelTask) &&
-                  !(checkRestModelTask.isEquivalent())
-                )
-              );
-            });
+                    !isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) &&
+                    (
+                      (
+                         isPropertyTrue(project, SKIP_IDL_CHECK) &&
+                         isTaskSuccessful(checkSnapshotTask) &&
+                         !isResultEquivalent(checkSnapshotTask.getSummaryTarget())
+                      ) ||
+                      (
+                        !isPropertyTrue(project, SKIP_IDL_CHECK) &&
+                        isTaskSuccessful(checkRestModelTask) &&
+                        !isResultEquivalent(checkRestModelTask.getSummaryTarget())
+                      )
+                    ));
           });
 
       Task publishRestliIdlTask = project.getTasks()
@@ -1303,58 +1390,21 @@ public class PegasusPlugin implements Plugin<Project>
             task.setSuffix(IDL_FILE_SUFFIX);
 
             task.onlyIf(t ->
-            {
-              project.getLogger().info(
-                  "SKIP_IDL: {}\n" +
-                  "IDL_NO_PUBLISH: {}\n" +
-                  "SNAPSHOT_NO_PUBLISH: {}\n" +
-                  "checkRestModelTask:" +
-                  " Executed: {}" +
-                  ", Not Skipped: {}" +
-                  ", No Failure: {}" +
-                  ", Is Not Equivalent: {}\n" +
-                  "checkIdlTask:" +
-                  " Executed: {}" +
-                  ", Not Skipped: {}" +
-                  ", No Failure: {}" +
-                  ", Is Not Equivalent: {}\n" +
-                  "checkSnapshotTask:" +
-                  " Executed: {}" +
-                  ", Not Skipped: {}" +
-                  ", No Failure: {}" +
-                  ", Is RestSpec Not Equivalent: {}\n",
-                  isPropertyTrue(project, SKIP_IDL_CHECK),
-                  isPropertyTrue(project, IDL_NO_PUBLISH),
-                  isPropertyTrue(project, SNAPSHOT_NO_PUBLISH),
-                  checkRestModelTask.getState().getExecuted(),
-                  !checkRestModelTask.getState().getSkipped(),
-                  checkRestModelTask.getState().getFailure() == null,
-                  !checkRestModelTask.isEquivalent(),
-                  checkIdlTask.getState().getExecuted(),
-                  !checkIdlTask.getState().getSkipped(),
-                  checkIdlTask.getState().getFailure() == null,
-                  !checkIdlTask.isEquivalent(),
-                  checkSnapshotTask.getState().getExecuted(),
-                  !checkSnapshotTask.getState().getSkipped(),
-                  checkSnapshotTask.getState().getFailure() == null,
-                  !checkSnapshotTask.isEquivalent());
-
-              return !isPropertyTrue(project, IDL_NO_PUBLISH) &&
-              (
-                (
-                   isPropertyTrue(project, SKIP_IDL_CHECK) &&
-                   isTaskSuccessful(checkSnapshotTask) &&
-                   !(checkSnapshotTask.isRestSpecEquivalent())
-                ) ||
-                (
-                   !isPropertyTrue(project, SKIP_IDL_CHECK) &&
-                   (
-                      (isTaskSuccessful(checkRestModelTask) && !(checkRestModelTask.isRestSpecEquivalent())) ||
-                      (isTaskSuccessful(checkIdlTask) && !(checkIdlTask.isEquivalent()))
-                   )
-                )
-              );
-            });
+                    !isPropertyTrue(project, IDL_NO_PUBLISH) &&
+                    (
+                      (
+                         isPropertyTrue(project, SKIP_IDL_CHECK) &&
+                         isTaskSuccessful(checkSnapshotTask) &&
+                         !isResultEquivalent(checkSnapshotTask.getSummaryTarget(), true)
+                      ) ||
+                      (
+                         !isPropertyTrue(project, SKIP_IDL_CHECK) &&
+                         (
+                            (isTaskSuccessful(checkRestModelTask) && !isResultEquivalent(checkRestModelTask.getSummaryTarget(), true)) ||
+                            (isTaskSuccessful(checkIdlTask) && !isResultEquivalent(checkIdlTask.getSummaryTarget()))
+                         )
+                      )
+                    ));
           });
 
       project.getLogger().info("API project selected for {} is {}",
@@ -1383,6 +1433,63 @@ public class PegasusPlugin implements Plugin<Project>
         }
       }));
     });
+  }
+
+  protected void configurePegasusSchemaSnapshotGeneration(Project project, SourceSet sourceSet, boolean isExtensionSchema)
+  {
+    File schemaDir = isExtensionSchema? project.file(getExtensionSchemaPath(project, sourceSet))
+        : project.file(getDataSchemaPath(project, sourceSet));
+
+    if ((isExtensionSchema && SharedFileUtils.getSuffixedFiles(project, schemaDir, PDL_FILE_SUFFIX).isEmpty()) ||
+            (!isExtensionSchema && SharedFileUtils.getSuffixedFiles(project, schemaDir, DATA_TEMPLATE_FILE_SUFFIXES).isEmpty()))
+    {
+        return;
+    }
+
+    Path publishablePegasusSchemaSnapshotDir = project.getBuildDir().toPath().resolve(sourceSet.getName() +
+            (isExtensionSchema ? PEGASUS_EXTENSION_SCHEMA_SNAPSHOT: PEGASUS_SCHEMA_SNAPSHOT));
+
+    Task generatePegasusSchemaSnapshot = generatePegasusSchemaSnapshot(project, sourceSet,
+        isExtensionSchema ? PEGASUS_EXTENSION_SCHEMA_SNAPSHOT: PEGASUS_SCHEMA_SNAPSHOT, schemaDir,
+        publishablePegasusSchemaSnapshotDir.toFile(), isExtensionSchema);
+
+    File pegasusSchemaSnapshotDir = project.file(isExtensionSchema ? getPegasusExtensionSchemaSnapshotPath(project, sourceSet)
+        : getPegasusSchemaSnapshotPath(project, sourceSet));
+    pegasusSchemaSnapshotDir.mkdirs();
+
+    Task checkSchemaSnapshot = project.getTasks().create(sourceSet.getTaskName("check",
+        isExtensionSchema ? PEGASUS_EXTENSION_SCHEMA_SNAPSHOT: PEGASUS_SCHEMA_SNAPSHOT),
+        CheckPegasusSnapshotTask.class, task ->
+        {
+          task.dependsOn(generatePegasusSchemaSnapshot);
+          task.setCurrentSnapshotDirectory(publishablePegasusSchemaSnapshotDir.toFile());
+          task.setPreviousSnapshotDirectory(pegasusSchemaSnapshotDir);
+          task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION)
+              .plus(project.getConfigurations().getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION))
+              .plus(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)));
+          task.setCompatibilityLevel(isExtensionSchema ?
+                  PropertyUtil.findCompatLevel(project, FileCompatibilityType.PEGASUS_EXTENSION_SCHEMA_SNAPSHOT)
+              :PropertyUtil.findCompatLevel(project, FileCompatibilityType.PEGASUS_SCHEMA_SNAPSHOT));
+          task.setCompatibilityMode(isExtensionSchema ? COMPATIBILITY_OPTIONS_MODE_EXTENSION :
+              PropertyUtil.findCompatMode(project, PEGASUS_COMPATIBILITY_MODE));
+          task.setExtensionSchema(isExtensionSchema);
+          task.setHandlerJarPath(project.getConfigurations() .getByName(SCHEMA_ANNOTATION_HANDLER_CONFIGURATION));
+
+          task.onlyIf(t ->
+          {
+            String pegasusSnapshotCompatPropertyName = isExtensionSchema ?
+              findProperty(FileCompatibilityType.PEGASUS_EXTENSION_SCHEMA_SNAPSHOT)
+              : findProperty(FileCompatibilityType.PEGASUS_SCHEMA_SNAPSHOT);
+            return !project.hasProperty(pegasusSnapshotCompatPropertyName) ||
+                !"off".equalsIgnoreCase((String) project.property(pegasusSnapshotCompatPropertyName));
+          });
+        });
+
+    Task publishPegasusSchemaSnapshot = publishPegasusSchemaSnapshot(project, sourceSet,
+        isExtensionSchema ? PEGASUS_EXTENSION_SCHEMA_SNAPSHOT: PEGASUS_SCHEMA_SNAPSHOT, checkSchemaSnapshot,
+        publishablePegasusSchemaSnapshotDir.toFile(), pegasusSchemaSnapshotDir);
+
+    project.getTasks().getByName(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).dependsOn(publishPegasusSchemaSnapshot);
   }
 
   @SuppressWarnings("deprecation")
@@ -1538,6 +1645,10 @@ public class PegasusPlugin implements Plugin<Project>
           {
             task.setEnableArgFile(true);
           }
+          if (isPropertyTrue(project, CODE_GEN_PATH_CASE_SENSITIVE))
+          {
+            task.setGenerateLowercasePath(false);
+          }
 
           task.onlyIf(t ->
           {
@@ -1587,8 +1698,14 @@ public class PegasusPlugin implements Plugin<Project>
         getDataModelConfig(project, sourceSet),
         project.getConfigurations().getByName("dataTemplateCompile")));
 
+    // Set source compatibility to 1.8 as the data-templates now generate code with Java 8 features.
+    JavaCompile compileTask = project.getTasks()
+        .withType(JavaCompile.class).getByName(targetSourceSet.getCompileJavaTaskName());
+    compileTask.doFirst(new CacheableAction<>(task -> {
+      ((JavaCompile) task).setSourceCompatibility("1.8");
+      ((JavaCompile) task).setTargetCompatibility("1.8");
+    }));
     // make sure that java source files have been generated before compiling them
-    Task compileTask = project.getTasks().getByName(targetSourceSet.getCompileJavaTaskName());
     compileTask.dependsOn(generateDataTemplatesTask);
 
     // Prepare schema files for publication by syncing schema folders.
@@ -1651,32 +1768,27 @@ public class PegasusPlugin implements Plugin<Project>
           });
 
       prepareExtensionSchemasForPublishTask.dependsOn(validateExtensionSchemaTask);
-      prepareExtensionSchemasForPublishTask.dependsOn(copyPdscSchemasTask);
       dataTemplateJarDepends.add(prepareExtensionSchemasForPublishTask);
     }
+
+    // include pegasus files in the output of this SourceSet
+    project.getTasks().withType(ProcessResources.class).getByName(targetSourceSet.getProcessResourcesTaskName(), it ->
+    {
+      it.from(prepareSchemasForPublishTask, copy -> copy.into("pegasus"));
+      // TODO: Remove this permanently once translated PDSCs are no longer needed.
+      it.from(prepareLegacySchemasForPublishTask, copy -> copy.into(TRANSLATED_SCHEMAS_DIR));
+      Sync copyExtensionSchemasTask = project.getTasks().withType(Sync.class).findByName(sourceSet.getName() + "CopyExtensionSchemas");
+      if (copyExtensionSchemasTask != null)
+      {
+        it.from(copyExtensionSchemasTask, copy -> copy.into("extensions"));
+      }
+    });
 
     // create data template jar file
     Jar dataTemplateJarTask = project.getTasks()
         .create(sourceSet.getName() + "DataTemplateJar", Jar.class, task ->
         {
           task.dependsOn(dataTemplateJarDepends);
-
-          // Copy all schemas as-is into the root schema directory in the JAR
-          task.from(publishableSchemasBuildDir, copySpec ->
-            copySpec.eachFile(fileCopyDetails ->
-              fileCopyDetails.setPath("pegasus" + File.separatorChar + fileCopyDetails.getPath())));
-
-          // Copy the translated PDSC schemas into a separate root directory in the JAR
-          // TODO: Remove this permanently once translated PDSCs are no longer needed.
-          task.from(publishableLegacySchemasBuildDir, copySpec ->
-              copySpec.eachFile(fileCopyDetails ->
-                  fileCopyDetails.setPath(TRANSLATED_SCHEMAS_DIR + File.separatorChar + fileCopyDetails.getPath())));
-
-          // Copy all extension schemas as-is into the root extensions directory in the JAR
-          task.from(publishableExtensionSchemasBuildDir, copySpec ->
-              copySpec.eachFile(fileCopyDetails ->
-                  fileCopyDetails.setPath("extensions" + File.separatorChar + fileCopyDetails.getPath())));
-
           task.from(targetSourceSet.getOutput());
 
           // FIXME change to #getArchiveAppendix().set(...); breaks backwards-compatibility before 5.1
@@ -1706,6 +1818,66 @@ public class PegasusPlugin implements Plugin<Project>
     // FIXME change to #getArchiveFile(); breaks backwards-compatibility before 5.1
     project.getDependencies().add(compileConfigName, project.files(dataTemplateJarTask.getArchivePath()));
 
+    // The below Action is only applied when the 'ivy-publish' is applied by the consumer.
+    // If the consumer does not use ivy-publish, this is a noop.
+    // this Action prepares the project applying the pegasus plugin to publish artifacts using these steps:
+    // 1. Registers "feature variants" for pegasus-specific artifacts;
+    //      see https://docs.gradle.org/6.1/userguide/feature_variants.html
+    // 2. Wires legacy configurations like `dataTemplateCompile` to auto-generated feature variant *Api and
+    //      *Implementation configurations for backwards compatibility.
+    // 3. Configures the Ivy Publication to include auto-generated feature variant *Api and *Implementation
+    //      configurations and their dependencies.
+    project.getPlugins().withType(IvyPublishPlugin.class, ivyPublish -> {
+      if (!isAtLeastGradle61())
+      {
+        throw new GradleException("Using the ivy-publish plugin with the pegasus plugin requires Gradle 6.1 or higher " +
+                "at build time.  Please upgrade.");
+      }
+
+      JavaPluginExtension java = project.getExtensions().getByType(JavaPluginExtension.class);
+      // create new capabilities per source set; automatically creates api and implementation configurations
+      String featureName = mapSourceSetToFeatureName(targetSourceSet);
+      try
+      {
+        /*
+         reflection is required to preserve compatibility with Gradle 5.2.1 and below
+         TODO once Gradle 5.3+ is required, remove reflection and replace with:
+           java.registerFeature(featureName, featureSpec -> {
+             featureSpec.usingSourceSet(targetSourceSet);
+            });
+        */
+        Method registerFeature = JavaPluginExtension.class.getDeclaredMethod("registerFeature", String.class, Action.class);
+        Action<?>/*<org.gradle.api.plugins.FeatureSpec>*/ featureSpecAction = createFeatureVariantFromSourceSet(targetSourceSet);
+        registerFeature.invoke(java, featureName, featureSpecAction);
+      }
+      catch (ReflectiveOperationException e)
+      {
+        throw new GradleException("Unable to register new feature variant", e);
+      }
+
+      // expose transitive dependencies to consumers via variant configurations
+      Configuration featureConfiguration = project.getConfigurations().getByName(featureName);
+      Configuration mainGeneratedDataTemplateApi = project.getConfigurations().getByName(targetSourceSet.getApiConfigurationName());
+      featureConfiguration.extendsFrom(mainGeneratedDataTemplateApi);
+      mainGeneratedDataTemplateApi.extendsFrom(
+              getDataModelConfig(project, targetSourceSet),
+              project.getConfigurations().getByName("dataTemplateCompile"));
+
+      // Configure the existing IvyPublication
+      // For backwards-compatibility, make the legacy dataTemplate/testDataTemplate configurations extend
+      // their replacements, auto-created when we registered the new feature variant
+      project.afterEvaluate(p -> {
+        PublishingExtension publishing = p.getExtensions().getByType(PublishingExtension.class);
+        // When configuring a Gradle Publication, use this value to find the name of the publication to configure.  Defaults to "ivy".
+        String publicationName = p.getExtensions().getExtraProperties().getProperties().getOrDefault("PegasusPublicationName", "ivy").toString();
+        IvyPublication ivyPublication = publishing.getPublications().withType(IvyPublication.class).getByName(publicationName);
+        ivyPublication.configurations(configurations -> configurations.create(featureName, legacyConfiguration -> {
+          legacyConfiguration.extend(p.getConfigurations().getByName(targetSourceSet.getApiElementsConfigurationName()).getName());
+          legacyConfiguration.extend(p.getConfigurations().getByName(targetSourceSet.getRuntimeElementsConfigurationName()).getName());
+        }));
+      });
+    });
+
     if (debug)
     {
       System.out.println("configureDataTemplateGeneration sourceSet " + sourceSet.getName());
@@ -1719,6 +1891,34 @@ public class PegasusPlugin implements Plugin<Project>
 
     project.getTasks().getByName(sourceSet.getCompileJavaTaskName()).dependsOn(dataTemplateJarTask);
     return generateDataTemplatesTask;
+  }
+
+  private String mapSourceSetToFeatureName(SourceSet sourceSet) {
+    String featureName = "";
+    switch (sourceSet.getName()) {
+      case "mainGeneratedDataTemplate":
+        featureName = "dataTemplate";
+        break;
+      case "testGeneratedDataTemplate":
+        featureName = "testDataTemplate";
+        break;
+      case "mainGeneratedRest":
+        featureName = "restClient";
+        break;
+      case "testGeneratedRest":
+        featureName = "testRestClient";
+        break;
+      case "mainGeneratedAvroSchema":
+        featureName = "avroSchema";
+        break;
+      case "testGeneratedAvroSchema":
+        featureName = "testAvroSchema";
+        break;
+      default:
+        String msg = String.format("Unable to map %s to an appropriate feature name", sourceSet);
+        throw new GradleException(msg);
+    }
+    return featureName;
   }
 
   // Generate rest client from idl files generated from java source files in the specified source set.
@@ -1794,7 +1994,7 @@ public class PegasusPlugin implements Plugin<Project>
         {
           task.dependsOn(project.getConfigurations().getByName("dataTemplate"));
           task.setInputDir(idlDir);
-          task.setResolverPath(dataModels);
+          task.setResolverPath(dataModels.plus(project.getConfigurations().getByName("restClientCompile")));
           task.setRuntimeClasspath(project.getConfigurations().getByName("dataModel")
               .plus(project.getConfigurations().getByName("dataTemplate").getArtifacts().getFiles()));
           task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION));
@@ -1805,6 +2005,15 @@ public class PegasusPlugin implements Plugin<Project>
           {
             task.setEnableArgFile(true);
           }
+          if (isPropertyTrue(project, CODE_GEN_PATH_CASE_SENSITIVE))
+          {
+            task.setGenerateLowercasePath(false);
+          }
+          if (isPropertyTrue(project, ENABLE_FLUENT_API))
+          {
+            task.setGenerateFluentApi(true);
+          }
+          task.doFirst(new CacheableAction<>(t -> project.delete(generatedRestClientDir)));
         });
 
     if (dataTemplateJarTask != null)
@@ -2015,6 +2224,12 @@ public class PegasusPlugin implements Plugin<Project>
       case IDL:
         property = IDL_COMPAT_REQUIREMENT;
         break;
+      case PEGASUS_SCHEMA_SNAPSHOT:
+        property = PEGASUS_SCHEMA_SNAPSHOT_REQUIREMENT;
+        break;
+      case PEGASUS_EXTENSION_SCHEMA_SNAPSHOT:
+        property =  PEGASUS_EXTENSION_SCHEMA_SNAPSHOT_REQUIREMENT;
+        break;
       default:
         throw new GradleException("No property defined for compatibility type " + type);
     }
@@ -2058,11 +2273,18 @@ public class PegasusPlugin implements Plugin<Project>
       sourceDirectorySet.srcDir(dataSchemaPath);
       project.getLogger().info("Adding resource root '{}'", dataSchemaPath);
 
-      // Exclude the data schema directory from being copied into the default Jar task
+      final String extensionsSchemaPath = getExtensionSchemaPath(project, sourceSet);
+      final File extensionsSchemaRoot = project.file(extensionsSchemaPath);
+      sourceDirectorySet.srcDir(extensionsSchemaPath);
+      project.getLogger().info("Adding resource root '{}'", extensionsSchemaPath);
+
+      // Exclude the data schema and extensions schema directory from being copied into the default Jar task
       sourceDirectorySet.getFilter().exclude(fileTreeElement -> {
         final File file = fileTreeElement.getFile();
         // Traversal starts with the children of a resource root, so checking the direct parent is sufficient
-        final boolean exclude = dataSchemaRoot.equals(file.getParentFile());
+        final boolean underDataSchemaRoot = dataSchemaRoot.equals(file.getParentFile());
+        final boolean underExtensionsSchemaRoot = extensionsSchemaRoot.equals(file.getParentFile());
+        final boolean exclude = (underDataSchemaRoot || underExtensionsSchemaRoot);
         if (exclude)
         {
           project.getLogger().info("Excluding resource directory '{}'", file);
@@ -2070,5 +2292,79 @@ public class PegasusPlugin implements Plugin<Project>
         return exclude;
       });
     });
+  }
+
+  private Task generatePegasusSchemaSnapshot(Project project, SourceSet sourceSet, String taskName, File inputDir, File outputDir,
+      boolean isExtensionSchema)
+  {
+    return project.getTasks().create(sourceSet.getTaskName("generate", taskName),
+        GeneratePegasusSnapshotTask.class, task ->
+        {
+          task.setInputDir(inputDir);
+          task.setResolverPath(getDataModelConfig(project, sourceSet).plus(project.files(getDataSchemaPath(project, sourceSet))));
+          task.setClassPath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION));
+          task.setPegasusSchemaSnapshotDestinationDir(outputDir);
+          task.setExtensionSchema(isExtensionSchema);
+          if (isPropertyTrue(project, ENABLE_ARG_FILE))
+          {
+            task.setEnableArgFile(true);
+          }
+        });
+  }
+
+  private Task publishPegasusSchemaSnapshot(Project project, SourceSet sourceSet, String taskName, Task checkPegasusSnapshotTask,
+      File inputDir, File outputDir)
+  {
+    return project.getTasks().create(sourceSet.getTaskName("publish", taskName),
+        Sync.class, task ->
+        {
+          task.dependsOn(checkPegasusSnapshotTask);
+          task.from(inputDir);
+          task.into(outputDir);
+          task.onlyIf(t -> !SharedFileUtils.getSuffixedFiles(project, inputDir, PDL_FILE_SUFFIX).isEmpty());
+        });
+  }
+
+  private void checkGradleVersion(Project project)
+  {
+    if (MIN_REQUIRED_VERSION.compareTo(GradleVersion.current()) > 0)
+    {
+      throw new GradleException(String.format("This plugin does not support %s. Please use %s or later.",
+          GradleVersion.current(),
+          MIN_REQUIRED_VERSION));
+    }
+    if (MIN_SUGGESTED_VERSION.compareTo(GradleVersion.current()) > 0)
+    {
+      project.getLogger().warn(String.format("Pegasus supports %s, but it may not be supported in the next major release. Please use %s or later.",
+          GradleVersion.current(),
+          MIN_SUGGESTED_VERSION));
+    }
+  }
+
+  /**
+   * Reflection is necessary to obscure types introduced in Gradle 5.3
+   *
+   * @param sourceSet the target sourceset upon which to create a new feature variant
+   * @return an Action which modifies a org.gradle.api.plugins.FeatureSpec instance
+   */
+  private Action<?>/*<org.gradle.api.plugins.FeatureSpec>*/ createFeatureVariantFromSourceSet(SourceSet sourceSet)
+  {
+    return featureSpec -> {
+      try
+      {
+        Class<?> clazz = Class.forName("org.gradle.api.plugins.FeatureSpec");
+        Method usingSourceSet = clazz.getDeclaredMethod("usingSourceSet", SourceSet.class);
+        usingSourceSet.invoke(featureSpec, sourceSet);
+      }
+      catch (ReflectiveOperationException e)
+      {
+        throw new GradleException("Unable to invoke FeatureSpec#usingSourceSet(SourceSet)", e);
+      }
+    };
+  }
+
+  protected static boolean isAtLeastGradle61()
+  {
+    return GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.1")) >= 0;
   }
 }

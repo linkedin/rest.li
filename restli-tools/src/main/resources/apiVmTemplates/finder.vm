@@ -1,0 +1,76 @@
+#*
+   Copyright (c) 2021 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*#
+#if($is_interface)
+  #foreach($withEG in [true, false])
+    #if($finder.hasOptionalParams() || $finder.hasProjectionParams())
+      #doc($method.schema.doc)
+      public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParamsWithOptAndEg($finder, false, $withEG)##
+          #**##methodParamsWithEGroup($finder, false, $withEG)##
+      );
+    #end
+
+    #doc($finder.schema.doc)
+    public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParamsWithOptAndEg($finder, true, $withEG)##
+        #**##methodParamsWithEGroup($finder, true, $withEG)##
+    );
+  #end ## end withEG
+  #optionalParamClass($finder)
+#else
+  #foreach($withEG in [true, false])
+    #if($finder.hasOptionalParams() || $finder.hasProjectionParams())
+      #doc($method.schema.doc)
+      public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParamsWithOptAndEg($finder, false, $withEG)##
+          #**##methodParamsWithEGroup($finder, false, $withEG)##
+          ) {
+        return ${finder.methodName}(#assocKeyCallArgs($finder, true)##
+            #**##optionalMethodCallArgsWithEGroup($finder, $withEG)##
+        );
+      }
+    #end
+
+    #doc($finder.schema.doc)
+    public CompletionStage<CollectionResponse<${spec.entityClassName}>> ${finder.methodName}(#assocKeyParamsWithOptAndEg($finder, true, $withEG)##
+        #**##methodParamsWithEGroup($finder, true, $withEG)##
+        ) {
+      #**##paramsRequestMap($finder)##
+      #if($finder.assocKeys.size() > 0)
+        CompoundKey assocKey = new CompoundKey();
+        #foreach($assocKey in $finder.assocKeys)
+          assocKey.append("$assocKey.name", $assocKey.name);
+        #end
+      #end
+      queryParams.put(RestConstants.QUERY_TYPE_PARAM, "$finder.name");
+      FindRequest<${spec.entityClassName}> request = new FindRequest<>(
+          Collections.emptyMap(),
+          Collections.emptyList(),
+          ${spec.entityClassName}.class,
+          _resourceSpec,
+          queryParams,
+          queryParamClasses,
+          "$finder.name",
+          ORIGINAL_RESOURCE_PATH,
+          buildReadOnlyPathKeys(),
+          RestliRequestOptions.DEFAULT_OPTIONS,
+          #**##if($finder.assocKeys.size() > 0)assocKey #else null #end);
+      #**##makeRequestAndReturn(
+      "CollectionResponse<${spec.entityClassName}>",
+      "CollectionResponse<${spec.entityClassName}>",
+      "resp.getEntity()",
+                  $withEG
+                )##
+          }
+  #end ## end withEG
+#end ## is_interface

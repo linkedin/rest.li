@@ -131,7 +131,7 @@ public class ZooKeeperEphemeralStoreChildrenWatcherWithFIleStoreTest
     removeNode("/bucket");
     _testData.clear();
 
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _zkClient.ensurePersistentNodeExists("/bucket", callback);
     callback.get(5, TimeUnit.SECONDS);
 
@@ -185,7 +185,7 @@ public class ZooKeeperEphemeralStoreChildrenWatcherWithFIleStoreTest
   {
     generateTestData();
 
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _zkClient.ensurePersistentNodeExists("/bucket", callback);
     callback.get(5, TimeUnit.SECONDS);
 
@@ -214,7 +214,7 @@ public class ZooKeeperEphemeralStoreChildrenWatcherWithFIleStoreTest
   @AfterMethod
   public void tearDownMethod() throws ExecutionException, InterruptedException
   {
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _zkClient.removeNodeUnsafeRecursive("/bucket", callback);
     callback.get();
   }

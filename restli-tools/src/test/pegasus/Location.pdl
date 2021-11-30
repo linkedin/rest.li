@@ -1,0 +1,7 @@
+record Location {
+  latitude: float
+
+  longitude: float
+
+  name: optional string
+}

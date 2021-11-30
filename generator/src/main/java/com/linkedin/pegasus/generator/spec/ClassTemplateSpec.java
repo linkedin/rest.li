@@ -156,7 +156,7 @@ public class ClassTemplateSpec implements BindingInfo
 
   public void setModifiers(ModifierSpec... modifiers)
   {
-    _modifiers = new HashSet<ModifierSpec>(Arrays.asList(modifiers));
+    _modifiers = new HashSet<>(Arrays.asList(modifiers));
   }
 
   public String getLocation()

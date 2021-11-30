@@ -16,13 +16,9 @@
 package com.linkedin.restli.common;
 
 
-import com.linkedin.data.DataMap;
-import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.restli.restspec.ResourceSchema;
-import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 
@@ -42,7 +38,7 @@ public class OptionsResponse
     _dataSchemas = dataSchemas;
   }
 
-  public Map<String, DataSchema> getDataSchemas() throws IOException
+  public Map<String, DataSchema> getDataSchemas()
   {
     return Collections.unmodifiableMap(_dataSchemas);
   }

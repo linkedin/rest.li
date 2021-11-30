@@ -46,7 +46,7 @@ public class TestEnum
 
       // get symbols
       EnumDataSchema enumSchema = (EnumDataSchema) schema;
-      Set<String> schemaSymbols = new HashSet<String>(enumSchema.getSymbols());
+      Set<String> schemaSymbols = new HashSet<>(enumSchema.getSymbols());
       assertNotNull(schemaSymbols);
 
       for (String symbol : schemaSymbols)

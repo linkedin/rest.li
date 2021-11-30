@@ -69,7 +69,7 @@ public class CustomMetadataProjectionResource extends CollectionResourceTemplate
     GREETING_TWO.setId(15l);
     GREETING_TWO.setMessage("I really like you!");
 
-    LIST = new ArrayList<Greeting>();
+    LIST = new ArrayList<>();
     LIST.add(GREETING_ONE);
     LIST.add(GREETING_TWO);
 
@@ -89,7 +89,7 @@ public class CustomMetadataProjectionResource extends CollectionResourceTemplate
       final @MetadataProjectionParam MaskTree metadataProjection,
       final @PagingProjectionParam MaskTree pagingProjection)
   {
-    return new CollectionResult<Greeting, Greeting>(LIST, 2, CUSTOM_METADATA_GREETING);
+    return new CollectionResult<>(LIST, 2, CUSTOM_METADATA_GREETING);
   }
 
   /**
@@ -104,7 +104,7 @@ public class CustomMetadataProjectionResource extends CollectionResourceTemplate
       final @PagingProjectionParam MaskTree pagingProjection) throws CloneNotSupportedException
   {
     super.getContext().setMetadataProjectionMode(ProjectionMode.MANUAL);
-    return new CollectionResult<Greeting, Greeting>(LIST, 2, applyMetadataProjection(metadataProjection));
+    return new CollectionResult<>(LIST, 2, applyMetadataProjection(metadataProjection));
   }
 
   /**
@@ -119,7 +119,7 @@ public class CustomMetadataProjectionResource extends CollectionResourceTemplate
       final @PagingProjectionParam MaskTree pagingProjection) throws CloneNotSupportedException
   {
     super.getContext().setProjectionMode(ProjectionMode.MANUAL);
-    return new CollectionResult<Greeting, Greeting>(applyRootObjectProjection(rootObjectProjection),
+    return new CollectionResult<>(applyRootObjectProjection(rootObjectProjection),
         2, CUSTOM_METADATA_GREETING);
   }
 
@@ -136,7 +136,7 @@ public class CustomMetadataProjectionResource extends CollectionResourceTemplate
   {
     super.getContext().setMetadataProjectionMode(ProjectionMode.MANUAL);
     super.getContext().setProjectionMode(ProjectionMode.MANUAL);
-    return new CollectionResult<Greeting, Greeting>(applyRootObjectProjection(rootObjectProjection),
+    return new CollectionResult<>(applyRootObjectProjection(rootObjectProjection),
         2, applyMetadataProjection(metadataProjection));
   }
 
@@ -153,7 +153,7 @@ public class CustomMetadataProjectionResource extends CollectionResourceTemplate
       final @PagingProjectionParam MaskTree pagingProjection) throws CloneNotSupportedException
   {
     super.getContext().setMetadataProjectionMode(ProjectionMode.MANUAL);
-    return new CollectionResult<Greeting, Greeting>(LIST, 2, applyMetadataProjection(metadataProjection));
+    return new CollectionResult<>(LIST, 2, applyMetadataProjection(metadataProjection));
   }
 
   /**
@@ -168,7 +168,7 @@ public class CustomMetadataProjectionResource extends CollectionResourceTemplate
       final @MetadataProjectionParam MaskTree metadataProjection,
       final @PagingProjectionParam MaskTree pagingProjection)
   {
-    return new CollectionResult<Greeting, Greeting>(LIST, 2, null);
+    return new CollectionResult<>(LIST, 2, null);
   }
 
   private List<Greeting> applyRootObjectProjection(final MaskTree rootObjectProjection) throws CloneNotSupportedException

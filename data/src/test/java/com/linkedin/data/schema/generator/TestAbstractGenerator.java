@@ -117,7 +117,7 @@ public class TestAbstractGenerator
     protected List<File> targetFiles(File targetDirectory)
     {
       Collection<NamedDataSchema> schemas = getSchemaResolver().bindings().values();
-      ArrayList<File> generatedFiles = new ArrayList<File>(schemas.size());
+      ArrayList<File> generatedFiles = new ArrayList<>(schemas.size());
       for (DataSchema schema : schemas)
       {
         if (schema instanceof NamedDataSchema)
@@ -179,7 +179,7 @@ public class TestAbstractGenerator
     "/error/b/c"
   );
 
-  Set<String> _expectedSchemas = new HashSet<String>(Arrays.asList(
+  Set<String> _expectedSchemas = new HashSet<>(Arrays.asList(
     "/a1/foo.pdsc",
     "/a1/x/y/z.pdsc",
     "/a3/b/c/baz.pdsc",
@@ -191,7 +191,7 @@ public class TestAbstractGenerator
 
   Map<String, String> _badPegasusSchemas = asMap(
     "/error/b/c/error.pdsc", "size must not be negative",
-    "/error/b/c/redefine1.pdsc", "already defined as",
+    "/error/b/c/redefine1.pdsc", "already defined at",
     "/error/b/c/enumValueDocError.pdsc", "symbol has an invalid documentation value"
   );
 
@@ -373,7 +373,7 @@ public class TestAbstractGenerator
 
     // test sources are directories
     targetDir = setup(testPaths, debug);
-    List<String> argList = new ArrayList<String>();
+    List<String> argList = new ArrayList<>();
     argList.add(targetDir.getCanonicalPath());
     for (File f : testDir.listFiles())
     {
@@ -382,7 +382,7 @@ public class TestAbstractGenerator
         argList.add(f.getCanonicalPath());
       }
     }
-    Map<File, Map.Entry<String,String>> a1A2Files = new HashMap<File, Map.Entry<String, String>>();
+    Map<File, Map.Entry<String,String>> a1A2Files = new HashMap<>();
     for (Map.Entry<File, Map.Entry<String,String>> e : files.entrySet())
     {
       String pdscFileName = e.getValue().getKey();

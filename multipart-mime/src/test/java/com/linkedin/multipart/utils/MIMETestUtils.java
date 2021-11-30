@@ -131,7 +131,7 @@ public final class MIMETestUtils
 
   public static List<Integer> generatePrimeNumbers(final int limit)
   {
-    final List<Integer> primeNumberList = new ArrayList<Integer>();
+    final List<Integer> primeNumberList = new ArrayList<>();
     for (int i = 1; i < limit; i++)
     {
       boolean isPrimeNumber = true;
@@ -379,7 +379,7 @@ public final class MIMETestUtils
         new MultiPartMIMEInputStream.Builder(new ByteArrayInputStream(BODY_D.getPartData().copyBytes()),
             executorService, BODY_D.getPartHeaders()).withWriteChunkSize(chunkSize).build();
 
-    final List<MultiPartMIMEDataSourceWriter> dataSources = new ArrayList<MultiPartMIMEDataSourceWriter>();
+    final List<MultiPartMIMEDataSourceWriter> dataSources = new ArrayList<>();
     dataSources.add(bodyADataSource);
     dataSources.add(bodyBDataSource);
     dataSources.add(bodyCDataSource);
@@ -452,7 +452,7 @@ public final class MIMETestUtils
 
   public static class MultiPartMIMEFullReaderCallback implements MultiPartMIMEReaderCallback
   {
-    private final List<SinglePartMIMEFullReaderCallback> _singlePartMIMEReaderCallbacks = new ArrayList<SinglePartMIMEFullReaderCallback>();
+    private final List<SinglePartMIMEFullReaderCallback> _singlePartMIMEReaderCallbacks = new ArrayList<>();
     private final CountDownLatch _finishCountDownLatch;
 
     public MultiPartMIMEFullReaderCallback()

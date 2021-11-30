@@ -1,0 +1,10 @@
+namespace com.linkedin.pegasus.generator.test.unnamed
+
+record UnionNameConflictArray {
+  // Union's inner class should be UnionNameConflict, the array class will be UnionNameConflictArray$Array to avoid
+  // naming conflict with record class.
+  unionNameConflict: array[union[int, string]]
+  // Union's inner class should be UnionNameConflictArray$Union to avoid naming conflict, and the array class will be
+  // UnionNameConflictArray$UnionArray
+  unionNameConflictArray: array[union[int, string]]
+}

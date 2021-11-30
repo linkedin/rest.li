@@ -350,7 +350,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       _builder.writeSpace()
           .write("=")
           .writeSpace()
-          .writeJson(field.getDefault());
+          .writeJson(field.getDefault(), field.getType());
     }
     _builder.newline();
   }

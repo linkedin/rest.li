@@ -28,7 +28,7 @@ public class ConsistentHashRingIteratorTest
   public List<ConsistentHashRing.Point<Integer>> generatePoints(int num) {
     final List<ConsistentHashRing.Point<Integer>> points = new ArrayList<>();
     for (int i = 1; i <= num; ++i) {
-      points.add(new ConsistentHashRing.Point<Integer>(i, i));
+      points.add(new ConsistentHashRing.Point<>(i, i));
     }
     return points;
   }
@@ -37,7 +37,7 @@ public class ConsistentHashRingIteratorTest
   public void testIterationFromBeginning()
   {
     final List<ConsistentHashRing.Point<Integer>> objects = generatePoints(6);
-    ConsistentHashRingIterator<Integer> iterator = new ConsistentHashRingIterator<Integer>(objects, 0);
+    ConsistentHashRingIterator<Integer> iterator = new ConsistentHashRingIterator<>(objects, 0);
 
     verifyIterator(iterator, objects, 0);
   }
@@ -46,7 +46,7 @@ public class ConsistentHashRingIteratorTest
   public void testIterationFromMiddle()
   {
     final List<ConsistentHashRing.Point<Integer>> objects = generatePoints(6);
-    ConsistentHashRingIterator<Integer> iterator = new ConsistentHashRingIterator<Integer>(objects, 3);
+    ConsistentHashRingIterator<Integer> iterator = new ConsistentHashRingIterator<>(objects, 3);
 
     verifyIterator(iterator, objects, 3);
   }
@@ -55,7 +55,7 @@ public class ConsistentHashRingIteratorTest
   public void testIterationFromEnd()
   {
     final List<ConsistentHashRing.Point<Integer>> objects = generatePoints(6);
-    ConsistentHashRingIterator<Integer> iterator = new ConsistentHashRingIterator<Integer>(objects, 5);
+    ConsistentHashRingIterator<Integer> iterator = new ConsistentHashRingIterator<>(objects, 5);
 
     verifyIterator(iterator, objects, 5);
   }
@@ -64,7 +64,7 @@ public class ConsistentHashRingIteratorTest
   public void testEmptyIterator()
   {
     final List<ConsistentHashRing.Point<Integer>> objects = new ArrayList<>();
-    ConsistentHashRingIterator<Integer> iterator = new ConsistentHashRingIterator<Integer>(objects, 0);
+    ConsistentHashRingIterator<Integer> iterator = new ConsistentHashRingIterator<>(objects, 0);
 
     verifyIterator(iterator, objects, 0);
   }

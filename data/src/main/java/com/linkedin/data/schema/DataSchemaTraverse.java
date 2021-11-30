@@ -44,8 +44,8 @@ public class DataSchemaTraverse
     void callback(List<String> path, DataSchema schema);
   }
 
-  private final IdentityHashMap<DataSchema, Boolean> _seen = new IdentityHashMap<DataSchema, Boolean>();
-  private final ArrayList<String> _path = new ArrayList<String>();
+  private final IdentityHashMap<DataSchema, Boolean> _seen = new IdentityHashMap<>();
+  private final ArrayList<String> _path = new ArrayList<>();
   private final Order _order;
   private Map<Order, Callback> _callbacks = new HashMap<>();
 

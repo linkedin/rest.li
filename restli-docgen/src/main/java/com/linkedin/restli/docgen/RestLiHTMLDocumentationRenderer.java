@@ -46,6 +46,7 @@ import com.linkedin.restli.server.RestLiServer;
 import com.linkedin.restli.server.RoutingException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
@@ -285,9 +286,19 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     return "text/html";
   }
 
+  /**
+   * Deprecated since 29.19.10. Use {@link #setFormatUriProvider(Function)} instead.
+   */
+  @Deprecated
   public void setJsonFormatUri(URI jsonFormatUri)
   {
-    _jsonFormatUri = URI.create(_serverNodeUri.toString() + jsonFormatUri.toString());
+    setFormatUriProvider(docFormat -> docFormat == DocumentationFormat.JSON ? jsonFormatUri : null);
+  }
+
+  @Override
+  public void setFormatUriProvider(Function<DocumentationFormat, URI> uriProvider)
+  {
+    _documentationFormatUriProvider = uriProvider;
   }
 
   private static String getResourceType(ResourceSchema resourceSchema)
@@ -316,7 +327,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
     final Map<String, Object> pageModel = new HashMap<>();
     pageModel.put("serverNodeUri", _serverNodeUri);
     pageModel.put("docBaseUri", _docBaseUri);
-    pageModel.put("jsonFormatUri", _jsonFormatUri);
+    pageModel.put("jsonFormatUri", _documentationFormatUriProvider.apply(DocumentationFormat.JSON));
     return pageModel;
   }
 
@@ -402,7 +413,7 @@ public class RestLiHTMLDocumentationRenderer implements RestLiDocumentationRende
   private final Map<Object, Map<String, ResourceSchema>> _relatedResourceCache = new HashMap<>();
   private final Map<Object, Map<String, NamedDataSchema>> _relatedSchemaCache = new HashMap<>();
 
-  private URI _jsonFormatUri;
+  private Function<DocumentationFormat, URI> _documentationFormatUriProvider;
 
   static
   {

@@ -20,12 +20,14 @@ package com.linkedin.pegasus.generator;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.DataMapBuilder;
+import com.linkedin.data.collections.CheckedMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.JsonBuilder;
 import com.linkedin.data.schema.MapDataSchema;
+import com.linkedin.data.schema.MaskMap;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
@@ -50,12 +52,15 @@ import com.linkedin.data.template.IntegerMap;
 import com.linkedin.data.template.LongArray;
 import com.linkedin.data.template.LongMap;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.template.RequiredFieldNotPresentException;
 import com.linkedin.data.template.StringArray;
 import com.linkedin.data.template.StringMap;
+import com.linkedin.data.template.TemplateOutputCastException;
 import com.linkedin.data.template.TyperefInfo;
 import com.linkedin.data.template.UnionTemplate;
 import com.linkedin.data.template.WrappingArrayTemplate;
 import com.linkedin.data.template.WrappingMapTemplate;
+import com.linkedin.data.transform.filter.FilterConstants;
 import com.linkedin.pegasus.generator.spec.ArrayTemplateSpec;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.pegasus.generator.spec.CustomInfoSpec;
@@ -68,13 +73,21 @@ import com.linkedin.pegasus.generator.spec.RecordTemplateSpec;
 import com.linkedin.pegasus.generator.spec.TyperefTemplateSpec;
 import com.linkedin.pegasus.generator.spec.UnionTemplateSpec;
 
+import com.linkedin.util.ArgumentUtil;
+import com.sun.codemodel.JCase;
+import com.sun.codemodel.JConditional;
 import com.sun.codemodel.JFieldRef;
+import com.sun.codemodel.JOp;
+import com.sun.codemodel.JSwitch;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import java.util.function.Consumer;
+import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -130,7 +143,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
         StringMap.class
     };
 
-    PredefinedJavaClasses = new HashMap<DataSchema, Class<?>>();
+    PredefinedJavaClasses = new HashMap<>();
 
     for (Class<?> clazz : predefinedClass)
     {
@@ -153,9 +166,10 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   // Deprecated annotation utils
   //
   private static final String DEPRECATED_KEY = "deprecated";
+  static final String PROJECTION_MASK_CLASSNAME = "ProjectionMask";
 
-  private final Map<ClassTemplateSpec, JDefinedClass> _definedClasses = new HashMap<ClassTemplateSpec, JDefinedClass>();
-  private final Map<JDefinedClass, ClassTemplateSpec> _generatedClasses = new HashMap<JDefinedClass, ClassTemplateSpec>();
+  private final Map<ClassTemplateSpec, JDefinedClass> _definedClasses = new HashMap<>();
+  private final Map<JDefinedClass, ClassTemplateSpec> _generatedClasses = new HashMap<>();
 
   private final JClass _recordBaseClass;
   private final JClass _unionBaseClass;
@@ -168,15 +182,19 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
   private final boolean _recordFieldAccessorWithMode;
   private final boolean _recordFieldRemove;
   private final boolean _pathSpecMethods;
+  private final boolean _fieldMaskMethods;
   private final boolean _copierMethods;
   private final String _rootPath;
+  private final ProjectionMaskApiChecker _projectionMaskApiChecker;
 
   private JavaDataTemplateGenerator(String defaultPackage,
                                     boolean recordFieldAccessorWithMode,
                                     boolean recordFieldRemove,
                                     boolean pathSpecMethods,
                                     boolean copierMethods,
-                                    String rootPath)
+                                    String rootPath,
+                                    boolean fieldMaskMethods,
+                                    ProjectionMaskApiChecker projectionMaskApiChecker)
   {
     super(defaultPackage);
 
@@ -191,8 +209,10 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     _recordFieldAccessorWithMode = recordFieldAccessorWithMode;
     _recordFieldRemove = recordFieldRemove;
     _pathSpecMethods = pathSpecMethods;
+    _fieldMaskMethods = fieldMaskMethods;
     _copierMethods = copierMethods;
     _rootPath = rootPath;
+    _projectionMaskApiChecker = projectionMaskApiChecker;
   }
 
   public JavaDataTemplateGenerator(Config config)
@@ -202,7 +222,9 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
          config.getRecordFieldRemove(),
          config.getPathSpecMethods(),
          config.getCopierMethods(),
-         config.getRootPath());
+         config.getRootPath(),
+         config.isFieldMaskMethods(),
+         config.getProjectionMaskApiChecker());
   }
 
   /**
@@ -225,7 +247,9 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
          true,
          true,
          true,
-         rootPath);
+         rootPath,
+         false,
+         null);
   }
 
   public Map<JDefinedClass, ClassTemplateSpec> getGeneratedClasses()
@@ -284,10 +308,11 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     return inv;
   }
 
-  private static void generateCopierMethods(JDefinedClass templateClass)
+  private static void generateCopierMethods(JDefinedClass templateClass, Map<String, JVar> fields, JClass changeListenerClass)
   {
-    overrideCopierMethod(templateClass, "clone");
-    overrideCopierMethod(templateClass, "copy");
+    // Clone is a shallow copy and shouldn't reset fields, copy is a deep copy and should.
+    overrideCopierMethod(templateClass, "clone", fields, false, changeListenerClass);
+    overrideCopierMethod(templateClass, "copy", fields, true, changeListenerClass);
   }
 
   private static boolean hasNestedFields(DataSchema schema)
@@ -323,18 +348,27 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     noArgConstructor.body().invoke(THIS).arg(JExpr._new(newClass));
   }
 
-  private static void generateConstructorWithObjectArg(JDefinedClass cls, JVar schemaField)
+  private static void generateConstructorWithObjectArg(JDefinedClass cls, JVar schemaField, JVar changeListenerVar)
   {
     final JMethod argConstructor = cls.constructor(JMod.PUBLIC);
     final JVar param = argConstructor.param(Object.class, "data");
     argConstructor.body().invoke(SUPER).arg(param).arg(schemaField);
+    if (changeListenerVar != null)
+    {
+      addChangeListenerRegistration(argConstructor, changeListenerVar);
+    }
   }
 
-  private static void generateConstructorWithArg(JDefinedClass cls, JVar schemaField, JClass paramClass)
+  private static void generateConstructorWithArg(JDefinedClass cls, JVar schemaField, JClass paramClass, JVar changeListenerVar)
   {
     final JMethod argConstructor = cls.constructor(JMod.PUBLIC);
     final JVar param = argConstructor.param(paramClass, "data");
     argConstructor.body().invoke(SUPER).arg(param).arg(schemaField);
+
+    if (changeListenerVar != null)
+    {
+      addChangeListenerRegistration(argConstructor, changeListenerVar);
+    }
   }
 
   private static void generateConstructorWithArg(JDefinedClass cls, JVar schemaField, JClass paramClass, JClass elementClass, JClass dataClass)
@@ -343,6 +377,11 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final JVar param = argConstructor.param(paramClass, "data");
     final JInvocation inv = argConstructor.body().invoke(SUPER).arg(param).arg(schemaField).arg(JExpr.dotclass(elementClass));
     dataClassArg(inv, dataClass);
+  }
+
+  private static void addChangeListenerRegistration(JMethod constructor, JVar changeListenerVar)
+  {
+    constructor.body().invoke("addChangeListener").arg(changeListenerVar);
   }
 
   /**
@@ -370,12 +409,29 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     return customInfo != null ? customInfo.getCustomSchema() : schema.getDereferencedDataSchema();
   }
 
-  private static void overrideCopierMethod(JDefinedClass templateClass, String methodName)
+  private static void overrideCopierMethod(JDefinedClass templateClass, String methodName, Map<String, JVar> fields,
+      boolean resetFields,
+      JClass changeListenerClass)
   {
     final JMethod copierMethod = templateClass.method(JMod.PUBLIC, templateClass, methodName);
     copierMethod.annotate(Override.class);
     copierMethod._throws(CloneNotSupportedException.class);
-    copierMethod.body()._return(JExpr.cast(templateClass, JExpr._super().invoke(methodName)));
+    JVar copyVar = copierMethod.body().decl(templateClass, "__" + methodName, JExpr.cast(templateClass, JExpr._super().invoke(methodName)));
+
+    if (!fields.isEmpty())
+    {
+      if (resetFields)
+      {
+        fields.values().forEach(var -> {
+          copierMethod.body().assign(copyVar.ref(var), JExpr._null());
+        });
+      }
+
+      copierMethod.body().assign(copyVar.ref("__changeListener"), JExpr._new(changeListenerClass).arg(copyVar));
+      copierMethod.body().add(copyVar.invoke("addChangeListener").arg(copyVar.ref("__changeListener")));
+    }
+
+    copierMethod.body()._return(copyVar);
   }
 
   private static void setDeprecatedAnnotationAndJavadoc(DataSchema schema, JDefinedClass schemaClass)
@@ -494,7 +550,8 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final JClass itemJClass = generate(arrayDataTemplateSpec.getItemClass());
     final JClass dataJClass = generate(arrayDataTemplateSpec.getItemDataClass());
 
-    if (CodeUtil.isDirectType(arrayDataTemplateSpec.getSchema().getItems()))
+    final boolean isDirect = CodeUtil.isDirectType(arrayDataTemplateSpec.getSchema().getItems());
+    if (isDirect)
     {
       arrayClass._extends(_directArrayBaseClass.narrow(itemJClass));
     }
@@ -517,13 +574,25 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     {
       generatePathSpecMethodsForCollection(arrayClass, arrayDataTemplateSpec.getSchema(), itemJClass, "items");
     }
+    if (_fieldMaskMethods)
+    {
+      generateMaskBuilderForCollection(arrayClass, arrayDataTemplateSpec.getSchema(), itemJClass, "items",
+          arrayDataTemplateSpec.getItemClass());
+    }
 
     generateCustomClassInitialization(arrayClass, arrayDataTemplateSpec.getCustomInfo());
 
     if (_copierMethods)
     {
-      generateCopierMethods(arrayClass);
+      generateCopierMethods(arrayClass, Collections.emptyMap(), null);
     }
+
+    // Generate coercer overrides
+    generateCoercerOverrides(arrayClass,
+        arrayDataTemplateSpec.getItemClass(),
+        arrayDataTemplateSpec.getSchema().getItems(),
+        arrayDataTemplateSpec.getCustomInfo(),
+        false);
   }
 
   protected void extendWrappingArrayBaseClass(JClass itemJClass, JDefinedClass arrayClass)
@@ -574,11 +643,11 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final JVar param = bytesConstructor.param(ByteString.class, "value");
     bytesConstructor.body().invoke(SUPER).arg(param).arg(schemaField);
 
-    generateConstructorWithObjectArg(fixedClass, schemaField);
+    generateConstructorWithObjectArg(fixedClass, schemaField, null);
 
     if (_copierMethods)
     {
-      generateCopierMethods(fixedClass);
+      generateCopierMethods(fixedClass, Collections.emptyMap(), null);
     }
   }
 
@@ -588,7 +657,8 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final JClass valueJClass = generate(mapSpec.getValueClass());
     final JClass dataJClass = generate(mapSpec.getValueDataClass());
 
-    if (CodeUtil.isDirectType(mapSpec.getSchema().getValues()))
+    final boolean isDirect = CodeUtil.isDirectType(mapSpec.getSchema().getValues());
+    if (isDirect)
     {
       mapClass._extends(_directMapBaseClass.narrow(valueJClass));
     }
@@ -610,13 +680,24 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     {
       generatePathSpecMethodsForCollection(mapClass, mapSpec.getSchema(), valueJClass, "values");
     }
-
+    if (_fieldMaskMethods)
+    {
+      generateMaskBuilderForCollection(mapClass, mapSpec.getSchema(), valueJClass, "values",
+          mapSpec.getValueClass());
+    }
     generateCustomClassInitialization(mapClass, mapSpec.getCustomInfo());
 
     if (_copierMethods)
     {
-      generateCopierMethods(mapClass);
+      generateCopierMethods(mapClass, Collections.emptyMap(), null);
     }
+
+    // Generate coercer overrides
+    generateCoercerOverrides(mapClass,
+        mapSpec.getValueClass(),
+        mapSpec.getSchema().getValues(),
+        mapSpec.getCustomInfo(),
+        true);
   }
 
   protected void extendWrappingMapBaseClass(JClass valueJClass, JDefinedClass mapClass)
@@ -667,24 +748,55 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     {
       generatePathSpecMethodsForRecord(recordSpec.getFields(), templateClass);
     }
-
+    if (_fieldMaskMethods)
+    {
+      generateMaskBuilderForRecord(recordSpec.getFields(), templateClass);
+    }
     final JFieldVar schemaFieldVar = generateSchemaField(templateClass, recordSpec.getSchema(), recordSpec.getSourceFileFormat());
-    generateDataMapConstructor(templateClass, schemaFieldVar, recordSpec.getFields().size(), recordSpec.getWrappedFields().size());
-    generateConstructorWithArg(templateClass, schemaFieldVar, _dataMapClass);
 
+    // Generate instance vars
+    Map<String, JVar> fieldVarMap = new HashMap<>();
     for (RecordTemplateSpec.Field field : recordSpec.getFields())
     {
-      generateRecordFieldAccessors(templateClass, field, generate(field.getType()), schemaFieldVar);
+      final String fieldName = field.getSchemaField().getName();
+      final JVar fieldVar =
+          templateClass.field(JMod.PRIVATE, generate(field.getType()), "_" + fieldName + "Field", JExpr._null());
+      fieldVarMap.put(fieldName, fieldVar);
     }
+
+    final JVar changeListenerVar;
+    final JClass changeListenerClass;
+    // Generate a change listener if there are any fields.
+    if (!fieldVarMap.isEmpty())
+    {
+      changeListenerClass = generateChangeListener(templateClass, fieldVarMap);
+      changeListenerVar = templateClass.field(JMod.PRIVATE, changeListenerClass, "__changeListener",
+          JExpr._new(changeListenerClass).arg(JExpr._this()));
+    }
+    else
+    {
+      changeListenerClass = null;
+      changeListenerVar = null;
+    }
+    generateDataMapConstructor(templateClass, schemaFieldVar, recordSpec.getFields().size(), recordSpec.getWrappedFields().size(), changeListenerVar);
+    generateConstructorWithArg(templateClass, schemaFieldVar, _dataMapClass, changeListenerVar);
 
     recordSpec.getFields().stream()
         .map(RecordTemplateSpec.Field::getCustomInfo)
         .distinct()
         .forEach(customInfo -> generateCustomClassInitialization(templateClass, customInfo));
 
+    // Generate accessors
+    for (RecordTemplateSpec.Field field : recordSpec.getFields())
+    {
+      final String fieldName = field.getSchemaField().getName();
+      generateRecordFieldAccessors(templateClass, field, generate(field.getType()), schemaFieldVar,
+          fieldVarMap.get(fieldName));
+    }
+
     if (_copierMethods)
     {
-      generateCopierMethods(templateClass);
+      generateCopierMethods(templateClass, fieldVarMap, changeListenerClass);
     }
   }
 
@@ -697,8 +809,10 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
    *                           than {@link #DEFAULT_DATAMAP_INITIAL_CAPACITY}.
    * @param initialCacheSize Initial size for the cache, applied only if capacity derived from this is smaller than
    *                         {@link #DEFAULT_DATAMAP_INITIAL_CAPACITY}
+   * @param changeListenerVar The map change listener variable if any.
    */
-  private void generateDataMapConstructor(JDefinedClass cls, JVar schemaField, int initialDataMapSize, int initialCacheSize)
+  private void generateDataMapConstructor(JDefinedClass cls, JVar schemaField, int initialDataMapSize, int initialCacheSize,
+      JVar changeListenerVar)
   {
     final JMethod noArgConstructor = cls.constructor(JMod.PUBLIC);
     JInvocation superConstructorArg = JExpr._new(_dataMapClass);
@@ -724,11 +838,178 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     {
       noArgConstructor.body().invoke(SUPER).arg(superConstructorArg).arg(schemaField);
     }
+
+    if (changeListenerVar != null)
+    {
+      addChangeListenerRegistration(noArgConstructor, changeListenerVar);
+    }
   }
 
   protected void extendRecordBaseClass(JDefinedClass templateClass)
   {
     templateClass._extends(_recordBaseClass);
+  }
+
+  private void generateMaskBuilderForRecord(List<RecordTemplateSpec.Field> fieldSpecs, JDefinedClass templateClass)
+      throws JClassAlreadyExistsException
+  {
+    final JDefinedClass maskNestedClass = generateProjectionMaskNestedClass(templateClass, fieldSpecs.size());
+
+    for (RecordTemplateSpec.Field field : fieldSpecs)
+    {
+      // Generate method body for all fields, two variants are generated for complex fields.
+      // For simple field "foo" generate:
+      // public ProjectionMask withFoo() {
+      //    maskMap.put("foo", POSITIVE_MASK);
+      //    _fooMask = null;
+      // }
+      // In addition to above API, complex fields will generate additional API to set nested mask. For a complex field "bar":
+      // public ProjectionMask withBar(Function<Bar.ProjectionMask, Bar.ProjectionMask> nestedMaskBuilder) {
+      //    _barMask = nestedMaskBuilder.apply(_barMask == null ? Bar.createMask() : _barMask);
+      //    getDataMap().put("foo", _barMask.getDataMap());
+      // }
+      generateWithFieldBodyNested(field, maskNestedClass, method -> {});
+      generateWithFieldBodyDefault(field, maskNestedClass, method ->
+      {
+        method.body().invoke(JExpr.invoke("getDataMap"), "put").arg(field.getSchemaField().getName())
+            .arg(getCodeModel().ref(MaskMap.class).staticRef("POSITIVE_MASK"));
+      });
+
+      // For array types, add another method to get Field mask with a range specified
+      // For a array type field "foo" with "Bar" items, a new API to set start and count will be provided (for both variants above).
+      // public ProjectionMask withFoo(Function<BarArray.ProjectionMask, BarArray.ProjectionMask> nestedMaskBuilder, Integer start, Integer count) {
+      //    _fooMask = nestedMaskBuilder.apply(_fooMask == null ? BarArray.createMask() : _fooMask);
+      //   getDataMap().put("foo", _fooMask.getDataMap());
+      //   getDataMap().getDataMap("foo").put("$start", start);
+      //   getDataMap().getDataMap("foo").put("$count, count);
+      // }
+      if (isArrayType(field.getSchemaField().getType()))
+      {
+        generateWithFieldBodyNested(field, maskNestedClass, withFieldRangeMethod -> generateArrayFieldAttributeMethod(field, withFieldRangeMethod));
+        generateWithFieldBodyDefault(field, maskNestedClass, withFieldRangeMethod ->
+        {
+          withFieldRangeMethod.body().invoke(JExpr.invoke("getDataMap"), "put").arg(field.getSchemaField().getName())
+              .arg(JExpr._new(getCodeModel().ref(DataMap.class)).arg(JExpr.lit(DataMapBuilder.getOptimumHashMapCapacityFromSize(2))));
+          generateArrayFieldAttributeMethod(field, withFieldRangeMethod);
+        });
+      }
+    }
+  }
+
+  private void generateArrayFieldAttributeMethod(RecordTemplateSpec.Field field, JMethod withFieldRangeMethod)
+  {
+    JVar start = withFieldRangeMethod.param(getCodeModel().ref(Integer.class), "start");
+    JVar count = withFieldRangeMethod.param(getCodeModel().ref(Integer.class), "count");
+    JInvocation getDataMap = JExpr.invoke("getDataMap").invoke("getDataMap")
+        .arg(field.getSchemaField().getName());
+    JBlock startBlock = withFieldRangeMethod.body()
+        ._if(start.ne(JExpr._null()))._then();
+    startBlock.invoke(getDataMap, "put")
+        .arg(FilterConstants.START)
+        .arg(start);
+    JBlock countBlock = withFieldRangeMethod.body()
+        ._if(count.ne(JExpr._null()))._then();
+    countBlock.invoke(getDataMap,"put")
+        .arg(FilterConstants.COUNT)
+        .arg(count);
+  }
+
+  private void generateWithFieldBodyNested(RecordTemplateSpec.Field field, JDefinedClass maskNestedClass, Consumer<JMethod> methodBodyCustomizer)
+  {
+    // For fields with nested types, add a method that allows setting nested mask.
+    if (hasNestedFields(field.getSchemaField().getType()))
+    {
+      final JClass fieldType = generate(field.getType());
+      JClass nestedMaskType = getCodeModel().ref(fieldType.fullName() + "." + PROJECTION_MASK_CLASSNAME);
+      String fieldName = escapeReserved(field.getSchemaField().getName());
+      String maskFieldName = "_" + fieldName + "Mask";
+      JInvocation getDataMap = JExpr.invoke("getDataMap");
+      // Generate a fully typesafe method if the nested type has the new ProjectionMask API.
+      if (hasProjectionMaskApi(fieldType, field.getType()))
+      {
+        JFieldVar maskField = maskNestedClass.fields().get(maskFieldName);
+        if (maskField == null)
+        {
+          maskField = maskNestedClass.field(JMod.PRIVATE, nestedMaskType, maskFieldName);
+        }
+        final JMethod withFieldTypesafeMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(escapeReserved(
+            fieldName)));
+        if (!field.getSchemaField().getDoc().isEmpty())
+        {
+          withFieldTypesafeMethod.javadoc().append(field.getSchemaField().getDoc());
+        }
+        setDeprecatedAnnotationAndJavadoc(withFieldTypesafeMethod, field.getSchemaField());
+        JVar nestedMask = withFieldTypesafeMethod.param(getCodeModel().ref(Function.class).narrow(nestedMaskType, nestedMaskType), "nestedMask");
+        withFieldTypesafeMethod.body().assign(maskField,
+            nestedMask.invoke("apply").arg(
+                JOp.cond(maskField.eq(JExpr._null()), fieldType.staticInvoke("createMask"), maskField)));
+        withFieldTypesafeMethod.body().invoke(getDataMap, "put")
+            .arg(fieldName)
+            .arg(maskField.invoke("getDataMap"));
+
+        methodBodyCustomizer.accept(withFieldTypesafeMethod);
+        withFieldTypesafeMethod.body()._return(JExpr._this());
+      }
+      // Generate a method that accepts generic mask map if needed
+      if (shouldGenerateGenericMaskApi(field.getType()))
+      {
+        final JMethod withFieldMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(escapeReserved(
+            fieldName)));
+        if (!field.getSchemaField().getDoc().isEmpty())
+        {
+          withFieldMethod.javadoc().append(field.getSchemaField().getDoc());
+        }
+        setDeprecatedAnnotationAndJavadoc(withFieldMethod, field.getSchemaField());
+        JVar maskMap = withFieldMethod.param(_maskMapClass, "nestedMask");
+        withFieldMethod.body().invoke(getDataMap, "put")
+            .arg(fieldName)
+            .arg(maskMap.invoke("getDataMap"));
+
+        methodBodyCustomizer.accept(withFieldMethod);
+        withFieldMethod.body()._return(JExpr._this());
+      }
+    }
+  }
+
+  /**
+   * Returns true of the provided class/spec has ProjectionMask api or if it would generate templates with
+   * ProjectionMask.
+   */
+  private boolean hasProjectionMaskApi(JClass parentClass, ClassTemplateSpec templateSpec)
+  {
+    return _projectionMaskApiChecker != null &&
+        _projectionMaskApiChecker.hasProjectionMaskApi(parentClass, templateSpec);
+  }
+
+  /**
+   * Check if a projection mask API using  generic mask map should be generated for a nested type.
+   * Returns true if the nested type is from an external source. This is needed for backwards compatibility.
+   * Note: If the nested type is generated from source PDLs, it will have ProjectionMask, so generic API is not needed.
+   * @param templateSpec Spec for the nested type.
+   */
+  private boolean shouldGenerateGenericMaskApi(ClassTemplateSpec templateSpec)
+  {
+    return _projectionMaskApiChecker == null ||
+        !_projectionMaskApiChecker.isGeneratedFromSource(templateSpec);
+  }
+
+  private void generateWithFieldBodyDefault(RecordTemplateSpec.Field field, JDefinedClass maskNestedClass, Consumer<JMethod> methodCustomizer)
+  {
+    String fieldName = escapeReserved(field.getSchemaField().getName());
+    final JMethod withFieldMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(fieldName));
+    if (!field.getSchemaField().getDoc().isEmpty())
+    {
+      withFieldMethod.javadoc().append(field.getSchemaField().getDoc());
+    }
+    setDeprecatedAnnotationAndJavadoc(withFieldMethod, field.getSchemaField());
+    String maskFieldName = "_" + fieldName + "Mask";
+    JFieldVar maskField = maskNestedClass.fields().get(maskFieldName);
+    if (maskField != null)
+    {
+      withFieldMethod.body().assign(maskField, JExpr._null());
+    }
+    methodCustomizer.accept(withFieldMethod);
+    withFieldMethod.body()._return(JExpr._this());
   }
 
   private void generatePathSpecMethodsForRecord(List<RecordTemplateSpec.Field> fieldSpecs, JDefinedClass templateClass)
@@ -782,33 +1063,42 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     staticFieldsAccessor.body()._return(staticFields);
   }
 
-  private void generateRecordFieldAccessors(JDefinedClass templateClass, RecordTemplateSpec.Field field, JClass type, JVar schemaFieldVar)
+  private void generateRecordFieldAccessors(JDefinedClass templateClass, RecordTemplateSpec.Field field, JClass type, JVar schemaFieldVar,
+      JVar fieldVar)
   {
     final RecordDataSchema.Field schemaField = field.getSchemaField();
     final DataSchema fieldSchema = schemaField.getType();
-    final boolean isDirect = CodeUtil.isDirectType(fieldSchema);
-    final String wrappedOrDirect;
-    if (isDirect)
-    {
-      wrappedOrDirect = (field.getCustomInfo() == null ? "Direct" : "CustomType");
-    }
-    else
-    {
-      wrappedOrDirect = "Wrapped";
-    }
     final String capitalizedName = CodeUtil.capitalize(schemaField.getName());
 
+    final JExpression mapRef = JExpr._super().ref("_map");
+    final JExpression fieldNameExpr = JExpr.lit(schemaField.getName());
     final String fieldFieldName = "FIELD_" + capitalizedName;
     final JFieldVar fieldField = templateClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, RecordDataSchema.Field.class, fieldFieldName);
     fieldField.init(schemaFieldVar.invoke("getField").arg(schemaField.getName()));
+
+    // Generate default field if applicable
+    final String defaultFieldName = "DEFAULT_" + capitalizedName;
+    final JFieldVar defaultField;
+    if (field.getSchemaField().getDefault() != null)
+    {
+      defaultField = templateClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, type, defaultFieldName);
+
+      templateClass.init().assign(defaultField, getCoerceOutputExpression(
+          fieldField.invoke("getDefault"), schemaField.getType(), type, field.getCustomInfo()));
+    }
+    else
+    {
+      defaultField = null;
+    }
 
     // Generate has method.
     final JMethod has = templateClass.method(JMod.PUBLIC, getCodeModel().BOOLEAN, "has" + capitalizedName);
     addAccessorDoc(templateClass, has, schemaField, "Existence checker");
     setDeprecatedAnnotationAndJavadoc(has, schemaField);
     final JBlock hasBody = has.body();
-    JExpression res = JExpr.invoke("contains").arg(fieldField);
-    hasBody._return(res);
+    final JBlock hasInstanceVarBody = hasBody._if(fieldVar.ne(JExpr._null()))._then();
+    hasInstanceVarBody._return(JExpr.lit(true));
+    hasBody._return(mapRef.invoke("containsKey").arg(fieldNameExpr));
 
     if (_recordFieldRemove)
     {
@@ -818,7 +1108,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       addAccessorDoc(templateClass, remove, schemaField, "Remover");
       setDeprecatedAnnotationAndJavadoc(remove, schemaField);
       final JBlock removeBody = remove.body();
-      removeBody.invoke("remove").arg(fieldField);
+      removeBody.add(mapRef.invoke("remove").arg(fieldNameExpr));
     }
 
     final String getterName = JavaCodeUtil.getGetterName(getCodeModel(), type, capitalizedName);
@@ -831,8 +1121,40 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       setDeprecatedAnnotationAndJavadoc(getterWithMode, schemaField);
       JVar modeParam = getterWithMode.param(_getModeClass, "mode");
       final JBlock getterWithModeBody = getterWithMode.body();
-      res = JExpr.invoke("obtain" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type)).arg(modeParam);
-      getterWithModeBody._return(res);
+
+      // If it is an optional field with no default, just call out to the getter without mode.
+      if (field.getSchemaField().getOptional() && defaultField == null)
+      {
+        getterWithModeBody._return(JExpr.invoke(getterName));
+      }
+      else
+      {
+        JSwitch modeSwitch = getterWithModeBody._switch(modeParam);
+        JCase strictCase = modeSwitch._case(JExpr.ref("STRICT"));
+        // If there is no default defined, call the getter without mode, else fall through to default.
+        if (defaultField == null)
+        {
+          strictCase.body()._return(JExpr.invoke(getterName));
+        }
+        JCase defaultCase = modeSwitch._case(JExpr.ref("DEFAULT"));
+        if (defaultField != null)
+        {
+          // If there is a default, then default is the same as strict, else we should fall through to null.
+          defaultCase.body()._return(JExpr.invoke(getterName));
+        }
+
+        JCase nullCase = modeSwitch._case(JExpr.ref("NULL"));
+        JConditional nullCaseConditional = nullCase.body()._if(fieldVar.ne(JExpr._null()));
+        nullCaseConditional._then()._return(fieldVar);
+        JBlock nullCaseConditionalElse = nullCaseConditional._else();
+        JVar rawValueVar = nullCaseConditionalElse.decl(
+            _objectClass, "__rawValue", mapRef.invoke("get").arg(fieldNameExpr));
+        nullCaseConditionalElse.assign(fieldVar,
+            getCoerceOutputExpression(rawValueVar, fieldSchema, type, field.getCustomInfo()));
+        nullCaseConditionalElse._return(fieldVar);
+
+        getterWithModeBody._throw(JExpr._new(getCodeModel().ref(IllegalStateException.class)).arg(JExpr.lit("Unknown mode ").plus(modeParam)));
+      }
     }
 
     // Getter method without mode.
@@ -851,11 +1173,24 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       returnComment.add("Required field. Could be null for partial record.");
     }
     final JBlock getterWithoutModeBody = getterWithoutMode.body();
-    res = JExpr.invoke("obtain" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type)).arg(_strictGetMode);
-    getterWithoutModeBody._return(res);
+    JConditional getterWithoutModeBodyConditional = getterWithoutModeBody._if(fieldVar.ne(JExpr._null()));
+    getterWithoutModeBodyConditional._then()._return(fieldVar);
+    JBlock getterWithoutModeBodyConditionalElse = getterWithoutModeBodyConditional._else();
+    JVar rawValueVar = getterWithoutModeBodyConditionalElse.decl(
+        _objectClass, "__rawValue", mapRef.invoke("get").arg(fieldNameExpr));
+    if (schemaField.getDefault() != null)
+    {
+      getterWithoutModeBodyConditionalElse._if(rawValueVar.eq(JExpr._null()))._then()._return(defaultField);
+    }
+    else if (!schemaField.getOptional())
+    {
+      getterWithoutModeBodyConditionalElse._if(rawValueVar.eq(JExpr._null()))._then()._throw(
+          JExpr._new(getCodeModel().ref(RequiredFieldNotPresentException.class)).arg(fieldNameExpr));
+    }
+    getterWithoutModeBodyConditionalElse.assign(fieldVar,
+        getCoerceOutputExpression(rawValueVar, fieldSchema, type, field.getCustomInfo()));
+    getterWithoutModeBodyConditionalElse._return(fieldVar);
 
-    // Determine dataClass
-    final JClass dataClass = generate(field.getDataClass());
     final String setterName = "set" + capitalizedName;
 
     if (_recordFieldAccessorWithMode)
@@ -866,8 +1201,41 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       setDeprecatedAnnotationAndJavadoc(setterWithMode, schemaField);
       JVar param = setterWithMode.param(type, "value");
       JVar modeParam = setterWithMode.param(_setModeClass, "mode");
-      JInvocation inv = setterWithMode.body().invoke("put" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type));
-      dataClassArg(inv, dataClass).arg(param).arg(modeParam);
+      JSwitch modeSwitch = setterWithMode.body()._switch(modeParam);
+      JCase disallowNullCase = modeSwitch._case(JExpr.ref("DISALLOW_NULL"));
+      disallowNullCase.body()._return(JExpr.invoke(setterName).arg(param));
+
+      // Generate remove optional if null, only for required fields. Optional fields will fall through to
+      // remove if null, which is the same behavior for them.
+      JCase removeOptionalIfNullCase = modeSwitch._case(JExpr.ref("REMOVE_OPTIONAL_IF_NULL"));
+      if (!schemaField.getOptional()) {
+        JConditional paramIsNull = removeOptionalIfNullCase.body()._if(param.eq(JExpr._null()));
+        paramIsNull._then()._throw(JExpr._new(getCodeModel().ref(IllegalArgumentException.class))
+            .arg(JExpr.lit("Cannot remove mandatory field " + schemaField.getName() + " of " + templateClass.fullName())));
+        paramIsNull._else()
+            .add(_checkedUtilClass.staticInvoke("putWithoutChecking").arg(mapRef).arg(fieldNameExpr)
+                .arg(getCoerceInputExpression(param, fieldSchema, field.getCustomInfo())));
+        paramIsNull._else().assign(fieldVar, param);
+        removeOptionalIfNullCase.body()._break();
+      }
+
+      JCase removeIfNullCase = modeSwitch._case(JExpr.ref("REMOVE_IF_NULL"));
+      JConditional paramIsNull = removeIfNullCase.body()._if(param.eq(JExpr._null()));
+      paramIsNull._then().invoke("remove" + capitalizedName);
+      paramIsNull._else()
+          .add(_checkedUtilClass.staticInvoke("putWithoutChecking").arg(mapRef).arg(fieldNameExpr)
+              .arg(getCoerceInputExpression(param, fieldSchema, field.getCustomInfo())));
+      paramIsNull._else().assign(fieldVar, param);
+      removeIfNullCase.body()._break();
+
+      JCase ignoreNullCase = modeSwitch._case(JExpr.ref("IGNORE_NULL"));
+      JConditional paramIsNotNull = ignoreNullCase.body()._if(param.ne(JExpr._null()));
+      paramIsNotNull._then()
+          .add(_checkedUtilClass.staticInvoke("putWithoutChecking").arg(mapRef).arg(fieldNameExpr)
+              .arg(getCoerceInputExpression(param, fieldSchema, field.getCustomInfo())));
+      paramIsNotNull._then().assign(fieldVar, param);
+      ignoreNullCase.body()._break();
+
       setterWithMode.body()._return(JExpr._this());
     }
 
@@ -879,8 +1247,13 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     param.annotate(Nonnull.class);
     JCommentPart paramDoc = setter.javadoc().addParam(param);
     paramDoc.add("Must not be null. For more control, use setters with mode instead.");
-    JInvocation inv = setter.body().invoke("put" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type));
-    dataClassArg(inv, dataClass).arg(param).arg(_disallowNullSetMode);
+    JConditional paramIsNull = setter.body()._if(param.eq(JExpr._null()));
+    paramIsNull._then()._throw(JExpr._new(getCodeModel().ref(NullPointerException.class))
+        .arg(JExpr.lit("Cannot set field " + schemaField.getName() + " of " + templateClass.fullName() + " to null")));
+    paramIsNull._else()
+        .add(_checkedUtilClass.staticInvoke("putWithoutChecking").arg(mapRef).arg(fieldNameExpr)
+            .arg(getCoerceInputExpression(param, fieldSchema, field.getCustomInfo())));
+    paramIsNull._else().assign(fieldVar, param);
     setter.body()._return(JExpr._this());
 
     // Setter method without mode for unboxified type
@@ -890,8 +1263,9 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       addAccessorDoc(templateClass, unboxifySetter, schemaField, "Setter");
       setDeprecatedAnnotationAndJavadoc(unboxifySetter, schemaField);
       param = unboxifySetter.param(type.unboxify(), "value");
-      inv = unboxifySetter.body().invoke("put" + wrappedOrDirect).arg(fieldField).arg(JExpr.dotclass(type));
-      dataClassArg(inv, dataClass).arg(param).arg(_disallowNullSetMode);
+      unboxifySetter.body().add(_checkedUtilClass.staticInvoke("putWithoutChecking").arg(mapRef).arg(fieldNameExpr)
+              .arg(getCoerceInputExpression(param, fieldSchema, field.getCustomInfo())));
+      unboxifySetter.body().assign(fieldVar, param);
       unboxifySetter.body()._return(JExpr._this());
     }
   }
@@ -919,16 +1293,46 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     final JVar schemaField = generateSchemaField(unionClass, unionSpec.getSchema(), unionSpec.getSourceFileFormat());
 
+    // Generate instance vars for members.
+    Map<String, JVar> memberVarMap = new HashMap<>();
+    for (UnionTemplateSpec.Member member : unionSpec.getMembers())
+    {
+      if (member.getClassTemplateSpec() != null)
+      {
+        final String memberName = CodeUtil.uncapitalize(CodeUtil.getUnionMemberName(member));
+        final JVar memberVar =
+            unionClass.field(JMod.PRIVATE, generate(member.getClassTemplateSpec()), "_" + memberName + "Member", JExpr._null());
+        memberVarMap.put(member.getUnionMemberKey(), memberVar);
+      }
+    }
+
+    final JClass changeListenerClass;
+    final JVar changeListenerVar;
+
+    // Generate change listener if there are any members.
+    if (!memberVarMap.isEmpty())
+    {
+      changeListenerClass = generateChangeListener(unionClass, memberVarMap);
+      changeListenerVar = unionClass.field(JMod.PRIVATE, changeListenerClass, "__changeListener",
+          JExpr._new(changeListenerClass).arg(JExpr._this()));
+    }
+    else
+    {
+      changeListenerClass = null;
+      changeListenerVar = null;
+    }
+
     // Default union datamap size to 1 (last arg) as union can have at-most one element.
     // We don't need cache for unions, so pass in -1 for cache size to ignore size param.
-    generateDataMapConstructor(unionClass, schemaField, 1, -1);
-    generateConstructorWithObjectArg(unionClass, schemaField);
+    generateDataMapConstructor(unionClass, schemaField, 1, -1, changeListenerVar);
+    generateConstructorWithObjectArg(unionClass, schemaField, changeListenerVar);
 
     for (UnionTemplateSpec.Member member : unionSpec.getMembers())
     {
       if (member.getClassTemplateSpec() != null)
       {
-        generateUnionMemberAccessors(unionClass, member, generate(member.getClassTemplateSpec()), generate(member.getDataClass()), schemaField);
+        generateUnionMemberAccessors(unionClass, member, generate(member.getClassTemplateSpec()),
+            generate(member.getDataClass()), schemaField, memberVarMap.get(member.getUnionMemberKey()));
       }
     }
 
@@ -941,10 +1345,13 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     {
       generatePathSpecMethodsForUnion(unionSpec, unionClass);
     }
-
+    if (_fieldMaskMethods)
+    {
+      generateMaskBuilderForUnion(unionSpec, unionClass);
+    }
     if (_copierMethods)
     {
-      generateCopierMethods(unionClass);
+      generateCopierMethods(unionClass, memberVarMap, changeListenerClass);
     }
 
     if (unionSpec.getTyperefClass() != null)
@@ -967,22 +1374,13 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     unionClass._extends(_unionBaseClass);
   }
 
-  private void generateUnionMemberAccessors(JDefinedClass unionClass, UnionTemplateSpec.Member member, JClass memberClass, JClass dataClass, JVar schemaField)
+  private void generateUnionMemberAccessors(JDefinedClass unionClass, UnionTemplateSpec.Member member,
+      JClass memberClass, JClass dataClass, JVar schemaField, JVar memberVar)
   {
     final DataSchema memberType = member.getSchema();
-    final boolean isDirect = CodeUtil.isDirectType(memberType);
-    final String wrappedOrDirect;
-    if (isDirect)
-    {
-      wrappedOrDirect = (member.getCustomInfo() == null ? "Direct" : "CustomType");
-    }
-    else
-    {
-      wrappedOrDirect = "Wrapped";
-    }
-
-    String memberKey = member.getUnionMemberKey();
-    String capitalizedName = CodeUtil.getUnionMemberName(member);
+    final String memberKey = member.getUnionMemberKey();
+    final String capitalizedName = CodeUtil.getUnionMemberName(member);
+    final JExpression mapRef = JExpr._super().ref("_map");
 
     final String memberFieldName = "MEMBER_" + capitalizedName;
     final JFieldVar memberField = unionClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, DataSchema.class, memberFieldName);
@@ -1002,7 +1400,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
 
     final JMethod is = unionClass.method(JMod.PUBLIC, getCodeModel().BOOLEAN, "is" + capitalizedName);
     final JBlock isBody = is.body();
-    JExpression res = JExpr.invoke("memberIs").arg(memberKey);
+    JExpression res = JExpr.invoke("memberIs").arg(JExpr.lit(memberKey));
     isBody._return(res);
 
     // Getter method.
@@ -1010,15 +1408,84 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final String getterName = "get" + capitalizedName;
     final JMethod getter = unionClass.method(JMod.PUBLIC, memberClass, getterName);
     final JBlock getterBody = getter.body();
-    res = JExpr.invoke("obtain" + wrappedOrDirect).arg(memberField).arg(JExpr.dotclass(memberClass)).arg(memberKey);
-    getterBody._return(res);
+    getterBody.invoke("checkNotNull");
+    JBlock memberVarNonNullBlock = getterBody._if(memberVar.ne(JExpr._null()))._then();
+    memberVarNonNullBlock._return(memberVar);
+    JVar rawValueVar = getterBody.decl(_objectClass, "__rawValue", mapRef.invoke("get").arg(JExpr.lit(memberKey)));
+    getterBody.assign(memberVar, getCoerceOutputExpression(rawValueVar, memberType, memberClass, member.getCustomInfo()));
+    getterBody._return(memberVar);
 
     // Setter method.
 
     final JMethod setter = unionClass.method(JMod.PUBLIC, Void.TYPE, setterName);
     param = setter.param(memberClass, "value");
-    final JInvocation inv = setter.body().invoke("select" + wrappedOrDirect).arg(memberField).arg(JExpr.dotclass(memberClass));
-    dataClassArg(inv, dataClass).arg(memberKey).arg(param);
+    final JBlock setterBody = setter.body();
+    setterBody.invoke("checkNotNull");
+    setterBody.add(mapRef.invoke("clear"));
+    setterBody.assign(memberVar, param);
+    setterBody.add(_checkedUtilClass.staticInvoke("putWithoutChecking").arg(mapRef).arg(JExpr.lit(memberKey))
+        .arg(getCoerceInputExpression(param, memberType, member.getCustomInfo())));
+  }
+
+  private void generateMaskBuilderForUnion(UnionTemplateSpec unionSpec, JDefinedClass unionClass)
+      throws JClassAlreadyExistsException
+  {
+    final JDefinedClass maskNestedClass = generateProjectionMaskNestedClass(unionClass, unionSpec.getMembers().size());
+
+    // Generates a method in the ProjectionMask class for each member. APIs generated are similar to fields in a record.
+    for (UnionTemplateSpec.Member member : unionSpec.getMembers())
+    {
+      String memberKey = member.getUnionMemberKey();
+      String methodName = CodeUtil.getUnionMemberName(member);
+      JInvocation getDataMap = JExpr.invoke("getDataMap");
+      if (hasNestedFields(member.getSchema()))
+      {
+        final JClass memberType = generate(member.getClassTemplateSpec());
+        // Generate a nested mask api for the member using generic MaskMap if the member is from an external source.
+        // public ProjectionMask withFoo(MaksMap nestedMask) {
+        //   getDataMap().put("foo", nestedMask.getDataMap());
+        // }
+        if (shouldGenerateGenericMaskApi(member.getClassTemplateSpec()))
+        {
+          final JMethod withMemberMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(escapeReserved(methodName)));
+          JVar maskMap = withMemberMethod.param(_maskMapClass,"nestedMask");
+          withMemberMethod.body().invoke(getDataMap, "put").arg(memberKey).arg(maskMap.invoke("getDataMap"));
+          withMemberMethod.body()._return(JExpr._this());
+        }
+        // Generate a typesafe nested mask api for the member if it has ProjectionMask class.
+        // public ProjectionMask withFoo(Function<Foo.ProjectionMask, Foo.ProjectionMask> nestedMask) {
+        //   _fooMask = nestedMask.apply(_fooMask == null ? Foo.createMask() : _fooMask);
+        //   getDataMap().put("foo", _fooMask.getDataMap());
+        // }
+        if (hasProjectionMaskApi(memberType, member.getClassTemplateSpec()))
+        {
+          JClass nestedMaskType = getCodeModel().ref(memberType.fullName() + "." + PROJECTION_MASK_CLASSNAME);
+          final JMethod withMemberTypesafeMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(escapeReserved(methodName)));
+
+          String maskFieldName = "_" + CodeUtil.capitalize(escapeReserved(methodName)) + "Mask";
+          JFieldVar maskField = maskNestedClass.field(JMod.PRIVATE, nestedMaskType, maskFieldName);
+          JVar nestedMask =
+              withMemberTypesafeMethod.param(getCodeModel().ref(Function.class).narrow(nestedMaskType, nestedMaskType),
+                  "nestedMask");
+          withMemberTypesafeMethod.body()
+              .assign(maskField, nestedMask.invoke("apply")
+                  .arg(JOp.cond(maskField.eq(JExpr._null()), memberType.staticInvoke("createMask"), maskField)));
+          withMemberTypesafeMethod.body().invoke(getDataMap, "put").arg(memberKey).arg(maskField.invoke("getDataMap"));
+          withMemberTypesafeMethod.body()._return(JExpr._this());
+        }
+      }
+      else
+      {
+        // Generate a mask API to project the member.
+        // public ProjectionMask withFoo() {
+        //   getDataMap().put("foo", MaskMap.POSITIVE_MASK);
+        // }
+        final JMethod withMemberMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(escapeReserved(methodName)));
+        withMemberMethod.body().invoke(getDataMap, "put").arg(memberKey)
+            .arg(getCodeModel().ref(MaskMap.class).staticRef("POSITIVE_MASK"));
+        withMemberMethod.body()._return(JExpr._this());
+      }
+    }
   }
 
   private void generatePathSpecMethodsForUnion(UnionTemplateSpec unionSpec, JDefinedClass unionClass)
@@ -1122,7 +1589,58 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     // Generate the schema field initialization
     schemaField.init(JExpr.cast(getCodeModel()._ref(schema.getClass()), parseSchemaInvocation));
 
+    // Using "dataSchema" as method name since "schema" conflicts with RecordTemplate::schema and "getSchema" conflicts
+    // with TyperefInfo::getSchema
+    final JMethod staticFieldsAccessor = templateClass.method(JMod.PUBLIC | JMod.STATIC, schema.getClass(), "dataSchema");
+    staticFieldsAccessor.body()._return(schemaField);
+
     return schemaField;
+  }
+
+  private void generateMaskBuilderForCollection(JDefinedClass templateClass, DataSchema schema,
+      JClass childClass, String wildcardMethodName, ClassTemplateSpec itemSpec)
+      throws JClassAlreadyExistsException
+  {
+    // If an array item/map value is a complex type, this generates a mask builder that allows building a nested mask.
+    // If the array type is BarArray, then
+    // public ProjectionMask withItems(Function<Bar.ProjectionMask, Bar.ProjectionMask> nestedMask) {
+    //   _itemsMask = nestedMask.apply(_itemsMask == null ? Bar.createMask() : _itemsMask);
+    //   getDataMap().put("$*", _itemsMask.getDataMap());
+    // }
+    if (hasNestedFields(schema))
+    {
+      // Arrays can custom attributes like start and count. The expected size of the map is attribute size + 1 (for items).
+      final JDefinedClass maskNestedClass = generateProjectionMaskNestedClass(templateClass, FilterConstants.ARRAY_ATTRIBUTES.size() + 1);
+      JInvocation getDataMap = JExpr.invoke("getDataMap");
+
+      // Generate fully typesafe API for specifying item/value mask if the nested type has ProjectionMask class.
+      if (hasProjectionMaskApi(childClass, itemSpec))
+      {
+        final JMethod withFieldTypesafeMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(wildcardMethodName));
+
+        JClass nestedMaskType = getCodeModel().ref(childClass.fullName() + "." + PROJECTION_MASK_CLASSNAME);
+        JFieldVar maskField = maskNestedClass.field(JMod.PRIVATE, nestedMaskType, "_" + wildcardMethodName + "Mask");
+
+        JVar nestedMask = withFieldTypesafeMethod.param(getCodeModel().ref(Function.class).narrow(nestedMaskType, nestedMaskType), "nestedMask");
+        withFieldTypesafeMethod.body().assign(maskField,
+            nestedMask.invoke("apply").arg(
+                JOp.cond(maskField.eq(JExpr._null()), childClass.staticInvoke("createMask"), maskField)));
+        withFieldTypesafeMethod.body().invoke(getDataMap, "put")
+            .arg(JExpr.lit(FilterConstants.WILDCARD))
+            .arg(maskField.invoke("getDataMap"));
+        withFieldTypesafeMethod.body()._return(JExpr._this());
+      }
+      // Generate mask api using generic MaskMap if the item/value type is from external source.
+      if (shouldGenerateGenericMaskApi(itemSpec))
+      {
+        final JMethod withFieldMethod = maskNestedClass.method(JMod.PUBLIC, maskNestedClass, "with" + CodeUtil.capitalize(wildcardMethodName));
+        JVar maskMap = withFieldMethod.param(_maskMapClass, "nestedMask");
+        withFieldMethod.body().invoke(getDataMap, "put")
+            .arg(JExpr.lit(FilterConstants.WILDCARD))
+            .arg(maskMap.invoke("getDataMap"));
+        withFieldMethod.body()._return(JExpr._this());
+      }
+    }
   }
 
   private void generatePathSpecMethodsForCollection(JDefinedClass templateClass, DataSchema schema, JClass childClass, String wildcardMethodName)
@@ -1155,6 +1673,24 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     return fieldsNestedClass;
   }
 
+  private JDefinedClass generateProjectionMaskNestedClass(JDefinedClass templateClass, int fieldCount)
+      throws JClassAlreadyExistsException
+  {
+    final JDefinedClass projectionMaskNestedClass = templateClass._class(JMod.PUBLIC | JMod.STATIC, PROJECTION_MASK_CLASSNAME);
+    projectionMaskNestedClass._extends(_maskMapClass);
+    JMethod constructor = projectionMaskNestedClass.constructor(JMod.NONE);
+    if (DataMapBuilder.getOptimumHashMapCapacityFromSize(fieldCount) < DEFAULT_DATAMAP_INITIAL_CAPACITY)
+    {
+      constructor.body().invoke(SUPER).arg(
+          JExpr.lit(DataMapBuilder.getOptimumHashMapCapacityFromSize(fieldCount)));
+    }
+
+    JMethod createMaskMethod = templateClass.method(JMod.PUBLIC | JMod.STATIC, projectionMaskNestedClass, "createMask");
+    createMaskMethod.body()._return(JExpr._new(projectionMaskNestedClass));
+
+    return projectionMaskNestedClass;
+  }
+
   /**
    * @see com.linkedin.data.template.Custom#initializeCustomClass(Class)
    * @see com.linkedin.data.template.Custom#initializeCoercerClass(Class)
@@ -1174,6 +1710,41 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
         templateClass.init().add(_customClass.staticInvoke("initializeCoercerClass").arg(getCodeModel().ref(coercerClassFullName).dotclass()));
       }
     }
+  }
+
+  protected void generateCoercerOverrides(JDefinedClass wrapperClass,
+      ClassTemplateSpec itemSpec,
+      DataSchema itemSchema,
+      CustomInfoSpec customInfoSpec,
+      boolean tolerateNullForCoerceOutput)
+  {
+    JClass valueType = generate(itemSpec);
+
+    // Generate coerce input only for direct types. Wrapped types will just call data().
+    if (CodeUtil.isDirectType(itemSchema))
+    {
+      JMethod coerceInput = wrapperClass.method(JMod.PROTECTED, _objectClass, "coerceInput");
+      JVar inputParam = coerceInput.param(valueType, "object");
+      coerceInput._throws(ClassCastException.class);
+      coerceInput.annotate(Override.class);
+      coerceInput.body().add(
+          getCodeModel().directClass(ArgumentUtil.class.getCanonicalName()).staticInvoke("notNull").arg(inputParam).arg("object"));
+      coerceInput.body()._return(getCoerceInputExpression(inputParam, itemSchema, customInfoSpec));
+    }
+
+    JMethod coerceOutput = wrapperClass.method(JMod.PROTECTED, valueType, "coerceOutput");
+    JVar outputParam = coerceOutput.param(_objectClass, "object");
+    coerceOutput._throws(TemplateOutputCastException.class);
+    coerceOutput.annotate(Override.class);
+    if (tolerateNullForCoerceOutput)
+    {
+      coerceOutput.body()._if(outputParam.eq(JExpr._null()))._then()._return(JExpr._null());
+    }
+    else
+    {
+      coerceOutput.body().directStatement("assert(object != null);");
+    }
+    coerceOutput.body()._return(getCoerceOutputExpression(outputParam, itemSchema, valueType, customInfoSpec));
   }
 
   private void generateConstructorWithInitialCapacity(JDefinedClass cls, JClass elementClass)
@@ -1218,14 +1789,131 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     argConstructor.body().invoke("putAll").arg(m);
   }
 
+  private JClass generateChangeListener(JDefinedClass cls, Map<String, JVar> fieldMap) throws JClassAlreadyExistsException
+  {
+    final JClass changeListenerInterface = getCodeModel().ref(CheckedMap.ChangeListener.class);
+    final JDefinedClass changeListenerClass = cls._class(JMod.PRIVATE | JMod.STATIC, "ChangeListener");
+    changeListenerClass._implements(changeListenerInterface.narrow(String.class, Object.class));
+
+    final JFieldVar objectRefVar = changeListenerClass.field(JMod.PRIVATE | JMod.FINAL, cls, "__objectRef");
+
+    final JMethod constructor = changeListenerClass.constructor(JMod.PRIVATE);
+    JVar refParam = constructor.param(cls, "reference");
+    constructor.body().assign(objectRefVar, refParam);
+
+    final JMethod method = changeListenerClass.method(JMod.PUBLIC, void.class, "onUnderlyingMapChanged");
+    method.annotate(Override.class);
+    final JVar keyParam = method.param(String.class, "key");
+    method.param(_objectClass, "value");
+    JSwitch keySwitch = method.body()._switch(keyParam);
+    fieldMap.forEach((key, field) -> {
+      JCase keyCase = keySwitch._case(JExpr.lit(key));
+      keyCase.body().assign(objectRefVar.ref(field.name()), JExpr._null());
+      keyCase.body()._break();
+    });
+
+    return changeListenerClass;
+  }
+
+  private JExpression getCoerceOutputExpression(JExpression rawExpr, DataSchema schema, JClass typeClass,
+      CustomInfoSpec customInfoSpec)
+  {
+    if (CodeUtil.isDirectType(schema))
+    {
+      if (customInfoSpec == null)
+      {
+        switch (schema.getDereferencedType())
+        {
+          case INT:
+            return _dataTemplateUtilClass.staticInvoke("coerceIntOutput").arg(rawExpr);
+          case FLOAT:
+            return _dataTemplateUtilClass.staticInvoke("coerceFloatOutput").arg(rawExpr);
+          case LONG:
+            return _dataTemplateUtilClass.staticInvoke("coerceLongOutput").arg(rawExpr);
+          case DOUBLE:
+            return _dataTemplateUtilClass.staticInvoke("coerceDoubleOutput").arg(rawExpr);
+          case BYTES:
+            return _dataTemplateUtilClass.staticInvoke("coerceBytesOutput").arg(rawExpr);
+          case BOOLEAN:
+            return _dataTemplateUtilClass.staticInvoke("coerceBooleanOutput").arg(rawExpr);
+          case STRING:
+            return _dataTemplateUtilClass.staticInvoke("coerceStringOutput").arg(rawExpr);
+          case ENUM:
+            return _dataTemplateUtilClass.staticInvoke("coerceEnumOutput")
+                .arg(rawExpr)
+                .arg(typeClass.dotclass())
+                .arg(typeClass.staticRef(DataTemplateUtil.UNKNOWN_ENUM));
+        }
+      }
+
+      JClass customClass = generate(customInfoSpec.getCustomClass());
+      return _dataTemplateUtilClass.staticInvoke("coerceCustomOutput").arg(rawExpr).arg(customClass.dotclass());
+    }
+    else
+    {
+      switch (schema.getDereferencedType())
+      {
+        case MAP:
+        case RECORD:
+          return JOp.cond(rawExpr.eq(JExpr._null()), JExpr._null(), JExpr._new(typeClass)
+              .arg(_dataTemplateUtilClass.staticInvoke("castOrThrow").arg(rawExpr).arg(_dataMapClass.dotclass())));
+        case ARRAY:
+          return JOp.cond(rawExpr.eq(JExpr._null()), JExpr._null(), JExpr._new(typeClass)
+              .arg(_dataTemplateUtilClass.staticInvoke("castOrThrow").arg(rawExpr).arg(_dataListClass.dotclass())));
+        case FIXED:
+        case UNION:
+          return JOp.cond(rawExpr.eq(JExpr._null()), JExpr._null(), JExpr._new(typeClass).arg(rawExpr));
+        default:
+          throw new TemplateOutputCastException(
+              "Cannot handle wrapped schema of type " + schema.getDereferencedType());
+      }
+    }
+  }
+
+  private JExpression getCoerceInputExpression(JExpression objectExpr, DataSchema schema, CustomInfoSpec customInfoSpec)
+  {
+    if (CodeUtil.isDirectType(schema))
+    {
+      if (customInfoSpec == null)
+      {
+        switch (schema.getDereferencedType())
+        {
+          case INT:
+            return _dataTemplateUtilClass.staticInvoke("coerceIntInput").arg(objectExpr);
+          case FLOAT:
+            return _dataTemplateUtilClass.staticInvoke("coerceFloatInput").arg(objectExpr);
+          case LONG:
+            return _dataTemplateUtilClass.staticInvoke("coerceLongInput").arg(objectExpr);
+          case DOUBLE:
+            return _dataTemplateUtilClass.staticInvoke("coerceDoubleInput").arg(objectExpr);
+          case BYTES:
+          case BOOLEAN:
+          case STRING:
+            return objectExpr;
+          case ENUM:
+            return objectExpr.invoke("name");
+        }
+      }
+
+      JClass customClass = generate(customInfoSpec.getCustomClass());
+      return _dataTemplateUtilClass.staticInvoke("coerceCustomInput").arg(objectExpr).arg(customClass.dotclass());
+    }
+    else
+    {
+      return objectExpr.invoke("data");
+    }
+  }
+
   public static class Config
   {
     private String _defaultPackage;
     private boolean _recordFieldAccessorWithMode;
     private boolean _recordFieldRemove;
     private boolean _pathSpecMethods;
+    private boolean _fieldMaskMethods;
     private boolean _copierMethods;
     private String _rootPath;
+    private ProjectionMaskApiChecker _projectionMaskApiChecker;
 
     public Config()
     {
@@ -1233,6 +1921,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       _recordFieldAccessorWithMode = true;
       _recordFieldRemove = true;
       _pathSpecMethods = true;
+      _fieldMaskMethods = false;
       _copierMethods = true;
       _rootPath = null;
     }
@@ -1277,6 +1966,16 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       return _pathSpecMethods;
     }
 
+    public boolean isFieldMaskMethods()
+    {
+      return _fieldMaskMethods;
+    }
+
+    public void setFieldMaskMethods(boolean fieldMaskMethods)
+    {
+      _fieldMaskMethods = fieldMaskMethods;
+    }
+
     public void setCopierMethods(boolean copierMethods)
     {
       _copierMethods = copierMethods;
@@ -1295,6 +1994,16 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     public String getRootPath()
     {
       return _rootPath;
+    }
+
+    public ProjectionMaskApiChecker getProjectionMaskApiChecker()
+    {
+      return _projectionMaskApiChecker;
+    }
+
+    public void setProjectionMaskApiChecker(ProjectionMaskApiChecker projectionMaskApiChecker)
+    {
+      _projectionMaskApiChecker = projectionMaskApiChecker;
     }
   }
 }

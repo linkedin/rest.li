@@ -43,7 +43,7 @@ public class FindRequest<T extends RecordTemplate>
 {
   private final CompoundKey _assocKey;
 
-  FindRequest(Map<String, String> headers,
+  public FindRequest(Map<String, String> headers,
               List<HttpCookie> cookies,
               Class<T> templateClass,
               ResourceSpec resourceSpec,
@@ -59,7 +59,7 @@ public class FindRequest<T extends RecordTemplate>
           null,
           headers,
           cookies,
-          new CollectionResponseDecoder<T>(templateClass),
+        new CollectionResponseDecoder<>(templateClass),
           resourceSpec,
           queryParams,
           queryParamClasses,

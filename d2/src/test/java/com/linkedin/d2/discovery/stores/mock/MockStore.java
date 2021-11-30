@@ -45,8 +45,8 @@ public class MockStore<T> implements PropertyEventPublisher<T>, PropertyStore<T>
 
   public MockStore()
   {
-    _properties = new HashMap<String, T>();
-    _publishing = new HashSet<String>();
+    _properties = new HashMap<>();
+    _publishing = new HashSet<>();
     _shutdown = false;
   }
 

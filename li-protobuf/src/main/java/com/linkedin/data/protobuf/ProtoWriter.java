@@ -74,9 +74,17 @@ public class ProtoWriter implements Closeable
    */
   public ProtoWriter(OutputStream out)
   {
+    this(out, DEFAULT_BUFFER_SIZE);
+  }
+
+  /**
+   * Create a new {@code ProtoWriter} wrapping the given {@code OutputStream} with the given buffer size.
+   */
+  public ProtoWriter(OutputStream out, int bufferSize)
+  {
     _out = out;
-    _buffer = new byte[DEFAULT_BUFFER_SIZE];
-    _limit = DEFAULT_BUFFER_SIZE;
+    _buffer = new byte[bufferSize];
+    _limit = bufferSize;
   }
 
   /**

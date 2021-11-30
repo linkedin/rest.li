@@ -101,6 +101,9 @@
         "method" : "batch_get"
       }, {
         "method" : "get_all",
+        "metadata" : {
+          "type" : "com.linkedin.restli.examples.defaults.api.LowLevelRecordWithDefault"
+        },
         "pagingSupported" : true
       } ],
       "finders" : [ {
@@ -108,7 +111,10 @@
         "parameters" : [ {
           "name" : "noDefaultFieldA",
           "type" : "int"
-        } ]
+        } ],
+        "metadata" : {
+          "type" : "com.linkedin.restli.examples.defaults.api.LowLevelRecordWithDefault"
+        }
       } ],
       "batchFinders" : [ {
         "name" : "searchRecords",

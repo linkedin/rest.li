@@ -146,9 +146,9 @@ public class SimpleLoadBalancerSimulation
   public SimpleLoadBalancerSimulation(LoadBalancerStrategyFactory<? extends LoadBalancerStrategy> loadBalancerStrategyFactoryToTest)
   {
     this(loadBalancerStrategyFactoryToTest,
-         new MockStoreFactory<ClusterProperties>(),
-         new MockStoreFactory<ServiceProperties>(),
-         new MockStoreFactory<UriProperties>());
+         new MockStoreFactory<>(),
+         new MockStoreFactory<>(),
+         new MockStoreFactory<>());
   }
 
   public SimpleLoadBalancerSimulation(LoadBalancerStrategyFactory<? extends LoadBalancerStrategy> loadBalancerStrategyFactoryToTest,
@@ -172,25 +172,24 @@ public class SimpleLoadBalancerSimulation
   {
     // simulation state
     _random = new Random();
-    _possibleServices = Collections.synchronizedList(new ArrayList<String>());
-    _possibleClusters = Collections.synchronizedList(new ArrayList<String>());
-    _possiblePaths = Collections.synchronizedList(new ArrayList<String>());
-    _possibleSchemes = Collections.synchronizedList(new ArrayList<String>());
-    _possibleStrategies = Collections.synchronizedList(new ArrayList<String>());
-    _possibleUris = Collections.synchronizedList(new ArrayList<URI>());
+    _possibleServices = Collections.synchronizedList(new ArrayList<>());
+    _possibleClusters = Collections.synchronizedList(new ArrayList<>());
+    _possiblePaths = Collections.synchronizedList(new ArrayList<>());
+    _possibleSchemes = Collections.synchronizedList(new ArrayList<>());
+    _possibleStrategies = Collections.synchronizedList(new ArrayList<>());
+    _possibleUris = Collections.synchronizedList(new ArrayList<>());
 
     // load balancer state
 
     _executorService = Executors.newSingleThreadScheduledExecutor();;
 
     // pretend that these are zk stores
-    _serviceRegistry = new MockStore<ServiceProperties>();
-    _uriRegistry = new MockStore<UriProperties>();
-    _clusterRegistry = new MockStore<ClusterProperties>();
+    _serviceRegistry = new MockStore<>();
+    _uriRegistry = new MockStore<>();
+    _clusterRegistry = new MockStore<>();
 
-    _loadBalancerStrategyFactories =
-        new HashMap<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>>();
-    _clientFactories = new HashMap<String, TransportClientFactory>();
+    _loadBalancerStrategyFactories = new HashMap<>();
+    _clientFactories = new HashMap<>();
     _state =
         new SimpleLoadBalancerState(_executorService,
                                     _uriRegistry,
@@ -200,7 +199,7 @@ public class SimpleLoadBalancerSimulation
                                     _loadBalancerStrategyFactories);
     _loadBalancer = new SimpleLoadBalancer(_state, 10, TimeUnit.SECONDS, _executorService);
 
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _loadBalancer.start(callback);
     try
     {
@@ -212,9 +211,9 @@ public class SimpleLoadBalancerSimulation
     }
 
     // verification state
-    _expectedServiceProperties = new ConcurrentHashMap<String, ServiceProperties>();
-    _expectedClusterProperties = new ConcurrentHashMap<String, ClusterProperties>();
-    _expectedUriProperties = new ConcurrentHashMap<String, UriProperties>();
+    _expectedServiceProperties = new ConcurrentHashMap<>();
+    _expectedClusterProperties = new ConcurrentHashMap<>();
+    _expectedUriProperties = new ConcurrentHashMap<>();
     _totalMessages = 0;
 
     // state setup
@@ -627,7 +626,7 @@ public class SimpleLoadBalancerSimulation
               // schemes could find no available uris in the
               // cluster. let's see if we can find a URI that
               // matches a prioritized scheme in the cluster.
-              Set<String> schemes = new HashSet<String>();
+              Set<String> schemes = new HashSet<>();
 
               for (URI uri : uriProperties.Uris())
               {
@@ -751,11 +750,11 @@ public class SimpleLoadBalancerSimulation
         new ClusterProperties(clusterName, prioritizedSchemes);
 
     // weight the uris randomly between 1 and 2
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
 
     for (URI uri : uris)
     {
-      Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+      Map<Integer, PartitionData> partitionData = new HashMap<>(1);
       partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d + _random.nextDouble()));
       uriData.put(uri, partitionData);
     }
@@ -779,7 +778,7 @@ public class SimpleLoadBalancerSimulation
   // helpers
   public List<URI> stringToUris(String urisString)
   {
-    List<URI> uris = new ArrayList<URI>();
+    List<URI> uris = new ArrayList<>();
 
     if (urisString.length() > 0)
     {
@@ -886,7 +885,7 @@ public class SimpleLoadBalancerSimulation
 
     for (int i = 0; i < queues; ++i)
     {
-      _queues[i] = new ConcurrentLinkedQueue<String[]>();
+      _queues[i] = new ConcurrentLinkedQueue<>();
     }
   }
 
@@ -915,7 +914,7 @@ public class SimpleLoadBalancerSimulation
     @Override
     public PropertyStore<T> getStore()
     {
-      return new MockStore<T>();
+      return new MockStore<>();
     }
   }
 

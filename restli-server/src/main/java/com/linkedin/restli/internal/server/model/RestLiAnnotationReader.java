@@ -53,6 +53,7 @@ import com.linkedin.restli.internal.common.ReflectionUtils;
 import com.linkedin.restli.internal.server.PathKeysImpl;
 import com.linkedin.restli.internal.server.RestLiInternalException;
 import com.linkedin.restli.internal.server.model.ResourceMethodDescriptor.InterfaceType;
+import com.linkedin.restli.restspec.MaxBatchSizeSchema;
 import com.linkedin.restli.restspec.ResourceEntityType;
 import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.BatchCreateRequest;
@@ -79,6 +80,7 @@ import com.linkedin.restli.server.annotations.BatchFinder;
 import com.linkedin.restli.server.annotations.CallbackParam;
 import com.linkedin.restli.server.annotations.Finder;
 import com.linkedin.restli.server.annotations.HeaderParam;
+import com.linkedin.restli.server.annotations.MaxBatchSize;
 import com.linkedin.restli.server.annotations.MetadataProjectionParam;
 import com.linkedin.restli.server.annotations.Optional;
 import com.linkedin.restli.server.annotations.PagingContextParam;
@@ -157,6 +159,13 @@ public final class RestLiAnnotationReader
                                                                                                       ResourceMethod.CREATE,
                                                                                                       ResourceMethod.PARTIAL_UPDATE,
                                                                                                       ResourceMethod.UPDATE));
+
+  private static final Set<ResourceMethod> BATCH_METHODS = new HashSet<>(Arrays.asList(ResourceMethod.BATCH_CREATE,
+                                                                                       ResourceMethod.BATCH_PARTIAL_UPDATE,
+                                                                                       ResourceMethod.BATCH_UPDATE,
+                                                                                       ResourceMethod.BATCH_DELETE,
+                                                                                       ResourceMethod.BATCH_GET,
+                                                                                       ResourceMethod.BATCH_FINDER));
 
   /**
    * This is a utility class.
@@ -272,7 +281,7 @@ public final class RestLiAnnotationReader
         alternativeKeyAnnotations = new AlternativeKey[]{resourceClass.getAnnotation(AlternativeKey.class)};
       }
 
-      Map<String, com.linkedin.restli.server.AlternativeKey<?, ?>> alternativeKeyMap = new HashMap<String, com.linkedin.restli.server.AlternativeKey<?, ?>>(alternativeKeyAnnotations.length);
+      Map<String, com.linkedin.restli.server.AlternativeKey<?, ?>> alternativeKeyMap = new HashMap<>(alternativeKeyAnnotations.length);
       for (AlternativeKey altKeyAnnotation : alternativeKeyAnnotations)
       {
         @SuppressWarnings("unchecked")
@@ -283,7 +292,7 @@ public final class RestLiAnnotationReader
     }
     else
     {
-      model.putAlternativeKeys(new HashMap<String, com.linkedin.restli.server.AlternativeKey<?, ?>>());
+      model.putAlternativeKeys(new HashMap<>());
     }
   }
 
@@ -411,7 +420,7 @@ public final class RestLiAnnotationReader
 
   private static void checkRestLiDataAnnotations(final Class<?> resourceClass, RecordDataSchema dataSchema)
   {
-    Map<String, String[]> annotations = new HashMap<String, String[]>();
+    Map<String, String[]> annotations = new HashMap<>();
     if (resourceClass.isAnnotationPresent(ReadOnly.class))
     {
       annotations.put(ReadOnly.class.getSimpleName(), resourceClass.getAnnotation(ReadOnly.class).value());
@@ -427,7 +436,7 @@ public final class RestLiAnnotationReader
       checkPathsAgainstSchema(dataSchema, resourceClassName, annotationEntry.getKey(), annotationEntry.getValue());
     }
     // Check for redundant or conflicting information.
-    Map<String, String> pathToAnnotation = new HashMap<String, String>();
+    Map<String, String> pathToAnnotation = new HashMap<>();
     for (Map.Entry<String, String[]> annotationEntry : annotations.entrySet())
     {
       String annotationName = annotationEntry.getKey();
@@ -598,7 +607,7 @@ public final class RestLiAnnotationReader
     }
 
     Key primaryKey = buildKey(name, keyName, keyClass, annotationData.typerefInfoClass());
-    Set<Key> keys = new HashSet<Key>();
+    Set<Key> keys = new HashSet<>();
     if (annotationData.keys() == null)
     {
       keys.add(primaryKey);
@@ -986,9 +995,9 @@ public final class RestLiAnnotationReader
                                                   final Method method,
                                                   final ResourceMethod methodType)
   {
-    Set<String> paramNames = new HashSet<String>();
+    Set<String> paramNames = new HashSet<>();
 
-    List<Parameter<?>> queryParameters = new ArrayList<Parameter<?>>();
+    List<Parameter<?>> queryParameters = new ArrayList<>();
     Annotation[][] paramsAnnos = method.getParameterAnnotations();
 
     // Iterate over the method parameters.
@@ -1258,14 +1267,14 @@ public final class RestLiAnnotationReader
     {
       throw new ResourceConfigException("Param Annotation type must be 'ParseqContextParam' or the deprecated 'ParseqContext' for ParseqContext");
     }
-    return new Parameter<Context>("",
-                                                      Context.class,
-                                                      null,
-                                                      false,
-                                                      null,
-                                                      parameter,
-                                                      false,
-                                                      annotations);
+    return new Parameter<>("",
+        Context.class,
+        null,
+        false,
+        null,
+        parameter,
+        false,
+        annotations);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -1421,7 +1430,7 @@ public final class RestLiAnnotationReader
   private static Set<Key> buildKeys(String resourceName,
                                     com.linkedin.restli.server.annotations.Key[] annoKeys)
   {
-    Set<Key> keys = new HashSet<Key>();
+    Set<Key> keys = new HashSet<>();
     for(com.linkedin.restli.server.annotations.Key key : annoKeys)
     {
       keys.add(buildKey(resourceName, key.name(), key.type(), key.typeref()));
@@ -1484,9 +1493,13 @@ public final class RestLiAnnotationReader
     return param;
   }
 
-  private static void checkIfKeyIsValid(String paramName, final Class<?> paramType, ResourceModel model)
+  /**
+   * For a given path key name and resource model, returns true if the path key exists in the resource,
+   * its parent, or any of its super-parents (if applicable).
+   */
+  private static void checkIfKeyIsValid(String keyName, ResourceModel model)
   {
-    ResourceModel nextModel = model.getParentResourceModel();
+    ResourceModel nextModel = model;
 
     while (nextModel != null)
     {
@@ -1494,7 +1507,7 @@ public final class RestLiAnnotationReader
 
       for (Key key : keys)
       {
-        if (key.getName().equals(paramName))
+        if (key.getName().equals(keyName))
         {
           return;
         }
@@ -1503,7 +1516,7 @@ public final class RestLiAnnotationReader
       nextModel = nextModel.getParentResourceModel();
     }
 
-    throw new ResourceConfigException("Parameter " + paramName + " not found in path keys of class " + model.getResourceClass());
+    throw new ResourceConfigException("Parameter " + keyName + " not found in path keys of class " + model.getResourceClass());
   }
 
   private static Parameter<?> buildPathKeyParam(final ResourceModel model,
@@ -1513,7 +1526,7 @@ public final class RestLiAnnotationReader
   {
     String paramName = annotations.get(PathKeyParam.class).value();
 
-    checkIfKeyIsValid(paramName, paramType, model);
+    checkIfKeyIsValid(paramName, model);
 
     Parameter<?> param = new Parameter<>(paramName,
                                         paramType,
@@ -2019,7 +2032,7 @@ public final class RestLiAnnotationReader
   private static void validateCrudMethods(final ResourceModel model)
   {
     Map<ResourceMethod, ResourceMethodDescriptor> crudMethods =
-        new HashMap<ResourceMethod, ResourceMethodDescriptor>();
+        new HashMap<>();
     for (ResourceMethodDescriptor descriptor : model.getResourceMethodDescriptors())
     {
       ResourceMethod type = descriptor.getType();
@@ -2165,6 +2178,8 @@ public final class RestLiAnnotationReader
       addServiceErrors(batchFinderMethodDescriptor, method);
       addSuccessStatuses(batchFinderMethodDescriptor, method);
 
+      addMaxBatchSize(batchFinderMethodDescriptor, method, ResourceMethod.BATCH_FINDER);
+
       model.addResourceMethodDescriptor(batchFinderMethodDescriptor);
     }
   }
@@ -2234,6 +2249,8 @@ public final class RestLiAnnotationReader
 
       addServiceErrors(resourceMethodDescriptor, method);
       addSuccessStatuses(resourceMethodDescriptor, method);
+
+      addMaxBatchSize(resourceMethodDescriptor, method, resourceMethod);
 
       model.addResourceMethodDescriptor(resourceMethodDescriptor);
     }
@@ -2323,6 +2340,8 @@ public final class RestLiAnnotationReader
         addServiceErrors(resourceMethodDescriptor, method);
         addSuccessStatuses(resourceMethodDescriptor, method);
 
+        addMaxBatchSize(resourceMethodDescriptor, method, resourceMethod);
+
         model.addResourceMethodDescriptor(resourceMethodDescriptor);
       }
     }
@@ -2390,6 +2409,7 @@ public final class RestLiAnnotationReader
                                                                                                 getActionResourceLevel(actionAnno, model),
                                                                                                 returnFieldDef,
                                                                                                 actionReturnRecordDataSchema,
+                                                                                                actionAnno.readOnly(),
                                                                                                 recordDataSchema,
                                                                                                 getInterfaceType(method),
                                                                                                 annotationsMap);
@@ -3200,5 +3220,43 @@ public final class RestLiAnnotationReader
     }
 
     return String.format("method '%s' of resource '%s'", method.getName(), resourceClass.getName());
+  }
+
+  /**
+   * Reads annotations on a given method in order to get max batch size, which are then added to
+   * a given resource method descriptor.
+   *
+   * @param resourceMethodDescriptor resource method descriptor to add max batch size to
+   * @param method method annotated with max batch size
+   * @param resourceMethod resource method which is used to validate the method with max batch size annotation
+   *                       is a supported method.
+   */
+  private static void addMaxBatchSize(ResourceMethodDescriptor resourceMethodDescriptor, Method method,
+      ResourceMethod resourceMethod)
+  {
+    final MaxBatchSize maxBatchSizeAnnotation = method.getAnnotation(MaxBatchSize.class);
+    if (maxBatchSizeAnnotation == null)
+    {
+      return;
+    }
+
+    // Only batch methods are allowed to use MaxBatchSize annotation.
+    if (!BATCH_METHODS.contains(resourceMethod))
+    {
+      throw new ResourceConfigException(String.format("The resource method: %s cannot specify MaxBatchSize.",
+          resourceMethod.toString()));
+    }
+    int maxBatchSizeValue = maxBatchSizeAnnotation.value();
+
+    // Max batch size value should always be greater than 0
+    if (maxBatchSizeValue <= 0)
+    {
+      throw new ResourceConfigException(String.format("The resource method: %s max batch size value is %s, " +
+                      "it should be greater than 0.", resourceMethod.toString(), maxBatchSizeValue));
+    }
+    MaxBatchSizeSchema maxBatchSizeSchema = new MaxBatchSizeSchema();
+    maxBatchSizeSchema.setValue(maxBatchSizeAnnotation.value());
+    maxBatchSizeSchema.setValidate(maxBatchSizeAnnotation.validate());
+    resourceMethodDescriptor.setMaxBatchSize(maxBatchSizeSchema);
   }
 }

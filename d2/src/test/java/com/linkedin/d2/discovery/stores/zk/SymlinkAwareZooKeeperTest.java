@@ -83,27 +83,27 @@ public class SymlinkAwareZooKeeperTest
     FutureCallback<None> callback;
     for (int i = 1; i <= 10; i++)
     {
-      callback = new FutureCallback<None>();
+      callback = new FutureCallback<>();
       _zkClient.ensurePersistentNodeExists("/foo/bar/" + i, callback);
       callback.get();
-      callback = new FutureCallback<None>();
+      callback = new FutureCallback<>();
       _zkClient.setDataUnsafe("/foo/bar/" + i, String.valueOf(i).getBytes("UTF-8"), callback);
       callback.get();
     }
 
     for (int i=11; i <= 15; i++)
     {
-      callback = new FutureCallback<None>();
+      callback = new FutureCallback<>();
       _zkClient.ensurePersistentNodeExists("/bar/foo/" + i, callback);
       callback.get();
-      callback = new FutureCallback<None>();
+      callback = new FutureCallback<>();
       _zkClient.setDataUnsafe("/bar/foo/" + i, String.valueOf(i).getBytes("UTF-8"), callback);
       callback.get();
     }
-    callback = new FutureCallback<None>();
+    callback = new FutureCallback<>();
     _zkClient.createSymlink("/foo/$link", "/foo/bar", callback);
     callback.get();
-    callback = new FutureCallback<None>();
+    callback = new FutureCallback<>();
     _zkClient.createSymlink("/$bar", "/foo", callback);
     callback.get();
   }
@@ -348,9 +348,9 @@ public class SymlinkAwareZooKeeperTest
     // symlink: /foo/$link/newNode -> /foo/bar/newNode
     _zkClient.getZooKeeper().exists("/foo/$link/newNode", existWatch, existCallback2, null);
     latch2.await(30, TimeUnit.SECONDS);
-    _zkClient.ensurePersistentNodeExists("/foo/bar/newNode", new FutureCallback<None>());
+    _zkClient.ensurePersistentNodeExists("/foo/bar/newNode", new FutureCallback<>());
     latch.await(30, TimeUnit.SECONDS);
-    _zkClient.removeNodeUnsafe("/foo/bar/newNode", new FutureCallback<None>());
+    _zkClient.removeNodeUnsafe("/foo/bar/newNode", new FutureCallback<>());
   }
 
   @Test
@@ -391,10 +391,10 @@ public class SymlinkAwareZooKeeperTest
     _zkClient.getZooKeeper().exists("/foo/$link/foo", existWatch, existCallback2, null);
     latch2.await(30, TimeUnit.SECONDS);
     // update symlink. now it points to /bar/foo, which does exist.
-    _zkClient.setSymlinkData("/foo/$link", "/bar", new FutureCallback<None>());
+    _zkClient.setSymlinkData("/foo/$link", "/bar", new FutureCallback<>());
     latch.await(30, TimeUnit.SECONDS);
     // restore symlink
-    _zkClient.setSymlinkData("/foo/$link", "/foo/bar", new FutureCallback<None>());
+    _zkClient.setSymlinkData("/foo/$link", "/foo/bar", new FutureCallback<>());
   }
 
   @Test
@@ -435,10 +435,10 @@ public class SymlinkAwareZooKeeperTest
     _zkClient.getZooKeeper().exists("/$link", existWatch, existCallback2, null);
     latch2.await(30, TimeUnit.SECONDS);
     // create symlink /$link -> /foo/bar. existWatch should be notified.
-    _zkClient.createSymlink("/$link", "/foo/bar", new FutureCallback<None>());
+    _zkClient.createSymlink("/$link", "/foo/bar", new FutureCallback<>());
     latch.await(30, TimeUnit.SECONDS);
     // delete symlink /$link
-    _zkClient.removeNodeUnsafe("/$link", new FutureCallback<None>());
+    _zkClient.removeNodeUnsafe("/$link", new FutureCallback<>());
   }
 
   @Test
@@ -479,9 +479,9 @@ public class SymlinkAwareZooKeeperTest
     // symlink: /foo/$link -> /foo/bar
     _zkClient.getZooKeeper().getChildren("/foo/$link", childrenWatch, childrenCallback2, null);
     latch2.await(30, TimeUnit.SECONDS);
-    _zkClient.ensurePersistentNodeExists("/foo/bar/newNode", new FutureCallback<None>());
+    _zkClient.ensurePersistentNodeExists("/foo/bar/newNode", new FutureCallback<>());
     latch.await(30, TimeUnit.SECONDS);
-    _zkClient.removeNodeUnsafe("/foo/bar/newNode", new FutureCallback<None>());
+    _zkClient.removeNodeUnsafe("/foo/bar/newNode", new FutureCallback<>());
   }
 
   @Test
@@ -520,9 +520,9 @@ public class SymlinkAwareZooKeeperTest
     _zkClient.getZooKeeper().getChildren("/foo/$link", watcher, callback, null);
     latch1.await(30, TimeUnit.SECONDS);
     // update symlink
-    _zkClient.setSymlinkData("/foo/$link", "/bar/foo", new FutureCallback<None>());
+    _zkClient.setSymlinkData("/foo/$link", "/bar/foo", new FutureCallback<>());
     latch2.await(30, TimeUnit.SECONDS);
-    FutureCallback<None> fcb = new FutureCallback<None>();
+    FutureCallback<None> fcb = new FutureCallback<>();
     // restore symlink
     _zkClient.setSymlinkData("/foo/$link", "/foo/bar", fcb);
     fcb.get();
@@ -571,9 +571,9 @@ public class SymlinkAwareZooKeeperTest
     _zkClient.getZooKeeper().getChildren("/foo/$link", watcher, callback, null);
     latch1.await(30, TimeUnit.SECONDS);
     // update symlink
-    _zkClient.setSymlinkData("/foo/$link", "/bar/foo", new FutureCallback<None>());
+    _zkClient.setSymlinkData("/foo/$link", "/bar/foo", new FutureCallback<>());
     latch2.await(30, TimeUnit.SECONDS);
-    FutureCallback<None> fcb = new FutureCallback<None>();
+    FutureCallback<None> fcb = new FutureCallback<>();
     // restore symlink
     _zkClient.setSymlinkData("/foo/$link", "/foo/bar", fcb);
     fcb.get();
@@ -604,7 +604,7 @@ public class SymlinkAwareZooKeeperTest
         latch2.countDown();
       }
     };
-    FutureCallback<None> fcb = new FutureCallback<None>();
+    FutureCallback<None> fcb = new FutureCallback<>();
     _zkClient.setSymlinkData("/foo/$link", "INVALID", fcb);
     fcb.get();
     _zkClient.getZooKeeper().exists("/foo/$link", watcher, callback, null);

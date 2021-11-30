@@ -52,13 +52,13 @@ public class TestArray
     Class<StringMapArray> templateClass = (Class<StringMapArray>) fieldInfo.getFieldClass();
     ArrayDataSchema schema = (ArrayDataSchema) fieldInfo.getField().getType();
 
-    List<StringMap> input = new ArrayList<StringMap>();
+    List<StringMap> input = new ArrayList<>();
     for (int i = 0; i < 5; ++i)
     {
       input.add(new StringMap());
       input.get(i).put("input key " + i, "value " + i);
     }
-    List<StringMap> adds = new ArrayList<StringMap>();
+    List<StringMap> adds = new ArrayList<>();
     for (int i = 0; i < 5; ++i)
     {
       adds.add(new StringMap());
@@ -76,12 +76,12 @@ public class TestArray
     Class<StringArrayArray> templateClass = (Class<StringArrayArray>) fieldInfo.getFieldClass();
     ArrayDataSchema schema = (ArrayDataSchema) fieldInfo.getField().getType();
 
-    List<StringArray> input = new ArrayList<StringArray>();
+    List<StringArray> input = new ArrayList<>();
     for (int i = 0; i < 5; ++i)
     {
       input.add(new StringArray("input" + i));
     }
-    List<StringArray> adds = new ArrayList<StringArray>();
+    List<StringArray> adds = new ArrayList<>();
     for (int i = 0; i < 5; ++i)
     {
       adds.add(new StringArray("add" + i));
@@ -112,13 +112,13 @@ public class TestArray
     Class<RecordBarArray> templateClass = (Class<RecordBarArray>) fieldInfo.getFieldClass();
     ArrayDataSchema schema = (ArrayDataSchema) fieldInfo.getField().getType();
 
-    List<RecordBar> input = new ArrayList<RecordBar>();
+    List<RecordBar> input = new ArrayList<>();
     for (int i = 0; i < 5; ++i)
     {
       input.add(new RecordBar());
       input.get(i).setLocation("input " + i);
     }
-    List<RecordBar> adds = new ArrayList<RecordBar>();
+    List<RecordBar> adds = new ArrayList<>();
     for (int i = 0; i < 5; ++i)
     {
       adds.add(new RecordBar());

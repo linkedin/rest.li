@@ -1,0 +1,79 @@
+#*
+   Copyright (c) 2021 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*#
+#if($is_interface)
+  #foreach($withEG in [true, false])
+    #if($method.hasOptionalParams() || $method.hasProjectionParams())
+      #doc($method.schema.doc)
+      public CompletionStage<Map<$spec.keyClassDisplayName, UpdateEntityStatus<${spec.entityClassName}>>> batchPartialUpdateAndGet(
+          Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if($method.hasRequiredParams() || $withEG),#end
+          #**##methodParamsWithEGroup($method, false, $withEG)##
+          );
+    #end
+
+    #doc($method.schema.doc)
+    public CompletionStage<Map<$spec.keyClassDisplayName, UpdateEntityStatus<${spec.entityClassName}>>> batchPartialUpdateAndGet(
+        Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if( $method.hasParams() || $withEG),#end
+        #**##methodParamsWithEGroup($method, true, $withEG)##
+        );
+  #end ## end withEG
+#else ## is_interface
+  #foreach($withEG in [true, false])
+    #if($method.hasOptionalParams() || $method.hasProjectionParams())
+      #doc($method.schema.doc)
+      public CompletionStage<Map<$spec.keyClassDisplayName, UpdateEntityStatus<${spec.entityClassName}>>> batchPartialUpdateAndGet(
+          Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if($method.hasRequiredParams() || $withEG),#end
+          #**##methodParamsWithEGroup($method, false, $withEG)##
+          ) {
+        return batchPartialUpdateAndGet(patches,
+            #**##optionalMethodCallArgsWithEGroup($method, $withEG)##
+        );
+      }
+    #end
+
+    #doc($method.schema.doc)
+    public CompletionStage<Map<$spec.keyClassDisplayName, UpdateEntityStatus<${spec.entityClassName}>>> batchPartialUpdateAndGet(
+        Map<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>> patches#if( $method.hasParams() || $withEG),#end
+        #**##methodParamsWithEGroup($method, true, $withEG)##
+        ) {
+      Map<String, Object> queryParams = new HashMap<>($method.getQueryParamMapSize());
+      Map<String, Class<?>> queryParamClasses = new HashMap<>($method.getQueryParamMapSize());
+      #fillQueryParams($method)
+      #**##returnEntityParam("true")
+      queryParams.put(RestConstants.QUERY_BATCH_IDS_PARAM, patches.keySet());
+      CollectionRequest<KeyValueRecord<$spec.keyClassDisplayName, PatchRequest<${spec.entityClassName}>>> inputs = FluentClientUtils.buildBatchKVInputs(
+          patches, PATCH_VALUE_FACTORY);
+
+      BatchPartialUpdateEntityRequest<${spec.keyClassDisplayName}, ${spec.entityClassName}> request = new BatchPartialUpdateEntityRequest<>(
+          Collections.emptyMap(),
+          Collections.emptyList(),
+          inputs,
+          queryParams,
+          queryParamClasses,
+          _resourceSpec,
+          ORIGINAL_RESOURCE_PATH,
+          buildReadOnlyPathKeys(),
+          RestliRequestOptions.DEFAULT_OPTIONS,
+          patches,
+          null);
+      #**##makeRequestAndReturn(
+        "Map<$spec.keyClassName, UpdateEntityStatus<${spec.entityClassName}>>",
+        "BatchKVResponse<$spec.keyClassName, UpdateEntityStatus<${spec.entityClassName}>>",
+        "resp.getEntity().getResults()",
+        $withEG
+      )##
+    }
+  #end ## end withEG
+#end ## is_interface

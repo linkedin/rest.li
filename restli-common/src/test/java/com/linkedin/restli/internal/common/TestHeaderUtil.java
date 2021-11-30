@@ -34,8 +34,8 @@ public class TestHeaderUtil
   @Test
   public void testMergeHeader()
   {
-    Map<String, String> headers1 = new HashMap<String, String>();
-    Map<String, String> headers2 = new HashMap<String, String>();
+    Map<String, String> headers1 = new HashMap<>();
+    Map<String, String> headers2 = new HashMap<>();
     headers1.put("X-header1", "header1Value");
     headers1.put("X-commonheader", "commonHeader1Value");
     headers2.put("X-header2", "header2Value");
@@ -52,7 +52,7 @@ public class TestHeaderUtil
   @Test
   public void testRemoveHeaders()
   {
-    Map<String, String> headers = new HashMap<String, String>();
+    Map<String, String> headers = new HashMap<>();
     headers.put("X-header1", "header1Value");
     headers.put("X-header2", "header2Value");
     headers.put("X-header3", "header3Value");

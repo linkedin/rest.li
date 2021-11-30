@@ -64,7 +64,7 @@ public abstract class AbstractClient implements Client
   @Override
   public Future<RestResponse> restRequest(RestRequest request, RequestContext requestContext)
   {
-    final FutureCallback<RestResponse> future = new FutureCallback<RestResponse>();
+    final FutureCallback<RestResponse> future = new FutureCallback<>();
     restRequest(request, requestContext, future);
     return future;
   }

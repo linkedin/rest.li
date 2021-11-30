@@ -41,11 +41,11 @@ public class TestMultiplexedCallback extends MultiplexerTestBase
   @Test
   public void testSuccess() throws Exception
   {
-    FutureCallback<RestResponse> callback1 = new FutureCallback<RestResponse>();
-    FutureCallback<RestResponse> callback2 = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> callback1 = new FutureCallback<>();
+    FutureCallback<RestResponse> callback2 = new FutureCallback<>();
 
     ImmutableMap<Integer, Callback<RestResponse>> individualCallbacks = ImmutableMap.<Integer, Callback<RestResponse>>of(ID1, callback1, ID2, callback2);
-    FutureCallback<MultiplexedResponse> aggregatedCallback = new FutureCallback<MultiplexedResponse>();
+    FutureCallback<MultiplexedResponse> aggregatedCallback = new FutureCallback<>();
 
     TestRecord entity1 = fakeEntity(ID1);
     IndividualResponse ir1 = fakeIndividualResponse(entity1);
@@ -69,11 +69,11 @@ public class TestMultiplexedCallback extends MultiplexerTestBase
   @Test
   public void testError() throws Exception
   {
-    FutureCallback<RestResponse> callback1 = new FutureCallback<RestResponse>();
-    FutureCallback<RestResponse> callback2 = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> callback1 = new FutureCallback<>();
+    FutureCallback<RestResponse> callback2 = new FutureCallback<>();
 
     ImmutableMap<Integer, Callback<RestResponse>> individualCallbacks = ImmutableMap.<Integer, Callback<RestResponse>>of(ID1, callback1, ID2, callback2);
-    FutureCallback<MultiplexedResponse> aggregatedCallback = new FutureCallback<MultiplexedResponse>();
+    FutureCallback<MultiplexedResponse> aggregatedCallback = new FutureCallback<>();
 
     MultiplexedCallback multiplexedCallback = new MultiplexedCallback(individualCallbacks, aggregatedCallback);
     RestLiDecodingException exception = new RestLiDecodingException(null, null);
@@ -87,11 +87,11 @@ public class TestMultiplexedCallback extends MultiplexerTestBase
   @Test
   public void testMixed() throws Exception
   {
-    FutureCallback<RestResponse> callback1 = new FutureCallback<RestResponse>();
-    FutureCallback<RestResponse> callback2 = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> callback1 = new FutureCallback<>();
+    FutureCallback<RestResponse> callback2 = new FutureCallback<>();
 
     ImmutableMap<Integer, Callback<RestResponse>> individualCallbacks = ImmutableMap.<Integer, Callback<RestResponse>>of(ID1, callback1, ID2, callback2);
-    FutureCallback<MultiplexedResponse> aggregatedCallback = new FutureCallback<MultiplexedResponse>();
+    FutureCallback<MultiplexedResponse> aggregatedCallback = new FutureCallback<>();
 
     TestRecord entity1 = fakeEntity(ID1);
     IndividualResponse ir1 = fakeIndividualResponse(entity1);

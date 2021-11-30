@@ -21,7 +21,7 @@ package com.linkedin.data.schema.resolver;
  *
  * @author Aman Gupta
  */
-public enum SchemaDirectoryName
+public enum SchemaDirectoryName implements SchemaDirectory
 {
   /**
    * Directory holds the pegasus schemas. Pegasus parsers and resolvers look for pegasus

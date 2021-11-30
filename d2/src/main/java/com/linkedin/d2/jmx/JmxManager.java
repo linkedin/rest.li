@@ -71,7 +71,7 @@ public class JmxManager
   public synchronized <T> JmxManager registerZooKeeperPermanentStore(String name,
                                                                      ZooKeeperPermanentStore<T> store)
   {
-    checkReg(new ZooKeeperPermanentStoreJmx<T>(store), name);
+    checkReg(new ZooKeeperPermanentStoreJmx<>(store), name);
 
     return this;
   }
@@ -79,7 +79,7 @@ public class JmxManager
   public synchronized <T> JmxManager registerZooKeeperEphemeralStore(String name,
                                                                      ZooKeeperEphemeralStore<T> store)
   {
-    checkReg(new ZooKeeperEphemeralStoreJmx<T>(store), name);
+    checkReg(new ZooKeeperEphemeralStoreJmx<>(store), name);
 
     return this;
   }
@@ -146,7 +146,7 @@ public class JmxManager
 
   public synchronized <T> JmxManager registerZooKeeperTogglingStore(String name, ZooKeeperTogglingStore<T> store)
   {
-    checkReg(new ZooKeeperTogglingStoreJmx<T>(store), name);
+    checkReg(new ZooKeeperTogglingStoreJmx<>(store), name);
 
     return this;
   }

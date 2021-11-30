@@ -198,7 +198,7 @@ public class SchemaParser extends AbstractSchemaParser
    */
   public List<RecordDataSchema.Field> parseFields(RecordDataSchema recordSchema, DataList list)
   {
-    List<RecordDataSchema.Field> fields = new ArrayList<RecordDataSchema.Field>();
+    List<RecordDataSchema.Field> fields = new ArrayList<>();
     for (Object o : list)
     {
       boolean ok = true;
@@ -404,7 +404,7 @@ public class SchemaParser extends AbstractSchemaParser
         try
         {
           bindNameToSchema(name, aliasNames, recordSchema);
-          List<RecordDataSchema.Field> fields = new ArrayList<RecordDataSchema.Field>();
+          List<RecordDataSchema.Field> fields = new ArrayList<>();
 
           DataList includeList = getDataList(map, INCLUDE_KEY, false);
           DataList fieldsList = getDataList(map, FIELDS_KEY, true);
@@ -725,8 +725,8 @@ public class SchemaParser extends AbstractSchemaParser
   private class DefinedAndReferencedNames
   {
     private final StringBuilder _stringBuilder = new StringBuilder();
-    private final Set<Name> _defines = new HashSet<Name>();
-    private final Set<Name> _references = new HashSet<Name>();
+    private final Set<Name> _defines = new HashSet<>();
+    private final Set<Name> _references = new HashSet<>();
 
     /**
      * Parse list of schemas for defined and referenced names.
@@ -921,7 +921,7 @@ public class SchemaParser extends AbstractSchemaParser
     List<Name> aliasNames = null;
     if (aliases != null)
     {
-      aliasNames = new ArrayList<Name>(aliases.size());
+      aliasNames = new ArrayList<>(aliases.size());
       for (String alias : aliases)
       {
         Name name = null;

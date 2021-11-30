@@ -1,0 +1,37 @@
+{
+  "models" : [ {
+    "type" : "record",
+    "name" : "ValidateEmptyUnion",
+    "namespace" : "com.linkedin.restli.examples.greetings.api",
+    "fields" : [ {
+      "name" : "foo",
+      "type" : [ {
+        "alias" : "bar",
+        "type" : "string"
+      }, {
+        "alias" : "fuzz",
+        "type" : "int"
+      } ]
+    } ]
+  } ],
+  "schema" : {
+    "name" : "emptyUnion",
+    "namespace" : "com.linkedin.restli.examples.greetings.client",
+    "path" : "/emptyUnion",
+    "schema" : "com.linkedin.restli.examples.greetings.api.ValidateEmptyUnion",
+    "doc" : "Resource for testing Rest.li empty union data validation.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ValidateEmptyUnionResource",
+    "collection" : {
+      "identifier" : {
+        "name" : "emptyUnionId",
+        "type" : "long"
+      },
+      "supports" : [ "get" ],
+      "methods" : [ {
+        "method" : "get"
+      } ],
+      "entity" : {
+        "path" : "/emptyUnion/{emptyUnionId}"
+      }
+    }
+  }
+}

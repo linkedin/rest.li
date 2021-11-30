@@ -33,6 +33,8 @@ import org.testng.annotations.Test;
 public class TestMIMEParse
 {
   private static final String JSON_TYPE = "application/json";
+  private static final String JSON_TYPE_WITH_VALID_PARAMS = "application/json; foo=bar";
+  private static final String JSON_TYPE_WITH_Q_PARAM = "application/json; q=.9";
   private static final String PSON_TYPE = "application/x-pson";
   private static final String EMPTY_TYPE = "";
   private static final String HTML_HEADER = "text/html";
@@ -57,6 +59,8 @@ public class TestMIMEParse
     return new Object[][]
     {
         { Arrays.asList(new String[] { JSON_TYPE }), JSON_HEADER, JSON_TYPE },
+        { Arrays.asList(new String[] { JSON_TYPE }), JSON_TYPE_WITH_VALID_PARAMS, JSON_TYPE_WITH_VALID_PARAMS },
+        { Arrays.asList(new String[] { JSON_TYPE }), JSON_TYPE_WITH_Q_PARAM, JSON_TYPE },
         { Arrays.asList(new String[] { PSON_TYPE }), JSON_HEADER, EMPTY_TYPE },
         { Arrays.asList(new String[] { JSON_TYPE, PSON_TYPE }), JSON_HEADER, JSON_TYPE },
         { Arrays.asList(new String[] { JSON_TYPE, PSON_TYPE }), HTML_HEADER, EMPTY_TYPE },

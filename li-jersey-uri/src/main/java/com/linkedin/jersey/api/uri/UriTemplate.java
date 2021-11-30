@@ -431,7 +431,7 @@ public class UriTemplate {
      * @return the URI.
      */
     public final String createURI(String[] values, int offset, int length) {
-        Map<String, String> mapValues = new HashMap<String, String>();
+        Map<String, String> mapValues = new HashMap<>();
         StringBuilder b = new StringBuilder();
         // Find all template variables
         Matcher m = TEMPLATE_NAMES_PATTERN.matcher(normalizedTemplate);
@@ -547,7 +547,7 @@ public class UriTemplate {
             final String userInfo, final String host, final String port,
             final String path, final String query, final String fragment,
             final Map<String, ? extends Object> values, final boolean encode) {
-        Map<String, String> stringValues = new HashMap<String, String>();
+        Map<String, String> stringValues = new HashMap<>();
         for (Map.Entry<String, ? extends Object> e : values.entrySet()) {
             if (e.getValue() != null)
                 stringValues.put(e.getKey(), e.getValue().toString());
@@ -811,7 +811,7 @@ public class UriTemplate {
             final String path, final String query, final String fragment,
             final String[] values, final boolean encode) {
 
-        final Map<String, String> mapValues = new HashMap<String, String>();
+        final Map<String, String> mapValues = new HashMap<>();
         final StringBuilder sb = new StringBuilder();
         int offset = 0;
 

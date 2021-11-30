@@ -47,7 +47,7 @@ import java.util.Map;
 )
 public class PartialUpdateGreetingResource implements KeyValueResource<Long, Greeting>
 {
-  private static final int SIZE = 20;
+  private static final int SIZE = 30;
 
   private static final Map<Long, Greeting> _db = new HashMap<>();
   static

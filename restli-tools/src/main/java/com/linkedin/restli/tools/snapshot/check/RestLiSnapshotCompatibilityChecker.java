@@ -186,7 +186,7 @@ public class RestLiSnapshotCompatibilityChecker
       return infoMap;
     }
 
-    final Stack<Object> path = new Stack<Object>();
+    final Stack<Object> path = new Stack<>();
     path.push("");
 
     FileInputStream prevSnapshotFile = null;

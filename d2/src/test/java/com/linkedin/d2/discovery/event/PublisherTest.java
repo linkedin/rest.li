@@ -109,7 +109,7 @@ public abstract class PublisherTest
     private final Condition _addCondition = _lock.newCondition();
     private final Condition _removeCondition = _lock.newCondition();
 
-    private Map<String,String> _currentValues = new HashMap<String, String>();
+    private Map<String,String> _currentValues = new HashMap<>();
 
     public void awaitInit(String key, String value, long timeout, TimeUnit timeoutUnit)
             throws InterruptedException, TimeoutException

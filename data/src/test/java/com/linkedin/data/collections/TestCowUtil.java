@@ -30,9 +30,9 @@ public class TestCowUtil
   @Test
   public void testUnsafeClone()
   {
-    final CowList<String> list = new CowList<String>();
-    final CowSet<String> set = new CowSet<String>();
-    final CowMap<String, String> map = new CowMap<String, String>();
+    final CowList<String> list = new CowList<>();
+    final CowSet<String> set = new CowSet<>();
+    final CowMap<String, String> map = new CowMap<>();
 
     final CowList<String> listClone = CommonUtil.unsafeClone(list);
     final CowSet<String> setClone = CommonUtil.unsafeClone(set);
@@ -54,9 +54,9 @@ public class TestCowUtil
   @Test
   public void testUnsafeCloneSetReadOnly()
   {
-    final CowList<String> list = new CowList<String>();
-    final CowSet<String> set = new CowSet<String>();
-    final CowMap<String, String> map = new CowMap<String, String>();
+    final CowList<String> list = new CowList<>();
+    final CowSet<String> set = new CowSet<>();
+    final CowMap<String, String> map = new CowMap<>();
 
     final CowList<String> listClone = CommonUtil.unsafeCloneSetReadOnly(list);
     final CowSet<String> setClone = CommonUtil.unsafeCloneSetReadOnly(set);

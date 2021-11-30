@@ -83,7 +83,7 @@ public class ImmutableList<T>
   public ImmutableList<T> append(T element)
   {
     ArgumentUtil.notNull(element, "element");
-    return new ImmutableList<T>(element, this);
+    return new ImmutableList<>(element, this);
   }
 
   /**

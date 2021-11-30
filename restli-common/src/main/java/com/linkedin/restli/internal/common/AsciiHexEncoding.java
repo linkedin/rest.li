@@ -52,7 +52,7 @@ public class AsciiHexEncoding
 
   private static Set<Character> toSet(char[] chars)
   {
-    HashSet<Character> reservedCharsSet = new HashSet<Character>();
+    HashSet<Character> reservedCharsSet = new HashSet<>();
     for(char c : chars)
     {
       reservedCharsSet.add(c);

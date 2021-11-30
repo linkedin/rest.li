@@ -46,7 +46,7 @@ public class BaseDarkClusterDispatcherImpl implements BaseDarkClusterDispatcher
   private final AtomicInteger _requestCount = new AtomicInteger(0);
   private final AtomicInteger _successCount = new AtomicInteger(0);
   private final AtomicInteger _exceptionCount = new AtomicInteger(0);
-  private final ConcurrentHashMap<String, AtomicInteger> _exceptionCountMap = new ConcurrentHashMap<String, AtomicInteger>();
+  private final ConcurrentHashMap<String, AtomicInteger> _exceptionCountMap = new ConcurrentHashMap<>();
   private final DarkClusterVerifierManager _verifierManager;
 
   public BaseDarkClusterDispatcherImpl(@Nonnull String darkClusterName,

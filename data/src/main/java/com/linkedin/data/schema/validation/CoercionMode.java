@@ -16,6 +16,9 @@
 
 package com.linkedin.data.schema.validation;
 
+import com.linkedin.data.template.DataTemplateUtil;
+
+
 /**
  * Specifies whether and how primitive types will be coerced from
  * one value type to a value type that conforms to the Java type
@@ -33,7 +36,7 @@ public enum CoercionMode
    * coerces Avro string encoded binary to {@link com.linkedin.data.ByteString}.
    *
    * This coercion mode performs the following type coercions:
-   * 
+   *
    * <table border="1">
    *   <tr>
    *     <th>Schema Type</th>
@@ -44,26 +47,26 @@ public enum CoercionMode
    *   <tr>
    *     <td>int</td>
    *     <td>Number</td>
-   *     <td>Int</td>
-   *     <td>{@link Number#intValue}</td>
+   *     <td>Integer</td>
+   *     <td>{@link DataTemplateUtil#coerceIntOutput(Object)}</td>
    *   </tr>
    *   <tr>
    *     <td>long</td>
    *     <td>Number</td>
    *     <td>Long</td>
-   *     <td>{@link Number#longValue}</td>
+   *     <td>{@link DataTemplateUtil#coerceLongOutput(Object)}</td>
    *   </tr>
    *   <tr>
    *     <td>float</td>
-   *     <td>Number</td>
+   *     <td>Number or String*</td>
    *     <td>Float</td>
-   *     <td>{@link Number#floatValue}</td>
+   *     <td>{@link DataTemplateUtil#coerceFloatOutput(Object)}</td>
    *   </tr>
    *   <tr>
    *     <td>double</td>
-   *     <td>Number</td>
+   *     <td>Number or String*</td>
    *     <td>Double</td>
-   *     <td>{@link Number#doubleValue}</td>
+   *     <td>{@link DataTemplateUtil#coerceDoubleOutput(Object)}</td>
    *   </tr>
    *   <tr>
    *     <td>bytes</td>
@@ -78,6 +81,10 @@ public enum CoercionMode
    *     <td>{@link com.linkedin.data.ByteString#copyAvroString(String, boolean)}</td>
    *   </tr>
    * </table>
+   * <i>
+   *   *String values can be coerced to Float and Double only for non-numeric values
+   *   {@code "NaN"}, {@code "Infinity"}, {@code "-Infinity"}.
+   *  </i>
    */
   NORMAL,
 
@@ -97,7 +104,7 @@ public enum CoercionMode
    *   <tr>
    *     <td>int</td>
    *     <td>String</td>
-   *     <td>Int</td>
+   *     <td>Integer</td>
    *     <td>parsing the string with {@link java.math.BigDecimal} and calling {@link Number#intValue()}</td>
    *   </tr>
    *   <tr>
@@ -110,19 +117,19 @@ public enum CoercionMode
    *     <td>float</td>
    *     <td>String</td>
    *     <td>Float</td>
-   *     <td>parsing the string with {@link java.math.BigDecimal} and calling {@link Number#floatValue()}</td>
+   *     <td>{@link Float#valueOf(String)}</td>
    *   </tr>
    *   <tr>
    *     <td>double</td>
    *     <td>String</td>
    *     <td>Double</td>
-   *     <td>parsing the string with {@link java.math.BigDecimal} and calling {@link Number#doubleValue()}</td>
+   *     <td>{@link Double#valueOf(String)}</td>
    *   </tr>
    *   <tr>
    *     <td>boolean</td>
    *     <td>String</td>
    *     <td>Boolean</td>
-   *     <td>strict case insensitive match against "true" or "false"</td>
+   *     <td>strict case-insensitive match against "true" or "false"</td>
    *   </tr>
    * </table>
    */

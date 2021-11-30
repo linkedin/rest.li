@@ -7,7 +7,6 @@ import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.data.schema.DataSchemaTraverse;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.avro.Schema;
@@ -26,11 +25,11 @@ import org.apache.avro.Schema;
 class DefaultDataToAvroConvertCallback extends AbstractDefaultDataTranslator implements DataSchemaTraverse.Callback
 {
   private final DataToAvroSchemaTranslationOptions _options;
-  private final IdentityHashMap<RecordDataSchema.Field, FieldOverride> _defaultValueOverrides;
+  private final Map<RecordDataSchema.Field, FieldOverride> _defaultValueOverrides;
   private DataSchema _newDefaultSchema;
 
   DefaultDataToAvroConvertCallback(DataToAvroSchemaTranslationOptions options,
-      IdentityHashMap<RecordDataSchema.Field, FieldOverride> defaultValueOverrides)
+      Map<RecordDataSchema.Field, FieldOverride> defaultValueOverrides)
   {
     _options = options;
     _defaultValueOverrides = defaultValueOverrides;
@@ -114,7 +113,7 @@ class DefaultDataToAvroConvertCallback extends AbstractDefaultDataTranslator imp
     {
       throw new IllegalArgumentException(
           message(path,
-              "cannot translate union value %1$s because it's type is not the 1st member type of the union %2$s",
+              "cannot translate union value %1$s because its type is not the 1st member type of the union %2$s",
               value, unionDataSchema));
     }
     path.add(key);
@@ -214,6 +213,17 @@ class DefaultDataToAvroConvertCallback extends AbstractDefaultDataTranslator imp
       assert((_options.getOptionalDefaultMode() != OptionalDefaultMode.TRANSLATE_TO_NULL) ||
           (_options.getOptionalDefaultMode() == OptionalDefaultMode.TRANSLATE_TO_NULL && isTranslatedUnionMember) ||
           (fieldValue == Data.NULL));
+    }
+    else if (fieldValue == null)
+    {
+      // If the default specified at parent level doesn't specify a value for the field, use the default specified at
+      // field level.
+      fieldValue = field.getDefault();
+      if (fieldValue == null)
+      {
+        throw new IllegalArgumentException(
+            message(path, "Cannot translate required field without default."));
+      }
     }
     Object resultFieldValue = translate(path, fieldValue, fieldDataSchema);
     _newDefaultSchema = fieldDataSchema;

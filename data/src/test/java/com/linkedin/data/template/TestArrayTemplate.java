@@ -139,8 +139,9 @@ public class TestArrayTemplate
       {
         E value = adds.get(i);
         assertTrue(array3.add(value));
+        Object getValue = array3.get(i);
         assertEquals(array3.get(i), value);
-        assertSame(array3.get(i), value);
+        assertSame(array3.get(i), getValue);
         assertTrue(array3.toString().contains(value.toString()));
       }
       assertEquals(array3, adds);
@@ -151,8 +152,9 @@ public class TestArrayTemplate
       {
         E value = adds.get(adds.size() - i - 1);
         array4.add(0, value);
+        Object getValue = array4.get(0);
         assertEquals(array4.get(0), value);
-        assertSame(array4.get(0), value);
+        assertSame(array4.get(0), getValue);
       }
       assertEquals(array4, adds);
 
@@ -234,7 +236,7 @@ public class TestArrayTemplate
         {
           ArrayTemplate arrayRemove = templateClass.newInstance();
           arrayRemove.addAll(input);
-          InternalList<E> reference = new InternalList<E>(input);
+          InternalList<E> reference = new InternalList<>(input);
           arrayRemove.removeRange(from, to);
           reference.removeRange(from, to);
           assertEquals(reference, arrayRemove);
@@ -244,7 +246,7 @@ public class TestArrayTemplate
       // set(int index, E element)
       ArrayTemplate array9 = templateClass.newInstance();
       array9.addAll(input);
-      InternalList<E> reference9 = new InternalList<E>(input);
+      InternalList<E> reference9 = new InternalList<>(input);
       for (int i = 0; i < input.size() / 2; ++i)
       {
         int k = input.size() - i - 1;
@@ -354,7 +356,7 @@ public class TestArrayTemplate
       ArrayTemplate arrayContainsAll = templateClass.newInstance();
       arrayContainsAll.addAll(input);
       arrayContainsAll.addAll(adds);
-      InternalList<E> referenceContainsAll = new InternalList<E>(input);
+      InternalList<E> referenceContainsAll = new InternalList<>(input);
       referenceContainsAll.addAll(adds);
       for (int from = 0; from < arrayContainsAll.size(); ++from)
       {
@@ -373,7 +375,7 @@ public class TestArrayTemplate
       }
 
       // removeAll
-      InternalList<E> referenceListRemoveAll = new InternalList<E>(input);
+      InternalList<E> referenceListRemoveAll = new InternalList<>(input);
       referenceListRemoveAll.addAll(adds);
       for (int from = 0; from < referenceListRemoveAll.size(); ++from)
       {
@@ -381,7 +383,7 @@ public class TestArrayTemplate
         {
           ArrayTemplate arrayRemoveAll = templateClass.newInstance();
           arrayRemoveAll.addAll(referenceListRemoveAll);
-          InternalList<E> referenceRemoveAll = new InternalList<E>(referenceListRemoveAll);
+          InternalList<E> referenceRemoveAll = new InternalList<>(referenceListRemoveAll);
 
           boolean testResult = arrayRemoveAll.removeAll(referenceListRemoveAll.subList(from, to));
           boolean referenceResult = referenceRemoveAll.removeAll(referenceListRemoveAll.subList(from, to));
@@ -394,7 +396,7 @@ public class TestArrayTemplate
       }
 
       // retainAll
-      InternalList<E> referenceListRetainAll = new InternalList<E>(input);
+      InternalList<E> referenceListRetainAll = new InternalList<>(input);
       referenceListRetainAll.addAll(adds);
       for (int from = 0; from < referenceListRetainAll.size(); ++from)
       {
@@ -402,7 +404,7 @@ public class TestArrayTemplate
         {
           ArrayTemplate arrayRetainAll = templateClass.newInstance();
           arrayRetainAll.addAll(referenceListRetainAll);
-          InternalList<E> referenceRetainAll = new InternalList<E>(referenceListRetainAll);
+          InternalList<E> referenceRetainAll = new InternalList<>(referenceListRetainAll);
 
           boolean testResult = arrayRetainAll.removeAll(referenceListRetainAll.subList(from, to));
           boolean referenceResult = referenceRetainAll.removeAll(referenceListRetainAll.subList(from, to));
@@ -982,12 +984,12 @@ public class TestArrayTemplate
   @Test
   public void testArrayOfStringArray()
   {
-    List<StringArray> input = new ArrayList<StringArray>();
+    List<StringArray> input = new ArrayList<>();
     for (int i = 0; i < 5; ++i)
     {
       input.add(new StringArray("input" + i));
     }
-    List<StringArray> adds = new ArrayList<StringArray>();
+    List<StringArray> adds = new ArrayList<>();
     for (int i = 0; i < 5; ++i)
     {
       adds.add(new StringArray("add" + i));
@@ -1076,13 +1078,13 @@ public class TestArrayTemplate
   @Test
   public void testFooRecordArray()
   {
-    List<FooRecord> input = new ArrayList<FooRecord>();
+    List<FooRecord> input = new ArrayList<>();
     for (int i = 0; i < 5; ++i)
     {
       input.add(new FooRecord());
       input.get(i).setBar("input " + i);
     }
-    List<FooRecord> adds = new ArrayList<FooRecord>();
+    List<FooRecord> adds = new ArrayList<>();
     for (int i = 0; i < 5; ++i)
     {
       adds.add(new FooRecord());
@@ -1128,7 +1130,7 @@ public class TestArrayTemplate
     {
       ArrayDataSchema schema = (ArrayDataSchema) DataTemplateUtil.parseSchema("{ \"type\" : \"array\", \"items\" : \"" + e.getKey() + "\" }");
       @SuppressWarnings("unchecked")
-      PrimitiveLegacyArray<?> array = new PrimitiveLegacyArray<Object>(new DataList(), schema, (Class)e.getValue());
+      PrimitiveLegacyArray<?> array = new PrimitiveLegacyArray<>(new DataList(), schema, (Class<?>) e.getValue());
     }
     EnumLegacyArray enumArray = new EnumLegacyArray(new DataList());
   }

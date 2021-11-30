@@ -20,6 +20,7 @@ import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 
 /**
@@ -51,7 +52,7 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
   public CheckedList()
   {
     _checker = null;
-    _list = new InternalList<E>();
+    _list = new InternalList<>();
   }
 
   /**
@@ -63,7 +64,7 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
   {
     _checker = null;
     checkAll(list);
-    _list = new InternalList<E>(list);
+    _list = new InternalList<>(list);
   }
 
   /**
@@ -74,7 +75,7 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
   public CheckedList(int initialCapacity)
   {
     _checker = null;
-    _list = new InternalList<E>(initialCapacity);
+    _list = new InternalList<>(initialCapacity);
   }
 
   /**
@@ -85,7 +86,7 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
   public CheckedList(ListChecker<E> checker)
   {
     _checker = checker;
-    _list = new InternalList<E>();
+    _list = new InternalList<>();
   }
 
   /**
@@ -99,7 +100,7 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
   {
     _checker = checker;
     checkAll(list);
-    _list = new InternalList<E>(list);
+    _list = new InternalList<>(list);
   }
 
   /**
@@ -112,7 +113,7 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
   public CheckedList(int initialCapacity, ListChecker<E> checker)
   {
     _checker = checker;
-    _list = new InternalList<E>(initialCapacity);
+    _list = new InternalList<>(initialCapacity);
   }
 
   @Override
@@ -262,6 +263,12 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
   }
 
   @Override
+  public void forEach(Consumer<? super E> action)
+  {
+    _list.forEach(action);
+  }
+
+  @Override
   public Object[] toArray()
   {
     return _list.toArray();
@@ -313,6 +320,22 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
   }
 
   /**
+   * Add that does not invoke checker but does check for read-only, use with caution.
+   *
+   * This method skips all value checks.
+   *
+   * @param element provides the element to be added to the list.
+   * @param index Index to add at.
+   * @return true.
+   * @throws UnsupportedOperationException if the list is read-only.
+   */
+  protected void addWithoutChecking(int index, E element)
+  {
+    checkMutability();
+    _list.add(index, element);
+  }
+
+  /**
    * Set without checking, use with caution.
    *
    * This method skips all checks.
@@ -331,6 +354,12 @@ public class CheckedList<E> extends AbstractList<E> implements CommonList<E>, Cl
   {
     assert(assertCheck(element)) : "Check is failed";
     return addWithoutChecking(element);
+  }
+
+  void addWithAssertChecking(int index, E element)
+  {
+    assert(assertCheck(element)) : "Check is failed";
+    addWithoutChecking(index, element);
   }
 
   E setWithAssertChecking(int index, E element)

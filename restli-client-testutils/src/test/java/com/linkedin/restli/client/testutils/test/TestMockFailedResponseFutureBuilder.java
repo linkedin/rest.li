@@ -54,7 +54,7 @@ public class TestMockFailedResponseFutureBuilder
   @Test
   public void testOnlyOneOfErrorResponseOrEntityIsSet()
   {
-    MockFailedResponseFutureBuilder<Long, Greeting> builder = new MockFailedResponseFutureBuilder<Long, Greeting>();
+    MockFailedResponseFutureBuilder<Long, Greeting> builder = new MockFailedResponseFutureBuilder<>();
     builder.setEntity(new Greeting());
     try
     {
@@ -66,7 +66,7 @@ public class TestMockFailedResponseFutureBuilder
       // expected
     }
 
-    builder = new MockFailedResponseFutureBuilder<Long, Greeting>();
+    builder = new MockFailedResponseFutureBuilder<>();
     builder.setErrorResponse(new ErrorResponse());
     try
     {
@@ -81,7 +81,7 @@ public class TestMockFailedResponseFutureBuilder
 
   private ResponseFuture<Greeting> buildWithErrorResponse(ErrorHandlingBehavior errorHandlingBehavior)
   {
-    MockFailedResponseFutureBuilder<Long, Greeting> builder = new MockFailedResponseFutureBuilder<Long, Greeting>();
+    MockFailedResponseFutureBuilder<Long, Greeting> builder = new MockFailedResponseFutureBuilder<>();
     ErrorResponse errorResponse = new ErrorResponse().setStatus(404).setMessage("foo");
 
     builder.setErrorResponse(errorResponse).setErrorHandlingBehavior(errorHandlingBehavior);
@@ -130,7 +130,7 @@ public class TestMockFailedResponseFutureBuilder
 
   private ResponseFuture<Greeting> buildWithEntity(ErrorHandlingBehavior errorHandlingBehavior)
   {
-    MockFailedResponseFutureBuilder<Long, Greeting> builder = new MockFailedResponseFutureBuilder<Long, Greeting>();
+    MockFailedResponseFutureBuilder<Long, Greeting> builder = new MockFailedResponseFutureBuilder<>();
     Greeting greeting = new Greeting().setId(1L).setMessage("foo");
 
     builder.setEntity(greeting).setErrorHandlingBehavior(errorHandlingBehavior).setStatus(500);

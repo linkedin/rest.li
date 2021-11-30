@@ -64,12 +64,12 @@ public class BatchRequest<T extends RecordTemplate> extends RecordTemplate
    */
   public BatchRequest(DataMap data, Class<T> valueClass)
   {
-    this(data, new TypeSpec<T>(valueClass));
+    this(data, new TypeSpec<>(valueClass));
   }
 
   private BatchRequest(DataMap data, Class<T> valueClass, int capacity)
   {
-    this(data, new TypeSpec<T>(valueClass), capacity);
+    this(data, new TypeSpec<>(valueClass), capacity);
   }
 
   /**
@@ -120,6 +120,6 @@ public class BatchRequest<T extends RecordTemplate> extends RecordTemplate
   {
     DataMap value = data().getDataMap(ENTITIES);
 
-    return new DynamicRecordMap<T>(value, _entitiesSchema, _valueType.getType());
+    return new DynamicRecordMap<>(value, _entitiesSchema, _valueType.getType());
   }
 }

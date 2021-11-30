@@ -128,12 +128,12 @@ public class ZooKeeperChildrenDataPublisher<T extends Map<String, V>, V> extends
     // See:
     // http://zookeeper.apache.org/doc/current/zookeeperProgrammers.html#Java+Binding
     private volatile int _initialCount;
-    private volatile Map<String, V> _childMap = new HashMap<String, V>();
+    private volatile Map<String, V> _childMap = new HashMap<>();
 
     private void initialize(String path, List<String> children)
     {
       _initialCount = children.size();
-      _childMap = new HashMap<String, V>();
+      _childMap = new HashMap<>();
       for (String child : children)
       {
         String childPath = path + "/" + child;
@@ -211,13 +211,13 @@ public class ZooKeeperChildrenDataPublisher<T extends Map<String, V>, V> extends
             {
               if (_initialCount == 0)
               {
-                _eventBus.publishInitialize(propToPublish, (T)new HashMap<String, V>(_childMap));
+                _eventBus.publishInitialize(propToPublish, (T) new HashMap<>(_childMap));
                 _log.debug("{}: published initialize", propToPublish);
               }
             }
             else
             {
-              _eventBus.publishAdd(propToPublish, (T)new HashMap<String, V>(_childMap));
+              _eventBus.publishAdd(propToPublish, (T) new HashMap<>(_childMap));
               _log.debug("{}: published add", propToPublish);
             }
           }
@@ -239,13 +239,13 @@ public class ZooKeeperChildrenDataPublisher<T extends Map<String, V>, V> extends
           {
             if (_initialCount == 0)
             {
-              _eventBus.publishInitialize(propToPublish,(T)new HashMap<String, V>(_childMap));
+              _eventBus.publishInitialize(propToPublish,(T) new HashMap<>(_childMap));
               _log.debug("{}: published initialize", propToPublish);
             }
           }
           else
           {
-            _eventBus.publishAdd(propToPublish, (T)new HashMap<String, V>(_childMap));
+            _eventBus.publishAdd(propToPublish, (T) new HashMap<>(_childMap));
             _log.debug("{}: published add", propToPublish);
           }
           break;

@@ -18,6 +18,7 @@ package com.linkedin.data.template;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.MapDataSchema;
+import com.linkedin.util.ArgumentUtil;
 import java.util.Map;
 
 
@@ -64,5 +65,18 @@ public final class DoubleMap extends DirectMapTemplate<Double>
   public DoubleMap copy() throws CloneNotSupportedException
   {
     return (DoubleMap) super.copy();
+  }
+
+  @Override
+  protected Object coerceInput(Double object) throws ClassCastException
+  {
+    ArgumentUtil.notNull(object, "object");
+    return DataTemplateUtil.coerceDoubleInput(object);
+  }
+
+  @Override
+  protected Double coerceOutput(Object object) throws TemplateOutputCastException
+  {
+    return DataTemplateUtil.coerceDoubleOutput(object);
   }
 }

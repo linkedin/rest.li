@@ -3,6 +3,7 @@
   "name" : "RecordBar",
   "namespace" : "com.linkedin.pegasus.generator.test",
   "fields" : [
-    { "name" : "location", "type" : "string" }
+    { "name" : "location", "type" : "string" },
+    { "name" : "optionalLocation", "type" : "string", "optional": true }
   ]
 }

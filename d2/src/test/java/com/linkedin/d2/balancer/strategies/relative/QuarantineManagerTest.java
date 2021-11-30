@@ -289,6 +289,29 @@ public class QuarantineManagerTest
     assertTrue(state.getQuarantineMap().containsKey(trackerClients.get(0)));
   }
 
+  @Test
+  public void testEnrollOneQuarantine()
+  {
+    LoadBalancerQuarantine quarantine = Mockito.mock(LoadBalancerQuarantine.class);
+    List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(3);
+    Map<TrackerClient, LoadBalancerQuarantine> existingQuarantineMap = new HashMap<>();
+
+    setup(0.5, true, true);
+    _quarantineManager.tryEnableQuarantine();
+
+    PartitionState state = new PartitionStateTestDataBuilder()
+        .setTrackerClientStateMap(trackerClients,
+            Arrays.asList(StateUpdater.MIN_HEALTH_SCORE, StateUpdater.MIN_HEALTH_SCORE, QuarantineManager.INITIAL_RECOVERY_HEALTH_SCORE),
+            Arrays.asList(TrackerClientState.HealthState.UNHEALTHY, TrackerClientState.HealthState.NEUTRAL, TrackerClientState.HealthState.UNHEALTHY),
+            Arrays.asList(20, 20, 20))
+        .build();
+
+    _quarantineManager.updateQuarantineState(state, state, 10000);
+
+    assertEquals(state.getQuarantineMap().size(), 1, "No exception expected");
+    assertTrue(state.getQuarantineMap().containsKey(trackerClients.get(0)));
+  }
+
   @DataProvider(name = "trueFalse")
   Object[][] enable()
   {

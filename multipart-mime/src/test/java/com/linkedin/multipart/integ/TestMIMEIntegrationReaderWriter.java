@@ -96,14 +96,14 @@ public class TestMIMEIntegrationReaderWriter extends AbstractMIMEIntegrationStre
     scheduledExecutorService = Executors.newScheduledThreadPool(10);
 
     _normalBodyData = "some normal body that is relatively small".getBytes();
-    _normalBodyHeaders = new HashMap<String, String>();
+    _normalBodyHeaders = new HashMap<>();
     _normalBodyHeaders.put("simpleheader", "simplevalue");
 
     //Second body has no headers
     _headerLessBodyData = "a body without headers".getBytes();
 
     //Third body has only headers
-    _bodyLessHeaders = new HashMap<String, String>();
+    _bodyLessHeaders = new HashMap<>();
     _normalBodyHeaders.put("header1", "value1");
     _normalBodyHeaders.put("header2", "value2");
     _normalBodyHeaders.put("header3", "value3");
@@ -133,7 +133,7 @@ public class TestMIMEIntegrationReaderWriter extends AbstractMIMEIntegrationStre
   @Override
   protected Map<String, String> getClientProperties()
   {
-    Map<String, String> clientProperties = new HashMap<String, String>();
+    Map<String, String> clientProperties = new HashMap<>();
     clientProperties.put(HttpClientFactory.HTTP_REQUEST_TIMEOUT, "9000000");
     return clientProperties;
   }
@@ -176,7 +176,7 @@ public class TestMIMEIntegrationReaderWriter extends AbstractMIMEIntegrationStre
   public void testEachSingleBodyDataSourceMultipleTimes(final int chunkSize, final MIMEDataPart bodyPart)
       throws Exception
   {
-    final List<MultiPartMIMEDataSourceWriter> dataSources = new ArrayList<MultiPartMIMEDataSourceWriter>();
+    final List<MultiPartMIMEDataSourceWriter> dataSources = new ArrayList<>();
     for (int i = 0; i < 4; i++)
     {
       final MultiPartMIMEInputStream inputStreamDataSource =
@@ -254,7 +254,7 @@ public class TestMIMEIntegrationReaderWriter extends AbstractMIMEIntegrationStre
 
     final AtomicInteger status = new AtomicInteger(-1);
     final CountDownLatch latch = new CountDownLatch(1);
-    Callback<StreamResponse> callback = expectSuccessCallback(latch, status, new HashMap<String, String>());
+    Callback<StreamResponse> callback = expectSuccessCallback(latch, status, new HashMap<>());
     _client.streamRequest(streamRequest, callback);
     latch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS);
     Assert.assertEquals(status.get(), RestStatus.OK);
@@ -342,7 +342,7 @@ public class TestMIMEIntegrationReaderWriter extends AbstractMIMEIntegrationStre
   private static class MultiPartMIMEReaderCallbackImpl implements MultiPartMIMEReaderCallback
   {
     final Callback<StreamResponse> _r2callback;
-    final List<SinglePartMIMEReaderCallbackImpl> _singlePartMIMEReaderCallbacks = new ArrayList<SinglePartMIMEReaderCallbackImpl>();
+    final List<SinglePartMIMEReaderCallbackImpl> _singlePartMIMEReaderCallbacks = new ArrayList<>();
 
     MultiPartMIMEReaderCallbackImpl(final Callback<StreamResponse> r2callback)
     {

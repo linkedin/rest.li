@@ -43,7 +43,7 @@ import net.sf.cglib.proxy.MethodProxy;
 final class GeneratePatchMethodInterceptor implements MethodInterceptor
 {
   /** Wrapped primitive types supported by {@link com.linkedin.data.DataMap} */
-  private final static Set<Class<?>> _primitiveTypes = Collections.unmodifiableSet(new HashSet<Class<?>>(Arrays.<Class<?>>asList(
+  private final static Set<Class<?>> _primitiveTypes = Collections.unmodifiableSet(new HashSet<>(Arrays.<Class<?>>asList(
       Integer.TYPE,
       Integer.class,
       Long.TYPE,
@@ -85,6 +85,8 @@ final class GeneratePatchMethodInterceptor implements MethodInterceptor
       return handleGet(method);
     else if (methodName.startsWith("remove"))
       return handleRemove(methodName);
+    else if (methodName.equals("addChangeListener") && args.length == 1)
+      return null;
     return ObjectProxyHelper.handleObjectMethods(_clazz, obj, method, args);
   }
 

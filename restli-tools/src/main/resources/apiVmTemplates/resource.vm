@@ -1,0 +1,242 @@
+#*
+   Copyright (c) 2021 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*#
+#if ($spec.resource.namespace)
+package $spec.resource.namespace;
+#end
+
+import com.linkedin.data.schema.MaskMap;
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
+import com.linkedin.data.template.DynamicRecordMetadata;
+import com.linkedin.parseq.Engine;
+import com.linkedin.parseq.Task;
+import com.linkedin.parseq.function.Success;
+import com.linkedin.parseq.function.Failure;
+import com.linkedin.restli.client.ExecutionGroup;
+import com.linkedin.restli.client.ParSeqBasedCompletionStageFactory;
+import com.linkedin.restli.client.ParSeqRestliClient;
+import com.linkedin.restli.client.Response;
+import com.linkedin.restli.client.RestliRequestOptions;
+import com.linkedin.restli.client.util.FluentClientUtils;
+import com.linkedin.restli.client.AbstractRequestBuilder;
+import com.linkedin.restli.client.ParSeqBasedFluentClient;
+import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.ResourceSpec;
+import com.linkedin.restli.common.ResourceSpecImpl;
+import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.TypeSpec;
+#foreach($import in $spec.importsForMethods)
+  import ${import};
+#end
+## #importClasses($spec)
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import javax.annotation.Generated;
+
+@Generated("Generated from $spec.sourceIdlName")
+@SuppressWarnings({"rawtypes", "unchecked"})
+public class ${spec.className}${class_name_suffix} implements ${spec.toImplementInterfaceName}, ParSeqBasedFluentClient {
+  private final static String ORIGINAL_RESOURCE_PATH = "$util.getResourcePath($spec.resource.path)";
+  private static ResourceSpec _resourceSpec;
+  #if(${spec.getPathKeys().size()} > 0)
+  private Map<String, Object> _pathKeyMap = new HashMap<>();
+  #end
+  private ParSeqBasedCompletionStageFactory _completionStageFactory;
+
+  #if(${spec.getActions().size()} > 0)
+  private final Map<String, Class<?>> _actionQueryParamsClasses = Collections.singletonMap("action", String.class);
+  #foreach($method in $spec.actions)
+  private final Map<String, Object> _${method.name}ActionQueryParams = Collections.singletonMap("action", "${method.name}");
+  #end
+  #end
+
+  static {
+    HashMap<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<String, DynamicRecordMetadata>();
+    #foreach($action in $spec.actions)
+      ArrayList<FieldDef<?>> ${action.name}Params = new ArrayList<FieldDef<?>>();
+      #foreach($actionParam in $action.allParameters)
+        ${action.name}Params.add(new FieldDef<${actionParam.fieldClassDisplayName}>("${actionParam.paramName}", ${actionParam.fieldClassDisplayName}.class, DataTemplateUtil.getSchema(#if(${actionParam.hasParamTypeRef()})${actionParam.getParamTypeRefClassDisplayName()}#else${actionParam.fieldClassDisplayName}#end.class)));
+      #end
+      requestMetadataMap.put("${action.name}", new DynamicRecordMetadata("${action.name}", ${action.name}Params));
+    #end
+
+    HashMap<String, DynamicRecordMetadata> responseMetadataMap=new HashMap<String, DynamicRecordMetadata>();
+    #foreach($action in $spec.actions)
+      #if($action.hasReturns())
+        responseMetadataMap.put("${action.name}", new DynamicRecordMetadata("${action.name}", Collections.singletonList(new FieldDef<${action.valueClassDisplayName}>("value", ${action.valueClassDisplayName}.class, DataTemplateUtil.getSchema(#if(${action.hasReturnTypeRef()})${action.getValuedTypeRefClassDisplayName()}#else${action.valueClassDisplayName}#end.class)))));
+      #else
+        responseMetadataMap.put("${action.name}", new DynamicRecordMetadata("${action.name}", Collections.emptyList()));
+      #end
+    #end
+
+    #if (${spec.getResource().hasSimple()})
+    _resourceSpec = new ResourceSpecImpl(
+        #if($spec.restMethods.size() > 0)
+          EnumSet.of(
+              #foreach($method in $spec.restMethods)
+              ResourceMethod.${method.method.toUpperCase()}#if($foreach.hasNext),#end
+              #end
+          ),
+        #else
+          EnumSet.noneOf(ResourceMethod.class),
+        #end
+        requestMetadataMap,
+        responseMetadataMap,
+        ${spec.entityClassName}.class
+        );
+    #elseif(${spec.getResource().hasCollection()})
+    _resourceSpec = new ResourceSpecImpl(
+        #if($spec.restMethods.size() > 0)
+          EnumSet.of(
+              #foreach($method in $spec.restMethods)
+              ResourceMethod.${method.method.toUpperCase()}#if($foreach.hasNext),#end
+              #end
+          ),
+        #else
+          EnumSet.noneOf(ResourceMethod.class),
+        #end
+        requestMetadataMap,
+        responseMetadataMap,
+        #if(${spec.hasKeyTypeRef()})
+        ${spec.getKeyTypeRefClassDisplayName()}.class,
+        #else
+        ${spec.getKeyClassDisplayName(false)}.class,
+        #end
+        #if(${spec.hasComplexKey()})
+        ${spec.getComplexKeySpec().getKeyKeyClassDisplayName()}.class,
+        ${spec.getComplexKeySpec().getParamKeyClassDisplayName()}.class,
+        #else
+        null,
+        null,
+        #end
+        ${spec.entityClassName}.class,
+        Collections.emptyMap());
+    #elseif(${spec.getResource().hasAssociation()})
+    HashMap<String, CompoundKey.TypeInfo> keyParts = new HashMap<String, CompoundKey.TypeInfo>();
+      #foreach($assoc_key in ${spec.getCompoundKeySpec().getAssocKeySpecs()})
+    keyParts.put("${assoc_key.name}", new CompoundKey.TypeInfo(${assoc_key.bindingType}.class, ${assoc_key.declaredType}.class));
+      #end
+    _resourceSpec = new ResourceSpecImpl(
+        #if($spec.restMethods.size() > 0)
+          EnumSet.of(
+              #foreach($method in $spec.restMethods)
+              ResourceMethod.${method.method.toUpperCase()}#if($foreach.hasNext),#end
+              #end
+          ),
+        #else
+          EnumSet.noneOf(ResourceMethod.class),
+        #end
+        requestMetadataMap,
+        responseMetadataMap,
+        CompoundKey.class,
+        null,
+        null,
+        ${spec.entityClassName}.class,
+        keyParts
+        );
+    #elseif(${spec.getResource().hasActionsSet()})
+    _resourceSpec = new ResourceSpecImpl(EnumSet.noneOf(ResourceMethod.class),
+      requestMetadataMap,
+      responseMetadataMap,
+      Void.class,
+      null,
+      null,
+      null,
+      Collections.emptyMap());
+    #end
+  }
+
+  private final ParSeqRestliClient _client;
+  private final Engine _engine;
+
+  #doc( $spec.resource.doc "  ")
+  public ${spec.className}${class_name_suffix}(ParSeqRestliClient client, Engine engine) {
+    _client = client;
+    _engine = engine;
+    _completionStageFactory = new ParSeqBasedCompletionStageFactory(engine);
+  }
+
+  ## Merge another pathKeyMap
+  #if(${spec.getPathKeys().size()}> 0)
+  public ${spec.className}${class_name_suffix} pathKeys(Map<String, Object> pathKeyMap)
+  {
+    _pathKeyMap.putAll(pathKeyMap);
+    return this;
+  }
+  #end
+
+  ## PathKey binding method
+  #foreach($pathKey in ${spec.getPathKeys()})
+  public ${spec.className}${class_name_suffix} with${util.nameCapsCase(${pathKey})}(${spec.getPathKeyTypes().get($pathKey)} $pathKey)
+  {
+    _pathKeyMap.put("$pathKey", $pathKey);
+    return this;
+  }
+  #end
+
+  ## generate impl class for subResources
+  #foreach($subSpec in $spec.childSubResourceSpecs)
+  @Override
+  public #if(${subSpec.namespace.equals($subSpec.parentNamespace)})${subSpec.className}#else${subSpec.bindingName}#end ${util.nameCamelCase($subSpec.className)}Of(#if(${subSpec.diffPathKey})${subSpec.parent.keyClassDisplayName} ${subSpec.diffPathKey}#end)
+  {
+    return new #if(${subSpec.namespace.equals($subSpec.parentNamespace)})${subSpec.className}#else${subSpec.bindingName}#end${class_name_suffix}(_client, _engine)#if(${spec.getPathKeys().size()} > 0).pathKeys(_pathKeyMap)#end
+               #if(${subSpec.diffPathKey})
+               .with${util.nameCapsCase(${subSpec.diffPathKey})}(${subSpec.diffPathKey});
+               #else
+               ;
+               #end
+  }
+  #end
+
+  #parseMethodsFromTemplates
+
+  ## Add association key generation stub
+  #if(${spec.getResource().hasAssociation()})
+    #assocCompoundKeyClass($spec)
+    #assocCompoundKeyGenImpl($spec)
+  #end
+
+  #if(${spec.getPathKeys().size()} > 0)
+  protected Map<String, Object> buildReadOnlyPathKeys()
+  {
+    return AbstractRequestBuilder.getReadOnlyPathKeys(_pathKeyMap);
+  }
+  #else
+  protected Map<String, Object> buildReadOnlyPathKeys()
+  {
+    return Collections.emptyMap();
+  }
+  #end
+
+  public void runBatchOnClient(Runnable runnable) throws Exception
+  {
+    generateExecutionGroup().batchOn(runnable, this);
+  }
+
+  public Engine getEngine()
+  {
+    return _engine;
+  }
+}

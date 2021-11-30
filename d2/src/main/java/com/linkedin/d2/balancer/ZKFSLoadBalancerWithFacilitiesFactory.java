@@ -92,7 +92,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                                    config.enableSaveUriDataOnDisk,
                                                    config.sslSessionValidatorFactory,
                                                    d2ClientJmxManager,
-                                                   config.zookeeperReadWindowMs
+                                                   config.zookeeperReadWindowMs,
+                                                   config.deterministicSubsettingMetadataProvider
     );
   }
 }

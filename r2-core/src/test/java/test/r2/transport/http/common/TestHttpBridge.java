@@ -57,8 +57,8 @@ public class TestHttpBridge
 
     RestRequest r = new RestRequestBuilder(uri).build();
 
-    FutureCallback<RestResponse> futureCallback = new FutureCallback<RestResponse>();
-    TransportCallback<RestResponse> callback = new TransportCallbackAdapter<RestResponse>(futureCallback);
+    FutureCallback<RestResponse> futureCallback = new FutureCallback<>();
+    TransportCallback<RestResponse> callback = new TransportCallbackAdapter<>(futureCallback);
     TransportCallback<RestResponse> bridgeCallback = HttpBridge.restToHttpCallback(callback, r);
 
     bridgeCallback.onResponse(TransportResponseImpl.<RestResponse>error(new Exception()));
@@ -79,9 +79,9 @@ public class TestHttpBridge
   @Test
   public void testHttpToRestErrorMessage() throws TimeoutException, InterruptedException, ExecutionException
   {
-    FutureCallback<RestResponse> futureCallback = new FutureCallback<RestResponse>();
+    FutureCallback<RestResponse> futureCallback = new FutureCallback<>();
     TransportCallback<RestResponse> callback =
-        new TransportCallbackAdapter<RestResponse>(futureCallback);
+        new TransportCallbackAdapter<>(futureCallback);
     TransportCallback<RestResponse> bridgeCallback = HttpBridge.httpToRestCallback(callback);
 
     RestResponse restResponse = new RestResponseBuilder().build();
@@ -104,8 +104,8 @@ public class TestHttpBridge
 
     RestRequest r = new RestRequestBuilder(uri).build();
 
-    FutureCallback<StreamResponse> futureCallback = new FutureCallback<StreamResponse>();
-    TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<StreamResponse>(futureCallback);
+    FutureCallback<StreamResponse> futureCallback = new FutureCallback<>();
+    TransportCallback<StreamResponse> callback = new TransportCallbackAdapter<>(futureCallback);
     TransportCallback<StreamResponse> bridgeCallback = HttpBridge.streamToHttpCallback(callback,
         Messages.toStreamRequest(r));
 
@@ -127,9 +127,9 @@ public class TestHttpBridge
   @Test
   public void testHttpToStreamErrorMessage() throws TimeoutException, InterruptedException, ExecutionException
   {
-    FutureCallback<StreamResponse> futureCallback = new FutureCallback<StreamResponse>();
+    FutureCallback<StreamResponse> futureCallback = new FutureCallback<>();
     TransportCallback<StreamResponse> callback =
-        new TransportCallbackAdapter<StreamResponse>(futureCallback);
+        new TransportCallbackAdapter<>(futureCallback);
     TransportCallback<StreamResponse> bridgeCallback = HttpBridge.httpToStreamCallback(callback);
 
     StreamResponse streamResponse = new StreamResponseBuilder().build(EntityStreams.emptyStream());

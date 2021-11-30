@@ -27,6 +27,7 @@ dependencies {
   testCompile externalDependency.mockito
   testCompile externalDependency.httpclient
   testCompile externalDependency.parseq_restClient
+  testCompile externalDependency.parseq_testApi
   testDataModel project(path: ':restli-int-test-api', configuration: 'dataTemplate')
   testCompile project(path: ':restli-int-test-api', configuration: 'restClient')
   testCompile project(path: project.path, configuration: 'testRestClient')

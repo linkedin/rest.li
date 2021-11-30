@@ -1,0 +1,9 @@
+record BirthInfo {
+  day: int
+
+  month: int
+
+  year: int
+
+  location: optional Location
+}

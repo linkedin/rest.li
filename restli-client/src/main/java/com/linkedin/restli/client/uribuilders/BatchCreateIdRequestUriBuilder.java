@@ -16,12 +16,8 @@
 
 package com.linkedin.restli.client.uribuilders;
 
-
-import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.restli.client.BatchCreateIdRequest;
 import com.linkedin.restli.common.ProtocolVersion;
-
-import java.net.URI;
 
 
 /**
@@ -33,13 +29,5 @@ public class BatchCreateIdRequestUriBuilder extends AbstractRestliRequestUriBuil
   BatchCreateIdRequestUriBuilder(BatchCreateIdRequest<?, ?> request, String uriPrefix, ProtocolVersion version)
   {
     super(request, uriPrefix, version);
-  }
-
-  @Override
-  public URI build()
-  {
-    UriBuilder b = UriBuilder.fromUri(buildBaseUriWithPrefix());
-    appendQueryParams(b);
-    return b.build();
   }
 }

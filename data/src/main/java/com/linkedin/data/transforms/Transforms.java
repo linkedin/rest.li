@@ -18,19 +18,19 @@ package com.linkedin.data.transforms;
 
 /**
  * Convenience methods for commonly used {@link Transform}s.
- * 
+ *
  * @author "Joe Betz<jbetz@linkedin.com>"
- * 
+ *
  */
 public class Transforms
 {
   public static <T> Transform<T, T> identity()
   {
-    return new IdentityTransform<T>();
+    return new IdentityTransform<>();
   }
 
   public static <T> Transform<Object, T> constantValue(T constant)
   {
-    return new ConstantValueTransform<T>(constant);
+    return new ConstantValueTransform<>(constant);
   }
 }

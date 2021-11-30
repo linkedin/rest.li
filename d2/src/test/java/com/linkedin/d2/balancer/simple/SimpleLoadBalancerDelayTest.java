@@ -68,9 +68,9 @@ public class SimpleLoadBalancerDelayTest
     URI uri3 = URI.create("http://test.qa3.com:6789");
     List<String> uris = Arrays.asList("test.qa1.com:1234", "test.qa2.com:2345", "test.qa3.com:6789");
 
-    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(3);
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>(3);
     uriData.put(uri1, partitionData);
     uriData.put(uri2, partitionData);
     uriData.put(uri3, partitionData);
@@ -1642,9 +1642,9 @@ public class SimpleLoadBalancerDelayTest
         throws InterruptedException, ExecutionException
     {
       // only support 1 partition for now
-      Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+      Map<Integer, PartitionData> partitionData = new HashMap<>(1);
       partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-      Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>(2);
+      Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>(2);
 
       for (String uriString : uris)
       {

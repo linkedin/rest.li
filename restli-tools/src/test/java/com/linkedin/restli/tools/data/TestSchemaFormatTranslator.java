@@ -89,7 +89,8 @@ public class TestSchemaFormatTranslator
     // pdl to pdsc, delete source files (no '-o' flag)
     int inputPdlFileCount = destFiles.size();
     String pdscTemp = Files.createTempDirectory("restli").toFile().getAbsolutePath();
-    SchemaFormatTranslator.main(new String[]{"-spdl", "-dpdsc", RESOLVER_DIR, pdlTemp, pdscTemp});
+    String pdlResolverPath = EXTERNAL_RESOURCES + File.pathSeparator + pdlTemp;
+    SchemaFormatTranslator.main(new String[]{"-spdl", "-dpdsc", pdlResolverPath, pdlTemp, pdscTemp});
     destFiles = FileUtil.listFiles(new File(pdscTemp), pdscFilter);
     Assert.assertTrue(destFiles.size() > 0);
     Assert.assertEquals(destFiles.size(), inputPdlFileCount);

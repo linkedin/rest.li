@@ -301,7 +301,7 @@ public class QueryTunnelUtil
     RestRequestBuilder requestBuilder = request.builder();
 
     // Get copy of headers and remove the override
-    Map<String, String> h = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    Map<String, String> h = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     h.putAll(request.getHeaders());
     h.remove(HEADER_METHOD_OVERRIDE);
 

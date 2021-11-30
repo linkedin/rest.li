@@ -190,7 +190,7 @@ public class SimpleLoadBalancerStateTest
                                     _loadBalancerStrategyFactories);
     }
 
-    FutureCallback<None> callback = new FutureCallback<None>();
+    FutureCallback<None> callback = new FutureCallback<>();
     _state.start(callback);
     try
     {
@@ -208,7 +208,7 @@ public class SimpleLoadBalancerStateTest
     reset();
 
     TestListener listener = new TestListener();
-    List<String> schemes = new ArrayList<String>();
+    List<String> schemes = new ArrayList<>();
 
     schemes.add("http");
     _state.register(listener);
@@ -251,7 +251,7 @@ public class SimpleLoadBalancerStateTest
 
     _state.listenToCluster("partition-cluster-1", new NullStateListenerCallback());
     _clusterRegistry.put("partition-cluster-1", new ClusterProperties("partition-cluster-1", null,
-        new HashMap<String, String>(), new HashSet<URI>(), new RangeBasedPartitionProperties("id=(\\d+)", 0, 100, 2)));
+        new HashMap<>(), new HashSet<>(), new RangeBasedPartitionProperties("id=(\\d+)", 0, 100, 2)));
 
     _state.listenToService("partition-service-1", new NullStateListenerCallback());
     _serviceRegistry.put("partition-service-1",
@@ -274,7 +274,7 @@ public class SimpleLoadBalancerStateTest
     reset();
 
     TestListener listener = new TestListener();
-    List<String> schemes = new ArrayList<String>();
+    List<String> schemes = new ArrayList<>();
 
     schemes.add("http");
     _state.register(listener);
@@ -321,10 +321,10 @@ public class SimpleLoadBalancerStateTest
 
     URI uri = URI.create("http://cluster-1/test");
     TestListener listener = new TestListener();
-    List<String> schemes = new ArrayList<String>();
-    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    List<String> schemes = new ArrayList<>();
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
     uriData.put(uri, partitionData);
     schemes.add("http");
     _state.register(listener);
@@ -369,10 +369,10 @@ public class SimpleLoadBalancerStateTest
 
     URI uri = URI.create("http://cluster-1/test");
     TestListener listener = new TestListener();
-    List<String> schemes = new ArrayList<String>();
-    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    List<String> schemes = new ArrayList<>();
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
     uriData.put(uri, partitionData);
     schemes.add("http");
     _state.register(listener);
@@ -464,7 +464,7 @@ public class SimpleLoadBalancerStateTest
   {
     reset();
 
-    List<String> schemes = new ArrayList<String>();
+    List<String> schemes = new ArrayList<>();
 
     schemes.add("http");
 
@@ -507,10 +507,10 @@ public class SimpleLoadBalancerStateTest
     reset();
 
     URI uri = URI.create("http://cluster-1/test");
-    List<String> schemes = new ArrayList<String>();
-    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    List<String> schemes = new ArrayList<>();
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
     uriData.put(uri, partitionData);
 
     schemes.add("http");
@@ -547,7 +547,7 @@ public class SimpleLoadBalancerStateTest
     reset();
 
     URI uri = URI.create("cluster-1/test");
-    List<String> schemes = new ArrayList<String>();
+    List<String> schemes = new ArrayList<>();
     Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
     Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
@@ -582,8 +582,8 @@ public class SimpleLoadBalancerStateTest
     reset();
 
     URI uri = URI.create("http://cluster-1/test");
-    List<String> schemes = new ArrayList<String>();
-    Map<URI, Double> weights = new HashMap<URI, Double>();
+    List<String> schemes = new ArrayList<>();
+    Map<URI, Double> weights = new HashMap<>();
 
     weights.put(uri, 1d);
     schemes.add("http");
@@ -617,8 +617,8 @@ public class SimpleLoadBalancerStateTest
     reset();
 
     URI uri = URI.create("http://cluster-1/test");
-    List<String> schemes = new ArrayList<String>();
-    Map<URI, Double> weights = new HashMap<URI, Double>();
+    List<String> schemes = new ArrayList<>();
+    Map<URI, Double> weights = new HashMap<>();
 
     weights.put(uri, 1d);
     schemes.add("http");
@@ -689,10 +689,10 @@ public class SimpleLoadBalancerStateTest
   public void testServiceStrategyList() throws URISyntaxException, InterruptedException
   {
     reset();
-    LinkedList<String> strategyList = new LinkedList<String>();
+    LinkedList<String> strategyList = new LinkedList<>();
     URI uri = URI.create("http://cluster-1/test");
-    List<String> schemes = new ArrayList<String>();
-    Map<URI, Double> weights = new HashMap<URI, Double>();
+    List<String> schemes = new ArrayList<>();
+    Map<URI, Double> weights = new HashMap<>();
 
     weights.put(uri, 1d);
     schemes.add("http");
@@ -840,9 +840,9 @@ public class SimpleLoadBalancerStateTest
   public void testRefreshWithConcurrentGetTC() throws URISyntaxException, InterruptedException
   {
     reset();
-    LinkedList<String> strategyList = new LinkedList<String>();
+    LinkedList<String> strategyList = new LinkedList<>();
     URI uri = URI.create("http://cluster-1/test");
-    final List<String> schemes = new ArrayList<String>();
+    final List<String> schemes = new ArrayList<>();
 
     schemes.add("http");
     strategyList.add("degraderV3");
@@ -873,10 +873,10 @@ public class SimpleLoadBalancerStateTest
     assertNotNull(resultTC, "got null tracker client in non-concurrent env");
 
     ExecutorService myExecutor = Executors.newCachedThreadPool();
-    ArrayList<TcCallable> cArray = new ArrayList<TcCallable>();
+    ArrayList<TcCallable> cArray = new ArrayList<>();
 
-    List<TrackerClient> clients = new ArrayList<TrackerClient>();
-    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(2);
+    List<TrackerClient> clients = new ArrayList<>();
+    Map<Integer, PartitionData> partitionDataMap = new HashMap<>(2);
     partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
     clients.add(new DegraderTrackerClientImpl(uri, partitionDataMap, new DegraderLoadBalancerTest.TestLoadBalancerClient(uri),
                                               SystemClock.instance(), null));
@@ -893,7 +893,7 @@ public class SimpleLoadBalancerStateTest
       {
         while(true)
         {
-          List<String> myStrategyList = new LinkedList<String>();
+          List<String> myStrategyList = new LinkedList<>();
           myStrategyList.add("degraderV3");
           _state.refreshServiceStrategies(new ServiceProperties("service-1",
                                                                 "cluster-1",
@@ -915,7 +915,7 @@ public class SimpleLoadBalancerStateTest
 
     myExecutor.execute(refreshTask);
     Integer badResults = 0;
-    ArrayList<Future<Integer>> myList = new ArrayList<Future<Integer>>();
+    ArrayList<Future<Integer>> myList = new ArrayList<>();
     for (int i=0; i<cArray.size(); i++)
     {
       @SuppressWarnings("unchecked")
@@ -1001,11 +1001,11 @@ public class SimpleLoadBalancerStateTest
     reset();
 
     URI uri = URI.create("http://cluster-1/test");
-    List<String> schemes = new ArrayList<String>();
+    List<String> schemes = new ArrayList<>();
 
-    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
     uriData.put(uri, partitionData);
     schemes.add("http");
 
@@ -1033,7 +1033,7 @@ public class SimpleLoadBalancerStateTest
 
     _state.listenToCluster("partition-cluster-1", new NullStateListenerCallback());
     _clusterRegistry.put("partition-cluster-1", new ClusterProperties("partition-cluster-1", null,
-        new HashMap<String, String>(), new HashSet<URI>(), new RangeBasedPartitionProperties("id=(\\d+)", 0, 100, 2)));
+        new HashMap<>(), new HashSet<>(), new RangeBasedPartitionProperties("id=(\\d+)", 0, 100, 2)));
 
     _state.listenToService("partition-service-1", new NullStateListenerCallback());
     _serviceRegistry.put("partition-service-1",
@@ -1044,12 +1044,12 @@ public class SimpleLoadBalancerStateTest
             schemes,
             Collections.<URI>emptySet()));
 
-    Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> partitionWeight = new HashMap<>();
     partitionWeight.put(0, new PartitionData(1d));
     partitionWeight.put(1, new PartitionData(2d));
 
     Map<URI, Map<Integer, PartitionData>> partitionDesc =
-        new HashMap<URI, Map<Integer, PartitionData>>();
+        new HashMap<>();
     partitionDesc.put(uri1, partitionWeight);
 
     partitionWeight.remove(0);
@@ -1069,8 +1069,8 @@ public class SimpleLoadBalancerStateTest
     TrackerClient client = _state.getClient("service-1", uri);
     client.restRequest(new RestRequestBuilder(URI.create("d2://service-1/foo")).build(),
         new RequestContext(),
-        Collections.<String, String>emptyMap(),
-        new TransportCallbackAdapter<RestResponse>(Callbacks.<RestResponse>empty()));
+        Collections.emptyMap(),
+        new TransportCallbackAdapter<>(Callbacks.empty()));
 
     // now force a refresh by adding cluster
     _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
@@ -1079,8 +1079,8 @@ public class SimpleLoadBalancerStateTest
     client = _state.getClient("service-1", uri);
     client.restRequest(new RestRequestBuilder(URI.create("d2://service-1/foo")).build(),
         new RequestContext(),
-        Collections.<String, String>emptyMap(),
-        new TransportCallbackAdapter<RestResponse>(Callbacks.<RestResponse>empty()));
+        Collections.emptyMap(),
+        new TransportCallbackAdapter<>(Callbacks.empty()));
 
     // refresh by adding service
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
@@ -1097,8 +1097,8 @@ public class SimpleLoadBalancerStateTest
     client = _state.getClient("service-1", uri);
     client.restRequest(new RestRequestBuilder(URI.create("d2://service-1/foo")).build(),
         new RequestContext(),
-        Collections.<String, String>emptyMap(),
-        new TransportCallbackAdapter<RestResponse>(Callbacks.<RestResponse>empty()));
+        Collections.emptyMap(),
+        new TransportCallbackAdapter<>(Callbacks.empty()));
 
     _uriRegistry.put("cluster-1", new UriProperties("cluster-1", Collections.<URI, Map<Integer, PartitionData>>emptyMap()));
 
@@ -1108,8 +1108,8 @@ public class SimpleLoadBalancerStateTest
     client = _state.getClient("service-1", uri);
     client.restRequest(new RestRequestBuilder(URI.create("d2://service-1/foo")).build(),
         new RequestContext(),
-        Collections.<String, String>emptyMap(),
-        new TransportCallbackAdapter<RestResponse>(Callbacks.<RestResponse>empty()));
+        Collections.emptyMap(),
+        new TransportCallbackAdapter<>(Callbacks.empty()));
 
 
 
@@ -1130,11 +1130,11 @@ public class SimpleLoadBalancerStateTest
     reset();
 
     URI uri = URI.create("http://cluster-1/test");
-    List<String> schemes = new ArrayList<String>();
+    List<String> schemes = new ArrayList<>();
 
-    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
     uriData.put(uri, partitionData);
     schemes.add("http");
 
@@ -1162,23 +1162,23 @@ public class SimpleLoadBalancerStateTest
 
     _state.listenToCluster("partition-cluster-1", new NullStateListenerCallback());
     _clusterRegistry.put("partition-cluster-1", new ClusterProperties("partition-cluster-1", null,
-        new HashMap<String, String>(), new HashSet<URI>(), new RangeBasedPartitionProperties("id=(\\d+)", 0, 100, 2)));
+        new HashMap<>(), new HashSet<>(), new RangeBasedPartitionProperties("id=(\\d+)", 0, 100, 2)));
 
     _state.listenToService("partition-service-1", new NullStateListenerCallback());
     _serviceRegistry.put("partition-service-1",
         new ServiceProperties("partition-service-1",
-            "partition-cluster-1", "/partition-test", Arrays.asList("degraderV3"), Collections.<String, Object>emptyMap(),
-                                                                        Collections.<String, Object>emptyMap(),
-                                                                        Collections.<String, String>emptyMap(),
+            "partition-cluster-1", "/partition-test", Arrays.asList("degraderV3"), Collections.emptyMap(),
+                                                                        Collections.emptyMap(),
+                                                                        Collections.emptyMap(),
                                                                         schemes,
-                                                                        Collections.<URI>emptySet()));
+                                                                        Collections.emptySet()));
 
-    Map<Integer, PartitionData> partitionWeight = new HashMap<Integer, PartitionData>();
+    Map<Integer, PartitionData> partitionWeight = new HashMap<>();
     partitionWeight.put(0, new PartitionData(1d));
     partitionWeight.put(1, new PartitionData(2d));
 
     Map<URI, Map<Integer, PartitionData>> partitionDesc =
-        new HashMap<URI, Map<Integer, PartitionData>>();
+        new HashMap<>();
     partitionDesc.put(uri1, partitionWeight);
 
     partitionWeight.remove(0);
@@ -1198,8 +1198,8 @@ public class SimpleLoadBalancerStateTest
     TrackerClient client = _state.getClient("service-1", uri);
     client.streamRequest(new StreamRequestBuilder(URI.create("d2://service-1/foo")).build(EntityStreams.emptyStream()),
         new RequestContext(),
-        Collections.<String, String>emptyMap(),
-        new TransportCallbackAdapter<StreamResponse>(Callbacks.<StreamResponse>empty()));
+        Collections.emptyMap(),
+        new TransportCallbackAdapter<>(Callbacks.empty()));
 
     // now force a refresh by adding cluster
     _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1"));
@@ -1208,8 +1208,8 @@ public class SimpleLoadBalancerStateTest
     client = _state.getClient("service-1", uri);
     client.streamRequest(new StreamRequestBuilder(URI.create("d2://service-1/foo")).build(EntityStreams.emptyStream()),
         new RequestContext(),
-        Collections.<String, String>emptyMap(),
-        new TransportCallbackAdapter<StreamResponse>(Callbacks.<StreamResponse>empty()));
+        Collections.emptyMap(),
+        new TransportCallbackAdapter<>(Callbacks.empty()));
 
     // refresh by adding service
     _serviceRegistry.put("service-1", new ServiceProperties("service-1",
@@ -1226,8 +1226,8 @@ public class SimpleLoadBalancerStateTest
     client = _state.getClient("service-1", uri);
     client.streamRequest(new StreamRequestBuilder(URI.create("d2://service-1/foo")).build(EntityStreams.emptyStream()),
         new RequestContext(),
-        Collections.<String, String>emptyMap(),
-        new TransportCallbackAdapter<StreamResponse>(Callbacks.<StreamResponse>empty()));
+        Collections.emptyMap(),
+        new TransportCallbackAdapter<>(Callbacks.empty()));
 
     _uriRegistry.put("cluster-1", new UriProperties("cluster-1", Collections.<URI, Map<Integer, PartitionData>>emptyMap()));
 
@@ -1237,8 +1237,8 @@ public class SimpleLoadBalancerStateTest
     client = _state.getClient("service-1", uri);
     client.streamRequest(new StreamRequestBuilder(URI.create("d2://service-1/foo")).build(EntityStreams.emptyStream()),
         new RequestContext(),
-        Collections.<String, String>emptyMap(),
-        new TransportCallbackAdapter<StreamResponse>(Callbacks.<StreamResponse>empty()));
+        Collections.emptyMap(),
+        new TransportCallbackAdapter<>(Callbacks.empty()));
 
 
 
@@ -1261,10 +1261,10 @@ public class SimpleLoadBalancerStateTest
     int expectedVersion = 0;
 
     URI uri = URI.create("http://cluster-1/test");
-    List<String> schemes = new ArrayList<String>();
-    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    List<String> schemes = new ArrayList<>();
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
     uriData.put(uri, partitionData);
     schemes.add("http");
 
@@ -1324,10 +1324,10 @@ public class SimpleLoadBalancerStateTest
     reset(true, true);
 
     URI uri = URI.create("https://cluster-1/test");
-    List<String> schemes = new ArrayList<String>();
-    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    List<String> schemes = new ArrayList<>();
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
     uriData.put(uri, partitionData);
 
     schemes.add("https");
@@ -1336,7 +1336,7 @@ public class SimpleLoadBalancerStateTest
     _state.listenToCluster("cluster-1", new NullStateListenerCallback());
     _state.listenToService("service-1", new NullStateListenerCallback());
 
-    Map<String,Object> transportClientProperties = new HashMap<String,Object>();
+    Map<String, Object> transportClientProperties = new HashMap<>();
     transportClientProperties.put(HttpClientFactory.HTTP_SSL_CONTEXT, _sslContext);
     transportClientProperties.put(HttpClientFactory.HTTP_SSL_PARAMS, _sslParameters);
     transportClientProperties = Collections.unmodifiableMap(transportClientProperties);
@@ -1369,10 +1369,10 @@ public class SimpleLoadBalancerStateTest
     reset(true, true);
 
     URI uri = URI.create("https://cluster-1/test");
-    List<String> schemes = new ArrayList<String>();
-    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    List<String> schemes = new ArrayList<>();
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
     uriData.put(uri, partitionData);
 
     schemes.add("https");
@@ -1388,7 +1388,7 @@ public class SimpleLoadBalancerStateTest
 
     assertNull(_state.getClient("service-1", uri));
 
-    Map<String,Object> transportClientProperties = new HashMap<String,Object>();
+    Map<String, Object> transportClientProperties = new HashMap<>();
     transportClientProperties.put(HttpClientFactory.HTTP_SSL_CONTEXT, _sslContext);
     transportClientProperties.put(HttpClientFactory.HTTP_SSL_PARAMS, _sslParameters);
     transportClientProperties = Collections.unmodifiableMap(transportClientProperties);
@@ -1415,10 +1415,10 @@ public class SimpleLoadBalancerStateTest
 
     URI uri = URI.create("http://cluster-1/test");
     URI httpsUri = URI.create("https://cluster-1/test");
-    List<String> schemes = new ArrayList<String>();
-    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    List<String> schemes = new ArrayList<>();
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
     uriData.put(uri, partitionData);
     uriData.put(httpsUri, partitionData);
 
@@ -1437,7 +1437,7 @@ public class SimpleLoadBalancerStateTest
 
     assertNull(_state.getClient("service-1", uri));
 
-    Map<String,Object> transportClientProperties = new HashMap<String,Object>();
+    Map<String, Object> transportClientProperties = new HashMap<>();
     transportClientProperties.put(HttpClientFactory.HTTP_SSL_CONTEXT, _sslContext);
     transportClientProperties.put(HttpClientFactory.HTTP_SSL_PARAMS, _sslParameters);
     transportClientProperties = Collections.unmodifiableMap(transportClientProperties);
@@ -1478,10 +1478,10 @@ public class SimpleLoadBalancerStateTest
     reset();
 
     URI uri = URI.create("http://cluster-1/test");
-    List<String> schemes = new ArrayList<String>();
-    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    List<String> schemes = new ArrayList<>();
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
     uriData.put(uri, partitionData);
 
     schemes.add("http");
@@ -1497,14 +1497,14 @@ public class SimpleLoadBalancerStateTest
 
     assertNull(_state.getClient("service-1", uri));
 
-    Map<String,Object> transportClientProperties = new HashMap<String,Object>();
+    Map<String, Object> transportClientProperties = new HashMap<>();
 
-    List<String> allowedClientOverrideKeys = new ArrayList<String>();
+    List<String> allowedClientOverrideKeys = new ArrayList<>();
     allowedClientOverrideKeys.add(PropertyKeys.HTTP_REQUEST_TIMEOUT);
     allowedClientOverrideKeys.add(PropertyKeys.HTTP_RESPONSE_COMPRESSION_OPERATIONS);
     transportClientProperties.put(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS, allowedClientOverrideKeys);
 
-    List<String> compressionOperations = new ArrayList<String>();
+    List<String> compressionOperations = new ArrayList<>();
     compressionOperations.add("get");
     compressionOperations.add("batch_get");
     compressionOperations.add("get_all");
@@ -1532,10 +1532,10 @@ public class SimpleLoadBalancerStateTest
   {
     reset();
     URI uri = URI.create("http://cluster-1/test");
-    List<String> schemes = new ArrayList<String>();
-    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    List<String> schemes = new ArrayList<>();
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
     uriData.put(uri, partitionData);
 
     schemes.add("http");
@@ -1582,9 +1582,9 @@ public class SimpleLoadBalancerStateTest
     _state.listenToCluster("cluster-2", new NullStateListenerCallback());
 
     URI uri2 = URI.create("http://cluster-2/test");
-    Map<Integer, PartitionData> partitionData2 = new HashMap<Integer, PartitionData>(1);
+    Map<Integer, PartitionData> partitionData2 = new HashMap<>(1);
     partitionData2.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData2 = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> uriData2 = new HashMap<>();
     uriData2.put(uri2, partitionData2);
 
     //if we start publishing new event to cluster-2 then we should get trackerClient
@@ -1614,21 +1614,21 @@ public class SimpleLoadBalancerStateTest
     reset();
 
     URI uri = URI.create("http://cluster-1/test");
-    List<String> schemes = new ArrayList<String>();
-    Map<Integer, PartitionData> partitionData = new HashMap<Integer, PartitionData>(1);
+    List<String> schemes = new ArrayList<>();
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
     partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
     uriData.put(uri, partitionData);
 
     schemes.add("http");
 
     assertNull(_state.getClient("service-1", uri));
 
-    Map<String,Object> transportProperties = new HashMap<String,Object>();
+    Map<String, Object> transportProperties = new HashMap<>();
     transportProperties.put("foobar", "unsupportedValue");
     _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
                                                             "/test", Arrays.asList("random"),
-                                                            Collections.<String, Object>emptyMap(),
+                                                            Collections.emptyMap(),
                                                             transportProperties, null, schemes, null));
 
     // we add the property first before listening to the service because the MockStore will
@@ -1666,9 +1666,9 @@ public class SimpleLoadBalancerStateTest
   {
     reset();
     URI uri = URI.create("http://cluster-1/test");
-    List<String> schemes = new ArrayList<String>();
-    Map<Integer, PartitionData> partitionDataMap = new HashMap<Integer, PartitionData>(1);
-    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<URI, Map<Integer, PartitionData>>();
+    List<String> schemes = new ArrayList<>();
+    Map<Integer, PartitionData> partitionDataMap = new HashMap<>(1);
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
     uriData.put(uri, partitionDataMap);
 
     schemes.add("http");

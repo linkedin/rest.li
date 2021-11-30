@@ -38,6 +38,14 @@ public class TestSymbolTableNameHandler
     Assert.assertEquals(name, "https://Host:100/service|Prefix-" + symbols.hashCode());
   }
 
+  @Test(expectedExceptions = {IllegalStateException.class})
+  public void testGenerateNameWithoutServerNodeUri()
+  {
+    List<String> symbols = Collections.unmodifiableList(Arrays.asList("Haha", "Hehe"));
+    SymbolTableNameHandler handler = new SymbolTableNameHandler("Prefix", null);
+    handler.generateName(symbols);
+  }
+
   @Test
   public void testExtractTableInfoRemoteTable()
   {
@@ -62,5 +70,14 @@ public class TestSymbolTableNameHandler
     String name = "https://SomeOldHostName:100/SomeOtherService|SomeOtherPrefix-1000";
     String replacedName = SYMBOL_TABLE_NAME_HANDLER.replaceServerNodeUri(name);
     Assert.assertEquals(replacedName, "https://Host:100/service|SomeOtherPrefix-1000");
+  }
+
+  @Test
+  public void testReplaceServerNodeUriWithoutServerNodeUri()
+  {
+    String name = "https://SomeOldHostName:100/SomeOtherService|SomeOtherPrefix-1000";
+    SymbolTableNameHandler handler = new SymbolTableNameHandler("Prefix", null);
+    String replacedName = handler.replaceServerNodeUri(name);
+    Assert.assertEquals(replacedName, name);
   }
 }

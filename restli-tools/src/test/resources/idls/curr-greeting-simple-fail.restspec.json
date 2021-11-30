@@ -45,6 +45,10 @@
     }, {
       "name" : "twoAction",
       "doc" : "an action to be deprecated"
+    }, {
+      "name" : "threeAction",
+      "doc" : "an action to be marked read-only",
+      "readOnly" : true
     } ],
     "entity" : {
       "path" : "/greetings/{id}"

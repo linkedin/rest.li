@@ -55,7 +55,7 @@ public class TestMockActionResponseFactory
     record.setId(42L);
     record.setMessage("Lorem ipsum");
 
-    final CollectionResponse<RecordTemplateWithDefaultValue> collectionResponse = new CollectionResponse<RecordTemplateWithDefaultValue>(RecordTemplateWithDefaultValue.class);
+    final CollectionResponse<RecordTemplateWithDefaultValue> collectionResponse = new CollectionResponse<>(RecordTemplateWithDefaultValue.class);
     collectionResponse.getElements().add(record);
     @SuppressWarnings("unchecked")
     final ActionResponse<CollectionResponse<RecordTemplateWithDefaultValue>> response =

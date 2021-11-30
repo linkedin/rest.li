@@ -49,7 +49,7 @@ public class CookieResource extends CollectionResourceTemplate<Long, Greeting>
   @Override
   public Map<Long, Greeting> batchGet(Set<Long> keys)
   {
-    Map<Long, Greeting> result = new HashMap<Long, Greeting>();
+    Map<Long, Greeting> result = new HashMap<>();
     for (Long key : keys)
     {
       result.put(key, new Greeting().setId(key).setMessage("NO CONTENT").setTone(Tone.FRIENDLY));

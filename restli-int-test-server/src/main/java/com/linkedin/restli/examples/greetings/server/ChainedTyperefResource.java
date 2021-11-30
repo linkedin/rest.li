@@ -73,14 +73,14 @@ public class ChainedTyperefResource extends AssociationResourceTemplate<Greeting
   public BatchUpdateResult<CompoundKey, Greeting> batchUpdate(BatchUpdateRequest<CompoundKey, Greeting> entities)
   {
     Set<CompoundKey> keys = entities.getData().keySet();
-    Map<CompoundKey, UpdateResponse> responseMap = new HashMap<CompoundKey, UpdateResponse>();
-    Map<CompoundKey, RestLiServiceException> errorMap = new HashMap<CompoundKey, RestLiServiceException>();
+    Map<CompoundKey, UpdateResponse> responseMap = new HashMap<>();
+    Map<CompoundKey, RestLiServiceException> errorMap = new HashMap<>();
 
     for(CompoundKey key : keys)
     {
       responseMap.put(key, new UpdateResponse(HttpStatus.S_201_CREATED));
     }
-    return new BatchUpdateResult<CompoundKey, Greeting>(responseMap);
+    return new BatchUpdateResult<>(responseMap);
   }
 
   @Finder("dateOnly")

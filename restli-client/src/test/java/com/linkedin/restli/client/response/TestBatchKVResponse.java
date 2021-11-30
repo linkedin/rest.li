@@ -58,12 +58,12 @@ public class TestBatchKVResponse
     final MyComplexKey keyPart1 = new MyComplexKey();
     keyPart1.setA("dolor");
     keyPart1.setB(7);
-    final ComplexResourceKey<MyComplexKey, EmptyRecord> complexKey1 = new ComplexResourceKey<MyComplexKey, EmptyRecord>(keyPart1, _EMPTY_RECORD);
+    final ComplexResourceKey<MyComplexKey, EmptyRecord> complexKey1 = new ComplexResourceKey<>(keyPart1, _EMPTY_RECORD);
 
     final MyComplexKey keyPart2 = new MyComplexKey();
     keyPart2.setA("sit");
     keyPart2.setB(27);
-    final ComplexResourceKey<MyComplexKey, EmptyRecord> complexKey2 = new ComplexResourceKey<MyComplexKey, EmptyRecord>(keyPart2, _EMPTY_RECORD);
+    final ComplexResourceKey<MyComplexKey, EmptyRecord> complexKey2 = new ComplexResourceKey<>(keyPart2, _EMPTY_RECORD);
 
     @SuppressWarnings("unchecked")
     final List<ComplexResourceKey<MyComplexKey, EmptyRecord>> complexKeys = Arrays.asList(complexKey1, complexKey2);
@@ -101,13 +101,13 @@ public class TestBatchKVResponse
     testData.put(BatchKVResponse.RESULTS, inputResults);
     testData.put(BatchKVResponse.ERRORS, inputErrors);
 
-    final BatchKVResponse<K, TestRecord> response = new BatchKVResponse<K, TestRecord>(testData,
-                                                                                       keyClass,
-                                                                                       TestRecord.class,
-                                                                                       Collections.<String, CompoundKey.TypeInfo>emptyMap(),
-                                                                                       keyKeyClass,
-                                                                                       keyParamsClass,
-                                                                                       protocolVersion);
+    final BatchKVResponse<K, TestRecord> response = new BatchKVResponse<>(testData,
+        keyClass,
+        TestRecord.class,
+        Collections.<String, CompoundKey.TypeInfo>emptyMap(),
+        keyKeyClass,
+        keyParamsClass,
+        protocolVersion);
     final Map<K, TestRecord> outputResults = response.getResults();
     final TestRecord outRecord = outputResults.get(resultKey);
     Assert.assertEquals(outRecord, outRecord);

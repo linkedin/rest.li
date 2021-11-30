@@ -47,6 +47,7 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
   @Override
   protected void handlePut(final String listenTo, final ServiceProperties discoveryProperties)
   {
+    // TODO: pick stable or canary configs if canary exists
     LoadBalancerStateItem<ServiceProperties> oldServicePropertiesItem =
       _simpleLoadBalancerState.getServiceProperties().get(listenTo);
 

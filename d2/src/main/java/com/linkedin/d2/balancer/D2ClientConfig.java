@@ -16,10 +16,12 @@
 package com.linkedin.d2.balancer;
 
 import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
+import com.linkedin.d2.balancer.clients.RetryClient;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
 import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
@@ -68,8 +70,18 @@ public class D2ClientConfig
    */
   ScheduledExecutorService _executorService = null;
   ScheduledExecutorService _backupRequestsExecutorService = null;
+
+  /**
+   * @deprecated Use restRetryEnabled and streamRetryEnabled instead
+   */
+  @Deprecated()
   boolean retry = false;
-  int retryLimit = DEAULT_RETRY_LIMIT;
+
+  boolean restRetryEnabled = false;
+  boolean streamRetryEnabled = false;
+  int retryLimit = DEFAULT_RETRY_LIMIT;
+  long retryUpdateIntervalMs = RetryClient.DEFAULT_UPDATE_INTERVAL_MS;
+  int retryAggregatedIntervalNum = RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM;
   boolean warmUp = true;
   int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
   int zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
@@ -79,19 +91,21 @@ public class D2ClientConfig
   BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer = null;
   long backupRequestsLatencyNotificationInterval = 1;
   TimeUnit backupRequestsLatencyNotificationIntervalUnit = TimeUnit.MINUTES;
+  // TODO: Once the change is fully verified, we should always enable the async feature
+  boolean enableBackupRequestsClientAsync = false;
   EventEmitter eventEmitter = null;
   PartitionAccessorRegistry partitionAccessorRegistry = null;
   Function<ZooKeeper, ZooKeeper> zooKeeperDecorator = null;
   Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories = Collections.emptyMap();
-  boolean requestTimeoutHandlerEnabled = true;
+  boolean requestTimeoutHandlerEnabled = false;
   SslSessionValidatorFactory sslSessionValidatorFactory = null;
   ZKPersistentConnection zkConnectionToUseForLB = null;
   ScheduledExecutorService startUpExecutorService = null;
   JmxManager jmxManager = new NoOpJmxManager();
   String d2JmxManagerPrefix = "UnknownPrefix";
   boolean enableRelativeLoadBalancer = false;
-
-  private static final int DEAULT_RETRY_LIMIT = 3;
+  DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider = null;
+  public static final int DEFAULT_RETRY_LIMIT = 3;
 
   public D2ClientConfig()
   {
@@ -119,7 +133,11 @@ public class D2ClientConfig
                  HealthCheckOperations healthCheckOperations,
                  ScheduledExecutorService executorService,
                  boolean retry,
+                 boolean restRetryEnabled,
+                 boolean streamRetryEnabled,
                  int retryLimit,
+                 long retryUpdateIntervalMs,
+                 int retryAggregatedIntervalNum,
                  boolean warmUp,
                  int warmUpTimeoutSeconds,
                  int warmUpConcurrentRequests,
@@ -128,6 +146,7 @@ public class D2ClientConfig
                  BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer,
                  long backupRequestsLatencyNotificationInterval,
                  TimeUnit backupRequestsLatencyNotificationIntervalUnit,
+                 boolean enableBackupRequestsClientAsync,
                  ScheduledExecutorService backupRequestsExecutorService,
                  EventEmitter emitter,
                  PartitionAccessorRegistry partitionAccessorRegistry,
@@ -141,7 +160,8 @@ public class D2ClientConfig
                  JmxManager jmxManager,
                  String d2JmxManagerPrefix,
                  int zookeeperReadWindowMs,
-                 boolean enableRelativeLoadBalancer)
+                 boolean enableRelativeLoadBalancer,
+                 DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -165,7 +185,11 @@ public class D2ClientConfig
     this.healthCheckOperations = healthCheckOperations;
     this._executorService = executorService;
     this.retry = retry;
+    this.restRetryEnabled = restRetryEnabled;
+    this.streamRetryEnabled = streamRetryEnabled;
     this.retryLimit = retryLimit;
+    this.retryUpdateIntervalMs = retryUpdateIntervalMs;
+    this.retryAggregatedIntervalNum = retryAggregatedIntervalNum;
     this.warmUp = warmUp;
     this.warmUpTimeoutSeconds = warmUpTimeoutSeconds;
     this.warmUpConcurrentRequests = warmUpConcurrentRequests;
@@ -174,6 +198,7 @@ public class D2ClientConfig
     this.backupRequestsStrategyStatsConsumer = backupRequestsStrategyStatsConsumer;
     this.backupRequestsLatencyNotificationInterval = backupRequestsLatencyNotificationInterval;
     this.backupRequestsLatencyNotificationIntervalUnit = backupRequestsLatencyNotificationIntervalUnit;
+    this.enableBackupRequestsClientAsync = enableBackupRequestsClientAsync;
     this._backupRequestsExecutorService = backupRequestsExecutorService;
     this.eventEmitter = emitter;
     this.partitionAccessorRegistry = partitionAccessorRegistry;
@@ -188,5 +213,6 @@ public class D2ClientConfig
     this.d2JmxManagerPrefix = d2JmxManagerPrefix;
     this.zookeeperReadWindowMs = zookeeperReadWindowMs;
     this.enableRelativeLoadBalancer = enableRelativeLoadBalancer;
+    this.deterministicSubsettingMetadataProvider = deterministicSubsettingMetadataProvider;
   }
 }

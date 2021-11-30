@@ -1,0 +1,132 @@
+#*
+   Copyright (c) 2021 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*#
+#if($is_interface)
+  #foreach($withEG in [true, false])
+    #foreach($flattenAssocKey in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
+      #set($showTemplate =(!$flattenAssocKey ||  ${spec.getResource().hasAssociation()}))
+      #if ($showTemplate) 
+        #if ($flattenAssocKey)
+          #define($keyStubNoOptional)
+            #associateKeyParams($spec),
+          #end ## end define
+          #define($keyStubWithOptional)
+            #associateKeyParams($spec),
+          #end ## end define
+        #else
+          #define($keyStubNoOptional)
+            $spec.keyClassDisplayName $spec.idName,
+          #end ## end define
+          #define($keyStubWithOptional)
+            $spec.keyClassDisplayName $spec.idName,
+          #end ## end define
+        #end ## endIf
+      #if($method.hasOptionalParams() || $method.hasProjectionParams())
+        #doc($method.schema.doc)
+        public CompletionStage<Void> update(
+            #if (!${spec.getResource().hasSimple()})
+              $keyStubNoOptional
+            #end
+            ${spec.entityClassName} entity#if($method.hasRequiredParams() || $withEG),#end
+            #**##methodParamsWithEGroup($method, false, $withEG)##
+          );
+      #end
+
+      #doc($method.schema.doc)
+      public CompletionStage<Void> update(
+        #if (!${spec.getResource().hasSimple()})
+          $keyStubWithOptional
+        #end
+        ${spec.entityClassName} entity#if( $method.hasParams() || $withEG),#end
+        #**##methodParamsWithEGroup($method, true, $withEG)##
+        );
+      #end ## end if showTemplate
+    #end ## foreach flattenAssocKey
+  #end ## end withEG
+#optionalParamClass($method)
+#else ## is_interface
+  #foreach($withEG in [true, false])
+    #foreach($flattenAssocKey in [true, false]) ##  association key colleciton will have API with assocKeyParamsWithOptAndEg for Get, Delete, Update, PartialUpdate, Action
+      #set($showTemplate =(!$flattenAssocKey ||  ${spec.getResource().hasAssociation()}))
+      #if ($showTemplate)
+        #if ($flattenAssocKey)
+          #define($keyStubNoOptional)
+            #associateKeyParams($spec),
+          #end ## end define
+          #define($keyStubWithOptional)
+            #associateKeyParams($spec),
+          #end ## end define
+        #else
+          #define($keyStubNoOptional)
+            $spec.keyClassDisplayName $spec.idName,
+          #end ## end define
+          #define($keyStubWithOptional)
+            $spec.keyClassDisplayName $spec.idName,
+          #end ## end define
+        #end ## endI
+      #if($method.hasOptionalParams() || $method.hasProjectionParams())
+        #doc($method.schema.doc)
+        public CompletionStage<Void> update(
+            #if (!${spec.getResource().hasSimple()})
+              $keyStubNoOptional
+            #end
+            ${spec.entityClassName} entity#if($method.hasRequiredParams() || $withEG),#end
+            #**##methodParamsWithEGroup($method, false, $withEG)##
+          ) {
+          #generateAssocKeyAsId($spec, $method, $flattenAssocKey)
+          return update(#if(${spec.idName})$spec.idName,#end
+              entity,
+              #**##optionalMethodCallArgsWithEGroup($method, $withEG)##
+          );
+        }
+      #end
+
+      #doc($method.schema.doc)
+      public CompletionStage<Void> update(
+        #if (!${spec.getResource().hasSimple()})
+          $keyStubWithOptional
+        #end
+        ${spec.entityClassName} entity#if( $method.hasParams() || $withEG),#end
+        #**##methodParamsWithEGroup($method, true, $withEG)##
+        ) {
+        #generateAssocKeyAsId($spec, $method, $flattenAssocKey)
+        #**##paramsRequestMap($method)##
+        UpdateRequest<${spec.entityClassName}> request = new UpdateRequest<>(
+            entity,
+            Collections.emptyMap(),
+            Collections.emptyList(),
+            _resourceSpec,
+            queryParams,
+            queryParamClasses,
+            ORIGINAL_RESOURCE_PATH,
+            buildReadOnlyPathKeys(),
+            RestliRequestOptions.DEFAULT_OPTIONS,
+            #if(${spec.idName})
+        #**#$spec.idName##
+            #else
+        #**#null##
+            #end,
+            null);
+        #**##makeRequestAndReturn(
+          "Void",
+          "?",
+          "(Void) null",
+          $withEG
+        )##
+      }
+      #end ## end if show template
+    #end ## foreach flattenAssocKey
+  #end ## end withEG
+#end ## is_interface

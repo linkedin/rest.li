@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# The purpose of this script is to get the inter-module dependencies of some subproject for the testRuntimeClasspath configuration
+
+# Ensure that the script is being run from the root project directory
+PROPERTIES_FILE='gradle.properties'
+if [ ! -f "$PROPERTIES_FILE" ]; then
+  echo "Could not find $PROPERTIES_FILE, please run this script from the root project directory."
+  exit 2
+fi
+
+if [ "$1" == '-h' ] || [ "$1" == '--help' ]; then
+  cat ./scripts/help-text/get-module-dependencies.txt
+  exit 0
+fi
+
+while [ $# -gt 0 ]; do
+  if [ "$1" = '-h' ] || [ "$1" = '--help' ]; then
+    cat ./scripts/help-text/get-module-dependencies.txt
+    exit 0
+  else
+    TARGET_MODULE="$1"
+    shift
+    TARGET_CONFIGURATION="$1"
+  fi
+  shift
+done
+
+if [ -z "$TARGET_MODULE" ] || [ -z "$TARGET_CONFIGURATION" ]; then
+  cat ./scripts/help-text/get-module-dependencies.txt
+  exit 2
+fi
+
+set -o pipefail
+set -e
+
+./gradlew :$TARGET_MODULE:dependencies --configuration $TARGET_CONFIGURATION 2> /dev/null | grep '\-\-\- project' | sed 's/.\+\-\-\- project :\(\S\+\).*/\1/' | sort -u

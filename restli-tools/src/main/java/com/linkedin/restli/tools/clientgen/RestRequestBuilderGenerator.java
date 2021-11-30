@@ -18,14 +18,14 @@ package com.linkedin.restli.tools.clientgen;
 
 
 import com.linkedin.common.Version;
-import com.linkedin.data.schema.generator.AbstractGenerator;
 import com.linkedin.internal.tools.ArgumentFileProcessor;
+import com.linkedin.pegasus.generator.CaseSensitiveFileCodeWriter;
 import com.linkedin.pegasus.generator.CodeUtil;
+import com.linkedin.pegasus.generator.DataTemplatePersistentClassChecker;
 import com.linkedin.pegasus.generator.DefaultGeneratorResult;
 import com.linkedin.pegasus.generator.GeneratorResult;
 import com.linkedin.pegasus.generator.JavaCodeGeneratorBase;
 import com.linkedin.pegasus.generator.JavaCodeUtil;
-import com.linkedin.pegasus.generator.PegasusDataTemplateGenerator;
 import com.linkedin.restli.internal.common.RestliVersion;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import com.linkedin.restli.restspec.ResourceEntityType;
@@ -40,7 +40,6 @@ import java.util.List;
 
 import com.sun.codemodel.JCodeModel;
 import com.sun.codemodel.JDefinedClass;
-import com.sun.codemodel.writer.FileCodeWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +53,12 @@ public class RestRequestBuilderGenerator
 {
   static final String GENERATOR_REST_GENERATE_DATATEMPLATES = "generator.rest.generate.datatemplates";
   static final String GENERATOR_REST_GENERATE_VERSION = "generator.rest.generate.version";
+  public static final String GENERATOR_REST_GENERATE_LOWERCASE_PATH = "generator.rest.generate.lowercase.path";
   private static final String GENERATOR_REST_GENERATE_DEPRECATED_VERSION = "generator.rest.generate.deprecated.version";
+  /**
+   * The system property that specifies whether to generate classes for externally resolved schemas
+   */
+  static final String GENERATOR_GENERATE_IMPORTED = "generator.generate.imported";
   private static final Logger _log = LoggerFactory.getLogger(RestRequestBuilderGenerator.class);
 
   /**
@@ -86,9 +90,10 @@ public class RestRequestBuilderGenerator
       sources = Arrays.copyOfRange(args, 1, args.length);
     }
 
-    final String generateImported = System.getProperty(PegasusDataTemplateGenerator.GENERATOR_GENERATE_IMPORTED);
+    final String generateImported = System.getProperty(GENERATOR_GENERATE_IMPORTED);
     final String generateDataTemplates = System.getProperty(GENERATOR_REST_GENERATE_DATATEMPLATES);
     final String versionString = System.getProperty(GENERATOR_REST_GENERATE_VERSION);
+    final String generateLowercasePath = System.getProperty(GENERATOR_REST_GENERATE_LOWERCASE_PATH);
     final RestliVersion version = RestliVersion.lookUpRestliVersion(new Version(versionString));
     if (version == null)
     {
@@ -106,7 +111,8 @@ public class RestRequestBuilderGenerator
                                     version,
                                     deprecatedByVersion,
                                     args[0],
-                                    sources);
+                                    sources,
+                                    generateLowercasePath == null ? true : Boolean.parseBoolean(generateLowercasePath));
   }
 
   public static RestliVersion findDeprecatedVersion()
@@ -159,6 +165,33 @@ public class RestRequestBuilderGenerator
                                     String[] sources)
       throws IOException
   {
+    return run(resolverPath,
+               defaultPackage,
+               rootPath,
+               generateImported,
+               generateDataTemplates,
+               version,
+               deprecatedByVersion,
+               targetDirectoryPath,
+               sources,
+               true);
+  }
+
+  /**
+   * @param generateLowercasePath true, files are generated with a lower case path; false, files are generated as spec specifies.
+   */
+  public static GeneratorResult run(String resolverPath,
+                                    String defaultPackage,
+                                    String rootPath,
+                                    final boolean generateImported,
+                                    final boolean generateDataTemplates,
+                                    RestliVersion version,
+                                    RestliVersion deprecatedByVersion,
+                                    String targetDirectoryPath,
+                                    String[] sources,
+                                    boolean generateLowercasePath)
+      throws IOException
+  {
     final RestSpecParser parser = new RestSpecParser();
     final JavaRequestBuilderGenerator generator = new JavaRequestBuilderGenerator(resolverPath, defaultPackage, generateDataTemplates, version, deprecatedByVersion, rootPath);
     final ClassLoader classLoader = JavaCodeUtil.classLoaderFromResolverPath(resolverPath);
@@ -171,7 +204,7 @@ public class RestRequestBuilderGenerator
       ResourceSchema resourceSchema = pair.first;
 
       // Skip unstructured data resources for client generation
-      if (resourceSchema != null && ResourceEntityType.UNSTRUCTURED_DATA == resourceSchema.getEntityType())
+      if (resourceSchema == null || ResourceEntityType.UNSTRUCTURED_DATA == resourceSchema.getEntityType())
       {
         continue;
       }
@@ -182,7 +215,8 @@ public class RestRequestBuilderGenerator
       }
       catch (Exception e)
       {
-        message.append(e.getMessage() + "\n");
+        _log.error("Failed to generate request builders for schema: " + resourceSchema.getName(), e);
+        message.append(e.getMessage()).append("\n");
       }
     }
 
@@ -191,11 +225,9 @@ public class RestRequestBuilderGenerator
       throw new IOException(message.toString());
     }
 
-    final PegasusDataTemplateGenerator.DataTemplatePersistentClassChecker dataTemplateChecker =
-        new PegasusDataTemplateGenerator.DataTemplatePersistentClassChecker(generateImported,
-                                                                            generator.getSpecGenerator(),
-                                                                            generator.getJavaDataTemplateGenerator(),
-                                                                            Collections.<File>emptySet());
+    final DataTemplatePersistentClassChecker dataTemplateChecker =
+        new DataTemplatePersistentClassChecker(generateImported, generator.getSpecGenerator(),
+            generator.getJavaDataTemplateGenerator(), Collections.<File>emptySet());
     final JavaCodeUtil.PersistentClassChecker checker = new JavaCodeUtil.PersistentClassChecker()
     {
       @Override
@@ -221,8 +253,8 @@ public class RestRequestBuilderGenerator
     final JCodeModel dataTemplateCodeModel = generator.getJavaDataTemplateGenerator().getCodeModel();
 
     final File targetDirectory = new File(targetDirectoryPath);
-    final List<File> targetFiles = JavaCodeUtil.targetFiles(targetDirectory, requestBuilderCodeModel, classLoader, checker);
-    targetFiles.addAll(JavaCodeUtil.targetFiles(targetDirectory, dataTemplateCodeModel, classLoader, checker));
+    final List<File> targetFiles = JavaCodeUtil.targetFiles(targetDirectory, requestBuilderCodeModel, classLoader, checker, generateLowercasePath);
+    targetFiles.addAll(JavaCodeUtil.targetFiles(targetDirectory, dataTemplateCodeModel, classLoader, checker, generateLowercasePath));
 
     final List<File> modifiedFiles;
     if (FileUtil.upToDate(parseResult.getSourceFiles(), targetFiles))
@@ -235,8 +267,8 @@ public class RestRequestBuilderGenerator
       modifiedFiles = targetFiles;
       _log.info("Generating " + targetFiles.size() + " files");
       _log.debug("Files: " + targetFiles);
-      requestBuilderCodeModel.build(new FileCodeWriter(targetDirectory, true));
-      dataTemplateCodeModel.build(new FileCodeWriter(targetDirectory, true));
+      requestBuilderCodeModel.build(new CaseSensitiveFileCodeWriter(targetDirectory, true, generateLowercasePath));
+      dataTemplateCodeModel.build(new CaseSensitiveFileCodeWriter(targetDirectory, true, generateLowercasePath));
     }
     return new DefaultGeneratorResult(parseResult.getSourceFiles(), targetFiles, modifiedFiles);
   }

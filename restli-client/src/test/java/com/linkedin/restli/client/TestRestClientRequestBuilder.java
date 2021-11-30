@@ -1505,9 +1505,12 @@ public class TestRestClientRequestBuilder
       Assert.assertEquals(streamRequest.getHeader(ACCEPT_TYPE_HEADER), expectedAcceptHeader);
     }
 
-    if (streamAttachments == false)
+    if (!streamAttachments)
     {
-      //If there are no attachments, then we can just read everything in
+      // Verify content type header.
+      Assert.assertEquals(streamRequest.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
+
+      // If there are no attachments, then we can just read everything in
       Messages.toRestRequest(streamRequest, new Callback<RestRequest>()
       {
         @Override
@@ -1519,8 +1522,7 @@ public class TestRestClientRequestBuilder
         @Override
         public void onSuccess(RestRequest result)
         {
-          //Verify content type and header after the conversion is complete.
-          Assert.assertEquals(result.getHeader(CONTENT_TYPE_HEADER), expectedContentTypeHeader);
+          // Verify entity after the conversion is complete.
           Assert.assertEquals(result.getEntity().asAvroString(), expectedRequestBody);
         }
       });

@@ -26,6 +26,7 @@ import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import com.linkedin.data.schema.grammar.PdlSchemaParserFactory;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -52,6 +53,7 @@ public abstract class AbstractMultiFormatDataSchemaResolver implements DataSchem
   };
 
   private final List<DataSchemaResolver> _resolvers = new ArrayList<>();
+  private List<SchemaDirectory> _schemaDirectories = Collections.singletonList(SchemaDirectoryName.PEGASUS);
 
   public static List<DataSchemaParserFactory> BUILTIN_FORMAT_PARSER_FACTORIES;
   static {
@@ -131,6 +133,20 @@ public abstract class AbstractMultiFormatDataSchemaResolver implements DataSchem
   }
 
   @Override
+  public DataSchemaLocation existingSchemaLocation(String name)
+  {
+    for (DataSchemaResolver resolver: _resolvers)
+    {
+      DataSchemaLocation result = resolver.existingSchemaLocation(name);
+      if (result != null)
+      {
+        return result;
+      }
+    }
+    return null;
+  }
+
+  @Override
   public boolean locationResolved(DataSchemaLocation location)
   {
     for (DataSchemaResolver resolver: _resolvers)
@@ -178,5 +194,16 @@ public abstract class AbstractMultiFormatDataSchemaResolver implements DataSchem
       results.putAll(resolver.getPendingSchemas());
     }
     return results;
+  }
+
+  @Override
+  public List<SchemaDirectory> getSchemaDirectories()
+  {
+    return _schemaDirectories;
+  }
+
+  public void setSchemaDirectories(List<SchemaDirectory> schemaDirectories)
+  {
+    _schemaDirectories = schemaDirectories;
   }
 }

@@ -29,6 +29,8 @@ public class RetriableRequestException extends RemoteInvocationException
 {
   private static final long serialVersionUID = 1L;
 
+  private boolean _doNotRetryOverride = false;
+
   /**
    * Construct a new instance.
    */
@@ -58,6 +60,20 @@ public class RetriableRequestException extends RemoteInvocationException
   }
 
   /**
+   * Construct a new instance with specified message, cause, and an option to disable
+   * stacktrace. Consider setting {@code writableStackTrace} to {@code false} to conserve
+   * computation cost if the stacktrace does not contribute meaningful insights.
+   *
+   * @param message the message to be used for this exception.
+   * @param cause the cause to be used for this exception.
+   * @param writableStackTrace the exception stacktrace is filled in if true; false otherwise.
+   */
+  public RetriableRequestException(String message, Throwable cause, boolean writableStackTrace)
+  {
+    super(message, cause, writableStackTrace);
+  }
+
+  /**
    * Construct a new instance with specified cause.
    *
    * @param cause the cause to be used for this exception.
@@ -65,5 +81,22 @@ public class RetriableRequestException extends RemoteInvocationException
   public RetriableRequestException(Throwable cause)
   {
     super(cause);
+  }
+
+  /**
+   * Based on the availability of entire backend cluster, a retriable request may be retried or not.
+   * The doNotRetryOverride flag will be set to true when {@link com.linkedin.r2.filter.transport.ClientRetryFilter}
+   * decides not to retry the request.
+   *
+   * @param doNotRetryOverride true if decided not to retry
+   */
+  public void setDoNotRetryOverride(boolean doNotRetryOverride)
+  {
+    _doNotRetryOverride = doNotRetryOverride;
+  }
+
+  public boolean getDoNotRetryOverride()
+  {
+   return _doNotRetryOverride;
   }
 }

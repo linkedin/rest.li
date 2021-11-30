@@ -1710,6 +1710,32 @@ public class TestDataTranslator
             false,
             "",
         },
+        // If complex field in pegasus schema has default value and it doesn't specify value for a nested required field,
+        // then the default value specified at field level should be used.
+        {
+            // required int with default value
+            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ "
+                + "{ \"name\" : \"bar\", \"type\" : "
+                + "{ \"type\": \"record\", \"name\": \"Bar\", \"fields\": ["
+                + " { \"name\": \"barInt\", \"type\": ##T_START \"int\" ##T_END, \"default\" : 42 }"
+                + " ] },"
+                + " \"default\": {}"
+                + " } ] }",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ "
+                + "{ \"name\" : \"bar\", \"type\" : "
+                + "{ \"type\": \"record\", \"name\": \"Bar\", \"fields\": ["
+                + " { \"name\": \"barInt\", \"type\": \"int\", \"default\" : 42 }"
+                + " ] },"
+                + " \"default\": { \"barInt\":42 }"
+                + " } ] }",
+            "{\"bar\":{\"barInt\":42}}",
+            PegasusToAvroDefaultFieldTranslationMode.TRANSLATE,
+            "{\"bar\":{\"barInt\":42}}",
+            false,
+            "",
+        },
+
 
         // Below are test case example for invalid option combination:
         // If the field in pegasus schema has been translated as required, its data cannot be translated as optional
@@ -1724,7 +1750,6 @@ public class TestDataTranslator
             true,
             "null of int in field bar of foo",
         },
-
         {
             // required Union of [int string] with default value
             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [\"int\", \"string\"] ##T_END, \"default\" : { \"int\" : 42 } } ] }",

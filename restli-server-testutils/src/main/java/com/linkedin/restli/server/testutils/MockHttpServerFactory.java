@@ -110,7 +110,7 @@ public class MockHttpServerFactory
                                   boolean enableAsync)
   {
     RestLiConfig config = createConfig(port);
-    Set<String> resourceClassNames = new HashSet<String>();
+    Set<String> resourceClassNames = new HashSet<>();
     for (Class<?> clazz: resourceClasses)
     {
       resourceClassNames.add(clazz.getName());

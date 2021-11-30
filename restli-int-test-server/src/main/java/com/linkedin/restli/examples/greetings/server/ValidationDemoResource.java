@@ -67,7 +67,7 @@ import java.util.Set;
 @ReadOnly({"stringA", "intA", "UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo1",
            "ArrayWithInlineRecord/*/bar1", "validationDemoNext/stringB", "validationDemoNext/UnionFieldWithInlineRecord"})
 @CreateOnly({"stringB", "intB", "UnionFieldWithInlineRecord/com.linkedin.restli.examples.greetings.api.myRecord/foo2",
-             "MapWithTyperefs/*/id"})
+             "MapWithTyperefs/*/id", "ArrayWithInlineRecord/*/bar3"})
 public class ValidationDemoResource implements KeyValueResource<Integer, ValidationDemo>
 {
   @RestMethod.Create
@@ -85,7 +85,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
   public BatchCreateResult<Integer, ValidationDemo> batchCreate(final BatchCreateRequest<Integer, ValidationDemo> entities,
                                                                 @ValidatorParam RestLiDataValidator validator)
   {
-    List<CreateResponse> results = new ArrayList<CreateResponse>();
+    List<CreateResponse> results = new ArrayList<>();
     int id = 0;
     for (ValidationDemo entity : entities.getInput())
     {
@@ -100,7 +100,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
         results.add(new CreateResponse(new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, result.getMessages().toString())));
       }
     }
-    return new BatchCreateResult<Integer, ValidationDemo>(results);
+    return new BatchCreateResult<>(results);
   }
 
   @RestMethod.Update
@@ -118,8 +118,8 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
   public BatchUpdateResult<Integer, ValidationDemo> batchUpdate(final BatchUpdateRequest<Integer, ValidationDemo> entities,
                                                                 @ValidatorParam RestLiDataValidator validator)
   {
-    Map<Integer, UpdateResponse> results = new HashMap<Integer, UpdateResponse>();
-    Map<Integer, RestLiServiceException> errors = new HashMap<Integer, RestLiServiceException>();
+    Map<Integer, UpdateResponse> results = new HashMap<>();
+    Map<Integer, RestLiServiceException> errors = new HashMap<>();
     for (Map.Entry<Integer, ValidationDemo> entry : entities.getData().entrySet())
     {
       Integer key = entry.getKey();
@@ -134,7 +134,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
         errors.put(key, new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, result.getMessages().toString()));
       }
     }
-    return new BatchUpdateResult<Integer, ValidationDemo>(results, errors);
+    return new BatchUpdateResult<>(results, errors);
   }
 
   @RestMethod.PartialUpdate
@@ -157,8 +157,8 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
   public BatchUpdateResult<Integer, ValidationDemo> batchUpdate(final BatchPatchRequest<Integer, ValidationDemo> entityUpdates,
                                                                 @ValidatorParam RestLiDataValidator validator)
   {
-    Map<Integer, UpdateResponse> results = new HashMap<Integer, UpdateResponse>();
-    Map<Integer, RestLiServiceException> errors = new HashMap<Integer, RestLiServiceException>();
+    Map<Integer, UpdateResponse> results = new HashMap<>();
+    Map<Integer, RestLiServiceException> errors = new HashMap<>();
     for (Map.Entry<Integer, PatchRequest<ValidationDemo>> entry : entityUpdates.getData().entrySet())
     {
       Integer key = entry.getKey();
@@ -173,7 +173,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
         errors.put(key, new RestLiServiceException(HttpStatus.S_422_UNPROCESSABLE_ENTITY, result.getMessages().toString()));
       }
     }
-    return new BatchUpdateResult<Integer, ValidationDemo>(results, errors);
+    return new BatchUpdateResult<>(results, errors);
   }
 
   private void check(boolean condition)
@@ -212,7 +212,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
   @RestMethod.BatchGet
   public Map<Integer, ValidationDemo> batchGet(Set<Integer> ids, @ValidatorParam RestLiDataValidator validator)
   {
-    Map<Integer, ValidationDemo> resultMap = new HashMap<Integer, ValidationDemo>();
+    Map<Integer, ValidationDemo> resultMap = new HashMap<>();
 
     // Generate entities that are missing a required field
     for (Integer id : ids)
@@ -250,7 +250,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
   @RestMethod.GetAll
   public List<ValidationDemo> getAll(@ValidatorParam RestLiDataValidator validator)
   {
-    List<ValidationDemo> validationDemos = new ArrayList<ValidationDemo>();
+    List<ValidationDemo> validationDemos = new ArrayList<>();
 
     // Generate entities with stringA fields that are too long
     for (int i = 0; i < 10; i++)
@@ -288,7 +288,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
   @Finder("search")
   public List<ValidationDemo> search(@QueryParam("intA") Integer intA, @ValidatorParam RestLiDataValidator validator)
   {
-    List<ValidationDemo> validationDemos = new ArrayList<ValidationDemo>();
+    List<ValidationDemo> validationDemos = new ArrayList<>();
 
     // Generate entities that are missing stringB fields
     for (int i = 0; i < 3; i++)
@@ -331,7 +331,7 @@ public class ValidationDemoResource implements KeyValueResource<Integer, Validat
 
 
     for (ValidationDemoCriteria currentCriteria : criteria) {
-      List<ValidationDemo> validationDemos = new ArrayList<ValidationDemo>();
+      List<ValidationDemo> validationDemos = new ArrayList<>();
 
       // Generate entities that are missing stringB fields
       for (int i = 0; i < 3; i++)

@@ -1,0 +1,9 @@
+record JobExtensions includes
+record Job {
+  name: string,
+  id: long
+}
+{
+  @extension.params = {"id" : "$URN.jobId"}
+  testField: typeref BarUrn = string
+}

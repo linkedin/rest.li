@@ -1,0 +1,8 @@
+/**
+ * Invalid extension schema:
+ * The field name - "injectedField" has already defined in the included schema - Baz.
+ */
+record BazExtensions includes Baz {
+  @extension.using = "finder: test"
+  injectedField: array[DummyKey]
+}

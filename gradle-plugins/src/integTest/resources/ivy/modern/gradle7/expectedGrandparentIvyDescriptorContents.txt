@@ -1,0 +1,22 @@
+  <configurations>
+    <conf name="compile" visibility="public"/>
+    <conf name="dataTemplate" visibility="public" extends="mainGeneratedDataTemplateApiElements,mainGeneratedDataTemplateRuntimeElements"/>
+    <conf name="default" visibility="public" extends="runtime"/>
+    <conf name="mainGeneratedDataTemplateApiElements" visibility="public"/>
+    <conf name="mainGeneratedDataTemplateRuntimeElements" visibility="public"/>
+    <conf name="runtime" visibility="public"/>
+    <conf name="testDataTemplate" visibility="public" extends="testGeneratedDataTemplateApiElements,testGeneratedDataTemplateRuntimeElements"/>
+    <conf name="testGeneratedDataTemplateApiElements" visibility="public"/>
+    <conf name="testGeneratedDataTemplateRuntimeElements" visibility="public"/>
+  </configurations>
+  <publications>
+    <artifact name="grandparent" type="jar" ext="jar" conf="compile,runtime"/>
+    <artifact name="grandparent" type="jar" ext="jar" conf="mainGeneratedDataTemplateApiElements,mainGeneratedDataTemplateRuntimeElements" m:classifier="data-template"/>
+    <artifact name="grandparent" type="jar" ext="jar" conf="testGeneratedDataTemplateApiElements,testGeneratedDataTemplateRuntimeElements" m:classifier="test-data-template"/>
+  </publications>
+  <dependencies>
+    <dependency org="com.google.code.findbugs" name="jsr305" rev="3.0.2" conf="mainGeneratedDataTemplateApiElements-&gt;default"/>
+    <dependency org="com.google.code.findbugs" name="jsr305" rev="3.0.2" conf="mainGeneratedDataTemplateRuntimeElements-&gt;default"/>
+    <dependency org="com.google.code.findbugs" name="jsr305" rev="3.0.2" conf="testGeneratedDataTemplateApiElements-&gt;default"/>
+    <dependency org="com.google.code.findbugs" name="jsr305" rev="3.0.2" conf="testGeneratedDataTemplateRuntimeElements-&gt;default"/>
+  </dependencies>

@@ -1,0 +1,59 @@
+#*
+Copyright (c) 2021 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*#
+#if ($spec.resource.namespace)
+    package $spec.resource.namespace;
+#end
+#foreach($import in $spec.importsForMethods)
+    import ${import};
+#end
+import com.linkedin.data.schema.MaskMap;
+import com.linkedin.restli.common.ResourceSpec;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import javax.annotation.Generated;
+import com.linkedin.restli.client.ExecutionGroup;
+
+
+@Generated("Generated from $spec.sourceIdlName")
+public interface ${spec.className} {
+    ## this Interface can be used directly as fluentAPI's interface
+    ## or it can be used by Universal Client
+
+
+## Method interfaces:
+#set($is_interface=true)
+#parseMethodsFromTemplates
+
+#if(${spec.getResource().hasAssociation()})
+    #assocCompoundKeyGenInterface($spec)
+#end
+
+## recursively build subresource interfaces
+## TODO: should correct the indentation
+#foreach($subSpec in $spec.childSubResourceSpecs)
+#**##subResourceInterface($subSpec)##
+#end
+
+}

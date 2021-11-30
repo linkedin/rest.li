@@ -118,7 +118,7 @@ public class TestGroupsRequestBuilders
   public void testEntityUpdate(RootBuilderWrapper<Integer, Group> builders, URIDetails expectedURIDetails)
     throws IOException, RestException
   {
-    Request<EmptyRecord>  request = builders.partialUpdate().id(1).input(new PatchRequest<Group>()).build();
+    Request<EmptyRecord>  request = builders.partialUpdate().id(1).input(new PatchRequest<>()).build();
     checkRequestBuilder(request, ResourceMethod.PARTIAL_UPDATE, EmptyResponseDecoder.class, expectedURIDetails, new Group());
   }
 
@@ -386,9 +386,9 @@ public class TestGroupsRequestBuilders
       .setActionParam("Request", ownershipRequest)
       .build();
 
-    Map<FieldDef<?> , Object> parameters = new HashMap<FieldDef<?> , Object>(1);
-    parameters.put(new FieldDef<TransferOwnershipRequest>("request", TransferOwnershipRequest.class,
-                                                          DataTemplateUtil.getSchema(TransferOwnershipRequest.class)), ownershipRequest);
+    Map<FieldDef<?> , Object> parameters = new HashMap<>(1);
+    parameters.put(new FieldDef<>("request", TransferOwnershipRequest.class,
+        DataTemplateUtil.getSchema(TransferOwnershipRequest.class)), ownershipRequest);
     DynamicRecordTemplate requestInput = createDynamicRecordTemplate("transferOwnership", parameters);
     checkRequestBuilder(request, ResourceMethod.ACTION, ActionResponseDecoder.class, expectedURIDetails, requestInput);
   }
@@ -519,7 +519,7 @@ public class TestGroupsRequestBuilders
   {
     Request<Void> request = builders.<Void>action("SpamContacts").setPathKey("groupId", 42).build();
 
-    Map<FieldDef<?> , Object> parameters = new HashMap<FieldDef<?> , Object>(1);
+    Map<FieldDef<?> , Object> parameters = new HashMap<>(1);
     DynamicRecordTemplate requestInput = createDynamicRecordTemplate("spamContacts", parameters);
     checkRequestBuilder(request, ResourceMethod.ACTION, ActionResponseDecoder.class, expectedURIDetails, requestInput);
   }
@@ -570,7 +570,7 @@ public class TestGroupsRequestBuilders
     //"groups/1?fields=badge"
     //"groups/1?fields=badge"
 
-    final Set<String> fieldSet = new HashSet<String>();
+    final Set<String> fieldSet = new HashSet<>();
     fieldSet.add("badge");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "groups/1",
@@ -613,11 +613,11 @@ public class TestGroupsRequestBuilders
     //"groups?count=10&emailDomain=foo.com&fields=locale,state&q=emailDomain&start=0"
     //"groups?count=10&emailDomain=foo.com&fields=locale,state&q=emailDomain&start=0"
 
-    final Set<String> fieldSet = new HashSet<String>();
+    final Set<String> fieldSet = new HashSet<>();
     fieldSet.add("locale");
     fieldSet.add("state");
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("count", "10");
     queryParamsMap.put("emailDomain", "foo.com");
     queryParamsMap.put("q", "emailDomain");
@@ -644,7 +644,7 @@ public class TestGroupsRequestBuilders
     //"groups?managerMemberID=1&q=manager"
     //"groups?managerMemberID=1&q=manager"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("managerMemberID", "1");
     queryParamsMap.put("q", "manager");
 
@@ -669,7 +669,7 @@ public class TestGroupsRequestBuilders
     //"groups?groupID=1&keywords=linkedin&nameKeywords=test&q=search"
     //"groups?groupID=1&keywords=linkedin&nameKeywords=test&q=search"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("groupID", "1");
     queryParamsMap.put("keywords", "linkedin");
     queryParamsMap.put("nameKeywords", "test");
@@ -696,7 +696,7 @@ public class TestGroupsRequestBuilders
     //"groups?keywords=linkedin&q=search"
     //"groups?keywords=linkedin&q=search"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("keywords", "linkedin");
     queryParamsMap.put("q", "search");
 
@@ -721,7 +721,7 @@ public class TestGroupsRequestBuilders
     //"groups?keywords=linkedin&nameKeywords=test&q=search"
     //"groups?keywords=linkedin&nameKeywords=test&q=search"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("keywords", "linkedin");
     queryParamsMap.put("nameKeywords", "test");
     queryParamsMap.put("q", "search");
@@ -747,7 +747,7 @@ public class TestGroupsRequestBuilders
     //"groups?groupID=1&q=search"
     //"groups?groupID=1&q=search"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("groupID", "1");
     queryParamsMap.put("q", "search");
 
@@ -772,10 +772,10 @@ public class TestGroupsRequestBuilders
     //"groups?fields=approvalModes&ids=1&ids=3"
     //"groups?fields=approvalModes&ids=List(1,3)"
 
-    final Set<String> fieldSet = new HashSet<String>();
+    final Set<String> fieldSet = new HashSet<>();
     fieldSet.add("approvalModes");
 
-    final Set<String> idSet = new HashSet<String>();
+    final Set<String> idSet = new HashSet<>();
     idSet.add("1");
     idSet.add("3");
 
@@ -819,7 +819,7 @@ public class TestGroupsRequestBuilders
     //"groups/1/contacts/1?fields=lastName,firstName"
     //"groups/1/contacts/1?fields=lastName,firstName"
 
-    final Set<String> fieldSet = new HashSet<String>();
+    final Set<String> fieldSet = new HashSet<>();
     fieldSet.add("lastName");
     fieldSet.add("firstName");
 
@@ -844,7 +844,7 @@ public class TestGroupsRequestBuilders
     //"groups/1/contacts?ids=1&ids=3"
     //"groups/1/contacts?ids=List(1,3)"
 
-    final Set<String> idSet = new HashSet<String>();
+    final Set<String> idSet = new HashSet<>();
     idSet.add("1");
     idSet.add("3");
 
@@ -886,7 +886,7 @@ public class TestGroupsRequestBuilders
     //"groups/1?action=transferOwnership"
     //"groups/1?action=transferOwnership"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("action", "transferOwnership");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), "groups/1",
@@ -933,12 +933,12 @@ public class TestGroupsRequestBuilders
 
     //Note that we need two different ID sets, one for V1 and one for V2 since batch operations on compound keys
     //are unique.
-    final Set<String> idSetV1 = new HashSet<String>();
+    final Set<String> idSetV1 = new HashSet<>();
     idSetV1.add("groupID=2&memberID=1");
     idSetV1.add("groupID=2&memberID=2");
     idSetV1.add("groupID=1&memberID=1");
 
-    final Set<DataMap> idSetV2 = new HashSet<DataMap>();
+    final Set<DataMap> idSetV2 = new HashSet<>();
     final DataMap id1 = new DataMap();
     id1.put("groupID", "2");
     id1.put("memberID", "1");
@@ -971,7 +971,7 @@ public class TestGroupsRequestBuilders
     //"groupMemberships/memberID=1?q=member"
     //"groupMemberships/(memberID:1)?q=member"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("q", "member");
 
     final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
@@ -995,7 +995,7 @@ public class TestGroupsRequestBuilders
     //"groupMemberships/groupID=1?email=bruce@test.linkedin.com&firstName=Bruce&lastName=Willis&level=MEMBER&q=group&sort=LAST_NAME_ASC"
     //"groupMemberships/(groupID:1)?email=bruce@test.linkedin.com&firstName=Bruce&lastName=Willis&level=MEMBER&q=group&sort=LAST_NAME_ASC"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("email", "bruce@test.linkedin.com");
     queryParamsMap.put("firstName", "Bruce");
     queryParamsMap.put("lastName", "Willis");
@@ -1024,7 +1024,7 @@ public class TestGroupsRequestBuilders
     //"groupMemberships/groupID=1?firstName=Bruce&q=group"
     //"groupMemberships/(groupID:1)?firstName=Bruce&q=group"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("firstName", "Bruce");
     queryParamsMap.put("q", "group");
 
@@ -1082,10 +1082,10 @@ public class TestGroupsRequestBuilders
     //"groups/42/contacts?action=spamContacts"
     //"groups/42/contacts?action=spamContacts"
 
-    final Map<String, String> queryParamsMap = new HashMap<String, String>();
+    final Map<String, String> queryParamsMap = new HashMap<>();
     queryParamsMap.put("action", "spamContacts");
 
-    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(), 
+    final URIDetails uriDetails1 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_1_0_0.getProtocolVersion(),
         "groups/42/contacts", null, queryParamsMap, null);
 
     final URIDetails uriDetails2 = new URIDetails(AllProtocolVersions.RESTLI_PROTOCOL_2_0_0.getProtocolVersion(),

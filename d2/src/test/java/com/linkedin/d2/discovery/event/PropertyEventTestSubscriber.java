@@ -35,7 +35,7 @@ public class PropertyEventTestSubscriber implements PropertyEventSubscriber<Stri
 
   public PropertyEventTestSubscriber()
   {
-    properties = new HashMap<String, String>();
+    properties = new HashMap<>();
   }
 
   @Override
