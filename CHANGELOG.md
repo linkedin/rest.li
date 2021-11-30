@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Deprecate `FileFormatDataSchemaParser#new(String, DataSchemaResolver, DataSchemaParserFactory)`. 
 - Remove unused configurations "dataTemplateGenerator", "restTools", and "avroSchemaGenerator".
 
 ## [29.22.14] - 2021-11-24
