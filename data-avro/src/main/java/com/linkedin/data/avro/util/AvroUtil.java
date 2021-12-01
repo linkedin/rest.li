@@ -31,14 +31,20 @@ public class AvroUtil
 {
   public static String jsonFromGenericRecord(GenericRecord record) throws IOException
   {
+    return jsonFromGenericRecord(record, true);
+  }
+
+  public static String jsonFromGenericRecord(GenericRecord record, boolean pretty) throws IOException
+  {
     GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>();
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    Encoder jsonEncoder = AvroCompatibilityHelper.newJsonEncoder(record.getSchema(), outputStream, true);
+    Encoder jsonEncoder = AvroCompatibilityHelper.newJsonEncoder(record.getSchema(), outputStream,pretty);
     writer.setSchema(record.getSchema());
     writer.write(record, jsonEncoder);
     jsonEncoder.flush();
     return outputStream.toString();
   }
+
 
   public static byte[] bytesFromGenericRecord(GenericRecord record) throws IOException
   {
