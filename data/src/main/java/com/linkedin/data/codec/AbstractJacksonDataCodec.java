@@ -59,7 +59,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
    * <a href="https://github.com/FasterXML/jackson-docs/wiki/Presentation:-Jackson-Performance">Jackson Performance</a>
    */
   public static final JsonFactoryBuilder JSON_FACTORY_BUILDER = new JsonFactoryBuilder();
-  public static JsonFactory JSON_FACTORY;
+  public static final JsonFactory JSON_FACTORY;
   static {
     // Disable string interning by default since it causes GC issues.
     JSON_FACTORY_BUILDER.configure(JsonFactory.Feature.INTERN_FIELD_NAMES, false);
