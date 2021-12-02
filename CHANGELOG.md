@@ -16,6 +16,15 @@ and what APIs have changed, if applicable.
 - Update Gradle version compatibility in the `pegasus` Gradle plugin.
   - Minimum required Gradle version is now `5.2.1`
   - Minimum suggested Gradle version is now `5.3`
+- Delete the mainCopyPdscSchemas Gradle task. mainCopySchemas is the replacement.
+- Delete the mainDestroyStaleSchemas Gradle task. mainCopySchemas is the replacement.
+- Remove unused configurations "dataTemplateGenerator", "restTools", and "avroSchemaGenerator".
+- Remove Guava dependency from `data-avro` module
+
+## [29.22.15] - 2021-11-30
+- Add mock response generator factory for BATCH_FINDER methods.
+- Deprecate `FileFormatDataSchemaParser#new(String, DataSchemaResolver, DataSchemaParserFactory)`. 
+- Add file existence check before performing compatibility report check during snapshot and restmodel publishing
 
 ## [29.22.14] - 2021-11-24
 - Fix bug where content type was not set for stream requests
@@ -5132,7 +5141,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.14...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.15...master
+[29.22.15]: https://github.com/linkedin/rest.li/compare/v29.22.14...v29.22.15
 [29.22.14]: https://github.com/linkedin/rest.li/compare/v29.22.13...v29.22.14
 [29.22.13]: https://github.com/linkedin/rest.li/compare/v29.22.12...v29.22.13
 [29.22.12]: https://github.com/linkedin/rest.li/compare/v29.22.11...v29.22.12
