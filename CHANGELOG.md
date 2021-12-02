@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Remove Guava dependency from `data-avro` module.
 
 ## [29.22.15] - 2021-11-30
 - Add mock response generator factory for BATCH_FINDER methods.
