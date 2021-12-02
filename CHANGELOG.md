@@ -17,7 +17,7 @@ and what APIs have changed, if applicable.
 ## [29.22.15] - 2021-11-30
 - Add mock response generator factory for BATCH_FINDER methods.
 - Deprecate `FileFormatDataSchemaParser#new(String, DataSchemaResolver, DataSchemaParserFactory)`. 
-- Write empty compatibility check report during snapshot check when there is not file to be processed
+- Add file existence check before performing compatibility report check during snapshot and restmodel publishing
 
 ## [29.22.14] - 2021-11-24
 - Fix bug where content type was not set for stream requests
