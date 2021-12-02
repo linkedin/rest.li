@@ -2437,6 +2437,10 @@ public final class RestLiAnnotationReader
     return returnTyperefSchema;
   }
 
+  /**
+   * Returns the logical return class of the given Action method. Unwraps the type from the enclosing Task/Callback/etc
+   * and the surrounding ActionResult, if present.
+   */
   private static Class<?> getActionReturnClass(ResourceModel model, Method method, Action actionAnno, String actionName)
   {
     final Type returnType = getLogicalReturnType(method);
@@ -2504,7 +2508,7 @@ public final class RestLiAnnotationReader
    * Checks that a action method's return type is allowed.
    * @param model provides the resource model the method is being validated for, used for context.
    * @param method provides the action method to validate.
-   * @param returnClass provides the declared return type of the method.
+   * @param returnClass provides the declared return type of the method (unwrapped from Task/Callback/etc and ActionResult).
    * @param returnTyperefSchema provides the schema of the returnTyperef declared on the method's @Action annotation, or null if returnTyperef is absent.
    * @throws ResourceConfigException on validation errors.
    */
@@ -2513,17 +2517,13 @@ public final class RestLiAnnotationReader
                                                Class<?> returnClass,
                                                TyperefDataSchema returnTyperefSchema)
   {
-    if (returnTyperefSchema == null)
+    if (returnTyperefSchema == null && !checkParameterType(returnClass, RestModelConstants.VALID_ACTION_RETURN_TYPES))
     {
-      Class<?> returnType = getLogicalReturnClass(method);
-
-      if (!checkParameterType(returnType, RestModelConstants.VALID_ACTION_RETURN_TYPES))
-      {
-        throw new ResourceConfigException("@Action method '" + method.getName()
-            + "' on class '" + method.getDeclaringClass().getName()
-            + "' has an invalid return type '" + returnType.getName()
-            + "'. Expected a DataTemplate or a primitive");
-      }
+      throw new ResourceConfigException("@Action method '" + method.getName()
+          + "' on class '" + method.getDeclaringClass().getName()
+          + "' has an invalid return type '" + returnClass.getName()
+          + "'. Expected a DataTemplate or a primitive,"
+          + " or expected returnTyperef to be specified in the @Action annotation.");
     }
 
     final String checkTyperefMessage = checkTyperefSchema(returnClass, returnTyperefSchema);
