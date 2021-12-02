@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Upgrade Avro dependency to 1.9.2. Remove Avro adapters for Avro 1.4/1.6 and related module.
 - Fix build-time validation of Action methods that return custom typerefs (e.g. `CustomLong`) yet don't indicate the
   corresponding typeref class (e.g. `CustomLongRef.class`) in the `@Action` annotation.
   - Clearly state that the `returnTyperef` annotation element is required for custom tyeprefs.
