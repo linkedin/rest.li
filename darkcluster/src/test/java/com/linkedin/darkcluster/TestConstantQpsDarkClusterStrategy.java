@@ -17,11 +17,8 @@
 package com.linkedin.darkcluster;
 
 import com.linkedin.darkcluster.impl.ConstantQpsDarkClusterStrategy;
-import com.linkedin.r2.transport.http.client.CallbackWrappingConstantQpsRateLimiterFactory;
 import com.linkedin.r2.transport.http.client.ConstantQpsRateLimiter;
 import com.linkedin.r2.transport.http.client.EvictingCircularBuffer;
-import com.linkedin.r2.transport.http.client.SharedBufferConstantQpsRateLimiterFactory;
-import com.linkedin.r2.transport.http.client.ratelimiter.NoOpCallbackWrapper;
 import com.linkedin.test.util.ClockedExecutor;
 import com.linkedin.util.clock.Clock;
 import java.net.URI;
@@ -36,6 +33,7 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -44,7 +42,7 @@ import org.testng.annotations.Test;
 public class TestConstantQpsDarkClusterStrategy
 {
   private static final String SOURCE_CLUSTER_NAME = "FooCluster";
-  private static final String DARK_CLUSTER_NAME = "fooCluster-dark";
+  private static final String DARK_CLUSTER_NAME_ONE = "fooCluster-dark";
   private static final String DARK_CLUSTER_NAME_TWO = "fooCluster-darkAlso";
   private static final String DARK_CLUSTER_NAME_THREE = "fooCluster-darkAlsoAsWell";
   private static final float ERR_PCT = 0.99f; // 1%
@@ -87,49 +85,65 @@ public class TestConstantQpsDarkClusterStrategy
     IntStream.of(1, 1000, 1000000).forEach(capacity ->
     {
       DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcher(new MockClient(false));
-      BaseDarkClusterDispatcherImpl baseDispatcher = new BaseDarkClusterDispatcherImpl(DARK_CLUSTER_NAME,
+      ClockedExecutor executor = new ClockedExecutor();
+      Supplier<ConstantQpsRateLimiter> uniqueRateLimiterSupplier = () -> {
+        EvictingCircularBuffer uniqueBuffer = TestConstantQpsDarkClusterStrategy.getBuffer(executor);
+        ConstantQpsRateLimiter limiter = new ConstantQpsRateLimiter(executor, executor, executor, uniqueBuffer);
+        limiter.setBufferCapacity(capacity);
+        limiter.setBufferTtl(Integer.MAX_VALUE, ChronoUnit.DAYS);
+        return limiter;
+      };
+      ConstantQpsRateLimiter sharedRateLimiter = uniqueRateLimiterSupplier.get();
+      Supplier<ConstantQpsRateLimiter> sharedRateLimiterSupplier = () -> sharedRateLimiter;
+      MockClusterInfoProvider mockClusterInfoProvider = new MockClusterInfoProvider();
+      mockClusterInfoProvider.putHttpsClusterCount(SOURCE_CLUSTER_NAME, numSourceInstances);
+
+      // dark cluster 1
+      BaseDarkClusterDispatcherImpl baseDispatcherOne = new BaseDarkClusterDispatcherImpl(DARK_CLUSTER_NAME_ONE,
           darkClusterDispatcher,
           new DoNothingNotifier(),
           new CountingVerifierManager());
-      MockClusterInfoProvider mockClusterInfoProvider = new MockClusterInfoProvider();
-      mockClusterInfoProvider.putHttpsClusterCount(DARK_CLUSTER_NAME, numDarkInstances);
-      mockClusterInfoProvider.putHttpsClusterCount(SOURCE_CLUSTER_NAME, numSourceInstances);
-      ClockedExecutor executor = new ClockedExecutor();
+      mockClusterInfoProvider.putHttpsClusterCount(DARK_CLUSTER_NAME_ONE, numDarkInstances);
+      ConstantQpsRateLimiter rateLimiterOne = sharedRateLimiterSupplier.get();
 
-      CallbackWrappingConstantQpsRateLimiterFactory rateLimiterFactory =
-          new CallbackWrappingConstantQpsRateLimiterFactory(executor, executor, executor, new NoOpCallbackWrapper());
+      // dark cluster 2
+      BaseDarkClusterDispatcherImpl baseDispatcherTwo = new BaseDarkClusterDispatcherImpl(DARK_CLUSTER_NAME_TWO,
+          darkClusterDispatcher,
+          new DoNothingNotifier(),
+          new CountingVerifierManager());
+      mockClusterInfoProvider.putHttpsClusterCount(DARK_CLUSTER_NAME_TWO, numDarkInstances);
+      ConstantQpsRateLimiter rateLimiterTwo = sharedRateLimiterSupplier.get();
 
-      EvictingCircularBuffer buffer = TestConstantQpsDarkClusterStrategy.getBuffer(executor);
-      ConstantQpsRateLimiter rateLimiter =
-          new ConstantQpsRateLimiter(executor, executor, executor, buffer);
-      rateLimiter.setBufferCapacity(capacity);
-      rateLimiter.setBufferTtl(Integer.MAX_VALUE, ChronoUnit.DAYS);
-
-      SharedBufferConstantQpsRateLimiterFactory sharedRateLimiterFactory =
-          new SharedBufferConstantQpsRateLimiterFactory(rateLimiter);
+      // dark cluster 3
+      BaseDarkClusterDispatcherImpl baseDispatcherThree = new BaseDarkClusterDispatcherImpl(DARK_CLUSTER_NAME_THREE,
+          darkClusterDispatcher,
+          new DoNothingNotifier(),
+          new CountingVerifierManager());
+      mockClusterInfoProvider.putHttpsClusterCount(DARK_CLUSTER_NAME_THREE, numDarkInstances);
+      ConstantQpsRateLimiter rateLimiterThree = uniqueRateLimiterSupplier.get();
 
       List<ConstantQpsDarkClusterStrategy> strategies = new ArrayList<>();
       strategies.add(new ConstantQpsDarkClusterStrategy(SOURCE_CLUSTER_NAME,
-          DARK_CLUSTER_NAME,
+          DARK_CLUSTER_NAME_ONE,
           outboundQps,
-          baseDispatcher,
+          baseDispatcherOne,
           new DoNothingNotifier(),
           mockClusterInfoProvider,
-          sharedRateLimiterFactory.getRateLimiter(TEST_CAPACITY, TEST_TTL, TEST_TTL_UNIT)));
+          rateLimiterOne));
       strategies.add(new ConstantQpsDarkClusterStrategy(SOURCE_CLUSTER_NAME,
           DARK_CLUSTER_NAME_TWO,
           outboundQps,
-          baseDispatcher,
+          baseDispatcherTwo,
           new DoNothingNotifier(),
           mockClusterInfoProvider,
-          sharedRateLimiterFactory.getRateLimiter(TEST_CAPACITY, TEST_TTL, TEST_TTL_UNIT)));
+          rateLimiterTwo));
       strategies.add(new ConstantQpsDarkClusterStrategy(SOURCE_CLUSTER_NAME,
           DARK_CLUSTER_NAME_THREE,
           outboundQps,
-          baseDispatcher,
+          baseDispatcherThree,
           new DoNothingNotifier(),
           mockClusterInfoProvider,
-          rateLimiterFactory.getRateLimiter(TEST_CAPACITY, TEST_TTL, TEST_TTL_UNIT)));
+          rateLimiterThree));
 
       // simulate receiving the configured qps while dispatching over the duration
       int msBetweenEachInboundRequest = (int) (1000 / inboundQps);
@@ -142,10 +156,19 @@ public class TestConstantQpsDarkClusterStrategy
         }
         executor.runFor(msBetweenEachInboundRequest);
       }
-      // Multiply by 2. Even though we are dispatching for 3 ConstantQpsDarkClusterStrategies, two of them are sharing a common ratelimiter.
-      int expectedCount = (int) (2 * (((duration == 0 ? 0 : duration / 1000.0) * outboundQps * numDarkInstances)/ (double) (numSourceInstances)));
-      int actualCount = baseDispatcher.getRequestCount();
-      Assert.assertEquals(actualCount, expectedCount, expectedCount * ERR_PCT, "count not within expected range");
+      double validation = ((duration == 0 ? 0 : duration / 1000.0) * outboundQps * numDarkInstances)/ (double) (numSourceInstances);
+      // Cluster One and Two share a rate limiter, so their combined QPS should match the expected value.
+      int actualCountClusterOne = baseDispatcherOne.getRequestCount();
+      int actualCountClusterTwo = baseDispatcherTwo.getRequestCount();
+      int expectedCountClusterOneAndTwo = (int) validation;
+      Assert.assertEquals(actualCountClusterOne + actualCountClusterTwo,
+                          expectedCountClusterOneAndTwo, expectedCountClusterOneAndTwo * ERR_PCT,
+                          "count not within expected range");
+
+      // Cluster Three uses its own so it matches the expected value on its own.
+      int expectedCountClusterThree = (int) validation;
+      int actualCountClusterThree = baseDispatcherThree.getRequestCount();
+      Assert.assertEquals(actualCountClusterThree, expectedCountClusterThree, expectedCountClusterThree * ERR_PCT, "count not within expected range");
     });
   }
 
