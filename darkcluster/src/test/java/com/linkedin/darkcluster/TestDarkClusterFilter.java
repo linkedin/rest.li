@@ -56,6 +56,8 @@ import com.linkedin.r2.message.rest.RestResponseBuilder;
 import static com.linkedin.darkcluster.DarkClusterTestUtil.createRelativeTrafficMultiplierConfig;
 import static com.linkedin.darkcluster.TestDarkClusterStrategyFactory.DARK_CLUSTER_NAME;
 import static com.linkedin.darkcluster.TestDarkClusterStrategyFactory.SOURCE_CLUSTER_NAME;
+
+import java.util.function.Supplier;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -72,7 +74,7 @@ public class TestDarkClusterFilter
   private DarkClusterVerifier _darkClusterVerifier = new NoOpDarkClusterVerifier();
   private DarkClusterVerifierManager _verifierManager = new DarkClusterVerifierManagerImpl(_darkClusterVerifier, _executorService);
   Clock clock = SystemClock.instance();
-  private ConstantQpsRateLimiter _rateLimiter = new ConstantQpsRateLimiter(
+  private Supplier<ConstantQpsRateLimiter> _rateLimiterSupplier = () -> new ConstantQpsRateLimiter(
       _scheduledExecutorService, _executorService, clock, new EvictingCircularBuffer(1, 1, ChronoUnit.SECONDS, clock));
   private Random _random = new Random();
   private DarkClusterFilter _darkClusterFilter;
@@ -88,7 +90,7 @@ public class TestDarkClusterFilter
     _darkClusterStrategyFactory = new DarkClusterStrategyFactoryImpl(_facilities, SOURCE_CLUSTER_NAME,
                                                                                                _darkClusterDispatcher,
                                                                                                _notifier, _random,
-                                                                                               _verifierManager, _rateLimiter);
+                                                                                               _verifierManager, _rateLimiterSupplier);
 
     DarkClusterManager darkClusterManager = new DarkClusterManagerImpl(SOURCE_CLUSTER_NAME,
                                                                        _facilities,
@@ -121,7 +123,7 @@ public class TestDarkClusterFilter
     _darkClusterStrategyFactory = new DarkClusterStrategyFactoryImpl(_facilities, SOURCE_CLUSTER_NAME,
                                                                      _darkClusterDispatcher,
                                                                      _notifier, _random,
-                                                                     _verifierManager, _rateLimiter);
+                                                                     _verifierManager, _rateLimiterSupplier);
     _darkClusterStrategyFactory.start();
     DarkClusterManager darkClusterManager = new DarkClusterManagerImpl(SOURCE_CLUSTER_NAME,
                                                                        _facilities,
