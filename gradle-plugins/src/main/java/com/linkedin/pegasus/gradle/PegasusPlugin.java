@@ -1345,11 +1345,13 @@ public class PegasusPlugin implements Plugin<Project>
                       (
                          isPropertyTrue(project, SKIP_IDL_CHECK) &&
                          isTaskSuccessful(checkSnapshotTask) &&
+                         checkSnapshotTask.getSummaryTarget().exists() &&
                          !isResultEquivalent(checkSnapshotTask.getSummaryTarget())
                       ) ||
                       (
                         !isPropertyTrue(project, SKIP_IDL_CHECK) &&
                         isTaskSuccessful(checkRestModelTask) &&
+                         checkRestModelTask.getSummaryTarget().exists() &&
                         !isResultEquivalent(checkRestModelTask.getSummaryTarget())
                       )
                     ));
@@ -1368,13 +1370,18 @@ public class PegasusPlugin implements Plugin<Project>
                       (
                          isPropertyTrue(project, SKIP_IDL_CHECK) &&
                          isTaskSuccessful(checkSnapshotTask) &&
+                         checkSnapshotTask.getSummaryTarget().exists() &&
                          !isResultEquivalent(checkSnapshotTask.getSummaryTarget(), true)
                       ) ||
                       (
                          !isPropertyTrue(project, SKIP_IDL_CHECK) &&
                          (
-                            (isTaskSuccessful(checkRestModelTask) && !isResultEquivalent(checkRestModelTask.getSummaryTarget(), true)) ||
-                            (isTaskSuccessful(checkIdlTask) && !isResultEquivalent(checkIdlTask.getSummaryTarget()))
+                            (isTaskSuccessful(checkRestModelTask) &&
+                                checkRestModelTask.getSummaryTarget().exists() &&
+                                !isResultEquivalent(checkRestModelTask.getSummaryTarget(), true)) ||
+                            (isTaskSuccessful(checkIdlTask) &&
+                                checkIdlTask.getSummaryTarget().exists() &&
+                                !isResultEquivalent(checkIdlTask.getSummaryTarget()))
                          )
                       )
                     ));
