@@ -15,6 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 - Add mock response generator factory for BATCH_FINDER methods.
 - Deprecate `FileFormatDataSchemaParser#new(String, DataSchemaResolver, DataSchemaParserFactory)`. 
+- Upgrade Avro dependency to 1.9.2. Remove Avro adapters for Avro 1.4/1.6 and related module.
 
 ## [29.22.14] - 2021-11-24
 - Fix bug where content type was not set for stream requests
