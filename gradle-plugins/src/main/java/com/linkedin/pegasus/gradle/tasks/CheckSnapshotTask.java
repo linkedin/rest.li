@@ -53,7 +53,6 @@ public class CheckSnapshotTask extends DefaultTask
 
     if (argFiles.isEmpty())
     {
-      IOUtil.writeText(_summaryTarget,"");
       return;
     }
 
