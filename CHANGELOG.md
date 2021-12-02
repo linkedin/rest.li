@@ -14,6 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 - Remove unused configurations "dataTemplateGenerator", "restTools", and "avroSchemaGenerator".
+- Remove Guava dependency from `data-avro` module.
 
 ## [29.22.15] - 2021-11-30
 - Add mock response generator factory for BATCH_FINDER methods.
