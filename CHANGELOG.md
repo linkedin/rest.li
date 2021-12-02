@@ -14,6 +14,19 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 - Upgrade Avro dependency to 1.9.2. Remove Avro adapters for Avro 1.4/1.6 and related module.
+- Fix build-time validation of Action methods that return custom typerefs (e.g. `CustomLong`) yet don't indicate the
+  corresponding typeref class (e.g. `CustomLongRef.class`) in the `@Action` annotation.
+  - Clearly state that the `returnTyperef` annotation element is required for custom tyeprefs.
+  - Catch previously-unhandled reflection exception for `ActionResult`-wrapped return types (e.g. `ActionResult<CustomLong>`).
+- Remove methods `ResourceContext#shouldReturnEntity` and `ResourceContextImpl#shouldReturnEntity`,
+  which have been deprecated since version `27.2.0`.
+- Update Gradle version compatibility in the `pegasus` Gradle plugin.
+  - Minimum required Gradle version is now `5.2.1`
+  - Minimum suggested Gradle version is now `5.3`
+- Delete the mainCopyPdscSchemas Gradle task. mainCopySchemas is the replacement.
+- Delete the mainDestroyStaleSchemas Gradle task. mainCopySchemas is the replacement.
+- Remove unused configurations "dataTemplateGenerator", "restTools", and "avroSchemaGenerator".
+- Remove Guava dependency from `data-avro` module
 
 ## [29.22.15] - 2021-11-30
 - Add mock response generator factory for BATCH_FINDER methods.

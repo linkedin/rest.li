@@ -214,7 +214,7 @@ subprojects {
     all*.exclude group: 'org.apache.velocity', module: 'velocity'
   }
 
-  if (!(it.name in ['data-avro', 'restli-int-test'])) {
+  if (!(it.name in ['restli-int-test'])) {
     configurations {
       // Prevent Guava from creeping in to avoid incompatibilities in multiple classloader environments.
       compile.resolutionStrategy {

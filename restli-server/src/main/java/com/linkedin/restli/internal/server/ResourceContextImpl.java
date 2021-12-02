@@ -633,16 +633,6 @@ public class ResourceContextImpl implements ServerResourceContext
     return _responseStreamingAttachments;
   }
 
-  /**
-   * @deprecated Use {@link #isReturnEntityRequested()} instead.
-   */
-  @Deprecated
-  @Override
-  public boolean shouldReturnEntity()
-  {
-    return isReturnEntityRequested();
-  }
-
   @Override
   public boolean isReturnEntityRequested()
   {
