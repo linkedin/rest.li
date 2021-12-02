@@ -5,7 +5,6 @@
 
 dependencies {
   compile project(':data')
-  compile externalDependency.guava
   compile externalDependency.jacksonCoreAsl_1_4
   compile externalDependency.avro
   compile externalDependency.avroUtil

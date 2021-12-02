@@ -583,8 +583,6 @@ public class PegasusPlugin implements Plugin<Project>
   private static final String RUN_ONCE = "runOnce";
   private static final Object STATIC_PROJECT_EVALUATED_LOCK = new Object();
 
-  private static final List<String> UNUSED_CONFIGURATIONS = Arrays.asList(
-      "dataTemplateGenerator", "restTools", "avroSchemaGenerator");
   // Directory in the dataTemplate jar that holds schemas translated from PDL to PDSC.
   private static final String TRANSLATED_SCHEMAS_DIR = "legacyPegasusSchemas";
   // Enable the use of argFiles for the tasks that support them
@@ -666,19 +664,6 @@ public class PegasusPlugin implements Plugin<Project>
       if (!project.getRootProject().hasProperty(RUN_ONCE)
           || !Boolean.parseBoolean(String.valueOf(project.getRootProject().property(RUN_ONCE))))
       {
-        project.getGradle().projectsEvaluated(gradle ->
-          gradle.getRootProject().subprojects(subproject ->
-            UNUSED_CONFIGURATIONS.forEach(configurationName -> {
-              Configuration conf = subproject.getConfigurations().findByName(configurationName);
-              if (conf != null && !conf.getDependencies().isEmpty()) {
-                subproject.getLogger().warn("*** Project {} declares dependency to unused configuration \"{}\". "
-                    + "This configuration is deprecated and you can safely remove the dependency. ***",
-                    subproject.getPath(), configurationName);
-              }
-            })
-          )
-        );
-
         // Re-initialize the static variables as they might have stale values from previous run. With Gradle 3.0 and
         // gradle daemon enabled, the plugin class might not be loaded for every run.
         DATA_TEMPLATE_FILE_SUFFIXES.clear();
@@ -731,21 +716,6 @@ public class PegasusPlugin implements Plugin<Project>
     // configuration for running rest client generator
     Configuration restClientCompile = configurations.maybeCreate("restClientCompile");
     restClientCompile.setVisible(false);
-
-    // configuration for running data template generator
-    // DEPRECATED! This configuration is no longer used. Please stop using it.
-    Configuration dataTemplateGenerator = configurations.maybeCreate("dataTemplateGenerator");
-    dataTemplateGenerator.setVisible(false);
-
-    // configuration for running rest client generator
-    // DEPRECATED! This configuration is no longer used. Please stop using it.
-    Configuration restTools = configurations.maybeCreate("restTools");
-    restTools.setVisible(false);
-
-    // configuration for running Avro schema generator
-    // DEPRECATED! To skip avro schema generation, use PegasusOptions.generationModes
-    Configuration avroSchemaGenerator = configurations.maybeCreate("avroSchemaGenerator");
-    avroSchemaGenerator.setVisible(false);
 
     // configuration for depending on data schemas and potentially generated data templates
     // and for publishing jars containing data schemas to the project artifacts for including in the ivy.xml
@@ -1532,7 +1502,7 @@ public class PegasusPlugin implements Plugin<Project>
               }
             }
 
-            return !project.getConfigurations().getByName("avroSchemaGenerator").isEmpty();
+            return false;
           });
 
           task.doFirst(new CacheableAction<>(t -> deleteGeneratedDir(project, sourceSet, AVRO_SCHEMA_GEN_TYPE)));

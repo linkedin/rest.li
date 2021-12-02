@@ -15,6 +15,8 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 - Delete the mainCopyPdscSchemas Gradle task. mainCopySchemas is the replacement.
 - Delete the mainDestroyStaleSchemas Gradle task. mainCopySchemas is the replacement.
+- Remove unused configurations "dataTemplateGenerator", "restTools", and "avroSchemaGenerator".
+- Remove Guava dependency from `data-avro` module
 
 ## [29.22.15] - 2021-11-30
 - Add mock response generator factory for BATCH_FINDER methods.
