@@ -13,9 +13,12 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Upgrade Avro dependency to 1.9.2. Remove Avro adapters for Avro 1.4/1.6 and related module.
+
+## [29.22.15] - 2021-11-30
 - Add mock response generator factory for BATCH_FINDER methods.
 - Deprecate `FileFormatDataSchemaParser#new(String, DataSchemaResolver, DataSchemaParserFactory)`. 
-- Upgrade Avro dependency to 1.9.2. Remove Avro adapters for Avro 1.4/1.6 and related module.
+- Add file existence check before performing compatibility report check during snapshot and restmodel publishing
 
 ## [29.22.14] - 2021-11-24
 - Fix bug where content type was not set for stream requests
@@ -5132,7 +5135,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.14...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.15...master
+[29.22.15]: https://github.com/linkedin/rest.li/compare/v29.22.14...v29.22.15
 [29.22.14]: https://github.com/linkedin/rest.li/compare/v29.22.13...v29.22.14
 [29.22.13]: https://github.com/linkedin/rest.li/compare/v29.22.12...v29.22.13
 [29.22.12]: https://github.com/linkedin/rest.li/compare/v29.22.11...v29.22.12
