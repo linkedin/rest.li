@@ -528,8 +528,8 @@ public class PegasusPlugin implements Plugin<Project>
 {
   public static boolean debug = false;
 
-  private static final GradleVersion MIN_REQUIRED_VERSION = GradleVersion.version("1.0"); // Next: 5.2.1
-  private static final GradleVersion MIN_SUGGESTED_VERSION = GradleVersion.version("5.2.1"); // Next: 5.3
+  private static final GradleVersion MIN_REQUIRED_VERSION = GradleVersion.version("5.2.1");
+  private static final GradleVersion MIN_SUGGESTED_VERSION = GradleVersion.version("5.3");
 
   //
   // Constants for generating sourceSet names and corresponding directory names
@@ -543,9 +543,6 @@ public class PegasusPlugin implements Plugin<Project>
   public static final String PDL_FILE_SUFFIX = ".pdl";
   // gradle property to opt OUT schema annotation validation, by default this feature is enabled.
   private static final String DISABLE_SCHEMA_ANNOTATION_VALIDATION = "schema.annotation.validation.disable";
-  // gradle property to opt in for destroying stale files from the build directory,
-  // by default it is disabled, because it triggers hot-reload (even if it results in a no-op)
-  private static final String DESTROY_STALE_FILES_ENABLE = "enableDestroyStaleFiles";
   public static final Collection<String> DATA_TEMPLATE_FILE_SUFFIXES = new ArrayList<>();
 
   public static final String IDL_FILE_SUFFIX = ".restspec.json";
@@ -586,8 +583,6 @@ public class PegasusPlugin implements Plugin<Project>
   private static final String RUN_ONCE = "runOnce";
   private static final Object STATIC_PROJECT_EVALUATED_LOCK = new Object();
 
-  private static final List<String> UNUSED_CONFIGURATIONS = Arrays.asList(
-      "dataTemplateGenerator", "restTools", "avroSchemaGenerator");
   // Directory in the dataTemplate jar that holds schemas translated from PDL to PDSC.
   private static final String TRANSLATED_SCHEMAS_DIR = "legacyPegasusSchemas";
   // Enable the use of argFiles for the tasks that support them
@@ -669,19 +664,6 @@ public class PegasusPlugin implements Plugin<Project>
       if (!project.getRootProject().hasProperty(RUN_ONCE)
           || !Boolean.parseBoolean(String.valueOf(project.getRootProject().property(RUN_ONCE))))
       {
-        project.getGradle().projectsEvaluated(gradle ->
-          gradle.getRootProject().subprojects(subproject ->
-            UNUSED_CONFIGURATIONS.forEach(configurationName -> {
-              Configuration conf = subproject.getConfigurations().findByName(configurationName);
-              if (conf != null && !conf.getDependencies().isEmpty()) {
-                subproject.getLogger().warn("*** Project {} declares dependency to unused configuration \"{}\". "
-                    + "This configuration is deprecated and you can safely remove the dependency. ***",
-                    subproject.getPath(), configurationName);
-              }
-            })
-          )
-        );
-
         // Re-initialize the static variables as they might have stale values from previous run. With Gradle 3.0 and
         // gradle daemon enabled, the plugin class might not be loaded for every run.
         DATA_TEMPLATE_FILE_SUFFIXES.clear();
@@ -734,21 +716,6 @@ public class PegasusPlugin implements Plugin<Project>
     // configuration for running rest client generator
     Configuration restClientCompile = configurations.maybeCreate("restClientCompile");
     restClientCompile.setVisible(false);
-
-    // configuration for running data template generator
-    // DEPRECATED! This configuration is no longer used. Please stop using it.
-    Configuration dataTemplateGenerator = configurations.maybeCreate("dataTemplateGenerator");
-    dataTemplateGenerator.setVisible(false);
-
-    // configuration for running rest client generator
-    // DEPRECATED! This configuration is no longer used. Please stop using it.
-    Configuration restTools = configurations.maybeCreate("restTools");
-    restTools.setVisible(false);
-
-    // configuration for running Avro schema generator
-    // DEPRECATED! To skip avro schema generation, use PegasusOptions.generationModes
-    Configuration avroSchemaGenerator = configurations.maybeCreate("avroSchemaGenerator");
-    avroSchemaGenerator.setVisible(false);
 
     // configuration for depending on data schemas and potentially generated data templates
     // and for publishing jars containing data schemas to the project artifacts for including in the ivy.xml
@@ -1375,11 +1342,13 @@ public class PegasusPlugin implements Plugin<Project>
                       (
                          isPropertyTrue(project, SKIP_IDL_CHECK) &&
                          isTaskSuccessful(checkSnapshotTask) &&
+                         checkSnapshotTask.getSummaryTarget().exists() &&
                          !isResultEquivalent(checkSnapshotTask.getSummaryTarget())
                       ) ||
                       (
                         !isPropertyTrue(project, SKIP_IDL_CHECK) &&
                         isTaskSuccessful(checkRestModelTask) &&
+                         checkRestModelTask.getSummaryTarget().exists() &&
                         !isResultEquivalent(checkRestModelTask.getSummaryTarget())
                       )
                     ));
@@ -1398,13 +1367,18 @@ public class PegasusPlugin implements Plugin<Project>
                       (
                          isPropertyTrue(project, SKIP_IDL_CHECK) &&
                          isTaskSuccessful(checkSnapshotTask) &&
+                         checkSnapshotTask.getSummaryTarget().exists() &&
                          !isResultEquivalent(checkSnapshotTask.getSummaryTarget(), true)
                       ) ||
                       (
                          !isPropertyTrue(project, SKIP_IDL_CHECK) &&
                          (
-                            (isTaskSuccessful(checkRestModelTask) && !isResultEquivalent(checkRestModelTask.getSummaryTarget(), true)) ||
-                            (isTaskSuccessful(checkIdlTask) && !isResultEquivalent(checkIdlTask.getSummaryTarget()))
+                            (isTaskSuccessful(checkRestModelTask) &&
+                                checkRestModelTask.getSummaryTarget().exists() &&
+                                !isResultEquivalent(checkRestModelTask.getSummaryTarget(), true)) ||
+                            (isTaskSuccessful(checkIdlTask) &&
+                                checkIdlTask.getSummaryTarget().exists() &&
+                                !isResultEquivalent(checkIdlTask.getSummaryTarget()))
                          )
                       )
                     ));
@@ -1528,7 +1502,7 @@ public class PegasusPlugin implements Plugin<Project>
               }
             }
 
-            return !project.getConfigurations().getByName("avroSchemaGenerator").isEmpty();
+            return false;
           });
 
           task.doFirst(new CacheableAction<>(t -> deleteGeneratedDir(project, sourceSet, AVRO_SCHEMA_GEN_TYPE)));
@@ -1711,23 +1685,6 @@ public class PegasusPlugin implements Plugin<Project>
     // make sure that java source files have been generated before compiling them
     compileTask.dependsOn(generateDataTemplatesTask);
 
-    // Dummy task to maintain backward compatibility
-    // TODO: Delete this task once use cases have had time to reference the new task
-    Task destroyStaleFiles = project.getTasks().create(sourceSet.getName() + "DestroyStaleFiles", Delete.class);
-    destroyStaleFiles.onlyIf(task -> {
-      project.getLogger().lifecycle("{} task is a NO-OP task.", task.getPath());
-      return false;
-    });
-
-    // Dummy task to maintain backward compatibility, as this task was replaced by CopySchemas
-    // TODO: Delete this task once use cases have had time to reference the new task
-    Task copyPdscSchemasTask = project.getTasks().create(sourceSet.getName() + "CopyPdscSchemas", Copy.class);
-    copyPdscSchemasTask.dependsOn(destroyStaleFiles);
-    copyPdscSchemasTask.onlyIf(task -> {
-      project.getLogger().lifecycle("{} task is a NO-OP task.", task.getPath());
-      return false;
-    });
-
     // Prepare schema files for publication by syncing schema folders.
     Task prepareSchemasForPublishTask = project.getTasks()
         .create(sourceSet.getName() + "CopySchemas", Sync.class, task ->
@@ -1735,7 +1692,6 @@ public class PegasusPlugin implements Plugin<Project>
           task.from(dataSchemaDir, syncSpec -> DATA_TEMPLATE_FILE_SUFFIXES.forEach(suffix -> syncSpec.include("**/*" + suffix)));
           task.into(publishableSchemasBuildDir);
         });
-    prepareSchemasForPublishTask.dependsOn(copyPdscSchemasTask);
 
     Collection<Task> dataTemplateJarDepends = new ArrayList<>();
     dataTemplateJarDepends.add(compileTask);
@@ -1760,7 +1716,6 @@ public class PegasusPlugin implements Plugin<Project>
           }
         });
 
-    prepareLegacySchemasForPublishTask.dependsOn(destroyStaleFiles);
     dataTemplateJarDepends.add(prepareLegacySchemasForPublishTask);
 
     // extension schema directory
@@ -1790,7 +1745,6 @@ public class PegasusPlugin implements Plugin<Project>
           });
 
       prepareExtensionSchemasForPublishTask.dependsOn(validateExtensionSchemaTask);
-      prepareExtensionSchemasForPublishTask.dependsOn(copyPdscSchemasTask);
       dataTemplateJarDepends.add(prepareExtensionSchemasForPublishTask);
     }
 

@@ -1,6 +1,5 @@
 package com.linkedin.data.avro;
 
-import com.google.common.base.CaseFormat;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.message.Message;
@@ -31,6 +30,11 @@ import java.util.Map;
  * @author Arun Ponniah Sethuramalingam
  */
 class PegasusUnionToAvroRecordConvertCallback implements DataSchemaTraverse.Callback {
+  /**
+   * A bit mask which selects the bit encoding ASCII character case.
+   */
+  private static final char CASE_MASK = 0x20;
+
   private final DataToAvroSchemaTranslationOptions _options;
 
   PegasusUnionToAvroRecordConvertCallback(DataToAvroSchemaTranslationOptions options)
@@ -204,7 +208,7 @@ class PegasusUnionToAvroRecordConvertCallback implements DataSchemaTraverse.Call
   {
     StringBuilder errorMessageBuilder = new StringBuilder();
 
-    unionFieldName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, unionFieldName);
+    unionFieldName = firstCharToUpper(unionFieldName);
 
     // Use the parent record's full name plus the union field name as the suffix. The parent record's name is included
     // to avoid any potential name conflicts between other similar unions under the same namespace.
@@ -265,5 +269,32 @@ class PegasusUnionToAvroRecordConvertCallback implements DataSchemaTraverse.Call
     field.setOptional(false);
 
     return field;
+  }
+
+  private static String firstCharToUpper(String word)
+  {
+    if (word.isEmpty())
+    {
+      return word;
+    }
+
+    char upperCh = toAsciiUpperCase(word.charAt(0));
+
+    if (word.charAt(0) == upperCh)
+    {
+      return word;
+    }
+
+    return upperCh + word.substring(1);
+  }
+
+  private static char toAsciiUpperCase(char ch)
+  {
+    return isAsciiLowerCase(ch) ? (char) (ch ^ CASE_MASK) : ch;
+  }
+
+  private static boolean isAsciiLowerCase(char ch)
+  {
+    return (ch >= 'a') && (ch <= 'z');
   }
 }
