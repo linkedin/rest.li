@@ -116,7 +116,8 @@ project.ext.externalDependency = [
   'guice': 'com.google.inject:guice:3.0',
   'guiceServlet': 'com.google.inject.extensions:guice-servlet:3.0',
 
-  'jsr305': 'com.google.code.findbugs:jsr305:3.0.0'
+  'jsr305': 'com.google.code.findbugs:jsr305:3.0.0',
+  "avroSpotBugsPlugin": "com.linkedin.avroutil1:spotbugs-plugin:0.2.56",
 ];
 
 if (!project.ext.isDefaultEnvironment)
@@ -149,6 +150,14 @@ allprojects {
       //Disable the crazy super-strict doclint tool in Java 8
       //noinspection SpellCheckingInspection
       options.addStringOption('Xdoclint:none', '-quiet')
+    }
+  }
+}
+
+allprojects {
+  plugins.withId('li-spotbugs') {
+    dependencies {
+      spotbugsPlugins spec.external.avroSpotBugsPlugin
     }
   }
 }
