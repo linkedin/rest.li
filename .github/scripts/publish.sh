@@ -42,7 +42,7 @@ if [ "$GITHUB_REF" != "refs/tags/$EXPECTED_TAG" ]; then
 fi
 
 # Ensure that the tag commit is an ancestor of master
-git fetch origin master:master
+git fetch origin master:master 2>&1 | head -n 10  # Truncate excessive fetch output
 git merge-base --is-ancestor $GITHUB_REF master
 if [ $? -ne 0 ]; then
   echo "Tag $GITHUB_REF is NOT an ancestor of master!"
@@ -50,7 +50,11 @@ if [ $? -ne 0 ]; then
   if $RELEASE_CANDIDATE; then
     echo "Since this is a release candidate tag, the deployment will continue."
   else
-    echo 'Please delete this tag and instead create a tag off a master commit.'
+    echo 'Cannot publish Rest.li using a non-master commit, please delete this tag.'
+    echo 'If you still want to publish, please run the release script using a master commit.'
+    echo 'See below for guidance on how to properly use the release script:'
+    echo ''
+    cat ./scripts/help-text/release.txt
     exit 1
   fi
 fi
