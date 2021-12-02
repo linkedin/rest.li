@@ -49,7 +49,7 @@ public class AvroUtil
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     return jsonFromGenericRecord(record,
         outputStream,
-        AvroCompatibilityHelper.newJsonEncoder(record.getSchema(), outputStream, pretty,version));
+        AvroCompatibilityHelper.newJsonEncoder(record.getSchema(), outputStream, pretty, version));
   }
 
   private static String jsonFromGenericRecord(
@@ -63,8 +63,6 @@ public class AvroUtil
     jsonEncoder.flush();
     return outputStream.toString();
   }
-
-
 
   public static byte[] bytesFromGenericRecord(GenericRecord record) throws IOException
   {
