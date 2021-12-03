@@ -17,7 +17,6 @@
 /* $Id$ */
 package com.linkedin.r2.transport.http.client;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.MultiCallback;
 import com.linkedin.common.util.None;
@@ -43,16 +42,13 @@ import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactory;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImpl;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder;
-import com.linkedin.r2.transport.http.client.common.ConnectionSharingChannelPoolManagerFactory;
-import com.linkedin.r2.transport.http.client.common.EventAwareChannelPoolManagerFactory;
-import com.linkedin.r2.transport.http.client.rest.HttpNettyClient;
-import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamClient;
-import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamClient;
+import com.linkedin.r2.netty.common.ChannelPoolManager;
+import com.linkedin.r2.netty.common.ChannelPoolManagerFactory;
+import com.linkedin.r2.netty.common.ChannelPoolManagerFactoryImpl;
+import com.linkedin.r2.netty.common.ChannelPoolManagerKey;
+import com.linkedin.r2.netty.common.ChannelPoolManagerKeyBuilder;
+import com.linkedin.r2.netty.common.ConnectionSharingChannelPoolManagerFactory;
+import com.linkedin.r2.netty.common.EventAwareChannelPoolManagerFactory;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.ConfigValueExtractor;
 import com.linkedin.r2.util.NamedThreadFactory;
@@ -75,6 +71,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 /**
  * A factory for HttpNettyClient instances.
@@ -157,11 +154,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_CHANNELPOOL_WAITER_TIMEOUT = Integer.MAX_VALUE;
   public static final double DEFAULT_MAX_CLIENT_REQUEST_RETRY_RATIO = 0.2;
   public static final double UNLIMITED_CLIENT_REQUEST_RETRY_RATIO = 1.0;
-  /**
-   * Helper constant to allow specify which version of pipeline v2 the code is running on. Since it is a feature in active development,
-   * we want to be able to enable the pipeline through configs, only for clients that have loaded a specific version of code
-   */
-  public static final int PIPELINE_V2_MATURITY_LEVEL = 1;
+
   // flag to enable/disable Nagle's algorithm
   public static final boolean DEFAULT_TCP_NO_DELAY = true;
   public static final boolean DEFAULT_SHARE_CONNECTION = false;
@@ -184,13 +177,12 @@ public class HttpClientFactory implements TransportClientFactory
   private final boolean                    _shutdownFactory;
   private final boolean                    _shutdownExecutor;
   private final boolean                    _shutdownCallbackExecutor;
-  private final boolean                    _usePipelineV2;
   private final FilterChain                _filters;
   private final Executor                   _compressionExecutor;
 
   private final AtomicBoolean              _finishingShutdown = new AtomicBoolean(false);
   private volatile ScheduledFuture<?>      _shutdownTimeoutTask;
-  private final AbstractJmxManager         _jmxManager;
+  private final AbstractJmxManager _jmxManager;
 
   /** Default request compression config (used when a config for a service isn't specified in {@link #_requestCompressionConfigs}) */
   private final CompressionConfig          _defaultRequestCompressionConfig;
@@ -216,364 +208,6 @@ public class HttpClientFactory implements TransportClientFactory
   private Callback<None>                   _factoryShutdownCallback;
   private ChannelPoolManagerFactory        _channelPoolManagerFactory;
 
-  /**
-   * Construct a new instance using an empty filter chain.
-   *
-   * @deprecated Use {@link Builder} instead.
-   */
-  @Deprecated
-  public HttpClientFactory()
-  {
-    this(FilterChains.empty());
-  }
-
-  /**
-   * Construct a new instance with a specified callback executor.
-   *
-   * @param callbackExecutor an optional executor to invoke user callbacks that otherwise
-   *          will be invoked by scheduler executor.
-   * @param shutdownCallbackExecutor if true, the callback executor will be shut down when
-   *          this factory is shut down
-   * @deprecated Use {@link Builder} instead.
-   */
-  @Deprecated
-  public HttpClientFactory(ExecutorService callbackExecutor,
-                           boolean shutdownCallbackExecutor)
-  {
-    this(FilterChains.empty(),
-         new NioEventLoopGroup(0 /* use default settings */, new NamedThreadFactory("R2 Nio Event Loop")),
-         true,
-         Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("R2 Netty Scheduler")),
-         true,
-         callbackExecutor,
-         shutdownCallbackExecutor);
-  }
-
-  /**
-   * Construct a new instance using the specified filter chain.
-   *
-   * @param filters the {@link FilterChain} shared by all Clients created by this factory.
-   * @deprecated Use {@link Builder} instead.
-   */
-  @Deprecated
-  public HttpClientFactory(FilterChain filters)
-  {
-    // TODO Disable Netty's thread renaming so that the names below are the ones that actually
-    // show up in log messages; need to coordinate with Espresso team (who also have netty threads)
-    this(filters,
-         new NioEventLoopGroup(0 /* use default settings */, new NamedThreadFactory("R2 Nio Event Loop")),
-         true,
-         Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("R2 Netty Scheduler")),
-         true);
-  }
-
-  /**
-   * Creates a new HttpClientFactory.
-   *
-   * @param filters the filter chain shared by all Clients created by this factory
-   * @param eventLoopGroup the {@link EventLoopGroup} that all Clients created by this
-   *          factory will share
-   * @param shutdownFactory if true, the channelFactory will be shut down when this
-   *          factory is shut down
-   * @param executor an executor shared by all Clients created by this factory to schedule
-   *          tasks
-   * @param shutdownExecutor if true, the executor will be shut down when this factory is
-   *          shut down
-   * @deprecated Use {@link Builder} instead.
-   */
-  @Deprecated
-  public HttpClientFactory(FilterChain filters,
-                           EventLoopGroup eventLoopGroup,
-                           boolean shutdownFactory,
-                           ScheduledExecutorService executor,
-                           boolean shutdownExecutor)
-  {
-    this(filters,
-         eventLoopGroup,
-         shutdownFactory,
-         executor,
-         shutdownExecutor,
-         null,
-         false);
-  }
-
-  /**
-   * Creates a new HttpClientFactory.
-   *
-   * @param filters the filter chain shared by all Clients created by this factory
-   * @param eventLoopGroup the {@link EventLoopGroup} that all Clients created by this
-   *          factory will share
-   * @param shutdownFactory if true, the channelFactory will be shut down when this
-   *          factory is shut down
-   * @param executor an executor shared by all Clients created by this factory to schedule
-   *          tasks
-   * @param shutdownExecutor if true, the executor will be shut down when this factory is
-   *          shut down
-   * @param callbackExecutorGroup an optional executor group to execute user callbacks that otherwise
-   *          will be executed by eventLoopGroup.
-   * @param shutdownCallbackExecutor if true, the callback executor will be shut down when
-   *          this factory is shut down
-   * @deprecated Use {@link Builder} instead.
-   */
-  @Deprecated
-  public HttpClientFactory(FilterChain filters,
-                           EventLoopGroup eventLoopGroup,
-                           boolean shutdownFactory,
-                           ScheduledExecutorService executor,
-                           boolean shutdownExecutor,
-                           ExecutorService callbackExecutorGroup,
-                           boolean shutdownCallbackExecutor)
-  {
-    this(filters,
-         eventLoopGroup,
-         shutdownFactory,
-         executor,
-         shutdownExecutor,
-         callbackExecutorGroup,
-         shutdownCallbackExecutor,
-         AbstractJmxManager.NULL_JMX_MANAGER);
-  }
-
-  /**
-   * @deprecated Use {@link Builder} instead.
-   */
-  @Deprecated
-  public HttpClientFactory(FilterChain filters,
-                           EventLoopGroup eventLoopGroup,
-                           boolean shutdownFactory,
-                           ScheduledExecutorService executor,
-                           boolean shutdownExecutor,
-                           ExecutorService callbackExecutorGroup,
-                           boolean shutdownCallbackExecutor,
-                           AbstractJmxManager jmxManager)
-  {
-    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
-      shutdownCallbackExecutor, jmxManager, true);
-  }
-
-  /**
-   * @deprecated Use {@link Builder} instead.
-   */
-  @Deprecated
-  public HttpClientFactory(FilterChain filters,
-                           EventLoopGroup eventLoopGroup,
-                           boolean shutdownFactory,
-                           ScheduledExecutorService executor,
-                           boolean shutdownExecutor,
-                           ExecutorService callbackExecutorGroup,
-                           boolean shutdownCallbackExecutor,
-                           AbstractJmxManager jmxManager,
-                           int requestCompressionThresholdDefault,
-                           Map<String, CompressionConfig> requestCompressionConfigs)
-  {
-    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
-        shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
-        true);
-  }
-
-  /**
-   * @deprecated Use {@link Builder} instead.
-   */
-  @Deprecated
-  public HttpClientFactory(FilterChain filters,
-                           EventLoopGroup eventLoopGroup,
-                           boolean shutdownFactory,
-                           ScheduledExecutorService executor,
-                           boolean shutdownExecutor,
-                           ExecutorService callbackExecutorGroup,
-                           boolean shutdownCallbackExecutor,
-                           AbstractJmxManager jmxManager,
-                           int requestCompressionThresholdDefault,
-                           Map<String, CompressionConfig> requestCompressionConfigs,
-                           boolean useClientCompression)
-  {
-    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
-      shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
-      Collections.emptyMap(), useClientCompression);
-  }
-
-  /**
-   * @deprecated Use {@link Builder} instead.
-   */
-  @Deprecated
-  public HttpClientFactory(FilterChain filters,
-                           EventLoopGroup eventLoopGroup,
-                           boolean shutdownFactory,
-                           ScheduledExecutorService executor,
-                           boolean shutdownExecutor,
-                           ExecutorService callbackExecutorGroup,
-                           boolean shutdownCallbackExecutor,
-                           AbstractJmxManager jmxManager,
-                           final int requestCompressionThresholdDefault,
-                           final Map<String, CompressionConfig> requestCompressionConfigs,
-                           final Map<String, CompressionConfig> responseCompressionConfigs,
-                           boolean useClientCompression)
-  {
-    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
-      shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault,
-      requestCompressionConfigs, responseCompressionConfigs, true,
-      useClientCompression ? Executors.newCachedThreadPool() : null, HttpProtocolVersion.HTTP_1_1);
-  }
-
-  /**
-   * @deprecated Use {@link Builder} instead.
-   */
-  @Deprecated
-  public HttpClientFactory(FilterChain filters,
-                           EventLoopGroup eventLoopGroup,
-                           boolean shutdownFactory,
-                           ScheduledExecutorService executor,
-                           boolean shutdownExecutor,
-                           ExecutorService callbackExecutorGroup,
-                           boolean shutdownCallbackExecutor,
-                           AbstractJmxManager jmxManager,
-                           boolean deprecatedTcpNoDelay)
-  {
-    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
-      jmxManager, deprecatedTcpNoDelay, Integer.MAX_VALUE, Collections.emptyMap(), Executors.newCachedThreadPool());
-  }
-
-  /**
-   * @deprecated Use {@link Builder} instead.
-   */
-  @Deprecated
-  public HttpClientFactory(FilterChain filters,
-                           EventLoopGroup eventLoopGroup,
-                           boolean shutdownFactory,
-                           ScheduledExecutorService executor,
-                           boolean shutdownExecutor,
-                           ExecutorService callbackExecutorGroup,
-                           boolean shutdownCallbackExecutor,
-                           AbstractJmxManager jmxManager,
-                           boolean deprecatedTcpNoDelay,
-                           int requestCompressionThresholdDefault,
-                           Map<String, CompressionConfig> requestCompressionConfigs,
-                           Executor compressionExecutor)
-  {
-    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
-      shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
-      Collections.emptyMap(), deprecatedTcpNoDelay, compressionExecutor, HttpProtocolVersion.HTTP_1_1);
-  }
-
-  /**
-   * @deprecated Use {@link Builder} instead.
-   */
-  @Deprecated
-  public HttpClientFactory(FilterChain filters,
-                           EventLoopGroup eventLoopGroup,
-                           boolean shutdownFactory,
-                           ScheduledExecutorService executor,
-                           boolean shutdownExecutor,
-                           ExecutorService callbackExecutorGroup,
-                           boolean shutdownCallbackExecutor,
-                           AbstractJmxManager jmxManager,
-                           final int requestCompressionThresholdDefault,
-                           final Map<String, CompressionConfig> requestCompressionConfigs,
-                           final Map<String, CompressionConfig> responseCompressionConfigs,
-                           boolean deprecatedTcpNoDelay,
-                           Executor compressionExecutor)
-  {
-    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
-      jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs, responseCompressionConfigs,
-      deprecatedTcpNoDelay, compressionExecutor, HttpProtocolVersion.HTTP_1_1);
-  }
-
-  /**
-   * @deprecated Use {@link Builder} instead.
-   */
-  @Deprecated
-  public HttpClientFactory(FilterChain filters,
-                           EventLoopGroup eventLoopGroup,
-                           boolean shutdownFactory,
-                           ScheduledExecutorService executor,
-                           boolean shutdownExecutor,
-                           ExecutorService callbackExecutorGroup,
-                           boolean shutdownCallbackExecutor,
-                           AbstractJmxManager jmxManager,
-                           final int requestCompressionThresholdDefault,
-                           final Map<String, CompressionConfig> requestCompressionConfigs,
-                           final Map<String, CompressionConfig> responseCompressionConfigs,
-                           boolean deprecatedTcpNoDelay,
-                           Executor compressionExecutor,
-                           HttpProtocolVersion defaultHttpVersion)
-  {
-    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
-      jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs, responseCompressionConfigs,
-      compressionExecutor, defaultHttpVersion);
-  }
-
-  /**
-   * @deprecated Use {@link Builder} instead.
-   */
-  @Deprecated
-  public HttpClientFactory(FilterChain filters,
-                           EventLoopGroup eventLoopGroup,
-                           boolean shutdownFactory,
-                           ScheduledExecutorService executor,
-                           boolean shutdownExecutor,
-                           ExecutorService callbackExecutorGroup,
-                           boolean shutdownCallbackExecutor,
-                           AbstractJmxManager jmxManager,
-                           final int requestCompressionThresholdDefault,
-                           final Map<String, CompressionConfig> requestCompressionConfigs,
-                           final Map<String, CompressionConfig> responseCompressionConfigs,
-                           Executor compressionExecutor,
-                           HttpProtocolVersion defaultHttpVersion)
-  {
-    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
-      jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs, responseCompressionConfigs,
-      compressionExecutor, defaultHttpVersion, DEFAULT_SHARE_CONNECTION);
-  }
-
-  /**
-   * @deprecated Use {@link Builder} instead.
-   */
-  @Deprecated
-  public HttpClientFactory(FilterChain filters,
-                           EventLoopGroup eventLoopGroup,
-                           boolean shutdownFactory,
-                           ScheduledExecutorService executor,
-                           boolean shutdownExecutor,
-                           ExecutorService callbackExecutorGroup,
-                           boolean shutdownCallbackExecutor,
-                           AbstractJmxManager jmxManager,
-                           final int requestCompressionThresholdDefault,
-                           final Map<String, CompressionConfig> requestCompressionConfigs,
-                           final Map<String, CompressionConfig> responseCompressionConfigs,
-                           Executor compressionExecutor,
-                           HttpProtocolVersion defaultHttpVersion,
-                           boolean shareConnection)
-  {
-    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
-      jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs, responseCompressionConfigs,
-      compressionExecutor, defaultHttpVersion, shareConnection, new EventProviderRegistry());
-  }
-
-  /**
-   * @deprecated Use {@link Builder} instead.
-   */
-  @Deprecated
-  public HttpClientFactory(FilterChain filters,
-                           EventLoopGroup eventLoopGroup,
-                           boolean shutdownFactory,
-                           ScheduledExecutorService executor,
-                           boolean shutdownExecutor,
-                           ExecutorService callbackExecutorGroup,
-                           boolean shutdownCallbackExecutor,
-                           AbstractJmxManager jmxManager,
-                           final int requestCompressionThresholdDefault,
-                           final Map<String, CompressionConfig> requestCompressionConfigs,
-                           final Map<String, CompressionConfig> responseCompressionConfigs,
-                           Executor compressionExecutor,
-                           HttpProtocolVersion defaultHttpVersion,
-                           boolean shareConnection,
-                           EventProviderRegistry eventProviderRegistry)
-  {
-    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
-      jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs, responseCompressionConfigs,
-      compressionExecutor, defaultHttpVersion, shareConnection, eventProviderRegistry, true, false);
-  }
-
   private HttpClientFactory(FilterChain filters,
                             EventLoopGroup eventLoopGroup,
                             boolean shutdownFactory,
@@ -589,13 +223,11 @@ public class HttpClientFactory implements TransportClientFactory
                             HttpProtocolVersion defaultHttpVersion,
                             boolean shareConnection,
                             EventProviderRegistry eventProviderRegistry,
-                            boolean enableSSLSessionResumption,
-                            boolean usePipelineV2)
+                            boolean enableSSLSessionResumption)
   {
     this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup, shutdownCallbackExecutor,
         jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs, responseCompressionConfigs,
-        compressionExecutor, defaultHttpVersion, shareConnection, eventProviderRegistry, enableSSLSessionResumption,
-        usePipelineV2, null);
+        compressionExecutor, defaultHttpVersion, shareConnection, eventProviderRegistry, enableSSLSessionResumption, null);
   }
 
   private HttpClientFactory(FilterChain filters,
@@ -614,13 +246,12 @@ public class HttpClientFactory implements TransportClientFactory
       boolean shareConnection,
       EventProviderRegistry eventProviderRegistry,
       boolean enableSSLSessionResumption,
-      boolean usePipelineV2,
       List<ExecutorService> executorsToShutDown)
   {
     this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
         shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
         responseCompressionConfigs, compressionExecutor, defaultHttpVersion, shareConnection, eventProviderRegistry,
-        enableSSLSessionResumption, usePipelineV2, executorsToShutDown, DEFAULT_CONNECT_TIMEOUT,
+        enableSSLSessionResumption, executorsToShutDown, DEFAULT_CONNECT_TIMEOUT,
         DEFAULT_SSL_HANDSHAKE_TIMEOUT, DEFAULT_CHANNELPOOL_WAITER_TIMEOUT);
   }
 
@@ -640,7 +271,6 @@ public class HttpClientFactory implements TransportClientFactory
                             boolean shareConnection,
                             EventProviderRegistry eventProviderRegistry,
                             boolean enableSSLSessionResumption,
-                            boolean usePipelineV2,
                             List<ExecutorService> executorsToShutDown,
                             int connectTimeout,
                             int sslHandShakeTimeout,
@@ -653,7 +283,6 @@ public class HttpClientFactory implements TransportClientFactory
     _shutdownExecutor = shutdownExecutor;
     _callbackExecutorGroup = callbackExecutorGroup;
     _shutdownCallbackExecutor = shutdownCallbackExecutor;
-    _usePipelineV2 = usePipelineV2;
     _jmxManager = jmxManager;
     _defaultRequestCompressionConfig = new CompressionConfig(requestCompressionThresholdDefault);
     _executorsToShutDown = executorsToShutDown;
@@ -674,7 +303,7 @@ public class HttpClientFactory implements TransportClientFactory
     _useClientCompression = _compressionExecutor != null;
     _defaultHttpVersion = defaultHttpVersion;
     _channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(
-        _eventLoopGroup, _executor, enableSSLSessionResumption,_usePipelineV2, _channelPoolWaiterTimeout,
+        _eventLoopGroup, _executor, enableSSLSessionResumption, _channelPoolWaiterTimeout,
         _connectTimeout, _sslHandShakeTimeout);
 
     if (eventProviderRegistry != null)
@@ -705,8 +334,6 @@ public class HttpClientFactory implements TransportClientFactory
     private boolean                    _shareConnection = false;
     private FilterChain                _filters = FilterChains.empty();
     private boolean                    _useClientCompression = true;
-    private boolean                    _usePipelineV2 = false;
-    private int                        _pipelineV2MinimumMaturityLevel = PIPELINE_V2_MATURITY_LEVEL;
     private Executor                   _customCompressionExecutor = null;
     private AbstractJmxManager         _jmxManager = AbstractJmxManager.NULL_JMX_MANAGER;
 
@@ -889,18 +516,6 @@ public class HttpClientFactory implements TransportClientFactory
       return this;
     }
 
-    public Builder setUsePipelineV2(boolean usePipelineV2)
-    {
-      _usePipelineV2 = usePipelineV2;
-      return this;
-    }
-
-    public Builder setPipelineV2MinimumMaturityLevel(int pipelineV2MinimumMaturityLevel)
-    {
-      _pipelineV2MinimumMaturityLevel = pipelineV2MinimumMaturityLevel;
-      return this;
-    }
-
     public HttpClientFactory build()
     {
       List<ExecutorService> executorsToShutDown = new ArrayList<>();
@@ -940,17 +555,11 @@ public class HttpClientFactory implements TransportClientFactory
       EventProviderRegistry eventProviderRegistry =  _eventProviderRegistry
           == null ? new EventProviderRegistry() : _eventProviderRegistry;
 
-      if (_usePipelineV2 && _pipelineV2MinimumMaturityLevel > PIPELINE_V2_MATURITY_LEVEL)
-      {
-        LOG.warn("Disabling Pipeline V2, Since Pegasus Pipeline V2 Maturity Level is below the configured level.");
-        _usePipelineV2 = false;
-      }
-
       return new HttpClientFactory(_filters, eventLoopGroup, _shutdownFactory, scheduledExecutorService,
         _shutdownExecutor, callbackExecutorGroup, _shutdownCallbackExecutor, _jmxManager,
         _requestCompressionThresholdDefault, _requestCompressionConfigs, _responseCompressionConfigs,
         compressionExecutor, _defaultHttpVersion, _shareConnection, eventProviderRegistry, _enableSSLSessionResumption,
-          _usePipelineV2, executorsToShutDown, _connectTimeout, _sslHandShakeTimeout, _channelPoolWaiterTimeout);
+        executorsToShutDown, _connectTimeout, _sslHandShakeTimeout, _channelPoolWaiterTimeout);
     }
 
   }
@@ -1366,8 +975,7 @@ public class HttpClientFactory implements TransportClientFactory
 
   TransportClient getRawClient(Map<String, ? extends Object> properties,
                                SSLContext sslContext,
-                               SSLParameters sslParameters)
-  {
+                               SSLParameters sslParameters) {
 
     // key which identifies and contains the set of transport properties to create a channel pool manager
     ChannelPoolManagerKey key = createChannelPoolManagerKey(properties, null, null);
@@ -1377,67 +985,41 @@ public class HttpClientFactory implements TransportClientFactory
     int shutdownTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_SHUTDOWN_TIMEOUT), DEFAULT_SHUTDOWN_TIMEOUT);
     int requestTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_REQUEST_TIMEOUT), DEFAULT_REQUEST_TIMEOUT);
     int streamingTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_STREAMING_TIMEOUT), DEFAULT_STREAMING_TIMEOUT);
-    if (streamingTimeout > DEFAULT_STREAMING_TIMEOUT)
-    {
+    if (streamingTimeout > DEFAULT_STREAMING_TIMEOUT) {
       // Minimum value for idle timeout so we don't have a busy thread checking for idle timeout too frequently!
-      if(streamingTimeout < DEFAULT_MINIMUM_STREAMING_TIMEOUT)
-      {
+      if (streamingTimeout < DEFAULT_MINIMUM_STREAMING_TIMEOUT) {
         streamingTimeout = DEFAULT_MINIMUM_STREAMING_TIMEOUT;
-        LOG.warn("Streaming timeout is too small, resetting to the minimum allowed timeout value of {}ms", DEFAULT_MINIMUM_STREAMING_TIMEOUT);
+        LOG.warn("Streaming timeout is too small, resetting to the minimum allowed timeout value of {}ms",
+            DEFAULT_MINIMUM_STREAMING_TIMEOUT);
       }
     }
 
     String httpServiceName = (String) properties.get(HTTP_SERVICE_NAME);
-    HttpProtocolVersion httpProtocolVersion =
-      chooseNewOverDefault(getHttpProtocolVersion(properties, HTTP_PROTOCOL_VERSION), _defaultHttpVersion);
+    HttpProtocolVersion httpProtocolVersion = chooseNewOverDefault(getHttpProtocolVersion(properties, HTTP_PROTOCOL_VERSION), _defaultHttpVersion);
 
-    LOG.info("The service '{}' has been assigned to the ChannelPoolManager with key '{}', http.protocolVersion={}, usePipelineV2={}, requestTimeout={}ms, streamingTimeout={}ms",
-             httpServiceName, key.getName(), httpProtocolVersion, _usePipelineV2, requestTimeout, streamingTimeout);
+    LOG.info(
+        "The service '{}' has been assigned to the ChannelPoolManager with key '{}', http.protocolVersion={}, requestTimeout={}ms, streamingTimeout={}ms",
+        httpServiceName, key.getName(), httpProtocolVersion, requestTimeout, streamingTimeout);
 
-    if (_usePipelineV2)
-    {
-      ChannelPoolManager channelPoolManager;
-      ChannelPoolManager sslChannelPoolManager;
+    ChannelPoolManager channelPoolManager;
+    ChannelPoolManager sslChannelPoolManager;
 
-      switch (httpProtocolVersion) {
-        case HTTP_1_1:
-          channelPoolManager = _channelPoolManagerFactory.buildStream(key);
-          sslChannelPoolManager = _channelPoolManagerFactory.buildStream(sslKey);
-          break;
-        case HTTP_2:
-          channelPoolManager = _channelPoolManagerFactory.buildHttp2Stream(key);
-          sslChannelPoolManager = _channelPoolManagerFactory.buildHttp2Stream(sslKey);
-          break;
-        default:
-          throw new IllegalArgumentException("Unrecognized HTTP protocol version " + httpProtocolVersion);
-      }
-
-      return new com.linkedin.r2.netty.client.HttpNettyClient(_eventLoopGroup, _executor, _callbackExecutorGroup,
-          channelPoolManager, sslChannelPoolManager, httpProtocolVersion, SystemClock.instance(),
-              requestTimeout, streamingTimeout, shutdownTimeout);
-    }
-
-    TransportClient streamClient;
     switch (httpProtocolVersion) {
       case HTTP_1_1:
-        streamClient = new HttpNettyStreamClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
-            _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildStream(key),
-            _channelPoolManagerFactory.buildStream(sslKey));
+        channelPoolManager = _channelPoolManagerFactory.buildHttp1Stream(key);
+        sslChannelPoolManager = _channelPoolManagerFactory.buildHttp1Stream(sslKey);
         break;
       case HTTP_2:
-        streamClient = new Http2NettyStreamClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout,
-            _callbackExecutorGroup, _jmxManager, _channelPoolManagerFactory.buildHttp2Stream(key),
-            _channelPoolManagerFactory.buildHttp2Stream(sslKey));
+        channelPoolManager = _channelPoolManagerFactory.buildHttp2Stream(key);
+        sslChannelPoolManager = _channelPoolManagerFactory.buildHttp2Stream(sslKey);
         break;
       default:
         throw new IllegalArgumentException("Unrecognized HTTP protocol version " + httpProtocolVersion);
     }
 
-    HttpNettyClient legacyClient =
-        new HttpNettyClient(_eventLoopGroup, _executor, requestTimeout, shutdownTimeout, _callbackExecutorGroup,
-            _jmxManager, _channelPoolManagerFactory.buildRest(key), _channelPoolManagerFactory.buildRest(sslKey));
-
-    return new MixedClient(legacyClient, streamClient);
+    return new com.linkedin.r2.netty.client.HttpNettyClient(_eventLoopGroup, _executor, _callbackExecutorGroup,
+        channelPoolManager, sslChannelPoolManager, httpProtocolVersion, SystemClock.instance(), requestTimeout,
+        streamingTimeout, shutdownTimeout);
   }
 
   /**

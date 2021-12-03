@@ -57,31 +57,6 @@ public class ClientServerConfiguration
   }
 
   @DataProvider
-  public static Object[][] allPipelineV2StreamCombinations()
-  {
-    List<Object[]> streamCombinations = new ArrayList<>();
-    Object[][] allStreamCombinations = allStreamCombinations();
-    for (Object[] allStreamCombination : allStreamCombinations)
-    {
-      ClientProvider clientProvider = (ClientProvider) allStreamCombination[0];
-      if (clientProvider.getUsePipelineV2())
-      {
-        streamCombinations.add(allStreamCombination);
-      }
-    }
-
-    Object[][] filteredStreamCombinations = new Object[streamCombinations.size()][3];
-    for(int i=0; i<streamCombinations.size(); i++)
-    {
-      filteredStreamCombinations[i][0] = streamCombinations.get(i)[0];
-      filteredStreamCombinations[i][1] = streamCombinations.get(i)[1];
-      filteredStreamCombinations[i][2] = streamCombinations.get(i)[2];
-    }
-
-    return filteredStreamCombinations;
-  }
-
-  @DataProvider
   public static Object[][] allRestCombinations()
   {
     return ArrayUtils.addAll(allHttpRest(), allHttps1Rest());

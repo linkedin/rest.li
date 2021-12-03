@@ -22,9 +22,9 @@ package com.linkedin.r2.transport.http.client;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerImpl;
+import com.linkedin.r2.netty.common.ChannelPoolFactory;
+import com.linkedin.r2.netty.common.ChannelPoolManager;
+import com.linkedin.r2.netty.common.ChannelPoolManagerImpl;
 import com.linkedin.r2.util.Cancellable;
 import io.netty.channel.Channel;
 import org.testng.Assert;

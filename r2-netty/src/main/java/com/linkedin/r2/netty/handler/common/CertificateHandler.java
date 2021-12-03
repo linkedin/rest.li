@@ -17,8 +17,8 @@
 package com.linkedin.r2.netty.handler.common;
 
 import com.linkedin.r2.netty.common.NettyChannelAttributes;
-import com.linkedin.r2.transport.http.client.common.ssl.SslSessionNotTrustedException;
-import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
+import com.linkedin.r2.netty.common.ssl.SslSessionNotTrustedException;
+import com.linkedin.r2.netty.common.ssl.SslSessionValidator;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;

@@ -40,7 +40,5 @@ public interface ClientProvider
     return Bootstrap.createHttpURI(port, relativeURI);
   }
 
-  boolean getUsePipelineV2();
-
   void tearDown();
 }

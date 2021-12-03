@@ -39,16 +39,14 @@ public class ClientsProviderConfiguration
   public static List<ClientProvider> allHttp1StreamClient()
   {
     return Arrays.asList(
-        new Http1ClientProvider(true),
-        new Http1ClientProvider(true, true)
+        new Http1ClientProvider(true)
     );
   }
 
   public static List<ClientProvider> allHttp1RestClient()
   {
     return Arrays.asList(
-        new Http1ClientProvider(false),
-        new Http1ClientProvider(false, true)
+        new Http1ClientProvider(false)
     );
   }
 
@@ -57,25 +55,21 @@ public class ClientsProviderConfiguration
   {
     return Arrays.asList(
       new Http2ClientProvider(true),
-      new Http2ClientProvider(false),
-      new Http2ClientProvider(true, true),
-      new Http2ClientProvider(false, true)
+      new Http2ClientProvider(false)
     );
   }
 
   public static List<ClientProvider> allHttp2StreamClient()
   {
     return Arrays.asList(
-        new Http2ClientProvider(true),
-        new Http2ClientProvider(true, true)
+        new Http2ClientProvider(true)
     );
   }
 
   public static List<ClientProvider> allHttp2RestClient()
   {
     return Arrays.asList(
-        new Http2ClientProvider(false),
-        new Http2ClientProvider(false, true)
+        new Http2ClientProvider(false)
     );
   }
 
@@ -90,16 +84,14 @@ public class ClientsProviderConfiguration
   public static List<ClientProvider> allHttps1StreamClient()
   {
     return Arrays.asList(
-        new Https1ClientProvider(true),
-        new Https1ClientProvider(true, true)
+        new Https1ClientProvider(true)
     );
   }
 
   public static List<ClientProvider> allHttps1RestClient()
   {
     return Arrays.asList(
-        new Https1ClientProvider(false),
-        new Https1ClientProvider(false, true)
+        new Https1ClientProvider(false)
     );
   }
 
@@ -107,25 +99,21 @@ public class ClientsProviderConfiguration
   {
     return Arrays.asList(
       new Https2ClientProvider(true),
-      /*new Https2ClientProvider(false), currently not supported on H2 protocol*/
-      new Https2ClientProvider(true, true),
-      new Https2ClientProvider(false, true)
+      new Https2ClientProvider(false)
     );
   }
 
   public static List<ClientProvider> allHttps2StreamClient()
   {
     return Arrays.asList(
-        new Https2ClientProvider(true),
-        new Https2ClientProvider(true, true)
+        new Https2ClientProvider(true)
     );
   }
 
   public static List<ClientProvider> allHttps2RestClient()
   {
     return Arrays.asList(
-        /*new Https2ClientProvider(false), currently not supported on H2 protocol*/
-        new Https2ClientProvider(false, true)
+        new Https2ClientProvider(false)
     );
   }
 }

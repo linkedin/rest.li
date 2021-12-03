@@ -27,7 +27,7 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
+import com.linkedin.r2.netty.common.ssl.SslSessionValidator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 

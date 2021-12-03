@@ -121,25 +121,18 @@ public class TestAlpnUpgradePromise extends AbstractEchoServiceTest
 
   private boolean isAlpnFailureCombination()
   {
-    return _clientProvider.getUsePipelineV2() &&
-        _clientProvider instanceof Https2ClientProvider &&
+    return _clientProvider instanceof Https2ClientProvider &&
         _serverProvider instanceof Https1JettyServerProvider;
   }
 
   private boolean isClearTextUpgradeFailureCombination()
   {
-    return _clientProvider.getUsePipelineV2() &&
-        _clientProvider instanceof Http2ClientProvider &&
+    return _clientProvider instanceof Http2ClientProvider &&
         _serverProvider instanceof Http1JettyServerProvider;
   }
 
   private boolean isValidClearTextOrAlpnCombination()
   {
-    if (!_clientProvider.getUsePipelineV2())
-    {
-      return false;
-    }
-
     if (_clientProvider instanceof Https2ClientProvider &&
         _serverProvider instanceof Https2JettyServerProvider)
     {

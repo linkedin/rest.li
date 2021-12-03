@@ -29,7 +29,7 @@ import com.linkedin.r2.netty.entitystream.StreamWriter;
 import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
-import com.linkedin.r2.transport.http.client.stream.OrderedEntityStreamReader;
+import com.linkedin.r2.netty.entitystream.OrderedEntityStreamReader;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;

@@ -36,7 +36,6 @@ import com.linkedin.r2.transport.common.StreamRequestHandler;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -72,7 +71,7 @@ public class TestStreamingTimeout extends AbstractServiceTest
   private static final int HTTP_REQUEST_TIMEOUT = 30000;
   private static RequestHandler _requestHandler;
 
-  @Factory(dataProvider = "allPipelineV2StreamCombinations", dataProviderClass = ClientServerConfiguration.class)
+  @Factory(dataProvider = "allStreamCombinations", dataProviderClass = ClientServerConfiguration.class)
   public TestStreamingTimeout(ClientProvider clientProvider, ServerProvider serverProvider, int port)
   {
     super(clientProvider, serverProvider, port);

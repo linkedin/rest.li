@@ -221,12 +221,7 @@ public abstract class AbstractServiceTest
   //Http2 Stream based channel is available on http2 new pipeline
   protected boolean isHttp2StreamBasedChannel()
   {
-    if(_clientProvider instanceof Http2ClientProvider || _clientProvider instanceof Https2ClientProvider)
-    {
-      return _clientProvider.getUsePipelineV2();
-    }
-
-    return false;
+    return _clientProvider instanceof Http2ClientProvider || _clientProvider instanceof Https2ClientProvider;
   }
 
 }

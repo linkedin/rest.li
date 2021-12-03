@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2018 LinkedIn Corp.
+   Copyright (c) 2012 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -13,19 +13,27 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-package com.linkedin.d2.balancer.simple;
-
-import com.linkedin.r2.netty.common.ssl.SslSessionValidator;
-import java.util.List;
-
 
 /**
- * A factory to create {@link SslSessionValidator} with validationStrings build in
- *
- * The reason a factory is needed is that validationStrings are available only during runtime when cluster properities
- * fetched from zookeeper. SslSessionValidator has to be built after that.
+ * $Id: $
  */
-public interface SslSessionValidatorFactory
+
+package com.linkedin.r2.netty.common;
+
+
+import com.linkedin.r2.transport.http.client.AsyncPool;
+import io.netty.channel.Channel;
+import java.net.SocketAddress;
+
+/**
+ * @author Steven Ihde
+ * @version $Revision: $
+ */
+public interface ChannelPoolFactory
 {
-  SslSessionValidator getSessionValidator(List<String> validationStrings);
+  /**
+   * Returns a new pool of Channels to a specific host. The pool will manage the lifecycle of creation
+   * and destruction of the channels.
+   */
+  AsyncPool<Channel> getPool(SocketAddress address);
 }

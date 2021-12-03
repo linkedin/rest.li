@@ -20,7 +20,6 @@ import com.linkedin.r2.transport.common.StreamRequestHandlerAdapter;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcher;
 import com.linkedin.r2.transport.common.bridge.server.TransportDispatcherBuilder;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.test.util.retry.ThreeRetries;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.Collections;

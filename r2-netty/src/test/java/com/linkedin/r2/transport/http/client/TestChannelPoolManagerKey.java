@@ -16,8 +16,8 @@
 
 package com.linkedin.r2.transport.http.client;
 
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder;
+import com.linkedin.r2.netty.common.ChannelPoolManagerKey;
+import com.linkedin.r2.netty.common.ChannelPoolManagerKeyBuilder;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
