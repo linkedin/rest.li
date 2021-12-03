@@ -34,7 +34,7 @@ class PegasusPluginIntegrationTest extends Specification {
     result.task(':mainDataTemplateJar').outcome == SUCCESS
 
     where:
-    gradleVersion << [ '4.0', '5.2.1', '5.6.4', '6.9', '7.0.2' ]
+    gradleVersion << [ '5.2.1', '5.3', '5.6.4', '6.9', '7.0.2' ]
   }
 
   @Unroll
@@ -102,7 +102,7 @@ class PegasusPluginIntegrationTest extends Specification {
     assertZipContains(dataTemplateArtifact, 'extensions/com/linkedin/LatLongExtensions.pdl')
 
     where:
-    gradleVersion << [ '4.0', '5.2.1', '5.6.4', '6.9', '7.0.2' ]
+    gradleVersion << [ '5.2.1', '5.3', '5.6.4', '6.9', '7.0.2' ]
   }
 
   def 'mainCopySchema task will remove stale PDSC'() {

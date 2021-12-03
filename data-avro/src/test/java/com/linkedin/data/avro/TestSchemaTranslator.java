@@ -16,6 +16,8 @@
 
 package com.linkedin.data.avro;
 
+import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
+import com.linkedin.avroutil1.compatibility.SchemaParseConfiguration;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
@@ -883,24 +885,25 @@ public class TestSchemaTranslator
           //       If it is an Exception, then the Pegasus schema cannot be translated and this is the exception that
           //         is expected. The 3rd element is a string that should be contained in the message of the exception.
           // }
-          {
-              // custom properties :
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END } ], \"version\" : 1 }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"version\" : 1 }",
-              null,
-              null,
-              null
-          },
-          {
-              // required, optional not specified
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }",
-              null,
-              null,
-              null
-          },
+         {
+             // custom properties :
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END } ], \"version\" : 1 }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"version\" : 1 }",
+             null,
+             null,
+             null
+         }
+         ,
+         {
+             // required, optional not specified
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }",
+             null,
+             null,
+             null
+         },
           {
               // required and has default
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
@@ -910,1353 +913,1353 @@ public class TestSchemaTranslator
               emptyFooValue,
               null
           },
-          {
-              // required, optional is false
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"optional\" : false } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // required, optional is false and has default
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42, \"optional\" : false } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\", \"default\" : 42 } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional is true
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"optional\" : true } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional and has default
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"optional\" : true, \"default\" : 42 } ] }",
-              translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ], \"default\" : 42 } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional and has default
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"optional\" : true, \"default\" : 42 } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional and has default, enum type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END, \"optional\" : true, \"default\" : \"APPLE\" } ] }",
-              translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] }, \"null\" ], \"default\" : \"APPLE\" } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional and has default, enum type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END, \"optional\" : true, \"default\" : \"APPLE\" } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional and has default with namespaced type
-              "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"record\", \"name\" : \"b.c.bar\", \"fields\" : [ ] } ##T_END, \"default\" : {  }, \"optional\" : true } ] }",
-              translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"a.b\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"bar\", \"namespace\" : \"b.c\", \"fields\" : [  ] }, \"null\" ], \"default\" : {  } } ] }",
-              "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ ] }",
-              emptyFooValue,
-              null
-          },
-          {
-              // optional and has default with namespaced type
-              "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"record\", \"name\" : \"b.c.bar\", \"fields\" : [ ] } ##T_END, \"default\" : {  }, \"optional\" : true } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"a.b\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"bar\", \"namespace\" : \"b.c\", \"fields\" : [  ] } ], \"default\" : null } ] }",
-              "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ ] }",
-              emptyFooValue,
-              null
-          },
-          {
-              // optional and has default value with multi-level nesting
-              "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"record\", \"name\" : \"b.c.bar\", \"fields\" : [ { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"c.d.baz\", \"fields\" : [ ] } } ] }, \"default\" : { \"baz\" : { } }, \"optional\" : true } ] }",
-              translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"a.b\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"bar\", \"namespace\" : \"b.c\", \"fields\" : [ { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"baz\", \"namespace\" : \"c.d\", \"fields\" : [  ] } } ] }, \"null\" ], \"default\" : { \"baz\" : {  } } } ] }",
-              "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ ] }",
-              emptyFooValue,
-              null
-          },
-          {
-              // optional and has default value with multi-level nesting
-              "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"record\", \"name\" : \"b.c.bar\", \"fields\" : [ { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"c.d.baz\", \"fields\" : [ ] } } ] }, \"default\" : { \"baz\" : { } }, \"optional\" : true } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"a.b\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"bar\", \"namespace\" : \"b.c\", \"fields\" : [ { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"baz\", \"namespace\" : \"c.d\", \"fields\" : [  ] } } ] } ], \"default\" : null } ] }",
-              "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ ] }",
-              emptyFooValue,
-              null
-          },
-          {
-              // optional and has default but with circular references with inconsistent defaults, inconsistent because optional field has default, and also missing (which requires default to be null)
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"foo\", \"default\" : {  }, \"optional\" : true } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"foo\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional and has default but with circular references with inconsistent defaults, inconsistent because optional field has default, and also missing (which requires default to be null)
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"foo\", \"default\" : { \"bar\" : {  } }, \"optional\" : true } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"foo\" ], \"default\" : null } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // required union without null
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\" ] } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // required union with null
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"null\", \"string\" ] ##T_END } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\" ] } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // optional union without null
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END, \"optional\" : true } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional union with null
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"null\", \"int\", \"string\" ] ##T_END, \"optional\" : true } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional union without null and default is 1st member type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END, \"default\" : { \"int\" : 42 }, \"optional\" : true } ] }",
-              translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\", \"null\" ], \"default\" : 42 } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional union without null and default is 1st member type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END, \"default\" : { \"int\" : 42 }, \"optional\" : true } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional union without null and default is 2nd member type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END, \"default\" : { \"string\" : \"abc\" }, \"optional\" : true } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional union with null and non-null default, default is 1st member type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"null\", \"string\" ] ##T_END, \"default\" : { \"int\" : 42 }, \"optional\" : true } ] }",
-              translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\", \"string\" ], \"default\" : 42 } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional union with null and non-null default, default is 1st member type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"null\", \"string\" ] ##T_END, \"default\" : { \"int\" : 42 }, \"optional\" : true } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional union with null and non-null default, default is 2nd member type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"null\", \"string\" ] ##T_END, \"default\" : null, \"optional\" : true } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional union with null and non-null default, default is 3rd member type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"null\", \"string\" ] ##T_END, \"default\" : { \"string\" : \"abc\" }, \"optional\" : true } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional union with null and null default, default is 1st member type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"null\", \"int\", \"string\" ] ##T_END, \"default\" : null, \"optional\" : true } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional union but with circular references with inconsistent defaults, inconsistent because optional field has default, and also missing (which requires default to be null)
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"foo\", \"string\" ] ##T_END, \"default\" : { \"foo\" : { } }, \"optional\" : true } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"foo\", \"string\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional union but with circular references with but with consistent defaults (the only default that works is null for circularly referenced unions)
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"null\", \"foo\" ] ##T_END, \"default\" : null, \"optional\" : true } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"foo\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // typeref of fixed
-              "##T_START { \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] } ##T_END",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // typeref of enum
-              "##T_START { \"type\" : \"enum\", \"name\" : \"Fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END",
-              allModes,
-              "{ \"type\" : \"enum\", \"name\" : \"Fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // typeref of fixed
-              "##T_START { \"type\" : \"fixed\", \"name\" : \"Md5\", \"size\" : 16 } ##T_END",
-              allModes,
-              "{ \"type\" : \"fixed\", \"name\" : \"Md5\", \"size\" : 16 }",
-              null,
-              null,
-              null
-          },
-          {
-              // typeref of array
-              "##T_START { \"type\" : \"array\", \"items\" : \"int\" } ##T_END",
-              allModes,
-              "{ \"type\" : \"array\", \"items\" : \"int\" }",
-              null,
-              null,
-              null
-          },
-          {
-              // typeref of map
-              "##T_START { \"type\" : \"map\", \"values\" : \"int\" } ##T_END",
-              allModes,
-              "{ \"type\" : \"map\", \"values\" : \"int\" }",
-              null,
-              null,
-              null
-          },
-          {
-              // typeref of union
-              "##T_START [ \"null\", \"int\" ] ##T_END",
-              allModes,
-              "[ \"null\", \"int\" ]",
-              null,
-              null,
-              null
-          },
-          {
-              // typeref in array
-              "{ \"type\" : \"array\", \"items\" : ##T_START \"int\" ##T_END }",
-              allModes,
-              "{ \"type\" : \"array\", \"items\" : \"int\" }",
-              null,
-              null,
-              null
-          },
-          {
-              // typeref in map
-              "{ \"type\" : \"map\", \"values\" : ##T_START \"int\" ##T_END }",
-              allModes,
-              "{ \"type\" : \"map\", \"values\" : \"int\" }",
-              null,
-              null,
-              null
-          },
-          {
-              // typeref in union
-              "[ \"null\", ##T_START \"int\" ##T_END ]",
-              allModes,
-              "[ \"null\", \"int\" ]",
-              null,
-              null,
-              null
-          },
-          {
-              // record field with union with typeref, without null in record field
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ] } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", \"int\" ] } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // record field with union with typeref, without null and default is 1st member type and not typeref-ed
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"default\" : { \"string\" : \"abc\" } } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", \"int\" ], \"default\" : \"abc\" } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // record field with union with typeref, without null and default is 1st member type and typeref-ed
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"string\" ], \"default\" : { \"int\" : 42 } } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\" ], \"default\" : 42 } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // record field with union with typeref, without null and optional
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"optional\" : true } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\", \"int\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // record field with union with typeref, without null and optional, default is 1st member and not typeref-ed
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : { \"string\" : \"abc\" } } ] }",
-              translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", \"int\", \"null\" ], \"default\" : \"abc\" } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // record field with union with typeref, without null and optional, default is 1st member and not typeref-ed
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : { \"string\" : \"abc\" } } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\", \"int\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // record field with union with typeref, without null and optional, default is 1st member and typeref-ed
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"string\" ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // record field with union with typeref, without null and optional, default is 2nd member and not typeref-ed
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"string\" ], \"optional\" : true, \"default\" : { \"string\" : \"abc\" } } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // record field with union with typeref, without null and optional, default is 2nd member and typeref-ed
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\", \"int\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // record field with union with typeref, with null 1st member
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ] } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ] } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // record field with union with typeref, with null 1st member, default is 1st member and null
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ], \"default\" : null } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // record field with union with typeref with null 1st member, and optional
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ], \"optional\" : true } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // record field with union with typeref with null 1st member, and optional, default is 1st member and null
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : null } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // record field with union with typeref with null 1st member, and optional, default is last member and typeref-ed
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // record field with union with typeref, with null last member
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ] } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ] } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // record field with union with typeref, with null last member, default is 1st member and typeref-ed
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"default\" : { \"int\" : 42 } } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ], \"default\" : 42 } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // record field with union with typeref, with null last member, and optional
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"optional\" : true } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // record field with union with typeref, with null last member, and optional, default is 1st member and typeref-ed
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
-              translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ], \"default\" : 42 } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // record field with union with typeref, with null last member, and optional, default is 1st member and typeref-ed
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // record field with union with typeref, with null last member, and optional, default is last member and null
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"optional\" : true, \"default\" : null } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // array of union with no default
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : ##T_START [ \"int\", \"string\" ] ##T_END } } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // array of union with default, default value uses only 1st member type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ##T_END, \"default\" : [ { \"int\" : 42 }, { \"int\" : 13 } ] } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] }, \"default\" : [ 42, 13 ] } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // array of union with default, default value uses only 1st null member type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : ##T_START [ \"null\", \"string\" ] ##T_END }, \"default\" : [ null, null ] } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"null\", \"string\" ] }, \"default\" : [ null, null ] } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional array of union with no default
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : ##T_START [ \"int\", \"string\" ] ##T_END }, \"optional\" : true } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional array of union with default, default value uses only 1st member type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ##T_END, \"optional\" : true, \"default\" : [ { \"int\" : 42 }, { \"int\" : 13 } ] } ] }",
-              translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] }, \"null\" ], \"default\" : [ 42, 13 ] } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional array of union with default, default value uses only 1st member type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ##T_END, \"optional\" : true, \"default\" : [ { \"int\" : 42 }, { \"int\" : 13 } ] } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional array of union with default, default value uses 2nd member type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : ##T_START [ \"int\", \"string\" ] ##T_END }, \"optional\" : true, \"default\" : [ { \"int\" : 42 }, { \"string\" : \"abc\" } ] } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // map of union with no default
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : ##T_START [ \"int\", \"string\" ] ##T_END } } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // map of union with default, default value uses only 1st member type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ##T_END, \"default\" : { \"m1\" : { \"int\" : 42 } } } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] }, \"default\" : { \"m1\" : 42 } } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // map of union with default, default value uses only 1st null member type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : ##T_START [ \"null\", \"string\" ] ##T_END }, \"default\" : { \"m1\" : null } } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"null\", \"string\" ] }, \"default\" : { \"m1\" : null } } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional map of union with no default
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : ##T_START [ \"int\", \"string\" ] ##T_END }, \"optional\" : true } ] }",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional map of union with default, default value uses only 1st member type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ##T_END, \"optional\" : true, \"default\" : { \"m1\" : { \"int\" : 42 } } } ] }",
-              translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] }, \"null\" ], \"default\" : { \"m1\" : 42 } } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional map of union with default, default value uses only 1st member type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ##T_END, \"optional\" : true, \"default\" : { \"m1\" : { \"int\" : 42 } } } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // optional map of union with default, default value uses 2nd member type
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : ##T_START [ \"int\", \"string\" ] ##T_END }, \"optional\" : true, \"default\" : { \"m1\" : { \"string\" : \"abc\" } } } ] }",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              null
-          },
-          {
-              // required array of record field with default.
-              "{ " +
-                  "  \"type\" : \"record\", " +
-                  "  \"name\" : \"foo\", " +
-                  "  \"fields\" : [ " +
-                  "    { " +
-                  "      \"name\" : \"f1\", " +
-                  "      \"type\" : { " +
-                  "         \"type\": \"array\", " +
-                  "         \"items\": { " +
-                  "           \"type\" : \"record\", " +
-                  "           \"name\" : \"bar\", " +
-                  "           \"fields\" : [ " +
-                  "             { \"name\" : \"b1\", \"type\" : \"int\" } " +
-                  "            ] " +
-                  "          } " +
-                  "       }, " +
-                  "       \"default\": [] " +
-                  "    } "+
-                  "  ] " +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"bar\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : \"int\" } ] } }, \"default\" : [  ] } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // include
-              "{ " +
-                  "  \"type\" : \"record\", " +
-                  "  \"name\" : \"foo\", " +
-                  "  \"include\" : [ " +
-                  "    ##T_START { " +
-                  "      \"type\" : \"record\", " +
-                  "      \"name\" : \"bar\", " +
-                  "      \"fields\" : [ " +
-                  "        { \"name\" : \"b1\", \"type\" : \"int\" } " +
-                  "      ] " +
-                  "    } ##T_END " +
-                  "  ], " +
-                  "  \"fields\" : [ " +
-                  "    { " +
-                  "      \"name\" : \"f1\", " +
-                  "      \"type\" : \"double\" " +
-                  "    } "+
-                  "  ] " +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : \"int\" }, { \"name\" : \"f1\", \"type\" : \"double\" } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // include more than once
-              "{ " +
-                  "  \"type\" : \"record\", " +
-                  "  \"name\" : \"foo\", " +
-                  "  \"include\" : [ " +
-                  "    ##T_START { " +
-                  "      \"type\" : \"record\", " +
-                  "      \"name\" : \"bar\", " +
-                  "      \"fields\" : [ " +
-                  "        { \"name\" : \"b1\", \"type\" : \"int\", \"optional\" : true } " +
-                  "      ] " +
-                  "    } ##T_END " +
-                  "  ], " +
-                  "  \"fields\" : [ " +
-                  "    { " +
-                  "      \"name\" : \"f1\", " +
-                  "      \"type\" : { \"type\" : \"record\", \"name\" : \"f1\", \"include\" : [ \"bar\" ], \"fields\" : [] }" +
-                  "    }, "+
-                  "    { " +
-                  "      \"name\" : \"f2\", " +
-                  "      \"type\" : { \"type\" : \"record\", \"name\" : \"f2\", \"include\" : [ \"bar\" ], \"fields\" : [] }" +
-                  "    } "+
-                  "  ] " +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : [ \"null\", \"int\" ], \"default\" : null }, { \"name\" : \"f1\", \"type\" : { \"type\" : \"record\", \"name\" : \"f1\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] } }, { \"name\" : \"f2\", \"type\" : { \"type\" : \"record\", \"name\" : \"f2\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] } } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // inconsistent default,
-              // a referenced record has an optional field "frank" with default,
-              // but field of referenced record type has default value which does not provide value for "frank"
-              "{ " +
-                  "  \"type\" : \"record\", " +
-                  "  \"name\" : \"Bar\", " +
-                  "  \"fields\" : [ " +
-                  "    { " +
-                  "      \"name\" : \"barbara\", " +
-                  "      \"type\" : { " +
-                  "        \"type\" : \"record\", " +
-                  "        \"name\" : \"Foo\", " +
-                  "        \"fields\" : [ " +
-                  "          { " +
-                  "            \"name\" : \"frank\", " +
-                  "            \"type\" : \"string\", " +
-                  "            \"default\" : \"abc\", " +
-                  "            \"optional\" : true" +
-                  "          } " +
-                  "        ] " +
-                  "      }, " +
-                  "      \"default\" : { } " +
-                  "    } " +
-                  "  ]" +
-                  "}",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"Bar\", \"fields\" : [ { \"name\" : \"barbara\", \"type\" : { \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"frank\", \"type\" : [ \"null\", \"string\" ], \"default\" : null } ] }, \"default\" : { \"frank\" : null } } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // default override "foo1" default for "bar1" is "xyz", it should override "bar1" default "abc".
-              "{\n" +
-                  "  \"type\":\"record\",\n" +
-                  "  \"name\":\"foo\",\n" +
-                  "  \"fields\":[\n" +
-                  "    {\n" +
-                  "      \"name\": \"foo1\",\n" +
-                  "      \"type\": {\n" +
-                  "        \"type\" : \"record\",\n" +
-                  "        \"name\" : \"bar\",\n" +
-                  "        \"fields\" : [\n" +
-                  "           {\n" +
-                  "             \"name\" : \"bar1\",\n" +
-                  "             \"type\" : \"string\",\n" +
-                  "             \"default\" : \"abc\", " +
-                  "             \"optional\" : true\n" +
-                  "           }\n" +
-                  "        ]\n" +
-                  "      },\n" +
-                  "      \"optional\": true,\n" +
-                  "      \"default\": { \"bar1\": \"xyz\" }\n" +
-                  "    }\n" +
-                  "  ]\n" +
-                  "}\n",
-              translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"foo1\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"bar\", \"fields\" : [ { \"name\" : \"bar1\", \"type\" : [ \"string\", \"null\" ], \"default\" : \"abc\" } ] }, \"null\" ], \"default\" : { \"bar1\" : \"xyz\" } } ] }",
-              emptyFooSchema,
-              "{}",
-              "{\"foo1\": {\"bar1\": \"xyz\"}}"
-          },
-          {
-              // Required 'union with aliases' field with no default value
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"result\"," +
-                  "\"type\": ##T_START [" +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "] ##T_END" +
-                  "}" +
-                  "]" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // Required 'union with aliases' field with a null member and no default value
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"result\"," +
-                  "\"type\": [" +
-                  "\"null\"," +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "]" +
-                  "}" +
-                  "]" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // Optional 'union with aliases' field with no default value
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"result\"," +
-                  "\"type\": [" +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "]," +
-                  "\"optional\": true" +
-                  "}" +
-                  "]" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              "{\"result\": null}"
-          },
-          {
-              // Optional 'union with aliases' field with a null member and no default value
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"result\"," +
-                  "\"type\": [" +
-                  "\"null\"," +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "]," +
-                  "\"optional\": true" +
-                  "}" +
-                  "]" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              "{\"result\": null}"
-          },
-          {
-              // Required 'union with aliases' field with a default value
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"result\"," +
-                  "\"type\": [" +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "]," +
-                  "\"default\": { \"success\": \"Union with aliases.\" }" +
-                  "}" +
-                  "]" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"string\", \"null\" ], \"doc\" : \"Success message\", \"default\" : \"Union with aliases.\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"default\" : { \"fieldDiscriminator\" : \"success\", \"success\" : \"Union with aliases.\", \"failure\" : null } } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              "{\"result\": {\"success\": \"Union with aliases.\", \"failure\": null, \"fieldDiscriminator\": ##Q_STARTsuccess##Q_END}}"
-          },
-          {
-              // Optional 'union with aliases' field with a default value
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"result\"," +
-                  "\"type\": [" +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "]," +
-                  "\"optional\": true," +
-                  "\"default\": { \"success\": \"Union with aliases.\" }" +
-                  "}" +
-                  "]" +
-                  "}",
-              translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"string\", \"null\" ], \"doc\" : \"Success message\", \"default\" : \"Union with aliases.\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"null\" ], \"default\" : { \"fieldDiscriminator\" : \"success\", \"success\" : \"Union with aliases.\", \"failure\" : null } } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              "{\"result\": {\"success\": \"Union with aliases.\", \"failure\": null, \"fieldDiscriminator\": ##Q_STARTsuccess##Q_END}}"
-          },
-          {
-              // Optional 'union with aliases' field with a default value
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"result\"," +
-                  "\"type\": [" +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "]," +
-                  "\"optional\": true," +
-                  "\"default\": { \"success\": \"Union with aliases.\" }" +
-                  "}" +
-                  "]" +
-                  "}",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              "{\"result\": null}"
-          },
-          {
-              // Optional 'union with aliases' field with a null member and a default null value
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"result\"," +
-                  "\"type\": [" +
-                  "\"null\"," +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "]," +
-                  "\"optional\": true," +
-                  "\"default\": null" +
-                  "}" +
-                  "]" +
-                  "}",
-              translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"null\" ], \"default\" : { \"fieldDiscriminator\" : \"null\", \"success\" : null, \"failure\" : null } } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              "{\"result\": {\"success\": null, \"failure\": null, \"fieldDiscriminator\": ##Q_STARTnull##Q_END}}"
-          },
-          {
-              // Optional 'union with aliases' field with a null member and a default null value
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"result\"," +
-                  "\"type\": [" +
-                  "\"null\"," +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "]," +
-                  "\"optional\": true," +
-                  "\"default\": null" +
-                  "}" +
-                  "]" +
-                  "}",
-              translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
-              emptyFooSchema,
-              emptyFooValue,
-              "{\"result\": null}"
-          },
-          {
-              // Two 'union with aliases' fields under different records but with the same field name. The generated record
-              // representation for these two unions should include the parent record's name to avoid any name conflicts.
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"bar\"," +
-                  "\"type\": {" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"Bar\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"result\"," + // same union field name as the one below.
-                  "\"type\": [ { \"type\" : \"string\", \"alias\" : \"resultUrn\" } ]" +
-                  "}" +
-                  "]" +
-                  "}" +
-                  "}," +
-                  "{" +
-                  "\"name\": \"baz\"," +
-                  "\"type\": {" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"Baz\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"result\"," + // same union field name as the one above.
-                  "\"type\": [ { \"type\" : \"string\", \"alias\" : \"resultUrn\" } ]" +
-                  "}" +
-                  "]" +
-                  "}" +
-                  "}" +
-                  "]" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"record\", \"name\" : \"Bar\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"BarResult\", \"fields\" : [ { \"name\" : \"resultUrn\", \"type\" : [ \"null\", \"string\" ], \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"BarResultDiscriminator\", \"symbols\" : [ \"resultUrn\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] } }, { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"Baz\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"BazResult\", \"fields\" : [ { \"name\" : \"resultUrn\", \"type\" : [ \"null\", \"string\" ], \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"BazResultDiscriminator\", \"symbols\" : [ \"resultUrn\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] } } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // An 'union with aliases' field containing a record member which has another 'union with aliases' field
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"result\"," + // 'result' is an union field with just one member of type 'MessageRecord' record
-                  "\"type\": [" +
-                  "{ " +
-                  "\"type\" : {" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"MessageRecord\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"message\"," + // 'message' is an union field under 'MessageRecord'
-                  "\"type\": [" +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "]" +
-                  "}" +
-                  "]" +
-                  "}," +
-                  "\"alias\" : \"message\"" +
-                  "}" +
-                  "]" +
-                  "}" +
-                  "]" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"message\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"MessageRecord\", \"fields\" : [ { \"name\" : \"message\", \"type\" : { \"type\" : \"record\", \"name\" : \"MessageRecordMessage\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"MessageRecordMessageDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] } ], \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"message\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // A required array field with 'union with aliases' as its item type and no default value
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"results\"," +
-                  "\"type\": ##T_START {" +
-                  "\"type\": \"array\"," +
-                  "\"items\": [" +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "]" +
-                  "} ##T_END" +
-                  "}" +
-                  "]" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // A required array field with 'union with aliases' as its item type and a default value
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"results\"," +
-                  "\"type\": {" +
-                  "\"type\": \"array\"," +
-                  "\"items\": [" +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "]" +
-                  "}," +
-                  "\"default\": [ { \"success\": \"Operation completed.\" }, { \"failure\": \"Operation failed.\" } ]" +
-                  "}" +
-                  "]" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // An optional array field with 'union with aliases' as its item type and no default value
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"results\"," +
-                  "\"type\": {" +
-                  "\"type\": \"array\"," +
-                  "\"items\": [" +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "]" +
-                  "}," +
-                  "\"optional\": true" +
-                  "}" +
-                  "]" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ], \"default\" : null } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // An optional array field with 'union with aliases' as its item type and a default value
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"results\"," +
-                  "\"type\": {" +
-                  "\"type\": \"array\"," +
-                  "\"items\": [" +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "]" +
-                  "}," +
-                  "\"default\": [ { \"success\": \"Operation completed.\" }, { \"failure\": \"Operation failed.\" } ]," +
-                  "\"optional\": true" +
-                  "}" +
-                  "]" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ], \"default\" : null } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // A nested array field with 'union with aliases' as its item type and a default value
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"results\"," +
-                  "\"type\": {" +
-                  "\"type\": \"array\"," +
-                  "\"items\": {" +
-                  "\"type\": \"array\"," +
-                  "\"items\": {" +
-                  "\"type\": \"array\"," +
-                  "\"items\": [" +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "]" +
-                  "}" +
-                  "}" +
-                  "}," +
-                  "\"default\": [ [ [ { \"success\": \"Operation completed.\" }, { \"failure\": \"Operation failed.\" } ] ] ]" +
-                  "}" +
-                  "]" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // A nested array and map field with 'union with aliases' as its item type and a default value
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"results\"," +
-                  "\"type\": {" +
-                  "\"type\": \"array\"," +
-                  "\"items\": {" +
-                  "\"type\": \"map\"," +
-                  "\"values\": {" +
-                  "\"type\": \"array\"," +
-                  "\"items\": [" +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "]" +
-                  "}" +
-                  "}" +
-                  "}," +
-                  "\"default\": [ { \"key\": [ { \"success\": \"Operation completed.\" }, { \"failure\": \"Operation failed.\" } ] } ]" +
-                  "}" +
-                  "]" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // A nested map field with 'union with aliases' as its item type and a default value
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"results\"," +
-                  "\"type\": {" +
-                  "\"type\": \"map\"," +
-                  "\"values\": {" +
-                  "\"type\": \"map\"," +
-                  "\"values\": {" +
-                  "\"type\": \"map\"," +
-                  "\"values\": [" +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "]" +
-                  "}" +
-                  "}" +
-                  "}," +
-                  "\"default\": { \"level1\": { \"level2\": { \"level3key1\": { \"success\": \"Operation completed.\" }, \"level3key2\": { \"failure\": \"Operation failed.\" } } } }" +
-                  "}" +
-                  "]" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // A nested map and array field with 'union with aliases' as its item type and a default value
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"results\"," +
-                  "\"type\": {" +
-                  "\"type\": \"map\"," +
-                  "\"values\": {" +
-                  "\"type\": \"array\"," +
-                  "\"items\": {" +
-                  "\"type\": \"map\"," +
-                  "\"values\": [" +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "]" +
-                  "}" +
-                  "}" +
-                  "}," +
-                  "\"default\": { \"level1\": [ { \"level3key1\": { \"success\": \"Operation completed.\" }, \"level3key2\": { \"failure\": \"Operation failed.\" } } ] }" +
-                  "}" +
-                  "]" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              // A required map field with 'union with aliases' as its item type with no default value
-              "{" +
-                  "\"type\": \"record\"," +
-                  "\"name\": \"foo\"," +
-                  "\"fields\": [" +
-                  "{" +
-                  "\"name\": \"results\"," +
-                  "\"type\": ##T_START {" +
-                  "\"type\": \"map\"," +
-                  "\"values\": [" +
-                  "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
-                  "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
-                  "]" +
-                  "} ##T_END" +
-                  "}" +
-                  "]" +
-                  "}",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              " { " +
-              "   \"type\" : \"record\", " +
-              "   \"name\" : \"Foo\", " +
-              "   \"fields\" : [ { " +
-              "     \"name\" : \"field1\", " +
-              "     \"type\" : \"int\", " +
-              "     \"b_customAnnotation\" : \"f1\", " +
-              "     \"c_customAnnotation\" : \"f1\", " +
-              "     \"a_customAnnotation\" : \"f1\" " +
-              "   } ] " +
-              " } ",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"field1\", \"type\" : \"int\", \"a_customAnnotation\" : \"f1\", \"b_customAnnotation\" : \"f1\", \"c_customAnnotation\" : \"f1\" } ] }",
-              null,
-              null,
-              null
-          },
-          {
-              " { " +
-              "   \"type\" : \"record\", " +
-              "   \"name\" : \"Foo\", " +
-              "   \"fields\" : [ { " +
-              "     \"name\" : \"field1\", " +
-              "     \"type\" : \"int\", " +
-              "     \"c_customAnnotation\" : { " +
-              "       \"b_nested\" : \"a\", " +
-              "       \"a_nested\" : \"a\", " +
-              "       \"c_nested\" : \"a\" " +
-              "     }, " +
-              "     \"a_customAnnotation\" : \"f1\", " +
-              "     \"b_customAnnotation\" : \"f1\" " +
-              "   } ] " +
-              " } ",
-              allModes,
-              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"field1\", \"type\" : \"int\", \"a_customAnnotation\" : \"f1\", \"b_customAnnotation\" : \"f1\", \"c_customAnnotation\" : { \"a_nested\" : \"a\", \"b_nested\" : \"a\", \"c_nested\" : \"a\" } } ] }",
-              null,
-              null,
-              null
-          }
+         {
+             // required, optional is false
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"optional\" : false } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // required, optional is false and has default
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42, \"optional\" : false } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\", \"default\" : 42 } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional is true
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"optional\" : true } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional and has default
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"optional\" : true, \"default\" : 42 } ] }",
+             translateDefault,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ], \"default\" : 42 } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional and has default
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"optional\" : true, \"default\" : 42 } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional and has default, enum type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END, \"optional\" : true, \"default\" : \"APPLE\" } ] }",
+             translateDefault,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] }, \"null\" ], \"default\" : \"APPLE\" } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional and has default, enum type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END, \"optional\" : true, \"default\" : \"APPLE\" } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional and has default with namespaced type
+             "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"record\", \"name\" : \"b.c.bar\", \"fields\" : [ ] } ##T_END, \"default\" : {  }, \"optional\" : true } ] }",
+             translateDefault,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"a.b\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"bar\", \"namespace\" : \"b.c\", \"fields\" : [  ] }, \"null\" ], \"default\" : {  } } ] }",
+             "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ ] }",
+             emptyFooValue,
+             null
+         },
+         {
+             // optional and has default with namespaced type
+             "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"record\", \"name\" : \"b.c.bar\", \"fields\" : [ ] } ##T_END, \"default\" : {  }, \"optional\" : true } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"a.b\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"bar\", \"namespace\" : \"b.c\", \"fields\" : [  ] } ], \"default\" : null } ] }",
+             "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ ] }",
+             emptyFooValue,
+             null
+         },
+         {
+             // optional and has default value with multi-level nesting
+             "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"record\", \"name\" : \"b.c.bar\", \"fields\" : [ { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"c.d.baz\", \"fields\" : [ ] } } ] }, \"default\" : { \"baz\" : { } }, \"optional\" : true } ] }",
+             translateDefault,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"a.b\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"bar\", \"namespace\" : \"b.c\", \"fields\" : [ { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"baz\", \"namespace\" : \"c.d\", \"fields\" : [  ] } } ] }, \"null\" ], \"default\" : { \"baz\" : {  } } } ] }",
+             "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ ] }",
+             emptyFooValue,
+             null
+         },
+         {
+             // optional and has default value with multi-level nesting
+             "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"record\", \"name\" : \"b.c.bar\", \"fields\" : [ { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"c.d.baz\", \"fields\" : [ ] } } ] }, \"default\" : { \"baz\" : { } }, \"optional\" : true } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"a.b\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"bar\", \"namespace\" : \"b.c\", \"fields\" : [ { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"baz\", \"namespace\" : \"c.d\", \"fields\" : [  ] } } ] } ], \"default\" : null } ] }",
+             "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ ] }",
+             emptyFooValue,
+             null
+         },
+         {
+             // optional and has default but with circular references with inconsistent defaults, inconsistent because optional field has default, and also missing (which requires default to be null)
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"foo\", \"default\" : {  }, \"optional\" : true } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"foo\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional and has default but with circular references with inconsistent defaults, inconsistent because optional field has default, and also missing (which requires default to be null)
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"foo\", \"default\" : { \"bar\" : {  } }, \"optional\" : true } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"foo\" ], \"default\" : null } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // required union without null
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\" ] } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // required union with null
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"null\", \"string\" ] ##T_END } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\" ] } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // optional union without null
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END, \"optional\" : true } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional union with null
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"null\", \"int\", \"string\" ] ##T_END, \"optional\" : true } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional union without null and default is 1st member type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END, \"default\" : { \"int\" : 42 }, \"optional\" : true } ] }",
+             translateDefault,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\", \"null\" ], \"default\" : 42 } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional union without null and default is 1st member type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END, \"default\" : { \"int\" : 42 }, \"optional\" : true } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional union without null and default is 2nd member type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END, \"default\" : { \"string\" : \"abc\" }, \"optional\" : true } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional union with null and non-null default, default is 1st member type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"null\", \"string\" ] ##T_END, \"default\" : { \"int\" : 42 }, \"optional\" : true } ] }",
+             translateDefault,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\", \"string\" ], \"default\" : 42 } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional union with null and non-null default, default is 1st member type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"null\", \"string\" ] ##T_END, \"default\" : { \"int\" : 42 }, \"optional\" : true } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional union with null and non-null default, default is 2nd member type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"null\", \"string\" ] ##T_END, \"default\" : null, \"optional\" : true } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional union with null and non-null default, default is 3rd member type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"null\", \"string\" ] ##T_END, \"default\" : { \"string\" : \"abc\" }, \"optional\" : true } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional union with null and null default, default is 1st member type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"null\", \"int\", \"string\" ] ##T_END, \"default\" : null, \"optional\" : true } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional union but with circular references with inconsistent defaults, inconsistent because optional field has default, and also missing (which requires default to be null)
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"foo\", \"string\" ] ##T_END, \"default\" : { \"foo\" : { } }, \"optional\" : true } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"foo\", \"string\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional union but with circular references with but with consistent defaults (the only default that works is null for circularly referenced unions)
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"null\", \"foo\" ] ##T_END, \"default\" : null, \"optional\" : true } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"foo\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // typeref of fixed
+             "##T_START { \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] } ##T_END",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // typeref of enum
+             "##T_START { \"type\" : \"enum\", \"name\" : \"Fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END",
+             allModes,
+             "{ \"type\" : \"enum\", \"name\" : \"Fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // typeref of fixed
+             "##T_START { \"type\" : \"fixed\", \"name\" : \"Md5\", \"size\" : 16 } ##T_END",
+             allModes,
+             "{ \"type\" : \"fixed\", \"name\" : \"Md5\", \"size\" : 16 }",
+             null,
+             null,
+             null
+         },
+         {
+             // typeref of array
+             "##T_START { \"type\" : \"array\", \"items\" : \"int\" } ##T_END",
+             allModes,
+             "{ \"type\" : \"array\", \"items\" : \"int\" }",
+             null,
+             null,
+             null
+         },
+         {
+             // typeref of map
+             "##T_START { \"type\" : \"map\", \"values\" : \"int\" } ##T_END",
+             allModes,
+             "{ \"type\" : \"map\", \"values\" : \"int\" }",
+             null,
+             null,
+             null
+         },
+         {
+             // typeref of union
+             "##T_START [ \"null\", \"int\" ] ##T_END",
+             allModes,
+             "[ \"null\", \"int\" ]",
+             null,
+             null,
+             null
+         },
+         {
+             // typeref in array
+             "{ \"type\" : \"array\", \"items\" : ##T_START \"int\" ##T_END }",
+             allModes,
+             "{ \"type\" : \"array\", \"items\" : \"int\" }",
+             null,
+             null,
+             null
+         },
+         {
+             // typeref in map
+             "{ \"type\" : \"map\", \"values\" : ##T_START \"int\" ##T_END }",
+             allModes,
+             "{ \"type\" : \"map\", \"values\" : \"int\" }",
+             null,
+             null,
+             null
+         },
+         {
+             // typeref in union
+             "[ \"null\", ##T_START \"int\" ##T_END ]",
+             allModes,
+             "[ \"null\", \"int\" ]",
+             null,
+             null,
+             null
+         },
+         {
+             // record field with union with typeref, without null in record field
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ] } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", \"int\" ] } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // record field with union with typeref, without null and default is 1st member type and not typeref-ed
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"default\" : { \"string\" : \"abc\" } } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", \"int\" ], \"default\" : \"abc\" } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // record field with union with typeref, without null and default is 1st member type and typeref-ed
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"string\" ], \"default\" : { \"int\" : 42 } } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\" ], \"default\" : 42 } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // record field with union with typeref, without null and optional
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"optional\" : true } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\", \"int\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // record field with union with typeref, without null and optional, default is 1st member and not typeref-ed
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : { \"string\" : \"abc\" } } ] }",
+             translateDefault,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", \"int\", \"null\" ], \"default\" : \"abc\" } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // record field with union with typeref, without null and optional, default is 1st member and not typeref-ed
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : { \"string\" : \"abc\" } } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\", \"int\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // record field with union with typeref, without null and optional, default is 1st member and typeref-ed
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"string\" ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // record field with union with typeref, without null and optional, default is 2nd member and not typeref-ed
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"string\" ], \"optional\" : true, \"default\" : { \"string\" : \"abc\" } } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // record field with union with typeref, without null and optional, default is 2nd member and typeref-ed
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\", \"int\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // record field with union with typeref, with null 1st member
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ] } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ] } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // record field with union with typeref, with null 1st member, default is 1st member and null
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ], \"default\" : null } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // record field with union with typeref with null 1st member, and optional
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ], \"optional\" : true } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // record field with union with typeref with null 1st member, and optional, default is 1st member and null
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : null } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // record field with union with typeref with null 1st member, and optional, default is last member and typeref-ed
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // record field with union with typeref, with null last member
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ] } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ] } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // record field with union with typeref, with null last member, default is 1st member and typeref-ed
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"default\" : { \"int\" : 42 } } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ], \"default\" : 42 } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // record field with union with typeref, with null last member, and optional
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"optional\" : true } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // record field with union with typeref, with null last member, and optional, default is 1st member and typeref-ed
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
+             translateDefault,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ], \"default\" : 42 } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // record field with union with typeref, with null last member, and optional, default is 1st member and typeref-ed
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // record field with union with typeref, with null last member, and optional, default is last member and null
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"optional\" : true, \"default\" : null } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // array of union with no default
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : ##T_START [ \"int\", \"string\" ] ##T_END } } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // array of union with default, default value uses only 1st member type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ##T_END, \"default\" : [ { \"int\" : 42 }, { \"int\" : 13 } ] } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] }, \"default\" : [ 42, 13 ] } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // array of union with default, default value uses only 1st null member type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : ##T_START [ \"null\", \"string\" ] ##T_END }, \"default\" : [ null, null ] } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"null\", \"string\" ] }, \"default\" : [ null, null ] } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional array of union with no default
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : ##T_START [ \"int\", \"string\" ] ##T_END }, \"optional\" : true } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional array of union with default, default value uses only 1st member type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ##T_END, \"optional\" : true, \"default\" : [ { \"int\" : 42 }, { \"int\" : 13 } ] } ] }",
+             translateDefault,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] }, \"null\" ], \"default\" : [ 42, 13 ] } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional array of union with default, default value uses only 1st member type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ##T_END, \"optional\" : true, \"default\" : [ { \"int\" : 42 }, { \"int\" : 13 } ] } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional array of union with default, default value uses 2nd member type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : ##T_START [ \"int\", \"string\" ] ##T_END }, \"optional\" : true, \"default\" : [ { \"int\" : 42 }, { \"string\" : \"abc\" } ] } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // map of union with no default
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : ##T_START [ \"int\", \"string\" ] ##T_END } } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // map of union with default, default value uses only 1st member type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ##T_END, \"default\" : { \"m1\" : { \"int\" : 42 } } } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] }, \"default\" : { \"m1\" : 42 } } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // map of union with default, default value uses only 1st null member type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : ##T_START [ \"null\", \"string\" ] ##T_END }, \"default\" : { \"m1\" : null } } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"null\", \"string\" ] }, \"default\" : { \"m1\" : null } } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional map of union with no default
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : ##T_START [ \"int\", \"string\" ] ##T_END }, \"optional\" : true } ] }",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional map of union with default, default value uses only 1st member type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ##T_END, \"optional\" : true, \"default\" : { \"m1\" : { \"int\" : 42 } } } ] }",
+             translateDefault,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] }, \"null\" ], \"default\" : { \"m1\" : 42 } } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional map of union with default, default value uses only 1st member type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ##T_END, \"optional\" : true, \"default\" : { \"m1\" : { \"int\" : 42 } } } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // optional map of union with default, default value uses 2nd member type
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : ##T_START [ \"int\", \"string\" ] ##T_END }, \"optional\" : true, \"default\" : { \"m1\" : { \"string\" : \"abc\" } } } ] }",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             null
+         },
+         {
+             // required array of record field with default.
+             "{ " +
+                 "  \"type\" : \"record\", " +
+                 "  \"name\" : \"foo\", " +
+                 "  \"fields\" : [ " +
+                 "    { " +
+                 "      \"name\" : \"f1\", " +
+                 "      \"type\" : { " +
+                 "         \"type\": \"array\", " +
+                 "         \"items\": { " +
+                 "           \"type\" : \"record\", " +
+                 "           \"name\" : \"bar\", " +
+                 "           \"fields\" : [ " +
+                 "             { \"name\" : \"b1\", \"type\" : \"int\" } " +
+                 "            ] " +
+                 "          } " +
+                 "       }, " +
+                 "       \"default\": [] " +
+                 "    } "+
+                 "  ] " +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"bar\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : \"int\" } ] } }, \"default\" : [  ] } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // include
+             "{ " +
+                 "  \"type\" : \"record\", " +
+                 "  \"name\" : \"foo\", " +
+                 "  \"include\" : [ " +
+                 "    ##T_START { " +
+                 "      \"type\" : \"record\", " +
+                 "      \"name\" : \"bar\", " +
+                 "      \"fields\" : [ " +
+                 "        { \"name\" : \"b1\", \"type\" : \"int\" } " +
+                 "      ] " +
+                 "    } ##T_END " +
+                 "  ], " +
+                 "  \"fields\" : [ " +
+                 "    { " +
+                 "      \"name\" : \"f1\", " +
+                 "      \"type\" : \"double\" " +
+                 "    } "+
+                 "  ] " +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : \"int\" }, { \"name\" : \"f1\", \"type\" : \"double\" } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // include more than once
+             "{ " +
+                 "  \"type\" : \"record\", " +
+                 "  \"name\" : \"foo\", " +
+                 "  \"include\" : [ " +
+                 "    ##T_START { " +
+                 "      \"type\" : \"record\", " +
+                 "      \"name\" : \"bar\", " +
+                 "      \"fields\" : [ " +
+                 "        { \"name\" : \"b1\", \"type\" : \"int\", \"optional\" : true } " +
+                 "      ] " +
+                 "    } ##T_END " +
+                 "  ], " +
+                 "  \"fields\" : [ " +
+                 "    { " +
+                 "      \"name\" : \"f1\", " +
+                 "      \"type\" : { \"type\" : \"record\", \"name\" : \"f1\", \"include\" : [ \"bar\" ], \"fields\" : [] }" +
+                 "    }, "+
+                 "    { " +
+                 "      \"name\" : \"f2\", " +
+                 "      \"type\" : { \"type\" : \"record\", \"name\" : \"f2\", \"include\" : [ \"bar\" ], \"fields\" : [] }" +
+                 "    } "+
+                 "  ] " +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : [ \"null\", \"int\" ], \"default\" : null }, { \"name\" : \"f1\", \"type\" : { \"type\" : \"record\", \"name\" : \"f1\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] } }, { \"name\" : \"f2\", \"type\" : { \"type\" : \"record\", \"name\" : \"f2\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] } } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // inconsistent default,
+             // a referenced record has an optional field "frank" with default,
+             // but field of referenced record type has default value which does not provide value for "frank"
+             "{ " +
+                 "  \"type\" : \"record\", " +
+                 "  \"name\" : \"Bar\", " +
+                 "  \"fields\" : [ " +
+                 "    { " +
+                 "      \"name\" : \"barbara\", " +
+                 "      \"type\" : { " +
+                 "        \"type\" : \"record\", " +
+                 "        \"name\" : \"Foo\", " +
+                 "        \"fields\" : [ " +
+                 "          { " +
+                 "            \"name\" : \"frank\", " +
+                 "            \"type\" : \"string\", " +
+                 "            \"default\" : \"abc\", " +
+                 "            \"optional\" : true" +
+                 "          } " +
+                 "        ] " +
+                 "      }, " +
+                 "      \"default\" : { } " +
+                 "    } " +
+                 "  ]" +
+                 "}",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"Bar\", \"fields\" : [ { \"name\" : \"barbara\", \"type\" : { \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"frank\", \"type\" : [ \"null\", \"string\" ], \"default\" : null } ] }, \"default\" : { \"frank\" : null } } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // default override "foo1" default for "bar1" is "xyz", it should override "bar1" default "abc".
+             "{\n" +
+                 "  \"type\":\"record\",\n" +
+                 "  \"name\":\"foo\",\n" +
+                 "  \"fields\":[\n" +
+                 "    {\n" +
+                 "      \"name\": \"foo1\",\n" +
+                 "      \"type\": {\n" +
+                 "        \"type\" : \"record\",\n" +
+                 "        \"name\" : \"bar\",\n" +
+                 "        \"fields\" : [\n" +
+                 "           {\n" +
+                 "             \"name\" : \"bar1\",\n" +
+                 "             \"type\" : \"string\",\n" +
+                 "             \"default\" : \"abc\", " +
+                 "             \"optional\" : true\n" +
+                 "           }\n" +
+                 "        ]\n" +
+                 "      },\n" +
+                 "      \"optional\": true,\n" +
+                 "      \"default\": { \"bar1\": \"xyz\" }\n" +
+                 "    }\n" +
+                 "  ]\n" +
+                 "}\n",
+             translateDefault,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"foo1\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"bar\", \"fields\" : [ { \"name\" : \"bar1\", \"type\" : [ \"string\", \"null\" ], \"default\" : \"abc\" } ] }, \"null\" ], \"default\" : { \"bar1\" : \"xyz\" } } ] }",
+             emptyFooSchema,
+             "{}",
+             "{\"foo1\": {\"bar1\": \"xyz\"}}"
+         },
+         {
+             // Required 'union with aliases' field with no default value
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"result\"," +
+                 "\"type\": ##T_START [" +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "] ##T_END" +
+                 "}" +
+                 "]" +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // Required 'union with aliases' field with a null member and no default value
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"result\"," +
+                 "\"type\": [" +
+                 "\"null\"," +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "]" +
+                 "}" +
+                 "]" +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // Optional 'union with aliases' field with no default value
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"result\"," +
+                 "\"type\": [" +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "]," +
+                 "\"optional\": true" +
+                 "}" +
+                 "]" +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             "{\"result\": null}"
+         },
+         {
+             // Optional 'union with aliases' field with a null member and no default value
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"result\"," +
+                 "\"type\": [" +
+                 "\"null\"," +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "]," +
+                 "\"optional\": true" +
+                 "}" +
+                 "]" +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             "{\"result\": null}"
+         },
+         {
+             // Required 'union with aliases' field with a default value
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"result\"," +
+                 "\"type\": [" +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "]," +
+                 "\"default\": { \"success\": \"Union with aliases.\" }" +
+                 "}" +
+                 "]" +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"string\", \"null\" ], \"doc\" : \"Success message\", \"default\" : \"Union with aliases.\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"default\" : { \"fieldDiscriminator\" : \"success\", \"success\" : \"Union with aliases.\", \"failure\" : null } } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             "{\"result\": {\"success\": \"Union with aliases.\", \"failure\": null, \"fieldDiscriminator\": ##Q_STARTsuccess##Q_END}}"
+         },
+         {
+             // Optional 'union with aliases' field with a default value
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"result\"," +
+                 "\"type\": [" +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "]," +
+                 "\"optional\": true," +
+                 "\"default\": { \"success\": \"Union with aliases.\" }" +
+                 "}" +
+                 "]" +
+                 "}",
+             translateDefault,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"string\", \"null\" ], \"doc\" : \"Success message\", \"default\" : \"Union with aliases.\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"null\" ], \"default\" : { \"fieldDiscriminator\" : \"success\", \"success\" : \"Union with aliases.\", \"failure\" : null } } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             "{\"result\": {\"success\": \"Union with aliases.\", \"failure\": null, \"fieldDiscriminator\": ##Q_STARTsuccess##Q_END}}"
+         },
+         {
+             // Optional 'union with aliases' field with a default value
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"result\"," +
+                 "\"type\": [" +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "]," +
+                 "\"optional\": true," +
+                 "\"default\": { \"success\": \"Union with aliases.\" }" +
+                 "}" +
+                 "]" +
+                 "}",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             "{\"result\": null}"
+         },
+         {
+             // Optional 'union with aliases' field with a null member and a default null value
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"result\"," +
+                 "\"type\": [" +
+                 "\"null\"," +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "]," +
+                 "\"optional\": true," +
+                 "\"default\": null" +
+                 "}" +
+                 "]" +
+                 "}",
+             translateDefault,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"null\" ], \"default\" : { \"fieldDiscriminator\" : \"null\", \"success\" : null, \"failure\" : null } } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             "{\"result\": {\"success\": null, \"failure\": null, \"fieldDiscriminator\": ##Q_STARTnull##Q_END}}"
+         },
+         {
+             // Optional 'union with aliases' field with a null member and a default null value
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"result\"," +
+                 "\"type\": [" +
+                 "\"null\"," +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "]," +
+                 "\"optional\": true," +
+                 "\"default\": null" +
+                 "}" +
+                 "]" +
+                 "}",
+             translateToNull,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
+             emptyFooSchema,
+             emptyFooValue,
+             "{\"result\": null}"
+         },
+         {
+             // Two 'union with aliases' fields under different records but with the same field name. The generated record
+             // representation for these two unions should include the parent record's name to avoid any name conflicts.
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"bar\"," +
+                 "\"type\": {" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"Bar\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"result\"," + // same union field name as the one below.
+                 "\"type\": [ { \"type\" : \"string\", \"alias\" : \"resultUrn\" } ]" +
+                 "}" +
+                 "]" +
+                 "}" +
+                 "}," +
+                 "{" +
+                 "\"name\": \"baz\"," +
+                 "\"type\": {" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"Baz\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"result\"," + // same union field name as the one above.
+                 "\"type\": [ { \"type\" : \"string\", \"alias\" : \"resultUrn\" } ]" +
+                 "}" +
+                 "]" +
+                 "}" +
+                 "}" +
+                 "]" +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"record\", \"name\" : \"Bar\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"BarResult\", \"fields\" : [ { \"name\" : \"resultUrn\", \"type\" : [ \"null\", \"string\" ], \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"BarResultDiscriminator\", \"symbols\" : [ \"resultUrn\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] } }, { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"Baz\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"BazResult\", \"fields\" : [ { \"name\" : \"resultUrn\", \"type\" : [ \"null\", \"string\" ], \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"BazResultDiscriminator\", \"symbols\" : [ \"resultUrn\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] } } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // An 'union with aliases' field containing a record member which has another 'union with aliases' field
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"result\"," + // 'result' is an union field with just one member of type 'MessageRecord' record
+                 "\"type\": [" +
+                 "{ " +
+                 "\"type\" : {" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"MessageRecord\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"message\"," + // 'message' is an union field under 'MessageRecord'
+                 "\"type\": [" +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "]" +
+                 "}" +
+                 "]" +
+                 "}," +
+                 "\"alias\" : \"message\"" +
+                 "}" +
+                 "]" +
+                 "}" +
+                 "]" +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"message\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"MessageRecord\", \"fields\" : [ { \"name\" : \"message\", \"type\" : { \"type\" : \"record\", \"name\" : \"MessageRecordMessage\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"MessageRecordMessageDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] } ], \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"message\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // A required array field with 'union with aliases' as its item type and no default value
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"results\"," +
+                 "\"type\": ##T_START {" +
+                 "\"type\": \"array\"," +
+                 "\"items\": [" +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "]" +
+                 "} ##T_END" +
+                 "}" +
+                 "]" +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // A required array field with 'union with aliases' as its item type and a default value
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"results\"," +
+                 "\"type\": {" +
+                 "\"type\": \"array\"," +
+                 "\"items\": [" +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "]" +
+                 "}," +
+                 "\"default\": [ { \"success\": \"Operation completed.\" }, { \"failure\": \"Operation failed.\" } ]" +
+                 "}" +
+                 "]" +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // An optional array field with 'union with aliases' as its item type and no default value
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"results\"," +
+                 "\"type\": {" +
+                 "\"type\": \"array\"," +
+                 "\"items\": [" +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "]" +
+                 "}," +
+                 "\"optional\": true" +
+                 "}" +
+                 "]" +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ], \"default\" : null } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // An optional array field with 'union with aliases' as its item type and a default value
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"results\"," +
+                 "\"type\": {" +
+                 "\"type\": \"array\"," +
+                 "\"items\": [" +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "]" +
+                 "}," +
+                 "\"default\": [ { \"success\": \"Operation completed.\" }, { \"failure\": \"Operation failed.\" } ]," +
+                 "\"optional\": true" +
+                 "}" +
+                 "]" +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ], \"default\" : null } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // A nested array field with 'union with aliases' as its item type and a default value
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"results\"," +
+                 "\"type\": {" +
+                 "\"type\": \"array\"," +
+                 "\"items\": {" +
+                 "\"type\": \"array\"," +
+                 "\"items\": {" +
+                 "\"type\": \"array\"," +
+                 "\"items\": [" +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "]" +
+                 "}" +
+                 "}" +
+                 "}," +
+                 "\"default\": [ [ [ { \"success\": \"Operation completed.\" }, { \"failure\": \"Operation failed.\" } ] ] ]" +
+                 "}" +
+                 "]" +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // A nested array and map field with 'union with aliases' as its item type and a default value
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"results\"," +
+                 "\"type\": {" +
+                 "\"type\": \"array\"," +
+                 "\"items\": {" +
+                 "\"type\": \"map\"," +
+                 "\"values\": {" +
+                 "\"type\": \"array\"," +
+                 "\"items\": [" +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "]" +
+                 "}" +
+                 "}" +
+                 "}," +
+                 "\"default\": [ { \"key\": [ { \"success\": \"Operation completed.\" }, { \"failure\": \"Operation failed.\" } ] } ]" +
+                 "}" +
+                 "]" +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // A nested map field with 'union with aliases' as its item type and a default value
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"results\"," +
+                 "\"type\": {" +
+                 "\"type\": \"map\"," +
+                 "\"values\": {" +
+                 "\"type\": \"map\"," +
+                 "\"values\": {" +
+                 "\"type\": \"map\"," +
+                 "\"values\": [" +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "]" +
+                 "}" +
+                 "}" +
+                 "}," +
+                 "\"default\": { \"level1\": { \"level2\": { \"level3key1\": { \"success\": \"Operation completed.\" }, \"level3key2\": { \"failure\": \"Operation failed.\" } } } }" +
+                 "}" +
+                 "]" +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // A nested map and array field with 'union with aliases' as its item type and a default value
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"results\"," +
+                 "\"type\": {" +
+                 "\"type\": \"map\"," +
+                 "\"values\": {" +
+                 "\"type\": \"array\"," +
+                 "\"items\": {" +
+                 "\"type\": \"map\"," +
+                 "\"values\": [" +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "]" +
+                 "}" +
+                 "}" +
+                 "}," +
+                 "\"default\": { \"level1\": [ { \"level3key1\": { \"success\": \"Operation completed.\" }, \"level3key2\": { \"failure\": \"Operation failed.\" } } ] }" +
+                 "}" +
+                 "]" +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             // A required map field with 'union with aliases' as its item type with no default value
+             "{" +
+                 "\"type\": \"record\"," +
+                 "\"name\": \"foo\"," +
+                 "\"fields\": [" +
+                 "{" +
+                 "\"name\": \"results\"," +
+                 "\"type\": ##T_START {" +
+                 "\"type\": \"map\"," +
+                 "\"values\": [" +
+                 "{ \"type\" : \"string\", \"alias\" : \"success\", \"doc\": \"Success message\" }," +
+                 "{ \"type\" : \"string\", \"alias\" : \"failure\", \"doc\": \"Failure message\" }" +
+                 "]" +
+                 "} ##T_END" +
+                 "}" +
+                 "]" +
+                 "}",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             " { " +
+             "   \"type\" : \"record\", " +
+             "   \"name\" : \"Foo\", " +
+             "   \"fields\" : [ { " +
+             "     \"name\" : \"field1\", " +
+             "     \"type\" : \"int\", " +
+             "     \"b_customAnnotation\" : \"f1\", " +
+             "     \"c_customAnnotation\" : \"f1\", " +
+             "     \"a_customAnnotation\" : \"f1\" " +
+             "   } ] " +
+             " } ",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"field1\", \"type\" : \"int\", \"a_customAnnotation\" : \"f1\", \"b_customAnnotation\" : \"f1\", \"c_customAnnotation\" : \"f1\" } ] }",
+             null,
+             null,
+             null
+         },
+         {
+             " { " +
+             "   \"type\" : \"record\", " +
+             "   \"name\" : \"Foo\", " +
+             "   \"fields\" : [ { " +
+             "     \"name\" : \"field1\", " +
+             "     \"type\" : \"int\", " +
+             "     \"c_customAnnotation\" : { " +
+             "       \"b_nested\" : \"a\", " +
+             "       \"a_nested\" : \"a\", " +
+             "       \"c_nested\" : \"a\" " +
+             "     }, " +
+             "     \"a_customAnnotation\" : \"f1\", " +
+             "     \"b_customAnnotation\" : \"f1\" " +
+             "   } ] " +
+             " } ",
+             allModes,
+             "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"field1\", \"type\" : \"int\", \"a_customAnnotation\" : \"f1\", \"b_customAnnotation\" : \"f1\", \"c_customAnnotation\" : { \"a_nested\" : \"a\", \"b_nested\" : \"a\", \"c_nested\" : \"a\" } } ] }",
+             null,
+             null,
+             null
+         }
       };
 
 
@@ -2354,7 +2357,7 @@ public class TestSchemaTranslator
         assertEquals(postTranslateSchemaText, preTranslateSchemaText);
 
         // make sure Avro accepts it
-        Schema avroSchema = Schema.parse(avroTextFromSchema);
+        Schema avroSchema = AvroCompatibilityHelper.parse(avroTextFromSchema);
 
         SchemaParser parser = new SchemaParser();
         ValidationOptions options = new ValidationOptions();
@@ -2367,18 +2370,15 @@ public class TestSchemaTranslator
         {
           // use other dataToAvroSchemaJson
           String avroSchema2Json = SchemaTranslator.dataToAvroSchemaJson(
-            TestUtil.dataSchemaFromString(schemaText)
+            TestUtil.dataSchemaFromString(schemaText), transOptions
           );
-          String avroSchema2JsonCompact = SchemaTranslator.dataToAvroSchemaJson(
-            TestUtil.dataSchemaFromString(schemaText),
-            new DataToAvroSchemaTranslationOptions()
-          );
-          assertEquals(avroSchema2Json, avroSchema2JsonCompact);
-          Schema avroSchema2 = Schema.parse(avroSchema2Json);
+
+          Schema avroSchema2 = AvroCompatibilityHelper.parse(avroSchema2Json);
+
           assertEquals(avroSchema2, avroSchema);
 
           // use dataToAvroSchema
-          Schema avroSchema3 = SchemaTranslator.dataToAvroSchema(TestUtil.dataSchemaFromString(schemaText));
+          Schema avroSchema3 = SchemaTranslator.dataToAvroSchema(TestUtil.dataSchemaFromString(schemaText), transOptions);
           assertEquals(avroSchema3, avroSchema2);
         }
 
@@ -2386,7 +2386,7 @@ public class TestSchemaTranslator
         {
           // check if the translated default value is good by using it.
           // writer schema and Avro JSON value should not include fields with default values.
-          Schema writerSchema = Schema.parse(writerSchemaText);
+          Schema writerSchema = AvroCompatibilityHelper.parse(writerSchemaText);
           GenericRecord genericRecord = genericRecordFromString(avroValueJson, writerSchema, avroSchema);
 
           if (expectedGenericRecordJson != null)
@@ -2477,7 +2477,7 @@ public class TestSchemaTranslator
       assertEquals(resultAvroDataMap, expectedAvroDataMap);
 
       // Test avro Schema
-      Schema avroSchema = Schema.parse(avroTextFromSchema);
+      Schema avroSchema = AvroCompatibilityHelper.parse(avroTextFromSchema);
 
       // Test validation parsing
       SchemaParser parser = new SchemaParser();
@@ -3071,6 +3071,7 @@ public class TestSchemaTranslator
   @Test(dataProvider = "fromAvroSchemaData")
   public void testFromAvroSchema(String avroText, String schemaText) throws Exception
   {
+
     AvroToDataSchemaTranslationOptions options[] =
     {
       new AvroToDataSchemaTranslationOptions(AvroToDataSchemaTranslationMode.TRANSLATE),
@@ -3085,7 +3086,11 @@ public class TestSchemaTranslator
       String schemaTextFromAvro = SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.SPACES);
       assertEquals(TestUtil.dataMapFromString(schemaTextFromAvro), TestUtil.dataMapFromString(schemaText));
 
-      Schema avroSchema = Schema.parse(avroText);
+      Schema avroSchema = AvroCompatibilityHelper.parse(avroText,
+          new SchemaParseConfiguration(false,
+          false),
+          null).getMainSchema();
+
       String preTranslateAvroSchema = avroSchema.toString();
       schema = SchemaTranslator.avroToDataSchema(avroSchema, option);
       schemaTextFromAvro = SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.SPACES);
@@ -3249,11 +3254,11 @@ public class TestSchemaTranslator
       "  \"fields\" : [] " +
       "}";
 
-    final Schema emptySchema = Schema.parse(emptySchemaText);
+    final Schema emptySchema = AvroCompatibilityHelper.parse(emptySchemaText);
 
     final String emptyRecord = "{}";
 
-    final Schema readerSchema = Schema.parse(readerSchemaText);
+    final Schema readerSchema = AvroCompatibilityHelper.parse(readerSchemaText);
 
     genericRecordFromString(emptyRecord, emptySchema, readerSchema);
 
