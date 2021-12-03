@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [30.0.0] - 2021-12-02
 - Upgrade Avro dependency to 1.9.2. Remove Avro adapters for Avro 1.4/1.6 and related module.
 - Fix build-time validation of Action methods that return custom typerefs (e.g. `CustomLong`) yet don't indicate the
   corresponding typeref class (e.g. `CustomLongRef.class`) in the `@Action` annotation.
@@ -5148,7 +5150,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.15...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v30.0.0...master
+[30.0.0]: https://github.com/linkedin/rest.li/compare/v29.22.15...v30.0.0
 [29.22.15]: https://github.com/linkedin/rest.li/compare/v29.22.14...v29.22.15
 [29.22.14]: https://github.com/linkedin/rest.li/compare/v29.22.13...v29.22.14
 [29.22.13]: https://github.com/linkedin/rest.li/compare/v29.22.12...v29.22.13
