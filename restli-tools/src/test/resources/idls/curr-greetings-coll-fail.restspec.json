@@ -1,5 +1,6 @@
 {
   "name" : "greetings",
+  "d2ServiceName": "greetingsD2",
   "path" : "/greetings",
   "schema" : "com.linkedin.greetings.api.Greeting",
   "entityType" : "UNSTRUCTURED_DATA",

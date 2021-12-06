@@ -70,6 +70,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
 
@@ -222,6 +223,20 @@ public class ResourceCompatibilityChecker
     }
 
     return true;
+  }
+
+  private boolean checkD2ServiceName(String prevData, String currData) {
+    if (prevData == null && currData == null) {
+      return true;
+    }
+
+    if (prevData != null && prevData.equals(currData)) {
+      return true;
+    }
+
+    _infoMap.addRestSpecInfo("d2ServiceName", CompatibilityInfo.Type.VALUE_NOT_EQUAL, _infoPath,
+        prevData, currData);
+    return false;
   }
 
   private boolean checkDoc(RecordDataSchema.Field field, Object prevData, Object currData)
@@ -685,6 +700,8 @@ public class ResourceCompatibilityChecker
     checkEqualSingleValue(prevRec.schema().getField("namespace"),
                           prevRec.getNamespace(GetMode.DEFAULT),
                           currRec.getNamespace(GetMode.DEFAULT));
+
+    checkD2ServiceName(prevRec.getD2ServiceName(GetMode.DEFAULT), currRec.getD2ServiceName(GetMode.DEFAULT));
 
     checkEqualSingleValue(prevRec.schema().getField("path"),
                           prevRec.getPath(GetMode.DEFAULT),

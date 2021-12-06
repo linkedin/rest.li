@@ -16,6 +16,16 @@ record ResourceSchema includes CustomAnnotationSchema {
   `namespace`: optional string
 
   /**
+   * d2 service name of the resource. Should be set only if the d2 service name is not the same as
+   * the Rest.li resource name.
+   *
+   * This is meant to be a hint to D2 based routing solutions, and is NOT directly used anywhere by
+   * the rest.li framework, apart from enforcing that this value once set, cannot be changed for backward
+   * compatibility reasons.
+   */
+  d2ServiceName: optional string
+
+  /**
    * URI template for accessing the resource
    */
   path: string

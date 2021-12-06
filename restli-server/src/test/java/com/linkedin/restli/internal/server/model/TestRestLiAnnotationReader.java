@@ -70,6 +70,7 @@ public class TestRestLiAnnotationReader
   {
     final String expectedNamespace = "com.linkedin.model.actions";
     final String expectedName = "actionsMethod";
+    final String expectedD2ServiceName = "actionsService";
 
     final ResourceModel model = RestLiAnnotationReader.processResource(ActionsOnlyResource.class);
 
@@ -78,6 +79,7 @@ public class TestRestLiAnnotationReader
     Assert.assertTrue(model.isRoot());
     Assert.assertEquals(expectedName, model.getName());
     Assert.assertEquals(expectedNamespace, model.getNamespace());
+    Assert.assertEquals(expectedD2ServiceName, model.getD2ServiceName());
 
     Assert.assertNull(model.getParentResourceClass());
     Assert.assertNull(model.getParentResourceModel());
@@ -156,6 +158,7 @@ public class TestRestLiAnnotationReader
     Assert.assertTrue(model.isRoot());
     Assert.assertEquals(expectedName, model.getName());
     Assert.assertEquals(expectedNamespace, model.getNamespace());
+    Assert.assertNull(model.getD2ServiceName());
 
     Assert.assertNull(model.getParentResourceClass());
     Assert.assertNull(model.getParentResourceModel());
@@ -208,6 +211,9 @@ public class TestRestLiAnnotationReader
     final String expectedNamespace = "";
 
     final String expectedName = "foo";
+
+    final String expectedD2ServiceName = "foo1";
+
     final Class<? extends RecordTemplate> expectedValueClass = EmptyRecord.class;
 
     final String expectedKeyName = "fooId";
@@ -220,6 +226,7 @@ public class TestRestLiAnnotationReader
     Assert.assertTrue(model.isRoot());
     Assert.assertEquals(expectedName, model.getName());
     Assert.assertEquals(expectedNamespace, model.getNamespace());
+    Assert.assertEquals(expectedD2ServiceName, model.getD2ServiceName());
 
     Assert.assertNull(model.getParentResourceClass());
     Assert.assertNull(model.getParentResourceModel());
@@ -401,6 +408,9 @@ public class TestRestLiAnnotationReader
     final String expectedNamespace = "";
 
     final String expectedName = "foo";
+
+    final String expectedD2ServiceName = "foo3";
+
     final Class<? extends RecordTemplate> expectedValueClass = EmptyRecord.class;
 
     final ResourceModel model = RestLiAnnotationReader.processResource(FooResource3.class);
@@ -410,6 +420,7 @@ public class TestRestLiAnnotationReader
     Assert.assertTrue(model.isRoot());
     Assert.assertEquals(expectedName, model.getName());
     Assert.assertEquals(expectedNamespace, model.getNamespace());
+    Assert.assertEquals(expectedD2ServiceName, model.getD2ServiceName());
 
     Assert.assertNull(model.getParentResourceClass());
     Assert.assertNull(model.getParentResourceModel());

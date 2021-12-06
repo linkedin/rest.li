@@ -631,7 +631,8 @@ public final class RestLiAnnotationReader
                           parentResourceClass,
                           name,
                           resourceType,
-                          namespace);
+                          namespace,
+                          annotationData.d2ServiceName());
 
     collectionModel.setParentResourceModel(parentResourceModel);
 
@@ -644,7 +645,6 @@ public final class RestLiAnnotationReader
 
   private static RestLiAnnotationData getRestLiAnnotationData(Class<?> resourceClass)
   {
-    RestLiAnnotationData annotationData;
     if (resourceClass.isAnnotationPresent(RestLiCollection.class))
     {
       return new RestLiAnnotationData(resourceClass.getAnnotation(RestLiCollection.class));
@@ -692,7 +692,8 @@ public final class RestLiAnnotationReader
                           parentResourceClass,
                           name,
                           resourceType,
-                          namespace);
+                          namespace,
+                          annotationData.d2ServiceName());
 
     resourceModel.setParentResourceModel(parentResource);
 
@@ -2712,6 +2713,8 @@ public final class RestLiAnnotationReader
 
     String namespace = actionsAnno.namespace();
 
+    String d2ServiceName = RestAnnotations.DEFAULT.equals(actionsAnno.d2ServiceName()) ? null : actionsAnno.d2ServiceName();
+
     ResourceModel actionResourceModel = new ResourceModel(null, // primary key
                                                           null, // key key class
                                                           null, // key params class
@@ -2721,7 +2724,8 @@ public final class RestLiAnnotationReader
                                                           null, // parent resource class
                                                           name, // name
                                                           ResourceType.ACTIONS, // resource type
-                                                          namespace); // namespace
+                                                          namespace, // namespace
+                                                          d2ServiceName); // d2 service name
 
     actionResourceModel.setParentResourceModel(parentResourceModel);
 
