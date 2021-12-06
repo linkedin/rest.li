@@ -23,7 +23,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.linkedin.r2.message.RequestContext;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A timing key uniquely identifies a timing record, which will be saved in {@link RequestContext}.
@@ -34,9 +37,11 @@ import java.util.concurrent.Executors;
  */
 public class TimingKey
 {
+  private static final Logger LOG = LoggerFactory.getLogger(TimingKey.class);
   private static final Map<String, TimingKey> _pool = new ConcurrentHashMap<>();
   private static final ExecutorService _unregisterExecutor = Executors
       .newFixedThreadPool(1, TimingKey::createDaemonThread);
+  private final static AtomicInteger UNIQUE_KEY_COUNTER = new AtomicInteger();
 
   private final String _name;
   private final String _type;
@@ -79,7 +84,7 @@ public class TimingKey
   {
     if (_pool.putIfAbsent(timingKey.getName(), timingKey) != null)
     {
-      throw new IllegalStateException("Timing key " + timingKey.getName() + " has already been registered!");
+      LOG.warn("Timing key " + timingKey.getName() + " has already been registered!");
     }
     return timingKey;
   }
@@ -155,6 +160,14 @@ public class TimingKey
    */
   public static int getCount() {
     return _pool.size();
+  }
+
+  /**
+   * @param baseName Base name.
+   * @return Unique name with counter suffix added to provided base name.
+   */
+  public static String getUniqueName(String baseName) {
+    return baseName + UNIQUE_KEY_COUNTER.incrementAndGet();
   }
 
   private static final Thread createDaemonThread(Runnable runnable) {

@@ -53,13 +53,13 @@ public class TimedStreamFilter implements StreamFilter
 
     String filterClassName = _streamFilter.getClass().getSimpleName();
     String timingKeyPrefix = filterClassName + "-";
-    String timingKeyPostfix = ":" + hashCode();
+    String timingKeyPostfix = ":";
 
-    _onRequestTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_REQUEST_SUFFIX + timingKeyPostfix,
+    _onRequestTimingKey = TimingKey.registerNewKey(TimingKey.getUniqueName(timingKeyPrefix + ON_REQUEST_SUFFIX + timingKeyPostfix),
         filterClassName, TimingImportance.LOW);
-    _onResponseTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_RESPONSE_SUFFIX + timingKeyPostfix,
+    _onResponseTimingKey = TimingKey.registerNewKey(TimingKey.getUniqueName(timingKeyPrefix + ON_RESPONSE_SUFFIX + timingKeyPostfix),
         filterClassName, TimingImportance.LOW);
-    _onErrorTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_ERROR_SUFFIX + timingKeyPostfix,
+    _onErrorTimingKey = TimingKey.registerNewKey(TimingKey.getUniqueName(timingKeyPrefix + ON_ERROR_SUFFIX + timingKeyPostfix),
         filterClassName, TimingImportance.LOW);
     _shared = false;
   }
