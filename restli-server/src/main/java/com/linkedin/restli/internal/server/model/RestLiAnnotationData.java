@@ -40,6 +40,7 @@ public class RestLiAnnotationData
   private final Key[]    _keys;
   private final String   _keyName;
   private final Class<? extends TyperefInfo> _typerefInfoClass;
+  private final String   _d2ServiceName;
 
   /**
    * @param collectionAnno {@link RestLiCollection} annotation
@@ -52,6 +53,7 @@ public class RestLiAnnotationData
     _keys = null;
     _keyName = RestAnnotations.DEFAULT.equals(collectionAnno.keyName()) ? null : collectionAnno.keyName();
     _typerefInfoClass = RestAnnotations.NULL_TYPEREF_INFO.class.equals(collectionAnno.keyTyperefClass()) ? null : collectionAnno.keyTyperefClass();
+    _d2ServiceName = RestAnnotations.DEFAULT.equals(collectionAnno.d2ServiceName()) ? null : collectionAnno.d2ServiceName();
   }
 
   /**
@@ -65,6 +67,7 @@ public class RestLiAnnotationData
     _keys = associationAnno.assocKeys();
     _keyName = RestAnnotations.DEFAULT.equals(associationAnno.keyName()) ? null : associationAnno.keyName();
     _typerefInfoClass = null;
+    _d2ServiceName = RestAnnotations.DEFAULT.equals(associationAnno.d2ServiceName()) ? null : associationAnno.d2ServiceName();
   }
 
   /**
@@ -78,6 +81,7 @@ public class RestLiAnnotationData
     _keys = null;
     _keyName = null;
     _typerefInfoClass = null;
+    _d2ServiceName = RestAnnotations.DEFAULT.equals(simpleResourceAnno.d2ServiceName()) ? null : simpleResourceAnno.d2ServiceName();
   }
 
   /**
@@ -125,4 +129,11 @@ public class RestLiAnnotationData
     return _typerefInfoClass;
   }
 
+  /**
+   * @return d2 service name
+   */
+  public String d2ServiceName()
+  {
+    return _d2ServiceName;
+  }
 }

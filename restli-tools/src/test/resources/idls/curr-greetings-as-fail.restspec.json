@@ -2,5 +2,6 @@
   "name" : "greetings",
   "path" : "/greetings",
   "schema" : "com.linkedin.greetings.api.Greeting",
+  "d2ServiceName" : "asD2",
   "doc" : "A richer \"Hello world\" example"
 }

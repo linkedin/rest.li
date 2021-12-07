@@ -1,5 +1,6 @@
 {
   "name" : "greeting",
+  "d2ServiceName": "greetingSimpleD2",
   "path" : "/greeting",
   "schema" : "com.linkedin.greetings.api.Greeting",
   "doc" : "A simple greeting resource",

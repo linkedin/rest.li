@@ -1,6 +1,7 @@
 {
   "name" : "greetings",
   "namespace": "com.linkedin.restli.greetings",
+  "d2ServiceName": "newD2Assoc",
   "path" : "/greetings",
   "schema" : "com.linkedin.greetings.api.Greeting",
   "doc" : "A richer \"Hello world\" example, demonstrating a full array of methods, finders and actions",

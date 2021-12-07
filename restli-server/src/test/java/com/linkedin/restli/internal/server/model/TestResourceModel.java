@@ -119,7 +119,8 @@ public class TestResourceModel
                                                           null,
                                                           "collectionCollection",
                                                           ResourceType.COLLECTION,
-                                                          "com.linkedin.restli.internal.server.model");
+                                                          "com.linkedin.restli.internal.server.model",
+                                                          "collectionCollection");
 
     // Add resource-level service errors
     if (resourceLevelServiceErrors == null)
