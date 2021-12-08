@@ -48,6 +48,8 @@ import static com.linkedin.d2.DarkClusterStrategyName.RELATIVE_TRAFFIC;
 import static com.linkedin.darkcluster.DarkClusterTestUtil.createRelativeTrafficMultiplierConfig;
 import static com.linkedin.darkcluster.impl.DarkClusterStrategyFactoryImpl.NO_OP_DARK_CLUSTER_STRATEGY;
 import static org.testng.Assert.fail;
+
+import java.util.function.Supplier;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -61,7 +63,7 @@ public class TestDarkClusterStrategyFactory
   private static final int SEED = 2;
   private DarkClusterStrategyFactory _strategyFactory;
   private MockClusterInfoProvider _clusterInfoProvider;
-  private ConstantQpsRateLimiter _rateLimiter;
+  private Supplier<ConstantQpsRateLimiter> _rateLimiterSupplier;
 
   @BeforeMethod
   public void setup()
@@ -72,14 +74,14 @@ public class TestDarkClusterStrategyFactory
     _clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, PREEXISTING_DARK_CLUSTER_NAME, darkClusterConfigOld);
     DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcher(new MockClient(false));
     ClockedExecutor executor = new ClockedExecutor();
-    _rateLimiter = new ConstantQpsRateLimiter(executor, executor, executor, TestConstantQpsDarkClusterStrategy.getBuffer(executor));
+    _rateLimiterSupplier = () -> new ConstantQpsRateLimiter(executor, executor, executor, TestConstantQpsDarkClusterStrategy.getBuffer(executor));
     _strategyFactory = new DarkClusterStrategyFactoryImpl(facilities,
                                                           SOURCE_CLUSTER_NAME,
                                                           darkClusterDispatcher,
                                                           new DoNothingNotifier(),
                                                           new Random(SEED),
                                                           new CountingVerifierManager(),
-                                                          _rateLimiter);
+                                                          _rateLimiterSupplier);
     _strategyFactory.start();
   }
 
