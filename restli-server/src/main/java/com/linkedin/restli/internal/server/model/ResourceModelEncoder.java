@@ -297,7 +297,7 @@ public class ResourceModelEncoder
       InputStream stream = getResourceStream(resourceFilePath.toString(),
         this.getClass().getClassLoader(),
         Thread.currentThread().getContextClassLoader());
-      if(stream == null)
+      if (stream == null)
       {
         // restspec.json file not found, building one instead
         return buildResourceSchema(resourceModel);
@@ -453,6 +453,13 @@ public class ResourceModelEncoder
     {
       resourceSchema.setNamespace(resourceModel.getNamespace());
     }
+
+    // Set the D2 service name only IF it is not null to avoid unnecessary IDL changes.
+    if (resourceModel.getD2ServiceName() != null)
+    {
+      resourceSchema.setD2ServiceName(resourceModel.getD2ServiceName());
+    }
+
     resourceSchema.setPath(buildPath(resourceModel));
 
     final Class<?> valueClass = resourceModel.getValueClass();

@@ -1220,6 +1220,7 @@ public class ExampleRequestResponseGenerator
         null,
         resourceSchema.getName(),
         null,
-        resourceSchema.getNamespace());
+        resourceSchema.getNamespace(),
+        null);
   }
 }

@@ -57,6 +57,7 @@ public class ResourceModel implements ResourceDefinition
 
   private final String                          _name;
   private final String                          _namespace;
+  private final String                          _d2ServiceName;
 
   private final Class<?>                        _resourceClass;
   private final ResourceType                    _resourceType;
@@ -114,6 +115,39 @@ public class ResourceModel implements ResourceDefinition
                        final ResourceType resourceType,
                        final String namespace)
   {
+    this(primaryKey, keyKeyClass, keyParamsClass, keys, valueClass, resourceClass, parentResourceClass, name,
+        resourceType, namespace, null);
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param primaryKey the primary {@link Key} of this resource
+   * @param keyKeyClass class of the key part of a {@link ComplexResourceKey} if this is a
+   *          {@link ComplexKeyResource}
+   * @param keyParamsClass class of the param part of a {@link ComplexResourceKey} if this
+   *          is a {@link ComplexKeyResource}
+   * @param keys set of resource keys
+   * @param valueClass resource value class
+   * @param resourceClass resource class
+   * @param parentResourceClass parent resource class
+   * @param name resource name
+   * @param resourceType {@link ResourceType}
+   * @param namespace namespace
+   * @param d2ServiceName The d2 service name for the resource
+   */
+  public ResourceModel(final Key primaryKey,
+      final Class<? extends RecordTemplate> keyKeyClass,
+      final Class<? extends RecordTemplate> keyParamsClass,
+      final Set<Key> keys,
+      final Class<? extends RecordTemplate> valueClass,
+      final Class<?> resourceClass,
+      final Class<?> parentResourceClass,
+      final String name,
+      final ResourceType resourceType,
+      final String namespace,
+      final String d2ServiceName)
+  {
     _keyKeyClass = keyKeyClass;
     _keyParamsClass = keyParamsClass;
     _keys = keys;
@@ -126,6 +160,7 @@ public class ResourceModel implements ResourceDefinition
     _resourceClass = resourceClass;
     _name = name;
     _namespace = namespace;
+    _d2ServiceName = d2ServiceName;
     _root = (parentResourceClass == null);
     _parentResourceClass = parentResourceClass;
     _resourceMethodDescriptors = new ArrayList<>(5);
@@ -143,7 +178,6 @@ public class ResourceModel implements ResourceDefinition
    * @param name resource name
    * @param resourceType {@link ResourceType}
    * @param namespace namespace
-   *
    */
   public ResourceModel(final Class<? extends RecordTemplate> valueClass,
                        final Class<?> resourceClass,
@@ -162,6 +196,38 @@ public class ResourceModel implements ResourceDefinition
          name,
          resourceType,
          namespace);
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param valueClass resource value class
+   * @param resourceClass resource class
+   * @param parentResourceClass parent resource class
+   * @param name resource name
+   * @param resourceType {@link ResourceType}
+   * @param namespace namespace
+   * @param d2ServiceName The d2 service name for the resource
+   */
+  public ResourceModel(final Class<? extends RecordTemplate> valueClass,
+      final Class<?> resourceClass,
+      final Class<?> parentResourceClass,
+      final String name,
+      final ResourceType resourceType,
+      final String namespace,
+      final String d2ServiceName)
+  {
+    this(null,
+        null,
+        null,
+        Collections.<Key>emptySet(),
+        valueClass,
+        resourceClass,
+        parentResourceClass,
+        name,
+        resourceType,
+        namespace,
+        d2ServiceName);
   }
 
   public ResourceType getResourceType()
@@ -349,6 +415,12 @@ public class ResourceModel implements ResourceDefinition
   public String getNamespace()
   {
     return _namespace;
+  }
+
+  @Override
+  public String getD2ServiceName()
+  {
+    return _d2ServiceName;
   }
 
   @Override

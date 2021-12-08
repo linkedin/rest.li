@@ -14,6 +14,12 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.23.0] - 2021-12-06
+- Introduce d2ServiceName annotation on rest.li resources. This is an optional param that is meant to be populated by resources for whom the resource name is not the same as d2 service name
+
+## [29.22.16] - 2021-12-03
+- Fixed issues with potential duplicate TimingKeys being registered.
+
 ## [29.22.15] - 2021-11-30
 - Add mock response generator factory for BATCH_FINDER methods.
 - Deprecate `FileFormatDataSchemaParser#new(String, DataSchemaResolver, DataSchemaParserFactory)`. 
@@ -5134,7 +5140,9 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.15...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.23.0...master
+[29.23.0]: https://github.com/linkedin/rest.li/compare/v29.22.16...v29.23.0
+[29.22.16]: https://github.com/linkedin/rest.li/compare/v29.22.15...v29.22.16
 [29.22.15]: https://github.com/linkedin/rest.li/compare/v29.22.14...v29.22.15
 [29.22.14]: https://github.com/linkedin/rest.li/compare/v29.22.13...v29.22.14
 [29.22.13]: https://github.com/linkedin/rest.li/compare/v29.22.12...v29.22.13
