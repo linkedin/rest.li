@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.23.1] - 2021-12-08
+- Add support for a rate limiter supplier to enable multiple dark clusters with the CONSTANT_QPS strategy
+
 ## [29.23.0] - 2021-12-06
 - Introduce d2ServiceName annotation on rest.li resources. This is an optional param that is meant to be populated by resources for whom the resource name is not the same as d2 service name
 
@@ -5140,7 +5143,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.23.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.23.1...master
+[29.23.1]: https://github.com/linkedin/rest.li/compare/v29.23.0...v29.23.1
 [29.23.0]: https://github.com/linkedin/rest.li/compare/v29.22.16...v29.23.0
 [29.22.16]: https://github.com/linkedin/rest.li/compare/v29.22.15...v29.22.16
 [29.22.15]: https://github.com/linkedin/rest.li/compare/v29.22.14...v29.22.15
