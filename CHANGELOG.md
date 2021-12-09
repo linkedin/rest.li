@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.23.3] - 2021-12-09
+- Take default headers as input to fetch remote symbol table in `DefaultSymbolTableProvider`
+
 ## [29.23.2] - 2021-12-09
 - Observability enhancements for D2 announcer.
 
@@ -5146,7 +5149,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.23.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.23.3...master
+[29.23.3]: https://github.com/linkedin/rest.li/compare/v29.23.2...v29.23.3
 [29.23.2]: https://github.com/linkedin/rest.li/compare/v29.23.1...v29.23.2
 [29.23.1]: https://github.com/linkedin/rest.li/compare/v29.23.0...v29.23.1
 [29.23.0]: https://github.com/linkedin/rest.li/compare/v29.22.16...v29.23.0
