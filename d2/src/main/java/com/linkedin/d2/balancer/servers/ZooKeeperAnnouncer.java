@@ -72,6 +72,8 @@ public class ZooKeeperAnnouncer
   private boolean _isRunningMarkUpOrMarkDown;
   private volatile boolean _shuttingDown;
 
+  private volatile boolean _markUpFailed;
+
   public ZooKeeperAnnouncer(ZooKeeperServer server)
   {
     this(server, true);
@@ -169,16 +171,22 @@ public class ZooKeeperAnnouncer
       {
         if (e instanceof KeeperException.ConnectionLossException || e instanceof KeeperException.SessionExpiredException)
         {
-          _log.debug("failed to mark up uri {} due to {}.", _uri, e.getClass().getSimpleName());
+          _log.info("failed to mark up uri {} due to connection issue {}.", _uri, e.getClass().getSimpleName());
           // Setting to null because if that connection dies, when don't want to continue making operations before
           // the connection is up again.
           // When the connection will be up again, the ZKAnnouncer will be restarted and it will read the _isUp
           // value and start markingUp again if necessary
           _nextOperation = null;
           _isRunningMarkUpOrMarkDown = false;
+
+          // A failed state is not relevant here because the connection has also been lost; when it is restored the
+          // announcer will retry as expected.
+          _markUpFailed = false;
         }
         else
         {
+          _log.error("failed to mark up uri {}", _uri, e);
+          _markUpFailed = true;
           callback.onError(e);
           runNextMarkUpOrMarkDown();
         }
@@ -187,6 +195,7 @@ public class ZooKeeperAnnouncer
       @Override
       public void onSuccess(None result)
       {
+        _markUpFailed = false;
         _log.info("markUp for uri = {} succeeded.", _uri);
         // Note that the pending callbacks we see at this point are
         // from the requests that are filed before us because zookeeper
@@ -451,5 +460,10 @@ public class ZooKeeperAnnouncer
   {
     Map<Integer, PartitionData> partitionDataMap = getPartitionData();
     return partitionDataMap == null ? 0 : partitionDataMap.size();
+  }
+
+  public boolean isMarkUpFailed()
+  {
+    return _markUpFailed;
   }
 }

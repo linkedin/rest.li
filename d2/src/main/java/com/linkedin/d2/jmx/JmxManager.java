@@ -17,6 +17,7 @@
 package com.linkedin.d2.jmx;
 
 import com.linkedin.d2.balancer.servers.ZooKeeperAnnouncer;
+import com.linkedin.d2.balancer.servers.ZooKeeperConnectionManager;
 import com.linkedin.d2.balancer.servers.ZooKeeperServer;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
@@ -138,6 +139,14 @@ public class JmxManager
                                                             ZooKeeperAnnouncer announcer)
   {
     checkReg(new ZooKeeperAnnouncerJmx(announcer), name);
+
+    return this;
+  }
+
+  public synchronized JmxManager registerZooKeeperConnectionManager(String name,
+      ZooKeeperConnectionManager connectionManager)
+  {
+    checkReg(new ZooKeeperConnectionManagerJmx(connectionManager), name);
 
     return this;
   }

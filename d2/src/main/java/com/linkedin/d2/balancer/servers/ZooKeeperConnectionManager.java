@@ -70,6 +70,8 @@ public class ZooKeeperConnectionManager
   private volatile boolean _managerStarted = false;
   private volatile boolean _storeReady = false;
 
+  private volatile boolean _sessionEstablished = false;
+
   private volatile ZooKeeperEphemeralStore<UriProperties> _store;
 
   public ZooKeeperConnectionManager(ZKPersistentConnection zkConnection,
@@ -242,8 +244,6 @@ public class ZooKeeperConnectionManager
 
   private class Listener implements ZKPersistentConnection.EventListener
   {
-
-    private volatile boolean _sessionEstablished = false;
     @Override
     public void notifyEvent(ZKPersistentConnection.Event event)
     {
@@ -252,6 +252,7 @@ public class ZooKeeperConnectionManager
       {
         case SESSION_ESTABLISHED:
         {
+          _sessionEstablished = true;
           _store = _factory.createStore(_zkConnection.getZKConnection(), ZKFSUtil.uriPath(_zkBasePath));
           _storeReady = true;
           //Trying to start the store. If the manager itself is not started yet, the start will be deferred until start is called.
@@ -260,6 +261,7 @@ public class ZooKeeperConnectionManager
         }
         case SESSION_EXPIRED:
         {
+          _sessionEstablished = false;
           _store.shutdown(Callbacks.empty());
           _storeStarted = false;
           break;
@@ -319,6 +321,7 @@ public class ZooKeeperConnectionManager
       @Override
       public void onSuccess(None result)
       {
+        LOG.info("ZooKeeperEphemeralStore started successfully, starting {} announcers", (_servers.length));
         /* mark store as started */
         _storeStarted = true;
         for (ZooKeeperAnnouncer server : _servers)
@@ -341,7 +344,6 @@ public class ZooKeeperConnectionManager
             }
           });
         }
-        LOG.info("Starting {} announcers", (_servers.length));
       }
     });
   }
@@ -354,5 +356,25 @@ public class ZooKeeperConnectionManager
   public ZooKeeperAnnouncer[] getAnnouncers()
   {
     return _servers;
+  }
+
+  public boolean isSessionEstablished()
+  {
+    return _sessionEstablished;
+  }
+
+  public String getZooKeeperConnectString()
+  {
+    return _zkConnectString;
+  }
+
+  public int getZooKeeperSessionTimeout()
+  {
+    return _zkSessionTimeout;
+  }
+
+  public String getZooKeeperBasePath()
+  {
+    return _zkBasePath;
   }
 }
