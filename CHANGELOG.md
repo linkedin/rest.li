@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.24.0] - 2021-12-09
+- bump minor version for the new public method added in 29.23.3
+
 ## [29.23.3] - 2021-12-09
 - Take default headers as input to fetch remote symbol table in `DefaultSymbolTableProvider`
 
@@ -5149,7 +5152,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.23.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.24.0...master
+[29.24.0]: https://github.com/linkedin/rest.li/compare/v29.23.3...v29.24.0
 [29.23.3]: https://github.com/linkedin/rest.li/compare/v29.23.2...v29.23.3
 [29.23.2]: https://github.com/linkedin/rest.li/compare/v29.23.1...v29.23.2
 [29.23.1]: https://github.com/linkedin/rest.li/compare/v29.23.0...v29.23.1
