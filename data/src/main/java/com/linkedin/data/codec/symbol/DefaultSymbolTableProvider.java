@@ -25,7 +25,12 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 import org.slf4j.Logger;
@@ -47,6 +52,16 @@ public class DefaultSymbolTableProvider implements SymbolTableProvider
    * Accept header
    */
   private static final String ACCEPT_HEADER = "Accept";
+
+  /**
+   * IC header key
+   */
+  private static final String IC_HEADER = "X-LI-R2-W-IC-1";
+
+  /**
+   * Default IC header
+   */
+  private static final String DEFAULT_IC_HEADER = "serviceCallTraceData=%7B%22caller%22%3A%7B%22container%22%3A%22container%22%2C%22service%22%3A%22restli%22%2C%22env%22%3A%22env%22%2C%22instance%22%3A%22inst%22%2C%22machine%22%3A%22machine.linkedin.biz%22%2C%22version%22%3A%220.0.1%22%7D%2C%22treeId%22%3A%22{}%22%2C%22context%22%3A%7B%22source%22%3A%22restli%22%2C%22forceTraceEnabled%22%3A%22false%22%2C%22debugEnabled%22%3A%22false%22%2C%22traceGroupingKey%22%3A%22restli-default-symboltable%22%7D%7D,com.linkedin.container.rpc.trace.rpcTrace=(machine.linkedin.biz,restli,1970/01/01 01:00:00.000)";
 
   /**
    * Symbol table request header
@@ -155,6 +170,8 @@ public class DefaultSymbolTableProvider implements SymbolTableProvider
         {
           DEFAULT_HEADERS.entrySet().forEach(entry -> connection.setRequestProperty(entry.getKey(), entry.getValue()));
         }
+        connection.setRequestProperty(IC_HEADER,
+                DEFAULT_IC_HEADER.replaceAll("\\{}", Base64.getEncoder().encodeToString(getTreeId(Instant.now()))));
         connection.setRequestProperty(ACCEPT_HEADER, ProtobufDataCodec.DEFAULT_HEADER);
         connection.setRequestProperty(SYMBOL_TABLE_HEADER, Boolean.toString(true));
         int responseCode = connection.getResponseCode();
@@ -200,5 +217,39 @@ public class DefaultSymbolTableProvider implements SymbolTableProvider
     }
 
     return connection;
+  }
+
+
+  private final static int TREE_ID_RESERVED_LENGTH = 1;
+  private final static int TREE_ID_LENGTH = 16;
+  private final static int TREE_ID_RANDOM_LENGTH = 8;
+  // TreeId only support version 0~3
+  private final static byte TREE_ID_RESERVED_VERSION_MASK = 0x03;
+
+  // Below are config specific for treeId_v0
+  private final static byte TREE_ID_RESERVED_UNUSED = 0x00;
+  private final static byte TREE_ID_RESERVED_EXCLUDE_VERSION_MASK = (byte) 0xfc;
+  private final static int TREE_ID_VERSION = 0x00; // current version = 0
+  // 6 bits unused + 2 bit version
+  private final static byte TREE_ID_RESERVED = (TREE_ID_RESERVED_UNUSED & TREE_ID_RESERVED_EXCLUDE_VERSION_MASK)
+          | (TREE_ID_VERSION & TREE_ID_RESERVED_VERSION_MASK);
+
+  private byte[] getTreeId(Instant instant) {
+    final byte[] treeId = new byte[TREE_ID_LENGTH];
+    final byte[] random = new byte[TREE_ID_RANDOM_LENGTH];
+
+    // assign reserved to treeId
+    treeId[0] = TREE_ID_RESERVED;
+    // assign micro-second epoch time to treeId
+    long currentTimeUs = ChronoUnit.MICROS.between(Instant.EPOCH, instant);
+    for (int i = TREE_ID_LENGTH - TREE_ID_RANDOM_LENGTH - 1; i >= TREE_ID_RESERVED_LENGTH; i--) {
+      treeId[i] = (byte) (currentTimeUs & 0xFF);
+      currentTimeUs >>= Byte.SIZE;
+    }
+    // assign random to treeId
+    ThreadLocalRandom.current().nextBytes(random);
+    System.arraycopy(random, 0, treeId, TREE_ID_LENGTH - TREE_ID_RANDOM_LENGTH, TREE_ID_RANDOM_LENGTH);
+
+    return treeId;
   }
 }

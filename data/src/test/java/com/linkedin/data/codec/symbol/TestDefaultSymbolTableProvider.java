@@ -50,6 +50,7 @@ public class TestDefaultSymbolTableProvider
     SymbolTable remoteTable = provider.getSymbolTable(_symbolTableName);
     verify(connection).setRequestProperty(eq("Accept"), eq(ProtobufDataCodec.DEFAULT_HEADER));
     verify(connection).setRequestProperty(eq("test"), eq("test"));
+    verify(connection).setRequestProperty(eq("X-LI-R2-W-IC-1"), anyString());
     verify(connection).disconnect();
 
     // Verify table is deserialized correctly.
