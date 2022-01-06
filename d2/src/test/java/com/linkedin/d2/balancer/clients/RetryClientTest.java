@@ -431,7 +431,7 @@ public class RetryClientTest
       final URI foo = URI.create(uri);
       Map<Integer, PartitionData> foo1Data = new HashMap<>();
       // ensure that we first route to the retry uris before the good uris
-      double weight = uri.contains("good") ? 0.0001 : 1.0;
+      double weight = uri.contains("good") ? 0.1 : 1.0;
       foo1Data.put(0, new PartitionData(weight));
       partitionDescriptions.put(foo, foo1Data);
     }
