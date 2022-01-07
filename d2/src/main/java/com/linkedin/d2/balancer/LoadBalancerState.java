@@ -29,6 +29,7 @@ import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdown
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -95,10 +96,10 @@ public interface LoadBalancerState
   default SubsettingState.SubsetItem getClientsSubset(String serviceName,
                                                    int minClusterSubsetSize,
                                                    int partitionId,
-                                                   Map<URI, TrackerClient> potentialClients,
+                                                   Map<URI, Double> possibleUris,
                                                    long version)
   {
-    return new SubsettingState.SubsetItem(false, potentialClients);
+    return new SubsettingState.SubsetItem(false, possibleUris, Collections.emptySet());
   }
 
   /**
