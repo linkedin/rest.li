@@ -286,7 +286,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         Ring<URI> ring = null;
         for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
         {
-          SubsettingState.SubsetItem subsetItem = getPotentialClients(serviceName, service,
+          TrackerClientSubsetItem subsetItem = getPotentialClients(serviceName, service,
               cluster, uris, pair.getScheme(), partitionId, uriItem.getVersion());
           ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, subsetItem.getWeightedSubset(),
               subsetItem.shouldForceUpdate());
@@ -339,7 +339,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       {
         for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
         {
-          SubsettingState.SubsetItem subsetItem = getPotentialClients(serviceName, service, cluster, uris,
+          TrackerClientSubsetItem subsetItem = getPotentialClients(serviceName, service, cluster, uris,
               pair.getScheme(), partitionId, uriItem.getVersion());
           Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, subsetItem.getWeightedSubset(),
               subsetItem.shouldForceUpdate());
@@ -554,7 +554,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       {
         for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
         {
-          SubsettingState.SubsetItem subsetItem = getPotentialClients(serviceName, service, cluster, uris,
+          TrackerClientSubsetItem subsetItem = getPotentialClients(serviceName, service, cluster, uris,
               pair.getScheme(), partitionId, uriItem.getVersion());
           Map<URI, TrackerClient> trackerClients = subsetItem.getWeightedSubset();
           int size = Math.min(trackerClients.size(), limitHostPerPartition);
@@ -715,7 +715,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   // supports partitioning
-  private SubsettingState.SubsetItem getPotentialClients(String serviceName,
+  private TrackerClientSubsetItem getPotentialClients(String serviceName,
                                                   ServiceProperties serviceProperties,
                                                   ClusterProperties clusterProperties,
                                                   UriProperties uris,
@@ -740,7 +740,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     {
       info(_log, "Can not find a host for service: ", serviceName, ", scheme: ", scheme, ", partition: ", partitionId);
     }
-    return new SubsettingState.SubsetItem(subsetItem, clientsToBalance);
+    return new TrackerClientSubsetItem(subsetItem.shouldForceUpdate(), clientsToBalance);
   }
 
   private Map<URI, TrackerClient> getPotentialClients(String serviceName,
@@ -864,7 +864,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       LoadBalancerStrategy strategy = pair.getStrategy();
       String scheme = pair.getScheme();
 
-      SubsettingState.SubsetItem subsetItem = getPotentialClients(serviceName, serviceProperties, cluster,
+      TrackerClientSubsetItem subsetItem = getPotentialClients(serviceName, serviceProperties, cluster,
           uris, scheme, partitionId, uriItem.getVersion());
       clientsToLoadBalance = subsetItem.getWeightedSubset();
 
@@ -1012,4 +1012,23 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
   }
 
+  public static class TrackerClientSubsetItem
+  {
+    private final boolean _shouldForceUpdate;
+    private final Map<URI, TrackerClient> _trackerClientMap;
+
+    public TrackerClientSubsetItem(boolean shouldForceUpdate, Map<URI, TrackerClient> trackerClientMap)
+    {
+      _shouldForceUpdate = shouldForceUpdate;
+      _trackerClientMap = trackerClientMap;
+    }
+
+    public boolean shouldForceUpdate() {
+      return _shouldForceUpdate;
+    }
+
+    public Map<URI, TrackerClient> getWeightedSubset() {
+      return _trackerClientMap;
+    }
+  }
 }

@@ -1029,14 +1029,20 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
             {
               warn(_log, "Failed to shut down old ", serviceName, " TransportClient with scheme = ", entry.getKey()
                 , e);
-              _subsettingState.invalidateCache(serviceName);
+              if (_subsettingState != null)
+              {
+                _subsettingState.invalidateCache(serviceName);
+              }
             }
 
             @Override
             public void onSuccess(None result)
             {
               info(_log, "Shut down old ", serviceName, " TransportClient with scheme = ", entry.getKey());
-              _subsettingState.invalidateCache(serviceName);
+              if (_subsettingState != null)
+              {
+                _subsettingState.invalidateCache(serviceName);
+              }
             }
           };
           entry.getValue().shutdown(callback);

@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.balancer.subsetting;
 
-import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
 import java.net.URI;
 import java.util.Collections;
@@ -222,22 +221,12 @@ public class SubsettingState
     private final boolean _shouldForceUpdate;
     private final Map<URI, Double> _weightedUriSubset;
     private final Set<URI> _doNotSlowStartUris;
-    private final Map<URI, TrackerClient> _weightedClientSubset;
 
     public SubsetItem(boolean shouldForceUpdate, Map<URI, Double> weightedUriSubset, Set<URI> doNotSlowStartUris)
     {
       _shouldForceUpdate = shouldForceUpdate;
       _weightedUriSubset = weightedUriSubset;
       _doNotSlowStartUris = doNotSlowStartUris;
-      _weightedClientSubset = null;
-    }
-
-    public SubsetItem(SubsetItem subsetItem, Map<URI, TrackerClient> weightedClientSubset)
-    {
-      _shouldForceUpdate = subsetItem.shouldForceUpdate();
-      _weightedUriSubset = subsetItem.getWeightedUriSubset();
-      _doNotSlowStartUris = subsetItem.getDoNotSlowStartUris();
-      _weightedClientSubset = weightedClientSubset;
     }
 
     public boolean shouldForceUpdate()
@@ -253,11 +242,6 @@ public class SubsettingState
     public Set<URI> getDoNotSlowStartUris()
     {
       return _doNotSlowStartUris;
-    }
-
-    public Map<URI, TrackerClient> getWeightedSubset()
-    {
-      return _weightedClientSubset;
     }
   }
 }
