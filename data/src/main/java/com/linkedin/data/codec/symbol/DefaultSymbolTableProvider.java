@@ -80,6 +80,11 @@ public class DefaultSymbolTableProvider implements SymbolTableProvider
   private static Map<String, String> DEFAULT_HEADERS;
 
   /**
+   * Request headers provider to generate headers required to fetch remote symbol table if any.
+   */
+  private static HeaderProvider HEADER_PROVIDER;
+
+  /**
    * Cache storing mapping from symbol table name to symbol table.
    */
   private final Cache<String, SymbolTable> _cache;
@@ -94,8 +99,17 @@ public class DefaultSymbolTableProvider implements SymbolTableProvider
   /**
    * Set Default headers to fetch remote symbol table
    */
-  public static void setDefaultHeaders(Map<String, String> defaultHeaders) {
+  public static void setDefaultHeaders(Map<String, String> defaultHeaders)
+  {
     DEFAULT_HEADERS = defaultHeaders;
+  }
+
+  /**
+   * Set request headers provider to fetch remote symbol table
+   */
+  public static void setHeaderProvider(HeaderProvider headerProvider)
+  {
+    HEADER_PROVIDER = headerProvider;
   }
 
   /**
@@ -155,6 +169,10 @@ public class DefaultSymbolTableProvider implements SymbolTableProvider
         {
           DEFAULT_HEADERS.entrySet().forEach(entry -> connection.setRequestProperty(entry.getKey(), entry.getValue()));
         }
+        if (HEADER_PROVIDER != null)
+        {
+          HEADER_PROVIDER.getHeaders().entrySet().forEach(entry -> connection.setRequestProperty(entry.getKey(), entry.getValue()));
+        }
         connection.setRequestProperty(ACCEPT_HEADER, ProtobufDataCodec.DEFAULT_HEADER);
         connection.setRequestProperty(SYMBOL_TABLE_HEADER, Boolean.toString(true));
         int responseCode = connection.getResponseCode();
@@ -200,5 +218,9 @@ public class DefaultSymbolTableProvider implements SymbolTableProvider
     }
 
     return connection;
+  }
+
+  public interface HeaderProvider {
+    Map<String, String> getHeaders();
   }
 }
