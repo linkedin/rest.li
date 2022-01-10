@@ -43,6 +43,7 @@ public class TestDefaultSymbolTableProvider
     HttpURLConnection connection = mock(HttpURLConnection.class);
     DefaultSymbolTableProvider provider = spy(new DefaultSymbolTableProvider());
     provider.setDefaultHeaders(defaultHeader);
+    provider.setHeaderProvider(new MockSymbolTableHeaderProvider());
     doReturn(connection).when(provider).openConnection(eq("https://someservice:100/symbolTable/tableName"));
     when(connection.getResponseCode()).thenReturn(200);
     when(connection.getInputStream()).thenReturn(serializedTable.asInputStream());
@@ -50,7 +51,7 @@ public class TestDefaultSymbolTableProvider
     SymbolTable remoteTable = provider.getSymbolTable(_symbolTableName);
     verify(connection).setRequestProperty(eq("Accept"), eq(ProtobufDataCodec.DEFAULT_HEADER));
     verify(connection).setRequestProperty(eq("test"), eq("test"));
-    verify(connection).setRequestProperty(eq("X-LI-R2-W-IC-1"), anyString());
+    verify(connection).setRequestProperty(eq("Header"), eq("test"));
     verify(connection).disconnect();
 
     // Verify table is deserialized correctly.
@@ -111,5 +112,17 @@ public class TestDefaultSymbolTableProvider
   {
     DefaultSymbolTableProvider provider = new DefaultSymbolTableProvider();
     provider.getSymbolTable("random");
+  }
+
+  class MockSymbolTableHeaderProvider implements DefaultSymbolTableProvider.HeaderProvider
+  {
+
+    @Override
+    public Map<String, String> getHeaders()
+    {
+      Map<String, String> headers = new HashMap<>();
+      headers.put("Header", "test");
+      return headers;
+    }
   }
 }
