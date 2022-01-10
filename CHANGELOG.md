@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.26.0] - 2022-01-10
+- Add header provider to generate required request to fetch default remote symbol table
+
 ## [29.25.0] - 2022-01-06
 - Fix a race condition where TransportClient is shutdown while subset cache still holds reference to it
 
@@ -5155,7 +5158,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.25.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.26.0...master
+[29.26.0]: https://github.com/linkedin/rest.li/compare/v29.25.0...v29.26.0
 [29.25.0]: https://github.com/linkedin/rest.li/compare/v29.24.0...v29.25.0
 [29.24.0]: https://github.com/linkedin/rest.li/compare/v29.23.3...v29.24.0
 [29.23.3]: https://github.com/linkedin/rest.li/compare/v29.23.2...v29.23.3
