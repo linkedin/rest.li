@@ -42,12 +42,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.zookeeper.AsyncCallback;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.data.Stat;
+import com.linkedin.pegasus.org.apache.zookeeper.AsyncCallback;
+import com.linkedin.pegasus.org.apache.zookeeper.CreateMode;
+import com.linkedin.pegasus.org.apache.zookeeper.KeeperException;
+import com.linkedin.pegasus.org.apache.zookeeper.WatchedEvent;
+import com.linkedin.pegasus.org.apache.zookeeper.ZooDefs;
+import com.linkedin.pegasus.org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

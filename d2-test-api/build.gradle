@@ -1,5 +1,6 @@
 dependencies {
   compile project(':d2')
+  implementation project(path: ':restli-zookeeper', configuration: 'shadow')
   compile externalDependency.testng
   compile externalDependency.metricsCore
   compile externalDependency.xerialSnappy

@@ -37,14 +37,14 @@ import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.discovery.PropertySerializer;
 
-import org.apache.zookeeper.AsyncCallback;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.apache.zookeeper.ZooDefs;
-import org.apache.zookeeper.data.Stat;
+import com.linkedin.pegasus.org.apache.zookeeper.AsyncCallback;
+import com.linkedin.pegasus.org.apache.zookeeper.CreateMode;
+import com.linkedin.pegasus.org.apache.zookeeper.KeeperException;
+import com.linkedin.pegasus.org.apache.zookeeper.WatchedEvent;
+import com.linkedin.pegasus.org.apache.zookeeper.Watcher;
+import com.linkedin.pegasus.org.apache.zookeeper.Watcher.Event.KeeperState;
+import com.linkedin.pegasus.org.apache.zookeeper.ZooDefs;
+import com.linkedin.pegasus.org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

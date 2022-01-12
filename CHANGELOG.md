@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.38.0] - 2022-08-25
+- Introduce restli-netty, a shaded Netty dependency for use with r2.
+
 ## [29.37.15] - 2022-08-23
 - Exclude transitive Netty dependency for ZooKeeper client.
 
@@ -5309,7 +5312,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.15...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.38.0...master
+[29.38.0]: https://github.com/linkedin/rest.li/compare/v29.37.15...v29.38.0
 [29.37.15]: https://github.com/linkedin/rest.li/compare/v29.37.14...v29.37.15
 [29.37.14]: https://github.com/linkedin/rest.li/compare/v29.37.13...v29.37.14
 [29.37.13]: https://github.com/linkedin/rest.li/compare/v29.37.12...v29.37.13

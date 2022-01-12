@@ -17,10 +17,10 @@
 package com.linkedin.d2.discovery.stores.zk;
 
 import com.linkedin.d2.discovery.PropertySerializer;
-import org.apache.zookeeper.AsyncCallback;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.data.ACL;
+import com.linkedin.pegasus.org.apache.zookeeper.AsyncCallback;
+import com.linkedin.pegasus.org.apache.zookeeper.CreateMode;
+import com.linkedin.pegasus.org.apache.zookeeper.Watcher;
+import com.linkedin.pegasus.org.apache.zookeeper.data.ACL;
 
 import java.util.List;
 

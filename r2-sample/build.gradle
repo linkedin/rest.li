@@ -4,6 +4,6 @@ dependencies {
   compile project(':pegasus-common')
   compile project(':data')
   compile project(':r2-jetty')
-  compile externalDependency.netty
+  implementation project(path: ':restli-netty', configuration: 'shadow')
   compile externalDependency.servletApi
 }

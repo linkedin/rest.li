@@ -32,7 +32,7 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
-import io.netty.channel.EventLoopGroup;
+import com.linkedin.pegasus.io.netty.channel.EventLoopGroup;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;

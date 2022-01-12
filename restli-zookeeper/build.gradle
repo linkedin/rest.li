@@ -1,0 +1,42 @@
+apply plugin: 'com.github.johnrengelman.shadow'
+
+dependencies {
+  implementation externalDependency.zookeeper
+  shadow externalDependency.slf4jApi
+}
+
+tasks.named('shadowJar') {
+  archiveClassifier.set('')
+
+  dependencies {
+    // Don't use externalDependency, since it would only exclude a specific SLF4J API version.
+    exclude dependency('org.slf4j:slf4j-api')
+
+    exclude dependency('org.apache.yetus:audience-annotations')
+  }
+
+  exclude 'META-INF/maven/'
+
+  relocate 'org.apache.zookeeper', 'com.linkedin.pegasus.org.apache.zookeeper'
+  relocate 'org.apache.jute', 'com.linkedin.pegasus.org.apache.jute'
+
+  exclude 'META-INF/io.netty.versions.properties'
+  exclude 'META-INF/maven/'
+  exclude 'META-INF/native-image/'
+
+  relocate 'io.netty', 'com.linkedin.pegasus.org.apache.zookeeper.io.netty'
+  relocate 'META-INF/native/libnetty', 'META-INF/native/libcom_linkedin_pegasus_zookeeper_netty'
+  relocate 'META-INF/native/netty', 'META-INF/native/com_linkedin_pegasus_zookeeper_netty'
+
+  mergeServiceFiles()
+}
+
+tasks.named('jar') {
+  enabled = false
+
+  // Workaround for IDEA-163411.
+  // Even when disabled, IntelliJ interprets the regular jar task as producing the unclassified jar. Although the build
+  // works with Gradle, IntelliJ will incorrectly fail to find the shaded classes and show spurious errors in the IDE.
+  // Giving this a specific classifier prevents IntelliJ's confusion.
+  archiveClassifier.set('slim')
+}

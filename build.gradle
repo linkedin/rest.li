@@ -16,9 +16,11 @@
 
 buildscript {
   repositories {
+    gradlePluginPortal()
     jcenter()
   }
   dependencies {
+    classpath 'com.github.jengelman.gradle.plugins:shadow:5.2.0'
     classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.21.0'
     classpath 'org.jacoco:org.jacoco.core:0.8.7'
   }

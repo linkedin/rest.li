@@ -26,7 +26,7 @@ import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerImpl;
 import com.linkedin.r2.util.Cancellable;
-import io.netty.channel.Channel;
+import com.linkedin.pegasus.io.netty.channel.Channel;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

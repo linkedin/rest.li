@@ -35,8 +35,8 @@ import com.linkedin.r2.transport.http.client.common.AbstractNettyClient;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
 
-import io.netty.channel.EventLoopGroup;
-import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import com.linkedin.pegasus.io.netty.channel.EventLoopGroup;
+import com.linkedin.pegasus.io.netty.util.concurrent.DefaultEventExecutorGroup;
 
 import java.net.SocketAddress;
 import java.util.Map;

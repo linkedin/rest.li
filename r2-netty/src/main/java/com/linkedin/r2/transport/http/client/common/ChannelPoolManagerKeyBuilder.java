@@ -18,7 +18,7 @@ package com.linkedin.r2.transport.http.client.common;
 
 import com.linkedin.r2.transport.http.client.AsyncPoolImpl;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import io.netty.util.internal.ObjectUtil;
+import com.linkedin.pegasus.io.netty.util.internal.ObjectUtil;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;

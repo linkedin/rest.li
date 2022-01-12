@@ -24,7 +24,7 @@ import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
-import io.netty.channel.nio.NioEventLoopGroup;
+import com.linkedin.pegasus.io.netty.channel.nio.NioEventLoopGroup;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

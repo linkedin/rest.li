@@ -39,9 +39,9 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZooDefs;
+import com.linkedin.pegasus.org.apache.zookeeper.CreateMode;
+import com.linkedin.pegasus.org.apache.zookeeper.KeeperException;
+import com.linkedin.pegasus.org.apache.zookeeper.ZooDefs;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;

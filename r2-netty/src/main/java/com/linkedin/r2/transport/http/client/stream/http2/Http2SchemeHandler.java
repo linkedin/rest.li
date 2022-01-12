@@ -22,9 +22,9 @@ package com.linkedin.r2.transport.http.client.stream.http2;
 
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.transport.common.bridge.common.RequestWithCallback;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelOutboundHandlerAdapter;
-import io.netty.channel.ChannelPromise;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelOutboundHandlerAdapter;
+import com.linkedin.pegasus.io.netty.channel.ChannelPromise;
 import java.net.URI;
 
 

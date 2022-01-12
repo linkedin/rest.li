@@ -34,7 +34,7 @@ import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 
-import org.apache.zookeeper.KeeperException;
+import com.linkedin.pegasus.org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

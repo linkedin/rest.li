@@ -23,7 +23,7 @@ package com.linkedin.d2.discovery.event;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZKServer;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
-import org.apache.zookeeper.Watcher;
+import com.linkedin.pegasus.org.apache.zookeeper.Watcher;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 

@@ -18,14 +18,14 @@ package com.linkedin.r2.transport.http.server;
 
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.netty.common.SslHandlerUtil;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpRequestDecoder;
-import io.netty.handler.codec.http.HttpResponseEncoder;
-import io.netty.handler.ssl.SslHandler;
-import io.netty.util.concurrent.EventExecutorGroup;
+import com.linkedin.pegasus.io.netty.channel.ChannelInitializer;
+import com.linkedin.pegasus.io.netty.channel.SimpleChannelInboundHandler;
+import com.linkedin.pegasus.io.netty.channel.socket.nio.NioSocketChannel;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpObjectAggregator;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpRequestDecoder;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpResponseEncoder;
+import com.linkedin.pegasus.io.netty.handler.ssl.SslHandler;
+import com.linkedin.pegasus.io.netty.util.concurrent.EventExecutorGroup;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 

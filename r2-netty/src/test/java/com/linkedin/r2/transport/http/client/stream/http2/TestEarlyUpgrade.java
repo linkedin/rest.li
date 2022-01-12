@@ -25,8 +25,8 @@ import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImp
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder;
 import com.linkedin.test.util.AssertionMethods;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
+import com.linkedin.pegasus.io.netty.channel.EventLoopGroup;
+import com.linkedin.pegasus.io.netty.channel.nio.NioEventLoopGroup;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;

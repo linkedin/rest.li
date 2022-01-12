@@ -64,8 +64,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.Watcher;
+import com.linkedin.pegasus.org.apache.zookeeper.KeeperException;
+import com.linkedin.pegasus.org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

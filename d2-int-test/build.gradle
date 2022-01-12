@@ -6,15 +6,12 @@ dependencies {
   compile project(':data')
   compile project(':pegasus-common')
   compile project(':li-jersey-uri')
+  implementation project(path: ':restli-zookeeper', configuration: 'shadow')
   compile fileTree(dir: 'lib', include: '*.jar')
   compile externalDependency.commonsCodec
   compile externalDependency.commonsIo
   compile externalDependency.commonsHttpClient
-  compile(externalDependency.zookeeper) {
-    exclude group: 'io.netty'
-  }
   compile externalDependency.jdkTools
-  compile externalDependency.netty
   testCompile externalDependency.testng
   testCompile externalDependency.commonsIo
   testCompile externalDependency.metricsCore

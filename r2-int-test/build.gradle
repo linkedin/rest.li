@@ -6,6 +6,7 @@ dependencies {
     testCompile externalDependency.testng
     testCompile externalDependency.junit
     compile externalDependency.commonsLang
+    implementation project(path: ':restli-netty', configuration: 'shadow')
 }
 
 tasks.withType(Test) {

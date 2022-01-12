@@ -25,11 +25,11 @@ import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandler;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.SimpleChannelInboundHandler;
 
-import io.netty.util.AttributeKey;
+import com.linkedin.pegasus.io.netty.util.AttributeKey;
 import java.nio.channels.ClosedChannelException;
 import java.util.Collections;
 import java.util.Map;

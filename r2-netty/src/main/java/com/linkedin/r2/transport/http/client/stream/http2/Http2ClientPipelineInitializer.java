@@ -16,21 +16,21 @@
 
 package com.linkedin.r2.transport.http.client.stream.http2;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.HttpClientCodec;
-import io.netty.handler.codec.http.HttpClientUpgradeHandler;
-import io.netty.handler.codec.http.HttpScheme;
-import io.netty.handler.codec.http2.DefaultHttp2Connection;
-import io.netty.handler.codec.http2.Http2ClientUpgradeCodec;
-import io.netty.handler.codec.http2.Http2Connection;
-import io.netty.handler.ssl.ApplicationProtocolConfig;
-import io.netty.handler.ssl.ApplicationProtocolNames;
-import io.netty.handler.ssl.ClientAuth;
-import io.netty.handler.ssl.IdentityCipherSuiteFilter;
-import io.netty.handler.ssl.JdkSslContext;
-import io.netty.util.AttributeKey;
+import com.linkedin.pegasus.io.netty.channel.Channel;
+import com.linkedin.pegasus.io.netty.channel.ChannelInitializer;
+import com.linkedin.pegasus.io.netty.channel.socket.nio.NioSocketChannel;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpClientCodec;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpClientUpgradeHandler;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpScheme;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.DefaultHttp2Connection;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2ClientUpgradeCodec;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2Connection;
+import com.linkedin.pegasus.io.netty.handler.ssl.ApplicationProtocolConfig;
+import com.linkedin.pegasus.io.netty.handler.ssl.ApplicationProtocolNames;
+import com.linkedin.pegasus.io.netty.handler.ssl.ClientAuth;
+import com.linkedin.pegasus.io.netty.handler.ssl.IdentityCipherSuiteFilter;
+import com.linkedin.pegasus.io.netty.handler.ssl.JdkSslContext;
+import com.linkedin.pegasus.io.netty.util.AttributeKey;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -41,7 +41,8 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * Initializes Netty HTTP/2 streaming pipeline implementation of {@link io.netty.channel.ChannelInitializer}
+ * Initializes Netty HTTP/2 streaming pipeline implementation of
+ * {@link com.linkedin.pegasus.io.netty.channel.ChannelInitializer}
  */
 class Http2ClientPipelineInitializer extends ChannelInitializer<NioSocketChannel>
 {

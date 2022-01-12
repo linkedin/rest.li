@@ -25,10 +25,10 @@ import com.linkedin.r2.netty.handler.common.SessionResumptionSslHandler;
 import com.linkedin.r2.netty.handler.common.SslHandshakeTimingHandler;
 import com.linkedin.r2.netty.handler.http.HttpMessageDecoders;
 import com.linkedin.r2.netty.handler.http.HttpMessageEncoders;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.HttpClientCodec;
-import io.netty.handler.codec.http.HttpScheme;
+import com.linkedin.pegasus.io.netty.channel.ChannelInitializer;
+import com.linkedin.pegasus.io.netty.channel.socket.nio.NioSocketChannel;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpClientCodec;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpScheme;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 
@@ -37,7 +37,7 @@ import javax.net.ssl.SSLParameters;
  * the channel pipeline is setup with the following additional handlers.
  *
  * DefaultChannelPipeline {
- *   (sslHandler = {@link io.netty.handler.ssl.SslHandler}),
+ *   (sslHandler = {@link com.linkedin.pegasus.io.netty.handler.ssl.SslHandler}),
  *   (CertificateHandler = {@link CertificateHandler}),
  *   (sslHandshakeTimingHandler = {@link SslHandshakeTimingHandler})
  * }
@@ -45,7 +45,7 @@ import javax.net.ssl.SSLParameters;
  * The rest of the handlers are common between SSL and non-SSL.
  *
  * DefaultChannelPipeline {
- *   (codec = {@link io.netty.handler.codec.http.HttpClientCodec}),
+ *   (codec = {@link com.linkedin.pegasus.io.netty.handler.codec.http.HttpClientCodec}),
  *   (outboundRestRequestEncoder = {@link HttpMessageEncoders.RestRequestEncoder}),
  *   (outboundStreamDataEncoder = {@link HttpMessageEncoders.DataEncoder}),
  *   (outboundStreamRequestEncoder = {@link HttpMessageEncoders.StreamRequestEncoder}),

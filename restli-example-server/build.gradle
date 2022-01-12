@@ -11,11 +11,9 @@ dependencies {
   compile project(':restli-server')
   compile project(':restli-common')
   compile project(':pegasus-common')
+  implementation project(path: ':restli-zookeeper', configuration: 'shadow')
   compile externalDependency.javaxInject
   compile externalDependency.parseq
-  compile(externalDependency.zookeeper) {
-    exclude group: 'io.netty'
-  }
   testCompile project(':restli-client')
   testCompile externalDependency.testng
   testCompile externalDependency.easymock

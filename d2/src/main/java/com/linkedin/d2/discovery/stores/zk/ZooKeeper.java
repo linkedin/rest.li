@@ -16,13 +16,13 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
-import org.apache.zookeeper.AsyncCallback;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.ZooKeeper.States;
-import org.apache.zookeeper.data.ACL;
-import org.apache.zookeeper.data.Stat;
+import com.linkedin.pegasus.org.apache.zookeeper.AsyncCallback;
+import com.linkedin.pegasus.org.apache.zookeeper.CreateMode;
+import com.linkedin.pegasus.org.apache.zookeeper.KeeperException;
+import com.linkedin.pegasus.org.apache.zookeeper.Watcher;
+import com.linkedin.pegasus.org.apache.zookeeper.ZooKeeper.States;
+import com.linkedin.pegasus.org.apache.zookeeper.data.ACL;
+import com.linkedin.pegasus.org.apache.zookeeper.data.Stat;
 
 import java.util.List;
 

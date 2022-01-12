@@ -23,16 +23,16 @@ import com.linkedin.r2.message.stream.entitystream.ReadHandle;
 import com.linkedin.r2.message.stream.entitystream.Reader;
 import com.linkedin.r2.netty.common.NettyRequestAdapter;
 import com.linkedin.r2.transport.http.client.stream.OrderedEntityStreamReader;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
-import io.netty.handler.codec.http.DefaultHttpContent;
-import io.netty.handler.codec.http.HttpContent;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.LastHttpContent;
+import com.linkedin.pegasus.io.netty.buffer.Unpooled;
+import com.linkedin.pegasus.io.netty.channel.ChannelDuplexHandler;
+import com.linkedin.pegasus.io.netty.channel.ChannelFuture;
+import com.linkedin.pegasus.io.netty.channel.ChannelFutureListener;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelPromise;
+import com.linkedin.pegasus.io.netty.handler.codec.http.DefaultHttpContent;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpContent;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpRequest;
+import com.linkedin.pegasus.io.netty.handler.codec.http.LastHttpContent;
 
 /**
  * This encoder encodes StreamRequest to Netty's HttpRequest.
