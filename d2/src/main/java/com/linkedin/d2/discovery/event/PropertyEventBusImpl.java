@@ -121,7 +121,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
           {
             subscriber.onInitialize(prop, _properties.get(prop));
           }
-          if (notifyPublisher)
+          if (notifyPublisher && _publisher != null)
           {
             _publisher.startPublishing(prop);
           }
@@ -147,7 +147,10 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
             if (subscribers.isEmpty())
             {
               _properties.remove(prop);
-              _publisher.stopPublishing(prop);
+              if (_publisher != null)
+              {
+                _publisher.stopPublishing(prop);
+              }
             }
           }
         }

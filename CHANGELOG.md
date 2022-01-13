@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.26.2] - 2022-01-13
+- Fix for null pointer exception when registering listener on event bus before publisher is set.
+
 ## [29.26.1] - 2022-01-13
 - Fail documentation requests while renderers are being lazily initialized (rather than block threads until complete).
 
@@ -5161,7 +5164,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.26.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.26.2...master
+[29.26.2]: https://github.com/linkedin/rest.li/compare/v29.26.1...v29.26.2
 [29.26.1]: https://github.com/linkedin/rest.li/compare/v29.26.0...v29.26.1
 [29.26.0]: https://github.com/linkedin/rest.li/compare/v29.25.0...v29.26.0
 [29.25.0]: https://github.com/linkedin/rest.li/compare/v29.24.0...v29.25.0
