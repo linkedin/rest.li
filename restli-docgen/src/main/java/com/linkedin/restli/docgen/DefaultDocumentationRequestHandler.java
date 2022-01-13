@@ -34,12 +34,14 @@ import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.model.ResourceModel;
 import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.RestLiDocumentationRequestHandler;
+import com.linkedin.restli.server.RestLiServiceException;
 import com.linkedin.restli.server.RoutingException;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -70,16 +72,13 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
   @Override
   public void handleRequest(RestRequest request, RequestContext requestContext, Callback<RestResponse> callback)
   {
-    if (!_initialized)
+    if (_shouldInitialize.getAndSet(false))
     {
-      synchronized (this)
-      {
-        if (!_initialized)
-        {
-          initializeRenderers();
-          _initialized = true;
-        }
-      }
+      initializeRenderers();
+    }
+    if (_jsonRenderer == null || _htmlRenderer == null)
+    {
+      callback.onError(new RestLiServiceException(HttpStatus.S_503_SERVICE_UNAVAILABLE, "Documentation renderers have not yet been initialized."));
     }
     try
     {
@@ -261,5 +260,5 @@ public class DefaultDocumentationRequestHandler implements RestLiDocumentationRe
   private RestLiDocumentationRenderer _jsonRenderer;
   private RestLiConfig _config;
   private Map<String, ResourceModel> _rootResources;
-  private boolean _initialized = false;
+  private final AtomicBoolean _shouldInitialize = new AtomicBoolean(true);
 }
