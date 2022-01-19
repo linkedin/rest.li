@@ -27,6 +27,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ScheduledExecutorService;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
@@ -37,6 +38,7 @@ import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.util.ArgumentUtil;
 
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 import org.apache.zookeeper.KeeperException;
@@ -53,6 +55,9 @@ import org.slf4j.LoggerFactory;
 
 public class ZooKeeperAnnouncer
 {
+  public static final boolean DEFAULT_D2_WARMUP_CLUSTER_ENABLED = false;
+  public static final int DEFAULT_D2_WARMUP_DURATION = 0;
+
   private final ZooKeeperServer _server;
   private static final Logger _log = LoggerFactory.getLogger(ZooKeeperAnnouncer.class);
   private volatile String _cluster;
@@ -65,12 +70,25 @@ public class ZooKeeperAnnouncer
    * it will try to bring up the server again on ZK if the connection goes down, or a new store is set
    */
   private boolean _isUp;
+
+  // Field to indicate if warm up was started. If it is true, it will try to end the warm up
+  // by marking down on ZK if the connection goes down
+  private boolean _isWarmUp;
+
   private final Deque<Callback<None>> _pendingMarkDown;
   private final Deque<Callback<None>> _pendingMarkUp;
+
+  // Queue to store pending mark down for warm-up cluster
+  private final Deque<Callback<None>> _pendingWarmUpMarkDown;
 
   private Runnable _nextOperation;
   private boolean _isRunningMarkUpOrMarkDown;
   private volatile boolean _shuttingDown;
+
+  private ScheduledExecutorService _executorService;
+  private boolean _isEnabledD2WarmupCluster;
+  private String _warmupClusterName;
+  private int _warmupDuration;
 
   public ZooKeeperAnnouncer(ZooKeeperServer server)
   {
@@ -82,8 +100,27 @@ public class ZooKeeperAnnouncer
     _server = server;
     // initialIsUp is used for delay mark up. If it's false, there won't be markup when the announcer is started.
     _isUp = initialIsUp;
+    _isWarmUp = false;
     _pendingMarkDown = new ArrayDeque<>();
     _pendingMarkUp = new ArrayDeque<>();
+    _pendingWarmUpMarkDown = new ArrayDeque<>();
+
+  }
+
+  public ZooKeeperAnnouncer(ZooKeeperServer server, boolean initialIsUp, ScheduledExecutorService executorService,
+      boolean isEnabledD2WarmupCluster, String warmupClusterName, int warmupDuration)
+  {
+    _server = server;
+    // initialIsUp is used for delay mark up. If it's false, there won't be markup when the announcer is started.
+    _isUp = initialIsUp;
+    _isWarmUp = false;
+    _pendingMarkDown = new ArrayDeque<>();
+    _pendingMarkUp = new ArrayDeque<>();
+    _pendingWarmUpMarkDown = new ArrayDeque<>();
+    _executorService = executorService;
+    _isEnabledD2WarmupCluster = isEnabledD2WarmupCluster;
+    _warmupClusterName = warmupClusterName;
+    _warmupDuration = warmupDuration;
   }
 
   /**
@@ -120,7 +157,7 @@ public class ZooKeeperAnnouncer
     // retry the last one.
     // Note that we use _isUp to record the last requested operation, so changing
     // its value should be the first operation done in #markUp and #markDown.
-    if (!_pendingMarkDown.isEmpty() || !_pendingMarkUp.isEmpty())
+    if (!_pendingMarkDown.isEmpty() || !_pendingMarkUp.isEmpty() || !_pendingWarmUpMarkDown.isEmpty())
     {
       if (_isUp)
       {
@@ -129,6 +166,12 @@ public class ZooKeeperAnnouncer
       else
       {
         markDown(callback);
+      }
+
+      // If markDown for warm-up cluster is pending, complete it
+      if(!_pendingWarmUpMarkDown.isEmpty() && _isWarmUp)
+      {
+        _server.markDown(_warmupClusterName, _uri, callback);
       }
     }
     // No need to retry the successful operation because the ephemeral node
@@ -162,14 +205,15 @@ public class ZooKeeperAnnouncer
 
   private synchronized void doMarkUp(Callback<None> callback)
   {
-    _server.markUp(_cluster, _uri, _partitionDataMap, _uriSpecificProperties, new Callback<None>()
+
+    final Callback<None> markUpCallback = new Callback<None>()
     {
       @Override
       public void onError(Throwable e)
       {
         if (e instanceof KeeperException.ConnectionLossException || e instanceof KeeperException.SessionExpiredException)
         {
-          _log.debug("failed to mark up uri {} due to {}.", _uri, e.getClass().getSimpleName());
+          _log.info("failed to mark up uri {} for cluster {} due to {}.", _uri, _cluster, e.getClass().getSimpleName());
           // Setting to null because if that connection dies, when don't want to continue making operations before
           // the connection is up again.
           // When the connection will be up again, the ZKAnnouncer will be restarted and it will read the _isUp
@@ -187,7 +231,7 @@ public class ZooKeeperAnnouncer
       @Override
       public void onSuccess(None result)
       {
-        _log.info("markUp for uri = {} succeeded.", _uri);
+        _log.info("markUp for uri = {} on cluster {} succeeded.", _uri, _cluster);
         // Note that the pending callbacks we see at this point are
         // from the requests that are filed before us because zookeeper
         // guarantees the ordering of callback being invoked.
@@ -211,8 +255,88 @@ public class ZooKeeperAnnouncer
         }
         runNextMarkUpOrMarkDown();
       }
-    });
+    };
+
+    final Callback<None> warmUpMarkDownCallback = new Callback<None>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        // It is important here to retry the markDown for warm-up cluster.
+        // We cannot go ahead to markUp the regular cluster, as the warm-up cluster to uris association has not been deleted
+        // from the zookeeper store.
+        if (e instanceof KeeperException.ConnectionLossException || e instanceof KeeperException.SessionExpiredException)
+        {
+          _log.warn("failed to markDown uri {} on warm-up cluster {} due to {}.", _uri, _warmupClusterName, e.getClass().getSimpleName());
+          // Setting to null because if that connection dies, when don't want to continue making operations before
+          // the connection is up again.
+          // When the connection will be up again, the ZKAnnouncer will be restarted and it will read the _isWarmUp
+          // value and mark down warm-up cluster again if necessary
+          _nextOperation = null;
+          _isRunningMarkUpOrMarkDown = false;
+        }
+        else
+        {
+          callback.onError(e);
+          //continue to mark up to the regular cluster
+          _server.markUp(_cluster, _uri, _partitionDataMap, _uriSpecificProperties, markUpCallback);
+        }
+      }
+
+      @Override
+      public void onSuccess(None result)
+      {
+        // Mark _isWarmUp to true to indicate warm up is completed
+        _isWarmUp = false;
+        // Note that the pending callbacks we see at this point are from the requests that are filed before us because
+        // zookeeper guarantees the ordering of callback being invoked.
+        synchronized (ZooKeeperAnnouncer.this)
+        {
+          // drain _pendingMarkDown with successful result.
+          drain(_pendingWarmUpMarkDown, null);
+        }
+        _log.info("markDown for uri {} on warm-up cluster {} has completed, now marking up regular cluster {}", _uri, _warmupClusterName, _cluster);
+        _server.markUp(_cluster, _uri, _partitionDataMap, _uriSpecificProperties, markUpCallback);
+      }
+    };
+
+    final Callback<None> warmUpMarkUpCallback = new Callback<None>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        _log.warn("failure to markUp uri {} of warm-up cluster {} due to {}.", _uri, _warmupClusterName, e.getClass().getSimpleName());
+        // Try markUp to regular. We give up on the attempt to warm up in this case.
+        _server.markUp(_cluster, _uri, _partitionDataMap, _uriSpecificProperties, markUpCallback);
+      }
+
+      @Override
+      public void onSuccess(None result)
+      {
+        _log.info("markUp for uri {} on warm-up cluster {} succeeded", _uri, _warmupClusterName);
+        // Mark _isWarmUp to true to indicate warm up in progress
+        _isWarmUp = true;
+        // Add mark down as pending, so that in case of ZK connection loss, on retry there is a mark down attempted
+        // for warm-up cluster
+        _pendingWarmUpMarkDown.add(callback);
+        // Run warm-up for _warmupDuration ms and then schedule a mark down for the warm-up cluster
+        _log.debug("warm-up will run for {}ms",_warmupDuration);
+        _executorService.schedule(() -> _server.markDown(_warmupClusterName, _uri, warmUpMarkDownCallback), _warmupDuration,
+              TimeUnit.MILLISECONDS);
+      }
+    };
+
     _log.info("overrideMarkUp is called for uri = " + _uri);
+    if (_isEnabledD2WarmupCluster)
+    {
+      _log.info("Warm-up is enabled with warm-up cluster {}", _warmupClusterName);
+      _server.markUp(_warmupClusterName, _uri, _partitionDataMap, _uriSpecificProperties, warmUpMarkUpCallback);
+    }
+    else
+    {
+      _server.markUp(_cluster, _uri, _partitionDataMap, _uriSpecificProperties, markUpCallback);
+    }
+
   }
 
   public synchronized void markDown(final Callback<None> callback)
@@ -452,4 +576,17 @@ public class ZooKeeperAnnouncer
     Map<Integer, PartitionData> partitionDataMap = getPartitionData();
     return partitionDataMap == null ? 0 : partitionDataMap.size();
   }
+
+  /**
+   * A way to force users to set both executor service and warm up parameters, if they want to use d2 warmup
+   */
+  public void setExecutorServiceAndWarmupParameters(ScheduledExecutorService executorService, boolean isEnabledD2WarmupCluster,
+      String warmupClusterName, int warmupDuration)
+  {
+    _executorService = executorService;
+    _isEnabledD2WarmupCluster = isEnabledD2WarmupCluster;
+    _warmupClusterName = warmupClusterName;
+    _warmupDuration = warmupDuration;
+  }
+
 }
