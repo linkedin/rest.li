@@ -1,4 +1,4 @@
-import org.apache.tools.ant.types.LogLevel
+import org.gradle.api.logging.LogLevel
 
 
 apply plugin: 'pegasus'
