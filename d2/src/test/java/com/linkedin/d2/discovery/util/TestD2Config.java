@@ -807,15 +807,13 @@ public class TestD2Config
 
     clusterNameWithRouting = D2Config.clusterNameWithRouting("clusterName",
                                                              "destinationColo",
-                                                             "defaultColo",
                                                              "masterColo",
                                                              false,
                                                              false);
-    assertEquals("clusterName-defaultColo", clusterNameWithRouting);
+    assertEquals("clusterName", clusterNameWithRouting);
 
     clusterNameWithRouting = D2Config.clusterNameWithRouting("clusterName",
                                                              "destinationColo",
-                                                             "defaultColo",
                                                              "masterColo",
                                                              true,
                                                              false);
@@ -823,7 +821,6 @@ public class TestD2Config
 
     clusterNameWithRouting = D2Config.clusterNameWithRouting("clusterName",
                                                              "destinationColo",
-                                                             "defaultColo",
                                                              "masterColo",
                                                              true,
                                                              true);
@@ -831,7 +828,6 @@ public class TestD2Config
 
     clusterNameWithRouting = D2Config.clusterNameWithRouting("clusterName",
                                                              "",
-                                                             "defaultColo",
                                                              "masterColo",
                                                              false,
                                                              false);
@@ -839,7 +835,6 @@ public class TestD2Config
 
     clusterNameWithRouting = D2Config.clusterNameWithRouting("clusterName",
                                                              "",
-                                                             "defaultColo",
                                                              "masterColo",
                                                              true,
                                                              false);
@@ -1690,22 +1685,22 @@ public class TestD2Config
 
     // It's hard to validate the serviceGroups without replicating all the temporary structures
     // needed inside D2Config. Just doing it manually here.
-    verifyServiceProperties("cluster1Foo-EastCoast", "service-1_1", "/service-1_1", "ServiceGroup1");
+    verifyServiceProperties("cluster1Foo", "service-1_1", "/service-1_1", "ServiceGroup1");
     verifyServiceProperties("cluster1Foo-WestCoast", "service-1_1Master", "/service-1_1", "ServiceGroup1");
     verifyServiceProperties("cluster1Foo-WestCoast", "service-1_1-WestCoast", "/service-1_1", "ServiceGroup1");
     verifyServiceProperties("cluster1Foo-EastCoast", "service-1_1-EastCoast", "/service-1_1", "ServiceGroup1");
 
-    verifyServiceProperties("cluster1Foo-EastCoast", "service-1_2", "/service-1_2", "ServiceGroup1");
+    verifyServiceProperties("cluster1Foo", "service-1_2", "/service-1_2", "ServiceGroup1");
     verifyServiceProperties("cluster1Foo-WestCoast", "service-1_2Master", "/service-1_2", "ServiceGroup1");
     verifyServiceProperties("cluster1Foo-WestCoast", "service-1_2-WestCoast", "/service-1_2", "ServiceGroup1");
     verifyServiceProperties("cluster1Foo-EastCoast", "service-1_2-EastCoast", "/service-1_2", "ServiceGroup1");
 
-    verifyServiceProperties("cluster1Bar-EastCoast", "service-1_1", "/service-1_1", "ServiceGroup2");
+    verifyServiceProperties("cluster1Bar", "service-1_1", "/service-1_1", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-WestCoast", "service-1_1Master", "/service-1_1", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-WestCoast", "service-1_1-WestCoast", "/service-1_1", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-EastCoast", "service-1_1-EastCoast", "/service-1_1", "ServiceGroup2");
 
-    verifyServiceProperties("cluster1Bar-EastCoast", "service-1_2", "/service-1_2", "ServiceGroup2");
+    verifyServiceProperties("cluster1Bar", "service-1_2", "/service-1_2", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-WestCoast", "service-1_2Master", "/service-1_2", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-WestCoast", "service-1_2-WestCoast", "/service-1_2", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-EastCoast", "service-1_2-EastCoast", "/service-1_2", "ServiceGroup2");
@@ -1774,22 +1769,22 @@ public class TestD2Config
 
     // It's hard to validate the serviceGroups without replicating all the temporary structures
     // needed inside D2Config. Just doing it manually here.
-    verifyServiceProperties("cluster1Foo-EastCoast", "service-1_1", "/service-1_1", "ServiceGroup1");
+    verifyServiceProperties("cluster1Foo", "service-1_1", "/service-1_1", "ServiceGroup1");
     verifyServiceProperties("cluster1Foo-EastCoast", "service-1_1Master", "/service-1_1", "ServiceGroup1");
     verifyServiceProperties("cluster1Foo-WestCoast", "service-1_1-WestCoast", "/service-1_1", "ServiceGroup1");
     verifyServiceProperties("cluster1Foo-EastCoast", "service-1_1-EastCoast", "/service-1_1", "ServiceGroup1");
 
-    verifyServiceProperties("cluster1Foo-EastCoast", "service-1_2", "/service-1_2", "ServiceGroup1");
+    verifyServiceProperties("cluster1Foo", "service-1_2", "/service-1_2", "ServiceGroup1");
     verifyServiceProperties("cluster1Foo-EastCoast", "service-1_2Master", "/service-1_2", "ServiceGroup1");
     verifyServiceProperties("cluster1Foo-WestCoast", "service-1_2-WestCoast", "/service-1_2", "ServiceGroup1");
     verifyServiceProperties("cluster1Foo-EastCoast", "service-1_2-EastCoast", "/service-1_2", "ServiceGroup1");
 
-    verifyServiceProperties("cluster1Bar-EastCoast", "service-1_1", "/service-1_1", "ServiceGroup2");
+    verifyServiceProperties("cluster1Bar", "service-1_1", "/service-1_1", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-EastCoast", "service-1_1Master", "/service-1_1", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-WestCoast", "service-1_1-WestCoast", "/service-1_1", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-EastCoast", "service-1_1-EastCoast", "/service-1_1", "ServiceGroup2");
 
-    verifyServiceProperties("cluster1Bar-EastCoast", "service-1_2", "/service-1_2", "ServiceGroup2");
+    verifyServiceProperties("cluster1Bar", "service-1_2", "/service-1_2", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-EastCoast", "service-1_2Master", "/service-1_2", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-WestCoast", "service-1_2-WestCoast", "/service-1_2", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-EastCoast", "service-1_2-EastCoast", "/service-1_2", "ServiceGroup2");
@@ -1859,22 +1854,22 @@ public class TestD2Config
 
     // It's hard to validate the serviceGroups without replicating all the temporary structures
     // needed inside D2Config. Just doing it manually here.
-    verifyServiceProperties("cluster1Foo-EastCoast", "service-1_1", "/service-1_1", "ServiceGroup1");
+    verifyServiceProperties("cluster1Foo", "service-1_1", "/service-1_1", "ServiceGroup1");
     verifyServiceProperties("cluster1Foo-EastCoast", "service-1_1Master", "/service-1_1", "ServiceGroup1");
     verifyServiceProperties("cluster1Foo-WestCoast", "service-1_1-WestCoast", "/service-1_1", "ServiceGroup1");
     verifyServiceProperties("cluster1Foo-EastCoast", "service-1_1-EastCoast", "/service-1_1", "ServiceGroup1");
 
-    verifyServiceProperties("cluster1Foo-EastCoast", "service-1_2", "/service-1_2", "ServiceGroup1");
+    verifyServiceProperties("cluster1Foo", "service-1_2", "/service-1_2", "ServiceGroup1");
     verifyServiceProperties("cluster1Foo-EastCoast", "service-1_2Master", "/service-1_2", "ServiceGroup1");
     verifyServiceProperties("cluster1Foo-WestCoast", "service-1_2-WestCoast", "/service-1_2", "ServiceGroup1");
     verifyServiceProperties("cluster1Foo-EastCoast", "service-1_2-EastCoast", "/service-1_2", "ServiceGroup1");
 
-    verifyServiceProperties("cluster1Bar-EastCoast", "service-1_1", "/service-1_1", "ServiceGroup2");
+    verifyServiceProperties("cluster1Bar", "service-1_1", "/service-1_1", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-EastCoast", "service-1_1Master", "/service-1_1", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-WestCoast", "service-1_1-WestCoast", "/service-1_1", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-EastCoast", "service-1_1-EastCoast", "/service-1_1", "ServiceGroup2");
 
-    verifyServiceProperties("cluster1Bar-EastCoast", "service-1_2", "/service-1_2", "ServiceGroup2");
+    verifyServiceProperties("cluster1Bar", "service-1_2", "/service-1_2", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-EastCoast", "service-1_2Master", "/service-1_2", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-WestCoast", "service-1_2-WestCoast", "/service-1_2", "ServiceGroup2");
     verifyServiceProperties("cluster1Bar-EastCoast", "service-1_2-EastCoast", "/service-1_2", "ServiceGroup2");
@@ -1921,7 +1916,7 @@ public class TestD2Config
 
     String coloClusterName = D2Utils.addSuffixToBaseName(cluster1Name, defaultColo);
     verifyClusterProperties(coloClusterName);
-    verifyServiceProperties(coloClusterName, excludedService, "/" + excludedService, null);
+    verifyServiceProperties(cluster1Name, excludedService, "/" + excludedService, null);
     try
     {
       String badService = D2Utils.addSuffixToBaseName(excludedService, defaultColo);
@@ -2059,7 +2054,7 @@ public class TestD2Config
     d2Conf.runDiscovery(_zkHosts);
 
     // Verify default routing
-    verifyServiceProperties("cluster1-EastCoast", "service1", "/service1", null);
+    verifyServiceProperties("cluster1", "service1", "/service1", null);
     verifyServiceProperties("cluster1-WestCoast", "service2", "/service2", null, true);
 
     // Verify explicit routing
@@ -2124,7 +2119,7 @@ public class TestD2Config
     d2Conf.runDiscovery(_zkHosts);
 
     // Verify default routing
-    verifyServiceProperties(D2Utils.addSuffixToBaseName(clusterVariantName, defaultColo), service1, "/"+service1, serviceGroupName);
+    verifyServiceProperties(clusterVariantName, service1, "/"+service1, serviceGroupName);
     verifyServiceProperties(D2Utils.addSuffixToBaseName(clusterVariantName, masterColo), service2, "/"+service2, serviceGroupName);
   }
 
@@ -2165,7 +2160,7 @@ public class TestD2Config
     verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterName), D2Utils.addMasterToBaseName(service1), "/"+service1, null);
     verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterName), D2Utils.addMasterToBaseName(service2), "/"+service2, null);
     // verify default routing
-    verifyServiceProperties(D2Utils.addSuffixToBaseName(clusterName, defaultColo), service1, "/"+service1, null);
+    verifyServiceProperties(clusterName, service1, "/"+service1, null);
     verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterName), service2, "/"+service2, null, true);
   }
 
@@ -2222,7 +2217,7 @@ public class TestD2Config
     verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterVariantName), D2Utils.addMasterToBaseName(service1), "/"+service1, serviceGroupName);
     verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterVariantName), D2Utils.addMasterToBaseName(service2), "/"+service2, serviceGroupName);
     // verify default routing
-    verifyServiceProperties(D2Utils.addSuffixToBaseName(clusterVariantName, defaultColo), service1, "/"+service1, serviceGroupName);
+    verifyServiceProperties(clusterVariantName, service1, "/"+service1, serviceGroupName);
     verifyServiceProperties(D2Utils.getSymlinkNameForMaster(clusterVariantName), service2, "/"+service2, serviceGroupName, true);
   }
 
@@ -2308,7 +2303,7 @@ public class TestD2Config
 
     assertEquals(d2Conf.runDiscovery(_zkHosts), 0);
 
-    verifyServiceProperties("zServices-EastCoast", "service-1", "/service-1", "ServiceGroup1");
+    verifyServiceProperties("zServices", "service-1", "/service-1", "ServiceGroup1");
     verifyServiceProperties("zServices-EastCoast", "service-1-EastCoast", "/service-1", "ServiceGroup1");
     verifyServiceProperties("zServices-WestCoast", "service-1-WestCoast", "/service-1", "ServiceGroup1");
     verifyServiceProperties("zServices-WestCoast", "service-1Master", "/service-1", "ServiceGroup1");
@@ -2375,7 +2370,7 @@ public class TestD2Config
           // yes, we don't need to check the masterServiceName for each service, but there's no harm
           String masterClusterName = D2Utils.addSuffixToBaseName(clusterName, ("".matches(colo) ? null :masterColo));
           String masterServiceName = D2Utils.addSuffixToBaseName(serviceName, ("".matches(colo) ? null :masterColo));
-          String defaultClusterName = D2Utils.addSuffixToBaseName(clusterName, ("".matches(colo) ? null : defaultColo));
+          String defaultClusterName = clusterName;
           verifyServiceProperties(coloClusterName, coloServiceName, "/" + serviceName, null);
           verifyServiceProperties(masterClusterName, masterServiceName, "/" + serviceName, null);
           verifyServiceProperties(defaultClusterName, serviceName, "/" + serviceName, null);

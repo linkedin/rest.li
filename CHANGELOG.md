@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Modified the service-cluster mapping for regular service Znodes to be consistent with the change in d2-config-service.
 
 ## [29.26.3] - 2022-01-18
 - Generate compile time constants for union members if people want to write build time switch case to check for things based on member

@@ -400,7 +400,6 @@ public class D2Config
 
             final String defaultColoClusterName = clusterNameWithRouting(clusterName,
                                                                          colo,
-                                                                         defaultColo,
                                                                          masterColo,
                                                                          defaultRoutingToMasterColo,
                                                                          enableSymlink);
@@ -617,19 +616,12 @@ public class D2Config
 
   protected static String clusterNameWithRouting(final String clusterName,
                                                  final String destinationColo,
-                                                 final String defaultColo,
                                                  final String masterColo,
                                                  final boolean defaultRoutingToMasterColo,
                                                  final boolean enableSymlink)
   {
     final String defaultColoClusterName;
-    if ("".matches(destinationColo))
-    {
-      // If we didn't have an coloVariants for this cluster, make sure to use the original
-      // cluster name.
-      defaultColoClusterName = clusterName;
-    }
-    else if (defaultRoutingToMasterColo)
+    if (!"".matches(destinationColo) && defaultRoutingToMasterColo)
     {
       // If this service is configured to route all requests to the master colo by default
       // then we need to configure the service to use the master colo.
@@ -644,7 +636,9 @@ public class D2Config
     }
     else
     {
-      defaultColoClusterName = D2Utils.addSuffixToBaseName(clusterName, defaultColo);
+      // For regular service node, if not route to master colo, the cluster name should be the original
+      // cluster without suffix.
+      defaultColoClusterName = clusterName;
     }
     return defaultColoClusterName;
   }
@@ -824,6 +818,7 @@ public class D2Config
     for (String variant : clusterVariantConfig.keySet())
     {
       Map<String,Object> varConfig = clusterVariantConfig.get(variant);
+      String defaultColoClusterName = variant;
       String variantColoName = D2Utils.addSuffixToBaseName(variant, coloStr);
       String masterColoName;
       if (enableSymlink)
@@ -872,6 +867,12 @@ public class D2Config
           // for default services whose defaultRouting = Master, we also want them to
           // point to the master colo.
           varServiceConfig.put(PropertyKeys.CLUSTER_NAME, masterColoName);
+        }
+        else if (defaultServiceString != null && "true".equalsIgnoreCase(defaultServiceString))
+        {
+          // for default services who is not default routing to master, we want them to
+          // point to the variant cluster without suffix, e.g. clusterFoo.
+          varServiceConfig.put(PropertyKeys.CLUSTER_NAME, defaultColoClusterName);
         }
         else
         {
