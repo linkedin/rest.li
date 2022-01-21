@@ -73,7 +73,7 @@ public class ZooKeeperAnnouncer
 
   // Field to indicate if warm up was started. If it is true, it will try to end the warm up
   // by marking down on ZK if the connection goes down
-  private boolean _isWarmUp;
+  private boolean _isWarmingUp;
 
   private final Deque<Callback<None>> _pendingMarkDown;
   private final Deque<Callback<None>> _pendingMarkUp;
@@ -97,14 +97,7 @@ public class ZooKeeperAnnouncer
 
   public ZooKeeperAnnouncer(ZooKeeperServer server, boolean initialIsUp)
   {
-    _server = server;
-    // initialIsUp is used for delay mark up. If it's false, there won't be markup when the announcer is started.
-    _isUp = initialIsUp;
-    _isWarmUp = false;
-    _pendingMarkDown = new ArrayDeque<>();
-    _pendingMarkUp = new ArrayDeque<>();
-    _pendingWarmUpMarkDown = new ArrayDeque<>();
-
+    this(server, initialIsUp, (ScheduledExecutorService) null, DEFAULT_D2_WARMUP_CLUSTER_ENABLED, null, DEFAULT_D2_WARMUP_DURATION);
   }
 
   public ZooKeeperAnnouncer(ZooKeeperServer server, boolean initialIsUp, ScheduledExecutorService executorService,
@@ -113,7 +106,7 @@ public class ZooKeeperAnnouncer
     _server = server;
     // initialIsUp is used for delay mark up. If it's false, there won't be markup when the announcer is started.
     _isUp = initialIsUp;
-    _isWarmUp = false;
+    _isWarmingUp = false;
     _pendingMarkDown = new ArrayDeque<>();
     _pendingMarkUp = new ArrayDeque<>();
     _pendingWarmUpMarkDown = new ArrayDeque<>();
@@ -155,9 +148,15 @@ public class ZooKeeperAnnouncer
   {
     // If we have pending operations failed because of a connection loss,
     // retry the last one.
+    // If markDown for warm-up cluster is pending, complete it
+    if(!_pendingWarmUpMarkDown.isEmpty() && _isWarmingUp)
+    {
+      _server.markDown(_warmupClusterName, _uri, callback);
+    }
+
     // Note that we use _isUp to record the last requested operation, so changing
     // its value should be the first operation done in #markUp and #markDown.
-    if (!_pendingMarkDown.isEmpty() || !_pendingMarkUp.isEmpty() || !_pendingWarmUpMarkDown.isEmpty())
+    if (!_pendingMarkDown.isEmpty() || !_pendingMarkUp.isEmpty())
     {
       if (_isUp)
       {
@@ -166,12 +165,6 @@ public class ZooKeeperAnnouncer
       else
       {
         markDown(callback);
-      }
-
-      // If markDown for warm-up cluster is pending, complete it
-      if(!_pendingWarmUpMarkDown.isEmpty() && _isWarmUp)
-      {
-        _server.markDown(_warmupClusterName, _uri, callback);
       }
     }
     // No need to retry the successful operation because the ephemeral node
@@ -270,7 +263,7 @@ public class ZooKeeperAnnouncer
           _log.warn("failed to markDown uri {} on warm-up cluster {} due to {}.", _uri, _warmupClusterName, e.getClass().getSimpleName());
           // Setting to null because if that connection dies, when don't want to continue making operations before
           // the connection is up again.
-          // When the connection will be up again, the ZKAnnouncer will be restarted and it will read the _isWarmUp
+          // When the connection will be up again, the ZKAnnouncer will be restarted and it will read the _isWarmingUp
           // value and mark down warm-up cluster again if necessary
           _nextOperation = null;
           _isRunningMarkUpOrMarkDown = false;
@@ -286,8 +279,8 @@ public class ZooKeeperAnnouncer
       @Override
       public void onSuccess(None result)
       {
-        // Mark _isWarmUp to true to indicate warm up is completed
-        _isWarmUp = false;
+        // Mark _isWarmingUp to true to indicate warm up is completed
+        _isWarmingUp = false;
         // Note that the pending callbacks we see at this point are from the requests that are filed before us because
         // zookeeper guarantees the ordering of callback being invoked.
         synchronized (ZooKeeperAnnouncer.this)
@@ -314,8 +307,8 @@ public class ZooKeeperAnnouncer
       public void onSuccess(None result)
       {
         _log.info("markUp for uri {} on warm-up cluster {} succeeded", _uri, _warmupClusterName);
-        // Mark _isWarmUp to true to indicate warm up in progress
-        _isWarmUp = true;
+        // Mark _isWarmingUp to true to indicate warm up in progress
+        _isWarmingUp = true;
         // Add mark down as pending, so that in case of ZK connection loss, on retry there is a mark down attempted
         // for warm-up cluster
         _pendingWarmUpMarkDown.add(callback);
