@@ -79,6 +79,17 @@ Pegasus Data Schema format uses a simple Avro-like syntax to define your
 data model in a language-independent way. Rest.li provides code
 generators to create Java classes that implement your data model.
 
+Remember to define datamodels for Array and Map types that you plan to reference
+from your Resources. These can be for query parameters or return types. The
+recommended way to define these types is by creating a typeref:
+```pdl
+namespace com.example.widget
+
+typeref WidgetArrayRef = array[Widget]
+```
+Then you can use the typeref or the array/map type in your APIs.
+
+
 <a id="wiki-WritingResources"></a>
 
 ## Writing Resources
@@ -848,7 +859,8 @@ Valid types for query parameters are:
 -   Custom types (see the bottom of this section)
 -   Record template types (any subclass of `RecordTemplate` generated
     from a `.pdl` schema)
--   Arrays of one of the types above, e.g. `String[]`, `long[]`, ...
+-   Arrays of one of the types above, e.g. `String[]`, `long[]`, ... (Remember
+    to define datamodels for Array types by [creating a typeref](#defining-data-models))
 
 ```java
 @Finder("simpleFinder")
@@ -898,7 +910,7 @@ declaration:
 private static final Object REGISTER_COERCER = Custom.registerCoercer(new ObjectCoercer(), CustomObject.class);
 ```
 
-Typeref Schema
+Typeref Schema (Custom Types)
 
 The purpose of the typeref schemas is to keep track of the underlying
 type of the custom Type and the location of the custom type's class,
@@ -1767,6 +1779,10 @@ Valid parameter types and return types for action are:
 -   `AbstractMapTemplate` or a subclass of `AbstractMapTemplate`, for
     example, `StringMap`, `LongMap`, and so on.
 -   Custom types
+
+To use Arrays and Maps of non-primitive type (Eg record, enum) as return type,
+the array/map should be [defined as data models](#defining-data-models). This is needed for the
+template classes to be generated for them. Eg, `typeref FooRecordArrayRef = array[FooRecord]`
 
 Similar to `GetResult<V>`, since 1.5.8, Rest.li supports an
 `ActionResult<V>` wrapper return type that allows you to specify an
