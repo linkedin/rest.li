@@ -17,6 +17,7 @@
 package com.linkedin.data.avro;
 
 
+import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
 import java.io.IOException;
 import java.io.OutputStream;
 import org.apache.avro.Schema;
@@ -44,7 +45,7 @@ public class AvroAdapter_1_4 implements AvroAdapter
   @Override
   public GenericData.EnumSymbol createEnumSymbol(Schema avroSchema, String enumValue)
   {
-    return new GenericData.EnumSymbol(enumValue);
+    return AvroCompatibilityHelper.newEnumSymbol(avroSchema, enumValue);
   }
 
   @Override
@@ -63,22 +64,19 @@ public class AvroAdapter_1_4 implements AvroAdapter
   @Override
   public Encoder createBinaryEncoder(OutputStream outputStream) throws IOException
   {
-    Encoder binaryEncoder = new BinaryEncoder(outputStream);
-    return binaryEncoder;
+    return AvroCompatibilityHelper.newBinaryEncoder(outputStream);
   }
 
   @Override
   public Decoder createJsonDecoder(Schema schema, String json) throws IOException
   {
-    Decoder jsonDecoder = new JsonDecoder(schema, json);
-    return jsonDecoder;
+    return AvroCompatibilityHelper.newJsonDecoder(schema, json);
   }
 
   @Override
   public Encoder createJsonEncoder(Schema schema, OutputStream outputStream) throws IOException
   {
-    Encoder jsonEncoder = new JsonEncoder(schema, outputStream);
-    return jsonEncoder;
+    return AvroCompatibilityHelper.newJsonEncoder(schema, outputStream, true);
   }
 }
 
