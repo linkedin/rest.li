@@ -15,7 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.26.4] - 2022-01-24
-- Modified the service-cluster mapping for regular service Znodes to be consistent with the change in d2-config-service.
+- Map local variant of service ZNodes to cluster without colo suffix
 
 ## [29.26.3] - 2022-01-18
 - Generate compile time constants for union members if people want to write build time switch case to check for things based on member
