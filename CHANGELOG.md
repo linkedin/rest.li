@@ -17,6 +17,9 @@ and what APIs have changed, if applicable.
 ## [29.27.1] - 2022-01-25
 - Update Avro version to 1.92
 
+## [29.26.4] - 2022-01-24
+- Map local variant of service ZNodes to cluster without colo suffix
+
 ## [29.26.3] - 2022-01-18
 - Generate compile time constants for union members if people want to write build time switch case to check for things based on member
 
