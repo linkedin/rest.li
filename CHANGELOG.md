@@ -14,7 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.27.1] - 2022-01-25
+## [29.27.0] - 2022-01-25
 - Update Avro version to 1.92
 
 ## [29.26.4] - 2022-01-24
@@ -5173,8 +5173,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.27.1...master
-[29.27.1]: https://github.com/linkedin/rest.li/compare/v29.26.4...v29.27.1
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.27.0...master
+[29.27.0]: https://github.com/linkedin/rest.li/compare/v29.26.4...v29.27.0
 [29.26.4]: https://github.com/linkedin/rest.li/compare/v29.26.3...v29.26.4
 [29.26.3]: https://github.com/linkedin/rest.li/compare/v29.26.2...v29.26.3
 [29.26.2]: https://github.com/linkedin/rest.li/compare/v29.26.1...v29.26.2
