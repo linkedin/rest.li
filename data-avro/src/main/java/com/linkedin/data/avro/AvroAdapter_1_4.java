@@ -22,12 +22,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
-import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.Decoder;
-import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.Encoder;
-import org.apache.avro.io.JsonDecoder;
-import org.apache.avro.io.JsonEncoder;
 
 
 /**
@@ -57,8 +53,7 @@ public class AvroAdapter_1_4 implements AvroAdapter
   @Override
   public Decoder createBinaryDecoder(byte[] bytes) throws IOException
   {
-    Decoder binaryDecoder = DecoderFactory.defaultFactory().createBinaryDecoder(bytes, null);
-    return binaryDecoder;
+    return AvroCompatibilityHelper.newBinaryDecoder(bytes);
   }
 
   @Override

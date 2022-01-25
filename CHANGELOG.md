@@ -13,8 +13,6 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
-
-## [29.26.4] - 2022-01-24
 - Update Avro version to 1.92
 
 ## [29.26.3] - 2022-01-18
