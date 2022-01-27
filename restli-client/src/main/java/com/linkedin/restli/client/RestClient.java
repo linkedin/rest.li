@@ -26,7 +26,6 @@ import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.URIKeyPair;
 import com.linkedin.d2.balancer.util.URIMappingResult;
-import com.linkedin.data.ByteString;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.multipart.MultiPartMIMEUtils;
@@ -59,6 +58,7 @@ import com.linkedin.restli.common.OperationNameGenerator;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.RestLiTraceInfo;
 import com.linkedin.restli.common.attachments.RestLiAttachmentDataSourceWriter;
 import com.linkedin.restli.common.attachments.RestLiDataSourceIterator;
 import com.linkedin.restli.disruptor.DisruptRestController;
@@ -346,6 +346,7 @@ public class RestClient implements Client {
         final ResourceMethod method = request.getMethod();
         final String methodName = request.getMethodName();
         addDisruptContext(request.getBaseUriTemplate(), method, methodName, requestContext);
+        addTraceInfo(request, requestContext);
         sendStreamRequestImpl(requestContext,
           requestUri,
           method,
@@ -407,6 +408,7 @@ public class RestClient implements Client {
         final ResourceMethod method = request.getMethod();
         final String methodName = request.getMethodName();
         addDisruptContext(request.getBaseUriTemplate(), method, methodName, requestContext);
+        addTraceInfo(request, requestContext);
         sendRestRequestImpl(requestContext,
           requestUri,
           method,
@@ -1041,6 +1043,13 @@ public class RestClient implements Client {
         return controller.getDisruptContext(resource, method, name);
       }
     });
+  }
+
+  private <T> void addTraceInfo(Request<T> request, RequestContext requestContext) {
+    RestLiTraceInfo.inject(requestContext,
+                           request.getServiceName(),
+                           request.getBaseUriTemplate(),
+                           OperationNameGenerator.generate(request.getMethod(), request.getMethodName()));
   }
 
   // Return the scatter gather strategy for the given request, and per-request strategy takes precedence

@@ -1144,8 +1144,8 @@ public class TestRestClientRequestBuilder
     EasyMock.expect(mockRequest.getPathKeys()).andReturn(Collections.<String, String>emptyMap()).once();
     EasyMock.expect(mockRequest.getQueryParamsObjects()).andReturn(Collections.emptyMap()).once();
     EasyMock.expect(mockRequest.getQueryParamClasses()).andReturn(Collections.<String, Class<?>>emptyMap()).once();
-    EasyMock.expect(mockRequest.getBaseUriTemplate()).andReturn(BASE_URI_TEMPLATE).times(3);
-    EasyMock.expect(mockRequest.getServiceName()).andReturn(SERVICE_NAME).once();
+    EasyMock.expect(mockRequest.getBaseUriTemplate()).andReturn(BASE_URI_TEMPLATE).times(4);
+    EasyMock.expect(mockRequest.getServiceName()).andReturn(SERVICE_NAME).times(2);
     EasyMock.expect(mockRequest.getResponseDecoder()).andReturn(mockResponseDecoder).once();
     EasyMock.expect(mockRequest.getHeaders()).andReturn(Collections.<String, String>emptyMap()).once();
     EasyMock.expect(mockRequest.getCookies()).andReturn(Collections.<String>emptyList()).once();
@@ -1163,8 +1163,8 @@ public class TestRestClientRequestBuilder
     EasyMock.expect(mockRequest.getUriTemplate()).andReturn(URI_TEMPALTE);
     EasyMock.expect(mockRequest.getQueryParamsObjects()).andReturn(Collections.emptyMap()).once();
     EasyMock.expect(mockRequest.getQueryParamClasses()).andReturn(Collections.<String, Class<?>>emptyMap()).once();
-    EasyMock.expect(mockRequest.getBaseUriTemplate()).andReturn(BASE_URI_TEMPLATE).times(2);
-    EasyMock.expect(mockRequest.getServiceName()).andReturn(SERVICE_NAME).once();
+    EasyMock.expect(mockRequest.getBaseUriTemplate()).andReturn(BASE_URI_TEMPLATE).times(3);
+    EasyMock.expect(mockRequest.getServiceName()).andReturn(SERVICE_NAME).times(2);
     EasyMock.expect(mockRequest.getResponseDecoder()).andReturn(mockResponseDecoder).once();
     EasyMock.expect(mockRequest.getHeaders()).andReturn(Collections.<String, String>emptyMap()).once();
     EasyMock.expect(mockRequest.getCookies()).andReturn(Collections.<String>emptyList()).once();
@@ -1419,26 +1419,26 @@ public class TestRestClientRequestBuilder
                                      null,
                                      null,
                                      Collections.<String, CompoundKey.TypeInfo> emptyMap())).once();
-      EasyMock.expect(mockRequest.getMethodName()).andReturn(null);
+      EasyMock.expect(mockRequest.getMethodName()).andReturn(null).times(2);
     }
     else if (method == ResourceMethod.BATCH_GET)
     {
-      EasyMock.expect(mockRequest.getMethodName()).andReturn(null);
+      EasyMock.expect(mockRequest.getMethodName()).andReturn(null).times(2);
     }
     else if (method == ResourceMethod.ACTION)
     {
       EasyMock.expect(((ActionRequest)mockRequest).getId()).andReturn(null);
-      EasyMock.expect(mockRequest.getMethodName()).andReturn("testAction");
+      EasyMock.expect(mockRequest.getMethodName()).andReturn("testAction").times(2);
     }
     else if (method == ResourceMethod.FINDER)
     {
       EasyMock.expect(((FindRequest)mockRequest).getAssocKey()).andReturn(new CompoundKey());
-      EasyMock.expect(mockRequest.getMethodName()).andReturn("testFinder");
+      EasyMock.expect(mockRequest.getMethodName()).andReturn("testFinder").times(2);
     }
     else if (method == ResourceMethod.GET_ALL)
     {
       EasyMock.expect(((GetAllRequest)mockRequest).getAssocKey()).andReturn(new CompoundKey());
-      EasyMock.expect(mockRequest.getMethodName()).andReturn(null);
+      EasyMock.expect(mockRequest.getMethodName()).andReturn(null).times(2);
     }
     else if (method == ResourceMethod.UPDATE)
     {
@@ -1449,7 +1449,7 @@ public class TestRestClientRequestBuilder
                                      null,
                                      Collections.<String, CompoundKey.TypeInfo> emptyMap())).once();
       EasyMock.expect(((UpdateRequest)mockRequest).getId()).andReturn(null);
-      EasyMock.expect(mockRequest.getMethodName()).andReturn(null);
+      EasyMock.expect(mockRequest.getMethodName()).andReturn(null).times(2);
     }
     else if (method == ResourceMethod.PARTIAL_UPDATE)
     {
@@ -1460,7 +1460,7 @@ public class TestRestClientRequestBuilder
                                      null,
                                      Collections.<String, CompoundKey.TypeInfo> emptyMap())).once();
       EasyMock.expect(((PartialUpdateRequest)mockRequest).getId()).andReturn(null);
-      EasyMock.expect(mockRequest.getMethodName()).andReturn(null);
+      EasyMock.expect(mockRequest.getMethodName()).andReturn(null).times(2);
     }
     else if (method == ResourceMethod.DELETE)
     {
@@ -1471,11 +1471,11 @@ public class TestRestClientRequestBuilder
                                      null,
                                      Collections.<String, CompoundKey.TypeInfo> emptyMap())).once();
       EasyMock.expect(((DeleteRequest)mockRequest).getId()).andReturn(null);
-      EasyMock.expect(mockRequest.getMethodName()).andReturn(null);
+      EasyMock.expect(mockRequest.getMethodName()).andReturn(null).times(2);
     }
     else
     {
-      EasyMock.expect(mockRequest.getMethodName()).andReturn(null);
+      EasyMock.expect(mockRequest.getMethodName()).andReturn(null).times(2);
     }
 
     EasyMock.expect(mockRecordTemplate.data()).andReturn(entityBody).once();

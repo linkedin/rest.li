@@ -65,6 +65,7 @@ public class ResourceModel implements ResourceDefinition
   private final boolean                         _root;
   private final Class<?>                        _parentResourceClass;
   private ResourceModel                         _parentResourceModel;
+  private String                                _resourceTemplate;
 
   private final Set<Key>                        _keys;
   private final Key                             _primaryKey;
@@ -167,6 +168,8 @@ public class ResourceModel implements ResourceDefinition
     _primaryKey = primaryKey;
     _resourceType = resourceType;
     _pathSubResourceMap = new HashMap<>();
+
+    generateResourceTemplate();
   }
 
   /**
@@ -189,7 +192,7 @@ public class ResourceModel implements ResourceDefinition
     this(null,
          null,
          null,
-         Collections.<Key>emptySet(),
+         Collections.emptySet(),
          valueClass,
          resourceClass,
          parentResourceClass,
@@ -220,7 +223,7 @@ public class ResourceModel implements ResourceDefinition
     this(null,
         null,
         null,
-        Collections.<Key>emptySet(),
+        Collections.emptySet(),
         valueClass,
         resourceClass,
         parentResourceClass,
@@ -348,6 +351,39 @@ public class ResourceModel implements ResourceDefinition
   public void setParentResourceModel(final ResourceModel parentResourceModel)
   {
     _parentResourceModel = parentResourceModel;
+
+    if (parentResourceModel != null) {
+      generateResourceTemplate();
+    }
+  }
+
+  /**
+   * This method generates the resource template identical to com.linkedin.restli.client.Request.getBaseUriTemplate()
+   */
+  private void generateResourceTemplate() {
+    final StringBuilder templateBuilder = new StringBuilder();
+
+    if (_parentResourceModel != null) {
+      templateBuilder.append(_parentResourceModel.getResourceTemplate()).append('/');
+    }
+
+    templateBuilder.append(getName());
+
+    final String keyName = getKeyName();  // TODO handle multiple keys?
+
+    if (keyName != null) {
+      templateBuilder.append("/{").append(keyName).append('}');
+    }
+
+    _resourceTemplate = templateBuilder.toString();
+
+    // Ensure any sub-resources have the correct template
+    _pathSubResourceMap.values().forEach(ResourceModel::generateResourceTemplate);
+  }
+
+  @Override
+  public String getResourceTemplate() {
+    return _resourceTemplate;
   }
 
   public void setCustomAnnotation(DataMap customAnnotationData)
