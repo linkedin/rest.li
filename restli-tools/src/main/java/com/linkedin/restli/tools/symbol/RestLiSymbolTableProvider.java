@@ -42,6 +42,7 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -242,6 +243,22 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
       SymbolTable symbolTable = _symbolTableNameToSymbolTableCache.getIfPresent(tableName);
       if (symbolTable != null)
       {
+        if (!isRemote && !tableName.contains(_symbolTableNameHandler.getSymbolTablePrefix()))
+        {
+          for (Iterator<Map.Entry<String, SymbolTable>> iter =
+              _serviceNameToSymbolTableCache.asMap().entrySet().iterator(); iter.hasNext(); )
+          {
+            Map.Entry<String, SymbolTable> entry = iter.next();
+            String cachedTableName =
+                _symbolTableNameHandler.extractMetadata(entry.getValue().getName()).getSymbolTableName();
+            String serviceName =
+                cachedTableName.substring(0, cachedTableName.indexOf(SymbolTableNameHandler.PREFIX_HASH_SEPARATOR));
+            if (tableName.contains(serviceName))
+            {
+              iter.remove();
+            }
+          }
+        }
         return symbolTable;
       }
 

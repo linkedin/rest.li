@@ -30,7 +30,7 @@ import java.util.List;
  */
 class SymbolTableNameHandler extends SymbolTableMetadataExtractor
 {
-  private static String PREFIX_HASH_SEPARATOR = "-";
+  /* package private */ static String PREFIX_HASH_SEPARATOR = "-";
 
   private final String _symbolTablePrefix;
   private final String _serverNodeUri;
@@ -95,5 +95,9 @@ class SymbolTableNameHandler extends SymbolTableMetadataExtractor
     }
 
     return _serverNodeUri + SERVER_NODE_URI_PREFIX_TABLENAME_SEPARATOR + existingTableName.substring(index + 1);
+  }
+
+  /* package private */ String getSymbolTablePrefix() {
+    return _symbolTablePrefix;
   }
 }
