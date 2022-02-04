@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.28.0] - 2022-02-04
+- Fix weight double-count in D2 SimpleLoadBalancer
+
 ## [29.27.0] - 2022-01-25
 - Update Avro version to 1.92
 
@@ -5173,7 +5176,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.27.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.28.0...master
+[29.28.0]: https://github.com/linkedin/rest.li/compare/v29.27.0...v29.28.0
 [29.27.0]: https://github.com/linkedin/rest.li/compare/v29.26.4...v29.27.0
 [29.26.4]: https://github.com/linkedin/rest.li/compare/v29.26.3...v29.26.4
 [29.26.3]: https://github.com/linkedin/rest.li/compare/v29.26.2...v29.26.3
