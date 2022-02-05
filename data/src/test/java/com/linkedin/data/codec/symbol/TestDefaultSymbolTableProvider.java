@@ -22,6 +22,8 @@ import java.net.HttpURLConnection;
 import static org.mockito.Mockito.*;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -34,16 +36,22 @@ public class TestDefaultSymbolTableProvider
   @Test
   public void testRemoteSymbolTableSuccess() throws Exception
   {
+    Map<String, String> defaultHeader = new HashMap<>();
+    defaultHeader.put("test", "test");
     ByteString serializedTable = SymbolTableSerializer.toByteString(DefaultSymbolTableProvider.CODEC, _symbolTable);
 
     HttpURLConnection connection = mock(HttpURLConnection.class);
     DefaultSymbolTableProvider provider = spy(new DefaultSymbolTableProvider());
+    provider.setDefaultHeaders(defaultHeader);
+    provider.setHeaderProvider(new MockSymbolTableHeaderProvider());
     doReturn(connection).when(provider).openConnection(eq("https://someservice:100/symbolTable/tableName"));
     when(connection.getResponseCode()).thenReturn(200);
     when(connection.getInputStream()).thenReturn(serializedTable.asInputStream());
 
     SymbolTable remoteTable = provider.getSymbolTable(_symbolTableName);
     verify(connection).setRequestProperty(eq("Accept"), eq(ProtobufDataCodec.DEFAULT_HEADER));
+    verify(connection).setRequestProperty(eq("test"), eq("test"));
+    verify(connection).setRequestProperty(eq("Header"), eq("test"));
     verify(connection).disconnect();
 
     // Verify table is deserialized correctly.
@@ -104,5 +112,17 @@ public class TestDefaultSymbolTableProvider
   {
     DefaultSymbolTableProvider provider = new DefaultSymbolTableProvider();
     provider.getSymbolTable("random");
+  }
+
+  class MockSymbolTableHeaderProvider implements DefaultSymbolTableProvider.HeaderProvider
+  {
+
+    @Override
+    public Map<String, String> getHeaders()
+    {
+      Map<String, String> headers = new HashMap<>();
+      headers.put("Header", "test");
+      return headers;
+    }
   }
 }

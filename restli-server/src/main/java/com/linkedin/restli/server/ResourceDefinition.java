@@ -42,6 +42,17 @@ public interface ResourceDefinition
   String getNamespace();
 
   /**
+   * Gets the D2 service name. This is null unless explicitly annotated by the resource owner in the resource.
+   *
+   * <p>This is meant to be a hint to D2 based routing solutions, and is NOT directly used anywhere by
+   * the rest.li framework, apart from enforcing that this value once set, cannot be changed for backward
+   * compatibility reasons.</p>
+   *
+   * @return the d2 service name
+   */
+  String getD2ServiceName();
+
+  /**
    * Gets the rest.li resource java class.
    *
    * @return java class for this rest.li resource.

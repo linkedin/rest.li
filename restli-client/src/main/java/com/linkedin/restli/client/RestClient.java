@@ -973,6 +973,7 @@ public class RestClient implements Client {
     {
       if (dataMap != null && type != null && type.supportsStreaming())
       {
+        requestBuilder.setHeader(RestConstants.HEADER_CONTENT_TYPE, type.getHeaderKey());
         return requestBuilder.build(EntityStreamAdapters.fromGenericEntityStream(
             type.getStreamCodec().encodeMap(dataMap)));
       }

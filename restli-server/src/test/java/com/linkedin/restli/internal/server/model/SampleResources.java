@@ -152,13 +152,13 @@ class SampleResources
    * The following resources are used by {@link TestRestLiApiBuilder}.
    */
 
-  @RestLiCollection(name = "foo")
+  @RestLiCollection(name = "foo", d2ServiceName = "foo1")
   static class FooResource1 extends CollectionResourceTemplate<Long, EmptyRecord> {}
 
   @RestLiCollection(name = "foo")
   static class FooResource2 extends CollectionResourceTemplate<Long, EmptyRecord> {}
 
-  @RestLiSimpleResource(name = "foo")
+  @RestLiSimpleResource(name = "foo", d2ServiceName = "foo3")
   static class FooResource3 extends SimpleResourceTemplate<EmptyRecord> {}
 
   @RestLiActions(name = "foo")
@@ -848,7 +848,8 @@ class SampleResources
    */
   @RestLiActions(
       name = "actionsMethod",
-      namespace = "com.linkedin.model.actions"
+      namespace = "com.linkedin.model.actions",
+      d2ServiceName = "actionsService"
   )
   public static class ActionsOnlyResource {
 

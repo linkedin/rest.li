@@ -56,13 +56,13 @@ public class TimedRestFilter implements RestFilter
 
     String filterClassName = restFilter.getClass().getSimpleName();
     String timingKeyPrefix = filterClassName + "-";
-    String timingKeyPostfix = ":" + hashCode();
+    String timingKeyPostfix = ":";
 
-    _onRequestTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_REQUEST_SUFFIX + timingKeyPostfix,
+    _onRequestTimingKey = TimingKey.registerNewKey(TimingKey.getUniqueName(timingKeyPrefix + ON_REQUEST_SUFFIX + timingKeyPostfix),
         _restFilter.getClass().getSimpleName(), TimingImportance.LOW);
-    _onResponseTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_RESPONSE_SUFFIX + timingKeyPostfix,
+    _onResponseTimingKey = TimingKey.registerNewKey(TimingKey.getUniqueName(timingKeyPrefix + ON_RESPONSE_SUFFIX + timingKeyPostfix),
         _restFilter.getClass().getSimpleName(), TimingImportance.LOW);
-    _onErrorTimingKey = TimingKey.registerNewKey(timingKeyPrefix + ON_ERROR_SUFFIX + timingKeyPostfix,
+    _onErrorTimingKey = TimingKey.registerNewKey(TimingKey.getUniqueName(timingKeyPrefix + ON_ERROR_SUFFIX + timingKeyPostfix),
         _restFilter.getClass().getSimpleName(), TimingImportance.LOW);
     _shared = false;
   }

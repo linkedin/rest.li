@@ -14,6 +14,53 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.27.0] - 2022-01-25
+- Update Avro version to 1.92
+
+## [29.26.4] - 2022-01-24
+- Map local variant of service ZNodes to cluster without colo suffix
+
+## [29.26.3] - 2022-01-18
+- Generate compile time constants for union members if people want to write build time switch case to check for things based on member
+
+## [29.26.2] - 2022-01-13
+- Fix for null pointer exception when registering listener on event bus before publisher is set.
+
+## [29.26.1] - 2022-01-13
+- Fail documentation requests while renderers are being lazily initialized (rather than block threads until complete).
+
+## [29.26.0] - 2022-01-10
+- Add header provider to generate required request to fetch default remote symbol table
+
+## [29.25.0] - 2022-01-06
+- Fix a race condition where TransportClient is shutdown while subset cache still holds reference to it
+
+## [29.24.0] - 2021-12-09
+- bump minor version for the new public method added in 29.23.3
+
+## [29.23.3] - 2021-12-09
+- Take default headers as input to fetch remote symbol table in `DefaultSymbolTableProvider`
+
+## [29.23.2] - 2021-12-09
+- Observability enhancements for D2 announcer.
+
+## [29.23.1] - 2021-12-08
+- Add support for a rate limiter supplier to enable multiple dark clusters with the CONSTANT_QPS strategy
+
+## [29.23.0] - 2021-12-06
+- Introduce d2ServiceName annotation on rest.li resources. This is an optional param that is meant to be populated by resources for whom the resource name is not the same as d2 service name
+
+## [29.22.16] - 2021-12-03
+- Fixed issues with potential duplicate TimingKeys being registered.
+
+## [29.22.15] - 2021-11-30
+- Add mock response generator factory for BATCH_FINDER methods.
+- Deprecate `FileFormatDataSchemaParser#new(String, DataSchemaResolver, DataSchemaParserFactory)`. 
+- Add file existence check before performing compatibility report check during snapshot and restmodel publishing
+
+## [29.22.14] - 2021-11-24
+- Fix bug where content type was not set for stream requests
+
 ## [29.22.13] - 2021-11-05
 - Make SmoothRateLimiter setRate idempotent
 
@@ -5126,7 +5173,22 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.22.13...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.27.0...master
+[29.27.0]: https://github.com/linkedin/rest.li/compare/v29.26.4...v29.27.0
+[29.26.4]: https://github.com/linkedin/rest.li/compare/v29.26.3...v29.26.4
+[29.26.3]: https://github.com/linkedin/rest.li/compare/v29.26.2...v29.26.3
+[29.26.2]: https://github.com/linkedin/rest.li/compare/v29.26.1...v29.26.2
+[29.26.1]: https://github.com/linkedin/rest.li/compare/v29.26.0...v29.26.1
+[29.26.0]: https://github.com/linkedin/rest.li/compare/v29.25.0...v29.26.0
+[29.25.0]: https://github.com/linkedin/rest.li/compare/v29.24.0...v29.25.0
+[29.24.0]: https://github.com/linkedin/rest.li/compare/v29.23.3...v29.24.0
+[29.23.3]: https://github.com/linkedin/rest.li/compare/v29.23.2...v29.23.3
+[29.23.2]: https://github.com/linkedin/rest.li/compare/v29.23.1...v29.23.2
+[29.23.1]: https://github.com/linkedin/rest.li/compare/v29.23.0...v29.23.1
+[29.23.0]: https://github.com/linkedin/rest.li/compare/v29.22.16...v29.23.0
+[29.22.16]: https://github.com/linkedin/rest.li/compare/v29.22.15...v29.22.16
+[29.22.15]: https://github.com/linkedin/rest.li/compare/v29.22.14...v29.22.15
+[29.22.14]: https://github.com/linkedin/rest.li/compare/v29.22.13...v29.22.14
 [29.22.13]: https://github.com/linkedin/rest.li/compare/v29.22.12...v29.22.13
 [29.22.12]: https://github.com/linkedin/rest.li/compare/v29.22.11...v29.22.12
 [29.22.11]: https://github.com/linkedin/rest.li/compare/v29.22.10...v29.22.11

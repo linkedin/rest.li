@@ -45,7 +45,7 @@ apply from: "${buildScriptDirPath}/configBuildScript.gradle"
 project.ext.externalDependency = [
   'antlr': 'org.antlr:antlr4:4.5',
   'antlrRuntime': 'org.antlr:antlr4-runtime:4.5',
-  'avro': 'org.apache.avro:avro:1.4.0',
+  'avro': 'org.apache.avro:avro:1.9.2',
   'avro_1_6': 'org.apache.avro:avro:1.6.3',
    // avro compatibility layer
   'avroUtil': 'com.linkedin.avroutil1:helper-all:0.2.17',
@@ -65,9 +65,9 @@ project.ext.externalDependency = [
   'guava': 'com.google.guava:guava:18.0',
   'httpclient': 'org.apache.httpcomponents:httpclient:4.3.1',
   'httpcore': 'org.apache.httpcomponents:httpcore:4.3.1',
-  'jacksonCore': 'com.fasterxml.jackson.core:jackson-core:2.9.7',
-  'jacksonSmile': 'com.fasterxml.jackson.dataformat:jackson-dataformat-smile:2.9.7',
-  'jacksonDataBind': 'com.fasterxml.jackson.core:jackson-databind:2.9.7',
+  'jacksonCore': 'com.fasterxml.jackson.core:jackson-core:2.10.2',
+  'jacksonSmile': 'com.fasterxml.jackson.dataformat:jackson-dataformat-smile:2.10.2',
+  'jacksonDataBind': 'com.fasterxml.jackson.core:jackson-databind:2.10.2',
   'jacksonCoreAsl_1_4': 'org.codehaus.jackson:jackson-core-asl:1.4.2',
   'jacksonCoreAsl_1_8': 'org.codehaus.jackson:jackson-core-asl:1.8.8',
   'javaparser': 'com.github.javaparser:javaparser-symbol-solver-core:3.15.11',
@@ -116,7 +116,8 @@ project.ext.externalDependency = [
   'guice': 'com.google.inject:guice:3.0',
   'guiceServlet': 'com.google.inject.extensions:guice-servlet:3.0',
 
-  'jsr305': 'com.google.code.findbugs:jsr305:3.0.0'
+  'jsr305': 'com.google.code.findbugs:jsr305:3.0.0',
+  "avroSpotBugsPlugin": "com.linkedin.avroutil1:spotbugs-plugin:0.2.56",
 ];
 
 if (!project.ext.isDefaultEnvironment)
@@ -149,6 +150,14 @@ allprojects {
       //Disable the crazy super-strict doclint tool in Java 8
       //noinspection SpellCheckingInspection
       options.addStringOption('Xdoclint:none', '-quiet')
+    }
+  }
+}
+
+allprojects {
+  plugins.withId('li-spotbugs') {
+    dependencies {
+      spotbugsPlugins spec.external.avroSpotBugsPlugin
     }
   }
 }

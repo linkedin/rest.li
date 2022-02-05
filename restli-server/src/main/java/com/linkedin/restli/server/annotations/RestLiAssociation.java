@@ -42,19 +42,39 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface RestLiAssociation
 {
-  /** The parent resource class.  Optional - if not specified, this resource will be a
-   * root resource */
+  /**
+   * The parent resource class.  Optional - if not specified, this resource will be a
+   * root resource
+   */
   Class<?> parent() default RestAnnotations.ROOT.class;
 
-  /** Path is only set for root resources. The path of subresources is implied by the resource hierarchy */
+  /**
+   * Path is only set for root resources. The path of subresources is implied by the resource hierarchy
+   */
   String name();
 
-  /** The namespace of the resource, used to qualify the IDL name*/
+  /**
+   * The namespace of the resource, used to qualify the IDL name
+   */
   String namespace() default "";
 
-  /** The symbolic name of the key for this resource e.g. 'groupID'. Optional, defaults to "[resourceName]id" */
+  /**
+   * The symbolic name of the key for this resource e.g. 'groupID'. Optional, defaults to "[resourceName]id"
+   */
   String keyName() default RestAnnotations.DEFAULT;
 
-  /** An ordered list of associative keys used in this association (required) */
+  /**
+   * An ordered list of associative keys used in this association (required)
+   */
   Key[] assocKeys();
+
+  /**
+   * The d2 service name for this resource. Should be set only if the d2 service name is not the same as
+   * the Rest.li resource name.
+   *
+   * <p>This is meant to be a hint to D2 based routing solutions, and is NOT directly used anywhere by
+   * the rest.li framework, apart from enforcing that this value once set, cannot be changed for backward
+   * compatibility reasons.</p>
+   */
+  String d2ServiceName() default RestAnnotations.DEFAULT;
 }

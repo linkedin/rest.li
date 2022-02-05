@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 import org.slf4j.Logger;
@@ -74,6 +75,16 @@ public class DefaultSymbolTableProvider implements SymbolTableProvider
   private static SSLSocketFactory SSL_SOCKET_FACTORY;
 
   /**
+   * Default request headers to fetch remote symbol table if any.
+   */
+  private static Map<String, String> DEFAULT_HEADERS;
+
+  /**
+   * Request headers provider to generate headers required to fetch remote symbol table if any.
+   */
+  private static HeaderProvider HEADER_PROVIDER;
+
+  /**
    * Cache storing mapping from symbol table name to symbol table.
    */
   private final Cache<String, SymbolTable> _cache;
@@ -83,6 +94,22 @@ public class DefaultSymbolTableProvider implements SymbolTableProvider
    */
   public static void setSSLSocketFactory(SSLSocketFactory socketFactory) {
     SSL_SOCKET_FACTORY = socketFactory;
+  }
+
+  /**
+   * Set Default headers to fetch remote symbol table
+   */
+  public static void setDefaultHeaders(Map<String, String> defaultHeaders)
+  {
+    DEFAULT_HEADERS = defaultHeaders;
+  }
+
+  /**
+   * Set request headers provider to fetch remote symbol table
+   */
+  public static void setHeaderProvider(HeaderProvider headerProvider)
+  {
+    HEADER_PROVIDER = headerProvider;
   }
 
   /**
@@ -138,6 +165,14 @@ public class DefaultSymbolTableProvider implements SymbolTableProvider
       HttpURLConnection connection = openConnection(url);
       try
       {
+        if (DEFAULT_HEADERS != null)
+        {
+          DEFAULT_HEADERS.entrySet().forEach(entry -> connection.setRequestProperty(entry.getKey(), entry.getValue()));
+        }
+        if (HEADER_PROVIDER != null)
+        {
+          HEADER_PROVIDER.getHeaders().entrySet().forEach(entry -> connection.setRequestProperty(entry.getKey(), entry.getValue()));
+        }
         connection.setRequestProperty(ACCEPT_HEADER, ProtobufDataCodec.DEFAULT_HEADER);
         connection.setRequestProperty(SYMBOL_TABLE_HEADER, Boolean.toString(true));
         int responseCode = connection.getResponseCode();
@@ -183,5 +218,9 @@ public class DefaultSymbolTableProvider implements SymbolTableProvider
     }
 
     return connection;
+  }
+
+  public interface HeaderProvider {
+    Map<String, String> getHeaders();
   }
 }

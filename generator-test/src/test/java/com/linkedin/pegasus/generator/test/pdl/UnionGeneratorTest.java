@@ -27,6 +27,8 @@ import com.linkedin.pegasus.generator.test.idl.unions.WithPrimitivesUnion;
 import com.linkedin.pegasus.generator.test.pdl.fixtures.CustomInt;
 import org.testng.annotations.Test;
 
+import static org.testng.Assert.*;
+
 
 public class UnionGeneratorTest extends GeneratorTest
 {
@@ -35,6 +37,11 @@ public class UnionGeneratorTest extends GeneratorTest
   public void testWithComplexTypesUnion()
       throws Throwable
   {
+    assertEquals(WithComplexTypesUnion.Union.MEMBERKEY_Empty, "com.linkedin.pegasus.generator.test.idl.records.Empty");
+    assertEquals(WithComplexTypesUnion.Union.MEMBERKEY_Fruits, "com.linkedin.pegasus.generator.test.idl.enums.Fruits");
+    assertEquals(WithComplexTypesUnion.Union.MEMBERKEY_Array, "array");
+    assertEquals(WithComplexTypesUnion.Union.MEMBERKEY_Map, "map");
+
     WithComplexTypesUnion.Union recordMember = WithComplexTypesUnion.Union.create(new Empty());
     WithComplexTypesUnion.Union enumMember = WithComplexTypesUnion.Union.create(Fruits.APPLE);
     SimpleMap simpleMap = new SimpleMap();

@@ -1385,6 +1385,10 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
     final String memberFieldName = "MEMBER_" + capitalizedName;
     final JFieldVar memberField = unionClass.field(JMod.PRIVATE | JMod.STATIC | JMod.FINAL, DataSchema.class, memberFieldName);
     memberField.init(schemaField.invoke("getTypeByMemberKey").arg(memberKey));
+
+    final String memberFieldKeyName = "MEMBERKEY_" + capitalizedName;
+    unionClass.field(JMod.PUBLIC | JMod.STATIC | JMod.FINAL, String.class, memberFieldKeyName, JExpr.lit(memberKey));
+
     final String setterName = "set" + capitalizedName;
 
     // Generate builder.

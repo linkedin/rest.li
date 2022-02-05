@@ -286,7 +286,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         Ring<URI> ring = null;
         for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
         {
-          SubsettingState.SubsetItem subsetItem = getPotentialClients(serviceName, service,
+          TrackerClientSubsetItem subsetItem = getPotentialClients(serviceName, service,
               cluster, uris, pair.getScheme(), partitionId, uriItem.getVersion());
           ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, subsetItem.getWeightedSubset(),
               subsetItem.shouldForceUpdate());
@@ -339,7 +339,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       {
         for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
         {
-          SubsettingState.SubsetItem subsetItem = getPotentialClients(serviceName, service, cluster, uris,
+          TrackerClientSubsetItem subsetItem = getPotentialClients(serviceName, service, cluster, uris,
               pair.getScheme(), partitionId, uriItem.getVersion());
           Ring<URI> ring = pair.getStrategy().getRing(uriItem.getVersion(), partitionId, subsetItem.getWeightedSubset(),
               subsetItem.shouldForceUpdate());
@@ -554,7 +554,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       {
         for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
         {
-          SubsettingState.SubsetItem subsetItem = getPotentialClients(serviceName, service, cluster, uris,
+          TrackerClientSubsetItem subsetItem = getPotentialClients(serviceName, service, cluster, uris,
               pair.getScheme(), partitionId, uriItem.getVersion());
           Map<URI, TrackerClient> trackerClients = subsetItem.getWeightedSubset();
           int size = Math.min(trackerClients.size(), limitHostPerPartition);
@@ -715,7 +715,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   // supports partitioning
-  private SubsettingState.SubsetItem getPotentialClients(String serviceName,
+  private TrackerClientSubsetItem getPotentialClients(String serviceName,
                                                   ServiceProperties serviceProperties,
                                                   ClusterProperties clusterProperties,
                                                   UriProperties uris,
@@ -725,22 +725,30 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   {
     Set<URI> possibleUris = uris.getUriBySchemeAndPartition(scheme, partitionId);
 
-    Map<URI, TrackerClient> clientsToBalance = getPotentialClients(serviceName, serviceProperties, clusterProperties, possibleUris);
+    Map<URI, Double> weightedUris = possibleUris == null ? Collections.emptyMap()
+        : possibleUris.stream().collect(Collectors.toMap(uri -> uri,
+            uri -> uris.getPartitionDataMap(uri).get(partitionId).getWeight()));
+
     SubsettingState.SubsetItem subsetItem = serviceProperties.isEnableClusterSubsetting() ?
         _state.getClientsSubset(serviceName, serviceProperties.getMinClusterSubsetSize(),
-            partitionId, clientsToBalance, version) : new SubsettingState.SubsetItem(false, clientsToBalance);
+            partitionId, weightedUris, version) : new SubsettingState.SubsetItem(false, weightedUris, Collections.emptySet());
 
-    if (subsetItem.getWeightedSubset().isEmpty())
+    Map<URI, TrackerClient> clientsToBalance = getPotentialClients(serviceName, serviceProperties,
+        clusterProperties, possibleUris, partitionId, subsetItem);
+
+    if (clientsToBalance.isEmpty())
     {
       info(_log, "Can not find a host for service: ", serviceName, ", scheme: ", scheme, ", partition: ", partitionId);
     }
-    return subsetItem;
+    return new TrackerClientSubsetItem(subsetItem.shouldForceUpdate(), clientsToBalance);
   }
 
   private Map<URI, TrackerClient> getPotentialClients(String serviceName,
                                                   ServiceProperties serviceProperties,
                                                   ClusterProperties clusterProperties,
-                                                  Set<URI> possibleUris)
+                                                  Set<URI> possibleUris,
+                                                  int partitionId,
+                                                  SubsettingState.SubsetItem subsetItem)
   {
     Map<URI, TrackerClient> clientsToLoadBalance;
     if (possibleUris == null)
@@ -750,17 +758,27 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     else
     {
+      Map<URI, Double> weightedSubset = subsetItem.getWeightedUriSubset();;
+      Set<URI> doNotSlowStartUris = subsetItem.getDoNotSlowStartUris();
       clientsToLoadBalance = new HashMap<>(possibleUris.size());
       for (URI possibleUri : possibleUris)
       {
-        // don't pay attention to this uri if it's banned
+        // don't pay attention to this uri if it's banned or not in the subset
         if (!serviceProperties.isBanned(possibleUri) && !clusterProperties.isBanned(possibleUri))
         {
-          TrackerClient possibleTrackerClient = _state.getClient(serviceName, possibleUri);
-
-          if (possibleTrackerClient != null)
+          if (weightedSubset.containsKey(possibleUri))
           {
-            clientsToLoadBalance.put(possibleUri, possibleTrackerClient);
+            TrackerClient possibleTrackerClient = _state.getClient(serviceName, possibleUri);
+
+            if (possibleTrackerClient != null)
+            {
+              if (doNotSlowStartUris.contains(possibleUri))
+              {
+                possibleTrackerClient.setDoNotSlowStart(true);
+              }
+              possibleTrackerClient.setSubsetWeight(partitionId, weightedSubset.get(possibleUri));
+              clientsToLoadBalance.put(possibleUri, possibleTrackerClient);
+            }
           }
         }
         else
@@ -846,7 +864,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       LoadBalancerStrategy strategy = pair.getStrategy();
       String scheme = pair.getScheme();
 
-      SubsettingState.SubsetItem subsetItem = getPotentialClients(serviceName, serviceProperties, cluster,
+      TrackerClientSubsetItem subsetItem = getPotentialClients(serviceName, serviceProperties, cluster,
           uris, scheme, partitionId, uriItem.getVersion());
       clientsToLoadBalance = subsetItem.getWeightedSubset();
 
@@ -994,4 +1012,23 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
   }
 
+  public static class TrackerClientSubsetItem
+  {
+    private final boolean _shouldForceUpdate;
+    private final Map<URI, TrackerClient> _trackerClientMap;
+
+    public TrackerClientSubsetItem(boolean shouldForceUpdate, Map<URI, TrackerClient> trackerClientMap)
+    {
+      _shouldForceUpdate = shouldForceUpdate;
+      _trackerClientMap = trackerClientMap;
+    }
+
+    public boolean shouldForceUpdate() {
+      return _shouldForceUpdate;
+    }
+
+    public Map<URI, TrackerClient> getWeightedSubset() {
+      return _trackerClientMap;
+    }
+  }
 }

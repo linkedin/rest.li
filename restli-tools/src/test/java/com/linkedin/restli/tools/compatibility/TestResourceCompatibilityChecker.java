@@ -355,6 +355,8 @@ public class TestResourceCompatibilityChecker
 
     final Collection<CompatibilityInfo> resourceTestErrors = new HashSet<>();
     final Collection<CompatibilityInfo> modelTestErrors = new HashSet<>();
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "d2ServiceName"),
+        CompatibilityInfo.Type.VALUE_NOT_EQUAL, null, "greetingsD2"));
     resourceTestErrors.add(
       new CompatibilityInfo(Arrays.asList("", "collection", "identifier", "params"),
                             CompatibilityInfo.Type.TYPE_ERROR, "schema type changed from string to long"));
@@ -426,7 +428,7 @@ public class TestResourceCompatibilityChecker
                             "schema type changed from long to string"));
 
     final ResourceSchema prevResource = idlToResource(IDLS_SUFFIX + PREV_COLL_FILE);
-    final  ResourceSchema currResource = idlToResource(IDLS_SUFFIX + CURR_COLL_FAIL_FILE);
+    final ResourceSchema currResource = idlToResource(IDLS_SUFFIX + CURR_COLL_FAIL_FILE);
 
     ResourceCompatibilityChecker checker = new ResourceCompatibilityChecker(prevResource, prevSchemaResolver,
                                                                             currResource, incompatSchemaResolver);
@@ -461,6 +463,9 @@ public class TestResourceCompatibilityChecker
     prevAssocKey.setType("string");
 
     final Collection<CompatibilityInfo> testErrors = new HashSet<>();
+    testErrors.add(new CompatibilityInfo(Arrays.asList("", "d2ServiceName"),
+                                         CompatibilityInfo.Type.VALUE_NOT_EQUAL,
+                             "oldD2Assoc", "newD2Assoc"));
     testErrors.add(new CompatibilityInfo(Arrays.asList("", "association", "assocKeys"),
                                          CompatibilityInfo.Type.ARRAY_NOT_EQUAL,
                                          new AssocKeySchemaArray(prevAssocKey)));
@@ -501,6 +506,9 @@ public class TestResourceCompatibilityChecker
     final Collection<CompatibilityInfo> resourceTestErrors = new HashSet<>();
     final Collection<CompatibilityInfo> modelTestErrors = new HashSet<>();
 
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "d2ServiceName"),
+                                                 CompatibilityInfo.Type.VALUE_NOT_EQUAL,
+                                                 null, "greetingSimpleD2"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "simple", "supports"),
                                                  CompatibilityInfo.Type.ARRAY_NOT_CONTAIN,
                                                  new StringArray("delete", "get")));
@@ -558,6 +566,9 @@ public class TestResourceCompatibilityChecker
   public void testFailActionsSetFile() throws IOException
   {
     final Collection<CompatibilityInfo> testErrors = new HashSet<>();
+    testErrors.add(new CompatibilityInfo(Arrays.asList("", "d2ServiceName"),
+                                         CompatibilityInfo.Type.VALUE_NOT_EQUAL,
+                             null, "asD2"));
     testErrors.add(new CompatibilityInfo(Arrays.asList(""),
                                          CompatibilityInfo.Type.VALUE_WRONG_OPTIONALITY, "actionsSet"));
 

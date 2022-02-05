@@ -672,24 +672,24 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   public SubsettingState.SubsetItem getClientsSubset(String serviceName,
                                                   int minClusterSubsetSize,
                                                   int partitionId,
-                                                  Map<URI, TrackerClient> potentialClients,
+                                                  Map<URI, Double> possibleUris,
                                                   long version)
   {
     if (_subsettingState == null)
     {
-      return new SubsettingState.SubsetItem(false, potentialClients);
+      return new SubsettingState.SubsetItem(false, possibleUris, Collections.emptySet());
     }
     else
     {
       SubsettingState.SubsetItem subsetItem = _subsettingState
-          .getClientsSubset(serviceName, minClusterSubsetSize, partitionId, potentialClients, version, this);
+          .getClientsSubset(serviceName, minClusterSubsetSize, partitionId, possibleUris, version, this);
 
       debug(_log, "get cluster subset for service ", serviceName, ": [",
-          subsetItem.getWeightedSubset().values().stream()
+          subsetItem.getWeightedUriSubset().entrySet().stream()
               .limit(LOG_SUBSET_MAX_SIZE)
-              .map(client -> client.getUri() + ":" + client.getSubsetWeight(partitionId))
+              .map(uri -> uri.getKey() + ":" + uri.getValue())
               .collect(Collectors.joining(",")),
-          " (total ", subsetItem.getWeightedSubset().size(), ")], shouldForceUpdate = ", subsetItem.shouldForceUpdate()
+          " (total ", subsetItem.getWeightedUriSubset().size(), ")], shouldForceUpdate = ", subsetItem.shouldForceUpdate()
       );
 
       return subsetItem;
@@ -1029,12 +1029,20 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
             {
               warn(_log, "Failed to shut down old ", serviceName, " TransportClient with scheme = ", entry.getKey()
                 , e);
+              if (_subsettingState != null)
+              {
+                _subsettingState.invalidateCache(serviceName);
+              }
             }
 
             @Override
             public void onSuccess(None result)
             {
               info(_log, "Shut down old ", serviceName, " TransportClient with scheme = ", entry.getKey());
+              if (_subsettingState != null)
+              {
+                _subsettingState.invalidateCache(serviceName);
+              }
             }
           };
           entry.getValue().shutdown(callback);
