@@ -34,6 +34,7 @@ import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFact
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
+import com.linkedin.d2.balancer.util.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
@@ -76,6 +77,7 @@ public class D2ClientBuilder
   private static final Logger LOG = LoggerFactory.getLogger(D2ClientBuilder.class);
 
   private boolean _restOverStream = false;
+  private final D2ClientConfig _config = new D2ClientConfig();
 
   /**
    * @return {@link D2Client} that is not started yet. Call start(Callback) to start it.
@@ -175,7 +177,8 @@ public class D2ClientBuilder
                   _config.d2JmxManagerPrefix,
                   _config.zookeeperReadWindowMs,
                   _config.enableRelativeLoadBalancer,
-                  _config.deterministicSubsettingMetadataProvider);
+                  _config.deterministicSubsettingMetadataProvider,
+                  _config.canaryDistributionProvider);
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
@@ -538,6 +541,12 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setCanaryDistributionProvider(CanaryDistributionProvider provider)
+  {
+    _config.canaryDistributionProvider = provider;
+    return this;
+  }
+
   private Map<String, TransportClientFactory> createDefaultTransportClientFactories()
   {
     final Map<String, TransportClientFactory> clientFactories = new HashMap<>();
@@ -579,8 +588,6 @@ public class D2ClientBuilder
 
     return loadBalancerStrategyFactories;
   }
-
-  private final D2ClientConfig _config = new D2ClientConfig();
 
   private class TransportClientFactoryAwareD2Client extends D2ClientDelegator
   {

@@ -17,7 +17,10 @@
 package com.linkedin.d2.balancer.simple;
 
 import com.linkedin.d2.balancer.LoadBalancerState;
+import com.linkedin.d2.balancer.config.CanaryDistributionStrategyConverter;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
+import com.linkedin.d2.balancer.properties.ClusterPropertiesWithCanary;
+import com.linkedin.d2.balancer.util.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorFactory;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
@@ -43,13 +46,24 @@ class ClusterLoadBalancerSubscriber extends
   @Override
   protected void handlePut(final String listenTo, final ClusterProperties discoveryProperties)
   {
-    // TODO: pick stable or canary configs if canary exists
     if (discoveryProperties != null)
     {
+      ClusterProperties pickedProperties = discoveryProperties;
+      if (discoveryProperties instanceof ClusterPropertiesWithCanary) {
+        // has canary config, distribute to use either stable config or canary config
+        ClusterPropertiesWithCanary propertiesWithCanary = (ClusterPropertiesWithCanary) discoveryProperties;
+        CanaryDistributionProvider.Distribution distribution = _simpleLoadBalancerState.getCanaryDistributionProvider()
+                .distribute(CanaryDistributionStrategyConverter.toConfig(propertiesWithCanary.getCanaryDistributionStrategy()));
+        if (distribution == CanaryDistributionProvider.Distribution.CANARY) {
+          pickedProperties = propertiesWithCanary.getCanaryConfigs();
+        }
+        // TODO: set canary config metric
+      }
+
       _simpleLoadBalancerState.getClusterInfo().put(listenTo,
-        new ClusterInfoItem(_simpleLoadBalancerState, discoveryProperties,
-          PartitionAccessorFactory.getPartitionAccessor(discoveryProperties.getClusterName(),
-              _partitionAccessorRegistry, discoveryProperties.getPartitionProperties())));
+        new ClusterInfoItem(_simpleLoadBalancerState, pickedProperties,
+          PartitionAccessorFactory.getPartitionAccessor(pickedProperties.getClusterName(),
+              _partitionAccessorRegistry, pickedProperties.getPartitionProperties())));
       // notify the cluster listeners only when discoveryProperties is not null, because we don't
       // want to count initialization (just because listenToCluster is called)
       _simpleLoadBalancerState.notifyClusterListenersOnAdd(listenTo);
