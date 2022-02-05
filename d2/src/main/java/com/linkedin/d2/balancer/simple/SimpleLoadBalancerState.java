@@ -35,6 +35,7 @@ import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy
 import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
 import com.linkedin.d2.balancer.subsetting.SubsettingState;
 import com.linkedin.d2.balancer.subsetting.SubsettingStrategyFactoryImpl;
+import com.linkedin.d2.balancer.util.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
@@ -143,6 +144,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final boolean       _isSSLEnabled;
   private final SslSessionValidatorFactory _sslSessionValidatorFactory;
   private final SubsettingState _subsettingState;
+  private final CanaryDistributionProvider _canaryDistributionProvider;
 
   /*
    * Concurrency considerations:
@@ -271,17 +273,46 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   }
 
   public SimpleLoadBalancerState(ScheduledExecutorService executorService,
-      PropertyEventBus<UriProperties> uriBus,
-      PropertyEventBus<ClusterProperties> clusterBus,
-      PropertyEventBus<ServiceProperties> serviceBus,
-      Map<String, TransportClientFactory> clientFactories,
-      Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
-      SSLContext sslContext,
-      SSLParameters sslParameters,
-      boolean isSSLEnabled,
-      PartitionAccessorRegistry partitionAccessorRegistry,
-      SslSessionValidatorFactory sessionValidatorFactory,
-      DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider)
+                                 PropertyEventBus<UriProperties> uriBus,
+                                 PropertyEventBus<ClusterProperties> clusterBus,
+                                 PropertyEventBus<ServiceProperties> serviceBus,
+                                 Map<String, TransportClientFactory> clientFactories,
+                                 Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+                                 SSLContext sslContext,
+                                 SSLParameters sslParameters,
+                                 boolean isSSLEnabled,
+                                 PartitionAccessorRegistry partitionAccessorRegistry,
+                                 SslSessionValidatorFactory sessionValidatorFactory,
+                                 DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider)
+  {
+    this(executorService,
+            uriBus,
+            clusterBus,
+            serviceBus,
+            clientFactories,
+            loadBalancerStrategyFactories,
+            sslContext,
+            sslParameters,
+            isSSLEnabled,
+            partitionAccessorRegistry,
+            sessionValidatorFactory,
+            deterministicSubsettingMetadataProvider,
+            null);
+  }
+
+  public SimpleLoadBalancerState(ScheduledExecutorService executorService,
+                                 PropertyEventBus<UriProperties> uriBus,
+                                 PropertyEventBus<ClusterProperties> clusterBus,
+                                 PropertyEventBus<ServiceProperties> serviceBus,
+                                 Map<String, TransportClientFactory> clientFactories,
+                                 Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+                                 SSLContext sslContext,
+                                 SSLParameters sslParameters,
+                                 boolean isSSLEnabled,
+                                 PartitionAccessorRegistry partitionAccessorRegistry,
+                                 SslSessionValidatorFactory sessionValidatorFactory,
+                                 DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
+                                 CanaryDistributionProvider canaryDistributionProvider)
   {
     _executor = executorService;
     _uriProperties = new ConcurrentHashMap<>();
@@ -316,6 +347,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     {
       _subsettingState = null;
     }
+    _canaryDistributionProvider = canaryDistributionProvider;
   }
 
   public void register(final SimpleLoadBalancerStateListener listener)
@@ -598,6 +630,11 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   public Set<String> getSupportedStrategies()
   {
     return _loadBalancerStrategyFactories.keySet();
+  }
+
+  public CanaryDistributionProvider getCanaryDistributionProvider()
+  {
+    return _canaryDistributionProvider;
   }
 
   public int getTrackerClientCount(String clusterName)

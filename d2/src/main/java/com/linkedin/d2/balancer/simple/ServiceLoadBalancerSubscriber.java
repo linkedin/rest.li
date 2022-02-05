@@ -18,7 +18,10 @@ package com.linkedin.d2.balancer.simple;
 
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
+import com.linkedin.d2.balancer.config.CanaryDistributionStrategyConverter;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.properties.ServicePropertiesWithCanary;
+import com.linkedin.d2.balancer.util.CanaryDistributionProvider;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import java.util.Collections;
 import java.util.Set;
@@ -47,17 +50,28 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
   @Override
   protected void handlePut(final String listenTo, final ServiceProperties discoveryProperties)
   {
-    // TODO: pick stable or canary configs if canary exists
     LoadBalancerStateItem<ServiceProperties> oldServicePropertiesItem =
       _simpleLoadBalancerState.getServiceProperties().get(listenTo);
 
+    ServiceProperties pickedProperties = discoveryProperties;
+    if (discoveryProperties instanceof ServicePropertiesWithCanary) {
+      // has canary config, distribute to use either stable config or canary config
+      ServicePropertiesWithCanary propertiesWithCanary = (ServicePropertiesWithCanary) discoveryProperties;
+      CanaryDistributionProvider.Distribution distribution = _simpleLoadBalancerState.getCanaryDistributionProvider()
+              .distribute(CanaryDistributionStrategyConverter.toConfig(propertiesWithCanary.getCanaryDistributionStrategy()));
+      if (distribution == CanaryDistributionProvider.Distribution.CANARY) {
+        pickedProperties = propertiesWithCanary.getCanaryConfigs();
+      }
+      // TODO: set canary config metric
+    }
+
     _simpleLoadBalancerState.getServiceProperties().put(listenTo,
-      new LoadBalancerStateItem<>(discoveryProperties,
+      new LoadBalancerStateItem<>(pickedProperties,
         _simpleLoadBalancerState.getVersionAccess().incrementAndGet(),
         System.currentTimeMillis()));
 
     // always refresh strategies when we receive service event
-    if (discoveryProperties != null)
+    if (pickedProperties != null)
     {
       //if this service changes its cluster, we should update the cluster -> service map saying that
       //this service is no longer hosted in the old cluster.
@@ -65,7 +79,7 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
       {
         ServiceProperties oldServiceProperties = oldServicePropertiesItem.getProperty();
         if (oldServiceProperties != null && oldServiceProperties.getClusterName() != null &&
-          !oldServiceProperties.getClusterName().equals(discoveryProperties.getClusterName()))
+          !oldServiceProperties.getClusterName().equals(pickedProperties.getClusterName()))
         {
           Set<String> serviceNames =
             _simpleLoadBalancerState.getServicesPerCluster().get(oldServiceProperties.getClusterName());
@@ -76,21 +90,21 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
         }
       }
 
-      _simpleLoadBalancerState.refreshServiceStrategies(discoveryProperties);
-      _simpleLoadBalancerState.refreshClients(discoveryProperties);
+      _simpleLoadBalancerState.refreshServiceStrategies(pickedProperties);
+      _simpleLoadBalancerState.refreshClients(pickedProperties);
 
       // refresh state for which services are on which clusters
       Set<String> serviceNames =
-        _simpleLoadBalancerState.getServicesPerCluster().get(discoveryProperties.getClusterName());
+        _simpleLoadBalancerState.getServicesPerCluster().get(pickedProperties.getClusterName());
 
       if (serviceNames == null)
       {
         serviceNames =
           Collections.newSetFromMap(new ConcurrentHashMap<>());
-        _simpleLoadBalancerState.getServicesPerCluster().put(discoveryProperties.getClusterName(), serviceNames);
+        _simpleLoadBalancerState.getServicesPerCluster().put(pickedProperties.getClusterName(), serviceNames);
       }
 
-      serviceNames.add(discoveryProperties.getServiceName());
+      serviceNames.add(pickedProperties.getServiceName());
     }
     else if (oldServicePropertiesItem != null)
     {
