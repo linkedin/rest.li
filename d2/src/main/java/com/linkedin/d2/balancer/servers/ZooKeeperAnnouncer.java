@@ -366,11 +366,13 @@ public class ZooKeeperAnnouncer
     };
 
     if (_isRetryWarmup) {
-      // If the connection with ZooKeeper was lost during warm-up and is re-established after the warm-up duration completed, then complete the pending markDown for the warm-up cluster and announce to the regular cluster
+      // If the connection with ZooKeeper was lost during warm-up and is re-established after the warm-up duration completed, 
+      // then complete the pending markDown for the warm-up cluster and announce to the regular cluster
       if (_isWarmingUp) {
         _server.markDown(_warmupClusterName, _uri, warmupMarkDownCallback);
       }
-      // Otherwise, if the connection with ZooKeeper was lost during warm-up but was re-established before the warm-up duration completed, then during that request itself the markDown for the warm-up cluster has completed
+      // Otherwise, if the connection with ZooKeeper was lost during warm-up but was re-established before the warm-up duration completed, 
+      // then during that request itself the markDown for the warm-up cluster has completed
     }
     else if (_isDarkWarmupEnabled && _warmupDuration > 0 && _warmupClusterName != null && _executorService != null)
     {
@@ -625,5 +627,4 @@ public class ZooKeeperAnnouncer
   {
     return _markUpFailed;
   }
-
 }
