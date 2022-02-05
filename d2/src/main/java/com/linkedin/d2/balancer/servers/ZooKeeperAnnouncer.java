@@ -311,7 +311,7 @@ public class ZooKeeperAnnouncer
 
         synchronized (ZooKeeperAnnouncer.this)
         {
-          // Clear the queue for pending markDown requests to mark down as the current request has completed
+          // Clear the queue for pending markDown requests for warm-up cluster as the current request has completed
           // and the pending callbacks we see at this point are from the requests that are filed before us because
           // zookeeper guarantees the ordering of callback being invoked.
           _pendingWarmupMarkDown.clear();

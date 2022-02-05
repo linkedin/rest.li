@@ -606,7 +606,7 @@ public class ZookeeperConnectionManagerTest
     shutdownManager(manager);
   }
 
-  @Test (invocationCount = 10, timeOut = 10000)
+  @Test (invocationCount = 10, timeOut = 15000)
   public void testWarmup() throws Exception
   {
     ScheduledExecutorService warmupExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -641,7 +641,7 @@ public class ZookeeperConnectionManagerTest
     shutdownManager(manager);
   }
 
-  @Test (invocationCount = 10, timeOut = 10000)
+  @Test (invocationCount = 10, timeOut = 15000)
   public void testWarmupDuringDisconnection() throws Exception
   {
     ScheduledExecutorService warmupExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -685,7 +685,7 @@ public class ZookeeperConnectionManagerTest
     shutdownManager(manager);
   }
 
-  @Test (invocationCount = 10, timeOut = 10000)
+  @Test (invocationCount = 10, timeOut = 15000)
   public void testWarmupDuringDisconnectionWithReconnectionAfterWarmupMarkDownFailure() throws Exception
   {
     ScheduledExecutorService warmupExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -729,7 +729,7 @@ public class ZookeeperConnectionManagerTest
     shutdownManager(manager);
   }
 
-  @Test (invocationCount = 10, timeOut = 10000)
+  @Test (invocationCount = 10, timeOut = 15000)
   public void testWarmupDuringSessionExpiration() throws Exception
   {
     ScheduledExecutorService warmupExecutorService = Executors.newSingleThreadScheduledExecutor();
