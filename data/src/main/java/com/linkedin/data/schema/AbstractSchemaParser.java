@@ -740,6 +740,7 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
 
   /**
    * Extract the properties from a {@link DataMap}.
+   * null values are ignored.
    *
    * @param map to extract properties from.
    * @param reserved is the list of reserved names.
@@ -759,10 +760,6 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
         {
           Object replaced = props.put(key, value);
           assert(replaced == null);
-        }
-        else
-        {
-          startErrorMessage(value).append("\"").append(key).append("\" is a property and its value must not be null.\n");
         }
       }
     }
