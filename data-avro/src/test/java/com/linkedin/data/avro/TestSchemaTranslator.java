@@ -16,8 +16,6 @@
 
 package com.linkedin.data.avro;
 
-import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
-import com.linkedin.avroutil1.compatibility.SchemaParseConfiguration;
 import com.linkedin.data.Data;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
@@ -2356,7 +2354,7 @@ public class TestSchemaTranslator
         assertEquals(postTranslateSchemaText, preTranslateSchemaText);
 
         // make sure Avro accepts it
-        Schema avroSchema = AvroCompatibilityHelper.parse(avroTextFromSchema);
+        Schema avroSchema = Schema.parse(avroTextFromSchema);
 
         SchemaParser parser = new SchemaParser();
         ValidationOptions options = new ValidationOptions();
@@ -2369,17 +2367,18 @@ public class TestSchemaTranslator
         {
           // use other dataToAvroSchemaJson
           String avroSchema2Json = SchemaTranslator.dataToAvroSchemaJson(
-            TestUtil.dataSchemaFromString(schemaText), transOptions
+            TestUtil.dataSchemaFromString(schemaText)
           );
           String avroSchema2JsonCompact = SchemaTranslator.dataToAvroSchemaJson(
-            TestUtil.dataSchemaFromString(schemaText),  transOptions
+            TestUtil.dataSchemaFromString(schemaText),
+            new DataToAvroSchemaTranslationOptions()
           );
-          //assertEquals(avroSchema2Json, avroSchema2JsonCompact);
-          Schema avroSchema2 = AvroCompatibilityHelper.parse(avroSchema2Json);
+          assertEquals(avroSchema2Json, avroSchema2JsonCompact);
+          Schema avroSchema2 = Schema.parse(avroSchema2Json);
           assertEquals(avroSchema2, avroSchema);
 
           // use dataToAvroSchema
-          Schema avroSchema3 = SchemaTranslator.dataToAvroSchema(TestUtil.dataSchemaFromString(schemaText), transOptions);
+          Schema avroSchema3 = SchemaTranslator.dataToAvroSchema(TestUtil.dataSchemaFromString(schemaText));
           assertEquals(avroSchema3, avroSchema2);
         }
 
@@ -2387,7 +2386,7 @@ public class TestSchemaTranslator
         {
           // check if the translated default value is good by using it.
           // writer schema and Avro JSON value should not include fields with default values.
-          Schema writerSchema = AvroCompatibilityHelper.parse(writerSchemaText);
+          Schema writerSchema = Schema.parse(writerSchemaText);
           GenericRecord genericRecord = genericRecordFromString(avroValueJson, writerSchema, avroSchema);
 
           if (expectedGenericRecordJson != null)
@@ -2478,7 +2477,7 @@ public class TestSchemaTranslator
       assertEquals(resultAvroDataMap, expectedAvroDataMap);
 
       // Test avro Schema
-      Schema avroSchema = AvroCompatibilityHelper.parse(avroTextFromSchema);
+      Schema avroSchema = Schema.parse(avroTextFromSchema);
 
       // Test validation parsing
       SchemaParser parser = new SchemaParser();
@@ -3086,11 +3085,7 @@ public class TestSchemaTranslator
       String schemaTextFromAvro = SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.SPACES);
       assertEquals(TestUtil.dataMapFromString(schemaTextFromAvro), TestUtil.dataMapFromString(schemaText));
 
-      Schema avroSchema = AvroCompatibilityHelper.parse(avroText,
-          new SchemaParseConfiguration(false,
-              false),
-          null).getMainSchema();
-
+      Schema avroSchema = Schema.parse(avroText);
       String preTranslateAvroSchema = avroSchema.toString();
       schema = SchemaTranslator.avroToDataSchema(avroSchema, option);
       schemaTextFromAvro = SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.SPACES);
