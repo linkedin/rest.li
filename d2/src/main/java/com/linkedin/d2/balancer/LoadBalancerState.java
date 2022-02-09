@@ -99,7 +99,7 @@ public interface LoadBalancerState
                                                    Map<URI, Double> possibleUris,
                                                    long version)
   {
-    return new SubsettingState.SubsetItem(false, possibleUris, Collections.emptySet());
+    return new SubsettingState.SubsetItem(false, false, possibleUris, Collections.emptySet());
   }
 
   /**

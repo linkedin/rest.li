@@ -677,7 +677,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   {
     if (_subsettingState == null)
     {
-      return new SubsettingState.SubsetItem(false, possibleUris, Collections.emptySet());
+      return new SubsettingState.SubsetItem(false, false, possibleUris, Collections.emptySet());
     }
     else
     {
