@@ -18,7 +18,6 @@ package com.linkedin.data.avro;
 
 
 import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
-import com.linkedin.avroutil1.compatibility.SchemaParseConfiguration;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.DataMapBuilder;
 import com.linkedin.data.schema.DataSchema;
@@ -160,12 +159,7 @@ public class SchemaTranslator
             Object optionalDefaultModeProperty = ((DataMap) dataProperty).get(SchemaTranslator.OPTIONAL_DEFAULT_MODE_PROPERTY);
             dataToAvroSchemaOptions.setOptionalDefaultMode(OptionalDefaultMode.valueOf(optionalDefaultModeProperty.toString()));
             Schema avroSchemaFromEmbedded = dataToAvroSchema(resultDataSchema, dataToAvroSchemaOptions);
-            Schema avroSchemaFromJson = AvroCompatibilityHelper.parse(avroSchemaInJson, SchemaParseConfiguration.STRICT, null).getMainSchema();
-            Object embededSchemaPropertyVal = avroSchemaFromJson.getObjectProp(DATA_PROPERTY);
-            if (embededSchemaPropertyVal != null)
-            {
-              avroSchemaFromEmbedded.addProp(DATA_PROPERTY, embededSchemaPropertyVal);
-            }
+            Schema avroSchemaFromJson = Schema.parse(avroSchemaInJson);
             if (!avroSchemaFromEmbedded.equals(avroSchemaFromJson))
             {
               throw new IllegalArgumentException("Embedded schema does not translate to input Avro schema: " + avroSchemaInJson);

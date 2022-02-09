@@ -18,7 +18,6 @@
 package com.linkedin.data.codec.entitystream;
 
 import com.fasterxml.jackson.dataformat.smile.SmileFactory;
-import com.fasterxml.jackson.dataformat.smile.SmileFactoryBuilder;
 import com.fasterxml.jackson.dataformat.smile.SmileGenerator;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
@@ -47,13 +46,13 @@ public class JacksonSmileStreamDataCodec implements StreamDataCodec
     _smileFactory.enable(SmileGenerator.Feature.CHECK_SHARED_STRING_VALUES);
   }
 
-  public JacksonSmileStreamDataCodec(SmileFactory base, int bufferSize)
+  public JacksonSmileStreamDataCodec(SmileFactory smileFactory, int bufferSize)
   {
-    SmileFactoryBuilder smileFactoryBuilder = new SmileFactoryBuilder(base);
-    // Always disable field name interning.
-    smileFactoryBuilder.configure(SmileFactory.Feature.INTERN_FIELD_NAMES, false);
-    _smileFactory = smileFactoryBuilder.build();
+    _smileFactory = smileFactory;
     _bufferSize = bufferSize;
+
+    // Always disable field name interning.
+    _smileFactory.disable(SmileFactory.Feature.INTERN_FIELD_NAMES);
   }
 
   @Override

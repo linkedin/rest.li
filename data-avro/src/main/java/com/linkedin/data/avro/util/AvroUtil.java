@@ -17,7 +17,6 @@
 package com.linkedin.data.avro.util;
 
 import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
-import com.linkedin.avroutil1.compatibility.AvroVersion;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -32,32 +31,9 @@ public class AvroUtil
 {
   public static String jsonFromGenericRecord(GenericRecord record) throws IOException
   {
-    return jsonFromGenericRecord(record, true);
-  }
-
-  public static String jsonFromGenericRecord(GenericRecord record, boolean pretty) throws IOException
-  {
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    return jsonFromGenericRecord(record,
-        outputStream,
-        AvroCompatibilityHelper.newJsonEncoder(record.getSchema(), outputStream, pretty));
-
-  }
-
-  public static String jsonFromGenericRecord(GenericRecord record, boolean pretty, AvroVersion version) throws IOException
-  {
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    return jsonFromGenericRecord(record,
-        outputStream,
-        AvroCompatibilityHelper.newJsonEncoder(record.getSchema(), outputStream, pretty, version));
-  }
-
-  private static String jsonFromGenericRecord(
-      GenericRecord record,
-      ByteArrayOutputStream outputStream,
-      Encoder jsonEncoder) throws IOException
-  {
     GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>();
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    Encoder jsonEncoder = AvroCompatibilityHelper.newJsonEncoder(record.getSchema(), outputStream, true);
     writer.setSchema(record.getSchema());
     writer.write(record, jsonEncoder);
     jsonEncoder.flush();
