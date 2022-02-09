@@ -17,4 +17,16 @@ public interface DarkGateKeeper
    * @return true if request should be dispatched, false otherwise
    */
   boolean shouldDispatchToDark(RestRequest request, RequestContext requestContext);
+
+  /**
+   * Determine if the request is to be dispatched or not given dark cluster name
+   * @param request original request
+   * @param requestContext original request context
+   * @param darkClusterName name of the dark cluster
+   * @return true if request should be dispatched, false otherwise
+   */
+  default boolean shouldDispatchToDark(RestRequest request, RequestContext requestContext, String darkClusterName)
+  {
+    return shouldDispatchToDark(request, requestContext);
+  }
 }

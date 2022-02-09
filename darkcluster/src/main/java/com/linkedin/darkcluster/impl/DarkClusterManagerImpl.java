@@ -127,10 +127,13 @@ public class DarkClusterManagerImpl implements DarkClusterManager
         DarkClusterConfigMap configMap = _facilities.getClusterInfoProvider().getDarkClusterConfigMap(_sourceClusterName);
         for (String darkClusterName : configMap.keySet())
         {
-          RestRequest newD2Request = rewriteRequest(reqCopy, darkClusterName);
-          // now find the strategy appropriate for each dark cluster
-          DarkClusterStrategy strategy = _darkClusterStrategyFactory.get(darkClusterName);
-          darkRequestSent = strategy.handleRequest(reqCopy, newD2Request, newRequestContext);
+          if (_darkGateKeeper.shouldDispatchToDark(originalRequest, originalRequestContext, darkClusterName))
+          {
+            RestRequest newD2Request = rewriteRequest(reqCopy, darkClusterName);
+            // now find the strategy appropriate for each dark cluster
+            DarkClusterStrategy strategy = _darkClusterStrategyFactory.get(darkClusterName);
+            darkRequestSent = strategy.handleRequest(reqCopy, newD2Request, newRequestContext);
+          }
         }
 
       }
