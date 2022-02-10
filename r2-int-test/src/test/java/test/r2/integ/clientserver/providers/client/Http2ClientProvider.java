@@ -30,11 +30,6 @@ public class Http2ClientProvider extends AbstractClientProvider
     super(clientROS);
   }
 
-  public Http2ClientProvider(boolean clientROS, boolean usePipelineV2)
-  {
-    super(clientROS, usePipelineV2);
-  }
-
   @Override
   protected Client createClient(HttpClientFactory httpClientFactory, Map<String, Object> clientProperties)
   {

@@ -36,19 +36,12 @@ import java.util.Map;
 public abstract class AbstractClientProvider implements ClientProvider
 {
   protected final boolean _clientROS;
-  protected boolean _usePipelineV2;
   private List<HttpClientFactory> _httpClientFactoryList;
   private final static NioEventLoopGroup _nioEventLoopGroup = new NioEventLoopGroup(5, new NamedThreadFactory("R2 Nio EventLoop Integration Test"));
 
   protected AbstractClientProvider(boolean clientROS)
   {
-    this(clientROS, false);
-  }
-
-  protected AbstractClientProvider(boolean clientROS, boolean usePipelineV2)
-  {
     _clientROS = clientROS;
-    _usePipelineV2 = usePipelineV2;
     _httpClientFactoryList = new ArrayList<>();
   }
 
@@ -62,12 +55,6 @@ public abstract class AbstractClientProvider implements ClientProvider
   public Client createClient(FilterChain filters, Map<String, Object> clientProperties) throws Exception
   {
     return createClient(createHttpClientFactory(filters), clientProperties);
-  }
-
-  @Override
-  public boolean getUsePipelineV2()
-  {
-    return _usePipelineV2;
   }
 
   @Override
@@ -91,7 +78,7 @@ public abstract class AbstractClientProvider implements ClientProvider
   @Override
   public String toString()
   {
-    return "[" + getClass().getName() + ", stream=" + _clientROS +", _usePipelineV2=" + _usePipelineV2 + "]";
+    return "[" + getClass().getName() + ", stream=" + _clientROS + "]";
   }
 
   protected abstract Client createClient(HttpClientFactory httpClientFactory, Map<String, Object> clientProperties)
@@ -99,7 +86,7 @@ public abstract class AbstractClientProvider implements ClientProvider
 
   private HttpClientFactory createHttpClientFactory(FilterChain filters)
   {
-    HttpClientFactory httpClientFactory = Bootstrap.createHttpClientFactory(filters, _usePipelineV2, _nioEventLoopGroup);
+    HttpClientFactory httpClientFactory = Bootstrap.createHttpClientFactory(filters, _nioEventLoopGroup);
     _httpClientFactoryList.add(httpClientFactory);
     return httpClientFactory;
   }

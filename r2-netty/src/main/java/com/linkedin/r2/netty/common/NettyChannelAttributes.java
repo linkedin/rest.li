@@ -18,10 +18,10 @@ package com.linkedin.r2.netty.common;
 
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.EntityStream;
+import com.linkedin.r2.netty.common.ssl.SslSessionValidator;
 import com.linkedin.r2.netty.entitystream.StreamWriter;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.http.client.AsyncPool;
-import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
 import com.linkedin.r2.util.Timeout;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;

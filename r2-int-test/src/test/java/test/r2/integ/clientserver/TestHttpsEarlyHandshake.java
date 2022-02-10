@@ -21,10 +21,10 @@ import com.linkedin.common.util.None;
 import com.linkedin.r2.netty.common.SslHandlerUtil;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManager;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerFactoryImpl;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKey;
-import com.linkedin.r2.transport.http.client.common.ChannelPoolManagerKeyBuilder;
+import com.linkedin.r2.netty.common.ChannelPoolManager;
+import com.linkedin.r2.netty.common.ChannelPoolManagerFactoryImpl;
+import com.linkedin.r2.netty.common.ChannelPoolManagerKey;
+import com.linkedin.r2.netty.common.ChannelPoolManagerKeyBuilder;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -68,7 +68,7 @@ public class TestHttpsEarlyHandshake extends AbstractEchoServiceTest
 
     ChannelPoolManagerFactoryImpl channelPoolManagerFactory =
         new ChannelPoolManagerFactoryImpl(eventLoopGroup, scheduler, SSL_SESSION_RESUMPTION_ENABLED,
-            _clientProvider.getUsePipelineV2(), HttpClientFactory.DEFAULT_CHANNELPOOL_WAITER_TIMEOUT,
+            HttpClientFactory.DEFAULT_CHANNELPOOL_WAITER_TIMEOUT,
             HttpClientFactory.DEFAULT_CONNECT_TIMEOUT, HttpClientFactory.DEFAULT_SSL_HANDSHAKE_TIMEOUT);
     SSLContext context = SslContextUtil.getContext();
 
@@ -80,7 +80,7 @@ public class TestHttpsEarlyHandshake extends AbstractEchoServiceTest
       .setSSLParameters(context.getDefaultSSLParameters())
       .build();
 
-    ChannelPoolManager channelPoolManager = channelPoolManagerFactory.buildRest(key);
+    ChannelPoolManager channelPoolManager = channelPoolManagerFactory.buildHttp1Stream(key);
 
     InetAddress inetAddress = InetAddress.getByName("localhost");
     final SocketAddress address = new InetSocketAddress(inetAddress, _port);

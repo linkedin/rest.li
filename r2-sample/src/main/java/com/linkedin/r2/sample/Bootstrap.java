@@ -192,8 +192,7 @@ public class Bootstrap
     return new TransportClientAdapter(client, restOverStream);
   }
 
-  public static HttpClientFactory createHttpClientFactory(FilterChain filters, boolean usePipelineV2,
-      EventLoopGroup eventLoopGroup)
+  public static HttpClientFactory createHttpClientFactory(FilterChain filters, EventLoopGroup eventLoopGroup)
   {
     return new HttpClientFactory.Builder().
         setEventLoopGroup(eventLoopGroup).
@@ -201,7 +200,6 @@ public class Bootstrap
         setShutDownFactory(false).
         setScheduleExecutorService(r2Scheduler).
         setShutdownScheduledExecutorService(false).
-        setUsePipelineV2(usePipelineV2).
         build();
   }
 
@@ -218,7 +216,7 @@ public class Bootstrap
 
   public static Client createHttpClient(FilterChain filters)
   {
-    return createHttpClient(createHttpClientFactory(filters, false,  null), R2Constants.DEFAULT_REST_OVER_STREAM);
+    return createHttpClient(createHttpClientFactory(filters,  null), R2Constants.DEFAULT_REST_OVER_STREAM);
   }
 
 

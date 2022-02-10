@@ -32,7 +32,7 @@ import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
 import com.linkedin.d2.discovery.event.SynchronousExecutorService;
 import com.linkedin.d2.discovery.stores.mock.MockStore;
 import com.linkedin.r2.transport.common.TransportClientFactory;
-import com.linkedin.r2.transport.http.client.common.ssl.SslSessionNotTrustedException;
+import com.linkedin.r2.netty.common.ssl.SslSessionNotTrustedException;
 import java.net.URI;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;

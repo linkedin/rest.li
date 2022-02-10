@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Cleanup the Technical debt by removing the unused code associated with Netty PipelineV1
 
 ## [29.29.0] - 2022-02-09
 - Revert avro update introduced in 29.27.0

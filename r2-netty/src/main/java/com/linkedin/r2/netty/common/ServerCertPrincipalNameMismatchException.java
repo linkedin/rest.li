@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2018 LinkedIn Corp.
+   Copyright (c) 2017 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -13,19 +13,20 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-package com.linkedin.d2.balancer.simple;
 
-import com.linkedin.r2.netty.common.ssl.SslSessionValidator;
-import java.util.List;
-
+package com.linkedin.r2.netty.common;
 
 /**
- * A factory to create {@link SslSessionValidator} with validationStrings build in
+ * Exception used internally when the client cannot confirm the identity of the server through the Principal name check
  *
- * The reason a factory is needed is that validationStrings are available only during runtime when cluster properities
- * fetched from zookeeper. SslSessionValidator has to be built after that.
+ * @author Francesco Capponi (fcapponi@linkedin.com)
  */
-public interface SslSessionValidatorFactory
+public class ServerCertPrincipalNameMismatchException extends Exception
 {
-  SslSessionValidator getSessionValidator(List<String> validationStrings);
+  static final long serialVersionUID = 1L;
+
+  public ServerCertPrincipalNameMismatchException(String expected, String actual)
+  {
+    super("Expected principal cert name = " + expected + ", but found = " + actual);
+  }
 }
