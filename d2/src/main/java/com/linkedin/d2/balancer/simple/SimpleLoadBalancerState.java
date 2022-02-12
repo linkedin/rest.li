@@ -35,7 +35,7 @@ import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy
 import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
 import com.linkedin.d2.balancer.subsetting.SubsettingState;
 import com.linkedin.d2.balancer.subsetting.SubsettingStrategyFactoryImpl;
-import com.linkedin.d2.balancer.util.CanaryDistributionProvider;
+import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;

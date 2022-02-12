@@ -21,7 +21,7 @@ import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.config.CanaryDistributionStrategyConverter;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.ServicePropertiesWithCanary;
-import com.linkedin.d2.balancer.util.CanaryDistributionProvider;
+import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import java.util.Collections;
 import java.util.Set;
@@ -54,10 +54,13 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
       _simpleLoadBalancerState.getServiceProperties().get(listenTo);
 
     ServiceProperties pickedProperties = discoveryProperties;
-    if (discoveryProperties instanceof ServicePropertiesWithCanary) {
-      // has canary config, distribute to use either stable config or canary config
+    CanaryDistributionProvider canaryDistributionProvider = _simpleLoadBalancerState.getCanaryDistributionProvider();
+    if (discoveryProperties instanceof ServicePropertiesWithCanary && canaryDistributionProvider != null) {
+      // Canary config and canary distribution provider exist, distribute to use either stable config or canary config.
+      // ps: getCanaryConfigs and getCanaryDistributionStrategy are guaranteed not null in ServicePropertiesWithCanary,
+      // as created with default values in ServicePropertiesJsonSerializer.
       ServicePropertiesWithCanary propertiesWithCanary = (ServicePropertiesWithCanary) discoveryProperties;
-      CanaryDistributionProvider.Distribution distribution = _simpleLoadBalancerState.getCanaryDistributionProvider()
+      CanaryDistributionProvider.Distribution distribution = canaryDistributionProvider
               .distribute(CanaryDistributionStrategyConverter.toConfig(propertiesWithCanary.getCanaryDistributionStrategy()));
       if (distribution == CanaryDistributionProvider.Distribution.CANARY) {
         pickedProperties = propertiesWithCanary.getCanaryConfigs();

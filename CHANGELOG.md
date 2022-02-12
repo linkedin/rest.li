@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.30.0] - 2022-02-12
+support d2 config canary
+
 ## [29.29.1] - 2022-02-10
 - Make DarkGateKeeper configurable for different dark clusters
 
@@ -5182,7 +5185,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.29.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.30.0...master
+[29.30.0]: https://github.com/linkedin/rest.li/compare/v29.29.1...v29.30.0
 [29.29.1]: https://github.com/linkedin/rest.li/compare/v29.29.0...v29.29.1
 [29.29.0]: https://github.com/linkedin/rest.li/compare/v29.28.0...v29.29.0
 [29.28.0]: https://github.com/linkedin/rest.li/compare/v29.27.0...v29.28.0
