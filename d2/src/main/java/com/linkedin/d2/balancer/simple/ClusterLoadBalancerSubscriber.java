@@ -20,7 +20,7 @@ import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.config.CanaryDistributionStrategyConverter;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesWithCanary;
-import com.linkedin.d2.balancer.util.CanaryDistributionProvider;
+import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorFactory;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
@@ -49,10 +49,13 @@ class ClusterLoadBalancerSubscriber extends
     if (discoveryProperties != null)
     {
       ClusterProperties pickedProperties = discoveryProperties;
-      if (discoveryProperties instanceof ClusterPropertiesWithCanary) {
-        // has canary config, distribute to use either stable config or canary config
+      CanaryDistributionProvider canaryDistributionProvider = _simpleLoadBalancerState.getCanaryDistributionProvider();
+      if (discoveryProperties instanceof ClusterPropertiesWithCanary && canaryDistributionProvider != null) {
+        // Canary config and canary distribution provider exist, distribute to use either stable config or canary config.
+        // ps: getCanaryConfigs and getCanaryDistributionStrategy are guaranteed not null in ClusterPropertiesWithCanary,
+        // as created with default values in ClusterPropertiesJsonSerializer.
         ClusterPropertiesWithCanary propertiesWithCanary = (ClusterPropertiesWithCanary) discoveryProperties;
-        CanaryDistributionProvider.Distribution distribution = _simpleLoadBalancerState.getCanaryDistributionProvider()
+        CanaryDistributionProvider.Distribution distribution = canaryDistributionProvider
                 .distribute(CanaryDistributionStrategyConverter.toConfig(propertiesWithCanary.getCanaryDistributionStrategy()));
         if (distribution == CanaryDistributionProvider.Distribution.CANARY) {
           pickedProperties = propertiesWithCanary.getCanaryConfigs();

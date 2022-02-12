@@ -34,7 +34,7 @@ import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFact
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
-import com.linkedin.d2.balancer.util.CanaryDistributionProvider;
+import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
