@@ -191,6 +191,28 @@ public class ServicePropertiesJsonSerializer implements
 
   public ServiceProperties fromMap(Map<String,Object> map)
   {
+    ServiceProperties stableConfigs = buildServicePropertiesFromMap(map);
+    ServiceProperties canaryConfigs = null;
+    CanaryDistributionStrategy distributionStrategy = null;
+    // get canary properties and canary distribution strategy, if exist
+    Map<String, Object> canaryConfigsMap = mapGet(map, PropertyKeys.CANARY_CONFIGS);
+    Map<String, Object> distributionStrategyMap = mapGet(map, PropertyKeys.CANARY_DISTRIBUTION_STRATEGY);
+    if (canaryConfigsMap != null && !canaryConfigsMap.isEmpty()
+        && distributionStrategyMap != null && !distributionStrategyMap.isEmpty())
+    {
+      canaryConfigs = buildServicePropertiesFromMap(canaryConfigsMap);
+      distributionStrategy = new CanaryDistributionStrategy(
+          mapGetOrDefault(distributionStrategyMap, PropertyKeys.CANARY_STRATEGY, CanaryDistributionStrategy.DEFAULT_STRATEGY_LABEL),
+          mapGetOrDefault(distributionStrategyMap, PropertyKeys.PERCENTAGE_STRATEGY_PROPERTIES, Collections.emptyMap()),
+          mapGetOrDefault(distributionStrategyMap, PropertyKeys.TARGET_HOSTS_STRATEGY_PROPERTIES, Collections.emptyMap()),
+          mapGetOrDefault(distributionStrategyMap, PropertyKeys.TARGET_APPLICATIONS_STRATEGY_PROPERTIES, Collections.emptyMap())
+          );
+    }
+    return new ServiceStoreProperties(stableConfigs, canaryConfigs, distributionStrategy);
+  }
+
+  private ServiceProperties buildServicePropertiesFromMap(Map<String,Object> map)
+  {
     Map<String,Object> loadBalancerStrategyProperties = mapGetOrDefault(map, PropertyKeys.LB_STRATEGY_PROPERTIES, Collections.emptyMap());
     List<String> loadBalancerStrategyList = mapGetOrDefault(map, PropertyKeys.LB_STRATEGY_LIST, Collections.emptyList());
     Map<String, Object> transportClientProperties = mapGetOrDefault(map, PropertyKeys.TRANSPORT_CLIENT_PROPERTIES, Collections.emptyMap());
@@ -225,49 +247,19 @@ public class ServicePropertiesJsonSerializer implements
 
     List<Map<String, Object>> backupRequests = mapGetOrDefault(map, PropertyKeys.BACKUP_REQUESTS, Collections.emptyList());
 
-    // get canary service properties and canary distribution strategy, if exist
-    if (map.containsKey(PropertyKeys.CANARY_CONFIGS) && map.containsKey(PropertyKeys.CANARY_DISTRIBUTION_STRATEGY))
-    {
-      Map<String, Object> canaryConfigsMap = mapGet(map, PropertyKeys.CANARY_CONFIGS);
-      Map<String, Object> distributionStrategyMap = mapGet(map, PropertyKeys.CANARY_DISTRIBUTION_STRATEGY);
-      ServiceProperties canaryServiceProperties = fromMap(canaryConfigsMap);
-      CanaryDistributionStrategy distributionStrategy = new CanaryDistributionStrategy(
-          mapGetOrDefault(distributionStrategyMap, PropertyKeys.CANARY_STRATEGY, CanaryDistributionStrategy.DEFAULT_STRATEGY_LABEL),
-          mapGetOrDefault(distributionStrategyMap, PropertyKeys.PERCENTAGE_STRATEGY_PROPERTIES, Collections.emptyMap()),
-          mapGetOrDefault(distributionStrategyMap, PropertyKeys.TARGET_HOSTS_STRATEGY_PROPERTIES, Collections.emptyMap()),
-          mapGetOrDefault(distributionStrategyMap, PropertyKeys.TARGET_APPLICATIONS_STRATEGY_PROPERTIES, Collections.emptyMap())
-          );
-      return new ServicePropertiesWithCanary((String) map.get(PropertyKeys.SERVICE_NAME),
-          (String) map.get(PropertyKeys.CLUSTER_NAME),
-          (String) map.get(PropertyKeys.PATH),
-          loadBalancerStrategyList,
-          loadBalancerStrategyProperties,
-          getTransportClientPropertiesWithClientOverrides((String) map.get(PropertyKeys.SERVICE_NAME), transportClientProperties),
-          degraderProperties,
-          prioritizedSchemes,
-          banned,
-          metadataProperties,
-          backupRequests,
-          relativeStrategyProperties,
-          enableClusterSubsetting,
-          minClusterSubsetSize,
-          distributionStrategy,
-          canaryServiceProperties);
-    }
-
     return new ServiceProperties((String) map.get(PropertyKeys.SERVICE_NAME),
-                                 (String) map.get(PropertyKeys.CLUSTER_NAME),
-                                 (String) map.get(PropertyKeys.PATH),
-                                 loadBalancerStrategyList,
-                                 loadBalancerStrategyProperties,
-                                 getTransportClientPropertiesWithClientOverrides((String) map.get(PropertyKeys.SERVICE_NAME), transportClientProperties),
-                                 degraderProperties,
-                                 prioritizedSchemes,
-                                 banned,
-                                 metadataProperties,
-                                 backupRequests,
-                                 relativeStrategyProperties,
-                                 enableClusterSubsetting,
-                                 minClusterSubsetSize);
+        (String) map.get(PropertyKeys.CLUSTER_NAME),
+        (String) map.get(PropertyKeys.PATH),
+        loadBalancerStrategyList,
+        loadBalancerStrategyProperties,
+        getTransportClientPropertiesWithClientOverrides((String) map.get(PropertyKeys.SERVICE_NAME), transportClientProperties),
+        degraderProperties,
+        prioritizedSchemes,
+        banned,
+        metadataProperties,
+        backupRequests,
+        relativeStrategyProperties,
+        enableClusterSubsetting,
+        minClusterSubsetSize);
   }
 }

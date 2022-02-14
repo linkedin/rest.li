@@ -19,7 +19,7 @@ package com.linkedin.d2.balancer.simple;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.config.CanaryDistributionStrategyConverter;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
-import com.linkedin.d2.balancer.properties.ClusterPropertiesWithCanary;
+import com.linkedin.d2.balancer.properties.ClusterStoreProperties;
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorFactory;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
@@ -49,19 +49,20 @@ class ClusterLoadBalancerSubscriber extends
     if (discoveryProperties != null)
     {
       ClusterProperties pickedProperties = discoveryProperties;
-      CanaryDistributionProvider canaryDistributionProvider = _simpleLoadBalancerState.getCanaryDistributionProvider();
-      if (discoveryProperties instanceof ClusterPropertiesWithCanary && canaryDistributionProvider != null) {
-        // Canary config and canary distribution provider exist, distribute to use either stable config or canary config.
-        // ps: getCanaryConfigs and getCanaryDistributionStrategy are guaranteed not null in ClusterPropertiesWithCanary,
-        // as created with default values in ClusterPropertiesJsonSerializer.
-        ClusterPropertiesWithCanary propertiesWithCanary = (ClusterPropertiesWithCanary) discoveryProperties;
-        CanaryDistributionProvider.Distribution distribution = canaryDistributionProvider
-                .distribute(CanaryDistributionStrategyConverter.toConfig(propertiesWithCanary.getCanaryDistributionStrategy()));
-        if (distribution == CanaryDistributionProvider.Distribution.CANARY) {
-          pickedProperties = propertiesWithCanary.getCanaryConfigs();
+      CanaryDistributionProvider.Distribution distribution = CanaryDistributionProvider.Distribution.STABLE;
+      if (discoveryProperties instanceof ClusterStoreProperties) // this is actually always true
+      {
+        ClusterStoreProperties clusterStoreProperties = (ClusterStoreProperties) discoveryProperties;
+        CanaryDistributionProvider canaryDistributionProvider = _simpleLoadBalancerState.getCanaryDistributionProvider();
+        if (clusterStoreProperties.hasCanary() && canaryDistributionProvider != null)
+        {
+          // Canary config and canary distribution provider exist, distribute to use either stable config or canary config.
+          distribution = canaryDistributionProvider
+              .distribute(CanaryDistributionStrategyConverter.toConfig(clusterStoreProperties.getCanaryDistributionStrategy()));
         }
-        // TODO: set canary config metric
+        pickedProperties = clusterStoreProperties.getDistributedClusterProperties(distribution);
       }
+      // TODO: set canary/stable config metric
 
       _simpleLoadBalancerState.getClusterInfo().put(listenTo,
         new ClusterInfoItem(_simpleLoadBalancerState, pickedProperties,
@@ -75,7 +76,7 @@ class ClusterLoadBalancerSubscriber extends
     {
       // still insert the ClusterInfoItem when discoveryProperties is null, but don't create accessor
       _simpleLoadBalancerState.getClusterInfo().put(listenTo,
-        new ClusterInfoItem(_simpleLoadBalancerState, discoveryProperties, null));
+        new ClusterInfoItem(_simpleLoadBalancerState, null, null));
     }
   }
 

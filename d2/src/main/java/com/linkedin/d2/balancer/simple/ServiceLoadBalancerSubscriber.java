@@ -20,7 +20,7 @@ import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.config.CanaryDistributionStrategyConverter;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
-import com.linkedin.d2.balancer.properties.ServicePropertiesWithCanary;
+import com.linkedin.d2.balancer.properties.ServiceStoreProperties;
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import java.util.Collections;
@@ -54,19 +54,19 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
       _simpleLoadBalancerState.getServiceProperties().get(listenTo);
 
     ServiceProperties pickedProperties = discoveryProperties;
-    CanaryDistributionProvider canaryDistributionProvider = _simpleLoadBalancerState.getCanaryDistributionProvider();
-    if (discoveryProperties instanceof ServicePropertiesWithCanary && canaryDistributionProvider != null) {
-      // Canary config and canary distribution provider exist, distribute to use either stable config or canary config.
-      // ps: getCanaryConfigs and getCanaryDistributionStrategy are guaranteed not null in ServicePropertiesWithCanary,
-      // as created with default values in ServicePropertiesJsonSerializer.
-      ServicePropertiesWithCanary propertiesWithCanary = (ServicePropertiesWithCanary) discoveryProperties;
-      CanaryDistributionProvider.Distribution distribution = canaryDistributionProvider
-              .distribute(CanaryDistributionStrategyConverter.toConfig(propertiesWithCanary.getCanaryDistributionStrategy()));
-      if (distribution == CanaryDistributionProvider.Distribution.CANARY) {
-        pickedProperties = propertiesWithCanary.getCanaryConfigs();
+    CanaryDistributionProvider.Distribution distribution = CanaryDistributionProvider.Distribution.STABLE;
+    if (discoveryProperties instanceof ServiceStoreProperties) // this is actually always true
+    {
+      ServiceStoreProperties serviceStoreProperties = (ServiceStoreProperties) discoveryProperties;
+      CanaryDistributionProvider canaryDistributionProvider = _simpleLoadBalancerState.getCanaryDistributionProvider();
+      if (serviceStoreProperties.hasCanary() && canaryDistributionProvider != null) {
+        // Canary config and canary distribution provider exist, distribute to use either stable config or canary config.
+        distribution = canaryDistributionProvider
+            .distribute(CanaryDistributionStrategyConverter.toConfig(serviceStoreProperties.getCanaryDistributionStrategy()));
       }
-      // TODO: set canary config metric
+      pickedProperties = serviceStoreProperties.getDistributedServiceProperties(distribution);
     }
+    // TODO: set canary/stable config metric
 
     _simpleLoadBalancerState.getServiceProperties().put(listenTo,
       new LoadBalancerStateItem<>(pickedProperties,
