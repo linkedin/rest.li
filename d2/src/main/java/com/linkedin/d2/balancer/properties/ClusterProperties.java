@@ -28,9 +28,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * ClusterProperties is the serialized cluster object that is stored in zookeeper.
+ * ClusterProperties are the properties that define a cluster and its behaviors.
+ * It is the serialized cluster object as part of {@link ClusterStoreProperties} that is stored in zookeeper.
  *
- * Most likely you want POJO's here, and not include pegasus generated objects, because
+ * NOTE: {@link ClusterStoreProperties} includes ALL properties on a cluster store on service registry (zookeeper).
+ *
+ * Serialization NOTE: Most likely you want POJO's here, and not include pegasus generated objects, because
  * certain objects, like transportClientProperties, are serialized differently than
  * how Jackson would serialize the object (for instance, using different key names), and
  * that will cause problems in serialization/deserialization. This is the reason _darkClusters

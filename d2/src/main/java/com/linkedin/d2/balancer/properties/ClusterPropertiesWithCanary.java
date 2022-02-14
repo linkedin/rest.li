@@ -20,12 +20,18 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.apache.commons.lang3.Validate;
 
 
 /**
- * Cluster properties with canary configs and a distribution strategy, serialized and stored on service registry.
+ * ClusterPropertiesWithCanary includes {@link ClusterProperties} and a canary version of the cluster properties, and a distribution strategy.
+ * It is serialized and stored on service registry (like Zookeeper).
+ * Canary cluster properties are to be used when a D2 client falls into the canary group, as opposed to the original cluster properties.
+ *
+ * NOTE: {@link ClusterStoreProperties} includes ALL properties on a cluster store on service registry (zookeeper).
+ *
+ * DEPRECATED: use {@link ClusterStoreProperties} instead.
  */
+@Deprecated
 public class ClusterPropertiesWithCanary extends ClusterProperties
 {
   protected final ClusterProperties _canaryConfigs;
@@ -43,8 +49,6 @@ public class ClusterPropertiesWithCanary extends ClusterProperties
                                      ClusterProperties canaryConfigs)
   {
     super(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings, darkClusters, delegated);
-    Validate.notNull(canaryConfigs);
-    Validate.notNull(distributionStrategy);
     _canaryConfigs = canaryConfigs;
     _canaryDistributionStrategy = distributionStrategy;
   }

@@ -25,7 +25,6 @@ import com.linkedin.d2.HttpMethod;
 import com.linkedin.d2.HttpStatusCodeRange;
 import com.linkedin.d2.HttpStatusCodeRangeArray;
 import com.linkedin.d2.balancer.config.RelativeStrategyPropertiesConverter;
-import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -58,15 +57,20 @@ public class ServicePropertiesSerializerTest
 
     ServiceProperties property =
       new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/foo", Arrays.asList("rr"));
-    assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
+    ServiceStoreProperties storeProperties = new ServiceStoreProperties(property, null, null);
+    // service properties will be serialized then deserialized as service store properties
+    assertEquals(serializer.fromBytes(serializer.toBytes(property)), storeProperties);
+    // service store properties will be serialized then deserialized as service store properties
+    assertEquals(serializer.fromBytes(serializer.toBytes(storeProperties)), storeProperties);
+
 
     property = new ServiceProperties("servicename2", "clustername2", "/path2", Arrays.asList("strategy2"),
                                      Collections.<String,Object>singletonMap("foo", "bar"));
-    assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
+    assertEquals(serializer.fromBytes(serializer.toBytes(property)), new ServiceStoreProperties(property, null, null));
 
     Map<String, Object> arbitraryProperties = new HashMap<>();
     arbitraryProperties.put("foo", "bar");
-    property = new ServiceProperties(TEST_SERVICE_NAME,
+    property = new ServiceStoreProperties(TEST_SERVICE_NAME,
       TEST_CLUSTER_NAME,
                                      "/service",
                                      Arrays.asList("strategyName"),
@@ -76,7 +80,7 @@ public class ServicePropertiesSerializerTest
                                      Collections.<String>emptyList(),
                                      Collections.<URI>emptySet(),
                                      arbitraryProperties);
-    assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
+    assertEquals(serializer.fromBytes(serializer.toBytes(property)), new ServiceStoreProperties(property, null, null));
   }
 
   @DataProvider(name = "distributionStrategies")
@@ -109,10 +113,10 @@ public class ServicePropertiesSerializerTest
         null, null, Arrays.asList("HTTPS"), Collections.emptySet(),
         Collections.emptyMap(), Collections.emptyList(), RelativeStrategyPropertiesConverter.toMap(createRelativeStrategyProperties()));
 
-    ServicePropertiesWithCanary propertyWithCanary = new ServicePropertiesWithCanary("servicename2",
-        "clustername2", "/path2", Arrays.asList("strategy2"), distributionStrategy, canaryProperty);
+    ServiceStoreProperties property = new ServiceStoreProperties("servicename2",
+        "clustername2", "/path2", Arrays.asList("strategy2"), canaryProperty, distributionStrategy);
 
-    assertEquals(serializer.fromBytes(serializer.toBytes(propertyWithCanary)), propertyWithCanary);
+    assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
   }
 
   @Test
@@ -125,7 +129,7 @@ public class ServicePropertiesSerializerTest
         new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/foo", Arrays.asList("rr"), new HashMap<>(),
             null, null, Arrays.asList("HTTPS"), Collections.emptySet(),
             Collections.emptyMap(), Collections.emptyList(), RelativeStrategyPropertiesConverter.toMap(relativeStrategyProperties));
-    assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
+    assertEquals(serializer.fromBytes(serializer.toBytes(property)), new ServiceStoreProperties(property, null, null));
   }
 
   @Test(groups = { "small", "back-end" }, enabled = false)
@@ -158,7 +162,7 @@ public class ServicePropertiesSerializerTest
         Collections.<URI>emptySet(),
         arbitraryProperties);
 
-    assertEquals(serializer.fromBytes(serializer.toBytes(badServiceProp)), goodServiceProp);
+    assertEquals(serializer.fromBytes(serializer.toBytes(badServiceProp)), new ServiceStoreProperties(goodServiceProp, null, null));
   }
 
   @Test
