@@ -26,6 +26,7 @@ import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -58,7 +59,7 @@ public class TestArrayTemplate
     try
     {
       // constructors and addAll
-      ArrayTemplate array1 = templateClass.newInstance();
+      ArrayTemplate array1 = templateClass.getDeclaredConstructor().newInstance();
       array1.addAll(input);
       assertEquals(input, array1);
 
@@ -134,7 +135,7 @@ public class TestArrayTemplate
       assertEquals(schema1, schema);
 
       // add(E element), get(int index)
-      ArrayTemplate array3 = templateClass.newInstance();
+      ArrayTemplate array3 = templateClass.getDeclaredConstructor().newInstance();
       for (int i = 0; i < adds.size(); ++i)
       {
         E value = adds.get(i);
@@ -147,7 +148,7 @@ public class TestArrayTemplate
       assertEquals(array3, adds);
 
       // add(int index, E element), get(int index)
-      ArrayTemplate array4 = templateClass.newInstance();
+      ArrayTemplate array4 = templateClass.getDeclaredConstructor().newInstance();
       for (int i = 0; i < adds.size(); ++i)
       {
         E value = adds.get(adds.size() - i - 1);
@@ -175,7 +176,7 @@ public class TestArrayTemplate
       for (int i = 0; i <= input.size(); ++i)
       {
         List<E> subList = input.subList(0, i);
-        ArrayTemplate a = templateClass.newInstance();
+        ArrayTemplate a = templateClass.getDeclaredConstructor().newInstance();
         a.addAll(subList);
         if (i == input.size())
         {
@@ -190,7 +191,7 @@ public class TestArrayTemplate
       }
 
       // hashcode()
-      ArrayTemplate array5 = templateClass.newInstance();
+      ArrayTemplate array5 = templateClass.getDeclaredConstructor().newInstance();
       array5.addAll(input);
       assertEquals(array5.hashCode(), array5.data().hashCode());
       array5.addAll(adds);
@@ -209,7 +210,7 @@ public class TestArrayTemplate
       }
 
       // indexOf(Object o), lastIndexOf(Object o)
-      ArrayTemplate array6 = templateClass.newInstance();
+      ArrayTemplate array6 = templateClass.getDeclaredConstructor().newInstance();
       array6.addAll(adds);
       for (E e : adds)
       {
@@ -218,9 +219,9 @@ public class TestArrayTemplate
       }
 
       // remove(int index), subList(int fromIndex, int toIndex)
-      ArrayTemplate array7 = templateClass.newInstance();
+      ArrayTemplate array7 = templateClass.getDeclaredConstructor().newInstance();
       array7.addAll(input);
-      ArrayTemplate array8 = templateClass.newInstance();
+      ArrayTemplate array8 = templateClass.getDeclaredConstructor().newInstance();
       array8.addAll(input);
       for (int i = 0; i < input.size(); ++i)
       {
@@ -234,7 +235,7 @@ public class TestArrayTemplate
       {
         for (int to = from + 1; to <= input.size(); ++to)
         {
-          ArrayTemplate arrayRemove = templateClass.newInstance();
+          ArrayTemplate arrayRemove = templateClass.getDeclaredConstructor().newInstance();
           arrayRemove.addAll(input);
           InternalList<E> reference = new InternalList<>(input);
           arrayRemove.removeRange(from, to);
@@ -244,7 +245,7 @@ public class TestArrayTemplate
       }
 
       // set(int index, E element)
-      ArrayTemplate array9 = templateClass.newInstance();
+      ArrayTemplate array9 = templateClass.getDeclaredConstructor().newInstance();
       array9.addAll(input);
       InternalList<E> reference9 = new InternalList<>(input);
       for (int i = 0; i < input.size() / 2; ++i)
@@ -267,7 +268,7 @@ public class TestArrayTemplate
 
       // clone
       Exception exc = null;
-      ArrayTemplate array10 = templateClass.newInstance();
+      ArrayTemplate array10 = templateClass.getDeclaredConstructor().newInstance();
       array10.addAll(input);
       try
       {
@@ -294,7 +295,7 @@ public class TestArrayTemplate
       assert(exc == null);
 
       // copy
-      ArrayTemplate array10a = templateClass.newInstance();
+      ArrayTemplate array10a = templateClass.getDeclaredConstructor().newInstance();
       array10a.addAll(input);
 
       try
@@ -340,7 +341,7 @@ public class TestArrayTemplate
       // contains
       for (int i = 0; i < input.size(); ++i)
       {
-        ArrayTemplate array = templateClass.newInstance();
+        ArrayTemplate array = templateClass.getDeclaredConstructor().newInstance();
         E v = input.get(i);
         array.add(v);
         for (int k = 0; k < input.size(); ++k)
@@ -353,7 +354,7 @@ public class TestArrayTemplate
       }
 
       // containsAll
-      ArrayTemplate arrayContainsAll = templateClass.newInstance();
+      ArrayTemplate arrayContainsAll = templateClass.getDeclaredConstructor().newInstance();
       arrayContainsAll.addAll(input);
       arrayContainsAll.addAll(adds);
       InternalList<E> referenceContainsAll = new InternalList<>(input);
@@ -381,7 +382,7 @@ public class TestArrayTemplate
       {
         for (int to = from + 1; to <= referenceListRemoveAll.size(); ++to)
         {
-          ArrayTemplate arrayRemoveAll = templateClass.newInstance();
+          ArrayTemplate arrayRemoveAll = templateClass.getDeclaredConstructor().newInstance();
           arrayRemoveAll.addAll(referenceListRemoveAll);
           InternalList<E> referenceRemoveAll = new InternalList<>(referenceListRemoveAll);
 
@@ -402,7 +403,7 @@ public class TestArrayTemplate
       {
         for (int to = from + 1; to <= referenceListRetainAll.size(); ++to)
         {
-          ArrayTemplate arrayRetainAll = templateClass.newInstance();
+          ArrayTemplate arrayRetainAll = templateClass.getDeclaredConstructor().newInstance();
           arrayRetainAll.addAll(referenceListRetainAll);
           InternalList<E> referenceRetainAll = new InternalList<>(referenceListRetainAll);
 
@@ -417,7 +418,7 @@ public class TestArrayTemplate
       }
 
       // Iterator
-      ArrayTemplate arrayIt = templateClass.newInstance();
+      ArrayTemplate arrayIt = templateClass.getDeclaredConstructor().newInstance();
       arrayIt.addAll(input);
       arrayIt.addAll(adds);
       for (Iterator<E> it = arrayIt.iterator(); it.hasNext(); )
@@ -428,7 +429,7 @@ public class TestArrayTemplate
       assertTrue(arrayIt.isEmpty());
 
       // ListIterator hasNext, hasPrevious, next, previous
-      ArrayTemplate arrayListIt = templateClass.newInstance();
+      ArrayTemplate arrayListIt = templateClass.getDeclaredConstructor().newInstance();
       arrayListIt.addAll(input);
       arrayListIt.addAll(adds);
       for (int i = 0; i <= arrayListIt.size(); ++i)
@@ -495,11 +496,7 @@ public class TestArrayTemplate
         assertEquals(arrayListIt.get(i), value);
       }
     }
-    catch (InstantiationException exc)
-    {
-      fail("Unexpected exception", exc);
-    }
-    catch (IllegalAccessException exc)
+    catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException exc)
     {
       fail("Unexpected exception", exc);
     }
@@ -516,7 +513,7 @@ public class TestArrayTemplate
     try
     {
       Exception exc = null;
-      ArrayTemplate arrayTemplateBad = templateClass.newInstance();
+      ArrayTemplate arrayTemplateBad = templateClass.getDeclaredConstructor().newInstance();
       DataList badDataList = new DataList();
       ArrayTemplate badWrappedArrayTemplate = DataTemplateUtil.wrap(badDataList, schema, templateClass);
 
@@ -734,17 +731,7 @@ public class TestArrayTemplate
         assertTrue(exc != null);
         assertTrue(exc instanceof TemplateOutputCastException);
       }
-    }
-    catch (IllegalAccessException exc)
-    {
-      fail("Unexpected exception", exc);
-    }
-    catch (InstantiationException exc)
-    {
-      fail("Unexpected exception", exc);
-    }
-    catch (TemplateOutputCastException exc)
-    {
+    } catch (IllegalAccessException | TemplateOutputCastException | InstantiationException | InvocationTargetException | NoSuchMethodException exc) {
       fail("Unexpected exception", exc);
     }
   }
@@ -759,7 +746,7 @@ public class TestArrayTemplate
     try
     {
       // test insert non-native, converted to element type on set
-      ArrayTemplate array1 = templateClass.newInstance();
+      ArrayTemplate array1 = templateClass.getDeclaredConstructor().newInstance();
       array1.addAll((List<E>) castFrom);
       for (int i = 0; i < castTo.size(); ++i)
       {
@@ -776,11 +763,7 @@ public class TestArrayTemplate
         assertEquals(castTo.get(i), array2.get(i));
       }
     }
-    catch (InstantiationException exc)
-    {
-      fail("Unexpected exception", exc);
-    }
-    catch (IllegalAccessException exc)
+    catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException exc)
     {
       fail("Unexpected exception", exc);
     }

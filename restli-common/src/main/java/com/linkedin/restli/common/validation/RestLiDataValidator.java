@@ -51,6 +51,7 @@ import com.linkedin.restli.common.util.ProjectionMaskApplier;
 import com.linkedin.restli.restspec.RestSpecAnnotation;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -132,6 +133,8 @@ public class RestLiDataValidator
   private static final String INSTANTIATION_ERROR = "InstantiationException while trying to instantiate the record template class";
   private static final String ILLEGAL_ACCESS_ERROR = "IllegalAccessException while trying to instantiate the record template class";
   private static final String TEMPLATE_RUNTIME_ERROR = "TemplateRuntimeException while trying to find the schema class";
+  private static final String INVOCATION_TARGET_ERROR = "InvocationTargetException while trying to instantiate the record template class";
+  private static final String NO_SUCH_METHOD_ERROR = "NoSuchMethodException while trying to instantiate the record template class";
 
   private static PathMatchesPatternPredicate stringToPredicate(String path, boolean includeDescendants)
   {
@@ -511,7 +514,7 @@ public class RestLiDataValidator
     RecordTemplate entity;
     try
     {
-      entity = _valueClass.newInstance();
+      entity = _valueClass.getDeclaredConstructor().newInstance();
     }
     catch (InstantiationException e)
     {
@@ -520,6 +523,10 @@ public class RestLiDataValidator
     catch (IllegalAccessException e)
     {
       return validationResultWithErrorMessage(ILLEGAL_ACCESS_ERROR);
+    } catch (InvocationTargetException e) {
+      return validationResultWithErrorMessage(INVOCATION_TARGET_ERROR);
+    } catch (NoSuchMethodException e) {
+      return validationResultWithErrorMessage(NO_SUCH_METHOD_ERROR);
     }
     // Apply the patch to the entity and get paths that $set and $delete operations were performed on.
     @SuppressWarnings("unchecked")
