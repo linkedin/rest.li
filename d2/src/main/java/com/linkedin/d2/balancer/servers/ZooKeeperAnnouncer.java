@@ -165,7 +165,6 @@ public class ZooKeeperAnnouncer
     // retry the last one.
     // If markDown for warm-up cluster is pending, complete it
     // Since markUp for warm-up cluster is best effort, we do not register its failure and so do not retry it
-
     if(!_pendingWarmupMarkDown.isEmpty() && _isWarmingUp)
     {
       // complete the markDown on warm-up cluster and start the markUp on regular cluster
@@ -217,7 +216,6 @@ public class ZooKeeperAnnouncer
 
   private synchronized void doMarkUp(Callback<None> callback)
   {
-
     final Callback<None> markUpCallback = new Callback<None>()
     {
       @Override
@@ -225,7 +223,7 @@ public class ZooKeeperAnnouncer
       {
         if (e instanceof KeeperException.ConnectionLossException || e instanceof KeeperException.SessionExpiredException)
         {
-          _log.warn("failed to mark up uri {} for cluster {} due to connection issue {}.", _uri, _cluster, e.getClass().getSimpleName());
+          _log.warn("failed to mark up uri {} for cluster {} due to {}.", _uri, _cluster, e.getClass().getSimpleName());
           // Setting to null because if that connection dies, when don't want to continue making operations before
           // the connection is up again.
           // When the connection will be up again, the ZKAnnouncer will be restarted and it will read the _isUp
@@ -360,18 +358,21 @@ public class ZooKeeperAnnouncer
         _pendingWarmupMarkDown.add(warmupMarkDownCallback);
         // Run warm-up for _warmupDuration seconds and then schedule a mark down for the warm-up cluster
         _log.debug("warm-up will run for {} seconds.", _warmupDuration);
-        _executorService.schedule(() -> _server.markDown(_warmupClusterName, _uri, warmupMarkDownCallback), _warmupDuration,
-              TimeUnit.SECONDS);
+        _executorService.schedule(() -> _server.markDown(_warmupClusterName, _uri, warmupMarkDownCallback),
+              _warmupDuration, TimeUnit.SECONDS);
       }
     };
 
-    if (_isRetryWarmup) {
-      // If the connection with ZooKeeper was lost during warm-up and is re-established after the warm-up duration completed, 
+    _log.info("overrideMarkUp is called for uri = " + _uri);
+    if (_isRetryWarmup)
+    {
+      // If the connection with ZooKeeper was lost during warm-up and is re-established after the warm-up duration completed,
       // then complete the pending markDown for the warm-up cluster and announce to the regular cluster
-      if (_isWarmingUp) {
+      if (_isWarmingUp)
+      {
         _server.markDown(_warmupClusterName, _uri, warmupMarkDownCallback);
       }
-      // Otherwise, if the connection with ZooKeeper was lost during warm-up but was re-established before the warm-up duration completed, 
+      // Otherwise, if the connection with ZooKeeper was lost during warm-up but was re-established before the warm-up duration completed,
       // then during that request itself the markDown for the warm-up cluster has completed
     }
     else if (_isDarkWarmupEnabled && _warmupDuration > 0 && _warmupClusterName != null && _executorService != null)
@@ -627,4 +628,5 @@ public class ZooKeeperAnnouncer
   {
     return _markUpFailed;
   }
+
 }
