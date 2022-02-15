@@ -17,6 +17,7 @@
 package com.linkedin.data.avro;
 
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 import com.linkedin.data.DataMap;
@@ -143,7 +144,7 @@ abstract class AvroOverrideFactory
               try
               {
                 Class<?> translatorClass = Class.forName(customDataTranslatorClassName, true, Thread.currentThread().getContextClassLoader());
-                customDataTranslator = (CustomDataTranslator) translatorClass.newInstance();
+                customDataTranslator = (CustomDataTranslator) translatorClass.getDeclaredConstructor().newInstance();
               }
               catch (ClassCastException e)
               {
@@ -155,12 +156,7 @@ abstract class AvroOverrideFactory
                 emitMessage("%1$s class not found", customDataTranslatorClassName);
                 ok = false;
               }
-              catch (IllegalAccessException e)
-              {
-                emitMessage("%1$s cannot be instantiated due to %2$s", customDataTranslatorClassName, e.getClass().getName());
-                ok = false;
-              }
-              catch (InstantiationException e)
+              catch (IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException e)
               {
                 emitMessage("%1$s cannot be instantiated due to %2$s", customDataTranslatorClassName, e.getClass().getName());
                 ok = false;

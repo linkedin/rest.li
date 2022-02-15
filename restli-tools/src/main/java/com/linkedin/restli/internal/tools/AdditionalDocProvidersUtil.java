@@ -23,7 +23,7 @@ final public class AdditionalDocProvidersUtil
       try
       {
         providers.add(
-            (ResourceModelEncoder.DocsProvider) Class.forName("com.linkedin.sbtrestli.tools.scala.ScalaDocsProvider").newInstance());
+            (ResourceModelEncoder.DocsProvider) Class.forName("com.linkedin.sbtrestli.tools.scala.ScalaDocsProvider").getDeclaredConstructor().newInstance());
       }
       catch (ClassNotFoundException | InstantiationException | IllegalAccessException ignored)
       {

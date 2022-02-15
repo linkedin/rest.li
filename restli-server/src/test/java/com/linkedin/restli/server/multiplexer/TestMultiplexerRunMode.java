@@ -38,6 +38,7 @@ import com.linkedin.restli.server.RestLiServer;
 import com.linkedin.restli.server.resources.ResourceFactory;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
@@ -176,13 +177,9 @@ public class TestMultiplexerRunMode
       {
         try
         {
-          return resourceClass.newInstance();
+          return resourceClass.getDeclaredConstructor().newInstance();
         }
-        catch (InstantiationException e)
-        {
-          throw new RuntimeException(e);
-        }
-        catch (IllegalAccessException e)
+        catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e)
         {
           throw new RuntimeException(e);
         }
