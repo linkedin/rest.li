@@ -17,7 +17,6 @@
 package com.linkedin.data.codec;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonFactoryBuilder;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParser;
@@ -58,12 +57,10 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
    *
    * <a href="https://github.com/FasterXML/jackson-docs/wiki/Presentation:-Jackson-Performance">Jackson Performance</a>
    */
-  public static final JsonFactoryBuilder JSON_FACTORY_BUILDER = new JsonFactoryBuilder();
-  public static final JsonFactory JSON_FACTORY;
+  public static final JsonFactory JSON_FACTORY = new JsonFactory();
   static {
     // Disable string interning by default since it causes GC issues.
-    JSON_FACTORY_BUILDER.configure(JsonFactory.Feature.INTERN_FIELD_NAMES, false);
-    JSON_FACTORY = JSON_FACTORY_BUILDER.build();
+    JSON_FACTORY.disable(JsonFactory.Feature.INTERN_FIELD_NAMES);
   }
 
   protected static final int DEFAULT_BUFFER_SIZE = 4096;

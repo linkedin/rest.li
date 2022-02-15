@@ -1086,7 +1086,7 @@ public class TestDataTranslator
       try
       {
         avroRecord = DataTranslator.dataMapToGenericRecord(dataMap, recordDataSchema, avroSchema);
-        String avroJson = AvroUtil.jsonFromGenericRecord(avroRecord, false);
+        String avroJson = AvroUtil.jsonFromGenericRecord(avroRecord);
         if (debug) out.println(col + " GenericRecord: " + avroJson);
         result = avroJson;
       }
@@ -1771,7 +1771,7 @@ public class TestDataTranslator
             PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE,
             "{\"enumRequired\":null}", //read as optional from Avro
             true,
-            "Not an enum: null for schema: {\"type\":\"enum\",\"name\":\"Fruits\",\"symbols\":[\"APPLE\",\"ORANGE\"]}"
+            "null of Fruits in field enumRequired of Foo"
         },
     };
   }
@@ -1839,7 +1839,7 @@ public class TestDataTranslator
         //Translate to generic record
         GenericRecord avroRecord = DataTranslator.dataMapToGenericRecord(dataMap, recordDataSchema, avroSchema, options);
 
-        String avroJson = AvroUtil.jsonFromGenericRecord(avroRecord, false);
+        String avroJson = AvroUtil.jsonFromGenericRecord(avroRecord);
 
         // avroJson compare
         assertEquals(avroJson, expectedAvroRecordJsonString);

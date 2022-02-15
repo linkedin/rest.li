@@ -17,13 +17,16 @@
 package com.linkedin.data.avro;
 
 
-import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
 import java.io.IOException;
 import java.io.OutputStream;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
+import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.Decoder;
+import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.Encoder;
+import org.apache.avro.io.JsonDecoder;
+import org.apache.avro.io.JsonEncoder;
 
 
 /**
@@ -41,7 +44,7 @@ public class AvroAdapter_1_4 implements AvroAdapter
   @Override
   public GenericData.EnumSymbol createEnumSymbol(Schema avroSchema, String enumValue)
   {
-    return AvroCompatibilityHelper.newEnumSymbol(avroSchema, enumValue);
+    return new GenericData.EnumSymbol(enumValue);
   }
 
   @Override
@@ -53,25 +56,29 @@ public class AvroAdapter_1_4 implements AvroAdapter
   @Override
   public Decoder createBinaryDecoder(byte[] bytes) throws IOException
   {
-    return AvroCompatibilityHelper.newBinaryDecoder(bytes);
+    Decoder binaryDecoder = DecoderFactory.defaultFactory().createBinaryDecoder(bytes, null);
+    return binaryDecoder;
   }
 
   @Override
   public Encoder createBinaryEncoder(OutputStream outputStream) throws IOException
   {
-    return AvroCompatibilityHelper.newBinaryEncoder(outputStream);
+    Encoder binaryEncoder = new BinaryEncoder(outputStream);
+    return binaryEncoder;
   }
 
   @Override
   public Decoder createJsonDecoder(Schema schema, String json) throws IOException
   {
-    return AvroCompatibilityHelper.newJsonDecoder(schema, json);
+    Decoder jsonDecoder = new JsonDecoder(schema, json);
+    return jsonDecoder;
   }
 
   @Override
   public Encoder createJsonEncoder(Schema schema, OutputStream outputStream) throws IOException
   {
-    return AvroCompatibilityHelper.newJsonEncoder(schema, outputStream, true);
+    Encoder jsonEncoder = new JsonEncoder(schema, outputStream);
+    return jsonEncoder;
   }
 }
 

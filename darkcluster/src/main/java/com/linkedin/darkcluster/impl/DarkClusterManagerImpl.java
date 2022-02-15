@@ -20,16 +20,13 @@ import com.linkedin.darkcluster.api.DarkGateKeeper;
 import com.linkedin.darkcluster.api.DarkRequestHeaderGenerator;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import java.net.URI;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
-import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
 import com.linkedin.common.util.Notifier;
@@ -100,7 +97,7 @@ public class DarkClusterManagerImpl implements DarkClusterManager
     _darkClusterStrategyFactory = strategyFactory;
     _uriRewriterMap = new HashMap<>();
     // if null, initialize this to a noop which returns true always
-    _darkGateKeeper = darkGateKeeper == null ? (req, context) -> true : darkGateKeeper;
+    _darkGateKeeper = darkGateKeeper == null ? DarkGateKeeper.NO_OP_DARK_GATE_KEEPER : darkGateKeeper;
     _darkRequestHeaderGenerators = darkRequestHeaderGenerators == null ? Collections.emptyList() : darkRequestHeaderGenerators;
   }
 
@@ -118,7 +115,7 @@ public class DarkClusterManagerImpl implements DarkClusterManager
       // 2) is whitelisted if whitelist regex is provided
       // 3) not blacklisted if blacklist regex is provided
       // 4) custom dark gatekeeper returns true for the given request and requestContext
-      if ((isSafe(originalRequest) || whiteListed) && !blackedListed && (_darkGateKeeper.shouldDispatchToDark(originalRequest, originalRequestContext)))
+      if ((isSafe(originalRequest) || whiteListed) && !blackedListed)
       {
         // the request is already immutable, and a new requestContext will be created in BaseDarkClusterDispatcher.
         // We don't need to copy them here, but doing it just for safety.
@@ -127,10 +124,13 @@ public class DarkClusterManagerImpl implements DarkClusterManager
         DarkClusterConfigMap configMap = _facilities.getClusterInfoProvider().getDarkClusterConfigMap(_sourceClusterName);
         for (String darkClusterName : configMap.keySet())
         {
-          RestRequest newD2Request = rewriteRequest(reqCopy, darkClusterName);
-          // now find the strategy appropriate for each dark cluster
-          DarkClusterStrategy strategy = _darkClusterStrategyFactory.get(darkClusterName);
-          darkRequestSent = strategy.handleRequest(reqCopy, newD2Request, newRequestContext);
+          if (_darkGateKeeper.shouldDispatchToDark(originalRequest, originalRequestContext, darkClusterName))
+          {
+            RestRequest newD2Request = rewriteRequest(reqCopy, darkClusterName);
+            // now find the strategy appropriate for each dark cluster
+            DarkClusterStrategy strategy = _darkClusterStrategyFactory.get(darkClusterName);
+            darkRequestSent = strategy.handleRequest(reqCopy, newD2Request, newRequestContext);
+          }
         }
 
       }

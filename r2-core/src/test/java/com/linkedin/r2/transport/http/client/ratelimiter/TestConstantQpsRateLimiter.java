@@ -21,6 +21,7 @@ import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.ConstantQpsRateLimiter;
 import com.linkedin.r2.transport.http.client.TestEvictingCircularBuffer;
 import com.linkedin.test.util.ClockedExecutor;
+import com.linkedin.test.util.retry.ThreeRetries;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -128,7 +129,7 @@ public class TestConstantQpsRateLimiter
     assert(uniqueTimeDeltas.size() > 8 && uniqueTimeDeltas.size() < 11);
   }
 
-  @Test
+  @Test(retryAnalyzer = ThreeRetries.class) // Known to be flaky in CI
   public void testLowRateHighlyParallelConsistentRandomness()
   {
     // Simulate a large production cluster dispatching a very low rate of traffic.

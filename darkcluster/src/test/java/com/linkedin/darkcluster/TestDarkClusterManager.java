@@ -17,6 +17,7 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 
 import static com.linkedin.darkcluster.DarkClusterTestUtil.createRelativeTrafficMultiplierConfig;
 import static com.linkedin.darkcluster.TestDarkClusterStrategyFactory.DARK_CLUSTER_NAME;
+import static com.linkedin.darkcluster.TestDarkClusterStrategyFactory.DARK_CLUSTER_NAME2;
 import static com.linkedin.darkcluster.TestDarkClusterStrategyFactory.SOURCE_CLUSTER_NAME;
 
 import java.util.Collections;
@@ -34,7 +35,13 @@ public class TestDarkClusterManager
   @DataProvider
   public Object[][] provideKeys()
   {
-    DarkGateKeeper darkGateKeeper = (request, requestContext) -> false;
+    DarkGateKeeper darkGateKeeper = new DarkGateKeeper() {
+      @Override
+      public boolean shouldDispatchToDark(RestRequest request, RequestContext requestContext, String darkClusterName) {
+        return false;
+      }
+    };
+
     return new Object[][] {
       // whitelist, blacklist, httpMethod, darkGateKeeper, expected white count, expected black count
       {null, null, METHOD_SAFE, null, 1, 1},
@@ -86,6 +93,54 @@ public class TestDarkClusterManager
     Assert.assertEquals(blackStatus, expectedBlackCount > 0, "black uri requests not as expected");
     Assert.assertEquals(strategyFactory.strategyGetOrCreateCount, expectedWhiteCount + expectedBlackCount,
                         "unexpected strategy GetOrCreateCount");
+  }
+
+  @Test
+  public void testDarkGateKeeper()
+  {
+    DarkGateKeeper darkGateKeeper = new DarkGateKeeper() {
+      @Override
+      public boolean shouldDispatchToDark(RestRequest request, RequestContext requestContext, String darkClusterName) {
+        return darkClusterName.equals(DARK_CLUSTER_NAME);
+      }
+    };
+
+    MockClusterInfoProvider clusterInfoProvider = new MockClusterInfoProvider();
+    Facilities facilities = new MockFacilities(clusterInfoProvider);
+    MockStrategyFactory strategyFactory = new MockStrategyFactory();
+    DarkClusterManager darkClusterManager = new DarkClusterManagerImpl(SOURCE_CLUSTER_NAME,
+        facilities,
+        strategyFactory,
+        null,
+        null,
+        new DoNothingNotifier(),
+        darkGateKeeper);
+
+    strategyFactory.start();
+
+    // This configuration will choose the RelativeTrafficMultiplierDarkClusterStrategy
+    DarkClusterConfig darkClusterConfig = createRelativeTrafficMultiplierConfig(1.0f);
+    clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME2, darkClusterConfig);
+
+    RestRequest restRequest1 = new RestRequestBuilder(URI.create("/white")).setMethod(METHOD_SAFE).build();
+    boolean whiteStatus = darkClusterManager.handleDarkRequest(restRequest1, new RequestContext());
+    RestRequest restRequest2 = new RestRequestBuilder(URI.create("/black")).setMethod(METHOD_SAFE).build();
+    boolean blackStatus = darkClusterManager.handleDarkRequest(restRequest2, new RequestContext());
+
+    Assert.assertFalse(whiteStatus, "white uri requests not as expected");
+    Assert.assertFalse(blackStatus, "black uri requests not as expected");
+    Assert.assertEquals(strategyFactory.strategyGetOrCreateCount, 0,
+        "unexpected strategy GetOrCreateCount");
+
+    clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig);
+
+    boolean whiteStatus1 = darkClusterManager.handleDarkRequest(restRequest1, new RequestContext());
+    boolean blackStatus1 = darkClusterManager.handleDarkRequest(restRequest2, new RequestContext());
+
+    Assert.assertTrue(whiteStatus1, "white uri requests not as expected");
+    Assert.assertTrue(blackStatus1, "black uri requests not as expected");
+    Assert.assertEquals(strategyFactory.strategyGetOrCreateCount, 2,
+        "unexpected strategy GetOrCreateCount");
   }
 
   @Test

@@ -64,14 +64,14 @@ public class SubsettingState
 
     if (subsettingStrategy == null)
     {
-      return new SubsetItem(false, possibleUris, Collections.emptySet());
+      return new SubsetItem(false, false, possibleUris, Collections.emptySet());
     }
 
     DeterministicSubsettingMetadata metadata = _subsettingMetadataProvider.getSubsettingMetadata(state);
 
     if (metadata == null)
     {
-      return new SubsetItem(false, possibleUris, Collections.emptySet());
+      return new SubsetItem(false, false, possibleUris, Collections.emptySet());
     }
 
     synchronized (_lockMap.computeIfAbsent(serviceName, name -> new Object()))
@@ -81,7 +81,7 @@ public class SubsettingState
       {
         if (subsetCache.getWeightedSubsets().containsKey(partitionId))
         {
-          return new SubsetItem(false, subsetCache.getWeightedSubsets().get(partitionId), Collections.emptySet());
+          return new SubsetItem(true, false, subsetCache.getWeightedSubsets().get(partitionId), Collections.emptySet());
         }
       }
 
@@ -89,7 +89,7 @@ public class SubsettingState
 
       if (subsetMap == null)
       {
-        return new SubsetItem(false, possibleUris, Collections.emptySet());
+        return new SubsetItem(false, false, possibleUris, Collections.emptySet());
       }
       else
       {
@@ -126,7 +126,7 @@ public class SubsettingState
 
         LOG.debug("Subset cache updated for service " + serviceName + ": " + subsetCache);
 
-        return new SubsetItem(true, subsetMap, doNotSlowStartUris);
+        return new SubsetItem(true, true, subsetMap, doNotSlowStartUris);
       }
     }
   }
@@ -218,15 +218,22 @@ public class SubsettingState
    */
   public static class SubsetItem
   {
+    private final boolean _isWeightedSubset;
     private final boolean _shouldForceUpdate;
     private final Map<URI, Double> _weightedUriSubset;
     private final Set<URI> _doNotSlowStartUris;
 
-    public SubsetItem(boolean shouldForceUpdate, Map<URI, Double> weightedUriSubset, Set<URI> doNotSlowStartUris)
+    public SubsetItem(boolean isWeightedSubset, boolean shouldForceUpdate,
+        Map<URI, Double> weightedUriSubset, Set<URI> doNotSlowStartUris)
     {
+      _isWeightedSubset = isWeightedSubset;
       _shouldForceUpdate = shouldForceUpdate;
       _weightedUriSubset = weightedUriSubset;
       _doNotSlowStartUris = doNotSlowStartUris;
+    }
+
+    public boolean isWeightedSubset() {
+      return _isWeightedSubset;
     }
 
     public boolean shouldForceUpdate()
