@@ -24,28 +24,28 @@ public class FailedoutClusterWatchManagerTest {
   @BeforeMethod
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    _manager = new FailedoutClusterWatchManager(_loadBalancerState);
+    _manager = new FailedoutClusterWatchManager(CLUSTER_NAME, _loadBalancerState);
   }
 
   @Test
   public void testAddPeerClusterWatches() {
-    _manager.addPeerClusterWatches(CLUSTER_NAME, new HashSet<>(Arrays.asList(PEER_CLUSTER_NAME1, PEER_CLUSTER_NAME2)));
+    _manager.addPeerClusterWatches(new HashSet<>(Arrays.asList(PEER_CLUSTER_NAME1, PEER_CLUSTER_NAME2)));
     verify(_loadBalancerState).listenToCluster(eq(PEER_CLUSTER_NAME1), any());
     verify(_loadBalancerState).listenToCluster(eq(PEER_CLUSTER_NAME2), any());
   }
 
   @Test
   public void testAddPeerClusterWatchesWithPeerClusterAdded() {
-    _manager.addPeerClusterWatches(CLUSTER_NAME, new HashSet<>(Arrays.asList(PEER_CLUSTER_NAME1)));
-    _manager.addPeerClusterWatches(CLUSTER_NAME, new HashSet<>(Arrays.asList(PEER_CLUSTER_NAME1, PEER_CLUSTER_NAME2)));
+    _manager.addPeerClusterWatches(new HashSet<>(Arrays.asList(PEER_CLUSTER_NAME1)));
+    _manager.addPeerClusterWatches(new HashSet<>(Arrays.asList(PEER_CLUSTER_NAME1, PEER_CLUSTER_NAME2)));
     verify(_loadBalancerState, times(1)).listenToCluster(eq(PEER_CLUSTER_NAME2), any());
     verify(_loadBalancerState, times(1)).listenToCluster(eq(PEER_CLUSTER_NAME1), any());
   }
 
   @Test
   public void testAddPeerClusterWatchesWithPeerClusterRemoved() {
-    _manager.addPeerClusterWatches(CLUSTER_NAME, new HashSet<>(Arrays.asList(PEER_CLUSTER_NAME1, PEER_CLUSTER_NAME2)));
-    _manager.addPeerClusterWatches(CLUSTER_NAME, new HashSet<>(Arrays.asList(PEER_CLUSTER_NAME1)));
+    _manager.addPeerClusterWatches(new HashSet<>(Arrays.asList(PEER_CLUSTER_NAME1, PEER_CLUSTER_NAME2)));
+    _manager.addPeerClusterWatches(new HashSet<>(Arrays.asList(PEER_CLUSTER_NAME1)));
     verify(_loadBalancerState, times(1)).listenToCluster(eq(PEER_CLUSTER_NAME1), any());
     verify(_loadBalancerState, times(1)).listenToCluster(eq(PEER_CLUSTER_NAME2), any());
 
