@@ -35,6 +35,11 @@ import java.util.Set;
 import static com.linkedin.d2.balancer.properties.util.PropertyUtil.mapGet;
 
 
+/**
+ * ClusterPropertiesJsonSerializer serialize and deserialize data stored in a cluster store on service registry (like Zookeeper).
+ * NOTE: The deserialized object is actually a {@link ClusterStoreProperties} to include ALL properties in the store.
+ * The interface is left with PropertySerializer<ClusterProperties> for backward compatibility.
+ */
 public class ClusterPropertiesJsonSerializer implements
     PropertySerializer<ClusterProperties>, PropertyBuilder<ClusterProperties>
 {

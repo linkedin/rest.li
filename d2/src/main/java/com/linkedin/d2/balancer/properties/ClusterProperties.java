@@ -162,6 +162,12 @@ public class ClusterProperties
     _delegated = delegated;
   }
 
+  public ClusterProperties(ClusterProperties other)
+  {
+    this(other._clusterName, other._prioritizedSchemes, other._properties, other._bannedUris, other._partitionProperties,
+        other._sslSessionValidationStrings, other._darkClusters, other._delegated);
+  }
+
   public boolean isBanned(URI uri)
   {
     return _bannedUris.contains(uri);

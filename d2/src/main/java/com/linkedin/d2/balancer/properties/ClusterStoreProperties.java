@@ -148,14 +148,7 @@ public class ClusterStoreProperties extends ClusterProperties
     {
       return _canaryConfigs;
     }
-    return new ClusterProperties(getClusterName(),
-        getPrioritizedSchemes(),
-        getProperties(),
-        getBannedUris(),
-        getPartitionProperties(),
-        getSslSessionValidationStrings(),
-        getDarkClusters(),
-        isDelegated());
+    return new ClusterProperties(this); // make a copy of stable configs with the super class copy constructor
   }
 
   @Override

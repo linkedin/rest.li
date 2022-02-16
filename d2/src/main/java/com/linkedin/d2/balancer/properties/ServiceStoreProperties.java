@@ -168,9 +168,7 @@ public class ServiceStoreProperties extends ServiceProperties
     {
       return _canaryConfigs;
     }
-    return new ServiceProperties(getServiceName(), getClusterName(), getPath(), getLoadBalancerStrategyList(), getLoadBalancerStrategyProperties(),
-        getTransportClientProperties(), getDegraderProperties(), getPrioritizedSchemes(), getBanned(), getServiceMetadataProperties(), getBackupRequests(),
-        getRelativeStrategyProperties(), isEnableClusterSubsetting(), getMinClusterSubsetSize());
+    return new ServiceProperties(this); // make a copy of stable configs with the super class copy constructor
   }
 
   @Override
