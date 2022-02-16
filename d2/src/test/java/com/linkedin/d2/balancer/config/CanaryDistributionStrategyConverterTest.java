@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.config;
 
+import com.google.common.collect.ImmutableMap;
 import com.linkedin.d2.D2CanaryDistributionStrategy;
 import com.linkedin.d2.PercentageStrategyProperties;
 import com.linkedin.d2.StrategyType;
@@ -25,11 +26,14 @@ import com.linkedin.d2.balancer.properties.CanaryDistributionStrategy;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.data.template.StringArray;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import java.util.*;
 
 
 /**
@@ -57,6 +61,13 @@ public class CanaryDistributionStrategyConverterTest
     TARGET_HOSTS_FOR_CONFIG.setTargetHosts(new StringArray(HOSTS));
   }
 
+  /**
+   * Return test objects with the structure:
+   * {
+   *   CanaryDistributionStrategy - input canary distribution strategy
+   *   D2CanaryDistributionStrategy - Expected D2CanaryDistributionStrategy
+   * }
+   */
   @DataProvider(name = "distributionStrategyPropertiesAndConfigs")
   public Object[][] getDistributionStrategyPropertiesAndConfigs()
   {
@@ -88,49 +99,85 @@ public class CanaryDistributionStrategyConverterTest
   }
 
   @Test(dataProvider = "distributionStrategyPropertiesAndConfigs")
-  public void testNormalCases(CanaryDistributionStrategy properties, D2CanaryDistributionStrategy config)
+  public void testToConfigNormalCases(CanaryDistributionStrategy properties, D2CanaryDistributionStrategy config)
   {
     Assert.assertEquals(CanaryDistributionStrategyConverter.toConfig(properties), config, "toConfig failed");
     Assert.assertEquals(CanaryDistributionStrategyConverter.toProperties(config), properties, "toProperties failed");
   }
 
-  @Test
-  public void testEdgeCases()
+  /**
+   * Return test objects with the structure:
+   * {
+   *   String - Strategy type,
+   *   Map<String, Object> - Percentage properties map,
+   *   Map<String, Object> - Target hosts properties map,
+   *   Map<String, Object> - Target applications properties map,
+   *   D2CanaryDistributionStrategy - Expected D2CanaryDistributionStrategy
+   * }
+   */
+  @DataProvider(name = "getEdgeCasesDistributionPropertiesAndConfigs")
+  public Object[][] getEdgeCasesDistributionPropertiesAndConfigs()
   {
-    CanaryDistributionStrategy emtpyPercentageProperties = new CanaryDistributionStrategy("percentage", EMPTY_MAP, EMPTY_MAP, EMPTY_MAP);
-    CanaryDistributionStrategy emptyTargetHostsProperties = new CanaryDistributionStrategy(PropertyKeys.TARGET_HOSTS, EMPTY_MAP, EMPTY_MAP, EMPTY_MAP);
-    CanaryDistributionStrategy emptyTargetApplicationsProperties = new CanaryDistributionStrategy(PropertyKeys.TARGET_APPLICATIONS, EMPTY_MAP, EMPTY_MAP, EMPTY_MAP);
-    // empty properties will fall back to DISABLED
-    Assert.assertEquals(CanaryDistributionStrategyConverter.toConfig(emtpyPercentageProperties), DISABLED_CONFIG);
-    Assert.assertEquals(CanaryDistributionStrategyConverter.toConfig(emptyTargetHostsProperties), DISABLED_CONFIG);
-    Assert.assertEquals(CanaryDistributionStrategyConverter.toConfig(emptyTargetApplicationsProperties), DISABLED_CONFIG);
-    // multiple properties will only use the one specified in the strategy
-    Assert.assertEquals(
-      CanaryDistributionStrategyConverter.toConfig(new CanaryDistributionStrategy(PropertyKeys.TARGET_HOSTS, PERCENTAGE_PROPERTIES, TARGET_HOSTS_PROPERTIES, EMPTY_MAP))
-      , TARGET_HOSTS_CONFIG
-    );
+    final D2CanaryDistributionStrategy defaultPercentageConfigs = new D2CanaryDistributionStrategy()
+        .setStrategy(StrategyType.PERCENTAGE)
+        .setPercentageStrategyProperties(new PercentageStrategyProperties().setScope(CanaryDistributionStrategy.DEFAULT_SCOPE));
 
-    // invalid scope values will use default value
-    Map<String, Object> propertiesWithInvalidScope = new HashMap<>();
-    propertiesWithInvalidScope.put(PropertyKeys.PERCENTAGE_SCOPE, -1);      // scope < 0
-    CanaryDistributionStrategy strategyWithInvalidScope = new CanaryDistributionStrategy("percentage", propertiesWithInvalidScope, EMPTY_MAP, EMPTY_MAP);
-    D2CanaryDistributionStrategy expected = new D2CanaryDistributionStrategy()
-      .setStrategy(StrategyType.PERCENTAGE)
-      .setPercentageStrategyProperties(new PercentageStrategyProperties().setScope(CanaryDistributionStrategy.DEFAULT_SCOPE));
-    Assert.assertEquals(CanaryDistributionStrategyConverter.toConfig(strategyWithInvalidScope), expected);
-
-    propertiesWithInvalidScope.put(PropertyKeys.PERCENTAGE_SCOPE, 1);       // scope = 1
-    Assert.assertEquals(CanaryDistributionStrategyConverter.toConfig(strategyWithInvalidScope), expected);
-
-    propertiesWithInvalidScope.put(PropertyKeys.PERCENTAGE_SCOPE, "3xr9");  // non-numeric scope
-    Assert.assertEquals(CanaryDistributionStrategyConverter.toConfig(strategyWithInvalidScope), expected);
-
-    propertiesWithInvalidScope.put(PropertyKeys.TARGET_APPLICATIONS, APPS); // targetApplications strategy with invalid scope
-    TargetApplicationsStrategyProperties targetAppsWithDefaultScope = new TargetApplicationsStrategyProperties();
+    final TargetApplicationsStrategyProperties targetAppsWithDefaultScope = new TargetApplicationsStrategyProperties();
     targetAppsWithDefaultScope.setTargetApplications(new StringArray(APPS));
     targetAppsWithDefaultScope.setScope(CanaryDistributionStrategy.DEFAULT_SCOPE);
-    Assert.assertEquals(
-      CanaryDistributionStrategyConverter.toConfig(new CanaryDistributionStrategy(PropertyKeys.TARGET_APPLICATIONS, EMPTY_MAP, EMPTY_MAP, propertiesWithInvalidScope)),
-      new D2CanaryDistributionStrategy().setStrategy(StrategyType.TARGET_APPLICATIONS).setTargetApplicationsStrategyProperties(targetAppsWithDefaultScope));
+    final D2CanaryDistributionStrategy defaultTargetAppsConfigs = new D2CanaryDistributionStrategy().setStrategy(StrategyType.TARGET_APPLICATIONS)
+        .setTargetApplicationsStrategyProperties(targetAppsWithDefaultScope);
+
+    Map<String, Object> nullPercentageMap = new HashMap<>();
+    nullPercentageMap.put(PropertyKeys.PERCENTAGE_SCOPE, null);
+    nullPercentageMap.put(PropertyKeys.TARGET_APPLICATIONS, APPS);
+
+    Map<String, Object> nullAppsMap = new HashMap<>();
+    nullAppsMap.put(PropertyKeys.TARGET_APPLICATIONS, null);
+    nullAppsMap.put(PropertyKeys.PERCENTAGE_SCOPE, 0.3);
+
+    Map<String, Object> nullHostsMap = new HashMap<>();
+    nullHostsMap.put(PropertyKeys.TARGET_HOSTS, null);
+
+    return new Object[][] {
+        // unknown strategy type will fall back DISABLED
+        {"2343xscjfi", EMPTY_MAP, EMPTY_MAP, EMPTY_MAP, DISABLED_CONFIG},
+        // empty properties will fall back to DISABLED
+        {"percentage", EMPTY_MAP, EMPTY_MAP, EMPTY_MAP, DISABLED_CONFIG},
+        {PropertyKeys.TARGET_HOSTS, EMPTY_MAP, EMPTY_MAP, EMPTY_MAP, DISABLED_CONFIG},
+        {PropertyKeys.TARGET_APPLICATIONS, EMPTY_MAP, EMPTY_MAP, EMPTY_MAP, DISABLED_CONFIG},
+        // multiple properties will only use the one specified in the strategy
+        {PropertyKeys.TARGET_HOSTS, PERCENTAGE_PROPERTIES, TARGET_HOSTS_PROPERTIES, EMPTY_MAP, TARGET_HOSTS_CONFIG},
+
+        ///// Invalid Property Types /////
+        // percentage strategy with invalid property types will fall back to DISABLED
+        {"percentage", nullPercentageMap, EMPTY_MAP, EMPTY_MAP, DISABLED_CONFIG}, // scope is null
+        {"percentage", ImmutableMap.of(PropertyKeys.PERCENTAGE_SCOPE, "3xr9"), EMPTY_MAP, EMPTY_MAP, DISABLED_CONFIG}, // non-numeric scope
+        // target hosts strategy with invalid property types will fall back to DISABLED
+        {PropertyKeys.TARGET_HOSTS, EMPTY_MAP, nullHostsMap, EMPTY_MAP, DISABLED_CONFIG}, // null hosts
+        {PropertyKeys.TARGET_HOSTS, EMPTY_MAP, ImmutableMap.of(PropertyKeys.TARGET_HOSTS, "erwf"), EMPTY_MAP, DISABLED_CONFIG}, // hosts non list
+        {PropertyKeys.TARGET_HOSTS, EMPTY_MAP, ImmutableMap.of(PropertyKeys.TARGET_HOSTS, Arrays.asList("erwf", 3)), EMPTY_MAP, DISABLED_CONFIG}, // hosts list has invalid value type
+        // target apps strategy with invalid property types will fall back to DISABLED
+        {PropertyKeys.TARGET_APPLICATIONS, EMPTY_MAP, EMPTY_MAP, nullAppsMap, DISABLED_CONFIG}, // null apps
+        {PropertyKeys.TARGET_APPLICATIONS, EMPTY_MAP, EMPTY_MAP, ImmutableMap.of(PropertyKeys.TARGET_APPLICATIONS, 3), DISABLED_CONFIG}, // apps non list
+        {PropertyKeys.TARGET_APPLICATIONS, EMPTY_MAP, EMPTY_MAP, nullPercentageMap, DISABLED_CONFIG}, // scope is null
+        {PropertyKeys.TARGET_APPLICATIONS, EMPTY_MAP, EMPTY_MAP, ImmutableMap.of(PropertyKeys.TARGET_APPLICATIONS, APPS,
+                                                                                  PropertyKeys.PERCENTAGE_SCOPE, "9ejo"), DISABLED_CONFIG}, // non-numeric scope
+
+        ///// Invalid Property Values /////
+        // percentage strategy with invalid scope value will use default value
+        {"percentage", ImmutableMap.of(PropertyKeys.PERCENTAGE_SCOPE, -1), EMPTY_MAP, EMPTY_MAP, defaultPercentageConfigs},
+        {"percentage", ImmutableMap.of(PropertyKeys.PERCENTAGE_SCOPE, 1), EMPTY_MAP, EMPTY_MAP, defaultPercentageConfigs}, // scope >= 1
+        // target apps strategy with invalid scope value will use default value
+        {PropertyKeys.TARGET_APPLICATIONS, EMPTY_MAP, EMPTY_MAP, ImmutableMap.of(PropertyKeys.TARGET_APPLICATIONS, APPS,
+                                                                                  PropertyKeys.PERCENTAGE_SCOPE, 5), defaultTargetAppsConfigs} // scope >= 1
+    };
+  }
+  @Test(dataProvider = "getEdgeCasesDistributionPropertiesAndConfigs")
+  public void testToConfigEdgeCases(String strategyType, Map<String, Object> percentageProperties, Map<String, Object> targetHostsProperties,
+                                Map<String, Object> targetAppsProperties, D2CanaryDistributionStrategy expected)
+  {
+    CanaryDistributionStrategy input = new CanaryDistributionStrategy(strategyType, percentageProperties, targetHostsProperties, targetAppsProperties);
+    Assert.assertEquals(CanaryDistributionStrategyConverter.toConfig(input), expected);
   }
 }

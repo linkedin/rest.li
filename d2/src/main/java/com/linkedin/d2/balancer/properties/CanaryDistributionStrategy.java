@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.properties;
 
+import com.linkedin.util.ArgumentUtil;
 import java.util.Map;
 
 
@@ -39,6 +40,10 @@ public class CanaryDistributionStrategy
                                     Map<String, Object> targetHostsStrategyProperties,
                                     Map<String, Object> targetApplicationsStrategyProperties)
   {
+    ArgumentUtil.notNull(strategy, "strategy");
+    ArgumentUtil.notNull(percentageStrategyProperties, "percentageStrategyProperties");
+    ArgumentUtil.notNull(targetHostsStrategyProperties, "targetHostsStrategyProperties");
+    ArgumentUtil.notNull(targetApplicationsStrategyProperties, "targetApplicationsStrategyProperties");
     _strategy = strategy;
     _percentageStrategyProperties = percentageStrategyProperties;
     _targetHostsStrategyProperties = targetHostsStrategyProperties;

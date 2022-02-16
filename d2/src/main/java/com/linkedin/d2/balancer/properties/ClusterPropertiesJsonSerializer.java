@@ -83,6 +83,10 @@ public class ClusterPropertiesJsonSerializer implements
     return value;
   }
 
+  /**
+   * Always return the composite class {@link ClusterStoreProperties} to include ALL properties stored on service registry (like Zookeeper),
+   * such as canary configs, distribution strategy, etc.
+   */
   @Override
   public ClusterProperties fromMap(Map<String, Object> map) {
     ClusterProperties stableConfigs = buildClusterPropertiesFromMap(map);
@@ -104,6 +108,9 @@ public class ClusterPropertiesJsonSerializer implements
     return new ClusterStoreProperties(stableConfigs, canaryConfigs, distributionStrategy);
   }
 
+  /**
+   * Build cluster configs from map. This could be for either stable or canary configs.
+   */
   private ClusterProperties buildClusterPropertiesFromMap(Map<String, Object> map)
   {
     List<String> bannedList = mapGet(map, PropertyKeys.BANNED_URIS);
