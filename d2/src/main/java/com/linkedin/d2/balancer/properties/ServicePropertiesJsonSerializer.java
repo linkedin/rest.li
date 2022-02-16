@@ -41,6 +41,11 @@ import static com.linkedin.d2.balancer.properties.util.PropertyUtil.mapGet;
 import static com.linkedin.d2.balancer.properties.util.PropertyUtil.mapGetOrDefault;
 
 
+/**
+ * ServicePropertiesJsonSerializer serialize and deserialize data stored in a service store on service registry (like Zookeeper).
+ * NOTE: The deserialized object is actually a {@link ServiceStoreProperties} to include ALL properties in the store.
+ * The interface is left with PropertySerializer<ServiceProperties> for backward compatibility.
+ */
 public class ServicePropertiesJsonSerializer implements
     PropertySerializer<ServiceProperties>, PropertyBuilder<ServiceProperties>
 {
