@@ -100,15 +100,15 @@ public class ClusterStoreProperties extends ClusterProperties
   }
 
   public ClusterStoreProperties(String clusterName,
-                                List<String> prioritizedSchemes,
-                                Map<String, String> properties,
-                                Set<URI> bannedUris,
-                                PartitionProperties partitionProperties,
-                                List<String> sslSessionValidationStrings,
-                                Map<String, Object> darkClusters,
-                                boolean delegated,
-                                ClusterProperties canaryConfigs,
-                                CanaryDistributionStrategy distributionStrategy)
+      List<String> prioritizedSchemes,
+      Map<String, String> properties,
+      Set<URI> bannedUris,
+      PartitionProperties partitionProperties,
+      List<String> sslSessionValidationStrings,
+      Map<String, Object> darkClusters,
+      boolean delegated,
+      ClusterProperties canaryConfigs,
+      CanaryDistributionStrategy distributionStrategy)
   {
     super(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings, darkClusters, delegated);
     _canaryConfigs = canaryConfigs;
@@ -144,7 +144,7 @@ public class ClusterStoreProperties extends ClusterProperties
    */
   public ClusterProperties getDistributedClusterProperties(CanaryDistributionProvider.Distribution distribution)
   {
-    if (distribution.equals(CanaryDistributionProvider.Distribution.CANARY) || hasCanary())
+    if (distribution.equals(CanaryDistributionProvider.Distribution.CANARY) && hasCanary())
     {
       return _canaryConfigs;
     }

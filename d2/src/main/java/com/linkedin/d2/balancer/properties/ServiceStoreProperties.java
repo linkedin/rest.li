@@ -40,7 +40,8 @@ public class ServiceStoreProperties extends ServiceProperties
   protected final CanaryDistributionStrategy _canaryDistributionStrategy;
 
   public ServiceStoreProperties(String serviceName, String clusterName, String path,
-      List<String> prioritizedStrategyList) {
+      List<String> prioritizedStrategyList)
+  {
     this(serviceName, clusterName, path, prioritizedStrategyList,
         Collections.<String, Object>emptyMap(), Collections.<String, Object>emptyMap(),
         Collections.<String, String>emptyMap(),
@@ -48,7 +49,8 @@ public class ServiceStoreProperties extends ServiceProperties
   }
 
   public ServiceStoreProperties(String serviceName, String clusterName, String path,
-      List<String> prioritizedStrategyList, ServiceProperties canaryConfigs, CanaryDistributionStrategy distributionStrategy) {
+      List<String> prioritizedStrategyList, ServiceProperties canaryConfigs, CanaryDistributionStrategy distributionStrategy)
+  {
     super(serviceName, clusterName, path, prioritizedStrategyList,
         Collections.<String, Object>emptyMap(), Collections.<String, Object>emptyMap(),
         Collections.<String, String>emptyMap(),
@@ -58,7 +60,8 @@ public class ServiceStoreProperties extends ServiceProperties
   }
 
   public ServiceStoreProperties(String serviceName, String clusterName, String path,
-      List<String> prioritizedStrategyList, Map<String, Object> loadBalancerStrategyProperties) {
+      List<String> prioritizedStrategyList, Map<String, Object> loadBalancerStrategyProperties)
+  {
     this(serviceName, clusterName, path, prioritizedStrategyList, loadBalancerStrategyProperties,
         Collections.<String, Object>emptyMap(), Collections.<String, String>emptyMap(),
         Collections.<String>emptyList(), Collections.<URI>emptySet());
@@ -67,7 +70,8 @@ public class ServiceStoreProperties extends ServiceProperties
   public ServiceStoreProperties(String serviceName, String clusterName, String path,
       List<String> prioritizedStrategyList, Map<String, Object> loadBalancerStrategyProperties,
       Map<String, Object> transportClientProperties, Map<String, String> degraderProperties,
-      List<String> prioritizedSchemes, Set<URI> banned) {
+      List<String> prioritizedSchemes, Set<URI> banned)
+  {
     this(serviceName, clusterName, path, prioritizedStrategyList, loadBalancerStrategyProperties,
         transportClientProperties, degraderProperties, prioritizedSchemes, banned, Collections.<String,Object>emptyMap());
   }
@@ -75,7 +79,8 @@ public class ServiceStoreProperties extends ServiceProperties
   public ServiceStoreProperties(String serviceName, String clusterName, String path,
       List<String> prioritizedStrategyList, Map<String, Object> loadBalancerStrategyProperties,
       Map<String, Object> transportClientProperties, Map<String, String> degraderProperties,
-      List<String> prioritizedSchemes, Set<URI> banned, Map<String, Object> serviceMetadataProperties) {
+      List<String> prioritizedSchemes, Set<URI> banned, Map<String, Object> serviceMetadataProperties)
+  {
     this(serviceName, clusterName, path, prioritizedStrategyList, loadBalancerStrategyProperties,
         transportClientProperties, degraderProperties, prioritizedSchemes, banned, serviceMetadataProperties, Collections.emptyList());
   }
@@ -84,7 +89,8 @@ public class ServiceStoreProperties extends ServiceProperties
       List<String> prioritizedStrategyList, Map<String, Object> loadBalancerStrategyProperties,
       Map<String, Object> transportClientProperties, Map<String, String> degraderProperties,
       List<String> prioritizedSchemes, Set<URI> banned, Map<String, Object> serviceMetadataProperties,
-      List<Map<String, Object>> backupRequests) {
+      List<Map<String, Object>> backupRequests)
+  {
     this(serviceName, clusterName, path, prioritizedStrategyList, loadBalancerStrategyProperties,
         transportClientProperties, degraderProperties, prioritizedSchemes, banned, serviceMetadataProperties,
         backupRequests, null);
@@ -94,7 +100,8 @@ public class ServiceStoreProperties extends ServiceProperties
       List<String> prioritizedStrategyList, Map<String, Object> loadBalancerStrategyProperties,
       Map<String, Object> transportClientProperties, Map<String, String> degraderProperties,
       List<String> prioritizedSchemes, Set<URI> banned, Map<String, Object> serviceMetadataProperties,
-      List<Map<String, Object>> backupRequests, Map<String, Object> relativeStrategyProperties) {
+      List<Map<String, Object>> backupRequests, Map<String, Object> relativeStrategyProperties)
+  {
     this(serviceName, clusterName, path, prioritizedStrategyList, loadBalancerStrategyProperties,
         transportClientProperties, degraderProperties, prioritizedSchemes, banned, serviceMetadataProperties,
         backupRequests, relativeStrategyProperties, SubsettingStrategy.DEFAULT_ENABLE_CLUSTER_SUBSETTING, SubsettingStrategy.DEFAULT_CLUSTER_SUBSET_SIZE);
@@ -105,7 +112,8 @@ public class ServiceStoreProperties extends ServiceProperties
       Map<String, Object> transportClientProperties, Map<String, String> degraderProperties,
       List<String> prioritizedSchemes, Set<URI> banned, Map<String, Object> serviceMetadataProperties,
       List<Map<String, Object>> backupRequests, Map<String, Object> relativeStrategyProperties,
-      boolean enableClusterSubsetting, int minClusterSubsetSize) {
+      boolean enableClusterSubsetting, int minClusterSubsetSize)
+  {
     this(serviceName, clusterName, path, prioritizedStrategyList, loadBalancerStrategyProperties,
         transportClientProperties, degraderProperties, prioritizedSchemes, banned, serviceMetadataProperties,
         backupRequests, relativeStrategyProperties, enableClusterSubsetting, minClusterSubsetSize, null, null);
@@ -156,7 +164,7 @@ public class ServiceStoreProperties extends ServiceProperties
    */
   public ServiceProperties getDistributedServiceProperties(CanaryDistributionProvider.Distribution distribution)
   {
-    if (distribution.equals(CanaryDistributionProvider.Distribution.CANARY) || hasCanary())
+    if (distribution.equals(CanaryDistributionProvider.Distribution.CANARY) && hasCanary())
     {
       return _canaryConfigs;
     }

@@ -196,10 +196,27 @@ public class ClusterPropertiesSerializerTest
                                                              NullPartitionProperties.getInstance(), Arrays.asList("principal1", "principal2"),
                                                              DarkClustersConverter.toProperties(DARK_CLUSTER_CONFIG_MAP), false);
 
-    ClusterStoreProperties property = new ClusterStoreProperties("test", Collections.emptyList(), Collections.emptyMap(),
-                                                                                     Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(),
-                                                                                     (Map<String, Object>) null, false, canaryProperty, distributionStrategy);
+    ClusterStoreProperties property = new ClusterStoreProperties("test", Collections.emptyList(), Collections.emptyMap(), Collections.emptySet(),
+                                                                NullPartitionProperties.getInstance(), Collections.emptyList(),
+                                                                (Map<String, Object>) null, false, canaryProperty, distributionStrategy);
 
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
+  }
+
+  @Test
+  public void testClusterPropertiesWithCanaryEdgeCases()  throws PropertySerializationException
+  {
+    ClusterPropertiesJsonSerializer serializer = new ClusterPropertiesJsonSerializer();
+
+    ClusterProperties property = new ClusterProperties("test");
+    ClusterStoreProperties expected = new ClusterStoreProperties(property, null, null);
+    // having canary configs but missing distribution strategy will not be taken in.
+    ClusterStoreProperties inputProperty = new ClusterStoreProperties(property, property, null);
+    assertEquals(serializer.fromBytes(serializer.toBytes(inputProperty)), expected);
+
+    // having distribution strategy but missing canary configs will not be taken in.
+    inputProperty = new ClusterStoreProperties(property, null, new CanaryDistributionStrategy("percentage",
+        Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap()));
+    assertEquals(serializer.fromBytes(serializer.toBytes(inputProperty)), expected);
   }
 }

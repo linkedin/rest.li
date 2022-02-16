@@ -120,6 +120,23 @@ public class ServicePropertiesSerializerTest
   }
 
   @Test
+  public void testServicePropertiesWithCanaryEdgeCases()  throws PropertySerializationException
+  {
+    ServicePropertiesJsonSerializer serializer = new ServicePropertiesJsonSerializer();
+
+    ServiceProperties property = new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/foo", Arrays.asList("rr"));
+    ServiceStoreProperties expected = new ServiceStoreProperties(property, null, null);
+    // having canary configs but missing distribution strategy will not be taken in.
+    ServiceStoreProperties inputProperty = new ServiceStoreProperties(property, property, null);
+    assertEquals(serializer.fromBytes(serializer.toBytes(inputProperty)), expected);
+
+    // having distribution strategy but missing canary configs will not be taken in.
+    inputProperty = new ServiceStoreProperties(property, null, new CanaryDistributionStrategy("percentage",
+        Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap()));
+    assertEquals(serializer.fromBytes(serializer.toBytes(inputProperty)), expected);
+  }
+
+  @Test
   public void testServicePropertiesSerializerWithRelativeStrategy() throws PropertySerializationException
   {
     ServicePropertiesJsonSerializer serializer = new ServicePropertiesJsonSerializer();

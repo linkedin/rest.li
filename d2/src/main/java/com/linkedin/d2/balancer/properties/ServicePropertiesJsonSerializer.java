@@ -189,6 +189,10 @@ public class ServicePropertiesJsonSerializer implements
     }
   }
 
+  /**
+   * Always return the composite class {@link ServiceStoreProperties} to include ALL properties stored on service registry (like Zookeeper),
+   * such as canary configs, distribution strategy, etc.
+   */
   public ServiceProperties fromMap(Map<String,Object> map)
   {
     ServiceProperties stableConfigs = buildServicePropertiesFromMap(map);
@@ -211,6 +215,9 @@ public class ServicePropertiesJsonSerializer implements
     return new ServiceStoreProperties(stableConfigs, canaryConfigs, distributionStrategy);
   }
 
+  /**
+   * Build service configs from map. This could be for either stable or canary configs.
+   */
   private ServiceProperties buildServicePropertiesFromMap(Map<String,Object> map)
   {
     Map<String,Object> loadBalancerStrategyProperties = mapGetOrDefault(map, PropertyKeys.LB_STRATEGY_PROPERTIES, Collections.emptyMap());

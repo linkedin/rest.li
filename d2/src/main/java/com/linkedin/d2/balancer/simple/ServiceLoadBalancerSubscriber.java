@@ -55,7 +55,7 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
 
     ServiceProperties pickedProperties = discoveryProperties;
     CanaryDistributionProvider.Distribution distribution = CanaryDistributionProvider.Distribution.STABLE;
-    if (discoveryProperties instanceof ServiceStoreProperties) // this is actually always true
+    if (discoveryProperties instanceof ServiceStoreProperties) // this should always be true since the serializer returns the composite class
     {
       ServiceStoreProperties serviceStoreProperties = (ServiceStoreProperties) discoveryProperties;
       CanaryDistributionProvider canaryDistributionProvider = _simpleLoadBalancerState.getCanaryDistributionProvider();
