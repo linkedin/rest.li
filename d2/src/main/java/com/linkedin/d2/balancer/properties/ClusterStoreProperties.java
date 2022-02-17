@@ -109,6 +109,23 @@ public class ClusterStoreProperties extends ClusterProperties
       Map<String, Object> darkClusters,
       boolean delegated,
       ClusterProperties canaryConfigs,
+      CanaryDistributionStrategy distributionStrategy)
+  {
+    super(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings, darkClusters, delegated);
+    _canaryConfigs = canaryConfigs;
+    _canaryDistributionStrategy = distributionStrategy;
+    _clusterFailoutProperties = null;
+  }
+
+  public ClusterStoreProperties(String clusterName,
+      List<String> prioritizedSchemes,
+      Map<String, String> properties,
+      Set<URI> bannedUris,
+      PartitionProperties partitionProperties,
+      List<String> sslSessionValidationStrings,
+      Map<String, Object> darkClusters,
+      boolean delegated,
+      ClusterProperties canaryConfigs,
       CanaryDistributionStrategy distributionStrategy,
       ClusterFailoutProperties clusterFailoutProperties)
   {
@@ -130,6 +147,19 @@ public class ClusterStoreProperties extends ClusterProperties
     _canaryConfigs = canaryConfigs;
     _canaryDistributionStrategy = distributionStrategy;
     _clusterFailoutProperties = clusterFailoutProperties;
+  }
+
+  public ClusterStoreProperties(ClusterProperties stableConfigs,
+      ClusterProperties canaryConfigs,
+      CanaryDistributionStrategy distributionStrategy)
+  {
+    super(stableConfigs.getClusterName(), stableConfigs.getPrioritizedSchemes(),
+        stableConfigs.getProperties(), stableConfigs.getBannedUris(), stableConfigs.getPartitionProperties(),
+        stableConfigs.getSslSessionValidationStrings(), stableConfigs.getDarkClusters(),
+        stableConfigs.isDelegated());
+    _canaryConfigs = canaryConfigs;
+    _canaryDistributionStrategy = distributionStrategy;
+    _clusterFailoutProperties = null;
   }
 
   public ClusterProperties getCanaryConfigs()
