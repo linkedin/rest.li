@@ -9,18 +9,18 @@ import java.util.concurrent.ConcurrentMap;
 
 
 /**
- * This class is responsible for handling logistics for peer clusters of a failed out cluster.
+ * This class is responsible for managing a failed out cluster.
  * Some example tasks include:
  * - Adding cluster and URI watches for the peer clusters.
  * - Establishing connections to instances in the peer clusters.
  */
-public class FailedoutClusterWatchManager {
+public class FailedoutClusterManager {
   private final String _clusterName;
   private final LoadBalancerState _loadBalancerState;
   private final ConcurrentMap<String, LoadBalancerStateListenerCallback> _clusterListeners =
       new ConcurrentHashMap<>();
 
-  public FailedoutClusterWatchManager(String clusterName, LoadBalancerState loadBalancerState) {
+  public FailedoutClusterManager(String clusterName, LoadBalancerState loadBalancerState) {
     _clusterName = clusterName;
     _loadBalancerState = loadBalancerState;
   }

@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 import static org.mockito.Mockito.*;
 
 
-public class FailedoutClusterWatchManagerTest {
+public class FailedoutClusterManagerTest {
   private final static String CLUSTER_NAME = "Cluster";
   private final static String PEER_CLUSTER_NAME1 = "ClusterPeer1";
   private final static String PEER_CLUSTER_NAME2 = "ClusterPeer2";
@@ -19,12 +19,12 @@ public class FailedoutClusterWatchManagerTest {
   @Mock
   private LoadBalancerState _loadBalancerState;
 
-  private FailedoutClusterWatchManager _manager;
+  private FailedoutClusterManager _manager;
 
   @BeforeMethod
   public void setup() {
     MockitoAnnotations.initMocks(this);
-    _manager = new FailedoutClusterWatchManager(CLUSTER_NAME, _loadBalancerState);
+    _manager = new FailedoutClusterManager(CLUSTER_NAME, _loadBalancerState);
   }
 
   @Test
