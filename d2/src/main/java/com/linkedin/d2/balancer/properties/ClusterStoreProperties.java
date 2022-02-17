@@ -17,6 +17,7 @@
 package com.linkedin.d2.balancer.properties;
 
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
+import com.linkedin.d2.balancer.properties.ClusterFailoutProperties;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashSet;
@@ -39,7 +40,7 @@ public class ClusterStoreProperties extends ClusterProperties
 {
   protected final ClusterProperties _canaryConfigs;
   protected final CanaryDistributionStrategy _canaryDistributionStrategy;
-  // TODO: add fail-over data
+  protected final ClusterFailoutProperties _clusterFailoutProperties;
 
   public ClusterStoreProperties(String clusterName)
   {
@@ -96,7 +97,7 @@ public class ClusterStoreProperties extends ClusterProperties
       boolean delegated)
   {
     this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings, darkClusters, delegated,
-        null, null);
+        null, null, null);
   }
 
   public ClusterStoreProperties(String clusterName,
@@ -108,14 +109,19 @@ public class ClusterStoreProperties extends ClusterProperties
       Map<String, Object> darkClusters,
       boolean delegated,
       ClusterProperties canaryConfigs,
-      CanaryDistributionStrategy distributionStrategy)
+      CanaryDistributionStrategy distributionStrategy,
+      ClusterFailoutProperties clusterFailoutProperties)
   {
     super(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings, darkClusters, delegated);
     _canaryConfigs = canaryConfigs;
     _canaryDistributionStrategy = distributionStrategy;
+    _clusterFailoutProperties = clusterFailoutProperties;
   }
 
-  public ClusterStoreProperties(ClusterProperties stableConfigs, ClusterProperties canaryConfigs, CanaryDistributionStrategy distributionStrategy)
+  public ClusterStoreProperties(ClusterProperties stableConfigs,
+      ClusterProperties canaryConfigs,
+      CanaryDistributionStrategy distributionStrategy,
+      ClusterFailoutProperties clusterFailoutProperties)
   {
     super(stableConfigs.getClusterName(), stableConfigs.getPrioritizedSchemes(),
         stableConfigs.getProperties(), stableConfigs.getBannedUris(), stableConfigs.getPartitionProperties(),
@@ -123,6 +129,7 @@ public class ClusterStoreProperties extends ClusterProperties
         stableConfigs.isDelegated());
     _canaryConfigs = canaryConfigs;
     _canaryDistributionStrategy = distributionStrategy;
+    _clusterFailoutProperties = clusterFailoutProperties;
   }
 
   public ClusterProperties getCanaryConfigs()
@@ -133,6 +140,11 @@ public class ClusterStoreProperties extends ClusterProperties
   public CanaryDistributionStrategy getCanaryDistributionStrategy()
   {
     return _canaryDistributionStrategy;
+  }
+
+  public ClusterFailoutProperties getClusterFailoutProperties()
+  {
+    return _clusterFailoutProperties;
   }
 
   public boolean hasCanary() {
@@ -155,7 +167,8 @@ public class ClusterStoreProperties extends ClusterProperties
   public String toString()
   {
     return "ClusterStoreProperties [_stableClusterProperties=" + super.toString() + ", _canaryConfigs=" + _canaryConfigs
-        + ", _canaryDistributionStrategy=" + _canaryDistributionStrategy + "]";
+        + ", _canaryDistributionStrategy=" + _canaryDistributionStrategy
+        + ", _clusterFailoutProperties=" + _clusterFailoutProperties + "]";
   }
 
   @Override
@@ -165,6 +178,7 @@ public class ClusterStoreProperties extends ClusterProperties
     int result = super.hashCode();
     result = prime * result + ((_canaryConfigs == null) ? 0 : _canaryConfigs.hashCode());
     result = prime * result + ((_canaryDistributionStrategy == null) ? 0 : _canaryDistributionStrategy.hashCode());
+    result = prime * result + ((_clusterFailoutProperties == null) ? 0 : _clusterFailoutProperties.hashCode());
     return result;
   }
 
@@ -176,6 +190,9 @@ public class ClusterStoreProperties extends ClusterProperties
       return false;
     }
     ClusterStoreProperties other = (ClusterStoreProperties) obj;
+    if (_clusterFailoutProperties != other.getClusterFailoutProperties()) {
+      return false;
+    }
     return canaryEquals(other);
   }
 
