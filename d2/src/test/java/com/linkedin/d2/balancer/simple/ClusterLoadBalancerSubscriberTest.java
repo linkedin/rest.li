@@ -20,7 +20,6 @@ import com.linkedin.d2.balancer.properties.CanaryDistributionStrategy;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterStoreProperties;
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
-import com.linkedin.d2.balancer.properties.ClusterFailoutProperties;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import java.util.Collections;
 import java.util.HashMap;
@@ -109,7 +108,7 @@ public class ClusterLoadBalancerSubscriberTest
     ClusterLoadBalancerSubscriberFixture fixture = new ClusterLoadBalancerSubscriberFixture();
     when(fixture._canaryDistributionProvider.distribute(any())).thenReturn(distribution);
     fixture.getMockSubscriber(distribution != null).handlePut(CLUSTER_NAME,
-        new ClusterStoreProperties(stableConfigs, canaryConfigs, distributionStrategy, null));
+        new ClusterStoreProperties(stableConfigs, canaryConfigs, distributionStrategy));
 
     Assert.assertEquals(fixture._clusterInfo.get(CLUSTER_NAME).getClusterPropertiesItem().getProperty(),
         distribution == CanaryDistributionProvider.Distribution.CANARY ? canaryConfigs : stableConfigs);

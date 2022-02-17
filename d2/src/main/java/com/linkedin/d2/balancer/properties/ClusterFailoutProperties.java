@@ -2,7 +2,9 @@ package com.linkedin.d2.balancer.properties;
 
 import java.util.Map;
 import java.util.List;
-
+import com.linkedin.d2.balancer.clusterfailout.ClusterFailoutRedirectConfig;
+import com.linkedin.d2.balancer.clusterfailout.ClusterFailoutBucketConfig;
+import java.util.stream.Collectors;
 
 /**
  * Configuration for a service's cluster level failout properties. These properties are used to control
@@ -10,36 +12,20 @@ import java.util.List;
  */
 public class ClusterFailoutProperties
 {
-  /* Controls how requests from offline buckets are routed.
-  * _clusterFailoutRedirectConfigs = [
-  *   { destination: FabricUrn,
-   *     weight: int
-   *   },]
-   */
-  private final List<Map<String, Object>> _clusterFailoutRedirectConfigs;
-
-  /* Controls which buckets are offline.
-   * _clusterFailoutBucketConfigs = [
-   * { fabric: FabricUrn,
-   *   partition: string,
-   *  bucketIdRange: IntRange,
-   *  offlineAt: Time,
-   *  onlineAt: optional Time
-  }
-   */
-  private final List<Map<String, Object>> _clusterFailoutBucketConfigs;
+  private final List<ClusterFailoutRedirectConfig> _clusterFailoutRedirectConfigs;
+  private final List<ClusterFailoutBucketConfig> _clusterFailoutBucketConfigs;
 
   public ClusterFailoutProperties(List<Map<String, Object>> clusterFailoutRedirectConfigs,
       List<Map<String, Object>> clusterFailoutBucketConfigs) {
-    _clusterFailoutBucketConfigs = clusterFailoutBucketConfigs;
-    _clusterFailoutRedirectConfigs = clusterFailoutRedirectConfigs;
+    _clusterFailoutBucketConfigs = clusterFailoutBucketConfigs.stream().map(ClusterFailoutBucketConfig::new).collect(Collectors.toList());
+    _clusterFailoutRedirectConfigs = clusterFailoutRedirectConfigs.stream().map(ClusterFailoutRedirectConfig::new).collect(Collectors.toList());
   }
 
-  public List<Map<String, Object>> getClusterFailoutRedirectConfigs() {
+  public List<ClusterFailoutRedirectConfig> getClusterFailoutRedirectConfigs() {
     return _clusterFailoutRedirectConfigs;
   }
 
-  public List<Map<String, Object>> getClusterFailoutBucketConfigs() {
+  public List<ClusterFailoutBucketConfig> getClusterFailoutBucketConfigs() {
     return _clusterFailoutBucketConfigs;
   }
 
