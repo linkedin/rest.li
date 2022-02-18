@@ -65,7 +65,7 @@ public class ClusterFailoutProperties
       return false;
 
     ClusterFailoutProperties other = (ClusterFailoutProperties) obj;
-    return (_clusterFailoutRedirectConfigs.equals(other.getClusterFailoutRedirectConfigs()) &&
-          _clusterFailoutBucketConfigs.equals(other.getClusterFailoutBucketConfigs()));
+    return _clusterFailoutRedirectConfigs.equals(other.getClusterFailoutRedirectConfigs()) &&
+          _clusterFailoutBucketConfigs.equals(other.getClusterFailoutBucketConfigs());
   }
 }
