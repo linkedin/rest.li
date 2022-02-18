@@ -62,8 +62,7 @@ public class ClusterFailoutBucketConfig
           (String) configMap.get(ClusterFailoutBucketConfig.PARTITION_PROPERTY),
           (Integer) configMap.get(ClusterFailoutBucketConfig.BUCKET_ID_RANGE),
           (Date) configMap.get(ClusterFailoutBucketConfig.OFFLINE_AT_PROPERTY),
-          configMap.containsKey(ClusterFailoutBucketConfig.ONLINE_AT_PROPERTY) ?
-              (Date) configMap.get(ClusterFailoutBucketConfig.ONLINE_AT_PROPERTY) : null);
+          (Date) configMap.get(ClusterFailoutBucketConfig.ONLINE_AT_PROPERTY));
     }
     catch(Exception e) {
       _logger.error("Error while converting SLF properties: " + e.getMessage());
