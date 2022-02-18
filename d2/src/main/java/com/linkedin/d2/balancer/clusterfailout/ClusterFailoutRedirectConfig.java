@@ -71,6 +71,6 @@ public class ClusterFailoutRedirectConfig
       return false;
 
     ClusterFailoutRedirectConfig other = (ClusterFailoutRedirectConfig) obj;
-    return (_fabricUrn.equals(other.getFabricUrn()) && _weight.equals(other.getWeight()));
+    return _fabricUrn.equals(other.getFabricUrn()) && _weight.equals(other.getWeight());
   }
 }
