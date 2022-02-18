@@ -1,6 +1,8 @@
 package com.linkedin.d2.balancer.clusterfailout;
 
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class is a simple data structure for controlling the weighting of how much traffic is sent to a given fabric.
@@ -16,25 +18,22 @@ public class ClusterFailoutRedirectConfig
   private final static String FABRIC_URN_PROPERTY = "fabric";
   private final static String WEIGHT_PROPERTY = "weight";
 
+  private static final Logger _logger = LoggerFactory.getLogger(
+      ClusterFailoutRedirectConfig.class);
+
   public ClusterFailoutRedirectConfig(String fabricUrn, Integer weight) {
     _fabricUrn = fabricUrn;
     _weight = weight;
   }
 
   public static ClusterFailoutRedirectConfig createFromMap(Map<String, Object> configMap) {
-    ClusterFailoutRedirectConfig clusterFailoutRedirectConfig = null;
     try {
-      clusterFailoutRedirectConfig = new ClusterFailoutRedirectConfig(
-          (String) configMap.get(ClusterFailoutRedirectConfig.FABRIC_URN_PROPERTY),
+      return new ClusterFailoutRedirectConfig((String) configMap.get(ClusterFailoutRedirectConfig.FABRIC_URN_PROPERTY),
           (Integer) configMap.get(ClusterFailoutRedirectConfig.WEIGHT_PROPERTY));
+    } catch (Exception e) {
+      _logger.error("Error while converting SLF properties: " + e.getMessage());
+      return null;
     }
-    catch(ClassCastException e) {
-      // Return value will be null if cast failed.
-    }
-    catch (NullPointerException e) {
-      // return value will be null if a key is missing.
-    }
-    return clusterFailoutRedirectConfig;
   }
 
   public String getFabricUrn() {
@@ -72,10 +71,6 @@ public class ClusterFailoutRedirectConfig
       return false;
 
     ClusterFailoutRedirectConfig other = (ClusterFailoutRedirectConfig) obj;
-    if (!_fabricUrn.equals(other.getFabricUrn()))
-      return false;
-    if (!_weight.equals(other.getWeight()))
-      return false;
-    return true;
+    return (_fabricUrn.equals(other.getFabricUrn()) && _weight.equals(other.getWeight()));
   }
 }

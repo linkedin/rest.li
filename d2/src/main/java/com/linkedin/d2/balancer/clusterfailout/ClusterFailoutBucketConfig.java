@@ -2,6 +2,8 @@ package com.linkedin.d2.balancer.clusterfailout;
 
 import java.util.Map;
 import java.util.Date;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class is a simple data structure for tracking the traffic state of a given application.
@@ -33,9 +35,12 @@ public class ClusterFailoutBucketConfig
 
   private final static String FABRIC_URN_PROPERTY = "fabric";
   private final static String PARTITION_PROPERTY = "partition";
-  private final static String BUCKET_OFFLINE_RANGE_PROPERTY = "bucketOfflineRange";
+  private final static String BUCKET_ID_RANGE = "bucketIdRange";
   private final static String OFFLINE_AT_PROPERTY = "offlineAt";
   private final static String ONLINE_AT_PROPERTY = "onlineAt";
+
+  private static final Logger _logger = LoggerFactory.getLogger(
+      ClusterFailoutBucketConfig.class);
 
   public ClusterFailoutBucketConfig(String fabricUrn,
       String partition,
@@ -51,19 +56,19 @@ public class ClusterFailoutBucketConfig
   }
 
   public static ClusterFailoutBucketConfig createFromMap(Map<String, Object> configMap) {
-    ClusterFailoutBucketConfig clusterFailoutBucketConfig = null;
     try {
-      clusterFailoutBucketConfig = new ClusterFailoutBucketConfig((String) configMap.get(ClusterFailoutBucketConfig.FABRIC_URN_PROPERTY),
-          (String) configMap.get(ClusterFailoutBucketConfig.PARTITION_PROPERTY), (Integer) configMap.get(ClusterFailoutBucketConfig.BUCKET_OFFLINE_RANGE_PROPERTY),
-          (Date) configMap.get(ClusterFailoutBucketConfig.OFFLINE_AT_PROPERTY), (Date) configMap.get(ClusterFailoutBucketConfig.ONLINE_AT_PROPERTY));
+      return new ClusterFailoutBucketConfig(
+          (String) configMap.get(ClusterFailoutBucketConfig.FABRIC_URN_PROPERTY),
+          (String) configMap.get(ClusterFailoutBucketConfig.PARTITION_PROPERTY),
+          (Integer) configMap.get(ClusterFailoutBucketConfig.BUCKET_ID_RANGE),
+          (Date) configMap.get(ClusterFailoutBucketConfig.OFFLINE_AT_PROPERTY),
+          configMap.containsKey(ClusterFailoutBucketConfig.ONLINE_AT_PROPERTY) ?
+              (Date) configMap.get(ClusterFailoutBucketConfig.ONLINE_AT_PROPERTY) : null);
     }
-    catch(ClassCastException e) {
-      // Return value will be null if cast failed.
+    catch(Exception e) {
+      _logger.error("Error while converting SLF properties: " + e.getMessage());
+      return null;
     }
-    catch (NullPointerException e) {
-      // return value will be null if a key is missing.
-    }
-    return clusterFailoutBucketConfig;
   }
 
   public String getFabricUrn() {
@@ -116,16 +121,10 @@ public class ClusterFailoutBucketConfig
       return false;
 
     ClusterFailoutBucketConfig other = (ClusterFailoutBucketConfig) obj;
-    if (!_fabricUrn.equals(other.getFabricUrn()))
-      return false;
-    if (!_partition.equals(other.getPartition()))
-      return false;
-    if (!_bucketOfflineRange.equals(other.getBucketOfflineRange()))
-      return false;
-    if (!_offlineAt.equals(other.getOfflineAt()))
-      return false;
-    if (!_onlineAt.equals(other.getOnlineAt()))
-      return false;
-    return true;
+    return (_fabricUrn.equals(other.getFabricUrn()) &&
+        _partition.equals(other.getPartition()) &&
+        _bucketOfflineRange.equals(other.getBucketOfflineRange()) &&
+        _offlineAt.equals(other.getOfflineAt()) &&
+        _onlineAt.equals(other.getOnlineAt()));
   }
 }

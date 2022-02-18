@@ -5,6 +5,7 @@ import java.util.List;
 import com.linkedin.d2.balancer.clusterfailout.ClusterFailoutRedirectConfig;
 import com.linkedin.d2.balancer.clusterfailout.ClusterFailoutBucketConfig;
 import java.util.stream.Collectors;
+import java.util.Collections;
 
 /**
  * Configuration for a service's cluster level failout properties. These properties are used to control
@@ -17,8 +18,16 @@ public class ClusterFailoutProperties
 
   public ClusterFailoutProperties(List<Map<String, Object>> clusterFailoutRedirectConfigs,
       List<Map<String, Object>> clusterFailoutBucketConfigs) {
-    _clusterFailoutBucketConfigs = clusterFailoutBucketConfigs.stream().map(ClusterFailoutBucketConfig::createFromMap).collect(Collectors.toList());
-    _clusterFailoutRedirectConfigs = clusterFailoutRedirectConfigs.stream().map(ClusterFailoutRedirectConfig::createFromMap).collect(Collectors.toList());
+    _clusterFailoutBucketConfigs = Collections.unmodifiableList(
+        clusterFailoutBucketConfigs.stream()
+        .map(ClusterFailoutBucketConfig::createFromMap)
+        .filter(o -> o != null)
+        .collect(Collectors.toList()));
+    _clusterFailoutRedirectConfigs = Collections.unmodifiableList(
+        clusterFailoutRedirectConfigs.stream()
+        .map(ClusterFailoutRedirectConfig::createFromMap)
+        .filter(o -> o != null)
+        .collect(Collectors.toList()));
   }
 
   public List<ClusterFailoutRedirectConfig> getClusterFailoutRedirectConfigs() {
@@ -56,10 +65,7 @@ public class ClusterFailoutProperties
       return false;
 
     ClusterFailoutProperties other = (ClusterFailoutProperties) obj;
-    if (!_clusterFailoutRedirectConfigs.equals(other.getClusterFailoutRedirectConfigs()))
-      return false;
-    if (!_clusterFailoutBucketConfigs.equals(other.getClusterFailoutBucketConfigs()))
-      return false;
-    return true;
+    return (_clusterFailoutRedirectConfigs.equals(other.getClusterFailoutRedirectConfigs()) &&
+          _clusterFailoutBucketConfigs.equals(other.getClusterFailoutBucketConfigs()));
   }
 }

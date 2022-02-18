@@ -220,7 +220,12 @@ public class ClusterStoreProperties extends ClusterProperties
       return false;
     }
     ClusterStoreProperties other = (ClusterStoreProperties) obj;
-    if (_clusterFailoutProperties != other.getClusterFailoutProperties()) {
+    if (other == null)
+    {
+      return false;
+    }
+    if (_clusterFailoutProperties != other.getClusterFailoutProperties())
+    {
       return false;
     }
     return canaryEquals(other);
