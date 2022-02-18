@@ -31,6 +31,12 @@ public class ClusterFailoutBucketConfig
   // What time should they come back online?
   private final Date _onlineAt;
 
+  private final static String FABRIC_URN_PROPERTY = "fabric";
+  private final static String PARTITION_PROPERTY = "partition";
+  private final static String BUCKET_OFFLINE_RANGE_PROPERTY = "bucketOfflineRange";
+  private final static String OFFLINE_AT_PROPERTY = "offlineAt";
+  private final static String ONLINE_AT_PROPERTY = "onlineAt";
+
   public ClusterFailoutBucketConfig(String fabricUrn,
       String partition,
       Integer bucketOfflineRange,
@@ -44,12 +50,20 @@ public class ClusterFailoutBucketConfig
     _onlineAt = onlineAt;
   }
 
-  public ClusterFailoutBucketConfig(Map<String, Object> configMap) {
-    _fabricUrn = (String)configMap.get("fabric");
-    _partition = (String)configMap.get("partition");
-    _bucketOfflineRange = (Integer)configMap.get("bucketOfflineRange");
-    _offlineAt = (Date)configMap.get("offlineAt");
-    _onlineAt = (Date)configMap.get("onlineAt");
+  public static ClusterFailoutBucketConfig createFromMap(Map<String, Object> configMap) {
+    ClusterFailoutBucketConfig clusterFailoutBucketConfig = null;
+    try {
+      clusterFailoutBucketConfig = new ClusterFailoutBucketConfig((String) configMap.get(ClusterFailoutBucketConfig.FABRIC_URN_PROPERTY),
+          (String) configMap.get(ClusterFailoutBucketConfig.PARTITION_PROPERTY), (Integer) configMap.get(ClusterFailoutBucketConfig.BUCKET_OFFLINE_RANGE_PROPERTY),
+          (Date) configMap.get(ClusterFailoutBucketConfig.OFFLINE_AT_PROPERTY), (Date) configMap.get(ClusterFailoutBucketConfig.ONLINE_AT_PROPERTY));
+    }
+    catch(ClassCastException e) {
+      // Return value will be null if cast failed.
+    }
+    catch (NullPointerException e) {
+      // return value will be null if a key is missing.
+    }
+    return clusterFailoutBucketConfig;
   }
 
   public String getFabricUrn() {

@@ -13,14 +13,28 @@ public class ClusterFailoutRedirectConfig
   // Relative weight for traffic distribution
   private final Integer _weight;
 
+  private final static String FABRIC_URN_PROPERTY = "fabric";
+  private final static String WEIGHT_PROPERTY = "weight";
+
   public ClusterFailoutRedirectConfig(String fabricUrn, Integer weight) {
     _fabricUrn = fabricUrn;
     _weight = weight;
   }
 
-  public ClusterFailoutRedirectConfig(Map<String, Object> configMap) {
-    _fabricUrn = (String)configMap.get("fabric");
-    _weight = (Integer)configMap.get("weight");
+  public static ClusterFailoutRedirectConfig createFromMap(Map<String, Object> configMap) {
+    ClusterFailoutRedirectConfig clusterFailoutRedirectConfig = null;
+    try {
+      clusterFailoutRedirectConfig = new ClusterFailoutRedirectConfig(
+          (String) configMap.get(ClusterFailoutRedirectConfig.FABRIC_URN_PROPERTY),
+          (Integer) configMap.get(ClusterFailoutRedirectConfig.WEIGHT_PROPERTY));
+    }
+    catch(ClassCastException e) {
+      // Return value will be null if cast failed.
+    }
+    catch (NullPointerException e) {
+      // return value will be null if a key is missing.
+    }
+    return clusterFailoutRedirectConfig;
   }
 
   public String getFabricUrn() {

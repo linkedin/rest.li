@@ -17,8 +17,8 @@ public class ClusterFailoutProperties
 
   public ClusterFailoutProperties(List<Map<String, Object>> clusterFailoutRedirectConfigs,
       List<Map<String, Object>> clusterFailoutBucketConfigs) {
-    _clusterFailoutBucketConfigs = clusterFailoutBucketConfigs.stream().map(ClusterFailoutBucketConfig::new).collect(Collectors.toList());
-    _clusterFailoutRedirectConfigs = clusterFailoutRedirectConfigs.stream().map(ClusterFailoutRedirectConfig::new).collect(Collectors.toList());
+    _clusterFailoutBucketConfigs = clusterFailoutBucketConfigs.stream().map(ClusterFailoutBucketConfig::createFromMap).collect(Collectors.toList());
+    _clusterFailoutRedirectConfigs = clusterFailoutRedirectConfigs.stream().map(ClusterFailoutRedirectConfig::createFromMap).collect(Collectors.toList());
   }
 
   public List<ClusterFailoutRedirectConfig> getClusterFailoutRedirectConfigs() {
