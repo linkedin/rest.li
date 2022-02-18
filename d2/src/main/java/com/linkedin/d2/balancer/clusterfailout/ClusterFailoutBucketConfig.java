@@ -124,6 +124,6 @@ public class ClusterFailoutBucketConfig
         _partition.equals(other.getPartition()) &&
         _bucketOfflineRange.equals(other.getBucketOfflineRange()) &&
         _offlineAt.equals(other.getOfflineAt()) &&
-        _onlineAt.equals(other.getOnlineAt()));
+        _onlineAt.equals(other.getOnlineAt());
   }
 }
