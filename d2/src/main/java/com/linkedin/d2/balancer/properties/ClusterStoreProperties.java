@@ -220,11 +220,11 @@ public class ClusterStoreProperties extends ClusterProperties
       return false;
     }
     ClusterStoreProperties other = (ClusterStoreProperties) obj;
-    if (other == null)
+    if (_clusterFailoutProperties == null && other.getClusterFailoutProperties() != null)
     {
       return false;
     }
-    if (_clusterFailoutProperties != other.getClusterFailoutProperties())
+    if (!_clusterFailoutProperties.equals(other.getClusterFailoutProperties()))
     {
       return false;
     }
