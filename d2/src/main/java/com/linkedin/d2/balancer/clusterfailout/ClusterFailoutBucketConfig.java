@@ -120,7 +120,7 @@ public class ClusterFailoutBucketConfig
       return false;
 
     ClusterFailoutBucketConfig other = (ClusterFailoutBucketConfig) obj;
-    return (_fabricUrn.equals(other.getFabricUrn()) &&
+    return _fabricUrn.equals(other.getFabricUrn()) &&
         _partition.equals(other.getPartition()) &&
         _bucketOfflineRange.equals(other.getBucketOfflineRange()) &&
         _offlineAt.equals(other.getOfflineAt()) &&
