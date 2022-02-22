@@ -1,3 +1,19 @@
+/*
+   Copyright (c) 2012 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.d2.balancer.clusterfailout;
 
 import java.util.Map;
@@ -9,19 +25,15 @@ import org.slf4j.LoggerFactory;
  * This class is a simple data structure for tracking the traffic state of a given application.
  */
 
-
-/*
-failedoutBuckets: array[BucketFailoutConfig] {
-    fabric: FabricUrn
-    partition: string
-    // e.g. buckets 0-4 are offline
-    bucketIdRange: IntRange
-    offlineAt: Time
-    onlineAt: optional Time
-  }
- */
 public class ClusterFailoutBucketConfig
 {
+  private static final Logger LOG = LoggerFactory.getLogger(ClusterFailoutBucketConfig.class);
+  private final static String FABRIC_URN_PROPERTY = "fabric";
+  private final static String PARTITION_PROPERTY = "partition";
+  private final static String BUCKET_OFFLINE_RANGE = "bucketOfflineRange";
+  private final static String OFFLINE_AT_PROPERTY = "offlineAt";
+  private final static String ONLINE_AT_PROPERTY = "onlineAt";
+
   // Fabric that this configuration is addressing.
   private final String _fabricUrn;
   // Traffic partition, eg. Main, Guest, Static, etc.
@@ -32,15 +44,6 @@ public class ClusterFailoutBucketConfig
   private final Date _offlineAt;
   // What time should they come back online?
   private final Date _onlineAt;
-
-  private final static String FABRIC_URN_PROPERTY = "fabric";
-  private final static String PARTITION_PROPERTY = "partition";
-  private final static String BUCKET_ID_RANGE = "bucketIdRange";
-  private final static String OFFLINE_AT_PROPERTY = "offlineAt";
-  private final static String ONLINE_AT_PROPERTY = "onlineAt";
-
-  private static final Logger _logger = LoggerFactory.getLogger(
-      ClusterFailoutBucketConfig.class);
 
   public ClusterFailoutBucketConfig(String fabricUrn,
       String partition,
@@ -55,40 +58,48 @@ public class ClusterFailoutBucketConfig
     _onlineAt = onlineAt;
   }
 
-  public static ClusterFailoutBucketConfig createFromMap(Map<String, Object> configMap) {
+  public static ClusterFailoutBucketConfig createFromMap(Map<String, Object> configMap)
+  {
     try {
       return new ClusterFailoutBucketConfig(
           (String) configMap.get(ClusterFailoutBucketConfig.FABRIC_URN_PROPERTY),
           (String) configMap.get(ClusterFailoutBucketConfig.PARTITION_PROPERTY),
-          (Integer) configMap.get(ClusterFailoutBucketConfig.BUCKET_ID_RANGE),
+          (Integer) configMap.get(ClusterFailoutBucketConfig.BUCKET_OFFLINE_RANGE),
           (Date) configMap.get(ClusterFailoutBucketConfig.OFFLINE_AT_PROPERTY),
           (Date) configMap.get(ClusterFailoutBucketConfig.ONLINE_AT_PROPERTY));
     }
-    catch(Exception e) {
-      _logger.error("Error while converting SLF properties: " + e.getMessage());
+    catch(Exception e)
+    {
+      LOG.error("Error while converting SLF properties: " + e.getMessage());
       return null;
     }
   }
 
-  public String getFabricUrn() {
+  public String getFabricUrn()
+  {
     return _fabricUrn;
   }
-  public String getPartition() {
+  public String getPartition()
+  {
     return _partition;
   }
-  public Integer getBucketOfflineRange() {
+  public Integer getBucketOfflineRange()
+  {
     return _bucketOfflineRange;
   }
-  public Date getOfflineAt() {
+  public Date getOfflineAt()
+  {
     return _offlineAt;
   }
-  public Date getOnlineAt() {
+  public Date getOnlineAt()
+  {
     return _onlineAt;
   }
 
 
   @Override
-  public String toString() {
+  public String toString()
+  {
     return "ClusterFailoutBucketConfig [_fabricUrn=" + _fabricUrn
         + ", partition=" + _partition
         + ", bucketOfflineRange=" + _bucketOfflineRange
@@ -98,7 +109,8 @@ public class ClusterFailoutBucketConfig
   }
 
   @Override
-  public int hashCode() {
+  public int hashCode()
+  {
     final int prime = 31;
     int result = 1;
     result = prime * result + _fabricUrn.hashCode();

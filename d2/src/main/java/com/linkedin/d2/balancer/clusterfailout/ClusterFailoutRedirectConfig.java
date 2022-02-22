@@ -1,5 +1,22 @@
 package com.linkedin.d2.balancer.clusterfailout;
 
+/*
+   Copyright (c) 2012 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,49 +27,55 @@ import org.slf4j.LoggerFactory;
 
 public class ClusterFailoutRedirectConfig
 {
+  private static final Logger LOG = LoggerFactory.getLogger(ClusterFailoutRedirectConfig.class);
+
+  private final static String FABRIC_URN_PROPERTY = "fabric";
+  private final static String WEIGHT_PROPERTY = "weight";
+
   // Fabric that this configuration is addressing.
   private final String _fabricUrn;
   // Relative weight for traffic distribution
   private final Integer _weight;
 
-  private final static String FABRIC_URN_PROPERTY = "fabric";
-  private final static String WEIGHT_PROPERTY = "weight";
-
-  private static final Logger _logger = LoggerFactory.getLogger(
-      ClusterFailoutRedirectConfig.class);
-
-  public ClusterFailoutRedirectConfig(String fabricUrn, Integer weight) {
+  public ClusterFailoutRedirectConfig(String fabricUrn, Integer weight)
+  {
     _fabricUrn = fabricUrn;
     _weight = weight;
   }
 
-  public static ClusterFailoutRedirectConfig createFromMap(Map<String, Object> configMap) {
+  public static ClusterFailoutRedirectConfig createFromMap(Map<String, Object> configMap)
+  {
     try {
       return new ClusterFailoutRedirectConfig((String) configMap.get(ClusterFailoutRedirectConfig.FABRIC_URN_PROPERTY),
           (Integer) configMap.get(ClusterFailoutRedirectConfig.WEIGHT_PROPERTY));
-    } catch (Exception e) {
-      _logger.error("Error while converting SLF properties: " + e.getMessage());
+    } catch (Exception e)
+    {
+      LOG.error("Error while converting SLF properties: " + e.getMessage());
       return null;
     }
   }
 
-  public String getFabricUrn() {
+  public String getFabricUrn()
+  {
     return _fabricUrn;
   }
 
-  public Integer getWeight() {
+  public Integer getWeight()
+  {
     return _weight;
   }
 
   @Override
-  public String toString() {
+  public String toString()
+  {
     return "ClusterFailoutRedirectConfig [_fabricUrn=" + _fabricUrn
         + ", _weight=" + _weight
         + "]";
   }
 
   @Override
-  public int hashCode() {
+  public int hashCode()
+  {
     final int prime = 31;
     int result = 1;
     result = prime * result + _fabricUrn.hashCode();
