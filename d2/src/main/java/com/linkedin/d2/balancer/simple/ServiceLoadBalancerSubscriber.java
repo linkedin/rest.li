@@ -52,21 +52,7 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
   {
     LoadBalancerStateItem<ServiceProperties> oldServicePropertiesItem =
       _simpleLoadBalancerState.getServiceProperties().get(listenTo);
-
-    ServiceProperties pickedProperties = discoveryProperties;
-    CanaryDistributionProvider.Distribution distribution = CanaryDistributionProvider.Distribution.STABLE;
-    if (discoveryProperties instanceof ServiceStoreProperties) // this should always be true since the serializer returns the composite class
-    {
-      ServiceStoreProperties serviceStoreProperties = (ServiceStoreProperties) discoveryProperties;
-      CanaryDistributionProvider canaryDistributionProvider = _simpleLoadBalancerState.getCanaryDistributionProvider();
-      if (serviceStoreProperties.hasCanary() && canaryDistributionProvider != null) {
-        // Canary config and canary distribution provider exist, distribute to use either stable config or canary config.
-        distribution = canaryDistributionProvider
-            .distribute(CanaryDistributionStrategyConverter.toConfig(serviceStoreProperties.getCanaryDistributionStrategy()));
-      }
-      pickedProperties = serviceStoreProperties.getDistributedServiceProperties(distribution);
-    }
-    // TODO: set canary/stable config metric
+    ServiceProperties pickedProperties = pickActiveProperties(discoveryProperties);
 
     _simpleLoadBalancerState.getServiceProperties().put(listenTo,
       new LoadBalancerStateItem<>(pickedProperties,
@@ -159,5 +145,29 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
       _simpleLoadBalancerState.shutdownClients(listenTo);
 
     }
+  }
+
+  /**
+   * Pick the active properties (stable or canary configs) based on canary distribution strategy.
+   * @param discoveryProperties a composite properties containing all data on the service store (stable configs, canary configs, etc.).
+   * @return the picked active properties
+   */
+  private ServiceProperties pickActiveProperties(final ServiceProperties discoveryProperties)
+  {
+    ServiceProperties pickedProperties = discoveryProperties;
+    CanaryDistributionProvider.Distribution distribution = CanaryDistributionProvider.Distribution.STABLE;
+    if (discoveryProperties instanceof ServiceStoreProperties) // this should always be true since the serializer returns the composite class
+    {
+      ServiceStoreProperties serviceStoreProperties = (ServiceStoreProperties) discoveryProperties;
+      CanaryDistributionProvider canaryDistributionProvider = _simpleLoadBalancerState.getCanaryDistributionProvider();
+      if (serviceStoreProperties.hasCanary() && canaryDistributionProvider != null) {
+        // Canary config and canary distribution provider exist, distribute to use either stable config or canary config.
+        distribution = canaryDistributionProvider
+            .distribute(CanaryDistributionStrategyConverter.toConfig(serviceStoreProperties.getCanaryDistributionStrategy()));
+      }
+      pickedProperties = serviceStoreProperties.getDistributedServiceProperties(distribution);
+    }
+    // TODO: set canary/stable config metric
+    return pickedProperties;
   }
 }
