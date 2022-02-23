@@ -100,7 +100,7 @@ public class ZooKeeperAnnouncer
   // String to store the name of the dark warm-up cluster, defaults to null
   private String _warmupClusterName;
 
-  // Field to store the dark warm-up time duration in milli-seconds, defaults to zero
+  // Field to store the dark warm-up time duration in seconds, defaults to zero
   private int _warmupDuration;
 
   public ZooKeeperAnnouncer(ZooKeeperServer server)
