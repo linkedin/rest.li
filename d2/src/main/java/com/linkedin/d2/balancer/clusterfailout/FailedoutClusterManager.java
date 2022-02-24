@@ -1,12 +1,15 @@
 package com.linkedin.d2.balancer.clusterfailout;
 
-import com.linkedin.d2.balancer.LoadBalancerState;
-import com.linkedin.d2.balancer.LoadBalancerState.LoadBalancerStateListenerCallback;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import com.linkedin.d2.balancer.LoadBalancerState;
+import com.linkedin.d2.balancer.LoadBalancerState.LoadBalancerStateListenerCallback;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class is responsible for managing a failed out cluster.
@@ -15,6 +18,8 @@ import java.util.concurrent.ConcurrentMap;
  * - Establishing connections to instances in the peer clusters.
  */
 public class FailedoutClusterManager {
+  private static final Logger _log = LoggerFactory.getLogger(FailedoutClusterManager.class);
+
   private final String _clusterName;
   private final LoadBalancerState _loadBalancerState;
   private final ConcurrentMap<String, LoadBalancerStateListenerCallback> _clusterListeners =
@@ -60,6 +65,9 @@ public class FailedoutClusterManager {
   }
 
   private void removeClusterWatches(Set<String> peerClustersToRemove) {
+    if (_log.isDebugEnabled()) {
+      _log.debug("Removing peer clusters: " + String.join(",", peerClustersToRemove));
+    }
     for (String peerCluster : peerClustersToRemove) {
       final LoadBalancerStateListenerCallback listener = _clusterListeners.remove(peerCluster);
       if (listener != null) {
@@ -69,6 +77,9 @@ public class FailedoutClusterManager {
   }
 
   private void addClusterWatches(Set<String> peerClusters) {
+    if (_log.isDebugEnabled()) {
+      _log.debug("Watching peer clusters: " + String.join(",", peerClusters));
+    }
     for (final String peerCluster : peerClusters) {
       _clusterListeners.computeIfAbsent(peerCluster, clusterName -> {
         // TODO(RESILIEN-50): Establish connections to peer clusters when listener#done() is invoked.
