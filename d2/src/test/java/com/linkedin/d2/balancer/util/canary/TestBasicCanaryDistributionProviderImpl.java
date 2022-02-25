@@ -183,28 +183,44 @@ public class TestBasicCanaryDistributionProviderImpl
         CanaryDistributionProvider.Distribution.STABLE, "Invalid strategies should return stable");
   }
 
+  // Verify uniform distribution of the String built-in hashCode method, which theoretically should be guaranteed as it's used
+  // in Map with String keys. But we explicitly test it to verify its behavior.
   @Test
   public void testHashDistribution()
   {
     // verify hash results are almost uniformly distributed
-    int bucketCount = 100;
+    int bucketCount = 100; // since ramp is 100% based, we test with 100 buckets
     int attemptCount = 1000;
+    // count how many attempts are skewed
+    // (e.g: one bucket gets 13 will cause another bucket gets 7, the attempts skewed in this pair of buckets is ((13 - 10) + (10 - 7)) / 2 = 3
+    int skewedCount = 0;
     int[] hits = new int[bucketCount]; // to count hits in each bucket 0 ~ 99.
     String serviceName = "test-service";
     String hostName = "lor1-app";
     int bucketIdx;
-    int hashResult;
+    BasicCanaryDistributionProviderImpl impl = spy(new BasicCanaryDistributionProviderImpl(serviceName, hostName));
     for (int i = 0; i < attemptCount; i++) {
-      hashResult = (serviceName + hostName + i).hashCode();
-      bucketIdx = abs(hashResult) % 100; // hash "test-service"+"lor1-appXXX"
+      when(impl.getHashKey()).thenReturn(serviceName + hostName + i);
+      bucketIdx = impl.getHashResult() % bucketCount; // hash "test-service"+"lor1-appXXX"
       hits[bucketIdx]++;
     }
 
-    // compare each bucket hits with the average hit, verify offsets are < 4
+    // compare each bucket hits with the average hit, aggregate skewed attempts
     int avgHits = attemptCount / bucketCount;
+    int offsetBound = 4;
+    int offset;
     for (int i = 0; i < bucketCount; i++)
     {
-      Assert.assertTrue(abs(hits[i] - avgHits) < 4, "hits[" + i + "]" + " should not bias from avgHits " + avgHits + " by greater or equal than 4");
+      offset = abs(hits[i] - avgHits);
+      skewedCount += offset;
+      // verify no single bucket goes beyond the offset bound.
+      Assert.assertTrue(offset < offsetBound,
+          "hits[" + i + "]" + hits[i] + " should not bias from avgHits " + avgHits + " by greater or equal than " + offsetBound);
     }
+    skewedCount /= 2; // divide by 2 since we counted the skewed attempts twice in a pair of buckets
+    // skewed attempts should take less than 7% in total attempts (actual skewed rate is ~6.2%).
+    double skewedRate = 0.07;
+    Assert.assertTrue(skewedCount / (double) attemptCount < skewedRate,
+        "Skewed attempts " + skewedCount + " out of total attempts " + attemptCount + " should be less than " + skewedRate);
   }
 }

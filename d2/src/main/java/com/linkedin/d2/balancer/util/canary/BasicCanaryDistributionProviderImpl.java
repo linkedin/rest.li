@@ -105,9 +105,14 @@ public class BasicCanaryDistributionProviderImpl implements CanaryDistributionPr
     return _hostName == null ? "" : _hostName;
   }
 
+  // For testing convenience
+  protected String getHashKey() {
+    return getServiceName() + getHostName();
+  }
+
   protected int getHashResult()
   {
-    return Math.abs((getServiceName() + getHostName()).hashCode()); // Get absolute value of the hash code
+    return Math.abs(getHashKey().hashCode()); // Get absolute value of the hash code
   }
 
   protected boolean isServiceMatch(String target) {
