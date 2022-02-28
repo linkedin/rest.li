@@ -38,6 +38,7 @@ import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.subsetting.SubsettingState;
+import com.linkedin.d2.balancer.util.AffinityRoutingURIProvider;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.d2.balancer.util.HostOverrideList;
@@ -196,18 +197,39 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
           UriProperties uris = uriItem.getProperty();
 
           List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
-            _state.getStrategiesForService(serviceName,
-              service.getPrioritizedSchemes());
+              _state.getStrategiesForService(serviceName, service.getPrioritizedSchemes());
 
-          TrackerClient trackerClient = chooseTrackerClient(request, requestContext, serviceName, clusterName, cluster,
-            uriItem, uris, orderedStrategies, service);
+          TrackerClient trackerClient = null;
+
+          // Optimize affinity routing with help of AffinityRoutingProvider
+          AffinityRoutingURIProvider affinityRoutingURIProvider =
+              (AffinityRoutingURIProvider) requestContext.getLocalAttr(AffinityRoutingURIProvider.AFFINITY_ROUTING_URI_PROVIDER);
+
+          if (affinityRoutingURIProvider != null && affinityRoutingURIProvider.isEnabled()
+              && KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext) == null) {
+            trackerClient = affinityRoutingURIProvider.getTargetHostURI(clusterName)
+                  .map(targetHost -> _state.getClient(serviceName, targetHost))
+                  .orElse(null);
+          }
+
+          if (trackerClient == null) {
+            trackerClient =
+                chooseTrackerClient(request, requestContext, serviceName, clusterName, cluster, uriItem, uris,
+                    orderedStrategies, service);
+
+            // set host URI for the cluster. with that next time, for the same inbound request, if downstream request is
+            // made to same cluster and optimized affinity routing is enabled, then it will go to same box.
+            if (affinityRoutingURIProvider != null  && affinityRoutingURIProvider.isEnabled()) {
+              // affinityRoutingURIProvider.getTrackerClientConsumer().accept(clusterName, trackerClient);
+              affinityRoutingURIProvider.setTargetHostURI(clusterName, trackerClient.getUri());
+            }
+          }
 
           String clusterAndServiceUriString = trackerClient.getUri() + service.getPath();
           _serviceAvailableStats.inc();
           clientCallback.onSuccess(new RewriteLoadBalancerClient(serviceName,
             URI.create(clusterAndServiceUriString),
             trackerClient));
-
         }
         else
         {
@@ -847,7 +869,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       // The partition to check is picked at random to be conservative.
       // E.g. in the above example, we don't want to always use the drop rate of partition 1.
 
-      Map<Integer, PartitionData> partitionDataMap = uris.getPartitionDataMap(targetHost);
+        Map<Integer, PartitionData> partitionDataMap = uris.getPartitionDataMap(targetHost);
       if (partitionDataMap == null || partitionDataMap.isEmpty())
       {
         die(serviceName, "PEGA_1014. There is no partition data for server host: " + targetHost + ". URI: " + requestUri);
@@ -909,6 +931,9 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
           + " (choosable: " + clientsToLoadBalance.size() + " hosts, total in cluster: " + uris.Uris().size() + ")");
       }
     }
+
+    //TODO put URI in the ICLocal for clustername
+    // clusterName <> trackerClient instance
     return trackerClient;
   }
 
