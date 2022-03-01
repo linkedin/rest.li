@@ -15,19 +15,13 @@
 */
 
 package com.linkedin.data.avro;
-
 class TestAvroUtil
 {
   static String namespaceProcessor(String text)
   {
     if (text.contains("##NS"))
     {
-      final AvroAdapter avroAdapter = AvroAdapterFinder.getAvroAdapter();
-
-      if (avroAdapter.jsonUnionMemberHasFullName())
-        text = text.replaceAll("##NS\\(([^\\)]+)\\)", "$1");
-      else
-        text = text.replaceAll("##NS\\([^\\)]+\\)", "");
+      text = text.replaceAll("##NS\\(([^\\)]+)\\)", "$1");
     }
     return text;
   }
@@ -36,16 +30,8 @@ class TestAvroUtil
   {
     if (text.contains("##Q_START") && text.contains("##Q_END"))
     {
-      final AvroAdapter avroAdapter = AvroAdapterFinder.getAvroAdapter();
 
-      if (avroAdapter.jsonUnionMemberHasFullName())
-      {
-        return text.replaceAll("##Q_START", "\"").replaceAll("##Q_END", "\"");
-      }
-      else
-      {
-        return text.replaceAll("##Q_START", "").replaceAll("##Q_END", "");
-      }
+      return text.replaceAll("##Q_START", "\"").replaceAll("##Q_END", "\"");
     }
     return text;
   }
