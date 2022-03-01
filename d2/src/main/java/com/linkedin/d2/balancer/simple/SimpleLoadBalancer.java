@@ -77,6 +77,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -205,8 +206,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
           AffinityRoutingURIProvider affinityRoutingURIProvider =
               (AffinityRoutingURIProvider) requestContext.getLocalAttr(AffinityRoutingURIProvider.AFFINITY_ROUTING_URI_PROVIDER);
 
-          if (affinityRoutingURIProvider != null && affinityRoutingURIProvider.isEnabled()
-              && KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext) == null) {
+          if (isOptimizedAffinityRoutingEnabled(requestContext, affinityRoutingURIProvider)) {
             trackerClient = affinityRoutingURIProvider.getTargetHostURI(clusterName)
                   .map(targetHost -> _state.getClient(serviceName, targetHost))
                   .orElse(null);
@@ -219,7 +219,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
             // set host URI for the cluster. with that next time, for the same inbound request, if downstream request is
             // made to same cluster and optimized affinity routing is enabled, then it will go to same box.
-            if (affinityRoutingURIProvider != null  && affinityRoutingURIProvider.isEnabled()) {
+            if (isOptimizedAffinityRoutingEnabled(requestContext, affinityRoutingURIProvider)) {
               // affinityRoutingURIProvider.getTrackerClientConsumer().accept(clusterName, trackerClient);
               affinityRoutingURIProvider.setTargetHostURI(clusterName, trackerClient.getUri());
             }
@@ -262,6 +262,11 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }, clientCallback));
   }
 
+  private boolean isOptimizedAffinityRoutingEnabled(RequestContext requestContext,
+      @Nullable AffinityRoutingURIProvider affinityRoutingURIProvider) {
+    return affinityRoutingURIProvider != null && affinityRoutingURIProvider.isEnabled()
+        && (KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext) == null);
+  }
 
   @Override
   public <K> MapKeyResult<Ring<URI>, K> getRings(URI serviceUri, Iterable<K> keys) throws ServiceUnavailableException
@@ -869,7 +874,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       // The partition to check is picked at random to be conservative.
       // E.g. in the above example, we don't want to always use the drop rate of partition 1.
 
-        Map<Integer, PartitionData> partitionDataMap = uris.getPartitionDataMap(targetHost);
+      Map<Integer, PartitionData> partitionDataMap = uris.getPartitionDataMap(targetHost);
       if (partitionDataMap == null || partitionDataMap.isEmpty())
       {
         die(serviceName, "PEGA_1014. There is no partition data for server host: " + targetHost + ". URI: " + requestUri);
@@ -932,8 +937,6 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       }
     }
 
-    //TODO put URI in the ICLocal for clustername
-    // clusterName <> trackerClient instance
     return trackerClient;
   }
 

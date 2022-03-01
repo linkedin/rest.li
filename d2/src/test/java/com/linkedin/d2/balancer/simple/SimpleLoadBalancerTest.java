@@ -620,6 +620,96 @@ public class SimpleLoadBalancerTest
   }
 
   @Test
+  public void testOptimizedAffinityRoutingSkippedForTargetHostHint() throws Exception
+  {
+    Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
+        new HashMap<>();
+    Map<String, TransportClientFactory> clientFactories = new HashMap<>();
+    List<String> prioritizedSchemes = new ArrayList<>();
+
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+
+    ScheduledExecutorService executorService = new SynchronousExecutorService();
+
+    loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
+    clientFactories.put(PropertyKeys.HTTP_SCHEME, new DoNothingClientFactory());
+
+    SimpleLoadBalancerState state =
+        new SimpleLoadBalancerState(executorService,
+            uriRegistry,
+            clusterRegistry,
+            serviceRegistry,
+            clientFactories,
+            loadBalancerStrategyFactories);
+
+    SimpleLoadBalancer loadBalancer =
+        new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor);
+
+    FutureCallback<None> balancerCallback = new FutureCallback<>();
+    loadBalancer.start(balancerCallback);
+    balancerCallback.get();
+
+    URI uri1 = URI.create("http://test.qd.com:5678");
+    URI uri2 = URI.create("http://test.qd.com:1234");
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
+    partitionData.put(DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>(2);
+    uriData.put(uri1, partitionData);
+    uriData.put(uri2, partitionData);
+
+    prioritizedSchemes.add(PropertyKeys.HTTP_SCHEME);
+
+    Set<URI> bannedSet = new HashSet<>();
+    clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", Collections.emptyList(),
+        Collections.emptyMap(), bannedSet, NullPartitionProperties.getInstance()));
+
+    serviceRegistry.put("foo", new ServiceProperties("foo",
+        "cluster-1",
+        "/foo",
+        Arrays.asList("degrader"),
+        Collections.<String,Object>emptyMap(),
+        null,
+        null,
+        prioritizedSchemes,
+        null));
+    uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+
+    URI expectedUri = URI.create("http://test.qd.com:1234/foo");
+    URIRequest uriRequest = new URIRequest("d2://foo/52");
+
+    RequestContext serviceContext = new RequestContext();
+    serviceContext.putLocalAttr(AffinityRoutingURIProvider.AFFINITY_ROUTING_URI_PROVIDER, new AffinityRoutingURIProvider() {
+      private final Map<String, URI> uriMap = new HashMap<>();
+
+      @Override
+      public boolean isEnabled() {
+        return true;
+      }
+
+      @Override
+      public Optional<URI> getTargetHostURI(String clusterName) {
+        return Optional.ofNullable(uriMap.get(clusterName));
+      }
+
+      @Override
+      public void setTargetHostURI(String clusterName, URI targetHostURI) {
+        uriMap.put(clusterName, targetHostURI);
+      }
+    });
+
+    KeyMapper.TargetHostHints.setRequestContextTargetHost(serviceContext, uri2);
+
+    RewriteLoadBalancerClient client =
+        (RewriteLoadBalancerClient) loadBalancer.getClient(uriRequest, serviceContext);
+    Assert.assertEquals(client.getUri(), expectedUri);
+    AffinityRoutingURIProvider affinityRoutingURIProvider
+        = (AffinityRoutingURIProvider) serviceContext.getLocalAttr(AffinityRoutingURIProvider.AFFINITY_ROUTING_URI_PROVIDER);
+    Assert.assertFalse(affinityRoutingURIProvider.getTargetHostURI("cluster-1").isPresent());
+  }
+
+  @Test
   public void testGetClientWithBannedURI() throws Exception
   {
     Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =

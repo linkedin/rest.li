@@ -21,11 +21,12 @@ public interface AffinityRoutingURIProvider {
   Optional<URI> getTargetHostURI(String clusterName);
 
   /**
-   * Setter to associate machine URI for the cluster name. URI includes scheme, hostname and port for the cluster. Cluster to URI mapping
-   * should be done per inbound request level, i.e. treeId of the request should be used to create request level mapping between
-   * cluster name and URI.
-   * @param clusterName
-   * @param targetHostURI
+   * Setter to associate machine URI for the cluster name. URI includes scheme, hostname and port for the cluster. target host
+   * URI is returned by D2 load balancer after picking a box from D2 hash ring. Cluster to URI mapping
+   * should be done per inbound request level in order to uniformly distribute load across different machines.
+   *
+   * @param clusterName cluster name for which URI is requested
+   * @param targetHostURI Host URI returned by D2 load balancer after picking a box from D2 hash ring.
    */
   void setTargetHostURI(String clusterName, URI targetHostURI);
 }
