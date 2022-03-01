@@ -2,7 +2,6 @@ package com.linkedin.d2.balancer.properties;
 
 import java.util.Map;
 import java.util.List;
-import com.linkedin.d2.balancer.clusterfailout.ClusterFailoutRedirectConfig;
 /*
    Copyright (c) 2012 LinkedIn Corp.
 
@@ -20,7 +19,6 @@ import com.linkedin.d2.balancer.clusterfailout.ClusterFailoutRedirectConfig;
 */
 
 
-import com.linkedin.d2.balancer.clusterfailout.ClusterFailoutBucketConfig;
 import java.util.stream.Collectors;
 import java.util.Collections;
 
@@ -30,30 +28,22 @@ import java.util.Collections;
  */
 public class ClusterFailoutProperties
 {
-  private final List<ClusterFailoutRedirectConfig> _clusterFailoutRedirectConfigs;
-  private final List<ClusterFailoutBucketConfig> _clusterFailoutBucketConfigs;
+  private final List<Map<String, Object>> _clusterFailoutRedirectConfigs;
+  private final List<Map<String, Object>> _clusterFailoutBucketConfigs;
 
   public ClusterFailoutProperties(List<Map<String, Object>> clusterFailoutRedirectConfigs,
       List<Map<String, Object>> clusterFailoutBucketConfigs)
   {
-    _clusterFailoutBucketConfigs = Collections.unmodifiableList(
-        clusterFailoutBucketConfigs.stream()
-        .map(ClusterFailoutBucketConfig::createFromMap)
-        .filter(o -> o != null)
-        .collect(Collectors.toList()));
-    _clusterFailoutRedirectConfigs = Collections.unmodifiableList(
-        clusterFailoutRedirectConfigs.stream()
-        .map(ClusterFailoutRedirectConfig::createFromMap)
-        .filter(o -> o != null)
-        .collect(Collectors.toList()));
+    _clusterFailoutBucketConfigs = clusterFailoutBucketConfigs;
+    _clusterFailoutRedirectConfigs = clusterFailoutRedirectConfigs;
   }
 
-  public List<ClusterFailoutRedirectConfig> getClusterFailoutRedirectConfigs()
+  public List<Map<String, Object>> getClusterFailoutRedirectConfigs()
   {
     return _clusterFailoutRedirectConfigs;
   }
 
-  public List<ClusterFailoutBucketConfig> getClusterFailoutBucketConfigs()
+  public List<Map<String, Object>> getClusterFailoutBucketConfigs()
   {
     return _clusterFailoutBucketConfigs;
   }

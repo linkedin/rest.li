@@ -224,7 +224,7 @@ public class ClusterStoreProperties extends ClusterProperties
     {
       return false;
     }
-    if (!_clusterFailoutProperties.equals(other.getClusterFailoutProperties()))
+    if (_clusterFailoutProperties != null && !_clusterFailoutProperties.equals(other.getClusterFailoutProperties()))
     {
       return false;
     }
