@@ -18,7 +18,10 @@ package com.linkedin.d2.balancer.simple;
 
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
+import com.linkedin.d2.balancer.config.CanaryDistributionStrategyConverter;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.properties.ServiceStoreProperties;
+import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import java.util.Collections;
 import java.util.Set;
@@ -47,17 +50,17 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
   @Override
   protected void handlePut(final String listenTo, final ServiceProperties discoveryProperties)
   {
-    // TODO: pick stable or canary configs if canary exists
     LoadBalancerStateItem<ServiceProperties> oldServicePropertiesItem =
       _simpleLoadBalancerState.getServiceProperties().get(listenTo);
+    ServiceProperties pickedProperties = pickActiveProperties(discoveryProperties);
 
     _simpleLoadBalancerState.getServiceProperties().put(listenTo,
-      new LoadBalancerStateItem<>(discoveryProperties,
+      new LoadBalancerStateItem<>(pickedProperties,
         _simpleLoadBalancerState.getVersionAccess().incrementAndGet(),
         System.currentTimeMillis()));
 
     // always refresh strategies when we receive service event
-    if (discoveryProperties != null)
+    if (pickedProperties != null)
     {
       //if this service changes its cluster, we should update the cluster -> service map saying that
       //this service is no longer hosted in the old cluster.
@@ -65,7 +68,7 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
       {
         ServiceProperties oldServiceProperties = oldServicePropertiesItem.getProperty();
         if (oldServiceProperties != null && oldServiceProperties.getClusterName() != null &&
-          !oldServiceProperties.getClusterName().equals(discoveryProperties.getClusterName()))
+          !oldServiceProperties.getClusterName().equals(pickedProperties.getClusterName()))
         {
           Set<String> serviceNames =
             _simpleLoadBalancerState.getServicesPerCluster().get(oldServiceProperties.getClusterName());
@@ -76,21 +79,21 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
         }
       }
 
-      _simpleLoadBalancerState.refreshServiceStrategies(discoveryProperties);
-      _simpleLoadBalancerState.refreshClients(discoveryProperties);
+      _simpleLoadBalancerState.refreshServiceStrategies(pickedProperties);
+      _simpleLoadBalancerState.refreshClients(pickedProperties);
 
       // refresh state for which services are on which clusters
       Set<String> serviceNames =
-        _simpleLoadBalancerState.getServicesPerCluster().get(discoveryProperties.getClusterName());
+        _simpleLoadBalancerState.getServicesPerCluster().get(pickedProperties.getClusterName());
 
       if (serviceNames == null)
       {
         serviceNames =
           Collections.newSetFromMap(new ConcurrentHashMap<>());
-        _simpleLoadBalancerState.getServicesPerCluster().put(discoveryProperties.getClusterName(), serviceNames);
+        _simpleLoadBalancerState.getServicesPerCluster().put(pickedProperties.getClusterName(), serviceNames);
       }
 
-      serviceNames.add(discoveryProperties.getServiceName());
+      serviceNames.add(pickedProperties.getServiceName());
     }
     else if (oldServicePropertiesItem != null)
     {
@@ -142,5 +145,29 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
       _simpleLoadBalancerState.shutdownClients(listenTo);
 
     }
+  }
+
+  /**
+   * Pick the active properties (stable or canary configs) based on canary distribution strategy.
+   * @param discoveryProperties a composite properties containing all data on the service store (stable configs, canary configs, etc.).
+   * @return the picked active properties
+   */
+  private ServiceProperties pickActiveProperties(final ServiceProperties discoveryProperties)
+  {
+    ServiceProperties pickedProperties = discoveryProperties;
+    CanaryDistributionProvider.Distribution distribution = CanaryDistributionProvider.Distribution.STABLE;
+    if (discoveryProperties instanceof ServiceStoreProperties) // this should always be true since the serializer returns the composite class
+    {
+      ServiceStoreProperties serviceStoreProperties = (ServiceStoreProperties) discoveryProperties;
+      CanaryDistributionProvider canaryDistributionProvider = _simpleLoadBalancerState.getCanaryDistributionProvider();
+      if (serviceStoreProperties.hasCanary() && canaryDistributionProvider != null) {
+        // Canary config and canary distribution provider exist, distribute to use either stable config or canary config.
+        distribution = canaryDistributionProvider
+            .distribute(CanaryDistributionStrategyConverter.toConfig(serviceStoreProperties.getCanaryDistributionStrategy()));
+      }
+      pickedProperties = serviceStoreProperties.getDistributedServiceProperties(distribution);
+    }
+    // TODO: set canary/stable config metric
+    return pickedProperties;
   }
 }

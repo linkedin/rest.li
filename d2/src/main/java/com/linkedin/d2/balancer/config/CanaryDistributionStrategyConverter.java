@@ -1,8 +1,29 @@
+/*
+   Copyright (c) 2021 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.d2.balancer.config;
 
-import com.linkedin.d2.*;
+import com.linkedin.d2.D2CanaryDistributionStrategy;
+import com.linkedin.d2.PercentageStrategyProperties;
+import com.linkedin.d2.StrategyType;
+import com.linkedin.d2.TargetApplicationsStrategyProperties;
+import com.linkedin.d2.TargetHostsStrategyProperties;
 import com.linkedin.d2.balancer.properties.CanaryDistributionStrategy;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.balancer.properties.util.PropertyUtil;
 import com.linkedin.data.template.StringArray;
 
 import org.slf4j.Logger;
@@ -11,8 +32,6 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.linkedin.d2.balancer.properties.util.PropertyUtil.coerce;
 
 
 /**
@@ -51,59 +70,46 @@ public class CanaryDistributionStrategyConverter
     }
     config.setStrategy(type);
 
-    switch (type)
+    try
     {
-      case PERCENTAGE:
-        Map<String, Object> fromPercentageProperties = properties.getPercentageStrategyProperties();
-        if (fromPercentageProperties == null || !fromPercentageProperties.containsKey(PropertyKeys.PERCENTAGE_SCOPE))
-        {
-          LOG.warn(
-            "No properties set for percentage strategy in CanaryDistributionStrategy: " + fromPercentageProperties + ". Fall back to DISABLED.");
-          config.setStrategy(StrategyType.DISABLED);
+      switch (type)
+      {
+        case PERCENTAGE:
+          Double scope = getValidScope(PropertyUtil.checkAndGetValue(properties.getPercentageStrategyProperties(), PropertyKeys.PERCENTAGE_SCOPE,
+                                        Number.class, "PercentageStrategyProperties").doubleValue());
+          PercentageStrategyProperties toPercentageProperties = new PercentageStrategyProperties();
+          toPercentageProperties.setScope(scope);
+          config.setPercentageStrategyProperties(toPercentageProperties);
           break;
-        }
-
-        PercentageStrategyProperties toPercentageProperties = new PercentageStrategyProperties();
-        toPercentageProperties.setScope(getValidScopeValue(fromPercentageProperties.get(PropertyKeys.PERCENTAGE_SCOPE)));
-        config.setPercentageStrategyProperties(toPercentageProperties);
-        break;
-      case TARGET_HOSTS:
-        Map<String, Object> fromTargetHostsProperties = properties.getTargetHostsStrategyProperties();
-        if (fromTargetHostsProperties == null || !fromTargetHostsProperties.containsKey(PropertyKeys.TARGET_HOSTS))
-        {
-          LOG.warn(
-            "No properties set for targetHosts strategy in CanaryDistributionStrategy: " + fromTargetHostsProperties + ". Fall back to DISABLED.");
-          config.setStrategy(StrategyType.DISABLED);
+        case TARGET_HOSTS:
+          List<String> hosts = PropertyUtil.checkAndGetValue(properties.getTargetHostsStrategyProperties(), PropertyKeys.TARGET_HOSTS, List.class,
+                                                      "TargetHostsStrategyProperties");
+          TargetHostsStrategyProperties toTargetHostsProperties = new TargetHostsStrategyProperties();
+          toTargetHostsProperties.setTargetHosts(new StringArray(hosts));
+          config.setTargetHostsStrategyProperties(toTargetHostsProperties);
           break;
-        }
+        case TARGET_APPLICATIONS:
+          Map<String, Object> fromTargetAppsProperties = properties.getTargetApplicationsStrategyProperties();
+          List<String> apps = PropertyUtil.checkAndGetValue(fromTargetAppsProperties, PropertyKeys.TARGET_APPLICATIONS, List.class,
+                                                      "TargetApplicationsStrategyProperties");
+          Double appScope = getValidScope(PropertyUtil.checkAndGetValue(fromTargetAppsProperties, PropertyKeys.PERCENTAGE_SCOPE,
+                                        Number.class, "TargetApplicationsStrategyProperties").doubleValue());
 
-        List<String> hosts = (List<String>) fromTargetHostsProperties.get(PropertyKeys.TARGET_HOSTS);
-        TargetHostsStrategyProperties toTargetHostsProperties = new TargetHostsStrategyProperties();
-        toTargetHostsProperties.setTargetHosts(new StringArray(hosts));
-        config.setTargetHostsStrategyProperties(toTargetHostsProperties);
-        break;
-      case TARGET_APPLICATIONS:
-        Map<String, Object> fromTargetAppsProperties = properties.getTargetApplicationsStrategyProperties();
-        if (fromTargetAppsProperties == null
-          || !fromTargetAppsProperties.containsKey(PropertyKeys.TARGET_APPLICATIONS)
-          || !fromTargetAppsProperties.containsKey(PropertyKeys.PERCENTAGE_SCOPE))
-        {
-          LOG.warn("No properties set for targetApplications strategy in CanaryDistributionStrategy: " + fromTargetAppsProperties
-                     + ". Fall back to DISABLED.");
-          config.setStrategy(StrategyType.DISABLED);
+          TargetApplicationsStrategyProperties toTargetAppsProperties = new TargetApplicationsStrategyProperties();
+          toTargetAppsProperties.setTargetApplications(new StringArray(apps));
+          toTargetAppsProperties.setScope(appScope);
+          config.setTargetApplicationsStrategyProperties(toTargetAppsProperties);
           break;
-        }
-
-        List<String> apps = (List<String>) fromTargetAppsProperties.get(PropertyKeys.TARGET_APPLICATIONS);
-        TargetApplicationsStrategyProperties toTargetAppsProperties = new TargetApplicationsStrategyProperties();
-        toTargetAppsProperties.setTargetApplications(new StringArray(apps));
-        toTargetAppsProperties.setScope(getValidScopeValue(fromTargetAppsProperties.get(PropertyKeys.PERCENTAGE_SCOPE)));
-        config.setTargetApplicationsStrategyProperties(toTargetAppsProperties);
-        break;
-      case DISABLED:
-        break;
-      default:
-        throw new IllegalStateException("Unexpected value: " + type);
+        case DISABLED:
+          break;
+        default:
+          throw new IllegalStateException("Unexpected strategy type: " + type);
+      }
+    }
+    catch (Exception e)
+    {
+      LOG.warn("Error in converting distribution strategy. Fall back to DISABLED.", e);
+      config.setStrategy(StrategyType.DISABLED);
     }
     return config;
   }
@@ -151,23 +157,13 @@ public class CanaryDistributionStrategyConverter
                                           targetApplicationsStrategyProperties);
   }
 
-  private static Double getValidScopeValue(Object scope)
+  private static Double getValidScope(double scope)
   {
-    Double value;
-    try
+    if (scope < 0 || scope >= 1)
     {
-      value = coerce(scope, Double.class);
-      if (value < 0 || value >= 1)
-      {
-        LOG.warn("Invalid scope value: " + value + ". Use default value 0.");
-        value = CanaryDistributionStrategy.DEFAULT_SCOPE;
-      }
+      LOG.warn("Invalid scope: " + scope + ". Use default value 0.");
+      scope = CanaryDistributionStrategy.DEFAULT_SCOPE;
     }
-    catch (Exception ex)
-    {
-      LOG.warn("Invalid scope value: " + scope.toString() + ". Use default value 0.", ex);
-      value = CanaryDistributionStrategy.DEFAULT_SCOPE;
-    }
-    return value;
+    return scope;
   }
 }

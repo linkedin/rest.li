@@ -16,6 +16,7 @@ dependencies {
   testCompile project(path: ':restli-common', configuration: 'testArtifacts')
   testCompile project(path: ':restli-internal-testutils', configuration: 'testArtifacts')
   testCompile project(path: ':multipart-mime', configuration: 'testArtifacts')
+  testCompile project(':test-util')
   testCompile externalDependency.guava
   testCompile externalDependency.testng
   testCompile externalDependency.junit

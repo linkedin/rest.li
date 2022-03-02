@@ -5,6 +5,7 @@ import com.linkedin.parseq.ParSeqUnitTestHelper;
 import com.linkedin.parseq.Task;
 import com.linkedin.parseq.batching.Batch;
 import com.linkedin.parseq.batching.BatchingStrategy;
+import com.linkedin.test.util.retry.ThreeRetries;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -63,7 +64,7 @@ public class TestExecutionGroup
     verify(client1, times(1)).get(any());
   }
 
-  @Test
+  @Test(retryAnalyzer = ThreeRetries.class)
   public void testAddToGroupAndExecute_MultipleGroup() throws Exception
   {
     // Task will be called twice in two groups
