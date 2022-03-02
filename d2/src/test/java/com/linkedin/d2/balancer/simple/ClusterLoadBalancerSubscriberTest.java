@@ -16,7 +16,9 @@
 
 package com.linkedin.d2.balancer.simple;
 
+import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.properties.CanaryDistributionStrategy;
+import com.linkedin.d2.balancer.properties.ClusterFailoutProperties;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterStoreProperties;
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
@@ -55,10 +57,12 @@ public class ClusterLoadBalancerSubscriberTest
     AtomicLong _version;
 
     Map<String, ClusterInfoItem> _clusterInfo;
+    Map<String, LoadBalancerStateItem<ClusterFailoutProperties>> _clusterFailoutProperties;
 
     ClusterLoadBalancerSubscriberFixture() {
       MockitoAnnotations.initMocks(this);
       _clusterInfo = new HashMap<>();
+      _clusterFailoutProperties = new HashMap<>();
       _version = new AtomicLong(0);
     }
 
@@ -72,6 +76,7 @@ public class ClusterLoadBalancerSubscriberTest
 
       when(_simpleLoadBalancerState.getClusterInfo()).thenReturn(_clusterInfo);
       when(_simpleLoadBalancerState.getVersionAccess()).thenReturn(_version);
+      when(_simpleLoadBalancerState.getClusterFailoutProperties()).thenReturn(_clusterFailoutProperties);
       doNothing().when(_simpleLoadBalancerState).notifyClusterListenersOnAdd(any());
       return new ClusterLoadBalancerSubscriber(_simpleLoadBalancerState, _eventBus, null);
     }
@@ -112,5 +117,25 @@ public class ClusterLoadBalancerSubscriberTest
 
     Assert.assertEquals(fixture._clusterInfo.get(CLUSTER_NAME).getClusterPropertiesItem().getProperty(),
         distribution == CanaryDistributionProvider.Distribution.CANARY ? canaryConfigs : stableConfigs);
+  }
+
+  @DataProvider(name = "getConfigsWithClusterFailoutProperties")
+  public Object[][] getConfigsWithClusterFailoutProperties()
+  {
+    ClusterProperties stableConfigs = new ClusterProperties(CLUSTER_NAME, Collections.singletonList("aa"));
+
+    return new Object[][] {
+      {stableConfigs, null},
+      {stableConfigs, new ClusterFailoutProperties(Collections.emptyList(), Collections.emptyList())},
+    };
+  }
+  @Test(dataProvider = "getConfigsWithClusterFailoutProperties")
+  public void testWithClusterFailoutConfigs(ClusterProperties stableConfigs, ClusterFailoutProperties clusterFailoutProperties)
+  {
+    ClusterLoadBalancerSubscriberFixture fixture = new ClusterLoadBalancerSubscriberFixture();
+    fixture.getMockSubscriber(false).handlePut(CLUSTER_NAME, new ClusterStoreProperties(
+      stableConfigs, null, null, clusterFailoutProperties));
+
+    Assert.assertEquals(fixture._clusterFailoutProperties.get(CLUSTER_NAME).getProperty(), clusterFailoutProperties);
   }
 }

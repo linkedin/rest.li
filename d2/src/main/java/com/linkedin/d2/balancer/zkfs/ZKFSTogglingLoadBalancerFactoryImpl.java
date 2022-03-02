@@ -22,6 +22,7 @@ package com.linkedin.d2.balancer.zkfs;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.clusterfailout.ClusterFailoutConfigProviderFactory;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -35,9 +36,9 @@ import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
-import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.FileSystemDirectory;
 import com.linkedin.d2.balancer.util.TogglingLoadBalancer;
+import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistryImpl;
 import com.linkedin.d2.discovery.PropertySerializer;
@@ -91,6 +92,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   private final SslSessionValidatorFactory _sslSessionValidatorFactory;
   private final DeterministicSubsettingMetadataProvider _deterministicSubsettingMetadataProvider;
   private final CanaryDistributionProvider _canaryDistributionProvider;
+  private final ClusterFailoutConfigProviderFactory _clusterFailoutConfigProviderFactory;
 
   private static final Logger _log = LoggerFactory.getLogger(ZKFSTogglingLoadBalancerFactoryImpl.class);
 
@@ -239,6 +241,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
             d2ClientJmxManager,
             zookeeperReadWindowMs,
             deterministicSubsettingMetadataProvider,
+            null,
             null);
   }
 
@@ -261,6 +264,51 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                              D2ClientJmxManager d2ClientJmxManager,
                                              int zookeeperReadWindowMs,
                                              DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
+                                             ClusterFailoutConfigProviderFactory clusterFailoutConfigProviderFactory)
+  {
+    this(factory,
+         timeout,
+         timeoutUnit,
+         baseZKPath,
+         fsBasePath,
+         clientFactories,
+         loadBalancerStrategyFactories,
+         d2ServicePath,
+         sslContext,
+         sslParameters,
+         isSSLEnabled,
+         clientServicesConfig,
+         useNewEphemeralStoreWatcher,
+         partitionAccessorRegistry,
+         enableSaveUriDataOnDisk,
+         sslSessionValidatorFactory,
+         d2ClientJmxManager,
+         zookeeperReadWindowMs,
+         deterministicSubsettingMetadataProvider,
+         clusterFailoutConfigProviderFactory,
+         null);
+  }
+
+  public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
+                                             long timeout,
+                                             TimeUnit timeoutUnit,
+                                             String baseZKPath,
+                                             String fsBasePath,
+                                             Map<String, TransportClientFactory> clientFactories,
+                                             Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+                                             String d2ServicePath,
+                                             SSLContext sslContext,
+                                             SSLParameters sslParameters,
+                                             boolean isSSLEnabled,
+                                             Map<String, Map<String, Object>> clientServicesConfig,
+                                             boolean useNewEphemeralStoreWatcher,
+                                             PartitionAccessorRegistry partitionAccessorRegistry,
+                                             boolean enableSaveUriDataOnDisk,
+                                             SslSessionValidatorFactory sslSessionValidatorFactory,
+                                             D2ClientJmxManager d2ClientJmxManager,
+                                             int zookeeperReadWindowMs,
+                                             DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
+                                             ClusterFailoutConfigProviderFactory clusterFailoutConfigProviderFactory,
                                              CanaryDistributionProvider canaryDistributionProvider)
   {
     _factory = factory;
@@ -282,6 +330,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     _d2ClientJmxManager = d2ClientJmxManager;
     _zookeeperReadWindowMs = zookeeperReadWindowMs;
     _deterministicSubsettingMetadataProvider = deterministicSubsettingMetadataProvider;
+    _clusterFailoutConfigProviderFactory = clusterFailoutConfigProviderFactory;
     _canaryDistributionProvider = canaryDistributionProvider;
   }
 
@@ -343,7 +392,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
             _sslSessionValidatorFactory, _deterministicSubsettingMetadataProvider, _canaryDistributionProvider);
     _d2ClientJmxManager.setSimpleLoadBalancerState(state);
 
-    SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, _lbTimeout, _lbTimeoutUnit, executorService);
+    SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, _lbTimeout, _lbTimeoutUnit, executorService, _clusterFailoutConfigProviderFactory);
     _d2ClientJmxManager.setSimpleLoadBalancer(balancer);
 
     TogglingLoadBalancer togLB = _factory.createBalancer(balancer, state, clusterToggle, serviceToggle, uriToggle);

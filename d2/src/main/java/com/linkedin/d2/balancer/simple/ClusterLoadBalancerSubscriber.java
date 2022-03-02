@@ -17,6 +17,7 @@
 package com.linkedin.d2.balancer.simple;
 
 import com.linkedin.d2.balancer.LoadBalancerState;
+import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.config.CanaryDistributionStrategyConverter;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterStoreProperties;
@@ -48,7 +49,29 @@ class ClusterLoadBalancerSubscriber extends
   {
     if (discoveryProperties != null)
     {
-      ClusterProperties pickedProperties = pickActiveProperties(discoveryProperties);
+      ClusterProperties pickedProperties = discoveryProperties;
+      CanaryDistributionProvider.Distribution distribution = CanaryDistributionProvider.Distribution.STABLE;
+      if (discoveryProperties instanceof ClusterStoreProperties) // this should always be true since the serializer returns the composite class
+      {
+        ClusterStoreProperties clusterStoreProperties = (ClusterStoreProperties) discoveryProperties;
+        CanaryDistributionProvider canaryDistributionProvider = _simpleLoadBalancerState.getCanaryDistributionProvider();
+        if (clusterStoreProperties.hasCanary() && canaryDistributionProvider != null)
+        {
+          // Canary config and canary distribution provider exist, distribute to use either stable config or canary config.
+          distribution = canaryDistributionProvider
+              .distribute(CanaryDistributionStrategyConverter.toConfig(clusterStoreProperties.getCanaryDistributionStrategy()));
+        }
+        pickedProperties = clusterStoreProperties.getDistributedClusterProperties(distribution);
+
+        _simpleLoadBalancerState.getClusterFailoutProperties().put(
+          listenTo,
+          new LoadBalancerStateItem<>(
+            clusterStoreProperties.getClusterFailoutProperties(),
+            _simpleLoadBalancerState.getVersionAccess().incrementAndGet(),
+            System.currentTimeMillis())
+        );
+      }
+      // TODO: set canary/stable config metric
 
       _simpleLoadBalancerState.getClusterInfo().put(listenTo,
         new ClusterInfoItem(_simpleLoadBalancerState, pickedProperties,

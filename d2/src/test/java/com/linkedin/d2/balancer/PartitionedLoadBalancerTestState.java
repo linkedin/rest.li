@@ -1,13 +1,12 @@
 package com.linkedin.d2.balancer;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
-import com.linkedin.d2.balancer.clients.DegraderTrackerClient;
 import com.linkedin.d2.balancer.clients.DegraderTrackerClientImpl;
 import com.linkedin.d2.balancer.clients.RetryTrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClientImpl;
+import com.linkedin.d2.balancer.properties.ClusterFailoutProperties;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
@@ -22,7 +21,6 @@ import com.linkedin.util.clock.SettableClock;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -123,6 +121,12 @@ public class PartitionedLoadBalancerTestState implements LoadBalancerState
     prioritizedSchemes.add("http");
     ClusterProperties clusterProperties = new ClusterProperties(_cluster, prioritizedSchemes);
     return new LoadBalancerStateItem<>(clusterProperties, 1, 1);
+  }
+
+  @Override
+  public LoadBalancerStateItem<ClusterFailoutProperties> getClusterFailoutProperties(String clusterName)
+  {
+    return null;
   }
 
   @Override

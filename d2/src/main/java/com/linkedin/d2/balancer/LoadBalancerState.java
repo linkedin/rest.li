@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.properties.ClusterFailoutProperties;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
@@ -79,6 +80,8 @@ public interface LoadBalancerState
   LoadBalancerStateItem<UriProperties> getUriProperties(String clusterName);
 
   LoadBalancerStateItem<ClusterProperties> getClusterProperties(String clusterName);
+
+  LoadBalancerStateItem<ClusterFailoutProperties> getClusterFailoutProperties(String clusterName);
 
   LoadBalancerStateItem<PartitionAccessor> getPartitionAccessor(String clusterName);
 
