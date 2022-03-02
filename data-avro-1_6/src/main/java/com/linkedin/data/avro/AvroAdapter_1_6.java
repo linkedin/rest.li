@@ -16,14 +16,13 @@
 
 package com.linkedin.data.avro;
 
+import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
 import java.io.IOException;
 import java.io.OutputStream;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.io.Decoder;
-import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.Encoder;
-import org.apache.avro.io.EncoderFactory;
 
 /**
  * Adapter for Avro 1.6
@@ -32,9 +31,6 @@ import org.apache.avro.io.EncoderFactory;
 @Deprecated
 public class AvroAdapter_1_6 implements AvroAdapter
 {
-  private final DecoderFactory _decoderFactory = DecoderFactory.get();
-  private final EncoderFactory _encoderFactory = EncoderFactory.get();
-
   @Override
   public boolean jsonUnionMemberHasFullName()
   {
@@ -44,36 +40,36 @@ public class AvroAdapter_1_6 implements AvroAdapter
   @Override
   public GenericData.EnumSymbol createEnumSymbol(Schema avroSchema, String enumValue)
   {
-    return new GenericData.EnumSymbol(avroSchema, enumValue);
+    return AvroCompatibilityHelper.newEnumSymbol(avroSchema, enumValue);
   }
 
   @Override
   public Schema stringToAvroSchema(String avroSchemaJson)
   {
-    return new Schema.Parser().parse(avroSchemaJson);
+    return Schema.parse(avroSchemaJson);
   }
 
   @Override
   public Decoder createBinaryDecoder(byte[] bytes) throws IOException
   {
-    return _decoderFactory.binaryDecoder(bytes, null);
+    return AvroCompatibilityHelper.newBinaryDecoder(bytes);
   }
 
   @Override
   public Encoder createBinaryEncoder(OutputStream outputStream) throws IOException
   {
-    return _encoderFactory.binaryEncoder(outputStream, null);
+    return AvroCompatibilityHelper.newBinaryEncoder(outputStream);
   }
 
   @Override
   public Decoder createJsonDecoder(Schema schema, String json) throws IOException
   {
-    return _decoderFactory.jsonDecoder(schema, json);
+    return AvroCompatibilityHelper.newJsonDecoder(schema, json);
   }
 
   @Override
   public Encoder createJsonEncoder(Schema schema, OutputStream outputStream) throws IOException
   {
-    return _encoderFactory.jsonEncoder(schema, outputStream);
+    return AvroCompatibilityHelper.newJsonEncoder(schema, outputStream, true);
   }
 }
