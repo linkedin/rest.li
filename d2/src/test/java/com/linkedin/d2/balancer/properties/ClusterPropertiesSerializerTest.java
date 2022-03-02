@@ -241,7 +241,8 @@ public class ClusterPropertiesSerializerTest
         {new ClusterFailoutProperties(clusterFailoutRedirectConfigsList, clusterFailoutBucketConfigsList)},
         {new ClusterFailoutProperties(clusterFailoutRedirectConfigsList, emptyList)},
         {new ClusterFailoutProperties(emptyList, clusterFailoutBucketConfigsList)},
-        {new ClusterFailoutProperties(emptyList, emptyList)}};
+        {new ClusterFailoutProperties(emptyList, emptyList)},
+        {new ClusterFailoutProperties(null, null)}};
   };
 
   @Test(dataProvider = "clusterFailoutProperties")

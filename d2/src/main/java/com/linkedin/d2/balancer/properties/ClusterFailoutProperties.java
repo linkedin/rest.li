@@ -1,16 +1,9 @@
-package com.linkedin.d2.balancer.properties;
-
-import java.util.Map;
-import java.util.List;
 /*
    Copyright (c) 2012 LinkedIn Corp.
-
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
-
        http://www.apache.org/licenses/LICENSE-2.0
-
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +11,10 @@ import java.util.List;
    limitations under the License.
 */
 
+package com.linkedin.d2.balancer.properties;
+
+import java.util.Map;
+import java.util.List;
 
 import java.util.stream.Collectors;
 import java.util.Collections;
@@ -34,8 +31,8 @@ public class ClusterFailoutProperties
   public ClusterFailoutProperties(List<Map<String, Object>> clusterFailoutRedirectConfigs,
       List<Map<String, Object>> clusterFailoutBucketConfigs)
   {
-    _clusterFailoutBucketConfigs = clusterFailoutBucketConfigs;
-    _clusterFailoutRedirectConfigs = clusterFailoutRedirectConfigs;
+    _clusterFailoutBucketConfigs = (clusterFailoutBucketConfigs != null) ? clusterFailoutBucketConfigs:Collections.emptyList();
+    _clusterFailoutRedirectConfigs = (clusterFailoutRedirectConfigs != null) ? clusterFailoutRedirectConfigs:Collections.emptyList();
   }
 
   public List<Map<String, Object>> getClusterFailoutRedirectConfigs()
@@ -77,6 +74,12 @@ public class ClusterFailoutProperties
       return false;
 
     ClusterFailoutProperties other = (ClusterFailoutProperties) obj;
+    if (other == null)
+      return false;
+    if ((_clusterFailoutRedirectConfigs == null && other.getClusterFailoutRedirectConfigs() != null) ||
+        (_clusterFailoutBucketConfigs == null && other.getClusterFailoutBucketConfigs() != null))
+      return false;
+
     return _clusterFailoutRedirectConfigs.equals(other.getClusterFailoutRedirectConfigs()) &&
           _clusterFailoutBucketConfigs.equals(other.getClusterFailoutBucketConfigs());
   }
