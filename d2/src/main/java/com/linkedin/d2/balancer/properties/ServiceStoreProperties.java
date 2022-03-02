@@ -195,8 +195,7 @@ public class ServiceStoreProperties extends ServiceProperties
     {
       return false;
     }
-    ServiceStoreProperties other = (ServiceStoreProperties) obj;
-    return canaryEquals(other);
+    return (obj instanceof ServiceStoreProperties) && canaryEquals((ServiceStoreProperties) obj);
   }
 
   private boolean canaryEquals(ServiceStoreProperties other)

@@ -175,8 +175,7 @@ public class ClusterStoreProperties extends ClusterProperties
     {
       return false;
     }
-    ClusterStoreProperties other = (ClusterStoreProperties) obj;
-    return canaryEquals(other);
+    return (obj instanceof ClusterStoreProperties) && canaryEquals((ClusterStoreProperties) obj);
   }
 
   private boolean canaryEquals(ClusterStoreProperties other)
