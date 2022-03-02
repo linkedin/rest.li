@@ -26,6 +26,16 @@ import java.util.Map;
 import java.util.Set;
 
 
+/**
+ * ServiceProperties are the properties that define a service and its behaviors.
+ * It is the serialized service object as part of {@link ServiceStoreProperties} that is stored in zookeeper.
+ *
+ * NOTE: {@link ServiceStoreProperties} includes ALL properties on a service store on service registry (zookeeper).
+ *
+ * Serialization NOTE: Most likely you want POJO's here (e.g: Map<String, Object>), and not include pegasus generated objects, because
+ * certain objects are serialized differently than how Jackson would serialize the object (for instance, using different key names), and
+ * that will cause problems in serialization/deserialization.
+ */
 public class ServiceProperties
 {
   private final String _serviceName;
@@ -178,6 +188,13 @@ public class ServiceProperties
         ? relativeStrategyProperties : Collections.emptyMap();
     _enableClusterSubsetting = enableClusterSubsetting;
     _minClusterSubsetSize = minClusterSubsetSize;
+  }
+
+  public ServiceProperties(ServiceProperties other)
+  {
+    this(other._serviceName, other._clusterName, other._path, other._prioritizedStrategyList, other._loadBalancerStrategyProperties,
+        other._transportClientProperties, other._degraderProperties, other._prioritizedSchemes, other._banned, other._serviceMetadataProperties,
+        other._backupRequests, other._relativeStrategyProperties, other._enableClusterSubsetting, other._minClusterSubsetSize);
   }
 
   public String getClusterName()

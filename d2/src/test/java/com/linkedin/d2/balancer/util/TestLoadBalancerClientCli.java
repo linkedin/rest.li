@@ -173,11 +173,11 @@ public class TestLoadBalancerClientCli
 
   private void validateClusterProperties(String stores, String clusterName)
   {
-    String clusterProps = stores.substring(stores.indexOf("Cluster '" + clusterName +"':ClusterProperties"));
+    String clusterProps = stores.substring(stores.indexOf("Cluster '" + clusterName +"':ClusterStoreProperties"));
 
     if (clusterProps != null)
     {
-      assertContains(clusterProps,"Cluster '" + clusterName +"':ClusterProperties [_clusterName=" + clusterName);
+      assertContains(clusterProps,"Cluster '" + clusterName +"':ClusterStoreProperties [_stableClusterProperties=ClusterProperties [_clusterName=" + clusterName);
       assertContains(clusterProps,"_prioritizedSchemes=[http]");
       assertContains(clusterProps,"_bannedUris=[]");
       assertContains(clusterProps,"_partitionProperties=com.linkedin.d2.balancer.properties.NullPartitionProperties");
@@ -186,7 +186,7 @@ public class TestLoadBalancerClientCli
 
   private void validateServiceProperties(String stores, String clusterName, String serviceName, String servicePath, String loadBalancerStrategyList, String hashMethod, String hashConfig)
   {
-    String serviceProps = stores.substring(stores.indexOf("Cluster '" + clusterName +"' UriProperties:nullService '" + serviceName + "':ServiceProperties"));
+    String serviceProps = stores.substring(stores.indexOf("Cluster '" + clusterName +"' UriProperties:nullService '" + serviceName + "':ServiceStoreProperties"));
 
     if (serviceProps != null)
     {
@@ -198,11 +198,11 @@ public class TestLoadBalancerClientCli
 
   private void validateServiceProperties(String stores, String clusterName, String serviceName, String servicePath, String loadBalancerStrategyList)
   {
-    String serviceProps = stores.substring(stores.indexOf("Cluster '" + clusterName +"' UriProperties:nullService '" + serviceName + "':ServiceProperties"));
+    String serviceProps = stores.substring(stores.indexOf("Cluster '" + clusterName +"' UriProperties:nullService '" + serviceName + "':ServiceStoreProperties"));
 
     if (serviceProps != null)
     {
-      assertContains(serviceProps,"Cluster '" + clusterName +"' UriProperties:nullService '" + serviceName + "':ServiceProperties [_clusterName=" + clusterName);
+      assertContains(serviceProps,"Cluster '" + clusterName +"' UriProperties:nullService '" + serviceName + "':ServiceStoreProperties [_stableServiceProperties=ServiceProperties [_clusterName=" + clusterName);
       assertContains(serviceProps,"_path=/" + servicePath);
       assertContains(serviceProps,"_serviceName=" + serviceName);
       assertContains(serviceProps,"_loadBalancerStrategyList=[" + loadBalancerStrategyList + "]");

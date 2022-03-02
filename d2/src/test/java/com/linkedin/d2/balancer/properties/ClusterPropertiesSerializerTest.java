@@ -70,30 +70,34 @@ public class ClusterPropertiesSerializerTest
 
 
     ClusterProperties property = new ClusterProperties("test");
-    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
+    ClusterStoreProperties storeProperties = new ClusterStoreProperties(property, null, null);
+    // cluster properties will be serialized then deserialized as cluster store properties
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), storeProperties);
+    // cluster store properties will be serialized then deserialized as cluster store properties
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(storeProperties)), storeProperties);
 
     property = new ClusterProperties("test", schemes);
-    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), new ClusterStoreProperties(property, null, null));
 
     supProperties.put("foo", "bar");
     property = new ClusterProperties("test", schemes, supProperties);
-    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), new ClusterStoreProperties(property, null, null));
 
     property = new ClusterProperties("test", schemes, null);
-    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), new ClusterStoreProperties(property, null, null));
 
 
     RangeBasedPartitionProperties rbp = new RangeBasedPartitionProperties("blah", 0, 5000000, 100);
     property = new ClusterProperties("test", schemes, supProperties, bannedSet, rbp);
-    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), new ClusterStoreProperties(property, null, null));
 
     HashBasedPartitionProperties hbp = new HashBasedPartitionProperties("blah", 150, HashBasedPartitionProperties.HashAlgorithm.valueOf("md5".toUpperCase()));
     property = new ClusterProperties("test", schemes, supProperties, bannedSet, hbp);
-    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), new ClusterStoreProperties(property, null, null));
 
     property = new ClusterProperties("test", schemes, supProperties, new HashSet<>(), NullPartitionProperties.getInstance(),
         Arrays.asList("principal1", "principal2"), (Map<String, Object>)null, false);
-    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), new ClusterStoreProperties(property, null, null));
 
     try
     {
@@ -111,7 +115,7 @@ public class ClusterPropertiesSerializerTest
     ClusterProperties property = new ClusterProperties("test", new ArrayList<>(), Collections.emptyMap(), new HashSet<>(), NullPartitionProperties.getInstance(),
                                                        Arrays.asList("principal1", "principal2"), DarkClustersConverter.toProperties(
       DARK_CLUSTER_CONFIG_MAP), false);
-    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), new ClusterStoreProperties(property, null, null));
   }
 
   @Test
@@ -136,7 +140,7 @@ public class ClusterPropertiesSerializerTest
                                                        NullPartitionProperties.getInstance(),
                                                        Arrays.asList("principal1", "principal2"),
                                                        DarkClustersConverter.toProperties(darkClusterConfigMap), false);
-    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), new ClusterStoreProperties(property, null, null));
   }
 
   @Test
@@ -150,7 +154,7 @@ public class ClusterPropertiesSerializerTest
                                                        NullPartitionProperties.getInstance(),
                                                        Arrays.asList("principal1", "principal2"),
                                                        DarkClustersConverter.toProperties(darkClusterConfigMap), false);
-    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), new ClusterStoreProperties(property, null, null));
   }
 
   @Test
@@ -160,7 +164,7 @@ public class ClusterPropertiesSerializerTest
     ClusterProperties property = new ClusterProperties("test", new ArrayList<>(), new HashMap<>(), new HashSet<>(), NullPartitionProperties.getInstance(),
                                                        Arrays.asList("principal1", "principal2"),
                                                        (Map<String, Object>) null, false);
-    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), property);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), new ClusterStoreProperties(property, null, null));
   }
 
   @DataProvider(name = "distributionStrategies")
@@ -192,10 +196,27 @@ public class ClusterPropertiesSerializerTest
                                                              NullPartitionProperties.getInstance(), Arrays.asList("principal1", "principal2"),
                                                              DarkClustersConverter.toProperties(DARK_CLUSTER_CONFIG_MAP), false);
 
-    ClusterPropertiesWithCanary propertyWithCanary = new ClusterPropertiesWithCanary("test", Collections.emptyList(), Collections.emptyMap(),
-                                                                                     Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(),
-                                                                                     (Map<String, Object>) null, false, distributionStrategy, canaryProperty);
+    ClusterStoreProperties property = new ClusterStoreProperties("test", Collections.emptyList(), Collections.emptyMap(), Collections.emptySet(),
+                                                                NullPartitionProperties.getInstance(), Collections.emptyList(),
+                                                                (Map<String, Object>) null, false, canaryProperty, distributionStrategy);
 
-    assertEquals(serializer.fromBytes(serializer.toBytes(propertyWithCanary)), propertyWithCanary);
+    assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
+  }
+
+  @Test
+  public void testClusterPropertiesWithCanaryEdgeCases()  throws PropertySerializationException
+  {
+    ClusterPropertiesJsonSerializer serializer = new ClusterPropertiesJsonSerializer();
+
+    ClusterProperties property = new ClusterProperties("test");
+    ClusterStoreProperties expected = new ClusterStoreProperties(property, null, null);
+    // having canary configs but missing distribution strategy will not be taken in.
+    ClusterStoreProperties inputProperty = new ClusterStoreProperties(property, property, null);
+    assertEquals(serializer.fromBytes(serializer.toBytes(inputProperty)), expected);
+
+    // having distribution strategy but missing canary configs will not be taken in.
+    inputProperty = new ClusterStoreProperties(property, null, new CanaryDistributionStrategy("percentage",
+        Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap()));
+    assertEquals(serializer.fromBytes(serializer.toBytes(inputProperty)), expected);
   }
 }
