@@ -17,6 +17,7 @@
 package com.linkedin.d2.balancer.properties;
 
 import com.linkedin.d2.balancer.properties.util.PropertyUtil;
+import com.linkedin.d2.balancer.properties.ClusterFailoutProperties;
 import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializationException;
@@ -97,9 +98,14 @@ public class ClusterPropertiesJsonSerializer implements
     ClusterProperties stableConfigs = buildClusterPropertiesFromMap(map);
     ClusterProperties canaryConfigs = null;
     CanaryDistributionStrategy distributionStrategy = null;
+    ClusterFailoutProperties clusterFailoutProperties = null;
+
     // get canary properties and canary distribution strategy, if exist
     Map<String, Object> canaryConfigsMap = mapGet(map, PropertyKeys.CANARY_CONFIGS);
     Map<String, Object> distributionStrategyMap = mapGet(map, PropertyKeys.CANARY_DISTRIBUTION_STRATEGY);
+
+    // get existing cluster failout properties if it exists
+    Map<String, Object> clusterFailoutMap = mapGet(map, PropertyKeys.CLUSTER_FAILOUT_PROPERTIES);
     if (canaryConfigsMap != null && !canaryConfigsMap.isEmpty()
         && distributionStrategyMap != null && !distributionStrategyMap.isEmpty())
     {
@@ -110,7 +116,14 @@ public class ClusterPropertiesJsonSerializer implements
         mapGetOrDefault(distributionStrategyMap, PropertyKeys.TARGET_HOSTS_STRATEGY_PROPERTIES, Collections.emptyMap()),
         mapGetOrDefault(distributionStrategyMap, PropertyKeys.TARGET_APPLICATIONS_STRATEGY_PROPERTIES, Collections.emptyMap()));
     }
-    return new ClusterStoreProperties(stableConfigs, canaryConfigs, distributionStrategy);
+    if (clusterFailoutMap != null && !clusterFailoutMap.isEmpty())
+    {
+      clusterFailoutProperties = new ClusterFailoutProperties(
+          mapGetOrDefault(clusterFailoutMap, PropertyKeys.CLUSTER_FAILOUT_REDIRECT_CONFIGS, Collections.emptyList()),
+          mapGetOrDefault(clusterFailoutMap, PropertyKeys.CLUSTER_FAILOUT_BUCKET_CONFIGS, Collections.emptyList()));
+
+    }
+    return new ClusterStoreProperties(stableConfigs, canaryConfigs, distributionStrategy, clusterFailoutProperties);
   }
 
   /**
