@@ -60,8 +60,8 @@ public abstract class ZKClusterFailoutConfigProvider implements ClusterFailoutCo
    * @param clusterFailoutProperties The properties defined for a cluster failout.
    * @return Parsed and processed config that's ready to be used for routing requests.
    */
-  public abstract @Nullable
-  ClusterFailoutConfig createFailoutConfig(@Nullable ClusterFailoutProperties clusterFailoutProperties);
+  public abstract @Nullable ClusterFailoutConfig createFailoutConfig(@Nonnull String clusterName,
+                                                                     @Nullable ClusterFailoutProperties clusterFailoutProperties);
 
   @Override
   public ClusterFailoutConfig getFailoutConfig(String clusterName)
@@ -79,7 +79,7 @@ public abstract class ZKClusterFailoutConfigProvider implements ClusterFailoutCo
       final ClusterFailoutProperties failoutProperties = item.getProperty();
       _log.debug("Detected cluster failout property change for cluster: {}. New properties: {}", clusterName, failoutProperties);
 
-      final ClusterFailoutConfig failoutConfig = createFailoutConfig(failoutProperties);
+      final ClusterFailoutConfig failoutConfig = createFailoutConfig(clusterName, failoutProperties);
       _failedoutClusters.computeIfAbsent(clusterName, name -> new FailedoutClusterManager(clusterName, _loadBalancerState))
         .updateFailoutConfig(failoutConfig);
     }

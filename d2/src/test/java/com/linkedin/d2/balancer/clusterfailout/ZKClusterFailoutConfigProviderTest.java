@@ -168,7 +168,7 @@ public class ZKClusterFailoutConfigProviderTest
 
     @Nullable
     @Override
-    public TestingClusterFailoutConfig createFailoutConfig(@Nullable ClusterFailoutProperties clusterFailoutProperties)
+    public TestingClusterFailoutConfig createFailoutConfig(@Nonnull String clusterName, @Nullable ClusterFailoutProperties clusterFailoutProperties)
     {
       if (clusterFailoutProperties == null)
       {
