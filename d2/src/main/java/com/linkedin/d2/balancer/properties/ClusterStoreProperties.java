@@ -17,7 +17,7 @@
 package com.linkedin.d2.balancer.properties;
 
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
-import com.linkedin.d2.balancer.properties.ClusterFailoutProperties;
+import com.linkedin.d2.balancer.properties.FailoutProperties;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashSet;
@@ -40,7 +40,7 @@ public class ClusterStoreProperties extends ClusterProperties
 {
   protected final ClusterProperties _canaryConfigs;
   protected final CanaryDistributionStrategy _canaryDistributionStrategy;
-  protected final ClusterFailoutProperties _clusterFailoutProperties;
+  protected final FailoutProperties _failoutProperties;
 
   public ClusterStoreProperties(String clusterName)
   {
@@ -114,7 +114,21 @@ public class ClusterStoreProperties extends ClusterProperties
     super(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings, darkClusters, delegated);
     _canaryConfigs = canaryConfigs;
     _canaryDistributionStrategy = distributionStrategy;
-    _clusterFailoutProperties = null;
+    _failoutProperties = null;
+  }
+
+  public ClusterStoreProperties(ClusterProperties stableConfigs,
+      ClusterProperties canaryConfigs,
+      CanaryDistributionStrategy distributionStrategy,
+      FailoutProperties failoutProperties)
+  {
+    super(stableConfigs.getClusterName(), stableConfigs.getPrioritizedSchemes(),
+        stableConfigs.getProperties(), stableConfigs.getBannedUris(), stableConfigs.getPartitionProperties(),
+        stableConfigs.getSslSessionValidationStrings(), stableConfigs.getDarkClusters(),
+        stableConfigs.isDelegated());
+    _canaryConfigs = canaryConfigs;
+    _canaryDistributionStrategy = distributionStrategy;
+    _failoutProperties = failoutProperties;
   }
 
   public ClusterStoreProperties(String clusterName,
@@ -127,26 +141,12 @@ public class ClusterStoreProperties extends ClusterProperties
       boolean delegated,
       ClusterProperties canaryConfigs,
       CanaryDistributionStrategy distributionStrategy,
-      ClusterFailoutProperties clusterFailoutProperties)
+      FailoutProperties failoutProperties)
   {
     super(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings, darkClusters, delegated);
     _canaryConfigs = canaryConfigs;
     _canaryDistributionStrategy = distributionStrategy;
-    _clusterFailoutProperties = clusterFailoutProperties;
-  }
-
-  public ClusterStoreProperties(ClusterProperties stableConfigs,
-      ClusterProperties canaryConfigs,
-      CanaryDistributionStrategy distributionStrategy,
-      ClusterFailoutProperties clusterFailoutProperties)
-  {
-    super(stableConfigs.getClusterName(), stableConfigs.getPrioritizedSchemes(),
-        stableConfigs.getProperties(), stableConfigs.getBannedUris(), stableConfigs.getPartitionProperties(),
-        stableConfigs.getSslSessionValidationStrings(), stableConfigs.getDarkClusters(),
-        stableConfigs.isDelegated());
-    _canaryConfigs = canaryConfigs;
-    _canaryDistributionStrategy = distributionStrategy;
-    _clusterFailoutProperties = clusterFailoutProperties;
+    _failoutProperties = failoutProperties;
   }
 
   public ClusterStoreProperties(ClusterProperties stableConfigs,
@@ -159,7 +159,7 @@ public class ClusterStoreProperties extends ClusterProperties
         stableConfigs.isDelegated());
     _canaryConfigs = canaryConfigs;
     _canaryDistributionStrategy = distributionStrategy;
-    _clusterFailoutProperties = null;
+    _failoutProperties = null;
   }
 
   public ClusterProperties getCanaryConfigs()
@@ -172,9 +172,9 @@ public class ClusterStoreProperties extends ClusterProperties
     return _canaryDistributionStrategy;
   }
 
-  public ClusterFailoutProperties getClusterFailoutProperties()
+  public FailoutProperties getFailoutProperties()
   {
-    return _clusterFailoutProperties;
+    return _failoutProperties;
   }
 
   public boolean hasCanary() {
@@ -198,7 +198,7 @@ public class ClusterStoreProperties extends ClusterProperties
   {
     return "ClusterStoreProperties [_stableClusterProperties=" + super.toString() + ", _canaryConfigs=" + _canaryConfigs
         + ", _canaryDistributionStrategy=" + _canaryDistributionStrategy
-        + ", _clusterFailoutProperties=" + _clusterFailoutProperties + "]";
+        + ", _failoutProperties=" + _failoutProperties + "]";
   }
 
   @Override
@@ -208,7 +208,7 @@ public class ClusterStoreProperties extends ClusterProperties
     int result = super.hashCode();
     result = prime * result + ((_canaryConfigs == null) ? 0 : _canaryConfigs.hashCode());
     result = prime * result + ((_canaryDistributionStrategy == null) ? 0 : _canaryDistributionStrategy.hashCode());
-    result = prime * result + ((_clusterFailoutProperties == null) ? 0 : _clusterFailoutProperties.hashCode());
+    result = prime * result + ((_failoutProperties == null) ? 0 : _failoutProperties.hashCode());
     return result;
   }
 
@@ -220,16 +220,16 @@ public class ClusterStoreProperties extends ClusterProperties
       return false;
     }
 
-    ClusterStoreProperties other = (ClusterStoreProperties) obj;
-    if (_clusterFailoutProperties == null && other.getClusterFailoutProperties() != null)
-    {
+    return (obj instanceof ClusterStoreProperties) && canaryEquals((ClusterStoreProperties) obj) && failoutEquals((ClusterStoreProperties) obj);
+  }
+
+  private boolean failoutEquals(ClusterStoreProperties other)
+  {
+    if (_failoutProperties == null && other.getFailoutProperties() != null)
       return false;
-    }
-    if (_clusterFailoutProperties != null && !_clusterFailoutProperties.equals(other.getClusterFailoutProperties()))
-    {
+    if (_failoutProperties != null && !_failoutProperties.equals(other.getFailoutProperties()))
       return false;
-    }
-    return (obj instanceof ClusterStoreProperties) && canaryEquals((ClusterStoreProperties) obj);
+    return true;
   }
 
   private boolean canaryEquals(ClusterStoreProperties other)
