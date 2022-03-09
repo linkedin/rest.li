@@ -290,12 +290,11 @@ public class ClusterPropertiesSerializerTest
         {withoutFailout},
         // Test serialization when canary property is missing
         {withoutCanary},
-        // Test when a ClusterProperties is passed in, rather than a ClusterStoreProperties
-        {canaryProperty}};
+      };
   };
 
   @Test(dataProvider = "ClusterProperties")
-  public void testClusterStoreProperties(ClusterProperties property) throws PropertySerializationException
+  public void testClusterStoreProperties(ClusterStoreProperties property) throws PropertySerializationException
   {
     ClusterPropertiesJsonSerializer serializer = new ClusterPropertiesJsonSerializer();
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
