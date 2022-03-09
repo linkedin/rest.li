@@ -439,7 +439,7 @@ public class ZookeeperConnectionManagerTest
     executorService.shutdown();
   }
 
-  @Test(invocationCount = 10, timeOut = 10000, groups = { "ci-flaky" })
+  @Test(invocationCount = 10, timeOut = 10000, groups = { "ci-flaky" }, retryAnalyzer = ThreeRetries.class) // Known to be flaky in CI
   public void testMarkUpAndDownMultipleTimesFinalUp()
     throws Exception
   {

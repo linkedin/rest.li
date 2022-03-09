@@ -14,6 +14,15 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.31.0] - 2022-03-02
+- Support d2 config canary
+
+## [29.30.0] - 2022-02-28
+- Re-apply avro update to 1.9.2
+
+## [29.29.2] - 2022-02-17
+- Generalize avro --> pegasus translation code to accept any CharSequence value for strings
+
 ## [29.29.1] - 2022-02-10
 - Make DarkGateKeeper configurable for different dark clusters
 
@@ -24,7 +33,7 @@ and what APIs have changed, if applicable.
 - Fix weight double-count in D2 SimpleLoadBalancer
 
 ## [29.27.0] - 2022-01-25
-- Update Avro version to 1.92
+- Update Avro version to 1.9.2
 
 ## [29.26.4] - 2022-01-24
 - Map local variant of service ZNodes to cluster without colo suffix
@@ -5182,7 +5191,10 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.29.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.31.0...master
+[29.31.0]: https://github.com/linkedin/rest.li/compare/v29.30.0...v29.31.0
+[29.30.0]: https://github.com/linkedin/rest.li/compare/v29.29.2...v29.30.0
+[29.29.2]: https://github.com/linkedin/rest.li/compare/v29.29.1...v29.29.2
 [29.29.1]: https://github.com/linkedin/rest.li/compare/v29.29.0...v29.29.1
 [29.29.0]: https://github.com/linkedin/rest.li/compare/v29.28.0...v29.29.0
 [29.28.0]: https://github.com/linkedin/rest.li/compare/v29.27.0...v29.28.0

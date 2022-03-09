@@ -16,17 +16,24 @@
 
 package com.linkedin.data.avro.generator;
 
+import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.apache.avro.Schema;
+import org.apache.avro.Schema.Parser;
+import org.apache.commons.compress.utils.IOUtils;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -338,7 +345,12 @@ public class TestAvroSchemaGenerator
       Schema avroSchema;
       try
       {
-        avroSchema = Schema.parse(avroSchemaInputStream);
+        avroSchema = AvroCompatibilityHelper.parse(
+            new BufferedReader(
+                new InputStreamReader(avroSchemaInputStream, StandardCharsets.UTF_8))
+                .lines()
+                .collect(Collectors.joining("\n"))
+        );
       }
       finally
       {

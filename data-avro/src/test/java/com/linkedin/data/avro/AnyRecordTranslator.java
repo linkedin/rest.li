@@ -21,6 +21,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.codec.JacksonDataCodec;
 import com.linkedin.data.schema.DataSchema;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
@@ -51,16 +52,16 @@ public class AnyRecordTranslator implements CustomDataTranslator
     }
     if (error == false)
     {
-      Utf8 type = null;
-      Utf8 value = null;
+      CharSequence type = null;
+      CharSequence value = null;
       try
       {
-        type = (Utf8) genericRecord.get(TYPE);
-        value = (Utf8) genericRecord.get(VALUE);
+        type = (CharSequence) genericRecord.get(TYPE);
+        value = (CharSequence) genericRecord.get(VALUE);
       }
       catch (ClassCastException e)
       {
-        context.appendMessage("Error translating %1$s, \"type\" or \"value\" is not a %2$s", avroData, Utf8.class.getSimpleName());
+        context.appendMessage("Error translating %1$s, \"type\" or \"value\" is not a %2$s", avroData, CharSequence.class.getSimpleName());
         error = true;
       }
       if (error == false)
@@ -73,7 +74,7 @@ public class AnyRecordTranslator implements CustomDataTranslator
         {
           try
           {
-            DataMap valueDataMap = _codec.bytesToMap(value.getBytes());
+            DataMap valueDataMap = _codec.bytesToMap(String.valueOf(value).getBytes(StandardCharsets.UTF_8));
             DataMap anyDataMap = new DataMap(2);
             anyDataMap.put(type.toString(), valueDataMap);
             result = anyDataMap;
