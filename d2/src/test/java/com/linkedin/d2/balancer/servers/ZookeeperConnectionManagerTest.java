@@ -560,13 +560,13 @@ public class ZookeeperConnectionManagerTest
     shutdownManager(manager);
   }
 
-  @Test (invocationCount = 10, timeOut = 15000)
+  @Test (invocationCount = 1, timeOut = 5000)
   public void testWarmup() throws Exception
   {
     ScheduledExecutorService warmupExecutorService = Executors.newSingleThreadScheduledExecutor();
     boolean isDarkWarmupEnabled = true;
     String warmupClusterName = "warmup" + _cluster;
-    int warmupDuration = 5; //run warm-up for 5 seconds
+    int warmupDuration = 2; //run warm-up for 2 seconds
 
     ZooKeeperAnnouncer announcer = getZooKeeperWarmupAnnouncer(_cluster, _uri, WEIGHT, isDarkWarmupEnabled, warmupClusterName, warmupDuration, warmupExecutorService);
     ZooKeeperConnectionManager manager = createManagerForWarmupTests(false, warmupDuration, announcer);
@@ -590,13 +590,13 @@ public class ZookeeperConnectionManagerTest
     shutdownManager(manager);
   }
 
-  @Test (invocationCount = 10, timeOut = 15000)
+  @Test (invocationCount = 1, timeOut = 5000)
   public void testWarmupWithDisconnection() throws Exception
   {
     ScheduledExecutorService warmupExecutorService = Executors.newSingleThreadScheduledExecutor();
     boolean isDarkWarmupEnabled = true;
     String warmupClusterName = "warmup" + _cluster;
-    int warmupDuration = 5; //run warm up for 5 sec
+    int warmupDuration = 2; //run warm up for 2 seconds
 
     ZooKeeperAnnouncer announcer = getZooKeeperWarmupAnnouncer(_cluster, _uri, WEIGHT, isDarkWarmupEnabled, warmupClusterName, warmupDuration, warmupExecutorService);
     ZooKeeperConnectionManager manager = createManagerForWarmupTests(false, warmupDuration, announcer);
@@ -612,7 +612,7 @@ public class ZookeeperConnectionManagerTest
     }
     catch (TimeoutException e)
     {
-      // We are expecting TimeoutException here because the warmup is set to run for 5 seconds,
+      // We are expecting TimeoutException here because the warmup is set to run for 2 seconds,
       // but we are getting the result from the callback after 1 sec, so the warm up should not have completed
     }
     UriProperties properties = store.get(warmupClusterName);
@@ -642,13 +642,13 @@ public class ZookeeperConnectionManagerTest
     shutdownManager(manager);
   }
 
-  @Test (invocationCount = 10, timeOut = 15000)
+  @Test (invocationCount = 1, timeOut = 10000)
   public void testWarmupWithDisconnectionAndReconnectionAfterWarmupMarkDownFailure() throws Exception
   {
     ScheduledExecutorService warmupExecutorService = Executors.newSingleThreadScheduledExecutor();
     boolean isDarkWarmupEnabled = true;
     String warmupClusterName = "warmup" + _cluster;
-    int warmupDuration = 5; //run warm up for 5 sec
+    int warmupDuration = 2; //run warm up for 2 sec
 
     ZooKeeperAnnouncer announcer = getZooKeeperWarmupAnnouncer(_cluster, _uri, WEIGHT, isDarkWarmupEnabled, warmupClusterName, warmupDuration, warmupExecutorService);
     ZooKeeperConnectionManager manager = createManagerForWarmupTests(false, warmupDuration, announcer);
@@ -703,7 +703,7 @@ public class ZookeeperConnectionManagerTest
     shutdownManager(manager);
   }
 
-  @Test (invocationCount = 10, timeOut = 15000)
+  @Test (invocationCount = 1, timeOut = 15000)
   public void testWarmupDuringSessionExpiration() throws Exception
   {
     ScheduledExecutorService warmupExecutorService = Executors.newSingleThreadScheduledExecutor();
