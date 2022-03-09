@@ -227,7 +227,7 @@ public class PropertyKeys
   public static final String HTTP_SCHEME = "http";
   public static final String HTTPS_SCHEME = "https";
 
-  // used by ServicePropertiesWithCanary and ClusterPropertiesWithCanary
+  // used by ServiceProperties and ClusterProperties Serializers
   public static final String CANARY_CONFIGS = "canaryConfigs";
   public static final String CANARY_DISTRIBUTION_STRATEGY = "canaryDistributionStrategy";
 

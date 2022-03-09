@@ -33,8 +33,13 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.linkedin.d2.balancer.properties.util.PropertyUtil.mapGet;
-import static com.linkedin.d2.balancer.properties.util.PropertyUtil.mapGetOrDefault;
 
+
+/**
+ * ClusterPropertiesJsonSerializer serialize and deserialize data stored in a cluster store on service registry (like Zookeeper).
+ * NOTE: The deserialized object is actually a {@link ClusterStoreProperties} to include ALL properties in the store.
+ * The interface is left with PropertySerializer<ClusterProperties> for backward compatibility.
+ */
 public class ClusterPropertiesJsonSerializer implements
     PropertySerializer<ClusterProperties>, PropertyBuilder<ClusterProperties>
 {
@@ -83,8 +88,35 @@ public class ClusterPropertiesJsonSerializer implements
     return value;
   }
 
+  /**
+   * Always return the composite class {@link ClusterStoreProperties} to include ALL properties stored on service registry (like Zookeeper),
+   * such as canary configs, distribution strategy, etc.
+   */
   @Override
-  public ClusterProperties fromMap(Map<String, Object> map)
+  public ClusterProperties fromMap(Map<String, Object> map) {
+    ClusterProperties stableConfigs = buildClusterPropertiesFromMap(map);
+    ClusterProperties canaryConfigs = null;
+    CanaryDistributionStrategy distributionStrategy = null;
+    // get canary properties and canary distribution strategy, if exist
+    Map<String, Object> canaryConfigsMap = mapGet(map, PropertyKeys.CANARY_CONFIGS);
+    Map<String, Object> distributionStrategyMap = mapGet(map, PropertyKeys.CANARY_DISTRIBUTION_STRATEGY);
+    if (canaryConfigsMap != null && !canaryConfigsMap.isEmpty()
+        && distributionStrategyMap != null && !distributionStrategyMap.isEmpty())
+    {
+      canaryConfigs = buildClusterPropertiesFromMap(canaryConfigsMap);
+      distributionStrategy = new CanaryDistributionStrategy(
+        mapGetOrDefault(distributionStrategyMap, PropertyKeys.CANARY_STRATEGY, CanaryDistributionStrategy.DEFAULT_STRATEGY_LABEL),
+        mapGetOrDefault(distributionStrategyMap, PropertyKeys.PERCENTAGE_STRATEGY_PROPERTIES, Collections.emptyMap()),
+        mapGetOrDefault(distributionStrategyMap, PropertyKeys.TARGET_HOSTS_STRATEGY_PROPERTIES, Collections.emptyMap()),
+        mapGetOrDefault(distributionStrategyMap, PropertyKeys.TARGET_APPLICATIONS_STRATEGY_PROPERTIES, Collections.emptyMap()));
+    }
+    return new ClusterStoreProperties(stableConfigs, canaryConfigs, distributionStrategy);
+  }
+
+  /**
+   * Build cluster configs from map. This could be for either stable or canary configs.
+   */
+  private ClusterProperties buildClusterPropertiesFromMap(Map<String, Object> map)
   {
     List<String> bannedList = mapGet(map, PropertyKeys.BANNED_URIS);
     Set<URI> banned = (bannedList == null) ? Collections.emptySet()
@@ -162,22 +194,6 @@ public class ClusterPropertiesJsonSerializer implements
     if (map.containsKey(PropertyKeys.DELEGATED)) {
       delegated = mapGet(map, PropertyKeys.DELEGATED);
     }
-
-    // get canary cluster properties and canary distribution strategy, if exist
-    if (map.containsKey(PropertyKeys.CANARY_CONFIGS) && map.containsKey(PropertyKeys.CANARY_DISTRIBUTION_STRATEGY))
-    {
-      Map<String, Object> canaryConfigsMap = mapGet(map, PropertyKeys.CANARY_CONFIGS);
-      Map<String, Object> distributionStrategyMap = mapGet(map, PropertyKeys.CANARY_DISTRIBUTION_STRATEGY);
-      ClusterProperties canaryServiceProperties = fromMap(canaryConfigsMap);
-      CanaryDistributionStrategy distributionStrategy = new CanaryDistributionStrategy(
-        mapGetOrDefault(distributionStrategyMap, PropertyKeys.CANARY_STRATEGY, CanaryDistributionStrategy.DEFAULT_STRATEGY_LABEL),
-        mapGetOrDefault(distributionStrategyMap, PropertyKeys.PERCENTAGE_STRATEGY_PROPERTIES, Collections.emptyMap()),
-        mapGetOrDefault(distributionStrategyMap, PropertyKeys.TARGET_HOSTS_STRATEGY_PROPERTIES, Collections.emptyMap()),
-        mapGetOrDefault(distributionStrategyMap, PropertyKeys.TARGET_APPLICATIONS_STRATEGY_PROPERTIES, Collections.emptyMap()));
-      return new ClusterPropertiesWithCanary(clusterName, prioritizedSchemes, properties, banned, partitionProperties, validationList,
-                                             darkClusterProperty, delegated, distributionStrategy, canaryServiceProperties);
-    }
-
     return new ClusterProperties(clusterName, prioritizedSchemes, properties, banned, partitionProperties, validationList,
         darkClusterProperty, delegated);
   }
