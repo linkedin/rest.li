@@ -225,10 +225,12 @@ public class ClusterStoreProperties extends ClusterProperties
 
   private boolean failoutEquals(ClusterStoreProperties other)
   {
-    if (_failoutProperties == null && other.getFailoutProperties() != null)
+    if (_failoutProperties == null && other.getFailoutProperties() != null) {
       return false;
-    if (_failoutProperties != null && !_failoutProperties.equals(other.getFailoutProperties()))
+    }
+    if (_failoutProperties != null && !_failoutProperties.equals(other.getFailoutProperties())) {
       return false;
+    }
     return true;
   }
 
