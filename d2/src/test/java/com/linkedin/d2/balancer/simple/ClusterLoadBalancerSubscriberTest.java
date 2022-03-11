@@ -23,10 +23,14 @@ import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterStoreProperties;
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
@@ -34,7 +38,11 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
@@ -55,14 +63,14 @@ public class ClusterLoadBalancerSubscriberTest
     PropertyEventBus<ClusterProperties> _eventBus;
     @Mock
     AtomicLong _version;
+    @Captor
+    ArgumentCaptor<LoadBalancerStateItem<ClusterFailoutProperties>> _clusterFailoutPropertiesCaptor;
 
     Map<String, ClusterInfoItem> _clusterInfo;
-    Map<String, LoadBalancerStateItem<ClusterFailoutProperties>> _clusterFailoutProperties;
 
     ClusterLoadBalancerSubscriberFixture() {
       MockitoAnnotations.initMocks(this);
       _clusterInfo = new HashMap<>();
-      _clusterFailoutProperties = new HashMap<>();
       _version = new AtomicLong(0);
     }
 
@@ -76,7 +84,6 @@ public class ClusterLoadBalancerSubscriberTest
 
       when(_simpleLoadBalancerState.getClusterInfo()).thenReturn(_clusterInfo);
       when(_simpleLoadBalancerState.getVersionAccess()).thenReturn(_version);
-      when(_simpleLoadBalancerState.getClusterFailoutProperties()).thenReturn(_clusterFailoutProperties);
       doNothing().when(_simpleLoadBalancerState).notifyClusterListenersOnAdd(any());
       return new ClusterLoadBalancerSubscriber(_simpleLoadBalancerState, _eventBus, null);
     }
@@ -136,6 +143,8 @@ public class ClusterLoadBalancerSubscriberTest
     fixture.getMockSubscriber(false).handlePut(CLUSTER_NAME, new ClusterStoreProperties(
       stableConfigs, null, null, clusterFailoutProperties));
 
-    Assert.assertEquals(fixture._clusterFailoutProperties.get(CLUSTER_NAME).getProperty(), clusterFailoutProperties);
+    verify(fixture._simpleLoadBalancerState, times(1)).updateClusterFailoutProperties(eq(CLUSTER_NAME),
+                                                                                      fixture._clusterFailoutPropertiesCaptor.capture());
+    Assert.assertEquals(fixture._clusterFailoutPropertiesCaptor.getValue().getProperty(), clusterFailoutProperties);
   }
 }

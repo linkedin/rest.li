@@ -49,29 +49,7 @@ class ClusterLoadBalancerSubscriber extends
   {
     if (discoveryProperties != null)
     {
-      ClusterProperties pickedProperties = discoveryProperties;
-      CanaryDistributionProvider.Distribution distribution = CanaryDistributionProvider.Distribution.STABLE;
-      if (discoveryProperties instanceof ClusterStoreProperties) // this should always be true since the serializer returns the composite class
-      {
-        ClusterStoreProperties clusterStoreProperties = (ClusterStoreProperties) discoveryProperties;
-        CanaryDistributionProvider canaryDistributionProvider = _simpleLoadBalancerState.getCanaryDistributionProvider();
-        if (clusterStoreProperties.hasCanary() && canaryDistributionProvider != null)
-        {
-          // Canary config and canary distribution provider exist, distribute to use either stable config or canary config.
-          distribution = canaryDistributionProvider
-              .distribute(CanaryDistributionStrategyConverter.toConfig(clusterStoreProperties.getCanaryDistributionStrategy()));
-        }
-        pickedProperties = clusterStoreProperties.getDistributedClusterProperties(distribution);
-
-        _simpleLoadBalancerState.getClusterFailoutProperties().put(
-          listenTo,
-          new LoadBalancerStateItem<>(
-            clusterStoreProperties.getClusterFailoutProperties(),
-            _simpleLoadBalancerState.getVersionAccess().incrementAndGet(),
-            System.currentTimeMillis())
-        );
-      }
-      // TODO: set canary/stable config metric
+      ClusterProperties pickedProperties = pickActiveProperties(listenTo, discoveryProperties);
 
       _simpleLoadBalancerState.getClusterInfo().put(listenTo,
         new ClusterInfoItem(_simpleLoadBalancerState, pickedProperties,
@@ -101,7 +79,7 @@ class ClusterLoadBalancerSubscriber extends
    * @param discoveryProperties a composite properties containing all data on the cluster store (stable configs, canary configs, etc.).
    * @return the picked active properties
    */
-  private ClusterProperties pickActiveProperties(final ClusterProperties discoveryProperties)
+  private ClusterProperties pickActiveProperties(String listenTo, final ClusterProperties discoveryProperties)
   {
     ClusterProperties pickedProperties = discoveryProperties;
     CanaryDistributionProvider.Distribution distribution = CanaryDistributionProvider.Distribution.STABLE;
@@ -116,6 +94,14 @@ class ClusterLoadBalancerSubscriber extends
             .distribute(CanaryDistributionStrategyConverter.toConfig(clusterStoreProperties.getCanaryDistributionStrategy()));
       }
       pickedProperties = clusterStoreProperties.getDistributedClusterProperties(distribution);
+
+      _simpleLoadBalancerState.updateClusterFailoutProperties(
+        listenTo,
+        new LoadBalancerStateItem<>(
+          clusterStoreProperties.getClusterFailoutProperties(),
+          _simpleLoadBalancerState.getVersionAccess().incrementAndGet(),
+          System.currentTimeMillis())
+      );
     }
     // TODO: set canary/stable config metric
     return pickedProperties;

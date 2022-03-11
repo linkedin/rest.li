@@ -591,9 +591,9 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     return _clusterInfo;
   }
 
-  Map<String, LoadBalancerStateItem<ClusterFailoutProperties>> getClusterFailoutProperties()
+  void updateClusterFailoutProperties(String clusterName, LoadBalancerStateItem<ClusterFailoutProperties> clusterFailoutProperties)
   {
-    return _clusterFailoutProperties;
+     _clusterFailoutProperties.put(clusterName, clusterFailoutProperties);
   }
 
 
