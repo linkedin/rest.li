@@ -219,7 +219,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
                     orderedStrategies, service);
 
             // set host URI for the cluster. with that next time, for the same inbound request, if downstream request is
-            // made to same cluster and optimized affinity routing is enabled, then it will go to same box.
+            // made to same cluster and custom affinity routing is enabled, then it will go to same box.
             if (enableCustomAffinityRouting) {
               customAffinityRoutingURIProvider.setTargetHostURI(clusterName, trackerClient.getUri());
             }
