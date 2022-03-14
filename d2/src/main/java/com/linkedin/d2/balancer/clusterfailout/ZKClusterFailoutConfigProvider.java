@@ -77,7 +77,7 @@ public abstract class ZKClusterFailoutConfigProvider implements ClusterFailoutCo
     if (item != null)
     {
       final ClusterFailoutProperties failoutProperties = item.getProperty();
-      _log.debug("Detected cluster failout property change for cluster: {}. New properties: {}", clusterName, failoutProperties);
+      _log.info("Detected cluster failout property change for cluster: {}. New properties: {}", clusterName, failoutProperties);
 
       final ClusterFailoutConfig failoutConfig = createFailoutConfig(clusterName, failoutProperties);
       _failedoutClusters.computeIfAbsent(clusterName, name -> new FailedoutClusterManager(clusterName, _loadBalancerState))
@@ -95,7 +95,7 @@ public abstract class ZKClusterFailoutConfigProvider implements ClusterFailoutCo
     FailedoutClusterManager manager = _failedoutClusters.remove(clusterName);
     if (manager != null)
     {
-      _log.debug("Cluster: {} removed. Resetting cluster failout config.", clusterName);
+      _log.info("Cluster: {} removed. Resetting cluster failout config.", clusterName);
       manager.updateFailoutConfig(null);
     }
   }
