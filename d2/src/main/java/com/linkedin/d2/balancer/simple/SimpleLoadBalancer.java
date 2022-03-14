@@ -38,7 +38,7 @@ import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.subsetting.SubsettingState;
-import com.linkedin.d2.balancer.util.AffinityRoutingURIProvider;
+import com.linkedin.d2.balancer.util.CustomAffinityRoutingURIProvider;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.d2.balancer.util.HostOverrideList;
@@ -202,12 +202,13 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
           TrackerClient trackerClient = null;
 
-          // Optimize affinity routing with help of AffinityRoutingProvider
-          AffinityRoutingURIProvider affinityRoutingURIProvider =
-              (AffinityRoutingURIProvider) requestContext.getLocalAttr(AffinityRoutingURIProvider.AFFINITY_ROUTING_URI_PROVIDER);
+          // Use client provided by CustomURIAffinityRoutingProvider when it's enabled
+          CustomAffinityRoutingURIProvider customAffinityRoutingURIProvider =
+              (CustomAffinityRoutingURIProvider) requestContext.getLocalAttr(CustomAffinityRoutingURIProvider.CUSTOM_AFFINITY_ROUTING_URI_PROVIDER);
 
-          if (isOptimizedAffinityRoutingEnabled(requestContext, affinityRoutingURIProvider)) {
-            trackerClient = affinityRoutingURIProvider.getTargetHostURI(clusterName)
+          boolean enableCustomAffinityRouting = isCustomAffinityRoutingEnabled(requestContext, customAffinityRoutingURIProvider);
+          if (enableCustomAffinityRouting) {
+            trackerClient = customAffinityRoutingURIProvider.getTargetHostURI(clusterName)
                   .map(targetHost -> _state.getClient(serviceName, targetHost))
                   .orElse(null);
           }
@@ -219,9 +220,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
             // set host URI for the cluster. with that next time, for the same inbound request, if downstream request is
             // made to same cluster and optimized affinity routing is enabled, then it will go to same box.
-            if (isOptimizedAffinityRoutingEnabled(requestContext, affinityRoutingURIProvider)) {
-              // affinityRoutingURIProvider.getTrackerClientConsumer().accept(clusterName, trackerClient);
-              affinityRoutingURIProvider.setTargetHostURI(clusterName, trackerClient.getUri());
+            if (enableCustomAffinityRouting) {
+              customAffinityRoutingURIProvider.setTargetHostURI(clusterName, trackerClient.getUri());
             }
           }
 
@@ -262,8 +262,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }, clientCallback));
   }
 
-  private boolean isOptimizedAffinityRoutingEnabled(RequestContext requestContext,
-      @Nullable AffinityRoutingURIProvider affinityRoutingURIProvider) {
+  private boolean isCustomAffinityRoutingEnabled(RequestContext requestContext,
+      @Nullable CustomAffinityRoutingURIProvider affinityRoutingURIProvider) {
     return affinityRoutingURIProvider != null && affinityRoutingURIProvider.isEnabled()
         && (KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext) == null);
   }
