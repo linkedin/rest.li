@@ -228,7 +228,10 @@ public class ClusterStoreProperties extends ClusterProperties
     if (_failoutProperties == null && other.getFailoutProperties() != null) {
       return false;
     }
-    return _failoutProperties == null || _failoutProperties.equals(other.getFailoutProperties());
+    if (_failoutProperties != null && !_failoutProperties.equals(other.getFailoutProperties())) {
+      return false;
+    }
+    return true;
   }
 
   private boolean canaryEquals(ClusterStoreProperties other)
