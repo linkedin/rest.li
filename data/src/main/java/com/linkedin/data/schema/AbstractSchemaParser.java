@@ -752,7 +752,7 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
     for (Map.Entry<String, Object> e : map.entrySet())
     {
       String key = e.getKey();
-      if (reserved.contains(key) == false)
+      if (!reserved.contains(key))
       {
         Object value = e.getValue();
         Object replaced = props.put(key, value);
