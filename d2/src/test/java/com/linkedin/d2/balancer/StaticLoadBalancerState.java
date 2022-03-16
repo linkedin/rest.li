@@ -19,8 +19,8 @@ package com.linkedin.d2.balancer;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.d2.balancer.properties.ClusterFailoutProperties;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
+import com.linkedin.d2.balancer.properties.FailoutProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PartitionProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -169,7 +169,7 @@ public class StaticLoadBalancerState implements LoadBalancerState
   }
 
   @Override
-  public LoadBalancerStateItem<ClusterFailoutProperties> getClusterFailoutProperties(String clusterName)
+  public LoadBalancerStateItem<FailoutProperties> getFailoutProperties(String clusterName)
   {
     return null;
   }

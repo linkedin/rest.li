@@ -40,7 +40,6 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
@@ -132,8 +131,8 @@ public class ClusterLoadBalancerSubscriberTest
         distribution == CanaryDistributionProvider.Distribution.CANARY ? canaryConfigs : stableConfigs);
   }
 
-  @DataProvider(name = "getConfigsWithClusterFailoutProperties")
-  public Object[][] getConfigsWithClusterFailoutProperties()
+  @DataProvider(name = "getConfigsWithFailoutProperties")
+  public Object[][] getConfigsWithFailoutProperties()
   {
     ClusterProperties stableConfigs = new ClusterProperties(CLUSTER_NAME, Collections.singletonList("aa"));
 
@@ -142,15 +141,15 @@ public class ClusterLoadBalancerSubscriberTest
       {stableConfigs, new ClusterFailoutProperties(Collections.emptyList(), Collections.emptyList())},
     };
   }
-  @Test(dataProvider = "getConfigsWithClusterFailoutProperties")
-  public void testWithClusterFailoutConfigs(ClusterProperties stableConfigs, ClusterFailoutProperties clusterFailoutProperties)
+  @Test(dataProvider = "getConfigsWithFailoutProperties")
+  public void testWithFailoutConfigs(ClusterProperties stableConfigs, ClusterFailoutProperties clusterFailoutProperties)
   {
     ClusterLoadBalancerSubscriberFixture fixture = new ClusterLoadBalancerSubscriberFixture();
     fixture.getMockSubscriber(false).handlePut(CLUSTER_NAME, new ClusterStoreProperties(
       stableConfigs, null, null, clusterFailoutProperties));
 
-    verify(fixture._simpleLoadBalancerState, times(1)).updateClusterFailoutProperties(eq(CLUSTER_NAME),
-                                                                                      fixture._clusterFailoutPropertiesCaptor.capture());
+    verify(fixture._simpleLoadBalancerState, times(1)).updateFailoutProperties(eq(CLUSTER_NAME),
+                                                                               fixture._clusterFailoutPropertiesCaptor.capture());
     Assert.assertEquals(fixture._clusterFailoutPropertiesCaptor.getValue().getProperty(), clusterFailoutProperties);
   }
 }

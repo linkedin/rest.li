@@ -26,7 +26,7 @@ import com.linkedin.d2.balancer.Directory;
 import com.linkedin.d2.balancer.Facilities;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
-import com.linkedin.d2.balancer.clusterfailout.ClusterFailoutConfig;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfig;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.hashing.Ring;
@@ -118,7 +118,7 @@ public class DelegatingFacilities implements Facilities
         }
 
         @Override
-        public ClusterFailoutConfig getClusterFailoutConfig(String clusterName)
+        public FailoutConfig getFailoutConfig(String clusterName)
         {
           return null;
         }

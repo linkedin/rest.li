@@ -22,7 +22,7 @@ package com.linkedin.d2.balancer.zkfs;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
-import com.linkedin.d2.balancer.clusterfailout.ClusterFailoutConfigProviderFactory;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -92,7 +92,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   private final SslSessionValidatorFactory _sslSessionValidatorFactory;
   private final DeterministicSubsettingMetadataProvider _deterministicSubsettingMetadataProvider;
   private final CanaryDistributionProvider _canaryDistributionProvider;
-  private final ClusterFailoutConfigProviderFactory _clusterFailoutConfigProviderFactory;
+  private final FailoutConfigProviderFactory _failoutConfigProviderFactory;
 
   private static final Logger _log = LoggerFactory.getLogger(ZKFSTogglingLoadBalancerFactoryImpl.class);
 
@@ -264,7 +264,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                              D2ClientJmxManager d2ClientJmxManager,
                                              int zookeeperReadWindowMs,
                                              DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
-                                             ClusterFailoutConfigProviderFactory clusterFailoutConfigProviderFactory)
+                                             FailoutConfigProviderFactory failoutConfigProviderFactory)
   {
     this(factory,
          timeout,
@@ -284,8 +284,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
          sslSessionValidatorFactory,
          d2ClientJmxManager,
          zookeeperReadWindowMs,
-         deterministicSubsettingMetadataProvider,
-         clusterFailoutConfigProviderFactory,
+         deterministicSubsettingMetadataProvider, failoutConfigProviderFactory,
          null);
   }
 
@@ -308,7 +307,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                              D2ClientJmxManager d2ClientJmxManager,
                                              int zookeeperReadWindowMs,
                                              DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
-                                             ClusterFailoutConfigProviderFactory clusterFailoutConfigProviderFactory,
+                                             FailoutConfigProviderFactory failoutConfigProviderFactory,
                                              CanaryDistributionProvider canaryDistributionProvider)
   {
     _factory = factory;
@@ -330,7 +329,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     _d2ClientJmxManager = d2ClientJmxManager;
     _zookeeperReadWindowMs = zookeeperReadWindowMs;
     _deterministicSubsettingMetadataProvider = deterministicSubsettingMetadataProvider;
-    _clusterFailoutConfigProviderFactory = clusterFailoutConfigProviderFactory;
+    _failoutConfigProviderFactory = failoutConfigProviderFactory;
     _canaryDistributionProvider = canaryDistributionProvider;
   }
 
@@ -392,7 +391,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
             _sslSessionValidatorFactory, _deterministicSubsettingMetadataProvider, _canaryDistributionProvider);
     _d2ClientJmxManager.setSimpleLoadBalancerState(state);
 
-    SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, _lbTimeout, _lbTimeoutUnit, executorService, _clusterFailoutConfigProviderFactory);
+    SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, _lbTimeout, _lbTimeoutUnit, executorService, _failoutConfigProviderFactory);
     _d2ClientJmxManager.setSimpleLoadBalancer(balancer);
 
     TogglingLoadBalancer togLB = _factory.createBalancer(balancer, state, clusterToggle, serviceToggle, uriToggle);

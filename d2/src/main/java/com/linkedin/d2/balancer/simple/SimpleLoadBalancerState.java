@@ -25,8 +25,8 @@ import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClientFactory;
-import com.linkedin.d2.balancer.properties.ClusterFailoutProperties;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
+import com.linkedin.d2.balancer.properties.FailoutProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -90,7 +90,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final Map<String, LoadBalancerStateItem<UriProperties>>                        _uriProperties;
   private final Map<String, ClusterInfoItem>                                             _clusterInfo;
   private final Map<String, LoadBalancerStateItem<ServiceProperties>>                    _serviceProperties;
-  private final Map<String, LoadBalancerStateItem<ClusterFailoutProperties>>             _clusterFailoutProperties;
+  private final Map<String, LoadBalancerStateItem<FailoutProperties>>                    _clusterFailoutProperties;
 
   private final AtomicLong                                                               _version;
 
@@ -548,7 +548,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   }
 
   @Override
-  public LoadBalancerStateItem<ClusterFailoutProperties> getClusterFailoutProperties(String clusterName)
+  public LoadBalancerStateItem<FailoutProperties> getFailoutProperties(String clusterName)
   {
     return _clusterFailoutProperties.get(clusterName);
   }
@@ -591,9 +591,9 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     return _clusterInfo;
   }
 
-  void updateClusterFailoutProperties(String clusterName, LoadBalancerStateItem<ClusterFailoutProperties> clusterFailoutProperties)
+  void updateFailoutProperties(String clusterName, LoadBalancerStateItem<FailoutProperties> failoutProperties)
   {
-     _clusterFailoutProperties.put(clusterName, clusterFailoutProperties);
+     _clusterFailoutProperties.put(clusterName, failoutProperties);
   }
 
 

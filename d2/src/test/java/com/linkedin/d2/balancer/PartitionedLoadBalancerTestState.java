@@ -6,8 +6,8 @@ import com.linkedin.d2.balancer.clients.DegraderTrackerClientImpl;
 import com.linkedin.d2.balancer.clients.RetryTrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClientImpl;
-import com.linkedin.d2.balancer.properties.ClusterFailoutProperties;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
+import com.linkedin.d2.balancer.properties.FailoutProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -124,7 +124,7 @@ public class PartitionedLoadBalancerTestState implements LoadBalancerState
   }
 
   @Override
-  public LoadBalancerStateItem<ClusterFailoutProperties> getClusterFailoutProperties(String clusterName)
+  public LoadBalancerStateItem<FailoutProperties> getFailoutProperties(String clusterName)
   {
     return null;
   }

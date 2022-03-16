@@ -95,10 +95,10 @@ class ClusterLoadBalancerSubscriber extends
       }
       pickedProperties = clusterStoreProperties.getDistributedClusterProperties(distribution);
 
-      _simpleLoadBalancerState.updateClusterFailoutProperties(
+      _simpleLoadBalancerState.updateFailoutProperties(
         listenTo,
         new LoadBalancerStateItem<>(
-          clusterStoreProperties.getClusterFailoutProperties(),
+          clusterStoreProperties.getFailoutProperties(),
           _simpleLoadBalancerState.getVersionAccess().incrementAndGet(),
           System.currentTimeMillis())
       );

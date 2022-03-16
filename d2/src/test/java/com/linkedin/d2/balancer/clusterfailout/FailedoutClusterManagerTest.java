@@ -83,7 +83,7 @@ public class FailedoutClusterManagerTest
 
   @Test
   public void testUpdateFailoutConfigWithoutActiveFailout() {
-    ClusterFailoutConfig config = mock(ClusterFailoutConfig.class);
+    FailoutConfig config = mock(FailoutConfig.class);
     when(config.isFailedOut()).thenReturn(false);
     when(config.getPeerClusters()).thenReturn(Collections.singleton(PEER_CLUSTER_NAME1));
     _manager.updateFailoutConfig(config);
@@ -93,7 +93,7 @@ public class FailedoutClusterManagerTest
 
   @Test
   public void testUpdateFailoutConfigWithActiveFailout() {
-    ClusterFailoutConfig config = mock(ClusterFailoutConfig.class);
+    FailoutConfig config = mock(FailoutConfig.class);
     when(config.isFailedOut()).thenReturn(true);
     when(config.getPeerClusters()).thenReturn(Collections.singleton(PEER_CLUSTER_NAME1));
     _manager.updateFailoutConfig(config);
@@ -103,7 +103,7 @@ public class FailedoutClusterManagerTest
 
   @Test
   public void testUpdateFailoutConfigUpdate() {
-    ClusterFailoutConfig config = mock(ClusterFailoutConfig.class);
+    FailoutConfig config = mock(FailoutConfig.class);
     when(config.isFailedOut()).thenReturn(true);
     when(config.getPeerClusters()).thenReturn(Collections.singleton(PEER_CLUSTER_NAME1));
     _manager.updateFailoutConfig(config);
@@ -116,7 +116,7 @@ public class FailedoutClusterManagerTest
 
   @Test
   public void testUpdateFailoutConfigUpdateToNull() {
-    ClusterFailoutConfig config = mock(ClusterFailoutConfig.class);
+    FailoutConfig config = mock(FailoutConfig.class);
     when(config.isFailedOut()).thenReturn(true);
     when(config.getPeerClusters()).thenReturn(Collections.singleton(PEER_CLUSTER_NAME1));
     _manager.updateFailoutConfig(config);

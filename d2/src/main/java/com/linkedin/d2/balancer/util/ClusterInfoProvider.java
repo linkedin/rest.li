@@ -19,7 +19,7 @@ package com.linkedin.d2.balancer.util;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
-import com.linkedin.d2.balancer.clusterfailout.ClusterFailoutConfig;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfig;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
@@ -96,5 +96,5 @@ public interface ClusterInfoProvider
    *
    * @return null if there is no active failout config for this cluster.
    */
-  ClusterFailoutConfig getClusterFailoutConfig(String clusterName);
+  FailoutConfig getFailoutConfig(String clusterName);
 }

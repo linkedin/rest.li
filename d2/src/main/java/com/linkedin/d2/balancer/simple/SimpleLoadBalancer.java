@@ -32,9 +32,9 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.WarmUpService;
 import com.linkedin.d2.balancer.clients.RewriteLoadBalancerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.d2.balancer.clusterfailout.ClusterFailoutConfig;
-import com.linkedin.d2.balancer.clusterfailout.ClusterFailoutConfigProvider;
-import com.linkedin.d2.balancer.clusterfailout.ClusterFailoutConfigProviderFactory;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfig;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProvider;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -101,7 +101,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   private final TimeUnit          _unit;
   private final ScheduledExecutorService _executor;
   private final Random            _random = new Random();
-  private final ClusterFailoutConfigProvider _clusterFailoutConfigProvider;
+  private final FailoutConfigProvider _failoutConfigProvider;
 
   public SimpleLoadBalancer(LoadBalancerState state, ScheduledExecutorService executorService)
   {
@@ -114,9 +114,9 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   public SimpleLoadBalancer(LoadBalancerState state, long timeout, TimeUnit unit, ScheduledExecutorService executor,
-                            ClusterFailoutConfigProviderFactory clusterFailoutConfigProviderFactory)
+                            FailoutConfigProviderFactory failoutConfigProviderFactory)
   {
-    this(state, new Stats(1000), new Stats(1000), timeout, unit, executor, clusterFailoutConfigProviderFactory);
+    this(state, new Stats(1000), new Stats(1000), timeout, unit, executor, failoutConfigProviderFactory);
   }
 
 
@@ -126,7 +126,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
                             long timeout,
                             TimeUnit unit,
                             ScheduledExecutorService executor,
-                            ClusterFailoutConfigProviderFactory clusterFailoutConfigProviderFactory)
+                            FailoutConfigProviderFactory failoutConfigProviderFactory)
   {
     _state = state;
     _serviceUnavailableStats = serviceUnavailableStats;
@@ -134,13 +134,13 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     _timeout = timeout;
     _unit = unit;
     _executor = executor;
-    if (clusterFailoutConfigProviderFactory != null)
+    if (failoutConfigProviderFactory != null)
     {
-      _clusterFailoutConfigProvider = clusterFailoutConfigProviderFactory.create(state);
+      _failoutConfigProvider = failoutConfigProviderFactory.create(state);
     }
     else
     {
-      _clusterFailoutConfigProvider = null;
+      _failoutConfigProvider = null;
     }
   }
 
@@ -168,9 +168,9 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       @Override
       public void onSuccess(None result)
       {
-        if (_clusterFailoutConfigProvider != null)
+        if (_failoutConfigProvider != null)
         {
-          _clusterFailoutConfigProvider.start();
+          _failoutConfigProvider.start();
         }
         callback.onSuccess(result);
       }
@@ -182,9 +182,9 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   public void shutdown(PropertyEventShutdownCallback shutdown)
   {
     _state.shutdown(() -> {
-      if (_clusterFailoutConfigProvider != null)
+      if (_failoutConfigProvider != null)
       {
-        _clusterFailoutConfigProvider.shutdown();
+        _failoutConfigProvider.shutdown();
       }
       shutdown.done();
     });
@@ -1033,9 +1033,9 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   @Override
-  public ClusterFailoutConfig getClusterFailoutConfig(String clusterName)
+  public FailoutConfig getFailoutConfig(String clusterName)
   {
-    return _clusterFailoutConfigProvider != null ? _clusterFailoutConfigProvider.getFailoutConfig(clusterName) : null;
+    return _failoutConfigProvider != null ? _failoutConfigProvider.getFailoutConfig(clusterName) : null;
   }
 
   @Override

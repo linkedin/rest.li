@@ -15,29 +15,21 @@
 */
 package com.linkedin.d2.balancer.clusterfailout;
 
-/**
- * Class responsible for providing cluster failout config for each cluster.
- */
-public interface ClusterFailoutConfigProvider
+import java.util.Set;
+
+public interface FailoutConfig
 {
   /**
-   * Gets the failout config for a cluster.
-   * @param clusterName The name of the cluster to get failout config for.
-   * @return Corresponding failout config if cluster has an associated failed out config.
+   * Checks if this cluster is failed out.
+   * A failout can be scheduled to stop at a future time. When this happens, we will still have an active failout
+   * config and use the config to figure out if failout is finished.
+   *
+   * @return true if cluster is failed out.
    */
-  ClusterFailoutConfig getFailoutConfig(String clusterName);
+  boolean isFailedOut();
 
   /**
-   * Optional step for starting the config provider
+   * Gets all the configured peer clusters for accepting re-routed requests.
    */
-  default void start() {
-
-  }
-
-  /**
-   * Optional step for shutting down the config provider
-   */
-  default void shutdown() {
-
-  }
+  Set<String> getPeerClusters();
 }

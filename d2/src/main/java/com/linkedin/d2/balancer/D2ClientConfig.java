@@ -17,7 +17,7 @@ package com.linkedin.d2.balancer;
 
 import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
 import com.linkedin.d2.balancer.clients.RetryClient;
-import com.linkedin.d2.balancer.clusterfailout.ClusterFailoutConfigProviderFactory;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -110,7 +110,7 @@ public class D2ClientConfig
   CanaryDistributionProvider canaryDistributionProvider = null;
   public static final int DEFAULT_RETRY_LIMIT = 3;
   boolean enableClusterFailout = false;
-  ClusterFailoutConfigProviderFactory clusterFailoutConfigProviderFactory;
+  FailoutConfigProviderFactory _failoutConfigProviderFactory;
 
   public D2ClientConfig()
   {
@@ -169,7 +169,7 @@ public class D2ClientConfig
                  DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
                  CanaryDistributionProvider canaryDistributionProvider,
                  boolean enableClusterFailout,
-                 ClusterFailoutConfigProviderFactory clusterFailoutConfigProviderFactory)
+                 FailoutConfigProviderFactory failoutConfigProviderFactory)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -224,6 +224,6 @@ public class D2ClientConfig
     this.deterministicSubsettingMetadataProvider = deterministicSubsettingMetadataProvider;
     this.canaryDistributionProvider = canaryDistributionProvider;
     this.enableClusterFailout = enableClusterFailout;
-    this.clusterFailoutConfigProviderFactory = clusterFailoutConfigProviderFactory;
+    this._failoutConfigProviderFactory = failoutConfigProviderFactory;
   }
 }

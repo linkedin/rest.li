@@ -17,9 +17,9 @@
 package com.linkedin.d2.balancer.clusterfailout;
 
 import com.linkedin.d2.balancer.LoadBalancerState;
-import com.linkedin.d2.balancer.properties.ClusterFailoutProperties;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterStoreProperties;
+import com.linkedin.d2.balancer.properties.FailoutProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
@@ -59,7 +59,7 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
-public class ZKClusterFailoutConfigProviderTest
+public class ZKFailoutConfigProviderTest
 {
   private static final String CLUSTER_NAME = "cluster-1";
   private static final String PEER_CLUSTER_NAME1 = "cluster-peer1";
@@ -70,7 +70,7 @@ public class ZKClusterFailoutConfigProviderTest
   private MockStore<ServiceProperties> _serviceRegistry;
   private SimpleLoadBalancerState _state;
 
-  private ZKClusterFailoutConfigProvider _clusterFailoutConfigProvider;
+  private ZKFailoutConfigProvider _clusterFailoutConfigProvider;
 
   private static final SslSessionValidatorFactory SSL_SESSION_VALIDATOR_FACTORY = validationStrings -> sslSession -> {
     if (validationStrings == null || validationStrings.isEmpty())
@@ -107,7 +107,7 @@ public class ZKClusterFailoutConfigProviderTest
                                          new PropertyEventBusImpl<>(executorService, _serviceRegistry), clientFactories,
                                          loadBalancerStrategyFactories, sslContext, sslParameters, true, null, SSL_SESSION_VALIDATOR_FACTORY);
 
-    _clusterFailoutConfigProvider = new TestingZKClusterFailoutConfigProvider(_state);
+    _clusterFailoutConfigProvider = new TestingZKFailoutConfigProvider(_state);
     _clusterFailoutConfigProvider.start();
   }
 
@@ -124,7 +124,7 @@ public class ZKClusterFailoutConfigProviderTest
   {
     testNewCluster();
     _clusterRegistry.put(CLUSTER_NAME, createClusterStoreProperties(true, false, Collections.emptySet()));
-    ClusterFailoutConfig config = _clusterFailoutConfigProvider.getFailoutConfig(CLUSTER_NAME);
+    FailoutConfig config = _clusterFailoutConfigProvider.getFailoutConfig(CLUSTER_NAME);
     assertNotNull(config);
     assertFalse(config.isFailedOut());
     assertTrue(config.getPeerClusters().isEmpty());
@@ -158,65 +158,65 @@ public class ZKClusterFailoutConfigProviderTest
     assertNull(_clusterFailoutConfigProvider.getFailoutConfig(CLUSTER_NAME));
   }
 
-  private static class TestingZKClusterFailoutConfigProvider extends ZKClusterFailoutConfigProvider
+  private static class TestingZKFailoutConfigProvider extends ZKFailoutConfigProvider
   {
 
-    public TestingZKClusterFailoutConfigProvider(@Nonnull LoadBalancerState loadBalancerState)
+    public TestingZKFailoutConfigProvider(@Nonnull LoadBalancerState loadBalancerState)
     {
       super(loadBalancerState);
     }
 
     @Nullable
     @Override
-    public TestingClusterFailoutConfig createFailoutConfig(@Nonnull String clusterName, @Nullable ClusterFailoutProperties clusterFailoutProperties)
+    public TestingFailoutConfig createFailoutConfig(@Nonnull String clusterName, @Nullable FailoutProperties failoutProperties)
     {
-      if (clusterFailoutProperties == null)
+      if (failoutProperties == null)
       {
         return null;
       }
 
-      Set<String> peerClusters = clusterFailoutProperties.getClusterFailoutRedirectConfigs().stream().map(config -> config.get("peer").toString())
+      Set<String> peerClusters = failoutProperties.getFailoutRedirectConfigs().stream().map(config -> config.get("peer").toString())
         .collect(Collectors.toSet());
 
-      if (clusterFailoutProperties.getClusterFailoutBucketConfigs().isEmpty())
+      if (failoutProperties.getFailoutBucketConfigs().isEmpty())
       {
-        return new TestingClusterFailoutConfig(false, peerClusters);
+        return new TestingFailoutConfig(false, peerClusters);
       }
 
-      if (clusterFailoutProperties.getClusterFailoutRedirectConfigs() != null)
+      if (failoutProperties.getFailoutRedirectConfigs() != null)
       {
-        return new TestingClusterFailoutConfig(true, peerClusters);
+        return new TestingFailoutConfig(true, peerClusters);
       }
 
       return null;
     }
   }
 
-  private ClusterStoreProperties createClusterStoreProperties(boolean hasClusterFailoutConfig, boolean isFailedOut, Set<String> peerClusters)
+  private ClusterStoreProperties createClusterStoreProperties(boolean hasFailoutConfig, boolean isFailedOut, Set<String> peerClusters)
   {
-    ClusterFailoutProperties properties = null;
-    if (hasClusterFailoutConfig)
+    FailoutProperties properties = null;
+    if (hasFailoutConfig)
     {
       List<Map<String, Object>> redirectConfigs = new ArrayList<>();
       peerClusters.forEach(cluster -> redirectConfigs.add(Collections.singletonMap("peer", cluster)));
       if (!isFailedOut)
       {
-        properties = new ClusterFailoutProperties(redirectConfigs, Collections.emptyList());
+        properties = new FailoutProperties(redirectConfigs, Collections.emptyList());
       }
       else
       {
-        properties = new ClusterFailoutProperties(redirectConfigs, Collections.singletonList(Collections.emptyMap()));
+        properties = new FailoutProperties(redirectConfigs, Collections.singletonList(Collections.emptyMap()));
       }
     }
     return new ClusterStoreProperties(new ClusterProperties(CLUSTER_NAME), null, null, properties);
   }
 
-  private static class TestingClusterFailoutConfig implements ClusterFailoutConfig
+  private static class TestingFailoutConfig implements FailoutConfig
   {
     private final boolean _isFailedOut;
     private final Set<String> _peerClusters;
 
-    public TestingClusterFailoutConfig(boolean isFailedOut, Set<String> peerClusters)
+    public TestingFailoutConfig(boolean isFailedOut, Set<String> peerClusters)
     {
       _isFailedOut = isFailedOut;
       _peerClusters = peerClusters;

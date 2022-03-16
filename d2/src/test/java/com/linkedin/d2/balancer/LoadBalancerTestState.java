@@ -21,8 +21,8 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.clients.DegraderTrackerClientImpl;
 import com.linkedin.d2.balancer.clients.TestClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
-import com.linkedin.d2.balancer.properties.ClusterFailoutProperties;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
+import com.linkedin.d2.balancer.properties.FailoutProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
@@ -78,7 +78,7 @@ public class LoadBalancerTestState implements LoadBalancerState
   }
 
   @Override
-  public LoadBalancerStateItem<ClusterFailoutProperties> getClusterFailoutProperties(String clusterName)
+  public LoadBalancerStateItem<FailoutProperties> getFailoutProperties(String clusterName)
   {
     return null;
   }

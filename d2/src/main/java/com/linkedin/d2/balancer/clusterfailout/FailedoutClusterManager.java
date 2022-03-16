@@ -41,7 +41,7 @@ public class FailedoutClusterManager
   private final String _clusterName;
   private final LoadBalancerState _loadBalancerState;
   private final ConcurrentMap<String, LoadBalancerStateListenerCallback> _clusterListeners = new ConcurrentHashMap<>();
-  private ClusterFailoutConfig _failoutConfig;
+  private FailoutConfig _failoutConfig;
 
   public FailedoutClusterManager(@Nonnull String clusterName, @Nonnull LoadBalancerState loadBalancerState)
   {
@@ -58,7 +58,7 @@ public class FailedoutClusterManager
    * Gets the current failout config.
    * @return Optional.empty() when there is not failout config found.
    */
-  public ClusterFailoutConfig getFailoutConfig()
+  public FailoutConfig getFailoutConfig()
   {
     return _failoutConfig;
   }
@@ -67,7 +67,7 @@ public class FailedoutClusterManager
    * Updates to a new failout config version.
    * @param failoutConfig The new failout config. Null when there is not active failout associated with the cluster.
    */
-  public void updateFailoutConfig(@Nullable ClusterFailoutConfig failoutConfig)
+  public void updateFailoutConfig(@Nullable FailoutConfig failoutConfig)
   {
     if (failoutConfig == null)
     {
@@ -81,7 +81,7 @@ public class FailedoutClusterManager
     _failoutConfig = failoutConfig;
   }
 
-  private void processNewConfig(@Nonnull ClusterFailoutConfig failoutConfig)
+  private void processNewConfig(@Nonnull FailoutConfig failoutConfig)
   {
     if (!failoutConfig.isFailedOut())
     {

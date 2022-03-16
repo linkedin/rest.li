@@ -18,8 +18,8 @@ package com.linkedin.d2.balancer.clusterfailout;
 import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
-import com.linkedin.d2.balancer.properties.ClusterFailoutProperties;
 import com.linkedin.d2.balancer.properties.ClusterStoreProperties;
+import com.linkedin.d2.balancer.properties.FailoutProperties;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -32,13 +32,13 @@ import org.slf4j.LoggerFactory;
 /**
  * Class responsible for providing cluster failout config for each cluster.
  */
-public abstract class ZKClusterFailoutConfigProvider implements ClusterFailoutConfigProvider, LoadBalancerClusterListener
+public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, LoadBalancerClusterListener
 {
   private static final Logger _log = LoggerFactory.getLogger(FailedoutClusterManager.class);
   private final ConcurrentMap<String, FailedoutClusterManager> _failedoutClusters = new ConcurrentHashMap<>();
   private final LoadBalancerState _loadBalancerState;
 
-  public ZKClusterFailoutConfigProvider(@Nonnull LoadBalancerState loadBalancerState)
+  public ZKFailoutConfigProvider(@Nonnull LoadBalancerState loadBalancerState)
   {
     _loadBalancerState = loadBalancerState;
   }
@@ -56,15 +56,16 @@ public abstract class ZKClusterFailoutConfigProvider implements ClusterFailoutCo
   }
 
   /**
-   * Converts {@link ClusterStoreProperties} into a {@link ClusterFailoutConfig} that will be used for routing requests.
-   * @param clusterFailoutProperties The properties defined for a cluster failout.
+   * Converts {@link FailoutProperties} into a {@link FailoutConfig} that will be used for routing requests.
+   * @param failoutProperties The properties defined for a cluster failout.
    * @return Parsed and processed config that's ready to be used for routing requests.
    */
-  public abstract @Nullable ClusterFailoutConfig createFailoutConfig(@Nonnull String clusterName,
-                                                                     @Nullable ClusterFailoutProperties clusterFailoutProperties);
+  public abstract @Nullable
+  FailoutConfig createFailoutConfig(@Nonnull String clusterName,
+                                    @Nullable FailoutProperties failoutProperties);
 
   @Override
-  public ClusterFailoutConfig getFailoutConfig(String clusterName)
+  public FailoutConfig getFailoutConfig(String clusterName)
   {
     final FailedoutClusterManager failedoutClusterManager = _failedoutClusters.get(clusterName);
     return failedoutClusterManager != null ? failedoutClusterManager.getFailoutConfig() : null;
@@ -73,13 +74,13 @@ public abstract class ZKClusterFailoutConfigProvider implements ClusterFailoutCo
   @Override
   public void onClusterAdded(String clusterName)
   {
-    LoadBalancerStateItem<ClusterFailoutProperties> item = _loadBalancerState.getClusterFailoutProperties(clusterName);
+    LoadBalancerStateItem<FailoutProperties> item = _loadBalancerState.getFailoutProperties(clusterName);
     if (item != null)
     {
-      final ClusterFailoutProperties failoutProperties = item.getProperty();
+      final FailoutProperties failoutProperties = item.getProperty();
       _log.info("Detected cluster failout property change for cluster: {}. New properties: {}", clusterName, failoutProperties);
 
-      final ClusterFailoutConfig failoutConfig = createFailoutConfig(clusterName, failoutProperties);
+      final FailoutConfig failoutConfig = createFailoutConfig(clusterName, failoutProperties);
       _failedoutClusters.computeIfAbsent(clusterName, name -> new FailedoutClusterManager(clusterName, _loadBalancerState))
         .updateFailoutConfig(failoutConfig);
     }

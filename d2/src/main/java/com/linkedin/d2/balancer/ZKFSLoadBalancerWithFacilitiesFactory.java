@@ -94,7 +94,7 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                                    d2ClientJmxManager,
                                                    config.zookeeperReadWindowMs,
                                                    config.deterministicSubsettingMetadataProvider,
-                                                   config.clusterFailoutConfigProviderFactory
+                                                   config._failoutConfigProviderFactory
     );
   }
 }

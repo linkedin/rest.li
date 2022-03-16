@@ -26,7 +26,7 @@ import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
-import com.linkedin.d2.balancer.clusterfailout.ClusterFailoutConfig;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfig;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 
 public class MockClusterInfoProvider implements ClusterInfoProvider
@@ -75,7 +75,7 @@ public class MockClusterInfoProvider implements ClusterInfoProvider
   }
 
   @Override
-  public ClusterFailoutConfig getClusterFailoutConfig(String clusterName)
+  public FailoutConfig getFailoutConfig(String clusterName)
   {
     return null;
   }
