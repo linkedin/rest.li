@@ -25,6 +25,7 @@ import com.linkedin.d2.balancer.clients.BackupRequestsClient;
 import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.clients.RequestTimeoutClient;
 import com.linkedin.d2.balancer.clients.RetryClient;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -178,7 +179,9 @@ public class D2ClientBuilder
                   _config.zookeeperReadWindowMs,
                   _config.enableRelativeLoadBalancer,
                   _config.deterministicSubsettingMetadataProvider,
-                  _config.canaryDistributionProvider);
+                  _config.canaryDistributionProvider,
+                  _config.enableClusterFailout,
+                  _config.failoutConfigProviderFactory);
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
@@ -544,6 +547,18 @@ public class D2ClientBuilder
   public D2ClientBuilder setCanaryDistributionProvider(CanaryDistributionProvider provider)
   {
     _config.canaryDistributionProvider = provider;
+    return this;
+  }
+
+  public D2ClientBuilder setEnableClusterFailout(boolean enableClusterFailout)
+  {
+    _config.enableClusterFailout = enableClusterFailout;
+    return this;
+  }
+
+  public D2ClientBuilder setFailoutConfigProviderFactory(FailoutConfigProviderFactory failoutConfigProviderFactory)
+  {
+    _config.failoutConfigProviderFactory = failoutConfigProviderFactory;
     return this;
   }
 

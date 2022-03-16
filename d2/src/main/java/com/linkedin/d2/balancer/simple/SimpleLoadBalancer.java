@@ -32,6 +32,9 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.WarmUpService;
 import com.linkedin.d2.balancer.clients.RewriteLoadBalancerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfig;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProvider;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -98,23 +101,32 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   private final TimeUnit          _unit;
   private final ScheduledExecutorService _executor;
   private final Random            _random = new Random();
+  private final FailoutConfigProvider _failoutConfigProvider;
 
   public SimpleLoadBalancer(LoadBalancerState state, ScheduledExecutorService executorService)
   {
-    this(state, new Stats(1000), new Stats(1000), 0, TimeUnit.SECONDS, executorService);
+    this(state, new Stats(1000), new Stats(1000), 0, TimeUnit.SECONDS, executorService, null);
   }
 
   public SimpleLoadBalancer(LoadBalancerState state, long timeout, TimeUnit unit, ScheduledExecutorService executor)
   {
-    this(state, new Stats(1000), new Stats(1000), timeout, unit, executor);
+    this(state, new Stats(1000), new Stats(1000), timeout, unit, executor, null);
   }
+
+  public SimpleLoadBalancer(LoadBalancerState state, long timeout, TimeUnit unit, ScheduledExecutorService executor,
+                            FailoutConfigProviderFactory failoutConfigProviderFactory)
+  {
+    this(state, new Stats(1000), new Stats(1000), timeout, unit, executor, failoutConfigProviderFactory);
+  }
+
 
   public SimpleLoadBalancer(LoadBalancerState state,
                             Stats serviceAvailableStats,
                             Stats serviceUnavailableStats,
                             long timeout,
                             TimeUnit unit,
-                            ScheduledExecutorService executor)
+                            ScheduledExecutorService executor,
+                            FailoutConfigProviderFactory failoutConfigProviderFactory)
   {
     _state = state;
     _serviceUnavailableStats = serviceUnavailableStats;
@@ -122,6 +134,14 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     _timeout = timeout;
     _unit = unit;
     _executor = executor;
+    if (failoutConfigProviderFactory != null)
+    {
+      _failoutConfigProvider = failoutConfigProviderFactory.create(state);
+    }
+    else
+    {
+      _failoutConfigProvider = null;
+    }
   }
 
   public Stats getServiceUnavailableStats()
@@ -137,13 +157,37 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   @Override
   public void start(Callback<None> callback)
   {
-    _state.start(callback);
+    _state.start(new Callback<None>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        callback.onError(e);
+      }
+
+      @Override
+      public void onSuccess(None result)
+      {
+        if (_failoutConfigProvider != null)
+        {
+          _failoutConfigProvider.start();
+        }
+        callback.onSuccess(result);
+      }
+    });
+
   }
 
   @Override
   public void shutdown(PropertyEventShutdownCallback shutdown)
   {
-    _state.shutdown(shutdown);
+    _state.shutdown(() -> {
+      if (_failoutConfigProvider != null)
+      {
+        _failoutConfigProvider.shutdown();
+      }
+      shutdown.done();
+    });
   }
 
   /**
@@ -986,6 +1030,12 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
               clusterProperties.accessDarkClusters() : new DarkClusterConfigMap();
       wrappedCallback.onSuccess(darkClusterConfigMap);
     });
+  }
+
+  @Override
+  public FailoutConfig getFailoutConfig(String clusterName)
+  {
+    return _failoutConfigProvider != null ? _failoutConfigProvider.getFailoutConfig(clusterName) : null;
   }
 
   @Override

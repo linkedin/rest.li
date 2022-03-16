@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.simple;
 
+import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.properties.CanaryDistributionStrategy;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterStoreProperties;
@@ -28,6 +29,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
@@ -35,7 +39,10 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
@@ -56,6 +63,8 @@ public class ClusterLoadBalancerSubscriberTest
     PropertyEventBus<ClusterProperties> _eventBus;
     @Mock
     AtomicLong _version;
+    @Captor
+    ArgumentCaptor<LoadBalancerStateItem<FailoutProperties>> _clusterFailoutPropertiesCaptor;
 
     Map<String, ClusterInfoItem> _clusterInfo;
 
@@ -119,5 +128,27 @@ public class ClusterLoadBalancerSubscriberTest
 
     Assert.assertEquals(fixture._clusterInfo.get(CLUSTER_NAME).getClusterPropertiesItem().getProperty(),
         distribution == CanaryDistributionProvider.Distribution.CANARY ? canaryConfigs : stableConfigs);
+  }
+
+  @DataProvider(name = "getConfigsWithFailoutProperties")
+  public Object[][] getConfigsWithFailoutProperties()
+  {
+    ClusterProperties stableConfigs = new ClusterProperties(CLUSTER_NAME, Collections.singletonList("aa"));
+
+    return new Object[][] {
+      {stableConfigs, null},
+      {stableConfigs, new FailoutProperties(Collections.emptyList(), Collections.emptyList())},
+    };
+  }
+  @Test(dataProvider = "getConfigsWithFailoutProperties")
+  public void testWithFailoutConfigs(ClusterProperties stableConfigs, FailoutProperties clusterFailoutProperties)
+  {
+    ClusterLoadBalancerSubscriberFixture fixture = new ClusterLoadBalancerSubscriberFixture();
+    fixture.getMockSubscriber(false).handlePut(CLUSTER_NAME, new ClusterStoreProperties(
+      stableConfigs, null, null, clusterFailoutProperties));
+
+    verify(fixture._simpleLoadBalancerState, times(1)).updateFailoutProperties(eq(CLUSTER_NAME),
+                                                                               fixture._clusterFailoutPropertiesCaptor.capture());
+    Assert.assertEquals(fixture._clusterFailoutPropertiesCaptor.getValue().getProperty(), clusterFailoutProperties);
   }
 }

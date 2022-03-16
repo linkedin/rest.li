@@ -26,6 +26,7 @@ import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClientFactory;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
+import com.linkedin.d2.balancer.properties.FailoutProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -35,9 +36,9 @@ import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy
 import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
 import com.linkedin.d2.balancer.subsetting.SubsettingState;
 import com.linkedin.d2.balancer.subsetting.SubsettingStrategyFactoryImpl;
-import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
+import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistryImpl;
@@ -89,6 +90,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final Map<String, LoadBalancerStateItem<UriProperties>>                        _uriProperties;
   private final Map<String, ClusterInfoItem>                                             _clusterInfo;
   private final Map<String, LoadBalancerStateItem<ServiceProperties>>                    _serviceProperties;
+  private final Map<String, LoadBalancerStateItem<FailoutProperties>>                    _clusterFailoutProperties;
 
   private final AtomicLong                                                               _version;
 
@@ -318,6 +320,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _uriProperties = new ConcurrentHashMap<>();
     _clusterInfo = new ConcurrentHashMap<>();
     _serviceProperties = new ConcurrentHashMap<>();
+    _clusterFailoutProperties = new ConcurrentHashMap<>();
     _version = new AtomicLong(0);
 
     _uriSubscriber = new UriLoadBalancerSubscriber(uriBus, this);
@@ -545,6 +548,12 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   }
 
   @Override
+  public LoadBalancerStateItem<FailoutProperties> getFailoutProperties(String clusterName)
+  {
+    return _clusterFailoutProperties.get(clusterName);
+  }
+
+  @Override
   public LoadBalancerStateItem<PartitionAccessor> getPartitionAccessor(String clusterName)
   {
     ClusterInfoItem clusterInfoItem =  _clusterInfo.get(clusterName);
@@ -581,6 +590,12 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   {
     return _clusterInfo;
   }
+
+  void updateFailoutProperties(String clusterName, LoadBalancerStateItem<FailoutProperties> failoutProperties)
+  {
+     _clusterFailoutProperties.put(clusterName, failoutProperties);
+  }
+
 
   public Map<String, LoadBalancerStateItem<ServiceProperties>> getServiceProperties()
   {
