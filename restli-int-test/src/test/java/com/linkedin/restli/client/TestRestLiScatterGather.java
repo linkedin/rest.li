@@ -44,6 +44,7 @@ import com.linkedin.restli.examples.greetings.client.PartialUpdateGreetingReques
 import com.linkedin.restli.internal.common.TestConstants;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 import com.linkedin.test.util.retry.SingleRetry;
+import com.linkedin.test.util.retry.ThreeRetries;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -101,7 +102,7 @@ public class TestRestLiScatterGather extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "scatterGatherDataProvider",
-      retryAnalyzer = SingleRetry.class) // Known to be flaky in CI
+      retryAnalyzer = ThreeRetries.class, groups = { "ci-flaky" }) // Known to be flaky in CI
   public static void testSendScatterGatherRequest(URIMapper mapper, RootBuilderWrapper<Long, Greeting> builders)
           throws RemoteInvocationException
   {
