@@ -755,15 +755,8 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
       if (reserved.contains(key) == false)
       {
         Object value = e.getValue();
-        if (value != Data.NULL)
-        {
-          Object replaced = props.put(key, value);
-          assert(replaced == null);
-        }
-        else
-        {
-          startErrorMessage(value).append("\"").append(key).append("\" is a property and its value must not be null.\n");
-        }
+        Object replaced = props.put(key, value);
+        assert(replaced == null);
       }
     }
     return props;
