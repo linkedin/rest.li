@@ -284,7 +284,8 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
          sslSessionValidatorFactory,
          d2ClientJmxManager,
          zookeeperReadWindowMs,
-         deterministicSubsettingMetadataProvider, failoutConfigProviderFactory,
+         deterministicSubsettingMetadataProvider,
+         failoutConfigProviderFactory,
          null);
   }
 
