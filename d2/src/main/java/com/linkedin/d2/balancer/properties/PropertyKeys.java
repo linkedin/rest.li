@@ -240,10 +240,11 @@ public class PropertyKeys
   public static final String TARGET_APPLICATIONS_STRATEGY_PROPERTIES = "targetApplicationsStrategyProperties";
   public static final String TARGET_APPLICATIONS = "targetApplications";
 
-  // used by ClusterLevelFailouts
-  public static final String CLUSTER_FAILOUT_PROPERTIES = "clusterFailoutProperties";
-  public static final String CLUSTER_FAILOUT_REDIRECT_CONFIGS = "clusterFailoutRedirectConfigs";
-  public static final String CLUSTER_FAILOUT_BUCKET_CONFIGS = "clusterFailoutBucketConfigs";
+  // used by ClusterStoreProperties
+  public static final String FAILOUT_PROPERTIES = "failoutProperties";
+  // used by FailoutProperties
+  public static final String FAILOUT_REDIRECT_CONFIGS = "failoutRedirectConfigs";
+  public static final String FAILOUT_BUCKET_CONFIGS = "failoutBucketConfigs";
 
   private static String getFieldName(PathSpec pathSpec)
   {
