@@ -76,17 +76,24 @@ import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.annotations.BatchFinder;
 import com.linkedin.restli.server.errors.ServiceError;
 import com.linkedin.restli.server.errors.ParametersServiceError;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.io.IOUtils;
@@ -108,6 +115,10 @@ public class ResourceModelEncoder
   private static final Pattern UNNECESSARY_WHITESPACE_PATTERN = Pattern.compile("[ \\t]+");
 
   private final DataCodec codec = new JacksonDataCodec();
+
+  // Used to cache the mapping between restspec file and
+  // the class loader that can get the resource
+  private Map<String, ClassLoader> _restSpecToClassLoaderMap = null;
 
   /**
    * Provides documentation strings from a JVM language to be incorporated into ResourceModels.
@@ -294,9 +305,22 @@ public class ResourceModelEncoder
 
     try
     {
+      // Try getting resourceStream directly using the resourceFilePath
       InputStream stream = getResourceStream(resourceFilePath.toString(),
         this.getClass().getClassLoader(),
         Thread.currentThread().getContextClassLoader());
+
+      if (stream == null)
+      {
+        // If resourceStream cannot be created from classloader by using resource name directly,
+        // we still need to consider the case where the restspec file is consisting of
+        //  api-name  (could be added by customer through idl options) and resourceName,
+        //  such as in the form <api-name>-<resourceName>.json
+        stream = getResourceStreamBySearchingRestSpec(resourceFilePath.toString(),
+            this.getClass().getClassLoader(),
+            Thread.currentThread().getContextClassLoader());
+      }
+
       if (stream == null)
       {
         // restspec.json file not found, building one instead
@@ -312,6 +336,48 @@ public class ResourceModelEncoder
     {
       throw new RuntimeException("Failed to read " + resourceFilePath.toString() + " from classpath.", e);
     }
+  }
+
+  private InputStream getResourceStreamBySearchingRestSpec(String resourceName, ClassLoader... classLoaders)
+  {
+    if (_restSpecToClassLoaderMap == null)
+    {
+      _restSpecToClassLoaderMap = new HashMap<>();
+      for(ClassLoader classLoader: classLoaders)
+      {
+        URL[] urls = ((URLClassLoader) classLoader).getURLs();
+        for (URL url : urls)
+        {
+          if (!url.toString().toLowerCase().endsWith("jar"))
+          {
+            continue;
+          }
+          try
+          {
+            JarInputStream jarIn = new JarInputStream(url.openStream());
+            for (JarEntry e = jarIn.getNextJarEntry(); e != null; e = jarIn.getNextJarEntry()) {
+              if (!e.isDirectory() && e.getName().contains("restspec.json"))
+              {
+                _restSpecToClassLoaderMap.put(e.getName(), classLoader);
+              }
+            }
+          }
+          catch (IOException e)
+          {
+            // Will not add the entry
+          }
+        }
+      }
+    }
+
+    for (Map.Entry<String, ClassLoader> entry : _restSpecToClassLoaderMap.entrySet())
+    {
+      if (entry.getKey().contains(resourceName))
+      {
+        return entry.getValue().getResourceAsStream(entry.getKey());
+      }
+    }
+    return null;
   }
 
   // Get resource stream via a list of classloader.  This method will traverse via each class loader and
