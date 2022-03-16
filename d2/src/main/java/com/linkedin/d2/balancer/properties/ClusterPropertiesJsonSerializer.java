@@ -17,7 +17,6 @@
 package com.linkedin.d2.balancer.properties;
 
 import com.linkedin.d2.balancer.properties.util.PropertyUtil;
-import com.linkedin.d2.balancer.properties.ClusterFailoutProperties;
 import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializationException;
