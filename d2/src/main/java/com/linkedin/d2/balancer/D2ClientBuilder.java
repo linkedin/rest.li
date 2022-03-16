@@ -181,7 +181,7 @@ public class D2ClientBuilder
                   _config.deterministicSubsettingMetadataProvider,
                   _config.canaryDistributionProvider,
                   _config.enableClusterFailout,
-                  _config._failoutConfigProviderFactory);
+                  _config.failoutConfigProviderFactory);
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
@@ -558,7 +558,7 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setFailoutConfigProviderFactory(FailoutConfigProviderFactory failoutConfigProviderFactory)
   {
-    _config._failoutConfigProviderFactory = failoutConfigProviderFactory;
+    _config.failoutConfigProviderFactory = failoutConfigProviderFactory;
     return this;
   }
 

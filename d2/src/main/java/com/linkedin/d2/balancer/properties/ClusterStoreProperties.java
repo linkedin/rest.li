@@ -220,15 +220,7 @@ public class ClusterStoreProperties extends ClusterProperties
       return false;
     }
 
-ClusterStoreProperties other = (ClusterStoreProperties) obj;
-    if (_clusterFailoutProperties == null && other.getClusterFailoutProperties() != null)
-    {
-      return false;
-    }
-    if (_clusterFailoutProperties != null && !_clusterFailoutProperties.equals(other.getClusterFailoutProperties()))
-    {
-      return false;
-    }    return (obj instanceof ClusterStoreProperties) && canaryEquals((ClusterStoreProperties) obj) && failoutEquals((ClusterStoreProperties) obj);
+    return (obj instanceof ClusterStoreProperties) && canaryEquals((ClusterStoreProperties) obj) && failoutEquals((ClusterStoreProperties) obj);
   }
 
   private boolean failoutEquals(ClusterStoreProperties other)
@@ -236,10 +228,7 @@ ClusterStoreProperties other = (ClusterStoreProperties) obj;
     if (_failoutProperties == null && other.getFailoutProperties() != null) {
       return false;
     }
-    if (_failoutProperties != null && !_failoutProperties.equals(other.getFailoutProperties())) {
-      return false;
-    }
-    return true;
+    return _failoutProperties == null || _failoutProperties.equals(other.getFailoutProperties());
   }
 
   private boolean canaryEquals(ClusterStoreProperties other)

@@ -110,7 +110,7 @@ public class D2ClientConfig
   CanaryDistributionProvider canaryDistributionProvider = null;
   public static final int DEFAULT_RETRY_LIMIT = 3;
   boolean enableClusterFailout = false;
-  FailoutConfigProviderFactory _failoutConfigProviderFactory;
+  FailoutConfigProviderFactory failoutConfigProviderFactory;
 
   public D2ClientConfig()
   {
@@ -224,6 +224,6 @@ public class D2ClientConfig
     this.deterministicSubsettingMetadataProvider = deterministicSubsettingMetadataProvider;
     this.canaryDistributionProvider = canaryDistributionProvider;
     this.enableClusterFailout = enableClusterFailout;
-    this._failoutConfigProviderFactory = failoutConfigProviderFactory;
+    this.failoutConfigProviderFactory = failoutConfigProviderFactory;
   }
 }

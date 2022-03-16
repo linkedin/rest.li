@@ -18,7 +18,6 @@ package com.linkedin.d2.balancer.simple;
 
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.properties.CanaryDistributionStrategy;
-import com.linkedin.d2.balancer.properties.ClusterFailoutProperties;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterStoreProperties;
 import com.linkedin.d2.balancer.properties.FailoutProperties;
@@ -65,7 +64,7 @@ public class ClusterLoadBalancerSubscriberTest
     @Mock
     AtomicLong _version;
     @Captor
-    ArgumentCaptor<LoadBalancerStateItem<ClusterFailoutProperties>> _clusterFailoutPropertiesCaptor;
+    ArgumentCaptor<LoadBalancerStateItem<FailoutProperties>> _clusterFailoutPropertiesCaptor;
 
     Map<String, ClusterInfoItem> _clusterInfo;
 
@@ -138,11 +137,11 @@ public class ClusterLoadBalancerSubscriberTest
 
     return new Object[][] {
       {stableConfigs, null},
-      {stableConfigs, new ClusterFailoutProperties(Collections.emptyList(), Collections.emptyList())},
+      {stableConfigs, new FailoutProperties(Collections.emptyList(), Collections.emptyList())},
     };
   }
   @Test(dataProvider = "getConfigsWithFailoutProperties")
-  public void testWithFailoutConfigs(ClusterProperties stableConfigs, ClusterFailoutProperties clusterFailoutProperties)
+  public void testWithFailoutConfigs(ClusterProperties stableConfigs, FailoutProperties clusterFailoutProperties)
   {
     ClusterLoadBalancerSubscriberFixture fixture = new ClusterLoadBalancerSubscriberFixture();
     fixture.getMockSubscriber(false).handlePut(CLUSTER_NAME, new ClusterStoreProperties(
