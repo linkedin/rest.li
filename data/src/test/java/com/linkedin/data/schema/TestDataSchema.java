@@ -1924,11 +1924,6 @@ public class TestDataSchema
                   new String[] {"invalid name"}
               },
               {
-                  // bad properties
-                  "{ \"name\" : \"foo\", \"type\" : \"record\", \"fields\" : [], \"p1\" : null }",
-                  new String[] {"is a property and its value must not be null"}
-              },
-              {
                   // redefine boolean
                   "{ \"type\" : \"fixed\", \"name\" : \"boolean\", \"size\" : 4 }",
                   new String[] {"cannot be redefined"}

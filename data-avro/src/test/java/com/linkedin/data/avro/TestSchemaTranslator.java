@@ -39,6 +39,7 @@ import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
+import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -3321,6 +3322,19 @@ public class TestSchemaTranslator
     DataMap actual = TestUtil.dataMapFromString(pdscSchema.toString());
     DataMap expected = TestUtil.dataMapFromString(expectedSchema);
     assertEquals(actual, expected);
+  }
+
+  /*
+   * This test will fail in versions below 29.32.2 since AbstractSchemaParser.extractProperties throws exception
+   * if value is null in a schema
+   */
+  @Test
+  public void testNullValueInSchemaParser() {
+    String failingSchemaFromSI18816 =
+        "{\"type\":\"record\",\"name\":\"request\",\"namespace\":\"com.linkedin.test\",\"doc\":\"Doc\",\"fields\":[{\"name\":\"contentProviders\",\"type\":[\"null\",{\"type\":\"array\",\"items\":{\"type\":\"record\",\"name\":\"ContentProviders\",\"doc\":\"The Ids of the content provider\",\"fields\":[{\"name\":\"EntpProvider\",\"type\":[\"null\",{\"type\":\"record\",\"name\":\"EntpProvider\",\"fields\":[{\"name\":\"ID\",\"type\":\"string\",\"compliance\":{\"policy\":\"ENTERPRISE_ACCOUNT_ID\",\"format\":\"ID\"}}]}],\"doc\":\"The ID.\",\"default\":null,\"compliance\":{\"EntpProvider\":\"INHERITED\"}}],\"compliance\":\"INHERITED\"},\"default\":null,\"compliance\":\"INHERITED\"}],\"doc\":\"Array of test Ids1\",\"default\":null,\"compliance\":{\"array\":\"INHERITED\"}},{\"name\":\"enterpriseScopeFilterId\",\"type\":[\"null\",{\"type\":\"array\",\"items\":\"string\"}],\"doc\":\"A list of enterprise entities Ids\",\"default\":null,\"compliance\":\"NONE\"}],\"schemaType\":\"DocumentSchema\",\"version\":10,\"upconvertVersion\":10,\"evolutionSafetyMode\":\"IGNORE_WARNINGS\"}";
+    Schema schema = Schema.parse(failingSchemaFromSI18816);
+    DataSchema dataSchema = SchemaTranslator.avroToDataSchema(schema);
+    Assert.assertNotNull(dataSchema);
   }
 
   private static String readFile(File file) throws IOException
