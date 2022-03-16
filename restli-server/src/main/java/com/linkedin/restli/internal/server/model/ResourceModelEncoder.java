@@ -340,6 +340,11 @@ public class ResourceModelEncoder
 
   private InputStream getResourceStreamBySearchingRestSpec(String resourceName, ClassLoader... classLoaders)
   {
+    final String REST_SPEC_JSON_SUFFIX = "restspec.json";
+    if (!resourceName.endsWith(REST_SPEC_JSON_SUFFIX))
+    {
+      return null;
+    }
     if (_restSpecToClassLoaderMap == null)
     {
       _restSpecToClassLoaderMap = new HashMap<>();
@@ -356,7 +361,7 @@ public class ResourceModelEncoder
           {
             JarInputStream jarIn = new JarInputStream(url.openStream());
             for (JarEntry e = jarIn.getNextJarEntry(); e != null; e = jarIn.getNextJarEntry()) {
-              if (!e.isDirectory() && e.getName().contains("restspec.json"))
+              if (!e.isDirectory() && e.getName().endsWith(REST_SPEC_JSON_SUFFIX))
               {
                 _restSpecToClassLoaderMap.put(e.getName(), classLoader);
               }
@@ -372,7 +377,7 @@ public class ResourceModelEncoder
 
     for (Map.Entry<String, ClassLoader> entry : _restSpecToClassLoaderMap.entrySet())
     {
-      if (entry.getKey().contains(resourceName))
+      if (entry.getKey().endsWith("-" + resourceName))
       {
         return entry.getValue().getResourceAsStream(entry.getKey());
       }
