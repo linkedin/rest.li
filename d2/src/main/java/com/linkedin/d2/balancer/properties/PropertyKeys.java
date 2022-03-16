@@ -240,6 +240,12 @@ public class PropertyKeys
   public static final String TARGET_APPLICATIONS_STRATEGY_PROPERTIES = "targetApplicationsStrategyProperties";
   public static final String TARGET_APPLICATIONS = "targetApplications";
 
+  // used by ClusterStoreProperties
+  public static final String FAILOUT_PROPERTIES = "failoutProperties";
+  // used by FailoutProperties
+  public static final String FAILOUT_REDIRECT_CONFIGS = "failoutRedirectConfigs";
+  public static final String FAILOUT_BUCKET_CONFIGS = "failoutBucketConfigs";
+
   private static String getFieldName(PathSpec pathSpec)
   {
     if (pathSpec.getPathComponents().size() != 1)

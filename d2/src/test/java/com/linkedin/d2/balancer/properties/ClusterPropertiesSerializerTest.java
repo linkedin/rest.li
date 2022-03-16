@@ -23,7 +23,6 @@ import com.linkedin.d2.discovery.PropertySerializationException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
-
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -218,5 +217,86 @@ public class ClusterPropertiesSerializerTest
     inputProperty = new ClusterStoreProperties(property, null, new CanaryDistributionStrategy("percentage",
         Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap()));
     assertEquals(serializer.fromBytes(serializer.toBytes(inputProperty)), expected);
+  }
+
+  @DataProvider(name = "FailoutProperties")
+  public Object[][] getFailoutProperties() {
+
+    Map<String, Object> failoutRedirectConfigs = new HashMap<>();
+    failoutRedirectConfigs.put("fabric", "testfabric");
+    failoutRedirectConfigs.put("weight", 1);
+
+    Map<String, Object> failoutBucketConfigs = new HashMap<>();
+    failoutRedirectConfigs.put("fabric", "testfabric");
+    failoutBucketConfigs.put("partition", "main");
+
+    List<Map<String, Object>> failoutRedirectConfigsList =  new ArrayList<Map<String, Object>>();
+    failoutRedirectConfigsList.add(failoutRedirectConfigs);
+    List<Map<String, Object>> failoutBucketConfigsList =  new ArrayList<Map<String, Object>>();
+    failoutBucketConfigsList.add(failoutBucketConfigs);
+    List<Map<String, Object>> emptyList =  new ArrayList<Map<String, Object>>();
+    emptyList.add(Collections.emptyMap());
+
+    return new Object[][]{
+        {new FailoutProperties(failoutRedirectConfigsList, failoutBucketConfigsList)},
+        {new FailoutProperties(failoutRedirectConfigsList, emptyList)},
+        {new FailoutProperties(emptyList, failoutBucketConfigsList)},
+        {new FailoutProperties(emptyList, emptyList)}};
+  };
+
+  @Test(dataProvider = "FailoutProperties")
+  public void testFailoutProperties(FailoutProperties FailoutProperties) throws PropertySerializationException
+  {
+    ClusterPropertiesJsonSerializer serializer = new ClusterPropertiesJsonSerializer();
+
+    // canary configs adds dark cluster  properties
+    ClusterProperties canaryProperty = new ClusterProperties("test", Collections.emptyList(), Collections.emptyMap(), Collections.emptySet(),
+        NullPartitionProperties.getInstance(), Arrays.asList("principal1", "principal2"),
+        DarkClustersConverter.toProperties(DARK_CLUSTER_CONFIG_MAP), false);
+
+    ClusterStoreProperties property = new ClusterStoreProperties("test", Collections.emptyList(), Collections.emptyMap(), Collections.emptySet(),
+        NullPartitionProperties.getInstance(), Collections.emptyList(),
+        (Map<String, Object>) null, false, canaryProperty,
+        new CanaryDistributionStrategy("distributionStrategy", Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap()),
+        FailoutProperties);
+
+    assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
+  }
+
+  @DataProvider(name = "ClusterProperties")
+  public Object[][] getClusterProperties() {
+
+    ClusterProperties canaryProperty = new ClusterProperties("test", Collections.emptyList(), Collections.emptyMap(), Collections.emptySet(),
+        NullPartitionProperties.getInstance(), Arrays.asList("principal1", "principal2"),
+        DarkClustersConverter.toProperties(DARK_CLUSTER_CONFIG_MAP), false);
+    Map<String, Object> percentageProperties = new HashMap<>();
+    percentageProperties.put("scope", 0.1);
+    CanaryDistributionStrategy distributionStrategy = new CanaryDistributionStrategy("percentage", percentageProperties, Collections.emptyMap(), Collections.emptyMap());
+
+    ClusterStoreProperties withoutFailout = new ClusterStoreProperties("test", Collections.emptyList(), Collections.emptyMap(), Collections.emptySet(),
+        NullPartitionProperties.getInstance(), Collections.emptyList(),
+        (Map<String, Object>) null, false, canaryProperty,
+        distributionStrategy,
+        null);
+
+    ClusterStoreProperties withoutCanary = new ClusterStoreProperties("test", Collections.emptyList(), Collections.emptyMap(), Collections.emptySet(),
+        NullPartitionProperties.getInstance(), Collections.emptyList(),
+        (Map<String, Object>) null, false, null,
+        null,
+        new FailoutProperties(Collections.emptyList(), Collections.emptyList()));
+
+    return new Object[][]{
+        // Test serialization when failout property is missing
+        {withoutFailout},
+        // Test serialization when canary property is missing
+        {withoutCanary},
+      };
+  };
+
+  @Test(dataProvider = "ClusterProperties")
+  public void testClusterStoreProperties(ClusterStoreProperties property) throws PropertySerializationException
+  {
+    ClusterPropertiesJsonSerializer serializer = new ClusterPropertiesJsonSerializer();
+    assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
   }
 }

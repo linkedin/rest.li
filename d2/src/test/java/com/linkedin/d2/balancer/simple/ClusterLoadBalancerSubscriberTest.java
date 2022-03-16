@@ -19,10 +19,13 @@ package com.linkedin.d2.balancer.simple;
 import com.linkedin.d2.balancer.properties.CanaryDistributionStrategy;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterStoreProperties;
+import com.linkedin.d2.balancer.properties.FailoutProperties;
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import org.mockito.Mock;
@@ -91,24 +94,28 @@ public class ClusterLoadBalancerSubscriberTest
   {
     ClusterProperties stableConfigs = new ClusterProperties(CLUSTER_NAME, Collections.singletonList("aa"));
     ClusterProperties canaryConfigs = new ClusterProperties(CLUSTER_NAME, Collections.singletonList("bb"));
+    List<Map<String, Object>> emptyList =  new ArrayList<Map<String, Object>>();
+    emptyList.add(Collections.emptyMap());
+    FailoutProperties failoutProperties = new FailoutProperties(emptyList, emptyList);
     CanaryDistributionStrategy dummyDistributionStrategy = new CanaryDistributionStrategy("any", Collections.emptyMap(),
         Collections.emptyMap(), Collections.emptyMap());
     return new Object[][] {
-        {stableConfigs, null, null, null}, // no canary configs and no distribution strategy
-        {stableConfigs, canaryConfigs, null, null}, // no distribution strategy
-        {stableConfigs, canaryConfigs, dummyDistributionStrategy, null}, // no distribution provider
-        {stableConfigs, canaryConfigs, dummyDistributionStrategy, CanaryDistributionProvider.Distribution.STABLE},
-        {stableConfigs, canaryConfigs, dummyDistributionStrategy, CanaryDistributionProvider.Distribution.CANARY}
+        {stableConfigs, null, null, null, null}, // no canary configs and no distribution strategy and no failout properties
+        {stableConfigs, canaryConfigs, null, null, null}, // no distribution strategy, no failout properties
+        {stableConfigs, canaryConfigs, dummyDistributionStrategy, null, null}, // no distribution provider, no failout properties
+        {stableConfigs, canaryConfigs, dummyDistributionStrategy, CanaryDistributionProvider.Distribution.STABLE, null},
+        {stableConfigs, canaryConfigs, dummyDistributionStrategy, CanaryDistributionProvider.Distribution.CANARY, null},
+        {stableConfigs, canaryConfigs, dummyDistributionStrategy, CanaryDistributionProvider.Distribution.STABLE, failoutProperties},
     };
   }
   @Test(dataProvider = "getConfigsAndDistributions")
   public void testWithCanaryConfigs(ClusterProperties stableConfigs, ClusterProperties canaryConfigs, CanaryDistributionStrategy distributionStrategy,
-      CanaryDistributionProvider.Distribution distribution)
+      CanaryDistributionProvider.Distribution distribution, FailoutProperties failoutProperties)
   {
     ClusterLoadBalancerSubscriberFixture fixture = new ClusterLoadBalancerSubscriberFixture();
     when(fixture._canaryDistributionProvider.distribute(any())).thenReturn(distribution);
     fixture.getMockSubscriber(distribution != null).handlePut(CLUSTER_NAME,
-        new ClusterStoreProperties(stableConfigs, canaryConfigs, distributionStrategy));
+        new ClusterStoreProperties(stableConfigs, canaryConfigs, distributionStrategy, failoutProperties));
 
     Assert.assertEquals(fixture._clusterInfo.get(CLUSTER_NAME).getClusterPropertiesItem().getProperty(),
         distribution == CanaryDistributionProvider.Distribution.CANARY ? canaryConfigs : stableConfigs);
