@@ -97,9 +97,14 @@ public class ClusterPropertiesJsonSerializer implements
     ClusterProperties stableConfigs = buildClusterPropertiesFromMap(map);
     ClusterProperties canaryConfigs = null;
     CanaryDistributionStrategy distributionStrategy = null;
+    FailoutProperties failoutProperties = null;
+
     // get canary properties and canary distribution strategy, if exist
     Map<String, Object> canaryConfigsMap = mapGet(map, PropertyKeys.CANARY_CONFIGS);
     Map<String, Object> distributionStrategyMap = mapGet(map, PropertyKeys.CANARY_DISTRIBUTION_STRATEGY);
+
+    // get existing cluster failout properties if it exists
+    Map<String, Object> clusterFailoutMap = mapGet(map, PropertyKeys.FAILOUT_PROPERTIES);
     if (canaryConfigsMap != null && !canaryConfigsMap.isEmpty()
         && distributionStrategyMap != null && !distributionStrategyMap.isEmpty())
     {
@@ -110,7 +115,14 @@ public class ClusterPropertiesJsonSerializer implements
         mapGetOrDefault(distributionStrategyMap, PropertyKeys.TARGET_HOSTS_STRATEGY_PROPERTIES, Collections.emptyMap()),
         mapGetOrDefault(distributionStrategyMap, PropertyKeys.TARGET_APPLICATIONS_STRATEGY_PROPERTIES, Collections.emptyMap()));
     }
-    return new ClusterStoreProperties(stableConfigs, canaryConfigs, distributionStrategy);
+    if (clusterFailoutMap != null && !clusterFailoutMap.isEmpty())
+    {
+      failoutProperties = new FailoutProperties(
+          mapGetOrDefault(clusterFailoutMap, PropertyKeys.FAILOUT_REDIRECT_CONFIGS, Collections.emptyList()),
+          mapGetOrDefault(clusterFailoutMap, PropertyKeys.FAILOUT_BUCKET_CONFIGS, Collections.emptyList()));
+
+    }
+    return new ClusterStoreProperties(stableConfigs, canaryConfigs, distributionStrategy, failoutProperties);
   }
 
   /**
