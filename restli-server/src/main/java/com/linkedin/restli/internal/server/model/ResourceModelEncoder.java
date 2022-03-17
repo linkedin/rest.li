@@ -112,6 +112,7 @@ public class ResourceModelEncoder
   public static final String DEPRECATED_ANNOTATION_DOC_FIELD = "doc";
   public static final String COMPOUND_KEY_TYPE_NAME = "CompoundKey";
 
+  private static final String REST_SPEC_JSON_SUFFIX = "restspec.json";
   private static final Pattern UNNECESSARY_WHITESPACE_PATTERN = Pattern.compile("[ \\t]+");
 
   private final DataCodec codec = new JacksonDataCodec();
@@ -340,7 +341,6 @@ public class ResourceModelEncoder
 
   private InputStream getResourceStreamBySearchingRestSpec(String resourceName, ClassLoader... classLoaders)
   {
-    final String REST_SPEC_JSON_SUFFIX = "restspec.json";
     if (!resourceName.endsWith(REST_SPEC_JSON_SUFFIX))
     {
       return null;
