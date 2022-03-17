@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Fix documentation renderer's doc string rendering failure for restspec filename that has api-name prefix
 
 ## [29.32.1] - 2022-03-15
 - Support failouts in ClusterStoreProperties.
