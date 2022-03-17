@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.32.2] - 2022-03-17
+- Ignore null values in Schema Parser instead of throwing error.
+
 ## [29.32.1] - 2022-03-15
 - Support failouts in ClusterStoreProperties.
 
