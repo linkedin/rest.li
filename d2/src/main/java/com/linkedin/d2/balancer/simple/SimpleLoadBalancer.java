@@ -38,6 +38,7 @@ import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.subsetting.SubsettingState;
+import com.linkedin.d2.balancer.util.CustomAffinityRoutingURIProvider;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.d2.balancer.util.HostOverrideList;
@@ -76,6 +77,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -196,18 +198,38 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
           UriProperties uris = uriItem.getProperty();
 
           List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
-            _state.getStrategiesForService(serviceName,
-              service.getPrioritizedSchemes());
+              _state.getStrategiesForService(serviceName, service.getPrioritizedSchemes());
 
-          TrackerClient trackerClient = chooseTrackerClient(request, requestContext, serviceName, clusterName, cluster,
-            uriItem, uris, orderedStrategies, service);
+          TrackerClient trackerClient = null;
+
+          // Use client provided by CustomURIAffinityRoutingProvider when it's enabled
+          CustomAffinityRoutingURIProvider customAffinityRoutingURIProvider =
+              (CustomAffinityRoutingURIProvider) requestContext.getLocalAttr(CustomAffinityRoutingURIProvider.CUSTOM_AFFINITY_ROUTING_URI_PROVIDER);
+
+          boolean enableCustomAffinityRouting = isCustomAffinityRoutingEnabled(requestContext, customAffinityRoutingURIProvider);
+          if (enableCustomAffinityRouting) {
+            trackerClient = customAffinityRoutingURIProvider.getTargetHostURI(clusterName)
+                  .map(targetHost -> _state.getClient(serviceName, targetHost))
+                  .orElse(null);
+          }
+
+          if (trackerClient == null) {
+            trackerClient =
+                chooseTrackerClient(request, requestContext, serviceName, clusterName, cluster, uriItem, uris,
+                    orderedStrategies, service);
+
+            // set host URI for the cluster. with that next time, for the same inbound request, if downstream request is
+            // made to same cluster and custom affinity routing is enabled, then it will go to same box.
+            if (enableCustomAffinityRouting) {
+              customAffinityRoutingURIProvider.setTargetHostURI(clusterName, trackerClient.getUri());
+            }
+          }
 
           String clusterAndServiceUriString = trackerClient.getUri() + service.getPath();
           _serviceAvailableStats.inc();
           clientCallback.onSuccess(new RewriteLoadBalancerClient(serviceName,
             URI.create(clusterAndServiceUriString),
             trackerClient));
-
         }
         else
         {
@@ -240,6 +262,11 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }, clientCallback));
   }
 
+  private boolean isCustomAffinityRoutingEnabled(RequestContext requestContext,
+      @Nullable CustomAffinityRoutingURIProvider affinityRoutingURIProvider) {
+    return affinityRoutingURIProvider != null && affinityRoutingURIProvider.isEnabled()
+        && (KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext) == null);
+  }
 
   @Override
   public <K> MapKeyResult<Ring<URI>, K> getRings(URI serviceUri, Iterable<K> keys) throws ServiceUnavailableException
@@ -909,6 +936,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
           + " (choosable: " + clientsToLoadBalance.size() + " hosts, total in cluster: " + uris.Uris().size() + ")");
       }
     }
+
     return trackerClient;
   }
 

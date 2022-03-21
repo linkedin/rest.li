@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.32.4] - 2022-03-21
+- Add support for custom affinity routing provider
+
 ## [29.32.3] - 2022-03-18
 - Ignore null values in Schema Parser instead of throwing error.
 
@@ -5203,10 +5206,11 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.32.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.32.4...master
+[29.32.4]: https://github.com/linkedin/rest.li/compare/v29.32.3...v29.32.4
 [29.32.3]: https://github.com/linkedin/rest.li/compare/v29.32.2...v29.32.3
 [29.32.2]: https://github.com/linkedin/rest.li/compare/v29.32.1...v29.32.2
-[29.32.1]: https://github.com/linkedin/rest.li/compare/v29.31.0...v29.31.1
+[29.32.1]: https://github.com/linkedin/rest.li/compare/v29.32.0...v29.32.1
 [29.32.0]: https://github.com/linkedin/rest.li/compare/v29.31.0...v29.32.0
 [29.31.0]: https://github.com/linkedin/rest.li/compare/v29.30.0...v29.31.0
 [29.30.0]: https://github.com/linkedin/rest.li/compare/v29.29.2...v29.30.0
