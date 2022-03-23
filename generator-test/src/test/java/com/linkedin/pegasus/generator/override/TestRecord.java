@@ -208,16 +208,12 @@ public class TestRecord
   {
     try
     {
-      T record = recordClass.newInstance();
+      T record = recordClass.getDeclaredConstructor().newInstance();
       RecordDataSchema schema = (RecordDataSchema) DataTemplateUtil.getSchema(recordClass);
       RecordDataSchema schema2 = record.schema();
       assertSame(schema, schema2);
     }
-    catch (IllegalAccessException exc)
-    {
-      fail("Unexpected exception", exc);
-    }
-    catch (InstantiationException exc)
+    catch (IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException exc)
     {
       fail("Unexpected exception", exc);
     }
