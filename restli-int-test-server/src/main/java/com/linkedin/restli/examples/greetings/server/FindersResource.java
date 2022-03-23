@@ -17,12 +17,14 @@
 package com.linkedin.restli.examples.greetings.server;
 
 
+import com.linkedin.data.ByteString;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.SearchMetadata;
 import com.linkedin.restli.server.BasicCollectionResult;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.NoMetadata;
 import com.linkedin.restli.server.annotations.Finder;
+import com.linkedin.restli.server.annotations.QueryParam;
 import com.linkedin.restli.server.annotations.RestLiCollection;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 

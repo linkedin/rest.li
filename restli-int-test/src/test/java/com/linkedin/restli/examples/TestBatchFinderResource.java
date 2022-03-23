@@ -16,6 +16,7 @@
 
 package com.linkedin.restli.examples;
 
+import com.linkedin.data.ByteString;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
@@ -28,6 +29,7 @@ import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.common.BatchCollectionResponse;
 import com.linkedin.restli.common.BatchFinderCriteriaResult;
 import com.linkedin.restli.common.CollectionMetadata;
+import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.GreetingCriteria;
@@ -217,6 +219,23 @@ public class TestBatchFinderResource extends RestLiIntegrationTest
     ErrorResponse error = batchResult.get(2).getError();
     Assert.assertTrue(batchResult.get(2).isError());
     Assert.assertEquals(error.getMessage(), "Fail to find Greeting!");
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchFindersRequestBuilderDataProvider")
+  public void testByteStringArrayAsQueryParam(RootBuilderWrapper<Long, Greeting> builders) throws
+                                                                                           RemoteInvocationException
+  {
+    ByteString bs1 = ByteString.copyString("bytestring one", "ASCII");
+    ByteString bs2 = ByteString.copyString("bytestring one", "ASCII");
+
+    Request<CollectionResponse<Greeting>> request = builders.findBy("searchWithByteStringArray").setQueryParam("byteStrings",
+        Arrays.asList(bs1, bs2)).build();
+    ResponseFuture<CollectionResponse<Greeting>> future = getClient().sendRequest(request);
+    CollectionResponse<Greeting> response = future.getResponse().getEntity();
+
+    List<Greeting> result = response.getElements();
+
+    Assert.assertTrue(result.isEmpty());
   }
 
   @DataProvider(name = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "batchFindersRequestBuilderDataProvider")
