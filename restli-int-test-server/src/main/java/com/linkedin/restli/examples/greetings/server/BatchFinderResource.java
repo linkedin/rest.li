@@ -16,7 +16,7 @@
 
 package com.linkedin.restli.examples.greetings.server;
 
-import com.linkedin.data.ByteString;
+import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.examples.greetings.api.Empty;
 import com.linkedin.restli.examples.greetings.api.Greeting;
@@ -77,13 +77,6 @@ public class BatchFinderResource extends CollectionResourceTemplate<Long, Greeti
   @Finder("searchWithMetadata")
   public CollectionResult<Greeting, SearchMetadata> searchWithMetadata()
   {
-    return new CollectionResult<>(Collections.<Greeting>emptyList(),
-        0,
-        new SearchMetadata());
-  }
-
-  @Finder("searchWithByteStringArray")
-  public CollectionResult<Greeting, SearchMetadata> searchWithByteStringArray(@QueryParam("byteStrings") ByteString[] byteStrings) {
     return new CollectionResult<>(Collections.<Greeting>emptyList(),
         0,
         new SearchMetadata());
