@@ -1,0 +1,24 @@
+{
+  "name" : "byteStringArray",
+  "namespace" : "com.linkedin.restli.examples.greetings.client",
+  "path" : "/byteStringArray",
+  "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
+  "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ByteStringArrayQueryParamResource",
+  "collection" : {
+    "identifier" : {
+      "name" : "byteStringArrayId",
+      "type" : "long"
+    },
+    "supports" : [ ],
+    "finders" : [ {
+      "name" : "searchWithByteStringArray",
+      "parameters" : [ {
+        "name" : "byteStrings",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"bytes\" }"
+      } ]
+    } ],
+    "entity" : {
+      "path" : "/byteStringArray/{byteStringArrayId}"
+    }
+  }
+}

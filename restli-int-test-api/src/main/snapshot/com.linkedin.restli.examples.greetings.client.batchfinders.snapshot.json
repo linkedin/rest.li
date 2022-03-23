@@ -83,15 +83,6 @@
       },
       "supports" : [ ],
       "finders" : [ {
-        "name" : "searchWithByteStringArray",
-        "parameters" : [ {
-          "name" : "byteStrings",
-          "type" : "{ \"type\" : \"array\", \"items\" : \"bytes\" }"
-        } ],
-        "metadata" : {
-          "type" : "com.linkedin.restli.examples.greetings.api.SearchMetadata"
-        }
-      }, {
         "name" : "searchWithMetadata",
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.SearchMetadata"
