@@ -38,7 +38,7 @@ public class TestByteStringArrayAsQueryParam extends RestLiIntegrationTest{
     ByteString bs1 = ByteString.copyString("bytestring one", "ASCII");
     ByteString bs2 = ByteString.copyString("bytestring one", "ASCII");
 
-    Request<CollectionResponse<Greeting>> request = builders.findBy("searchWithByteStringArray").setQueryParam("byteStrings",
+    Request<CollectionResponse<Greeting>> request = builders.findBy("byteStringArrayFinder").setQueryParam("byteStrings",
         Arrays.asList(bs1, bs2)).build();
     ResponseFuture<CollectionResponse<Greeting>> future = getClient().sendRequest(request);
     CollectionResponse<Greeting> response = future.getResponse().getEntity();

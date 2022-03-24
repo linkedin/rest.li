@@ -10,10 +10,10 @@ import com.linkedin.restli.server.annotations.RestLiCollection;
 import java.util.Collections;
 
 
-@RestLiCollection(name = "byteStringArray", namespace = "com.linkedin.restli.examples.greetings.client")
+@RestLiCollection(name = "byteStringArrayQueryParam", namespace = "com.linkedin.restli.examples.greetings.client")
 public class ByteStringArrayQueryParamResource implements KeyValueResource<Long, Greeting> {
-  @Finder("searchWithByteStringArray")
-  public BasicCollectionResult<Greeting> searchWithByteStringArray(@QueryParam("byteStrings") ByteString[] byteStrings) {
+  @Finder("byteStringArrayFinder")
+  public BasicCollectionResult<Greeting> byteStringArrayFinder(@QueryParam("byteStrings") ByteString[] byteStrings) {
     return new BasicCollectionResult<Greeting>(Collections.<Greeting>emptyList());
   }
 }
