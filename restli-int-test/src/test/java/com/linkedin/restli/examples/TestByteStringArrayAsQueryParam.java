@@ -6,8 +6,8 @@ import com.linkedin.restli.client.Request;
 import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.common.CollectionResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
-import com.linkedin.restli.examples.greetings.client.ByteStringArrayBuilders;
-import com.linkedin.restli.examples.greetings.client.ByteStringArrayRequestBuilders;
+import com.linkedin.restli.examples.greetings.client.ByteStringArrayQueryParamBuilders;
+import com.linkedin.restli.examples.greetings.client.ByteStringArrayQueryParamRequestBuilders;
 import com.linkedin.restli.test.util.RootBuilderWrapper;
 import java.util.Arrays;
 import java.util.List;
@@ -53,8 +53,8 @@ public class TestByteStringArrayAsQueryParam extends RestLiIntegrationTest{
   private static Object[][] byteStringArrayQueryParamRequestBuilderDataProvider()
   {
     return new Object[][] {
-        { new RootBuilderWrapper<Long, Greeting>(new ByteStringArrayBuilders())},
-        { new RootBuilderWrapper<Long, Greeting>(new ByteStringArrayRequestBuilders())}
+        { new RootBuilderWrapper<Long, Greeting>(new ByteStringArrayQueryParamBuilders())},
+        { new RootBuilderWrapper<Long, Greeting>(new ByteStringArrayQueryParamRequestBuilders())}
     };
   }
 }
