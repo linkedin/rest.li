@@ -14,7 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.32.6] - 2022-03-28
+## [29.33.0] - 2022-03-28
 - Add Support for ByteString[] Query Parameters
 
 ## [29.32.5] - 2022-03-22
