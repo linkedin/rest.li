@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.32.6] - 2022-03-28
+- Add Support for ByteString[] Query Parameters
+
 ## [29.32.5] - 2022-03-22
 - Updating newInstance usage which is deprecated in Java 9+
 
