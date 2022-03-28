@@ -5212,7 +5212,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.32.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.33.0...master
+[29.33.0]: https://github.com/linkedin/rest.li/compare/v29.32.5...v29.33.0
 [29.32.5]: https://github.com/linkedin/rest.li/compare/v29.32.4...v29.32.5
 [29.32.4]: https://github.com/linkedin/rest.li/compare/v29.32.3...v29.32.4
 [29.32.3]: https://github.com/linkedin/rest.li/compare/v29.32.2...v29.32.3
