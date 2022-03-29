@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.examples;
 
-import com.linkedin.data.schema.PathSpec;
 import com.linkedin.r2.RemoteInvocationException;
 import com.linkedin.r2.transport.common.Client;
 import com.linkedin.r2.transport.common.bridge.client.TransportClientAdapter;
@@ -27,7 +26,6 @@ import com.linkedin.restli.client.ResponseFuture;
 import com.linkedin.restli.client.RestClient;
 import com.linkedin.restli.common.BatchCollectionResponse;
 import com.linkedin.restli.common.BatchFinderCriteriaResult;
-import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.examples.greetings.api.Greeting;
 import com.linkedin.restli.examples.greetings.api.GreetingCriteria;

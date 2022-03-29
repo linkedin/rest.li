@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.33.0] - 2022-03-28
+- Add Support for ByteString[] Query Parameters
+
 ## [29.32.5] - 2022-03-22
 - Updating newInstance usage which is deprecated in Java 9+
 
@@ -5209,7 +5212,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.32.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.33.0...master
+[29.33.0]: https://github.com/linkedin/rest.li/compare/v29.32.5...v29.33.0
 [29.32.5]: https://github.com/linkedin/rest.li/compare/v29.32.4...v29.32.5
 [29.32.4]: https://github.com/linkedin/rest.li/compare/v29.32.3...v29.32.4
 [29.32.3]: https://github.com/linkedin/rest.li/compare/v29.32.2...v29.32.3
