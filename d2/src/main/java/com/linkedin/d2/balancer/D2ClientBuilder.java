@@ -237,6 +237,7 @@ public class D2ClientBuilder
       }
       else
       {
+        LOG.info("Enabling D2Client failout support");
         d2Client = new FailoutClient(d2Client, loadBalancer, _config.failoutRedirectStrategy);
       }
     }

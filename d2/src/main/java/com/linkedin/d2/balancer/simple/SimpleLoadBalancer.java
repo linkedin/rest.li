@@ -137,6 +137,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     if (failoutConfigProviderFactory != null)
     {
       _failoutConfigProvider = failoutConfigProviderFactory.create(state);
+      _log.info("Created failoutConfigProvider.");
     }
     else
     {
@@ -171,6 +172,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         if (_failoutConfigProvider != null)
         {
           _failoutConfigProvider.start();
+          _log.info("Started failoutConfigProvider.");
         }
         callback.onSuccess(result);
       }
