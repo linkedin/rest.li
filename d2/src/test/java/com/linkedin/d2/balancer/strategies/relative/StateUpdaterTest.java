@@ -80,7 +80,7 @@ public class StateUpdaterTest
         partitionLoadBalancerStateMap, Collections.emptyList(), SERVICE_NAME);
   }
 
-  @Test
+  @Test(retryAnalyzer = ThreeRetries.class) // Known to be flaky in CI
   public void testExecutorScheduleWithError() throws InterruptedException {
     D2RelativeStrategyProperties relativeStrategyProperties = new D2RelativeStrategyProperties()
         .setInitialHealthScore(0.01)

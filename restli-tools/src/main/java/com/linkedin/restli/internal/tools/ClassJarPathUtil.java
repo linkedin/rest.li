@@ -53,7 +53,7 @@ public class ClassJarPathUtil
       try
       {
         Class<?> handlerClass = Class.forName(className, false, classLoader);
-        SchemaAnnotationHandler handler = (SchemaAnnotationHandler) handlerClass.newInstance();
+        SchemaAnnotationHandler handler = (SchemaAnnotationHandler) handlerClass.getDeclaredConstructor().newInstance();
         handlers.add(handler);
       }
       catch (Exception e)

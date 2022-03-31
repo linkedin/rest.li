@@ -14,8 +14,23 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.32.2] - 2022-03-17
+## [29.33.1] - 2022-03-31
 - Support failout redirection in D2 client.
+
+## [29.33.0] - 2022-03-28
+- Add Support for ByteString[] Query Parameters
+
+## [29.32.5] - 2022-03-22
+- Updating newInstance usage which is deprecated in Java 9+
+
+## [29.32.4] - 2022-03-21
+- Add support for custom affinity routing provider
+
+## [29.32.3] - 2022-03-18
+- Ignore null values in Schema Parser instead of throwing error.
+
+## [29.32.2] - 2022-03-17
+- Fix documentation renderer's doc string rendering failure for restspec filename that has api-name prefix
 
 ## [29.32.1] - 2022-03-15
 - Support failouts in ClusterStoreProperties.
@@ -5200,9 +5215,14 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.32.2...master
-[29.32.2]: https://github.com/linkedin/rest.li/compare/v29.31.1...v29.31.2
-[29.32.1]: https://github.com/linkedin/rest.li/compare/v29.31.0...v29.31.1
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.33.1...master
+[29.33.1]: https://github.com/linkedin/rest.li/compare/v29.33.0...v29.33.1
+[29.33.0]: https://github.com/linkedin/rest.li/compare/v29.32.5...v29.33.0
+[29.32.5]: https://github.com/linkedin/rest.li/compare/v29.32.4...v29.32.5
+[29.32.4]: https://github.com/linkedin/rest.li/compare/v29.32.3...v29.32.4
+[29.32.3]: https://github.com/linkedin/rest.li/compare/v29.32.2...v29.32.3
+[29.32.2]: https://github.com/linkedin/rest.li/compare/v29.32.1...v29.32.2
+[29.32.1]: https://github.com/linkedin/rest.li/compare/v29.32.0...v29.32.1
 [29.32.0]: https://github.com/linkedin/rest.li/compare/v29.31.0...v29.32.0
 [29.31.0]: https://github.com/linkedin/rest.li/compare/v29.30.0...v29.31.0
 [29.30.0]: https://github.com/linkedin/rest.li/compare/v29.29.2...v29.30.0

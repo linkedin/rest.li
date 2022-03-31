@@ -89,6 +89,7 @@ public class TestResourceSchemaCollection
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.stringKeys", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.stringKeys.stringKeysSub", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.complexArray", ResourceType.COLLECTION);
+    expectedTypes.put("com.linkedin.restli.examples.greetings.client.byteStringArrayQueryParam", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.complexKeys", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.complexKeys.complexKeysSub", ResourceType.COLLECTION);
     expectedTypes.put("com.linkedin.restli.examples.greetings.client.complexByteKeys", ResourceType.COLLECTION);

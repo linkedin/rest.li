@@ -20,6 +20,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
@@ -231,13 +232,9 @@ public class TestAsyncMethodInvocationPlanClass
       {
         try
         {
-          return resourceClass.newInstance();
+          return resourceClass.getDeclaredConstructor().newInstance();
         }
-        catch (InstantiationException e)
-        {
-          throw new RuntimeException(e);
-        }
-        catch (IllegalAccessException e)
+        catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e)
         {
           throw new RuntimeException(e);
         }

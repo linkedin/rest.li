@@ -752,18 +752,11 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
     for (Map.Entry<String, Object> e : map.entrySet())
     {
       String key = e.getKey();
-      if (reserved.contains(key) == false)
+      if (!reserved.contains(key))
       {
         Object value = e.getValue();
-        if (value != Data.NULL)
-        {
-          Object replaced = props.put(key, value);
-          assert(replaced == null);
-        }
-        else
-        {
-          startErrorMessage(value).append("\"").append(key).append("\" is a property and its value must not be null.\n");
-        }
+        Object replaced = props.put(key, value);
+        assert(replaced == null);
       }
     }
     return props;

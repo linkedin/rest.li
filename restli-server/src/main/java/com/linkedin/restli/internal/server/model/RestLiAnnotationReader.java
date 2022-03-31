@@ -118,6 +118,7 @@ import com.linkedin.restli.server.resources.unstructuredData.SingleUnstructuredD
 import com.linkedin.util.CustomTypeUtil;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
@@ -313,19 +314,11 @@ public final class RestLiAnnotationReader
     KeyCoercer<?, ?> keyCoercer;
     try
     {
-      keyCoercer = altKeyAnnotation.keyCoercer().newInstance();
-    }
-    catch (InstantiationException e)
-    {
-      throw new ResourceConfigException(String.format("KeyCoercer for alternative key '%s' on resource %s cannot be instantiated, %s",
-                                                      keyName, resourceName, e.getMessage()),
-                                        e);
-    }
-    catch (IllegalAccessException e)
-    {
-      throw new ResourceConfigException(String.format("KeyCoercer for alternative key '%s' on resource %s cannot be instantiated, %s",
-                                                      keyName, resourceName, e.getMessage()),
-                                        e);
+      keyCoercer = altKeyAnnotation.keyCoercer().getDeclaredConstructor().newInstance();
+    } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+      throw new ResourceConfigException(
+          String.format("KeyCoercer for alternative key '%s' on resource %s cannot be instantiated, %s", keyName,
+              resourceName, e.getMessage()), e);
     }
 
     try
@@ -1747,14 +1740,13 @@ public final class RestLiAnnotationReader
   }
 
   private static TyperefDataSchema getSchemaFromTyperefInfo(Class<? extends TyperefInfo> typerefInfoClass)
-          throws IllegalAccessException, InstantiationException
-  {
+      throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
     if (typerefInfoClass == null)
     {
       return null;
     }
 
-    TyperefInfo typerefInfo = typerefInfoClass.newInstance();
+    TyperefInfo typerefInfo = typerefInfoClass.getDeclaredConstructor().newInstance();
     return typerefInfo.getSchema();
 
   }
