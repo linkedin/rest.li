@@ -46,6 +46,7 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
   @Override
   public void start()
   {
+    _log.info("Registering cluster listener to watch for failout config changes");
     _loadBalancerState.registerClusterListener(this);
   }
 
