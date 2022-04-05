@@ -19,5 +19,6 @@ dependencies {
   testCompile project(':d2-test-api')
   testRuntime project(':r2-jetty')
   testCompile project(':test-util')
+  testCompile externalDependency.mockito
 }
 

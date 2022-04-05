@@ -52,7 +52,6 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPropertyMerger;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
 import com.linkedin.d2.discovery.util.D2Config;
-import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -61,6 +60,7 @@ import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
 
+import java.util.concurrent.ScheduledExecutorService;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
@@ -681,6 +681,20 @@ public class LoadBalancerClientCli
                                                                           TimeoutException,
                                                                           InterruptedException
   {
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("D2 PropertyEventExecutor"));
+    SimpleLoadBalancerState state = createSimpleLoadBalancerState(zkclient, zkserver, d2path, executor);
+
+    SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, executor);
+    FutureCallback<None> callback = new FutureCallback<>();
+    balancer.start(callback);
+    callback.get(5, TimeUnit.SECONDS);
+
+    return balancer;
+  }
+
+  public static SimpleLoadBalancerState createSimpleLoadBalancerState(ZKConnection zkclient, String zkserver, String d2path,
+      ScheduledExecutorService executor) throws PropertyStoreException, URISyntaxException, IOException
+  {
     // zk stores
     String clstoreString = zkserver + ZKFSUtil.clusterPath(d2path);
     String scstoreString = zkserver + ZKFSUtil.servicePath(d2path);
@@ -688,19 +702,17 @@ public class LoadBalancerClientCli
 
     ZooKeeperPermanentStore<ClusterProperties> zkClusterRegistry =
         (ZooKeeperPermanentStore<ClusterProperties>) getStore(zkclient,
-                                                              clstoreString,
-                                                              new ClusterPropertiesJsonSerializer());
+            clstoreString,
+            new ClusterPropertiesJsonSerializer());
     ZooKeeperPermanentStore<ServiceProperties> zkServiceRegistry =
         (ZooKeeperPermanentStore<ServiceProperties>) getStore(zkclient,
-                                                              scstoreString,
-                                                              new ServicePropertiesJsonSerializer());
+            scstoreString,
+            new ServicePropertiesJsonSerializer());
     ZooKeeperEphemeralStore<UriProperties> zkUriRegistry =
         (ZooKeeperEphemeralStore<UriProperties>) getEphemeralStore(zkclient,
-                                                                   uristoreString,
-                                                                   new UriPropertiesJsonSerializer(),
-                                                                   new UriPropertiesMerger());
-
-    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("D2 PropertyEventExecutor"));
+            uristoreString,
+            new UriPropertiesJsonSerializer(),
+            new UriPropertiesMerger());
 
     PropertyEventBus<ServiceProperties> serviceBus =
         new PropertyEventBusImpl<>(executor, zkServiceRegistry);
@@ -723,29 +735,14 @@ public class LoadBalancerClientCli
     clientFactories.put("http", new HttpClientFactory.Builder().build());
 
     // create the state
-    SimpleLoadBalancerState state =
-        new SimpleLoadBalancerState(executor,
-                                    uriBus,
-                                    clusterBus,
-                                    serviceBus,
-                                    clientFactories,
-                                    loadBalancerStrategyFactories,
-                                    null, null, false);
 
-    SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, executor);
-    FutureCallback<None> callback = new FutureCallback<>();
-    balancer.start(callback);
-    callback.get(5, TimeUnit.SECONDS);
-
-    new JmxManager().registerLoadBalancer("balancer", balancer)
-                    .registerLoadBalancerState("state", state)
-                    .registerScheduledThreadPoolExecutor("executorService", executor)
-                    .registerZooKeeperPermanentStore("zkClusterRegistry", zkClusterRegistry)
-                    .registerZooKeeperPermanentStore("zkServiceRegistry",
-                                                     zkServiceRegistry)
-                    .registerZooKeeperEphemeralStore("zkUriRegistry", zkUriRegistry);
-
-    return balancer;
+    return new SimpleLoadBalancerState(executor,
+        uriBus,
+        clusterBus,
+        serviceBus,
+        clientFactories,
+        loadBalancerStrategyFactories,
+        null, null, false);
   }
 
   public ZKFSLoadBalancer getZKFSLoadBalancer(String zkConnectString, String d2path, String d2ServicePath) throws Exception

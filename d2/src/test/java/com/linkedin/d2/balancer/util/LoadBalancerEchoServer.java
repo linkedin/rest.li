@@ -84,6 +84,7 @@ public class LoadBalancerEchoServer
   private boolean            _isStopped = false;
   private int                _timeout = 5000;
   private final Map<Integer, Double> _partitionWeight;
+  private final boolean      _disableEchoOutput;
 
   private final static String RESPONSE_POSTFIX = ".FromEchoServerPort:";
 
@@ -172,12 +173,32 @@ public class LoadBalancerEchoServer
       InterruptedException,
       TimeoutException
   {
+    this(zookeeperHost, zookeeperPort, echoServerHost, echoServerPort, timeout, scheme, basePath, cluster,
+        partitionWeight, false, services);
+  }
+
+  public LoadBalancerEchoServer(String zookeeperHost,
+                                int zookeeperPort,
+                                String echoServerHost,
+                                int echoServerPort,
+                                int timeout,
+                                String scheme,
+                                String basePath,
+                                String cluster,
+                                Map<Integer, Double> partitionWeight,
+                                boolean disableEchoOutput,
+                                String... services) throws IOException,
+      PropertyStoreException,
+      InterruptedException,
+      TimeoutException
+  {
     _host = echoServerHost;
     _port = echoServerPort;
     _scheme = scheme;
     _timeout = timeout;
     _cluster = cluster;
     _partitionWeight = partitionWeight;
+    _disableEchoOutput = disableEchoOutput;
     _basePath = basePath;
     _uri = URI.create(_scheme + "://" + echoServerHost + ":" + _port + "/" + _cluster);
 
@@ -435,7 +456,10 @@ public class LoadBalancerEchoServer
     public void handleRequest(RestRequest request, RequestContext requestContext,
                               final Callback<RestResponse> callback)
     {
-      System.out.println("REST server request: " + request.getEntity().asString("UTF-8"));
+      if (!_disableEchoOutput)
+      {
+        System.out.println("REST server request: " + request.getEntity().asString("UTF-8"));
+      }
 
       String requestStr = request.getEntity().asString("UTF-8");
       String response = requestStr + ";WEIGHT=" + printWeights() + getResponsePostfixStringWithPort();

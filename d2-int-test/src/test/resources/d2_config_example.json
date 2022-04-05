@@ -1,13 +1,10 @@
 {
   "clusterDefaults": {
+  },
+  "serviceDefaults": {
     "prioritizedSchemes": [
       "http"
     ],
-    "properties": {
-      "requestTimeout": "10000"
-    }
-  },
-  "serviceDefaults": {
     "loadBalancerStrategyProperties": {
       "maxClusterLatencyWithoutDegrading": "500",
       "updateIntervalsMs": "5000",
