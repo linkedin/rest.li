@@ -53,6 +53,7 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
   public void shutdown()
   {
     _loadBalancerState.unregisterClusterListener(this);
+    _failedoutClusterManagers.values().forEach(FailedoutClusterManager::shutdown);
   }
 
   /**
@@ -61,8 +62,7 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
    * @return Parsed and processed config that's ready to be used for routing requests.
    */
   public abstract @Nullable
-  FailoutConfig createFailoutConfig(@Nonnull String clusterName,
-                                    @Nullable FailoutProperties failoutProperties);
+  FailoutConfig createFailoutConfig(@Nonnull String clusterName, @Nullable FailoutProperties failoutProperties);
 
   @Override
   public FailoutConfig getFailoutConfig(String clusterName)
@@ -81,7 +81,8 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
       _log.info("Detected cluster failout property change for cluster: {}. New properties: {}", clusterName, failoutProperties);
 
       final FailoutConfig failoutConfig = createFailoutConfig(clusterName, failoutProperties);
-      _failedoutClusterManagers.computeIfAbsent(clusterName, name -> new FailedoutClusterManager(clusterName, _loadBalancerState))
+      _failedoutClusterManagers
+        .computeIfAbsent(clusterName, name -> new FailedoutClusterManager(clusterName, _loadBalancerState, createConnectionWarmUpHandler()))
         .updateFailoutConfig(failoutConfig);
     }
     else
@@ -99,5 +100,11 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
       _log.info("Cluster: {} removed. Resetting cluster failout config.", clusterName);
       manager.updateFailoutConfig(null);
     }
+  }
+
+  @Nullable
+  public FailedoutClusterConnectionWarmUpHandler createConnectionWarmUpHandler()
+  {
+    return null;
   }
 }
