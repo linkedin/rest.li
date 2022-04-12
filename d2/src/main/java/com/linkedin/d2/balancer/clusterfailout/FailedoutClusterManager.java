@@ -29,7 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class is responsible for managing a failed out cluster.
+ * This class is responsible for managing one failed out cluster.
  * Some example tasks include:
  * - Adding cluster and URI watches for the peer clusters.
  * - Establishing connections to instances in the peer clusters.
@@ -56,7 +56,7 @@ public class FailedoutClusterManager
 
   /**
    * Gets the current failout config.
-   * @return Optional.empty() when there is not failout config found.
+   * @return null when there is not failout config found.
    */
   public FailoutConfig getFailoutConfig()
   {

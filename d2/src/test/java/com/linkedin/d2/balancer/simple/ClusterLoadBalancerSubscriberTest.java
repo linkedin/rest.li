@@ -30,8 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
@@ -39,10 +37,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
@@ -63,8 +58,6 @@ public class ClusterLoadBalancerSubscriberTest
     PropertyEventBus<ClusterProperties> _eventBus;
     @Mock
     AtomicLong _version;
-    @Captor
-    ArgumentCaptor<LoadBalancerStateItem<FailoutProperties>> _clusterFailoutPropertiesCaptor;
 
     Map<String, ClusterInfoItem> _clusterInfo;
 
@@ -147,8 +140,8 @@ public class ClusterLoadBalancerSubscriberTest
     fixture.getMockSubscriber(false).handlePut(CLUSTER_NAME, new ClusterStoreProperties(
       stableConfigs, null, null, clusterFailoutProperties));
 
-    verify(fixture._simpleLoadBalancerState, times(1)).updateFailoutProperties(eq(CLUSTER_NAME),
-                                                                               fixture._clusterFailoutPropertiesCaptor.capture());
-    Assert.assertEquals(fixture._clusterFailoutPropertiesCaptor.getValue().getProperty(), clusterFailoutProperties);
+    LoadBalancerStateItem<FailoutProperties> failoutPropertiesItem = fixture._clusterInfo.get(CLUSTER_NAME).getFailoutPropertiesItem();
+    Assert.assertNotNull(failoutPropertiesItem);
+    Assert.assertEquals(failoutPropertiesItem.getProperty(), clusterFailoutProperties);
   }
 }

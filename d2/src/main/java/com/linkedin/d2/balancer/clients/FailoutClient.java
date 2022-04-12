@@ -17,8 +17,8 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.d2.balancer.D2Client;
 import com.linkedin.d2.balancer.D2ClientDelegator;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
-import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.clusterfailout.FailoutConfig;
+import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
@@ -26,23 +26,25 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
+
+import java.net.URI;
 import java.util.concurrent.Future;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * A D2 delegator which rewrites URIs to redirect requests to another cluster if the target service has been failed out
  * of service.
  */
-public class FailoutClient extends D2ClientDelegator {
+public class FailoutClient extends D2ClientDelegator
+{
   private static final Logger LOG = LoggerFactory.getLogger(FailoutClient.class);
 
   private final FailoutRedirectStrategy _redirectStrategy;
   private final LoadBalancerWithFacilities _balancer;
 
-  public FailoutClient(D2Client d2Client, LoadBalancerWithFacilities balancer,
-      FailoutRedirectStrategy redirectStrategy)
+  public FailoutClient(D2Client d2Client, LoadBalancerWithFacilities balancer, FailoutRedirectStrategy redirectStrategy)
   {
     super(d2Client);
     _balancer = balancer;
@@ -70,14 +72,24 @@ public class FailoutClient extends D2ClientDelegator {
   }
 
   @Override
-  public void restRequest(RestRequest request, final RequestContext requestContext,
-      final Callback<RestResponse> callback)
+  public void restRequest(final RestRequest request, final RequestContext requestContext, final Callback<RestResponse> callback)
   {
-    final FailoutConfig config = getClusterFailoutConfig(request);
-    if (config != null && config.isFailedOut()) {
-      request = request.builder().setURI(
-          _redirectStrategy.redirect(config, request.getURI())).build();
-    }
+    determineRequestUri(request, new Callback<URI>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        LOG.error("Failed to build request URI. Original request URI will be used.", e);
+        FailoutClient.super.restRequest(request, requestContext, callback);
+      }
+
+      @Override
+      public void onSuccess(URI result)
+      {
+        final RestRequest redirectedRequest = request.builder().setURI(result).build();
+        FailoutClient.super.restRequest(redirectedRequest, requestContext, callback);
+      }
+    });
 
     super.restRequest(request, requestContext, callback);
   }
@@ -89,36 +101,61 @@ public class FailoutClient extends D2ClientDelegator {
   }
 
   @Override
-  public void streamRequest(StreamRequest request, final RequestContext requestContext,
-      final Callback<StreamResponse> callback)
+  public void streamRequest(final StreamRequest request, final RequestContext requestContext, final Callback<StreamResponse> callback)
   {
-    final FailoutConfig config = getClusterFailoutConfig(request);
-    if (config != null && config.isFailedOut()) {
-      request = request.builder().setURI(
-          _redirectStrategy.redirect(config, request.getURI())).build(
-            request.getEntityStream());
-    }
+    determineRequestUri(request, new Callback<URI>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        LOG.error("Failed to build request URI. Original request URI will be used.", e);
+        FailoutClient.super.streamRequest(request, requestContext, callback);
+      }
 
-    super.streamRequest(request, requestContext, callback);
+      @Override
+      public void onSuccess(URI result)
+      {
+        final StreamRequest redirectedRequest = request.builder().setURI(result).build(
+          request.getEntityStream());
+        FailoutClient.super.streamRequest(redirectedRequest, requestContext, callback);
+      }
+    });
   }
 
   /**
-   * Attempt to find the cluster failout config.
-   *
-   * <p>This should succeed provided the current D2 service is available.</p>
+   * Attempts to determine correct request Uri. The original request URI will be used if there is no active failout.
    *
    * @param request the D2 request from which the service name can be found.
+   * @param callback callback to be invoked once the request URI has been determined
    */
-  private FailoutConfig getClusterFailoutConfig(Request request)
+  private void determineRequestUri(final Request request, Callback<URI> callback)
   {
     String currentService = LoadBalancerUtil.getServiceNameFromUri(request.getURI());
-    String currentCluster;
-    try {
-      currentCluster = _balancer.getLoadBalancedServiceProperties(currentService).getClusterName();
-    } catch (ServiceUnavailableException e) {
-      LOG.error("Unable to determine the current cluster name; current service is unavailable.", e);
-      return null;
-    }
-    return _balancer.getClusterInfoProvider().getFailoutConfig(currentCluster);
+    _balancer.getLoadBalancedServiceProperties(currentService, new Callback<ServiceProperties>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        callback.onError(e);
+      }
+
+      @Override
+      public void onSuccess(ServiceProperties result)
+      {
+        String cluster = result.getClusterName();
+        FailoutConfig config = _balancer.getClusterInfoProvider().getFailoutConfig(cluster);
+
+        if (config != null && config.isFailedOut())
+        {
+          // Rewrites the URI based on failout config
+          callback.onSuccess(_redirectStrategy.redirect(config, request.getURI()));
+        }
+        else
+        {
+          // Keep URI unchanged if there is no active failout
+          callback.onSuccess(request.getURI());
+        }
+      }
+    });
   }
 }

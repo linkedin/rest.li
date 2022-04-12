@@ -550,7 +550,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   @Override
   public LoadBalancerStateItem<FailoutProperties> getFailoutProperties(String clusterName)
   {
-    return _clusterFailoutProperties.get(clusterName);
+    ClusterInfoItem clusterInfoItem =  _clusterInfo.get(clusterName);
+    return clusterInfoItem == null ? null : clusterInfoItem.getFailoutPropertiesItem();
   }
 
   @Override
@@ -590,12 +591,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   {
     return _clusterInfo;
   }
-
-  void updateFailoutProperties(String clusterName, LoadBalancerStateItem<FailoutProperties> failoutProperties)
-  {
-     _clusterFailoutProperties.put(clusterName, failoutProperties);
-  }
-
 
   public Map<String, LoadBalancerStateItem<ServiceProperties>> getServiceProperties()
   {

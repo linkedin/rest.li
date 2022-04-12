@@ -18,6 +18,7 @@ package com.linkedin.d2.balancer.simple;
 
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
+import com.linkedin.d2.balancer.properties.FailoutProperties;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 
 /**
@@ -28,14 +29,19 @@ class ClusterInfoItem
 {
   private final LoadBalancerStateItem<ClusterProperties> _clusterPropertiesItem;
   private final LoadBalancerStateItem<PartitionAccessor> _partitionAccessorItem;
+  private final LoadBalancerStateItem<FailoutProperties> _failoutPropertiesItem;
 
-  ClusterInfoItem(SimpleLoadBalancerState simpleLoadBalancerState, ClusterProperties clusterProperties, PartitionAccessor partitionAccessor)
+  ClusterInfoItem(SimpleLoadBalancerState simpleLoadBalancerState, ClusterProperties clusterProperties, PartitionAccessor partitionAccessor,
+                  FailoutProperties failoutProperties)
   {
     long version = simpleLoadBalancerState.getVersionAccess().incrementAndGet();
     _clusterPropertiesItem = new LoadBalancerStateItem<>(clusterProperties,
       version,
       System.currentTimeMillis());
     _partitionAccessorItem = new LoadBalancerStateItem<>(partitionAccessor,
+      version,
+      System.currentTimeMillis());
+    _failoutPropertiesItem = new LoadBalancerStateItem<>(failoutProperties,
       version,
       System.currentTimeMillis());
   }
@@ -50,9 +56,16 @@ class ClusterInfoItem
     return _partitionAccessorItem;
   }
 
+  LoadBalancerStateItem<FailoutProperties> getFailoutPropertiesItem()
+  {
+    return _failoutPropertiesItem;
+  }
+
   @Override
   public String toString()
   {
     return "_clusterProperties = " + _clusterPropertiesItem.getProperty();
   }
+
+
 }
