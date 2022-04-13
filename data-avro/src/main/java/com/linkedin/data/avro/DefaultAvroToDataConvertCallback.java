@@ -75,7 +75,7 @@ class DefaultAvroToDataConvertCallback extends AbstractDefaultDataTranslator imp
     DataSchema fieldDataSchema = field.getType();
     boolean isOptional = field.getOptional();
     Object result;
-    if (isOptional && ((fieldValue == null) || (fieldValue == Data.NULL)))
+    if (isOptional && (fieldValue == null || fieldValue == Data.NULL))
     {
       // for optional fields,
       // null union members have been removed from translated union schema
