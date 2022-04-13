@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.33.1] - 2022-04-12
+- Fix an Avro translation bug where optional fields in a partial default record are not treated properly.
+
 ## [29.33.0] - 2022-03-28
 - Add Support for ByteString[] Query Parameters
 
@@ -5212,7 +5215,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.33.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.33.1...master
+[29.33.1]: https://github.com/linkedin/rest.li/compare/v29.33.0...v29.33.1
 [29.33.0]: https://github.com/linkedin/rest.li/compare/v29.32.5...v29.33.0
 [29.32.5]: https://github.com/linkedin/rest.li/compare/v29.32.4...v29.32.5
 [29.32.4]: https://github.com/linkedin/rest.li/compare/v29.32.3...v29.32.4
