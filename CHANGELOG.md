@@ -15,7 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.33.1] - 2022-04-12
-- Fix a bug where optional fields in a partial default record are not treated properly.
+- Fix an Avro translation bug where optional fields in a partial default record are not treated properly.
 
 ## [29.33.0] - 2022-03-28
 - Add Support for ByteString[] Query Parameters
