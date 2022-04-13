@@ -18,7 +18,6 @@ package com.linkedin.d2.balancer.clusterfailout;
 import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
-import com.linkedin.d2.balancer.properties.ClusterStoreProperties;
 import com.linkedin.d2.balancer.properties.FailoutProperties;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,7 +34,7 @@ import org.slf4j.LoggerFactory;
 public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, LoadBalancerClusterListener
 {
   private static final Logger _log = LoggerFactory.getLogger(FailedoutClusterManager.class);
-  private final ConcurrentMap<String, FailedoutClusterManager> _failedoutClusters = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, FailedoutClusterManager> _failedoutClusterManagers = new ConcurrentHashMap<>();
   private final LoadBalancerState _loadBalancerState;
 
   public ZKFailoutConfigProvider(@Nonnull LoadBalancerState loadBalancerState)
@@ -68,7 +67,7 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
   @Override
   public FailoutConfig getFailoutConfig(String clusterName)
   {
-    final FailedoutClusterManager failedoutClusterManager = _failedoutClusters.get(clusterName);
+    final FailedoutClusterManager failedoutClusterManager = _failedoutClusterManagers.get(clusterName);
     return failedoutClusterManager != null ? failedoutClusterManager.getFailoutConfig() : null;
   }
 
@@ -82,7 +81,7 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
       _log.info("Detected cluster failout property change for cluster: {}. New properties: {}", clusterName, failoutProperties);
 
       final FailoutConfig failoutConfig = createFailoutConfig(clusterName, failoutProperties);
-      _failedoutClusters.computeIfAbsent(clusterName, name -> new FailedoutClusterManager(clusterName, _loadBalancerState))
+      _failedoutClusterManagers.computeIfAbsent(clusterName, name -> new FailedoutClusterManager(clusterName, _loadBalancerState))
         .updateFailoutConfig(failoutConfig);
     }
     else
@@ -94,7 +93,7 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
   @Override
   public void onClusterRemoved(String clusterName)
   {
-    FailedoutClusterManager manager = _failedoutClusters.remove(clusterName);
+    FailedoutClusterManager manager = _failedoutClusterManagers.remove(clusterName);
     if (manager != null)
     {
       _log.info("Cluster: {} removed. Resetting cluster failout config.", clusterName);

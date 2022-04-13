@@ -49,7 +49,7 @@ class ClusterLoadBalancerSubscriber extends
   {
     if (discoveryProperties != null)
     {
-      ClusterProperties pickedProperties = pickActiveProperties(listenTo, discoveryProperties);
+      ClusterProperties pickedProperties = pickActiveProperties(discoveryProperties);
 
       _simpleLoadBalancerState.getClusterInfo().put(listenTo,
         new ClusterInfoItem(_simpleLoadBalancerState, pickedProperties,
@@ -80,7 +80,7 @@ class ClusterLoadBalancerSubscriber extends
    * @param discoveryProperties a composite properties containing all data on the cluster store (stable configs, canary configs, etc.).
    * @return the picked active properties
    */
-  private ClusterProperties pickActiveProperties(String listenTo, final ClusterProperties discoveryProperties)
+  private ClusterProperties pickActiveProperties(final ClusterProperties discoveryProperties)
   {
     final ClusterStoreProperties clusterStoreProperties = toClusterStoreProperties(discoveryProperties);
     if (clusterStoreProperties == null)

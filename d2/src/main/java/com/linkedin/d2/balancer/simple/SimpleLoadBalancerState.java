@@ -90,7 +90,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final Map<String, LoadBalancerStateItem<UriProperties>>                        _uriProperties;
   private final Map<String, ClusterInfoItem>                                             _clusterInfo;
   private final Map<String, LoadBalancerStateItem<ServiceProperties>>                    _serviceProperties;
-  private final Map<String, LoadBalancerStateItem<FailoutProperties>>                    _clusterFailoutProperties;
 
   private final AtomicLong                                                               _version;
 
@@ -320,7 +319,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _uriProperties = new ConcurrentHashMap<>();
     _clusterInfo = new ConcurrentHashMap<>();
     _serviceProperties = new ConcurrentHashMap<>();
-    _clusterFailoutProperties = new ConcurrentHashMap<>();
     _version = new AtomicLong(0);
 
     _uriSubscriber = new UriLoadBalancerSubscriber(uriBus, this);
