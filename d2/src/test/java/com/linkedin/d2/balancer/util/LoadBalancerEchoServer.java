@@ -20,11 +20,12 @@ package com.linkedin.d2.balancer.util;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
-import com.linkedin.d2.balancer.LoadBalancerServer;
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.properties.UriPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.UriPropertiesMerger;
+import com.linkedin.d2.balancer.servers.ZooKeeperAnnouncer;
 import com.linkedin.d2.balancer.servers.ZooKeeperServer;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
@@ -80,7 +81,8 @@ public class LoadBalancerEchoServer
   private final Set<String>  _validPaths;
   private final URI          _uri;
   private Server             _server;
-  private final LoadBalancerServer _announcer;
+  private final ZooKeeperAnnouncer _announcer;
+  private final ZooKeeperServer _zooKeeperServer;
   private boolean            _isStopped = false;
   private int                _timeout = 5000;
   private final Map<Integer, Double> _partitionWeight;
@@ -243,9 +245,12 @@ public class LoadBalancerEchoServer
 
     wait.await();
 
-    _announcer = new ZooKeeperServer(zk);
+    _zooKeeperServer = new ZooKeeperServer(zk);
+    _announcer = new ZooKeeperAnnouncer(_zooKeeperServer);
+    _announcer.setCluster(cluster);
+    _announcer.setUri(_uri.toString());
 
-    new JmxManager().registerZooKeeperServer("server", (ZooKeeperServer) _announcer);
+    new JmxManager().registerZooKeeperAnnouncer("server:" + _port, _announcer);
     new JmxManager().registerZooKeeperEphemeralStore("uris", zk);
     // announce that the server has started
   }
@@ -339,11 +344,17 @@ public class LoadBalancerEchoServer
     {
       partitionDataMap.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
     }
-    _announcer.markUp(_cluster, _uri, partitionDataMap, callback);
+    _announcer.setPartitionData(partitionDataMap);
+    _announcer.markUp(callback);
 
     try
     {
       callback.get(10, TimeUnit.SECONDS);
+      FutureCallback<None> changeWeightCallback = new FutureCallback<>();
+      _zooKeeperServer.addUriSpecificProperty(_cluster, "changeWeight", _uri, partitionDataMap, PropertyKeys.DO_NOT_SLOW_START,
+          true,
+          changeWeightCallback);
+      changeWeightCallback.get(10, TimeUnit.SECONDS);
     }
     catch (Exception e)
     {
@@ -354,7 +365,7 @@ public class LoadBalancerEchoServer
   public void markDown() throws PropertyStoreException
   {
     FutureCallback<None> callback = new FutureCallback<>();
-    _announcer.markDown(_cluster, _uri, callback);
+    _announcer.markDown(callback);
     try
     {
       callback.get(10, TimeUnit.SECONDS);
@@ -404,14 +415,12 @@ public class LoadBalancerEchoServer
 
   public long getDelayValueFromRequest(String request)
   {
-    if (request.contains("PORT:"+_port))
+    String patternStr = String.format("PORT=%d,LATENCY=(\\d+)", _port);
+    Pattern pattern = Pattern.compile(patternStr, Pattern.CASE_INSENSITIVE);
+    Matcher matcher = pattern.matcher(request);
+    if (matcher.find())
     {
-      Pattern pattern = Pattern.compile("DELAY=(\\d+)", Pattern.CASE_INSENSITIVE);
-      Matcher matcher = pattern.matcher(request);
-      while (matcher.find())
-      {
-        return Long.parseLong(matcher.group(1));
-      }
+      return Long.parseLong(matcher.group(1));
     }
     return 0;
   }

@@ -5,14 +5,18 @@
     "prioritizedSchemes": [
       "http"
     ],
-    "loadBalancerStrategyProperties": {
-      "maxClusterLatencyWithoutDegrading": "500",
-      "updateIntervalsMs": "5000",
-      "defaultSuccessfulTransmissionWeight": "1.0",
-      "pointsPerWeight": "100"
+    "relativeStrategyProperties": {
+      "updateIntervalMs": "1000",
+      "relativeLatencyHighThresholdFactor": 8.0,
+      "relativeLatencyLowThresholdFactor": 6.0,
+      "upStep": 0.05,
+      "downStep": 0.2,
+      "initialHealthScore": 0.01,
+      "slowStartThreshold": 0.16,
+      "enableFastRecovery": true
     },
     "loadBalancerStrategyList": [
-      "degraderV3"
+      "relative"
     ]
   },
   "serviceVariants": {

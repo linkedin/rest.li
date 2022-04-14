@@ -34,6 +34,7 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.zkfs.ZKFSComponentFactory;
 import com.linkedin.d2.balancer.zkfs.ZKFSLoadBalancer;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
@@ -60,6 +61,7 @@ import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
 
+import com.linkedin.util.clock.SystemClock;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectInstance;
@@ -729,6 +731,8 @@ public class LoadBalancerClientCli
     loadBalancerStrategyFactories.put("degraderV2", new DegraderLoadBalancerStrategyFactoryV3());
     loadBalancerStrategyFactories.put("degraderV3", new DegraderLoadBalancerStrategyFactoryV3());
     loadBalancerStrategyFactories.put("degraderV2_1", new DegraderLoadBalancerStrategyFactoryV3());
+    loadBalancerStrategyFactories.put("relative", new RelativeLoadBalancerStrategyFactory(executor,
+        null, null, null, SystemClock.instance()));
 
     Map<String, TransportClientFactory> clientFactories = new HashMap<>();
 
