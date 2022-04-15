@@ -18,34 +18,46 @@ package com.linkedin.d2.balancer.simple;
 
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
+import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 
 /**
  * We put together the cluster properties and the partition accessor for a cluster so that we don't have to
  * maintain two separate maps (which have to be in sync all the time)
  */
-class ClusterInfoItem
+public class ClusterInfoItem
 {
   private final LoadBalancerStateItem<ClusterProperties> _clusterPropertiesItem;
   private final LoadBalancerStateItem<PartitionAccessor> _partitionAccessorItem;
 
   ClusterInfoItem(SimpleLoadBalancerState simpleLoadBalancerState, ClusterProperties clusterProperties, PartitionAccessor partitionAccessor)
   {
-    long version = simpleLoadBalancerState.getVersionAccess().incrementAndGet();
-    _clusterPropertiesItem = new LoadBalancerStateItem<>(clusterProperties,
-      version,
-      System.currentTimeMillis());
-    _partitionAccessorItem = new LoadBalancerStateItem<>(partitionAccessor,
-      version,
-      System.currentTimeMillis());
+    this(simpleLoadBalancerState, clusterProperties, partitionAccessor, CanaryDistributionProvider.Distribution.STABLE);
   }
 
-  LoadBalancerStateItem<ClusterProperties> getClusterPropertiesItem()
+  ClusterInfoItem(
+      SimpleLoadBalancerState simpleLoadBalancerState,
+      ClusterProperties clusterProperties,
+      PartitionAccessor partitionAccessor,
+      CanaryDistributionProvider.Distribution distribution)
+  {
+    long version = simpleLoadBalancerState.getVersionAccess().incrementAndGet();
+    _clusterPropertiesItem = new LoadBalancerStateItem<>(clusterProperties,
+        version,
+        System.currentTimeMillis(),
+        distribution);
+    _partitionAccessorItem = new LoadBalancerStateItem<>(partitionAccessor,
+        version,
+        System.currentTimeMillis());
+  }
+
+
+  public LoadBalancerStateItem<ClusterProperties> getClusterPropertiesItem()
   {
     return _clusterPropertiesItem;
   }
 
-  LoadBalancerStateItem<PartitionAccessor> getPartitionAccessorItem()
+  public LoadBalancerStateItem<PartitionAccessor> getPartitionAccessorItem()
   {
     return _partitionAccessorItem;
   }

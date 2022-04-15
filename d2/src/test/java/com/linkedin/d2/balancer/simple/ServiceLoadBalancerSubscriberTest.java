@@ -22,6 +22,8 @@ import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.ServiceStoreProperties;
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,8 +38,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 
 /**
@@ -60,7 +61,13 @@ public class ServiceLoadBalancerSubscriberTest
     @Mock
     AtomicLong _version;
     @Captor
-    private ArgumentCaptor<ServiceProperties> _propertiesArgCaptor;
+    private ArgumentCaptor<ServiceProperties> _refreshServiceStrategyPropertiesArgCaptor;
+
+    @Captor
+    private ArgumentCaptor<ServiceProperties> _refreshClientsPropertiesArgCaptor;
+
+    @Captor
+    private ArgumentCaptor<LoadBalancerStateItem<ServiceProperties>> _servicePropertiesUpdateArgsCaptor;
 
     Map<String, LoadBalancerStateItem<ServiceProperties>> _serviceProperties;
     Map<String, Set<String>> _servicesPerCluster;
@@ -84,10 +91,37 @@ public class ServiceLoadBalancerSubscriberTest
       when(_simpleLoadBalancerState.getServiceProperties()).thenReturn(_serviceProperties);
       when(_simpleLoadBalancerState.getServicesPerCluster()).thenReturn(_servicesPerCluster);
       when(_simpleLoadBalancerState.getVersionAccess()).thenReturn(_version);
-      doNothing().when(_simpleLoadBalancerState).refreshServiceStrategies(any());
-      doNothing().when(_simpleLoadBalancerState).refreshClients(_propertiesArgCaptor.capture());
+      doNothing().when(_simpleLoadBalancerState).notifyListenersOnServicePropertiesUpdates(
+          _servicePropertiesUpdateArgsCaptor.capture());
+      doNothing().when(_simpleLoadBalancerState).refreshServiceStrategies(
+          _refreshServiceStrategyPropertiesArgCaptor.capture());
+      doNothing().when(_simpleLoadBalancerState).refreshClients(_refreshClientsPropertiesArgCaptor.capture());
       return new ServiceLoadBalancerSubscriber(_eventBus, _simpleLoadBalancerState);
     }
+  }
+
+  @Test
+  public void testHandleRemove()
+  {
+    String serviceName = "mock-service-foo";
+    String clusterName = "mock-cluster-foo";
+    ServiceLoadBalancerSubscriberFixture fixture = new ServiceLoadBalancerSubscriberFixture();
+    LoadBalancerStateItem<ServiceProperties> servicePropertiesToRemove = new LoadBalancerStateItem<>(
+        new ServiceProperties(serviceName, clusterName, "MockPath", new ArrayList<>(Arrays.asList("foo", "bar"))),
+        0, 0);
+
+    fixture._serviceProperties.put(serviceName, servicePropertiesToRemove);
+    fixture.getMockSubscriber(false).handleRemove(serviceName);
+
+    Assert.assertEquals(fixture._simpleLoadBalancerState.getServiceProperties().size(), 0);
+    verify(
+        fixture._simpleLoadBalancerState,
+        times(1)
+    ).notifyListenersOnServicePropertiesRemovals(servicePropertiesToRemove);
+    verify(
+        fixture._simpleLoadBalancerState,
+        times(1)
+    ).shutdownClients(serviceName);
   }
 
   /**
@@ -124,7 +158,12 @@ public class ServiceLoadBalancerSubscriberTest
                                                                               new ServiceStoreProperties(stableConfigs, canaryConfigs, distributionStrategy));
 
     ServiceProperties expectedPickedProperties = distribution == CanaryDistributionProvider.Distribution.CANARY ? canaryConfigs : stableConfigs;
-    Assert.assertEquals(fixture._propertiesArgCaptor.getValue(), expectedPickedProperties);
+    Assert.assertEquals(fixture._servicePropertiesUpdateArgsCaptor.getValue().getProperty(), expectedPickedProperties);
+    Assert.assertEquals(
+        fixture._servicePropertiesUpdateArgsCaptor.getValue().getDistribution(),
+        distribution == null ? CanaryDistributionProvider.Distribution.STABLE : distribution);
+    Assert.assertEquals(fixture._refreshClientsPropertiesArgCaptor.getValue(), expectedPickedProperties);
+    Assert.assertEquals(fixture._refreshClientsPropertiesArgCaptor.getValue(), expectedPickedProperties);
     Assert.assertEquals(fixture._serviceProperties.get(SERVICE_NAME).getProperty(), expectedPickedProperties);
   }
 }

@@ -37,7 +37,7 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
   private static final Logger _log =
     LoggerFactory.getLogger(ServiceLoadBalancerSubscriber.class);
 
-  private SimpleLoadBalancerState _simpleLoadBalancerState;
+  final private SimpleLoadBalancerState _simpleLoadBalancerState;
 
   public ServiceLoadBalancerSubscriber(PropertyEventBus<ServiceProperties> eventBus,
                                        SimpleLoadBalancerState simpleLoadBalancerState)
@@ -52,12 +52,15 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
   {
     LoadBalancerStateItem<ServiceProperties> oldServicePropertiesItem =
       _simpleLoadBalancerState.getServiceProperties().get(listenTo);
-    ServiceProperties pickedProperties = pickActiveProperties(discoveryProperties);
+    PickActivePropertiesResult pickedPropertiesResult = pickActiveProperties(discoveryProperties);
+    ServiceProperties pickedProperties = pickedPropertiesResult.serviceProperties;
 
-    _simpleLoadBalancerState.getServiceProperties().put(listenTo,
-      new LoadBalancerStateItem<>(pickedProperties,
+    LoadBalancerStateItem<ServiceProperties> newServiceProperties = new LoadBalancerStateItem<>(
+        pickedProperties,
         _simpleLoadBalancerState.getVersionAccess().incrementAndGet(),
-        System.currentTimeMillis()));
+        System.currentTimeMillis(),
+        pickedPropertiesResult.distribution);
+    _simpleLoadBalancerState.getServiceProperties().put(listenTo, newServiceProperties);
 
     // always refresh strategies when we receive service event
     if (pickedProperties != null)
@@ -79,6 +82,7 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
         }
       }
 
+      _simpleLoadBalancerState.notifyListenersOnServicePropertiesUpdates(newServiceProperties);
       _simpleLoadBalancerState.refreshServiceStrategies(pickedProperties);
       _simpleLoadBalancerState.refreshClients(pickedProperties);
 
@@ -142,17 +146,35 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
         serviceNames.remove(serviceProperties.getServiceName());
       }
 
+      _simpleLoadBalancerState.notifyListenersOnServicePropertiesRemovals(serviceItem);
       _simpleLoadBalancerState.shutdownClients(listenTo);
 
     }
   }
 
   /**
+   * Data class for returning both the canary distribution policy
+   * and the final service properties from PickActiveProperties.
+   */
+  static private class PickActivePropertiesResult
+  {
+    final CanaryDistributionProvider.Distribution distribution;
+    final ServiceProperties serviceProperties;
+
+    PickActivePropertiesResult(CanaryDistributionProvider.Distribution distribution,
+        ServiceProperties serviceProperties)
+    {
+      this.distribution = distribution;
+      this.serviceProperties = serviceProperties;
+    }
+  }
+
+  /**
    * Pick the active properties (stable or canary configs) based on canary distribution strategy.
    * @param discoveryProperties a composite properties containing all data on the service store (stable configs, canary configs, etc.).
-   * @return the picked active properties
+   * @return the picked active properties and the canary decision
    */
-  private ServiceProperties pickActiveProperties(final ServiceProperties discoveryProperties)
+  private PickActivePropertiesResult pickActiveProperties(final ServiceProperties discoveryProperties)
   {
     ServiceProperties pickedProperties = discoveryProperties;
     CanaryDistributionProvider.Distribution distribution = CanaryDistributionProvider.Distribution.STABLE;
@@ -167,7 +189,7 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
       }
       pickedProperties = serviceStoreProperties.getDistributedServiceProperties(distribution);
     }
-    // TODO: set canary/stable config metric
-    return pickedProperties;
+
+    return new PickActivePropertiesResult(distribution, pickedProperties);
   }
 }

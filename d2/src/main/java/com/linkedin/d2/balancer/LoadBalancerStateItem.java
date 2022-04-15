@@ -16,17 +16,30 @@
 
 package com.linkedin.d2.balancer;
 
+import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
+
 public class LoadBalancerStateItem<P>
 {
   private final P    _property;
   private final long _version;
   private final long _lastUpdate;
+  private final CanaryDistributionProvider.Distribution _distribution;
 
   public LoadBalancerStateItem(P property, long version, long lastUpdate)
+  {
+    this(property, version, lastUpdate, CanaryDistributionProvider.Distribution.STABLE);
+  }
+
+  public LoadBalancerStateItem(
+      P property,
+      long version,
+      long lastUpdate,
+      CanaryDistributionProvider.Distribution distribution)
   {
     _property = property;
     _version = version;
     _lastUpdate = lastUpdate;
+    _distribution = distribution;
   }
 
   public P getProperty()
@@ -42,6 +55,14 @@ public class LoadBalancerStateItem<P>
   public long getLastUpdate()
   {
     return _lastUpdate;
+  }
+
+  /**
+   * Get the canary state of the underlying property object.
+   */
+  public CanaryDistributionProvider.Distribution getDistribution()
+  {
+    return _distribution;
   }
 
   @Override
