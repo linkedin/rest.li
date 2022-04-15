@@ -31,8 +31,8 @@ import org.slf4j.LoggerFactory;
 /**
  * This class is responsible for managing one failed out cluster.
  * Some example tasks include:
- * - Adding cluster and URI watches for the peer clusters.
- * - Establishing connections to instances in the peer clusters.
+ * - Adding cluster and URI watches for the peer clusters of the failed out downstream cluster.
+ * - Establishing connections to instances in the peer clusters of the failed out downstream cluster.
  * - Managing failout config updates for the cluster.
  */
 public class FailedoutClusterManager
@@ -85,7 +85,7 @@ public class FailedoutClusterManager
   {
     if (!failoutConfig.isFailedOut())
     {
-      _log.debug("Failout completed for cluster: {}. Removing all peer cluster watches.", _clusterName);
+      _log.debug("Failout completed for downstream cluster: {}. Removing all peer cluster watches.", _clusterName);
       removePeerClusterWatches();
     }
     else
@@ -96,8 +96,8 @@ public class FailedoutClusterManager
   }
 
   /**
-   * Calle this method when a cluster is failed out and/or its new peer clusters are identified.
-   * @param newPeerClusters Name of the peer clusters of the failed out clusters
+   * Calle this method when a cluster is failed out and/or new peer clusters of the failed out downstream cluster are identified.
+   * @param newPeerClusters Name of the peer clusters of the failed out downstream clusters
    */
   void addPeerClusterWatches(@Nonnull Set<String> newPeerClusters)
   {
