@@ -81,6 +81,9 @@ public class FailedoutClusterManager
     _failoutConfig = failoutConfig;
   }
 
+  /**
+   * Processes failout config of the failed out downstream cluster.
+   */
   private void processNewConfig(@Nonnull FailoutConfig failoutConfig)
   {
     if (!failoutConfig.isFailedOut())
