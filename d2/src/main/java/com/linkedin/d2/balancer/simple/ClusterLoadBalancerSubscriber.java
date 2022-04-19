@@ -48,7 +48,7 @@ class ClusterLoadBalancerSubscriber extends
   {
     if (discoveryProperties != null)
     {
-      PickActivePropertiesResult pickedPropertiesResult = pickActiveProperties(discoveryProperties);
+      ActivePropertiesResult pickedPropertiesResult = pickActiveProperties(discoveryProperties);
 
       ClusterInfoItem newClusterInfoItem = new ClusterInfoItem(
           _simpleLoadBalancerState,
@@ -82,14 +82,14 @@ class ClusterLoadBalancerSubscriber extends
 
   /**
    * Data class for returning both the canary distribution policy
-   * and the final cluster properties from PickActiveProperties.
+   * and the final cluster properties from PickActiveProperties method.
    */
-  static private class PickActivePropertiesResult
+  static private class ActivePropertiesResult
   {
     final CanaryDistributionProvider.Distribution distribution;
     final ClusterProperties clusterProperties;
 
-    PickActivePropertiesResult(CanaryDistributionProvider.Distribution distribution,
+    ActivePropertiesResult(CanaryDistributionProvider.Distribution distribution,
         ClusterProperties clusterProperties)
     {
       this.distribution = distribution;
@@ -102,7 +102,7 @@ class ClusterLoadBalancerSubscriber extends
    * @param discoveryProperties a composite properties containing all data on the cluster store (stable configs, canary configs, etc.).
    * @return the picked active properties and the canary distribution strategy.
    */
-  private PickActivePropertiesResult pickActiveProperties(final ClusterProperties discoveryProperties)
+  private ActivePropertiesResult pickActiveProperties(final ClusterProperties discoveryProperties)
   {
     ClusterProperties pickedProperties = discoveryProperties;
     CanaryDistributionProvider.Distribution distribution = CanaryDistributionProvider.Distribution.STABLE;
@@ -119,6 +119,6 @@ class ClusterLoadBalancerSubscriber extends
       pickedProperties = clusterStoreProperties.getDistributedClusterProperties(distribution);
     }
 
-    return new PickActivePropertiesResult(distribution, pickedProperties);
+    return new ActivePropertiesResult(distribution, pickedProperties);
   }
 }

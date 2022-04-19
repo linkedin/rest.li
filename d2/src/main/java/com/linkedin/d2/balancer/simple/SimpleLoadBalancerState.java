@@ -463,18 +463,24 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
         // so it is needed to notify all the listeners
         for (SimpleLoadBalancerStateListener listener : _listeners)
         {
+          // Send removal notifications for service properties.
+          for (LoadBalancerStateItem<ServiceProperties> serviceProperties :
+              _serviceProperties.values()) {
+            listener.onServicePropertiesRemoval(serviceProperties);
+          }
+
+          // Send removal notification for cluster properties.
+          for (ClusterInfoItem clusterInfoItem: _clusterInfo.values())
+          {
+            listener.onClusterInfoRemoval(clusterInfoItem);
+          }
+
           // Notify the strategy removal
           for (Map.Entry<String, Map<String, LoadBalancerStrategy>> serviceStrategy : _serviceStrategies.entrySet())
           {
             for (Map.Entry<String, LoadBalancerStrategy> strategyEntry : serviceStrategy.getValue().entrySet())
             {
               listener.onStrategyRemoved(serviceStrategy.getKey(), strategyEntry.getKey(), strategyEntry.getValue());
-            }
-
-            // Send removal notifications for other service D2 information.
-            for (LoadBalancerStateItem<ServiceProperties> serviceProperties :
-                _serviceProperties.values()) {
-              listener.onServicePropertiesRemoval(serviceProperties);
             }
 
             // Also notify the client removal
@@ -486,15 +492,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                 listener.onClientRemoved(serviceStrategy.getKey(), client);
               }
             }
-          }
-        }
-
-        // Send ClusterInfo removal notification to all listeners.
-        for (SimpleLoadBalancerStateListener listener : _listeners)
-        {
-          for (ClusterInfoItem clusterInfoItem: _clusterInfo.values())
-          {
-            listener.onClusterInfoRemoval(clusterInfoItem);
           }
         }
 

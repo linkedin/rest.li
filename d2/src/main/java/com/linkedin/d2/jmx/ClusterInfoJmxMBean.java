@@ -22,5 +22,5 @@ public interface ClusterInfoJmxMBean {
    * @return integer value of canary distribution policy when building the cluster properties:
    *         0 - STABLE, 1 - CANARY, -1 - UNSPECIFIED
    */
-  long getCanaryDistributionPolicy();
+  int getCanaryDistributionPolicy();
 }

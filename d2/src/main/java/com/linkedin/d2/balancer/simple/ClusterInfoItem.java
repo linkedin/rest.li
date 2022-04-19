@@ -20,6 +20,8 @@ import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
+import javax.annotation.Nonnull;
+
 
 /**
  * We put together the cluster properties and the partition accessor for a cluster so that we don't have to
@@ -30,15 +32,16 @@ public class ClusterInfoItem
   private final LoadBalancerStateItem<ClusterProperties> _clusterPropertiesItem;
   private final LoadBalancerStateItem<PartitionAccessor> _partitionAccessorItem;
 
-  ClusterInfoItem(SimpleLoadBalancerState simpleLoadBalancerState, ClusterProperties clusterProperties, PartitionAccessor partitionAccessor)
+  public ClusterInfoItem(SimpleLoadBalancerState simpleLoadBalancerState, ClusterProperties clusterProperties, PartitionAccessor partitionAccessor)
   {
     this(simpleLoadBalancerState, clusterProperties, partitionAccessor, CanaryDistributionProvider.Distribution.STABLE);
   }
 
-  ClusterInfoItem(
+  public ClusterInfoItem(
       SimpleLoadBalancerState simpleLoadBalancerState,
       ClusterProperties clusterProperties,
       PartitionAccessor partitionAccessor,
+      @Nonnull
       CanaryDistributionProvider.Distribution distribution)
   {
     long version = simpleLoadBalancerState.getVersionAccess().incrementAndGet();

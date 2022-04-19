@@ -17,6 +17,8 @@
 package com.linkedin.d2.balancer;
 
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
+import javax.annotation.Nonnull;
+
 
 public class LoadBalancerStateItem<P>
 {
@@ -34,6 +36,7 @@ public class LoadBalancerStateItem<P>
       P property,
       long version,
       long lastUpdate,
+      @Nonnull
       CanaryDistributionProvider.Distribution distribution)
   {
     _property = property;

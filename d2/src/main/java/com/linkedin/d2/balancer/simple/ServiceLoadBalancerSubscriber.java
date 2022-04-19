@@ -52,7 +52,7 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
   {
     LoadBalancerStateItem<ServiceProperties> oldServicePropertiesItem =
       _simpleLoadBalancerState.getServiceProperties().get(listenTo);
-    PickActivePropertiesResult pickedPropertiesResult = pickActiveProperties(discoveryProperties);
+    ActivePropertiesResult pickedPropertiesResult = pickActiveProperties(discoveryProperties);
     ServiceProperties pickedProperties = pickedPropertiesResult.serviceProperties;
 
     LoadBalancerStateItem<ServiceProperties> newServiceProperties = new LoadBalancerStateItem<>(
@@ -154,14 +154,14 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
 
   /**
    * Data class for returning both the canary distribution policy
-   * and the final service properties from PickActiveProperties.
+   * and the final service properties from PickActiveProperties method.
    */
-  static private class PickActivePropertiesResult
+  static private class ActivePropertiesResult
   {
     final CanaryDistributionProvider.Distribution distribution;
     final ServiceProperties serviceProperties;
 
-    PickActivePropertiesResult(CanaryDistributionProvider.Distribution distribution,
+    ActivePropertiesResult(CanaryDistributionProvider.Distribution distribution,
         ServiceProperties serviceProperties)
     {
       this.distribution = distribution;
@@ -174,7 +174,7 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
    * @param discoveryProperties a composite properties containing all data on the service store (stable configs, canary configs, etc.).
    * @return the picked active properties and the canary decision
    */
-  private PickActivePropertiesResult pickActiveProperties(final ServiceProperties discoveryProperties)
+  private ActivePropertiesResult pickActiveProperties(final ServiceProperties discoveryProperties)
   {
     ServiceProperties pickedProperties = discoveryProperties;
     CanaryDistributionProvider.Distribution distribution = CanaryDistributionProvider.Distribution.STABLE;
@@ -190,6 +190,6 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
       pickedProperties = serviceStoreProperties.getDistributedServiceProperties(distribution);
     }
 
-    return new PickActivePropertiesResult(distribution, pickedProperties);
+    return new ActivePropertiesResult(distribution, pickedProperties);
   }
 }

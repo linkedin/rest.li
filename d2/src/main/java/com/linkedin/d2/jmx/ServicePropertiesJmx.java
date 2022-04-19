@@ -28,7 +28,7 @@ public class ServicePropertiesJmx implements ServicePropertiesJmxMBean
   }
 
   @Override
-  public long getCanaryDistributionPolicy()
+  public int getCanaryDistributionPolicy()
   {
     switch (_serviceProperties.getDistribution())
     {

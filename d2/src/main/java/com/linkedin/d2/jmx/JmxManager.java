@@ -96,14 +96,14 @@ public class JmxManager
     return this;
   }
 
-  public synchronized JmxManager registerClusterInfo(String name, ClusterInfoItem clusterInfoItem)
+  public synchronized JmxManager registerClusterInfoJmxBean(String name, ClusterInfoItem clusterInfoItem)
   {
     checkReg(new ClusterInfoJmx(clusterInfoItem), name);
 
     return this;
   }
 
-  public synchronized JmxManager registerServiceProperties(
+  public synchronized JmxManager registerServicePropertiesJmxBean(
       String name, LoadBalancerStateItem<ServiceProperties> serviceProperties)
   {
     checkReg(new ServicePropertiesJmx(serviceProperties), name);

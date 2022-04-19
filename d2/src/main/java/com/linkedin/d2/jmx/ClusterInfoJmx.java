@@ -29,7 +29,7 @@ public class ClusterInfoJmx implements ClusterInfoJmxMBean
   }
 
   @Override
-  public long getCanaryDistributionPolicy()
+  public int getCanaryDistributionPolicy()
   {
     switch (_clusterInfoItem.getClusterPropertiesItem().getDistribution())
     {

@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.34.0] - 2022-04-19
+- Add JMX-based canary monitoring for cluster properties and service properties.
+
 ## [29.33.1] - 2022-04-12
 - Fix an Avro translation bug where optional fields in a partial default record are not treated properly.
 
@@ -5215,7 +5218,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.33.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.34.0...master
+[29.34.0]: https://github.com/linkedin/rest.li/compare/v29.33.1...v29.34.0
 [29.33.1]: https://github.com/linkedin/rest.li/compare/v29.33.0...v29.33.1
 [29.33.0]: https://github.com/linkedin/rest.li/compare/v29.32.5...v29.33.0
 [29.32.5]: https://github.com/linkedin/rest.li/compare/v29.32.4...v29.32.5
