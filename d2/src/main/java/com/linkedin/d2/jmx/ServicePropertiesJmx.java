@@ -37,4 +37,9 @@ public class ServicePropertiesJmx implements ServicePropertiesJmxMBean
       default: return -1;
     }
   }
+
+  @Override
+  public LoadBalancerStateItem<ServiceProperties> getServicePropertiesLBStateItem() {
+    return _serviceProperties;
+  }
 }

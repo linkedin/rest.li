@@ -90,7 +90,7 @@ public class D2ClientJmxManager
       {
         _jmxManager.registerClusterInfoJmxBean(
             getClusterInfoJmxName(clusterInfoItem.getClusterPropertiesItem().getProperty().getClusterName()),
-            clusterInfoItem);
+            new ClusterInfoJmx(clusterInfoItem));
       }
 
       @Override
@@ -106,7 +106,7 @@ public class D2ClientJmxManager
       {
         _jmxManager.registerServicePropertiesJmxBean(
             getServicePropertiesJmxName(serviceProperties.getProperty().getServiceName()),
-            serviceProperties);
+            new ServicePropertiesJmx(serviceProperties));
       }
 
 

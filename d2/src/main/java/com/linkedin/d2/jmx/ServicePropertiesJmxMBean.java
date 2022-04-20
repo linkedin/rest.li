@@ -16,6 +16,10 @@
 
 package com.linkedin.d2.jmx;
 
+import com.linkedin.d2.balancer.LoadBalancerStateItem;
+import com.linkedin.d2.balancer.properties.ServiceProperties;
+
+
 public interface ServicePropertiesJmxMBean {
   /**
    *
@@ -23,4 +27,10 @@ public interface ServicePropertiesJmxMBean {
    *         0 - STABLE, 1 - CANARY, -1 - UNSPECIFIED
    */
   int getCanaryDistributionPolicy();
+
+  /**
+   *
+   * @return the service properties load balancer state item that backs up the JMX Mbeans object;
+   */
+  LoadBalancerStateItem<ServiceProperties> getServicePropertiesLBStateItem();
 }

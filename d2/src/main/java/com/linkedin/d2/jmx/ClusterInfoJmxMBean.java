@@ -16,6 +16,9 @@
 
 package com.linkedin.d2.jmx;
 
+import com.linkedin.d2.balancer.simple.ClusterInfoItem;
+
+
 public interface ClusterInfoJmxMBean {
   /**
    *
@@ -23,4 +26,10 @@ public interface ClusterInfoJmxMBean {
    *         0 - STABLE, 1 - CANARY, -1 - UNSPECIFIED
    */
   int getCanaryDistributionPolicy();
+
+  /**
+   *
+   * @return the raw ClusterInfoItem object that backs up this JMX MBean object.
+   */
+  ClusterInfoItem getClusterInfoItem();
 }

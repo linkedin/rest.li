@@ -29,6 +29,12 @@ public class ClusterInfoJmx implements ClusterInfoJmxMBean
   }
 
   @Override
+  public ClusterInfoItem getClusterInfoItem()
+  {
+    return _clusterInfoItem;
+  }
+
+  @Override
   public int getCanaryDistributionPolicy()
   {
     switch (_clusterInfoItem.getClusterPropertiesItem().getDistribution())
