@@ -118,7 +118,7 @@ public class TestDynamicClient extends D2BaseTest {
     assertAllEchoServersRunning(_echoServers);
     assertAllEchoServersRegistered(_cli.getZKClient(), _zkUriString, _echoServers);
 
-    ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("D2 PropertyEventExecutor"));
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("D2 PropertyEventExecutor"));
     _state = LoadBalancerClientCli.createSimpleLoadBalancerState(_cli.getZKClient(), _zkUriString, "/d2", executor);
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(_state, 5, TimeUnit.SECONDS, executor);
     _client = new DynamicClient(balancer, null);

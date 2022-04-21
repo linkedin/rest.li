@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer.util;
 
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
@@ -53,6 +54,7 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPropertyMerger;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
 import com.linkedin.d2.discovery.util.D2Config;
+import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -691,11 +693,13 @@ public class LoadBalancerClientCli
     balancer.start(callback);
     callback.get(5, TimeUnit.SECONDS);
 
+    new JmxManager().registerLoadBalancer("balancer", balancer);
+
     return balancer;
   }
 
   public static SimpleLoadBalancerState createSimpleLoadBalancerState(ZKConnection zkclient, String zkserver, String d2path,
-      ScheduledExecutorService executor) throws PropertyStoreException, URISyntaxException, IOException
+      ScheduledThreadPoolExecutor executor) throws PropertyStoreException, URISyntaxException, IOException
   {
     // zk stores
     String clstoreString = zkserver + ZKFSUtil.clusterPath(d2path);
@@ -738,15 +742,22 @@ public class LoadBalancerClientCli
 
     clientFactories.put("http", new HttpClientFactory.Builder().build());
 
-    // create the state
-
-    return new SimpleLoadBalancerState(executor,
+    SimpleLoadBalancerState state = new SimpleLoadBalancerState(executor,
         uriBus,
         clusterBus,
         serviceBus,
         clientFactories,
         loadBalancerStrategyFactories,
         null, null, false);
+
+    new JmxManager().registerLoadBalancerState("state", state)
+        .registerScheduledThreadPoolExecutor("executorService", executor)
+        .registerZooKeeperPermanentStore("zkClusterRegistry", zkClusterRegistry)
+        .registerZooKeeperPermanentStore("zkServiceRegistry",
+            zkServiceRegistry)
+        .registerZooKeeperEphemeralStore("zkUriRegistry", zkUriRegistry);
+
+    return state;
   }
 
   public ZKFSLoadBalancer getZKFSLoadBalancer(String zkConnectString, String d2path, String d2ServicePath) throws Exception
