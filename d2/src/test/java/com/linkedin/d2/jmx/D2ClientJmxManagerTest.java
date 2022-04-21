@@ -54,9 +54,9 @@ public class D2ClientJmxManagerTest {
   @Captor
   ArgumentCaptor<String> _registerObjectNameCaptor;
   @Captor
-  ArgumentCaptor<ClusterInfoJmx> _clusterInfoJmxArgumentCaptor;
+  ArgumentCaptor<ClusterInfoItem> _clusterInfoArgumentCaptor;
   @Captor
-  ArgumentCaptor<ServicePropertiesJmx> _servicePropertiesJmxArgumentCaptor;
+  ArgumentCaptor<LoadBalancerStateItem<ServiceProperties>> _servicePropertiesArgumentCaptor;
 
   D2ClientJmxManager _d2ClientJmxManager;
   private ClusterInfoItem _clusterInfoItem;
@@ -90,12 +90,12 @@ public class D2ClientJmxManagerTest {
     Mockito.doReturn(_jmxManager).when(_jmxManager).unregister(_unregisteredObjectNameCaptor.capture());
     Mockito.doReturn(_jmxManager).when(_jmxManager).registerLoadBalancerState(
         _simpleLoadBalancerStateNameCaptor.capture(), _simpleLoadBalancerStateCaptor.capture());
-    Mockito.doReturn(_jmxManager).when(_jmxManager).registerClusterInfoJmxBean(
+    Mockito.doReturn(_jmxManager).when(_jmxManager).registerClusterInfo(
         _registerObjectNameCaptor.capture(),
-        _clusterInfoJmxArgumentCaptor.capture());
-    Mockito.doReturn(_jmxManager).when(_jmxManager).registerServicePropertiesJmxBean(
+        _clusterInfoArgumentCaptor.capture());
+    Mockito.doReturn(_jmxManager).when(_jmxManager).registerServiceProperties(
         _registerObjectNameCaptor.capture(),
-        _servicePropertiesJmxArgumentCaptor.capture());
+        _servicePropertiesArgumentCaptor.capture());
     Mockito.doNothing().when(_simpleLoadBalancerState).register(_simpleLoadBalancerStateListenerCaptor.capture());
   }
 
@@ -109,7 +109,7 @@ public class D2ClientJmxManagerTest {
         "S_Foo-ServiceProperties"
     );
     Assert.assertEquals(
-        _servicePropertiesJmxArgumentCaptor.getValue().getServicePropertiesLBStateItem(),
+        _servicePropertiesArgumentCaptor.getValue(),
         _servicePropertiesLBState
     );
   }
@@ -124,7 +124,7 @@ public class D2ClientJmxManagerTest {
         "C_Foo-ClusterInfo"
     );
     Assert.assertEquals(
-        _clusterInfoJmxArgumentCaptor.getValue().getClusterInfoItem(),
+        _clusterInfoArgumentCaptor.getValue(),
         _clusterInfoItem
     );
   }

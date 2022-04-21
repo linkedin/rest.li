@@ -16,9 +16,12 @@
 
 package com.linkedin.d2.jmx;
 
+import com.linkedin.d2.balancer.LoadBalancerStateItem;
+import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.servers.ZooKeeperAnnouncer;
 import com.linkedin.d2.balancer.servers.ZooKeeperConnectionManager;
 import com.linkedin.d2.balancer.servers.ZooKeeperServer;
+import com.linkedin.d2.balancer.simple.ClusterInfoItem;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -108,6 +111,21 @@ public class JmxManager
   public synchronized JmxManager registerServicePropertiesJmxBean(String name, ServicePropertiesJmx servicePropertiesJmx)
   {
     checkReg(servicePropertiesJmx, name);
+
+    return this;
+  }
+
+  public synchronized JmxManager registerClusterInfo(String name, ClusterInfoItem clusterInfo)
+  {
+    checkReg(new ClusterInfoJmx(clusterInfo), name);
+
+    return this;
+  }
+
+  public synchronized JmxManager registerServiceProperties(
+      String name, LoadBalancerStateItem<ServiceProperties> serviceProperties)
+  {
+    checkReg(new ServicePropertiesJmx(serviceProperties), name);
 
     return this;
   }

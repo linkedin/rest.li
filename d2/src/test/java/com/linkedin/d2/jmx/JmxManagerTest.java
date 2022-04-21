@@ -82,6 +82,53 @@ public class JmxManagerTest {
     resetJmxObjects();
   }
 
+  @DataProvider(name = "getJmxBeansSourceObjects")
+  public Object[][] getJmxBeansSourceObjects()
+  {
+    return new Object[][] {
+        {_servicePropertiesLBState.getProperty()},
+        {_clusterInfoItem}
+    };
+  }
+
+  @Test(dataProvider = "getJmxBeansSourceObjects", invocationCount = 2)
+  public void testRegisterJmxBeansSourceObjects(Object jmxBeanSourceObject)
+  {
+    String name = "Bar";
+    ObjectName jmxObjName = null;
+    try {
+      jmxObjName = _jmxManager.getName(name);
+    } catch (MalformedObjectNameException e) {
+      Assert.fail("Unexpected bad JMX object name: " + e.getMessage());
+    }
+    if (jmxBeanSourceObject instanceof ServiceProperties) {
+      LoadBalancerStateItem<ServiceProperties> servicePropertiesLoadBalancerStateItem =
+          new LoadBalancerStateItem<>(
+              (ServiceProperties) jmxBeanSourceObject,
+              0,
+              0,
+              CanaryDistributionProvider.Distribution.CANARY);
+      _jmxManager.registerServiceProperties(
+          name, servicePropertiesLoadBalancerStateItem);
+      try {
+        Assert.assertEquals(
+            _jmxManager.getMBeanServer().getAttribute(jmxObjName, "ServicePropertiesLBStateItem"),
+            servicePropertiesLoadBalancerStateItem);
+      } catch (Exception e) {
+        Assert.fail("Failed to check MBean attribute: " + e.getMessage());
+      }
+    } else if (jmxBeanSourceObject instanceof ClusterInfoItem) {
+      _jmxManager.registerClusterInfo(name, (ClusterInfoItem)jmxBeanSourceObject);
+      try {
+        Assert.assertEquals(
+            _jmxManager.getMBeanServer().getAttribute(jmxObjName, "ClusterInfoItem"),
+            jmxBeanSourceObject);
+      } catch (Exception e) {
+        Assert.fail("Failed to check MBean attribute: " + e.getMessage());
+      }
+    }
+  }
+
   @DataProvider(name = "getJmxBeans")
   public Object[][] getJmxBeans()
   {

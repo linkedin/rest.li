@@ -88,9 +88,9 @@ public class D2ClientJmxManager
       @Override
       public void onClusterInfoUpdate(ClusterInfoItem clusterInfoItem)
       {
-        _jmxManager.registerClusterInfoJmxBean(
+        _jmxManager.registerClusterInfo(
             getClusterInfoJmxName(clusterInfoItem.getClusterPropertiesItem().getProperty().getClusterName()),
-            new ClusterInfoJmx(clusterInfoItem));
+            clusterInfoItem);
       }
 
       @Override
@@ -104,9 +104,9 @@ public class D2ClientJmxManager
       @Override
       public void onServicePropertiesUpdate(LoadBalancerStateItem<ServiceProperties> serviceProperties)
       {
-        _jmxManager.registerServicePropertiesJmxBean(
+        _jmxManager.registerServiceProperties(
             getServicePropertiesJmxName(serviceProperties.getProperty().getServiceName()),
-            new ServicePropertiesJmx(serviceProperties));
+            serviceProperties);
       }
 
 
