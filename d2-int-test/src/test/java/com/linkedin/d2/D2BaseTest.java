@@ -90,10 +90,12 @@ public class D2BaseTest implements D2TestConstants
                                                           int echoServerPort,
                                                           String cluster,
                                                           Map<Integer, Double> partitionWeight,
+                                                          boolean disableEchoOutput,
                                                           String... services) throws Exception
   {
     _log.debug("Starting echo server " + echoServerHost + " " + echoServerPort + " in cluster " + cluster);
-    LoadBalancerEchoServer echoServer = new LoadBalancerEchoServer(zkHost, zkPort, echoServerHost, echoServerPort, "http","/d2", cluster, services);
+    LoadBalancerEchoServer echoServer = new LoadBalancerEchoServer(zkHost, zkPort, echoServerHost, echoServerPort,
+        5000, "http","/d2", cluster, null, disableEchoOutput, services);
     echoServer.startServer();
     echoServer.markUp(partitionWeight);
 

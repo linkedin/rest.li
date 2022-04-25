@@ -168,8 +168,10 @@ public class TestPartitionsWithZKQuorum extends D2BaseTest
 
   private void startCustomPartitionEchoServers(Map<Integer, Double> partitionWeight) throws Exception
   {
-    _echoServers.add(startEchoServer(getHost(_zkHosts[0]), getPort(_zkHosts[0]), ECHO_SERVER_HOST, ECHO_SERVER_PORT4, "cluster-4", partitionWeight, "service-4_11", "service-4_12", "service-4_13" ));
-    _echoServers.add(startEchoServer(getHost(_zkHosts[0]), getPort(_zkHosts[0]), ECHO_SERVER_HOST, ECHO_SERVER_PORT5, "cluster-4", partitionWeight, "service-4_11", "service-4_12", "service-4_13" ));
+    _echoServers.add(startEchoServer(getHost(_zkHosts[0]), getPort(_zkHosts[0]), ECHO_SERVER_HOST, ECHO_SERVER_PORT4, "cluster-4", partitionWeight,
+        false, "service-4_11", "service-4_12", "service-4_13" ));
+    _echoServers.add(startEchoServer(getHost(_zkHosts[0]), getPort(_zkHosts[0]), ECHO_SERVER_HOST, ECHO_SERVER_PORT5, "cluster-4", partitionWeight,
+        false, "service-4_11", "service-4_12", "service-4_13" ));
   }
 
   private void startAllEchoServers(Map<Integer, Double> partitionWeight) throws Exception
