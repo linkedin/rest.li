@@ -49,13 +49,18 @@ class ClusterLoadBalancerSubscriber extends
   {
     if (discoveryProperties != null)
     {
-      ClusterProperties pickedProperties = pickActiveProperties(discoveryProperties);
+      ActivePropertiesResult pickedPropertiesResult = pickActiveProperties(discoveryProperties);
 
-      _simpleLoadBalancerState.getClusterInfo().put(listenTo,
-        new ClusterInfoItem(_simpleLoadBalancerState, pickedProperties,
-          PartitionAccessorFactory.getPartitionAccessor(pickedProperties.getClusterName(),
-              _partitionAccessorRegistry, pickedProperties.getPartitionProperties()),
-              getFailoutProperties(discoveryProperties)));
+      ClusterInfoItem newClusterInfoItem = new ClusterInfoItem(
+          _simpleLoadBalancerState,
+          pickedPropertiesResult.clusterProperties,
+          PartitionAccessorFactory.getPartitionAccessor(
+              pickedPropertiesResult.clusterProperties.getClusterName(),
+              _partitionAccessorRegistry,
+              pickedPropertiesResult.clusterProperties.getPartitionProperties()),
+          pickedPropertiesResult.distribution, getFailoutProperties(discoveryProperties));
+      _simpleLoadBalancerState.getClusterInfo().put(listenTo, newClusterInfoItem);
+      _simpleLoadBalancerState.notifyListenersOnClusterInfoUpdates(newClusterInfoItem);
       // notify the cluster listeners only when discoveryProperties is not null, because we don't
       // want to count initialization (just because listenToCluster is called)
       _simpleLoadBalancerState.notifyClusterListenersOnAdd(listenTo);
@@ -71,16 +76,34 @@ class ClusterLoadBalancerSubscriber extends
   @Override
   protected void handleRemove(final String listenTo)
   {
-    _simpleLoadBalancerState.getClusterInfo().remove(listenTo);
+    ClusterInfoItem clusterInfoRemoved = _simpleLoadBalancerState.getClusterInfo().remove(listenTo);
+    _simpleLoadBalancerState.notifyListenersOnClusterInfoRemovals(clusterInfoRemoved);
     _simpleLoadBalancerState.notifyClusterListenersOnRemove(listenTo);
+  }
+
+  /**
+   * Data class for returning both the canary distribution policy
+   * and the final cluster properties from PickActiveProperties method.
+   */
+  static private class ActivePropertiesResult
+  {
+    final CanaryDistributionProvider.Distribution distribution;
+    final ClusterProperties clusterProperties;
+
+    ActivePropertiesResult(CanaryDistributionProvider.Distribution distribution,
+        ClusterProperties clusterProperties)
+    {
+      this.distribution = distribution;
+      this.clusterProperties = clusterProperties;
+    }
   }
 
   /**
    * Pick the active properties (stable or canary configs) based on canary distribution strategy.
    * @param discoveryProperties a composite properties containing all data on the cluster store (stable configs, canary configs, etc.).
-   * @return the picked active properties
+   * @return the picked active properties and the canary distribution strategy.
    */
-  private ClusterProperties pickActiveProperties(final ClusterProperties discoveryProperties)
+  private ActivePropertiesResult pickActiveProperties(final ClusterProperties discoveryProperties)
   {
     final ClusterStoreProperties clusterStoreProperties = toClusterStoreProperties(discoveryProperties);
     if (clusterStoreProperties == null)
@@ -97,8 +120,8 @@ class ClusterLoadBalancerSubscriber extends
       distribution = canaryDistributionProvider
           .distribute(CanaryDistributionStrategyConverter.toConfig(clusterStoreProperties.getCanaryDistributionStrategy()));
     }
-    // TODO: set canary/stable config metric
-    return clusterStoreProperties.getDistributedClusterProperties(distribution);
+
+    return new ActivePropertiesResult(distribution, pickedProperties);
   }
 
   private FailoutProperties getFailoutProperties(final ClusterProperties clusterProperties)

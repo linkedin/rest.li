@@ -464,6 +464,18 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
         // so it is needed to notify all the listeners
         for (SimpleLoadBalancerStateListener listener : _listeners)
         {
+          // Send removal notifications for service properties.
+          for (LoadBalancerStateItem<ServiceProperties> serviceProperties :
+              _serviceProperties.values()) {
+            listener.onServicePropertiesRemoval(serviceProperties);
+          }
+
+          // Send removal notification for cluster properties.
+          for (ClusterInfoItem clusterInfoItem: _clusterInfo.values())
+          {
+            listener.onClusterInfoRemoval(clusterInfoItem);
+          }
+
           // Notify the strategy removal
           for (Map.Entry<String, Map<String, LoadBalancerStrategy>> serviceStrategy : _serviceStrategies.entrySet())
           {
@@ -484,7 +496,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
           }
         }
 
-        // When SimpleLoadBalancerStateis shutdown, all the cluster listener also need to be notified.
+        // When SimpleLoadBalancerState is shutdown, all the cluster listener also need to be notified.
         for (LoadBalancerClusterListener clusterListener : _clusterListeners)
         {
           for (String clusterName : _clusterInfo.keySet())
@@ -1224,6 +1236,68 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     void onClientAdded(String serviceName, TrackerClient client);
 
     void onClientRemoved(String serviceName, TrackerClient client);
+
+    default void onClusterInfoUpdate(@SuppressWarnings("unused") ClusterInfoItem clusterInfoItem)
+    {
+    }
+
+    default void onClusterInfoRemoval(@SuppressWarnings("unused") ClusterInfoItem clusterInfoItem)
+    {
+    }
+
+    default void onServicePropertiesUpdate(
+        @SuppressWarnings("unused") LoadBalancerStateItem<ServiceProperties> serviceProperties)
+    {
+    }
+
+    default void onServicePropertiesRemoval(
+        @SuppressWarnings("unused") LoadBalancerStateItem<ServiceProperties> serviceProperties)
+    {
+    }
+  }
+
+  /**
+   * Notify load balancer state listeners for service properties' updates.
+   */
+  void notifyListenersOnServicePropertiesUpdates(LoadBalancerStateItem<ServiceProperties> serviceProperties)
+  {
+    for (SimpleLoadBalancerStateListener listener : _listeners)
+    {
+      listener.onServicePropertiesUpdate(serviceProperties);
+    }
+  }
+
+  /**
+   * Notify load balancer state listeners for service properties' removals.
+   */
+  void notifyListenersOnServicePropertiesRemovals(LoadBalancerStateItem<ServiceProperties> serviceProperties)
+  {
+    for (SimpleLoadBalancerStateListener listener : _listeners)
+    {
+      listener.onServicePropertiesRemoval(serviceProperties);
+    }
+  }
+
+  /**
+   * Notify the load balancer state listeners for cluster information updates.
+   */
+  void notifyListenersOnClusterInfoUpdates(ClusterInfoItem clusterInfoItem)
+  {
+    for (SimpleLoadBalancerStateListener listener : _listeners)
+    {
+      listener.onClusterInfoUpdate(clusterInfoItem);
+    }
+  }
+
+  /**
+   * Notify the load balancer state listeners for cluster information removals.
+   */
+  void notifyListenersOnClusterInfoRemovals(ClusterInfoItem clusterInfoItem)
+  {
+    for (SimpleLoadBalancerStateListener listener : _listeners)
+    {
+      listener.onClusterInfoRemoval(clusterInfoItem);
+    }
   }
 
   /**

@@ -253,20 +253,23 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
               (CustomAffinityRoutingURIProvider) requestContext.getLocalAttr(CustomAffinityRoutingURIProvider.CUSTOM_AFFINITY_ROUTING_URI_PROVIDER);
 
           boolean enableCustomAffinityRouting = isCustomAffinityRoutingEnabled(requestContext, customAffinityRoutingURIProvider);
-          if (enableCustomAffinityRouting) {
+          if (enableCustomAffinityRouting)
+          {
             trackerClient = customAffinityRoutingURIProvider.getTargetHostURI(clusterName)
                   .map(targetHost -> _state.getClient(serviceName, targetHost))
                   .orElse(null);
           }
 
-          if (trackerClient == null) {
+          if (trackerClient == null)
+          {
             trackerClient =
                 chooseTrackerClient(request, requestContext, serviceName, clusterName, cluster, uriItem, uris,
                     orderedStrategies, service);
 
             // set host URI for the cluster. with that next time, for the same inbound request, if downstream request is
             // made to same cluster and custom affinity routing is enabled, then it will go to same box.
-            if (enableCustomAffinityRouting) {
+            if (enableCustomAffinityRouting)
+            {
               customAffinityRoutingURIProvider.setTargetHostURI(clusterName, trackerClient.getUri());
             }
           }
