@@ -33,6 +33,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -44,8 +45,8 @@ public class TestLoadBalancerWithFailout extends D2BaseTest
 {
   private static final String D2_CONFIG_FILE = "d2_config_example.json";
   private static final String ZK_HOST = "127.0.0.1";
-  private static final int ECHO_SERVER_PORT_START = 2851;
-  private static final int NUMBER_OF_HOSTS = 5;
+  private static final int ECHO_SERVER_PORT_START = 2861;
+  private static final int NUMBER_OF_HOSTS = 2;
 
   private LoadBalancerClientCli _cli;
   private List<LoadBalancerEchoServer> _echoServers;
@@ -81,11 +82,6 @@ public class TestLoadBalancerWithFailout extends D2BaseTest
   public void init()
     throws Exception
   {
-    // Bring up all echo servers
-    if (_echoServers != null)
-    {
-      stopAllEchoServers(_echoServers);
-    }
     startEchoServers(NUMBER_OF_HOSTS);
     assertAllEchoServersRunning(_echoServers);
     assertAllEchoServersRegistered(_cli.getZKClient(), _zkUriString, _echoServers);
@@ -118,7 +114,17 @@ public class TestLoadBalancerWithFailout extends D2BaseTest
     }
   }
 
-  @Test(retryAnalyzer = ThreeRetries.class)
+  @AfterMethod
+  public void teardown()
+    throws Exception
+  {
+    if (_echoServers != null)
+    {
+      stopAllEchoServers(_echoServers);
+    }
+  }
+
+  @Test
   public void testFailout()
     throws ExecutionException, InterruptedException, TimeoutException
   {
