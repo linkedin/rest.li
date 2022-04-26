@@ -105,20 +105,20 @@ class ClusterLoadBalancerSubscriber extends
    */
   private ActivePropertiesResult pickActiveProperties(final ClusterProperties discoveryProperties)
   {
-    final ClusterStoreProperties clusterStoreProperties = toClusterStoreProperties(discoveryProperties);
-    if (clusterStoreProperties == null)
-    {
-      // this should not happen since the serializer returns the composite class
-      return discoveryProperties;
-    }
-
+    ClusterProperties pickedProperties = discoveryProperties;
     CanaryDistributionProvider.Distribution distribution = CanaryDistributionProvider.Distribution.STABLE;
-    CanaryDistributionProvider canaryDistributionProvider = _simpleLoadBalancerState.getCanaryDistributionProvider();
-    if (clusterStoreProperties.hasCanary() && canaryDistributionProvider != null)
+
+    final ClusterStoreProperties clusterStoreProperties = toClusterStoreProperties(discoveryProperties);
+    if (clusterStoreProperties != null) // this should always be true since the serializer returns the composite class
     {
-      // Canary config and canary distribution provider exist, distribute to use either stable config or canary config.
-      distribution = canaryDistributionProvider
+      CanaryDistributionProvider canaryDistributionProvider = _simpleLoadBalancerState.getCanaryDistributionProvider();
+      if (clusterStoreProperties.hasCanary() && canaryDistributionProvider != null)
+      {
+        // Canary config and canary distribution provider exist, distribute to use either stable config or canary config.
+        distribution = canaryDistributionProvider
           .distribute(CanaryDistributionStrategyConverter.toConfig(clusterStoreProperties.getCanaryDistributionStrategy()));
+      }
+      pickedProperties = clusterStoreProperties.getDistributedClusterProperties(distribution);
     }
 
     return new ActivePropertiesResult(distribution, pickedProperties);

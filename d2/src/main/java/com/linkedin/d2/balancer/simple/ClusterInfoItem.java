@@ -36,9 +36,18 @@ public class ClusterInfoItem
 
   public ClusterInfoItem(SimpleLoadBalancerState simpleLoadBalancerState, ClusterProperties clusterProperties, PartitionAccessor partitionAccessor)
   {
-    this(simpleLoadBalancerState, clusterProperties, partitionAccessor, CanaryDistributionProvider.Distribution.STABLE, null);
+    this(simpleLoadBalancerState, clusterProperties, partitionAccessor, CanaryDistributionProvider.Distribution.STABLE);
   }
 
+  public ClusterInfoItem(
+    SimpleLoadBalancerState simpleLoadBalancerState,
+    ClusterProperties clusterProperties,
+    PartitionAccessor partitionAccessor,
+    @Nonnull
+      CanaryDistributionProvider.Distribution distribution)
+  {
+    this(simpleLoadBalancerState, clusterProperties, partitionAccessor, distribution, null);
+  }
   public ClusterInfoItem(
       SimpleLoadBalancerState simpleLoadBalancerState,
       ClusterProperties clusterProperties,
