@@ -20,6 +20,7 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.util.NamedThreadFactory;
+import com.linkedin.test.util.retry.ThreeRetries;
 
 import java.io.File;
 import java.net.URI;
@@ -117,7 +118,7 @@ public class TestLoadBalancerWithFailout extends D2BaseTest
     }
   }
 
-  @Test
+  @Test(retryAnalyzer = ThreeRetries.class)
   public void testFailout()
     throws ExecutionException, InterruptedException, TimeoutException
   {
