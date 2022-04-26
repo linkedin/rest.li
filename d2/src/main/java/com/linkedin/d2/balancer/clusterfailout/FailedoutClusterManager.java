@@ -99,7 +99,7 @@ public class FailedoutClusterManager
   }
 
   /**
-   * Calle this method when a cluster is failed out and/or new peer clusters of the failed out downstream cluster are identified.
+   * Call this method when a cluster is failed out and/or new peer clusters of the failed out downstream cluster are identified.
    * @param newPeerClusters Name of the peer clusters of the failed out downstream clusters
    */
   void addPeerClusterWatches(@Nonnull Set<String> newPeerClusters)
