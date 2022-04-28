@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.37.2] - 2022-07-01
+- Add connection warm up support when a failout has been initiated
+
 ## [29.37.1] - 2022-06-29
 - Handle method order when validating methods to ensure consistent linked batch finder validation
 
@@ -5267,7 +5270,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.2...master
+[29.37.2]: https://github.com/linkedin/rest.li/compare/v29.37.1...v29.37.2
 [29.37.1]: https://github.com/linkedin/rest.li/compare/v29.37.0...v29.37.1
 [29.37.0]: https://github.com/linkedin/rest.li/compare/v29.36.1...v29.37.0
 [29.36.1]: https://github.com/linkedin/rest.li/compare/v29.36.0...v29.36.1
