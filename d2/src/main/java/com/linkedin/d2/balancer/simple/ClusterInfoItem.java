@@ -18,10 +18,11 @@ package com.linkedin.d2.balancer.simple;
 
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
+import com.linkedin.d2.balancer.properties.FailoutProperties;
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import javax.annotation.Nonnull;
-
+import javax.annotation.Nullable;
 
 /**
  * We put together the cluster properties and the partition accessor for a cluster so that we don't have to
@@ -31,6 +32,7 @@ public class ClusterInfoItem
 {
   private final LoadBalancerStateItem<ClusterProperties> _clusterPropertiesItem;
   private final LoadBalancerStateItem<PartitionAccessor> _partitionAccessorItem;
+  private final LoadBalancerStateItem<FailoutProperties> _failoutPropertiesItem;
 
   public ClusterInfoItem(SimpleLoadBalancerState simpleLoadBalancerState, ClusterProperties clusterProperties, PartitionAccessor partitionAccessor)
   {
@@ -38,11 +40,21 @@ public class ClusterInfoItem
   }
 
   public ClusterInfoItem(
+    SimpleLoadBalancerState simpleLoadBalancerState,
+    ClusterProperties clusterProperties,
+    PartitionAccessor partitionAccessor,
+    @Nonnull
+      CanaryDistributionProvider.Distribution distribution)
+  {
+    this(simpleLoadBalancerState, clusterProperties, partitionAccessor, distribution, null);
+  }
+  public ClusterInfoItem(
       SimpleLoadBalancerState simpleLoadBalancerState,
       ClusterProperties clusterProperties,
       PartitionAccessor partitionAccessor,
       @Nonnull
-      CanaryDistributionProvider.Distribution distribution)
+      CanaryDistributionProvider.Distribution distribution,
+      @Nullable FailoutProperties failoutProperties)
   {
     long version = simpleLoadBalancerState.getVersionAccess().incrementAndGet();
     _clusterPropertiesItem = new LoadBalancerStateItem<>(clusterProperties,
@@ -52,6 +64,9 @@ public class ClusterInfoItem
     _partitionAccessorItem = new LoadBalancerStateItem<>(partitionAccessor,
         version,
         System.currentTimeMillis());
+    _failoutPropertiesItem = new LoadBalancerStateItem<>(failoutProperties,
+      version,
+      System.currentTimeMillis());
   }
 
 
@@ -65,9 +80,16 @@ public class ClusterInfoItem
     return _partitionAccessorItem;
   }
 
+  LoadBalancerStateItem<FailoutProperties> getFailoutPropertiesItem()
+  {
+    return _failoutPropertiesItem;
+  }
+
   @Override
   public String toString()
   {
     return "_clusterProperties = " + _clusterPropertiesItem.getProperty();
   }
+
+
 }

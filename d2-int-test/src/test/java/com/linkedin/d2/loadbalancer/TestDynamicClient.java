@@ -46,6 +46,8 @@ import javax.management.MBeanException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
+
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -109,11 +111,6 @@ public class TestDynamicClient extends D2BaseTest {
   @BeforeMethod
   public void init() throws Exception
   {
-    // Bring up all echo servers
-    if (_echoServers != null)
-    {
-      stopAllEchoServers(_echoServers);
-    }
     startEchoServers(NUMBER_OF_HOSTS);
     assertAllEchoServersRunning(_echoServers);
     assertAllEchoServersRegistered(_cli.getZKClient(), _zkUriString, _echoServers);
@@ -127,6 +124,16 @@ public class TestDynamicClient extends D2BaseTest {
     FutureCallback<None> callback = new FutureCallback<>();
     balancer.start(callback);
     callback.get(5, TimeUnit.SECONDS);
+  }
+
+  @AfterMethod
+  public void teardown()
+    throws Exception
+  {
+    if (_echoServers != null)
+    {
+      stopAllEchoServers(_echoServers);
+    }
   }
 
   /**

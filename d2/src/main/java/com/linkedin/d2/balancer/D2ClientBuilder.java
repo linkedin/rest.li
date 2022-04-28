@@ -22,9 +22,12 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
 import com.linkedin.d2.balancer.clients.BackupRequestsClient;
+import com.linkedin.d2.balancer.clients.FailoutClient;
+import com.linkedin.d2.balancer.clients.FailoutRedirectStrategy;
 import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.clients.RequestTimeoutClient;
 import com.linkedin.d2.balancer.clients.RetryClient;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -178,7 +181,10 @@ public class D2ClientBuilder
                   _config.zookeeperReadWindowMs,
                   _config.enableRelativeLoadBalancer,
                   _config.deterministicSubsettingMetadataProvider,
-                  _config.canaryDistributionProvider);
+                  _config.canaryDistributionProvider,
+                  _config.enableClusterFailout,
+                  _config.failoutConfigProviderFactory,
+                  _config.failoutRedirectStrategy);
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
@@ -221,6 +227,19 @@ public class D2ClientBuilder
       d2Client = new RetryClient(d2Client, loadBalancer, _config.retryLimit,
           _config.retryUpdateIntervalMs, _config.retryAggregatedIntervalNum, SystemClock.instance(),
           _config.restRetryEnabled, _config.streamRetryEnabled);
+    }
+
+    if (_config.enableClusterFailout)
+    {
+      if (_config.failoutRedirectStrategy == null)
+      {
+        LOG.warn("A URI rewrite strategy is required for failout.");
+      }
+      else
+      {
+        LOG.info("Enabling D2Client failout support");
+        d2Client = new FailoutClient(d2Client, loadBalancer, _config.failoutRedirectStrategy);
+      }
     }
 
     // If we created default transport client factories, we need to shut them down when d2Client
@@ -544,6 +563,24 @@ public class D2ClientBuilder
   public D2ClientBuilder setCanaryDistributionProvider(CanaryDistributionProvider provider)
   {
     _config.canaryDistributionProvider = provider;
+    return this;
+  }
+
+  public D2ClientBuilder setEnableClusterFailout(boolean enableClusterFailout)
+  {
+    _config.enableClusterFailout = enableClusterFailout;
+    return this;
+  }
+
+  public D2ClientBuilder setFailoutConfigProviderFactory(FailoutConfigProviderFactory failoutConfigProviderFactory)
+  {
+    _config.failoutConfigProviderFactory = failoutConfigProviderFactory;
+    return this;
+  }
+
+  public D2ClientBuilder setFailoutRedirectStrategy(FailoutRedirectStrategy failoutRedirectStrategy)
+  {
+    _config.failoutRedirectStrategy = failoutRedirectStrategy;
     return this;
   }
 

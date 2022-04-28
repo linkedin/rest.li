@@ -16,16 +16,17 @@
 
 package com.linkedin.darkcluster;
 
-import com.linkedin.common.callback.Callback;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.linkedin.common.callback.Callback;
 import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfig;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 
 public class MockClusterInfoProvider implements ClusterInfoProvider
@@ -71,6 +72,12 @@ public class MockClusterInfoProvider implements ClusterInfoProvider
   public void unregisterClusterListener(LoadBalancerClusterListener clusterListener)
   {
     clusterListeners.remove(clusterListener);
+  }
+
+  @Override
+  public FailoutConfig getFailoutConfig(String clusterName)
+  {
+    return null;
   }
 
   /**

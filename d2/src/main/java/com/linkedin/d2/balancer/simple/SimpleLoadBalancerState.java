@@ -26,6 +26,7 @@ import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClientFactory;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
+import com.linkedin.d2.balancer.properties.FailoutProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -35,9 +36,9 @@ import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy
 import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
 import com.linkedin.d2.balancer.subsetting.SubsettingState;
 import com.linkedin.d2.balancer.subsetting.SubsettingStrategyFactoryImpl;
-import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
+import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistryImpl;
@@ -554,6 +555,13 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   {
     ClusterInfoItem clusterInfoItem =  _clusterInfo.get(clusterName);
     return clusterInfoItem == null ? null : clusterInfoItem.getClusterPropertiesItem();
+  }
+
+  @Override
+  public LoadBalancerStateItem<FailoutProperties> getFailoutProperties(String clusterName)
+  {
+    ClusterInfoItem clusterInfoItem =  _clusterInfo.get(clusterName);
+    return clusterInfoItem == null ? null : clusterInfoItem.getFailoutPropertiesItem();
   }
 
   @Override

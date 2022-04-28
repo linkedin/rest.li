@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.simple;
 
+import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.properties.CanaryDistributionStrategy;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterStoreProperties;
@@ -161,5 +162,27 @@ public class ClusterLoadBalancerSubscriberTest
     verify(fixture._simpleLoadBalancerState, times(1)).notifyClusterListenersOnRemove(
         clusterName
     );
+  }
+
+  @DataProvider(name = "getConfigsWithFailoutProperties")
+  public Object[][] getConfigsWithFailoutProperties()
+  {
+    ClusterProperties stableConfigs = new ClusterProperties(CLUSTER_NAME, Collections.singletonList("aa"));
+
+    return new Object[][] {
+      {stableConfigs, null},
+      {stableConfigs, new FailoutProperties(Collections.emptyList(), Collections.emptyList())},
+    };
+  }
+  @Test(dataProvider = "getConfigsWithFailoutProperties")
+  public void testWithFailoutConfigs(ClusterProperties stableConfigs, FailoutProperties clusterFailoutProperties)
+  {
+    ClusterLoadBalancerSubscriberFixture fixture = new ClusterLoadBalancerSubscriberFixture();
+    fixture.getMockSubscriber(false).handlePut(CLUSTER_NAME, new ClusterStoreProperties(
+      stableConfigs, null, null, clusterFailoutProperties));
+
+    LoadBalancerStateItem<FailoutProperties> failoutPropertiesItem = fixture._clusterInfo.get(CLUSTER_NAME).getFailoutPropertiesItem();
+    Assert.assertNotNull(failoutPropertiesItem);
+    Assert.assertEquals(failoutPropertiesItem.getProperty(), clusterFailoutProperties);
   }
 }

@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.33.4] - 2022-04-26
+- Support failout redirection in D2 client.
+
 ## [29.33.3] - 2022-04-25
 - Add end-to-end integration tests for D2 client.
 
@@ -5221,7 +5224,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.33.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.33.4...master
+[29.33.4]: https://github.com/linkedin/rest.li/compare/v29.33.3...v29.33.4
 [29.33.3]: https://github.com/linkedin/rest.li/compare/v29.33.2...v29.33.3
 [29.33.2]: https://github.com/linkedin/rest.li/compare/v29.33.1...v29.33.2
 [29.33.1]: https://github.com/linkedin/rest.li/compare/v29.33.0...v29.33.1
