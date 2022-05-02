@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.33.5] - 2022-05-02
+- Expose RestLiConfig from RestLiServer.
+
 ## [29.33.4] - 2022-04-26
 - Support failout redirection in D2 client.
 
@@ -5224,7 +5227,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.33.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.33.5...master
+[29.33.5]: https://github.com/linkedin/rest.li/compare/v29.33.4...v29.33.5
 [29.33.4]: https://github.com/linkedin/rest.li/compare/v29.33.3...v29.33.4
 [29.33.3]: https://github.com/linkedin/rest.li/compare/v29.33.2...v29.33.3
 [29.33.2]: https://github.com/linkedin/rest.li/compare/v29.33.1...v29.33.2
