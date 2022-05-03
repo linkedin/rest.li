@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- For entity level action request builders, issue a sensible error if the id is null.
 
 ## [29.33.5] - 2022-05-02
 - Expose RestLiConfig from RestLiServer.

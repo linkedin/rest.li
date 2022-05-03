@@ -78,7 +78,7 @@ public class Http2ProtocolUpgradeHandler extends ChannelDuplexHandler
 
   public static void processChannelActive(ChannelHandlerContext ctx, Logger log, ChannelPromise upgradePromise)
   {
-    // For an upgrade request, clients should use an OPTIONS request for path “*” or a HEAD request for “/”.
+    // For an upgrade request, clients should use an OPTIONS request for path "*" or a HEAD request for "/".
     // RFC: https://tools.ietf.org/html/rfc7540#section-3.2
     // Implementation detail: https://http2.github.io/faq/#can-i-implement-http2-without-implementing-http11
     final DefaultFullHttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.OPTIONS, "*");

@@ -161,6 +161,24 @@ public class TestSimpleResourceHierarchy extends RestLiIntegrationTest
   }
 
   @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
+  public void testRootSimpleResourceEntityAction(RootBuilderWrapper<Void, Greeting> builders) throws RemoteInvocationException
+  {
+    Request<Integer> request = builders.<Integer>action("ExampleActionThatIsExplicitlyEntityLevel").setActionParam("Param1", 3).build();
+    ResponseFuture<Integer> responseFuture = getClient().sendRequest(request);
+    Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
+    Assert.assertEquals(responseFuture.getResponse().getEntity().intValue(), 33);
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
+  public void testRootSimpleResourceAnyAction(RootBuilderWrapper<Void, Greeting> builders) throws RemoteInvocationException
+  {
+    Request<Integer> request = builders.<Integer>action("ExampleActionThatIsExplicitlyAnyLevel").setActionParam("Param1", 3).build();
+    ResponseFuture<Integer> responseFuture = getClient().sendRequest(request);
+    Assert.assertEquals(responseFuture.getResponse().getStatus(), 200);
+    Assert.assertEquals(responseFuture.getResponse().getEntity().intValue(), 36);
+  }
+
+  @Test(dataProvider = com.linkedin.restli.internal.common.TestConstants.RESTLI_PROTOCOL_1_2_PREFIX + "requestBuilderDataProvider")
   public void testRootSimpleResourceActionException(RootBuilderWrapper<Void, Greeting> builders) throws RemoteInvocationException
   {
     try

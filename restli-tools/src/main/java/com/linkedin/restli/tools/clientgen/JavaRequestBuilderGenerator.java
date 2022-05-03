@@ -42,6 +42,7 @@ import com.linkedin.pegasus.generator.JavaCodeUtil;
 import com.linkedin.pegasus.generator.JavaDataTemplateGenerator;
 import com.linkedin.pegasus.generator.TemplateSpecGenerator;
 import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
+import com.linkedin.restli.client.ActionRequestBuilder;
 import com.linkedin.restli.client.OptionsRequestBuilder;
 import com.linkedin.restli.client.RestliRequestOptions;
 import com.linkedin.restli.client.base.ActionRequestBuilderBase;
@@ -57,6 +58,7 @@ import com.linkedin.restli.client.base.BuilderBase;
 import com.linkedin.restli.client.base.CreateIdEntityRequestBuilderBase;
 import com.linkedin.restli.client.base.CreateIdRequestBuilderBase;
 import com.linkedin.restli.client.base.DeleteRequestBuilderBase;
+import com.linkedin.restli.client.base.EntityActionRequestBuilderBase;
 import com.linkedin.restli.client.base.FindRequestBuilderBase;
 import com.linkedin.restli.client.base.GetAllRequestBuilderBase;
 import com.linkedin.restli.client.base.GetRequestBuilderBase;
@@ -1378,7 +1380,9 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     {
       for (ActionSchema action : resourceActions)
       {
-        generateActionMethod(facadeClass, baseUriExpr, _voidClass, action, resourceSpecField, resourceName, pathKeys, pathKeyTypes, assocKeyTypes, pathToAssocKeys, requestOptionsExpr, rootPath);
+        generateActionMethod(facadeClass, baseUriExpr, _voidClass, ActionRequestBuilderBase.class, action,
+            resourceSpecField, resourceName, pathKeys, pathKeyTypes, assocKeyTypes, pathToAssocKeys, requestOptionsExpr,
+            rootPath);
       }
     }
 
@@ -1386,7 +1390,9 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
     {
       for (ActionSchema action : entityActions)
       {
-        generateActionMethod(facadeClass, baseUriExpr, keyClass, action, resourceSpecField, resourceName, pathKeys, pathKeyTypes, assocKeyTypes, pathToAssocKeys, requestOptionsExpr, rootPath);
+        generateActionMethod(facadeClass, baseUriExpr, keyClass, EntityActionRequestBuilderBase.class, action,
+            resourceSpecField, resourceName, pathKeys, pathKeyTypes, assocKeyTypes, pathToAssocKeys, requestOptionsExpr,
+            rootPath);
       }
     }
   }
@@ -1394,6 +1400,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
   private void generateActionMethod(JDefinedClass facadeClass,
                                     JExpression baseUriExpr,
                                     JClass keyClass,
+                                    Class<?> builderParentClass,
                                     ActionSchema action,
                                     JVar resourceSpecField,
                                     String resourceName,
@@ -1406,7 +1413,7 @@ public class JavaRequestBuilderGenerator extends JavaCodeGeneratorBase
       throws JClassAlreadyExistsException
   {
     final JClass returnType = getActionReturnType(facadeClass, action.getReturns());
-    final JClass vanillaActionBuilderClass = getCodeModel().ref(ActionRequestBuilderBase.class).narrow(keyClass, returnType);
+    final JClass vanillaActionBuilderClass = getCodeModel().ref(builderParentClass).narrow(keyClass, returnType);
     final String actionName = action.getName();
 
     final String actionBuilderClassName = CodeUtil.capitalize(resourceName) + "Do" + CodeUtil.capitalize(actionName) + METHOD_BUILDER_SUFFIX.get(_version);

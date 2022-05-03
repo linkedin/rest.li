@@ -28,6 +28,22 @@
       } ],
       "returns" : "int"
     }, {
+      "name" : "exampleActionThatIsExplicitlyAnyLevel",
+      "doc" : "An example action on the greeting which is explicitly set to any-level.",
+      "parameters" : [ {
+        "name" : "param1",
+        "type" : "int"
+      } ],
+      "returns" : "int"
+    }, {
+      "name" : "exampleActionThatIsExplicitlyEntityLevel",
+      "doc" : "An example action on the greeting which is explicitly set to entity-level.",
+      "parameters" : [ {
+        "name" : "param1",
+        "type" : "int"
+      } ],
+      "returns" : "int"
+    }, {
       "name" : "exceptionTest",
       "doc" : "An example action throwing an exception."
     } ],
