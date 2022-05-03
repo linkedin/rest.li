@@ -826,7 +826,21 @@ public class ZKConnection
     @Override
     public void process(WatchedEvent watchedEvent)
     {
-      ZooKeeper zk = zk();
+      ZooKeeper zk;
+      try
+      {
+        zk = zk();
+      }
+      catch (IllegalStateException e)
+      {
+        if (_shutdownAsynchronously) {
+          // On asynchronous shutdown, this can be a legitimate race.
+          LOG.debug("Watched event received after connection shutdown (type {}, state {}.", watchedEvent.getType(),
+              watchedEvent.getState());
+          return;
+        }
+        throw e;
+      }
       long sessionID = zk.getSessionId();
 
       if (watchedEvent.getType() == Event.EventType.None)
