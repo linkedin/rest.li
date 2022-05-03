@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.39.4] - 2022-09-30
+Add JMX metrics for DNS resolution and clarify DNS timeout errors.
+
 ## [29.39.3] - 2022-09-26
 Catch exceptions when zk connection state change event is received after zk connection shutdown.
 
@@ -5356,7 +5359,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.39.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.39.4...master
+[29.39.4]: https://github.com/linkedin/rest.li/compare/v29.39.3...v29.39.4
 [29.39.3]: https://github.com/linkedin/rest.li/compare/v29.39.2...v29.39.3
 [29.39.2]: https://github.com/linkedin/rest.li/compare/v29.39.1...v29.39.2
 [29.39.1]: https://github.com/linkedin/rest.li/compare/v29.39.0...v29.39.1
