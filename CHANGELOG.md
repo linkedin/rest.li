@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.33.6] - 2022-05-03
+- Provide a mechanism to set a routing hint for the d2 request to get request symbol table.
+
 ## [29.33.5] - 2022-05-02
 - Expose RestLiConfig from RestLiServer.
 
@@ -5227,7 +5230,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.33.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.33.6...master
+[29.33.6]: https://github.com/linkedin/rest.li/compare/v29.33.5...v29.33.6
 [29.33.5]: https://github.com/linkedin/rest.li/compare/v29.33.4...v29.33.5
 [29.33.4]: https://github.com/linkedin/rest.li/compare/v29.33.3...v29.33.4
 [29.33.3]: https://github.com/linkedin/rest.li/compare/v29.33.2...v29.33.3
