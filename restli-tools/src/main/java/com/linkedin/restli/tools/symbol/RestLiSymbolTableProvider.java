@@ -18,6 +18,7 @@ package com.linkedin.restli.tools.symbol;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.data.ByteString;
 import com.linkedin.data.codec.symbol.EmptySymbolTable;
@@ -27,6 +28,7 @@ import com.linkedin.data.codec.symbol.SymbolTableMetadata;
 import com.linkedin.data.codec.symbol.SymbolTableProvider;
 import com.linkedin.data.codec.symbol.SymbolTableSerializer;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.Client;
@@ -48,6 +50,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,6 +96,7 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
   private final SymbolTableNameHandler _symbolTableNameHandler;
   private final Cache<String, SymbolTable> _serviceNameToSymbolTableCache;
   private final Cache<String, SymbolTable> _symbolTableNameToSymbolTableCache;
+  private final Map<String, URI> _d2ServiceNameToTargetHostMap;
   private volatile SymbolTable _defaultResponseSymbolTable = null;
   private volatile String _defaultResponseSymbolTableName = null;
 
@@ -175,6 +179,33 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
                                    String serverNodeUri,
                                    List<String> overriddenSymbols)
   {
+    this(client, uriPrefix, cacheSize, timeout, symbolTablePrefix, serverNodeUri, overriddenSymbols,
+        Collections.emptyMap());
+  }
+
+  /**
+   * Constructor
+   *
+   * @param client             The {@link Client} to use to make requests to remote services to fetch their symbol tables.
+   * @param uriPrefix          The URI prefix to use when invoking remote services by name (and not by hostname:port)
+   * @param cacheSize          The size of the caches used to store symbol tables.
+   * @param timeout            The client request timeout to fetch remote symbol table.
+   * @param symbolTablePrefix  The prefix to use for symbol tables vended by this instance.
+   * @param serverNodeUri      The URI on which the current service is running. This should also include the context
+   *                           and servlet path (if applicable).
+   * @param overriddenSymbols  The list of overridden symbols to use for the symbol table.
+   * @param d2ServiceNameToTargetHostMap A map from d2 service name to target hosts for configuring target host routing
+   *                                     when making request symbol table calls.
+   */
+  public RestLiSymbolTableProvider(Client client,
+                                   String uriPrefix,
+                                   int cacheSize,
+                                   long timeout,
+                                   String symbolTablePrefix,
+                                   String serverNodeUri,
+                                   List<String> overriddenSymbols,
+                                   Map<String, URI> d2ServiceNameToTargetHostMap)
+  {
     _client = client;
     _uriPrefix = uriPrefix;
     _serverNodeUri = serverNodeUri;
@@ -188,6 +219,7 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
       _defaultResponseSymbolTable = new InMemorySymbolTable(symbolTableName, overriddenSymbols);
       _defaultResponseSymbolTableName = _symbolTableNameHandler.extractMetadata(symbolTableName).getSymbolTableName();
     }
+    _d2ServiceNameToTargetHostMap = d2ServiceNameToTargetHostMap;
   }
 
   /**
@@ -208,6 +240,30 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
                                    String serverNodeUri,
                                    SymbolTable responseSymbolTable)
   {
+    this(client, uriPrefix, cacheSize, timeout, serverNodeUri, responseSymbolTable, Collections.emptyMap());
+  }
+
+  /**
+   * Constructor
+   *
+   * @param client               The {@link Client} to use to make requests to remote services to fetch their symbol tables.
+   * @param uriPrefix            The URI prefix to use when invoking remote services by name (and not by hostname:port)
+   * @param cacheSize            The size of the caches used to store symbol tables.
+   * @param timeout              The client request timeout to fetch remote symbol table.
+   * @param serverNodeUri        The URI on which the current service is running. This should also include the context
+   *                             and servlet path (if applicable).
+   * @param responseSymbolTable  The pre-generated response symbol table.
+   * @param d2ServiceNameToTargetHostMap A map from d2 service name to target hosts for configuring target host routing
+   *                                     when making request symbol table calls.
+   */
+  public RestLiSymbolTableProvider(Client client,
+                                   String uriPrefix,
+                                   int cacheSize,
+                                   long timeout,
+                                   String serverNodeUri,
+                                   SymbolTable responseSymbolTable,
+                                   Map<String, URI> d2ServiceNameToTargetHostMap)
+  {
     _client = client;
     _uriPrefix = uriPrefix;
     _serverNodeUri = serverNodeUri;
@@ -220,6 +276,7 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
       _defaultResponseSymbolTable = responseSymbolTable;
       _defaultResponseSymbolTableName = responseSymbolTable.getName();
     }
+    _d2ServiceNameToTargetHostMap = d2ServiceNameToTargetHostMap;
   }
 
   @Override
@@ -253,7 +310,7 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
 
       // Ok, we didn't find it in the cache, let's go query the service the table was served from.
       URI symbolTableUri = new URI(serverNodeUri + "/" + RestLiSymbolTableRequestHandler.SYMBOL_TABLE_URI_PATH + "/" + tableName);
-      symbolTable = fetchRemoteSymbolTable(symbolTableUri, Collections.emptyMap(), false);
+      symbolTable = fetchRemoteSymbolTable(new RequestContext(), symbolTableUri, Collections.emptyMap(), false);
 
       if (symbolTable != null)
       {
@@ -297,7 +354,12 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
       // Fetch remote symbol table, configuring the fetch to return an empty table on 404. This will ensure that
       // for services that don't have symbol tables enabled yet, we will not use any symbol tables when encoding.
       //
-      symbolTable = fetchRemoteSymbolTable(symbolTableUri, Collections.emptyMap(), true);
+      RequestContext requestContext = new RequestContext();
+      URI routingHint = _d2ServiceNameToTargetHostMap.get(serviceName);
+      if (routingHint != null) {
+        KeyMapper.TargetHostHints.setRequestContextTargetHost(requestContext, routingHint);
+      }
+      symbolTable = fetchRemoteSymbolTable(requestContext, symbolTableUri, Collections.emptyMap(), true);
 
       if (symbolTable != null)
       {
@@ -350,13 +412,13 @@ public class RestLiSymbolTableProvider implements SymbolTableProvider, ResourceD
         _symbolTableNameHandler.extractMetadata(_defaultResponseSymbolTable.getName()).getSymbolTableName();
   }
 
-  SymbolTable fetchRemoteSymbolTable(URI symbolTableUri, Map<String, String> requestHeaders, boolean returnEmptyOn404)
+  private SymbolTable fetchRemoteSymbolTable(RequestContext requestContext, URI symbolTableUri, Map<String, String> requestHeaders, boolean returnEmptyOn404)
   {
     try
     {
       Map<String, String> headers = new HashMap<>(requestHeaders);
       headers.put(RestConstants.HEADER_FETCH_SYMBOL_TABLE, Boolean.TRUE.toString());
-      Future<RestResponse> future = _client.restRequest(new RestRequestBuilder(symbolTableUri).setHeaders(headers).build());
+      Future<RestResponse> future = _client.restRequest(new RestRequestBuilder(symbolTableUri).setHeaders(headers).build(), requestContext);
       RestResponse restResponse = future.get(_timeout, TimeUnit.MILLISECONDS);
       int status = restResponse.getStatus();
 
