@@ -1,7 +1,7 @@
 namespace com.linkedin.d2
 
 /**
- * Configuration for a dark canary cluster. Dark Canaries are instances of a service that have production traffic tee'd off to them, but the results are ignored. These are used for early validation of code, configs, and A/B ramps.
+ * Loosely typed model containing data that controls the failout state an application.
  */
 record FailoutProperties {
   /**
