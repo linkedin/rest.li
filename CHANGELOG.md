@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Update antlr dependency to fix security issues.
 
 ## [29.33.6] - 2022-05-03
 - Provide a mechanism to set a routing hint for the d2 request to get request symbol table.
