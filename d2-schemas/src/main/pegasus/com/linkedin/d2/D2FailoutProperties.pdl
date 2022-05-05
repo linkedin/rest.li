@@ -3,14 +3,14 @@ namespace com.linkedin.d2
 /**
  * Loosely typed model containing data that controls the failout state an application.
  */
-record FailoutProperties {
+record D2FailoutProperties {
   /**
    * Routing data for offline partitions.
    */
-  redirectConfigs: array[ map[string, FailoutPropertiesConfigValue]]
+  redirectConfigs: array[ map[string, D2FailoutPropertiesConfigValue]]
 
   /**
    * Batch of buckets to failout.
    */
-  failoutBucketConfigs: array[ map[string, FailoutPropertiesConfigValue]]
+  failoutBucketConfigs: array[ map[string, D2FailoutPropertiesConfigValue]]
 }
