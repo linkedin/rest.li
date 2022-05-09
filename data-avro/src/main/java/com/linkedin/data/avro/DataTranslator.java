@@ -35,16 +35,20 @@ import com.linkedin.data.schema.UnionDataSchema;
 import java.nio.ByteBuffer;
 import java.util.AbstractMap;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericFixed;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.specific.SpecificRecord;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.avro.util.Utf8;
 
 
@@ -107,6 +111,20 @@ public class DataTranslator implements DataTranslatorContext
     } catch (RuntimeException e)
     {
       throw translator.dataTranslationException(e);
+    }
+  }
+
+  public static <T extends SpecificRecordBase> T dataMapToSpecificRecord(DataMap map, RecordDataSchema dataSchema,
+      Schema avroSchema) throws DataTranslationException {
+    DataMapToSpecificRecordTranslator translator = new DataMapToSpecificRecordTranslator();
+    try {
+      T avroRecord = translator.translate(map, dataSchema, avroSchema);
+      translator.checkMessageListForErrorsAndThrowDataTranslationException();
+      return avroRecord;
+    } catch (RuntimeException e) {
+      throw translator.dataTranslationException(e);
+    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+      throw translator.dataTranslationException(new RuntimeException(e));
     }
   }
 
@@ -491,6 +509,186 @@ public class DataTranslator implements DataTranslatorContext
         return result;
       }
     }
+  }
+
+
+  private static class DataMapToSpecificRecordTranslator extends DataTranslator {
+    private static final Object BAD_RESULT = CustomDataTranslator.AVRO_BAD_RESULT;
+
+    private DataMapToSpecificRecordTranslator() {
+      super();
+    }
+
+    private Object getVal(Object val, DataSchema recordDataSchema, Schema fieldAvroSchema)
+        throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+      Object fieldVal = val;
+      String key;
+      DataSchema dereferencedDataSchema = recordDataSchema.getDereferencedDataSchema();
+      DataSchema.Type type = dereferencedDataSchema.getType();
+
+      switch (type) {
+        case INT:
+          fieldVal = ((Number) fieldVal).intValue();
+          break;
+        case LONG:
+          fieldVal = ((Number) fieldVal).longValue();
+          break;
+        case FLOAT:
+          fieldVal = ((Number) fieldVal).floatValue();
+          break;
+        case DOUBLE:
+          fieldVal = ((Number) fieldVal).doubleValue();
+          break;
+        case STRING:
+          fieldVal =  String.valueOf(fieldVal);
+          break;
+        case BYTES:
+          fieldVal = ByteBuffer.wrap(translateBytes(fieldVal));
+          break;
+        case RECORD:
+          fieldVal = translate(fieldVal, dereferencedDataSchema, fieldAvroSchema);
+          break;
+        case ARRAY:
+          DataList list = (DataList) fieldVal;
+          DataSchema elementDataSchema = ((ArrayDataSchema) dereferencedDataSchema).getItems();
+          Schema elementAvroSchema = fieldAvroSchema.getElementType();
+          List<Object> avroList = new ArrayList<>();
+          for (int i = 0; i < list.size(); i++)
+          {
+            _path.addLast(i);
+            Object entryAvroValue = getVal(list.get(i), elementDataSchema, elementAvroSchema);
+            _path.removeLast();
+            avroList.add(entryAvroValue);
+          }
+          fieldVal = avroList;
+          break;
+        case ENUM:
+          String enumValue = fieldVal.toString();
+          EnumDataSchema enumDataSchema = (EnumDataSchema) dereferencedDataSchema;
+          if (!enumDataSchema.getSymbols().contains(enumValue))
+          {
+            appendMessage("enum value %1$s not one of %2$s", enumValue, enumDataSchema.getSymbols());
+            fieldVal = BAD_RESULT;
+            break;
+          }
+          fieldVal = AvroCompatibilityHelper.newEnumSymbol(fieldAvroSchema, enumValue);
+          break;
+        case UNION:
+          UnionDataSchema unionDataSchema = (UnionDataSchema) dereferencedDataSchema;
+          Object memberValue;
+          if (fieldVal == Data.NULL)
+          {
+            key = DataSchemaConstants.NULL_TYPE;
+            memberValue = Data.NULL;
+          }
+          else
+          {
+            DataMap map = (DataMap) fieldVal;
+            fieldVal = Data.NULL;
+            Map.Entry<String, Object> entry = map.entrySet().iterator().next();
+            key = entry.getKey();
+            memberValue = entry.getValue();
+          }
+
+          if(unionDataSchema.getTypeByMemberKey(key) != null) {
+            Map.Entry<String, Schema> fieldAvroEntry = findUnionMember(unionDataSchema.getTypeByMemberKey(key), fieldAvroSchema);
+            if (fieldAvroEntry == null)
+            {
+              _path.removeLast();
+            } else {
+              fieldVal = memberValue;
+            }
+          }
+          break;
+        case MAP:
+          DataMap map = (DataMap) val;
+          DataSchema valueDataSchema = ((MapDataSchema) dereferencedDataSchema).getValues();
+          Schema valueAvroSchema = fieldAvroSchema.getValueType();
+          Map<String, Object> avroMap = new HashMap<>(map.size());
+          for (Map.Entry<String, Object> entry : map.entrySet())
+          {
+            key = entry.getKey();
+            _path.addLast(key);
+            Object entryAvroValue = getVal(entry.getValue(), valueDataSchema, valueAvroSchema);
+            _path.removeLast();
+            avroMap.put(key, entryAvroValue);
+          }
+          fieldVal = avroMap;
+          break;
+        default:
+          appendMessage("schema type unknown %1$s", dereferencedDataSchema.getType()) ;
+          fieldVal = BAD_RESULT;
+          break;
+      }
+
+      return fieldVal;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends SpecificRecordBase> T translate(Object value, DataSchema dataSchema, Schema avroSchema)
+        throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+      T specificRecord;
+      specificRecord = (T) Class.forName(avroSchema.getFullName()).newInstance();
+      AvroOverride avroOverride = getAvroOverride(dataSchema);
+      if (avroOverride != null)
+      {
+        return avroOverride.getCustomDataTranslator().dataToAvroSpecific(this, value, dataSchema, avroSchema);
+      }
+
+      DataSchema dereferencedDataSchema = dataSchema.getDereferencedDataSchema();
+
+      DataMap map = (DataMap) value;
+      RecordDataSchema recordDataSchema = (RecordDataSchema) dereferencedDataSchema;
+      for (RecordDataSchema.Field field : recordDataSchema.getFields())
+      {
+        String fieldName = field.getName();
+        Schema.Field avroField = avroSchema.getField(fieldName);
+        if (avroField == null)
+        {
+          continue;
+        }
+        _path.addLast(fieldName);
+        Object fieldValue = getVal(map.get(fieldName), field.getType(), avroField.schema());
+        boolean isOptional = field.getOptional();
+        if (isOptional)
+        {
+          if (fieldValue == null)
+          {
+            fieldValue = Data.NULL;
+          }
+        }
+        else if (fieldValue == null)
+        {
+          // Required field is missing, should assign default value
+          Object defaultValue = field.getDefault();
+          if (defaultValue != null)
+          {
+            if (_dataTranslationOptions == null || ((DataMapToAvroRecordTranslationOptions) _dataTranslationOptions).getDefaultFieldDataTranslationMode()
+                == PegasusToAvroDefaultFieldTranslationMode.TRANSLATE)
+            {
+              // assign default value if present
+              fieldValue = defaultValue;
+            }
+            else
+            {
+              // Translate default value as null, depending on specified options
+              fieldValue = Data.NULL;
+            }
+          }
+          else
+          {
+            appendMessage("required field is absent");
+            _path.removeLast();
+            continue;
+          }
+        }
+
+        specificRecord.put(specificRecord.getSchema().getField(fieldName).pos(), fieldValue);
+        _path.removeLast();
+      }
+      return specificRecord;
+    }
+
   }
 
   private static class DataMapToGenericRecordTranslator extends DataTranslator
