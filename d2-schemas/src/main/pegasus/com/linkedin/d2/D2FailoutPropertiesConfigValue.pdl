@@ -4,4 +4,4 @@ namespace com.linkedin.d2
 /**
  * Weakly typed configValue containing failout data (Later to be converted in to a strongly typed object).
  */
-typeref D2FailoutPropertiesConfigValue = union[intValue: int, stringValue: string, mapValue: map[string, int]]
+typeref D2FailoutPropertiesConfigValue = union[longValue: long, intValue: int, stringValue: string, mapValue: map[string, int]]
