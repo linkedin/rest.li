@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.33.8] - 2022-05-10
+- Add (currently unused) models for D2FailoutProperties.
+
 ## [29.33.7] - 2022-05-04
 - Silence Zookeeper errors in logs on race condition between watched events and async shutdown.
 
@@ -5233,7 +5236,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.33.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.33.8...master
+[29.33.8]: https://github.com/linkedin/rest.li/compare/v29.33.7...v29.33.8
 [29.33.7]: https://github.com/linkedin/rest.li/compare/v29.33.6...v29.33.7
 [29.33.6]: https://github.com/linkedin/rest.li/compare/v29.33.5...v29.33.6
 [29.33.5]: https://github.com/linkedin/rest.li/compare/v29.33.4...v29.33.5
