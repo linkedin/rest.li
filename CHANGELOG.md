@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.33.8] - 2022-05-10
+- Add (currently unused) models for D2FailoutProperties.
+
 ## [29.33.7] - 2022-05-04
 - Silence Zookeeper errors in logs on race condition between watched events and async shutdown.
 
