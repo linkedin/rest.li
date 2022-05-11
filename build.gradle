@@ -43,8 +43,8 @@ apply from: environmentScript
 apply from: "${buildScriptDirPath}/configBuildScript.gradle"
 
 project.ext.externalDependency = [
-  'antlr': 'org.antlr:antlr4:4.9.3',
-  'antlrRuntime': 'org.antlr:antlr4-runtime:4.9.3',
+  'antlr': 'org.antlr:antlr4:4.6',
+  'antlrRuntime': 'org.antlr:antlr4-runtime:4.6',
   'avro': 'org.apache.avro:avro:1.9.2',
   'avro_1_6': 'org.apache.avro:avro:1.6.3',
    // avro compatibility layer
