@@ -57,6 +57,7 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
   private String                         _name;
   private final Map<FieldDef<?>, Object> _actionParams = new HashMap<>();
   private List<Object>                   _streamingAttachments; //We initialize only when we need to.
+  private boolean                        _enableMutableActionParams;
 
   public ActionRequestBuilder(String baseUriTemplate, Class<V> elementClass, ResourceSpec resourceSpec, RestliRequestOptions requestOptions)
   {
@@ -68,6 +69,11 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
   {
     super(baseUriTemplate, resourceSpec, requestOptions);
     _elementType = elementType;
+  }
+
+  public ActionRequestBuilder<K, V> enableMutableActionParams(boolean enable) {
+    _enableMutableActionParams = enable;
+    return this;
   }
 
   public ActionRequestBuilder<K, V> name(String name)
@@ -223,8 +229,12 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
     ActionResponseDecoder<V> actionResponseDecoder =
         new ActionResponseDecoder<>(responseFieldDef, actionResponseDataSchema);
     DynamicRecordTemplate inputParameters =
-        new DynamicRecordTemplate(requestDataSchema, buildReadOnlyActionParameters());
-    inputParameters.data().setReadOnly();
+        new DynamicRecordTemplate(requestDataSchema, buildActionParameters());
+    if (!_enableMutableActionParams)
+    {
+      inputParameters.data().setReadOnly();
+    }
+
     return new ActionRequest<>(inputParameters,
         buildReadOnlyHeaders(),
         buildReadOnlyCookies(),
@@ -241,9 +251,9 @@ public class ActionRequestBuilder<K, V> extends AbstractRequestBuilder<K, V, Act
 
   }
 
-  private Map<FieldDef<?>, Object> buildReadOnlyActionParameters()
+  private Map<FieldDef<?>, Object> buildActionParameters()
   {
-    return buildReadOnlyActionParameters(_actionParams);
+    return _enableMutableActionParams ? _actionParams : buildReadOnlyActionParameters(_actionParams);
   }
 
   private static Map<FieldDef<?>, Object> buildReadOnlyActionParameters(Map<FieldDef<?>, Object> actionParams)
