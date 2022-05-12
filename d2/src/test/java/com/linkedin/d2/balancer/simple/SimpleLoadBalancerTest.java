@@ -1475,16 +1475,12 @@ public class SimpleLoadBalancerTest
           assertEquals(unmappedKeys.size(), 1);
         }
 
-        try
-        {
-          loadBalancer.getClient(new URIRequest("d2://foo/id=100"), new RequestContext());
-          if (partitionMethod == 0)
-          {
-            // key out of range
-            fail("Should throw ServiceUnavailableException caused by PartitionAccessException");
-          }
+        loadBalancer.getClient(new URIRequest("d2://foo/id=100"), new RequestContext());
+        if (partitionMethod == 0) {
+          // key out of range
+          assertEquals(mapKeyResult.getUnmappedKeys().size(), 1);
+          //fail("Should throw ServiceUnavailableException caused by PartitionAccessException");
         }
-        catch(ServiceUnavailableException e) {}
       }
 
       final CountDownLatch latch = new CountDownLatch(1);
