@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.34.0] - 2022-05-11
+- update d2 partitioning logic to map unmapped URIs to default partition 0
+
 ## [29.33.9] - 2022-05-10
 - Experimental optimization of action request building
 - Revert "Provide a mechanism to set a routing hint for the d2 request to get request symbol table (#787)"
@@ -5240,7 +5243,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.33.9...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.34.0...master
+[29.34.0]: https://github.com/linkedin/rest.li/compare/v29.33.7...v29.34.0
 [29.33.9]: https://github.com/linkedin/rest.li/compare/v29.33.8...v29.33.9
 [29.33.8]: https://github.com/linkedin/rest.li/compare/v29.33.7...v29.33.8
 [29.33.7]: https://github.com/linkedin/rest.li/compare/v29.33.6...v29.33.7

@@ -52,6 +52,7 @@ import com.linkedin.d2.balancer.util.MapKeyResult;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.hashing.Ring;
+import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
@@ -901,8 +902,10 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       }
       catch (PartitionAccessException e)
       {
-        die(serviceName, "PEGA_1013. Error in finding the partition for URI: " + requestUri + ", " +
-          "in cluster: " + clusterName + ", " + e.getMessage());
+        debug(_log,
+            "PEGA_1013. Mapped URI to default partition as there was error in finding the partition for URI: "
+                + requestUri + ", in cluster: " + clusterName + ", " + e.getMessage());
+        partitionId = DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
       }
     }
     else
