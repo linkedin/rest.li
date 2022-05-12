@@ -1475,12 +1475,13 @@ public class SimpleLoadBalancerTest
           assertEquals(unmappedKeys.size(), 1);
         }
 
-        loadBalancer.getClient(new URIRequest("d2://foo/id=100"), new RequestContext());
-        if (partitionMethod == 0) {
-          // key out of range
-          assertEquals(mapKeyResult.getUnmappedKeys().size(), 1);
-          //fail("Should throw ServiceUnavailableException caused by PartitionAccessException");
-        }
+        // key out of range, this should also map to a default partition client
+        RewriteLoadBalancerClient client =
+            (RewriteLoadBalancerClient) loadBalancer.getClient(new URIRequest("d2://foo/id=100"), new RequestContext());
+        assertTrue(client.getDecoratedClient() instanceof RewriteClient);
+        RewriteClient rewriteClient = (RewriteClient) client.getDecoratedClient();
+        assertTrue(rewriteClient.getDecoratedClient() instanceof TrackerClient);
+        assertTrue(((TrackerClient) rewriteClient.getDecoratedClient()).getPartitionWeight(DEFAULT_PARTITION_ID) == 1.0d);
       }
 
       final CountDownLatch latch = new CountDownLatch(1);
