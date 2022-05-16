@@ -521,12 +521,22 @@ public class DataTranslator implements DataTranslatorContext
 
     private Object getVal(Object val, DataSchema recordDataSchema, Schema fieldAvroSchema)
         throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+
       Object fieldVal = val;
       String key;
       DataSchema dereferencedDataSchema = recordDataSchema.getDereferencedDataSchema();
       DataSchema.Type type = dereferencedDataSchema.getType();
 
       switch (type) {
+        case NULL:
+          if (val != null)
+          {
+            appendMessage("value must be null for null schema");
+            fieldVal = BAD_RESULT;
+            break;
+          }
+          fieldVal = Data.NULL;
+          break;
         case INT:
           fieldVal = ((Number) fieldVal).intValue();
           break;
@@ -574,7 +584,9 @@ public class DataTranslator implements DataTranslatorContext
           fieldVal = AvroCompatibilityHelper.newEnumSymbol(fieldAvroSchema, enumValue);
           break;
         case UNION:
+
           UnionDataSchema unionDataSchema = (UnionDataSchema) dereferencedDataSchema;
+
           Object memberValue;
           if (fieldVal == Data.NULL)
           {
@@ -583,21 +595,31 @@ public class DataTranslator implements DataTranslatorContext
           }
           else
           {
-            DataMap map = (DataMap) fieldVal;
-            fieldVal = Data.NULL;
+            DataMap map = (DataMap) val;
             Map.Entry<String, Object> entry = map.entrySet().iterator().next();
             key = entry.getKey();
             memberValue = entry.getValue();
           }
 
-          if(unionDataSchema.getTypeByMemberKey(key) != null) {
-            Map.Entry<String, Schema> fieldAvroEntry = findUnionMember(unionDataSchema.getTypeByMemberKey(key), fieldAvroSchema);
-            if (fieldAvroEntry == null)
-            {
-              _path.removeLast();
-            } else {
-              fieldVal = memberValue;
+          if (unionDataSchema.areMembersAliased())
+          {
+            // Since Pegasus 'union with aliases' are represented as an Avro record, the translation
+            // is handled separately.
+            fieldVal = translatePegasusUnionWithAliasesToAvroRecord(key, memberValue, unionDataSchema, fieldAvroSchema);
+          }
+          else
+          {
+            DataSchema memberDataSchema = unionDataSchema.getTypeByMemberKey(key);
+            Map.Entry<String, Schema> memberAvroEntry = findUnionMember(memberDataSchema, fieldAvroSchema);
+            if (memberAvroEntry == null || memberDataSchema == null) {
+              fieldVal = BAD_RESULT;
+              break;
             }
+            Schema memberAvroSchema = memberAvroEntry.getValue();
+            _path.addLast(memberAvroEntry.getKey());
+            Object memberAvroValue = getVal(memberValue, memberDataSchema, memberAvroSchema);
+            _path.removeLast();
+            fieldVal = memberAvroValue;
           }
           break;
         case MAP:
@@ -624,17 +646,63 @@ public class DataTranslator implements DataTranslatorContext
       return fieldVal;
     }
 
+    private Object translatePegasusUnionWithAliasesToAvroRecord(String memberKey, Object memberValue, UnionDataSchema unionDataSchema, Schema avroSchema)
+        throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+      Schema recordAvroSchema = extractNonnullSchema(avroSchema);
+
+      GenericData.Record avroRecord = new GenericData.Record(recordAvroSchema);
+
+      // Bail out if the pegasus union data has an invalid member key
+      DataSchema memberDataSchema = unionDataSchema.getTypeByMemberKey(memberKey);
+      if (memberDataSchema == null)
+      {
+        appendMessage("cannot find member key %1$s in union %2$s", memberKey, unionDataSchema);
+        return BAD_RESULT;
+      }
+
+      // If the member value is null, don't try to map this to a field as the Avro record will not have
+      // a field for a null union member
+      if (memberValue != Data.NULL)
+      {
+        Schema.Field avroField = recordAvroSchema.getField(memberKey);
+        if (avroField == null)
+        {
+          appendMessage("cannot find field %1$s in record %2$s", memberKey, recordAvroSchema);
+          return BAD_RESULT;
+        }
+        _path.add(memberKey);
+
+        Schema fieldAvroSchema = avroField.schema();
+        avroRecord.put(memberKey, getVal(memberValue, memberDataSchema, extractNonnullSchema(fieldAvroSchema)));
+        _path.removeLast();
+      }
+
+      Schema.Field avroDiscriminatorField = recordAvroSchema.getField(DataSchemaConstants.DISCRIMINATOR_FIELD);
+      if (avroDiscriminatorField == null)
+      {
+        appendMessage("cannot find field %1$s in record %2$s", DataSchemaConstants.DISCRIMINATOR_FIELD, recordAvroSchema);
+        return BAD_RESULT;
+      }
+
+      _path.add(DataSchemaConstants.DISCRIMINATOR_FIELD);
+      Object fieldDiscriminator = AvroCompatibilityHelper.newEnumSymbol(avroDiscriminatorField.schema(), memberKey);
+      avroRecord.put(DataSchemaConstants.DISCRIMINATOR_FIELD, fieldDiscriminator);
+      _path.removeLast();
+
+      return avroRecord;
+    }
+
     @SuppressWarnings("unchecked")
     private <T extends SpecificRecordBase> T translate(Object value, DataSchema dataSchema, Schema avroSchema)
         throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-      T specificRecord;
-      specificRecord = (T) Class.forName(avroSchema.getFullName()).newInstance();
       AvroOverride avroOverride = getAvroOverride(dataSchema);
       if (avroOverride != null)
       {
         return avroOverride.getCustomDataTranslator().dataToAvroSpecific(this, value, dataSchema, avroSchema);
       }
 
+      T specificRecord;
+      specificRecord = (T) Class.forName(avroSchema.getFullName()).newInstance();
       DataSchema dereferencedDataSchema = dataSchema.getDereferencedDataSchema();
 
       DataMap map = (DataMap) value;

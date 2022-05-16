@@ -2219,10 +2219,10 @@ public class TestDataTranslator
     RecordDataSchema recordDataSchemaOfMapOfMap =
         (RecordDataSchema) TestUtil.dataSchemaFromString(MapOfMapOfArrayOfMapArrayUnion.TEST_SCHEMA.toString());
 
-    DataMap arrayData = new DataMap(ImmutableMap.of("mapOrArray", new DataMap(ImmutableMap.of("com.linkedin.data.avro.testevents.TestArray", new DataList(Arrays.asList("a"))))));
+    DataMap arrayData = new DataMap(ImmutableMap.of("mapOrArray", new DataMap(ImmutableMap.of("array", new DataList(Arrays.asList("a"))))));
     MapArrayUnion arrayUnion = DataTranslator.dataMapToSpecificRecord(arrayData, recordDataSchemaMapArrayUnion, MapArrayUnion.TEST_SCHEMA);
 
-    DataMap mapData = new DataMap(ImmutableMap.of("mapOrArray", new DataMap(ImmutableMap.of("com.linkedin.data.avro.testevents.TestMap", new DataMap(
+    DataMap mapData = new DataMap(ImmutableMap.of("mapOrArray", new DataMap(ImmutableMap.of("map", new DataMap(
         ImmutableMap.of("key", "value")
     )))));
     MapArrayUnion mapUnion = DataTranslator.dataMapToSpecificRecord(mapData, recordDataSchemaMapArrayUnion, MapArrayUnion.TEST_SCHEMA);
