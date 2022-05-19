@@ -20,7 +20,6 @@ import com.linkedin.d2.discovery.stores.zk.AbstractZooKeeper;
 import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import java.util.List;
-import org.antlr.v4.runtime.misc.NotNull;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -30,6 +29,7 @@ import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import javax.annotation.Nonnull;
 
 
 /**
@@ -44,7 +44,7 @@ public class AclAwareZookeeper extends AbstractZooKeeper
 
   private final ZKAclProvider _aclProvider;
 
-  public AclAwareZookeeper(@NotNull ZooKeeper zooKeeper, @NotNull ZKAclProvider aclProvider)
+  public AclAwareZookeeper(@Nonnull ZooKeeper zooKeeper, @Nonnull ZKAclProvider aclProvider)
   {
     super(zooKeeper);
     _aclProvider = aclProvider;
