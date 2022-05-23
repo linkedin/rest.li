@@ -16,8 +16,20 @@
 
 package com.linkedin.data.avro;
 
+import com.google.common.collect.ImmutableMap;
+import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
+import com.linkedin.data.avro.testevents.ArrayOfMapArrayUnion;
+import com.linkedin.data.avro.testevents.EnumData;
+import com.linkedin.data.avro.testevents.MapArrayUnion;
+import com.linkedin.data.avro.testevents.MapOfArrayOfMapArrayUnion;
+import com.linkedin.data.avro.testevents.MapOfMapOfArrayOfMapArrayUnion;
+import com.linkedin.data.avro.testevents.RecordMap;
+import com.linkedin.data.avro.testevents.RecordArray;
+import com.linkedin.data.avro.testevents.StringRecord;
+import com.linkedin.data.avro.testevents.TestEventRecordOfRecord;
+import com.linkedin.data.avro.testevents.TestEventWithUnionAndEnum;
 import com.linkedin.data.avro.util.AvroUtil;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.validation.CoercionMode;
@@ -32,16 +44,16 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -2100,6 +2112,144 @@ public class TestDataTranslator
     dataMapToAvroRecordTranslationOptions.setAvroToDataSchemaNamespaceMapping(Collections.singletonMap("avro.a.b.c", "a.b.c"));
     GenericRecord reconvertedAvroRecord = DataTranslator.dataMapToGenericRecord(pegasusDataMap, recordDataSchema, avroSchema, dataMapToAvroRecordTranslationOptions);
     Assert.assertEquals(((GenericRecord) reconvertedAvroRecord.get("a")).get("b"), 1);
+  }
+
+  @DataProvider
+  public Object[][] testDataMapToSpecificRecordTranslatorUnionProvider() {
+    return new Object[][]{
+        {"fieldName", "field", "eventData", new DataMap(ImmutableMap.of("long", 1L)), "enumData", EnumData.APPROVED,
+            1L},
+        {"fieldName", "field", "eventData", new DataMap(ImmutableMap.of("string", "1")), "enumData", EnumData.REJECTED,
+            "1"}};
+  }
+
+  // Test Union and Enum
+  @Test(dataProvider = "testDataMapToSpecificRecordTranslatorUnionProvider")
+  public void testDataMapToSpecificRecordTranslatorUnion(String field1, String fieldVal1, String field2,
+      Object fieldVal2, String field3, EnumData enumData, Object testVal) throws IOException {
+    RecordDataSchema recordDataSchema =
+        (RecordDataSchema) TestUtil.dataSchemaFromString(TestEventWithUnionAndEnum.TEST_SCHEMA.toString());
+
+    Schema avroSchema = TestEventWithUnionAndEnum.TEST_SCHEMA;
+    DataMap innerMap2 = new DataMap();
+    innerMap2.put(field1, fieldVal1);
+    innerMap2.put(field2, fieldVal2);
+    innerMap2.put(field3, enumData.toString());
+
+    TestEventWithUnionAndEnum event = DataTranslator.dataMapToSpecificRecord(innerMap2, recordDataSchema, avroSchema);
+    Assert.assertEquals(event.get(event.getSchema().getField(field1).pos()), fieldVal1);
+    Assert.assertEquals(event.get(event.getSchema().getField(field2).pos()), testVal);
+    Assert.assertEquals(event.get(event.getSchema().getField(field3).pos()), enumData);
+  }
+
+
+  //Test nested records and Array
+  @Test
+  public void testDataMapToSpecificRecordTranslatorInnerRecord() throws IOException {
+    RecordDataSchema recordDataSchema =
+        (RecordDataSchema) TestUtil.dataSchemaFromString(TestEventRecordOfRecord.TEST_SCHEMA.toString());
+    RecordDataSchema innerRecordDataSchema =
+        (RecordDataSchema) TestUtil.dataSchemaFromString(TestEventWithUnionAndEnum.TEST_SCHEMA.toString());
+
+    Schema avroSchema = TestEventRecordOfRecord.TEST_SCHEMA;
+    Schema innerAvroSchema = TestEventWithUnionAndEnum.TEST_SCHEMA;
+    DataMap innerMap2 = new DataMap();
+    innerMap2.put("fieldName", "field");
+    innerMap2.put("eventData", new DataMap(ImmutableMap.of("long", 1L)));
+    innerMap2.put("enumData", EnumData.APPROVED.toString());
+
+    TestEventRecordOfRecord testEventRecordOfRecord =
+        DataTranslator.dataMapToSpecificRecord(new DataMap(ImmutableMap.of("innerField", innerMap2, "stringArray", new DataList(Arrays.asList("val1")))), recordDataSchema,
+            avroSchema);
+    TestEventWithUnionAndEnum innerEvent =
+        DataTranslator.dataMapToSpecificRecord(innerMap2, innerRecordDataSchema, innerAvroSchema);
+    Assert.assertEquals(testEventRecordOfRecord.get(0), innerEvent);
+    Assert.assertEquals(testEventRecordOfRecord.get(1), Arrays.asList("[val1]"));
+  }
+
+  @Test
+  public void testArrayOfRecords() throws IOException {
+    RecordDataSchema recordDataSchema =
+        (RecordDataSchema) TestUtil.dataSchemaFromString(RecordArray.TEST_SCHEMA.toString());
+
+    DataMap stringRecord =
+        new DataMap(ImmutableMap.of("stringField", new DataMap(ImmutableMap.of("string", "stringVal"))));
+    DataList recordArray = new DataList(Arrays.asList(stringRecord));
+
+    RecordArray recordArrayEvent =
+        DataTranslator.dataMapToSpecificRecord(new DataMap(ImmutableMap.of("recordArray", recordArray)),
+            recordDataSchema, RecordArray.TEST_SCHEMA);
+
+    StringRecord stringRecordEvent = DataTranslator.dataMapToSpecificRecord(stringRecord,
+        (RecordDataSchema) TestUtil.dataSchemaFromString(StringRecord.TEST_SCHEMA.toString()), StringRecord.TEST_SCHEMA);
+
+    Assert.assertEquals(recordArrayEvent.get(0), Arrays.asList(stringRecordEvent));
+  }
+
+  @Test
+  public void testMapOfRecords() throws IOException {
+    RecordDataSchema recordDataSchema =
+        (RecordDataSchema) TestUtil.dataSchemaFromString(RecordMap.TEST_SCHEMA.toString());
+
+    DataMap stringRecord =
+        new DataMap(ImmutableMap.of("stringField", new DataMap(ImmutableMap.of("string", "stringVal"))));
+    DataMap recordMap = new DataMap(ImmutableMap.of("key", stringRecord));
+
+    RecordMap mapRecordEvent =
+        DataTranslator.dataMapToSpecificRecord(new DataMap(ImmutableMap.of("recordMap", recordMap)),
+            recordDataSchema, RecordMap.TEST_SCHEMA);
+
+    StringRecord stringRecordEvent = DataTranslator.dataMapToSpecificRecord(stringRecord,
+        (RecordDataSchema) TestUtil.dataSchemaFromString(StringRecord.TEST_SCHEMA.toString()), StringRecord.TEST_SCHEMA);
+
+    Assert.assertEquals(((HashMap)mapRecordEvent.get(0)).get("key"), stringRecordEvent);
+  }
+
+  @Test
+  public void testMapArrayUnion() throws IOException {
+    RecordDataSchema recordDataSchemaMapArrayUnion =
+        (RecordDataSchema) TestUtil.dataSchemaFromString(MapArrayUnion.TEST_SCHEMA.toString());
+
+    RecordDataSchema recordDataSchema =
+        (RecordDataSchema) TestUtil.dataSchemaFromString(ArrayOfMapArrayUnion.TEST_SCHEMA.toString());
+
+    RecordDataSchema recordDataSchemaOfMap =
+        (RecordDataSchema) TestUtil.dataSchemaFromString(MapOfArrayOfMapArrayUnion.TEST_SCHEMA.toString());
+
+    RecordDataSchema recordDataSchemaOfMapOfMap =
+        (RecordDataSchema) TestUtil.dataSchemaFromString(MapOfMapOfArrayOfMapArrayUnion.TEST_SCHEMA.toString());
+
+    DataMap arrayData = new DataMap(ImmutableMap.of("mapOrArray", new DataMap(ImmutableMap.of("array", new DataList(Arrays.asList("a"))))));
+    MapArrayUnion arrayUnion = DataTranslator.dataMapToSpecificRecord(arrayData, recordDataSchemaMapArrayUnion, MapArrayUnion.TEST_SCHEMA);
+
+    DataMap mapData = new DataMap(ImmutableMap.of("mapOrArray", new DataMap(ImmutableMap.of("map", new DataMap(
+        ImmutableMap.of("key", "value")
+    )))));
+    MapArrayUnion mapUnion = DataTranslator.dataMapToSpecificRecord(mapData, recordDataSchemaMapArrayUnion, MapArrayUnion.TEST_SCHEMA);
+
+    DataMap arrayOfMapArrayUnionData = new DataMap(ImmutableMap.of("recordArray", new DataList(Arrays.asList(arrayData, mapData))));
+    ArrayOfMapArrayUnion arrayOfMapArrayUnion = DataTranslator.dataMapToSpecificRecord(arrayOfMapArrayUnionData, recordDataSchema, ArrayOfMapArrayUnion.TEST_SCHEMA);
+
+    DataMap mapOfArrayOfMapArrayUnionData = new DataMap(ImmutableMap.of("recordMap", arrayOfMapArrayUnionData));
+    MapOfArrayOfMapArrayUnion mapOfArrayOfMapArrayUnion = DataTranslator.dataMapToSpecificRecord(mapOfArrayOfMapArrayUnionData, recordDataSchemaOfMap, MapOfArrayOfMapArrayUnion.TEST_SCHEMA);
+
+    DataMap mapOfMapOfArrayOfMapArrayUnionData = new DataMap(ImmutableMap.of("recordMap", new DataMap(ImmutableMap.of("recordMap", mapOfArrayOfMapArrayUnionData))));
+    MapOfMapOfArrayOfMapArrayUnion mapOfMapOfArrayOfMapArrayUnion = DataTranslator.dataMapToSpecificRecord(mapOfMapOfArrayOfMapArrayUnionData, recordDataSchemaOfMapOfMap, MapOfMapOfArrayOfMapArrayUnion.TEST_SCHEMA);
+
+    Assert.assertTrue(arrayUnion.get(0) instanceof List);
+    Assert.assertEquals(((List<?>) arrayUnion.get(0)).get(0), "a");
+    Assert.assertTrue(mapUnion.get(0) instanceof Map);
+    Assert.assertEquals(((Map<?, ?>) mapUnion.get(0)).get("key"), "value");
+
+    Assert.assertTrue(arrayOfMapArrayUnion.get(0) instanceof List);
+    Assert.assertTrue(((MapArrayUnion)((List<?>) arrayOfMapArrayUnion.get(0)).get(0)).get(0) instanceof List);
+    Assert.assertTrue(((MapArrayUnion)((List<?>) arrayOfMapArrayUnion.get(0)).get(1)).get(0) instanceof Map);
+
+    Assert.assertTrue(mapOfArrayOfMapArrayUnion.get(0) instanceof Map);
+    Assert.assertEquals(((Map<?, ?>) mapOfArrayOfMapArrayUnion.get(0)).get("recordArray"), Arrays.asList(arrayUnion, mapUnion));
+
+    Assert.assertTrue(mapOfMapOfArrayOfMapArrayUnion.get(0) instanceof Map);
+    Assert.assertEquals(((Map<?, ?>) mapOfMapOfArrayOfMapArrayUnion.get(0)).get("recordMap"), mapOfArrayOfMapArrayUnion);
   }
 }
 
