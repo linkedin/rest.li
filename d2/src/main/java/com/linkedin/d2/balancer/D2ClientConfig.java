@@ -16,7 +16,9 @@
 package com.linkedin.d2.balancer;
 
 import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
+import com.linkedin.d2.balancer.clients.FailoutRedirectStrategy;
 import com.linkedin.d2.balancer.clients.RetryClient;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -108,6 +110,9 @@ public class D2ClientConfig
   DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider = null;
   CanaryDistributionProvider canaryDistributionProvider = null;
   public static final int DEFAULT_RETRY_LIMIT = 3;
+  boolean enableClusterFailout = false;
+  FailoutConfigProviderFactory failoutConfigProviderFactory;
+  FailoutRedirectStrategy failoutRedirectStrategy;
 
   public D2ClientConfig()
   {
@@ -164,7 +169,10 @@ public class D2ClientConfig
                  int zookeeperReadWindowMs,
                  boolean enableRelativeLoadBalancer,
                  DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
-                 CanaryDistributionProvider canaryDistributionProvider)
+                 CanaryDistributionProvider canaryDistributionProvider,
+                 boolean enableClusterFailout,
+                 FailoutConfigProviderFactory failoutConfigProviderFactory,
+                 FailoutRedirectStrategy failoutRedirectStrategy)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -218,5 +226,8 @@ public class D2ClientConfig
     this.enableRelativeLoadBalancer = enableRelativeLoadBalancer;
     this.deterministicSubsettingMetadataProvider = deterministicSubsettingMetadataProvider;
     this.canaryDistributionProvider = canaryDistributionProvider;
+    this.enableClusterFailout = enableClusterFailout;
+    this.failoutConfigProviderFactory = failoutConfigProviderFactory;
+    this.failoutRedirectStrategy = failoutRedirectStrategy;
   }
 }

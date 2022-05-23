@@ -16,18 +16,23 @@
 
 package com.linkedin.d2.balancer.simple;
 
+import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.properties.CanaryDistributionStrategy;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterStoreProperties;
 import com.linkedin.d2.balancer.properties.FailoutProperties;
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
@@ -35,8 +40,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 
 /**
@@ -57,12 +61,19 @@ public class ClusterLoadBalancerSubscriberTest
     @Mock
     AtomicLong _version;
 
+    @Captor
+    ArgumentCaptor<ClusterInfoItem> _clusterInfoUpdatesCaptor;
+
     Map<String, ClusterInfoItem> _clusterInfo;
 
     ClusterLoadBalancerSubscriberFixture() {
       MockitoAnnotations.initMocks(this);
       _clusterInfo = new HashMap<>();
       _version = new AtomicLong(0);
+      when(_simpleLoadBalancerState.getVersionAccess()).thenReturn(_version);
+      when(_simpleLoadBalancerState.getClusterInfo()).thenReturn(_clusterInfo);
+      doNothing().when(_simpleLoadBalancerState).notifyListenersOnClusterInfoUpdates(
+          _clusterInfoUpdatesCaptor.capture());
     }
 
     ClusterLoadBalancerSubscriber getMockSubscriber(boolean hasCanaryProvider)
@@ -72,9 +83,6 @@ public class ClusterLoadBalancerSubscriberTest
       } else {
         when(_simpleLoadBalancerState.getCanaryDistributionProvider()).thenReturn(null);
       }
-
-      when(_simpleLoadBalancerState.getClusterInfo()).thenReturn(_clusterInfo);
-      when(_simpleLoadBalancerState.getVersionAccess()).thenReturn(_version);
       doNothing().when(_simpleLoadBalancerState).notifyClusterListenersOnAdd(any());
       return new ClusterLoadBalancerSubscriber(_simpleLoadBalancerState, _eventBus, null);
     }
@@ -119,5 +127,62 @@ public class ClusterLoadBalancerSubscriberTest
 
     Assert.assertEquals(fixture._clusterInfo.get(CLUSTER_NAME).getClusterPropertiesItem().getProperty(),
         distribution == CanaryDistributionProvider.Distribution.CANARY ? canaryConfigs : stableConfigs);
+    verify(fixture._simpleLoadBalancerState, times(1)).notifyClusterListenersOnAdd(CLUSTER_NAME);
+    Assert.assertEquals(fixture._clusterInfoUpdatesCaptor.getValue().getClusterPropertiesItem().getProperty(),
+        distribution == CanaryDistributionProvider.Distribution.CANARY ? canaryConfigs : stableConfigs);
+    Assert.assertEquals(fixture._clusterInfoUpdatesCaptor.getValue().getClusterPropertiesItem().getDistribution(),
+        distribution == null ? CanaryDistributionProvider.Distribution.STABLE : distribution);
+  }
+
+  @Test
+  public void testHandleRemove()
+  {
+    String clusterName = "mock-cluster-foo";
+    ClusterLoadBalancerSubscriberFixture fixture = new ClusterLoadBalancerSubscriberFixture();
+    ClusterInfoItem clusterInfoItemToRemove =
+        new ClusterInfoItem(fixture._simpleLoadBalancerState, new ClusterProperties(clusterName),
+            new PartitionAccessor() {
+              @Override
+              public int getMaxPartitionId() {
+                return 0;
+              }
+
+              @Override
+              public int getPartitionId(URI uri) {
+                return 0;
+              }
+            }, CanaryDistributionProvider.Distribution.CANARY);
+    fixture._simpleLoadBalancerState.getClusterInfo().put(clusterName, clusterInfoItemToRemove);
+    fixture.getMockSubscriber(false).handleRemove(clusterName);
+
+    Assert.assertFalse(fixture._simpleLoadBalancerState.getClusterInfo().containsKey(clusterName));
+    verify(fixture._simpleLoadBalancerState, times(1)).notifyListenersOnClusterInfoRemovals(
+        clusterInfoItemToRemove
+    );
+    verify(fixture._simpleLoadBalancerState, times(1)).notifyClusterListenersOnRemove(
+        clusterName
+    );
+  }
+
+  @DataProvider(name = "getConfigsWithFailoutProperties")
+  public Object[][] getConfigsWithFailoutProperties()
+  {
+    ClusterProperties stableConfigs = new ClusterProperties(CLUSTER_NAME, Collections.singletonList("aa"));
+
+    return new Object[][] {
+      {stableConfigs, null},
+      {stableConfigs, new FailoutProperties(Collections.emptyList(), Collections.emptyList())},
+    };
+  }
+  @Test(dataProvider = "getConfigsWithFailoutProperties")
+  public void testWithFailoutConfigs(ClusterProperties stableConfigs, FailoutProperties clusterFailoutProperties)
+  {
+    ClusterLoadBalancerSubscriberFixture fixture = new ClusterLoadBalancerSubscriberFixture();
+    fixture.getMockSubscriber(false).handlePut(CLUSTER_NAME, new ClusterStoreProperties(
+      stableConfigs, null, null, clusterFailoutProperties));
+
+    LoadBalancerStateItem<FailoutProperties> failoutPropertiesItem = fixture._clusterInfo.get(CLUSTER_NAME).getFailoutPropertiesItem();
+    Assert.assertNotNull(failoutPropertiesItem);
+    Assert.assertEquals(failoutPropertiesItem.getProperty(), clusterFailoutProperties);
   }
 }

@@ -63,6 +63,7 @@ public class RestLiServer implements RestRequestHandler, RestToRestLiRequestHand
 
   private final RestRestLiServer _restRestLiServer;
   private final StreamRestLiServer _streamRestLiServer;
+  private final RestLiConfig _restliConfig;
 
   public RestLiServer(RestLiConfig config)
   {
@@ -76,6 +77,7 @@ public class RestLiServer implements RestRequestHandler, RestToRestLiRequestHand
 
   public RestLiServer(RestLiConfig config, ResourceFactory resourceFactory, Engine engine)
   {
+    _restliConfig = config;
     Map<String, ResourceModel> rootResources = new RestLiApiBuilder(config).build();
 
     // Notify listeners of the resource models.
@@ -150,6 +152,10 @@ public class RestLiServer implements RestRequestHandler, RestToRestLiRequestHand
   public void handleRequestWithRestLiResponse(StreamRequest request, RequestContext requestContext, Callback<RestLiResponse> callback)
   {
     _streamRestLiServer.handleRequestWithRestLiResponse(request, requestContext, callback);
+  }
+
+  public RestLiConfig getRestliConfig() {
+    return _restliConfig;
   }
 
   private boolean isMultipart(final Request request, final RequestContext requestContext, final Callback<?> callback)

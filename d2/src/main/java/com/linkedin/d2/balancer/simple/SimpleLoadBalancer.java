@@ -32,6 +32,9 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.WarmUpService;
 import com.linkedin.d2.balancer.clients.RewriteLoadBalancerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfig;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProvider;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -49,6 +52,7 @@ import com.linkedin.d2.balancer.util.MapKeyResult;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.hashing.Ring;
+import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
@@ -100,23 +104,32 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   private final TimeUnit          _unit;
   private final ScheduledExecutorService _executor;
   private final Random            _random = new Random();
+  private final FailoutConfigProvider _failoutConfigProvider;
 
   public SimpleLoadBalancer(LoadBalancerState state, ScheduledExecutorService executorService)
   {
-    this(state, new Stats(1000), new Stats(1000), 0, TimeUnit.SECONDS, executorService);
+    this(state, new Stats(1000), new Stats(1000), 0, TimeUnit.SECONDS, executorService, null);
   }
 
   public SimpleLoadBalancer(LoadBalancerState state, long timeout, TimeUnit unit, ScheduledExecutorService executor)
   {
-    this(state, new Stats(1000), new Stats(1000), timeout, unit, executor);
+    this(state, new Stats(1000), new Stats(1000), timeout, unit, executor, null);
   }
+
+  public SimpleLoadBalancer(LoadBalancerState state, long timeout, TimeUnit unit, ScheduledExecutorService executor,
+                            FailoutConfigProviderFactory failoutConfigProviderFactory)
+  {
+    this(state, new Stats(1000), new Stats(1000), timeout, unit, executor, failoutConfigProviderFactory);
+  }
+
 
   public SimpleLoadBalancer(LoadBalancerState state,
                             Stats serviceAvailableStats,
                             Stats serviceUnavailableStats,
                             long timeout,
                             TimeUnit unit,
-                            ScheduledExecutorService executor)
+                            ScheduledExecutorService executor,
+                            FailoutConfigProviderFactory failoutConfigProviderFactory)
   {
     _state = state;
     _serviceUnavailableStats = serviceUnavailableStats;
@@ -124,6 +137,15 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     _timeout = timeout;
     _unit = unit;
     _executor = executor;
+    if (failoutConfigProviderFactory != null)
+    {
+      _failoutConfigProvider = failoutConfigProviderFactory.create(state);
+      _log.debug("Created failoutConfigProvider.");
+    }
+    else
+    {
+      _failoutConfigProvider = null;
+    }
   }
 
   public Stats getServiceUnavailableStats()
@@ -139,13 +161,38 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   @Override
   public void start(Callback<None> callback)
   {
-    _state.start(callback);
+    _state.start(new Callback<None>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        callback.onError(e);
+      }
+
+      @Override
+      public void onSuccess(None result)
+      {
+        if (_failoutConfigProvider != null)
+        {
+          _failoutConfigProvider.start();
+          _log.info("Started failoutConfigProvider.");
+        }
+        callback.onSuccess(result);
+      }
+    });
+
   }
 
   @Override
   public void shutdown(PropertyEventShutdownCallback shutdown)
   {
-    _state.shutdown(shutdown);
+    _state.shutdown(() -> {
+      if (_failoutConfigProvider != null)
+      {
+        _failoutConfigProvider.shutdown();
+      }
+      shutdown.done();
+    });
   }
 
   /**
@@ -207,20 +254,23 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
               (CustomAffinityRoutingURIProvider) requestContext.getLocalAttr(CustomAffinityRoutingURIProvider.CUSTOM_AFFINITY_ROUTING_URI_PROVIDER);
 
           boolean enableCustomAffinityRouting = isCustomAffinityRoutingEnabled(requestContext, customAffinityRoutingURIProvider);
-          if (enableCustomAffinityRouting) {
+          if (enableCustomAffinityRouting)
+          {
             trackerClient = customAffinityRoutingURIProvider.getTargetHostURI(clusterName)
                   .map(targetHost -> _state.getClient(serviceName, targetHost))
                   .orElse(null);
           }
 
-          if (trackerClient == null) {
+          if (trackerClient == null)
+          {
             trackerClient =
                 chooseTrackerClient(request, requestContext, serviceName, clusterName, cluster, uriItem, uris,
                     orderedStrategies, service);
 
             // set host URI for the cluster. with that next time, for the same inbound request, if downstream request is
             // made to same cluster and custom affinity routing is enabled, then it will go to same box.
-            if (enableCustomAffinityRouting) {
+            if (enableCustomAffinityRouting)
+            {
               customAffinityRoutingURIProvider.setTargetHostURI(clusterName, trackerClient.getUri());
             }
           }
@@ -852,8 +902,10 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       }
       catch (PartitionAccessException e)
       {
-        die(serviceName, "PEGA_1013. Error in finding the partition for URI: " + requestUri + ", " +
-          "in cluster: " + clusterName + ", " + e.getMessage());
+        debug(_log,
+            "PEGA_1013. Mapped URI to default partition as there was error in finding the partition for URI: "
+                + requestUri + ", in cluster: " + clusterName + ", " + e.getMessage());
+        partitionId = DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
       }
     }
     else
@@ -1014,6 +1066,12 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
               clusterProperties.accessDarkClusters() : new DarkClusterConfigMap();
       wrappedCallback.onSuccess(darkClusterConfigMap);
     });
+  }
+
+  @Override
+  public FailoutConfig getFailoutConfig(String clusterName)
+  {
+    return _failoutConfigProvider != null ? _failoutConfigProvider.getFailoutConfig(clusterName) : null;
   }
 
   @Override

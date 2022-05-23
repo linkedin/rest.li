@@ -3324,6 +3324,56 @@ public class TestSchemaTranslator
     assertEquals(actual, expected);
   }
 
+  @Test
+  public void testAvroPartialDefaultFields() throws IOException
+  {
+    String schemaWithPartialDefaultFields = "{" +
+        "  \"type\": \"record\"," +
+        "  \"name\": \"testRecord\"," +
+        "  \"fields\": [" +
+        "    {" +
+        "      \"name\": \"recordFieldWithDefault\"," +
+        "      \"type\": {" +
+        "        \"type\": \"record\"," +
+        "        \"name\": \"recordType\"," +
+        "        \"fields\": [" +
+        "          {" +
+        "            \"name\": \"mapField\"," +
+        "            \"type\": {" +
+        "              \"type\": \"map\"," +
+        "              \"values\": \"string\"" +
+        "            }" +
+        "          }," +
+        "          {" +
+        "            \"name\": \"optionalRecordField\"," +
+        "            \"type\": [" +
+        "              \"null\"," +
+        "              {" +
+        "                \"type\": \"record\"," +
+        "                \"name\": \"simpleRecordType\"," +
+        "                \"fields\": [" +
+        "                  {" +
+        "                    \"name\": \"stringField\"," +
+        "                    \"type\": \"string\"" +
+        "                  }" + "                ]" +
+        "              }" +
+        "            ]," +
+        "            \"default\": null" +
+        "          }" +
+        "        ]" +
+        "      }," +
+        "      \"default\": {" +
+        "        \"mapField\": {}" +
+        "      }" +
+        "    }" +
+        "  ]" +
+        "}";
+
+    Schema schema = Schema.parse(schemaWithPartialDefaultFields);
+    DataSchema dataSchema = SchemaTranslator.avroToDataSchema(schema);
+    Assert.assertNotNull(dataSchema);
+  }
+
   /*
    * This test will fail in versions below 29.32.2 since AbstractSchemaParser.extractProperties throws exception
    * if value is null in a schema

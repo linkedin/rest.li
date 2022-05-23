@@ -14,6 +14,37 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.34.0] - 2022-05-11
+- update d2 partitioning logic to map unmapped URIs to default partition 0
+
+## [29.33.9] - 2022-05-10
+- Experimental optimization of action request building
+- Revert "Provide a mechanism to set a routing hint for the d2 request to get request symbol table (#787)"
+
+## [29.33.8] - 2022-05-10
+- Add (currently unused) models for D2FailoutProperties.
+
+## [29.33.7] - 2022-05-04
+- Silence Zookeeper errors in logs on race condition between watched events and async shutdown.
+
+## [29.33.6] - 2022-05-03
+- Provide a mechanism to set a routing hint for the d2 request to get request symbol table.
+
+## [29.33.5] - 2022-05-02
+- Expose RestLiConfig from RestLiServer.
+
+## [29.33.4] - 2022-04-26
+- Support failout redirection in D2 client.
+
+## [29.33.3] - 2022-04-25
+- Add end-to-end integration tests for D2 client.
+
+## [29.33.2] - 2022-04-21
+- Add JMX-based canary monitoring for cluster properties and service properties.
+
+## [29.33.1] - 2022-04-12
+- Fix an Avro translation bug where optional fields in a partial default record are not treated properly.
+
 ## [29.33.0] - 2022-03-28
 - Add Support for ByteString[] Query Parameters
 
@@ -5212,7 +5243,17 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.33.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.34.0...master
+[29.34.0]: https://github.com/linkedin/rest.li/compare/v29.33.7...v29.34.0
+[29.33.9]: https://github.com/linkedin/rest.li/compare/v29.33.8...v29.33.9
+[29.33.8]: https://github.com/linkedin/rest.li/compare/v29.33.7...v29.33.8
+[29.33.7]: https://github.com/linkedin/rest.li/compare/v29.33.6...v29.33.7
+[29.33.6]: https://github.com/linkedin/rest.li/compare/v29.33.5...v29.33.6
+[29.33.5]: https://github.com/linkedin/rest.li/compare/v29.33.4...v29.33.5
+[29.33.4]: https://github.com/linkedin/rest.li/compare/v29.33.3...v29.33.4
+[29.33.3]: https://github.com/linkedin/rest.li/compare/v29.33.2...v29.33.3
+[29.33.2]: https://github.com/linkedin/rest.li/compare/v29.33.1...v29.33.2
+[29.33.1]: https://github.com/linkedin/rest.li/compare/v29.33.0...v29.33.1
 [29.33.0]: https://github.com/linkedin/rest.li/compare/v29.32.5...v29.33.0
 [29.32.5]: https://github.com/linkedin/rest.li/compare/v29.32.4...v29.32.5
 [29.32.4]: https://github.com/linkedin/rest.li/compare/v29.32.3...v29.32.4
