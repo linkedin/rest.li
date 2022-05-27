@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.29.3-rc.1] - 2022-05-27
+- RC release to unblock customers.
+
 ## [29.29.2] - 2022-02-17
 
 - Generalize avro --> pegasus translation code to accept any CharSequence value for strings
@@ -5186,7 +5189,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.29.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.29.3-rc.1...master
+[29.29.3-rc.1]: https://github.com/linkedin/rest.li/compare/v29.29.2...v29.29.3-rc.1
 [29.29.2]: https://github.com/linkedin/rest.li/compare/v29.29.1...v29.29.2
 [29.29.1]: https://github.com/linkedin/rest.li/compare/v29.29.0...v29.29.1
 [29.29.0]: https://github.com/linkedin/rest.li/compare/v29.28.0...v29.29.0
