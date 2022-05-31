@@ -241,7 +241,6 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
             d2ClientJmxManager,
             zookeeperReadWindowMs,
             deterministicSubsettingMetadataProvider,
-            null,
             null);
   }
 
