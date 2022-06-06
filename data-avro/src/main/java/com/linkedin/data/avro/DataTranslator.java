@@ -886,7 +886,7 @@ public class DataTranslator implements DataTranslatorContext
             boolean isOptional = field.getOptional();
             if (isOptional)
             {
-              if (fieldValue == null)
+              if (fieldValue == null || fieldValue == Data.NULL)
               {
                 fieldValue = Data.NULL;
                 fieldDataSchema = DataSchemaConstants.NULL_DATA_SCHEMA;
