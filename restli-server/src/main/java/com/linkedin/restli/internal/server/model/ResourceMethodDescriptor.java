@@ -74,6 +74,7 @@ public class ResourceMethodDescriptor
   private final RecordDataSchema                        _requestDataSchema;
   private final InterfaceType                           _interfaceType;
   private final DataMap                                 _customAnnotations;
+  private final String                                  _linkedBatchFinderName;
   // Method-level service error definitions
   private List<ServiceError>                            _serviceErrors;
   private List<HttpStatus>                              _successStatuses;
@@ -110,7 +111,46 @@ public class ResourceMethodDescriptor
                                         null,
                                         metadataType,
                                         interfaceType,
-                                        customAnnotations);
+                                        customAnnotations,
+                                        null);
+  }
+
+  /**
+   * Finder resource method descriptor factory.
+   *
+   * @param method resource {@link Method}
+   * @param parameters rest.li method {@link Parameter}s
+   * @param finderName finder name
+   * @param metadataType finder metadata type
+   * @param interfaceType method {@link InterfaceType}
+   * @param customAnnotations All the custom annotations associated with this method encoded as a {@link DataMap}
+   * @param linkedBatchFinderName The optional batch finder linked to this finder
+   * @return finder {@link ResourceMethodDescriptor}
+   */
+  public static ResourceMethodDescriptor createForFinder(final Method method,
+      final List<Parameter<?>> parameters,
+      final String finderName,
+      final Class<? extends RecordTemplate> metadataType,
+      final InterfaceType interfaceType,
+      final DataMap customAnnotations,
+      final String linkedBatchFinderName)
+  {
+    return new ResourceMethodDescriptor(ResourceMethod.FINDER,
+                                        method,
+                                        parameters,
+                                        finderName,
+                                        null,
+                                        BATCH_FINDER_NULL_CRITERIA_INDEX,
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                        false,
+                                        null,
+                                        metadataType,
+                                        interfaceType,
+                                        customAnnotations,
+                                        linkedBatchFinderName);
   }
 
   /**
@@ -146,7 +186,8 @@ public class ResourceMethodDescriptor
                                         null,
                                         metadataType,
                                         interfaceType,
-                                        customAnnotations);
+                                        customAnnotations,
+                     null);
   }
 
   /**
@@ -187,7 +228,8 @@ public class ResourceMethodDescriptor
                                         recordDataSchema,
                                         null,
                                         interfaceType,
-                                        customAnnotations);
+                                        customAnnotations,
+                                        null);
   }
 
   /**
@@ -230,7 +272,8 @@ public class ResourceMethodDescriptor
                                         recordDataSchema,
                                         null,
                                         interfaceType,
-                                        customAnnotations);
+                                        customAnnotations,
+                                        null);
   }
 
   /**
@@ -285,7 +328,8 @@ public class ResourceMethodDescriptor
                                         null,
                                         collectionCustomMetadataType,
                                         interfaceType,
-                                        customAnnotations);
+                                        customAnnotations,
+                                        null);
   }
 
   /**
@@ -305,7 +349,8 @@ public class ResourceMethodDescriptor
                                    final RecordDataSchema requestDataSchema,
                                    final Class<? extends RecordTemplate> collectionCustomMetadataType,
                                    final InterfaceType interfaceType,
-                                   final DataMap customAnnotations)
+                                   final DataMap customAnnotations,
+                                   final String linkedBatchFinderName)
   {
     super();
     _type = type;
@@ -323,6 +368,7 @@ public class ResourceMethodDescriptor
     _interfaceType = interfaceType;
     _customAnnotations = customAnnotations;
     _batchFinderCriteriaIndex = batchFinderCriteriaIndex;
+    _linkedBatchFinderName = linkedBatchFinderName;
   }
 
   /**
@@ -449,6 +495,13 @@ public class ResourceMethodDescriptor
   public String getBatchFinderName()
   {
     return _batchFinderName;
+  }
+
+  /**
+   * @return the name of the batch finder method linked with a finder method
+   */
+  public String getLinkedBatchFinderName() {
+    return _linkedBatchFinderName;
   }
 
   /**

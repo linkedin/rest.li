@@ -225,6 +225,14 @@ public class TestRestLiResourceModels
     expectConfigException(InvalidResources.FinderTwoNamedInOneClass.class, "duplicate @Finder");
     expectConfigException(InvalidResources.FinderNonExistingAssocKey.class, "Non-existing assocKey");
     expectConfigException(InvalidResources.GetAllNonExistingAssocKey.class, "Non-existing assocKey");
+    expectConfigException(InvalidResources.MissingLinkedBatchFinder.class, "Did not find any Linked @BatchFinder method named");
+    expectConfigException(InvalidResources.LinkedBatchFinderMissingFieldInCriteria.class, "There is no field in the criteria object");
+    expectConfigException(InvalidResources.LinkedBatchFinderAssocKeyFieldInCriteria.class, "There is no field in the criteria object");
+    expectConfigException(InvalidResources.LinkedBatchFinderMismatchedFieldTypeInCriteria.class, "The type doesn't match in the criteria object");
+    expectConfigException(InvalidResources.LinkedBatchFinderMismatchedFieldOptionalityInCriteria.class, "The optionality doesn't match in the criteria object");
+    expectConfigException(InvalidResources.LinkedBatchFinderExtraFieldsInCriteria.class, "has an invalid criteria type with extra fields");
+    expectConfigException(InvalidResources.LinkedBatchFinderMetadataMismatch.class, "does not have the same metadata type");
+    expectConfigException(InvalidResources.LinkedBatchFinderUnsupportedPaging.class, "does not support paging while the finder does");
   }
 
   @Test

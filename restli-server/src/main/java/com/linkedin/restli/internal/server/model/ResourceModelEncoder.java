@@ -982,6 +982,11 @@ public class ResourceModelEncoder
       finder.setPagingSupported(true);
     }
 
+    if (resourceMethodDescriptor.getLinkedBatchFinderName() != null)
+    {
+      finder.setLinkedBatchFinderName(resourceMethodDescriptor.getLinkedBatchFinderName());
+    }
+
     appendServiceErrors(finder, resourceMethodDescriptor.getServiceErrors());
     appendSuccessStatuses(finder, resourceMethodDescriptor.getSuccessStatuses());
 
