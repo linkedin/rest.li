@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.36.0] - 2022-06-21
+- Add Enum symbols order change as compatible message in checker. This will make equivalent compatibility check to fail and publish the new snapshot files.
+
 ## [29.35.0] - 2022-06-15
 - Avoid using JsonFactoryBuilder to be more compatible with pre 2.10 jackson at runtime
 
@@ -5255,7 +5258,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.35.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.36.0...master
+[29.36.0]: https://github.com/linkedin/rest.li/compare/v29.35.0...v29.36.0
 [29.35.0]: https://github.com/linkedin/rest.li/compare/v29.34.3...v29.35.0
 [29.34.3]: https://github.com/linkedin/rest.li/compare/v29.34.2...v29.34.3
 [29.34.2]: https://github.com/linkedin/rest.li/compare/v29.34.1...v29.34.2
