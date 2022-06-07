@@ -59,7 +59,7 @@ public class GenerateDataTemplateTask extends DefaultTask
    */
   @InputDirectory
   @SkipWhenEmpty
-  @Classpath
+  @PathSensitive(PathSensitivity.RELATIVE)
   public File getInputDir()
   {
     return _inputDir;
