@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.34.3] - 2022-06-06
+- Translate Data.null to Avro null if schema field is optional
+
 ## [29.34.2] - 2022-06-03
 - Provide a way to link a finder with a functionally equivalent batch finder declaratively
 
@@ -5249,7 +5252,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.34.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.34.3...master
+[29.34.3]: https://github.com/linkedin/rest.li/compare/v29.34.2...v29.34.3
 [29.34.2]: https://github.com/linkedin/rest.li/compare/v29.34.1...v29.34.2
 [29.34.1]: https://github.com/linkedin/rest.li/compare/v29.34.0...v29.34.1
 [29.34.0]: https://github.com/linkedin/rest.li/compare/v29.33.7...v29.34.0

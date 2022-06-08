@@ -25,8 +25,8 @@ import com.linkedin.data.avro.testevents.EnumData;
 import com.linkedin.data.avro.testevents.MapArrayUnion;
 import com.linkedin.data.avro.testevents.MapOfArrayOfMapArrayUnion;
 import com.linkedin.data.avro.testevents.MapOfMapOfArrayOfMapArrayUnion;
-import com.linkedin.data.avro.testevents.RecordMap;
 import com.linkedin.data.avro.testevents.RecordArray;
+import com.linkedin.data.avro.testevents.RecordMap;
 import com.linkedin.data.avro.testevents.StringRecord;
 import com.linkedin.data.avro.testevents.TestEventRecordOfRecord;
 import com.linkedin.data.avro.testevents.TestEventWithUnionAndEnum;
@@ -58,9 +58,7 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 public class TestDataTranslator
 {
@@ -711,7 +709,8 @@ public class TestDataTranslator
         },
         {
           "{ \"intOptional\" : null }",
-          "Error processing /intOptional"
+          ONE_WAY,
+          "{\"intOptional\":null}"
         },
         {
           "{ \"intOptional\" : \"s1\" }",
@@ -751,7 +750,8 @@ public class TestDataTranslator
         },
         {
           "{ \"unionOptional\" : null }",
-          "Error processing /unionOptional"
+          ONE_WAY,
+          "{\"unionOptional\":null}"
         },
         {
           "{ \"unionOptional\" : \"s1\" }",
@@ -829,7 +829,8 @@ public class TestDataTranslator
         },
         {
           "{ \"uwaOptionalNoNull\" : null }",
-          "Error processing /uwaOptionalNoNull"
+          ONE_WAY,
+          "{\"uwaOptionalNoNull\":null}"
         },
         {
           "{ \"uwaOptionalNoNull\" : {} }",
@@ -877,7 +878,7 @@ public class TestDataTranslator
         },
         {
           "{ \"uwaOptionalWithNull\" : null }",
-          "{\"uwaOptionalWithNull\":{\"##NS(foo.)FooUwaOptionalWithNull\":{\"success\":null,\"failure\":null,\"fieldDiscriminator\":\"null\"}}}"
+          "{\"uwaOptionalWithNull\":null}"
         },
         {
           "{ \"uwaOptionalWithNull\" : {} }",
@@ -1133,7 +1134,7 @@ public class TestDataTranslator
       {
         // translate from Avro back to Pegasus
         DataMap dataMapResult = DataTranslator.genericRecordToDataMap(avroRecord, recordDataSchema, avroSchema);
-        ValidationResult vr = ValidateDataAgainstSchema.validate(dataMap,
+        ValidationResult vr = ValidateDataAgainstSchema.validate(dataMapResult,
                                                                  recordDataSchema,
                                                                  new ValidationOptions(RequiredMode.MUST_BE_PRESENT,
                                                                                        CoercionMode.NORMAL));

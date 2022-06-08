@@ -41,13 +41,11 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericFixed;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.specific.SpecificRecord;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.avro.util.Utf8;
 
@@ -886,7 +884,7 @@ public class DataTranslator implements DataTranslatorContext
             boolean isOptional = field.getOptional();
             if (isOptional)
             {
-              if (fieldValue == null)
+              if (fieldValue == null || fieldValue == Data.NULL)
               {
                 fieldValue = Data.NULL;
                 fieldDataSchema = DataSchemaConstants.NULL_DATA_SCHEMA;
