@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.34.4] - 2022-06-07
+- Add Enum symbols order change as compatible message in checker. This will make equivalent compatibility check to fail and publish the new snapshot files.
+
 ## [29.34.3] - 2022-06-06
 - Translate Data.null to Avro null if schema field is optional
 
@@ -5252,7 +5255,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.34.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.34.4...master
+[29.34.4]: https://github.com/linkedin/rest.li/compare/v29.34.3...v29.34.4
 [29.34.3]: https://github.com/linkedin/rest.li/compare/v29.34.2...v29.34.3
 [29.34.2]: https://github.com/linkedin/rest.li/compare/v29.34.1...v29.34.2
 [29.34.1]: https://github.com/linkedin/rest.li/compare/v29.34.0...v29.34.1

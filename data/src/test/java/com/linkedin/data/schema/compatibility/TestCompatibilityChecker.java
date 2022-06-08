@@ -803,6 +803,13 @@ public class TestCompatibilityChecker
         _noCheckNamesOnly,
         false
       },
+      {
+        "{ \"type\" : \"enum\", \"name\" : \"a.b.Enum\", \"symbols\" : [ \"A\", \"B\" ] }",
+        "{ \"type\" : \"enum\", \"name\" : \"a.b.Enum\", \"symbols\" : [ \"B\", \"A\" ] }",
+        _dataAndSchema,
+        false,
+        "INFO :: ENUM_ORDER_CHANGE :: /a.b.Enum/symbols :: enum symbols order changed at symbol B"
+      },
     };
 
     testCompatibility(inputs);
