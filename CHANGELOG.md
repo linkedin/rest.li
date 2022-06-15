@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.34.4] - 2022-06-15
+- Avoid using JsonFactoryBuilder to be more compatible with pre 2.10 jackson at runtime
+
 ## [29.34.3] - 2022-06-06
 - Translate Data.null to Avro null if schema field is optional
 
