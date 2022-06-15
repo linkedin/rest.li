@@ -14,7 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.34.4] - 2022-06-15
+## [29.35.0] - 2022-06-15
 - Avoid using JsonFactoryBuilder to be more compatible with pre 2.10 jackson at runtime
 
 ## [29.34.3] - 2022-06-06
@@ -5255,7 +5255,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.34.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.35.0...master
+[29.35.0]: https://github.com/linkedin/rest.li/compare/v29.34.3...v29.35.0
 [29.34.3]: https://github.com/linkedin/rest.li/compare/v29.34.2...v29.34.3
 [29.34.2]: https://github.com/linkedin/rest.li/compare/v29.34.1...v29.34.2
 [29.34.1]: https://github.com/linkedin/rest.li/compare/v29.34.0...v29.34.1
