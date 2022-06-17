@@ -33,6 +33,7 @@ public class FailoutClientTest {
   private FailoutClient _failoutClient;
 
   @BeforeMethod
+  @SuppressWarnings({"rawtypes", "unchecked"})
   public void setup() throws URISyntaxException {
     _redirectStrategy = mock(FailoutRedirectStrategy.class);
     when(_redirectStrategy.redirect(any(), any())).thenReturn(new URI(REDIRECTED_URI));
@@ -63,6 +64,7 @@ public class FailoutClientTest {
   }
 
   @Test
+  @SuppressWarnings("rawtypes")
   public void testRestRequestLoadBalancerError() throws URISyntaxException {
     doAnswer(invocation -> {
       Callback callback = (Callback) invocation.getArguments()[1];
@@ -91,6 +93,7 @@ public class FailoutClientTest {
   }
 
   @Test
+  @SuppressWarnings("rawtypes")
   public void testStreamRequestLoadBalancerError() throws URISyntaxException {
     doAnswer(invocation -> {
       Callback callback = (Callback) invocation.getArguments()[1];
@@ -118,12 +121,14 @@ public class FailoutClientTest {
     assertEquals(requestArgumentCaptor.getValue().getURI().toString(), REDIRECTED_URI);
   }
 
+  @SuppressWarnings({"rawtypes", "unchecked"})
   private void sendAndVerifyRestRequest() throws URISyntaxException {
     Callback callback = mock(Callback.class);
     _failoutClient.restRequest(new RestRequestBuilder(new URI(REQUEST_URI)).build(), callback);
     verify(callback, times(1)).onSuccess(any());
   }
 
+  @SuppressWarnings({"rawtypes", "unchecked"})
   private void sendAndVerifyStreamRequest() throws URISyntaxException {
     Callback callback = mock(Callback.class);
     _failoutClient.streamRequest(new StreamRequestBuilder(new URI(REQUEST_URI)).build(EntityStreams.emptyStream()),
