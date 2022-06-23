@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2015 LinkedIn Corp.
+   Copyright (c) 2022 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -36,7 +36,9 @@ import org.testng.reporters.Files;
 
 
 /**
- * TODO: Remove this and PDSC field in resources permanently once translated PDSCs are no longer needed.
+ * We manually added translated PDSCs to be consistent with legacy PDSC JAR publishing behavior.
+ * This test is needed to ensure that PDLs and PDSCs models don't diverge.
+ * TODO: Remove this test and PDSC files in resources permanently once translated PDSCs are no longer needed.
  */
 public class TestLegacyPdscEquivalence
 {
@@ -51,7 +53,7 @@ public class TestLegacyPdscEquivalence
         (file) -> FilenameUtils.getExtension(file.getName()).equals(SchemaParser.FILETYPE))
         .stream()
         .collect(Collectors.toMap((file) -> FilenameUtils.removeExtension(file.getName()), file -> file));
-
+    Assert.assertFalse(pdscFiles.isEmpty(), "List of legacy PDSC files shouldn't be empty");
     DataSchemaParser dataSchemaParser = new DataSchemaParser.Builder(pdlSrcDir).build();
     Map<DataSchema, DataSchemaLocation> schemaLocationMap =
         dataSchemaParser.parseSources(new String[]{pdlSrcDir + "/com/linkedin/restli/common"}).getSchemaAndLocations();
@@ -67,7 +69,7 @@ public class TestLegacyPdscEquivalence
         pdscEncoder.encode(schemaEntry.getKey());
         String translatedPdsc = builder.result();
         Assert.assertEquals(translatedPdsc, Files.readFile(
-            pdscFiles.get(FilenameUtils.removeExtension(schemaEntry.getValue().getSourceFile().getName()))));
+            pdscFiles.get(FilenameUtils.removeExtension(schemaEntry.getValue().getSourceFile().getName()))).trim());
       }
     }
   }

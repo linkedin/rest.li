@@ -15,7 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.37.0] - 2022-06-23
-- Translate `:restli-common` PDL files to PDSC files to support legacy web use cases.
+- Package translated legacy PDSC models into `:restli-common` JAR
 
 ## [29.36.1] - 2022-06-22
 - Fix FailoutClient delegated client's restRequest invocation 
