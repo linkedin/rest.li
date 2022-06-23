@@ -1,6 +1,7 @@
 dependencies {
   compile project(':data')
   compile project(':data-transform')
+  compile project(':generator')
   compile project(':li-jersey-uri')
   compile project(':pegasus-common')
   compile project(':r2-core')
