@@ -126,6 +126,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -1956,18 +1957,19 @@ public final class RestLiAnnotationReader
     return false;
   }
 
-  private static void addResourceMethods(final Class<?> resourceClass,
-                                                   final ResourceModel model)
+  private static void addResourceMethods(final Class<?> resourceClass, final ResourceModel model)
   {
-    // this ignores methods declared in superclasses (e.g. template methods)
-    for (Method method : resourceClass.getDeclaredMethods())
-    {
-      // ignore synthetic, type-erased versions of methods
-      if (method.isSynthetic())
-      {
-        continue;
-      }
+    // this ignores methods declared in superclasses (e.g. template methods) and synthetic type-erased methods.
+    // We sort methods such that batch finders are always processed before finders. This ensures that any validation
+    // of linked batch finder methods from finders works as expected. We don't care about the order in which other
+    // methods are processed.
+    List<Method> methods = Arrays.stream(resourceClass.getDeclaredMethods())
+        .filter(method -> !method.isSynthetic())
+        .sorted(Comparator.comparing(RestLiAnnotationReader::getMethodIndex))
+        .collect(Collectors.toList());
 
+    for (Method method : methods)
+    {
       addActionResourceMethod(model, method);
       addBatchFinderResourceMethod(model, method);
       addFinderResourceMethod(model, method);
@@ -1976,6 +1978,29 @@ public final class RestLiAnnotationReader
     }
 
     validateResourceModel(model);
+  }
+
+  /**
+   * Return the index of a method.
+   *
+   * <p>This is used when sorting methods before validating them in {@link #addResourceMethods(Class, ResourceModel)}.
+   * The sorting is essential because we want batch finders to be always processed before finders, to ensure that
+   * any validation of linked batch finder methods from finders works as expected. We don't care about the order in
+   * which other methods are processed. </p>
+   */
+  static int getMethodIndex(Method method)
+  {
+    if (method.getAnnotation(BatchFinder.class) != null)
+    {
+      return 1;
+    }
+
+    if (method.getAnnotation(Finder.class) != null)
+    {
+      return 2;
+    }
+
+    return 3;
   }
 
   private static void validateResourceModel(final ResourceModel model)

@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.37.1] - 2022-06-29
+- Handle method order when validating methods to ensure consistent linked batch finder validation
+
 ## [29.37.0] - 2022-06-23
 - Package translated legacy PDSC models into `:restli-common` JAR
 
@@ -5264,7 +5267,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.1...master
+[29.37.1]: https://github.com/linkedin/rest.li/compare/v29.37.0...v29.37.1
 [29.37.0]: https://github.com/linkedin/rest.li/compare/v29.36.1...v29.37.0
 [29.36.1]: https://github.com/linkedin/rest.li/compare/v29.36.0...v29.36.1
 [29.36.0]: https://github.com/linkedin/rest.li/compare/v29.35.0...v29.36.0
