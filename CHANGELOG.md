@@ -14,8 +14,11 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.37.2] - 2022-07-01
+## [29.37.3] - 2022-07-18
 - Add connection warm up support when a failout has been initiated
+
+## [29.37.2] - 2022-07-18
+- Validate HTTP override header for query tunneling.
 
 ## [29.37.1] - 2022-06-29
 - Handle method order when validating methods to ensure consistent linked batch finder validation
@@ -5270,7 +5273,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.3...master
+[29.37.3]: https://github.com/linkedin/rest.li/compare/v29.37.2...v29.37.3
 [29.37.2]: https://github.com/linkedin/rest.li/compare/v29.37.1...v29.37.2
 [29.37.1]: https://github.com/linkedin/rest.li/compare/v29.37.0...v29.37.1
 [29.37.0]: https://github.com/linkedin/rest.li/compare/v29.36.1...v29.37.0
