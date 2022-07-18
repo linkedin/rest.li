@@ -15,12 +15,21 @@
 */
 package com.linkedin.d2.balancer.clusterfailout;
 
-import com.linkedin.d2.balancer.LoadBalancerState;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
- * Factory for creating a {@link FailoutConfigProvider}.
+ * A handler for handling connection warm up to peer clusters.
  */
-public interface FailoutConfigProviderFactory
+public interface FailedoutClusterConnectionWarmUpHandler
 {
-  FailoutConfigProvider create(LoadBalancerState loadBalancerState);
+  /**
+   * Warms up connections to the given cluster with provided failout config.
+   */
+  void warmUpConnections(@Nonnull String clusterName, @Nullable FailoutConfig config);
+
+  /**
+   * Shuts down this handler.
+   */
+  void shutdown();
 }

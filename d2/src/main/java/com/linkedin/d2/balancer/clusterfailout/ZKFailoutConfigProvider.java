@@ -53,6 +53,7 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
   public void shutdown()
   {
     _loadBalancerState.unregisterClusterListener(this);
+    _failedoutClusterManagers.values().forEach(FailedoutClusterManager::shutdown);
   }
 
   /**
@@ -61,8 +62,7 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
    * @return Parsed and processed config that's ready to be used for routing requests.
    */
   public abstract @Nullable
-  FailoutConfig createFailoutConfig(@Nonnull String clusterName,
-                                    @Nullable FailoutProperties failoutProperties);
+  FailoutConfig createFailoutConfig(@Nonnull String clusterName, @Nullable FailoutProperties failoutProperties);
 
   @Override
   public FailoutConfig getFailoutConfig(String clusterName)
@@ -81,7 +81,8 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
       _log.info("Detected cluster failout property change for cluster: {}. New properties: {}", clusterName, failoutProperties);
 
       final FailoutConfig failoutConfig = createFailoutConfig(clusterName, failoutProperties);
-      _failedoutClusterManagers.computeIfAbsent(clusterName, name -> new FailedoutClusterManager(clusterName, _loadBalancerState))
+      _failedoutClusterManagers
+        .computeIfAbsent(clusterName, name -> new FailedoutClusterManager(clusterName, _loadBalancerState, createConnectionWarmUpHandler()))
         .updateFailoutConfig(failoutConfig);
     }
     else
@@ -99,5 +100,21 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
       _log.info("Cluster: {} removed. Resetting cluster failout config.", clusterName);
       manager.updateFailoutConfig(null);
     }
+  }
+
+  /**
+   * Creates a {@link FailedoutClusterConnectionWarmUpHandler} to warm-up the connection to peer clusters before
+   * sending the actual request. Establishing connections can be costly and possibly overload the peer clusters
+   * when a large number of clients trying to connect to the peer clusters at the same time when fail out starts.
+   * Sub-classes can override this method to return a non-null handler to warm up the connections. Method will be
+   * invoked for each cluster failed out.
+   * @return null if no connection warm-up is required.
+   *         An instance of {@link FailedoutClusterConnectionWarmUpHandler} to handle warm-up.
+   *         Handler will be invoked once when we first start watching a peer cluster.
+   */
+  @Nullable
+  public FailedoutClusterConnectionWarmUpHandler createConnectionWarmUpHandler()
+  {
+    return null;
   }
 }

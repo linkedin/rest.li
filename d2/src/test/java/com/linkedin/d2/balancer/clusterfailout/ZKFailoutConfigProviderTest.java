@@ -53,6 +53,9 @@ import javax.net.ssl.SSLParameters;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
@@ -107,7 +110,7 @@ public class ZKFailoutConfigProviderTest
                                          new PropertyEventBusImpl<>(executorService, _serviceRegistry), clientFactories,
                                          loadBalancerStrategyFactories, sslContext, sslParameters, true, null, SSL_SESSION_VALIDATOR_FACTORY);
 
-    _clusterFailoutConfigProvider = new TestingZKFailoutConfigProvider(_state);
+    _clusterFailoutConfigProvider = spy(new TestingZKFailoutConfigProvider(_state));
     _clusterFailoutConfigProvider.start();
   }
 
@@ -117,6 +120,7 @@ public class ZKFailoutConfigProviderTest
     _state.listenToCluster(CLUSTER_NAME, new LoadBalancerState.NullStateListenerCallback());
     _clusterRegistry.put(CLUSTER_NAME, createClusterStoreProperties(false, false, Collections.emptySet()));
     assertNull(_clusterFailoutConfigProvider.getFailoutConfig(CLUSTER_NAME));
+    verify(_clusterFailoutConfigProvider, times(1)).createConnectionWarmUpHandler();
   }
 
   @Test
@@ -147,6 +151,8 @@ public class ZKFailoutConfigProviderTest
     assertNotNull(config);
     assertFalse(config.isFailedOut());
     assertTrue(config.getPeerClusters().isEmpty());
+
+    verify(_clusterFailoutConfigProvider, times(1)).createConnectionWarmUpHandler();
   }
 
   @Test
@@ -156,6 +162,8 @@ public class ZKFailoutConfigProviderTest
 
     _clusterRegistry.put(CLUSTER_NAME, createClusterStoreProperties(false, false, Collections.emptySet()));
     assertNull(_clusterFailoutConfigProvider.getFailoutConfig(CLUSTER_NAME));
+
+    verify(_clusterFailoutConfigProvider, times(1)).createConnectionWarmUpHandler();
   }
 
   private static class TestingZKFailoutConfigProvider extends ZKFailoutConfigProvider

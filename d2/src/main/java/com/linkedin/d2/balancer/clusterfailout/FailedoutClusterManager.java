@@ -40,13 +40,16 @@ public class FailedoutClusterManager
   private static final Logger _log = LoggerFactory.getLogger(FailedoutClusterManager.class);
   private final String _clusterName;
   private final LoadBalancerState _loadBalancerState;
-  private final ConcurrentMap<String, LoadBalancerStateListenerCallback> _clusterListeners = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, LoadBalancerStateListenerCallback> _clusterListenerCallbacks = new ConcurrentHashMap<>();
+  private final FailedoutClusterConnectionWarmUpHandler _connectionWarmUpHandler;
   private FailoutConfig _failoutConfig;
 
-  public FailedoutClusterManager(@Nonnull String clusterName, @Nonnull LoadBalancerState loadBalancerState)
+  public FailedoutClusterManager(@Nonnull String clusterName, @Nonnull LoadBalancerState loadBalancerState,
+                                 @Nullable FailedoutClusterConnectionWarmUpHandler connectionWarmUpHandler)
   {
     _clusterName = clusterName;
     _loadBalancerState = loadBalancerState;
+    _connectionWarmUpHandler = connectionWarmUpHandler;
   }
 
   public String getClusterName()
@@ -81,6 +84,13 @@ public class FailedoutClusterManager
     _failoutConfig = failoutConfig;
   }
 
+  public void shutdown()
+  {
+    if (_connectionWarmUpHandler != null) {
+      _connectionWarmUpHandler.shutdown();
+    }
+  }
+
   /**
    * Processes failout config of the failed out downstream cluster.
    */
@@ -94,7 +104,7 @@ public class FailedoutClusterManager
     else
     {
       Set<String> peerClusters = failoutConfig.getPeerClusters();
-      addPeerClusterWatches(peerClusters);
+      addPeerClusterWatches(peerClusters, failoutConfig);
     }
   }
 
@@ -102,9 +112,9 @@ public class FailedoutClusterManager
    * Call this method when a cluster is failed out and/or new peer clusters of the failed out downstream cluster are identified.
    * @param newPeerClusters Name of the peer clusters of the failed out downstream clusters
    */
-  void addPeerClusterWatches(@Nonnull Set<String> newPeerClusters)
+  void addPeerClusterWatches(@Nonnull Set<String> newPeerClusters, @Nonnull FailoutConfig failoutConfig)
   {
-    final Set<String> existingPeerClusters = _clusterListeners.keySet();
+    final Set<String> existingPeerClusters = _clusterListenerCallbacks.keySet();
 
     if (newPeerClusters.isEmpty())
     {
@@ -117,7 +127,7 @@ public class FailedoutClusterManager
 
     if (!peerClustersToAdd.isEmpty())
     {
-      addClusterWatches(peerClustersToAdd);
+      addClusterWatches(peerClustersToAdd, failoutConfig);
     }
 
     final Set<String> peerClustersToRemove = new HashSet<>(existingPeerClusters);
@@ -134,10 +144,10 @@ public class FailedoutClusterManager
    */
   void removePeerClusterWatches()
   {
-    removeClusterWatches(_clusterListeners.keySet());
+    removeClusterWatches(_clusterListenerCallbacks.keySet());
   }
 
-  private void addClusterWatches(@Nonnull Set<String> clustersToWatch)
+  private void addClusterWatches(@Nonnull Set<String> clustersToWatch, @Nonnull FailoutConfig failoutConfig)
   {
     if (_log.isDebugEnabled())
     {
@@ -145,11 +155,16 @@ public class FailedoutClusterManager
     }
     for (final String cluster : clustersToWatch)
     {
-      _clusterListeners.computeIfAbsent(cluster, clusterName -> {
-        // TODO(RESILIEN-50): Establish connections to peer clusters when listener#done() is invoked.
-        LoadBalancerStateListenerCallback listener = new LoadBalancerState.NullStateListenerCallback();
-        _loadBalancerState.listenToCluster(cluster, listener);
-        return listener;
+      _clusterListenerCallbacks.computeIfAbsent(cluster, clusterName -> {
+        LoadBalancerStateListenerCallback listenerCallback = (type, name) -> {
+          if (_connectionWarmUpHandler != null)
+          {
+            _log.debug("Warming up connections to: " + cluster);
+            _connectionWarmUpHandler.warmUpConnections(cluster, failoutConfig);
+          }
+        };
+        _loadBalancerState.listenToCluster(cluster, listenerCallback);
+        return listenerCallback;
       });
     }
   }
@@ -162,7 +177,7 @@ public class FailedoutClusterManager
     }
     for (String cluster : clustersToRemove)
     {
-      final LoadBalancerStateListenerCallback listener = _clusterListeners.remove(cluster);
+      final LoadBalancerStateListenerCallback listener = _clusterListenerCallbacks.remove(cluster);
       if (listener != null)
       {
         // TODO(RESILIEN-51): Unregister watches when failout is over
