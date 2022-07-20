@@ -70,6 +70,7 @@ public class TemplateSpecGenerator
   private static final String ARRAY_SUFFIX = "Array";
   private static final String MAP_SUFFIX = "Map";
   private static final String UNION_SUFFIX = "Union";
+  private static final String DEPRECATED = "deprecated";
   // Separator to add with the suffix for unnamed types. This should be a character allowed in java type names but not
   // allowed in pdl identifiers.
   private static final String CLASS_NAME_SUFFIX_SEPARATOR = "$";
@@ -132,8 +133,17 @@ public class TemplateSpecGenerator
    */
   public ClassTemplateSpec generate(DataSchema schema, DataSchemaLocation location)
   {
+    return generate(schema, location, false);
+  }
+
+  /**
+   * Generate {@link ClassTemplateSpec} from the specified {@link DataSchema} and its location. If skipDeprecatedField
+   * is set to true, the class of the deprecated field will be bypassed in the generated specs.
+   */
+  public ClassTemplateSpec generate(DataSchema schema, DataSchemaLocation location, boolean skipDeprecatedField)
+  {
     pushCurrentLocation(location);
-    final ClassTemplateSpec result = processSchema(schema, null, null);
+    final ClassTemplateSpec result = processSchema(schema, null, null, skipDeprecatedField);
     popCurrentLocation();
     return result;
   }
@@ -313,7 +323,7 @@ public class TemplateSpecGenerator
     _classTemplateSpecs.add(classTemplateSpec);
   }
 
-  private ClassTemplateSpec processSchema(DataSchema schema, ClassTemplateSpec enclosingClass, String memberName)
+  private ClassTemplateSpec processSchema(DataSchema schema, ClassTemplateSpec enclosingClass, String memberName, boolean skipDeprecatedField)
   {
     final CustomInfoSpec customInfo = getImmediateCustomInfo(schema);
     ClassTemplateSpec result = null;
@@ -332,7 +342,7 @@ public class TemplateSpecGenerator
       schema = typerefSchema.getRef();
       if (schema.getType() == DataSchema.Type.UNION)
       {
-        result = (found != null) ? found : generateUnion((UnionDataSchema) schema, typerefSchema);
+        result = (found != null) ? found : generateUnion((UnionDataSchema) schema, typerefSchema, skipDeprecatedField);
         break;
       }
       else if (found == null)
@@ -352,11 +362,11 @@ public class TemplateSpecGenerator
         {
           if (schema instanceof NamedDataSchema)
           {
-            result = generateNamedSchema((NamedDataSchema) schema);
+            result = generateNamedSchema((NamedDataSchema) schema, skipDeprecatedField);
           }
           else
           {
-            result = generateUnnamedComplexSchema(schema, enclosingClass, memberName);
+            result = generateUnnamedComplexSchema(schema, enclosingClass, memberName, skipDeprecatedField);
           }
         }
         else
@@ -487,7 +497,7 @@ public class TemplateSpecGenerator
     throw unrecognizedSchemaType(enclosingClass, memberName, schema);
   }
 
-  private ClassTemplateSpec generateNamedSchema(NamedDataSchema schema)
+  private ClassTemplateSpec generateNamedSchema(NamedDataSchema schema, boolean skipDeprecatedField)
   {
     pushCurrentLocation(_schemaResolver.nameToDataSchemaLocations().get(schema.getFullName()));
 
@@ -499,7 +509,7 @@ public class TemplateSpecGenerator
     switch (schema.getType())
     {
       case RECORD:
-        templateClass = generateRecord((RecordDataSchema) schema);
+        templateClass = generateRecord((RecordDataSchema) schema, skipDeprecatedField);
         break;
       case ENUM:
         templateClass = generateEnum((EnumDataSchema) schema);
@@ -516,19 +526,19 @@ public class TemplateSpecGenerator
     return templateClass;
   }
 
-  private ClassTemplateSpec generateUnnamedComplexSchema(DataSchema schema, ClassTemplateSpec enclosingClass, String memberName)
+  private ClassTemplateSpec generateUnnamedComplexSchema(DataSchema schema, ClassTemplateSpec enclosingClass, String memberName, boolean skipDeprecatedField)
   {
     if (schema instanceof ArrayDataSchema)
     {
-      return generateArray((ArrayDataSchema) schema, enclosingClass, memberName);
+      return generateArray((ArrayDataSchema) schema, enclosingClass, memberName, skipDeprecatedField);
     }
     else if (schema instanceof MapDataSchema)
     {
-      return generateMap((MapDataSchema) schema, enclosingClass, memberName);
+      return generateMap((MapDataSchema) schema, enclosingClass, memberName, skipDeprecatedField);
     }
     else if (schema instanceof UnionDataSchema)
     {
-      return generateUnion((UnionDataSchema) schema, enclosingClass, memberName);
+      return generateUnion((UnionDataSchema) schema, enclosingClass, memberName, skipDeprecatedField);
     }
     else
     {
@@ -555,7 +565,7 @@ public class TemplateSpecGenerator
     return result;
   }
 
-  private ArrayTemplateSpec generateArray(ArrayDataSchema schema, ClassTemplateSpec enclosingClass, String memberName)
+  private ArrayTemplateSpec generateArray(ArrayDataSchema schema, ClassTemplateSpec enclosingClass, String memberName, boolean skipDeprecatedField)
   {
     final DataSchema itemSchema = schema.getItems();
 
@@ -568,7 +578,7 @@ public class TemplateSpecGenerator
        * schema processing is necessary in order to processSchema the data template classes for those type
        * refs.
        */
-      processSchema(itemSchema, enclosingClass, memberName);
+      processSchema(itemSchema, enclosingClass, memberName, skipDeprecatedField);
 
       return (ArrayTemplateSpec) classInfo.existingClass;
     }
@@ -576,7 +586,7 @@ public class TemplateSpecGenerator
     final ArrayTemplateSpec arrayClass = (ArrayTemplateSpec) classInfo.definedClass;
     registerClassTemplateSpec(schema, arrayClass);
 
-    arrayClass.setItemClass(processSchema(itemSchema, enclosingClass, memberName));
+    arrayClass.setItemClass(processSchema(itemSchema, enclosingClass, memberName, skipDeprecatedField));
     arrayClass.setItemDataClass(determineDataClass(itemSchema, enclosingClass, memberName));
 
     final CustomInfoSpec customInfo = getImmediateCustomInfo(itemSchema);
@@ -585,7 +595,7 @@ public class TemplateSpecGenerator
     return arrayClass;
   }
 
-  private MapTemplateSpec generateMap(MapDataSchema schema, ClassTemplateSpec enclosingClass, String memberName)
+  private MapTemplateSpec generateMap(MapDataSchema schema, ClassTemplateSpec enclosingClass, String memberName, boolean skipDeprecatedField)
   {
     final DataSchema valueSchema = schema.getValues();
 
@@ -598,7 +608,7 @@ public class TemplateSpecGenerator
        * schema processing is necessary in order to processSchema the data template classes for those type
        * refs.
        */
-      processSchema(valueSchema, enclosingClass, memberName);
+      processSchema(valueSchema, enclosingClass, memberName, skipDeprecatedField);
 
       return (MapTemplateSpec) classInfo.existingClass;
     }
@@ -606,7 +616,7 @@ public class TemplateSpecGenerator
     final MapTemplateSpec mapClass = (MapTemplateSpec) classInfo.definedClass;
     registerClassTemplateSpec(schema, mapClass);
 
-    mapClass.setValueClass(processSchema(valueSchema, enclosingClass, memberName));
+    mapClass.setValueClass(processSchema(valueSchema, enclosingClass, memberName, skipDeprecatedField));
     mapClass.setValueDataClass(determineDataClass(valueSchema, enclosingClass, memberName));
 
     final CustomInfoSpec customInfo = getImmediateCustomInfo(valueSchema);
@@ -615,7 +625,7 @@ public class TemplateSpecGenerator
     return mapClass;
   }
 
-  private UnionTemplateSpec generateUnion(UnionDataSchema schema, ClassTemplateSpec enclosingClass, String memberName)
+  private UnionTemplateSpec generateUnion(UnionDataSchema schema, ClassTemplateSpec enclosingClass, String memberName, boolean skipDeprecatedField)
   {
     if (enclosingClass == null || memberName == null)
     {
@@ -628,10 +638,10 @@ public class TemplateSpecGenerator
     }
     final UnionTemplateSpec unionClass = (UnionTemplateSpec) classInfo.definedClass;
     registerClassTemplateSpec(schema, unionClass);
-    return generateUnion(schema, unionClass);
+    return generateUnion(schema, unionClass, skipDeprecatedField);
   }
 
-  private ClassTemplateSpec generateUnion(UnionDataSchema schema, TyperefDataSchema typerefDataSchema)
+  private ClassTemplateSpec generateUnion(UnionDataSchema schema, TyperefDataSchema typerefDataSchema, boolean skipDeprecatedField)
   {
     assert typerefDataSchema.getRef() == schema;
 
@@ -649,14 +659,14 @@ public class TemplateSpecGenerator
     typerefInfoClass.setClassName("UnionTyperefInfo");
     typerefInfoClass.setModifiers(ModifierSpec.PRIVATE, ModifierSpec.STATIC, ModifierSpec.FINAL);
 
-    final UnionTemplateSpec result = generateUnion(schema, unionClass);
+    final UnionTemplateSpec result = generateUnion(schema, unionClass, skipDeprecatedField);
     result.setTyperefClass(typerefInfoClass);
 
     popCurrentLocation();
     return result;
   }
 
-  private UnionTemplateSpec generateUnion(UnionDataSchema schema, UnionTemplateSpec unionClass)
+  private UnionTemplateSpec generateUnion(UnionDataSchema schema, UnionTemplateSpec unionClass, boolean skipDeprecatedField)
   {
     final Map<CustomInfoSpec, Object> customInfoMap = new IdentityHashMap<>(schema.getMembers().size() * 2);
 
@@ -672,7 +682,7 @@ public class TemplateSpecGenerator
 
       if (memberType.getDereferencedType() != DataSchema.Type.NULL)
       {
-        newMember.setClassTemplateSpec(processSchema(memberType, unionClass, memberType.getUnionMemberKey()));
+        newMember.setClassTemplateSpec(processSchema(memberType, unionClass, memberType.getUnionMemberKey(), skipDeprecatedField));
         newMember.setDataClass(determineDataClass(memberType, unionClass, memberType.getUnionMemberKey()));
         final CustomInfoSpec customInfo = getImmediateCustomInfo(memberType);
         if (customInfo != null)
@@ -730,7 +740,7 @@ public class TemplateSpecGenerator
     return typerefClass;
   }
 
-  private RecordTemplateSpec generateRecord(RecordDataSchema schema)
+  private RecordTemplateSpec generateRecord(RecordDataSchema schema, boolean skipDeprecatedField)
   {
     final RecordTemplateSpec recordClass = new RecordTemplateSpec(schema);
     recordClass.setNamespace(schema.getNamespace());
@@ -744,14 +754,17 @@ public class TemplateSpecGenerator
     final List<NamedDataSchema> includes = schema.getInclude();
     for (NamedDataSchema includedSchema : includes)
     {
-      processSchema(includedSchema, null, null);
+      processSchema(includedSchema, null, null, skipDeprecatedField);
     }
 
     final Map<CustomInfoSpec, Object> customInfoMap = new IdentityHashMap<>(schema.getFields().size() * 2);
 
     for (RecordDataSchema.Field field : schema.getFields())
     {
-      final ClassTemplateSpec fieldClass = processSchema(field.getType(), recordClass, field.getName());
+      if (skipDeprecatedField && isDeprecated(field)) {
+        continue;
+      }
+      final ClassTemplateSpec fieldClass = processSchema(field.getType(), recordClass, field.getName(), skipDeprecatedField);
       final RecordTemplateSpec.Field newField = new RecordTemplateSpec.Field();
       newField.setSchemaField(field);
       newField.setType(fieldClass);
@@ -772,6 +785,27 @@ public class TemplateSpecGenerator
     }
 
     return recordClass;
+  }
+
+  private boolean isDeprecated(RecordDataSchema.Field field) {
+    Map<String, Object> properties = field.getProperties();
+    if (properties.containsKey(DEPRECATED)) {
+      Object property = properties.get(DEPRECATED);
+      if (property instanceof Boolean)
+      {
+        return (Boolean) properties.get(DEPRECATED);
+      }
+      else if (property instanceof String)
+      {
+        return true;
+      }
+      else
+      {
+        throw new IllegalArgumentException("Expected boolean or string value for '" + DEPRECATED + "' property in " + field.getRecord().getFullName());
+      }
+    } else {
+      return false;
+    }
   }
 
   /*
