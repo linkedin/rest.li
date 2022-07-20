@@ -21,6 +21,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.ComplexDataSchema;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.EnumDataSchema;
@@ -70,7 +71,6 @@ public class TemplateSpecGenerator
   private static final String ARRAY_SUFFIX = "Array";
   private static final String MAP_SUFFIX = "Map";
   private static final String UNION_SUFFIX = "Union";
-  private static final String DEPRECATED = "deprecated";
   // Separator to add with the suffix for unnamed types. This should be a character allowed in java type names but not
   // allowed in pdl identifiers.
   private static final String CLASS_NAME_SUFFIX_SEPARATOR = "$";
@@ -789,11 +789,11 @@ public class TemplateSpecGenerator
 
   private boolean isDeprecated(RecordDataSchema.Field field) {
     Map<String, Object> properties = field.getProperties();
-    if (properties.containsKey(DEPRECATED)) {
-      Object property = properties.get(DEPRECATED);
+    if (properties.containsKey(DataSchemaConstants.DEPRECATED_KEY)) {
+      Object property = properties.get(DataSchemaConstants.DEPRECATED_KEY);
       if (property instanceof Boolean)
       {
-        return (Boolean) properties.get(DEPRECATED);
+        return (Boolean) property;
       }
       else if (property instanceof String)
       {
@@ -801,7 +801,7 @@ public class TemplateSpecGenerator
       }
       else
       {
-        throw new IllegalArgumentException("Expected boolean or string value for '" + DEPRECATED + "' property in " + field.getRecord().getFullName());
+        throw new IllegalArgumentException("Expected boolean or string value for '" + DataSchemaConstants.DEPRECATED_KEY + "' property in " + field.getRecord().getFullName());
       }
     } else {
       return false;
