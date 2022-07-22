@@ -34,6 +34,12 @@ dependencies {
   testCompile project(':test-util')
   testCompile project(':d2-test-api')
   testCompileOnly externalDependency.findbugs
+
+  runtimeOnly externalDependency.grpcNettyShaded
+  implementation externalDependency.grpcProtobuf
+  implementation externalDependency.grpcStub
+  implementation externalDependency.protobufJavaUtil
+  implementation externalDependency.envoyApi
 }
 
 task packup(dependsOn: configurations.default.allArtifacts, type: Copy) {
