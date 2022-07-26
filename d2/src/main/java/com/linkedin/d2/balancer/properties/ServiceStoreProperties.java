@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.properties;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.linkedin.d2.balancer.subsetting.SubsettingStrategy;
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import java.net.URI;
@@ -34,6 +35,7 @@ import java.util.Set;
  * certain objects are serialized differently than how Jackson would serialize the object (for instance, using different key names), and
  * that will cause problems in serialization/deserialization.
  */
+@JsonInclude(JsonInclude.Include.NON_NULL) // NOTE: fields with null values will NOT be serialized (won't be included in ZK data)
 public class ServiceStoreProperties extends ServiceProperties
 {
   protected final ServiceProperties _canaryConfigs;
