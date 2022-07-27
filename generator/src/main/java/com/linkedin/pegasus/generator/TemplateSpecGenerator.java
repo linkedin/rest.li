@@ -137,8 +137,10 @@ public class TemplateSpecGenerator
   }
 
   /**
-   * Generate {@link ClassTemplateSpec} from the specified {@link DataSchema} and its location. If skipDeprecatedField
-   * is set to true, the class of the deprecated field will be bypassed in the generated specs.
+   * Generate {@link ClassTemplateSpec} from the specified {@link DataSchema} and its location.
+   *
+   * @param skipDeprecatedField flag to indicate whether to skip spec generation for deprecated fields, their types and referenced types.
+   *                            This behavior affect the spec generation recursively.
    */
   public ClassTemplateSpec generate(DataSchema schema, DataSchemaLocation location, boolean skipDeprecatedField)
   {
@@ -761,6 +763,7 @@ public class TemplateSpecGenerator
 
     for (RecordDataSchema.Field field : schema.getFields())
     {
+      // If skipDeprecatedField is set, spec generator will recursively skip deprecated field, its type and types referenced within this type
       if (skipDeprecatedField && isDeprecated(field)) {
         continue;
       }
