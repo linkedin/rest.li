@@ -16,8 +16,8 @@
 
 package com.linkedin.d2.balancer.properties;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
-import com.linkedin.d2.balancer.properties.FailoutProperties;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashSet;
@@ -36,6 +36,7 @@ import java.util.Set;
  * how Jackson would serialize the object (for instance, using different key names), and
  * that will cause problems in serialization/deserialization.
  */
+@JsonInclude(JsonInclude.Include.NON_NULL) // NOTE: fields with null values will NOT be serialized (won't be included in ZK data)
 public class ClusterStoreProperties extends ClusterProperties
 {
   protected final ClusterProperties _canaryConfigs;
