@@ -1,4 +1,5 @@
 dependencies {
   compile project(':d2')
   compile externalDependency.testng
+  compileOnly externalDependency.findbugs
 }
