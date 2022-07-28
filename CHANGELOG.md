@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.37.5] - 2022-07-28
+- Add option to skip deprecated field when recursively generate class spec
+
 ## [29.37.4] - 2022-07-25
 - Serialize ZK data with non-null fields only 
 
