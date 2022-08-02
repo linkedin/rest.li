@@ -140,7 +140,6 @@ public class TemplateSpecGenerator
    * Generate {@link ClassTemplateSpec} from the specified {@link DataSchema} and its location.
    *
    * @param skipDeprecatedField flag to indicate whether to skip spec generation for deprecated fields, their types and referenced types.
-   *                            This behavior affect the spec generation recursively.
    */
   public ClassTemplateSpec generate(DataSchema schema, DataSchemaLocation location, boolean skipDeprecatedField)
   {
@@ -756,18 +755,18 @@ public class TemplateSpecGenerator
     final List<NamedDataSchema> includes = schema.getInclude();
     for (NamedDataSchema includedSchema : includes)
     {
-      processSchema(includedSchema, null, null, skipDeprecatedField);
+      processSchema(includedSchema, null, null, false);
     }
 
     final Map<CustomInfoSpec, Object> customInfoMap = new IdentityHashMap<>(schema.getFields().size() * 2);
 
     for (RecordDataSchema.Field field : schema.getFields())
     {
-      // If skipDeprecatedField is set, spec generator will recursively skip deprecated field, its type and types referenced within this type
+      // If skipDeprecatedField is set, spec generator will skip deprecated field, its type and types referenced within this type
       if (skipDeprecatedField && isDeprecated(field)) {
         continue;
       }
-      final ClassTemplateSpec fieldClass = processSchema(field.getType(), recordClass, field.getName(), skipDeprecatedField);
+      final ClassTemplateSpec fieldClass = processSchema(field.getType(), recordClass, field.getName(), false);
       final RecordTemplateSpec.Field newField = new RecordTemplateSpec.Field();
       newField.setSchemaField(field);
       newField.setType(fieldClass);
