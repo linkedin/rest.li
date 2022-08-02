@@ -20,6 +20,7 @@ import com.linkedin.d2.balancer.LoadBalancerState;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.mockito.ArgumentCaptor;
@@ -112,11 +113,11 @@ public class FailedoutClusterManagerTest
     verify(_loadBalancerState, times(1)).listenToCluster(eq(PEER_CLUSTER_NAME2), any());
     verify(_warmUpHandler, times(1)).cancelPendingRequests(eq(PEER_CLUSTER_NAME2));
 
-    ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
+    ArgumentCaptor<Callable> captor = ArgumentCaptor.forClass(Callable.class);
     verify(_scheduledExecutorService, times(1)).schedule(captor.capture(),
         eq(PEER_WATCH_TEAR_DOWN_DELAY_MS), eq(TimeUnit.MILLISECONDS));
 
-    captor.getValue().run();
+    captor.getValue().call();
     verify(_loadBalancerState, times(1)).stopListenToCluster(eq(PEER_CLUSTER_NAME2));
   }
 
@@ -222,11 +223,11 @@ public class FailedoutClusterManagerTest
     verify(_warmUpHandler, never()).warmUpConnections(any(), any());
     verify(_warmUpHandler, times(1)).cancelPendingRequests(eq(PEER_CLUSTER_NAME1));
 
-    ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
+    ArgumentCaptor<Callable> captor = ArgumentCaptor.forClass(Callable.class);
     verify(_scheduledExecutorService, times(1)).schedule(captor.capture(),
         eq(PEER_WATCH_TEAR_DOWN_DELAY_MS), eq(TimeUnit.MILLISECONDS));
 
-    captor.getValue().run();
+    captor.getValue().call();
     verify(_loadBalancerState, times(1)).stopListenToCluster(eq(PEER_CLUSTER_NAME1));
   }
 
