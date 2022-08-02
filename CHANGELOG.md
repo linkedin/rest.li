@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.37.7] - 2022-08-02
+- Support removing cluster watches created due to cluster failout
+
 ## [29.37.6] - 2022-07-28
 - Bump ZooKeeper client version to [3.7.1](https://zookeeper.apache.org/releases.html#releasenotes) (latest stable version at the time).
 
@@ -5282,7 +5285,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.7...master
+[29.37.7]: https://github.com/linkedin/rest.li/compare/v29.37.6...v29.37.7
 [29.37.6]: https://github.com/linkedin/rest.li/compare/v29.37.5...v29.37.6
 [29.37.5]: https://github.com/linkedin/rest.li/compare/v29.37.4...v29.37.5
 [29.37.4]: https://github.com/linkedin/rest.li/compare/v29.37.3...v29.37.4
