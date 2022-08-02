@@ -73,6 +73,16 @@ public interface LoadBalancerState
 
   void listenToCluster(String clusterName, LoadBalancerStateListenerCallback callback);
 
+  /**
+   * Stops listening to a cluster
+   * @param clusterName the cluster to stop listening to.
+   * @return true if listeners successfully stopped.
+   */
+  default boolean stopListenToCluster(String clusterName)
+  {
+    return false;
+  }
+
   void start(Callback<None> callback);
 
   void shutdown(PropertyEventShutdownCallback shutdown);

@@ -166,6 +166,12 @@ public class LoadBalancerTestState implements LoadBalancerState
   }
 
   @Override
+  public boolean stopListenToCluster(String clusterName)
+  {
+    return !listenToCluster;
+  }
+
+  @Override
   public void listenToService(String serviceName,
                               LoadBalancerStateListenerCallback callback)
   {

@@ -22,6 +22,7 @@ import com.linkedin.d2.balancer.properties.FailoutProperties;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -36,10 +37,28 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
   private static final Logger _log = LoggerFactory.getLogger(FailedoutClusterManager.class);
   private final ConcurrentMap<String, FailedoutClusterManager> _failedoutClusterManagers = new ConcurrentHashMap<>();
   private final LoadBalancerState _loadBalancerState;
+  /**
+   * If provided, this executor will be used to schedule peer cluster watch removal.
+   */
+  private final ScheduledExecutorService _scheduledExecutorService;
+  /**
+   * {@link #_scheduledExecutorService} must be provided for this config to be effective.
+   * This controls the delay that we will wait before removing peer cluster watches after the failout is over, which
+   * helps to make sure that any pending requests to the peer clusters are finished.
+   */
+  private final long _peerWatchTeardownDelayMs;
 
   public ZKFailoutConfigProvider(@Nonnull LoadBalancerState loadBalancerState)
   {
+    this(loadBalancerState, 0, null);
+  }
+
+  public ZKFailoutConfigProvider(@Nonnull LoadBalancerState loadBalancerState,
+      long peerWatchTeardownDelayMs, ScheduledExecutorService scheduledExecutorService)
+  {
     _loadBalancerState = loadBalancerState;
+    _peerWatchTeardownDelayMs = peerWatchTeardownDelayMs;
+    _scheduledExecutorService = scheduledExecutorService;
   }
 
   @Override
@@ -82,7 +101,8 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
 
       final FailoutConfig failoutConfig = createFailoutConfig(clusterName, failoutProperties);
       _failedoutClusterManagers
-        .computeIfAbsent(clusterName, name -> new FailedoutClusterManager(clusterName, _loadBalancerState, createConnectionWarmUpHandler()))
+        .computeIfAbsent(clusterName, name -> new FailedoutClusterManager(clusterName, _loadBalancerState,
+            createConnectionWarmUpHandler(), _peerWatchTeardownDelayMs, _scheduledExecutorService))
         .updateFailoutConfig(failoutConfig);
     }
     else

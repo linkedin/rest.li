@@ -145,6 +145,12 @@ public class StaticLoadBalancerState implements LoadBalancerState
   }
 
   @Override
+  public boolean stopListenToCluster(String clusterName)
+  {
+    return false;
+  }
+
+  @Override
   public void start(Callback<None> callback)
   {
     callback.onSuccess(None.none());

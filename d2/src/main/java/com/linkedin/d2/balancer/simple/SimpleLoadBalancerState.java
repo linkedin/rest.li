@@ -544,6 +544,13 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _uriSubscriber.ensureListening(clusterName, wrappedCallback);
   }
 
+  public boolean stopListenToCluster(final String clusterName)
+  {
+    trace(_log, "stopListenToCluster: ", clusterName);
+
+    return _clusterSubscriber.ensureNotListening(clusterName) && _uriSubscriber.ensureNotListening(clusterName);
+  }
+
   @Override
   public LoadBalancerStateItem<UriProperties> getUriProperties(String clusterName)
   {

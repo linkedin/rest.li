@@ -514,6 +514,76 @@ public class SimpleLoadBalancerStateTest
   }
 
   @Test(groups = { "small", "back-end" })
+  public void testStopListenToCluster() throws InterruptedException
+  {
+    reset();
+
+    List<String> schemes = new ArrayList<>();
+
+    schemes.add("http");
+
+    assertFalse(_state.isListeningToCluster("cluster-1"));
+    assertNull(_state.getClusterProperties("cluster-1"));
+
+    final CountDownLatch latch = new CountDownLatch(1);
+    LoadBalancerStateListenerCallback callback = new LoadBalancerStateListenerCallback()
+    {
+      @Override
+      public void done(int type, String name)
+      {
+        latch.countDown();
+      }
+    };
+
+    _state.listenToCluster("cluster-1", callback);
+
+    if (!latch.await(5, TimeUnit.SECONDS))
+    {
+      fail("didn't get callback when listenToCluster was called");
+    }
+
+    assertTrue(_state.isListeningToCluster("cluster-1"));
+    assertNotNull(_state.getClusterProperties("cluster-1"));
+    assertNull(_state.getClusterProperties("cluster-1").getProperty());
+
+    ClusterProperties firstProperty = new ClusterProperties("cluster-1", schemes);
+
+    _clusterRegistry.put("cluster-1", firstProperty);
+
+    assertTrue(_state.isListeningToCluster("cluster-1"));
+    assertNotNull(_state.getClusterProperties("cluster-1"));
+    assertEquals(_state.getClusterProperties("cluster-1").getProperty(), firstProperty);
+
+    _state.stopListenToCluster("cluster-1");
+    assertFalse(_state.isListeningToCluster("cluster-1"));
+
+    ClusterProperties newProperty = new ClusterProperties("cluster-1");
+    _clusterRegistry.put("cluster-1", newProperty);
+    // Property should not be updated since we have stopped listening
+    assertEquals(_state.getClusterProperties("cluster-1").getProperty(), firstProperty);
+
+    // Start listening again and we should be getting the new property this time
+    final CountDownLatch newLatch = new CountDownLatch(1);
+    LoadBalancerStateListenerCallback newCallback = new LoadBalancerStateListenerCallback()
+    {
+      @Override
+      public void done(int type, String name)
+      {
+        newLatch.countDown();
+      }
+    };
+
+    _state.listenToCluster("cluster-1", newCallback);
+
+    if (!newLatch.await(5, TimeUnit.SECONDS))
+    {
+      fail("didn't get callback when listenToCluster was called");
+    }
+
+    assertEquals(_state.getClusterProperties("cluster-1").getProperty(), newProperty);
+  }
+
+  @Test(groups = { "small", "back-end" })
   public void testGetClient() throws URISyntaxException
   {
     reset();
