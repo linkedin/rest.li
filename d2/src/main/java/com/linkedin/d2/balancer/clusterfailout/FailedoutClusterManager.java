@@ -95,7 +95,8 @@ public class FailedoutClusterManager
 
   public void shutdown()
   {
-    if (_connectionWarmUpHandler != null) {
+    if (_connectionWarmUpHandler != null)
+    {
       _connectionWarmUpHandler.shutdown();
     }
   }
@@ -164,11 +165,13 @@ public class FailedoutClusterManager
     }
     for (final String cluster : clustersToWatch)
     {
-      _peerWatches.computeIfAbsent(cluster, clusterName -> {
+      _peerWatches.computeIfAbsent(cluster, clusterName ->
+      {
         boolean watchExistsBeforeFailout = _loadBalancerState.isListeningToCluster(clusterName);
         PeerWatchState peerWatchState = new PeerWatchState(watchExistsBeforeFailout);
 
-        LoadBalancerStateListenerCallback listenerCallback = (type, name) -> {
+        LoadBalancerStateListenerCallback listenerCallback = (type, name) ->
+        {
           if (_connectionWarmUpHandler != null)
           {
             _log.debug("Warming up connections to: " + cluster);
@@ -192,7 +195,8 @@ public class FailedoutClusterManager
     for (String cluster : clustersToRemove)
     {
       final PeerWatchState peerWatchState = _peerWatches.remove(cluster);
-      if (peerWatchState == null) {
+      if (peerWatchState == null)
+      {
         continue;
       }
       if (_connectionWarmUpHandler != null)
