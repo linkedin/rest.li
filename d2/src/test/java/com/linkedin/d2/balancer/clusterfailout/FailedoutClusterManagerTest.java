@@ -105,8 +105,8 @@ public class FailedoutClusterManagerTest
   }
 
   @Test
-  public void testAddPeerClusterWatchesWithPeerClusterRemoved()
-  {
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  public void testAddPeerClusterWatchesWithPeerClusterRemoved() throws Exception {
     _manager.addPeerClusterWatches(new HashSet<>(Arrays.asList(PEER_CLUSTER_NAME1, PEER_CLUSTER_NAME2)), mock(FailoutConfig.class));
     _manager.addPeerClusterWatches(new HashSet<>(Arrays.asList(PEER_CLUSTER_NAME1)), mock(FailoutConfig.class));
     verify(_loadBalancerState, times(1)).listenToCluster(eq(PEER_CLUSTER_NAME1), any());
@@ -206,7 +206,8 @@ public class FailedoutClusterManagerTest
   }
 
   @Test
-  public void testUpdateFailoutConfigUpdateToNull() {
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  public void testUpdateFailoutConfigUpdateToNull() throws Exception {
     FailoutConfig config = mock(FailoutConfig.class);
     when(config.isFailedOut()).thenReturn(true);
     when(config.getPeerClusters()).thenReturn(Collections.singleton(PEER_CLUSTER_NAME1));
