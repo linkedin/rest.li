@@ -46,7 +46,6 @@ import com.linkedin.pegasus.generator.spec.TyperefTemplateSpec;
 import com.linkedin.pegasus.generator.spec.UnionTemplateSpec;
 import com.linkedin.util.CustomTypeUtil;
 
-import java.io.File;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -105,7 +104,7 @@ public class TemplateSpecGenerator
   /**
    * List of regex pattern of schema full names to identify which schema need to skip deprecated fields when generating its spec.
    */
-  private final List<Pattern> _skipDeprecatedPatterns  = new ArrayList<>();
+  private final List<Pattern> _skipDeprecatedFieldPatterns = new ArrayList<>();
 
   public TemplateSpecGenerator(DataSchemaResolver schemaResolver)
   {
@@ -141,7 +140,10 @@ public class TemplateSpecGenerator
    */
   public ClassTemplateSpec generate(DataSchema schema, DataSchemaLocation location)
   {
-    return generate(schema, location, false);
+    pushCurrentLocation(location);
+    final ClassTemplateSpec result = processSchema(schema, null, null);
+    popCurrentLocation();
+    return result;
   }
 
   /**
@@ -151,10 +153,7 @@ public class TemplateSpecGenerator
   @Deprecated
   public ClassTemplateSpec generate(DataSchema schema, DataSchemaLocation location, boolean skipDeprecatedField)
   {
-    pushCurrentLocation(location);
-    final ClassTemplateSpec result = processSchema(schema, null, null);
-    popCurrentLocation();
-    return result;
+    return generate(schema, location);
   }
 
   public Collection<ClassTemplateSpec> getGeneratedSpecs()
@@ -163,13 +162,15 @@ public class TemplateSpecGenerator
   }
 
   /**
-   * Set the regex name patterns for schemas which needs to skip deprecated fields when generating the specs
+   * Set the regex name patterns for schemas which needs to skip deprecated fields when generating the specs.
+   * For any record schema with a fully-qualified name that matches any of the provided patterns, all its fields
+   * marked as deprecated will be skipped during spec generation.
    *
-   * @param skipDeprecatedPatterns list of regex name patterns to be set. They will be used to match full name of schemas.
+   * @param skipDeprecatedFieldPatterns list of regex name patterns to be set.
    */
-  public void setSkipDeprecatedPatterns(@Nonnull List<Pattern> skipDeprecatedPatterns) {
-    _skipDeprecatedPatterns.clear();
-    _skipDeprecatedPatterns.addAll(skipDeprecatedPatterns);
+  public void setSkipDeprecatedFieldPatterns(@Nonnull List<Pattern> skipDeprecatedFieldPatterns) {
+    _skipDeprecatedFieldPatterns.clear();
+    _skipDeprecatedFieldPatterns.addAll(skipDeprecatedFieldPatterns);
   }
 
   /**
@@ -829,8 +830,8 @@ public class TemplateSpecGenerator
     }
   }
 
-  public boolean shouldSkipDeprecatedFields(NamedDataSchema dataSchema) {
-    return _skipDeprecatedPatterns.stream().anyMatch(pattern -> pattern.matcher(dataSchema.getFullName()).matches());
+  private boolean shouldSkipDeprecatedFields(NamedDataSchema dataSchema) {
+    return _skipDeprecatedFieldPatterns.stream().anyMatch(pattern -> pattern.matcher(dataSchema.getFullName()).matches());
   }
 
   /*
