@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.37.8] - 2022-08-04
+- Switch to use name regex pattern to skip deprecated fields in spec generation
+
 ## [29.37.7] - 2022-08-03
 - Bugfix: mark a dark request as sent if it is sent to any dark clusters
 
@@ -5285,7 +5288,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.8...master
+[29.37.8]: https://github.com/linkedin/rest.li/compare/v29.37.7...v29.37.8
 [29.37.7]: https://github.com/linkedin/rest.li/compare/v29.37.6...v29.37.7
 [29.37.6]: https://github.com/linkedin/rest.li/compare/v29.37.5...v29.37.6
 [29.37.5]: https://github.com/linkedin/rest.li/compare/v29.37.4...v29.37.5
