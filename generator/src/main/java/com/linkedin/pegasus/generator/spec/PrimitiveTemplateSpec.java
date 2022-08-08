@@ -19,6 +19,7 @@ package com.linkedin.pegasus.generator.spec;
 
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaUtil;
+import com.linkedin.data.schema.NullDataSchema;
 import com.linkedin.data.schema.PrimitiveDataSchema;
 
 import java.util.HashMap;
@@ -47,6 +48,9 @@ public class PrimitiveTemplateSpec extends ClassTemplateSpec
   private PrimitiveTemplateSpec(PrimitiveDataSchema schema)
   {
     setSchema(schema);
+    if (!(schema instanceof NullDataSchema)) {
+      setClassName(DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(schema.getType()).getName());
+    }
   }
 
   public static PrimitiveTemplateSpec getInstance(DataSchema.Type schemaType)

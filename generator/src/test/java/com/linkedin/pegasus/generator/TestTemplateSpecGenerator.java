@@ -22,11 +22,13 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.DataSchemaUtil;
+import com.linkedin.data.schema.IntegerDataSchema;
 import com.linkedin.data.schema.Name;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.StringDataSchemaLocation;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
+import com.linkedin.pegasus.generator.spec.PrimitiveTemplateSpec;
 import com.linkedin.pegasus.generator.spec.RecordTemplateSpec;
 import com.linkedin.pegasus.generator.spec.UnionTemplateSpec;
 import com.linkedin.util.CustomTypeUtil;
@@ -130,6 +132,15 @@ public class TestTemplateSpecGenerator
       Assert.assertEquals(spec.getMembers().get(i).getCustomInfo().getCustomClass().getClassName(),
                           CustomTypeUtil.getJavaCustomTypeClassNameFromSchema((TyperefDataSchema) customTypedSchemas.get(i)));
     }
+  }
+
+  @Test
+  public void testPrimitiveDataSchema()
+  {
+    final IntegerDataSchema intSchema = new IntegerDataSchema();
+    final TemplateSpecGenerator generator = new TemplateSpecGenerator(_resolver);
+    final PrimitiveTemplateSpec spec = (PrimitiveTemplateSpec) generator.generate(intSchema, _location);
+    Assert.assertEquals(spec.getBindingName(), Integer.class.getName());
   }
 
   @DataProvider
