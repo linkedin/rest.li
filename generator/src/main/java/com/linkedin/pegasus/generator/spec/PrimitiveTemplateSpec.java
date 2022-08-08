@@ -48,7 +48,8 @@ public class PrimitiveTemplateSpec extends ClassTemplateSpec
   private PrimitiveTemplateSpec(PrimitiveDataSchema schema)
   {
     setSchema(schema);
-    if (!(schema instanceof NullDataSchema)) {
+    if (!(schema instanceof NullDataSchema)) 
+    {
       setClassName(DataSchemaUtil.dataSchemaTypeToPrimitiveDataSchemaClass(schema.getType()).getName());
     }
   }
