@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.37.9] - 2022-08-07
+- Add null-checks for cluster and service properties in D2ClientJmxManager
+
 ## [29.37.8] - 2022-08-04
 - Switch to use name regex pattern to skip deprecated fields in spec generation
 
@@ -5288,7 +5291,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.8...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.9...master
+[29.37.9]: https://github.com/linkedin/rest.li/compare/v29.37.8...v29.37.9
 [29.37.8]: https://github.com/linkedin/rest.li/compare/v29.37.7...v29.37.8
 [29.37.7]: https://github.com/linkedin/rest.li/compare/v29.37.6...v29.37.7
 [29.37.6]: https://github.com/linkedin/rest.li/compare/v29.37.5...v29.37.6

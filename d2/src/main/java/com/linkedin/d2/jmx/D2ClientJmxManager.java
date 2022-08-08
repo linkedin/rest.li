@@ -88,34 +88,42 @@ public class D2ClientJmxManager
       @Override
       public void onClusterInfoUpdate(ClusterInfoItem clusterInfoItem)
       {
-        _jmxManager.registerClusterInfo(
-            getClusterInfoJmxName(clusterInfoItem.getClusterPropertiesItem().getProperty().getClusterName()),
-            clusterInfoItem);
+        if (clusterInfoItem != null && clusterInfoItem.getClusterPropertiesItem() != null
+            && clusterInfoItem.getClusterPropertiesItem().getProperty() != null) {
+          _jmxManager.registerClusterInfo(
+              getClusterInfoJmxName(clusterInfoItem.getClusterPropertiesItem().getProperty().getClusterName()),
+              clusterInfoItem);
+        }
       }
 
       @Override
       public void onClusterInfoRemoval(ClusterInfoItem clusterInfoItem)
       {
-        _jmxManager.unregister(
-            getClusterInfoJmxName(clusterInfoItem.getClusterPropertiesItem().getProperty().getClusterName())
-        );
+        if (clusterInfoItem != null && clusterInfoItem.getClusterPropertiesItem() != null
+            && clusterInfoItem.getClusterPropertiesItem().getProperty() != null) {
+          _jmxManager.unregister(
+              getClusterInfoJmxName(clusterInfoItem.getClusterPropertiesItem().getProperty().getClusterName())
+          );
+        }
       }
 
       @Override
       public void onServicePropertiesUpdate(LoadBalancerStateItem<ServiceProperties> serviceProperties)
       {
-        _jmxManager.registerServiceProperties(
-            getServicePropertiesJmxName(serviceProperties.getProperty().getServiceName()),
-            serviceProperties);
+        if (serviceProperties != null && serviceProperties.getProperty() != null) {
+          _jmxManager.registerServiceProperties(
+              getServicePropertiesJmxName(serviceProperties.getProperty().getServiceName()),
+              serviceProperties);
+        }
       }
 
 
       @Override
       public void onServicePropertiesRemoval(LoadBalancerStateItem<ServiceProperties> serviceProperties)
       {
-        _jmxManager.unregister(
-            getServicePropertiesJmxName(serviceProperties.getProperty().getServiceName())
-        );
+        if (serviceProperties != null && serviceProperties.getProperty() != null) {
+          _jmxManager.unregister(getServicePropertiesJmxName(serviceProperties.getProperty().getServiceName()));
+        }
       }
 
       private String getClusterInfoJmxName(String clusterName)
