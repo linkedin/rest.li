@@ -95,7 +95,7 @@ public abstract class AbstractLoadBalancerSubscriber<T> implements
   /**
    * Tries to stop listening for property change.
    */
-  public void ensureNotListening(String propertyName, LoadBalancerState.LoadBalancerStateListenerCallback callback)
+  public void tryStopListening(String propertyName, LoadBalancerState.LoadBalancerStateListenerCallback callback)
   {
     if (!isListeningToProperty(propertyName))
     {

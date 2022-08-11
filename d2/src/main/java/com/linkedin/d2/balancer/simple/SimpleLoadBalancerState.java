@@ -565,8 +565,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
           }
         };
 
-    _clusterSubscriber.ensureNotListening(clusterName, wrappedCallback);
-    _uriSubscriber.ensureNotListening(clusterName, wrappedCallback);
+    _clusterSubscriber.tryStopListening(clusterName, wrappedCallback);
+    _uriSubscriber.tryStopListening(clusterName, wrappedCallback);
   }
 
   @Override
