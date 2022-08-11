@@ -166,9 +166,9 @@ public class LoadBalancerTestState implements LoadBalancerState
   }
 
   @Override
-  public boolean stopListenToCluster(String clusterName)
+  public void stopListenToCluster(String clusterName, LoadBalancerStateListenerCallback callback)
   {
-    return !listenToCluster;
+    callback.done(LoadBalancerStateListenerCallback.CLUSTER, clusterName);
   }
 
   @Override

@@ -96,9 +96,9 @@ public class PartitionedLoadBalancerTestState implements LoadBalancerState
   }
 
   @Override
-  public boolean stopListenToCluster(String clusterName)
+  public void stopListenToCluster(String clusterName, LoadBalancerStateListenerCallback callback)
   {
-    return false;
+    callback.done(LoadBalancerStateListenerCallback.SERVICE, null);
   }
 
   @Override

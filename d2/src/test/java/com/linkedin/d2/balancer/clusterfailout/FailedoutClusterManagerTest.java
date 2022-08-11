@@ -20,7 +20,6 @@ import com.linkedin.d2.balancer.LoadBalancerState;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.mockito.ArgumentCaptor;
@@ -105,20 +104,20 @@ public class FailedoutClusterManagerTest
   }
 
   @Test
-  @SuppressWarnings({"rawtypes", "unchecked"})
-  public void testAddPeerClusterWatchesWithPeerClusterRemoved() throws Exception {
+  public void testAddPeerClusterWatchesWithPeerClusterRemoved()
+  {
     _manager.addPeerClusterWatches(new HashSet<>(Arrays.asList(PEER_CLUSTER_NAME1, PEER_CLUSTER_NAME2)), mock(FailoutConfig.class));
     _manager.addPeerClusterWatches(new HashSet<>(Arrays.asList(PEER_CLUSTER_NAME1)), mock(FailoutConfig.class));
     verify(_loadBalancerState, times(1)).listenToCluster(eq(PEER_CLUSTER_NAME1), any());
     verify(_loadBalancerState, times(1)).listenToCluster(eq(PEER_CLUSTER_NAME2), any());
     verify(_warmUpHandler, times(1)).cancelPendingRequests(eq(PEER_CLUSTER_NAME2));
 
-    ArgumentCaptor<Callable> captor = ArgumentCaptor.forClass(Callable.class);
+    ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
     verify(_scheduledExecutorService, times(1)).schedule(captor.capture(),
         eq(PEER_WATCH_TEAR_DOWN_DELAY_MS), eq(TimeUnit.MILLISECONDS));
 
-    captor.getValue().call();
-    verify(_loadBalancerState, times(1)).stopListenToCluster(eq(PEER_CLUSTER_NAME2));
+    captor.getValue().run();
+    verify(_loadBalancerState, times(1)).stopListenToCluster(eq(PEER_CLUSTER_NAME2), any());
   }
 
   @Test
@@ -129,7 +128,7 @@ public class FailedoutClusterManagerTest
     manager.addPeerClusterWatches(new HashSet<>(Arrays.asList(PEER_CLUSTER_NAME1)), mock(FailoutConfig.class));
     manager.removePeerClusterWatches();
 
-    verify(_loadBalancerState, times(1)).stopListenToCluster(eq(PEER_CLUSTER_NAME1));
+    verify(_loadBalancerState, times(1)).stopListenToCluster(eq(PEER_CLUSTER_NAME1), any());
   }
 
   @Test
@@ -140,7 +139,7 @@ public class FailedoutClusterManagerTest
     _manager.removePeerClusterWatches();
 
     verify(_scheduledExecutorService, never()).schedule(any(Runnable.class), anyLong(), any());
-    verify(_loadBalancerState, never()).stopListenToCluster(any());
+    verify(_loadBalancerState, never()).stopListenToCluster(any(), any());
   }
 
   @Test
@@ -151,11 +150,12 @@ public class FailedoutClusterManagerTest
     _manager.removePeerClusterWatches();
 
     verify(_scheduledExecutorService, never()).schedule(any(Runnable.class), anyLong(), any());
-    verify(_loadBalancerState, never()).stopListenToCluster(any());
+    verify(_loadBalancerState, never()).stopListenToCluster(any(), any());
   }
 
   @Test
-  public void testUpdateFailoutConfigWithNull() {
+  public void testUpdateFailoutConfigWithNull()
+  {
     _manager.updateFailoutConfig(null);
     verify(_loadBalancerState, never()).listenToCluster(any(), any());
     assertNull(_manager.getFailoutConfig());
@@ -164,7 +164,8 @@ public class FailedoutClusterManagerTest
   }
 
   @Test
-  public void testUpdateFailoutConfigWithoutActiveFailout() {
+  public void testUpdateFailoutConfigWithoutActiveFailout()
+  {
     FailoutConfig config = mock(FailoutConfig.class);
     when(config.isFailedOut()).thenReturn(false);
     when(config.getPeerClusters()).thenReturn(Collections.singleton(PEER_CLUSTER_NAME1));
@@ -176,7 +177,8 @@ public class FailedoutClusterManagerTest
   }
 
   @Test
-  public void testUpdateFailoutConfigWithActiveFailout() {
+  public void testUpdateFailoutConfigWithActiveFailout()
+  {
     FailoutConfig config = mock(FailoutConfig.class);
     when(config.isFailedOut()).thenReturn(true);
     when(config.getPeerClusters()).thenReturn(Collections.singleton(PEER_CLUSTER_NAME1));
@@ -188,7 +190,8 @@ public class FailedoutClusterManagerTest
   }
 
   @Test
-  public void testUpdateFailoutConfigUpdate() {
+  public void testUpdateFailoutConfigUpdate()
+  {
     FailoutConfig config = mock(FailoutConfig.class);
     when(config.isFailedOut()).thenReturn(true);
     when(config.getPeerClusters()).thenReturn(Collections.singleton(PEER_CLUSTER_NAME1));
@@ -206,8 +209,8 @@ public class FailedoutClusterManagerTest
   }
 
   @Test
-  @SuppressWarnings({"rawtypes", "unchecked"})
-  public void testUpdateFailoutConfigUpdateToNull() throws Exception {
+  public void testUpdateFailoutConfigUpdateToNull()
+  {
     FailoutConfig config = mock(FailoutConfig.class);
     when(config.isFailedOut()).thenReturn(true);
     when(config.getPeerClusters()).thenReturn(Collections.singleton(PEER_CLUSTER_NAME1));
@@ -224,16 +227,17 @@ public class FailedoutClusterManagerTest
     verify(_warmUpHandler, never()).warmUpConnections(any(), any());
     verify(_warmUpHandler, times(1)).cancelPendingRequests(eq(PEER_CLUSTER_NAME1));
 
-    ArgumentCaptor<Callable> captor = ArgumentCaptor.forClass(Callable.class);
+    ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
     verify(_scheduledExecutorService, times(1)).schedule(captor.capture(),
         eq(PEER_WATCH_TEAR_DOWN_DELAY_MS), eq(TimeUnit.MILLISECONDS));
 
-    captor.getValue().call();
-    verify(_loadBalancerState, times(1)).stopListenToCluster(eq(PEER_CLUSTER_NAME1));
+    captor.getValue().run();
+    verify(_loadBalancerState, times(1)).stopListenToCluster(eq(PEER_CLUSTER_NAME1), any());
   }
 
   @Test
-  public void testShutdown() {
+  public void testShutdown()
+  {
     _manager.shutdown();
     verify(_warmUpHandler, times(1)).shutdown();
   }

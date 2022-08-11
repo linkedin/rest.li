@@ -204,18 +204,21 @@ public class FailedoutClusterManager
         _log.debug("Cancel pending requests to: {}", cluster);
         _connectionWarmUpHandler.cancelPendingRequests(cluster);
       }
+
       if (peerWatchState.shouldUnregisterWatches())
       {
         if (_scheduledExecutorService == null)
         {
           _log.debug("Stop listening to: {}", cluster);
-          _loadBalancerState.stopListenToCluster(cluster);
+          _loadBalancerState.stopListenToCluster(cluster, new LoadBalancerState.NullStateListenerCallback());
         }
         else
         {
           _log.debug("Scheduling listening to: {} to be removed in {} ms", _clusterName, _peerWatchTeardownDelayMs);
-          _scheduledExecutorService.schedule(() -> _loadBalancerState.stopListenToCluster(cluster),
-              _peerWatchTeardownDelayMs, TimeUnit.MILLISECONDS);
+          _scheduledExecutorService.schedule(
+              () -> _loadBalancerState.stopListenToCluster(cluster, new LoadBalancerState.NullStateListenerCallback()),
+              _peerWatchTeardownDelayMs,
+              TimeUnit.MILLISECONDS);
         }
       }
     }
@@ -238,6 +241,10 @@ public class FailedoutClusterManager
 
     public boolean shouldUnregisterWatches()
     {
+      // Only unregister watches:
+      // - If watches do not exist before failout. In this case, watches were likely added for
+      //   achieving failout and only used for failout. They were unlikely to be used by other code paths.
+      // - If they have been established successfully.
       return !_watchExistsBeforeFailout && _watchEstablished;
     }
   }
