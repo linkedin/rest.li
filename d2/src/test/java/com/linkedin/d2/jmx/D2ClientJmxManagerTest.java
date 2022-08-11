@@ -60,7 +60,9 @@ public class D2ClientJmxManagerTest {
 
   D2ClientJmxManager _d2ClientJmxManager;
   private ClusterInfoItem _clusterInfoItem;
+  private ClusterInfoItem _noPropertyClusterInfoItem;
   private LoadBalancerStateItem<ServiceProperties> _servicePropertiesLBState;
+  private LoadBalancerStateItem<ServiceProperties> _noPropertyLBStateItem;
 
   @BeforeMethod
   public void setUp()
@@ -80,12 +82,16 @@ public class D2ClientJmxManagerTest {
             return 0;
           }
         }, CanaryDistributionProvider.Distribution.CANARY);
+    _noPropertyClusterInfoItem = new ClusterInfoItem(_simpleLoadBalancerState, null, null,
+        CanaryDistributionProvider.Distribution.STABLE);
     _servicePropertiesLBState = new LoadBalancerStateItem<>(
         new ServiceProperties("S_Foo", "Bar", "/", Collections.singletonList("Random")),
         0,
         0,
         CanaryDistributionProvider.Distribution.CANARY
     );
+    _noPropertyLBStateItem = new LoadBalancerStateItem<ServiceProperties>(null, 0, 0,
+        CanaryDistributionProvider.Distribution.STABLE);
     _d2ClientJmxManager = new D2ClientJmxManager("Foo", _jmxManager);
     Mockito.doReturn(_jmxManager).when(_jmxManager).unregister(_unregisteredObjectNameCaptor.capture());
     Mockito.doReturn(_jmxManager).when(_jmxManager).registerLoadBalancerState(
@@ -99,10 +105,15 @@ public class D2ClientJmxManagerTest {
     Mockito.doNothing().when(_simpleLoadBalancerState).register(_simpleLoadBalancerStateListenerCaptor.capture());
   }
 
-  @Test
+  @Test()
   public void testSetSimpleLBStateListenerUpdateServiceProperties()
   {
     _d2ClientJmxManager.setSimpleLoadBalancerState(_simpleLoadBalancerState);
+    _simpleLoadBalancerStateListenerCaptor.getValue().onServicePropertiesUpdate(null);
+    Mockito.verify(_jmxManager, never()).registerServiceProperties(any(), any());
+    _simpleLoadBalancerStateListenerCaptor.getValue().onServicePropertiesUpdate(_noPropertyLBStateItem);
+    Mockito.verify(_jmxManager, never()).registerServiceProperties(any(), any());
+
     _simpleLoadBalancerStateListenerCaptor.getValue().onServicePropertiesUpdate(_servicePropertiesLBState);
     Assert.assertEquals(
         _registerObjectNameCaptor.getValue(),
@@ -118,6 +129,11 @@ public class D2ClientJmxManagerTest {
   public void testSetSimpleLBStateListenerUpdateClusterInfo()
   {
     _d2ClientJmxManager.setSimpleLoadBalancerState(_simpleLoadBalancerState);
+    _simpleLoadBalancerStateListenerCaptor.getValue().onClusterInfoUpdate(null);
+    Mockito.verify(_jmxManager, never()).registerClusterInfo(any(), any());
+    _simpleLoadBalancerStateListenerCaptor.getValue().onClusterInfoUpdate(_noPropertyClusterInfoItem);
+    Mockito.verify(_jmxManager, never()).registerClusterInfo(any(), any());
+
     _simpleLoadBalancerStateListenerCaptor.getValue().onClusterInfoUpdate(_clusterInfoItem);
     Assert.assertEquals(
         _registerObjectNameCaptor.getValue(),
@@ -135,6 +151,11 @@ public class D2ClientJmxManagerTest {
     _d2ClientJmxManager.setSimpleLoadBalancerState(_simpleLoadBalancerState);
     Assert.assertEquals(_simpleLoadBalancerStateNameCaptor.getValue(), "Foo-LoadBalancerState");
     Assert.assertEquals(_simpleLoadBalancerStateCaptor.getValue(), _simpleLoadBalancerState);
+    _simpleLoadBalancerStateListenerCaptor.getValue().onClusterInfoRemoval(null);
+    Mockito.verify(_jmxManager, never()).unregister(anyString());
+    _simpleLoadBalancerStateListenerCaptor.getValue().onClusterInfoRemoval(_noPropertyClusterInfoItem);
+    Mockito.verify(_jmxManager, never()).unregister(anyString());
+
     _simpleLoadBalancerStateListenerCaptor.getValue().onClusterInfoRemoval(_clusterInfoItem);
     Assert.assertEquals(
         _unregisteredObjectNameCaptor.getValue(),
@@ -147,6 +168,11 @@ public class D2ClientJmxManagerTest {
     _d2ClientJmxManager.setSimpleLoadBalancerState(_simpleLoadBalancerState);
     Assert.assertEquals(_simpleLoadBalancerStateNameCaptor.getValue(), "Foo-LoadBalancerState");
     Assert.assertEquals(_simpleLoadBalancerStateCaptor.getValue(), _simpleLoadBalancerState);
+    _simpleLoadBalancerStateListenerCaptor.getValue().onServicePropertiesRemoval(null);
+    Mockito.verify(_jmxManager, never()).unregister(anyString());
+    _simpleLoadBalancerStateListenerCaptor.getValue().onServicePropertiesRemoval(_noPropertyLBStateItem);
+    Mockito.verify(_jmxManager, never()).unregister(anyString());
+
     _simpleLoadBalancerStateListenerCaptor.getValue().onServicePropertiesRemoval(_servicePropertiesLBState);
     Assert.assertEquals(
         _unregisteredObjectNameCaptor.getValue(),

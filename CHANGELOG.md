@@ -14,8 +14,23 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.37.7] - 2022-08-02
+## [29.37.12] - 2022-08-10
 - Support removing cluster watches created due to cluster failout
+
+## [29.37.11] - 2022-08-09
+- Avoid using SmileFactoryBuilder to be more compatible with pre 2.10 jackson at runtime
+
+## [29.37.10] - 2022-08-08
+- Fix PrimitiveTemplateSpec not having className
+
+## [29.37.9] - 2022-08-07
+- Add null-checks for cluster and service properties in D2ClientJmxManager
+
+## [29.37.8] - 2022-08-04
+- Switch to use name regex pattern to skip deprecated fields in spec generation
+
+## [29.37.7] - 2022-08-03
+- Bugfix: mark a dark request as sent if it is sent to any dark clusters
 
 ## [29.37.6] - 2022-07-28
 - Bump ZooKeeper client version to [3.7.1](https://zookeeper.apache.org/releases.html#releasenotes) (latest stable version at the time).
@@ -5285,7 +5300,12 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.12...master
+[29.37.12]: https://github.com/linkedin/rest.li/compare/v29.37.11...v29.37.12
+[29.37.11]: https://github.com/linkedin/rest.li/compare/v29.37.10...v29.37.11
+[29.37.10]: https://github.com/linkedin/rest.li/compare/v29.37.9...v29.37.10
+[29.37.9]: https://github.com/linkedin/rest.li/compare/v29.37.8...v29.37.9
+[29.37.8]: https://github.com/linkedin/rest.li/compare/v29.37.7...v29.37.8
 [29.37.7]: https://github.com/linkedin/rest.li/compare/v29.37.6...v29.37.7
 [29.37.6]: https://github.com/linkedin/rest.li/compare/v29.37.5...v29.37.6
 [29.37.5]: https://github.com/linkedin/rest.li/compare/v29.37.4...v29.37.5
