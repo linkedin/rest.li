@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.37.11] - 2022-08-09
+- Avoid using SmileFactoryBuilder to be more compatible with pre 2.10 jackson at runtime
+
 ## [29.37.10] - 2022-08-08
 - Fix PrimitiveTemplateSpec not having className
 
@@ -5294,7 +5297,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.10...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.11...master
+[29.37.11]: https://github.com/linkedin/rest.li/compare/v29.37.10...v29.37.11
 [29.37.10]: https://github.com/linkedin/rest.li/compare/v29.37.9...v29.37.10
 [29.37.9]: https://github.com/linkedin/rest.li/compare/v29.37.8...v29.37.9
 [29.37.8]: https://github.com/linkedin/rest.li/compare/v29.37.7...v29.37.8
