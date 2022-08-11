@@ -188,6 +188,54 @@ public abstract class PropertyEventBusTest
     assertEquals(listener2.properties.get("add-dtest2"), "exists");
   }
 
+  @Test(groups = { "small", "back-end" })
+  public void testUnregisterRemovesSingleListener() throws InterruptedException
+  {
+    PropertyEventBus<String> bus = getBus();
+    PropertyEventTestSubscriber listener1 = new PropertyEventTestSubscriber();
+
+    put(bus, "dtest", "exists");
+
+    Set<String> listenTos = new HashSet<>();
+
+    listenTos.add("dtest");
+    bus.register(listenTos, listener1);
+    bus.register(listenTos, listener1);
+
+    assertEquals(listener1.properties.get("init-dtest"), "exists");
+
+    // Unregister once. We should still have a listener listening to changes
+    bus.unregister(listenTos, listener1);
+    put(bus, "dtest", "new-value");
+
+    // wait for the listener to get the response, in case this registry is async
+    for (int i = 0; i < 10 && listener1.properties.get("init-dtest") == null; ++i)
+    {
+      Thread.sleep(500);
+    }
+
+    // Verify property change is observed
+    assertEquals(listener1.properties.get("add-dtest"), "new-value");
+
+    // Unregister the second listener. listener1 should no longer be getting updates
+    bus.unregister(listenTos, listener1);
+
+    // Register listener2 to make sure updates are being propagated.
+    PropertyEventTestSubscriber listener2 = new PropertyEventTestSubscriber();
+    bus.register(listenTos, listener2);
+
+    put(bus, "dtest", "latest-value");
+
+    // wait for the listener to get the response, in case this registry is async
+    for (int i = 0; i < 10 && listener2.properties.get("add-dtest") == null; ++i)
+    {
+      Thread.sleep(500);
+    }
+
+    assertEquals(listener1.properties.get("add-dtest"), "new-value");
+    assertEquals(listener2.properties.get("add-dtest"), "latest-value");
+  }
+
   @Test
   public void testMaintainRegistration()
   {

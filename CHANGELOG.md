@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.37.12] - 2022-08-10
+- Support removing cluster watches created due to cluster failout
+
 ## [29.37.11] - 2022-08-09
 - Avoid using SmileFactoryBuilder to be more compatible with pre 2.10 jackson at runtime
 
@@ -5297,7 +5300,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.11...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.12...master
+[29.37.12]: https://github.com/linkedin/rest.li/compare/v29.37.11...v29.37.12
 [29.37.11]: https://github.com/linkedin/rest.li/compare/v29.37.10...v29.37.11
 [29.37.10]: https://github.com/linkedin/rest.li/compare/v29.37.9...v29.37.10
 [29.37.9]: https://github.com/linkedin/rest.li/compare/v29.37.8...v29.37.9

@@ -29,6 +29,11 @@ public interface FailedoutClusterConnectionWarmUpHandler
   void warmUpConnections(@Nonnull String clusterName, @Nullable FailoutConfig config);
 
   /**
+   * Cancels any pending requests to the given cluster.
+   */
+  default void cancelPendingRequests(@Nonnull String clusterName) {}
+
+  /**
    * Shuts down this handler.
    */
   void shutdown();
