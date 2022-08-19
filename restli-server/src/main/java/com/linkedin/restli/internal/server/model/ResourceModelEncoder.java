@@ -119,7 +119,7 @@ public class ResourceModelEncoder
 
   private final DataCodec codec = new JacksonDataCodec();
 
-  // Used to cache the mapping between restspec file and
+  // Used to cache the mapping between restspec file name and
   // the Resource object
   private Map<String, Resource> _restSpecPathToResourceMap = null;
 
@@ -335,7 +335,7 @@ public class ResourceModelEncoder
         return new ResourceSchema(resourceSchemaDataMap);
       }
     }
-    catch (Exception e)
+    catch (IOException e)
     {
       throw new RuntimeException("Failed to read " + resourceFilePath.toString() + " from classpath.", e);
     }
