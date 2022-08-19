@@ -121,6 +121,7 @@ project.ext.externalDependency = [
 
   'jsr305': 'com.google.code.findbugs:jsr305:3.0.0',
   "avroSpotBugsPlugin": "com.linkedin.avroutil1:spotbugs-plugin:0.2.56",
+  "classgraph": "io.github.classgraph:classgraph:4.8.149",
 ];
 
 if (!project.ext.isDefaultEnvironment)

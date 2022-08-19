@@ -76,11 +76,12 @@ import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.annotations.BatchFinder;
 import com.linkedin.restli.server.errors.ServiceError;
 import com.linkedin.restli.server.errors.ParametersServiceError;
-import java.io.File;
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.Resource;
+import io.github.classgraph.ResourceList;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -96,6 +97,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
 
@@ -118,8 +120,8 @@ public class ResourceModelEncoder
   private final DataCodec codec = new JacksonDataCodec();
 
   // Used to cache the mapping between restspec file and
-  // the class loader that can get the resource
-  private Map<String, ClassLoader> _restSpecToClassLoaderMap = null;
+  // the Resource object
+  private Map<String, Resource> _restSpecPathToResourceMap = null;
 
   /**
    * Provides documentation strings from a JVM language to be incorporated into ResourceModels.
@@ -333,53 +335,52 @@ public class ResourceModelEncoder
         return new ResourceSchema(resourceSchemaDataMap);
       }
     }
-    catch (IOException e)
+    catch (Exception e)
     {
       throw new RuntimeException("Failed to read " + resourceFilePath.toString() + " from classpath.", e);
     }
   }
 
-  private InputStream getResourceStreamBySearchingRestSpec(String resourceName, ClassLoader... classLoaders)
-  {
+  private InputStream getResourceStreamBySearchingRestSpec(String resourceName, ClassLoader... classLoaders) {
     if (!resourceName.endsWith(REST_SPEC_JSON_SUFFIX))
     {
       return null;
     }
-    if (_restSpecToClassLoaderMap == null)
+    if (_restSpecPathToResourceMap == null)
     {
-      _restSpecToClassLoaderMap = new HashMap<>();
-      for(ClassLoader classLoader: classLoaders)
+      _restSpecPathToResourceMap = new HashMap<>();
+      try
       {
-        URL[] urls = ((URLClassLoader) classLoader).getURLs();
-        for (URL url : urls)
-        {
-          if (!url.toString().toLowerCase().endsWith("jar"))
-          {
-            continue;
-          }
-          try
-          {
-            JarInputStream jarIn = new JarInputStream(url.openStream());
-            for (JarEntry e = jarIn.getNextJarEntry(); e != null; e = jarIn.getNextJarEntry()) {
-              if (!e.isDirectory() && e.getName().endsWith(REST_SPEC_JSON_SUFFIX))
-              {
-                _restSpecToClassLoaderMap.put(e.getName(), classLoader);
-              }
+        ResourceList resourceList = new ClassGraph().overrideClassLoaders(classLoaders)
+            .scan().getResourcesWithExtension(REST_SPEC_JSON_SUFFIX);
+        resourceList.forEach( resource -> {
+              _restSpecPathToResourceMap.put(FilenameUtils.getName(resource.getPath()),
+                  resource);
             }
-          }
-          catch (IOException e)
-          {
-            // Will not add the entry
-          }
-        }
+        );
+      }
+      catch (Exception e)
+      {
+        // don't throw exception
       }
     }
 
-    for (Map.Entry<String, ClassLoader> entry : _restSpecToClassLoaderMap.entrySet())
+    for (Map.Entry<String, Resource> entry : _restSpecPathToResourceMap.entrySet())
     {
+      // looking for file path suffix matching
+      // e.g.
+      // for "mypackage.myresource.restspec.json"
+      // looking for "myapiname-mypackage.myresource.restspec.json"
       if (entry.getKey().endsWith("-" + resourceName))
       {
-        return entry.getValue().getResourceAsStream(entry.getKey());
+        try
+        {
+          return entry.getValue().open();
+        }
+        catch (Exception e)
+        {
+          return null;
+        }
       }
     }
     return null;
