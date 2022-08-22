@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 public class ZKDeterministicSubsettingMetadataProvider implements DeterministicSubsettingMetadataProvider
 {
   private static final Logger _log = LoggerFactory.getLogger(ZKDeterministicSubsettingMetadataProvider.class);
-  private final String _clusterName;
   private final String _hostName;
   private final long _timeout;
   private final TimeUnit _unit;
@@ -49,6 +48,12 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
   private long _peerClusterVersion = -1;
   @GuardedBy("_lock")
   private DeterministicSubsettingMetadata _subsettingMetadata;
+  private String _clusterName;
+
+  public ZKDeterministicSubsettingMetadataProvider(String hostName, long timeout, TimeUnit unit)
+  {
+    this(null, hostName, timeout, unit);
+  }
 
   public ZKDeterministicSubsettingMetadataProvider(String clusterName,
                                       String hostName,
@@ -61,9 +66,19 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
     _unit = unit;
   }
 
+  public void setClusterName(String clusterName) {
+    _clusterName = clusterName;
+  }
+
   @Override
   public DeterministicSubsettingMetadata getSubsettingMetadata(LoadBalancerState state)
   {
+    if (_clusterName == null)
+    {
+      _log.debug("Peer cluster name not provided.");
+      return null;
+    }
+
     FutureCallback<DeterministicSubsettingMetadata> metadataFutureCallback = new FutureCallback<>();
 
     state.listenToCluster(_clusterName, (type, name) ->
