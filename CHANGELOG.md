@@ -14,6 +14,10 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.37.14] - 2022-08-19
+- Avoid casting classloader to URLLoader in ResourceModelEncoder and use ClassGraph to search for restspec file
+
+
 ## [29.37.13] - 2022-08-15
 - Fix d2-test-api dependencies
 
@@ -5303,7 +5307,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.13...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.14...master
+[29.37.14]: https://github.com/linkedin/rest.li/compare/v29.37.13...v29.37.14
 [29.37.13]: https://github.com/linkedin/rest.li/compare/v29.37.12...v29.37.13
 [29.37.12]: https://github.com/linkedin/rest.li/compare/v29.37.11...v29.37.12
 [29.37.11]: https://github.com/linkedin/rest.li/compare/v29.37.10...v29.37.11
