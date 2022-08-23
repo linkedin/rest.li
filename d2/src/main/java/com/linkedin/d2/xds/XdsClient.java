@@ -13,6 +13,11 @@ import java.util.Objects;
 
 public abstract class XdsClient
 {
+  private static final String ADS_TYPE_URL_LDS = "type.googleapis.com/envoy.config.listener.v3.Listener";
+  private static final String ADS_TYPE_URL_RDS = "type.googleapis.com/envoy.config.route.v3.RouteConfiguration";
+  private static final String ADS_TYPE_URL_CDS = "type.googleapis.com/envoy.config.cluster.v3.Cluster";
+  private static final String ADS_TYPE_URL_EDS = "type.googleapis.com/envoy.config.endpoint.v3.ClusterLoadAssignment";
+
   /**
    * Watcher interface for a single requested xDS resource.
    */
@@ -249,32 +254,58 @@ public abstract class XdsClient
     }
   }
 
-  /**
-   * Registers a data watcher for the given LDS resource.
-   */
-  void watchLdsResource(String resourceName, LdsResourceWatcher watcher) {
-    throw new UnsupportedOperationException();
-  }
-  /**
-   * Registers a data watcher for the given RDS resource.
-   */
-  void watchRdsResource(String resourceName, RdsResourceWatcher watcher) {
-    throw new UnsupportedOperationException();
+  enum ResourceType
+  {
+    UNKNOWN, LDS, RDS, CDS, EDS;
+
+    static ResourceType fromTypeUrl(String typeUrl)
+    {
+      switch (typeUrl)
+      {
+        case ADS_TYPE_URL_LDS:
+          return LDS;
+        case ADS_TYPE_URL_RDS:
+          return RDS;
+        case ADS_TYPE_URL_CDS:
+          return CDS;
+        case ADS_TYPE_URL_EDS:
+          return EDS;
+        default:
+          return UNKNOWN;
+      }
+    }
+
+    String typeUrl()
+    {
+      switch (this)
+      {
+        case LDS:
+          return ADS_TYPE_URL_LDS;
+        case RDS:
+          return ADS_TYPE_URL_RDS;
+        case CDS:
+          return ADS_TYPE_URL_CDS;
+        case EDS:
+          return ADS_TYPE_URL_EDS;
+        case UNKNOWN:
+        default:
+          throw new AssertionError("Unknown or missing case in enum switch: " + this);
+      }
+    }
   }
 
   /**
-   * Registers a data watcher for the given CDS resource.
+   * Registers a data watcher for the given xDS resource
    */
-  void watchCdsResource(String resourceName, CdsResourceWatcher watcher) {
-    throw new UnsupportedOperationException();
-  }
-
-  /**
-   * Registers a data watcher for the given EDS resource.
-   */
-  void watchEdsResource(String resourceName, EdsResourceWatcher watcher) {
+  void watchXdsResource(String resourceName, ResourceType type, ResourceWatcher watcher) {
     throw new UnsupportedOperationException();
   }
 
   // TODO: Handle cancel resource watch
+  /**
+   * Unregisters the given xDS resource watcher.
+   */
+  void cancelXdsResourceWatch(String resourceName, ResourceType type, LdsResourceWatcher watcher) {
+    throw new UnsupportedOperationException();
+  }
 }

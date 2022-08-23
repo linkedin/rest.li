@@ -20,6 +20,7 @@ public class XdsChannelFactory
     }
 
     return ManagedChannelBuilder.forTarget(xdsServerUri)
+        // TODO: Will switch to TLS for productionization
         .usePlaintext()
         .keepAliveTime(5, TimeUnit.MINUTES)
         .build();

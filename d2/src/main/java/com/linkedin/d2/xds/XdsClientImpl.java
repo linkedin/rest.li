@@ -42,10 +42,6 @@ public class XdsClientImpl extends XdsClient
   private static final String TYPE_URL_HTTP_CONNECTION_MANAGER =
       "type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager";
   private static final Logger _log = LoggerFactory.getLogger(XdsClientImpl.class);
-  private static final String ADS_TYPE_URL_LDS = "type.googleapis.com/envoy.config.listener.v3.Listener";
-  private static final String ADS_TYPE_URL_RDS = "type.googleapis.com/envoy.config.route.v3.RouteConfiguration";
-  private static final String ADS_TYPE_URL_CDS = "type.googleapis.com/envoy.config.cluster.v3.Cluster";
-  private static final String ADS_TYPE_URL_EDS = "type.googleapis.com/envoy.config.endpoint.v3.ClusterLoadAssignment";
 
   private static final String D2_CLUSTER_PROPERTIES_KEY = "d2ClusterProperties";
   private static final String D2_SERVICE_PROPERTIES_KEY = "d2ServiceProperties";
@@ -78,88 +74,23 @@ public class XdsClientImpl extends XdsClient
   }
 
   @Override
-  void watchLdsResource(final String resourceName, final LdsResourceWatcher watcher)
+  void watchXdsResource(String resourceName, ResourceType type, ResourceWatcher watcher)
   {
     _executorService.execute(() ->
     {
-      ResourceSubscriber subscriber = _ldsResourceSubscribers.get(resourceName);
+      Map<String, ResourceSubscriber> resourceSubscriberMap = getResourceSubscriberMap(type);
+      ResourceSubscriber subscriber = resourceSubscriberMap.get(resourceName);
       if (subscriber == null)
       {
-        _log.info("Subscribe LDS resource {}", resourceName);
-        subscriber = new ResourceSubscriber(ResourceType.LDS, resourceName);
-        _ldsResourceSubscribers.put(resourceName, subscriber);
+        _log.info("Subscribe {} resource {}", type, resourceName);
+        subscriber = new ResourceSubscriber(type, resourceName);
+        resourceSubscriberMap.put(resourceName, subscriber);
 
         if (_adsStream == null)
         {
           startRpcStream();
         }
-        _adsStream.sendDiscoveryRequest(ResourceType.LDS, Collections.singletonList(resourceName));
-      }
-      subscriber.addWatcher(watcher);
-    });
-  }
-
-  @Override
-  void watchRdsResource(final String resourceName, final RdsResourceWatcher watcher)
-  {
-    _executorService.execute(() ->
-    {
-      ResourceSubscriber subscriber = _rdsResourceSubscribers.get(resourceName);
-      if (subscriber == null)
-      {
-        _log.info("Subscribe RDS resource {}", resourceName);
-        subscriber = new ResourceSubscriber(ResourceType.RDS, resourceName);
-        _rdsResourceSubscribers.put(resourceName, subscriber);
-
-        if (_adsStream == null)
-        {
-          startRpcStream();
-        }
-        _adsStream.sendDiscoveryRequest(ResourceType.RDS, Collections.singletonList(resourceName));
-      }
-      subscriber.addWatcher(watcher);
-    });
-  }
-
-  @Override
-  void watchCdsResource(final String resourceName, final CdsResourceWatcher watcher)
-  {
-    _executorService.execute(() ->
-    {
-      ResourceSubscriber subscriber = _cdsResourceSubscribers.get(resourceName);
-      if (subscriber == null)
-      {
-        _log.info("Subscribe CDS resource {}", resourceName);
-        subscriber = new ResourceSubscriber(ResourceType.CDS, resourceName);
-        _cdsResourceSubscribers.put(resourceName, subscriber);
-
-        if (_adsStream == null)
-        {
-          startRpcStream();
-        }
-        _adsStream.sendDiscoveryRequest(ResourceType.CDS, Collections.singletonList(resourceName));
-      }
-      subscriber.addWatcher(watcher);
-    });
-  }
-
-  @Override
-  void watchEdsResource(final String resourceName, final EdsResourceWatcher watcher)
-  {
-    _executorService.execute(() ->
-    {
-      ResourceSubscriber subscriber = _edsResourceSubscribers.get(resourceName);
-      if (subscriber == null)
-      {
-        _log.info("Subscribe EDS resource {}", resourceName);
-        subscriber = new ResourceSubscriber(ResourceType.EDS, resourceName);
-        _edsResourceSubscribers.put(resourceName, subscriber);
-
-        if (_adsStream == null)
-        {
-          startRpcStream();
-        }
-        _adsStream.sendDiscoveryRequest(ResourceType.EDS, Collections.singletonList(resourceName));
+        _adsStream.sendDiscoveryRequest(type, Collections.singletonList(resourceName));
       }
       subscriber.addWatcher(watcher);
     });
@@ -196,25 +127,8 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    if (errors.isEmpty())
-    {
-      _adsStream.sendAckRequest(responseData.getResourceType(), responseData.getNonce());
-    } else
-    {
-      String errorDetail = Joiner.on('\n').join(errors);
-      _adsStream.sendNackRequest(responseData.getResourceType(), responseData.getNonce(), errorDetail);
-    }
-
-    for (Map.Entry<String, LdsUpdate> entry : ldsUpdates.entrySet())
-    {
-      String resourceName = entry.getKey();
-      LdsUpdate ldsUpdate = entry.getValue();
-      ResourceSubscriber subscriber = _ldsResourceSubscribers.get(resourceName);
-      if (subscriber != null)
-      {
-        subscriber.onData(ldsUpdate);
-      }
-    }
+    _log.info("Received LDS response nonce {}, resource updates {}", responseData.getNonce(), ldsUpdates);
+    handleResourceUpdate(ldsUpdates, responseData.getResourceType(), responseData.getNonce(), errors);
   }
 
   private void handleRdsResponse(DiscoveryResponseData responseData)
@@ -254,25 +168,8 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    if (errors.isEmpty())
-    {
-      _adsStream.sendAckRequest(responseData.getResourceType(), responseData.getNonce());
-    } else
-    {
-      String errorDetail = Joiner.on('\n').join(errors);
-      _adsStream.sendNackRequest(responseData.getResourceType(), responseData.getNonce(), errorDetail);
-    }
-
-    for (Map.Entry<String, RdsUpdate> entry : rdsUpdates.entrySet())
-    {
-      String resourceName = entry.getKey();
-      RdsUpdate rdsUpdate = entry.getValue();
-      ResourceSubscriber subscriber = _rdsResourceSubscribers.get(resourceName);
-      if (subscriber != null)
-      {
-        subscriber.onData(rdsUpdate);
-      }
-    }
+    _log.info("Received RDS response nonce {}, resource updates {}", responseData.getNonce(), rdsUpdates);
+    handleResourceUpdate(rdsUpdates, responseData.getResourceType(), responseData.getNonce(), errors);
   }
 
   private void handleCdsResponse(DiscoveryResponseData responseData)
@@ -302,25 +199,8 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    if (errors.isEmpty())
-    {
-      _adsStream.sendAckRequest(responseData.getResourceType(), responseData.getNonce());
-    } else
-    {
-      String errorDetail = Joiner.on('\n').join(errors);
-      _adsStream.sendNackRequest(responseData.getResourceType(), responseData.getNonce(), errorDetail);
-    }
-
-    for (Map.Entry<String, CdsUpdate> entry : cdsUpdates.entrySet())
-    {
-      String resourceName = entry.getKey();
-      CdsUpdate cdsUpdate = entry.getValue();
-      ResourceSubscriber subscriber = _cdsResourceSubscribers.get(resourceName);
-      if (subscriber != null)
-      {
-        subscriber.onData(cdsUpdate);
-      }
-    }
+    _log.info("Received CDS response nonce {}, resource updates {}", responseData.getNonce(), cdsUpdates);
+    handleResourceUpdate(cdsUpdates, responseData.getResourceType(), responseData.getNonce(), errors);
   }
 
   private void handleEdsResponse(DiscoveryResponseData responseData)
@@ -341,64 +221,49 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
+    _log.info("Received LDS response nonce {}, resource updates {}", responseData.getNonce(), edsUpdates);
+    handleResourceUpdate(edsUpdates, responseData.getResourceType(), responseData.getNonce(), errors);
+  }
+
+  private void handleResourceUpdate(Map<String, ? extends ResourceUpdate> updates, ResourceType type, String nonce,
+      List<String> errors)
+  {
     if (errors.isEmpty())
     {
-      _adsStream.sendAckRequest(responseData.getResourceType(), responseData.getNonce());
+      _adsStream.sendAckRequest(type, nonce);
     } else
     {
       String errorDetail = Joiner.on('\n').join(errors);
-      _adsStream.sendNackRequest(responseData.getResourceType(), responseData.getNonce(), errorDetail);
+      _adsStream.sendNackRequest(type, nonce, errorDetail);
     }
 
-    for (Map.Entry<String, EdsUpdate> entry : edsUpdates.entrySet())
+    for (Map.Entry<String, ? extends ResourceUpdate> entry : updates.entrySet())
     {
       String resourceName = entry.getKey();
-      EdsUpdate edsUpdate = entry.getValue();
-      ResourceSubscriber subscriber = _edsResourceSubscribers.get(resourceName);
+      ResourceUpdate resourceUpdate = entry.getValue();
+      ResourceSubscriber subscriber = getResourceSubscriberMap(type).get(resourceName);
       if (subscriber != null)
       {
-        subscriber.onData(edsUpdate);
+        subscriber.onData(resourceUpdate);
       }
     }
   }
 
-  private enum ResourceType
+  private Map<String, ResourceSubscriber> getResourceSubscriberMap(ResourceType type)
   {
-    UNKNOWN, LDS, RDS, CDS, EDS;
-
-    static ResourceType fromTypeUrl(String typeUrl)
+    switch (type)
     {
-      switch (typeUrl)
-      {
-        case ADS_TYPE_URL_LDS:
-          return LDS;
-        case ADS_TYPE_URL_RDS:
-          return RDS;
-        case ADS_TYPE_URL_CDS:
-          return CDS;
-        case ADS_TYPE_URL_EDS:
-          return EDS;
-        default:
-          return UNKNOWN;
-      }
-    }
-
-    String typeUrl()
-    {
-      switch (this)
-      {
-        case LDS:
-          return ADS_TYPE_URL_LDS;
-        case RDS:
-          return ADS_TYPE_URL_RDS;
-        case CDS:
-          return ADS_TYPE_URL_CDS;
-        case EDS:
-          return ADS_TYPE_URL_EDS;
-        case UNKNOWN:
-        default:
-          throw new AssertionError("Unknown or missing case in enum switch: " + this);
-      }
+      case LDS:
+        return _ldsResourceSubscribers;
+      case RDS:
+        return _rdsResourceSubscribers;
+      case CDS:
+        return _cdsResourceSubscribers;
+      case EDS:
+        return _edsResourceSubscribers;
+      case UNKNOWN:
+      default:
+        throw new AssertionError("Unknown resource type");
     }
   }
 
@@ -570,13 +435,15 @@ public class XdsClientImpl extends XdsClient
 
     private void onData(ResourceUpdate data)
     {
-      if (!Objects.equals(_data, data))
+      if (Objects.equals(_data, data))
       {
-        _data = data;
-        for (ResourceWatcher watcher : _watchers)
-        {
-          notifyWatcher(watcher, data);
-        }
+        _log.debug("Received resource update data equal to the current data. Will not perform the update.");
+        return;
+      }
+      _data = data;
+      for (ResourceWatcher watcher : _watchers)
+      {
+        notifyWatcher(watcher, data);
       }
     }
   }
