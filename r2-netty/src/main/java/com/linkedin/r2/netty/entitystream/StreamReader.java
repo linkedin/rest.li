@@ -23,7 +23,7 @@ import com.linkedin.r2.message.stream.entitystream.Reader;
 import com.linkedin.r2.netty.common.NettyChannelAttributes;
 import com.linkedin.r2.netty.common.StreamingTimeout;
 import com.linkedin.util.clock.SystemClock;
-import io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
 
 /**
  * Entity stream {@link Reader} implementation that reads from the entity stream

@@ -61,13 +61,21 @@ def manipulatePomXml = {
 publishing {
   publications {
     // Define the "release" publication
-    release(MavenPublication) {
-      from components.java
+    release(MavenPublication) { publication ->
+      if (project.name == 'restli-netty' || project.name == 'restli-zookeeper') {
+        apply plugin: 'com.github.johnrengelman.shadow'
+        project.shadow.component(publication)
+      } else {
+        from components.java
+      }
 
       afterEvaluate {
         // Add all extra archives (sources, javadoc, any custom archives e.g. all)
         project.configurations.archives.allArtifacts.forEach {
-          if (it.classifier) {
+          // Skip 'slim' identifier, otherwise this logic attemps to publish the disabled slim jar for restli-netty.
+          // This requirement is related to the workaround for IDEA-163411 in the restli-netty project. When that bug
+          // is resolved this can be simplified.
+          if (it.classifier && it.classifier != 'slim') {
             artifact it
           }
         }

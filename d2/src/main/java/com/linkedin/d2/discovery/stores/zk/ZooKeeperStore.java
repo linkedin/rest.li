@@ -29,8 +29,8 @@ import java.io.File;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
+import com.linkedin.pegasus.org.apache.zookeeper.WatchedEvent;
+import com.linkedin.pegasus.org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

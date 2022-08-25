@@ -21,14 +21,14 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.netty.common.NettyRequestAdapter;
 import com.linkedin.r2.netty.entitystream.StreamReader;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.MessageToMessageEncoder;
-import io.netty.handler.codec.http.DefaultHttpContent;
-import io.netty.handler.codec.http.HttpContent;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.LastHttpContent;
+import com.linkedin.pegasus.io.netty.buffer.Unpooled;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandler;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.handler.codec.MessageToMessageEncoder;
+import com.linkedin.pegasus.io.netty.handler.codec.http.DefaultHttpContent;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpContent;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpRequest;
+import com.linkedin.pegasus.io.netty.handler.codec.http.LastHttpContent;
 import java.util.List;
 
 /**

@@ -18,8 +18,8 @@ package com.linkedin.r2.netty.common;
 
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.Channel;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;

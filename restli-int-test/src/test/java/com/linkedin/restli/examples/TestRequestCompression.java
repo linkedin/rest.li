@@ -66,7 +66,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import io.netty.channel.nio.NioEventLoopGroup;
+import com.linkedin.pegasus.io.netty.channel.nio.NioEventLoopGroup;
 
 /**
  * Integration tests for request compression.

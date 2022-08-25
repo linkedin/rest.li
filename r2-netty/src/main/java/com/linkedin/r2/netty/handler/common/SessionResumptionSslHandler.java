@@ -17,14 +17,14 @@
 package com.linkedin.r2.netty.handler.common;
 
 import com.linkedin.r2.netty.common.SslHandlerUtil;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelOutboundHandlerAdapter;
-import io.netty.channel.ChannelPromise;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslHandler;
-import io.netty.util.AttributeKey;
-import io.netty.util.concurrent.Future;
+import com.linkedin.pegasus.io.netty.channel.Channel;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelOutboundHandlerAdapter;
+import com.linkedin.pegasus.io.netty.channel.ChannelPromise;
+import com.linkedin.pegasus.io.netty.handler.ssl.SslContext;
+import com.linkedin.pegasus.io.netty.handler.ssl.SslHandler;
+import com.linkedin.pegasus.io.netty.util.AttributeKey;
+import com.linkedin.pegasus.io.netty.util.concurrent.Future;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.concurrent.TimeUnit;

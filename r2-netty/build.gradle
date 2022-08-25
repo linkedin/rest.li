@@ -4,9 +4,9 @@ dependencies {
   compile project(':r2-core')
   compile project(':r2-disruptor')
   compile project(':r2-filter-compression')
+  implementation project(path: ':restli-netty', configuration: 'shadow')
 
   compile externalDependency.commonsLang
-  compile externalDependency.netty
 
   testCompile project(path: ':r2-core', configuration: 'testArtifacts')
   testCompile externalDependency.mockito

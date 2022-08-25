@@ -22,19 +22,19 @@ import com.linkedin.r2.message.timing.TimingImportance;
 import com.linkedin.r2.message.timing.TimingKey;
 import com.linkedin.r2.message.timing.TimingNameConstants;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelOutboundHandlerAdapter;
-import io.netty.handler.ssl.SslHandler;
-import io.netty.util.AttributeKey;
-import io.netty.util.concurrent.Future;
+import com.linkedin.pegasus.io.netty.channel.Channel;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelOutboundHandlerAdapter;
+import com.linkedin.pegasus.io.netty.handler.ssl.SslHandler;
+import com.linkedin.pegasus.io.netty.util.AttributeKey;
+import com.linkedin.pegasus.io.netty.util.concurrent.Future;
 
 /**
  * An SSL handler that records time in establishing a handshake.
  *
- * SSL hand shake starts when {@link SslHandler} is added to {@link io.netty.channel.ChannelPipeline}.
- * This handler is added after {@link SslHandler}, so technically this timer is started after hand shake begins,
- * but the difference should be negligible.
+ * SSL hand shake starts when {@link SslHandler} is added to
+ * {@link com.linkedin.pegasus.io.netty.channel.ChannelPipeline}. This handler is added after {@link SslHandler}, so
+ * technically this timer is started after hand shake begins, but the difference should be negligible.
  *
  * @author Xialin Zhu
  */

@@ -21,7 +21,7 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.stores.PropertyStore;
 import com.linkedin.d2.discovery.stores.toggling.TogglingPublisher;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
+import com.linkedin.pegasus.org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

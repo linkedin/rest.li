@@ -20,11 +20,11 @@ import com.linkedin.r2.netty.common.ChannelPipelineEvent;
 import com.linkedin.r2.netty.common.NettyChannelAttributes;
 import com.linkedin.r2.netty.common.ShutdownTimeoutException;
 import com.linkedin.r2.transport.http.client.AsyncPool;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandler;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.pool.ChannelPool;
+import com.linkedin.pegasus.io.netty.channel.Channel;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelInboundHandler;
+import com.linkedin.pegasus.io.netty.channel.ChannelInboundHandlerAdapter;
+import com.linkedin.pegasus.io.netty.channel.pool.ChannelPool;
 
 /**
  * An implementation of {@link ChannelInboundHandler} that returns or disposes the

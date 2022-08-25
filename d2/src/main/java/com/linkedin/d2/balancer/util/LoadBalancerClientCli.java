@@ -96,7 +96,7 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
-import org.apache.zookeeper.Watcher.Event.KeeperState;
+import com.linkedin.pegasus.org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.jvmstat.monitor.HostIdentifier;

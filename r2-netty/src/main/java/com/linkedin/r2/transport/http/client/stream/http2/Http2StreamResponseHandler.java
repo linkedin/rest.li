@@ -26,9 +26,9 @@ import com.linkedin.r2.transport.common.WireAttributeHelper;
 import com.linkedin.r2.transport.common.bridge.common.ResponseWithCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandler;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelInboundHandlerAdapter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -40,8 +40,8 @@ import org.slf4j.LoggerFactory;
  * Netty pipeline handler which takes a complete received message and invokes the user-specified callback.
  *
  * Note that an instance of this class needs to be stateless, since a single instance is used in multiple
- * {@link io.netty.channel.ChannelPipeline}s simultaneously. The user specified callback is expected to be
- * pass in through a {@link com.linkedin.r2.transport.common.bridge.common.ResponseWithCallback} as a
+ * {@link com.linkedin.pegasus.io.netty.channel.ChannelPipeline}s simultaneously. The user specified callback is
+ * expected to be pass in through a {@link com.linkedin.r2.transport.common.bridge.common.ResponseWithCallback} as a
  * {@link com.linkedin.r2.transport.http.client.TimeoutTransportCallback}
  *
  * @author Sean Sheng

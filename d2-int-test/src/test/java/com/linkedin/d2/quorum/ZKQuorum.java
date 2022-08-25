@@ -22,10 +22,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.apache.zookeeper.server.quorum.QuorumPeer;
-import org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
-import org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
-import org.apache.zookeeper.server.ZooKeeperServer;
+import com.linkedin.pegasus.org.apache.zookeeper.server.quorum.QuorumPeer;
+import com.linkedin.pegasus.org.apache.zookeeper.server.quorum.QuorumPeer.LearnerType;
+import com.linkedin.pegasus.org.apache.zookeeper.server.quorum.QuorumPeer.QuorumServer;
+import com.linkedin.pegasus.org.apache.zookeeper.server.ZooKeeperServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

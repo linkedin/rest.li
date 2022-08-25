@@ -41,7 +41,7 @@ import com.linkedin.util.ArgumentUtil;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
-import org.apache.zookeeper.KeeperException;
+import com.linkedin.pegasus.org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

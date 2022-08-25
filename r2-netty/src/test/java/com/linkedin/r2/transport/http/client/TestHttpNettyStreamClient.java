@@ -50,13 +50,13 @@ import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamClient
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.test.util.retry.SingleRetry;
 import com.linkedin.test.util.retry.ThreeRetries;
-import io.netty.channel.Channel;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.handler.codec.TooLongFrameException;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http2.Http2Exception;
-import io.netty.util.AsciiString;
+import com.linkedin.pegasus.io.netty.channel.Channel;
+import com.linkedin.pegasus.io.netty.channel.EventLoopGroup;
+import com.linkedin.pegasus.io.netty.channel.nio.NioEventLoopGroup;
+import com.linkedin.pegasus.io.netty.handler.codec.TooLongFrameException;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpHeaderNames;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2Exception;
+import com.linkedin.pegasus.io.netty.util.AsciiString;
 import org.eclipse.jetty.server.Server;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -1111,6 +1111,8 @@ public class TestHttpNettyStreamClient
                 latch.countDown();
               }
             }));
+        // Prevent overloading the test server, which can cause sporadic test failures.
+        Thread.sleep(5);
       }
 
       if (!latch.await(30, TimeUnit.SECONDS))

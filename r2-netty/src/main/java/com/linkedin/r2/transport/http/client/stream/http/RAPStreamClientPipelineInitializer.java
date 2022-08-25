@@ -17,9 +17,9 @@
 package com.linkedin.r2.transport.http.client.stream.http;
 
 import com.linkedin.r2.netty.handler.common.SessionResumptionSslHandler;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.HttpClientCodec;
+import com.linkedin.pegasus.io.netty.channel.ChannelInitializer;
+import com.linkedin.pegasus.io.netty.channel.socket.nio.NioSocketChannel;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpClientCodec;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;

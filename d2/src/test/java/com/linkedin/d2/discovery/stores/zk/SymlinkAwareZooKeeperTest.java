@@ -18,11 +18,11 @@ package com.linkedin.d2.discovery.stores.zk;
 
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
-import org.apache.zookeeper.AsyncCallback;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.data.Stat;
+import com.linkedin.pegasus.org.apache.zookeeper.AsyncCallback;
+import com.linkedin.pegasus.org.apache.zookeeper.KeeperException;
+import com.linkedin.pegasus.org.apache.zookeeper.WatchedEvent;
+import com.linkedin.pegasus.org.apache.zookeeper.Watcher;
+import com.linkedin.pegasus.org.apache.zookeeper.data.Stat;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;

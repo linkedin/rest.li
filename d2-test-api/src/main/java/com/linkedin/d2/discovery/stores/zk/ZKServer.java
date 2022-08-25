@@ -21,9 +21,9 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CountDownLatch;
 import org.apache.commons.io.FileUtils;
-import org.apache.zookeeper.server.NIOServerCnxn;
-import org.apache.zookeeper.server.NIOServerCnxnFactory;
-import org.apache.zookeeper.server.ZooKeeperServer;
+import com.linkedin.pegasus.org.apache.zookeeper.server.NIOServerCnxn;
+import com.linkedin.pegasus.org.apache.zookeeper.server.NIOServerCnxnFactory;
+import com.linkedin.pegasus.org.apache.zookeeper.server.ZooKeeperServer;
 
 /**
  * Very simple wrapper around ZooKeeper server, intended only for TEST use.

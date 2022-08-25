@@ -17,7 +17,7 @@
 package com.linkedin.d2.discovery.stores.zk.acl;
 
 import java.util.List;
-import org.apache.zookeeper.data.ACL;
+import com.linkedin.pegasus.org.apache.zookeeper.data.ACL;
 
 /**
  * Provide Zookeeper {@link ACL} information for authentication and authorization

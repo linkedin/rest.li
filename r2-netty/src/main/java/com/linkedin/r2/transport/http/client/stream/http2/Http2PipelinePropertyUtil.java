@@ -18,12 +18,12 @@ package com.linkedin.r2.transport.http.client.stream.http2;
 
 import com.linkedin.r2.transport.http.client.AsyncPoolHandle;
 import com.linkedin.util.ArgumentUtil;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http2.Http2Connection;
-import io.netty.handler.codec.http2.Http2Exception;
-import io.netty.handler.codec.http2.Http2Stream;
-import io.netty.util.AttributeKey;
+import com.linkedin.pegasus.io.netty.channel.Channel;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2Connection;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2Exception;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2Stream;
+import com.linkedin.pegasus.io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

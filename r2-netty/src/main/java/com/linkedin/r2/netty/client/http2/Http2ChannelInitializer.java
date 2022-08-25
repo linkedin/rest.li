@@ -29,23 +29,23 @@ import com.linkedin.r2.netty.handler.http2.Http2MessageDecoders;
 import com.linkedin.r2.netty.handler.http2.Http2MessageEncoders;
 import com.linkedin.r2.netty.handler.http2.Http2ProtocolUpgradeHandler;
 import com.linkedin.r2.netty.handler.http2.UnsupportedHandler;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelPromise;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.HttpClientCodec;
-import io.netty.handler.codec.http.HttpClientUpgradeHandler;
-import io.netty.handler.codec.http2.Http2ClientUpgradeCodec;
-import io.netty.handler.codec.http2.Http2ConnectionHandler;
-import io.netty.handler.codec.http2.Http2FrameCodec;
-import io.netty.handler.codec.http2.Http2FrameCodecBuilder;
-import io.netty.handler.codec.http2.Http2MultiplexHandler;
-import io.netty.handler.codec.http2.Http2Settings;
-import io.netty.handler.ssl.ApplicationProtocolConfig;
-import io.netty.handler.ssl.ApplicationProtocolNames;
-import io.netty.handler.ssl.ClientAuth;
-import io.netty.handler.ssl.IdentityCipherSuiteFilter;
-import io.netty.handler.ssl.JdkSslContext;
-import io.netty.handler.ssl.SslContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelInitializer;
+import com.linkedin.pegasus.io.netty.channel.ChannelPromise;
+import com.linkedin.pegasus.io.netty.channel.socket.nio.NioSocketChannel;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpClientCodec;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpClientUpgradeHandler;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2ClientUpgradeCodec;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2ConnectionHandler;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2FrameCodec;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2FrameCodecBuilder;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2MultiplexHandler;
+import com.linkedin.pegasus.io.netty.handler.codec.http2.Http2Settings;
+import com.linkedin.pegasus.io.netty.handler.ssl.ApplicationProtocolConfig;
+import com.linkedin.pegasus.io.netty.handler.ssl.ApplicationProtocolNames;
+import com.linkedin.pegasus.io.netty.handler.ssl.ClientAuth;
+import com.linkedin.pegasus.io.netty.handler.ssl.IdentityCipherSuiteFilter;
+import com.linkedin.pegasus.io.netty.handler.ssl.JdkSslContext;
+import com.linkedin.pegasus.io.netty.handler.ssl.SslContext;
 
 import java.util.Arrays;
 import javax.net.ssl.SSLContext;
@@ -65,7 +65,7 @@ import javax.net.ssl.SSLParameters;
  * are added and the pipeline should be setup with the following handlers.
  *
  * DefaultChannelPipeline {
- *   (sslHandler = {@link io.netty.handler.ssl.SslHandler}),
+ *   (sslHandler = {@link com.linkedin.pegasus.io.netty.handler.ssl.SslHandler}),
  *   (CertificateHandler = {@link CertificateHandler}),
  *   (sslHandshakeTimingHandler = {@link SslHandshakeTimingHandler}),
  *   (Http2FrameCodec = {@link Http2FrameCodec})

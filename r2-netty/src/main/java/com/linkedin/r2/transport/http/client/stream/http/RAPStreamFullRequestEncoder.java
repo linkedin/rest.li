@@ -18,9 +18,9 @@ package com.linkedin.r2.transport.http.client.stream.http;
 
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.netty.common.NettyRequestAdapter;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.MessageToMessageEncoder;
-import io.netty.handler.codec.http.HttpRequest;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.handler.codec.MessageToMessageEncoder;
+import com.linkedin.pegasus.io.netty.handler.codec.http.HttpRequest;
 
 import java.util.List;
 

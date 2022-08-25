@@ -6,6 +6,7 @@ dependencies {
   compile project (':r2-sample')
   compile project (':pegasus-common')
   compile project (':test-util')
+  implementation project(path: ':restli-netty', configuration: 'shadow')
   testRuntime externalDependency.disruptor
 }
 

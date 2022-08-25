@@ -23,11 +23,11 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
 import com.linkedin.r2.util.Timeout;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelPipeline;
-import io.netty.util.AttributeKey;
-import io.netty.util.concurrent.Promise;
+import com.linkedin.pegasus.io.netty.channel.Channel;
+import com.linkedin.pegasus.io.netty.channel.ChannelFuture;
+import com.linkedin.pegasus.io.netty.channel.ChannelPipeline;
+import com.linkedin.pegasus.io.netty.util.AttributeKey;
+import com.linkedin.pegasus.io.netty.util.concurrent.Promise;
 import java.util.concurrent.ScheduledFuture;
 
 /**

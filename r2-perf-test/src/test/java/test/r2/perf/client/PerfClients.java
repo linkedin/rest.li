@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.concurrent.Executors;
 
 import com.linkedin.r2.util.NamedThreadFactory;
-import io.netty.channel.nio.NioEventLoopGroup;
+import com.linkedin.pegasus.io.netty.channel.nio.NioEventLoopGroup;
 import test.r2.perf.Generator;
 import test.r2.perf.PerfConfig;
 

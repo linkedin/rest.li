@@ -16,12 +16,12 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
-import org.apache.zookeeper.AsyncCallback;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.Watcher;
-import org.apache.zookeeper.data.ACL;
-import org.apache.zookeeper.data.Stat;
+import com.linkedin.pegasus.org.apache.zookeeper.AsyncCallback;
+import com.linkedin.pegasus.org.apache.zookeeper.CreateMode;
+import com.linkedin.pegasus.org.apache.zookeeper.KeeperException;
+import com.linkedin.pegasus.org.apache.zookeeper.Watcher;
+import com.linkedin.pegasus.org.apache.zookeeper.data.ACL;
+import com.linkedin.pegasus.org.apache.zookeeper.data.Stat;
 
 import java.io.IOException;
 import java.util.List;
@@ -34,9 +34,9 @@ import java.util.List;
  */
 public class VanillaZooKeeperAdapter implements ZooKeeper
 {
-  private final org.apache.zookeeper.ZooKeeper _zk;
+  private final com.linkedin.pegasus.org.apache.zookeeper.ZooKeeper _zk;
 
-  public VanillaZooKeeperAdapter(org.apache.zookeeper.ZooKeeper zk)
+  public VanillaZooKeeperAdapter(com.linkedin.pegasus.org.apache.zookeeper.ZooKeeper zk)
   {
     _zk = zk;
   }
@@ -44,13 +44,13 @@ public class VanillaZooKeeperAdapter implements ZooKeeper
   public VanillaZooKeeperAdapter(String connectString, int sessionTimeout, Watcher watcher)
       throws IOException
   {
-    _zk = new org.apache.zookeeper.ZooKeeper(connectString, sessionTimeout, watcher);
+    _zk = new com.linkedin.pegasus.org.apache.zookeeper.ZooKeeper(connectString, sessionTimeout, watcher);
   }
 
   public VanillaZooKeeperAdapter(String connectString, int sessionTimeout, Watcher watcher,
                                  long sessionId, byte[] sessionPasswd) throws IOException
   {
-    _zk = new org.apache.zookeeper.ZooKeeper(connectString, sessionTimeout, watcher, sessionId, sessionPasswd);
+    _zk = new com.linkedin.pegasus.org.apache.zookeeper.ZooKeeper(connectString, sessionTimeout, watcher, sessionId, sessionPasswd);
   }
 
   @Override
@@ -218,7 +218,7 @@ public class VanillaZooKeeperAdapter implements ZooKeeper
   }
 
   @Override
-  public org.apache.zookeeper.ZooKeeper.States getState()
+  public com.linkedin.pegasus.org.apache.zookeeper.ZooKeeper.States getState()
   {
     return _zk.getState();
   }

@@ -57,8 +57,8 @@ import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.r2.util.ConfigValueExtractor;
 import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.util.clock.SystemClock;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
+import com.linkedin.pegasus.io.netty.channel.EventLoopGroup;
+import com.linkedin.pegasus.io.netty.channel.nio.NioEventLoopGroup;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -80,7 +80,7 @@ import org.slf4j.LoggerFactory;
  * A factory for HttpNettyClient instances.
  *
  * All clients created by the factory will share the same resources, in particular the
- * {@link io.netty.channel.EventLoopGroup} and {@link ScheduledExecutorService}.
+ * {@link com.linkedin.pegasus.io.netty.channel.EventLoopGroup} and {@link ScheduledExecutorService}.
  *
  * In order to shutdown cleanly, all clients issued by the factory should be shutdown via
  * {@link TransportClient#shutdown(com.linkedin.common.callback.Callback)} and the factory

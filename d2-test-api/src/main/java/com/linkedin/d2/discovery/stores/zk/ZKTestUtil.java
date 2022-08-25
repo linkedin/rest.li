@@ -16,8 +16,8 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
-import org.apache.zookeeper.WatchedEvent;
-import org.apache.zookeeper.Watcher;
+import com.linkedin.pegasus.org.apache.zookeeper.WatchedEvent;
+import com.linkedin.pegasus.org.apache.zookeeper.Watcher;
 import org.testng.Assert;
 
 import java.io.File;

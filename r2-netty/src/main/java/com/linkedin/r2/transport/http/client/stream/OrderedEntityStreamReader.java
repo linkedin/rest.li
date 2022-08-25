@@ -19,12 +19,13 @@ package com.linkedin.r2.transport.http.client.stream;
 import com.linkedin.data.ByteString;
 import com.linkedin.r2.message.stream.entitystream.ReadHandle;
 import com.linkedin.r2.message.stream.entitystream.Reader;
-import io.netty.channel.ChannelHandlerContext;
+import com.linkedin.pegasus.io.netty.channel.ChannelHandlerContext;
 
 
 /**
  * A Reader wrapper which ensures the reader callbacks are executed in the order they called by the writer
- * wrapped reader callbacks are queued to be invoked by the dedicated single threaded {@link io.netty.channel.EventLoop}
+ * wrapped reader callbacks are queued to be invoked by the dedicated single threaded
+ * {@link com.linkedin.pegasus.io.netty.channel.EventLoop}
  *
  * @author Nizar Mankulangara
  */
@@ -37,7 +38,8 @@ public class OrderedEntityStreamReader implements Reader
   /**
    * Construct a new instance.
    *
-   * @param ctx the {@link ChannelHandlerContext} to retrieve the right {@link io.netty.channel.EventLoop} Executor
+   * @param ctx the {@link ChannelHandlerContext} to retrieve the right
+   * {@link com.linkedin.pegasus.io.netty.channel.EventLoop} Executor
    * @param reader the underlying {@link Reader} whose callbacks execution needs to be ordered
    */
   public OrderedEntityStreamReader(ChannelHandlerContext ctx, Reader reader)
