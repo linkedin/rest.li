@@ -14,26 +14,30 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.37.16] - 2022-08-24
+- Make `DefaultDocumentationRequestHandler` blocking again to avoid the `503` errors users were frequently seeing for `OPTIONS` calls.
+  - Introduce the existing non-blocking ("fail fast") variant as optional subclass `NonBlockingDocumentationRequestHandler`.
+
 ## [29.37.15] - 2022-08-23
 - Exclude transitive Netty dependency for ZooKeeper client.
 
 ## [29.37.14] - 2022-08-19
-- Avoid casting classloader to URLLoader in ResourceModelEncoder and use ClassGraph to search for restspec file
+- Avoid casting classloader to `URLLoader` in `ResourceModelEncoder` and use `ClassGraph` to search for restspec file
 
 ## [29.37.13] - 2022-08-15
-- Fix d2-test-api dependencies
+- Fix `d2-test-api` dependencies
 
 ## [29.37.12] - 2022-08-10
 - Support removing cluster watches created due to cluster failout
 
 ## [29.37.11] - 2022-08-09
-- Avoid using SmileFactoryBuilder to be more compatible with pre 2.10 jackson at runtime
+- Avoid using `SmileFactoryBuilder` to be more compatible with pre-`2.10` jackson at runtime
 
 ## [29.37.10] - 2022-08-08
-- Fix PrimitiveTemplateSpec not having className
+- Fix `PrimitiveTemplateSpec` not having `className`
 
 ## [29.37.9] - 2022-08-07
-- Add null-checks for cluster and service properties in D2ClientJmxManager
+- Add null-checks for cluster and service properties in `D2ClientJmxManager`
 
 ## [29.37.8] - 2022-08-04
 - Switch to use name regex pattern to skip deprecated fields in spec generation
@@ -88,7 +92,7 @@ and what APIs have changed, if applicable.
 - Revert "Provide a mechanism to set a routing hint for the d2 request to get request symbol table (#787)"
 
 ## [29.33.8] - 2022-05-10
-- Add (currently unused) models for D2FailoutProperties.
+- Add (currently unused) models for `D2FailoutProperties`.
 
 ## [29.33.7] - 2022-05-04
 - Silence Zookeeper errors in logs on race condition between watched events and async shutdown.
@@ -97,7 +101,7 @@ and what APIs have changed, if applicable.
 - Provide a mechanism to set a routing hint for the d2 request to get request symbol table.
 
 ## [29.33.5] - 2022-05-02
-- Expose RestLiConfig from RestLiServer.
+- Expose `RestLiConfig` from `RestLiServer`.
 
 ## [29.33.4] - 2022-04-26
 - Support failout redirection in D2 client.
@@ -112,7 +116,7 @@ and what APIs have changed, if applicable.
 - Fix an Avro translation bug where optional fields in a partial default record are not treated properly.
 
 ## [29.33.0] - 2022-03-28
-- Add Support for ByteString[] Query Parameters
+- Add Support for `ByteString[]` Query Parameters
 
 ## [29.32.5] - 2022-03-22
 - Updating newInstance usage which is deprecated in Java 9+
@@ -5309,7 +5313,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.15...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.16...master
+[29.37.16]: https://github.com/linkedin/rest.li/compare/v29.37.15...v29.37.16
 [29.37.15]: https://github.com/linkedin/rest.li/compare/v29.37.14...v29.37.15
 [29.37.14]: https://github.com/linkedin/rest.li/compare/v29.37.13...v29.37.14
 [29.37.13]: https://github.com/linkedin/rest.li/compare/v29.37.12...v29.37.13
