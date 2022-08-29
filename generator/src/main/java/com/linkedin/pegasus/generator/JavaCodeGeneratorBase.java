@@ -68,7 +68,7 @@ public class JavaCodeGeneratorBase
       "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int",
       "interface", "long", "native", "new", "null", "package", "private", "protected", "public",
       "return", "short", "static", "strictfp", "super", "switch", "synchronized",
-      "this", "throw", "throws", "transient", "try", "void", "volatile", "while"
+      "this", "throw", "throws", "transient", "try", "void", "volatile", "while", "notify"
   )));
 
   /**
