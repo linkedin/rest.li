@@ -1,5 +1,6 @@
 package com.linkedin.d2.xds;
 
+import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterStoreProperties;
@@ -167,7 +168,7 @@ public class XdsToD2PropertiesAdaptor
                 String clusterName = clusterNames.get(0);
                 if (_serviceEventBus != null) {
                   _serviceEventBus.publishInitialize(serviceName,
-                      XdsToServicePropertiesAdaptor.toServiceProperties(serviceName, clusterName, "/greeter", servicePropertiesMap));
+                      XdsToServicePropertiesAdaptor.toServiceProperties(serviceName, clusterName, servicePropertiesMap));
                 }
                 listenToCluster(clusterName);
               });
@@ -176,6 +177,8 @@ public class XdsToD2PropertiesAdaptor
 
   private static final class XdsToUriPropertiesAdaptor
   {
+    private static final String ISTIO_FIELD = "istio";
+    private static final String LEGACY_D2_URI_FIELD = "istio-custom-label-non-k8s-d2-uri";
     static UriProperties toUriProperties(String clusterName, List<LocalityLbEndpoints> endpoints)
     {
       Map<URI, Map<Integer, PartitionData>> partitionDescriptions = new HashMap<>();
@@ -184,8 +187,22 @@ public class XdsToD2PropertiesAdaptor
         for (LbEndpoint endpoint : localityLbEndpoints.getLbEndpointsList())
         {
           int weight = endpoint.getLoadBalancingWeight().getValue();
-          SocketAddress socketAddress = endpoint.getEndpoint().getAddress().getSocketAddress();
-          URI uri = URI.create("http://127.0.0.1:34567");
+          Map<String, Struct> metadataMap = endpoint.getMetadata().getFilterMetadataMap();
+          String d2Uri = null;
+          if (metadataMap.containsKey(ISTIO_FIELD))
+          {
+            Map<String, Value> istioFieldsMap = metadataMap.get(ISTIO_FIELD).getFieldsMap();
+            d2Uri = istioFieldsMap.get(LEGACY_D2_URI_FIELD).getStringValue();
+          }
+
+          if (d2Uri == null)
+          {
+            _log.warn("Cannot find d2 URI in the EDS Istio metadata field. Fall back to use address + port in EDS");
+            SocketAddress socketAddress = endpoint.getEndpoint().getAddress().getSocketAddress();
+            d2Uri = socketAddress.getAddress() + ":" + socketAddress.getPortValue();
+          }
+
+          URI uri = URI.create(d2Uri);
           Map<Integer, PartitionData> partitionDataMap =
               Collections.singletonMap(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
           partitionDescriptions.put(uri, partitionDataMap);
@@ -197,10 +214,10 @@ public class XdsToD2PropertiesAdaptor
 
   private static final class XdsToServicePropertiesAdaptor
   {
-    static ServiceProperties toServiceProperties(String serviceName, String clusterName, String path,
+    static ServiceProperties toServiceProperties(String serviceName, String clusterName,
         Map<String, Value> serviceProperties)
     {
-      return new ServiceStoreProperties(serviceName, clusterName, path, Collections.singletonList("relative"),
+      return new ServiceStoreProperties(serviceName, clusterName, "", Collections.singletonList("relative"),
           Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.singletonList("http"),
           Collections.emptySet());
     }

@@ -30,6 +30,11 @@ public class XdsD2GreeterClient
     _client.start(new FutureCallback<>());
   }
 
+  public void shutdown()
+  {
+    _client.shutdown(new FutureCallback<>());
+  }
+
   public void sendGreeterRequest()
   {
     URI uri = URI.create("d2://grpc-demo-service-1.prod.linkedin.com");
@@ -42,11 +47,11 @@ public class XdsD2GreeterClient
       Future<RestResponse> response = _client.restRequest(request);
       String responseString = response.get().getEntity().asString(StandardCharsets.UTF_8);
 
-      System.err.println(uri + " response: " + responseString);
+      System.out.println(uri + " Received response: " + responseString);
     }
     catch (ExecutionException | InterruptedException e)
     {
-      System.err.println("future.get() failed for " + uri + ": " + e);
+      System.out.println("future.get() failed for " + uri + ": " + e);
     }
   }
 

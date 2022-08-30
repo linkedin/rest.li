@@ -43,6 +43,16 @@ dependencies {
   implementation externalDependency.envoyApi
 }
 
+task(runXdsGreeterClient, dependsOn: 'classes', type: JavaExec) {
+    main = 'com.linkedin.d2.xds.example.XdsD2GreeterClient'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task(runXdsGreeterServer, dependsOn: 'classes', type: JavaExec) {
+    main = 'com.linkedin.d2.xds.example.XdsD2GreeterServer'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
 task packup(dependsOn: configurations.default.allArtifacts, type: Copy) {
     into "$buildDir/package"
     from configurations.default
