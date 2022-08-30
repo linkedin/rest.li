@@ -2,6 +2,7 @@ dependencies {
   compile project(':degrader')
   compile project(':r2-core')
   compile project(':r2-netty')
+  compile project(':r2-jetty')
   compile project(':d2-schemas')
   compile project(':data')
   compile project(':pegasus-common')

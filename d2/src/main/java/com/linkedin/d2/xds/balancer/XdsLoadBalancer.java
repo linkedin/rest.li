@@ -11,17 +11,44 @@ import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.d2.discovery.event.PropertyEventThread;
+import com.linkedin.r2.message.Request;
+import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
+import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import java.util.concurrent.Executors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class XdsLoadBalancer implements LoadBalancerWithFacilities
 {
+  private static final Logger _log = LoggerFactory.getLogger(XdsLoadBalancer.class);
+
   private final TogglingLoadBalancer _loadBalancer;
 
   public XdsLoadBalancer(XdsTogglingLoadBalancerFactory factory)
   {
     _loadBalancer = factory.create(Executors.newSingleThreadScheduledExecutor());
+    _loadBalancer.enablePrimary(new Callback<None>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        _log.info("Error enabling primary stores", e);
+      }
+
+      @Override
+      public void onSuccess(None result)
+      {
+        _log.info("Primary store started");
+      }
+    });
+  }
+
+  @Override
+  public void getClient(Request request, RequestContext requestContext, Callback<TransportClient> clientCallback)
+  {
+    _loadBalancer.getClient(request, requestContext, clientCallback);
   }
 
   @Override

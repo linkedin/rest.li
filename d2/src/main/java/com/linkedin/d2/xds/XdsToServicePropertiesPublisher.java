@@ -37,12 +37,12 @@ public class XdsToServicePropertiesPublisher implements PropertyEventPublisher<S
   @Override
   public void start(Callback<None> callback)
   {
-
+    callback.onSuccess(None.none());
   }
 
   @Override
   public void shutdown(Callback<None> callback)
   {
-
+    callback.onSuccess(None.none());
   }
 }

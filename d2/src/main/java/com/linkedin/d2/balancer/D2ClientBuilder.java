@@ -131,6 +131,7 @@ public class D2ClientBuilder
         createDefaultLoadBalancerStrategyFactories();
 
     final D2ClientConfig cfg = new D2ClientConfig(_config.zkHosts,
+                  _config.xdsServer,
                   _config.zkSessionTimeoutInMs,
                   _config.zkStartupTimeoutInMs,
                   _config.lbWaitTimeout,
@@ -259,6 +260,12 @@ public class D2ClientBuilder
   public D2ClientBuilder setZkHosts(String zkHosts)
   {
     _config.zkHosts = zkHosts;
+    return this;
+  }
+
+  public D2ClientBuilder setXdsServer(String xdsServer)
+  {
+    _config.xdsServer = xdsServer;
     return this;
   }
 

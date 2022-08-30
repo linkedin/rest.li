@@ -17,6 +17,7 @@ import io.envoyproxy.envoy.config.route.v3.VirtualHost;
 import io.envoyproxy.envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -164,8 +165,10 @@ public class XdsToD2PropertiesAdaptor
                 }
 
                 String clusterName = clusterNames.get(0);
-                _serviceEventBus.publishInitialize(serviceName,
-                    XdsToServicePropertiesAdaptor.toServiceProperties(serviceName, clusterName, "", servicePropertiesMap));
+                if (_serviceEventBus != null) {
+                  _serviceEventBus.publishInitialize(serviceName,
+                      XdsToServicePropertiesAdaptor.toServiceProperties(serviceName, clusterName, "/greeter", servicePropertiesMap));
+                }
                 listenToCluster(clusterName);
               });
         });
@@ -182,7 +185,7 @@ public class XdsToD2PropertiesAdaptor
         {
           int weight = endpoint.getLoadBalancingWeight().getValue();
           SocketAddress socketAddress = endpoint.getEndpoint().getAddress().getSocketAddress();
-          URI uri = URI.create(socketAddress.getAddress() + ":" + socketAddress.getNamedPort());
+          URI uri = URI.create("http://127.0.0.1:34567");
           Map<Integer, PartitionData> partitionDataMap =
               Collections.singletonMap(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
           partitionDescriptions.put(uri, partitionDataMap);
@@ -197,7 +200,9 @@ public class XdsToD2PropertiesAdaptor
     static ServiceProperties toServiceProperties(String serviceName, String clusterName, String path,
         Map<String, Value> serviceProperties)
     {
-      return new ServiceStoreProperties(serviceName, clusterName, path, Collections.singletonList("relative"));
+      return new ServiceStoreProperties(serviceName, clusterName, path, Collections.singletonList("relative"),
+          Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.singletonList("http"),
+          Collections.emptySet());
     }
   }
 
@@ -205,7 +210,7 @@ public class XdsToD2PropertiesAdaptor
   {
     static ClusterProperties toClusterProperties(String clusterName, Map<String, Value> clusterProperties)
     {
-      return new ClusterStoreProperties(clusterName);
+      return new ClusterStoreProperties(clusterName, Arrays.asList("https", "http"));
     }
   }
 }
