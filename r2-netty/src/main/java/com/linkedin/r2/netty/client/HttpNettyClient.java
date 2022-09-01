@@ -301,7 +301,6 @@ public class HttpNettyClient implements TransportClient
     try
     {
       TimingContextUtil.markTiming(requestContext, TIMING_KEY);
-      // TODO : convert this TCP Socket address to DomainSocketAddress
       address = resolveAddress(request, requestContext);
       TimingContextUtil.markTiming(requestContext, TIMING_KEY);
     }

@@ -20,7 +20,6 @@ import com.linkedin.common.stats.NoopLongTracker;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolImpl;
 import com.linkedin.r2.transport.http.client.NoopRateLimiter;
-import com.linkedin.r2.transport.http.client.TransportProtocol;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolLifecycle;
 import com.linkedin.util.clock.SystemClock;
@@ -33,10 +32,13 @@ import io.netty.channel.epoll.EpollDomainSocketChannel;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.channel.unix.DomainSocketAddress;
 import java.net.SocketAddress;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+import org.apache.commons.lang3.StringUtils;
+
 
 /**
  * Factory class to produce {@link AsyncPool}&#060;{@link Channel}&#062; for Http2 channels
@@ -56,6 +58,7 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
   private final ChannelGroup _allChannels;
   private final ScheduledExecutorService _scheduler;
   private final AsyncPoolImpl.Strategy _strategy;
+  private final String _udsAddress;
 
   public Http2ChannelPoolFactory(
       ScheduledExecutorService scheduler,
@@ -76,7 +79,7 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
       boolean enableSSLSessionResumption,
       int connectTimeout,
       int sslHandShakeTimeout,
-      TransportProtocol transportProtocol)
+      String udsAddress)
   {
     final ChannelInitializer<Channel> initializer = new Http2ChannelInitializer(
         sslContext, sslParameters, maxInitialLineLength, maxHeaderSize, maxChunkSize, maxContentLength,
@@ -91,8 +94,10 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
     _idleTimeout = idleTimeout;
     _maxContentLength = maxContentLength;
     _tcpNoDelay = tcpNoDelay;
+    _udsAddress = udsAddress;
 
-    if (transportProtocol == TransportProtocol.UDS) {
+
+    if (!StringUtils.isEmpty(_udsAddress)) {
       _bootstrap = new Bootstrap().
           group(new EpollEventLoopGroup()).
           channel(EpollDomainSocketChannel.class).
@@ -112,6 +117,10 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
   @Override
   public AsyncPool<Channel> getPool(SocketAddress address)
   {
+    if (!StringUtils.isEmpty(_udsAddress)) {
+      address = new DomainSocketAddress(_udsAddress);
+    }
+
     return new AsyncPoolImpl<>(
         address.toString(),
         new Http2ChannelLifecycle(

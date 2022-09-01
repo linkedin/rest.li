@@ -18,7 +18,6 @@ package com.linkedin.r2.transport.http.client.common;
 
 import com.linkedin.r2.transport.http.client.AsyncPoolImpl;
 
-import com.linkedin.r2.transport.http.client.TransportProtocol;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 
@@ -46,13 +45,13 @@ public class ChannelPoolManagerKey
   private final AsyncPoolImpl.Strategy _strategy;
   private final boolean _tcpNoDelay;
   private final String _poolStatsNamePrefix;
-  private final TransportProtocol _transportProtocol;
+  private final String _udsAddress;
 
   public ChannelPoolManagerKey(SSLContext sslContext, SSLParameters sslParameters, int gracefulShutdownTimeout,
                                long idleTimeout, long sslIdleTimeout, int maxHeaderSize, int maxChunkSize,
                                long maxResponseSize, int maxPoolSize, int minPoolSize,
                                int maxConcurrentConnectionInitializations, int poolWaiterSize, AsyncPoolImpl.Strategy strategy,
-                               boolean tcpNoDelay, String poolStatsNamePrefix, TransportProtocol transportProtocol)
+                               boolean tcpNoDelay, String poolStatsNamePrefix, String udsAddress)
   {
     _sslContext = sslContext;
     _sslParameters = sslParameters;
@@ -69,7 +68,7 @@ public class ChannelPoolManagerKey
     _strategy = strategy;
     _tcpNoDelay = tcpNoDelay;
     _poolStatsNamePrefix = poolStatsNamePrefix;
-    _transportProtocol = transportProtocol;
+    _udsAddress = udsAddress;
   }
 
   /**
@@ -185,8 +184,8 @@ public class ChannelPoolManagerKey
     return _poolStatsNamePrefix;
   }
 
-  public TransportProtocol getTransportProtocol() {
-    return _transportProtocol;
+  public String getUdsAddress() {
+    return _udsAddress;
   }
 
   @Override

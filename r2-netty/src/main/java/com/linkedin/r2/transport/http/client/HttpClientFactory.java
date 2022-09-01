@@ -150,7 +150,6 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String DEFAULT_CLIENT_NAME = "noNameSpecifiedClient";
   public static final String DEFAULT_POOL_STATS_NAME_PREFIX = "noSpecifiedNamePrefix";
   public static final AsyncPoolImpl.Strategy DEFAULT_POOL_STRATEGY = AsyncPoolImpl.Strategy.MRU;
-  public static final TransportProtocol DEFAULT_TRANSPORT_PROTOCOL = TransportProtocol.TCP;
   public static final int DEFAULT_POOL_MIN_SIZE = 0;
   public static final int DEFAULT_MAX_HEADER_SIZE = 8 * 1024;
   public static final int DEFAULT_MAX_CHUNK_SIZE = 8 * 1024;
@@ -201,6 +200,7 @@ public class HttpClientFactory implements TransportClientFactory
   private final int _connectTimeout;
   private final int _sslHandShakeTimeout;
   private final int _channelPoolWaiterTimeout;
+  private final String _udsAddress;
   /** Request compression config for each http service. */
   private final Map<String, CompressionConfig> _requestCompressionConfigs;
   /** Response compression config for each http service. */
@@ -623,7 +623,7 @@ public class HttpClientFactory implements TransportClientFactory
         shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
         responseCompressionConfigs, compressionExecutor, defaultHttpVersion, shareConnection, eventProviderRegistry,
         enableSSLSessionResumption, usePipelineV2, executorsToShutDown, DEFAULT_CONNECT_TIMEOUT,
-        DEFAULT_SSL_HANDSHAKE_TIMEOUT, DEFAULT_CHANNELPOOL_WAITER_TIMEOUT);
+        DEFAULT_SSL_HANDSHAKE_TIMEOUT, DEFAULT_CHANNELPOOL_WAITER_TIMEOUT, null);
   }
 
   private HttpClientFactory(FilterChain filters,
@@ -646,7 +646,8 @@ public class HttpClientFactory implements TransportClientFactory
                             List<ExecutorService> executorsToShutDown,
                             int connectTimeout,
                             int sslHandShakeTimeout,
-                            int channelPoolWaiterTimeout)
+                            int channelPoolWaiterTimeout,
+                            String udsAddress)
   {
     _filters = filters;
     _eventLoopGroup = eventLoopGroup;
@@ -662,6 +663,7 @@ public class HttpClientFactory implements TransportClientFactory
     _connectTimeout = connectTimeout;
     _sslHandShakeTimeout = sslHandShakeTimeout;
     _channelPoolWaiterTimeout = channelPoolWaiterTimeout;
+    _udsAddress = udsAddress;
     if (requestCompressionConfigs == null)
     {
       throw new IllegalArgumentException("requestCompressionConfigs should not be null.");
@@ -708,6 +710,7 @@ public class HttpClientFactory implements TransportClientFactory
     private FilterChain                _filters = FilterChains.empty();
     private boolean                    _useClientCompression = true;
     private boolean                    _usePipelineV2 = false;
+    private String                     _udsAddress = null;
     private int                        _pipelineV2MinimumMaturityLevel = PIPELINE_V2_MATURITY_LEVEL;
     private Executor                   _customCompressionExecutor = null;
     private AbstractJmxManager         _jmxManager = AbstractJmxManager.NULL_JMX_MANAGER;
@@ -897,6 +900,12 @@ public class HttpClientFactory implements TransportClientFactory
       return this;
     }
 
+    public Builder setUdsAddress(String udsAddress)
+    {
+      _udsAddress = udsAddress;
+      return this;
+    }
+
     public Builder setPipelineV2MinimumMaturityLevel(int pipelineV2MinimumMaturityLevel)
     {
       _pipelineV2MinimumMaturityLevel = pipelineV2MinimumMaturityLevel;
@@ -952,7 +961,8 @@ public class HttpClientFactory implements TransportClientFactory
         _shutdownExecutor, callbackExecutorGroup, _shutdownCallbackExecutor, _jmxManager,
         _requestCompressionThresholdDefault, _requestCompressionConfigs, _responseCompressionConfigs,
         compressionExecutor, _defaultHttpVersion, _shareConnection, eventProviderRegistry, _enableSSLSessionResumption,
-          _usePipelineV2, executorsToShutDown, _connectTimeout, _sslHandShakeTimeout, _channelPoolWaiterTimeout);
+          _usePipelineV2, executorsToShutDown, _connectTimeout, _sslHandShakeTimeout, _channelPoolWaiterTimeout,
+          _udsAddress);
     }
 
   }
@@ -1312,28 +1322,6 @@ public class HttpClientFactory implements TransportClientFactory
     }
   }
 
-  private TransportProtocol getTransportProtocol(Map<String, ?> properties) {
-    if (properties == null)
-    {
-      LOG.warn("passed a null raw client properties");
-      return TransportProtocol.TCP;
-    }
-    if (properties.containsKey(TRANSPORT_PROTOCOL))
-    {
-      String transportProtocolString = (String)properties.get(TRANSPORT_PROTOCOL);
-      if (transportProtocolString.equalsIgnoreCase("TCP"))
-      {
-        return TransportProtocol.TCP;
-      }
-      else if (transportProtocolString.equalsIgnoreCase("UDS"))
-      {
-        return TransportProtocol.UDS;
-      }
-    }
-    // for all other cases
-    return TransportProtocol.TCP;
-  }
-
   private AsyncPoolImpl.Strategy getStrategy(Map<String, ? extends Object> properties)
   {
     if (properties == null)
@@ -1377,7 +1365,6 @@ public class HttpClientFactory implements TransportClientFactory
     Boolean tcpNoDelay = chooseNewOverDefault(getBooleanValue(properties, HTTP_TCP_NO_DELAY), DEFAULT_TCP_NO_DELAY);
     Integer maxConcurrentConnectionInitializations = chooseNewOverDefault(getIntValue(properties, HTTP_MAX_CONCURRENT_CONNECTIONS), DEFAULT_MAX_CONCURRENT_CONNECTIONS);
     AsyncPoolImpl.Strategy strategy = chooseNewOverDefault(getStrategy(properties), DEFAULT_POOL_STRATEGY);
-    TransportProtocol transportProtocol = chooseNewOverDefault(getTransportProtocol(properties), DEFAULT_TRANSPORT_PROTOCOL);
     Integer gracefulShutdownTimeout = chooseNewOverDefault(getIntValue(properties, HTTP_GRACEFUL_SHUTDOWN_TIMEOUT), DEFAULT_GRACEFUL_SHUTDOWN_TIMEOUT);
 
     return new ChannelPoolManagerKeyBuilder()
@@ -1386,7 +1373,7 @@ public class HttpClientFactory implements TransportClientFactory
       .setPoolWaiterSize(poolWaiterSize).setSSLParameters(sslParameters).setStrategy(strategy).setMinPoolSize(poolMinSize)
       .setMaxHeaderSize(maxHeaderSize).setMaxChunkSize(maxChunkSize)
       .setMaxConcurrentConnectionInitializations(maxConcurrentConnectionInitializations)
-      .setTcpNoDelay(tcpNoDelay).setPoolStatsNamePrefix(poolStatsNamePrefix).setTransportProtocol(transportProtocol).build();
+      .setTcpNoDelay(tcpNoDelay).setPoolStatsNamePrefix(poolStatsNamePrefix).setUdsAddress(_udsAddress).build();
   }
 
   TransportClient getRawClient(Map<String, ? extends Object> properties,

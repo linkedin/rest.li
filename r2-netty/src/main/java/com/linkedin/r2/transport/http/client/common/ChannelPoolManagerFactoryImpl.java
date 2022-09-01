@@ -203,7 +203,7 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
           _enableSSLSessionResumption,
           _connectTimeout,
           _sslHandShakeTimeout,
-          channelPoolManagerKey.getTransportProtocol());
+          channelPoolManagerKey.getUdsAddress());
     }
     else
     {
