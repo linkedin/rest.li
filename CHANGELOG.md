@@ -5322,7 +5322,6 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-<<<<<<< HEAD
 [Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.18...master
 [29.37.18]: https://github.com/linkedin/rest.li/compare/v29.37.17...v29.37.18
 [29.37.17]: https://github.com/linkedin/rest.li/compare/v29.37.16...v29.37.17
@@ -5337,10 +5336,6 @@ patch operations can re-use these classes for generating patch messages.
 [29.37.8]: https://github.com/linkedin/rest.li/compare/v29.37.7...v29.37.8
 [29.37.7]: https://github.com/linkedin/rest.li/compare/v29.37.6...v29.37.7
 [29.37.6]: https://github.com/linkedin/rest.li/compare/v29.37.5...v29.37.6
-=======
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.37.19...master
-[29.37.19]: https://github.com/linkedin/rest.li/compare/v>>>>>>> a193ca945 (Pass the UDS address from TransportClientFactory)...v29.37.19
->>>>>>> a193ca945 (Pass the UDS address from TransportClientFactory)
 [29.37.5]: https://github.com/linkedin/rest.li/compare/v29.37.4...v29.37.5
 [29.37.4]: https://github.com/linkedin/rest.li/compare/v29.37.3...v29.37.4
 [29.37.3]: https://github.com/linkedin/rest.li/compare/v29.37.2...v29.37.3
