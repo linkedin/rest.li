@@ -21,22 +21,26 @@
         "annotations" : {
           "returnEntity" : { }
         },
-        "method" : "create"
+        "method" : "create",
+        "javaMethodType" : "SYNC"
       }, {
         "annotations" : {
           "returnEntity" : { }
         },
-        "method" : "partial_update"
+        "method" : "partial_update",
+        "javaMethodType" : "SYNC"
       }, {
         "annotations" : {
           "returnEntity" : { }
         },
-        "method" : "batch_create"
+        "method" : "batch_create",
+        "javaMethodType" : "SYNC"
       }, {
         "annotations" : {
           "returnEntity" : { }
         },
-        "method" : "batch_partial_update"
+        "method" : "batch_partial_update",
+        "javaMethodType" : "SYNC"
       } ],
       "entity" : {
         "path" : "/annotation/{annotationId}"

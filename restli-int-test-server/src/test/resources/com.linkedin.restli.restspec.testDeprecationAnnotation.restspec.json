@@ -1,66 +1,72 @@
 {
-    "annotations" : {
-        "deprecated" : {
-            "doc" : "This is a deprecation documentation string for a resource."
-        }
-    },
-    "name" : "testDeprecationAnnotation",
-    "namespace" : "com.linkedin.restli.restspec",
-    "path" : "/testDeprecationAnnotation",
-    "schema" : "com.linkedin.restli.examples.MockRecord",
-    "doc" : "generated from: com.linkedin.restli.restspec.TestDeprecationAnnotationResource",
-    "collection" : {
-        "identifier" : {
-            "name" : "testDeprecationAnnotationId",
-            "type" : "long"
-        },
-        "supports" : [ "create", "get" ],
-        "methods" : [ {
-            "annotations" : {
-                "deprecated" : {
-                    "doc" : "Please use something else instead."
-                }
-            },
-            "method" : "create"
-        }, {
-            "method" : "get",
-            "parameters" : [ {
-                "annotations" : {
-                    "com.linkedin.restli.restspec.UnnamedAnnotation" : {
-                        "value" : 123
-                    }
-                },
-                "name" : "extra",
-                "type" : "string"
-            } ]
-        } ],
-        "finders" : [ {
-            "annotations" : {
-                "deprecated" : {
-                    "doc" : "Please use something else instead."
-                }
-            },
-            "name" : "testFinder",
-            "parameters" : [ {
-                "name" : "title",
-                "type" : "string"
-            } ],
-            "pagingSupported" : true
-        } ],
-        "actions" : [ {
-            "annotations" : {
-                "deprecated" : {
-                }
-            },
-            "name" : "testAction",
-            "parameters" : [ {
-                "name" : "num",
-                "type" : "int"
-            } ],
-            "returns" : "int"
-        } ],
-        "entity" : {
-            "path" : "/testDeprecationAnnotation/{testDeprecationAnnotationId}"
-        }
+  "annotations" : {
+    "deprecated" : {
+      "doc" : "This is a deprecation documentation string for a resource."
     }
+  },
+  "name" : "testDeprecationAnnotation",
+  "namespace" : "com.linkedin.restli.restspec",
+  "path" : "/testDeprecationAnnotation",
+  "schema" : "com.linkedin.restli.examples.MockRecord",
+  "doc" : "generated from: com.linkedin.restli.restspec.TestDeprecationAnnotationResource",
+  "collection" : {
+    "identifier" : {
+      "name" : "testDeprecationAnnotationId",
+      "type" : "long"
+    },
+    "supports" : [ "create", "get" ],
+    "methods" : [ {
+      "annotations" : {
+        "deprecated" : {
+          "doc" : "Please use something else instead."
+        }
+      },
+      "method" : "create",
+      "javaMethodType" : "SYNC"
+    }, {
+      "method" : "get",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : true,
+      "parameters" : [ {
+        "annotations" : {
+          "com.linkedin.restli.restspec.UnnamedAnnotation" : {
+            "value" : 123
+          }
+        },
+        "name" : "extra",
+        "type" : "string"
+      } ]
+    } ],
+    "finders" : [ {
+      "annotations" : {
+        "deprecated" : {
+          "doc" : "Please use something else instead."
+        }
+      },
+      "name" : "testFinder",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
+      "parameters" : [ {
+        "name" : "title",
+        "type" : "string"
+      } ],
+      "pagingSupported" : true
+    } ],
+    "actions" : [ {
+      "annotations" : {
+        "deprecated" : { }
+      },
+      "name" : "testAction",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
+      "parameters" : [ {
+        "name" : "num",
+        "type" : "int"
+      } ],
+      "returns" : "int"
+    } ],
+    "entity" : {
+      "path" : "/testDeprecationAnnotation/{testDeprecationAnnotationId}"
+    }
+  }
 }

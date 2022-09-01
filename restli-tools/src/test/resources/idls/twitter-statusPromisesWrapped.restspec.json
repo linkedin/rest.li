@@ -1,0 +1,80 @@
+{
+  "name" : "statusPromisesWrapped",
+  "path" : "/statusPromisesWrapped",
+  "schema" : "com.linkedin.restli.tools.twitter.Status",
+  "doc" : "CollectionResource containing all statuses modeled using promise template with result wrappers.\n\ngenerated from: com.linkedin.restli.tools.twitter.StatusPromiseResultWrappersResource",
+  "collection" : {
+    "identifier" : {
+      "name" : "statusID",
+      "type" : "long"
+    },
+    "alternativeKeys" : [ {
+      "name" : "alt",
+      "type" : "string",
+      "keyCoercer" : "com.linkedin.restli.tools.twitter.StringLongCoercer"
+    }, {
+      "name" : "newAlt",
+      "type" : "string",
+      "keyCoercer" : "com.linkedin.restli.tools.twitter.StringLongCoercer"
+    } ],
+    "supports" : [ "batch_get", "get", "get_all" ],
+    "methods" : [ {
+      "method" : "get",
+      "javaMethodType" : "PROMISE",
+      "javaReturnsResultWrapper" : true,
+      "doc" : "Gets a single status resource"
+    }, {
+      "method" : "batch_get",
+      "javaMethodType" : "PROMISE",
+      "javaReturnsResultWrapper" : true,
+      "doc" : "Gets a batch of statuses"
+    }, {
+      "method" : "get_all",
+      "javaMethodType" : "PROMISE",
+      "javaReturnsResultWrapper" : true,
+      "doc" : "Gets all the resources",
+      "metadata" : {
+        "type" : "com.linkedin.restli.tools.twitter.User"
+      },
+      "pagingSupported" : true
+    } ],
+    "finders" : [ {
+      "name" : "user_timeline",
+      "javaMethodType" : "PROMISE",
+      "javaReturnsResultWrapper" : true,
+      "doc" : "Gets the status timeline for a given user",
+      "metadata" : {
+        "type" : "com.linkedin.restli.tools.twitter.User"
+      },
+      "pagingSupported" : true
+    } ],
+    "batchFinders" : [ {
+      "name" : "batchFinderByAction",
+      "javaMethodType" : "PROMISE",
+      "javaReturnsResultWrapper" : true,
+      "doc" : "Batch finder for statuses",
+      "parameters" : [ {
+        "name" : "criteria",
+        "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.tools.twitter.Status\" }"
+      } ],
+      "metadata" : {
+        "type" : "com.linkedin.restli.tools.twitter.User"
+      },
+      "batchParam" : "criteria"
+    } ],
+    "entity" : {
+      "path" : "/statusPromisesWrapped/{statusID}",
+      "actions" : [ {
+        "name" : "forward",
+        "javaMethodType" : "PROMISE",
+        "javaReturnsResultWrapper" : true,
+        "doc" : "Ambiguous action binding test case",
+        "parameters" : [ {
+          "name" : "to",
+          "type" : "long"
+        } ],
+        "returns" : "string"
+      } ]
+    }
+  }
+}

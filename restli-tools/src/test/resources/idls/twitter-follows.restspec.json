@@ -15,16 +15,23 @@
     "supports" : [ "batch_get", "get", "partial_update" ],
     "methods" : [ {
       "method" : "get",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Gets a single Followed resource"
     }, {
       "method" : "partial_update",
+      "javaMethodType" : "SYNC",
       "doc" : "Updates the given Followed relationship"
     }, {
       "method" : "batch_get",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Gets a batch of Followed resources"
     } ],
     "finders" : [ {
       "name" : "followers",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Gets the followers of the given user",
       "parameters" : [ {
         "name" : "userID",
@@ -33,6 +40,8 @@
       } ]
     }, {
       "name" : "friends",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Gets the friends of the given user",
       "parameters" : [ {
         "name" : "userID",
@@ -41,6 +50,8 @@
       } ]
     }, {
       "name" : "other",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Test finder",
       "parameters" : [ {
         "name" : "someParam",
@@ -53,6 +64,8 @@
       "path" : "/follows/{followsId}",
       "actions" : [ {
         "name" : "entityAction",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "returns" : "com.linkedin.restli.tools.twitter.Status"
       } ]
     }

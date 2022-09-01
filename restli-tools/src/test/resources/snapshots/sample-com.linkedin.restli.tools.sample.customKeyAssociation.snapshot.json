@@ -38,12 +38,17 @@
       } ],
       "supports" : [ "batch_update", "get" ],
       "methods" : [ {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       }, {
-        "method" : "batch_update"
+        "method" : "batch_update",
+        "javaMethodType" : "SYNC"
       } ],
       "finders" : [ {
         "name" : "longId",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "assocKeys" : [ "longId" ]
       } ],
       "entity" : {
