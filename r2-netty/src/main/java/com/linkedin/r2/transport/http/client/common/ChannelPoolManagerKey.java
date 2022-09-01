@@ -45,12 +45,13 @@ public class ChannelPoolManagerKey
   private final AsyncPoolImpl.Strategy _strategy;
   private final boolean _tcpNoDelay;
   private final String _poolStatsNamePrefix;
+  private final String _udsAddress;
 
   public ChannelPoolManagerKey(SSLContext sslContext, SSLParameters sslParameters, int gracefulShutdownTimeout,
                                long idleTimeout, long sslIdleTimeout, int maxHeaderSize, int maxChunkSize,
                                long maxResponseSize, int maxPoolSize, int minPoolSize,
                                int maxConcurrentConnectionInitializations, int poolWaiterSize, AsyncPoolImpl.Strategy strategy,
-                               boolean tcpNoDelay, String poolStatsNamePrefix)
+                               boolean tcpNoDelay, String poolStatsNamePrefix, String udsAddress)
   {
     _sslContext = sslContext;
     _sslParameters = sslParameters;
@@ -67,6 +68,7 @@ public class ChannelPoolManagerKey
     _strategy = strategy;
     _tcpNoDelay = tcpNoDelay;
     _poolStatsNamePrefix = poolStatsNamePrefix;
+    _udsAddress = udsAddress;
   }
 
   /**
@@ -180,6 +182,10 @@ public class ChannelPoolManagerKey
   public String getPoolStatsNamePrefix()
   {
     return _poolStatsNamePrefix;
+  }
+
+  public String getUdsAddress() {
+    return _udsAddress;
   }
 
   @Override
