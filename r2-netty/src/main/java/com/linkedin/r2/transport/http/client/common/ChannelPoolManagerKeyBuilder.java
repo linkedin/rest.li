@@ -18,6 +18,7 @@ package com.linkedin.r2.transport.http.client.common;
 
 import com.linkedin.r2.transport.http.client.AsyncPoolImpl;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
+import com.linkedin.r2.transport.http.client.TransportProtocol;
 import io.netty.util.internal.ObjectUtil;
 
 import javax.net.ssl.SSLContext;
@@ -46,6 +47,7 @@ public class ChannelPoolManagerKeyBuilder
   private AsyncPoolImpl.Strategy _strategy = HttpClientFactory.DEFAULT_POOL_STRATEGY;
   private boolean _tcpNoDelay = HttpClientFactory.DEFAULT_TCP_NO_DELAY;
   private String _poolStatsNamePrefix = HttpClientFactory.DEFAULT_POOL_STATS_NAME_PREFIX;
+  private TransportProtocol _transportProtocol = HttpClientFactory.DEFAULT_TRANSPORT_PROTOCOL;
 
   /**
    * @param sslContext {@link SSLContext}
@@ -199,10 +201,15 @@ public class ChannelPoolManagerKeyBuilder
     return this;
   }
 
+  public ChannelPoolManagerKeyBuilder setTransportProtocol(TransportProtocol transportProtocol) {
+    _transportProtocol = transportProtocol;
+    return this;
+  }
+
   public ChannelPoolManagerKey build()
   {
     return new ChannelPoolManagerKey(_sslContext, _sslParameters, _gracefulShutdownTimeout, _idleTimeout, _sslIdleTimeout,
       _maxHeaderSize, _maxChunkSize, _maxResponseSize, _maxPoolSize, _minPoolSize, _maxConcurrentConnectionInitializations,
-      _poolWaiterSize, _strategy, _tcpNoDelay, _poolStatsNamePrefix);
+      _poolWaiterSize, _strategy, _tcpNoDelay, _poolStatsNamePrefix, _transportProtocol);
   }
 }

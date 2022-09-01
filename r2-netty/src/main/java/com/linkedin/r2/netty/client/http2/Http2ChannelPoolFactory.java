@@ -20,6 +20,7 @@ import com.linkedin.common.stats.NoopLongTracker;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.AsyncPoolImpl;
 import com.linkedin.r2.transport.http.client.NoopRateLimiter;
+import com.linkedin.r2.transport.http.client.TransportProtocol;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.common.ChannelPoolLifecycle;
 import com.linkedin.util.clock.SystemClock;
@@ -28,6 +29,8 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.EpollDomainSocketChannel;
+import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import java.net.SocketAddress;
@@ -72,9 +75,10 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
       boolean tcpNoDelay,
       boolean enableSSLSessionResumption,
       int connectTimeout,
-      int sslHandShakeTimeout)
+      int sslHandShakeTimeout,
+      TransportProtocol transportProtocol)
   {
-    final ChannelInitializer<NioSocketChannel> initializer = new Http2ChannelInitializer(
+    final ChannelInitializer<Channel> initializer = new Http2ChannelInitializer(
         sslContext, sslParameters, maxInitialLineLength, maxHeaderSize, maxChunkSize, maxContentLength,
         enableSSLSessionResumption, sslHandShakeTimeout);
 
@@ -88,11 +92,20 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
     _maxContentLength = maxContentLength;
     _tcpNoDelay = tcpNoDelay;
 
-    _bootstrap = new Bootstrap().
-        group(eventLoopGroup).
-        channel(NioSocketChannel.class).
-        option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout).
-        handler(initializer);
+    if (transportProtocol == TransportProtocol.UDS) {
+      _bootstrap = new Bootstrap().
+          group(new EpollEventLoopGroup()).
+          channel(EpollDomainSocketChannel.class).
+          option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout).
+          handler(initializer);
+    } else {
+      _bootstrap = new Bootstrap().
+          group(eventLoopGroup).
+          channel(NioSocketChannel.class).
+          option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout).
+          handler(initializer);
+    }
+
     _ssl = sslContext != null && sslParameters != null;
   }
 
