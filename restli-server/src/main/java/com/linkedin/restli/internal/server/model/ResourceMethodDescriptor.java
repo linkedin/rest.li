@@ -23,19 +23,26 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TemplateRuntimeException;
+import com.linkedin.parseq.Task;
+import com.linkedin.parseq.promise.Promise;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.restspec.JavaMethodType;
 import com.linkedin.restli.restspec.MaxBatchSizeSchema;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.annotations.ServiceErrors;
 import com.linkedin.restli.server.errors.ServiceError;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -428,6 +435,64 @@ public class ResourceMethodDescriptor
     }
 
     return _type.toString();
+  }
+
+  /**
+   * @return The type for the result computed by the method synchronously or asynchronously after removing any
+   * async wrappers like Task/Promise/Callback.
+   */
+  public Class<?> getMethodResultType() {
+    JavaMethodType methodType = getJavaMethodType();
+
+    switch (methodType) {
+      case ASYNC:
+        // Find the index of the callback param.
+        int callBackParamIndex = IntStream.range(0, _parameters.size())
+            .filter(i -> _parameters.get(i).getParamType() == Parameter.ParamType.CALLBACK)
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("No callback param found for async method"));
+        // The actual param is wrapped inside the Callback as a generic param, so extract the embedded generic type.
+        return getFirstActualType((ParameterizedType) _method.getGenericParameterTypes()[callBackParamIndex]);
+      case TASK:
+      case PROMISE:
+        // Task and Promise return types wrap the actual type inside a task or promise, so extract the embedded
+        // generic type.
+        return getFirstActualType((ParameterizedType) _method.getGenericReturnType());
+      default:
+        return _method.getReturnType();
+    }
+  }
+
+  /**
+   * @return The first actual type from a parameterized type as a class.
+   */
+  private Class<?> getFirstActualType(ParameterizedType parameterizedType) {
+    Type unwrappedType = parameterizedType.getActualTypeArguments()[0];
+    // Now there are 2 cases. The generic type may represent a parameterized type itself, in which case we need
+    // to extract its raw type because we don't care about its generic type. Else we can just cast it to a class
+    // and return it.
+    if (unwrappedType instanceof ParameterizedType) {
+      return (Class<?>) ((ParameterizedType) unwrappedType).getRawType();
+    }
+    return (Class<?>) unwrappedType;
+  }
+
+  /**
+   * @return Resource Java method type.
+   */
+  public JavaMethodType getJavaMethodType()
+  {
+    switch (_interfaceType)
+    {
+      case TASK:
+        return JavaMethodType.TASK;
+      case CALLBACK:
+        return JavaMethodType.ASYNC;
+      case PROMISE:
+        return JavaMethodType.PROMISE;
+      default:
+        return JavaMethodType.SYNC;
+    }
   }
 
   /**

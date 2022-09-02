@@ -70,7 +70,11 @@ import com.linkedin.restli.restspec.ServiceErrorSchemaArray;
 import com.linkedin.restli.restspec.ServiceErrorsSchema;
 import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.restspec.SuccessStatusesSchema;
+import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.AlternativeKey;
+import com.linkedin.restli.server.BatchResult;
+import com.linkedin.restli.server.CollectionResult;
+import com.linkedin.restli.server.GetResult;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.annotations.BatchFinder;
@@ -82,8 +86,6 @@ import io.github.classgraph.ResourceList;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -93,8 +95,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
@@ -773,6 +773,8 @@ public class ResourceModelEncoder
   private ActionSchema createActionSchema(ResourceMethodDescriptor resourceMethodDescriptor) {
     ActionSchema action = new ActionSchema();
     action.setName(resourceMethodDescriptor.getActionName());
+    action.setJavaMethodType(resourceMethodDescriptor.getJavaMethodType());
+    action.setJavaReturnsResultWrapper(resourceMethodDescriptor.getMethodResultType().equals(ActionResult.class));
 
     // Actions are read-write by default, so write info in the schema only for read-only actions.
     if (resourceMethodDescriptor.isActionReadOnly())
@@ -943,6 +945,8 @@ public class ResourceModelEncoder
     FinderSchema finder = new FinderSchema();
 
     finder.setName(resourceMethodDescriptor.getFinderName());
+    finder.setJavaMethodType(resourceMethodDescriptor.getJavaMethodType());
+    finder.setJavaReturnsResultWrapper(resourceMethodDescriptor.getMethodResultType().equals(CollectionResult.class));
 
     String doc = _docsProvider.getMethodDoc(resourceMethodDescriptor.getMethod());
     if (doc != null)
@@ -998,6 +1002,9 @@ public class ResourceModelEncoder
   private BatchFinderSchema createBatchFinderSchema(ResourceMethodDescriptor resourceMethodDescriptor) {
     BatchFinderSchema batchFinder = new BatchFinderSchema();
     batchFinder.setName(resourceMethodDescriptor.getBatchFinderName());
+    batchFinder.setJavaMethodType(resourceMethodDescriptor.getJavaMethodType());
+    // Batch finder has to return the wrapper.
+    batchFinder.setJavaReturnsResultWrapper(true);
     String doc = _docsProvider.getMethodDoc(resourceMethodDescriptor.getMethod());
     if (doc != null) {
       batchFinder.setDoc(doc);
@@ -1154,6 +1161,23 @@ public class ResourceModelEncoder
       RestMethodSchema restMethod = new RestMethodSchema();
 
       restMethod.setMethod(method.toString());
+      restMethod.setJavaMethodType(descriptor.getJavaMethodType());
+
+      Class<?> returnType = descriptor.getMethodResultType();
+
+      switch (method) {
+        case GET:
+          restMethod.setJavaReturnsResultWrapper(returnType.equals(GetResult.class));
+          break;
+        case BATCH_GET:
+          restMethod.setJavaReturnsResultWrapper(returnType.equals(BatchResult.class));
+          break;
+        case GET_ALL:
+          restMethod.setJavaReturnsResultWrapper(returnType.equals(CollectionResult.class));
+          break;
+        default:
+          break;
+      }
 
       String doc = _docsProvider.getMethodDoc(descriptor.getMethod());
       if (doc != null)
