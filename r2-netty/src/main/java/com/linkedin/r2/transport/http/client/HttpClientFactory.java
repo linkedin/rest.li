@@ -1426,7 +1426,7 @@ public class HttpClientFactory implements TransportClientFactory
 
       return new com.linkedin.r2.netty.client.HttpNettyClient(_eventLoopGroup, _executor, _callbackExecutorGroup,
           channelPoolManager, sslChannelPoolManager, httpProtocolVersion, SystemClock.instance(),
-              requestTimeout, streamingTimeout, shutdownTimeout);
+              requestTimeout, streamingTimeout, shutdownTimeout, _udsAddress);
     }
 
     TransportClient streamClient;
