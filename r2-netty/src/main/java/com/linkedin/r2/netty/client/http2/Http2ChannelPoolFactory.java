@@ -60,6 +60,31 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
   private final AsyncPoolImpl.Strategy _strategy;
   private final String _udsAddress;
 
+  @Deprecated
+  public Http2ChannelPoolFactory(
+      ScheduledExecutorService scheduler,
+      EventLoopGroup eventLoopGroup,
+      ChannelGroup channelGroup,
+      AsyncPoolImpl.Strategy strategy,
+      SSLContext sslContext,
+      SSLParameters sslParameters,
+      int maxPoolSize,
+      int minPoolSize,
+      int maxPoolWaiterSize,
+      int maxInitialLineLength,
+      int maxHeaderSize,
+      int maxChunkSize,
+      long idleTimeout,
+      long maxContentLength,
+      boolean tcpNoDelay,
+      boolean enableSSLSessionResumption,
+      int connectTimeout,
+      int sslHandShakeTimeout) {
+    this(scheduler, eventLoopGroup, channelGroup, strategy, sslContext, sslParameters, maxPoolSize, minPoolSize,
+        maxPoolWaiterSize, maxInitialLineLength, maxHeaderSize, maxChunkSize, idleTimeout, maxContentLength, tcpNoDelay,
+        enableSSLSessionResumption, connectTimeout, sslHandShakeTimeout, null);
+  }
+
   public Http2ChannelPoolFactory(
       ScheduledExecutorService scheduler,
       EventLoopGroup eventLoopGroup,
@@ -117,10 +142,6 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
   @Override
   public AsyncPool<Channel> getPool(SocketAddress address)
   {
-    if (!StringUtils.isEmpty(_udsAddress)) {
-      address = new DomainSocketAddress(_udsAddress);
-    }
-
     return new AsyncPoolImpl<>(
         address.toString(),
         new Http2ChannelLifecycle(

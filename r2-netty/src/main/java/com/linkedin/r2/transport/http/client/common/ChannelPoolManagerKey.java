@@ -47,6 +47,17 @@ public class ChannelPoolManagerKey
   private final String _poolStatsNamePrefix;
   private final String _udsAddress;
 
+  @Deprecated
+  public ChannelPoolManagerKey(SSLContext sslContext, SSLParameters sslParameters, int gracefulShutdownTimeout,
+      long idleTimeout, long sslIdleTimeout, int maxHeaderSize, int maxChunkSize,
+      long maxResponseSize, int maxPoolSize, int minPoolSize,
+      int maxConcurrentConnectionInitializations, int poolWaiterSize, AsyncPoolImpl.Strategy strategy,
+      boolean tcpNoDelay, String poolStatsNamePrefix) {
+    this(sslContext, sslParameters, gracefulShutdownTimeout, idleTimeout, sslIdleTimeout, maxHeaderSize, maxChunkSize,
+        maxResponseSize, maxPoolSize, minPoolSize, maxConcurrentConnectionInitializations, poolWaiterSize, strategy,
+        tcpNoDelay, poolStatsNamePrefix, null);
+  }
+
   public ChannelPoolManagerKey(SSLContext sslContext, SSLParameters sslParameters, int gracefulShutdownTimeout,
                                long idleTimeout, long sslIdleTimeout, int maxHeaderSize, int maxChunkSize,
                                long maxResponseSize, int maxPoolSize, int minPoolSize,
