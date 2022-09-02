@@ -1,0 +1,93 @@
+{
+  "models" : [ {
+    "type" : "record",
+    "name" : "Status",
+    "namespace" : "com.linkedin.restli.tools.twitter",
+    "fields" : [ ]
+  }, {
+    "type" : "record",
+    "name" : "User",
+    "namespace" : "com.linkedin.restli.tools.twitter",
+    "fields" : [ ]
+  } ],
+  "schema" : {
+    "name" : "statusesWrapped",
+    "path" : "/statusesWrapped",
+    "schema" : "com.linkedin.restli.tools.twitter.Status",
+    "doc" : "CollectionResource containing all statuses modeled using sync collection template with result wrappers.\n\ngenerated from: com.linkedin.restli.tools.twitter.StatusCollectionResultWrappersResource",
+    "collection" : {
+      "identifier" : {
+        "name" : "statusID",
+        "type" : "long"
+      },
+      "alternativeKeys" : [ {
+        "name" : "alt",
+        "type" : "string",
+        "keyCoercer" : "com.linkedin.restli.tools.twitter.StringLongCoercer"
+      }, {
+        "name" : "newAlt",
+        "type" : "string",
+        "keyCoercer" : "com.linkedin.restli.tools.twitter.StringLongCoercer"
+      } ],
+      "supports" : [ "batch_get", "get", "get_all" ],
+      "methods" : [ {
+        "method" : "get",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
+        "doc" : "Gets a single status resource"
+      }, {
+        "method" : "batch_get",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
+        "doc" : "Gets a batch of statuses"
+      }, {
+        "method" : "get_all",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
+        "doc" : "Gets all the resources",
+        "metadata" : {
+          "type" : "com.linkedin.restli.tools.twitter.User"
+        },
+        "pagingSupported" : true
+      } ],
+      "finders" : [ {
+        "name" : "user_timeline",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
+        "doc" : "Gets the status timeline for a given user",
+        "metadata" : {
+          "type" : "com.linkedin.restli.tools.twitter.User"
+        },
+        "pagingSupported" : true
+      } ],
+      "batchFinders" : [ {
+        "name" : "batchFinderByAction",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
+        "doc" : "Batch finder for statuses",
+        "parameters" : [ {
+          "name" : "criteria",
+          "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.tools.twitter.Status\" }"
+        } ],
+        "metadata" : {
+          "type" : "com.linkedin.restli.tools.twitter.User"
+        },
+        "batchParam" : "criteria"
+      } ],
+      "entity" : {
+        "path" : "/statusesWrapped/{statusID}",
+        "actions" : [ {
+          "name" : "forward",
+          "javaMethodType" : "SYNC",
+          "javaReturnsResultWrapper" : true,
+          "doc" : "Ambiguous action binding test case",
+          "parameters" : [ {
+            "name" : "to",
+            "type" : "long"
+          } ],
+          "returns" : "string"
+        } ]
+      }
+    }
+  }
+}
