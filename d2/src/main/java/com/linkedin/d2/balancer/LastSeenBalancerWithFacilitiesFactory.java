@@ -99,10 +99,11 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     SimpleLoadBalancerState state = new SimpleLoadBalancerState(
       config._executorService, uriBus, clusterBus, serviceBus, config.clientFactories, config.loadBalancerStrategyFactories,
       config.sslContext, config.sslParameters, config.isSSLEnabled, config.partitionAccessorRegistry,
-      config.sslSessionValidatorFactory, config.deterministicSubsettingMetadataProvider);
+      config.sslSessionValidatorFactory, config.deterministicSubsettingMetadataProvider, config.canaryDistributionProvider);
     d2ClientJmxManager.setSimpleLoadBalancerState(state);
 
-    SimpleLoadBalancer simpleLoadBalancer = new SimpleLoadBalancer(state, config.lbWaitTimeout, config.lbWaitUnit, config._executorService);
+    SimpleLoadBalancer simpleLoadBalancer = new SimpleLoadBalancer(state, config.lbWaitTimeout, config.lbWaitUnit, config._executorService,
+                                                                   config.failoutConfigProviderFactory);
     d2ClientJmxManager.setSimpleLoadBalancer(simpleLoadBalancer);
 
     // add facilities

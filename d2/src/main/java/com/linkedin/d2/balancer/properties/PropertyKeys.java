@@ -227,7 +227,7 @@ public class PropertyKeys
   public static final String HTTP_SCHEME = "http";
   public static final String HTTPS_SCHEME = "https";
 
-  // used by ServicePropertiesWithCanary and ClusterPropertiesWithCanary
+  // used by ServiceProperties and ClusterProperties Serializers
   public static final String CANARY_CONFIGS = "canaryConfigs";
   public static final String CANARY_DISTRIBUTION_STRATEGY = "canaryDistributionStrategy";
 
@@ -239,6 +239,12 @@ public class PropertyKeys
   public static final String TARGET_HOSTS = "targetHosts";
   public static final String TARGET_APPLICATIONS_STRATEGY_PROPERTIES = "targetApplicationsStrategyProperties";
   public static final String TARGET_APPLICATIONS = "targetApplications";
+
+  // used by ClusterStoreProperties
+  public static final String FAILOUT_PROPERTIES = "failoutProperties";
+  // used by FailoutProperties
+  public static final String FAILOUT_REDIRECT_CONFIGS = "failoutRedirectConfigs";
+  public static final String FAILOUT_BUCKET_CONFIGS = "failoutBucketConfigs";
 
   private static String getFieldName(PathSpec pathSpec)
   {

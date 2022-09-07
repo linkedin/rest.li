@@ -92,6 +92,36 @@ public abstract class AbstractLoadBalancerSubscriber<T> implements
     }
   }
 
+  /**
+   * Tries to stop listening for property change.
+   */
+  public void tryStopListening(String propertyName, LoadBalancerState.LoadBalancerStateListenerCallback callback)
+  {
+    if (!isListeningToProperty(propertyName))
+    {
+      callback.done(_type, propertyName);
+      return;
+    }
+    ClosableQueue<LoadBalancerState.LoadBalancerStateListenerCallback> waiterQueue =
+        _waiters.get(propertyName);
+    if (waiterQueue != null && !waiterQueue.isClosed())
+    {
+      // Watches is in the process of being established. Unregister now may cause unexpected race.
+      callback.done(_type, propertyName);
+      return;
+    }
+
+    // We need to remove waiters first. eventBus register/unregister is thread safe. Unregister only removes the first
+    // occurrence of the subscriber in its listener queue. It is ok if a subscriber is registered again between waiter
+    // removal and subscriber unregister. It will only remove the subscriber registered when waiter was initially added.
+    waiterQueue = _waiters.remove(propertyName);
+    if (waiterQueue != null)
+    {
+      _eventBus.unregister(Collections.singleton(propertyName), this);
+    }
+    callback.done(_type, propertyName);
+  }
+
   @Override
   public void onAdd(final String propertyName, final T propertyValue)
   {

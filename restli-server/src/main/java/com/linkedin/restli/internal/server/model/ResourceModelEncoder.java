@@ -70,12 +70,19 @@ import com.linkedin.restli.restspec.ServiceErrorSchemaArray;
 import com.linkedin.restli.restspec.ServiceErrorsSchema;
 import com.linkedin.restli.restspec.SimpleSchema;
 import com.linkedin.restli.restspec.SuccessStatusesSchema;
+import com.linkedin.restli.server.ActionResult;
 import com.linkedin.restli.server.AlternativeKey;
+import com.linkedin.restli.server.BatchResult;
+import com.linkedin.restli.server.CollectionResult;
+import com.linkedin.restli.server.GetResult;
 import com.linkedin.restli.server.Key;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.annotations.BatchFinder;
 import com.linkedin.restli.server.errors.ServiceError;
 import com.linkedin.restli.server.errors.ParametersServiceError;
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.Resource;
+import io.github.classgraph.ResourceList;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -84,11 +91,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
 
@@ -105,9 +114,14 @@ public class ResourceModelEncoder
   public static final String DEPRECATED_ANNOTATION_DOC_FIELD = "doc";
   public static final String COMPOUND_KEY_TYPE_NAME = "CompoundKey";
 
+  private static final String REST_SPEC_JSON_SUFFIX = "restspec.json";
   private static final Pattern UNNECESSARY_WHITESPACE_PATTERN = Pattern.compile("[ \\t]+");
 
   private final DataCodec codec = new JacksonDataCodec();
+
+  // Used to cache the mapping between restspec file name and
+  // the Resource object
+  private Map<String, Resource> _restSpecPathToResourceMap = null;
 
   /**
    * Provides documentation strings from a JVM language to be incorporated into ResourceModels.
@@ -294,9 +308,22 @@ public class ResourceModelEncoder
 
     try
     {
+      // Try getting resourceStream directly using the resourceFilePath
       InputStream stream = getResourceStream(resourceFilePath.toString(),
         this.getClass().getClassLoader(),
         Thread.currentThread().getContextClassLoader());
+
+      if (stream == null)
+      {
+        // If resourceStream cannot be created from classloader by using resource name directly,
+        // we still need to consider the case where the restspec file is consisting of
+        //  api-name  (could be added by customer through idl options) and resourceName,
+        //  such as in the form <api-name>-<resourceName>.json
+        stream = getResourceStreamBySearchingRestSpec(resourceFilePath.toString(),
+            this.getClass().getClassLoader(),
+            Thread.currentThread().getContextClassLoader());
+      }
+
       if (stream == null)
       {
         // restspec.json file not found, building one instead
@@ -312,6 +339,51 @@ public class ResourceModelEncoder
     {
       throw new RuntimeException("Failed to read " + resourceFilePath.toString() + " from classpath.", e);
     }
+  }
+
+  private InputStream getResourceStreamBySearchingRestSpec(String resourceName, ClassLoader... classLoaders) {
+    if (!resourceName.endsWith(REST_SPEC_JSON_SUFFIX))
+    {
+      return null;
+    }
+    if (_restSpecPathToResourceMap == null)
+    {
+      _restSpecPathToResourceMap = new HashMap<>();
+      try
+      {
+        ResourceList resourceList = new ClassGraph().overrideClassLoaders(classLoaders)
+            .scan().getResourcesWithExtension(REST_SPEC_JSON_SUFFIX);
+        resourceList.forEach( resource -> {
+              _restSpecPathToResourceMap.put(FilenameUtils.getName(resource.getPath()),
+                  resource);
+            }
+        );
+      }
+      catch (Exception e)
+      {
+        // don't throw exception
+      }
+    }
+
+    for (Map.Entry<String, Resource> entry : _restSpecPathToResourceMap.entrySet())
+    {
+      // looking for file path suffix matching
+      // e.g.
+      // for "mypackage.myresource.restspec.json"
+      // looking for "myapiname-mypackage.myresource.restspec.json"
+      if (entry.getKey().endsWith("-" + resourceName))
+      {
+        try
+        {
+          return entry.getValue().open();
+        }
+        catch (Exception e)
+        {
+          return null;
+        }
+      }
+    }
+    return null;
   }
 
   // Get resource stream via a list of classloader.  This method will traverse via each class loader and
@@ -701,6 +773,8 @@ public class ResourceModelEncoder
   private ActionSchema createActionSchema(ResourceMethodDescriptor resourceMethodDescriptor) {
     ActionSchema action = new ActionSchema();
     action.setName(resourceMethodDescriptor.getActionName());
+    action.setJavaMethodType(resourceMethodDescriptor.getJavaMethodType());
+    action.setJavaReturnsResultWrapper(resourceMethodDescriptor.getMethodResultType().equals(ActionResult.class));
 
     // Actions are read-write by default, so write info in the schema only for read-only actions.
     if (resourceMethodDescriptor.isActionReadOnly())
@@ -871,6 +945,8 @@ public class ResourceModelEncoder
     FinderSchema finder = new FinderSchema();
 
     finder.setName(resourceMethodDescriptor.getFinderName());
+    finder.setJavaMethodType(resourceMethodDescriptor.getJavaMethodType());
+    finder.setJavaReturnsResultWrapper(resourceMethodDescriptor.getMethodResultType().equals(CollectionResult.class));
 
     String doc = _docsProvider.getMethodDoc(resourceMethodDescriptor.getMethod());
     if (doc != null)
@@ -911,6 +987,11 @@ public class ResourceModelEncoder
       finder.setPagingSupported(true);
     }
 
+    if (resourceMethodDescriptor.getLinkedBatchFinderName() != null)
+    {
+      finder.setLinkedBatchFinderName(resourceMethodDescriptor.getLinkedBatchFinderName());
+    }
+
     appendServiceErrors(finder, resourceMethodDescriptor.getServiceErrors());
     appendSuccessStatuses(finder, resourceMethodDescriptor.getSuccessStatuses());
 
@@ -921,6 +1002,9 @@ public class ResourceModelEncoder
   private BatchFinderSchema createBatchFinderSchema(ResourceMethodDescriptor resourceMethodDescriptor) {
     BatchFinderSchema batchFinder = new BatchFinderSchema();
     batchFinder.setName(resourceMethodDescriptor.getBatchFinderName());
+    batchFinder.setJavaMethodType(resourceMethodDescriptor.getJavaMethodType());
+    // Batch finder has to return the wrapper.
+    batchFinder.setJavaReturnsResultWrapper(true);
     String doc = _docsProvider.getMethodDoc(resourceMethodDescriptor.getMethod());
     if (doc != null) {
       batchFinder.setDoc(doc);
@@ -1077,6 +1161,23 @@ public class ResourceModelEncoder
       RestMethodSchema restMethod = new RestMethodSchema();
 
       restMethod.setMethod(method.toString());
+      restMethod.setJavaMethodType(descriptor.getJavaMethodType());
+
+      Class<?> returnType = descriptor.getMethodResultType();
+
+      switch (method) {
+        case GET:
+          restMethod.setJavaReturnsResultWrapper(returnType.equals(GetResult.class));
+          break;
+        case BATCH_GET:
+          restMethod.setJavaReturnsResultWrapper(returnType.equals(BatchResult.class));
+          break;
+        case GET_ALL:
+          restMethod.setJavaReturnsResultWrapper(returnType.equals(CollectionResult.class));
+          break;
+        default:
+          break;
+      }
 
       String doc = _docsProvider.getMethodDoc(descriptor.getMethod());
       if (doc != null)

@@ -17,16 +17,28 @@
 package com.linkedin.restli.server.invalid;
 
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.Name;
+import com.linkedin.data.schema.RecordDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.RecordTemplate;
+import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.pegasus.generator.test.LongRef;
+import com.linkedin.restli.common.CompoundKey;
 import com.linkedin.restli.common.validation.CreateOnly;
 import com.linkedin.restli.common.validation.ReadOnly;
+import com.linkedin.restli.server.BatchFinderResult;
 import com.linkedin.restli.server.CollectionResult;
 import com.linkedin.restli.server.CustomLongRef;
 import com.linkedin.restli.server.CustomStringRef;
 import com.linkedin.restli.server.MapWithTestRecord;
+import com.linkedin.restli.server.PagingContext;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.TestRecord;
+import com.linkedin.restli.server.annotations.BatchFinder;
+import com.linkedin.restli.server.annotations.MetadataProjectionParam;
+import com.linkedin.restli.server.annotations.PagingContextParam;
+import com.linkedin.restli.server.annotations.PagingProjectionParam;
+import com.linkedin.restli.server.annotations.ProjectionParam;
 import com.linkedin.restli.server.custom.types.CustomString;
 import com.linkedin.restli.server.annotations.Action;
 import com.linkedin.restli.server.annotations.AssocKeyParam;
@@ -42,9 +54,12 @@ import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import com.linkedin.restli.server.resources.KeyValueResource;
 import com.linkedin.restli.server.resources.SimpleResourceTemplate;
 import com.linkedin.restli.server.resources.SingleObjectResource;
+import com.linkedin.restli.server.twitter.TwitterTestDataModels;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Followed;
 import com.linkedin.restli.server.twitter.TwitterTestDataModels.Status;
+import com.linkedin.restli.server.twitter.TwitterTestDataModels.User;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -259,5 +274,264 @@ public class InvalidResources
   @RestLiSimpleResource(name="foo")
   public class RedundantDataAnnotation4 extends SimpleResourceTemplate<MapWithTestRecord>
   {
+  }
+
+  @RestLiCollection(name = "foo", keyName="foo")
+  public static class MissingLinkedBatchFinder extends CollectionResourceTemplate<Long, Status>
+  {
+    @RestMethod.Get
+    public Status get(Long key)
+    {
+      return null;
+    }
+
+    @Finder(value = "find", linkedBatchFinderName = "batchFind")
+    public List<Status> find(@QueryParam("statusName") String statusName)
+    {
+      return Collections.emptyList();
+    }
+  }
+
+  public static class EmptyCriteria extends RecordTemplate
+  {
+    private static final RecordDataSchema SCHEMA =
+        new RecordDataSchema(new Name("EmptyCriteria", new StringBuilder(10)), RecordDataSchema.RecordType.RECORD);
+
+    public EmptyCriteria()
+    {
+      super(new DataMap(), SCHEMA);
+    }
+
+    public EmptyCriteria(DataMap map)
+    {
+      super(map, SCHEMA);
+    }
+  }
+
+  @RestLiCollection(name = "foo", keyName="foo")
+  public static class LinkedBatchFinderMissingFieldInCriteria extends CollectionResourceTemplate<Long, Status>
+  {
+    @RestMethod.Get
+    public Status get(Long key)
+    {
+      return null;
+    }
+
+    @Finder(value = "find", linkedBatchFinderName = "batchFind")
+    public List<Status> find(@QueryParam("statusName") String statusName)
+    {
+      return Collections.emptyList();
+    }
+
+    @BatchFinder(value = "batchFind", batchParam = "criteria")
+    public BatchFinderResult<EmptyCriteria, Status, Followed> batchFind(
+        @QueryParam("criteria") EmptyCriteria[] criteria)
+    {
+      return new BatchFinderResult<>();
+    }
+  }
+
+  @RestLiAssociation(name="associations",
+      namespace = "com.linkedin.restli.server.invalid",
+      assocKeys={@Key(name="src", type=String.class), @Key(name="dest", type=String.class)})
+  public static class LinkedBatchFinderAssocKeyFieldInCriteria extends AssociationResourceTemplate<Status>
+  {
+    @Override
+    public Status get(CompoundKey key) {
+      return null;
+    }
+
+    @Finder(value = "find", linkedBatchFinderName = "batchFind")
+    public List<Status> find(@AssocKeyParam("src") String src)
+    {
+      return Collections.emptyList();
+    }
+
+    @BatchFinder(value = "batchFind", batchParam = "criteria")
+    public BatchFinderResult<EmptyCriteria, Status, Followed> batchFind(
+        @QueryParam("criteria") EmptyCriteria[] criteria)
+    {
+      return new BatchFinderResult<>();
+    }
+  }
+
+  public static class LongStatusCriteria extends RecordTemplate
+  {
+    private final static RecordDataSchema SCHEMA = ((RecordDataSchema) DataTemplateUtil.parseSchema(
+        "{\"type\":\"record\",\"name\":\"LongStatusCriteria\",\"namespace\":\"com.example.test\",\"fields\":[{\"name\":\"statusName\",\"type\":\"long\"}]}"));
+
+    public LongStatusCriteria()
+    {
+      super(new DataMap(), SCHEMA);
+    }
+
+    public LongStatusCriteria(DataMap map)
+    {
+      super(map, SCHEMA);
+    }
+  }
+
+  @RestLiCollection(name = "foo", keyName="foo")
+  public static class LinkedBatchFinderMismatchedFieldTypeInCriteria extends CollectionResourceTemplate<Long, Status>
+  {
+    @RestMethod.Get
+    public Status get(Long key)
+    {
+      return null;
+    }
+
+    @Finder(value = "find", linkedBatchFinderName = "batchFind")
+    public List<Status> find(@QueryParam("statusName") String statusName)
+    {
+      return Collections.emptyList();
+    }
+
+    @BatchFinder(value = "batchFind", batchParam = "criteria")
+    public BatchFinderResult<LongStatusCriteria, Status, Followed> batchFind(
+        @QueryParam("criteria") LongStatusCriteria[] criteria)
+    {
+      return new BatchFinderResult<>();
+    }
+  }
+
+  public static class OptionalStringStatusCriteria extends RecordTemplate
+  {
+    private final static RecordDataSchema SCHEMA = ((RecordDataSchema) DataTemplateUtil.parseSchema(
+        "{\"type\":\"record\",\"name\":\"OptionalStringStatusCriteria\",\"namespace\":\"com.example.test\",\"fields\":[{\"name\":\"statusName\",\"type\":\"string\",\"optional\": true}]}"));
+
+    public OptionalStringStatusCriteria()
+    {
+      super(new DataMap(), SCHEMA);
+    }
+
+    public OptionalStringStatusCriteria(DataMap map)
+    {
+      super(map, SCHEMA);
+    }
+  }
+
+  @RestLiCollection(name = "foo", keyName="foo")
+  public static class LinkedBatchFinderMismatchedFieldOptionalityInCriteria extends CollectionResourceTemplate<Long, Status>
+  {
+    @RestMethod.Get
+    public Status get(Long key)
+    {
+      return null;
+    }
+
+    @Finder(value = "find", linkedBatchFinderName = "batchFind")
+    public List<Status> find(@QueryParam("statusName") String statusName)
+    {
+      return Collections.emptyList();
+    }
+
+    @BatchFinder(value = "batchFind", batchParam = "criteria")
+    public BatchFinderResult<OptionalStringStatusCriteria, Status, Followed> batchFind(
+        @QueryParam("criteria") OptionalStringStatusCriteria[] criteria)
+    {
+      return new BatchFinderResult<>();
+    }
+  }
+
+  public static class ExtraFieldsCriteria extends RecordTemplate
+  {
+    private final static RecordDataSchema SCHEMA = ((RecordDataSchema) DataTemplateUtil.parseSchema(
+        "{\"type\":\"record\",\"name\":\"ExtraFieldsCriteria\",\"namespace\":\"com.example.test\",\"fields\":[{\"name\":\"statusName\",\"type\":\"string\"}, {\"name\":\"random\",\"type\":\"long\"}]}"));
+
+    public ExtraFieldsCriteria()
+    {
+      super(new DataMap(), SCHEMA);
+    }
+
+    public ExtraFieldsCriteria(DataMap map)
+    {
+      super(map, SCHEMA);
+    }
+  }
+
+  @RestLiCollection(name = "foo", keyName="foo")
+  public static class LinkedBatchFinderExtraFieldsInCriteria extends CollectionResourceTemplate<Long, Status>
+  {
+    @RestMethod.Get
+    public Status get(Long key)
+    {
+      return null;
+    }
+
+    @Finder(value = "find", linkedBatchFinderName = "batchFind")
+    public List<Status> find(@QueryParam("statusName") String statusName)
+    {
+      return Collections.emptyList();
+    }
+
+    @BatchFinder(value = "batchFind", batchParam = "criteria")
+    public BatchFinderResult<ExtraFieldsCriteria, Status, Followed> batchFind(
+        @QueryParam("criteria") ExtraFieldsCriteria[] criteria)
+    {
+      return new BatchFinderResult<>();
+    }
+  }
+
+  public static class CorrectCriteria extends RecordTemplate
+  {
+    private final static RecordDataSchema SCHEMA = ((RecordDataSchema) DataTemplateUtil.parseSchema(
+        "{\"type\":\"record\",\"name\":\"CorrectCriteria\",\"namespace\":\"com.example.test\",\"fields\":[{\"name\":\"statusName\",\"type\":\"string\"}]}"));
+
+    public CorrectCriteria()
+    {
+      super(new DataMap(), SCHEMA);
+    }
+
+    public CorrectCriteria(DataMap map)
+    {
+      super(map, SCHEMA);
+    }
+  }
+
+  @RestLiCollection(name = "foo", keyName="foo")
+  public static class LinkedBatchFinderMetadataMismatch extends CollectionResourceTemplate<Long, Status>
+  {
+    @RestMethod.Get
+    public Status get(Long key)
+    {
+      return null;
+    }
+
+    @Finder(value = "find", linkedBatchFinderName = "batchFind")
+    public CollectionResult<Status, User> find(@QueryParam("statusName") String statusName)
+    {
+      return new CollectionResult<>(Collections.emptyList());
+    }
+
+    @BatchFinder(value = "batchFind", batchParam = "criteria")
+    public BatchFinderResult<CorrectCriteria, Status, Followed> batchFind(
+        @QueryParam("criteria") CorrectCriteria[] criteria)
+    {
+      return new BatchFinderResult<>();
+    }
+  }
+
+  @RestLiCollection(name = "foo", keyName="foo")
+  public static class LinkedBatchFinderUnsupportedPaging extends CollectionResourceTemplate<Long, Status>
+  {
+    @RestMethod.Get
+    public Status get(Long key)
+    {
+      return null;
+    }
+
+    @Finder(value = "find", linkedBatchFinderName = "batchFind")
+    public CollectionResult<Status, User> find(@QueryParam("statusName") String statusName,
+        @PagingContextParam PagingContext paging)
+    {
+      return new CollectionResult<>(Collections.emptyList());
+    }
+
+    @BatchFinder(value = "batchFind", batchParam = "criteria")
+    public BatchFinderResult<CorrectCriteria, Status, User> batchFind(
+        @QueryParam("criteria") CorrectCriteria[] criteria)
+    {
+      return new BatchFinderResult<>();
+    }
   }
 }

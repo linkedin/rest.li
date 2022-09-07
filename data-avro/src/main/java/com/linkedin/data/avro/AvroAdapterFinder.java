@@ -19,6 +19,7 @@ package com.linkedin.data.avro;
 
 import java.lang.reflect.Constructor;
 
+import java.lang.reflect.InvocationTargetException;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 
@@ -144,19 +145,10 @@ public class AvroAdapterFinder
     {
       Class<?> clazz = Class.forName(fullName);
       @SuppressWarnings("unchecked")
-      T result = (T) clazz.newInstance();
+      T result = (T) clazz.getDeclaredConstructor().newInstance();
       return result;
-    }
-    catch (ClassNotFoundException e)
-    {
-      throw new IllegalStateException("Unable to construct " + fullName, e);
-    }
-    catch (InstantiationException e)
-    {
-      throw new IllegalStateException("Unable to construct " + fullName, e);
-    }
-    catch (IllegalAccessException e)
-    {
+    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
+        InvocationTargetException | NoSuchMethodException e) {
       throw new IllegalStateException("Unable to construct " + fullName, e);
     }
   }

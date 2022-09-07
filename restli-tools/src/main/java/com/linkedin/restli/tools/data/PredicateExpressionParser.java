@@ -93,7 +93,7 @@ public class PredicateExpressionParser
       {
         try
         {
-          predicateStack.push(Class.forName(token).asSubclass(Predicate.class).newInstance());
+          predicateStack.push(Class.forName(token).asSubclass(Predicate.class).getDeclaredConstructor().newInstance());
         }
         catch (ClassCastException e)
         {

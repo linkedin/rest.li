@@ -19,6 +19,7 @@ package com.linkedin.data.template;
 
 import com.linkedin.data.DataMap;
 import com.linkedin.data.collections.CheckedMap;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.schema.RecordDataSchema;
 
 
@@ -180,6 +181,34 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
   }
 
   /**
+   * Set the value of field in an unsafe way without checking.
+   *
+   * This is direct method. The value is not a {@link DataTemplate}.
+   *
+   * @see SetMode
+   *
+   * @param field provides the field to set.
+   * @param valueClass provides the expected class of the input value.
+   * @param dataClass provides the class stored in the underlying {@link DataMap}.
+   * @param object provides the value to set.
+   * @param mode determines how should happen if the value provided is null.
+   * @param <T> is the type of the object.
+   * @throws ClassCastException if provided object is not the same as the expected class or
+   *                            it cannot be coerced to the expected class.
+   * @throws NullPointerException if null is not allowed, see {@link SetMode#DISALLOW_NULL}.
+   * @throws IllegalArgumentException if attempting to remove a mandatory field by setting it to null,
+   *                                  see {@link SetMode#REMOVE_OPTIONAL_IF_NULL}.
+   */
+  protected <T> void unsafePutDirect(RecordDataSchema.Field field, Class<T> valueClass, Class<?> dataClass, T object, SetMode mode)
+      throws ClassCastException
+  {
+    if (checkPutNullValue(field, object, mode))
+    {
+      CheckedUtil.putWithoutChecking(_map, field.getName(), DataTemplateUtil.coerceInput(object, valueClass, dataClass));
+    }
+  }
+
+  /**
    * Set the value of field whose type has needs to be coerced by {@link DirectCoercer}.
    *
    * @see SetMode
@@ -279,6 +308,40 @@ public abstract class RecordTemplate implements DataTemplate<DataMap>
       if (object.getClass() == valueClass)
       {
         _map.put(field.getName(), object.data());
+        getCache().put(object.data(), object);
+      }
+      else
+      {
+        throw new ClassCastException("Input " + object + " should be a " + valueClass.getName());
+      }
+    }
+  }
+
+  /**
+   * Set the value of field in an unsafe way without checking.
+   *
+   * This is wrapping method. The value is a {@link DataTemplate}.
+   *
+   * @see SetMode
+   *
+   * @param field provides the field to set.
+   * @param valueClass provides the expected class of the input value.
+   * @param object provides the value to set.
+   * @param mode determines how should happen if the value provided is null.
+   * @param <T> is the type of the input object.
+   * @throws ClassCastException if class of the provided value is not the same as the expected class.
+   * @throws NullPointerException if null is not allowed, see {@link SetMode#DISALLOW_NULL}.
+   * @throws IllegalArgumentException if attempting to remove a mandatory field by setting it to null,
+   *                                  see {@link SetMode#REMOVE_OPTIONAL_IF_NULL}.
+   */
+  protected <T extends DataTemplate<?>> void unsafePutWrapped(RecordDataSchema.Field field, Class<T> valueClass, T object, SetMode mode)
+      throws ClassCastException
+  {
+    if (checkPutNullValue(field, object, mode))
+    {
+      if (object.getClass() == valueClass)
+      {
+        CheckedUtil.putWithoutCheckingOrChangeNotification(_map, field.getName(), object.data());
         getCache().put(object.data(), object);
       }
       else

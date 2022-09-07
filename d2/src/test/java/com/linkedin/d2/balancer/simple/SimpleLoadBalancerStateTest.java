@@ -22,6 +22,7 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerState.LoadBalancerStateListenerCallback;
 import com.linkedin.d2.balancer.LoadBalancerState.NullStateListenerCallback;
+import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.clients.DegraderTrackerClientImpl;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.event.NoopEventEmitter;
@@ -43,6 +44,8 @@ import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFact
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.d2.discovery.event.SynchronousExecutorService;
@@ -50,9 +53,7 @@ import com.linkedin.d2.discovery.stores.mock.MockStore;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
-import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequestBuilder;
-import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportCallbackAdapter;
@@ -82,6 +83,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import java.util.concurrent.TimeoutException;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import org.testng.Assert;
@@ -334,14 +336,17 @@ public class SimpleLoadBalancerStateTest
     assertNull(listener.serviceName);
 
     // set up state
+    ClusterProperties clusterProperties = new ClusterProperties("cluster-1", schemes);
+    ServiceProperties serviceProperties = new ServiceProperties("service-1",
+        "cluster-1",
+        "/test",
+        Arrays.asList("random"));
+
     _state.listenToCluster("cluster-1", new NullStateListenerCallback());
     _state.listenToService("service-1", new NullStateListenerCallback());
-    _clusterRegistry.put("cluster-1", new ClusterProperties("cluster-1", schemes));
+    _clusterRegistry.put("cluster-1", clusterProperties);
     _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
-    _serviceRegistry.put("service-1", new ServiceProperties("service-1",
-                                                            "cluster-1",
-                                                            "/test",
-                                                            Arrays.asList("random")));
+    _serviceRegistry.put("service-1", serviceProperties);
 
     TrackerClient client = _state.getClient("cluster-1", uri);
 
@@ -359,6 +364,12 @@ public class SimpleLoadBalancerStateTest
       SimpleLoadBalancerTest.DoNothingClientFactory f = (SimpleLoadBalancerTest.DoNothingClientFactory)factory;
       assertEquals(f.getRunningClientCount(), 0, "Not all clients were shut down");
     }
+
+    // Verify that registered listeners get all removal events for cluster properties and service properties.
+    Assert.assertEquals(listener.servicePropertiesRemoved.size(), 1);
+    Assert.assertEquals(listener.servicePropertiesRemoved.get(0).getProperty(), serviceProperties);
+    Assert.assertEquals(listener.clusterInfoRemoved.size(), 1);
+    Assert.assertEquals(listener.clusterInfoRemoved.get(0).getClusterPropertiesItem().getProperty(), clusterProperties);
   }
 
   @Test(groups = { "small", "back-end" })
@@ -499,6 +510,93 @@ public class SimpleLoadBalancerStateTest
     assertTrue(_state.isListeningToCluster("cluster-1"));
     assertNotNull(_state.getClusterProperties("cluster-1"));
     assertEquals(_state.getClusterProperties("cluster-1").getProperty(), property);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testStopListenToCluster() throws InterruptedException, ExecutionException, TimeoutException {
+    reset();
+
+    List<String> schemes = new ArrayList<>();
+
+    schemes.add("http");
+
+    assertFalse(_state.isListeningToCluster("cluster-1"));
+    assertNull(_state.getClusterProperties("cluster-1"));
+
+    final CountDownLatch latch = new CountDownLatch(1);
+    LoadBalancerStateListenerCallback callback = new LoadBalancerStateListenerCallback()
+    {
+      @Override
+      public void done(int type, String name)
+      {
+        latch.countDown();
+      }
+    };
+
+    _state.listenToCluster("cluster-1", callback);
+
+    if (!latch.await(5, TimeUnit.SECONDS))
+    {
+      fail("didn't get callback when listenToCluster was called");
+    }
+
+    assertTrue(_state.isListeningToCluster("cluster-1"));
+    assertNotNull(_state.getClusterProperties("cluster-1"));
+    assertNull(_state.getClusterProperties("cluster-1").getProperty());
+
+    ClusterProperties firstProperty = new ClusterProperties("cluster-1", schemes);
+
+    _clusterRegistry.put("cluster-1", firstProperty);
+
+    assertTrue(_state.isListeningToCluster("cluster-1"));
+    assertNotNull(_state.getClusterProperties("cluster-1"));
+    assertEquals(_state.getClusterProperties("cluster-1").getProperty(), firstProperty);
+
+
+    // Start listening again, and we should be getting the new property this time
+    final CountDownLatch stopListenLatch = new CountDownLatch(1);
+    LoadBalancerStateListenerCallback stopListenCallback = new LoadBalancerStateListenerCallback()
+    {
+      @Override
+      public void done(int type, String name)
+      {
+        stopListenLatch.countDown();
+      }
+    };
+
+    _state.stopListenToCluster("cluster-1", stopListenCallback);
+
+    if (!stopListenLatch.await(5, TimeUnit.SECONDS))
+    {
+      fail("didn't get callback when stopListenLatch was called");
+    }
+
+    assertFalse(_state.isListeningToCluster("cluster-1"));
+
+    ClusterProperties newProperty = new ClusterProperties("cluster-1");
+    _clusterRegistry.put("cluster-1", newProperty);
+    // Property should not be updated since we have stopped listening
+    assertEquals(_state.getClusterProperties("cluster-1").getProperty(), firstProperty);
+
+    // Start listening again, and we should be getting the new property this time
+    final CountDownLatch newLatch = new CountDownLatch(1);
+    LoadBalancerStateListenerCallback newCallback = new LoadBalancerStateListenerCallback()
+    {
+      @Override
+      public void done(int type, String name)
+      {
+        newLatch.countDown();
+      }
+    };
+
+    _state.listenToCluster("cluster-1", newCallback);
+
+    if (!newLatch.await(5, TimeUnit.SECONDS))
+    {
+      fail("didn't get callback when listenToCluster was called");
+    }
+
+    assertEquals(_state.getClusterProperties("cluster-1").getProperty(), newProperty);
   }
 
   @Test(groups = { "small", "back-end" })
@@ -1858,6 +1956,56 @@ public class SimpleLoadBalancerStateTest
     assertNull(client);
   }
 
+  @Test
+  public void testNotifyListenersOnPropertiesChanges()
+  {
+    reset();
+
+    ClusterProperties clusterProperties = new ClusterProperties(
+        "cluster-1", Collections.singletonList("Random"));
+    ClusterInfoItem clusterInfoItem = new ClusterInfoItem(_state, clusterProperties, new PartitionAccessor() {
+      @Override
+      public int getMaxPartitionId() {
+        return 0;
+      }
+
+      @Override
+      public int getPartitionId(URI uri) throws PartitionAccessException {
+        return 0;
+      }
+    });
+    ServiceProperties serviceProperties = new ServiceProperties("service-1",
+        "cluster-1",
+        "/test",
+        Arrays.asList("random"));
+    LoadBalancerStateItem<ServiceProperties> servicePropertiesLBItem = new LoadBalancerStateItem<ServiceProperties>(
+        serviceProperties, 0, 0);
+
+
+    TestListener[] listeners = new TestListener[] {new TestListener(), new TestListener()};
+    Arrays.stream(listeners).forEach(listener -> _state.register(listener));
+
+    _state.notifyListenersOnServicePropertiesUpdates(servicePropertiesLBItem);
+    _state.notifyListenersOnClusterInfoUpdates(clusterInfoItem);
+    for (TestListener listener : listeners)
+    {
+      Assert.assertEquals(listener.clusterInfoUpdated.size(), 1);
+      Assert.assertEquals(listener.clusterInfoUpdated.get(0).getClusterPropertiesItem().getProperty(), clusterProperties);
+      Assert.assertEquals(listener.servicePropertiesUpdated.size(), 1);
+      Assert.assertEquals(listener.servicePropertiesUpdated.get(0).getProperty(), serviceProperties);
+    }
+
+    _state.notifyListenersOnServicePropertiesRemovals(servicePropertiesLBItem);
+    _state.notifyListenersOnClusterInfoRemovals(clusterInfoItem);
+    for (TestListener listener : listeners)
+    {
+      Assert.assertEquals(listener.clusterInfoRemoved.size(), 1);
+      Assert.assertEquals(listener.clusterInfoRemoved.get(0).getClusterPropertiesItem().getProperty(), clusterProperties);
+      Assert.assertEquals(listener.servicePropertiesRemoved.size(), 1);
+      Assert.assertEquals(listener.servicePropertiesRemoved.get(0).getProperty(), serviceProperties);
+    }
+  }
+
   private static class TestShutdownCallback implements PropertyEventShutdownCallback
   {
     private final CountDownLatch _latch = new CountDownLatch(1);
@@ -1878,6 +2026,19 @@ public class SimpleLoadBalancerStateTest
     public String               serviceName;
     public String               scheme;
     public LoadBalancerStrategy strategy;
+
+    public ArrayList<ClusterInfoItem> clusterInfoUpdated;
+    public ArrayList<LoadBalancerStateItem<ServiceProperties>> servicePropertiesUpdated;
+
+    public ArrayList<ClusterInfoItem> clusterInfoRemoved;
+    public ArrayList<LoadBalancerStateItem<ServiceProperties>> servicePropertiesRemoved;
+
+    public TestListener() {
+      clusterInfoRemoved = new ArrayList<>();
+      servicePropertiesRemoved = new ArrayList<>();
+      clusterInfoUpdated = new ArrayList<>();
+      servicePropertiesUpdated = new ArrayList<>();
+    }
 
     @Override
     public void onStrategyAdded(String serviceName,
@@ -1907,6 +2068,30 @@ public class SimpleLoadBalancerStateTest
     @Override
     public void onClientRemoved(String serviceName, TrackerClient client)
     {
+    }
+
+    @Override
+    public void onClusterInfoUpdate(ClusterInfoItem clusterInfoItem)
+    {
+      clusterInfoUpdated.add(clusterInfoItem);
+    }
+
+    @Override
+    public void onClusterInfoRemoval(ClusterInfoItem clusterInfoItem)
+    {
+      clusterInfoRemoved.add(clusterInfoItem);
+    }
+
+    @Override
+    public void onServicePropertiesUpdate(LoadBalancerStateItem<ServiceProperties> serviceProperties)
+    {
+      servicePropertiesUpdated.add(serviceProperties);
+    }
+
+    @Override
+    public void onServicePropertiesRemoval(LoadBalancerStateItem<ServiceProperties> serviceProperties)
+    {
+      servicePropertiesRemoved.add(serviceProperties);
     }
   }
 }

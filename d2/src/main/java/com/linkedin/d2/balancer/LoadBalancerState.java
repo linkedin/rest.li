@@ -20,6 +20,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
+import com.linkedin.d2.balancer.properties.FailoutProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -72,6 +73,13 @@ public interface LoadBalancerState
 
   void listenToCluster(String clusterName, LoadBalancerStateListenerCallback callback);
 
+  /**
+   * Stops listening to a cluster
+   * @param clusterName the cluster to stop listening to.
+   * @param callback callback to be invoked after stopped listening to the cluster.
+   */
+  default void stopListenToCluster(String clusterName, LoadBalancerStateListenerCallback callback) {}
+
   void start(Callback<None> callback);
 
   void shutdown(PropertyEventShutdownCallback shutdown);
@@ -79,6 +87,8 @@ public interface LoadBalancerState
   LoadBalancerStateItem<UriProperties> getUriProperties(String clusterName);
 
   LoadBalancerStateItem<ClusterProperties> getClusterProperties(String clusterName);
+
+  LoadBalancerStateItem<FailoutProperties> getFailoutProperties(String clusterName);
 
   LoadBalancerStateItem<PartitionAccessor> getPartitionAccessor(String clusterName);
 
@@ -99,7 +109,7 @@ public interface LoadBalancerState
                                                    Map<URI, Double> possibleUris,
                                                    long version)
   {
-    return new SubsettingState.SubsetItem(false, possibleUris, Collections.emptySet());
+    return new SubsettingState.SubsetItem(false, false, possibleUris, Collections.emptySet());
   }
 
   /**

@@ -69,7 +69,11 @@ public class CompatibilityMessage extends Message
     /**
      * Annotation compatible change, which can be used in custom annotation compatibility check
      */
-    ANNOTATION_COMPATIBLE_CHANGE(false);
+    ANNOTATION_COMPATIBLE_CHANGE(false),
+    /**
+     * Enum symbol order changed, which is a compatible change.
+     */
+    ENUM_SYMBOLS_ORDER_CHANGE(false);
 
     private final boolean _error;
 

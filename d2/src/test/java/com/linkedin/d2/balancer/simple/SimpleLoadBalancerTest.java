@@ -23,6 +23,7 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.KeyMapper;
+import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerTestState;
 import com.linkedin.d2.balancer.PartitionedLoadBalancerTestState;
@@ -49,6 +50,7 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
+import com.linkedin.d2.balancer.util.CustomAffinityRoutingURIProvider;
 import com.linkedin.d2.balancer.util.FileSystemDirectory;
 import com.linkedin.d2.balancer.util.HostOverrideList;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
@@ -94,6 +96,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.Spliterator;
@@ -107,6 +110,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.apache.commons.io.FileUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
@@ -529,6 +533,184 @@ public class SimpleLoadBalancerTest
 
       assertTrue(executorService.isShutdown(), "ExecutorService should have shut down!");
     }
+  }
+
+  @DataProvider
+  public Object[][] customAffinityRoutingEnabledDataProvider() {
+    return new Object[][]{
+        // Test affinity routing provider is enabled and TargetHostURI is NOT set before loadBalancer.getClient
+        {true, null, URI.create("http://test.qd.com:5678"), URI.create("http://test.qd.com:5678"), URI.create("http://test.qd.com:5678/foo")},
+        // Test affinity routing provider is enabled and TargetHostURI is set before loadBalancer.getClient
+        {true, URI.create("http://preset.qd.com:5678"), URI.create("http://test.qd.com:5678"),
+            URI.create("http://preset.qd.com:5678"), URI.create("http://preset.qd.com:5678/foo")},
+        // Test affinity routing provider is disabled
+        {false, null, URI.create("http://test.qd.com:5678"), null, URI.create("http://test.qd.com:5678/foo")},
+    };
+  }
+
+  @Test(dataProvider = "customAffinityRoutingEnabledDataProvider")
+  public void testGetClientWithCustomAffinityRoutingURIProvider(boolean isAffinityRoutingURIProviderEnabled,
+        @Nullable URI presetTargetHostURI, URI uriInPartition, URI expectedAffinityRoutingUri, URI expectedClientUri) throws Exception
+  {
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+    List<String> prioritizedSchemes = new ArrayList<>();
+
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
+
+    //URI uri = URI.create("http://test.qd.com:5678");
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
+    partitionData.put(DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>(2);
+    uriData.put(uriInPartition, partitionData);
+
+    if (presetTargetHostURI != null) {
+      uriData.put(presetTargetHostURI, partitionData);
+    }
+
+    prioritizedSchemes.add(PropertyKeys.HTTP_SCHEME);
+
+    Set<URI> bannedSet = new HashSet<>();
+    clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(),
+        Collections.emptyMap(), bannedSet, NullPartitionProperties.getInstance()));
+
+    serviceRegistry.put("foo", new ServiceProperties("foo",
+        CLUSTER1_NAME,
+        "/foo",
+        Arrays.asList("degrader"),
+        Collections.<String,Object>emptyMap(),
+        null,
+        null,
+        prioritizedSchemes,
+        null));
+    uriRegistry.put(CLUSTER1_NAME, new UriProperties(CLUSTER1_NAME, uriData));
+
+    //URI expectedUri = URI.create("http://test.qd.com:5678/foo");
+    URIRequest uriRequest = new URIRequest("d2://foo/52");
+
+    RequestContext serviceContext = new RequestContext();
+    serviceContext.putLocalAttr(
+        CustomAffinityRoutingURIProvider.CUSTOM_AFFINITY_ROUTING_URI_PROVIDER, new CustomAffinityRoutingURIProvider() {
+      private final Map<String, URI> uriMap = new HashMap<>();
+
+      @Override
+      public boolean isEnabled() {
+        return isAffinityRoutingURIProviderEnabled;
+      }
+
+      @Override
+      public Optional<URI> getTargetHostURI(String clusterName) {
+        return Optional.ofNullable(uriMap.get(clusterName));
+      }
+
+      @Override
+      public void setTargetHostURI(String clusterName, URI targetHostURI) {
+        uriMap.put(clusterName, targetHostURI);
+      }
+    });
+
+    CustomAffinityRoutingURIProvider affinityRoutingURIProvider
+        = (CustomAffinityRoutingURIProvider) serviceContext.getLocalAttr(CustomAffinityRoutingURIProvider.CUSTOM_AFFINITY_ROUTING_URI_PROVIDER);
+
+    if (presetTargetHostURI != null) {
+      affinityRoutingURIProvider.setTargetHostURI(CLUSTER1_NAME, presetTargetHostURI);
+    }
+
+    RewriteLoadBalancerClient client =
+        (RewriteLoadBalancerClient) loadBalancer.getClient(uriRequest, serviceContext);
+    Assert.assertEquals(client.getUri(), expectedClientUri);
+
+    if (isAffinityRoutingURIProviderEnabled) {
+      Assert.assertEquals(affinityRoutingURIProvider.getTargetHostURI(CLUSTER1_NAME).get(), expectedAffinityRoutingUri);
+    } else {
+      Assert.assertFalse(affinityRoutingURIProvider.getTargetHostURI(CLUSTER1_NAME).isPresent());
+    }
+  }
+
+  @DataProvider
+  public Object[][] customAffinityRoutingSkippedDataProvider() {
+    return new Object[][]{
+        // Test custom affinity routing skipped when targetHostHint is provided and custom affinity routing is also enabled
+        {true, true, URI.create("http://targethosthint.qd.com:1234/foo")},
+        // Test custom affinity routing skipped when targetHostHint is not provided and custom affinity routing is also disabled
+        {false, false, URI.create("http://test.qd.com:1234/foo")},
+        // Test custom affinity routing skipped when targetHostHint is provided and custom affinity routing is disabled
+        {true, false, URI.create("http://targethosthint.qd.com:1234/foo")},
+    };
+  }
+
+  @Test(dataProvider = "customAffinityRoutingSkippedDataProvider")
+  public void testCustomAffinityRoutingSkipped(boolean enableTargetHostHint, boolean enableCustomAffinityRouting,
+      URI expectedURI) throws Exception
+  {
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+    List<String> prioritizedSchemes = new ArrayList<>();
+
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
+
+    URI uri1 = URI.create("http://test.qd.com:1234");
+
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
+    partitionData.put(DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>(2);
+
+    uriData.put(uri1, partitionData);
+
+    URI uri2 = URI.create("http://targethosthint.qd.com:1234");
+    RequestContext serviceContext = new RequestContext();
+    if (enableTargetHostHint) {
+      uriData.put(uri2, partitionData);
+      KeyMapper.TargetHostHints.setRequestContextTargetHost(serviceContext, uri2);
+    }
+
+    prioritizedSchemes.add(PropertyKeys.HTTP_SCHEME);
+
+    Set<URI> bannedSet = new HashSet<>();
+    clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(),
+        Collections.emptyMap(), bannedSet, NullPartitionProperties.getInstance()));
+
+    serviceRegistry.put("foo", new ServiceProperties("foo",
+        CLUSTER1_NAME,
+        "/foo",
+        Arrays.asList("degrader"),
+        Collections.<String,Object>emptyMap(),
+        null,
+        null,
+        prioritizedSchemes,
+        null));
+    uriRegistry.put(CLUSTER1_NAME, new UriProperties(CLUSTER1_NAME, uriData));
+
+    URIRequest uriRequest = new URIRequest("d2://foo/52");
+
+    serviceContext.putLocalAttr(
+        CustomAffinityRoutingURIProvider.CUSTOM_AFFINITY_ROUTING_URI_PROVIDER, new CustomAffinityRoutingURIProvider() {
+      private final Map<String, URI> uriMap = new HashMap<>();
+
+      @Override
+      public boolean isEnabled() {
+        return enableCustomAffinityRouting;
+      }
+
+      @Override
+      public Optional<URI> getTargetHostURI(String clusterName) {
+        return Optional.ofNullable(uriMap.get(clusterName));
+      }
+
+      @Override
+      public void setTargetHostURI(String clusterName, URI targetHostURI) {
+        uriMap.put(clusterName, targetHostURI);
+      }
+    });
+
+    RewriteLoadBalancerClient client =
+        (RewriteLoadBalancerClient) loadBalancer.getClient(uriRequest, serviceContext);
+    Assert.assertEquals(client.getUri(), expectedURI);
+    CustomAffinityRoutingURIProvider affinityRoutingURIProvider
+        = (CustomAffinityRoutingURIProvider) serviceContext.getLocalAttr(CustomAffinityRoutingURIProvider.CUSTOM_AFFINITY_ROUTING_URI_PROVIDER);
+    Assert.assertFalse(affinityRoutingURIProvider.getTargetHostURI(CLUSTER1_NAME).isPresent());
   }
 
   @Test
@@ -1293,16 +1475,13 @@ public class SimpleLoadBalancerTest
           assertEquals(unmappedKeys.size(), 1);
         }
 
-        try
-        {
-          loadBalancer.getClient(new URIRequest("d2://foo/id=100"), new RequestContext());
-          if (partitionMethod == 0)
-          {
-            // key out of range
-            fail("Should throw ServiceUnavailableException caused by PartitionAccessException");
-          }
-        }
-        catch(ServiceUnavailableException e) {}
+        // key out of range, this should also map to a default partition client
+        RewriteLoadBalancerClient client =
+            (RewriteLoadBalancerClient) loadBalancer.getClient(new URIRequest("d2://foo/id=100"), new RequestContext());
+        assertTrue(client.getDecoratedClient() instanceof RewriteClient);
+        RewriteClient rewriteClient = (RewriteClient) client.getDecoratedClient();
+        assertTrue(rewriteClient.getDecoratedClient() instanceof TrackerClient);
+        assertTrue(((TrackerClient) rewriteClient.getDecoratedClient()).getPartitionWeight(DEFAULT_PARTITION_ID) == 1.0d);
       }
 
       final CountDownLatch latch = new CountDownLatch(1);

@@ -9,6 +9,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -438,7 +439,7 @@ public class ZookeeperConnectionManagerTest
     executorService.shutdown();
   }
 
-  @Test(invocationCount = 10, timeOut = 10000, groups = { "ci-flaky" })
+  @Test(invocationCount = 10, timeOut = 10000, groups = { "ci-flaky" }, retryAnalyzer = ThreeRetries.class) // Known to be flaky in CI
   public void testMarkUpAndDownMultipleTimesFinalUp()
     throws Exception
   {
@@ -471,6 +472,297 @@ public class ZookeeperConnectionManagerTest
     executorService.shutdown();
   }
 
+  @Test
+  public void testNoWarmupWhenDisabled() throws Exception
+  {
+    ScheduledExecutorService warmupExecutorService = Executors.newSingleThreadScheduledExecutor();
+    boolean isDarkWarmupEnabled = false;
+    String warmupClusterName = "warmup" + _cluster;
+    int warmupDuration = 5; //run warm up for 5 sec
+
+    ZooKeeperAnnouncer announcer = getZooKeeperWarmupAnnouncer(_cluster, _uri, WEIGHT, isDarkWarmupEnabled, warmupClusterName, warmupDuration, warmupExecutorService);
+    ZooKeeperConnectionManager manager = createManagerForWarmupTests(true, warmupDuration, announcer);
+    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
+
+    // Assert that no warm-up and only mark up to the regular cluster
+    UriProperties properties = store.get(warmupClusterName);
+    assertNull(properties);
+    properties = store.get(_cluster);
+    assertNotNull(properties);
+    assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
+    assertEquals(properties.Uris().size(), 1);
+
+    shutdownManager(manager);
+  }
+
+  @Test
+  public void testNoWarmupWhenDurationZero() throws Exception {
+    ScheduledExecutorService warmupExecutorService = Executors.newSingleThreadScheduledExecutor();
+    boolean isDarkWarmupEnabled = true;
+    String warmupClusterName = "warmup" + _cluster;
+    int warmupDuration = 0; //warm duration configured to be 0
+
+    ZooKeeperAnnouncer announcer = getZooKeeperWarmupAnnouncer(_cluster, _uri, WEIGHT, isDarkWarmupEnabled, warmupClusterName, warmupDuration, warmupExecutorService);
+    ZooKeeperConnectionManager manager = createManagerForWarmupTests(true, warmupDuration, announcer);
+    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
+
+    // Assert that no warm-up and only mark up to the regular cluster
+    UriProperties properties = store.get(warmupClusterName);
+    assertNull(properties);
+    properties = store.get(_cluster);
+    assertNotNull(properties);
+    assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
+    assertEquals(properties.Uris().size(), 1);
+
+    shutdownManager(manager);
+  }
+
+  @Test
+  public void testNoWarmupWhenWarmupClusterIsNull() throws Exception
+  {
+    ScheduledExecutorService warmupExecutorService = Executors.newSingleThreadScheduledExecutor();
+    boolean isDarkWarmupEnabled = true;
+    String warmupClusterName = null;
+    int warmupDuration = 5; //Run warm-up for 5 seconds
+
+    ZooKeeperAnnouncer announcer = getZooKeeperWarmupAnnouncer(_cluster, _uri, WEIGHT, isDarkWarmupEnabled, warmupClusterName, warmupDuration, warmupExecutorService);
+    ZooKeeperConnectionManager manager = createManagerForWarmupTests(true, warmupDuration, announcer);
+    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
+
+    // Assert only mark up to the regular cluster
+    UriProperties properties = store.get(_cluster);
+    assertNotNull(properties);
+    assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
+    assertEquals(properties.Uris().size(), 1);
+
+    shutdownManager(manager);
+  }
+
+  @Test
+  public void testNoWarmupWhenExecutorServiceIsNull() throws Exception{
+    ScheduledExecutorService warmupExecutorService = null;
+    boolean isDarkWarmupEnabled = true;
+    String warmupClusterName = "warmup" + _cluster;
+    int warmupDuration = 5; //Run warm-up for 5 seconds
+
+    ZooKeeperAnnouncer announcer = getZooKeeperWarmupAnnouncer(_cluster, _uri, WEIGHT, isDarkWarmupEnabled, warmupClusterName, warmupDuration, warmupExecutorService);
+    ZooKeeperConnectionManager manager = createManagerForWarmupTests(true, warmupDuration, announcer);
+    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
+
+    // Assert that no warm-up and only mark up to the regular cluster
+    UriProperties properties = store.get(warmupClusterName);
+    assertNull(properties);
+    properties = store.get(_cluster);
+    assertNotNull(properties);
+    assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
+    assertEquals(properties.Uris().size(), 1);
+
+    shutdownManager(manager);
+  }
+
+  @Test (invocationCount = 1, timeOut = 5000)
+  public void testWarmup() throws Exception
+  {
+    ScheduledExecutorService warmupExecutorService = Executors.newSingleThreadScheduledExecutor();
+    boolean isDarkWarmupEnabled = true;
+    String warmupClusterName = "warmup" + _cluster;
+    int warmupDuration = 2; //run warm-up for 2 seconds
+
+    ZooKeeperAnnouncer announcer = getZooKeeperWarmupAnnouncer(_cluster, _uri, WEIGHT, isDarkWarmupEnabled, warmupClusterName, warmupDuration, warmupExecutorService);
+    ZooKeeperConnectionManager manager = createManagerForWarmupTests(false, warmupDuration, announcer);
+    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
+    FutureCallback<None> managerStartCallback = new FutureCallback<>();
+    manager.start(managerStartCallback);
+
+    // Wait till warm up completes and announcer successfully marks up to the regular cluster
+    managerStartCallback.get();
+
+    UriProperties properties = store.get(_cluster);
+    assertNotNull(properties);
+    assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
+    assertEquals(properties.Uris().size(), 1);
+
+    // If warm up has happened, mark down for the warm up cluster should be successful
+    properties = store.get(warmupClusterName);
+    assertNotNull(properties);
+    assertEquals(properties.Uris().size(), 0);
+
+    shutdownManager(manager);
+  }
+
+  @Test (invocationCount = 1, timeOut = 5000)
+  public void testWarmupWithDisconnection() throws Exception
+  {
+    ScheduledExecutorService warmupExecutorService = Executors.newSingleThreadScheduledExecutor();
+    boolean isDarkWarmupEnabled = true;
+    String warmupClusterName = "warmup" + _cluster;
+    int warmupDuration = 2; //run warm up for 2 seconds
+
+    ZooKeeperAnnouncer announcer = getZooKeeperWarmupAnnouncer(_cluster, _uri, WEIGHT, isDarkWarmupEnabled, warmupClusterName, warmupDuration, warmupExecutorService);
+    ZooKeeperConnectionManager manager = createManagerForWarmupTests(false, warmupDuration, announcer);
+    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
+
+    FutureCallback<None> managerStartCallback = new FutureCallback<>();
+    manager.start(managerStartCallback);
+
+    // Ensure dark warm-up has begun before shutdown
+    try
+    {
+      managerStartCallback.get(1, TimeUnit.SECONDS);
+    }
+    catch (TimeoutException e)
+    {
+      // We are expecting TimeoutException here because the warmup is set to run for 2 seconds,
+      // but we are getting the result from the callback after 1 sec, so the warm up should not have completed
+    }
+    UriProperties properties = store.get(warmupClusterName);
+    assertNotNull(properties);
+    assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
+    assertEquals(properties.Uris().size(), 1);
+
+    //Shut down the connection to ZooKeeper during warmup
+    _zkServer.shutdown(false);
+
+    // restart connection before the warm up duration elapses, so that the markDown on warm-up cluster is successful
+    _zkServer.restart();
+
+    // Wait till warm up completes and announcer successfully marks up to the regular cluster
+    managerStartCallback.get();
+
+    properties = store.get(_cluster);
+    assertNotNull(properties);
+    assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
+    assertEquals(properties.Uris().size(), 1);
+
+    // Ensure warm up mark down was successful
+    properties = store.get(warmupClusterName);
+    assertNotNull(properties);
+    assertEquals(properties.Uris().size(), 0);
+
+    shutdownManager(manager);
+  }
+
+  @Test (invocationCount = 1, timeOut = 10000)
+  public void testWarmupWithDisconnectionAndReconnectionAfterWarmupMarkDownFailure() throws Exception
+  {
+    ScheduledExecutorService warmupExecutorService = Executors.newSingleThreadScheduledExecutor();
+    boolean isDarkWarmupEnabled = true;
+    String warmupClusterName = "warmup" + _cluster;
+    int warmupDuration = 2; //run warm up for 2 sec
+
+    ZooKeeperAnnouncer announcer = getZooKeeperWarmupAnnouncer(_cluster, _uri, WEIGHT, isDarkWarmupEnabled, warmupClusterName, warmupDuration, warmupExecutorService);
+    ZooKeeperConnectionManager manager = createManagerForWarmupTests(false, warmupDuration, announcer);
+    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
+
+    FutureCallback<None> managerStartCallback = new FutureCallback<>();
+    manager.start(managerStartCallback);
+
+    // Ensure dark warm-up has begun before shutdown
+    try
+    {
+      managerStartCallback.get(1, TimeUnit.SECONDS);
+    }
+    catch (TimeoutException e)
+    {
+      // We are expecting TimeoutException here because the warmup is set to run for 5 seconds,
+      // but we are getting the result from the callback after 1 sec, so the warm up should not have completed
+    }
+    UriProperties properties = store.get(warmupClusterName);
+    assertNotNull(properties);
+    assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
+    assertEquals(properties.Uris().size(), 1);
+
+    //Shut down the connection to ZooKeeper during warmup
+    _zkServer.shutdown(false);
+    // restart connection after warm up duration has elapsed
+    try
+    {
+      managerStartCallback.get(warmupDuration+1, TimeUnit.SECONDS);
+    }
+    catch(TimeoutException e)
+    {
+      //markDown for warm-up cluster should have failed due to ZooKeeper ConnectionLossException
+    }
+
+    _zkServer.restart();
+    // Wait for the restart to complete
+    Thread.sleep(1000);
+    // Assert that the retry triggered after session connection has completed the mark down from warm up cluster and
+    // has completed mark up to the regular cluster
+    AssertionMethods.assertWithTimeout(2000, () -> {
+      UriProperties  newProperties = store.get(_cluster);
+      assertNotNull(newProperties);
+      assertEquals(newProperties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
+      assertEquals(newProperties.Uris().size(), 1);
+
+      newProperties = store.get(warmupClusterName);
+      assertNotNull(newProperties);
+      assertEquals(newProperties.Uris().size(), 0);
+    });
+
+    shutdownManager(manager);
+  }
+
+  @Test (invocationCount = 1, timeOut = 15000)
+  public void testWarmupDuringSessionExpiration() throws Exception
+  {
+    ScheduledExecutorService warmupExecutorService = Executors.newSingleThreadScheduledExecutor();
+    boolean isDarkWarmupEnabled = true;
+    String warmupClusterName = "warmup" + _cluster;
+    int warmupDuration = 5; //run warm up for 5 sec
+    final double newWeight = 1.5d;
+
+    ZooKeeperAnnouncer announcer = getZooKeeperWarmupAnnouncer(_cluster, _uri, WEIGHT, isDarkWarmupEnabled, warmupClusterName, warmupDuration, warmupExecutorService);
+    ZKPersistentConnection zkPersistentConnection = getZkPersistentConnection();
+    ZooKeeperConnectionManager manager = createManagerForWarmupTests(false, zkPersistentConnection, warmupDuration, announcer);
+    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
+    FutureCallback<None> managerStartCallback = new FutureCallback<>();
+    manager.start(managerStartCallback);
+
+    // Ensure warm-up has begin before expiring the session
+    try
+    {
+      managerStartCallback.get(1, TimeUnit.SECONDS);
+    }
+    catch (TimeoutException e)
+    {
+      // We are expecting TimeoutException here because the warmup is set to run for 5 seconds,
+      // but we are getting the result from the callback after 1 sec, so the warm up should not have completed
+    }
+    UriProperties properties = store.get(warmupClusterName);
+    assertNotNull(properties);
+    assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
+    assertEquals(properties.Uris().size(), 1);
+
+    // the new WEIGHT will be picked up only if the connection is re-established
+    announcer.setWeight(newWeight);
+
+    // expiring the session
+    long oldSessionId = zkPersistentConnection.getZooKeeper().getSessionId();
+    ZKTestUtil.expireSession("localhost:" + PORT, zkPersistentConnection.getZooKeeper(), 10, TimeUnit.SECONDS);
+
+    // making sure that a new session has been established.
+    ZKTestUtil.waitForNewSessionEstablished(oldSessionId, zkPersistentConnection, 10, TimeUnit.SECONDS);
+
+    // Validate the after new session creation, mark up has completed
+    // Warm up will run again in this case as part of mark up for the new session
+    AssertionMethods.assertWithTimeout((warmupDuration+1)*1000, () -> {
+      UriProperties newProperties = store.get(_cluster);
+      assertNotNull(newProperties);
+      if (newProperties.getPartitionDataMap(URI.create(_uri)) == null)
+      {
+        Assert.fail("Supposed to have the uri present in ZK");
+      }
+      assertEquals(newProperties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), newWeight);
+      assertEquals(newProperties.Uris().size(), 1);
+
+      newProperties = store.get(warmupClusterName);
+      assertNotNull(newProperties);
+      assertEquals(newProperties.Uris().size(), 0);
+    });
+
+    shutdownManager(manager);
+  }
   // ################################# Tooling section #################################
 
   private static class IgnoreCancelledCallback implements Callback<None>
@@ -600,4 +892,38 @@ public class ZookeeperConnectionManagerTest
     announcer.setPartitionData(partitionWeight);
     return announcer;
   }
+
+  private static ZooKeeperAnnouncer getZooKeeperWarmupAnnouncer(String cluster, String uri, double weight, boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService warmupExecutor) {
+    ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer(new ZooKeeperServer(), true, isDarkWarmupEnabled, warmupClusterName, warmupDuration, warmupExecutor);
+    Map<Integer, PartitionData> partitionWeight = new HashMap<>();
+    partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
+    announcer.setCluster(cluster);
+    announcer.setUri(uri);
+    announcer.setPartitionData(partitionWeight);
+    return announcer;
+  }
+
+  private static ZooKeeperConnectionManager createManagerForWarmupTests(boolean start, int warmupDuration, ZooKeeperAnnouncer... announcers)
+      throws ExecutionException, InterruptedException, TimeoutException
+  {
+    ZKPersistentConnection zkPersistentConnection = getZkPersistentConnection();
+    return createManagerForWarmupTests(start, zkPersistentConnection, warmupDuration, announcers);
+  }
+
+  private static ZooKeeperConnectionManager createManagerForWarmupTests(boolean start, ZKPersistentConnection zkPersistentConnection,
+      int warmupDuration, ZooKeeperAnnouncer... announcers)
+      throws ExecutionException, InterruptedException, TimeoutException
+  {
+    ZooKeeperConnectionManager zooKeeperConnectionManager = new ZooKeeperConnectionManager(zkPersistentConnection, "/d2",
+        (connection, path) -> new ZooKeeperEphemeralStore<>(
+            connection, new UriPropertiesJsonSerializer(),
+            new UriPropertiesMerger(), path), announcers);
+    if (start) {
+      FutureCallback<None> managerStartCallback = new FutureCallback<>();
+      zooKeeperConnectionManager.start(managerStartCallback);
+      managerStartCallback.get(10 + warmupDuration, TimeUnit.SECONDS);
+    }
+    return zooKeeperConnectionManager;
+  }
+
 }

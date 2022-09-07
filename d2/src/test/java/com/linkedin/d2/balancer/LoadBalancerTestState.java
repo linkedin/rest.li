@@ -18,11 +18,11 @@ package com.linkedin.d2.balancer;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
-import com.linkedin.d2.balancer.clients.DegraderTrackerClient;
 import com.linkedin.d2.balancer.clients.DegraderTrackerClientImpl;
-import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.clients.TestClient;
+import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
+import com.linkedin.d2.balancer.properties.FailoutProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
@@ -75,6 +75,12 @@ public class LoadBalancerTestState implements LoadBalancerState
   {
     return (getClusterProperties)
         ? new LoadBalancerStateItem<>(new ClusterProperties("cluster-1"), 0, 0) : null;
+  }
+
+  @Override
+  public LoadBalancerStateItem<FailoutProperties> getFailoutProperties(String clusterName)
+  {
+    return null;
   }
 
   @Override
@@ -157,6 +163,12 @@ public class LoadBalancerTestState implements LoadBalancerState
     {
       callback.done(LoadBalancerStateListenerCallback.CLUSTER, clusterName);
     }
+  }
+
+  @Override
+  public void stopListenToCluster(String clusterName, LoadBalancerStateListenerCallback callback)
+  {
+    callback.done(LoadBalancerStateListenerCallback.CLUSTER, clusterName);
   }
 
   @Override

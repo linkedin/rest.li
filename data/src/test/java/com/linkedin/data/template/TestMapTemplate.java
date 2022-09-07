@@ -26,6 +26,7 @@ import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -66,7 +67,7 @@ public class TestMapTemplate
       Exception exc = null;
 
       // constructor and putall
-      MapTemplate map1 = templateClass.newInstance();
+      MapTemplate map1 = templateClass.getDeclaredConstructor().newInstance();
       map1.putAll(input);
       assertEquals(map1, input);
 
@@ -196,7 +197,7 @@ public class TestMapTemplate
       assertEquals(schema1, schema);
 
       // get(Object key), put(K key, V value, containsKey(Object key), containsValue(Object value), toString
-      MapTemplate map3 = templateClass.newInstance();
+      MapTemplate map3 = templateClass.getDeclaredConstructor().newInstance();
       for (Map.Entry<String, E> e : input.entrySet())
       {
         String key = e.getKey();
@@ -253,7 +254,7 @@ public class TestMapTemplate
       }
 
       // remove(Object key), containsKey(Object key), containsValue(Object value)
-      MapTemplate map4 = templateClass.newInstance();
+      MapTemplate map4 = templateClass.getDeclaredConstructor().newInstance();
       map4.putAll(input);
       int map4Size = map4.size();
       for (Map.Entry<String, E> e : input.entrySet())
@@ -280,7 +281,7 @@ public class TestMapTemplate
 
       // clone
       exc = null;
-      map4 = templateClass.newInstance();
+      map4 = templateClass.getDeclaredConstructor().newInstance();
       map4.putAll(input);
       try
       {
@@ -312,7 +313,7 @@ public class TestMapTemplate
       assert(exc == null);
 
       //copy
-      MapTemplate map4a = templateClass.newInstance();
+      MapTemplate map4a = templateClass.getDeclaredConstructor().newInstance();
       map4a.putAll(input);
       try
       {
@@ -360,7 +361,7 @@ public class TestMapTemplate
       assert(exc == null);
 
       // entrySet, keySet, values, clear
-      MapTemplate map5 = templateClass.newInstance();
+      MapTemplate map5 = templateClass.getDeclaredConstructor().newInstance();
       map5.putAll(input);
       assertEquals(map5.entrySet(), input.entrySet());
       assertCollectionEquals(map5.entrySet(), input.entrySet());
@@ -386,7 +387,7 @@ public class TestMapTemplate
       assertTrue(map5.isEmpty());
 
       // entrySet contains
-      MapTemplate map6 = templateClass.newInstance();
+      MapTemplate map6 = templateClass.getDeclaredConstructor().newInstance();
       Set<Map.Entry<String, E>> entrySet6 = map6.entrySet();
       for (Map.Entry<String, E> e : input.entrySet())
       {
@@ -533,8 +534,8 @@ public class TestMapTemplate
       assertTrue(exc instanceof UnsupportedOperationException);
 
       // entrySet equals, isEmpty
-      MapTemplate map7 = templateClass.newInstance();
-      MapTemplate map8 = templateClass.newInstance();
+      MapTemplate map7 = templateClass.getDeclaredConstructor().newInstance();
+      MapTemplate map8 = templateClass.getDeclaredConstructor().newInstance();
       map8.putAll(input);
       Set<Map.Entry<String, E>> entrySet7 = map7.entrySet();
       assertTrue(entrySet7.isEmpty());
@@ -573,7 +574,7 @@ public class TestMapTemplate
       assertFalse(map7.entrySet().equals(new Object()));
 
       // test Map.Entry.set()
-      MapTemplate map9 = templateClass.newInstance();
+      MapTemplate map9 = templateClass.getDeclaredConstructor().newInstance();
       map9.putAll(input);
       lastValue = null;
       for (Map.Entry<String, E> e : map9.entrySet())
@@ -601,11 +602,7 @@ public class TestMapTemplate
         lastValue = value;
       }
     }
-    catch (IllegalAccessException exc)
-    {
-      fail("Unexpected exception", exc);
-    }
-    catch (InstantiationException exc)
+    catch (IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException exc)
     {
       fail("Unexpected exception", exc);
     }
@@ -622,13 +619,9 @@ public class TestMapTemplate
     MapTemplate mapTemplateBad = null;
     try
     {
-      mapTemplateBad = templateClass.newInstance();
+      mapTemplateBad = templateClass.getDeclaredConstructor().newInstance();
     }
-    catch (IllegalAccessException exc)
-    {
-      fail("Unexpected exception", exc);
-    }
-    catch (InstantiationException exc)
+    catch (IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException exc)
     {
       fail("Unexpected exception", exc);
     }
@@ -757,7 +750,7 @@ public class TestMapTemplate
     try
     {
       // test insert non-native, converted to element type on set
-      MapTemplate map1 = templateClass.newInstance();
+      MapTemplate map1 = templateClass.getDeclaredConstructor().newInstance();
       map1.putAll((Map<String, E>) castFrom);
       for (String i : castFrom.keySet())
       {
@@ -800,11 +793,7 @@ public class TestMapTemplate
         lastHash = newHash;
       }
     }
-    catch (IllegalAccessException exc)
-    {
-      fail("Unexpected exception", exc);
-    }
-    catch (InstantiationException exc)
+    catch (IllegalAccessException | InstantiationException | InvocationTargetException | NoSuchMethodException exc)
     {
       fail("Unexpected exception", exc);
     }

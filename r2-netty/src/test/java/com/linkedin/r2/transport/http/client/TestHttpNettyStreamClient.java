@@ -49,6 +49,7 @@ import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamClient;
 import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamClient;
 import com.linkedin.r2.transport.http.common.HttpProtocolVersion;
 import com.linkedin.test.util.retry.SingleRetry;
+import com.linkedin.test.util.retry.ThreeRetries;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -1040,7 +1041,7 @@ public class TestHttpNettyStreamClient
    * @param isFullRequest Whether to buffer a full request before stream
    * @throws Exception
    */
-  @Test(dataProvider = "requestResponseParameters")
+  @Test(dataProvider = "requestResponseParameters", retryAnalyzer = ThreeRetries.class)
   public void testStreamRequests(
       AbstractNettyStreamClient client,
       String method,

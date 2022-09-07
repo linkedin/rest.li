@@ -1,0 +1,25 @@
+{
+  "type" : "record",
+  "name" : "ExtensionSchemaAnnotation",
+  "namespace" : "com.linkedin.restli.common",
+  "doc" : "Specifies the extension schema annotation configuration for defining the entity relationship among entities.",
+  "fields" : [ {
+    "name" : "using",
+    "type" : "string",
+    "doc" : "Specifies only for one to many relationship. It can use either GET_ALL(\"get_all\") or a FINDER(\"finder:<method name>\").",
+    "optional" : true
+  }, {
+    "name" : "params",
+    "type" : {
+      "type" : "map",
+      "values" : "string"
+    },
+    "doc" : "Specifies parameters if any of them are specified. It is also used for FINDER.",
+    "optional" : true
+  }, {
+    "name" : "versionSuffix",
+    "type" : "string",
+    "doc" : "Specifies versionSuffix in multi-version scenario. If is is not provided, will pick first version by default.",
+    "optional" : true
+  } ]
+}

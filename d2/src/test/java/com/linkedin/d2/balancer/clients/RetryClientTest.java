@@ -42,6 +42,7 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.test.util.ClockedExecutor;
 import com.linkedin.test.util.retry.SingleRetry;
+import com.linkedin.test.util.retry.ThreeRetries;
 import com.linkedin.util.clock.SettableClock;
 import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
@@ -136,7 +137,7 @@ public class RetryClientTest
     assertNotNull(restCallback.t);
   }
 
-  @Test
+  @Test(retryAnalyzer = ThreeRetries.class) // Known to be flaky in CI
   public void testIgnoreStreamRetry() throws Exception
   {
     SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/good"),

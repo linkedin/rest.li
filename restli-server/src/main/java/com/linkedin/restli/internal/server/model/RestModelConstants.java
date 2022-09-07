@@ -96,6 +96,7 @@ public interface RestModelConstants
       double[].class,
       Double[].class,
       Enum[].class,
+      ByteString[].class,
       DataTemplate[].class
   };
 

@@ -16,12 +16,15 @@
 package com.linkedin.d2.balancer;
 
 import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
+import com.linkedin.d2.balancer.clients.FailoutRedirectStrategy;
 import com.linkedin.d2.balancer.clients.RetryClient;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
+import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
@@ -105,7 +108,11 @@ public class D2ClientConfig
   String d2JmxManagerPrefix = "UnknownPrefix";
   boolean enableRelativeLoadBalancer = false;
   DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider = null;
+  CanaryDistributionProvider canaryDistributionProvider = null;
   public static final int DEFAULT_RETRY_LIMIT = 3;
+  boolean enableClusterFailout = false;
+  FailoutConfigProviderFactory failoutConfigProviderFactory;
+  FailoutRedirectStrategy failoutRedirectStrategy;
 
   public D2ClientConfig()
   {
@@ -161,7 +168,11 @@ public class D2ClientConfig
                  String d2JmxManagerPrefix,
                  int zookeeperReadWindowMs,
                  boolean enableRelativeLoadBalancer,
-                 DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider)
+                 DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
+                 CanaryDistributionProvider canaryDistributionProvider,
+                 boolean enableClusterFailout,
+                 FailoutConfigProviderFactory failoutConfigProviderFactory,
+                 FailoutRedirectStrategy failoutRedirectStrategy)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -214,5 +225,9 @@ public class D2ClientConfig
     this.zookeeperReadWindowMs = zookeeperReadWindowMs;
     this.enableRelativeLoadBalancer = enableRelativeLoadBalancer;
     this.deterministicSubsettingMetadataProvider = deterministicSubsettingMetadataProvider;
+    this.canaryDistributionProvider = canaryDistributionProvider;
+    this.enableClusterFailout = enableClusterFailout;
+    this.failoutConfigProviderFactory = failoutConfigProviderFactory;
+    this.failoutRedirectStrategy = failoutRedirectStrategy;
   }
 }

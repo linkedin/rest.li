@@ -255,7 +255,7 @@ public class TestClientBuilders
 
   @Test
   @SuppressWarnings("unchecked")
-  public void testActionRequestInputIsReadOnly()
+  public void testActionRequestInputIsReadOnlyByDefault()
   {
     FieldDef<TestRecord> pParam = new FieldDef<>("p",
         TestRecord.class,
@@ -308,6 +308,65 @@ public class TestClientBuilders
     inputParams = (DynamicRecordTemplate) request.getInputRecord();
     Assert.assertSame(inputParams.getValue(pParam).data(), testRecord1.data());
     Assert.assertTrue(inputParams.data().isReadOnly());
+    Assert.assertSame(request.getId(), key);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testActionRequestInputNotReadOnlyWhenMutableActionParamsEnabled()
+  {
+    FieldDef<TestRecord> pParam = new FieldDef<>("p",
+        TestRecord.class,
+        DataTemplateUtil.getSchema(TestRecord.class));
+    Map<String, DynamicRecordMetadata> requestMetadataMap = new HashMap<>();
+
+    DynamicRecordMetadata requestMetadata =
+        new DynamicRecordMetadata("action", Collections.<FieldDef<?>>singleton(pParam));
+    requestMetadataMap.put("action", requestMetadata);
+
+    DynamicRecordMetadata responseMetadata =
+        new DynamicRecordMetadata("action", Collections.<FieldDef<?>>emptyList());
+    Map<String, DynamicRecordMetadata> responseMetadataMap = new HashMap<>();
+    responseMetadataMap.put("action", responseMetadata);
+
+    ResourceSpec resourceSpec = new ResourceSpecImpl(Collections.<ResourceMethod>emptySet(),
+        requestMetadataMap,
+        responseMetadataMap,
+        ComplexResourceKey.class,
+        TestRecord.class,
+        TestRecord.class,
+        TestRecord.class,
+        Collections.<String, CompoundKey.TypeInfo> emptyMap());
+
+    ActionRequestBuilder<ComplexResourceKey<TestRecord, TestRecord>, TestRecord> builder =
+        new ActionRequestBuilder<>(
+            TEST_URI,
+            TestRecord.class,
+            resourceSpec,
+            RestliRequestOptions.DEFAULT_OPTIONS);
+    builder.enableMutableActionParams(true);
+    TestRecord testRecord1 = new TestRecord();
+    TestRecord testRecord2 = new TestRecord();
+    ComplexResourceKey<TestRecord, TestRecord> key =
+        new ComplexResourceKey<>(testRecord1, testRecord2);
+
+    ActionRequest<TestRecord> request = builder.name("action").setParam(pParam, testRecord1).id(key).build();
+
+    DynamicRecordTemplate inputParams = (DynamicRecordTemplate) request.getInputRecord();
+    Assert.assertSame(inputParams.getValue(pParam).data(), testRecord1.data());
+    Assert.assertFalse(inputParams.data().isReadOnly());
+    Assert.assertFalse(inputParams.getValue(pParam).data().isMadeReadOnly());
+    Assert.assertNotSame(request.getId(), key);
+    Assert.assertTrue(((ComplexResourceKey<TestRecord, TestRecord>) request.getId()).isReadOnly());
+
+    testRecord1.data().makeReadOnly();
+    testRecord2.data().makeReadOnly();
+
+    request = builder.build();
+
+    inputParams = (DynamicRecordTemplate) request.getInputRecord();
+    Assert.assertSame(inputParams.getValue(pParam).data(), testRecord1.data());
+    Assert.assertFalse(inputParams.data().isReadOnly());
     Assert.assertSame(request.getId(), key);
   }
 

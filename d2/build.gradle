@@ -19,14 +19,19 @@ dependencies {
   compile externalDependency.jdkTools
   compile externalDependency.zero_allocation_hashing
   compile externalDependency.xchart
+  compileOnly externalDependency.findbugs
+  testCompile externalDependency.metricsCore
+  testCompile externalDependency.xerialSnappy
   testCompile externalDependency.testng
   testCompile externalDependency.junit
   testCompile externalDependency.commonsIo
   testCompile externalDependency.easymock
   testCompile externalDependency.mockito
+  testCompile externalDependency.guava
   testCompile project(':r2-jetty')
   testCompile project(':test-util')
   testCompile project(':d2-test-api')
+  testCompileOnly externalDependency.findbugs
 }
 
 task packup(dependsOn: configurations.default.allArtifacts, type: Copy) {

@@ -31,6 +31,7 @@ import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.WarmUpService;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfig;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
@@ -134,6 +135,12 @@ public class ZKFSLoadBalancer
   public void unregisterClusterListener(LoadBalancerClusterListener clusterListener)
   {
     _currentLoadBalancer.unregisterClusterListener(clusterListener);
+  }
+
+  @Override
+  public FailoutConfig getFailoutConfig(String clusterName)
+  {
+    return _currentLoadBalancer.getFailoutConfig(clusterName);
   }
 
   public interface TogglingLoadBalancerFactory

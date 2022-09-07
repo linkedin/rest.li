@@ -6,18 +6,24 @@
     "fields" : [ ]
   } ],
   "schema" : {
-    "schema" : "com.linkedin.restli.tools.twitter.Status",
     "name" : "statusesParams",
-    "doc" : "CollectionResource containing all statuses\n\ngenerated from: com.linkedin.restli.tools.twitter.StatusWithParamsCollectionResource",
     "path" : "/statusesParams",
+    "schema" : "com.linkedin.restli.tools.twitter.Status",
+    "doc" : "CollectionResource containing all statuses\n\ngenerated from: com.linkedin.restli.tools.twitter.StatusWithParamsCollectionResource",
     "collection" : {
+      "identifier" : {
+        "name" : "statusID",
+        "type" : "long"
+      },
+      "supports" : [ "batch_get", "create", "delete", "get", "get_all", "partial_update" ],
       "methods" : [ {
-        "doc" : "Creates a new Status",
         "method" : "create",
+        "javaMethodType" : "SYNC",
+        "doc" : "Creates a new Status",
         "parameters" : [ {
-          "default" : "en_US",
           "name" : "locale",
           "type" : "string",
+          "default" : "en_US",
           "doc" : "query parameter has same name as method parameter"
         }, {
           "name" : "auth",
@@ -25,12 +31,14 @@
           "doc" : "query parameter has different name from method parameter"
         } ]
       }, {
-        "doc" : "Gets a single status resource",
         "method" : "get",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
+        "doc" : "Gets a single status resource",
         "parameters" : [ {
-          "default" : "en_US",
           "name" : "locale",
           "type" : "string",
+          "default" : "en_US",
           "doc" : "query parameter has same name as method parameter"
         }, {
           "name" : "auth",
@@ -38,12 +46,13 @@
           "doc" : "query parameter has different name from method parameter"
         } ]
       }, {
-        "doc" : "Updates a single status resource",
         "method" : "partial_update",
+        "javaMethodType" : "SYNC",
+        "doc" : "Updates a single status resource",
         "parameters" : [ {
-          "default" : "en_US",
           "name" : "locale",
           "type" : "string",
+          "default" : "en_US",
           "doc" : "query parameter has same name as method parameter"
         }, {
           "name" : "auth",
@@ -51,12 +60,13 @@
           "doc" : "query parameter has different name from method parameter"
         } ]
       }, {
-        "doc" : "Deletes a status resource",
         "method" : "delete",
+        "javaMethodType" : "SYNC",
+        "doc" : "Deletes a status resource",
         "parameters" : [ {
-          "default" : "en_US",
           "name" : "locale",
           "type" : "string",
+          "default" : "en_US",
           "doc" : "query parameter has same name as method parameter"
         }, {
           "name" : "auth",
@@ -64,12 +74,14 @@
           "doc" : "query parameter has different name from method parameter"
         } ]
       }, {
-        "doc" : "Gets a batch of statuses",
         "method" : "batch_get",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
+        "doc" : "Gets a batch of statuses",
         "parameters" : [ {
-          "default" : "en_US",
           "name" : "locale",
           "type" : "string",
+          "default" : "en_US",
           "doc" : "query parameter has same name as method parameter"
         }, {
           "name" : "auth",
@@ -78,10 +90,12 @@
         } ]
       }, {
         "method" : "get_all",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
-          "default" : "en_US",
           "name" : "locale",
           "type" : "string",
+          "default" : "en_US",
           "doc" : "query parameter has same name as method parameter"
         }, {
           "name" : "auth",
@@ -91,6 +105,8 @@
       } ],
       "finders" : [ {
         "name" : "criteria",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "locale",
           "type" : "string",
@@ -104,6 +120,8 @@
       } ],
       "actions" : [ {
         "name" : "forward",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "to",
           "type" : "long",
@@ -116,11 +134,6 @@
       } ],
       "entity" : {
         "path" : "/statusesParams/{statusID}"
-      },
-      "supports" : [ "batch_get", "create", "delete", "get", "get_all", "partial_update" ],
-      "identifier" : {
-        "name" : "statusID",
-        "type" : "long"
       }
     }
   }

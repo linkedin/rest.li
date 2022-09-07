@@ -546,23 +546,36 @@ public class CompatibilityChecker
 
     // using list to preserve symbol order
     List<String> newerOnlySymbols = new CheckerArrayList<>(newer.getSymbols());
-    newerOnlySymbols.removeAll(older.getSymbols());
-
     List<String> olderOnlySymbols = new CheckerArrayList<>(older.getSymbols());
+
+    newerOnlySymbols.removeAll(older.getSymbols());
     olderOnlySymbols.removeAll(newer.getSymbols());
 
-    if (newerOnlySymbols.isEmpty() == false)
+    if (!newerOnlySymbols.isEmpty())
     {
       appendMessage(CompatibilityMessage.Impact.BREAKS_OLD_READER,
                     "new enum added symbols %s",
                     newerOnlySymbols);
     }
 
-    if (olderOnlySymbols.isEmpty() == false)
+    if (!olderOnlySymbols.isEmpty())
     {
       appendMessage(CompatibilityMessage.Impact.BREAKS_NEW_READER,
                     "new enum removed symbols %s",
                     olderOnlySymbols);
+    }
+
+    if (newerOnlySymbols.isEmpty() && olderOnlySymbols.isEmpty())
+    {
+      for (int i = 0; i < newer.getSymbols().size(); i++)
+      {
+        if (!newer.getSymbols().get(i).equals(older.getSymbols().get(i)))
+        {
+          appendMessage(CompatibilityMessage.Impact.ENUM_SYMBOLS_ORDER_CHANGE, "enum symbols order changed at symbol %s",
+              newer.getSymbols().get(i));
+          break;
+        }
+      }
     }
 
     _path.removeLast();

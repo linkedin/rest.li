@@ -51,6 +51,8 @@
           "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
         } ],
         "method" : "get_all",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "doc" : "Ensures that template CRUD methods can specify a method-level service error.",
         "pagingSupported" : true
       } ],
@@ -63,6 +65,8 @@
           "parameters" : [ "param" ]
         } ],
         "name" : "ctrlF",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "doc" : "Ensures that a method-level service error can specify a parameter.",
         "parameters" : [ {
           "name" : "param",
@@ -72,6 +76,8 @@
       "actions" : [ {
         "success" : [ 200, 201, 204 ],
         "name" : "hasSuccessStatuses",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "doc" : "Ensures that multiple success statuses can be specified.",
         "returns" : "string"
       } ],

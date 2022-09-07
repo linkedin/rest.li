@@ -32,12 +32,16 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.WarmUpService;
 import com.linkedin.d2.balancer.clients.RewriteLoadBalancerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfig;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProvider;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.subsetting.SubsettingState;
+import com.linkedin.d2.balancer.util.CustomAffinityRoutingURIProvider;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.d2.balancer.util.HostOverrideList;
@@ -48,6 +52,7 @@ import com.linkedin.d2.balancer.util.MapKeyResult;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.hashing.Ring;
+import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
@@ -76,6 +81,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,23 +104,32 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   private final TimeUnit          _unit;
   private final ScheduledExecutorService _executor;
   private final Random            _random = new Random();
+  private final FailoutConfigProvider _failoutConfigProvider;
 
   public SimpleLoadBalancer(LoadBalancerState state, ScheduledExecutorService executorService)
   {
-    this(state, new Stats(1000), new Stats(1000), 0, TimeUnit.SECONDS, executorService);
+    this(state, new Stats(1000), new Stats(1000), 0, TimeUnit.SECONDS, executorService, null);
   }
 
   public SimpleLoadBalancer(LoadBalancerState state, long timeout, TimeUnit unit, ScheduledExecutorService executor)
   {
-    this(state, new Stats(1000), new Stats(1000), timeout, unit, executor);
+    this(state, new Stats(1000), new Stats(1000), timeout, unit, executor, null);
   }
+
+  public SimpleLoadBalancer(LoadBalancerState state, long timeout, TimeUnit unit, ScheduledExecutorService executor,
+                            FailoutConfigProviderFactory failoutConfigProviderFactory)
+  {
+    this(state, new Stats(1000), new Stats(1000), timeout, unit, executor, failoutConfigProviderFactory);
+  }
+
 
   public SimpleLoadBalancer(LoadBalancerState state,
                             Stats serviceAvailableStats,
                             Stats serviceUnavailableStats,
                             long timeout,
                             TimeUnit unit,
-                            ScheduledExecutorService executor)
+                            ScheduledExecutorService executor,
+                            FailoutConfigProviderFactory failoutConfigProviderFactory)
   {
     _state = state;
     _serviceUnavailableStats = serviceUnavailableStats;
@@ -122,6 +137,15 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     _timeout = timeout;
     _unit = unit;
     _executor = executor;
+    if (failoutConfigProviderFactory != null)
+    {
+      _failoutConfigProvider = failoutConfigProviderFactory.create(state);
+      _log.debug("Created failoutConfigProvider.");
+    }
+    else
+    {
+      _failoutConfigProvider = null;
+    }
   }
 
   public Stats getServiceUnavailableStats()
@@ -137,13 +161,38 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   @Override
   public void start(Callback<None> callback)
   {
-    _state.start(callback);
+    _state.start(new Callback<None>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        callback.onError(e);
+      }
+
+      @Override
+      public void onSuccess(None result)
+      {
+        if (_failoutConfigProvider != null)
+        {
+          _failoutConfigProvider.start();
+          _log.info("Started failoutConfigProvider.");
+        }
+        callback.onSuccess(result);
+      }
+    });
+
   }
 
   @Override
   public void shutdown(PropertyEventShutdownCallback shutdown)
   {
-    _state.shutdown(shutdown);
+    _state.shutdown(() -> {
+      if (_failoutConfigProvider != null)
+      {
+        _failoutConfigProvider.shutdown();
+      }
+      shutdown.done();
+    });
   }
 
   /**
@@ -196,18 +245,41 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
           UriProperties uris = uriItem.getProperty();
 
           List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
-            _state.getStrategiesForService(serviceName,
-              service.getPrioritizedSchemes());
+              _state.getStrategiesForService(serviceName, service.getPrioritizedSchemes());
 
-          TrackerClient trackerClient = chooseTrackerClient(request, requestContext, serviceName, clusterName, cluster,
-            uriItem, uris, orderedStrategies, service);
+          TrackerClient trackerClient = null;
+
+          // Use client provided by CustomURIAffinityRoutingProvider when it's enabled
+          CustomAffinityRoutingURIProvider customAffinityRoutingURIProvider =
+              (CustomAffinityRoutingURIProvider) requestContext.getLocalAttr(CustomAffinityRoutingURIProvider.CUSTOM_AFFINITY_ROUTING_URI_PROVIDER);
+
+          boolean enableCustomAffinityRouting = isCustomAffinityRoutingEnabled(requestContext, customAffinityRoutingURIProvider);
+          if (enableCustomAffinityRouting)
+          {
+            trackerClient = customAffinityRoutingURIProvider.getTargetHostURI(clusterName)
+                  .map(targetHost -> _state.getClient(serviceName, targetHost))
+                  .orElse(null);
+          }
+
+          if (trackerClient == null)
+          {
+            trackerClient =
+                chooseTrackerClient(request, requestContext, serviceName, clusterName, cluster, uriItem, uris,
+                    orderedStrategies, service);
+
+            // set host URI for the cluster. with that next time, for the same inbound request, if downstream request is
+            // made to same cluster and custom affinity routing is enabled, then it will go to same box.
+            if (enableCustomAffinityRouting)
+            {
+              customAffinityRoutingURIProvider.setTargetHostURI(clusterName, trackerClient.getUri());
+            }
+          }
 
           String clusterAndServiceUriString = trackerClient.getUri() + service.getPath();
           _serviceAvailableStats.inc();
           clientCallback.onSuccess(new RewriteLoadBalancerClient(serviceName,
             URI.create(clusterAndServiceUriString),
             trackerClient));
-
         }
         else
         {
@@ -240,6 +312,11 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }, clientCallback));
   }
 
+  private boolean isCustomAffinityRoutingEnabled(RequestContext requestContext,
+      @Nullable CustomAffinityRoutingURIProvider affinityRoutingURIProvider) {
+    return affinityRoutingURIProvider != null && affinityRoutingURIProvider.isEnabled()
+        && (KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext) == null);
+  }
 
   @Override
   public <K> MapKeyResult<Ring<URI>, K> getRings(URI serviceUri, Iterable<K> keys) throws ServiceUnavailableException
@@ -731,7 +808,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
     SubsettingState.SubsetItem subsetItem = serviceProperties.isEnableClusterSubsetting() ?
         _state.getClientsSubset(serviceName, serviceProperties.getMinClusterSubsetSize(),
-            partitionId, weightedUris, version) : new SubsettingState.SubsetItem(false, weightedUris, Collections.emptySet());
+            partitionId, weightedUris, version) :
+        new SubsettingState.SubsetItem(false, false, weightedUris, Collections.emptySet());
 
     Map<URI, TrackerClient> clientsToBalance = getPotentialClients(serviceName, serviceProperties,
         clusterProperties, possibleUris, partitionId, subsetItem);
@@ -776,7 +854,11 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
               {
                 possibleTrackerClient.setDoNotSlowStart(true);
               }
-              possibleTrackerClient.setSubsetWeight(partitionId, weightedSubset.get(possibleUri));
+              // Only update subset weight if the subset item is a weighted subset
+              if (subsetItem.isWeightedSubset())
+              {
+                possibleTrackerClient.setSubsetWeight(partitionId, weightedSubset.get(possibleUri));
+              }
               clientsToLoadBalance.put(possibleUri, possibleTrackerClient);
             }
           }
@@ -820,8 +902,10 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       }
       catch (PartitionAccessException e)
       {
-        die(serviceName, "PEGA_1013. Error in finding the partition for URI: " + requestUri + ", " +
-          "in cluster: " + clusterName + ", " + e.getMessage());
+        debug(_log,
+            "PEGA_1013. Mapped URI to default partition as there was error in finding the partition for URI: "
+                + requestUri + ", in cluster: " + clusterName + ", " + e.getMessage());
+        partitionId = DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
       }
     }
     else
@@ -904,6 +988,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
           + " (choosable: " + clientsToLoadBalance.size() + " hosts, total in cluster: " + uris.Uris().size() + ")");
       }
     }
+
     return trackerClient;
   }
 
@@ -981,6 +1066,12 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
               clusterProperties.accessDarkClusters() : new DarkClusterConfigMap();
       wrappedCallback.onSuccess(darkClusterConfigMap);
     });
+  }
+
+  @Override
+  public FailoutConfig getFailoutConfig(String clusterName)
+  {
+    return _failoutConfigProvider != null ? _failoutConfigProvider.getFailoutConfig(clusterName) : null;
   }
 
   @Override

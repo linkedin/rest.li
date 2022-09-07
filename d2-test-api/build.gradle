@@ -1,4 +1,7 @@
 dependencies {
   compile project(':d2')
   compile externalDependency.testng
+  compile externalDependency.metricsCore
+  compile externalDependency.xerialSnappy
+  compileOnly externalDependency.findbugs
 }

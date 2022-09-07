@@ -19,6 +19,7 @@ package com.linkedin.data.template;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.collections.CheckedUtil;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaUtil;
@@ -130,8 +131,8 @@ public class DynamicRecordTemplate extends RecordTemplate
     if (!fieldDefInRecord(fieldDef))
     {
       throw new IllegalArgumentException("Field " +
-                                             fieldDef.getName() +
-                                             " is not a field belonging to the schema of this DynamicRecordTemplate.");
+          fieldDef.getName() +
+          " is not a field belonging to the schema of this DynamicRecordTemplate.");
     }
 
     if (fieldDef.getType().isArray())
@@ -140,15 +141,15 @@ public class DynamicRecordTemplate extends RecordTemplate
     }
     else if (DataTemplate.class.isAssignableFrom(fieldDef.getType()))
     {
-      putWrapped(field, (Class<DataTemplate<?>>) fieldDef.getType(), (DataTemplate<?>)value);
+      unsafePutWrapped(field, (Class<DataTemplate<?>>) fieldDef.getType(), (DataTemplate<?>)value, SetMode.DISALLOW_NULL);
     }
     else
     {
-      putDirect(field,
-                (Class<Object>) fieldDef.getType(),
-                fieldDef.getDataClass(),
-                value,
-                fieldDef.getField().getOptional()? SetMode.IGNORE_NULL : SetMode.DISALLOW_NULL);
+      unsafePutDirect(field,
+          (Class<Object>) fieldDef.getType(),
+          fieldDef.getDataClass(),
+          value,
+          fieldDef.getField().getOptional()? SetMode.IGNORE_NULL : SetMode.DISALLOW_NULL);
     }
   }
 
@@ -211,7 +212,6 @@ public class DynamicRecordTemplate extends RecordTemplate
   @SuppressWarnings({"unchecked"})
   private <T> void putArray(RecordDataSchema.Field field, FieldDef<T> fieldDef, T value)
   {
-    DataList data = new DataList();
     Class<?> itemType = null;
     ArrayDataSchema arrayDataSchema = null;
     if (fieldDef.getDataSchema() instanceof ArrayDataSchema)
@@ -233,7 +233,7 @@ public class DynamicRecordTemplate extends RecordTemplate
     {
       throw new IllegalArgumentException(
           "Field " + fieldDef.getName() +
-            " does not have an array schema; although the data is an array.");
+              " does not have an array schema; although the data is an array.");
     }
 
     boolean isDataTemplate = DataTemplate.class.isAssignableFrom(itemType);
@@ -248,6 +248,8 @@ public class DynamicRecordTemplate extends RecordTemplate
       items = Arrays.asList((Object[]) value);
     }
 
+    DataList data = new DataList(items.size());
+
     for (Object item: items)
     {
       if (isDataTemplate)
@@ -260,7 +262,7 @@ public class DynamicRecordTemplate extends RecordTemplate
         }
         else
         {
-          itemData = ((DataTemplate) item).data();
+          itemData = ((DataTemplate<?>) item).data();
         }
 
         data.add(itemData);
@@ -269,11 +271,11 @@ public class DynamicRecordTemplate extends RecordTemplate
       {
         data.add(
             DataTemplateUtil.coerceInput(item,
-                                         (Class<Object>)item.getClass(),
-                                         itemType.isEnum() ? String.class : itemType));
+                (Class<Object>)item.getClass(),
+                itemType.isEnum() ? String.class : itemType));
       }
     }
 
-    putDirect(field, DataList.class, data, SetMode.DISALLOW_NULL);
+    CheckedUtil.putWithoutChecking(_map, field.getName(), data);
   }
 }

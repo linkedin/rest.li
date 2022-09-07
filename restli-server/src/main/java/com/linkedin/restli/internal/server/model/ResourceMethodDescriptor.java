@@ -23,19 +23,26 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.FieldDef;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TemplateRuntimeException;
+import com.linkedin.parseq.Task;
+import com.linkedin.parseq.promise.Promise;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.restspec.JavaMethodType;
 import com.linkedin.restli.restspec.MaxBatchSizeSchema;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.annotations.ServiceErrors;
 import com.linkedin.restli.server.errors.ServiceError;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,6 +81,7 @@ public class ResourceMethodDescriptor
   private final RecordDataSchema                        _requestDataSchema;
   private final InterfaceType                           _interfaceType;
   private final DataMap                                 _customAnnotations;
+  private final String                                  _linkedBatchFinderName;
   // Method-level service error definitions
   private List<ServiceError>                            _serviceErrors;
   private List<HttpStatus>                              _successStatuses;
@@ -110,7 +118,46 @@ public class ResourceMethodDescriptor
                                         null,
                                         metadataType,
                                         interfaceType,
-                                        customAnnotations);
+                                        customAnnotations,
+                                        null);
+  }
+
+  /**
+   * Finder resource method descriptor factory.
+   *
+   * @param method resource {@link Method}
+   * @param parameters rest.li method {@link Parameter}s
+   * @param finderName finder name
+   * @param metadataType finder metadata type
+   * @param interfaceType method {@link InterfaceType}
+   * @param customAnnotations All the custom annotations associated with this method encoded as a {@link DataMap}
+   * @param linkedBatchFinderName The optional batch finder linked to this finder
+   * @return finder {@link ResourceMethodDescriptor}
+   */
+  public static ResourceMethodDescriptor createForFinder(final Method method,
+      final List<Parameter<?>> parameters,
+      final String finderName,
+      final Class<? extends RecordTemplate> metadataType,
+      final InterfaceType interfaceType,
+      final DataMap customAnnotations,
+      final String linkedBatchFinderName)
+  {
+    return new ResourceMethodDescriptor(ResourceMethod.FINDER,
+                                        method,
+                                        parameters,
+                                        finderName,
+                                        null,
+                                        BATCH_FINDER_NULL_CRITERIA_INDEX,
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                        false,
+                                        null,
+                                        metadataType,
+                                        interfaceType,
+                                        customAnnotations,
+                                        linkedBatchFinderName);
   }
 
   /**
@@ -146,7 +193,8 @@ public class ResourceMethodDescriptor
                                         null,
                                         metadataType,
                                         interfaceType,
-                                        customAnnotations);
+                                        customAnnotations,
+                     null);
   }
 
   /**
@@ -187,7 +235,8 @@ public class ResourceMethodDescriptor
                                         recordDataSchema,
                                         null,
                                         interfaceType,
-                                        customAnnotations);
+                                        customAnnotations,
+                                        null);
   }
 
   /**
@@ -230,7 +279,8 @@ public class ResourceMethodDescriptor
                                         recordDataSchema,
                                         null,
                                         interfaceType,
-                                        customAnnotations);
+                                        customAnnotations,
+                                        null);
   }
 
   /**
@@ -285,7 +335,8 @@ public class ResourceMethodDescriptor
                                         null,
                                         collectionCustomMetadataType,
                                         interfaceType,
-                                        customAnnotations);
+                                        customAnnotations,
+                                        null);
   }
 
   /**
@@ -305,7 +356,8 @@ public class ResourceMethodDescriptor
                                    final RecordDataSchema requestDataSchema,
                                    final Class<? extends RecordTemplate> collectionCustomMetadataType,
                                    final InterfaceType interfaceType,
-                                   final DataMap customAnnotations)
+                                   final DataMap customAnnotations,
+                                   final String linkedBatchFinderName)
   {
     super();
     _type = type;
@@ -323,6 +375,7 @@ public class ResourceMethodDescriptor
     _interfaceType = interfaceType;
     _customAnnotations = customAnnotations;
     _batchFinderCriteriaIndex = batchFinderCriteriaIndex;
+    _linkedBatchFinderName = linkedBatchFinderName;
   }
 
   /**
@@ -382,6 +435,64 @@ public class ResourceMethodDescriptor
     }
 
     return _type.toString();
+  }
+
+  /**
+   * @return The type for the result computed by the method synchronously or asynchronously after removing any
+   * async wrappers like Task/Promise/Callback.
+   */
+  public Class<?> getMethodResultType() {
+    JavaMethodType methodType = getJavaMethodType();
+
+    switch (methodType) {
+      case ASYNC:
+        // Find the index of the callback param.
+        int callBackParamIndex = IntStream.range(0, _parameters.size())
+            .filter(i -> _parameters.get(i).getParamType() == Parameter.ParamType.CALLBACK)
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("No callback param found for async method"));
+        // The actual param is wrapped inside the Callback as a generic param, so extract the embedded generic type.
+        return getFirstActualType((ParameterizedType) _method.getGenericParameterTypes()[callBackParamIndex]);
+      case TASK:
+      case PROMISE:
+        // Task and Promise return types wrap the actual type inside a task or promise, so extract the embedded
+        // generic type.
+        return getFirstActualType((ParameterizedType) _method.getGenericReturnType());
+      default:
+        return _method.getReturnType();
+    }
+  }
+
+  /**
+   * @return The first actual type from a parameterized type as a class.
+   */
+  private Class<?> getFirstActualType(ParameterizedType parameterizedType) {
+    Type unwrappedType = parameterizedType.getActualTypeArguments()[0];
+    // Now there are 2 cases. The generic type may represent a parameterized type itself, in which case we need
+    // to extract its raw type because we don't care about its generic type. Else we can just cast it to a class
+    // and return it.
+    if (unwrappedType instanceof ParameterizedType) {
+      return (Class<?>) ((ParameterizedType) unwrappedType).getRawType();
+    }
+    return (Class<?>) unwrappedType;
+  }
+
+  /**
+   * @return Resource Java method type.
+   */
+  public JavaMethodType getJavaMethodType()
+  {
+    switch (_interfaceType)
+    {
+      case TASK:
+        return JavaMethodType.TASK;
+      case CALLBACK:
+        return JavaMethodType.ASYNC;
+      case PROMISE:
+        return JavaMethodType.PROMISE;
+      default:
+        return JavaMethodType.SYNC;
+    }
   }
 
   /**
@@ -449,6 +560,13 @@ public class ResourceMethodDescriptor
   public String getBatchFinderName()
   {
     return _batchFinderName;
+  }
+
+  /**
+   * @return the name of the batch finder method linked with a finder method
+   */
+  public String getLinkedBatchFinderName() {
+    return _linkedBatchFinderName;
   }
 
   /**

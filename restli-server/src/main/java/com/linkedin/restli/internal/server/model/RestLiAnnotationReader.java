@@ -118,6 +118,7 @@ import com.linkedin.restli.server.resources.unstructuredData.SingleUnstructuredD
 import com.linkedin.util.CustomTypeUtil;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
@@ -125,6 +126,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -313,19 +315,11 @@ public final class RestLiAnnotationReader
     KeyCoercer<?, ?> keyCoercer;
     try
     {
-      keyCoercer = altKeyAnnotation.keyCoercer().newInstance();
-    }
-    catch (InstantiationException e)
-    {
-      throw new ResourceConfigException(String.format("KeyCoercer for alternative key '%s' on resource %s cannot be instantiated, %s",
-                                                      keyName, resourceName, e.getMessage()),
-                                        e);
-    }
-    catch (IllegalAccessException e)
-    {
-      throw new ResourceConfigException(String.format("KeyCoercer for alternative key '%s' on resource %s cannot be instantiated, %s",
-                                                      keyName, resourceName, e.getMessage()),
-                                        e);
+      keyCoercer = altKeyAnnotation.keyCoercer().getDeclaredConstructor().newInstance();
+    } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+      throw new ResourceConfigException(
+          String.format("KeyCoercer for alternative key '%s' on resource %s cannot be instantiated, %s", keyName,
+              resourceName, e.getMessage()), e);
     }
 
     try
@@ -1747,14 +1741,13 @@ public final class RestLiAnnotationReader
   }
 
   private static TyperefDataSchema getSchemaFromTyperefInfo(Class<? extends TyperefInfo> typerefInfoClass)
-          throws IllegalAccessException, InstantiationException
-  {
+      throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
     if (typerefInfoClass == null)
     {
       return null;
     }
 
-    TyperefInfo typerefInfo = typerefInfoClass.newInstance();
+    TyperefInfo typerefInfo = typerefInfoClass.getDeclaredConstructor().newInstance();
     return typerefInfo.getSchema();
 
   }
@@ -1964,26 +1957,50 @@ public final class RestLiAnnotationReader
     return false;
   }
 
-  private static void addResourceMethods(final Class<?> resourceClass,
-                                                   final ResourceModel model)
+  private static void addResourceMethods(final Class<?> resourceClass, final ResourceModel model)
   {
-    // this ignores methods declared in superclasses (e.g. template methods)
-    for (Method method : resourceClass.getDeclaredMethods())
-    {
-      // ignore synthetic, type-erased versions of methods
-      if (method.isSynthetic())
-      {
-        continue;
-      }
+    // this ignores methods declared in superclasses (e.g. template methods) and synthetic type-erased methods.
+    // We sort methods such that batch finders are always processed before finders. This ensures that any validation
+    // of linked batch finder methods from finders works as expected. We don't care about the order in which other
+    // methods are processed.
+    List<Method> methods = Arrays.stream(resourceClass.getDeclaredMethods())
+        .filter(method -> !method.isSynthetic())
+        .sorted(Comparator.comparing(RestLiAnnotationReader::getMethodIndex))
+        .collect(Collectors.toList());
 
+    for (Method method : methods)
+    {
       addActionResourceMethod(model, method);
-      addFinderResourceMethod(model, method);
       addBatchFinderResourceMethod(model, method);
+      addFinderResourceMethod(model, method);
       addTemplateResourceMethod(resourceClass, model, method);
       addCrudResourceMethod(resourceClass, model, method);
     }
 
     validateResourceModel(model);
+  }
+
+  /**
+   * Return the index of a method.
+   *
+   * <p>This is used when sorting methods before validating them in {@link #addResourceMethods(Class, ResourceModel)}.
+   * The sorting is essential because we want batch finders to be always processed before finders, to ensure that
+   * any validation of linked batch finder methods from finders works as expected. We don't care about the order in
+   * which other methods are processed. </p>
+   */
+  static int getMethodIndex(Method method)
+  {
+    if (method.getAnnotation(BatchFinder.class) != null)
+    {
+      return 1;
+    }
+
+    if (method.getAnnotation(Finder.class) != null)
+    {
+      return 2;
+    }
+
+    return 3;
   }
 
   private static void validateResourceModel(final ResourceModel model)
@@ -2119,6 +2136,8 @@ public final class RestLiAnnotationReader
             method.getName()));
       }
 
+      String linkedBatchFinderName =
+          RestAnnotations.DEFAULT.equals(finderAnno.linkedBatchFinderName()) ? null : finderAnno.linkedBatchFinderName();
       List<Parameter<?>> queryParameters = getParameters(model, method, ResourceMethod.FINDER);
 
       Class<? extends RecordTemplate> metadataType = getCustomCollectionMetadata(method, DEFAULT_METADATA_PARAMETER_INDEX);
@@ -2131,9 +2150,10 @@ public final class RestLiAnnotationReader
                                                                                                  queryType,
                                                                                                  metadataType,
                                                                                                  getInterfaceType(method),
-                                                                                                 annotationsMap);
+                                                                                                 annotationsMap,
+                                                                                                 linkedBatchFinderName);
 
-      validateFinderMethod(finderMethodDescriptor, model);
+      validateFinderMethod(finderMethodDescriptor, model, linkedBatchFinderName);
       addServiceErrors(finderMethodDescriptor, method);
       addSuccessStatuses(finderMethodDescriptor, method);
 
@@ -2166,7 +2186,7 @@ public final class RestLiAnnotationReader
       DataMap annotationsMap = ResourceModelAnnotation.getAnnotationsMap(method.getAnnotations());
       addDeprecatedAnnotation(annotationsMap, method);
 
-      Integer criteriaIndex = getCriteriaParametersIndex(finderAnno,queryParameters);
+      Integer criteriaIndex = getCriteriaParametersIndex(finderAnno, queryParameters);
       ResourceMethodDescriptor batchFinderMethodDescriptor = ResourceMethodDescriptor.createForBatchFinder(method,
                                                                                                           queryParameters,
                                                                                                           queryType,
@@ -2603,7 +2623,6 @@ public final class RestLiAnnotationReader
     if (!RecordTemplate.class.isAssignableFrom(metadataType) ||
         !RecordTemplate.class.isAssignableFrom(criteriaType))
     {
-      String collectionClassName = returnType.getSimpleName();
       throw new ResourceConfigException("@BatchFinder method '" + method.getName()
           + "' on class '" + resourceModel.getResourceClass().getName()
           + "' has an invalid return type. The criteria and the metadata parameterized types "
@@ -2623,7 +2642,8 @@ public final class RestLiAnnotationReader
   }
 
   private static void validateFinderMethod(final ResourceMethodDescriptor finderMethodDescriptor,
-                                           final ResourceModel resourceModel)
+                                           final ResourceModel resourceModel,
+                                           final String linkedBatchFinderName)
   {
     Method method = finderMethodDescriptor.getMethod();
     Class<?> valueClass = resourceModel.getValueClass();
@@ -2702,7 +2722,122 @@ public final class RestLiAnnotationReader
           + resourceModel.getResourceClass().getName() + '\'');
     }
 
+    // Validate the linked batch finder if any for structural conformance.
+    if (linkedBatchFinderName != null)
+    {
+      validateLinkedBatchFinder(finderMethodDescriptor, resourceModel, linkedBatchFinderName);
+    }
+
     // query parameters are checked in getQueryParameters method
+  }
+
+  /**
+   * Validate that the linked batch finder method from the given finder conforms to the necessary
+   * structural requirements to ensure consistent batching and pagination. Specifically:
+   *
+   * <ul>
+   *   <li>A batch finder method with the linked batch finder name must exist on the same resource.</li>
+   *   <li>If the finder has a metadata type then the linked batch finder must also have the same metadata type.</li>
+   *   <li>All the query and assoc key parameters in the finder must have fields with the same name, type and
+   *   optionality in the criteria object. The criteria object cannot contain any other fields.</li>
+   *   <li>If the finder supports paging, then the linked batch finder must also support paging.</li>
+   * </ul>
+   *
+   * <p>If any of these constraints is violated, then the linked batch finder is invalid, and this method will
+   * throw a {@link ResourceConfigException}.</p>
+   */
+  private static void validateLinkedBatchFinder(ResourceMethodDescriptor finder,
+      ResourceModel resourceModel, String linkedBatchFinderName)
+  {
+    ResourceMethodDescriptor batchFinder =
+        resourceModel.findBatchFinderMethod(linkedBatchFinderName);
+
+    if (batchFinder == null)
+    {
+      throw new ResourceConfigException("Did not find any Linked @BatchFinder method named '"
+          + linkedBatchFinderName
+          + "' from @Finder Method named '" + finder.getFinderName()
+          + "' on class '"
+          + resourceModel.getResourceClass().getName() + '\'');
+    }
+
+    ParameterizedType collectionType = (ParameterizedType) getLogicalReturnType(batchFinder.getMethod());
+    final Class<?> batchFinderCriteriaType = (Class<?>) collectionType.getActualTypeArguments()[0];
+    final Class<?> batchFinderMetadataType = (Class<?>) collectionType.getActualTypeArguments()[2];
+    final Class<?> finderMetadataType = finder.getCollectionCustomMetadataType();
+    if (finderMetadataType != null && !finderMetadataType.equals(batchFinderMetadataType))
+    {
+      throw new ResourceConfigException("Linked @BatchFinder method '" + linkedBatchFinderName
+          + "' from @Finder Method named '" + finder.getFinderName()
+          + "' on class '" + resourceModel.getResourceClass().getName()
+          + "' does not have the same metadata type as the finder.");
+    }
+
+    final RecordDataSchema criteriaSchema = (RecordDataSchema) DataTemplateUtil.getSchema(batchFinderCriteriaType);
+    Set<String> fieldNames = criteriaSchema.getFields()
+        .stream()
+        .map(RecordDataSchema.Field::getName)
+        .collect(Collectors.toCollection(HashSet::new));
+    finder.getParameters().forEach(parameter ->
+    {
+      switch (parameter.getParamType())
+      {
+        case QUERY:
+        case KEY:
+        case ASSOC_KEY_PARAM:
+          RecordDataSchema.Field field = criteriaSchema.getField(parameter.getName());
+          if (field == null)
+          {
+            throw new ResourceConfigException("Linked @BatchFinder method '" + linkedBatchFinderName
+                + "' from @Finder Method named '" + finder.getFinderName()
+                + "' on class '" + resourceModel.getResourceClass().getName()
+                + "' has an invalid criteria type. There is no field in the criteria object for "
+                + "the parameter with name '" + parameter.getName() + "'");
+          }
+
+          if (!field.getType().equals(parameter.getDataSchema()))
+          {
+            throw new ResourceConfigException("Linked @BatchFinder method '" + linkedBatchFinderName
+                + "' from @Finder Method named '" + finder.getFinderName()
+                + "' on class '" + resourceModel.getResourceClass().getName()
+                + "' has an invalid criteria type. The type doesn't match in the criteria object for "
+                + "the parameter with name '" + parameter.getName() + "'");
+          }
+
+          if (parameter.isOptional() != field.getOptional())
+          {
+            throw new ResourceConfigException("Linked @BatchFinder method '" + linkedBatchFinderName
+                + "' from @Finder Method named '" + finder.getFinderName()
+                + "' on class '" + resourceModel.getResourceClass().getName()
+                + "' has an invalid criteria type. The optionality doesn't match in the criteria object for "
+                + "the parameter with name '" + parameter.getName() + "'");
+          }
+
+          fieldNames.remove(field.getName());
+          break;
+        case CONTEXT:
+        case PAGING_CONTEXT_PARAM:
+          if (!batchFinder.isPagingSupported())
+          {
+            throw new ResourceConfigException("Linked @BatchFinder method '" + linkedBatchFinderName
+                + "' from @Finder Method named '" + finder.getFinderName()
+                + "' on class '" + resourceModel.getResourceClass().getName()
+                + "' does not support paging while the finder does.");
+          }
+          break;
+        default:
+          break;
+      }
+    });
+
+    if (!fieldNames.isEmpty())
+    {
+      throw new ResourceConfigException("Linked @BatchFinder method '" + linkedBatchFinderName
+          + "' from @Finder Method named '" + finder.getFinderName()
+          + "' on class '" + resourceModel.getResourceClass().getName()
+          + "' has an invalid criteria type with extra fields '" + String.join(", ", fieldNames)
+          + "' that are not @AssocKey, @AssocKeyParam or @QueryParam parameters on the @Finder Method.");
+    }
   }
 
   private static ResourceModel processActions(final Class<?> actionResourceClass, ResourceModel parentResourceModel)

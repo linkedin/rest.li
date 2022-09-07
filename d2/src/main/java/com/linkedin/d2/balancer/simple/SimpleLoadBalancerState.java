@@ -26,6 +26,7 @@ import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClientFactory;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
+import com.linkedin.d2.balancer.properties.FailoutProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -37,6 +38,7 @@ import com.linkedin.d2.balancer.subsetting.SubsettingState;
 import com.linkedin.d2.balancer.subsetting.SubsettingStrategyFactoryImpl;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.LoadBalancerUtil;
+import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistryImpl;
@@ -143,6 +145,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final boolean       _isSSLEnabled;
   private final SslSessionValidatorFactory _sslSessionValidatorFactory;
   private final SubsettingState _subsettingState;
+  private final CanaryDistributionProvider _canaryDistributionProvider;
 
   /*
    * Concurrency considerations:
@@ -271,17 +274,46 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   }
 
   public SimpleLoadBalancerState(ScheduledExecutorService executorService,
-      PropertyEventBus<UriProperties> uriBus,
-      PropertyEventBus<ClusterProperties> clusterBus,
-      PropertyEventBus<ServiceProperties> serviceBus,
-      Map<String, TransportClientFactory> clientFactories,
-      Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
-      SSLContext sslContext,
-      SSLParameters sslParameters,
-      boolean isSSLEnabled,
-      PartitionAccessorRegistry partitionAccessorRegistry,
-      SslSessionValidatorFactory sessionValidatorFactory,
-      DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider)
+                                 PropertyEventBus<UriProperties> uriBus,
+                                 PropertyEventBus<ClusterProperties> clusterBus,
+                                 PropertyEventBus<ServiceProperties> serviceBus,
+                                 Map<String, TransportClientFactory> clientFactories,
+                                 Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+                                 SSLContext sslContext,
+                                 SSLParameters sslParameters,
+                                 boolean isSSLEnabled,
+                                 PartitionAccessorRegistry partitionAccessorRegistry,
+                                 SslSessionValidatorFactory sessionValidatorFactory,
+                                 DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider)
+  {
+    this(executorService,
+            uriBus,
+            clusterBus,
+            serviceBus,
+            clientFactories,
+            loadBalancerStrategyFactories,
+            sslContext,
+            sslParameters,
+            isSSLEnabled,
+            partitionAccessorRegistry,
+            sessionValidatorFactory,
+            deterministicSubsettingMetadataProvider,
+            null);
+  }
+
+  public SimpleLoadBalancerState(ScheduledExecutorService executorService,
+                                 PropertyEventBus<UriProperties> uriBus,
+                                 PropertyEventBus<ClusterProperties> clusterBus,
+                                 PropertyEventBus<ServiceProperties> serviceBus,
+                                 Map<String, TransportClientFactory> clientFactories,
+                                 Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+                                 SSLContext sslContext,
+                                 SSLParameters sslParameters,
+                                 boolean isSSLEnabled,
+                                 PartitionAccessorRegistry partitionAccessorRegistry,
+                                 SslSessionValidatorFactory sessionValidatorFactory,
+                                 DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
+                                 CanaryDistributionProvider canaryDistributionProvider)
   {
     _executor = executorService;
     _uriProperties = new ConcurrentHashMap<>();
@@ -316,6 +348,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     {
       _subsettingState = null;
     }
+    _canaryDistributionProvider = canaryDistributionProvider;
   }
 
   public void register(final SimpleLoadBalancerStateListener listener)
@@ -431,6 +464,18 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
         // so it is needed to notify all the listeners
         for (SimpleLoadBalancerStateListener listener : _listeners)
         {
+          // Send removal notifications for service properties.
+          for (LoadBalancerStateItem<ServiceProperties> serviceProperties :
+              _serviceProperties.values()) {
+            listener.onServicePropertiesRemoval(serviceProperties);
+          }
+
+          // Send removal notification for cluster properties.
+          for (ClusterInfoItem clusterInfoItem: _clusterInfo.values())
+          {
+            listener.onClusterInfoRemoval(clusterInfoItem);
+          }
+
           // Notify the strategy removal
           for (Map.Entry<String, Map<String, LoadBalancerStrategy>> serviceStrategy : _serviceStrategies.entrySet())
           {
@@ -451,7 +496,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
           }
         }
 
-        // When SimpleLoadBalancerStateis shutdown, all the cluster listener also need to be notified.
+        // When SimpleLoadBalancerState is shutdown, all the cluster listener also need to be notified.
         for (LoadBalancerClusterListener clusterListener : _clusterListeners)
         {
           for (String clusterName : _clusterInfo.keySet())
@@ -499,6 +544,31 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _uriSubscriber.ensureListening(clusterName, wrappedCallback);
   }
 
+  public void stopListenToCluster(final String clusterName, final LoadBalancerStateListenerCallback callback)
+  {
+    trace(_log, "stopListenToCluster: ", clusterName);
+
+    // wrap the callback since we need to wait for both uri and cluster listeners to
+    // onInit before letting the callback know that we're done.
+    final LoadBalancerStateListenerCallback wrappedCallback =
+        new LoadBalancerStateListenerCallback()
+        {
+          private final AtomicInteger _count = new AtomicInteger(2);
+
+          @Override
+          public void done(int type, String name)
+          {
+            if (_count.decrementAndGet() <= 0)
+            {
+              callback.done(type, clusterName);
+            }
+          }
+        };
+
+    _clusterSubscriber.tryStopListening(clusterName, wrappedCallback);
+    _uriSubscriber.tryStopListening(clusterName, wrappedCallback);
+  }
+
   @Override
   public LoadBalancerStateItem<UriProperties> getUriProperties(String clusterName)
   {
@@ -510,6 +580,13 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   {
     ClusterInfoItem clusterInfoItem =  _clusterInfo.get(clusterName);
     return clusterInfoItem == null ? null : clusterInfoItem.getClusterPropertiesItem();
+  }
+
+  @Override
+  public LoadBalancerStateItem<FailoutProperties> getFailoutProperties(String clusterName)
+  {
+    ClusterInfoItem clusterInfoItem =  _clusterInfo.get(clusterName);
+    return clusterInfoItem == null ? null : clusterInfoItem.getFailoutPropertiesItem();
   }
 
   @Override
@@ -600,6 +677,11 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     return _loadBalancerStrategyFactories.keySet();
   }
 
+  public CanaryDistributionProvider getCanaryDistributionProvider()
+  {
+    return _canaryDistributionProvider;
+  }
+
   public int getTrackerClientCount(String clusterName)
   {
     Set<String> serviceNames = _servicesPerCluster.get(clusterName);
@@ -677,7 +759,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   {
     if (_subsettingState == null)
     {
-      return new SubsettingState.SubsetItem(false, possibleUris, Collections.emptySet());
+      return new SubsettingState.SubsetItem(false, false, possibleUris, Collections.emptySet());
     }
     else
     {
@@ -1179,6 +1261,68 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     void onClientAdded(String serviceName, TrackerClient client);
 
     void onClientRemoved(String serviceName, TrackerClient client);
+
+    default void onClusterInfoUpdate(@SuppressWarnings("unused") ClusterInfoItem clusterInfoItem)
+    {
+    }
+
+    default void onClusterInfoRemoval(@SuppressWarnings("unused") ClusterInfoItem clusterInfoItem)
+    {
+    }
+
+    default void onServicePropertiesUpdate(
+        @SuppressWarnings("unused") LoadBalancerStateItem<ServiceProperties> serviceProperties)
+    {
+    }
+
+    default void onServicePropertiesRemoval(
+        @SuppressWarnings("unused") LoadBalancerStateItem<ServiceProperties> serviceProperties)
+    {
+    }
+  }
+
+  /**
+   * Notify load balancer state listeners for service properties' updates.
+   */
+  void notifyListenersOnServicePropertiesUpdates(LoadBalancerStateItem<ServiceProperties> serviceProperties)
+  {
+    for (SimpleLoadBalancerStateListener listener : _listeners)
+    {
+      listener.onServicePropertiesUpdate(serviceProperties);
+    }
+  }
+
+  /**
+   * Notify load balancer state listeners for service properties' removals.
+   */
+  void notifyListenersOnServicePropertiesRemovals(LoadBalancerStateItem<ServiceProperties> serviceProperties)
+  {
+    for (SimpleLoadBalancerStateListener listener : _listeners)
+    {
+      listener.onServicePropertiesRemoval(serviceProperties);
+    }
+  }
+
+  /**
+   * Notify the load balancer state listeners for cluster information updates.
+   */
+  void notifyListenersOnClusterInfoUpdates(ClusterInfoItem clusterInfoItem)
+  {
+    for (SimpleLoadBalancerStateListener listener : _listeners)
+    {
+      listener.onClusterInfoUpdate(clusterInfoItem);
+    }
+  }
+
+  /**
+   * Notify the load balancer state listeners for cluster information removals.
+   */
+  void notifyListenersOnClusterInfoRemovals(ClusterInfoItem clusterInfoItem)
+  {
+    for (SimpleLoadBalancerStateListener listener : _listeners)
+    {
+      listener.onClusterInfoRemoval(clusterInfoItem);
+    }
   }
 
   /**

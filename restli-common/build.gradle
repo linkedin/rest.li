@@ -8,6 +8,7 @@ dependencies {
   compile externalDependency.jacksonCore
   compile externalDependency.javaxAnnotation
   testCompile project(path: ':data', configuration: 'testArtifacts')
+  testCompile project(':generator')
   testCompile project(path: ':generator-test', configuration: 'testArtifacts')
   testCompile project(path: ':restli-internal-testutils', configuration: 'testArtifacts')
   testCompile project(path: ':multipart-mime', configuration: 'testArtifacts')

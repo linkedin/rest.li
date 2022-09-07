@@ -17,7 +17,11 @@
 package com.linkedin.d2.balancer.simple;
 
 import com.linkedin.d2.balancer.LoadBalancerState;
+import com.linkedin.d2.balancer.config.CanaryDistributionStrategyConverter;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
+import com.linkedin.d2.balancer.properties.ClusterStoreProperties;
+import com.linkedin.d2.balancer.properties.FailoutProperties;
+import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorFactory;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
@@ -43,13 +47,20 @@ class ClusterLoadBalancerSubscriber extends
   @Override
   protected void handlePut(final String listenTo, final ClusterProperties discoveryProperties)
   {
-    // TODO: pick stable or canary configs if canary exists
     if (discoveryProperties != null)
     {
-      _simpleLoadBalancerState.getClusterInfo().put(listenTo,
-        new ClusterInfoItem(_simpleLoadBalancerState, discoveryProperties,
-          PartitionAccessorFactory.getPartitionAccessor(discoveryProperties.getClusterName(),
-              _partitionAccessorRegistry, discoveryProperties.getPartitionProperties())));
+      ActivePropertiesResult pickedPropertiesResult = pickActiveProperties(discoveryProperties);
+
+      ClusterInfoItem newClusterInfoItem = new ClusterInfoItem(
+          _simpleLoadBalancerState,
+          pickedPropertiesResult.clusterProperties,
+          PartitionAccessorFactory.getPartitionAccessor(
+              pickedPropertiesResult.clusterProperties.getClusterName(),
+              _partitionAccessorRegistry,
+              pickedPropertiesResult.clusterProperties.getPartitionProperties()),
+          pickedPropertiesResult.distribution, getFailoutProperties(discoveryProperties));
+      _simpleLoadBalancerState.getClusterInfo().put(listenTo, newClusterInfoItem);
+      _simpleLoadBalancerState.notifyListenersOnClusterInfoUpdates(newClusterInfoItem);
       // notify the cluster listeners only when discoveryProperties is not null, because we don't
       // want to count initialization (just because listenToCluster is called)
       _simpleLoadBalancerState.notifyClusterListenersOnAdd(listenTo);
@@ -58,14 +69,75 @@ class ClusterLoadBalancerSubscriber extends
     {
       // still insert the ClusterInfoItem when discoveryProperties is null, but don't create accessor
       _simpleLoadBalancerState.getClusterInfo().put(listenTo,
-        new ClusterInfoItem(_simpleLoadBalancerState, discoveryProperties, null));
+        new ClusterInfoItem(_simpleLoadBalancerState, null, null, null));
     }
   }
 
   @Override
   protected void handleRemove(final String listenTo)
   {
-    _simpleLoadBalancerState.getClusterInfo().remove(listenTo);
+    ClusterInfoItem clusterInfoRemoved = _simpleLoadBalancerState.getClusterInfo().remove(listenTo);
+    _simpleLoadBalancerState.notifyListenersOnClusterInfoRemovals(clusterInfoRemoved);
     _simpleLoadBalancerState.notifyClusterListenersOnRemove(listenTo);
+  }
+
+  /**
+   * Data class for returning both the canary distribution policy
+   * and the final cluster properties from PickActiveProperties method.
+   */
+  static private class ActivePropertiesResult
+  {
+    final CanaryDistributionProvider.Distribution distribution;
+    final ClusterProperties clusterProperties;
+
+    ActivePropertiesResult(CanaryDistributionProvider.Distribution distribution,
+        ClusterProperties clusterProperties)
+    {
+      this.distribution = distribution;
+      this.clusterProperties = clusterProperties;
+    }
+  }
+
+  /**
+   * Pick the active properties (stable or canary configs) based on canary distribution strategy.
+   * @param discoveryProperties a composite properties containing all data on the cluster store (stable configs, canary configs, etc.).
+   * @return the picked active properties and the canary distribution strategy.
+   */
+  private ActivePropertiesResult pickActiveProperties(final ClusterProperties discoveryProperties)
+  {
+    ClusterProperties pickedProperties = discoveryProperties;
+    CanaryDistributionProvider.Distribution distribution = CanaryDistributionProvider.Distribution.STABLE;
+
+    final ClusterStoreProperties clusterStoreProperties = toClusterStoreProperties(discoveryProperties);
+    if (clusterStoreProperties != null) // this should always be true since the serializer returns the composite class
+    {
+      CanaryDistributionProvider canaryDistributionProvider = _simpleLoadBalancerState.getCanaryDistributionProvider();
+      if (clusterStoreProperties.hasCanary() && canaryDistributionProvider != null)
+      {
+        // Canary config and canary distribution provider exist, distribute to use either stable config or canary config.
+        distribution = canaryDistributionProvider
+          .distribute(CanaryDistributionStrategyConverter.toConfig(clusterStoreProperties.getCanaryDistributionStrategy()));
+      }
+      pickedProperties = clusterStoreProperties.getDistributedClusterProperties(distribution);
+    }
+
+    return new ActivePropertiesResult(distribution, pickedProperties);
+  }
+
+  private FailoutProperties getFailoutProperties(final ClusterProperties clusterProperties)
+  {
+    final ClusterStoreProperties clusterStoreProperties = toClusterStoreProperties(clusterProperties);
+    if (clusterStoreProperties == null)
+    {
+      // this should not happen since the serializer returns the composite class
+      return null;
+    }
+    return clusterStoreProperties.getFailoutProperties();
+  }
+
+  private ClusterStoreProperties toClusterStoreProperties(final ClusterProperties clusterProperties)
+  {
+    // Cast should always succeed since the serializer returns the composite class
+    return clusterProperties instanceof ClusterStoreProperties ? (ClusterStoreProperties) clusterProperties : null;
   }
 }

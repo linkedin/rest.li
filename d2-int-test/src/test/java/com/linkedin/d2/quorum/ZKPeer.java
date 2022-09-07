@@ -99,9 +99,7 @@ public class ZKPeer
     cnxnFactory.configure(new InetSocketAddress("127.0.0.1", _clientPort), _maxClientCnxns);
 
     _peer = QuorumPeer.testingQuorumPeer();
-    _peer.setClientPortAddress(new InetSocketAddress("127.0.0.1", _clientPort));
     _peer.setTxnFactory(fts);
-    _peer.setQuorumPeers(peersView);
     _peer.setElectionType(_electionAlg);
     _peer.setMyid(_id);
     _peer.setTickTime(_tickTime);
@@ -109,7 +107,7 @@ public class ZKPeer
     _peer.setMaxSessionTimeout(_maxSessionTimeout);
     _peer.setInitLimit(_initLimit);
     _peer.setSyncLimit(_syncLimit);
-    _peer.setQuorumVerifier(new QuorumMaj(peersCount));
+    _peer.setQuorumVerifier(new QuorumMaj(peersView), false);
     _peer.setCnxnFactory(cnxnFactory);
     _peer.setZKDatabase(new ZKDatabase(_peer.getTxnFactory()));
     _peer.setLearnerType(LearnerType.PARTICIPANT);

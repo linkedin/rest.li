@@ -45,6 +45,9 @@ public class ServicePropertiesSerializerTest
   public static final String TEST_SERVICE_NAME = "serviceName";
   public static final String TEST_CLUSTER_NAME = "clusterName";
 
+  public static final ServiceProperties SERVICE_PROPERTIES = new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME,
+      "/foo", Collections.singletonList("rr"));
+
   public static void main(String[] args) throws URISyntaxException, PropertySerializationException
   {
     new ServicePropertiesSerializerTest().testServicePropertiesSerializer();
@@ -56,17 +59,21 @@ public class ServicePropertiesSerializerTest
   {
     ServicePropertiesJsonSerializer serializer = new ServicePropertiesJsonSerializer();
 
-    ServiceProperties property =
-      new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/foo", Arrays.asList("rr"));
-    assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
+    ServiceProperties property = SERVICE_PROPERTIES;
+    ServiceStoreProperties storeProperties = new ServiceStoreProperties(property, null, null);
+    // service properties will be serialized then deserialized as service store properties
+    assertEquals(serializer.fromBytes(serializer.toBytes(property)), storeProperties);
+    // service store properties will be serialized then deserialized as service store properties
+    assertEquals(serializer.fromBytes(serializer.toBytes(storeProperties)), storeProperties);
+
 
     property = new ServiceProperties("servicename2", "clustername2", "/path2", Arrays.asList("strategy2"),
                                      Collections.<String,Object>singletonMap("foo", "bar"));
-    assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
+    assertEquals(serializer.fromBytes(serializer.toBytes(property)), new ServiceStoreProperties(property, null, null));
 
     Map<String, Object> arbitraryProperties = new HashMap<>();
     arbitraryProperties.put("foo", "bar");
-    property = new ServiceProperties(TEST_SERVICE_NAME,
+    property = new ServiceStoreProperties(TEST_SERVICE_NAME,
       TEST_CLUSTER_NAME,
                                      "/service",
                                      Arrays.asList("strategyName"),
@@ -76,7 +83,7 @@ public class ServicePropertiesSerializerTest
                                      Collections.<String>emptyList(),
                                      Collections.<URI>emptySet(),
                                      arbitraryProperties);
-    assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
+    assertEquals(serializer.fromBytes(serializer.toBytes(property)), new ServiceStoreProperties(property, null, null));
   }
 
   @DataProvider(name = "distributionStrategies")
@@ -109,10 +116,27 @@ public class ServicePropertiesSerializerTest
         null, null, Arrays.asList("HTTPS"), Collections.emptySet(),
         Collections.emptyMap(), Collections.emptyList(), RelativeStrategyPropertiesConverter.toMap(createRelativeStrategyProperties()));
 
-    ServicePropertiesWithCanary propertyWithCanary = new ServicePropertiesWithCanary("servicename2",
-        "clustername2", "/path2", Arrays.asList("strategy2"), distributionStrategy, canaryProperty);
+    ServiceStoreProperties property = new ServiceStoreProperties("servicename2",
+        "clustername2", "/path2", Arrays.asList("strategy2"), canaryProperty, distributionStrategy);
 
-    assertEquals(serializer.fromBytes(serializer.toBytes(propertyWithCanary)), propertyWithCanary);
+    assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
+  }
+
+  @Test
+  public void testServicePropertiesWithCanaryEdgeCases()  throws PropertySerializationException
+  {
+    ServicePropertiesJsonSerializer serializer = new ServicePropertiesJsonSerializer();
+
+    ServiceProperties property = new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/foo", Arrays.asList("rr"));
+    ServiceStoreProperties expected = new ServiceStoreProperties(property, null, null);
+    // having canary configs but missing distribution strategy will not be taken in.
+    ServiceStoreProperties inputProperty = new ServiceStoreProperties(property, property, null);
+    assertEquals(serializer.fromBytes(serializer.toBytes(inputProperty)), expected);
+
+    // having distribution strategy but missing canary configs will not be taken in.
+    inputProperty = new ServiceStoreProperties(property, null, new CanaryDistributionStrategy("percentage",
+        Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap()));
+    assertEquals(serializer.fromBytes(serializer.toBytes(inputProperty)), expected);
   }
 
   @Test
@@ -125,7 +149,7 @@ public class ServicePropertiesSerializerTest
         new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/foo", Arrays.asList("rr"), new HashMap<>(),
             null, null, Arrays.asList("HTTPS"), Collections.emptySet(),
             Collections.emptyMap(), Collections.emptyList(), RelativeStrategyPropertiesConverter.toMap(relativeStrategyProperties));
-    assertEquals(serializer.fromBytes(serializer.toBytes(property)), property);
+    assertEquals(serializer.fromBytes(serializer.toBytes(property)), new ServiceStoreProperties(property, null, null));
   }
 
   @Test(groups = { "small", "back-end" }, enabled = false)
@@ -158,7 +182,7 @@ public class ServicePropertiesSerializerTest
         Collections.<URI>emptySet(),
         arbitraryProperties);
 
-    assertEquals(serializer.fromBytes(serializer.toBytes(badServiceProp)), goodServiceProp);
+    assertEquals(serializer.fromBytes(serializer.toBytes(badServiceProp)), new ServiceStoreProperties(goodServiceProp, null, null));
   }
 
   @Test
@@ -207,6 +231,38 @@ public class ServicePropertiesSerializerTest
 
     Map<String, Object> transportProperties = servicePropertiesWithClientCfg.getTransportClientProperties();
     Assert.assertTrue(transportProperties != null && transportProperties.containsKey(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS));
+  }
+
+  @DataProvider(name = "testToBytesDataProvider")
+  public Object[][] testToBytesDataProvider() {
+    return new Object[][] {
+        // old/basic properties (without canary configs)
+        {SERVICE_PROPERTIES, false},
+        // new/composite properties, without canary configs
+        {new ServiceStoreProperties(SERVICE_PROPERTIES, null, null), false},
+        //with canary configs
+        {new ServiceStoreProperties(SERVICE_PROPERTIES, SERVICE_PROPERTIES,
+            new CanaryDistributionStrategy("percentage", Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap())), true},
+    };
+  }
+  @Test(dataProvider = "testToBytesDataProvider")
+  public void testToBytes(ServiceProperties properties, Boolean expectedToHaveKeysBeyondBasicConfigs) {
+    ServicePropertiesJsonSerializer serializer = new ServicePropertiesJsonSerializer();
+    byte[] bytes = serializer.toBytes(properties);
+    try
+    {
+      @SuppressWarnings("unchecked")
+      Map<String, Object> untyped =
+          JacksonUtil.getObjectMapper().readValue(new String(bytes, "UTF-8"), HashMap.class);
+      Assert.assertEquals(untyped.containsKey(PropertyKeys.CANARY_CONFIGS), expectedToHaveKeysBeyondBasicConfigs.booleanValue(),
+          "Incorrect status of canary configs key");
+      Assert.assertEquals(untyped.containsKey(PropertyKeys.CANARY_DISTRIBUTION_STRATEGY), expectedToHaveKeysBeyondBasicConfigs.booleanValue(),
+          "Incorrect status of canary distribution strategy key");
+    }
+    catch (Exception e)
+    {
+      Assert.fail("the test should never reach here.");
+    }
   }
 
   private D2RelativeStrategyProperties createRelativeStrategyProperties()

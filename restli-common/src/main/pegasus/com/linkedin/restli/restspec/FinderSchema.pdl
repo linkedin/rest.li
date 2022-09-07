@@ -11,6 +11,17 @@ record FinderSchema includes CustomAnnotationSchema, ServiceErrorsSchema, Succes
   name: optional string
 
   /**
+   * Java method type for this finder method
+   */
+  javaMethodType: optional JavaMethodType = "SYNC"
+
+  /**
+   * True if the java implementation of this method returns the result wrapper (aka CollectionResult). False, if
+   * it returns List.
+   */
+  javaReturnsResultWrapper: optional boolean = false
+
+  /**
    * Documentation for this finder
    */
   doc: optional string
@@ -39,4 +50,14 @@ record FinderSchema includes CustomAnnotationSchema, ServiceErrorsSchema, Succes
    * Indicates if this finder method has paging support using the start and count parameters
    */
   pagingSupported: optional boolean
+
+  /**
+   * The linked batch finder method name on the same resource if any. The finder and the linked batch finder
+   * need to conform to some structural constraints for this linkage to be valid. See the documentation of
+   * the com.linkedin.restli.server.annotations.Finder annotation for more details.
+   *
+   * This linkage is useful for clients to optimize parallel finder calls by merging them into a single
+   * batch finder.
+   */
+  linkedBatchFinderName: optional string
 }

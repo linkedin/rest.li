@@ -15,9 +15,12 @@ dependencies {
   compile externalDependency.netty
   testCompile externalDependency.testng
   testCompile externalDependency.commonsIo
+  testCompile externalDependency.metricsCore
+  testCompile externalDependency.xerialSnappy
   testCompile project(path: ':d2', configuration: 'testArtifacts')
   testCompile project(':d2-test-api')
   testRuntime project(':r2-jetty')
   testCompile project(':test-util')
+  testCompileOnly externalDependency.findbugs
 }
 

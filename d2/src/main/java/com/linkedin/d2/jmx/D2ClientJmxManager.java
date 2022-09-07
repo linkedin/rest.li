@@ -16,7 +16,10 @@
 
 package com.linkedin.d2.jmx;
 
+import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.simple.ClusterInfoItem;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState.SimpleLoadBalancerStateListener;
@@ -58,13 +61,13 @@ public class D2ClientJmxManager
       @Override
       public void onStrategyAdded(String serviceName, String scheme, LoadBalancerStrategy strategy)
       {
-        _jmxManager.registerLoadBalancerStrategy(getLoadBalancerJmxName(serviceName, scheme), strategy);
+        _jmxManager.registerLoadBalancerStrategy(getLoadBalancerStrategyJmxName(serviceName, scheme), strategy);
       }
 
       @Override
       public void onStrategyRemoved(String serviceName, String scheme, LoadBalancerStrategy strategy)
       {
-        _jmxManager.unregister(getLoadBalancerJmxName(serviceName, scheme));
+        _jmxManager.unregister(getLoadBalancerStrategyJmxName(serviceName, scheme));
       }
 
       @Override
@@ -82,7 +85,58 @@ public class D2ClientJmxManager
         //  _jmxManager.unregister(_prefix + "-" + clusterName + "-" + client.getUri().toString().replace("://", "-") + "-TrackerClient-Degrader");
       }
 
-      private String getLoadBalancerJmxName(String serviceName, String scheme)
+      @Override
+      public void onClusterInfoUpdate(ClusterInfoItem clusterInfoItem)
+      {
+        if (clusterInfoItem != null && clusterInfoItem.getClusterPropertiesItem() != null
+            && clusterInfoItem.getClusterPropertiesItem().getProperty() != null) {
+          _jmxManager.registerClusterInfo(
+              getClusterInfoJmxName(clusterInfoItem.getClusterPropertiesItem().getProperty().getClusterName()),
+              clusterInfoItem);
+        }
+      }
+
+      @Override
+      public void onClusterInfoRemoval(ClusterInfoItem clusterInfoItem)
+      {
+        if (clusterInfoItem != null && clusterInfoItem.getClusterPropertiesItem() != null
+            && clusterInfoItem.getClusterPropertiesItem().getProperty() != null) {
+          _jmxManager.unregister(
+              getClusterInfoJmxName(clusterInfoItem.getClusterPropertiesItem().getProperty().getClusterName())
+          );
+        }
+      }
+
+      @Override
+      public void onServicePropertiesUpdate(LoadBalancerStateItem<ServiceProperties> serviceProperties)
+      {
+        if (serviceProperties != null && serviceProperties.getProperty() != null) {
+          _jmxManager.registerServiceProperties(
+              getServicePropertiesJmxName(serviceProperties.getProperty().getServiceName()),
+              serviceProperties);
+        }
+      }
+
+
+      @Override
+      public void onServicePropertiesRemoval(LoadBalancerStateItem<ServiceProperties> serviceProperties)
+      {
+        if (serviceProperties != null && serviceProperties.getProperty() != null) {
+          _jmxManager.unregister(getServicePropertiesJmxName(serviceProperties.getProperty().getServiceName()));
+        }
+      }
+
+      private String getClusterInfoJmxName(String clusterName)
+      {
+        return String.format("%s-ClusterInfo", clusterName);
+      }
+
+      private String getServicePropertiesJmxName(String serviceName)
+      {
+        return String.format("%s-ServiceProperties", serviceName);
+      }
+
+      private String getLoadBalancerStrategyJmxName(String serviceName, String scheme)
       {
         return serviceName + "-" + scheme + "-LoadBalancerStrategy";
       }

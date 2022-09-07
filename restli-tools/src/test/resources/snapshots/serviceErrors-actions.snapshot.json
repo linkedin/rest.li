@@ -45,10 +45,14 @@
           "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
         } ],
         "name" : "doAction",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "doc" : "Ensures that action methods can specify a method-level service error.",
         "returns" : "int"
       }, {
         "name" : "iWillNeverFail",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "doc" : "This is included as a finder method with no method-level service errors.",
         "parameters" : [ {
           "name" : "who",
@@ -62,11 +66,15 @@
           "message" : "The error detail type... where is it?"
         } ],
         "name" : "missingErrorDetailType",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "doc" : "Ensures that service errors without error detail types can be used.",
         "returns" : "string"
       }, {
         "serviceErrors" : [ ],
         "name" : "noErrorsDefined",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "doc" : "Ensures that an empty list of service errors can be used at the method-level.",
         "returns" : "string"
       } ]
