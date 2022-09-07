@@ -13,9 +13,7 @@ dependencies {
   compile externalDependency.httpclient
   compile externalDependency.httpcore
   compile externalDependency.hdrhistogram
-  compile(externalDependency.zookeeper) {
-    exclude group: 'io.netty'
-  }
+  compile externalDependency.zookeeper
   compile externalDependency.jacksonCore
   compile externalDependency.jacksonDataBind
   compile externalDependency.jdkTools

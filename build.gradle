@@ -90,7 +90,7 @@ project.ext.externalDependency = [
   'log4j2Core': 'org.apache.logging.log4j:log4j-core:2.0.2',
   'log4jLog4j2': 'org.apache.logging.log4j:log4j-1.2-api:2.0.2',
   'mail': 'javax.mail:mail:1.4.4',
-  'netty': 'io.netty:netty-all:4.1.52.Final',
+  'netty': 'io.netty:netty-all:4.1.79.Final',
   'objenesis': 'org.objenesis:objenesis:1.2',
   'parseq': 'com.linkedin.parseq:parseq:5.1.2',
   'parseq_tracevis': 'com.linkedin.parseq:parseq-tracevis:5.1.2',

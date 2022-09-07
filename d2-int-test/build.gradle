@@ -10,9 +10,7 @@ dependencies {
   compile externalDependency.commonsCodec
   compile externalDependency.commonsIo
   compile externalDependency.commonsHttpClient
-  compile(externalDependency.zookeeper) {
-    exclude group: 'io.netty'
-  }
+  compile externalDependency.zookeeper
   compile externalDependency.jdkTools
   compile externalDependency.netty
   testCompile externalDependency.testng
