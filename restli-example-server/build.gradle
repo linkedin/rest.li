@@ -13,9 +13,7 @@ dependencies {
   compile project(':pegasus-common')
   compile externalDependency.javaxInject
   compile externalDependency.parseq
-  compile(externalDependency.zookeeper) {
-    exclude group: 'io.netty'
-  }
+  compile externalDependency.zookeeper
   testCompile project(':restli-client')
   testCompile externalDependency.testng
   testCompile externalDependency.easymock

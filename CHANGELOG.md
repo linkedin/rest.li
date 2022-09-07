@@ -17,12 +17,15 @@ and what APIs have changed, if applicable.
 ## [29.38.0-rc1] - 2022-09-06
 - Add Support for UDS transport protocol in R2 outbound traffic
 
+## [29.38.0] - 2022-08-31
+- Upgrade Netty to 4.1.79 and remove ZooKeeper Netty exclusions.
+
 ## [29.37.19] - 2022-08-31
 - Emit some additional information in the IDL/Snapshot to enable us to generate a java stub back from the IDL
 
 ## [29.37.18] - 2022-08-29
 - Support supplying D2 subsetting peer cluster name at run-time
-- 
+ 
 ## [29.37.17] - 2022-08-29
 - Add "notify" to reversed word set when generating data template
 
@@ -5327,7 +5330,7 @@ patch operations can re-use these classes for generating patch messages.
 
 [Unreleased]: https://github.com/linkedin/rest.li/compare/v29.38.0-rc1...master
 [29.38.0-rc1]: https://github.com/linkedin/rest.li/compare/v29.38.0...v29.38.0-rc1
-[29.38.0]: https://github.com/linkedin/rest.li/compare/v29.37.18...v29.38.0
+[29.38.0]: https://github.com/linkedin/rest.li/compare/v29.37.19...v29.38.0
 [29.37.19]: https://github.com/linkedin/rest.li/compare/v29.37.18...v29.37.19
 [29.37.18]: https://github.com/linkedin/rest.li/compare/v29.37.17...v29.37.18
 [29.37.17]: https://github.com/linkedin/rest.li/compare/v29.37.16...v29.37.17
