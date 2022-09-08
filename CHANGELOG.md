@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.38.2] - 2022-09-07
+- Removing the release candidate version number
+
 ## [29.38.1-rc.1] - 2022-09-06
 - Add Support for UDS transport protocol in R2 outbound traffic
 
@@ -5328,7 +5331,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.38.1-rc.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.38.2...master
+[29.38.2]: https://github.com/linkedin/rest.li/compare/v29.38.1-rc.1...v29.38.2
 [29.38.1-rc.1]: https://github.com/linkedin/rest.li/compare/v29.38.0...v29.38.1-rc.1
 [29.38.0]: https://github.com/linkedin/rest.li/compare/v29.37.19...v29.38.0
 [29.37.19]: https://github.com/linkedin/rest.li/compare/v29.37.18...v29.37.19
