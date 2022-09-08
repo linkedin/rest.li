@@ -46,9 +46,14 @@
       },
       "supports" : [ "batch_get", "create" ],
       "methods" : [ {
-        "method" : "create"
+        "method" : "create",
+        "javaMethodName" : "create",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "batch_get"
+        "method" : "batch_get",
+        "javaMethodName" : "batchGet",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       } ],
       "entity" : {
         "path" : "/typerefKeys/{typerefKeysId}"

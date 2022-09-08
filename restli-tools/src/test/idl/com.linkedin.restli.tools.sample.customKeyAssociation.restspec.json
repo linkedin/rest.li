@@ -16,14 +16,17 @@
     "supports" : [ "batch_update", "get" ],
     "methods" : [ {
       "method" : "get",
+      "javaMethodName" : "get",
       "javaMethodType" : "SYNC",
       "javaReturnsResultWrapper" : false
     }, {
       "method" : "batch_update",
+      "javaMethodName" : "batchUpdate",
       "javaMethodType" : "SYNC"
     } ],
     "finders" : [ {
       "name" : "longId",
+      "javaMethodName" : "dateOnly",
       "javaMethodType" : "SYNC",
       "javaReturnsResultWrapper" : false,
       "assocKeys" : [ "longId" ]

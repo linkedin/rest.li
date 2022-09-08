@@ -68,6 +68,9 @@
       "supports" : [ "get" ],
       "methods" : [ {
         "method" : "get",
+        "javaMethodName" : "get",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "array",
           "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.typeref.api.CustomStringRef\" }"

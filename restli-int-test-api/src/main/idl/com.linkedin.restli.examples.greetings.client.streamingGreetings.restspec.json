@@ -11,19 +11,34 @@
     },
     "supports" : [ "create", "delete", "get", "update" ],
     "methods" : [ {
-      "method" : "create"
+      "method" : "create",
+      "javaMethodName" : "create",
+      "javaMethodType" : "ASYNC"
     }, {
-      "method" : "get"
+      "method" : "get",
+      "javaMethodName" : "get",
+      "javaMethodType" : "ASYNC",
+      "javaReturnsResultWrapper" : false
     }, {
-      "method" : "update"
+      "method" : "update",
+      "javaMethodName" : "update",
+      "javaMethodType" : "ASYNC"
     }, {
-      "method" : "delete"
+      "method" : "delete",
+      "javaMethodName" : "delete",
+      "javaMethodType" : "ASYNC"
     } ],
     "actions" : [ {
       "name" : "actionAttachmentsAllowedButDisliked",
+      "javaMethodName" : "actionAttachmentsAllowedButDisliked",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "returns" : "boolean"
     }, {
       "name" : "actionNoAttachmentsAllowed",
+      "javaMethodName" : "actionNoAttachmentsAllowed",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "returns" : "int"
     } ],
     "entity" : {

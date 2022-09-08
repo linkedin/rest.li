@@ -11,10 +11,16 @@
     },
     "supports" : [ "get" ],
     "methods" : [ {
-      "method" : "get"
+      "method" : "get",
+      "javaMethodName" : "get",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false
     } ],
     "finders" : [ {
-      "name" : "finder"
+      "name" : "finder",
+      "javaMethodName" : "finder",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false
     } ],
     "entity" : {
       "path" : "/withContext/{withContextId}"

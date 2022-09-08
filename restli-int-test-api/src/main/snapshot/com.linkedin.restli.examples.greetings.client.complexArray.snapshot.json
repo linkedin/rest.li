@@ -57,12 +57,21 @@
       },
       "supports" : [ "batch_get", "get" ],
       "methods" : [ {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       }, {
-        "method" : "batch_get"
+        "method" : "batch_get",
+        "javaMethodName" : "batchGet",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       } ],
       "finders" : [ {
         "name" : "finder",
+        "javaMethodName" : "finder",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "array",
           "type" : "com.linkedin.restli.examples.greetings.api.ComplexArray"
@@ -70,6 +79,9 @@
       } ],
       "actions" : [ {
         "name" : "action",
+        "javaMethodName" : "action",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "array",
           "type" : "com.linkedin.restli.examples.greetings.api.ComplexArray"

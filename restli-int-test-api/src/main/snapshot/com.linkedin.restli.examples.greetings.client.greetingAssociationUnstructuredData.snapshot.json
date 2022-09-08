@@ -17,7 +17,10 @@
       } ],
       "supports" : [ "get" ],
       "methods" : [ {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       } ],
       "entity" : {
         "path" : "/greetingAssociationUnstructuredData/{greetingAssociationUnstructuredDataId}"

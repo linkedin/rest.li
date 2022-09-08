@@ -12,19 +12,35 @@
     },
     "supports" : [ "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get", "partial_update" ],
     "methods" : [ {
-      "method" : "create"
+      "method" : "create",
+      "javaMethodName" : "create",
+      "javaMethodType" : "PROMISE"
     }, {
-      "method" : "get"
+      "method" : "get",
+      "javaMethodName" : "get",
+      "javaMethodType" : "PROMISE",
+      "javaReturnsResultWrapper" : false
     }, {
-      "method" : "partial_update"
+      "method" : "partial_update",
+      "javaMethodName" : "update",
+      "javaMethodType" : "PROMISE"
     }, {
-      "method" : "batch_get"
+      "method" : "batch_get",
+      "javaMethodName" : "batchGet",
+      "javaMethodType" : "PROMISE",
+      "javaReturnsResultWrapper" : true
     }, {
-      "method" : "batch_update"
+      "method" : "batch_update",
+      "javaMethodName" : "batchUpdate",
+      "javaMethodType" : "SYNC"
     }, {
-      "method" : "batch_partial_update"
+      "method" : "batch_partial_update",
+      "javaMethodName" : "batchUpdate",
+      "javaMethodType" : "SYNC"
     }, {
-      "method" : "batch_delete"
+      "method" : "batch_delete",
+      "javaMethodName" : "batchDelete",
+      "javaMethodType" : "SYNC"
     } ],
     "finders" : [ {
       "annotations" : {
@@ -33,6 +49,9 @@
         }
       },
       "name" : "prefix",
+      "javaMethodName" : "prefix",
+      "javaMethodType" : "PROMISE",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Example javadoc",
       "parameters" : [ {
         "name" : "prefix",

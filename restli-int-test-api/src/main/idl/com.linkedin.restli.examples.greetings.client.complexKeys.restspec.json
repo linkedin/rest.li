@@ -12,27 +12,51 @@
     },
     "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get", "get_all", "partial_update" ],
     "methods" : [ {
-      "method" : "create"
+      "method" : "create",
+      "javaMethodName" : "create",
+      "javaMethodType" : "SYNC"
     }, {
-      "method" : "get"
+      "method" : "get",
+      "javaMethodName" : "get",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false
     }, {
-      "method" : "partial_update"
+      "method" : "partial_update",
+      "javaMethodName" : "update",
+      "javaMethodType" : "SYNC"
     }, {
-      "method" : "batch_create"
+      "method" : "batch_create",
+      "javaMethodName" : "batchCreate",
+      "javaMethodType" : "SYNC"
     }, {
-      "method" : "batch_get"
+      "method" : "batch_get",
+      "javaMethodName" : "batchGet",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : true
     }, {
-      "method" : "batch_update"
+      "method" : "batch_update",
+      "javaMethodName" : "batchUpdate",
+      "javaMethodType" : "SYNC"
     }, {
-      "method" : "batch_partial_update"
+      "method" : "batch_partial_update",
+      "javaMethodName" : "batchUpdate",
+      "javaMethodType" : "SYNC"
     }, {
-      "method" : "batch_delete"
+      "method" : "batch_delete",
+      "javaMethodName" : "batchDelete",
+      "javaMethodType" : "SYNC"
     }, {
       "method" : "get_all",
+      "javaMethodName" : "getAll",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "pagingSupported" : true
     } ],
     "finders" : [ {
       "name" : "prefix",
+      "javaMethodName" : "prefix",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "prefix",
         "type" : "string"
@@ -42,6 +66,9 @@
       "path" : "/complexKeys/{keys}",
       "actions" : [ {
         "name" : "entityAction",
+        "javaMethodName" : "entityAction",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "returns" : "int"
       } ],
       "subresources" : [ {
@@ -57,7 +84,10 @@
           },
           "supports" : [ "get" ],
           "methods" : [ {
-            "method" : "get"
+            "method" : "get",
+            "javaMethodName" : "get",
+            "javaMethodType" : "SYNC",
+            "javaReturnsResultWrapper" : false
           } ],
           "entity" : {
             "path" : "/complexKeys/{keys}/complexKeysSub/{subKey}"

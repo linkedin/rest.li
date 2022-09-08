@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.38.3] - 2022-09-07
+- Emit java method name in the IDL/Snapshot to enable us to generate a java stub back from the IDL.
+
 ## [29.38.2] - 2022-09-07
 - Removing the release candidate version number
 
@@ -5331,7 +5334,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.38.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.38.3...master
+[29.38.3]: https://github.com/linkedin/rest.li/compare/v29.38.2...v29.38.3
 [29.38.2]: https://github.com/linkedin/rest.li/compare/v29.38.1-rc.1...v29.38.2
 [29.38.1-rc.1]: https://github.com/linkedin/rest.li/compare/v29.38.0...v29.38.1-rc.1
 [29.38.0]: https://github.com/linkedin/rest.li/compare/v29.37.19...v29.38.0

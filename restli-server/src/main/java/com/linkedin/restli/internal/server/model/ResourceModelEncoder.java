@@ -773,6 +773,7 @@ public class ResourceModelEncoder
   private ActionSchema createActionSchema(ResourceMethodDescriptor resourceMethodDescriptor) {
     ActionSchema action = new ActionSchema();
     action.setName(resourceMethodDescriptor.getActionName());
+    action.setJavaMethodName(resourceMethodDescriptor.getMethod().getName());
     action.setJavaMethodType(resourceMethodDescriptor.getJavaMethodType());
     action.setJavaReturnsResultWrapper(resourceMethodDescriptor.getMethodResultType().equals(ActionResult.class));
 
@@ -945,6 +946,7 @@ public class ResourceModelEncoder
     FinderSchema finder = new FinderSchema();
 
     finder.setName(resourceMethodDescriptor.getFinderName());
+    finder.setJavaMethodName(resourceMethodDescriptor.getMethod().getName());
     finder.setJavaMethodType(resourceMethodDescriptor.getJavaMethodType());
     finder.setJavaReturnsResultWrapper(resourceMethodDescriptor.getMethodResultType().equals(CollectionResult.class));
 
@@ -1002,6 +1004,7 @@ public class ResourceModelEncoder
   private BatchFinderSchema createBatchFinderSchema(ResourceMethodDescriptor resourceMethodDescriptor) {
     BatchFinderSchema batchFinder = new BatchFinderSchema();
     batchFinder.setName(resourceMethodDescriptor.getBatchFinderName());
+    batchFinder.setJavaMethodName(resourceMethodDescriptor.getMethod().getName());
     batchFinder.setJavaMethodType(resourceMethodDescriptor.getJavaMethodType());
     // Batch finder has to return the wrapper.
     batchFinder.setJavaReturnsResultWrapper(true);
@@ -1161,6 +1164,7 @@ public class ResourceModelEncoder
       RestMethodSchema restMethod = new RestMethodSchema();
 
       restMethod.setMethod(method.toString());
+      restMethod.setJavaMethodName(descriptor.getMethod().getName());
       restMethod.setJavaMethodType(descriptor.getJavaMethodType());
 
       Class<?> returnType = descriptor.getMethodResultType();

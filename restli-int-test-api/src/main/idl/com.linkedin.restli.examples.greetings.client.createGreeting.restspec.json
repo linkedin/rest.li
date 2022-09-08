@@ -19,12 +19,16 @@
       "annotations" : {
         "returnEntity" : { }
       },
-      "method" : "create"
+      "method" : "create",
+      "javaMethodName" : "create",
+      "javaMethodType" : "SYNC"
     }, {
       "annotations" : {
         "returnEntity" : { }
       },
-      "method" : "batch_create"
+      "method" : "batch_create",
+      "javaMethodName" : "batchCreate",
+      "javaMethodType" : "SYNC"
     } ],
     "entity" : {
       "path" : "/createGreeting/{key}"

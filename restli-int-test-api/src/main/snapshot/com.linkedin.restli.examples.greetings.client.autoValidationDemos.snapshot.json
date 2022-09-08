@@ -172,29 +172,53 @@
         "annotations" : {
           "returnEntity" : { }
         },
-        "method" : "create"
+        "method" : "create",
+        "javaMethodName" : "create",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       }, {
-        "method" : "update"
+        "method" : "update",
+        "javaMethodName" : "update",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "partial_update"
+        "method" : "partial_update",
+        "javaMethodName" : "update",
+        "javaMethodType" : "SYNC"
       }, {
         "annotations" : {
           "returnEntity" : { }
         },
-        "method" : "batch_create"
+        "method" : "batch_create",
+        "javaMethodName" : "batchCreate",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "batch_get"
+        "method" : "batch_get",
+        "javaMethodName" : "batchGet",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true
       }, {
-        "method" : "batch_update"
+        "method" : "batch_update",
+        "javaMethodName" : "batchUpdate",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "batch_partial_update"
+        "method" : "batch_partial_update",
+        "javaMethodName" : "batchUpdate",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "get_all"
+        "method" : "get_all",
+        "javaMethodName" : "getAll",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       } ],
       "finders" : [ {
         "name" : "search",
+        "javaMethodName" : "search",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "intA",
           "type" : "int"
@@ -202,6 +226,9 @@
       } ],
       "batchFinders" : [ {
         "name" : "searchValidationDemos",
+        "javaMethodName" : "searchValidationDemos",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
         "parameters" : [ {
           "name" : "criteria",
           "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.ValidationDemoCriteria\" }"

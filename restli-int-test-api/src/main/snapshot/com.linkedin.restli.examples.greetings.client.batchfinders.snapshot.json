@@ -84,12 +84,18 @@
       "supports" : [ ],
       "finders" : [ {
         "name" : "searchWithMetadata",
+        "javaMethodName" : "searchWithMetadata",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.SearchMetadata"
         }
       } ],
       "batchFinders" : [ {
         "name" : "searchGreetings",
+        "javaMethodName" : "searchGreetings",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
         "parameters" : [ {
           "name" : "criteria",
           "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.GreetingCriteria\" }"

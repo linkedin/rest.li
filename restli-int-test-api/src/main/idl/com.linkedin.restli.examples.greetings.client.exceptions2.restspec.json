@@ -11,14 +11,23 @@
     },
     "supports" : [ "get" ],
     "methods" : [ {
-      "method" : "get"
+      "method" : "get",
+      "javaMethodName" : "getWithResult",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : true
     } ],
     "actions" : [ {
       "name" : "exceptionWithValue",
+      "javaMethodName" : "exceptionWithValue",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : true,
       "doc" : "Action that responds HTTP 500 with integer value",
       "returns" : "int"
     }, {
       "name" : "exceptionWithoutValue",
+      "javaMethodName" : "exceptionWithoutValue",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : true,
       "doc" : "Action that responds HTTP 500 without value"
     } ],
     "entity" : {

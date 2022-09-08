@@ -39,12 +39,16 @@
           "returnEntity" : { }
         },
         "method" : "create",
+        "javaMethodName" : "create",
+        "javaMethodType" : "SYNC",
         "doc" : "This is the \"upstream endpoint\" which is queried directly by the integration test.\n This endpoint makes a call to {@link #batchPartialUpdate(BatchPatchRequest)} (the \"downstream endpoint\"),\n then packs all the client-side timing data into the original server-side request context."
       }, {
         "annotations" : {
           "returnEntity" : { }
         },
         "method" : "batch_partial_update",
+        "javaMethodName" : "batchPartialUpdate",
+        "javaMethodType" : "SYNC",
         "doc" : "This is the \"downstream endpoint\", queried by {@link #create(InstrumentationControl)} (the \"upstream endpoint\")."
       } ],
       "entity" : {

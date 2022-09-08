@@ -12,23 +12,39 @@
     "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get" ],
     "methods" : [ {
       "method" : "create",
+      "javaMethodName" : "create",
+      "javaMethodType" : "SYNC",
       "parameters" : [ {
         "name" : "unionRefParam",
         "type" : "com.linkedin.restli.examples.typeref.api.UnionRefInline",
         "optional" : true
       } ]
     }, {
-      "method" : "get"
+      "method" : "get",
+      "javaMethodName" : "get",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false
     }, {
-      "method" : "batch_create"
+      "method" : "batch_create",
+      "javaMethodName" : "batchCreate",
+      "javaMethodType" : "SYNC"
     }, {
-      "method" : "batch_get"
+      "method" : "batch_get",
+      "javaMethodName" : "batchGet",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false
     }, {
-      "method" : "batch_update"
+      "method" : "batch_update",
+      "javaMethodName" : "batchUpdate",
+      "javaMethodType" : "SYNC"
     }, {
-      "method" : "batch_partial_update"
+      "method" : "batch_partial_update",
+      "javaMethodName" : "batchUpdate",
+      "javaMethodType" : "SYNC"
     }, {
-      "method" : "batch_delete"
+      "method" : "batch_delete",
+      "javaMethodName" : "batchDelete",
+      "javaMethodType" : "SYNC"
     } ],
     "entity" : {
       "path" : "/customTypes2/{customTypes2Id}",
@@ -45,7 +61,10 @@
           },
           "supports" : [ "get" ],
           "methods" : [ {
-            "method" : "get"
+            "method" : "get",
+            "javaMethodName" : "get",
+            "javaMethodType" : "SYNC",
+            "javaReturnsResultWrapper" : false
           } ],
           "entity" : {
             "path" : "/customTypes2/{customTypes2Id}/customTypes4/{customTypes4Id}"

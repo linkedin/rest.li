@@ -12,6 +12,9 @@
     "supports" : [ ],
     "finders" : [ {
       "name" : "repeatedGreetings",
+      "javaMethodName" : "serveRepeatedGreeting",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "repeat",
         "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"

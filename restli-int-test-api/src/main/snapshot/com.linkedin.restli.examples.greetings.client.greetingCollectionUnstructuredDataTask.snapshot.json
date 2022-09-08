@@ -13,7 +13,10 @@
       },
       "supports" : [ "get" ],
       "methods" : [ {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get",
+        "javaMethodType" : "TASK",
+        "javaReturnsResultWrapper" : false
       } ],
       "entity" : {
         "path" : "/greetingCollectionUnstructuredDataTask/{greetingCollectionUnstructuredDataTaskId}"

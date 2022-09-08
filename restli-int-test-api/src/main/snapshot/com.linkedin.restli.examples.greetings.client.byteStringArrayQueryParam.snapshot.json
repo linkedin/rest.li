@@ -42,6 +42,9 @@
       "supports" : [ ],
       "finders" : [ {
         "name" : "byteStringArrayFinder",
+        "javaMethodName" : "byteStringArrayFinder",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "byteStrings",
           "type" : "{ \"type\" : \"array\", \"items\" : \"bytes\" }"

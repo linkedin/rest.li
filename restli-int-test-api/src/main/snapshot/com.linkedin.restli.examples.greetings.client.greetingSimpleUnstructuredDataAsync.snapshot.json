@@ -9,7 +9,10 @@
     "simple" : {
       "supports" : [ "get" ],
       "methods" : [ {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get",
+        "javaMethodType" : "ASYNC",
+        "javaReturnsResultWrapper" : false
       } ],
       "entity" : {
         "path" : "/greetingSimpleUnstructuredDataAsync"

@@ -15,25 +15,46 @@
     } ],
     "supports" : [ "batch_get", "batch_partial_update", "batch_update", "create", "get" ],
     "methods" : [ {
-      "method" : "create"
+      "method" : "create",
+      "javaMethodName" : "create",
+      "javaMethodType" : "SYNC"
     }, {
-      "method" : "get"
+      "method" : "get",
+      "javaMethodName" : "get",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false
     }, {
-      "method" : "batch_get"
+      "method" : "batch_get",
+      "javaMethodName" : "batchGet",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false
     }, {
-      "method" : "batch_update"
+      "method" : "batch_update",
+      "javaMethodName" : "batchUpdate",
+      "javaMethodType" : "SYNC"
     }, {
-      "method" : "batch_partial_update"
+      "method" : "batch_partial_update",
+      "javaMethodName" : "batchUpdate",
+      "javaMethodType" : "SYNC"
     } ],
     "finders" : [ {
       "name" : "assocKeyFinder",
+      "javaMethodName" : "assocKeyFinder",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "assocKeys" : [ "src" ]
     }, {
       "name" : "assocKeyFinderOpt",
+      "javaMethodName" : "assocKeyFinderOpt",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "assocKeys" : [ "src" ]
     } ],
     "batchFinders" : [ {
       "name" : "searchMessages",
+      "javaMethodName" : "searchMessages",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : true,
       "parameters" : [ {
         "name" : "criteria",
         "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.MessageCriteria\" }"
@@ -49,6 +70,9 @@
       "path" : "/associations/{associationsId}",
       "actions" : [ {
         "name" : "testAction",
+        "javaMethodName" : "testAction",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "returns" : "string"
       } ],
       "subresources" : [ {
@@ -82,7 +106,10 @@
                 },
                 "supports" : [ "get" ],
                 "methods" : [ {
-                  "method" : "get"
+                  "method" : "get",
+                  "javaMethodName" : "get",
+                  "javaMethodType" : "SYNC",
+                  "javaReturnsResultWrapper" : false
                 } ],
                 "entity" : {
                   "path" : "/associations/{associationsId}/associationsAssociations/{associationsAssociationsId}/associationsAssociationsSub/{subKey}"
@@ -104,10 +131,16 @@
           },
           "supports" : [ "get" ],
           "methods" : [ {
-            "method" : "get"
+            "method" : "get",
+            "javaMethodName" : "get",
+            "javaMethodType" : "SYNC",
+            "javaReturnsResultWrapper" : false
           } ],
           "finders" : [ {
             "name" : "tone",
+            "javaMethodName" : "findByTone",
+            "javaMethodType" : "SYNC",
+            "javaReturnsResultWrapper" : false,
             "parameters" : [ {
               "name" : "tone",
               "type" : "com.linkedin.restli.examples.greetings.api.Tone"
@@ -115,12 +148,21 @@
           } ],
           "actions" : [ {
             "name" : "action",
+            "javaMethodName" : "action",
+            "javaMethodType" : "SYNC",
+            "javaReturnsResultWrapper" : false,
             "returns" : "int"
           }, {
             "name" : "concatenateStrings",
+            "javaMethodName" : "thingAction",
+            "javaMethodType" : "SYNC",
+            "javaReturnsResultWrapper" : false,
             "returns" : "string"
           }, {
             "name" : "getSource",
+            "javaMethodName" : "srcAction",
+            "javaMethodType" : "SYNC",
+            "javaReturnsResultWrapper" : false,
             "returns" : "string"
           } ],
           "entity" : {

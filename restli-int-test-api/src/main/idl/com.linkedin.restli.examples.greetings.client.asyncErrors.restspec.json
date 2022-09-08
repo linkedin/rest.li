@@ -6,6 +6,9 @@
   "actionsSet" : {
     "actions" : [ {
       "name" : "callback",
+      "javaMethodName" : "callback",
+      "javaMethodType" : "ASYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "id",
         "type" : "string"
@@ -13,6 +16,9 @@
       "returns" : "com.linkedin.restli.examples.greetings.api.Greeting"
     }, {
       "name" : "promise",
+      "javaMethodName" : "promise",
+      "javaMethodType" : "PROMISE",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "id",
         "type" : "string"
@@ -20,6 +26,9 @@
       "returns" : "com.linkedin.restli.examples.greetings.api.Greeting"
     }, {
       "name" : "task",
+      "javaMethodName" : "task",
+      "javaMethodType" : "TASK",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "id",
         "type" : "string"

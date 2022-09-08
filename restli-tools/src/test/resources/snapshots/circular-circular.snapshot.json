@@ -38,6 +38,7 @@
     "actionsSet" : {
       "actions" : [ {
         "name" : "test",
+        "javaMethodName" : "test",
         "javaMethodType" : "SYNC",
         "javaReturnsResultWrapper" : false,
         "readOnly" : true,

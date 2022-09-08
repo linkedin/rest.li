@@ -9,11 +9,18 @@
     "simple" : {
       "supports" : [ "delete", "get", "update" ],
       "methods" : [ {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get",
+        "javaMethodType" : "ASYNC",
+        "javaReturnsResultWrapper" : false
       }, {
-        "method" : "update"
+        "method" : "update",
+        "javaMethodName" : "update",
+        "javaMethodType" : "ASYNC"
       }, {
-        "method" : "delete"
+        "method" : "delete",
+        "javaMethodName" : "delete",
+        "javaMethodType" : "ASYNC"
       } ],
       "entity" : {
         "path" : "/reactiveGreetingSimpleUnstructuredData"

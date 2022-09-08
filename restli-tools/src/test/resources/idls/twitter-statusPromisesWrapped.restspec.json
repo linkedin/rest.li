@@ -20,16 +20,19 @@
     "supports" : [ "batch_get", "get", "get_all" ],
     "methods" : [ {
       "method" : "get",
+      "javaMethodName" : "getWrapped",
       "javaMethodType" : "PROMISE",
       "javaReturnsResultWrapper" : true,
       "doc" : "Gets a single status resource"
     }, {
       "method" : "batch_get",
+      "javaMethodName" : "batchGetWrapped",
       "javaMethodType" : "PROMISE",
       "javaReturnsResultWrapper" : true,
       "doc" : "Gets a batch of statuses"
     }, {
       "method" : "get_all",
+      "javaMethodName" : "getAllWrapped",
       "javaMethodType" : "PROMISE",
       "javaReturnsResultWrapper" : true,
       "doc" : "Gets all the resources",
@@ -40,6 +43,7 @@
     } ],
     "finders" : [ {
       "name" : "user_timeline",
+      "javaMethodName" : "getUserTimeline",
       "javaMethodType" : "PROMISE",
       "javaReturnsResultWrapper" : true,
       "doc" : "Gets the status timeline for a given user",
@@ -50,6 +54,7 @@
     } ],
     "batchFinders" : [ {
       "name" : "batchFinderByAction",
+      "javaMethodName" : "batchFindStatuses",
       "javaMethodType" : "PROMISE",
       "javaReturnsResultWrapper" : true,
       "doc" : "Batch finder for statuses",
@@ -66,6 +71,7 @@
       "path" : "/statusPromisesWrapped/{statusID}",
       "actions" : [ {
         "name" : "forward",
+        "javaMethodName" : "forward",
         "javaMethodType" : "PROMISE",
         "javaReturnsResultWrapper" : true,
         "doc" : "Ambiguous action binding test case",

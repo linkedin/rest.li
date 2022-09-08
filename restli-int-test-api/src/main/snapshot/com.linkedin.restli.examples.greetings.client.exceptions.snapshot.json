@@ -42,25 +42,50 @@
       "supports" : [ "batch_create", "create", "get" ],
       "methods" : [ {
         "method" : "create",
+        "javaMethodName" : "create",
+        "javaMethodType" : "SYNC",
         "doc" : "Responds with an error for requests to create insulting greetings, responds\n with 201 created for all other requests."
       }, {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       }, {
         "method" : "batch_create",
+        "javaMethodName" : "batchCreate",
+        "javaMethodType" : "SYNC",
         "doc" : "For a batch create request, responds with an error for requests to create insulting greetings, responds\n with 201 created for all other requests."
       } ],
       "actions" : [ {
-        "name" : "errorResponseFormatMessageAndDetails"
+        "name" : "errorResponseFormatMessageAndDetails",
+        "javaMethodName" : "errorResponseFormatMessageAndDetails",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       }, {
-        "name" : "errorResponseFormatMessageAndServiceCode"
+        "name" : "errorResponseFormatMessageAndServiceCode",
+        "javaMethodName" : "errorResponseFormatMessageAndServiceCode",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       }, {
-        "name" : "errorResponseFormatMessageAndServiceCodeAndExceptionClass"
+        "name" : "errorResponseFormatMessageAndServiceCodeAndExceptionClass",
+        "javaMethodName" : "errorResponseFormatMessageAndServiceCodeAndExceptionClass",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       }, {
-        "name" : "errorResponseFormatMessageOnly"
+        "name" : "errorResponseFormatMessageOnly",
+        "javaMethodName" : "errorResponseFormatMessageOnly",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       }, {
-        "name" : "errorResponseFormatMinimal"
+        "name" : "errorResponseFormatMinimal",
+        "javaMethodName" : "errorResponseFormatMinimal",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       }, {
-        "name" : "errorWithEmptyStatus"
+        "name" : "errorWithEmptyStatus",
+        "javaMethodName" : "errorWithEmptyStatus",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       } ],
       "entity" : {
         "path" : "/exceptions/{exceptionsId}"

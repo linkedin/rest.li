@@ -47,6 +47,9 @@
       "supports" : [ "get_all" ],
       "methods" : [ {
         "method" : "get_all",
+        "javaMethodName" : "getAllMetadataManualPagingAutomaticPartialNull",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
         "doc" : "Same as the test above except that this test is to make sure that GET_ALL observes the same code path in\n restli as FINDER does for custom metadata and paging projection.\n Redundant comments excluded for the sake of brevity.",
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
@@ -55,6 +58,9 @@
       } ],
       "finders" : [ {
         "name" : "metadataAutomaticPagingAutomaticPartialNull",
+        "javaMethodName" : "metadataAutomaticPagingAutomaticPartialNull",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
         "doc" : "This resource method performs automatic projection for the custom metadata and automatic projection\n for paging. This particular resource method also varies on what it sets total to.",
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
@@ -62,6 +68,9 @@
         "pagingSupported" : true
       }, {
         "name" : "metadataAutomaticPagingAutomaticPartialNullIncorrect",
+        "javaMethodName" : "metadataAutomaticPagingAutomaticPartialNullIncorrect",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
         "doc" : "This resource method performs automatic projection for the custom metadata and automatic projection\n for paging. This particular resource method also varies on what it sets total to.\n The caveat with this test is that it incorrectly assigns a non null value for the total\n even though the MaskTree says to exclude it.",
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
@@ -69,6 +78,9 @@
         "pagingSupported" : true
       }, {
         "name" : "metadataAutomaticPagingFullyAutomatic",
+        "javaMethodName" : "metadataAutomaticPagingFullyAutomatic",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
         "doc" : "This resource method performs automatic projection for the custom metadata and complete automatic projection\n for paging. This means that it will provide a total in its construction of CollectionResult.",
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
@@ -76,6 +88,9 @@
         "pagingSupported" : true
       }, {
         "name" : "metadataManualPagingAutomaticPartialNull",
+        "javaMethodName" : "metadataManualPagingAutomaticPartialNull",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
         "doc" : "This resource method performs manual projection for the custom metadata and automatic projection\n for paging. This particular resource method also varies on what it sets total to.\n Comments excluded since its combining behavior from the previous tests.",
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
@@ -83,6 +98,9 @@
         "pagingSupported" : true
       }, {
         "name" : "metadataManualPagingFullyAutomatic",
+        "javaMethodName" : "metadataManualPagingFullyAutomatic",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
         "doc" : "This resource method performs manual projection for the custom metadata and automatic projection\n for Paging.",
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.Greeting"
@@ -90,6 +108,9 @@
         "pagingSupported" : true
       }, {
         "name" : "searchWithLinksResult",
+        "javaMethodName" : "searchWithLinksResult",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
         "doc" : "This resource method is used to create additional paging metadata for fields such as links. Client side\n tests can use this method to potentially project on fields inside of links.",
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.Empty"

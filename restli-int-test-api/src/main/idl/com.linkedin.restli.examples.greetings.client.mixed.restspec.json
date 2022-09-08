@@ -11,16 +11,28 @@
     },
     "supports" : [ "create", "delete", "get", "update" ],
     "methods" : [ {
-      "method" : "create"
+      "method" : "create",
+      "javaMethodName" : "create",
+      "javaMethodType" : "ASYNC"
     }, {
-      "method" : "get"
+      "method" : "get",
+      "javaMethodName" : "get",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false
     }, {
-      "method" : "update"
+      "method" : "update",
+      "javaMethodName" : "update",
+      "javaMethodType" : "PROMISE"
     }, {
-      "method" : "delete"
+      "method" : "delete",
+      "javaMethodName" : "delete",
+      "javaMethodType" : "PROMISE"
     } ],
     "finders" : [ {
       "name" : "search",
+      "javaMethodName" : "search",
+      "javaMethodType" : "PROMISE",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "what",
         "type" : "string"
@@ -28,6 +40,9 @@
     } ],
     "actions" : [ {
       "name" : "theAction",
+      "javaMethodName" : "theAction",
+      "javaMethodType" : "ASYNC",
+      "javaReturnsResultWrapper" : false,
       "returns" : "string"
     } ],
     "entity" : {

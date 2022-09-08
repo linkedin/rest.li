@@ -42,6 +42,9 @@
       "supports" : [ "get" ],
       "methods" : [ {
         "method" : "get",
+        "javaMethodName" : "get",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "ignoreProjection",
           "type" : "boolean",
