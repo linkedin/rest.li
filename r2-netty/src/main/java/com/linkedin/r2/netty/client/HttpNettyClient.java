@@ -60,6 +60,7 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.pool.ChannelPool;
+import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.handler.codec.http.HttpScheme;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -75,6 +76,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,7 +105,25 @@ public class HttpNettyClient implements TransportClient
   private final long _requestTimeout;
   private final long _streamingTimeout;
   private final long _shutdownTimeout;
+  private final String _udsAddress;
+
   private final AtomicReference<NettyClientState> _state;
+
+  @Deprecated
+  public HttpNettyClient(
+      EventLoopGroup eventLoopGroup,
+      ScheduledExecutorService scheduler,
+      ExecutorService callbackExecutor,
+      ChannelPoolManager channelPoolManager,
+      ChannelPoolManager sslChannelPoolManager,
+      HttpProtocolVersion protocolVersion,
+      Clock clock,
+      long requestTimeout,
+      long streamingTimeout,
+      long shutdownTimeout) {
+    this(eventLoopGroup, scheduler, callbackExecutor, channelPoolManager, sslChannelPoolManager, protocolVersion,
+        clock, requestTimeout, streamingTimeout, shutdownTimeout, null);
+  }
 
   /**
    * Creates a new instance of {@link HttpNettyClient}.
@@ -119,6 +139,7 @@ public class HttpNettyClient implements TransportClient
    * @param requestTimeout Time in milliseconds before an error response is returned in the callback
    *                       with a {@link TimeoutException}
    * @param shutdownTimeout Client shutdown timeout
+   * @param udsAddress Unix Domain Socket Address, used while using side car proxy for external communication
    */
   public HttpNettyClient(
       EventLoopGroup eventLoopGroup,
@@ -130,7 +151,8 @@ public class HttpNettyClient implements TransportClient
       Clock clock,
       long requestTimeout,
       long streamingTimeout,
-      long shutdownTimeout)
+      long shutdownTimeout,
+      String udsAddress)
   {
     ArgumentUtil.notNull(eventLoopGroup, "eventLoopGroup");
     ArgumentUtil.notNull(scheduler, "scheduler");
@@ -158,6 +180,8 @@ public class HttpNettyClient implements TransportClient
     _requestTimeout = requestTimeout;
     _streamingTimeout = streamingTimeout;
     _shutdownTimeout = shutdownTimeout;
+    _udsAddress = udsAddress;
+
 
     _state = new AtomicReference<>(NettyClientState.RUNNING);
   }
@@ -298,16 +322,23 @@ public class HttpNettyClient implements TransportClient
 
     // resolve address
     final SocketAddress address;
-    try
-    {
-      TimingContextUtil.markTiming(requestContext, TIMING_KEY);
-      address = resolveAddress(request, requestContext);
-      TimingContextUtil.markTiming(requestContext, TIMING_KEY);
-    }
-    catch (Exception e)
-    {
-      decoratedCallback.onResponse(TransportResponseImpl.error(e));
-      return;
+
+    if (StringUtils.isEmpty(_udsAddress)) {
+      try {
+        TimingContextUtil.markTiming(requestContext, TIMING_KEY);
+        address = resolveAddress(request, requestContext);
+        TimingContextUtil.markTiming(requestContext, TIMING_KEY);
+      } catch (Exception e) {
+        decoratedCallback.onResponse(TransportResponseImpl.error(e));
+        return;
+      }
+    } else {
+      try {
+        address = new DomainSocketAddress(_udsAddress);
+      } catch (Exception e) {
+        decoratedCallback.onResponse(TransportResponseImpl.error(e));
+        return;
+      }
     }
 
     // Serialize wire attributes

@@ -29,6 +29,7 @@ import com.linkedin.r2.netty.handler.http2.Http2MessageDecoders;
 import com.linkedin.r2.netty.handler.http2.Http2MessageEncoders;
 import com.linkedin.r2.netty.handler.http2.Http2ProtocolUpgradeHandler;
 import com.linkedin.r2.netty.handler.http2.UnsupportedHandler;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -112,7 +113,7 @@ import javax.net.ssl.SSLParameters;
  * @author Sean Sheng
  * @author Nizar Mankulangara
  */
-class Http2ChannelInitializer extends ChannelInitializer<NioSocketChannel>
+class Http2ChannelInitializer extends ChannelInitializer<Channel>
 {
   private static final long MAX_INITIAL_STREAM_WINDOW_SIZE = 8 * 1024 * 1024;
   private static final boolean IS_CLIENT = true;
@@ -142,7 +143,7 @@ class Http2ChannelInitializer extends ChannelInitializer<NioSocketChannel>
   }
 
   @Override
-  protected void initChannel(NioSocketChannel channel) throws SSLException
+  protected void initChannel(Channel channel) throws SSLException
   {
     if (_ssl)
     {
@@ -157,7 +158,7 @@ class Http2ChannelInitializer extends ChannelInitializer<NioSocketChannel>
   /**
    * Configure the pipeline for TLS ALPN negotiation to HTTP/2.
    */
-  private void configureSsl(NioSocketChannel channel) throws SSLException
+  private void configureSsl(Channel channel) throws SSLException
   {
     final SslContext sslCtx = createSslContext();
     final ChannelPromise alpnPromise = channel.newPromise();
@@ -195,7 +196,7 @@ class Http2ChannelInitializer extends ChannelInitializer<NioSocketChannel>
   /**
    * Configure the pipeline for HTTP/2 clear text.
    */
-  private void configureClearText(NioSocketChannel channel)
+  private void configureClearText(Channel channel)
   {
     final HttpClientCodec sourceCodec = new HttpClientCodec(_maxInitialLineLength, _maxHeaderSize, _maxChunkSize);
 
