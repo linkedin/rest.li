@@ -11,6 +11,7 @@
     "supports" : [ "batch_get", "create", "delete", "get", "get_all", "partial_update" ],
     "methods" : [ {
       "method" : "create",
+      "javaMethodName" : "create",
       "javaMethodType" : "SYNC",
       "doc" : "Creates a new Status",
       "parameters" : [ {
@@ -25,6 +26,7 @@
       } ]
     }, {
       "method" : "get",
+      "javaMethodName" : "get",
       "javaMethodType" : "SYNC",
       "javaReturnsResultWrapper" : false,
       "doc" : "Gets a single status resource",
@@ -40,6 +42,7 @@
       } ]
     }, {
       "method" : "partial_update",
+      "javaMethodName" : "update",
       "javaMethodType" : "SYNC",
       "doc" : "Updates a single status resource",
       "parameters" : [ {
@@ -54,6 +57,7 @@
       } ]
     }, {
       "method" : "delete",
+      "javaMethodName" : "delete",
       "javaMethodType" : "SYNC",
       "doc" : "Deletes a status resource",
       "parameters" : [ {
@@ -68,6 +72,7 @@
       } ]
     }, {
       "method" : "batch_get",
+      "javaMethodName" : "batchGet",
       "javaMethodType" : "SYNC",
       "javaReturnsResultWrapper" : false,
       "doc" : "Gets a batch of statuses",
@@ -83,6 +88,7 @@
       } ]
     }, {
       "method" : "get_all",
+      "javaMethodName" : "getAll",
       "javaMethodType" : "SYNC",
       "javaReturnsResultWrapper" : false,
       "parameters" : [ {
@@ -98,6 +104,7 @@
     } ],
     "finders" : [ {
       "name" : "criteria",
+      "javaMethodName" : "findByCriteria",
       "javaMethodType" : "SYNC",
       "javaReturnsResultWrapper" : false,
       "parameters" : [ {
@@ -113,6 +120,7 @@
     } ],
     "actions" : [ {
       "name" : "forward",
+      "javaMethodName" : "forward",
       "javaMethodType" : "SYNC",
       "javaReturnsResultWrapper" : false,
       "parameters" : [ {

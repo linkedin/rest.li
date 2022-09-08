@@ -11,6 +11,11 @@ record FinderSchema includes CustomAnnotationSchema, ServiceErrorsSchema, Succes
   name: optional string
 
   /**
+   * Java method name for this rest method
+   */
+  javaMethodName: optional string
+
+  /**
    * Java method type for this finder method
    */
   javaMethodType: optional JavaMethodType = "SYNC"

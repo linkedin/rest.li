@@ -22,24 +22,28 @@
           "returnEntity" : { }
         },
         "method" : "create",
+        "javaMethodName" : "create",
         "javaMethodType" : "SYNC"
       }, {
         "annotations" : {
           "returnEntity" : { }
         },
         "method" : "partial_update",
+        "javaMethodName" : "update",
         "javaMethodType" : "SYNC"
       }, {
         "annotations" : {
           "returnEntity" : { }
         },
         "method" : "batch_create",
+        "javaMethodName" : "batchCreate",
         "javaMethodType" : "SYNC"
       }, {
         "annotations" : {
           "returnEntity" : { }
         },
         "method" : "batch_partial_update",
+        "javaMethodName" : "update",
         "javaMethodType" : "SYNC"
       } ],
       "entity" : {

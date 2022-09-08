@@ -11,6 +11,11 @@ record RestMethodSchema includes CustomAnnotationSchema, ServiceErrorsSchema, Su
   method: string
 
   /**
+   * Java method name for this rest method
+   */
+  javaMethodName: optional string
+
+  /**
    * Java method type for this rest method
    */
   javaMethodType: optional JavaMethodType = "SYNC"

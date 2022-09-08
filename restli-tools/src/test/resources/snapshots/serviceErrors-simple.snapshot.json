@@ -48,6 +48,7 @@
           "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
         } ],
         "method" : "get",
+        "javaMethodName" : "get",
         "javaMethodType" : "SYNC",
         "javaReturnsResultWrapper" : false,
         "doc" : "This ensures that annotation-specified CRUD methods can specify a method-level service error."
@@ -60,6 +61,7 @@
         } ],
         "success" : [ 204 ],
         "method" : "update",
+        "javaMethodName" : "update",
         "javaMethodType" : "SYNC",
         "doc" : "This ensures that template CRUD methods can specify a method-level service error in conjunction with\n success statuses. Also uses an error code with a unique error detail type."
       } ],
@@ -75,6 +77,7 @@
           "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
         } ],
         "name" : "doAction",
+        "javaMethodName" : "doAction",
         "javaMethodType" : "SYNC",
         "javaReturnsResultWrapper" : false,
         "doc" : "Ensures that action methods can specify a method-level service error.\n Also ensures that service errors without messages can be used.",
