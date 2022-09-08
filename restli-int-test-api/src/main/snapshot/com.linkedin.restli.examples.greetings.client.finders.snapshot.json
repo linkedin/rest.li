@@ -64,16 +64,28 @@
       },
       "supports" : [ ],
       "finders" : [ {
-        "name" : "basicSearch"
+        "name" : "basicSearch",
+        "javaMethodName" : "basicSearch",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       }, {
-        "name" : "predefinedSearch"
+        "name" : "predefinedSearch",
+        "javaMethodName" : "predefinedSearch",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       }, {
         "name" : "searchWithMetadata",
+        "javaMethodName" : "searchWithMetadata",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.SearchMetadata"
         }
       }, {
-        "name" : "searchWithoutMetadata"
+        "name" : "searchWithoutMetadata",
+        "javaMethodName" : "search",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true
       } ],
       "entity" : {
         "path" : "/finders/{findersId}"

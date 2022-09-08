@@ -62,28 +62,51 @@
       } ],
       "supports" : [ "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "partial_update", "update" ],
       "methods" : [ {
-        "method" : "create"
+        "method" : "create",
+        "javaMethodName" : "create",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       }, {
-        "method" : "update"
+        "method" : "update",
+        "javaMethodName" : "update",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "partial_update"
+        "method" : "partial_update",
+        "javaMethodName" : "update",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "delete"
+        "method" : "delete",
+        "javaMethodName" : "delete",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "batch_get"
+        "method" : "batch_get",
+        "javaMethodName" : "batchGet",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       }, {
-        "method" : "batch_update"
+        "method" : "batch_update",
+        "javaMethodName" : "batchUpdate",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "batch_partial_update"
+        "method" : "batch_partial_update",
+        "javaMethodName" : "batchUpdate",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "batch_delete"
+        "method" : "batch_delete",
+        "javaMethodName" : "batchDelete",
+        "javaMethodType" : "SYNC"
       } ],
       "entity" : {
         "path" : "/altKey/{altKeyId}",
         "actions" : [ {
           "name" : "getKeyValue",
+          "javaMethodName" : "testAction",
+          "javaMethodType" : "SYNC",
+          "javaReturnsResultWrapper" : false,
           "returns" : "long"
         } ],
         "subresources" : [ {
@@ -104,9 +127,15 @@
             } ],
             "supports" : [ "batch_get", "get" ],
             "methods" : [ {
-              "method" : "get"
+              "method" : "get",
+              "javaMethodName" : "get",
+              "javaMethodType" : "SYNC",
+              "javaReturnsResultWrapper" : false
             }, {
-              "method" : "batch_get"
+              "method" : "batch_get",
+              "javaMethodName" : "batchGet",
+              "javaMethodType" : "SYNC",
+              "javaReturnsResultWrapper" : false
             } ],
             "entity" : {
               "path" : "/altKey/{altKeyId}/altKeySub/{subKey}"

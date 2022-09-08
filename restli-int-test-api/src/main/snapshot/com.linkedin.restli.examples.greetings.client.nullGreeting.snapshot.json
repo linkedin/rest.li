@@ -69,25 +69,48 @@
       },
       "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "get_all", "update" ],
       "methods" : [ {
-        "method" : "create"
+        "method" : "create",
+        "javaMethodName" : "create",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       }, {
-        "method" : "update"
+        "method" : "update",
+        "javaMethodName" : "update",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "delete"
+        "method" : "delete",
+        "javaMethodName" : "delete",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "batch_create"
+        "method" : "batch_create",
+        "javaMethodName" : "batchCreate",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "batch_get"
+        "method" : "batch_get",
+        "javaMethodName" : "batchGetBatchResult",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true
       }, {
-        "method" : "batch_update"
+        "method" : "batch_update",
+        "javaMethodName" : "batchUpdate",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "batch_partial_update"
+        "method" : "batch_partial_update",
+        "javaMethodName" : "batchUpdate",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "batch_delete"
+        "method" : "batch_delete",
+        "javaMethodName" : "batchDelete",
+        "javaMethodType" : "SYNC"
       }, {
         "method" : "get_all",
+        "javaMethodName" : "getAllCollectionResult",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.Empty"
         },
@@ -95,6 +118,9 @@
       } ],
       "finders" : [ {
         "name" : "finderCallbackNullList",
+        "javaMethodName" : "finderCallbackNull",
+        "javaMethodType" : "ASYNC",
+        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone"
@@ -102,6 +128,9 @@
         "pagingSupported" : true
       }, {
         "name" : "finderPromiseNullList",
+        "javaMethodName" : "finderPromiseNullList",
+        "javaMethodType" : "PROMISE",
+        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone"
@@ -109,6 +138,9 @@
         "pagingSupported" : true
       }, {
         "name" : "finderTaskNullList",
+        "javaMethodName" : "finderTaskNullList",
+        "javaMethodType" : "TASK",
+        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone"
@@ -116,6 +148,9 @@
         "pagingSupported" : true
       }, {
         "name" : "searchReturnNullCollectionList",
+        "javaMethodName" : "searchReturnNullCollectionList",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone"
@@ -126,6 +161,9 @@
         "pagingSupported" : true
       }, {
         "name" : "searchReturnNullList",
+        "javaMethodName" : "searchReturnNullList",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone"
@@ -134,18 +172,33 @@
       } ],
       "actions" : [ {
         "name" : "returnActionResultWithNullStatus",
+        "javaMethodName" : "returnActionResultWithNullStatus",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
         "returns" : "int"
       }, {
         "name" : "returnActionResultWithNullValue",
+        "javaMethodName" : "returnActionResultWithNullValue",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
         "returns" : "int"
       }, {
         "name" : "returnNullActionResult",
+        "javaMethodName" : "returnNull",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true,
         "returns" : "int"
       }, {
         "name" : "returnNullStringArray",
+        "javaMethodName" : "returnNullStringArray",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "returns" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
       }, {
         "name" : "returnStringArrayWithNullElement",
+        "javaMethodName" : "returnStringArrayWithNullElement",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "returns" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
       } ],
       "entity" : {

@@ -41,9 +41,15 @@
       },
       "supports" : [ "batch_get", "get" ],
       "methods" : [ {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       }, {
-        "method" : "batch_get"
+        "method" : "batch_get",
+        "javaMethodName" : "batchGet",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       } ],
       "entity" : {
         "path" : "/cookie/{cookieId}"

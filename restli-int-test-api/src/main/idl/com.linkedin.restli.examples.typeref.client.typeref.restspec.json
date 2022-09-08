@@ -12,6 +12,9 @@
     "supports" : [ ],
     "actions" : [ {
       "name" : "BytesFunc",
+      "javaMethodName" : "bytesFunc",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "arg1",
         "type" : "com.linkedin.restli.examples.typeref.api.BytesRef"
@@ -19,6 +22,9 @@
       "returns" : "com.linkedin.restli.examples.typeref.api.BytesRef"
     }, {
       "name" : "CustomNonNegativeLongRef",
+      "javaMethodName" : "CustomNonNegativeLong",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "arg1",
         "type" : "com.linkedin.restli.examples.typeref.api.CustomNonNegativeLongRef"
@@ -26,6 +32,9 @@
       "returns" : "com.linkedin.restli.examples.typeref.api.CustomNonNegativeLongRef"
     }, {
       "name" : "FruitsRef",
+      "javaMethodName" : "FruitsFunc",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "arg1",
         "type" : "com.linkedin.restli.examples.typeref.api.FruitsRef"
@@ -33,6 +42,9 @@
       "returns" : "com.linkedin.restli.examples.typeref.api.FruitsRef"
     }, {
       "name" : "IntArrayFunc",
+      "javaMethodName" : "IntArrayFunc",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "arg1",
         "type" : "com.linkedin.restli.examples.typeref.api.IntArrayRef"
@@ -40,6 +52,9 @@
       "returns" : "com.linkedin.restli.examples.typeref.api.IntArrayRef"
     }, {
       "name" : "IntMapFunc",
+      "javaMethodName" : "IntMapFunc",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "arg1",
         "type" : "com.linkedin.restli.examples.typeref.api.IntMapRef"
@@ -47,6 +62,9 @@
       "returns" : "com.linkedin.restli.examples.typeref.api.IntMapRef"
     }, {
       "name" : "PointRef",
+      "javaMethodName" : "PointFunc",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "arg1",
         "type" : "com.linkedin.restli.examples.typeref.api.PointRef"
@@ -54,6 +72,9 @@
       "returns" : "com.linkedin.restli.examples.typeref.api.PointRef"
     }, {
       "name" : "StringFunc",
+      "javaMethodName" : "StringFunc",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "arg1",
         "type" : "com.linkedin.restli.examples.typeref.api.StringRef"
@@ -61,6 +82,9 @@
       "returns" : "com.linkedin.restli.examples.typeref.api.StringRef"
     }, {
       "name" : "booleanFunc",
+      "javaMethodName" : "booleanFunc",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "arg1",
         "type" : "com.linkedin.restli.examples.typeref.api.BooleanRef"
@@ -68,6 +92,9 @@
       "returns" : "com.linkedin.restli.examples.typeref.api.BooleanRef"
     }, {
       "name" : "booleanFunc2",
+      "javaMethodName" : "BooleanFunc",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "arg1",
         "type" : "com.linkedin.restli.examples.typeref.api.BooleanRef"
@@ -75,6 +102,9 @@
       "returns" : "com.linkedin.restli.examples.typeref.api.BooleanRef"
     }, {
       "name" : "doubleFunc",
+      "javaMethodName" : "doubleFunc",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "arg1",
         "type" : "com.linkedin.restli.examples.typeref.api.DoubleRef"
@@ -82,6 +112,9 @@
       "returns" : "com.linkedin.restli.examples.typeref.api.DoubleRef"
     }, {
       "name" : "doubleFunc2",
+      "javaMethodName" : "DoubleFunc",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "arg1",
         "type" : "com.linkedin.restli.examples.typeref.api.DoubleRef"
@@ -89,6 +122,9 @@
       "returns" : "com.linkedin.restli.examples.typeref.api.DoubleRef"
     }, {
       "name" : "floatFunc",
+      "javaMethodName" : "floatFunc",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "arg1",
         "type" : "com.linkedin.restli.examples.typeref.api.FloatRef"
@@ -96,6 +132,9 @@
       "returns" : "com.linkedin.restli.examples.typeref.api.FloatRef"
     }, {
       "name" : "floatFunc2",
+      "javaMethodName" : "FloatFunc",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "arg1",
         "type" : "com.linkedin.restli.examples.typeref.api.FloatRef"
@@ -103,6 +142,9 @@
       "returns" : "com.linkedin.restli.examples.typeref.api.FloatRef"
     }, {
       "name" : "intFunc",
+      "javaMethodName" : "intFunc",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "arg1",
         "type" : "com.linkedin.restli.examples.typeref.api.IntRef"
@@ -110,6 +152,9 @@
       "returns" : "com.linkedin.restli.examples.typeref.api.IntRef"
     }, {
       "name" : "intFunc2",
+      "javaMethodName" : "IntegerFunc",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "arg1",
         "type" : "com.linkedin.restli.examples.typeref.api.IntRef"
@@ -117,6 +162,9 @@
       "returns" : "com.linkedin.restli.examples.typeref.api.IntRef"
     }, {
       "name" : "longFunc",
+      "javaMethodName" : "longFunc",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "arg1",
         "type" : "com.linkedin.restli.examples.typeref.api.LongRef"
@@ -124,6 +172,9 @@
       "returns" : "com.linkedin.restli.examples.typeref.api.LongRef"
     }, {
       "name" : "longFunc2",
+      "javaMethodName" : "LongFunc",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "arg1",
         "type" : "com.linkedin.restli.examples.typeref.api.LongRef"

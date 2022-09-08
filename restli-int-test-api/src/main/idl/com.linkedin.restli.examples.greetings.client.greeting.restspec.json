@@ -8,19 +8,31 @@
     "supports" : [ "delete", "get", "partial_update", "update" ],
     "methods" : [ {
       "method" : "get",
+      "javaMethodName" : "get",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Gets the greeting."
     }, {
       "method" : "update",
+      "javaMethodName" : "update",
+      "javaMethodType" : "SYNC",
       "doc" : "Updates the greeting."
     }, {
       "method" : "partial_update",
+      "javaMethodName" : "update",
+      "javaMethodType" : "SYNC",
       "doc" : "Updates the greeting."
     }, {
       "method" : "delete",
+      "javaMethodName" : "delete",
+      "javaMethodType" : "SYNC",
       "doc" : "Deletes the greeting."
     } ],
     "actions" : [ {
       "name" : "exampleAction",
+      "javaMethodName" : "exampleAction",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "doc" : "An example action on the greeting.",
       "parameters" : [ {
         "name" : "param1",
@@ -29,6 +41,9 @@
       "returns" : "int"
     }, {
       "name" : "exceptionTest",
+      "javaMethodName" : "exceptionTest",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "doc" : "An example action throwing an exception."
     } ],
     "entity" : {
@@ -42,7 +57,10 @@
         "simple" : {
           "supports" : [ "get" ],
           "methods" : [ {
-            "method" : "get"
+            "method" : "get",
+            "javaMethodName" : "get",
+            "javaMethodType" : "SYNC",
+            "javaReturnsResultWrapper" : false
           } ],
           "entity" : {
             "path" : "/greeting/subGreetingSimpleUnstructuredData"
@@ -61,22 +79,41 @@
           },
           "supports" : [ "batch_create", "batch_get", "create", "delete", "get", "partial_update", "update" ],
           "methods" : [ {
-            "method" : "create"
+            "method" : "create",
+            "javaMethodName" : "create",
+            "javaMethodType" : "SYNC"
           }, {
-            "method" : "get"
+            "method" : "get",
+            "javaMethodName" : "get",
+            "javaMethodType" : "SYNC",
+            "javaReturnsResultWrapper" : false
           }, {
-            "method" : "update"
+            "method" : "update",
+            "javaMethodName" : "update",
+            "javaMethodType" : "SYNC"
           }, {
-            "method" : "partial_update"
+            "method" : "partial_update",
+            "javaMethodName" : "update",
+            "javaMethodType" : "SYNC"
           }, {
-            "method" : "delete"
+            "method" : "delete",
+            "javaMethodName" : "delete",
+            "javaMethodType" : "SYNC"
           }, {
-            "method" : "batch_create"
+            "method" : "batch_create",
+            "javaMethodName" : "batchCreate",
+            "javaMethodType" : "SYNC"
           }, {
-            "method" : "batch_get"
+            "method" : "batch_get",
+            "javaMethodName" : "batchGet",
+            "javaMethodType" : "SYNC",
+            "javaReturnsResultWrapper" : false
           } ],
           "finders" : [ {
             "name" : "search",
+            "javaMethodName" : "search",
+            "javaMethodType" : "SYNC",
+            "javaReturnsResultWrapper" : false,
             "parameters" : [ {
               "name" : "tone",
               "type" : "com.linkedin.restli.examples.greetings.api.Tone",
@@ -89,9 +126,15 @@
             "pagingSupported" : true
           } ],
           "actions" : [ {
-            "name" : "exceptionTest"
+            "name" : "exceptionTest",
+            "javaMethodName" : "exceptionTest",
+            "javaMethodType" : "SYNC",
+            "javaReturnsResultWrapper" : false
           }, {
             "name" : "purge",
+            "javaMethodName" : "purge",
+            "javaMethodType" : "SYNC",
+            "javaReturnsResultWrapper" : false,
             "returns" : "int"
           } ],
           "entity" : {
@@ -123,7 +166,10 @@
                       },
                       "supports" : [ "get" ],
                       "methods" : [ {
-                        "method" : "get"
+                        "method" : "get",
+                        "javaMethodName" : "get",
+                        "javaMethodType" : "SYNC",
+                        "javaReturnsResultWrapper" : false
                       } ],
                       "entity" : {
                         "path" : "/greeting/subgreetings/{subgreetingsId}/greetingsOfgreetingsOfgreeting/{greetingsOfgreetingsOfgreetingId}/greetingsOfgreetingsOfgreetingsOfgreeting/{greetingsOfgreetingsOfgreetingsOfgreetingId}"
@@ -142,19 +188,31 @@
                 "supports" : [ "delete", "get", "partial_update", "update" ],
                 "methods" : [ {
                   "method" : "get",
+                  "javaMethodName" : "get",
+                  "javaMethodType" : "SYNC",
+                  "javaReturnsResultWrapper" : false,
                   "doc" : "Gets the greeting."
                 }, {
                   "method" : "update",
+                  "javaMethodName" : "update",
+                  "javaMethodType" : "SYNC",
                   "doc" : "Updates the greeting."
                 }, {
                   "method" : "partial_update",
+                  "javaMethodName" : "update",
+                  "javaMethodType" : "SYNC",
                   "doc" : "Updates the greeting."
                 }, {
                   "method" : "delete",
+                  "javaMethodName" : "delete",
+                  "javaMethodType" : "SYNC",
                   "doc" : "Deletes the greeting."
                 } ],
                 "actions" : [ {
                   "name" : "exampleAction",
+                  "javaMethodName" : "exampleAction",
+                  "javaMethodType" : "SYNC",
+                  "javaReturnsResultWrapper" : false,
                   "doc" : "An example action on the greeting.",
                   "parameters" : [ {
                     "name" : "param1",
@@ -163,6 +221,9 @@
                   "returns" : "int"
                 }, {
                   "name" : "exceptionTest",
+                  "javaMethodName" : "exceptionTest",
+                  "javaMethodType" : "SYNC",
+                  "javaReturnsResultWrapper" : false,
                   "doc" : "An example action throwing an exception."
                 } ],
                 "entity" : {

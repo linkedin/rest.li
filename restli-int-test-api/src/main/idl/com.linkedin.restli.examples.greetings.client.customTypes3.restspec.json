@@ -15,12 +15,20 @@
     } ],
     "supports" : [ "batch_update", "get" ],
     "methods" : [ {
-      "method" : "get"
+      "method" : "get",
+      "javaMethodName" : "get",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false
     }, {
-      "method" : "batch_update"
+      "method" : "batch_update",
+      "javaMethodName" : "batchUpdate",
+      "javaMethodType" : "SYNC"
     } ],
     "finders" : [ {
       "name" : "dateOnly",
+      "javaMethodName" : "dateOnly",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "assocKeys" : [ "dateId" ]
     } ],
     "entity" : {

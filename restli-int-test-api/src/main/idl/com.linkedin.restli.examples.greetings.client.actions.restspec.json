@@ -6,9 +6,15 @@
   "actionsSet" : {
     "actions" : [ {
       "name" : "arrayPromise",
+      "javaMethodName" : "arrayPromise",
+      "javaMethodType" : "PROMISE",
+      "javaReturnsResultWrapper" : false,
       "returns" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
     }, {
       "name" : "customTypeRef",
+      "javaMethodName" : "customTypeRef",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "customLong",
         "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
@@ -16,6 +22,9 @@
       "returns" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
     }, {
       "name" : "echo",
+      "javaMethodName" : "echo",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "input",
         "type" : "string"
@@ -23,6 +32,9 @@
       "returns" : "string"
     }, {
       "name" : "echoMessage",
+      "javaMethodName" : "echoMessage",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "message",
         "type" : "com.linkedin.restli.examples.greetings.api.Message"
@@ -30,6 +42,9 @@
       "returns" : "com.linkedin.restli.examples.greetings.api.Message"
     }, {
       "name" : "echoMessageArray",
+      "javaMethodName" : "echoMessage",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "messages",
         "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Message\" }"
@@ -37,6 +52,9 @@
       "returns" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Message\" }"
     }, {
       "name" : "echoStringArray",
+      "javaMethodName" : "echoStringArray",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "strings",
         "type" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
@@ -44,6 +62,9 @@
       "returns" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
     }, {
       "name" : "echoToneArray",
+      "javaMethodName" : "echoToneArray",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "tones",
         "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Tone\" }"
@@ -51,36 +72,69 @@
       "returns" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Tone\" }"
     }, {
       "name" : "failCallbackCall",
+      "javaMethodName" : "failCall",
+      "javaMethodType" : "ASYNC",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Action that fails by calling the callback"
     }, {
       "name" : "failCallbackThrow",
+      "javaMethodName" : "failThrow",
+      "javaMethodType" : "ASYNC",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Action that fails by throwing an exception"
     }, {
       "name" : "failPromiseCall",
+      "javaMethodName" : "failPromiseCall",
+      "javaMethodType" : "PROMISE",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Action that fails by calling SettablePromise.fail"
     }, {
       "name" : "failPromiseThrow",
+      "javaMethodName" : "failPromiseThrow",
+      "javaMethodType" : "PROMISE",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Action that fails by throwing an exception, returning a promise"
     }, {
       "name" : "failTaskCall",
+      "javaMethodName" : "failTaskCall",
+      "javaMethodType" : "TASK",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Action that fails by calling SettablePromise.fail promise in a task"
     }, {
       "name" : "failTaskThrow",
+      "javaMethodName" : "failTaskThrow",
+      "javaMethodType" : "TASK",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Action that fails by throwing an exception, returning a task"
     }, {
       "name" : "failThrowInTask",
+      "javaMethodName" : "failThrowInTask",
+      "javaMethodType" : "TASK",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Action that fails by throwing an exception in the task"
     }, {
       "name" : "get",
+      "javaMethodName" : "get",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "returns" : "string"
     }, {
       "name" : "nullPromise",
+      "javaMethodName" : "nullPromise",
+      "javaMethodType" : "PROMISE",
+      "javaReturnsResultWrapper" : false,
       "returns" : "string"
     }, {
       "name" : "nullTask",
+      "javaMethodName" : "nullTask",
+      "javaMethodType" : "TASK",
+      "javaReturnsResultWrapper" : false,
       "returns" : "string"
     }, {
       "name" : "parseq",
+      "javaMethodName" : "parseqAction",
+      "javaMethodType" : "PROMISE",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Performs three \"slow\" tasks and collects the results. This uses the passed context\n parameter to execute tasks. The position of the context argument is arbitrary.\nService Returns: Concatenation of binary representation of a, all caps of b, and string value\nof c",
       "parameters" : [ {
         "name" : "a",
@@ -95,6 +149,9 @@
       "returns" : "string"
     }, {
       "name" : "parseq3",
+      "javaMethodName" : "parseqAction3",
+      "javaMethodType" : "TASK",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Performs three \"slow\" tasks and collects the results. This returns a task and lets\n the RestLi server invoke it.\nService Returns: Concatenation of binary representation of a, all caps of b, and string value\nof c",
       "parameters" : [ {
         "name" : "a",
@@ -109,9 +166,15 @@
       "returns" : "string"
     }, {
       "name" : "returnBool",
+      "javaMethodName" : "returnBool",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "returns" : "boolean"
     }, {
       "name" : "returnBoolOptionalParam",
+      "javaMethodName" : "returnBoolOptionalParam",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "param",
         "type" : "boolean",
@@ -120,9 +183,15 @@
       "returns" : "boolean"
     }, {
       "name" : "returnInt",
+      "javaMethodName" : "returnPrimitive",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "returns" : "int"
     }, {
       "name" : "returnIntOptionalParam",
+      "javaMethodName" : "returnIntOptionalParam",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "param",
         "type" : "int",
@@ -130,9 +199,15 @@
       } ],
       "returns" : "int"
     }, {
-      "name" : "returnVoid"
+      "name" : "returnVoid",
+      "javaMethodName" : "returnVoid",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : true
     }, {
       "name" : "taskCreationDelay",
+      "javaMethodName" : "taskCreationDelay",
+      "javaMethodType" : "TASK",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Simulates a delay in an asynchronous resource caused by ParSeq execution plan creation. The delay is simulated as\n {@link Thread#sleep(long)} because execution plan creation is a synchronous operation.\nService Returns: Nothing",
       "parameters" : [ {
         "name" : "delay",
@@ -141,6 +216,9 @@
       } ]
     }, {
       "name" : "taskExecutionDelay",
+      "javaMethodName" : "taskExecutionDelay",
+      "javaMethodType" : "TASK",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Simulates a delay in an asynchronous resource. The delay is simulated using a scheduled task (asynchronously).\n That is how a typical async resource looks like in terms of delays.\nService Returns: Nothing",
       "parameters" : [ {
         "name" : "delay",
@@ -148,11 +226,20 @@
         "doc" : "the number of milliseconds it will take this resource to create an execution plan"
       } ]
     }, {
-      "name" : "timeout"
+      "name" : "timeout",
+      "javaMethodName" : "timeout",
+      "javaMethodType" : "PROMISE",
+      "javaReturnsResultWrapper" : false
     }, {
-      "name" : "timeoutCallback"
+      "name" : "timeoutCallback",
+      "javaMethodName" : "timeout",
+      "javaMethodType" : "ASYNC",
+      "javaReturnsResultWrapper" : false
     }, {
       "name" : "ultimateAnswer",
+      "javaMethodName" : "testAction",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "returns" : "int"
     } ]
   }

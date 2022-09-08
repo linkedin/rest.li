@@ -41,11 +41,18 @@
       },
       "supports" : [ "create", "get", "update" ],
       "methods" : [ {
-        "method" : "create"
+        "method" : "create",
+        "javaMethodName" : "create",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       }, {
-        "method" : "update"
+        "method" : "update",
+        "javaMethodName" : "update",
+        "javaMethodType" : "SYNC"
       } ],
       "entity" : {
         "path" : "/exceptions3/{exceptions3Id}"

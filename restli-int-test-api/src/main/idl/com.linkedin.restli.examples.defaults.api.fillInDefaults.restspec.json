@@ -11,11 +11,20 @@
     },
     "supports" : [ "batch_get", "get", "get_all" ],
     "methods" : [ {
-      "method" : "get"
+      "method" : "get",
+      "javaMethodName" : "get",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false
     }, {
-      "method" : "batch_get"
+      "method" : "batch_get",
+      "javaMethodName" : "batchGet",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false
     }, {
       "method" : "get_all",
+      "javaMethodName" : "getAllHighLevelRecordWithDefault",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : true,
       "metadata" : {
         "type" : "com.linkedin.restli.examples.defaults.api.LowLevelRecordWithDefault"
       },
@@ -23,6 +32,9 @@
     } ],
     "finders" : [ {
       "name" : "findRecords",
+      "javaMethodName" : "findRecords",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : true,
       "parameters" : [ {
         "name" : "noDefaultFieldA",
         "type" : "int"
@@ -33,6 +45,9 @@
     } ],
     "batchFinders" : [ {
       "name" : "searchRecords",
+      "javaMethodName" : "searchRecords",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : true,
       "parameters" : [ {
         "name" : "criteria",
         "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.defaults.api.RecordCriteria\" }"
@@ -44,6 +59,9 @@
     } ],
     "actions" : [ {
       "name" : "defaultFillAction",
+      "javaMethodName" : "takeAction",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : true,
       "parameters" : [ {
         "name" : "actionParam",
         "type" : "long"

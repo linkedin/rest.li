@@ -54,6 +54,8 @@
       "supports" : [ "create", "delete", "get", "partial_update", "update" ],
       "methods" : [ {
         "method" : "create",
+        "javaMethodName" : "createGreeting",
+        "javaMethodType" : "SYNC",
         "parameters" : [ {
           "name" : "auth",
           "type" : "string",
@@ -61,6 +63,9 @@
         } ]
       }, {
         "method" : "get",
+        "javaMethodName" : "getGreeting",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "auth",
           "type" : "string",
@@ -72,6 +77,8 @@
         } ]
       }, {
         "method" : "update",
+        "javaMethodName" : "updateGreeting",
+        "javaMethodType" : "SYNC",
         "parameters" : [ {
           "name" : "auth",
           "type" : "string",
@@ -79,6 +86,8 @@
         } ]
       }, {
         "method" : "partial_update",
+        "javaMethodName" : "updateGreeting",
+        "javaMethodType" : "SYNC",
         "parameters" : [ {
           "name" : "auth",
           "type" : "string",
@@ -86,6 +95,8 @@
         } ]
       }, {
         "method" : "delete",
+        "javaMethodName" : "deleteGreeting",
+        "javaMethodType" : "SYNC",
         "parameters" : [ {
           "name" : "auth",
           "type" : "string",

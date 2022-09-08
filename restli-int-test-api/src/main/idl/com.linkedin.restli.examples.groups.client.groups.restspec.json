@@ -11,18 +11,33 @@
     },
     "supports" : [ "batch_get", "create", "delete", "get", "partial_update" ],
     "methods" : [ {
-      "method" : "create"
+      "method" : "create",
+      "javaMethodName" : "create",
+      "javaMethodType" : "SYNC"
     }, {
-      "method" : "get"
+      "method" : "get",
+      "javaMethodName" : "get",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false
     }, {
-      "method" : "partial_update"
+      "method" : "partial_update",
+      "javaMethodName" : "update",
+      "javaMethodType" : "SYNC"
     }, {
-      "method" : "delete"
+      "method" : "delete",
+      "javaMethodName" : "delete",
+      "javaMethodType" : "SYNC"
     }, {
-      "method" : "batch_get"
+      "method" : "batch_get",
+      "javaMethodName" : "batchGet",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false
     } ],
     "finders" : [ {
       "name" : "complexCircuit",
+      "javaMethodName" : "complexCircuit",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "doc" : "Test the default value for various types",
       "parameters" : [ {
         "name" : "nativeArray",
@@ -68,6 +83,9 @@
       "pagingSupported" : true
     }, {
       "name" : "emailDomain",
+      "javaMethodName" : "findByEmailDomain",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "emailDomain",
         "type" : "string"
@@ -75,6 +93,9 @@
       "pagingSupported" : true
     }, {
       "name" : "manager",
+      "javaMethodName" : "findByManager",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "managerMemberID",
         "type" : "int"
@@ -82,6 +103,9 @@
       "pagingSupported" : true
     }, {
       "name" : "search",
+      "javaMethodName" : "search",
+      "javaMethodType" : "SYNC",
+      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "keywords",
         "type" : "string",
@@ -101,6 +125,9 @@
       "path" : "/groups/{groupID}",
       "actions" : [ {
         "name" : "sendTestAnnouncement",
+        "javaMethodName" : "sendTestAnnouncement",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "subject",
           "type" : "string"
@@ -113,6 +140,9 @@
         } ]
       }, {
         "name" : "transferOwnership",
+        "javaMethodName" : "transferOwnership",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "request",
           "type" : "com.linkedin.restli.examples.groups.api.TransferOwnershipRequest"
@@ -131,18 +161,33 @@
           },
           "supports" : [ "batch_get", "create", "delete", "get", "partial_update" ],
           "methods" : [ {
-            "method" : "create"
+            "method" : "create",
+            "javaMethodName" : "create",
+            "javaMethodType" : "SYNC"
           }, {
-            "method" : "get"
+            "method" : "get",
+            "javaMethodName" : "get",
+            "javaMethodType" : "SYNC",
+            "javaReturnsResultWrapper" : false
           }, {
-            "method" : "partial_update"
+            "method" : "partial_update",
+            "javaMethodName" : "update",
+            "javaMethodType" : "SYNC"
           }, {
-            "method" : "delete"
+            "method" : "delete",
+            "javaMethodName" : "delete",
+            "javaMethodType" : "SYNC"
           }, {
-            "method" : "batch_get"
+            "method" : "batch_get",
+            "javaMethodName" : "batchGet",
+            "javaMethodType" : "SYNC",
+            "javaReturnsResultWrapper" : false
           } ],
           "actions" : [ {
-            "name" : "spamContacts"
+            "name" : "spamContacts",
+            "javaMethodName" : "spamContacts",
+            "javaMethodType" : "SYNC",
+            "javaReturnsResultWrapper" : false
           } ],
           "entity" : {
             "path" : "/groups/{groupID}/contacts/{contactID}"

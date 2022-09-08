@@ -106,27 +106,51 @@
       } ],
       "supports" : [ "batch_delete", "batch_get", "batch_partial_update", "batch_update", "delete", "get", "get_all", "partial_update", "update" ],
       "methods" : [ {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false
       }, {
-        "method" : "update"
+        "method" : "update",
+        "javaMethodName" : "update",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "partial_update"
+        "method" : "partial_update",
+        "javaMethodName" : "update",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "delete"
+        "method" : "delete",
+        "javaMethodName" : "delete",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "batch_get"
+        "method" : "batch_get",
+        "javaMethodName" : "batchGet",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : true
       }, {
-        "method" : "batch_update"
+        "method" : "batch_update",
+        "javaMethodName" : "batchUpdate",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "batch_partial_update"
+        "method" : "batch_partial_update",
+        "javaMethodName" : "batchUpdate",
+        "javaMethodType" : "SYNC"
       }, {
-        "method" : "batch_delete"
+        "method" : "batch_delete",
+        "javaMethodName" : "batchDelete",
+        "javaMethodType" : "SYNC"
       }, {
         "method" : "get_all",
+        "javaMethodName" : "getAll",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "pagingSupported" : true
       } ],
       "finders" : [ {
         "name" : "group",
+        "javaMethodName" : "getMemberships",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "level",
           "type" : "string",
@@ -152,6 +176,9 @@
         "pagingSupported" : true
       }, {
         "name" : "member",
+        "javaMethodName" : "getMemberships",
+        "javaMethodType" : "SYNC",
+        "javaReturnsResultWrapper" : false,
         "assocKeys" : [ "memberID" ],
         "pagingSupported" : true
       } ],

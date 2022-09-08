@@ -13,7 +13,10 @@
       },
       "supports" : [ "get" ],
       "methods" : [ {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get",
+        "javaMethodType" : "PROMISE",
+        "javaReturnsResultWrapper" : false
       } ],
       "entity" : {
         "path" : "/greetingCollectionUnstructuredDataPromise/{greetingCollectionUnstructuredDataPromiseId}"
