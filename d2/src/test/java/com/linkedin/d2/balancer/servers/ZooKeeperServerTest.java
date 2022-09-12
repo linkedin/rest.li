@@ -25,28 +25,25 @@ import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.properties.UriPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.UriPropertiesMerger;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
-import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZKServer;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
+import com.linkedin.d2.util.TestDataHelper;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
@@ -63,6 +60,7 @@ public class ZooKeeperServerTest
   private ZKServer _zkServer;
   private ZooKeeperServer _server;
   private ZooKeeperEphemeralStore<UriProperties> _store;
+  private TestDataHelper.MockD2ServiceDiscoveryEventHelper _mockEventHelper;
   private Map<Integer, PartitionData> _partitionWeight;
   private Map<String, Object> _uri1SpecificProperties;
   private Map<String, Object> _uri2SpecificProperties;
@@ -93,7 +91,8 @@ public class ZooKeeperServerTest
     callback.get();
 
     _server = new ZooKeeperServer(_store);
-
+    _mockEventHelper = TestDataHelper.getMockD2ServiceDiscoveryEventHelper();
+    _server.setServiceDiscoveryEventHelper(_mockEventHelper);
     _partitionWeight = new HashMap<>();
     _uri1SpecificProperties = new HashMap<>();
     _uri2SpecificProperties = new HashMap<>();
@@ -231,6 +230,9 @@ public class ZooKeeperServerTest
     assertNotNull(properties);
     assertEquals(properties.getPartitionDataMap(URI_1).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 1d);
     assertEquals(properties.getUriSpecificProperties().get(URI_1), _uri1SpecificProperties);
+    // each changeWeight triggers one markdown and one markup, in order
+    _mockEventHelper.verifySDStatusActiveUpdateIntentAndWriteEvents(Arrays.asList(CLUSTER_1, CLUSTER_1),
+        Arrays.asList(false, true), Arrays.asList(true, true));
 
     // changeWeight of uri2 with preexisting uri properties
     changeWeight(_server, CLUSTER_1, URI_2, true, 0.9d);
@@ -241,6 +243,8 @@ public class ZooKeeperServerTest
     assertNotNull(properties);
     assertEquals(properties.getPartitionDataMap(URI_2).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 0.9d);
     assertEquals(properties.getUriSpecificProperties().get(URI_2), _uri2SpecificProperties);
+    _mockEventHelper.verifySDStatusActiveUpdateIntentAndWriteEvents(Arrays.asList(CLUSTER_1, CLUSTER_1, CLUSTER_1, CLUSTER_1),
+        Arrays.asList(false, true, false, true), Arrays.asList(true, true, true, true));
 
     // changeWeight on uri1 using partitionData
     changeWeight(_server, CLUSTER_1, URI_1, true, _partitionWeight);
@@ -248,6 +252,8 @@ public class ZooKeeperServerTest
     assertNotNull(properties);
     assertEquals(properties.getPartitionDataMap(URI_1), _partitionWeight);
     assertEquals(properties.getUriSpecificProperties().get(URI_1).get(PropertyKeys.DO_NOT_SLOW_START), true);
+    _mockEventHelper.verifySDStatusActiveUpdateIntentAndWriteEvents(Arrays.asList(CLUSTER_1, CLUSTER_1, CLUSTER_1, CLUSTER_1, CLUSTER_1, CLUSTER_1),
+        Arrays.asList(false, true, false, true, false, true), Arrays.asList(true, true, true, true, true, true));
 
     // changeWeight on a cluster that doesn't exist
     try
@@ -297,6 +303,9 @@ public class ZooKeeperServerTest
     UriProperties properties = _store.get(CLUSTER_1);
     assertNotNull(properties);
     assertEquals(properties.getUriSpecificProperties().get(URI_1), _uri1SpecificProperties);
+    // each addUriSpecificProperty triggers one markdown and one markup, in order
+    _mockEventHelper.verifySDStatusActiveUpdateIntentAndWriteEvents(Arrays.asList(CLUSTER_1, CLUSTER_1),
+        Arrays.asList(false, true), Arrays.asList(true, true));
 
     // change the value
     final int propertyValue2 = 456;
@@ -307,6 +316,8 @@ public class ZooKeeperServerTest
     properties = _store.get(CLUSTER_1);
     assertNotNull(properties);
     assertEquals(properties.getUriSpecificProperties().get(URI_1), _uri1SpecificProperties);
+    _mockEventHelper.verifySDStatusActiveUpdateIntentAndWriteEvents(Arrays.asList(CLUSTER_1, CLUSTER_1, CLUSTER_1, CLUSTER_1),
+        Arrays.asList(false, true, false, true), Arrays.asList(true, true, true, true));
 
     boolean error = false;
     // invoke on a cluster that doesn't exist
