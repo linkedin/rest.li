@@ -25,6 +25,7 @@ import com.linkedin.r2.netty.handler.common.SessionResumptionSslHandler;
 import com.linkedin.r2.netty.handler.common.SslHandshakeTimingHandler;
 import com.linkedin.r2.netty.handler.http.HttpMessageDecoders;
 import com.linkedin.r2.netty.handler.http.HttpMessageEncoders;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
@@ -60,7 +61,7 @@ import javax.net.ssl.SSLParameters;
  * @author Sean Sheng
  * @author Nizar Mankulangara
  */
-class HttpChannelInitializer extends ChannelInitializer<NioSocketChannel>
+class HttpChannelInitializer extends ChannelInitializer<Channel>
 {
   /**
    * HTTP/2 stream channels are not recyclable and should be disposed upon completion.
@@ -93,7 +94,7 @@ class HttpChannelInitializer extends ChannelInitializer<NioSocketChannel>
   }
 
   @Override
-  protected void initChannel(NioSocketChannel channel)
+  protected void initChannel(Channel channel)
   {
     if (_ssl)
     {

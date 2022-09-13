@@ -14,6 +14,10 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+
+## [29.39.4-rc.1] - 2022-09-13
+- Add Support for UDS transport protocol in R2 outbound traffic over HTTP1.1
+
 ## [29.39.3] - 2022-09-26
 Catch exceptions when zk connection state change event is received after zk connection shutdown.
 
