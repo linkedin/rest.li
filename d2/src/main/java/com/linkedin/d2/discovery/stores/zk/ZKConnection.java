@@ -323,7 +323,8 @@ public class ZKConnection
       zk = _zkRef.get();
       if (zk == null)
       {
-        throw new IllegalStateException("Null zkRef after countdownlatch.");
+        throw new IllegalStateException("Null zkRef after countdownlatch. If this happened at shutdown, please check if your app has custom de-announcements. "
+            + "Mis-coordinating custom de-announcement with the default de-announcement could cause double de-announcing and lead to this exception.");
       }
     }
     catch (InterruptedException e)
