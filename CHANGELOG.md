@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.38.5] - 2022-09-15
+Update the error message to better guide users when zkRef is null.
+
 ## [29.38.4] - 2022-09-08
 - Use ZooKeeper 3.6.3
 
@@ -5337,7 +5340,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.38.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.38.5...master
+[29.38.5]: https://github.com/linkedin/rest.li/compare/v29.38.4...v29.38.5
 [29.38.4]: https://github.com/linkedin/rest.li/compare/v29.38.3...v29.38.4
 [29.38.3]: https://github.com/linkedin/rest.li/compare/v29.38.2...v29.38.3
 [29.38.2]: https://github.com/linkedin/rest.li/compare/v29.38.1-rc.1...v29.38.2
