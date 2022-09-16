@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.39.3] - 2022-09-26
+Catch exceptions when zk connection state change event is received after zk connection shutdown.
+
 ## [29.39.2] - 2022-09-23
 Remove unnessary extra IDL annotations due to recent restriction of adding new method into bridged service and emit resourceC
 lass for javaparser to use to update rest.li resource.
@@ -5353,7 +5356,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.39.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.39.3...master
+[29.39.3]: https://github.com/linkedin/rest.li/compare/v29.39.2...v29.39.3
 [29.39.2]: https://github.com/linkedin/rest.li/compare/v29.39.1...v29.39.2
 [29.39.1]: https://github.com/linkedin/rest.li/compare/v29.39.0...v29.39.1
 [29.39.0]: https://github.com/linkedin/rest.li/compare/v29.38.6...v29.39.0

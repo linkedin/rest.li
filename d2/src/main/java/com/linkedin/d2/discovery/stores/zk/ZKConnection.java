@@ -834,13 +834,9 @@ public class ZKConnection
       }
       catch (IllegalStateException e)
       {
-        if (_shutdownAsynchronously) {
-          // On asynchronous shutdown, this can be a legitimate race.
-          LOG.debug("Watched event received after connection shutdown (type {}, state {}.", watchedEvent.getType(),
-              watchedEvent.getState());
-          return;
-        }
-        throw e;
+        // if connection state change event is received after zk object is gone, it is a legitimate race.
+        LOG.debug("Watched event received after connection shutdown (type {}, state {}.", watchedEvent.getType(), watchedEvent.getState());
+        return;
       }
       long sessionID = zk.getSessionId();
 
