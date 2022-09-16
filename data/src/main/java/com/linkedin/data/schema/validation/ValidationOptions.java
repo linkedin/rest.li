@@ -257,6 +257,36 @@ public final class ValidationOptions
     return _avroUnionMode;
   }
 
+  /**
+   * Set whether we should detect and fix base64 encoded fixed values.
+   *
+   * <p>Some clients cannot encode avro encoded strings, and send Base64 encoded fixed values instead. If this is
+   * set to true, then the validator attempts to detect this case and decode the base64 encoded string into fixed bytes
+   * to avoid breaking validation.</p>
+   *
+   * @param value True if flag to fix base64 encoding for fixed value is enabled, false otherwise.
+   */
+  public void setShouldFixBase64EncodedFixedValues(boolean value)
+  {
+    _fixBase64EncodedFixedValues = value;
+  }
+
+  /**
+   * Return whether we should detect and fix base64 encoded fixed values.
+   *
+   * <p>Some clients cannot encode avro encoded strings, and send Base64 encoded fixed values instead. If this is
+   * true, then the validator attempts to detect this case and decode the base64 encoded string into fixed bytes
+   * to avoid breaking validation.</p>
+   *
+   * @return True if flag to fix base64 encoding for fixed value is enabled, false otherwise.
+   *
+   * @see #setShouldFixBase64EncodedFixedValues(boolean)
+   */
+  public boolean shouldFixBase64EncodedFixedValues()
+  {
+    return _fixBase64EncodedFixedValues;
+  }
+
   @Override
   public boolean equals(Object other)
   {
@@ -269,6 +299,7 @@ public final class ValidationOptions
         && otherOptions._requiredMode == _requiredMode
         && otherOptions._unrecognizedFieldMode == _unrecognizedFieldMode
         && otherOptions._avroUnionMode == _avroUnionMode
+        && otherOptions._fixBase64EncodedFixedValues == _fixBase64EncodedFixedValues
         && otherOptions._validatorParameters.equals(_validatorParameters));
   }
 
@@ -280,6 +311,7 @@ public final class ValidationOptions
     code = code * 31 + (_coercionMode == null ? 0 : _coercionMode.hashCode());
     code = code * 31 + (_unrecognizedFieldMode == null ? 0 : _unrecognizedFieldMode.hashCode());
     code = code * 31 + (_avroUnionMode ? 0 : 53);
+    code = code * 31 + (_fixBase64EncodedFixedValues ? 0 : 54);
     code = code * 31 + (_validatorParameters.hashCode());
     return code;
   }
@@ -295,7 +327,9 @@ public final class ValidationOptions
       .append(", UnrecognizedFieldMode=")
       .append(_unrecognizedFieldMode)
       .append(", AvroUnionMode=")
-      .append(_avroUnionMode);
+      .append(_avroUnionMode)
+      .append(", FixBase64EncodedFixedValues=")
+      .append(_fixBase64EncodedFixedValues);
     if (_validatorParameters != NO_VALIDATOR_PARAMETERS)
     {
       sb.append(", ValidatorOptions=")
@@ -308,6 +342,7 @@ public final class ValidationOptions
   private RequiredMode _requiredMode;
   private UnrecognizedFieldMode _unrecognizedFieldMode;
   private boolean      _avroUnionMode = false;
+  private boolean _fixBase64EncodedFixedValues = false;
   private Map<String,Object> _validatorParameters = NO_VALIDATOR_PARAMETERS;
   // Treat required fields as optional if the corresponding data element satisfies this predicate
   private Predicate _treatOptional = Predicates.alwaysFalse();
