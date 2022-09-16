@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.38.6] - 2022-09-15
+Add a validation option to coerce base64 encoded fixed values
+
 ## [29.38.5] - 2022-09-15
 Update the error message to better guide users when zkRef is null.
 
@@ -5340,7 +5343,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.38.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.38.6...master
+[29.38.6]: https://github.com/linkedin/rest.li/compare/v29.38.5...v29.38.6
 [29.38.5]: https://github.com/linkedin/rest.li/compare/v29.38.4...v29.38.5
 [29.38.4]: https://github.com/linkedin/rest.li/compare/v29.38.3...v29.38.4
 [29.38.3]: https://github.com/linkedin/rest.li/compare/v29.38.2...v29.38.3
