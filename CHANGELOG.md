@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.39.0] - 2022-09-19
+Releasing support for UDS in HTTP/2 stack
+
 ## [29.38.6] - 2022-09-15
 Add a validation option to coerce base64 encoded fixed values
 
@@ -5343,7 +5346,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.38.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.39.0...master
+[29.39.0]: https://github.com/linkedin/rest.li/compare/v29.38.6...v29.39.0
 [29.38.6]: https://github.com/linkedin/rest.li/compare/v29.38.5...v29.38.6
 [29.38.5]: https://github.com/linkedin/rest.li/compare/v29.38.4...v29.38.5
 [29.38.4]: https://github.com/linkedin/rest.li/compare/v29.38.3...v29.38.4
