@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.39.1] - 2022-09-20
+Expose an easy way to override validation options for ActionArgumentBuilder
+
 ## [29.39.0] - 2022-09-19
 Releasing support for UDS in HTTP/2 stack
 
@@ -5346,7 +5349,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.39.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.39.1...master
+[29.39.1]: https://github.com/linkedin/rest.li/compare/v29.39.0...v29.39.1
 [29.39.0]: https://github.com/linkedin/rest.li/compare/v29.38.6...v29.39.0
 [29.38.6]: https://github.com/linkedin/rest.li/compare/v29.38.5...v29.38.6
 [29.38.5]: https://github.com/linkedin/rest.li/compare/v29.38.4...v29.38.5
