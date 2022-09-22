@@ -16,17 +16,6 @@ record FinderSchema includes CustomAnnotationSchema, ServiceErrorsSchema, Succes
   javaMethodName: optional string
 
   /**
-   * Java method type for this finder method
-   */
-  javaMethodType: optional JavaMethodType = "SYNC"
-
-  /**
-   * True if the java implementation of this method returns the result wrapper (aka CollectionResult). False, if
-   * it returns List.
-   */
-  javaReturnsResultWrapper: optional boolean = false
-
-  /**
    * Documentation for this finder
    */
   doc: optional string

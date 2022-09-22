@@ -4,6 +4,7 @@
   "path" : "/typerefKeys",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.TyperefKeysResource",
+  "resourceClass": "com.linkedin.restli.examples.greetings.server.TyperefKeysResource",
   "collection" : {
     "identifier" : {
       "name" : "typerefKeysId",
@@ -12,13 +13,10 @@
     "supports" : [ "batch_get", "create" ],
     "methods" : [ {
       "method" : "create",
-      "javaMethodName" : "create",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "create"
     }, {
       "method" : "batch_get",
-      "javaMethodName" : "batchGet",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "batchGet"
     } ],
     "entity" : {
       "path" : "/typerefKeys/{typerefKeysId}"

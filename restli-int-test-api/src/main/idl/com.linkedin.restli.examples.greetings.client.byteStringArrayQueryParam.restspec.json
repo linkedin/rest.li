@@ -4,6 +4,7 @@
   "path" : "/byteStringArrayQueryParam",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ByteStringArrayQueryParamResource",
+  "resourceClass": "com.linkedin.restli.examples.greetings.server.ByteStringArrayQueryParamResource",
   "collection" : {
     "identifier" : {
       "name" : "byteStringArrayQueryParamId",
@@ -13,8 +14,6 @@
     "finders" : [ {
       "name" : "byteStringArrayFinder",
       "javaMethodName" : "byteStringArrayFinder",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "byteStrings",
         "type" : "{ \"type\" : \"array\", \"items\" : \"bytes\" }"

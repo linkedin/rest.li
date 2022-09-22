@@ -4,6 +4,7 @@
   "path" : "/streamingGreetings",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.StreamingGreetings",
+  "resourceClass": "com.linkedin.restli.examples.greetings.server.StreamingGreetings",
   "collection" : {
     "identifier" : {
       "name" : "streamingGreetingsId",
@@ -12,33 +13,23 @@
     "supports" : [ "create", "delete", "get", "update" ],
     "methods" : [ {
       "method" : "create",
-      "javaMethodName" : "create",
-      "javaMethodType" : "ASYNC"
+      "javaMethodName" : "create"
     }, {
       "method" : "get",
-      "javaMethodName" : "get",
-      "javaMethodType" : "ASYNC",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "get"
     }, {
       "method" : "update",
-      "javaMethodName" : "update",
-      "javaMethodType" : "ASYNC"
+      "javaMethodName" : "update"
     }, {
       "method" : "delete",
-      "javaMethodName" : "delete",
-      "javaMethodType" : "ASYNC"
+      "javaMethodName" : "delete"
     } ],
     "actions" : [ {
       "name" : "actionAttachmentsAllowedButDisliked",
       "javaMethodName" : "actionAttachmentsAllowedButDisliked",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
       "returns" : "boolean"
     }, {
       "name" : "actionNoAttachmentsAllowed",
-      "javaMethodName" : "actionNoAttachmentsAllowed",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
       "returns" : "int"
     } ],
     "entity" : {

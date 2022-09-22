@@ -57,6 +57,11 @@ record ResourceSchema includes CustomAnnotationSchema {
   doc: optional string
 
   /**
+   * Rest.li resourc class name
+   */
+  resourceClass: optional string
+
+  /**
    * details of collection, if this resource is a collection
    */
   collection: optional CollectionSchema

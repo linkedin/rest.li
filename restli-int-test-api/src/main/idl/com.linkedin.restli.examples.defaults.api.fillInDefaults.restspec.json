@@ -4,6 +4,7 @@
   "path" : "/fillInDefaults",
   "schema" : "com.linkedin.restli.examples.defaults.api.HighLevelRecordWithDefault",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.defaults.FieldFillInDefaultResources",
+  "resourceClass": "com.linkedin.restli.examples.greetings.server.defaults.FieldFillInDefaultResources",
   "collection" : {
     "identifier" : {
       "name" : "fillInDefaultsId",
@@ -12,19 +13,13 @@
     "supports" : [ "batch_get", "get", "get_all" ],
     "methods" : [ {
       "method" : "get",
-      "javaMethodName" : "get",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "get"
     }, {
       "method" : "batch_get",
-      "javaMethodName" : "batchGet",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "batchGet"
     }, {
       "method" : "get_all",
       "javaMethodName" : "getAllHighLevelRecordWithDefault",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : true,
       "metadata" : {
         "type" : "com.linkedin.restli.examples.defaults.api.LowLevelRecordWithDefault"
       },
@@ -33,8 +28,6 @@
     "finders" : [ {
       "name" : "findRecords",
       "javaMethodName" : "findRecords",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : true,
       "parameters" : [ {
         "name" : "noDefaultFieldA",
         "type" : "int"
@@ -46,8 +39,6 @@
     "batchFinders" : [ {
       "name" : "searchRecords",
       "javaMethodName" : "searchRecords",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : true,
       "parameters" : [ {
         "name" : "criteria",
         "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.defaults.api.RecordCriteria\" }"
@@ -60,8 +51,6 @@
     "actions" : [ {
       "name" : "defaultFillAction",
       "javaMethodName" : "takeAction",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : true,
       "parameters" : [ {
         "name" : "actionParam",
         "type" : "long"
