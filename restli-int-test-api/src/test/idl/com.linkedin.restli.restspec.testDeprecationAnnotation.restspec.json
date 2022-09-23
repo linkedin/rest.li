@@ -9,6 +9,7 @@
   "path" : "/testDeprecationAnnotation",
   "schema" : "com.linkedin.restli.examples.MockRecord",
   "doc" : "generated from: com.linkedin.restli.restspec.TestDeprecationAnnotationResource",
+  "resourceClass": "com.linkedin.restli.restspec.TestDeprecationAnnotationResource",
   "collection" : {
     "identifier" : {
       "name" : "testDeprecationAnnotationId",
@@ -21,9 +22,11 @@
           "doc" : "Please use something else instead."
         }
       },
-      "method" : "create"
+      "method" : "create",
+      "javaMethodName" : "create"
     }, {
       "method" : "get",
+      "javaMethodName" : "getWithResult",
       "parameters" : [ {
         "annotations" : {
           "com.linkedin.restli.restspec.UnnamedAnnotation" : {
@@ -41,6 +44,7 @@
         }
       },
       "name" : "testFinder",
+      "javaMethodName" : "testFinder",
       "parameters" : [ {
         "name" : "title",
         "type" : "string"
@@ -52,6 +56,7 @@
         "deprecated" : { }
       },
       "name" : "testAction",
+      "javaMethodName" : "testAction",
       "parameters" : [ {
         "name" : "num",
         "type" : "int"

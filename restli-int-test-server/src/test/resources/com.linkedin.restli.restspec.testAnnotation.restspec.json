@@ -119,6 +119,7 @@
         "path" : "/testAnnotation/{testAnnotationId}/testAnnotationSub",
         "schema" : "com.linkedin.restli.examples.MockRecord",
         "doc" : "generated from: com.linkedin.restli.restspec.TestAnnotationSubresource",
+        "resourceClass": "com.linkedin.restli.restspec.TestAnnotationSubresource",
         "collection" : {
           "identifier" : {
             "name" : "testAnnotationSubId",

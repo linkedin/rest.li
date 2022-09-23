@@ -9,7 +9,7 @@
   "path" : "/testDeprecationAnnotation",
   "schema" : "com.linkedin.restli.examples.MockRecord",
   "doc" : "generated from: com.linkedin.restli.restspec.TestDeprecationAnnotationResource",
-  "resourceDoc": "com.linkedin.restli.restspec.TestDeprecationAnnotationResource",
+  "resourceClass": "com.linkedin.restli.restspec.TestDeprecationAnnotationResource",
   "collection" : {
     "identifier" : {
       "name" : "testDeprecationAnnotationId",
