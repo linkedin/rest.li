@@ -25,7 +25,7 @@
         }
       },
       "method" : "create",
-      "javaMethodName" : "create",
+      "javaMethodName" : "create"
     }, {
       "annotations" : {
         "namedAnnotation" : {
