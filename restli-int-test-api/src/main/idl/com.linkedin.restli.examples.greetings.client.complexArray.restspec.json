@@ -4,7 +4,7 @@
   "path" : "/complexArray",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ComplexArrayResource",
-  "resourceClass": "com.linkedin.restli.examples.greetings.server.ComplexArrayResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.ComplexArrayResource",
   "collection" : {
     "identifier" : {
       "name" : "complexArrayId",

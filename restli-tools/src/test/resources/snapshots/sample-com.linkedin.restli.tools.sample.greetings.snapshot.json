@@ -19,6 +19,7 @@
     "path" : "/greetings",
     "schema" : "com.linkedin.restli.tools.sample.override.SimpleGreeting",
     "doc" : "Sample Collection Resource containing all simple greetings\n\ngenerated from: com.linkedin.restli.tools.sample.SimpleGreetingResource",
+    "resourceClass" : "com.linkedin.restli.tools.sample.SimpleGreetingResource",
     "collection" : {
       "identifier" : {
         "name" : "greetingsId",
@@ -28,36 +29,27 @@
       "methods" : [ {
         "method" : "create",
         "javaMethodName" : "create",
-        "javaMethodType" : "SYNC",
         "doc" : "Creates a new Greeting"
       }, {
         "method" : "get",
         "javaMethodName" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "doc" : "Gets a single greeting resource"
       }, {
         "method" : "partial_update",
         "javaMethodName" : "update",
-        "javaMethodType" : "SYNC",
         "doc" : "Updates a single greeting resource"
       }, {
         "method" : "delete",
         "javaMethodName" : "delete",
-        "javaMethodType" : "SYNC",
         "doc" : "Deletes a greeting resource"
       }, {
         "method" : "batch_get",
         "javaMethodName" : "batchGet",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "doc" : "Gets a batch of Greetings"
       } ],
       "finders" : [ {
         "name" : "message",
         "javaMethodName" : "find",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "message",
           "type" : "string",
@@ -67,8 +59,6 @@
       }, {
         "name" : "recipients",
         "javaMethodName" : "findGreetingsByGuest",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "annotations" : {
             "deprecated" : { }
@@ -85,8 +75,6 @@
       "actions" : [ {
         "name" : "greetingArrayAction",
         "javaMethodName" : "statusArrayAction",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "doc" : "Action data template array return type and input type test case",
         "parameters" : [ {
           "name" : "greetings",
@@ -96,8 +84,6 @@
       }, {
         "name" : "intArrayAction",
         "javaMethodName" : "intArrayAction",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "doc" : "Action array return type test case",
         "parameters" : [ {
           "name" : "ints",
@@ -107,8 +93,6 @@
       }, {
         "name" : "markGreetingAsRead",
         "javaMethodName" : "markGreetingAsRead",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "annotations" : {
             "deprecated" : { }

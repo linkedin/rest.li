@@ -2,7 +2,7 @@
   "name" : "accounts",
   "path" : "/accounts",
   "doc" : "generated from: com.linkedin.restli.tools.twitter.TwitterAccountsResource",
-  "resourceClass": "com.linkedin.restli.tools.twitter.TwitterAccountsResource",
+  "resourceClass" : "com.linkedin.restli.tools.twitter.TwitterAccountsResource",
   "actionsSet" : {
     "actions" : [ {
       "name" : "closeAccounts",

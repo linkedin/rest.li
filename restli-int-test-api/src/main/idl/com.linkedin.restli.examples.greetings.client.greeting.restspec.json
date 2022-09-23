@@ -4,35 +4,29 @@
   "path" : "/greeting",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "This resource represents a simple root resource.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.RootSimpleResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.RootSimpleResource",
   "simple" : {
     "supports" : [ "delete", "get", "partial_update", "update" ],
     "methods" : [ {
       "method" : "get",
       "javaMethodName" : "get",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
       "doc" : "Gets the greeting."
     }, {
       "method" : "update",
       "javaMethodName" : "update",
-      "javaMethodType" : "SYNC",
       "doc" : "Updates the greeting."
     }, {
       "method" : "partial_update",
       "javaMethodName" : "update",
-      "javaMethodType" : "SYNC",
       "doc" : "Updates the greeting."
     }, {
       "method" : "delete",
       "javaMethodName" : "delete",
-      "javaMethodType" : "SYNC",
       "doc" : "Deletes the greeting."
     } ],
     "actions" : [ {
       "name" : "exampleAction",
       "javaMethodName" : "exampleAction",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
       "doc" : "An example action on the greeting.",
       "parameters" : [ {
         "name" : "param1",
@@ -42,8 +36,6 @@
     }, {
       "name" : "exceptionTest",
       "javaMethodName" : "exceptionTest",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
       "doc" : "An example action throwing an exception."
     } ],
     "entity" : {
@@ -54,13 +46,12 @@
         "path" : "/greeting/subGreetingSimpleUnstructuredData",
         "entityType" : "UNSTRUCTURED_DATA",
         "doc" : "This resource models an simple sub resource that produces unstructured data entities as results.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.UnstructuredDataSimpleResourceUnderSimpleResource",
+        "resourceClass" : "com.linkedin.restli.examples.greetings.server.UnstructuredDataSimpleResourceUnderSimpleResource",
         "simple" : {
           "supports" : [ "get" ],
           "methods" : [ {
             "method" : "get",
-            "javaMethodName" : "get",
-            "javaMethodType" : "SYNC",
-            "javaReturnsResultWrapper" : false
+            "javaMethodName" : "get"
           } ],
           "entity" : {
             "path" : "/greeting/subGreetingSimpleUnstructuredData"
@@ -72,6 +63,7 @@
         "path" : "/greeting/subgreetings",
         "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
         "doc" : "This resource represents a collection resource under a simple resource.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.CollectionUnderSimpleResource",
+        "resourceClass" : "com.linkedin.restli.examples.greetings.server.CollectionUnderSimpleResource",
         "collection" : {
           "identifier" : {
             "name" : "subgreetingsId",
@@ -80,40 +72,29 @@
           "supports" : [ "batch_create", "batch_get", "create", "delete", "get", "partial_update", "update" ],
           "methods" : [ {
             "method" : "create",
-            "javaMethodName" : "create",
-            "javaMethodType" : "SYNC"
+            "javaMethodName" : "create"
           }, {
             "method" : "get",
-            "javaMethodName" : "get",
-            "javaMethodType" : "SYNC",
-            "javaReturnsResultWrapper" : false
+            "javaMethodName" : "get"
           }, {
             "method" : "update",
-            "javaMethodName" : "update",
-            "javaMethodType" : "SYNC"
+            "javaMethodName" : "update"
           }, {
             "method" : "partial_update",
-            "javaMethodName" : "update",
-            "javaMethodType" : "SYNC"
+            "javaMethodName" : "update"
           }, {
             "method" : "delete",
-            "javaMethodName" : "delete",
-            "javaMethodType" : "SYNC"
+            "javaMethodName" : "delete"
           }, {
             "method" : "batch_create",
-            "javaMethodName" : "batchCreate",
-            "javaMethodType" : "SYNC"
+            "javaMethodName" : "batchCreate"
           }, {
             "method" : "batch_get",
-            "javaMethodName" : "batchGet",
-            "javaMethodType" : "SYNC",
-            "javaReturnsResultWrapper" : false
+            "javaMethodName" : "batchGet"
           } ],
           "finders" : [ {
             "name" : "search",
             "javaMethodName" : "search",
-            "javaMethodType" : "SYNC",
-            "javaReturnsResultWrapper" : false,
             "parameters" : [ {
               "name" : "tone",
               "type" : "com.linkedin.restli.examples.greetings.api.Tone",
@@ -127,14 +108,10 @@
           } ],
           "actions" : [ {
             "name" : "exceptionTest",
-            "javaMethodName" : "exceptionTest",
-            "javaMethodType" : "SYNC",
-            "javaReturnsResultWrapper" : false
+            "javaMethodName" : "exceptionTest"
           }, {
             "name" : "purge",
             "javaMethodName" : "purge",
-            "javaMethodType" : "SYNC",
-            "javaReturnsResultWrapper" : false,
             "returns" : "int"
           } ],
           "entity" : {
@@ -145,6 +122,7 @@
               "path" : "/greeting/subgreetings/{subgreetingsId}/greetingsOfgreetingsOfgreeting",
               "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
               "doc" : "This resource represents a collection under a collection which is under another simple resource\n used as the parent for {@link CollectionOfCollectionOfCollectionOfSimpleResource}\n\ngenerated from: com.linkedin.restli.examples.greetings.server.CollectionOfCollectionOfSimpleResource",
+              "resourceClass" : "com.linkedin.restli.examples.greetings.server.CollectionOfCollectionOfSimpleResource",
               "collection" : {
                 "identifier" : {
                   "name" : "greetingsOfgreetingsOfgreetingId",
@@ -159,6 +137,7 @@
                     "path" : "/greeting/subgreetings/{subgreetingsId}/greetingsOfgreetingsOfgreeting/{greetingsOfgreetingsOfgreetingId}/greetingsOfgreetingsOfgreetingsOfgreeting",
                     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
                     "doc" : "This resource represents a collection resource under a collection resource,\n which is under another collection resource, and that is under another simple resource\n\n Used to test sub-resource with depth more than 1\n\ngenerated from: com.linkedin.restli.examples.greetings.server.CollectionOfCollectionOfCollectionOfSimpleResource",
+                    "resourceClass" : "com.linkedin.restli.examples.greetings.server.CollectionOfCollectionOfCollectionOfSimpleResource",
                     "collection" : {
                       "identifier" : {
                         "name" : "greetingsOfgreetingsOfgreetingsOfgreetingId",
@@ -167,9 +146,7 @@
                       "supports" : [ "get" ],
                       "methods" : [ {
                         "method" : "get",
-                        "javaMethodName" : "get",
-                        "javaMethodType" : "SYNC",
-                        "javaReturnsResultWrapper" : false
+                        "javaMethodName" : "get"
                       } ],
                       "entity" : {
                         "path" : "/greeting/subgreetings/{subgreetingsId}/greetingsOfgreetingsOfgreeting/{greetingsOfgreetingsOfgreetingId}/greetingsOfgreetingsOfgreetingsOfgreeting/{greetingsOfgreetingsOfgreetingsOfgreetingId}"
@@ -184,35 +161,29 @@
               "path" : "/greeting/subgreetings/{subgreetingsId}/subsubgreeting",
               "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
               "doc" : "This resource represents a simple sub-resource.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.SimpleResourceUnderCollectionResource",
+              "resourceClass" : "com.linkedin.restli.examples.greetings.server.SimpleResourceUnderCollectionResource",
               "simple" : {
                 "supports" : [ "delete", "get", "partial_update", "update" ],
                 "methods" : [ {
                   "method" : "get",
                   "javaMethodName" : "get",
-                  "javaMethodType" : "SYNC",
-                  "javaReturnsResultWrapper" : false,
                   "doc" : "Gets the greeting."
                 }, {
                   "method" : "update",
                   "javaMethodName" : "update",
-                  "javaMethodType" : "SYNC",
                   "doc" : "Updates the greeting."
                 }, {
                   "method" : "partial_update",
                   "javaMethodName" : "update",
-                  "javaMethodType" : "SYNC",
                   "doc" : "Updates the greeting."
                 }, {
                   "method" : "delete",
                   "javaMethodName" : "delete",
-                  "javaMethodType" : "SYNC",
                   "doc" : "Deletes the greeting."
                 } ],
                 "actions" : [ {
                   "name" : "exampleAction",
                   "javaMethodName" : "exampleAction",
-                  "javaMethodType" : "SYNC",
-                  "javaReturnsResultWrapper" : false,
                   "doc" : "An example action on the greeting.",
                   "parameters" : [ {
                     "name" : "param1",
@@ -222,8 +193,6 @@
                 }, {
                   "name" : "exceptionTest",
                   "javaMethodName" : "exceptionTest",
-                  "javaMethodType" : "SYNC",
-                  "javaReturnsResultWrapper" : false,
                   "doc" : "An example action throwing an exception."
                 } ],
                 "entity" : {

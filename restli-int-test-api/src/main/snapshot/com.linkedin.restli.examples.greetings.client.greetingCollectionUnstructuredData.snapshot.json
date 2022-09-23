@@ -6,6 +6,7 @@
     "path" : "/greetingCollectionUnstructuredData",
     "entityType" : "UNSTRUCTURED_DATA",
     "doc" : "This resource models a collection resource that produces unstructured data entities as results.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataCollectionResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataCollectionResource",
     "collection" : {
       "identifier" : {
         "name" : "greetingCollectionUnstructuredDataId",
@@ -14,9 +15,7 @@
       "supports" : [ "get" ],
       "methods" : [ {
         "method" : "get",
-        "javaMethodName" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "get"
       } ],
       "entity" : {
         "path" : "/greetingCollectionUnstructuredData/{greetingCollectionUnstructuredDataId}"

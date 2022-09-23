@@ -4,7 +4,7 @@
   "path" : "/groupMembershipsComplex",
   "schema" : "com.linkedin.restli.examples.groups.api.ComplexKeyGroupMembership",
   "doc" : "generated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupMembershipsResource3",
-  "resourceClass": "com.linkedin.restli.examples.groups.server.rest.impl.GroupMembershipsResource3",
+  "resourceClass" : "com.linkedin.restli.examples.groups.server.rest.impl.GroupMembershipsResource3",
   "collection" : {
     "identifier" : {
       "name" : "groupMembershipsComplexId",

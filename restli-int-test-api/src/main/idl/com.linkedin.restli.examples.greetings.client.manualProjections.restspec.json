@@ -4,7 +4,7 @@
   "path" : "/manualProjections",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "Resource where all get operations are implemented to explicitly examine the projection\n sent by the client and then manually apply the projection.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ManualProjectionsResource",
-  "resourceClass": "com.linkedin.restli.examples.greetings.server.ManualProjectionsResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.ManualProjectionsResource",
   "collection" : {
     "identifier" : {
       "name" : "manualProjectionsId",

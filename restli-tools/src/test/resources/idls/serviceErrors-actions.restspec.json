@@ -2,7 +2,7 @@
   "name" : "actions",
   "path" : "/actions",
   "doc" : "Actions resource to test IDL generation with defined service errors.\n This resource also tests that multiple resource-level service errors can be defined.\n\ngenerated from: com.linkedin.restli.tools.errors.ServiceErrorActionsResource",
-  "resourceClass": "com.linkedin.restli.tools.errors.ServiceErrorActionsResource",
+  "resourceClass" : "com.linkedin.restli.tools.errors.ServiceErrorActionsResource",
   "actionsSet" : {
     "serviceErrors" : [ {
       "status" : 400,

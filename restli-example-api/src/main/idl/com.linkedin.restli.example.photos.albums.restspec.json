@@ -4,6 +4,7 @@
   "path" : "/albums",
   "schema" : "com.linkedin.restli.example.Album",
   "doc" : "generated from: com.linkedin.restli.example.impl.AlbumResource",
+  "resourceClass" : "com.linkedin.restli.example.impl.AlbumResource",
   "collection" : {
     "identifier" : {
       "name" : "albumsId",
@@ -11,16 +12,21 @@
     },
     "supports" : [ "create", "delete", "get", "update" ],
     "methods" : [ {
-      "method" : "create"
+      "method" : "create",
+      "javaMethodName" : "create"
     }, {
-      "method" : "get"
+      "method" : "get",
+      "javaMethodName" : "get"
     }, {
-      "method" : "update"
+      "method" : "update",
+      "javaMethodName" : "update"
     }, {
-      "method" : "delete"
+      "method" : "delete",
+      "javaMethodName" : "delete"
     } ],
     "actions" : [ {
       "name" : "purge",
+      "javaMethodName" : "purge",
       "returns" : "int"
     } ],
     "entity" : {

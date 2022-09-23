@@ -4,7 +4,7 @@
   "path" : "/greetings",
   "schema" : "com.linkedin.restli.tools.sample.override.SimpleGreeting",
   "doc" : "Sample Collection Resource containing all simple greetings\n\ngenerated from: com.linkedin.restli.tools.sample.SimpleGreetingResource",
-  "resourceClass": "com.linkedin.restli.tools.sample.SimpleGreetingResource",
+  "resourceClass" : "com.linkedin.restli.tools.sample.SimpleGreetingResource",
   "collection" : {
     "identifier" : {
       "name" : "greetingsId",

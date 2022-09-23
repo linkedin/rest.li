@@ -4,7 +4,7 @@
   "path" : "/streamingGreetings",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.StreamingGreetings",
-  "resourceClass": "com.linkedin.restli.examples.greetings.server.StreamingGreetings",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.StreamingGreetings",
   "collection" : {
     "identifier" : {
       "name" : "streamingGreetingsId",
@@ -30,6 +30,7 @@
       "returns" : "boolean"
     }, {
       "name" : "actionNoAttachmentsAllowed",
+      "javaMethodName" : "actionNoAttachmentsAllowed",
       "returns" : "int"
     } ],
     "entity" : {

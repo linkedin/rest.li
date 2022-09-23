@@ -4,6 +4,7 @@
   "path" : "/customTypes2",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource2",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.CustomTypesResource2",
   "collection" : {
     "identifier" : {
       "name" : "customTypes2Id",
@@ -13,7 +14,6 @@
     "methods" : [ {
       "method" : "create",
       "javaMethodName" : "create",
-      "javaMethodType" : "SYNC",
       "parameters" : [ {
         "name" : "unionRefParam",
         "type" : "com.linkedin.restli.examples.typeref.api.UnionRefInline",
@@ -21,30 +21,22 @@
       } ]
     }, {
       "method" : "get",
-      "javaMethodName" : "get",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "get"
     }, {
       "method" : "batch_create",
-      "javaMethodName" : "batchCreate",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "batchCreate"
     }, {
       "method" : "batch_get",
-      "javaMethodName" : "batchGet",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "batchGet"
     }, {
       "method" : "batch_update",
-      "javaMethodName" : "batchUpdate",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "batchUpdate"
     }, {
       "method" : "batch_partial_update",
-      "javaMethodName" : "batchUpdate",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "batchUpdate"
     }, {
       "method" : "batch_delete",
-      "javaMethodName" : "batchDelete",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "batchDelete"
     } ],
     "entity" : {
       "path" : "/customTypes2/{customTypes2Id}",
@@ -54,6 +46,7 @@
         "path" : "/customTypes2/{customTypes2Id}/customTypes4",
         "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
         "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource4",
+        "resourceClass" : "com.linkedin.restli.examples.greetings.server.CustomTypesResource4",
         "collection" : {
           "identifier" : {
             "name" : "customTypes4Id",
@@ -62,9 +55,7 @@
           "supports" : [ "get" ],
           "methods" : [ {
             "method" : "get",
-            "javaMethodName" : "get",
-            "javaMethodType" : "SYNC",
-            "javaReturnsResultWrapper" : false
+            "javaMethodName" : "get"
           } ],
           "entity" : {
             "path" : "/customTypes2/{customTypes2Id}/customTypes4/{customTypes4Id}"

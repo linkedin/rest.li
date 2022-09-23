@@ -4,7 +4,7 @@
   "path" : "/customTypes3",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource3",
-  "resourceClass": "com.linkedin.restli.examples.greetings.server.CustomTypesResource3",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.CustomTypesResource3",
   "association" : {
     "identifier" : "customTypes3Id",
     "assocKeys" : [ {

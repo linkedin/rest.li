@@ -69,6 +69,7 @@
     "path" : "/customTypes",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.CustomTypesResource",
     "collection" : {
       "identifier" : {
         "name" : "customTypesId",
@@ -78,8 +79,6 @@
       "finders" : [ {
         "name" : "calendar",
         "javaMethodName" : "calendar",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "calendar",
           "type" : "com.linkedin.restli.examples.typeref.api.CalendarRef"
@@ -87,8 +86,6 @@
       }, {
         "name" : "calendars",
         "javaMethodName" : "calendars",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "calendars",
           "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.typeref.api.CalendarRef\" }"
@@ -96,8 +93,6 @@
       }, {
         "name" : "customLong",
         "javaMethodName" : "customLong",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "l",
           "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
@@ -105,8 +100,6 @@
       }, {
         "name" : "customLongArray",
         "javaMethodName" : "customLongArray",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "ls",
           "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.typeref.api.CustomLongRef\" }"
@@ -114,8 +107,6 @@
       }, {
         "name" : "date",
         "javaMethodName" : "date",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "d",
           "type" : "com.linkedin.restli.examples.typeref.api.DateRef"
@@ -123,8 +114,6 @@
       }, {
         "name" : "ip",
         "javaMethodName" : "ip",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "ip",
           "type" : "com.linkedin.restli.examples.typeref.api.IPAddressSimple"
@@ -133,8 +122,6 @@
       "actions" : [ {
         "name" : "action",
         "javaMethodName" : "action",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "l",
           "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
@@ -143,8 +130,6 @@
       }, {
         "name" : "arrayAction",
         "javaMethodName" : "arrayAction",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "ls",
           "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.typeref.api.CustomLongRef\" }"
@@ -153,8 +138,6 @@
       }, {
         "name" : "calendarAction",
         "javaMethodName" : "calendarAction",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "calendar",
           "type" : "com.linkedin.restli.examples.typeref.api.CalendarRef"

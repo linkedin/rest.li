@@ -12,7 +12,7 @@
   "path" : "/autoValidationDemos",
   "schema" : "com.linkedin.restli.examples.greetings.api.ValidationDemo",
   "doc" : "Free-form resource for testing Rest.li data validation.\n This class shows how to validate data automatically by using the validation filters.\n Invalid incoming data or outgoing data are rejected, and an error response is returned to the client.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.AutomaticValidationDemoResource",
-  "resourceClass": "com.linkedin.restli.examples.greetings.server.AutomaticValidationDemoResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.AutomaticValidationDemoResource",
   "collection" : {
     "identifier" : {
       "name" : "autoValidationDemosId",

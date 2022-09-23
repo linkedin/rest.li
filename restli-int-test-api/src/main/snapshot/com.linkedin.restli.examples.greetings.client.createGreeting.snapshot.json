@@ -39,6 +39,7 @@
     "path" : "/createGreeting",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "Class for testing the CREATE method that returns the entity.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.CreateGreetingResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.CreateGreetingResource",
     "collection" : {
       "identifier" : {
         "name" : "key",
@@ -50,15 +51,13 @@
           "returnEntity" : { }
         },
         "method" : "create",
-        "javaMethodName" : "create",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "create"
       }, {
         "annotations" : {
           "returnEntity" : { }
         },
         "method" : "batch_create",
-        "javaMethodName" : "batchCreate",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchCreate"
       } ],
       "entity" : {
         "path" : "/createGreeting/{key}"

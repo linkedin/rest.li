@@ -412,6 +412,7 @@
     "path" : "/groups",
     "schema" : "com.linkedin.restli.examples.groups.api.Group",
     "doc" : "TODO Derive path, resourceClass and keyName from class names (GroupsResource => /groups, GroupResource.class, \"groupId\")\n\ngenerated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupsResource2",
+    "resourceClass" : "com.linkedin.restli.examples.groups.server.rest.impl.GroupsResource2",
     "collection" : {
       "identifier" : {
         "name" : "groupID",
@@ -420,32 +421,23 @@
       "supports" : [ "batch_get", "create", "delete", "get", "partial_update" ],
       "methods" : [ {
         "method" : "create",
-        "javaMethodName" : "create",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "create"
       }, {
         "method" : "get",
-        "javaMethodName" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "get"
       }, {
         "method" : "partial_update",
-        "javaMethodName" : "update",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "update"
       }, {
         "method" : "delete",
-        "javaMethodName" : "delete",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "delete"
       }, {
         "method" : "batch_get",
-        "javaMethodName" : "batchGet",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "batchGet"
       } ],
       "finders" : [ {
         "name" : "complexCircuit",
         "javaMethodName" : "complexCircuit",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "doc" : "Test the default value for various types",
         "parameters" : [ {
           "name" : "nativeArray",
@@ -492,8 +484,6 @@
       }, {
         "name" : "emailDomain",
         "javaMethodName" : "findByEmailDomain",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "emailDomain",
           "type" : "string"
@@ -502,8 +492,6 @@
       }, {
         "name" : "manager",
         "javaMethodName" : "findByManager",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "managerMemberID",
           "type" : "int"
@@ -512,8 +500,6 @@
       }, {
         "name" : "search",
         "javaMethodName" : "search",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "keywords",
           "type" : "string",
@@ -534,8 +520,6 @@
         "actions" : [ {
           "name" : "sendTestAnnouncement",
           "javaMethodName" : "sendTestAnnouncement",
-          "javaMethodType" : "SYNC",
-          "javaReturnsResultWrapper" : false,
           "parameters" : [ {
             "name" : "subject",
             "type" : "string"
@@ -549,8 +533,6 @@
         }, {
           "name" : "transferOwnership",
           "javaMethodName" : "transferOwnership",
-          "javaMethodType" : "SYNC",
-          "javaReturnsResultWrapper" : false,
           "parameters" : [ {
             "name" : "request",
             "type" : "com.linkedin.restli.examples.groups.api.TransferOwnershipRequest"
@@ -562,6 +544,7 @@
           "path" : "/groups/{groupID}/contacts",
           "schema" : "com.linkedin.restli.examples.groups.api.GroupContact",
           "doc" : "TODO Not implemented in MongoDB yet\n\ngenerated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupContactsResource2",
+          "resourceClass" : "com.linkedin.restli.examples.groups.server.rest.impl.GroupContactsResource2",
           "collection" : {
             "identifier" : {
               "name" : "contactID",
@@ -570,32 +553,23 @@
             "supports" : [ "batch_get", "create", "delete", "get", "partial_update" ],
             "methods" : [ {
               "method" : "create",
-              "javaMethodName" : "create",
-              "javaMethodType" : "SYNC"
+              "javaMethodName" : "create"
             }, {
               "method" : "get",
-              "javaMethodName" : "get",
-              "javaMethodType" : "SYNC",
-              "javaReturnsResultWrapper" : false
+              "javaMethodName" : "get"
             }, {
               "method" : "partial_update",
-              "javaMethodName" : "update",
-              "javaMethodType" : "SYNC"
+              "javaMethodName" : "update"
             }, {
               "method" : "delete",
-              "javaMethodName" : "delete",
-              "javaMethodType" : "SYNC"
+              "javaMethodName" : "delete"
             }, {
               "method" : "batch_get",
-              "javaMethodName" : "batchGet",
-              "javaMethodType" : "SYNC",
-              "javaReturnsResultWrapper" : false
+              "javaMethodName" : "batchGet"
             } ],
             "actions" : [ {
               "name" : "spamContacts",
-              "javaMethodName" : "spamContacts",
-              "javaMethodType" : "SYNC",
-              "javaReturnsResultWrapper" : false
+              "javaMethodName" : "spamContacts"
             } ],
             "entity" : {
               "path" : "/groups/{groupID}/contacts/{contactID}"

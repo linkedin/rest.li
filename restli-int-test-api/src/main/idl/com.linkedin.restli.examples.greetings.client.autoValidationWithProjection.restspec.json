@@ -12,6 +12,7 @@
   "path" : "/autoValidationWithProjection",
   "schema" : "com.linkedin.restli.examples.greetings.api.ValidationDemo",
   "doc" : "A simplied resource for testing Rest.li data automatic validation with automatic projection.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.AutomaticValidationWithProjectionResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.AutomaticValidationWithProjectionResource",
   "collection" : {
     "identifier" : {
       "name" : "autoValidationWithProjectionId",
@@ -23,36 +24,26 @@
         "returnEntity" : { }
       },
       "method" : "create",
-      "javaMethodName" : "create",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "create"
     }, {
       "method" : "get",
-      "javaMethodName" : "get",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "get"
     }, {
       "annotations" : {
         "returnEntity" : { }
       },
       "method" : "batch_create",
-      "javaMethodName" : "batchCreate",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "batchCreate"
     }, {
       "method" : "batch_get",
-      "javaMethodName" : "batchGet",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : true
+      "javaMethodName" : "batchGet"
     }, {
       "method" : "get_all",
-      "javaMethodName" : "getAll",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "getAll"
     } ],
     "finders" : [ {
       "name" : "searchWithProjection",
-      "javaMethodName" : "searchWithProjection",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "searchWithProjection"
     } ],
     "entity" : {
       "path" : "/autoValidationWithProjection/{autoValidationWithProjectionId}"

@@ -4,7 +4,7 @@
   "path" : "/groups",
   "schema" : "com.linkedin.restli.examples.groups.api.Group",
   "doc" : "TODO Derive path, resourceClass and keyName from class names (GroupsResource => /groups, GroupResource.class, \"groupId\")\n\ngenerated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupsResource2",
-  "resourceClass": "com.linkedin.restli.examples.groups.server.rest.impl.GroupsResource2",
+  "resourceClass" : "com.linkedin.restli.examples.groups.server.rest.impl.GroupsResource2",
   "collection" : {
     "identifier" : {
       "name" : "groupID",
@@ -136,6 +136,7 @@
         "path" : "/groups/{groupID}/contacts",
         "schema" : "com.linkedin.restli.examples.groups.api.GroupContact",
         "doc" : "TODO Not implemented in MongoDB yet\n\ngenerated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupContactsResource2",
+        "resourceClass" : "com.linkedin.restli.examples.groups.server.rest.impl.GroupContactsResource2",
         "collection" : {
           "identifier" : {
             "name" : "contactID",

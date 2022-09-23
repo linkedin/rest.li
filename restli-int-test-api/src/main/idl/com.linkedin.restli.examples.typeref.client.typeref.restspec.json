@@ -4,7 +4,7 @@
   "path" : "/typeref",
   "schema" : "com.linkedin.restli.examples.typeref.api.TyperefRecord",
   "doc" : "Test for typeref param and return types in actions.\n\ngenerated from: com.linkedin.restli.examples.typeref.server.TyperefTestResource",
-  "resourceClass": "com.linkedin.restli.examples.typeref.server.TyperefTestResource",
+  "resourceClass" : "com.linkedin.restli.examples.typeref.server.TyperefTestResource",
   "collection" : {
     "identifier" : {
       "name" : "typerefId",

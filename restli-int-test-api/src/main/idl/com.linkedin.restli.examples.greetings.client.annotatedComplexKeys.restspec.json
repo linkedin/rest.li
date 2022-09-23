@@ -4,6 +4,7 @@
   "path" : "/annotatedComplexKeys",
   "schema" : "com.linkedin.restli.examples.greetings.api.Message",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.AnnotatedComplexKeysResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.AnnotatedComplexKeysResource",
   "collection" : {
     "identifier" : {
       "name" : "annotatedComplexKeyId",
@@ -13,34 +14,25 @@
     "supports" : [ "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get", "partial_update" ],
     "methods" : [ {
       "method" : "create",
-      "javaMethodName" : "create",
-      "javaMethodType" : "PROMISE"
+      "javaMethodName" : "create"
     }, {
       "method" : "get",
-      "javaMethodName" : "get",
-      "javaMethodType" : "PROMISE",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "get"
     }, {
       "method" : "partial_update",
-      "javaMethodName" : "update",
-      "javaMethodType" : "PROMISE"
+      "javaMethodName" : "update"
     }, {
       "method" : "batch_get",
-      "javaMethodName" : "batchGet",
-      "javaMethodType" : "PROMISE",
-      "javaReturnsResultWrapper" : true
+      "javaMethodName" : "batchGet"
     }, {
       "method" : "batch_update",
-      "javaMethodName" : "batchUpdate",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "batchUpdate"
     }, {
       "method" : "batch_partial_update",
-      "javaMethodName" : "batchUpdate",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "batchUpdate"
     }, {
       "method" : "batch_delete",
-      "javaMethodName" : "batchDelete",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "batchDelete"
     } ],
     "finders" : [ {
       "annotations" : {
@@ -50,8 +42,6 @@
       },
       "name" : "prefix",
       "javaMethodName" : "prefix",
-      "javaMethodType" : "PROMISE",
-      "javaReturnsResultWrapper" : false,
       "doc" : "Example javadoc",
       "parameters" : [ {
         "name" : "prefix",

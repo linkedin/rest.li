@@ -15,6 +15,7 @@
     "path" : "/statusesWrapped",
     "schema" : "com.linkedin.restli.tools.twitter.Status",
     "doc" : "CollectionResource containing all statuses modeled using sync collection template with result wrappers.\n\ngenerated from: com.linkedin.restli.tools.twitter.StatusCollectionResultWrappersResource",
+    "resourceClass" : "com.linkedin.restli.tools.twitter.StatusCollectionResultWrappersResource",
     "collection" : {
       "identifier" : {
         "name" : "statusID",
@@ -33,20 +34,14 @@
       "methods" : [ {
         "method" : "get",
         "javaMethodName" : "getWrapped",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : true,
         "doc" : "Gets a single status resource"
       }, {
         "method" : "batch_get",
         "javaMethodName" : "batchGetWrapped",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : true,
         "doc" : "Gets a batch of statuses"
       }, {
         "method" : "get_all",
         "javaMethodName" : "getAllWrapped",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : true,
         "doc" : "Gets all the resources",
         "metadata" : {
           "type" : "com.linkedin.restli.tools.twitter.User"
@@ -56,8 +51,6 @@
       "finders" : [ {
         "name" : "user_timeline",
         "javaMethodName" : "getUserTimeline",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : true,
         "doc" : "Gets the status timeline for a given user",
         "metadata" : {
           "type" : "com.linkedin.restli.tools.twitter.User"
@@ -67,8 +60,6 @@
       "batchFinders" : [ {
         "name" : "batchFinderByAction",
         "javaMethodName" : "batchFindStatuses",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : true,
         "doc" : "Batch finder for statuses",
         "parameters" : [ {
           "name" : "criteria",
@@ -84,8 +75,6 @@
         "actions" : [ {
           "name" : "forward",
           "javaMethodName" : "forward",
-          "javaMethodType" : "SYNC",
-          "javaReturnsResultWrapper" : true,
           "doc" : "Ambiguous action binding test case",
           "parameters" : [ {
             "name" : "to",

@@ -4,7 +4,7 @@
   "path" : "/greetingsPromiseCtx",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.GreetingsResourcePromiseCtx",
-  "resourceClass": "com.linkedin.restli.examples.greetings.server.GreetingsResourcePromiseCtx",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.GreetingsResourcePromiseCtx",
   "collection" : {
     "identifier" : {
       "name" : "greetingsPromiseCtxId",
@@ -54,8 +54,6 @@
     "finders" : [ {
       "name" : "empty",
       "javaMethodName" : "emptyFinder",
-      "javaMethodType" : "PROMISE",
-      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "array",
         "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Empty\" }"
@@ -113,7 +111,7 @@
     "actions" : [ {
       "name" : "anotherAction",
       "javaMethodName" : "anotherAction",
- \     "parameters" : [ {
+      "parameters" : [ {
         "name" : "bitfield",
         "type" : "{ \"type\" : \"array\", \"items\" : \"boolean\" }"
       }, {
@@ -128,19 +126,13 @@
       } ]
     }, {
       "name" : "exceptionTest",
-      "javaMethodName" : "exceptionTest",
-      "javaMethodType" : "PROMISE",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "exceptionTest"
     }, {
       "name" : "modifyCustomContext",
-      "javaMethodName" : "modifyCustomContext",
-      "javaMethodType" : "PROMISE",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "modifyCustomContext"
     }, {
       "name" : "purge",
       "javaMethodName" : "purge",
-      "javaMethodType" : "PROMISE",
-      "javaReturnsResultWrapper" : false,
       "returns" : "int"
     } ],
     "entity" : {
@@ -148,8 +140,6 @@
       "actions" : [ {
         "name" : "someAction",
         "javaMethodName" : "someAction",
-        "javaMethodType" : "PROMISE",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "a",
           "type" : "int",
@@ -173,8 +163,6 @@
       }, {
         "name" : "updateTone",
         "javaMethodName" : "updateTone",
-        "javaMethodType" : "PROMISE",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "newTone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone",

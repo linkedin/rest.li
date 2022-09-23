@@ -89,7 +89,7 @@
     "path" : "/fillInDefaults",
     "schema" : "com.linkedin.restli.examples.defaults.api.HighLevelRecordWithDefault",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.defaults.FieldFillInDefaultResources",
-    "resourceClass": "com.linkedin.restli.examples.greetings.server.defaults.FieldFillInDefaultResources",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.defaults.FieldFillInDefaultResources",
     "collection" : {
       "identifier" : {
         "name" : "fillInDefaultsId",

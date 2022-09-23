@@ -4,7 +4,7 @@
   "path" : "/mixed",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "This resource demonstrates mixing of various method signatures: synchronous, callback,\n promise\n\ngenerated from: com.linkedin.restli.examples.greetings.server.MixedResource",
-  "resourceClass": "com.linkedin.restli.examples.greetings.server.MixedResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.MixedResource",
   "collection" : {
     "identifier" : {
       "name" : "mixedId",

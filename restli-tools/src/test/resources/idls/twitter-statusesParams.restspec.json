@@ -3,6 +3,7 @@
   "path" : "/statusesParams",
   "schema" : "com.linkedin.restli.tools.twitter.Status",
   "doc" : "CollectionResource containing all statuses\n\ngenerated from: com.linkedin.restli.tools.twitter.StatusWithParamsCollectionResource",
+  "resourceClass" : "com.linkedin.restli.tools.twitter.StatusWithParamsCollectionResource",
   "collection" : {
     "identifier" : {
       "name" : "statusID",
@@ -12,7 +13,6 @@
     "methods" : [ {
       "method" : "create",
       "javaMethodName" : "create",
-      "javaMethodType" : "SYNC",
       "doc" : "Creates a new Status",
       "parameters" : [ {
         "name" : "locale",
@@ -27,8 +27,6 @@
     }, {
       "method" : "get",
       "javaMethodName" : "get",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
       "doc" : "Gets a single status resource",
       "parameters" : [ {
         "name" : "locale",
@@ -43,7 +41,6 @@
     }, {
       "method" : "partial_update",
       "javaMethodName" : "update",
-      "javaMethodType" : "SYNC",
       "doc" : "Updates a single status resource",
       "parameters" : [ {
         "name" : "locale",
@@ -58,7 +55,6 @@
     }, {
       "method" : "delete",
       "javaMethodName" : "delete",
-      "javaMethodType" : "SYNC",
       "doc" : "Deletes a status resource",
       "parameters" : [ {
         "name" : "locale",
@@ -73,8 +69,6 @@
     }, {
       "method" : "batch_get",
       "javaMethodName" : "batchGet",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
       "doc" : "Gets a batch of statuses",
       "parameters" : [ {
         "name" : "locale",
@@ -89,8 +83,6 @@
     }, {
       "method" : "get_all",
       "javaMethodName" : "getAll",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "locale",
         "type" : "string",
@@ -105,8 +97,6 @@
     "finders" : [ {
       "name" : "criteria",
       "javaMethodName" : "findByCriteria",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "locale",
         "type" : "string",
@@ -121,8 +111,6 @@
     "actions" : [ {
       "name" : "forward",
       "javaMethodName" : "forward",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "to",
         "type" : "long",

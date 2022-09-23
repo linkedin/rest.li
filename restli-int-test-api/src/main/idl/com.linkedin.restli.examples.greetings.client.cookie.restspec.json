@@ -4,6 +4,7 @@
   "path" : "/cookie",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CookieResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.CookieResource",
   "collection" : {
     "identifier" : {
       "name" : "cookieId",
@@ -12,14 +13,10 @@
     "supports" : [ "batch_get", "get" ],
     "methods" : [ {
       "method" : "get",
-      "javaMethodName" : "get",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "get"
     }, {
       "method" : "batch_get",
-      "javaMethodName" : "batchGet",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "batchGet"
     } ],
     "entity" : {
       "path" : "/cookie/{cookieId}"

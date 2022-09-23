@@ -3,7 +3,7 @@
   "path" : "/statusPromises",
   "schema" : "com.linkedin.restli.tools.twitter.Status",
   "doc" : "CollectionResource containing all statuses modeled using promise template.\n\ngenerated from: com.linkedin.restli.tools.twitter.StatusPromiseResource",
-  "resourceClass": "com.linkedin.restli.tools.twitter.StatusPromiseResource",
+  "resourceClass" : "com.linkedin.restli.tools.twitter.StatusPromiseResource",
   "collection" : {
     "identifier" : {
       "name" : "statusID",

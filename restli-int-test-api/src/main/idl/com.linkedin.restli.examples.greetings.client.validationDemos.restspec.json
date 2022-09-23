@@ -12,7 +12,7 @@
   "path" : "/validationDemos",
   "schema" : "com.linkedin.restli.examples.greetings.api.ValidationDemo",
   "doc" : "Free-form resource for testing Rest.li data validation.\n This class shows how to validate data manually by injecting the validator as a resource method parameter.\n Outgoing data that fails validation is corrected before it is sent to the client.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ValidationDemoResource",
-  "resourceClass": "com.linkedin.restli.examples.greetings.server.ValidationDemoResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.ValidationDemoResource",
   "collection" : {
     "identifier" : {
       "name" : "validationDemosId",

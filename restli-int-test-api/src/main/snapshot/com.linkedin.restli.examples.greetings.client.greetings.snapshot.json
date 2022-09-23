@@ -76,6 +76,7 @@
     "path" : "/greetings",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.GreetingsResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.GreetingsResource",
     "collection" : {
       "identifier" : {
         "name" : "greetingsId",
@@ -85,7 +86,6 @@
       "methods" : [ {
         "method" : "create",
         "javaMethodName" : "create",
-        "javaMethodType" : "SYNC",
         "parameters" : [ {
           "name" : "isNullId",
           "type" : "boolean",
@@ -93,54 +93,39 @@
         } ]
       }, {
         "method" : "get",
-        "javaMethodName" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "get"
       }, {
         "method" : "update",
-        "javaMethodName" : "update",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "update"
       }, {
         "method" : "partial_update",
-        "javaMethodName" : "update",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "update"
       }, {
         "method" : "delete",
-        "javaMethodName" : "delete",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "delete"
       }, {
         "method" : "batch_create",
-        "javaMethodName" : "batchCreate",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchCreate"
       }, {
         "method" : "batch_get",
-        "javaMethodName" : "batchGet",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "batchGet"
       }, {
         "method" : "batch_update",
-        "javaMethodName" : "batchUpdate",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchUpdate"
       }, {
         "method" : "batch_partial_update",
-        "javaMethodName" : "batchUpdate",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchUpdate"
       }, {
         "method" : "batch_delete",
-        "javaMethodName" : "batchDelete",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchDelete"
       }, {
         "method" : "get_all",
         "javaMethodName" : "getAll",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "pagingSupported" : true
       } ],
       "finders" : [ {
         "name" : "empty",
         "javaMethodName" : "emptyFinder",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "array",
           "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Empty\" }"
@@ -151,8 +136,6 @@
       }, {
         "name" : "search",
         "javaMethodName" : "search",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone",
@@ -162,8 +145,6 @@
       }, {
         "name" : "searchWithDefault",
         "javaMethodName" : "searchWithDefault",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone",
@@ -173,8 +154,6 @@
       }, {
         "name" : "searchWithFacets",
         "javaMethodName" : "searchWithFacets",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : true,
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone",
@@ -187,8 +166,6 @@
       }, {
         "name" : "searchWithPostFilter",
         "javaMethodName" : "searchWithPostFilter",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : true,
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.Empty"
         },
@@ -196,8 +173,6 @@
       }, {
         "name" : "searchWithTones",
         "javaMethodName" : "searchWithTones",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "tones",
           "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Tone\" }",
@@ -208,8 +183,6 @@
       "actions" : [ {
         "name" : "anotherAction",
         "javaMethodName" : "anotherAction",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "bitfield",
           "type" : "{ \"type\" : \"array\", \"items\" : \"boolean\" }"
@@ -225,19 +198,13 @@
         } ]
       }, {
         "name" : "exceptionTest",
-        "javaMethodName" : "exceptionTest",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "exceptionTest"
       }, {
         "name" : "modifyCustomContext",
-        "javaMethodName" : "modifyCustomContext",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "modifyCustomContext"
       }, {
         "name" : "purge",
         "javaMethodName" : "purge",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "returns" : "int"
       } ],
       "entity" : {
@@ -245,8 +212,6 @@
         "actions" : [ {
           "name" : "someAction",
           "javaMethodName" : "someAction",
-          "javaMethodType" : "SYNC",
-          "javaReturnsResultWrapper" : false,
           "parameters" : [ {
             "name" : "a",
             "type" : "int",
@@ -270,8 +235,6 @@
         }, {
           "name" : "updateTone",
           "javaMethodName" : "updateTone",
-          "javaMethodType" : "SYNC",
-          "javaReturnsResultWrapper" : false,
           "parameters" : [ {
             "name" : "newTone",
             "type" : "com.linkedin.restli.examples.greetings.api.Tone",

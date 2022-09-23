@@ -4,7 +4,7 @@
   "path" : "/typerefKeys",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.TyperefKeysResource",
-  "resourceClass": "com.linkedin.restli.examples.greetings.server.TyperefKeysResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.TyperefKeysResource",
   "collection" : {
     "identifier" : {
       "name" : "typerefKeysId",

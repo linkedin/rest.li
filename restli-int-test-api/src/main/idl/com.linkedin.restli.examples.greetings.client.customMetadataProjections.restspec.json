@@ -4,7 +4,7 @@
   "path" : "/customMetadataProjections",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "Resource methods to apply a mixture of automatic/manual projection for root object entities as well as the custom\n metadata entity returned in a CollectionResult.\n Note that we intentionally pass in MaskTrees for root object projection, custom metadata projection and paging\n projection to verify RestliAnnotationReader's ability to properly construct the correct arguments when\n reflectively calling resource methods.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.CustomMetadataProjectionResource",
-  "resourceClass": "com.linkedin.restli.examples.greetings.server.CustomMetadataProjectionResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.CustomMetadataProjectionResource",
   "collection" : {
     "identifier" : {
       "name" : "customMetadataProjectionsId",

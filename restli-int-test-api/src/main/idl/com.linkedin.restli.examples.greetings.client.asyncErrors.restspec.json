@@ -3,7 +3,7 @@
   "namespace" : "com.linkedin.restli.examples.greetings.client",
   "path" : "/asyncErrors",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.AsyncErrorResource",
-  "resourceClass": "com.linkedin.restli.examples.greetings.server.AsyncErrorResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.AsyncErrorResource",
   "actionsSet" : {
     "actions" : [ {
       "name" : "callback",

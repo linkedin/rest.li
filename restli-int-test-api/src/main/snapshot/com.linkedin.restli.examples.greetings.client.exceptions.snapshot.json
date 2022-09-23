@@ -34,6 +34,7 @@
     "path" : "/exceptions",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ExceptionsResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.ExceptionsResource",
     "collection" : {
       "identifier" : {
         "name" : "exceptionsId",
@@ -43,49 +44,33 @@
       "methods" : [ {
         "method" : "create",
         "javaMethodName" : "create",
-        "javaMethodType" : "SYNC",
         "doc" : "Responds with an error for requests to create insulting greetings, responds\n with 201 created for all other requests."
       }, {
         "method" : "get",
-        "javaMethodName" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "get"
       }, {
         "method" : "batch_create",
         "javaMethodName" : "batchCreate",
-        "javaMethodType" : "SYNC",
         "doc" : "For a batch create request, responds with an error for requests to create insulting greetings, responds\n with 201 created for all other requests."
       } ],
       "actions" : [ {
         "name" : "errorResponseFormatMessageAndDetails",
-        "javaMethodName" : "errorResponseFormatMessageAndDetails",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "errorResponseFormatMessageAndDetails"
       }, {
         "name" : "errorResponseFormatMessageAndServiceCode",
-        "javaMethodName" : "errorResponseFormatMessageAndServiceCode",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "errorResponseFormatMessageAndServiceCode"
       }, {
         "name" : "errorResponseFormatMessageAndServiceCodeAndExceptionClass",
-        "javaMethodName" : "errorResponseFormatMessageAndServiceCodeAndExceptionClass",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "errorResponseFormatMessageAndServiceCodeAndExceptionClass"
       }, {
         "name" : "errorResponseFormatMessageOnly",
-        "javaMethodName" : "errorResponseFormatMessageOnly",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "errorResponseFormatMessageOnly"
       }, {
         "name" : "errorResponseFormatMinimal",
-        "javaMethodName" : "errorResponseFormatMinimal",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "errorResponseFormatMinimal"
       }, {
         "name" : "errorWithEmptyStatus",
-        "javaMethodName" : "errorWithEmptyStatus",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "errorWithEmptyStatus"
       } ],
       "entity" : {
         "path" : "/exceptions/{exceptionsId}"
