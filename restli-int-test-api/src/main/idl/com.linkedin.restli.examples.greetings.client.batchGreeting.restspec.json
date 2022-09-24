@@ -4,6 +4,7 @@
   "path" : "/batchGreeting",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "Class for testing @MaxBatchSize annotation on batch methods\n\ngenerated from: com.linkedin.restli.examples.greetings.server.BatchGreetingResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.BatchGreetingResource",
   "collection" : {
     "identifier" : {
       "name" : "key",
@@ -12,21 +13,16 @@
     "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "get", "partial_update", "update" ],
     "methods" : [ {
       "method" : "get",
-      "javaMethodName" : "get",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "get"
     }, {
       "method" : "update",
-      "javaMethodName" : "update",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "update"
     }, {
       "method" : "partial_update",
-      "javaMethodName" : "update",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "update"
     }, {
       "method" : "batch_create",
       "javaMethodName" : "batchCreate",
-      "javaMethodType" : "SYNC",
       "maxBatchSize" : {
         "value" : 2,
         "validate" : true
@@ -34,8 +30,6 @@
     }, {
       "method" : "batch_get",
       "javaMethodName" : "batchGet",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
       "maxBatchSize" : {
         "value" : 2,
         "validate" : true
@@ -43,7 +37,6 @@
     }, {
       "method" : "batch_update",
       "javaMethodName" : "batchUpdate",
-      "javaMethodType" : "SYNC",
       "maxBatchSize" : {
         "value" : 2,
         "validate" : false
@@ -51,7 +44,6 @@
     }, {
       "method" : "batch_partial_update",
       "javaMethodName" : "batchUpdate",
-      "javaMethodType" : "SYNC",
       "maxBatchSize" : {
         "value" : 2,
         "validate" : true
@@ -59,7 +51,6 @@
     }, {
       "method" : "batch_delete",
       "javaMethodName" : "batchDelete",
-      "javaMethodType" : "SYNC",
       "maxBatchSize" : {
         "value" : 2,
         "validate" : true
@@ -68,8 +59,6 @@
     "batchFinders" : [ {
       "name" : "searchGreetings",
       "javaMethodName" : "searchGreetings",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : true,
       "parameters" : [ {
         "name" : "criteria",
         "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.GreetingCriteria\" }"

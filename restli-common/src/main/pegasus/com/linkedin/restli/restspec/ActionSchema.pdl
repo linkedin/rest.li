@@ -16,17 +16,6 @@ record ActionSchema includes CustomAnnotationSchema, ServiceErrorsSchema, Succes
   javaMethodName: optional string
 
   /**
-   * Java method type for this finder method
-   */
-  javaMethodType: optional JavaMethodType = "SYNC"
-
-  /**
-   * True if the java implementation of this method returns the result wrapper (aka ActionResult). False, if
-   * it returns List.
-   */
-  javaReturnsResultWrapper: optional boolean = false
-
-  /**
    * Placeholder indicating if this action is read-only or not. This is not enforced by the framework
    * and is just a marker.
    */

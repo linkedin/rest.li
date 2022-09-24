@@ -26,6 +26,7 @@
     "path" : "/stringKeys",
     "schema" : "com.linkedin.restli.examples.greetings.api.Message",
     "doc" : "Demonstrates a resource keyed by a string.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.StringKeysResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.StringKeysResource",
     "collection" : {
       "identifier" : {
         "name" : "parentKey",
@@ -34,52 +35,38 @@
       "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "partial_update", "update" ],
       "methods" : [ {
         "method" : "create",
-        "javaMethodName" : "create",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "create"
       }, {
         "method" : "get",
-        "javaMethodName" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "get"
       }, {
         "method" : "update",
-        "javaMethodName" : "update",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "update"
       }, {
         "method" : "partial_update",
-        "javaMethodName" : "update",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "update"
       }, {
         "method" : "delete",
-        "javaMethodName" : "delete",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "delete"
       }, {
         "method" : "batch_create",
-        "javaMethodName" : "batchCreate",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchCreate"
       }, {
         "method" : "batch_get",
-        "javaMethodName" : "batchGet",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "batchGet"
       }, {
         "method" : "batch_update",
-        "javaMethodName" : "batchUpdate",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchUpdate"
       }, {
         "method" : "batch_partial_update",
-        "javaMethodName" : "batchUpdate",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchUpdate"
       }, {
         "method" : "batch_delete",
-        "javaMethodName" : "batchDelete",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchDelete"
       } ],
       "finders" : [ {
         "name" : "search",
         "javaMethodName" : "search",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "keyword",
           "type" : "string",
@@ -95,6 +82,7 @@
           "path" : "/stringKeys/{parentKey}/stringKeysSub",
           "schema" : "com.linkedin.restli.examples.greetings.api.Message",
           "doc" : "Demonstrates a sub resource keyed by string.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.StringKeysSubResource",
+          "resourceClass" : "com.linkedin.restli.examples.greetings.server.StringKeysSubResource",
           "collection" : {
             "identifier" : {
               "name" : "subKey",
@@ -103,9 +91,7 @@
             "supports" : [ "get" ],
             "methods" : [ {
               "method" : "get",
-              "javaMethodName" : "get",
-              "javaMethodType" : "SYNC",
-              "javaReturnsResultWrapper" : false
+              "javaMethodName" : "get"
             } ],
             "entity" : {
               "path" : "/stringKeys/{parentKey}/stringKeysSub/{subKey}"

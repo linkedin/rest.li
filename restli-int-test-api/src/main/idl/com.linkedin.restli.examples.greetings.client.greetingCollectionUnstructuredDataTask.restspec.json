@@ -4,6 +4,7 @@
   "path" : "/greetingCollectionUnstructuredDataTask",
   "entityType" : "UNSTRUCTURED_DATA",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataCollectionResourceTask",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataCollectionResourceTask",
   "collection" : {
     "identifier" : {
       "name" : "greetingCollectionUnstructuredDataTaskId",
@@ -12,9 +13,7 @@
     "supports" : [ "get" ],
     "methods" : [ {
       "method" : "get",
-      "javaMethodName" : "get",
-      "javaMethodType" : "TASK",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "get"
     } ],
     "entity" : {
       "path" : "/greetingCollectionUnstructuredDataTask/{greetingCollectionUnstructuredDataTaskId}"

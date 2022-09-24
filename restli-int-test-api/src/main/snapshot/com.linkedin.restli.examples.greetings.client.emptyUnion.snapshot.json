@@ -20,6 +20,7 @@
     "path" : "/emptyUnion",
     "schema" : "com.linkedin.restli.examples.greetings.api.ValidateEmptyUnion",
     "doc" : "Resource for testing Rest.li empty union data validation.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ValidateEmptyUnionResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.ValidateEmptyUnionResource",
     "collection" : {
       "identifier" : {
         "name" : "emptyUnionId",
@@ -28,9 +29,7 @@
       "supports" : [ "get" ],
       "methods" : [ {
         "method" : "get",
-        "javaMethodName" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "get"
       } ],
       "entity" : {
         "path" : "/emptyUnion/{emptyUnionId}"

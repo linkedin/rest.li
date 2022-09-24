@@ -3,6 +3,7 @@
   "path" : "/noNamespace",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "An REST endpoint without namespace\n\ngenerated from: com.linkedin.restli.examples.greetings.server.NoNamespaceResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.NoNamespaceResource",
   "collection" : {
     "identifier" : {
       "name" : "noNamespaceId",
@@ -17,6 +18,7 @@
         "path" : "/noNamespace/{noNamespaceId}/noNamespace",
         "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
         "doc" : "A Subresource whose unqualified name is identical to its parent\n\n N.B. The only reason a namespace is specified on this resource is to avoid clashing when the\n client builders are generated.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.IdenticallyNamedSubResource",
+        "resourceClass" : "com.linkedin.restli.examples.greetings.server.IdenticallyNamedSubResource",
         "collection" : {
           "identifier" : {
             "name" : "noNamespaceId",
@@ -32,6 +34,7 @@
         "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub",
         "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
         "doc" : "A subresource of the REST endpoint without namespace\n\ngenerated from: com.linkedin.restli.examples.greetings.server.NoNamespaceSubResource",
+        "resourceClass" : "com.linkedin.restli.examples.greetings.server.NoNamespaceSubResource",
         "collection" : {
           "identifier" : {
             "name" : "noNamespaceSubId",
@@ -45,6 +48,7 @@
               "path" : "/noNamespace/{noNamespaceId}/noNamespaceSub/{noNamespaceSubId}/subSub",
               "schema" : "com.linkedin.restli.examples.greetings.api.ToneFacet",
               "doc" : "generated from: com.linkedin.restli.examples.greetings.server.SubSubResource",
+              "resourceClass" : "com.linkedin.restli.examples.greetings.server.SubSubResource",
               "collection" : {
                 "identifier" : {
                   "name" : "subSubId",

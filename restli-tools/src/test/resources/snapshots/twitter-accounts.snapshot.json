@@ -4,12 +4,11 @@
     "name" : "accounts",
     "path" : "/accounts",
     "doc" : "generated from: com.linkedin.restli.tools.twitter.TwitterAccountsResource",
+    "resourceClass" : "com.linkedin.restli.tools.twitter.TwitterAccountsResource",
     "actionsSet" : {
       "actions" : [ {
         "name" : "closeAccounts",
         "javaMethodName" : "closeAccounts",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "doc" : "This is a sample Javadoc comment for an action. This method below takes in parameters that\n specify what accounts to close\nService Returns: A map that contains details about account closures. This return description here is intentionally\nlong and poorly spaced in between\nso that I can make sure it shows up correctly in the restspec.json",
         "parameters" : [ {
           "name" : "emailAddresses",
@@ -28,21 +27,15 @@
         "returns" : "{ \"type\" : \"map\", \"values\" : \"string\" }"
       }, {
         "name" : "noArgMethod",
-        "javaMethodName" : "noArgMethod",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "noArgMethod"
       }, {
         "name" : "primitiveResponse",
         "javaMethodName" : "primitiveResponse",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "doc" : "This is a another sample Javadoc comment for an action. This poorly written java doc neglects to mention a return\n parameter description",
         "returns" : "int"
       }, {
         "name" : "register",
         "javaMethodName" : "register",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "first",
           "type" : "string"
@@ -64,8 +57,6 @@
       }, {
         "name" : "spamTweets",
         "javaMethodName" : "spamTweets",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "doc" : "This is a another sample Javadoc comment for an action. This semi-poorly written java doc only has one character in the\n return description and uses a mixture of upper and lower case letters in the @return tag\nService Returns: ^",
         "parameters" : [ {
           "name" : "statuses",

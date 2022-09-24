@@ -4,6 +4,7 @@
   "path" : "/reactiveGreetingCollectionUnstructuredData",
   "entityType" : "UNSTRUCTURED_DATA",
   "doc" : "This resource models a collection resource that reactively streams unstructured data response\n\ngenerated from: com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataCollectionResourceReactive",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataCollectionResourceReactive",
   "collection" : {
     "identifier" : {
       "name" : "reactiveGreetingCollectionUnstructuredDataId",
@@ -12,21 +13,16 @@
     "supports" : [ "create", "delete", "get", "update" ],
     "methods" : [ {
       "method" : "create",
-      "javaMethodName" : "create",
-      "javaMethodType" : "ASYNC"
+      "javaMethodName" : "create"
     }, {
       "method" : "get",
-      "javaMethodName" : "get",
-      "javaMethodType" : "ASYNC",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "get"
     }, {
       "method" : "update",
-      "javaMethodName" : "update",
-      "javaMethodType" : "ASYNC"
+      "javaMethodName" : "update"
     }, {
       "method" : "delete",
-      "javaMethodName" : "delete",
-      "javaMethodType" : "ASYNC"
+      "javaMethodName" : "delete"
     } ],
     "entity" : {
       "path" : "/reactiveGreetingCollectionUnstructuredData/{reactiveGreetingCollectionUnstructuredDataId}"

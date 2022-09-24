@@ -9,6 +9,7 @@
   "path" : "/testAnnotation",
   "schema" : "com.linkedin.restli.examples.MockRecord",
   "doc" : "generated from: com.linkedin.restli.restspec.TestAnnotationResource",
+  "resourceClass": "com.linkedin.restli.restspec.TestAnnotationResource",
   "collection" : {
     "identifier" : {
       "name" : "testAnnotationId",
@@ -24,8 +25,7 @@
         }
       },
       "method" : "create",
-      "javaMethodName" : "create",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "create"
     }, {
       "annotations" : {
         "namedAnnotation" : {
@@ -37,8 +37,6 @@
       },
       "method" : "get",
       "javaMethodName" : "getWithResult",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : true,
       "parameters" : [ {
         "annotations" : {
           "com.linkedin.restli.restspec.UnnamedAnnotation" : {
@@ -68,8 +66,6 @@
       },
       "name" : "testFinder",
       "javaMethodName" : "testFinder",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "annotations" : {
           "namedAnnotation" : {
@@ -101,8 +97,6 @@
       },
       "name" : "testAction",
       "javaMethodName" : "testAction",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "annotations" : {
           "com.linkedin.restli.restspec.UnnamedAnnotation" : {
@@ -125,6 +119,7 @@
         "path" : "/testAnnotation/{testAnnotationId}/testAnnotationSub",
         "schema" : "com.linkedin.restli.examples.MockRecord",
         "doc" : "generated from: com.linkedin.restli.restspec.TestAnnotationSubresource",
+        "resourceClass": "com.linkedin.restli.restspec.TestAnnotationSubresource",
         "collection" : {
           "identifier" : {
             "name" : "testAnnotationSubId",
@@ -138,8 +133,7 @@
               }
             },
             "method" : "delete",
-            "javaMethodName" : "delete",
-            "javaMethodType" : "SYNC"
+            "javaMethodName" : "delete"
           } ],
           "entity" : {
             "path" : "/testAnnotation/{testAnnotationId}/testAnnotationSub/{testAnnotationSubId}"

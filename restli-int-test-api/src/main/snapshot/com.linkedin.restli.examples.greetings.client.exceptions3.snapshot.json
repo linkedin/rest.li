@@ -34,6 +34,7 @@
     "path" : "/exceptions3",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ExceptionsResource3",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.ExceptionsResource3",
     "collection" : {
       "identifier" : {
         "name" : "exceptions3Id",
@@ -42,17 +43,13 @@
       "supports" : [ "create", "get", "update" ],
       "methods" : [ {
         "method" : "create",
-        "javaMethodName" : "create",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "create"
       }, {
         "method" : "get",
-        "javaMethodName" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "get"
       }, {
         "method" : "update",
-        "javaMethodName" : "update",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "update"
       } ],
       "entity" : {
         "path" : "/exceptions3/{exceptions3Id}"

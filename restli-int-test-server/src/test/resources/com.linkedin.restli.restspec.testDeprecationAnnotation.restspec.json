@@ -9,6 +9,7 @@
   "path" : "/testDeprecationAnnotation",
   "schema" : "com.linkedin.restli.examples.MockRecord",
   "doc" : "generated from: com.linkedin.restli.restspec.TestDeprecationAnnotationResource",
+  "resourceClass": "com.linkedin.restli.restspec.TestDeprecationAnnotationResource",
   "collection" : {
     "identifier" : {
       "name" : "testDeprecationAnnotationId",
@@ -22,13 +23,10 @@
         }
       },
       "method" : "create",
-      "javaMethodName" : "create",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "create"
     }, {
       "method" : "get",
       "javaMethodName" : "getWithResult",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : true,
       "parameters" : [ {
         "annotations" : {
           "com.linkedin.restli.restspec.UnnamedAnnotation" : {
@@ -47,8 +45,6 @@
       },
       "name" : "testFinder",
       "javaMethodName" : "testFinder",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "title",
         "type" : "string"
@@ -61,8 +57,6 @@
       },
       "name" : "testAction",
       "javaMethodName" : "testAction",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "num",
         "type" : "int"

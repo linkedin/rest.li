@@ -51,6 +51,7 @@
     "path" : "/customTypes3",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource3",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.CustomTypesResource3",
     "association" : {
       "identifier" : "customTypes3Id",
       "assocKeys" : [ {
@@ -63,19 +64,14 @@
       "supports" : [ "batch_update", "get" ],
       "methods" : [ {
         "method" : "get",
-        "javaMethodName" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "get"
       }, {
         "method" : "batch_update",
-        "javaMethodName" : "batchUpdate",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchUpdate"
       } ],
       "finders" : [ {
         "name" : "dateOnly",
         "javaMethodName" : "dateOnly",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "assocKeys" : [ "dateId" ]
       } ],
       "entity" : {

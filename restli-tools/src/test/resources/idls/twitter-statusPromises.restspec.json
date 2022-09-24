@@ -3,6 +3,7 @@
   "path" : "/statusPromises",
   "schema" : "com.linkedin.restli.tools.twitter.Status",
   "doc" : "CollectionResource containing all statuses modeled using promise template.\n\ngenerated from: com.linkedin.restli.tools.twitter.StatusPromiseResource",
+  "resourceClass" : "com.linkedin.restli.tools.twitter.StatusPromiseResource",
   "collection" : {
     "identifier" : {
       "name" : "statusID",
@@ -21,51 +22,38 @@
     "methods" : [ {
       "method" : "create",
       "javaMethodName" : "create",
-      "javaMethodType" : "PROMISE",
       "doc" : "Creates a new Status"
     }, {
       "method" : "get",
       "javaMethodName" : "get",
-      "javaMethodType" : "PROMISE",
-      "javaReturnsResultWrapper" : false,
       "doc" : "Gets a single status resource"
     }, {
       "method" : "partial_update",
       "javaMethodName" : "update",
-      "javaMethodType" : "PROMISE",
       "doc" : "Updates a single status resource"
     }, {
       "method" : "delete",
       "javaMethodName" : "delete",
-      "javaMethodType" : "PROMISE",
       "doc" : "Deletes a status resource"
     }, {
       "method" : "batch_get",
       "javaMethodName" : "batchGet",
-      "javaMethodType" : "PROMISE",
-      "javaReturnsResultWrapper" : false,
       "doc" : "Gets a batch of statuses"
     }, {
       "method" : "get_all",
       "javaMethodName" : "getAll",
-      "javaMethodType" : "PROMISE",
-      "javaReturnsResultWrapper" : false,
       "doc" : "Gets all the resources",
       "pagingSupported" : true
     } ],
     "finders" : [ {
       "name" : "user_timeline",
       "javaMethodName" : "getUserTimeline",
-      "javaMethodType" : "PROMISE",
-      "javaReturnsResultWrapper" : false,
       "doc" : "Gets the status timeline for a given user",
       "pagingSupported" : true
     } ],
     "batchFinders" : [ {
       "name" : "batchFinderByAction",
       "javaMethodName" : "batchFindStatuses",
-      "javaMethodType" : "PROMISE",
-      "javaReturnsResultWrapper" : true,
       "doc" : "Batch finder for statuses",
       "parameters" : [ {
         "name" : "criteria",
@@ -81,8 +69,6 @@
       "actions" : [ {
         "name" : "forward",
         "javaMethodName" : "forward",
-        "javaMethodType" : "PROMISE",
-        "javaReturnsResultWrapper" : false,
         "doc" : "Ambiguous action binding test case",
         "parameters" : [ {
           "name" : "to",

@@ -6,6 +6,7 @@
     "path" : "/greetingCollectionUnstructuredDataAsync",
     "entityType" : "UNSTRUCTURED_DATA",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataCollectionResourceAsync",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataCollectionResourceAsync",
     "collection" : {
       "identifier" : {
         "name" : "greetingCollectionUnstructuredDataAsyncId",
@@ -14,9 +15,7 @@
       "supports" : [ "get" ],
       "methods" : [ {
         "method" : "get",
-        "javaMethodName" : "get",
-        "javaMethodType" : "ASYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "get"
       } ],
       "entity" : {
         "path" : "/greetingCollectionUnstructuredDataAsync/{greetingCollectionUnstructuredDataAsyncId}"

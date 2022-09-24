@@ -59,6 +59,7 @@
     "path" : "/chainedTyperefs",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "Uses CustomNonNegativeLong which is a typeref to CustomLong, which is a typeref to long\n\n Note that there are no coercers in this typeref chain.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ChainedTyperefResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.ChainedTyperefResource",
     "association" : {
       "identifier" : "chainedTyperefsId",
       "assocKeys" : [ {
@@ -71,19 +72,14 @@
       "supports" : [ "batch_update", "get" ],
       "methods" : [ {
         "method" : "get",
-        "javaMethodName" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "get"
       }, {
         "method" : "batch_update",
-        "javaMethodName" : "batchUpdate",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchUpdate"
       } ],
       "finders" : [ {
         "name" : "dateOnly",
         "javaMethodName" : "dateOnly",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "assocKeys" : [ "birthday" ]
       } ],
       "entity" : {

@@ -3,6 +3,7 @@
   "path" : "/statusTasksWrapped",
   "schema" : "com.linkedin.restli.tools.twitter.Status",
   "doc" : "CollectionResource containing all statuses modeled using Task template with result wrappers.\n\ngenerated from: com.linkedin.restli.tools.twitter.StatusTaskResultWrappersResource",
+  "resourceClass" : "com.linkedin.restli.tools.twitter.StatusTaskResultWrappersResource",
   "collection" : {
     "identifier" : {
       "name" : "statusID",
@@ -21,20 +22,14 @@
     "methods" : [ {
       "method" : "get",
       "javaMethodName" : "getWrapped",
-      "javaMethodType" : "TASK",
-      "javaReturnsResultWrapper" : true,
       "doc" : "Gets a single status resource"
     }, {
       "method" : "batch_get",
       "javaMethodName" : "batchGetWrapped",
-      "javaMethodType" : "TASK",
-      "javaReturnsResultWrapper" : true,
       "doc" : "Gets a batch of statuses"
     }, {
       "method" : "get_all",
       "javaMethodName" : "getAllWrapped",
-      "javaMethodType" : "TASK",
-      "javaReturnsResultWrapper" : true,
       "doc" : "Gets all the resources",
       "metadata" : {
         "type" : "com.linkedin.restli.tools.twitter.User"
@@ -44,8 +39,6 @@
     "finders" : [ {
       "name" : "user_timeline",
       "javaMethodName" : "getUserTimeline",
-      "javaMethodType" : "TASK",
-      "javaReturnsResultWrapper" : true,
       "doc" : "Gets the status timeline for a given user",
       "metadata" : {
         "type" : "com.linkedin.restli.tools.twitter.User"
@@ -55,8 +48,6 @@
     "batchFinders" : [ {
       "name" : "batchFinderByAction",
       "javaMethodName" : "batchFindStatuses",
-      "javaMethodType" : "TASK",
-      "javaReturnsResultWrapper" : true,
       "doc" : "Batch finder for statuses",
       "parameters" : [ {
         "name" : "criteria",
@@ -72,8 +63,6 @@
       "actions" : [ {
         "name" : "forward",
         "javaMethodName" : "forward",
-        "javaMethodType" : "TASK",
-        "javaReturnsResultWrapper" : true,
         "doc" : "Ambiguous action binding test case",
         "parameters" : [ {
           "name" : "to",

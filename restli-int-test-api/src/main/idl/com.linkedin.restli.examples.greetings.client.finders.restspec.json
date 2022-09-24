@@ -4,6 +4,7 @@
   "path" : "/finders",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.FindersResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.FindersResource",
   "collection" : {
     "identifier" : {
       "name" : "findersId",
@@ -12,27 +13,19 @@
     "supports" : [ ],
     "finders" : [ {
       "name" : "basicSearch",
-      "javaMethodName" : "basicSearch",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "basicSearch"
     }, {
       "name" : "predefinedSearch",
-      "javaMethodName" : "predefinedSearch",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "predefinedSearch"
     }, {
       "name" : "searchWithMetadata",
       "javaMethodName" : "searchWithMetadata",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : true,
       "metadata" : {
         "type" : "com.linkedin.restli.examples.greetings.api.SearchMetadata"
       }
     }, {
       "name" : "searchWithoutMetadata",
-      "javaMethodName" : "search",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : true
+      "javaMethodName" : "search"
     } ],
     "entity" : {
       "path" : "/finders/{findersId}"

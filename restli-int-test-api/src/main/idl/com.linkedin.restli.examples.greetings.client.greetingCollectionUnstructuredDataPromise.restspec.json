@@ -4,6 +4,7 @@
   "path" : "/greetingCollectionUnstructuredDataPromise",
   "entityType" : "UNSTRUCTURED_DATA",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataCollectionResourcePromise",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataCollectionResourcePromise",
   "collection" : {
     "identifier" : {
       "name" : "greetingCollectionUnstructuredDataPromiseId",
@@ -12,9 +13,7 @@
     "supports" : [ "get" ],
     "methods" : [ {
       "method" : "get",
-      "javaMethodName" : "get",
-      "javaMethodType" : "PROMISE",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "get"
     } ],
     "entity" : {
       "path" : "/greetingCollectionUnstructuredDataPromise/{greetingCollectionUnstructuredDataPromiseId}"

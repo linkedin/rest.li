@@ -14,6 +14,10 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.39.2] - 2022-09-22
+Remove unnessary extra IDL annotations due to recent restriction of adding new method into bridged service and emit resourceC
+lass for javaparser to use to update rest.li resource.
+
 ## [29.39.1] - 2022-09-20
 Expose an easy way to override validation options for ActionArgumentBuilder
 

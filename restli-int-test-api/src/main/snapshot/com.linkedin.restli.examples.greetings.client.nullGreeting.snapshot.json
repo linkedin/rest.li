@@ -62,6 +62,7 @@
     "path" : "/nullGreeting",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "Tests to observe restli's resilience for resource methods returning null. We are simply reusing\n the Greetings model here for our own null-generating purposes.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.NullGreetingsResourceImpl",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.NullGreetingsResourceImpl",
     "collection" : {
       "identifier" : {
         "name" : "nullGreetingId",
@@ -70,47 +71,34 @@
       "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "get_all", "update" ],
       "methods" : [ {
         "method" : "create",
-        "javaMethodName" : "create",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "create"
       }, {
         "method" : "get",
-        "javaMethodName" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "get"
       }, {
         "method" : "update",
-        "javaMethodName" : "update",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "update"
       }, {
         "method" : "delete",
-        "javaMethodName" : "delete",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "delete"
       }, {
         "method" : "batch_create",
-        "javaMethodName" : "batchCreate",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchCreate"
       }, {
         "method" : "batch_get",
-        "javaMethodName" : "batchGetBatchResult",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : true
+        "javaMethodName" : "batchGetBatchResult"
       }, {
         "method" : "batch_update",
-        "javaMethodName" : "batchUpdate",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchUpdate"
       }, {
         "method" : "batch_partial_update",
-        "javaMethodName" : "batchUpdate",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchUpdate"
       }, {
         "method" : "batch_delete",
-        "javaMethodName" : "batchDelete",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchDelete"
       }, {
         "method" : "get_all",
         "javaMethodName" : "getAllCollectionResult",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : true,
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.Empty"
         },
@@ -119,8 +107,6 @@
       "finders" : [ {
         "name" : "finderCallbackNullList",
         "javaMethodName" : "finderCallbackNull",
-        "javaMethodType" : "ASYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone"
@@ -129,8 +115,6 @@
       }, {
         "name" : "finderPromiseNullList",
         "javaMethodName" : "finderPromiseNullList",
-        "javaMethodType" : "PROMISE",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone"
@@ -139,8 +123,6 @@
       }, {
         "name" : "finderTaskNullList",
         "javaMethodName" : "finderTaskNullList",
-        "javaMethodType" : "TASK",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone"
@@ -149,8 +131,6 @@
       }, {
         "name" : "searchReturnNullCollectionList",
         "javaMethodName" : "searchReturnNullCollectionList",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : true,
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone"
@@ -162,8 +142,6 @@
       }, {
         "name" : "searchReturnNullList",
         "javaMethodName" : "searchReturnNullList",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone"
@@ -173,32 +151,22 @@
       "actions" : [ {
         "name" : "returnActionResultWithNullStatus",
         "javaMethodName" : "returnActionResultWithNullStatus",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : true,
         "returns" : "int"
       }, {
         "name" : "returnActionResultWithNullValue",
         "javaMethodName" : "returnActionResultWithNullValue",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : true,
         "returns" : "int"
       }, {
         "name" : "returnNullActionResult",
         "javaMethodName" : "returnNull",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : true,
         "returns" : "int"
       }, {
         "name" : "returnNullStringArray",
         "javaMethodName" : "returnNullStringArray",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "returns" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
       }, {
         "name" : "returnStringArrayWithNullElement",
         "javaMethodName" : "returnStringArrayWithNullElement",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "returns" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
       } ],
       "entity" : {

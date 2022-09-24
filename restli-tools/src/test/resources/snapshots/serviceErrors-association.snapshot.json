@@ -32,6 +32,7 @@
     "path" : "/association",
     "schema" : "com.linkedin.restli.tools.DummyRecord",
     "doc" : "Association resource to test IDL generation with defined service errors.\n This resource also tests that an empty list of service errors can be defined.\n\ngenerated from: com.linkedin.restli.tools.errors.ServiceErrorAssociationResource",
+    "resourceClass" : "com.linkedin.restli.tools.errors.ServiceErrorAssociationResource",
     "association" : {
       "serviceErrors" : [ ],
       "identifier" : "associationId",
@@ -52,8 +53,6 @@
         } ],
         "method" : "get_all",
         "javaMethodName" : "getAll",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "doc" : "Ensures that template CRUD methods can specify a method-level service error.",
         "pagingSupported" : true
       } ],
@@ -67,8 +66,6 @@
         } ],
         "name" : "ctrlF",
         "javaMethodName" : "finder",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "doc" : "Ensures that a method-level service error can specify a parameter.",
         "parameters" : [ {
           "name" : "param",
@@ -79,8 +76,6 @@
         "success" : [ 200, 201, 204 ],
         "name" : "hasSuccessStatuses",
         "javaMethodName" : "hasSuccessStatuses",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "doc" : "Ensures that multiple success statuses can be specified.",
         "returns" : "string"
       } ],

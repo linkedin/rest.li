@@ -50,6 +50,7 @@
     "path" : "/altKey",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "Resource for testing Alternative Key Feature for CollectionResource template.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.altkey.CollectionAltKeyResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.altkey.CollectionAltKeyResource",
     "collection" : {
       "identifier" : {
         "name" : "altKeyId",
@@ -63,50 +64,37 @@
       "supports" : [ "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "partial_update", "update" ],
       "methods" : [ {
         "method" : "create",
-        "javaMethodName" : "create",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "create"
       }, {
         "method" : "get",
-        "javaMethodName" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "get"
       }, {
         "method" : "update",
-        "javaMethodName" : "update",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "update"
       }, {
         "method" : "partial_update",
-        "javaMethodName" : "update",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "update"
       }, {
         "method" : "delete",
-        "javaMethodName" : "delete",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "delete"
       }, {
         "method" : "batch_get",
-        "javaMethodName" : "batchGet",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "batchGet"
       }, {
         "method" : "batch_update",
-        "javaMethodName" : "batchUpdate",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchUpdate"
       }, {
         "method" : "batch_partial_update",
-        "javaMethodName" : "batchUpdate",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchUpdate"
       }, {
         "method" : "batch_delete",
-        "javaMethodName" : "batchDelete",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchDelete"
       } ],
       "entity" : {
         "path" : "/altKey/{altKeyId}",
         "actions" : [ {
           "name" : "getKeyValue",
           "javaMethodName" : "testAction",
-          "javaMethodType" : "SYNC",
-          "javaReturnsResultWrapper" : false,
           "returns" : "long"
         } ],
         "subresources" : [ {
@@ -115,6 +103,7 @@
           "path" : "/altKey/{altKeyId}/altKeySub",
           "schema" : "com.linkedin.restli.examples.greetings.api.Message",
           "doc" : "Resource for testing Alternative Key Feature for CollectionSubResource\n\ngenerated from: com.linkedin.restli.examples.greetings.server.altkey.AltKeySubResource",
+          "resourceClass" : "com.linkedin.restli.examples.greetings.server.altkey.AltKeySubResource",
           "collection" : {
             "identifier" : {
               "name" : "subKey",
@@ -128,14 +117,10 @@
             "supports" : [ "batch_get", "get" ],
             "methods" : [ {
               "method" : "get",
-              "javaMethodName" : "get",
-              "javaMethodType" : "SYNC",
-              "javaReturnsResultWrapper" : false
+              "javaMethodName" : "get"
             }, {
               "method" : "batch_get",
-              "javaMethodName" : "batchGet",
-              "javaMethodType" : "SYNC",
-              "javaReturnsResultWrapper" : false
+              "javaMethodName" : "batchGet"
             } ],
             "entity" : {
               "path" : "/altKey/{altKeyId}/altKeySub/{subKey}"

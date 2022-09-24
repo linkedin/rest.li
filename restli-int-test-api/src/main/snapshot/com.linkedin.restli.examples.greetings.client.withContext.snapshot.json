@@ -34,6 +34,7 @@
     "path" : "/withContext",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.WithContextResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.WithContextResource",
     "collection" : {
       "identifier" : {
         "name" : "withContextId",
@@ -42,15 +43,11 @@
       "supports" : [ "get" ],
       "methods" : [ {
         "method" : "get",
-        "javaMethodName" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "get"
       } ],
       "finders" : [ {
         "name" : "finder",
-        "javaMethodName" : "finder",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "finder"
       } ],
       "entity" : {
         "path" : "/withContext/{withContextId}"

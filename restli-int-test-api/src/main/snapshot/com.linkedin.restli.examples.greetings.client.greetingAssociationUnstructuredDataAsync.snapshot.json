@@ -6,6 +6,7 @@
     "path" : "/greetingAssociationUnstructuredDataAsync",
     "entityType" : "UNSTRUCTURED_DATA",
     "doc" : "This resource models an association resource that produces unstructured data entities as results.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataAssociationResourceAsync",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataAssociationResourceAsync",
     "association" : {
       "identifier" : "greetingAssociationUnstructuredDataAsyncId",
       "assocKeys" : [ {
@@ -18,9 +19,7 @@
       "supports" : [ "get" ],
       "methods" : [ {
         "method" : "get",
-        "javaMethodName" : "get",
-        "javaMethodType" : "ASYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "get"
       } ],
       "entity" : {
         "path" : "/greetingAssociationUnstructuredDataAsync/{greetingAssociationUnstructuredDataAsyncId}"

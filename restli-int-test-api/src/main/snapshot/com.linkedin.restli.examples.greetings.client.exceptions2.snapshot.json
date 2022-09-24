@@ -34,6 +34,7 @@
     "path" : "/exceptions2",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ExceptionsResource2",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.ExceptionsResource2",
     "collection" : {
       "identifier" : {
         "name" : "exceptions2Id",
@@ -42,22 +43,16 @@
       "supports" : [ "get" ],
       "methods" : [ {
         "method" : "get",
-        "javaMethodName" : "getWithResult",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : true
+        "javaMethodName" : "getWithResult"
       } ],
       "actions" : [ {
         "name" : "exceptionWithValue",
         "javaMethodName" : "exceptionWithValue",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : true,
         "doc" : "Action that responds HTTP 500 with integer value",
         "returns" : "int"
       }, {
         "name" : "exceptionWithoutValue",
         "javaMethodName" : "exceptionWithoutValue",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : true,
         "doc" : "Action that responds HTTP 500 without value"
       } ],
       "entity" : {

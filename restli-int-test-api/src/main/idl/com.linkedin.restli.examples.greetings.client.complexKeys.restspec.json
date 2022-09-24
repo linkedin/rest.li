@@ -4,6 +4,7 @@
   "path" : "/complexKeys",
   "schema" : "com.linkedin.restli.examples.greetings.api.Message",
   "doc" : "Demonstrates a resource with a complex key.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ComplexKeysResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.ComplexKeysResource",
   "collection" : {
     "identifier" : {
       "name" : "keys",
@@ -13,50 +14,36 @@
     "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get", "get_all", "partial_update" ],
     "methods" : [ {
       "method" : "create",
-      "javaMethodName" : "create",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "create"
     }, {
       "method" : "get",
-      "javaMethodName" : "get",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "get"
     }, {
       "method" : "partial_update",
-      "javaMethodName" : "update",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "update"
     }, {
       "method" : "batch_create",
-      "javaMethodName" : "batchCreate",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "batchCreate"
     }, {
       "method" : "batch_get",
-      "javaMethodName" : "batchGet",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : true
+      "javaMethodName" : "batchGet"
     }, {
       "method" : "batch_update",
-      "javaMethodName" : "batchUpdate",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "batchUpdate"
     }, {
       "method" : "batch_partial_update",
-      "javaMethodName" : "batchUpdate",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "batchUpdate"
     }, {
       "method" : "batch_delete",
-      "javaMethodName" : "batchDelete",
-      "javaMethodType" : "SYNC"
+      "javaMethodName" : "batchDelete"
     }, {
       "method" : "get_all",
       "javaMethodName" : "getAll",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
       "pagingSupported" : true
     } ],
     "finders" : [ {
       "name" : "prefix",
       "javaMethodName" : "prefix",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
       "parameters" : [ {
         "name" : "prefix",
         "type" : "string"
@@ -67,8 +54,6 @@
       "actions" : [ {
         "name" : "entityAction",
         "javaMethodName" : "entityAction",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "returns" : "int"
       } ],
       "subresources" : [ {
@@ -77,6 +62,7 @@
         "path" : "/complexKeys/{keys}/complexKeysSub",
         "schema" : "com.linkedin.restli.examples.greetings.api.TwoPartKey",
         "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ComplexKeysSubResource",
+        "resourceClass" : "com.linkedin.restli.examples.greetings.server.ComplexKeysSubResource",
         "collection" : {
           "identifier" : {
             "name" : "subKey",
@@ -85,9 +71,7 @@
           "supports" : [ "get" ],
           "methods" : [ {
             "method" : "get",
-            "javaMethodName" : "get",
-            "javaMethodType" : "SYNC",
-            "javaReturnsResultWrapper" : false
+            "javaMethodName" : "get"
           } ],
           "entity" : {
             "path" : "/complexKeys/{keys}/complexKeysSub/{subKey}"

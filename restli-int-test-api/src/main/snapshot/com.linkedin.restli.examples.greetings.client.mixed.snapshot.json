@@ -34,6 +34,7 @@
     "path" : "/mixed",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "This resource demonstrates mixing of various method signatures: synchronous, callback,\n promise\n\ngenerated from: com.linkedin.restli.examples.greetings.server.MixedResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.MixedResource",
     "collection" : {
       "identifier" : {
         "name" : "mixedId",
@@ -42,27 +43,20 @@
       "supports" : [ "create", "delete", "get", "update" ],
       "methods" : [ {
         "method" : "create",
-        "javaMethodName" : "create",
-        "javaMethodType" : "ASYNC"
+        "javaMethodName" : "create"
       }, {
         "method" : "get",
-        "javaMethodName" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "get"
       }, {
         "method" : "update",
-        "javaMethodName" : "update",
-        "javaMethodType" : "PROMISE"
+        "javaMethodName" : "update"
       }, {
         "method" : "delete",
-        "javaMethodName" : "delete",
-        "javaMethodType" : "PROMISE"
+        "javaMethodName" : "delete"
       } ],
       "finders" : [ {
         "name" : "search",
         "javaMethodName" : "search",
-        "javaMethodType" : "PROMISE",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "what",
           "type" : "string"
@@ -71,8 +65,6 @@
       "actions" : [ {
         "name" : "theAction",
         "javaMethodName" : "theAction",
-        "javaMethodType" : "ASYNC",
-        "javaReturnsResultWrapper" : false,
         "returns" : "string"
       } ],
       "entity" : {

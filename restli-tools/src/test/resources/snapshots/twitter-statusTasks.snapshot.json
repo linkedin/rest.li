@@ -15,6 +15,7 @@
     "path" : "/statusTasks",
     "schema" : "com.linkedin.restli.tools.twitter.Status",
     "doc" : "CollectionResource containing all statuses modeled using Task template.\n\ngenerated from: com.linkedin.restli.tools.twitter.StatusTaskResource",
+    "resourceClass" : "com.linkedin.restli.tools.twitter.StatusTaskResource",
     "collection" : {
       "identifier" : {
         "name" : "statusID",
@@ -33,51 +34,38 @@
       "methods" : [ {
         "method" : "create",
         "javaMethodName" : "create",
-        "javaMethodType" : "TASK",
         "doc" : "Creates a new Status"
       }, {
         "method" : "get",
         "javaMethodName" : "get",
-        "javaMethodType" : "TASK",
-        "javaReturnsResultWrapper" : false,
         "doc" : "Gets a single status resource"
       }, {
         "method" : "partial_update",
         "javaMethodName" : "update",
-        "javaMethodType" : "TASK",
         "doc" : "Updates a single status resource"
       }, {
         "method" : "delete",
         "javaMethodName" : "delete",
-        "javaMethodType" : "TASK",
         "doc" : "Deletes a status resource"
       }, {
         "method" : "batch_get",
         "javaMethodName" : "batchGet",
-        "javaMethodType" : "TASK",
-        "javaReturnsResultWrapper" : false,
         "doc" : "Gets a batch of statuses"
       }, {
         "method" : "get_all",
         "javaMethodName" : "getAll",
-        "javaMethodType" : "TASK",
-        "javaReturnsResultWrapper" : false,
         "doc" : "Gets all the resources",
         "pagingSupported" : true
       } ],
       "finders" : [ {
         "name" : "user_timeline",
         "javaMethodName" : "getUserTimeline",
-        "javaMethodType" : "TASK",
-        "javaReturnsResultWrapper" : false,
         "doc" : "Gets the status timeline for a given user",
         "pagingSupported" : true
       } ],
       "batchFinders" : [ {
         "name" : "batchFinderByAction",
         "javaMethodName" : "batchFindStatuses",
-        "javaMethodType" : "TASK",
-        "javaReturnsResultWrapper" : true,
         "doc" : "Batch finder for statuses",
         "parameters" : [ {
           "name" : "criteria",
@@ -93,8 +81,6 @@
         "actions" : [ {
           "name" : "forward",
           "javaMethodName" : "forward",
-          "javaMethodType" : "TASK",
-          "javaReturnsResultWrapper" : false,
           "doc" : "Ambiguous action binding test case",
           "parameters" : [ {
             "name" : "to",

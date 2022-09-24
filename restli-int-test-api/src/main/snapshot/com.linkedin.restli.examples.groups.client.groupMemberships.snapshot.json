@@ -95,6 +95,7 @@
     "path" : "/groupMemberships",
     "schema" : "com.linkedin.restli.examples.groups.api.GroupMembership",
     "doc" : "Association between members and groups\n\ngenerated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupMembershipsResource2",
+    "resourceClass" : "com.linkedin.restli.examples.groups.server.rest.impl.GroupMembershipsResource2",
     "association" : {
       "identifier" : "groupMembershipsId",
       "assocKeys" : [ {
@@ -107,50 +108,36 @@
       "supports" : [ "batch_delete", "batch_get", "batch_partial_update", "batch_update", "delete", "get", "get_all", "partial_update", "update" ],
       "methods" : [ {
         "method" : "get",
-        "javaMethodName" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "get"
       }, {
         "method" : "update",
-        "javaMethodName" : "update",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "update"
       }, {
         "method" : "partial_update",
-        "javaMethodName" : "update",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "update"
       }, {
         "method" : "delete",
-        "javaMethodName" : "delete",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "delete"
       }, {
         "method" : "batch_get",
-        "javaMethodName" : "batchGet",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : true
+        "javaMethodName" : "batchGet"
       }, {
         "method" : "batch_update",
-        "javaMethodName" : "batchUpdate",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchUpdate"
       }, {
         "method" : "batch_partial_update",
-        "javaMethodName" : "batchUpdate",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchUpdate"
       }, {
         "method" : "batch_delete",
-        "javaMethodName" : "batchDelete",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchDelete"
       }, {
         "method" : "get_all",
         "javaMethodName" : "getAll",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "pagingSupported" : true
       } ],
       "finders" : [ {
         "name" : "group",
         "javaMethodName" : "getMemberships",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "parameters" : [ {
           "name" : "level",
           "type" : "string",
@@ -177,8 +164,6 @@
       }, {
         "name" : "member",
         "javaMethodName" : "getMemberships",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
         "assocKeys" : [ "memberID" ],
         "pagingSupported" : true
       } ],

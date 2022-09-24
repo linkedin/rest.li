@@ -4,6 +4,7 @@
   "path" : "/complexByteKeys",
   "schema" : "com.linkedin.restli.examples.typeref.api.TyperefRecord",
   "doc" : "Demonstrates a resource with a complex key that consists of a field of Bytes typeref.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ComplexByteKeysResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.ComplexByteKeysResource",
   "collection" : {
     "identifier" : {
       "name" : "keys",
@@ -13,9 +14,7 @@
     "supports" : [ "get" ],
     "methods" : [ {
       "method" : "get",
-      "javaMethodName" : "get",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false
+      "javaMethodName" : "get"
     } ],
     "entity" : {
       "path" : "/complexByteKeys/{keys}"
