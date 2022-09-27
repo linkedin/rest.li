@@ -1,3 +1,10 @@
+// internal api inaccessible starting 1.9
+if(JavaVersion.current() > JavaVersion.VERSION_1_9){
+  project.tasks.withType(JavaCompile) {
+    options.compilerArgs += [ "--add-exports", "jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED" ]
+  }
+}
+
 dependencies {
   compile project(':degrader')
   compile project(':r2-core')
