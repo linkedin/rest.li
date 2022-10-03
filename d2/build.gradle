@@ -2,6 +2,7 @@ dependencies {
   compile project(':degrader')
   compile project(':r2-core')
   compile project(':r2-netty')
+  compile project(':r2-jetty')
   compile project(':d2-schemas')
   compile project(':data')
   compile project(':pegasus-common')
@@ -34,6 +35,22 @@ dependencies {
   testCompile project(':test-util')
   testCompile project(':d2-test-api')
   testCompileOnly externalDependency.findbugs
+
+  runtimeOnly externalDependency.grpcNettyShaded
+  implementation externalDependency.grpcProtobuf
+  implementation externalDependency.grpcStub
+  implementation externalDependency.protobufJavaUtil
+  implementation externalDependency.envoyApi
+}
+
+task(runXdsGreeterClient, dependsOn: 'classes', type: JavaExec) {
+    main = 'com.linkedin.d2.xds.example.XdsD2GreeterClient'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task(runXdsGreeterServer, dependsOn: 'classes', type: JavaExec) {
+    main = 'com.linkedin.d2.xds.example.XdsD2GreeterServer'
+    classpath = sourceSets.main.runtimeClasspath
 }
 
 task packup(dependsOn: configurations.default.allArtifacts, type: Copy) {

@@ -122,6 +122,13 @@ project.ext.externalDependency = [
   'jsr305': 'com.google.code.findbugs:jsr305:3.0.0',
   "avroSpotBugsPlugin": "com.linkedin.avroutil1:spotbugs-plugin:0.2.56",
   "classgraph": "io.github.classgraph:classgraph:4.8.149",
+
+  // for gRPC prototyping
+  'grpcNettyShaded': 'io.grpc:grpc-netty-shaded:1.45.1',
+  'grpcProtobuf': 'io.grpc:grpc-protobuf:1.45.1',
+  'grpcStub': 'io.grpc:grpc-stub:1.45.1',
+  'protobufJavaUtil': 'com.google.protobuf:protobuf-java-util:3.20.0',
+  'envoyApi': 'io.envoyproxy.controlplane:api:0.1.31',
 ];
 
 if (!project.ext.isDefaultEnvironment)
