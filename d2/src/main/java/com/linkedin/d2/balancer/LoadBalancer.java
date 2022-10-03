@@ -19,12 +19,15 @@ package com.linkedin.d2.balancer;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdownCallback;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import java.util.concurrent.ExecutionException;
+import org.apache.commons.lang3.tuple.Pair;
 
 
 /**
@@ -82,6 +85,12 @@ public interface LoadBalancer
     {
       clientCallback.onError(e);
     }
+  }
+
+  default void getLoadBalancedClusterProperties(String clusterName,
+      Callback<Pair<ClusterProperties, UriProperties>> callback)
+  {
+    throw new UnsupportedOperationException();
   }
 
   void start(Callback<None> callback);

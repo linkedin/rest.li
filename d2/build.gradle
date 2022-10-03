@@ -1,3 +1,7 @@
+plugins {
+    id "com.google.protobuf" version "0.8.10"
+}
+
 // internal api inaccessible starting 1.9
 if (JavaVersion.current() > JavaVersion.VERSION_1_9) {
   project.tasks.withType(JavaCompile) {
@@ -44,6 +48,23 @@ dependencies {
   testCompile project(':test-util')
   testCompile project(':d2-test-api')
   testCompileOnly externalDependency.findbugs
+
+  compile externalDependency.grpcNettyShaded
+  compile externalDependency.grpcProtobuf
+  compile externalDependency.grpcStub
+  compile externalDependency.protobufJava
+  compile externalDependency.protobufJavaUtil
+  compile externalDependency.envoyApi
+}
+
+sourceSets.main.java {
+    srcDir 'build/generated/source/proto/main/java'
+}
+
+protobuf {
+    protoc {
+        artifact = externalDependency.protoc
+    }
 }
 
 task packup(dependsOn: configurations.default.allArtifacts, type: Copy) {

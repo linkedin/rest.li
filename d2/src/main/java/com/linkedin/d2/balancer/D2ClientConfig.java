@@ -39,6 +39,7 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
 import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.d2.jmx.NoOpJmxManager;
 import com.linkedin.r2.transport.common.TransportClientFactory;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
@@ -50,23 +51,25 @@ import javax.net.ssl.SSLParameters;
 public class D2ClientConfig
 {
   String zkHosts = null;
+  public String xdsServer = null;
   long zkSessionTimeoutInMs = 3600000L;
   long zkStartupTimeoutInMs = 10000L;
-  long lbWaitTimeout = 5000L;
-  TimeUnit lbWaitUnit = TimeUnit.MILLISECONDS;
+  public long lbWaitTimeout = 5000L;
+  public TimeUnit lbWaitUnit = TimeUnit.MILLISECONDS;
   String flagFile = "/no/flag/file/set";
   String basePath = "/d2";
-  String fsBasePath = "/tmp/d2";
+  public String fsBasePath = "/tmp/d2";
   ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory componentFactory = null;
-  Map<String, TransportClientFactory> clientFactories = null;
+  public Map<String, TransportClientFactory> clientFactories = null;
   LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory = null;
-  String d2ServicePath = null;
-  SSLContext sslContext = null;
-  SSLParameters sslParameters = null;
-  boolean isSSLEnabled = false;
+  public String d2ServicePath = null;
+  public SSLContext sslContext = null;
+  public SslContext grpcSslContext = null;
+  public SSLParameters sslParameters = null;
+  public boolean isSSLEnabled = false;
   boolean shutdownAsynchronously = false;
   boolean isSymlinkAware = true;
-  Map<String, Map<String, Object>> clientServicesConfig = Collections.<String, Map<String, Object>>emptyMap();
+  public Map<String, Map<String, Object>> clientServicesConfig = Collections.<String, Map<String, Object>>emptyMap();
   boolean useNewEphemeralStoreWatcher = true;
   HealthCheckOperations healthCheckOperations = null;
   boolean enableSaveUriDataOnDisk = false;
@@ -99,21 +102,21 @@ public class D2ClientConfig
   // TODO: Once the change is fully verified, we should always enable the async feature
   boolean enableBackupRequestsClientAsync = false;
   EventEmitter eventEmitter = null;
-  PartitionAccessorRegistry partitionAccessorRegistry = null;
+  public PartitionAccessorRegistry partitionAccessorRegistry = null;
   Function<ZooKeeper, ZooKeeper> zooKeeperDecorator = null;
-  Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories = Collections.emptyMap();
+  public Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories = Collections.emptyMap();
   boolean requestTimeoutHandlerEnabled = false;
-  SslSessionValidatorFactory sslSessionValidatorFactory = null;
+  public SslSessionValidatorFactory sslSessionValidatorFactory = null;
   ZKPersistentConnection zkConnectionToUseForLB = null;
   ScheduledExecutorService startUpExecutorService = null;
-  JmxManager jmxManager = new NoOpJmxManager();
-  String d2JmxManagerPrefix = "UnknownPrefix";
+  public JmxManager jmxManager = new NoOpJmxManager();
+  public String d2JmxManagerPrefix = "UnknownPrefix";
   boolean enableRelativeLoadBalancer = false;
-  DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider = null;
-  CanaryDistributionProvider canaryDistributionProvider = null;
+  public DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider = null;
+  public CanaryDistributionProvider canaryDistributionProvider = null;
   public static final int DEFAULT_RETRY_LIMIT = 3;
   boolean enableClusterFailout = false;
-  FailoutConfigProviderFactory failoutConfigProviderFactory;
+  public FailoutConfigProviderFactory failoutConfigProviderFactory;
   FailoutRedirectStrategy failoutRedirectStrategy;
   ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter = new LogOnlyServiceDiscoveryEventEmitter(); // default to use log-only emitter
 
@@ -122,6 +125,7 @@ public class D2ClientConfig
   }
 
   D2ClientConfig(String zkHosts,
+                 String xdsServer,
                  long zkSessionTimeoutInMs,
                  long zkStartupTimeoutInMs,
                  long lbWaitTimeout,
@@ -133,6 +137,7 @@ public class D2ClientConfig
                  Map<String, TransportClientFactory> clientFactories,
                  LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory,
                  SSLContext sslContext,
+                 SslContext grpcSslContext,
                  SSLParameters sslParameters,
                  boolean isSSLEnabled,
                  boolean shutdownAsynchronously,
@@ -179,6 +184,7 @@ public class D2ClientConfig
                  ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter)
   {
     this.zkHosts = zkHosts;
+    this.xdsServer = xdsServer;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
     this.zkStartupTimeoutInMs = zkStartupTimeoutInMs;
     this.lbWaitTimeout = lbWaitTimeout;
@@ -190,6 +196,7 @@ public class D2ClientConfig
     this.clientFactories = clientFactories;
     this.lbWithFacilitiesFactory = lbWithFacilitiesFactory;
     this.sslContext = sslContext;
+    this.grpcSslContext = grpcSslContext;
     this.sslParameters = sslParameters;
     this.isSSLEnabled = isSSLEnabled;
     this.shutdownAsynchronously = shutdownAsynchronously;

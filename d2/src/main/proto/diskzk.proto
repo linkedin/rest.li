@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package indis;
+
+import "google/protobuf/struct.proto";
+
+option go_package = "golnkd.in/indis-registry-observer/diskzk/schema";
+
+message Stat {
+  // The zxid of the change that caused this znode to be created.
+  int64 Czxid = 1;
+  // The zxid of the change that last modified this znode.
+  int64 Mzxid = 2;
+  // The time in milliseconds from epoch when this znode was created.
+  int64 Ctime = 3;
+  // The time in milliseconds from epoch when this znode was last modified.
+  int64 Mtime = 4;
+  // The number of changes to the data of this znode.
+  int32 Version = 5;
+  // The number of changes to the children of this znode.
+  int32 Cversion = 6;
+  // The number of changes to the ACL of this znode.
+  int32 Aversion = 7;
+  // The session id of the owner of this znode if the znode is an ephemeral node. If it is not an ephemeral node, it will be zero.
+  int64 EphemeralOwner = 8;
+  // The length of the data field of this znode.
+  int32 DataLength = 9;
+  // The number of children of this znode.
+  int32 NumChildren = 10;
+  // The zxid of the change that last modified this node's children.
+  int64 Pzxid = 11;
+}
+
+message D2Node {
+  Stat stat = 1;
+  google.protobuf.Struct data = 2;
+}
+
+message D2NodeMap {
+  map<string, D2Node> nodes = 1;
+}

@@ -54,6 +54,7 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.util.ArgumentUtil;
 import com.linkedin.util.clock.SystemClock;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -132,6 +133,7 @@ public class D2ClientBuilder
         createDefaultLoadBalancerStrategyFactories();
 
     final D2ClientConfig cfg = new D2ClientConfig(_config.zkHosts,
+                  _config.xdsServer,
                   _config.zkSessionTimeoutInMs,
                   _config.zkStartupTimeoutInMs,
                   _config.lbWaitTimeout,
@@ -143,6 +145,7 @@ public class D2ClientBuilder
                   transportClientFactories,
                   _config.lbWithFacilitiesFactory,
                   _config.sslContext,
+                  _config.grpcSslContext,
                   _config.sslParameters,
                   _config.isSSLEnabled,
                   _config.shutdownAsynchronously,
@@ -265,6 +268,12 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setXdsServer(String xdsServer)
+  {
+    _config.xdsServer = xdsServer;
+    return this;
+  }
+
   public D2ClientBuilder setZkSessionTimeout(long zkSessionTimeout, TimeUnit unit)
   {
     _config.zkSessionTimeoutInMs = unit.toMillis(zkSessionTimeout);
@@ -312,6 +321,12 @@ public class D2ClientBuilder
   {
     _config.sslContext = sslContext;
     return this;
+  }
+
+  public D2ClientBuilder setGrpcSslContext(SslContext grpcSslContext)
+  {
+   _config.grpcSslContext = grpcSslContext;
+   return this;
   }
 
   public D2ClientBuilder setSSLParameters(SSLParameters sslParameters)

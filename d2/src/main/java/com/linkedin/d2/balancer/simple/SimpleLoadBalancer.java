@@ -84,6 +84,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -748,7 +749,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         @Override
         public void onError(Throwable e)
         {
-          finalCallback.onError(new ServiceUnavailableException(serviceName, "PEGA_1011. "+e.getMessage(), e));
+          finalCallback.onError(new ServiceUnavailableException(serviceName, "PEGA_1011. " + e.getMessage(), e));
         }
 
         @Override
@@ -766,7 +767,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     Runnable callback = () ->
     {
       LoadBalancerStateItem<ServiceProperties> serviceItem =
-        _state.getServiceProperties(serviceName);
+          _state.getServiceProperties(serviceName);
 
       if (serviceItem == null || serviceItem.getProperty() == null)
       {
@@ -789,6 +790,67 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     {
       _log.info("No timeout for service {}", serviceName);
       _state.listenToService(serviceName, new NullStateListenerCallback());
+      callback.run();
+    }
+  }
+
+  @Override
+  public void getLoadBalancedClusterProperties(String clusterName,
+      Callback<Pair<ClusterProperties, UriProperties>> callback)
+  {
+    boolean waitForUpdatedValue = _timeout > 0;
+    // if timeout is 0, we must not add the timeout callback, otherwise it would trigger immediately
+    if (waitForUpdatedValue)
+    {
+      Callback<Pair<ClusterProperties, UriProperties>> finalCallback = callback;
+      callback = new TimeoutCallback<>(_executor, _timeout, _unit, new Callback<Pair<ClusterProperties, UriProperties>>()
+      {
+        @Override
+        public void onError(Throwable e)
+        {
+          finalCallback.onError(new ServiceUnavailableException(clusterName, "PEGA_1011. " + e.getMessage(), e));
+        }
+
+        @Override
+        public void onSuccess(Pair<ClusterProperties, UriProperties> result)
+        {
+          finalCallback.onSuccess(result);
+        }
+      }, "Timeout while fetching cluster");
+    }
+    getLoadBalancedClusterProperties(clusterName, waitForUpdatedValue, callback);
+  }
+
+  public void getLoadBalancedClusterProperties(String clusterName, boolean waitForUpdatedValue,
+      Callback<Pair<ClusterProperties, UriProperties>> pairCallback)
+  {
+    Runnable callback = () ->
+    {
+      LoadBalancerStateItem<ClusterProperties> clusterItem =
+          _state.getClusterProperties(clusterName);
+
+      LoadBalancerStateItem<UriProperties> uriItem =
+          _state.getUriProperties(clusterName);
+
+      if (clusterItem == null || clusterItem.getProperty() == null || uriItem == null || uriItem.getProperty() == null)
+      {
+        warn(_log, "unable to find cluster: ", clusterName);
+
+        die(pairCallback, clusterName, "PEGA_1012. no cluster properties in lb state");
+        return;
+      }
+
+      pairCallback.onSuccess(Pair.of(clusterItem.getProperty(), uriItem.getProperty()));
+    };
+
+    if (waitForUpdatedValue)
+    {
+      _state.listenToCluster(clusterName, (type, name) -> callback.run());
+    }
+    else
+    {
+      _log.info("No timeout for cluster {}", clusterName);
+      _state.listenToCluster(clusterName, new NullStateListenerCallback());
       callback.run();
     }
   }

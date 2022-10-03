@@ -29,7 +29,9 @@ import com.linkedin.d2.balancer.LoadBalancerClusterListener;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.WarmUpService;
 import com.linkedin.d2.balancer.clusterfailout.FailoutConfig;
+import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
@@ -45,6 +47,8 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Map;
+import org.apache.commons.lang3.tuple.Pair;
+
 
 /**
  * TogglingLoadBalancer encapsulates a load balancer which has a primary and backup source
@@ -113,6 +117,13 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
   public void getLoadBalancedServiceProperties(String serviceName, Callback<ServiceProperties> clientCallback)
   {
     _balancer.getLoadBalancedServiceProperties(serviceName, clientCallback);
+  }
+
+  @Override
+  public void getLoadBalancedClusterProperties(String clusterName,
+      Callback<Pair<ClusterProperties, UriProperties>> callback)
+  {
+    _balancer.getLoadBalancedClusterProperties(clusterName, callback);
   }
 
   @Override
