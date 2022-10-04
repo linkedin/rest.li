@@ -393,6 +393,7 @@ public class ResourceMethodDescriptor
   public void setResourceModel(final ResourceModel resourceModel)
   {
     _resourceModel = resourceModel;
+    generateResourceMethodIdentifier();
   }
 
   /**
@@ -434,21 +435,23 @@ public class ResourceMethodDescriptor
     return _type.toString();
   }
 
+  /* package-protected */ void generateResourceMethodIdentifier() {
+      if (_resourceModel != null) {
+        _resourceMethodIdentifier =
+            ResourceMethodIdentifierGenerator.generate(_resourceModel.getBaseUriTemplate(),
+                getMethodType(),
+                getMethodName());
+      } else {
+        _resourceMethodIdentifier = null;
+      }
+  }
+
   /**
    * Returns the resource method identifier if it can be determined, or null otherwise.
    * This is identical to Request.getResourceMethodIdentifier().
    * @return the resource method identifier if it can be determined, or null otherwise.
    */
   public String getResourceMethodIdentifier() {
-    if (_resourceMethodIdentifier == null) {
-      if (_resourceModel != null) {
-        _resourceMethodIdentifier =
-            ResourceMethodIdentifierGenerator.generate(_resourceModel.getBaseUriTemplate(),
-                                                       getMethodType(),
-                                                       getMethodName());
-      }
-    }
-
     return _resourceMethodIdentifier;
   }
 

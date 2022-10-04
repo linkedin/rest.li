@@ -365,6 +365,9 @@ public class ResourceModel implements ResourceDefinition
 
     // Ensure any sub-resources have the correct template
     _pathSubResourceMap.values().forEach(ResourceModel::generateBaseUriTemplate);
+
+    // Ensure any defined ResourceMethodDescriptors are updated
+    _resourceMethodDescriptors.forEach(ResourceMethodDescriptor::generateResourceMethodIdentifier);
   }
 
   @Override
