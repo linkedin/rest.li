@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2013 LinkedIn Corp.
+   Copyright (c) 2022 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -17,6 +17,11 @@
 package com.linkedin.restli.common;
 
 /**
+ * This class generates a unique identifier for each resource method. The identifier is based on the resource
+ * baseUriTemplate (with properties removed), the resource method, and any action or finder if appropriate.
+ *
+ * The resourceMethodIdentifier is available from the Request, and ResourceMethodDescriptor APIs.
+ *
  * @author dmessink
  */
 public class ResourceMethodIdentifierGenerator

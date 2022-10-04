@@ -56,7 +56,9 @@ public interface ResourceDefinition
    * Gets the base uri template.
    * @return the base uri template.
    */
-  String getBaseUriTemplate();
+  default String getBaseUriTemplate() {
+    throw new UnsupportedOperationException();
+  }
 
   /**
    * Gets the rest.li resource java class.
