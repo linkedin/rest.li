@@ -32,4 +32,9 @@ public interface TestConstants
   String TESTNG_GROUP_NOT_IMPLEMENTED = "not_implemented";
 
   String TESTNG_GROUP_REST_FRAMEWORK_EXAMPLE = "rest-framework-example";
+
+  TestRecordTemplateClass.Foo FOO_1 = TestRecordTemplateClass.Foo.createFoo("foo1_key", "foo1_value");
+  TestRecordTemplateClass.Foo FOO_2 = TestRecordTemplateClass.Foo.createFoo("foo2_key", "foo2_value");
+  TestRecordTemplateClass.Bar MD_1 = TestRecordTemplateClass.Bar.createBar("md1_key", "md1_value");
+  TestRecordTemplateClass.Bar MD_2 = TestRecordTemplateClass.Bar.createBar("md2_key", "md2_value");
 }

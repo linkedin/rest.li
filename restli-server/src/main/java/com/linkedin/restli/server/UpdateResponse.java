@@ -17,6 +17,8 @@
 package com.linkedin.restli.server;
 
 import com.linkedin.restli.common.HttpStatus;
+import java.util.Objects;
+
 
 /**
  * @author dellamag
@@ -33,5 +35,22 @@ public class UpdateResponse
   public HttpStatus getStatus()
   {
     return _status;
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    if (this == object) {
+      return true;
+    }
+    if (object == null || getClass() != object.getClass()) {
+      return false;
+    }
+    UpdateResponse that = (UpdateResponse) object;
+    return _status == that._status;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(_status);
   }
 }
