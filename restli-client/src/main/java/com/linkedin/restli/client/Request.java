@@ -26,6 +26,7 @@ import com.linkedin.data.transform.filter.request.MaskTree;
 import com.linkedin.jersey.api.uri.UriTemplate;
 import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.ResourceMethodIdentifierGenerator;
 import com.linkedin.restli.common.ResourceProperties;
 import com.linkedin.restli.common.ResourceSpec;
 import com.linkedin.restli.common.RestConstants;
@@ -71,6 +72,7 @@ public class Request<T>
   private final Map<String, Class<?>>       _queryParamClasses; // Used for coercing query params. In case of collection or iterable, contains the type parameter class.
   private final String                      _methodName; // needed to identify finders and actions. null for everything else
   private final String                      _baseUriTemplate;
+  private final String                      _resourceMethodIdentifier;
   private final Map<String, Object>         _pathKeys;
   private final List<Object>                _streamingAttachments; //Usually null since streaming is rare. Creating an empty List is wasteful.
   private RestliRequestOptions              _requestOptions;
@@ -113,6 +115,7 @@ public class Request<T>
     _queryParamClasses = queryParamClasses;
     _methodName = methodName;
     _baseUriTemplate = baseUriTemplate;
+    _resourceMethodIdentifier = ResourceMethodIdentifierGenerator.generate(baseUriTemplate, method, methodName);
     _pathKeys = pathKeys;
 
     if (_baseUriTemplate != null && _pathKeys != null)
@@ -215,6 +218,10 @@ public class Request<T>
   public String getBaseUriTemplate()
   {
     return _baseUriTemplate;
+  }
+
+  public String getResourceMethodIdentifier() {
+    return _resourceMethodIdentifier;
   }
 
   public Map<String, Object> getPathKeys()

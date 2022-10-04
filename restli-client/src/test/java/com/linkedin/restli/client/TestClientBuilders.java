@@ -409,6 +409,7 @@ public class TestClientBuilders
     BatchGetRequest<TestRecord> request =
         builder.ids(1L, 2L, 3L).fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
     Assert.assertEquals(request.getObjectIds(), new HashSet<>(Arrays.asList(1L, 2L, 3L)));
     Assert.assertEquals(request.getFields(), new HashSet<>(Arrays.asList(
         TestRecord.fields().id(), TestRecord.fields().message())));
@@ -541,6 +542,7 @@ public class TestClientBuilders
         builder.ids(key1,key2).fields(TestRecord.fields().id(), TestRecord.fields().message()).buildKV();
 
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
 
     // Compare key sets. Note that have to convert keys to Strings as the request internally converts them to string
     HashSet<CompoundKey> expectedIds = new HashSet<>(Arrays.asList(key1, key2));
@@ -602,6 +604,7 @@ public class TestClientBuilders
     GetRequest<TestRecord> request = builder.id(key).build();
 
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
     Assert.assertEquals(request.isSafe(), true);
     Assert.assertEquals(request.isIdempotent(), true);
     checkBasicRequest(request,
@@ -645,6 +648,7 @@ public class TestClientBuilders
     Assert.assertEquals(request.isIdempotent(), false);
 
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
     checkBasicRequest(request, expectedURIDetails, ResourceMethod.CREATE, record, Collections.<String, String>emptyMap(), null);
   }
 
@@ -660,6 +664,7 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
     checkBasicRequest(request,
                       expectedURIDetails,
                       ResourceMethod.UPDATE,
@@ -686,6 +691,7 @@ public class TestClientBuilders
     Assert.assertEquals(request.isIdempotent(), false);
 
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
     checkBasicRequest(request, expectedURIDetails, ResourceMethod.PARTIAL_UPDATE, patch, Collections.<String, String>emptyMap(), null);
   }
 
@@ -745,6 +751,7 @@ public class TestClientBuilders
     BatchUpdateRequest<CompoundKey, TestRecord> request = builder.inputs(inputs).build();
 
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
 
@@ -789,6 +796,7 @@ public class TestClientBuilders
     BatchPartialUpdateRequest<CompoundKey, TestRecord> request = builder.inputs(inputs).build();
 
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
     Assert.assertNotNull(request.getPartialUpdateInputMap());
@@ -830,6 +838,7 @@ public class TestClientBuilders
     List<Long> ids = Arrays.asList(1L, 2L, 3L);
     BatchGetRequest<TestRecord> request = builder.ids(ids).fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
     Assert.assertEquals(request.getObjectIds(), new HashSet<>(Arrays.asList(1L, 2L, 3L)));
     Assert.assertEquals(request.getFields(), new HashSet<>(Arrays.asList(
         TestRecord.fields().id(), TestRecord.fields().message())));
@@ -878,6 +887,7 @@ public class TestClientBuilders
         .appendSingleAttachment(_dataSourceWriterB)
         .build();
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
     Assert.assertEquals(request.getObjectIds(), new HashSet<>(Arrays.asList(1L, 2L, 3L)));
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
@@ -926,6 +936,7 @@ public class TestClientBuilders
         .appendSingleAttachment(_dataSourceWriterB)
         .build();
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
     Assert.assertEquals(request.getObjectIds(), new HashSet<>(Arrays.asList(1L, 2L, 3L)));
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
@@ -970,6 +981,7 @@ public class TestClientBuilders
         new BatchDeleteRequestBuilder<>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
     BatchDeleteRequest<Long, TestRecord> request = builder.ids(1L, 2L, 3L).build();
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
     Assert.assertEquals(request.getObjectIds(), new HashSet<>(Arrays.asList(1L, 2L, 3L)));
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
@@ -990,6 +1002,7 @@ public class TestClientBuilders
         .build();
 
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
 
@@ -1451,6 +1464,7 @@ public class TestClientBuilders
     GetRequestBuilder<Long, TestRecord> builder = new GetRequestBuilder<>(TEST_URI, TestRecord.class, _COLL_SPEC, RestliRequestOptions.DEFAULT_OPTIONS);
     GetRequest<TestRecord> request = builder.id(1L).fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
     Assert.assertEquals(request.getObjectId(), Long.valueOf(1L));
     Assert.assertEquals(request.getFields(), new HashSet<>(Arrays.asList(
         TestRecord.fields().id(), TestRecord.fields().message())));
@@ -1533,6 +1547,7 @@ public class TestClientBuilders
         RestliRequestOptions.DEFAULT_OPTIONS);
     GetRequest<TestRecord> request = builder.fields(TestRecord.fields().id(), TestRecord.fields().message()).build();
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
     Assert.assertEquals(request.getObjectId(), null);
     Assert.assertEquals(request.getFields(), new HashSet<>(Arrays.asList(
         TestRecord.fields().id(), TestRecord.fields().message())));
@@ -1857,6 +1872,7 @@ public class TestClientBuilders
     expectedRequest.getEntities().put(toEntityKey(id2, expectedURIDetails.getProtocolVersion()), t2);
 
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
     Assert.assertTrue(request.isIdempotent());
     Assert.assertFalse(request.isSafe());
 
@@ -2074,6 +2090,7 @@ public class TestClientBuilders
     UpdateRequest<TestRecord> request = builder.id(key).input(new TestRecord()).build();
 
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), true);
     checkBasicRequest(request,
@@ -2095,6 +2112,7 @@ public class TestClientBuilders
     CreateRequest<TestRecord> request = builder.input(new TestRecord()).build();
 
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
     checkBasicRequest(request,
@@ -2169,6 +2187,7 @@ public class TestClientBuilders
     Assert.assertEquals(request.isSafe(), false);
     Assert.assertEquals(request.isIdempotent(), false);
     testBaseUriGeneration(request, expectedURIDetails.getProtocolVersion());
+    testResourceMethodIdentifier(request);
 
     // using .toStringFull (which is deprecated) because this is only used for checking v1
     @SuppressWarnings({"unchecked","rawtypes"})
@@ -3270,6 +3289,21 @@ public class TestClientBuilders
   {
     Assert.assertEquals(request.getBaseUriTemplate(), expectedBaseUriTemplate);
     Assert.assertEquals(request.getPathKeys(), expectedPathKeys);
+  }
+
+  private void testResourceMethodIdentifier(Request<?> request)
+  {
+    final String resourceMethodIdentifier = request.getResourceMethodIdentifier();
+    final String method = request.getMethod().toString();
+    final String methodName = request.getMethodName();
+
+    Assert.assertTrue(resourceMethodIdentifier.startsWith(TEST_URI),"identifier doesn't start with baseUriTemplate");
+    if (methodName == null) {
+      Assert.assertTrue(resourceMethodIdentifier.endsWith(method), "identifier doesn't end with method");
+    } else {
+      Assert.assertTrue(resourceMethodIdentifier.contains(method), "identifier doesn't contain with method");
+      Assert.assertTrue(resourceMethodIdentifier.endsWith(methodName), "identifier doesn't end with methodName");
+    }
   }
 
   private void testBaseUriGeneration(Request<?> request, ProtocolVersion version)

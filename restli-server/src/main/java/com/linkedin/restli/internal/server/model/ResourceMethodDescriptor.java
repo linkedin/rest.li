@@ -25,6 +25,7 @@ import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.data.template.TemplateRuntimeException;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ResourceMethod;
+import com.linkedin.restli.common.ResourceMethodIdentifierGenerator;
 import com.linkedin.restli.restspec.MaxBatchSizeSchema;
 import com.linkedin.restli.server.ResourceLevel;
 import com.linkedin.restli.server.annotations.ServiceErrors;
@@ -38,8 +39,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,6 +78,7 @@ public class ResourceMethodDescriptor
   private final InterfaceType                           _interfaceType;
   private final DataMap                                 _customAnnotations;
   private final String                                  _linkedBatchFinderName;
+  private String                                        _resourceMethodIdentifier;
   // Method-level service error definitions
   private List<ServiceError>                            _serviceErrors;
   private List<HttpStatus>                              _successStatuses;
@@ -432,6 +432,24 @@ public class ResourceMethodDescriptor
     }
 
     return _type.toString();
+  }
+
+  /**
+   * Returns the resource method identifier if it can be determined, or null otherwise.
+   * This is identical to Request.getResourceMethodIdentifier().
+   * @return the resource method identifier if it can be determined, or null otherwise.
+   */
+  public String getResourceMethodIdentifier() {
+    if (_resourceMethodIdentifier == null) {
+      if (_resourceModel != null) {
+        _resourceMethodIdentifier =
+            ResourceMethodIdentifierGenerator.generate(_resourceModel.getBaseUriTemplate(),
+                                                       getMethodType(),
+                                                       getMethodName());
+      }
+    }
+
+    return _resourceMethodIdentifier;
   }
 
   /**
