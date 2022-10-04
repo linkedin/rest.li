@@ -4,6 +4,7 @@
   "path" : "/withContext",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.WithContextResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.WithContextResource",
   "collection" : {
     "identifier" : {
       "name" : "withContextId",
@@ -11,10 +12,12 @@
     },
     "supports" : [ "get" ],
     "methods" : [ {
-      "method" : "get"
+      "method" : "get",
+      "javaMethodName" : "get"
     } ],
     "finders" : [ {
-      "name" : "finder"
+      "name" : "finder",
+      "javaMethodName" : "finder"
     } ],
     "entity" : {
       "path" : "/withContext/{withContextId}"

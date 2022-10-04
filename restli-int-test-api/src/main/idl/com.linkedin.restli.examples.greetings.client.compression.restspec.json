@@ -4,6 +4,7 @@
   "path" : "/compression",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "Simple \"hello world\" resource that takes a repeat parameter to specify how many times it should appear.\n Tuning the level of redundancy allows testing of compression correctness.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.CompressionResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.CompressionResource",
   "collection" : {
     "identifier" : {
       "name" : "compressionId",
@@ -12,6 +13,7 @@
     "supports" : [ ],
     "finders" : [ {
       "name" : "repeatedGreetings",
+      "javaMethodName" : "serveRepeatedGreeting",
       "parameters" : [ {
         "name" : "repeat",
         "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"

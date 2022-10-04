@@ -6,14 +6,18 @@
     "path" : "/reactiveGreetingSimpleUnstructuredData",
     "entityType" : "UNSTRUCTURED_DATA",
     "doc" : "This resource models a simple resource that reactively streams unstructured data response.\n\n For more comprehensive examples, look at {@link GreetingUnstructuredDataCollectionResourceReactive}\n\ngenerated from: com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataSimpleResourceReactive",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataSimpleResourceReactive",
     "simple" : {
       "supports" : [ "delete", "get", "update" ],
       "methods" : [ {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get"
       }, {
-        "method" : "update"
+        "method" : "update",
+        "javaMethodName" : "update"
       }, {
-        "method" : "delete"
+        "method" : "delete",
+        "javaMethodName" : "delete"
       } ],
       "entity" : {
         "path" : "/reactiveGreetingSimpleUnstructuredData"

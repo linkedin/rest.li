@@ -47,6 +47,7 @@
     "path" : "/customTypes2",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource2",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.CustomTypesResource2",
     "collection" : {
       "identifier" : {
         "name" : "customTypes2Id",
@@ -55,23 +56,30 @@
       "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get" ],
       "methods" : [ {
         "method" : "create",
+        "javaMethodName" : "create",
         "parameters" : [ {
           "name" : "unionRefParam",
           "type" : "com.linkedin.restli.examples.typeref.api.UnionRefInline",
           "optional" : true
         } ]
       }, {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get"
       }, {
-        "method" : "batch_create"
+        "method" : "batch_create",
+        "javaMethodName" : "batchCreate"
       }, {
-        "method" : "batch_get"
+        "method" : "batch_get",
+        "javaMethodName" : "batchGet"
       }, {
-        "method" : "batch_update"
+        "method" : "batch_update",
+        "javaMethodName" : "batchUpdate"
       }, {
-        "method" : "batch_partial_update"
+        "method" : "batch_partial_update",
+        "javaMethodName" : "batchUpdate"
       }, {
-        "method" : "batch_delete"
+        "method" : "batch_delete",
+        "javaMethodName" : "batchDelete"
       } ],
       "entity" : {
         "path" : "/customTypes2/{customTypes2Id}",
@@ -81,6 +89,7 @@
           "path" : "/customTypes2/{customTypes2Id}/customTypes4",
           "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
           "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomTypesResource4",
+          "resourceClass" : "com.linkedin.restli.examples.greetings.server.CustomTypesResource4",
           "collection" : {
             "identifier" : {
               "name" : "customTypes4Id",
@@ -88,7 +97,8 @@
             },
             "supports" : [ "get" ],
             "methods" : [ {
-              "method" : "get"
+              "method" : "get",
+              "javaMethodName" : "get"
             } ],
             "entity" : {
               "path" : "/customTypes2/{customTypes2Id}/customTypes4/{customTypes4Id}"

@@ -4,6 +4,7 @@
   "path" : "/typerefCustomDoubleAssociationKeyResource",
   "schema" : "com.linkedin.restli.examples.greetings.api.Message",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.TyperefCustomDoubleAssociationKeyResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.TyperefCustomDoubleAssociationKeyResource",
   "association" : {
     "identifier" : "typerefCustomDoubleAssociationKeyResourceId",
     "assocKeys" : [ {
@@ -16,6 +17,7 @@
     "supports" : [ "get" ],
     "methods" : [ {
       "method" : "get",
+      "javaMethodName" : "get",
       "parameters" : [ {
         "name" : "array",
         "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.typeref.api.CustomStringRef\" }"

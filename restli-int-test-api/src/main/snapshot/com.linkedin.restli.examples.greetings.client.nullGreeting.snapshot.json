@@ -62,6 +62,7 @@
     "path" : "/nullGreeting",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "Tests to observe restli's resilience for resource methods returning null. We are simply reusing\n the Greetings model here for our own null-generating purposes.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.NullGreetingsResourceImpl",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.NullGreetingsResourceImpl",
     "collection" : {
       "identifier" : {
         "name" : "nullGreetingId",
@@ -69,25 +70,35 @@
       },
       "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "get_all", "update" ],
       "methods" : [ {
-        "method" : "create"
+        "method" : "create",
+        "javaMethodName" : "create"
       }, {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get"
       }, {
-        "method" : "update"
+        "method" : "update",
+        "javaMethodName" : "update"
       }, {
-        "method" : "delete"
+        "method" : "delete",
+        "javaMethodName" : "delete"
       }, {
-        "method" : "batch_create"
+        "method" : "batch_create",
+        "javaMethodName" : "batchCreate"
       }, {
-        "method" : "batch_get"
+        "method" : "batch_get",
+        "javaMethodName" : "batchGetBatchResult"
       }, {
-        "method" : "batch_update"
+        "method" : "batch_update",
+        "javaMethodName" : "batchUpdate"
       }, {
-        "method" : "batch_partial_update"
+        "method" : "batch_partial_update",
+        "javaMethodName" : "batchUpdate"
       }, {
-        "method" : "batch_delete"
+        "method" : "batch_delete",
+        "javaMethodName" : "batchDelete"
       }, {
         "method" : "get_all",
+        "javaMethodName" : "getAllCollectionResult",
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.Empty"
         },
@@ -95,6 +106,7 @@
       } ],
       "finders" : [ {
         "name" : "finderCallbackNullList",
+        "javaMethodName" : "finderCallbackNull",
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone"
@@ -102,6 +114,7 @@
         "pagingSupported" : true
       }, {
         "name" : "finderPromiseNullList",
+        "javaMethodName" : "finderPromiseNullList",
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone"
@@ -109,6 +122,7 @@
         "pagingSupported" : true
       }, {
         "name" : "finderTaskNullList",
+        "javaMethodName" : "finderTaskNullList",
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone"
@@ -116,6 +130,7 @@
         "pagingSupported" : true
       }, {
         "name" : "searchReturnNullCollectionList",
+        "javaMethodName" : "searchReturnNullCollectionList",
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone"
@@ -126,6 +141,7 @@
         "pagingSupported" : true
       }, {
         "name" : "searchReturnNullList",
+        "javaMethodName" : "searchReturnNullList",
         "parameters" : [ {
           "name" : "tone",
           "type" : "com.linkedin.restli.examples.greetings.api.Tone"
@@ -134,18 +150,23 @@
       } ],
       "actions" : [ {
         "name" : "returnActionResultWithNullStatus",
+        "javaMethodName" : "returnActionResultWithNullStatus",
         "returns" : "int"
       }, {
         "name" : "returnActionResultWithNullValue",
+        "javaMethodName" : "returnActionResultWithNullValue",
         "returns" : "int"
       }, {
         "name" : "returnNullActionResult",
+        "javaMethodName" : "returnNull",
         "returns" : "int"
       }, {
         "name" : "returnNullStringArray",
+        "javaMethodName" : "returnNullStringArray",
         "returns" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
       }, {
         "name" : "returnStringArrayWithNullElement",
+        "javaMethodName" : "returnStringArrayWithNullElement",
         "returns" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
       } ],
       "entity" : {

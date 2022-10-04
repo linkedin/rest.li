@@ -46,6 +46,7 @@
     "path" : "/greetingsAuth",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.CustomCrudParamsResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.CustomCrudParamsResource",
     "collection" : {
       "identifier" : {
         "name" : "greetingsAuthId",
@@ -54,6 +55,7 @@
       "supports" : [ "create", "delete", "get", "partial_update", "update" ],
       "methods" : [ {
         "method" : "create",
+        "javaMethodName" : "createGreeting",
         "parameters" : [ {
           "name" : "auth",
           "type" : "string",
@@ -61,6 +63,7 @@
         } ]
       }, {
         "method" : "get",
+        "javaMethodName" : "getGreeting",
         "parameters" : [ {
           "name" : "auth",
           "type" : "string",
@@ -72,6 +75,7 @@
         } ]
       }, {
         "method" : "update",
+        "javaMethodName" : "updateGreeting",
         "parameters" : [ {
           "name" : "auth",
           "type" : "string",
@@ -79,6 +83,7 @@
         } ]
       }, {
         "method" : "partial_update",
+        "javaMethodName" : "updateGreeting",
         "parameters" : [ {
           "name" : "auth",
           "type" : "string",
@@ -86,6 +91,7 @@
         } ]
       }, {
         "method" : "delete",
+        "javaMethodName" : "deleteGreeting",
         "parameters" : [ {
           "name" : "auth",
           "type" : "string",

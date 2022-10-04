@@ -10,24 +10,24 @@
     "path" : "/trending",
     "schema" : "com.linkedin.restli.tools.twitter.Trend",
     "doc" : "Simple resource that contains the location of a status.\n\ngenerated from: com.linkedin.restli.tools.twitter.TrendingResource",
+    "resourceClass" : "com.linkedin.restli.tools.twitter.TrendingResource",
     "simple" : {
       "supports" : [ "delete", "get", "partial_update", "update" ],
       "methods" : [ {
         "method" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
+        "javaMethodName" : "get",
         "doc" : "Gets the global trending topics information."
       }, {
         "method" : "update",
-        "javaMethodType" : "SYNC",
+        "javaMethodName" : "update",
         "doc" : "Updates the global trending topics information."
       }, {
         "method" : "partial_update",
-        "javaMethodType" : "SYNC",
+        "javaMethodName" : "update",
         "doc" : "Updates the global trending topics information."
       }, {
         "method" : "delete",
-        "javaMethodType" : "SYNC",
+        "javaMethodName" : "delete",
         "doc" : "Deletes the global trending topics information."
       } ],
       "entity" : {
@@ -37,6 +37,7 @@
           "path" : "/trending/trendRegions",
           "schema" : "com.linkedin.restli.tools.twitter.Trend",
           "doc" : "CollectionResource containing all trending regions of a parent global trending resource\n\ngenerated from: com.linkedin.restli.tools.twitter.TrendRegionsCollectionResource",
+          "resourceClass" : "com.linkedin.restli.tools.twitter.TrendRegionsCollectionResource",
           "collection" : {
             "identifier" : {
               "name" : "trendRegionId",
@@ -45,51 +46,48 @@
             "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "partial_update", "update" ],
             "methods" : [ {
               "method" : "create",
-              "javaMethodType" : "SYNC",
+              "javaMethodName" : "create",
               "doc" : "Creates a new trending region"
             }, {
               "method" : "get",
-              "javaMethodType" : "SYNC",
-              "javaReturnsResultWrapper" : false,
+              "javaMethodName" : "get",
               "doc" : "Gets a single trending region resource"
             }, {
               "method" : "update",
-              "javaMethodType" : "SYNC",
+              "javaMethodName" : "update",
               "doc" : "Updates (overwrites) a trending region resource"
             }, {
               "method" : "partial_update",
-              "javaMethodType" : "SYNC",
+              "javaMethodName" : "update",
               "doc" : "Partially updates a trending region resource"
             }, {
               "method" : "delete",
-              "javaMethodType" : "SYNC",
+              "javaMethodName" : "delete",
               "doc" : "Deletes a trending region resource"
             }, {
               "method" : "batch_create",
-              "javaMethodType" : "SYNC",
+              "javaMethodName" : "batchCreate",
               "doc" : "Batch creates (overwrites) trending region resources"
             }, {
               "method" : "batch_get",
-              "javaMethodType" : "SYNC",
-              "javaReturnsResultWrapper" : false,
+              "javaMethodName" : "batchGet",
               "doc" : "Returns a batch of trending regions."
             }, {
               "method" : "batch_update",
-              "javaMethodType" : "SYNC",
+              "javaMethodName" : "batchUpdate",
               "doc" : "Batch updates (overwrites) trending region resources"
             }, {
               "method" : "batch_partial_update",
-              "javaMethodType" : "SYNC",
+              "javaMethodName" : "batchUpdate",
               "doc" : "Batch patches trending region resources"
             }, {
               "method" : "batch_delete",
-              "javaMethodType" : "SYNC",
+              "javaMethodName" : "batchDelete",
               "doc" : "Batch deletes trending region resources"
             } ],
             "finders" : [ {
               "name" : "get_trending_by_popularity",
-              "javaMethodType" : "SYNC",
-              "javaReturnsResultWrapper" : false,
+              "javaMethodName" : "getTrendingByPopularity",
               "doc" : "Returns the trending regions sorted by popularity.",
               "pagingSupported" : true
             } ],

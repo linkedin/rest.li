@@ -26,6 +26,7 @@
     "path" : "/stringKeys",
     "schema" : "com.linkedin.restli.examples.greetings.api.Message",
     "doc" : "Demonstrates a resource keyed by a string.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.StringKeysResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.StringKeysResource",
     "collection" : {
       "identifier" : {
         "name" : "parentKey",
@@ -33,28 +34,39 @@
       },
       "supports" : [ "batch_create", "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "partial_update", "update" ],
       "methods" : [ {
-        "method" : "create"
+        "method" : "create",
+        "javaMethodName" : "create"
       }, {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get"
       }, {
-        "method" : "update"
+        "method" : "update",
+        "javaMethodName" : "update"
       }, {
-        "method" : "partial_update"
+        "method" : "partial_update",
+        "javaMethodName" : "update"
       }, {
-        "method" : "delete"
+        "method" : "delete",
+        "javaMethodName" : "delete"
       }, {
-        "method" : "batch_create"
+        "method" : "batch_create",
+        "javaMethodName" : "batchCreate"
       }, {
-        "method" : "batch_get"
+        "method" : "batch_get",
+        "javaMethodName" : "batchGet"
       }, {
-        "method" : "batch_update"
+        "method" : "batch_update",
+        "javaMethodName" : "batchUpdate"
       }, {
-        "method" : "batch_partial_update"
+        "method" : "batch_partial_update",
+        "javaMethodName" : "batchUpdate"
       }, {
-        "method" : "batch_delete"
+        "method" : "batch_delete",
+        "javaMethodName" : "batchDelete"
       } ],
       "finders" : [ {
         "name" : "search",
+        "javaMethodName" : "search",
         "parameters" : [ {
           "name" : "keyword",
           "type" : "string",
@@ -70,6 +82,7 @@
           "path" : "/stringKeys/{parentKey}/stringKeysSub",
           "schema" : "com.linkedin.restli.examples.greetings.api.Message",
           "doc" : "Demonstrates a sub resource keyed by string.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.StringKeysSubResource",
+          "resourceClass" : "com.linkedin.restli.examples.greetings.server.StringKeysSubResource",
           "collection" : {
             "identifier" : {
               "name" : "subKey",
@@ -77,7 +90,8 @@
             },
             "supports" : [ "get" ],
             "methods" : [ {
-              "method" : "get"
+              "method" : "get",
+              "javaMethodName" : "get"
             } ],
             "entity" : {
               "path" : "/stringKeys/{parentKey}/stringKeysSub/{subKey}"

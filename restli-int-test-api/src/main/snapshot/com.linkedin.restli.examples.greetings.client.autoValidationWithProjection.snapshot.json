@@ -145,6 +145,7 @@
     "path" : "/autoValidationWithProjection",
     "schema" : "com.linkedin.restli.examples.greetings.api.ValidationDemo",
     "doc" : "A simplied resource for testing Rest.li data automatic validation with automatic projection.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.AutomaticValidationWithProjectionResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.AutomaticValidationWithProjectionResource",
     "collection" : {
       "identifier" : {
         "name" : "autoValidationWithProjectionId",
@@ -155,21 +156,27 @@
         "annotations" : {
           "returnEntity" : { }
         },
-        "method" : "create"
+        "method" : "create",
+        "javaMethodName" : "create"
       }, {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get"
       }, {
         "annotations" : {
           "returnEntity" : { }
         },
-        "method" : "batch_create"
+        "method" : "batch_create",
+        "javaMethodName" : "batchCreate"
       }, {
-        "method" : "batch_get"
+        "method" : "batch_get",
+        "javaMethodName" : "batchGet"
       }, {
-        "method" : "get_all"
+        "method" : "get_all",
+        "javaMethodName" : "getAll"
       } ],
       "finders" : [ {
-        "name" : "searchWithProjection"
+        "name" : "searchWithProjection",
+        "javaMethodName" : "searchWithProjection"
       } ],
       "entity" : {
         "path" : "/autoValidationWithProjection/{autoValidationWithProjectionId}"

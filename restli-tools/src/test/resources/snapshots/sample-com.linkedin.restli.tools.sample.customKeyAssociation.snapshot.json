@@ -27,6 +27,7 @@
     "path" : "/customKeyAssociation",
     "schema" : "com.linkedin.restli.tools.sample.override.SimpleGreeting",
     "doc" : "Sample association resource with a custom key.\n\ngenerated from: com.linkedin.restli.tools.sample.CustomKeyAssociationResource",
+    "resourceClass" : "com.linkedin.restli.tools.sample.CustomKeyAssociationResource",
     "association" : {
       "identifier" : "customKeyAssociationId",
       "assocKeys" : [ {
@@ -39,16 +40,14 @@
       "supports" : [ "batch_update", "get" ],
       "methods" : [ {
         "method" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false
+        "javaMethodName" : "get"
       }, {
         "method" : "batch_update",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchUpdate"
       } ],
       "finders" : [ {
         "name" : "longId",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
+        "javaMethodName" : "dateOnly",
         "assocKeys" : [ "longId" ]
       } ],
       "entity" : {

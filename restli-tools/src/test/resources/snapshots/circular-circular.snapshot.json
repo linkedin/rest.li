@@ -35,11 +35,11 @@
     "name" : "circular",
     "path" : "/circular",
     "doc" : "generated from: com.linkedin.restli.tools.snapshot.circular.CircularResource",
+    "resourceClass" : "com.linkedin.restli.tools.snapshot.circular.CircularResource",
     "actionsSet" : {
       "actions" : [ {
         "name" : "test",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
+        "javaMethodName" : "test",
         "readOnly" : true,
         "parameters" : [ {
           "name" : "a",

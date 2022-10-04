@@ -11,6 +11,7 @@
     "path" : "/annotation",
     "schema" : "com.linkedin.restli.tools.DummyRecord",
     "doc" : "Simple resource to test IDL generation with \"return entity\" methods using annotations as indicators.\n\ngenerated from: com.linkedin.restli.tools.returnentity.AnnotationResource",
+    "resourceClass" : "com.linkedin.restli.tools.returnentity.AnnotationResource",
     "collection" : {
       "identifier" : {
         "name" : "annotationId",
@@ -22,25 +23,25 @@
           "returnEntity" : { }
         },
         "method" : "create",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "create"
       }, {
         "annotations" : {
           "returnEntity" : { }
         },
         "method" : "partial_update",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "update"
       }, {
         "annotations" : {
           "returnEntity" : { }
         },
         "method" : "batch_create",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "batchCreate"
       }, {
         "annotations" : {
           "returnEntity" : { }
         },
         "method" : "batch_partial_update",
-        "javaMethodType" : "SYNC"
+        "javaMethodName" : "update"
       } ],
       "entity" : {
         "path" : "/annotation/{annotationId}"

@@ -2,6 +2,7 @@
   "name" : "actions",
   "path" : "/actions",
   "doc" : "Actions resource to test IDL generation with defined service errors.\n This resource also tests that multiple resource-level service errors can be defined.\n\ngenerated from: com.linkedin.restli.tools.errors.ServiceErrorActionsResource",
+  "resourceClass" : "com.linkedin.restli.tools.errors.ServiceErrorActionsResource",
   "actionsSet" : {
     "serviceErrors" : [ {
       "status" : 400,
@@ -22,14 +23,12 @@
         "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
       } ],
       "name" : "doAction",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
+      "javaMethodName" : "doAction",
       "doc" : "Ensures that action methods can specify a method-level service error.",
       "returns" : "int"
     }, {
       "name" : "iWillNeverFail",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
+      "javaMethodName" : "iWillNeverFail",
       "doc" : "This is included as a finder method with no method-level service errors.",
       "parameters" : [ {
         "name" : "who",
@@ -43,15 +42,13 @@
         "message" : "The error detail type... where is it?"
       } ],
       "name" : "missingErrorDetailType",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
+      "javaMethodName" : "missingErrorDetailType",
       "doc" : "Ensures that service errors without error detail types can be used.",
       "returns" : "string"
     }, {
       "serviceErrors" : [ ],
       "name" : "noErrorsDefined",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
+      "javaMethodName" : "noErrorsDefined",
       "doc" : "Ensures that an empty list of service errors can be used at the method-level.",
       "returns" : "string"
     } ]

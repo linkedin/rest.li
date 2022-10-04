@@ -14,6 +14,40 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.39.4] - 2022-09-30
+Add JMX metrics for DNS resolution and clarify DNS timeout errors.
+
+## [29.39.3] - 2022-09-26
+Catch exceptions when zk connection state change event is received after zk connection shutdown.
+
+## [29.39.2] - 2022-09-23
+Remove unnessary extra IDL annotations due to recent restriction of adding new method into bridged service and emit resourceC
+lass for javaparser to use to update rest.li resource.
+
+## [29.39.1] - 2022-09-20
+Expose an easy way to override validation options for ActionArgumentBuilder
+
+## [29.39.0] - 2022-09-19
+Releasing support for UDS in HTTP/2 stack
+
+## [29.38.6] - 2022-09-15
+Add a validation option to coerce base64 encoded fixed values
+
+## [29.38.5] - 2022-09-15
+Update the error message to better guide users when zkRef is null.
+
+## [29.38.4] - 2022-09-08
+- Use ZooKeeper 3.6.3
+
+## [29.38.3] - 2022-09-07
+- Emit java method name in the IDL/Snapshot to enable us to generate a java stub back from the IDL.
+
+## [29.38.2] - 2022-09-07
+- Removing the release candidate version number
+
+## [29.38.1-rc.1] - 2022-09-06
+- Add Support for UDS transport protocol in R2 outbound traffic
+
 ## [29.38.0] - 2022-08-31
 - Upgrade Netty to 4.1.79 and remove ZooKeeper Netty exclusions.
 
@@ -5325,7 +5359,18 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.38.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.39.4...master
+[29.39.4]: https://github.com/linkedin/rest.li/compare/v29.39.3...v29.39.4
+[29.39.3]: https://github.com/linkedin/rest.li/compare/v29.39.2...v29.39.3
+[29.39.2]: https://github.com/linkedin/rest.li/compare/v29.39.1...v29.39.2
+[29.39.1]: https://github.com/linkedin/rest.li/compare/v29.39.0...v29.39.1
+[29.39.0]: https://github.com/linkedin/rest.li/compare/v29.38.6...v29.39.0
+[29.38.6]: https://github.com/linkedin/rest.li/compare/v29.38.5...v29.38.6
+[29.38.5]: https://github.com/linkedin/rest.li/compare/v29.38.4...v29.38.5
+[29.38.4]: https://github.com/linkedin/rest.li/compare/v29.38.3...v29.38.4
+[29.38.3]: https://github.com/linkedin/rest.li/compare/v29.38.2...v29.38.3
+[29.38.2]: https://github.com/linkedin/rest.li/compare/v29.38.1-rc.1...v29.38.2
+[29.38.1-rc.1]: https://github.com/linkedin/rest.li/compare/v29.38.0...v29.38.1-rc.1
 [29.38.0]: https://github.com/linkedin/rest.li/compare/v29.37.19...v29.38.0
 [29.37.19]: https://github.com/linkedin/rest.li/compare/v29.37.18...v29.37.19
 [29.37.18]: https://github.com/linkedin/rest.li/compare/v29.37.17...v29.37.18

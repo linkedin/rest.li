@@ -11,16 +11,9 @@ record RestMethodSchema includes CustomAnnotationSchema, ServiceErrorsSchema, Su
   method: string
 
   /**
-   * Java method type for this rest method
+   * Java method name for this rest method
    */
-  javaMethodType: optional JavaMethodType = "SYNC"
-
-  /**
-   * True if the java implementation of this method returns the result wrapper (aka CollectionResult for GET_ALL, or
-   * GetResult for GET or BatchResult for Batch_GET). False, if it returns the result as is. This is only applicable
-   * for read methods (GET/BATCH_GET/GET_ALL).
-   */
-  javaReturnsResultWrapper: optional boolean
+  javaMethodName: optional string
 
   /**
    * Documentation for this rest method

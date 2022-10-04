@@ -4,6 +4,7 @@
   "path" : "/streamingGreetings",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.StreamingGreetings",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.StreamingGreetings",
   "collection" : {
     "identifier" : {
       "name" : "streamingGreetingsId",
@@ -11,19 +12,25 @@
     },
     "supports" : [ "create", "delete", "get", "update" ],
     "methods" : [ {
-      "method" : "create"
+      "method" : "create",
+      "javaMethodName" : "create"
     }, {
-      "method" : "get"
+      "method" : "get",
+      "javaMethodName" : "get"
     }, {
-      "method" : "update"
+      "method" : "update",
+      "javaMethodName" : "update"
     }, {
-      "method" : "delete"
+      "method" : "delete",
+      "javaMethodName" : "delete"
     } ],
     "actions" : [ {
       "name" : "actionAttachmentsAllowedButDisliked",
+      "javaMethodName" : "actionAttachmentsAllowedButDisliked",
       "returns" : "boolean"
     }, {
       "name" : "actionNoAttachmentsAllowed",
+      "javaMethodName" : "actionNoAttachmentsAllowed",
       "returns" : "int"
     } ],
     "entity" : {

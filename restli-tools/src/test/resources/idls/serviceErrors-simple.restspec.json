@@ -3,6 +3,7 @@
   "path" : "/simple",
   "schema" : "com.linkedin.restli.tools.DummyRecord",
   "doc" : "Simple resource to test IDL generation with defined service errors.\n\ngenerated from: com.linkedin.restli.tools.errors.ServiceErrorSimpleResource",
+  "resourceClass" : "com.linkedin.restli.tools.errors.ServiceErrorSimpleResource",
   "simple" : {
     "serviceErrors" : [ {
       "status" : 400,
@@ -19,8 +20,7 @@
         "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
       } ],
       "method" : "get",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
+      "javaMethodName" : "get",
       "doc" : "This ensures that annotation-specified CRUD methods can specify a method-level service error."
     }, {
       "serviceErrors" : [ {
@@ -31,7 +31,7 @@
       } ],
       "success" : [ 204 ],
       "method" : "update",
-      "javaMethodType" : "SYNC",
+      "javaMethodName" : "update",
       "doc" : "This ensures that template CRUD methods can specify a method-level service error in conjunction with\n success statuses. Also uses an error code with a unique error detail type."
     } ],
     "actions" : [ {
@@ -46,8 +46,7 @@
         "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
       } ],
       "name" : "doAction",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
+      "javaMethodName" : "doAction",
       "doc" : "Ensures that action methods can specify a method-level service error.\n Also ensures that service errors without messages can be used.",
       "returns" : "int"
     } ],

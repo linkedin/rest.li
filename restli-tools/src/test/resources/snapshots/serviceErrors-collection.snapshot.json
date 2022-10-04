@@ -32,6 +32,7 @@
     "path" : "/collection",
     "schema" : "com.linkedin.restli.tools.DummyRecord",
     "doc" : "Collection resource to test IDL generation with defined service errors.\n This resource also tests that service errors can be defined only at the method level.\n\ngenerated from: com.linkedin.restli.tools.errors.ServiceErrorCollectionResource",
+    "resourceClass" : "com.linkedin.restli.tools.errors.ServiceErrorCollectionResource",
     "collection" : {
       "identifier" : {
         "name" : "collectionId",
@@ -51,7 +52,7 @@
           "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
         } ],
         "method" : "create",
-        "javaMethodType" : "SYNC",
+        "javaMethodName" : "create",
         "doc" : "This ensures that annotation-specified CRUD methods can specify method-level service errors.\n It also ensures that multiple method-level service errors can be specified."
       }, {
         "serviceErrors" : [ {
@@ -61,17 +62,15 @@
           "errorDetailType" : "com.linkedin.restli.tools.DummyErrorDetails"
         } ],
         "method" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
+        "javaMethodName" : "get",
         "doc" : "This ensures that template CRUD methods can specify a method-level service error."
       }, {
         "method" : "delete",
-        "javaMethodType" : "SYNC",
+        "javaMethodName" : "delete",
         "doc" : "This is included as a template CRUD method with no service errors."
       }, {
         "method" : "get_all",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
+        "javaMethodName" : "getAll",
         "doc" : "This is included as an annotation-specified CRUD method with no service errors."
       } ],
       "finders" : [ {
@@ -83,8 +82,7 @@
           "parameters" : [ "param1", "param2" ]
         } ],
         "name" : "altF4",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
+        "javaMethodName" : "finder2",
         "doc" : "This ensures that a method-level service error can specify multiple parameters.\n It also ensures that service error parameter names are matched against the\n {@link QueryParam} annotation rather than the actual method arguments.",
         "parameters" : [ {
           "name" : "param1",
@@ -113,8 +111,7 @@
           "parameters" : [ "param1", "param2" ]
         } ],
         "name" : "ctrlAltDelete",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
+        "javaMethodName" : "finder3",
         "doc" : "This ensures that two method-level service errors specifying parameters can be used in conjunction\n with a method-level service error with no parameters.",
         "parameters" : [ {
           "name" : "param",
@@ -135,8 +132,7 @@
           "parameters" : [ "param" ]
         } ],
         "name" : "ctrlF",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
+        "javaMethodName" : "finder",
         "doc" : "This ensures that a method-level service error can specify one parameter.\n It also ensures that a subset of parameters can be specified.",
         "parameters" : [ {
           "name" : "param",
@@ -148,8 +144,7 @@
       } ],
       "actions" : [ {
         "name" : "errorProneAction",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
+        "javaMethodName" : "errorProneAction",
         "doc" : "This is included as an action method with no service errors.",
         "returns" : "string"
       } ],

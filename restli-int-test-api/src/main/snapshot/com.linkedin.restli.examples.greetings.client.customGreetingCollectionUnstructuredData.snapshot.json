@@ -6,6 +6,7 @@
     "path" : "/customGreetingCollectionUnstructuredData",
     "entityType" : "UNSTRUCTURED_DATA",
     "doc" : "This resource models a (very simple) custom collection resource that produces unstructured data as results.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.CustomGreetingCollectionUnstructuredDataResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.CustomGreetingCollectionUnstructuredDataResource",
     "collection" : {
       "identifier" : {
         "name" : "customGreetingCollectionUnstructuredDataId",
@@ -13,7 +14,8 @@
       },
       "supports" : [ "get" ],
       "methods" : [ {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get"
       } ],
       "entity" : {
         "path" : "/customGreetingCollectionUnstructuredData/{customGreetingCollectionUnstructuredDataId}"

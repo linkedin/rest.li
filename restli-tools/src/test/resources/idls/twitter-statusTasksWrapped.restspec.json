@@ -3,6 +3,7 @@
   "path" : "/statusTasksWrapped",
   "schema" : "com.linkedin.restli.tools.twitter.Status",
   "doc" : "CollectionResource containing all statuses modeled using Task template with result wrappers.\n\ngenerated from: com.linkedin.restli.tools.twitter.StatusTaskResultWrappersResource",
+  "resourceClass" : "com.linkedin.restli.tools.twitter.StatusTaskResultWrappersResource",
   "collection" : {
     "identifier" : {
       "name" : "statusID",
@@ -20,18 +21,15 @@
     "supports" : [ "batch_get", "get", "get_all" ],
     "methods" : [ {
       "method" : "get",
-      "javaMethodType" : "TASK",
-      "javaReturnsResultWrapper" : true,
+      "javaMethodName" : "getWrapped",
       "doc" : "Gets a single status resource"
     }, {
       "method" : "batch_get",
-      "javaMethodType" : "TASK",
-      "javaReturnsResultWrapper" : true,
+      "javaMethodName" : "batchGetWrapped",
       "doc" : "Gets a batch of statuses"
     }, {
       "method" : "get_all",
-      "javaMethodType" : "TASK",
-      "javaReturnsResultWrapper" : true,
+      "javaMethodName" : "getAllWrapped",
       "doc" : "Gets all the resources",
       "metadata" : {
         "type" : "com.linkedin.restli.tools.twitter.User"
@@ -40,8 +38,7 @@
     } ],
     "finders" : [ {
       "name" : "user_timeline",
-      "javaMethodType" : "TASK",
-      "javaReturnsResultWrapper" : true,
+      "javaMethodName" : "getUserTimeline",
       "doc" : "Gets the status timeline for a given user",
       "metadata" : {
         "type" : "com.linkedin.restli.tools.twitter.User"
@@ -50,8 +47,7 @@
     } ],
     "batchFinders" : [ {
       "name" : "batchFinderByAction",
-      "javaMethodType" : "TASK",
-      "javaReturnsResultWrapper" : true,
+      "javaMethodName" : "batchFindStatuses",
       "doc" : "Batch finder for statuses",
       "parameters" : [ {
         "name" : "criteria",
@@ -66,8 +62,7 @@
       "path" : "/statusTasksWrapped/{statusID}",
       "actions" : [ {
         "name" : "forward",
-        "javaMethodType" : "TASK",
-        "javaReturnsResultWrapper" : true,
+        "javaMethodName" : "forward",
         "doc" : "Ambiguous action binding test case",
         "parameters" : [ {
           "name" : "to",

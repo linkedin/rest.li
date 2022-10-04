@@ -6,6 +6,7 @@
     "path" : "/reactiveGreetingAssociationUnstructuredData",
     "entityType" : "UNSTRUCTURED_DATA",
     "doc" : "This resource models an association resource that reactively streams unstructured data response.\n\n For more comprehensive examples, look at {@link GreetingUnstructuredDataCollectionResourceReactive}\n\ngenerated from: com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataAssociationResourceReactive",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataAssociationResourceReactive",
     "association" : {
       "identifier" : "reactiveGreetingAssociationUnstructuredDataId",
       "assocKeys" : [ {
@@ -17,13 +18,17 @@
       } ],
       "supports" : [ "create", "delete", "get", "update" ],
       "methods" : [ {
-        "method" : "create"
+        "method" : "create",
+        "javaMethodName" : "create"
       }, {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get"
       }, {
-        "method" : "update"
+        "method" : "update",
+        "javaMethodName" : "update"
       }, {
-        "method" : "delete"
+        "method" : "delete",
+        "javaMethodName" : "delete"
       } ],
       "entity" : {
         "path" : "/reactiveGreetingAssociationUnstructuredData/{reactiveGreetingAssociationUnstructuredDataId}"

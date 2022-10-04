@@ -4,6 +4,7 @@
   "path" : "/photos",
   "schema" : "com.linkedin.restli.example.Photo",
   "doc" : "generated from: com.linkedin.restli.example.impl.PhotoResource",
+  "resourceClass" : "com.linkedin.restli.example.impl.PhotoResource",
   "collection" : {
     "identifier" : {
       "name" : "photosId",
@@ -11,20 +12,27 @@
     },
     "supports" : [ "batch_get", "create", "delete", "get", "partial_update", "update" ],
     "methods" : [ {
-      "method" : "create"
+      "method" : "create",
+      "javaMethodName" : "create"
     }, {
-      "method" : "get"
+      "method" : "get",
+      "javaMethodName" : "get"
     }, {
-      "method" : "update"
+      "method" : "update",
+      "javaMethodName" : "update"
     }, {
-      "method" : "partial_update"
+      "method" : "partial_update",
+      "javaMethodName" : "update"
     }, {
-      "method" : "delete"
+      "method" : "delete",
+      "javaMethodName" : "delete"
     }, {
-      "method" : "batch_get"
+      "method" : "batch_get",
+      "javaMethodName" : "batchGet"
     } ],
     "finders" : [ {
       "name" : "titleAndOrFormat",
+      "javaMethodName" : "find",
       "parameters" : [ {
         "name" : "title",
         "type" : "string",
@@ -38,6 +46,7 @@
     } ],
     "batchFinders" : [ {
       "name" : "searchPhotos",
+      "javaMethodName" : "searchPhotos",
       "parameters" : [ {
         "name" : "criteria",
         "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.example.PhotoCriteria\" }"
@@ -51,6 +60,7 @@
     } ],
     "actions" : [ {
       "name" : "purge",
+      "javaMethodName" : "purge",
       "returns" : "int"
     } ],
     "entity" : {

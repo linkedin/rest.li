@@ -19,6 +19,7 @@
     "path" : "/greetings",
     "schema" : "com.linkedin.restli.tools.sample.override.SimpleGreeting",
     "doc" : "Sample Collection Resource containing all simple greetings\n\ngenerated from: com.linkedin.restli.tools.sample.SimpleGreetingResource",
+    "resourceClass" : "com.linkedin.restli.tools.sample.SimpleGreetingResource",
     "collection" : {
       "identifier" : {
         "name" : "greetingsId",
@@ -27,31 +28,28 @@
       "supports" : [ "batch_get", "create", "delete", "get", "partial_update" ],
       "methods" : [ {
         "method" : "create",
-        "javaMethodType" : "SYNC",
+        "javaMethodName" : "create",
         "doc" : "Creates a new Greeting"
       }, {
         "method" : "get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
+        "javaMethodName" : "get",
         "doc" : "Gets a single greeting resource"
       }, {
         "method" : "partial_update",
-        "javaMethodType" : "SYNC",
+        "javaMethodName" : "update",
         "doc" : "Updates a single greeting resource"
       }, {
         "method" : "delete",
-        "javaMethodType" : "SYNC",
+        "javaMethodName" : "delete",
         "doc" : "Deletes a greeting resource"
       }, {
         "method" : "batch_get",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
+        "javaMethodName" : "batchGet",
         "doc" : "Gets a batch of Greetings"
       } ],
       "finders" : [ {
         "name" : "message",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
+        "javaMethodName" : "find",
         "parameters" : [ {
           "name" : "message",
           "type" : "string",
@@ -60,8 +58,7 @@
         "pagingSupported" : true
       }, {
         "name" : "recipients",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
+        "javaMethodName" : "findGreetingsByGuest",
         "parameters" : [ {
           "annotations" : {
             "deprecated" : { }
@@ -77,8 +74,7 @@
       } ],
       "actions" : [ {
         "name" : "greetingArrayAction",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
+        "javaMethodName" : "statusArrayAction",
         "doc" : "Action data template array return type and input type test case",
         "parameters" : [ {
           "name" : "greetings",
@@ -87,8 +83,7 @@
         "returns" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.tools.sample.override.SimpleGreeting\" }"
       }, {
         "name" : "intArrayAction",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
+        "javaMethodName" : "intArrayAction",
         "doc" : "Action array return type test case",
         "parameters" : [ {
           "name" : "ints",
@@ -97,8 +92,7 @@
         "returns" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
       }, {
         "name" : "markGreetingAsRead",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
+        "javaMethodName" : "markGreetingAsRead",
         "parameters" : [ {
           "annotations" : {
             "deprecated" : { }

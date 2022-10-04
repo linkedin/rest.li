@@ -34,6 +34,7 @@
     "path" : "/partialUpdateGreeting",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "Resource for testing PARTIAL_UPDATE and BATCH_PARTIAL_UPDATE methods that return\n the patched entity and entities, respectively.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.PartialUpdateGreetingResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.PartialUpdateGreetingResource",
     "collection" : {
       "identifier" : {
         "name" : "key",
@@ -44,12 +45,14 @@
         "annotations" : {
           "returnEntity" : { }
         },
-        "method" : "partial_update"
+        "method" : "partial_update",
+        "javaMethodName" : "update"
       }, {
         "annotations" : {
           "returnEntity" : { }
         },
-        "method" : "batch_partial_update"
+        "method" : "batch_partial_update",
+        "javaMethodName" : "batchUpdate"
       } ],
       "entity" : {
         "path" : "/partialUpdateGreeting/{key}"

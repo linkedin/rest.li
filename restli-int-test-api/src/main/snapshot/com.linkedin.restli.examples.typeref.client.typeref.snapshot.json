@@ -178,6 +178,7 @@
     "path" : "/typeref",
     "schema" : "com.linkedin.restli.examples.typeref.api.TyperefRecord",
     "doc" : "Test for typeref param and return types in actions.\n\ngenerated from: com.linkedin.restli.examples.typeref.server.TyperefTestResource",
+    "resourceClass" : "com.linkedin.restli.examples.typeref.server.TyperefTestResource",
     "collection" : {
       "identifier" : {
         "name" : "typerefId",
@@ -186,6 +187,7 @@
       "supports" : [ ],
       "actions" : [ {
         "name" : "BytesFunc",
+        "javaMethodName" : "bytesFunc",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.BytesRef"
@@ -193,6 +195,7 @@
         "returns" : "com.linkedin.restli.examples.typeref.api.BytesRef"
       }, {
         "name" : "CustomNonNegativeLongRef",
+        "javaMethodName" : "CustomNonNegativeLong",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.CustomNonNegativeLongRef"
@@ -200,6 +203,7 @@
         "returns" : "com.linkedin.restli.examples.typeref.api.CustomNonNegativeLongRef"
       }, {
         "name" : "FruitsRef",
+        "javaMethodName" : "FruitsFunc",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.FruitsRef"
@@ -207,6 +211,7 @@
         "returns" : "com.linkedin.restli.examples.typeref.api.FruitsRef"
       }, {
         "name" : "IntArrayFunc",
+        "javaMethodName" : "IntArrayFunc",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.IntArrayRef"
@@ -214,6 +219,7 @@
         "returns" : "com.linkedin.restli.examples.typeref.api.IntArrayRef"
       }, {
         "name" : "IntMapFunc",
+        "javaMethodName" : "IntMapFunc",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.IntMapRef"
@@ -221,6 +227,7 @@
         "returns" : "com.linkedin.restli.examples.typeref.api.IntMapRef"
       }, {
         "name" : "PointRef",
+        "javaMethodName" : "PointFunc",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.PointRef"
@@ -228,6 +235,7 @@
         "returns" : "com.linkedin.restli.examples.typeref.api.PointRef"
       }, {
         "name" : "StringFunc",
+        "javaMethodName" : "StringFunc",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.StringRef"
@@ -235,6 +243,7 @@
         "returns" : "com.linkedin.restli.examples.typeref.api.StringRef"
       }, {
         "name" : "booleanFunc",
+        "javaMethodName" : "booleanFunc",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.BooleanRef"
@@ -242,6 +251,7 @@
         "returns" : "com.linkedin.restli.examples.typeref.api.BooleanRef"
       }, {
         "name" : "booleanFunc2",
+        "javaMethodName" : "BooleanFunc",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.BooleanRef"
@@ -249,6 +259,7 @@
         "returns" : "com.linkedin.restli.examples.typeref.api.BooleanRef"
       }, {
         "name" : "doubleFunc",
+        "javaMethodName" : "doubleFunc",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.DoubleRef"
@@ -256,6 +267,7 @@
         "returns" : "com.linkedin.restli.examples.typeref.api.DoubleRef"
       }, {
         "name" : "doubleFunc2",
+        "javaMethodName" : "DoubleFunc",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.DoubleRef"
@@ -263,6 +275,7 @@
         "returns" : "com.linkedin.restli.examples.typeref.api.DoubleRef"
       }, {
         "name" : "floatFunc",
+        "javaMethodName" : "floatFunc",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.FloatRef"
@@ -270,6 +283,7 @@
         "returns" : "com.linkedin.restli.examples.typeref.api.FloatRef"
       }, {
         "name" : "floatFunc2",
+        "javaMethodName" : "FloatFunc",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.FloatRef"
@@ -277,6 +291,7 @@
         "returns" : "com.linkedin.restli.examples.typeref.api.FloatRef"
       }, {
         "name" : "intFunc",
+        "javaMethodName" : "intFunc",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.IntRef"
@@ -284,6 +299,7 @@
         "returns" : "com.linkedin.restli.examples.typeref.api.IntRef"
       }, {
         "name" : "intFunc2",
+        "javaMethodName" : "IntegerFunc",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.IntRef"
@@ -291,6 +307,7 @@
         "returns" : "com.linkedin.restli.examples.typeref.api.IntRef"
       }, {
         "name" : "longFunc",
+        "javaMethodName" : "longFunc",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.LongRef"
@@ -298,6 +315,7 @@
         "returns" : "com.linkedin.restli.examples.typeref.api.LongRef"
       }, {
         "name" : "longFunc2",
+        "javaMethodName" : "LongFunc",
         "parameters" : [ {
           "name" : "arg1",
           "type" : "com.linkedin.restli.examples.typeref.api.LongRef"

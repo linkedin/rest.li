@@ -3,6 +3,7 @@
   "path" : "/follows",
   "schema" : "com.linkedin.restli.tools.twitter.Followed",
   "doc" : "Association resource for the 'following' relationship\n\ngenerated from: com.linkedin.restli.tools.twitter.FollowsAssociativeResource",
+  "resourceClass" : "com.linkedin.restli.tools.twitter.FollowsAssociativeResource",
   "association" : {
     "identifier" : "followsId",
     "assocKeys" : [ {
@@ -15,23 +16,20 @@
     "supports" : [ "batch_get", "get", "partial_update" ],
     "methods" : [ {
       "method" : "get",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
+      "javaMethodName" : "get",
       "doc" : "Gets a single Followed resource"
     }, {
       "method" : "partial_update",
-      "javaMethodType" : "SYNC",
+      "javaMethodName" : "update",
       "doc" : "Updates the given Followed relationship"
     }, {
       "method" : "batch_get",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
+      "javaMethodName" : "batchGet",
       "doc" : "Gets a batch of Followed resources"
     } ],
     "finders" : [ {
       "name" : "followers",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
+      "javaMethodName" : "getFollowers",
       "doc" : "Gets the followers of the given user",
       "parameters" : [ {
         "name" : "userID",
@@ -40,8 +38,7 @@
       } ]
     }, {
       "name" : "friends",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
+      "javaMethodName" : "getFriends",
       "doc" : "Gets the friends of the given user",
       "parameters" : [ {
         "name" : "userID",
@@ -50,8 +47,7 @@
       } ]
     }, {
       "name" : "other",
-      "javaMethodType" : "SYNC",
-      "javaReturnsResultWrapper" : false,
+      "javaMethodName" : "getOther",
       "doc" : "Test finder",
       "parameters" : [ {
         "name" : "someParam",
@@ -64,8 +60,7 @@
       "path" : "/follows/{followsId}",
       "actions" : [ {
         "name" : "entityAction",
-        "javaMethodType" : "SYNC",
-        "javaReturnsResultWrapper" : false,
+        "javaMethodName" : "entityAction",
         "returns" : "com.linkedin.restli.tools.twitter.Status"
       } ]
     }

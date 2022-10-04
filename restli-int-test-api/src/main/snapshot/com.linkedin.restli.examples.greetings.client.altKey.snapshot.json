@@ -50,6 +50,7 @@
     "path" : "/altKey",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "Resource for testing Alternative Key Feature for CollectionResource template.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.altkey.CollectionAltKeyResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.altkey.CollectionAltKeyResource",
     "collection" : {
       "identifier" : {
         "name" : "altKeyId",
@@ -62,28 +63,38 @@
       } ],
       "supports" : [ "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "delete", "get", "partial_update", "update" ],
       "methods" : [ {
-        "method" : "create"
+        "method" : "create",
+        "javaMethodName" : "create"
       }, {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get"
       }, {
-        "method" : "update"
+        "method" : "update",
+        "javaMethodName" : "update"
       }, {
-        "method" : "partial_update"
+        "method" : "partial_update",
+        "javaMethodName" : "update"
       }, {
-        "method" : "delete"
+        "method" : "delete",
+        "javaMethodName" : "delete"
       }, {
-        "method" : "batch_get"
+        "method" : "batch_get",
+        "javaMethodName" : "batchGet"
       }, {
-        "method" : "batch_update"
+        "method" : "batch_update",
+        "javaMethodName" : "batchUpdate"
       }, {
-        "method" : "batch_partial_update"
+        "method" : "batch_partial_update",
+        "javaMethodName" : "batchUpdate"
       }, {
-        "method" : "batch_delete"
+        "method" : "batch_delete",
+        "javaMethodName" : "batchDelete"
       } ],
       "entity" : {
         "path" : "/altKey/{altKeyId}",
         "actions" : [ {
           "name" : "getKeyValue",
+          "javaMethodName" : "testAction",
           "returns" : "long"
         } ],
         "subresources" : [ {
@@ -92,6 +103,7 @@
           "path" : "/altKey/{altKeyId}/altKeySub",
           "schema" : "com.linkedin.restli.examples.greetings.api.Message",
           "doc" : "Resource for testing Alternative Key Feature for CollectionSubResource\n\ngenerated from: com.linkedin.restli.examples.greetings.server.altkey.AltKeySubResource",
+          "resourceClass" : "com.linkedin.restli.examples.greetings.server.altkey.AltKeySubResource",
           "collection" : {
             "identifier" : {
               "name" : "subKey",
@@ -104,9 +116,11 @@
             } ],
             "supports" : [ "batch_get", "get" ],
             "methods" : [ {
-              "method" : "get"
+              "method" : "get",
+              "javaMethodName" : "get"
             }, {
-              "method" : "batch_get"
+              "method" : "batch_get",
+              "javaMethodName" : "batchGet"
             } ],
             "entity" : {
               "path" : "/altKey/{altKeyId}/altKeySub/{subKey}"

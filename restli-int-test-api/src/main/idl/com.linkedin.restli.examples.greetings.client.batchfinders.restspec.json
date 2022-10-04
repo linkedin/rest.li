@@ -4,6 +4,7 @@
   "path" : "/batchfinders",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "This resource models a collection resource that exposes both a finder and a batch finder method.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.BatchFinderResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.BatchFinderResource",
   "collection" : {
     "identifier" : {
       "name" : "batchfindersId",
@@ -12,12 +13,14 @@
     "supports" : [ ],
     "finders" : [ {
       "name" : "searchWithMetadata",
+      "javaMethodName" : "searchWithMetadata",
       "metadata" : {
         "type" : "com.linkedin.restli.examples.greetings.api.SearchMetadata"
       }
     } ],
     "batchFinders" : [ {
       "name" : "searchGreetings",
+      "javaMethodName" : "searchGreetings",
       "parameters" : [ {
         "name" : "criteria",
         "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.GreetingCriteria\" }"

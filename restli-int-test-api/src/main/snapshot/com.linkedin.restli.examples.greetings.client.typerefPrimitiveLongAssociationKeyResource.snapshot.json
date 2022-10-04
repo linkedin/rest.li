@@ -31,6 +31,7 @@
     "path" : "/typerefPrimitiveLongAssociationKeyResource",
     "schema" : "com.linkedin.restli.examples.greetings.api.Message",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.TyperefPrimitiveLongAssociationKeyResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.TyperefPrimitiveLongAssociationKeyResource",
     "association" : {
       "identifier" : "typerefPrimitiveLongAssociationKeyResourceId",
       "assocKeys" : [ {
@@ -42,7 +43,8 @@
       } ],
       "supports" : [ "get" ],
       "methods" : [ {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get"
       } ],
       "entity" : {
         "path" : "/typerefPrimitiveLongAssociationKeyResource/{typerefPrimitiveLongAssociationKeyResourceId}"
