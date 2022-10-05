@@ -14,7 +14,8 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
 
 
-public class TestCollectionResult {
+public class TestCollectionResult
+{
 
   private static final CollectionResult<TestRecordTemplateClass.Foo, TestRecordTemplateClass.Bar> COLLECTION_RESULT_1 =
       new CollectionResult<>(ImmutableList.of(FOO_1), 1, MD_1, CollectionResult.PageIncrement.RELATIVE);

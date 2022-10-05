@@ -53,11 +53,14 @@ public class GetResult<V extends RecordTemplate>
   }
 
   @Override
-  public boolean equals(Object object) {
-    if (this == object) {
+  public boolean equals(Object object)
+  {
+    if (this == object)
+    {
       return true;
     }
-    if (object == null || getClass() != object.getClass()) {
+    if (object == null || getClass() != object.getClass())
+    {
       return false;
     }
     GetResult<?> getResult = (GetResult<?>) object;
@@ -65,7 +68,8 @@ public class GetResult<V extends RecordTemplate>
   }
 
   @Override
-  public int hashCode() {
+  public int hashCode()
+  {
     return Objects.hash(_value, _status);
   }
 }

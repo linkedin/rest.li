@@ -10,7 +10,8 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
 
 
-public class TestUpdateResponse {
+public class TestUpdateResponse
+{
 
   private static final UpdateResponse UPDATE_RESPONSE_1 = new UpdateResponse(HttpStatus.S_200_OK);
   private static final UpdateResponse UPDATE_RESPONSE_2 = new UpdateResponse(HttpStatus.S_200_OK);

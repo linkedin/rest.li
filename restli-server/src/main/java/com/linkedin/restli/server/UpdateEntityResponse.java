@@ -50,14 +50,18 @@ public class UpdateEntityResponse<V extends RecordTemplate> extends UpdateRespon
   }
 
   @Override
-  public boolean equals(Object object) {
-    if (this == object) {
+  public boolean equals(Object object)
+  {
+    if (this == object)
+    {
       return true;
     }
-    if (object == null || getClass() != object.getClass()) {
+    if (object == null || getClass() != object.getClass())
+    {
       return false;
     }
-    if (!super.equals(object)) {
+    if (!super.equals(object))
+    {
       return false;
     }
     UpdateEntityResponse<?> that = (UpdateEntityResponse<?>) object;
@@ -65,7 +69,8 @@ public class UpdateEntityResponse<V extends RecordTemplate> extends UpdateRespon
   }
 
   @Override
-  public int hashCode() {
+  public int hashCode()
+  {
     return Objects.hash(super.hashCode(), _entity);
   }
 }

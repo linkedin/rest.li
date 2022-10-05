@@ -155,11 +155,14 @@ public class CollectionResult<T extends RecordTemplate, MD extends RecordTemplat
   }
 
   @Override
-  public boolean equals(Object object) {
-    if (this == object) {
+  public boolean equals(Object object)
+  {
+    if (this == object)
+    {
       return true;
     }
-    if (object == null || getClass() != object.getClass()) {
+    if (object == null || getClass() != object.getClass())
+    {
       return false;
     }
     CollectionResult<?, ?> that = (CollectionResult<?, ?>) object;
@@ -170,7 +173,8 @@ public class CollectionResult<T extends RecordTemplate, MD extends RecordTemplat
   }
 
   @Override
-  public int hashCode() {
+  public int hashCode()
+  {
     return Objects.hash(_elements, _metadata, _total, _pageIncrement);
   }
 }

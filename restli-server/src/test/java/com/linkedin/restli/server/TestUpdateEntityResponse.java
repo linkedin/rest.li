@@ -12,7 +12,8 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
 
 
-public class TestUpdateEntityResponse {
+public class TestUpdateEntityResponse
+{
 
   private static final UpdateEntityResponse<TestRecordTemplateClass.Foo> UPDATE_ENTITY_RESPONSE_1 =
       new UpdateEntityResponse<>(HttpStatus.S_200_OK, FOO_1);

@@ -38,11 +38,14 @@ public class UpdateResponse
   }
 
   @Override
-  public boolean equals(Object object) {
-    if (this == object) {
+  public boolean equals(Object object)
+  {
+    if (this == object)
+    {
       return true;
     }
-    if (object == null || getClass() != object.getClass()) {
+    if (object == null || getClass() != object.getClass())
+    {
       return false;
     }
     UpdateResponse that = (UpdateResponse) object;
@@ -50,7 +53,8 @@ public class UpdateResponse
   }
 
   @Override
-  public int hashCode() {
+  public int hashCode()
+  {
     return Objects.hash(_status);
   }
 }

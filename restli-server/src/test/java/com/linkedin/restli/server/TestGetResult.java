@@ -12,7 +12,8 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
 
 
-public class TestGetResult {
+public class TestGetResult
+{
 
   private static final GetResult<TestRecordTemplateClass.Foo> REQUEST_1 = new GetResult<>(FOO_1, HttpStatus.S_200_OK);
   private static final GetResult<TestRecordTemplateClass.Foo> REQUEST_2 = new GetResult<>(FOO_1, HttpStatus.S_200_OK);
