@@ -1,6 +1,23 @@
+/*
+   Copyright (c) 2016 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.restli.server;
 
-import com.google.common.collect.ImmutableList;
+import java.util.Arrays;
+import java.util.Collections;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.testng.annotations.DataProvider;
@@ -18,20 +35,41 @@ public class TestCollectionResult
 {
 
   private static final CollectionResult<TestRecordTemplateClass.Foo, TestRecordTemplateClass.Bar> COLLECTION_RESULT_1 =
-      new CollectionResult<>(ImmutableList.of(FOO_1), 1, MD_1, CollectionResult.PageIncrement.RELATIVE);
+      new CollectionResult<>
+          (
+              Collections.unmodifiableList(Arrays.asList(FOO_1)), 1, MD_1, CollectionResult.PageIncrement.RELATIVE
+          );
   private static final CollectionResult<TestRecordTemplateClass.Foo, TestRecordTemplateClass.Bar> COLLECTION_RESULT_2 =
-      new CollectionResult<>(ImmutableList.of(FOO_1), 1, MD_1, CollectionResult.PageIncrement.RELATIVE);
+      new CollectionResult<>
+          (
+              Collections.unmodifiableList(Arrays.asList(FOO_1)), 1, MD_1, CollectionResult.PageIncrement.RELATIVE
+          );
   private static final String NON_COLLECTION_RESULT = "test";
   private static final CollectionResult<TestRecordTemplateClass.Foo, TestRecordTemplateClass.Bar> COLLECTION_RESULT_3 =
-      new CollectionResult<>(ImmutableList.of(FOO_2), 1, MD_1, CollectionResult.PageIncrement.RELATIVE);
+      new CollectionResult<>
+          (
+              Collections.unmodifiableList(Arrays.asList(FOO_2)), 1, MD_1, CollectionResult.PageIncrement.RELATIVE
+          );
   private static final CollectionResult<TestRecordTemplateClass.Foo, TestRecordTemplateClass.Bar> COLLECTION_RESULT_4 =
-      new CollectionResult<>(ImmutableList.of(FOO_1), 2, MD_1, CollectionResult.PageIncrement.RELATIVE);
+      new CollectionResult<>
+          (
+              Collections.unmodifiableList(Arrays.asList(FOO_1)), 2, MD_1, CollectionResult.PageIncrement.RELATIVE
+          );
   private static final CollectionResult<TestRecordTemplateClass.Foo, TestRecordTemplateClass.Bar> COLLECTION_RESULT_5 =
-      new CollectionResult<>(ImmutableList.of(FOO_1), 1, MD_2, CollectionResult.PageIncrement.RELATIVE);
+      new CollectionResult<>
+          (
+              Collections.unmodifiableList(Arrays.asList(FOO_1)), 1, MD_2, CollectionResult.PageIncrement.RELATIVE
+          );
   private static final CollectionResult<TestRecordTemplateClass.Foo, TestRecordTemplateClass.Bar> COLLECTION_RESULT_6 =
-      new CollectionResult<>(ImmutableList.of(FOO_1), 1, MD_1, CollectionResult.PageIncrement.FIXED);
+      new CollectionResult<>
+          (
+              Collections.unmodifiableList(Arrays.asList(FOO_1)), 1, MD_1, CollectionResult.PageIncrement.FIXED
+          );
   private static final CollectionResult<TestRecordTemplateClass.Foo, TestRecordTemplateClass.Bar> COLLECTION_RESULT_7 =
-      new CollectionResult<>(ImmutableList.of(FOO_1), 1, MD_1, CollectionResult.PageIncrement.RELATIVE);
+      new CollectionResult<>
+          (
+              Collections.unmodifiableList(Arrays.asList(FOO_1)), 1, MD_1, CollectionResult.PageIncrement.RELATIVE
+          );
 
   @DataProvider(name = "testEqualsDataProvider")
   public Object[][] testEqualsDataProvider()
