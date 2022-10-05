@@ -35,12 +35,19 @@ import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
+import com.linkedin.d2.discovery.event.LogOnlyServiceDiscoveryEventEmitter;
+import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
+import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter.StatusUpdateActionType;
+import com.linkedin.d2.discovery.event.D2ServiceDiscoveryEventHelper;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.util.ArgumentUtil;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +60,7 @@ import org.slf4j.LoggerFactory;
  * @author Francesco Capponi (fcapponi@linkedin.com)
  */
 
-public class ZooKeeperAnnouncer
+public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
 {
   public static final boolean DEFAULT_DARK_WARMUP_ENABLED = false;
   public static final int DEFAULT_DARK_WARMUP_DURATION = 0;
@@ -63,8 +70,31 @@ public class ZooKeeperAnnouncer
   private static final Logger _log = LoggerFactory.getLogger(ZooKeeperAnnouncer.class);
   private volatile String _cluster;
   private volatile URI _uri;
+  /**
+   * Ephemeral znode path and its data announced for the regular cluster and uri. It will be used as the tracingId in Service discovery status related tracking events.
+   * It's updated ONLY at mark-ups: (including regular mark-up and changing uri data by marking down then marking up again)
+   *   1. on mark-up success, the path is set to the created node path, and the data is the node data.
+   *   2. on mark-up failure, the path is set to a failure path like "/d2/uris/ClusterA/hostA-FAILURE", and the data is the one that was attempted to save.
+   * Mark-downs will NOT clear them, so that we could emit mark down event with the node path and data that was deleted (or failed to delete).
+   * Since ZookeeperAnnouncer managed to keep only one mark-up running at a time, there won't be raced updates.
+   * NOTE: service discovery active change event has to be emitted AFTER mark-up/down complete because the znode path and data will be set during the mark up/down.
+   * (by {@link ZooKeeperEphemeralStore} thru {@link ZooKeeperEphemeralStore.ZookeeperNodePathAndDataCallback}).
+   */
+  private final AtomicReference<String> _znodePathRef = new AtomicReference<>(); // path of the zookeeper node created for this announcement
+  private final AtomicReference<String> _znodeDataRef = new AtomicReference<>(); // data in the zookeeper node created for this announcement
+
+  /**
+   * Mark up/down startAt timestamp for the regular cluster, since ZookeeperAnnouncer managed to keep only one mark-up running at a time,
+   * there won't be raced update. NOTE that one mark-up could actually have multiple operations inside (like a markDown then a markUp),
+   * for tracing we want to count the time spent for the whole process, so we need to mark the start time here instead of in ZookeeperServer.
+   */
+  private final AtomicLong _markUpStartAtRef = new AtomicLong(Long.MAX_VALUE);
+  private final AtomicLong _markDownStartAtRef = new AtomicLong(Long.MAX_VALUE);
+
   private volatile Map<Integer, PartitionData> _partitionDataMap;
   private volatile Map<String, Object> _uriSpecificProperties;
+
+  private ServiceDiscoveryEventEmitter _eventEmitter;
 
   /**
    * Field that indicates if the user requested the server to be up or down. If it is requested to be up,
@@ -99,6 +129,13 @@ public class ZooKeeperAnnouncer
 
   // String to store the name of the dark warm-up cluster, defaults to null
   private String _warmupClusterName;
+  // Similar as _znodePath and _znodeData above but for the warm up cluster.
+  private final AtomicReference<String> _warmupClusterZnodePathRef = new AtomicReference<>();
+  private final AtomicReference<String> _warmupClusterZnodeDataRef = new AtomicReference<>();
+
+  // Same as the start timestamps for the regular cluster above.
+  private final AtomicLong _warmupClusterMarkUpStartAtRef = new AtomicLong(Long.MAX_VALUE);
+  private final AtomicLong _warmupClusterMarkDownStartAtRef = new AtomicLong(Long.MAX_VALUE);
 
   // Field to store the dark warm-up time duration in seconds, defaults to zero
   private int _warmupDuration;
@@ -116,6 +153,13 @@ public class ZooKeeperAnnouncer
   public ZooKeeperAnnouncer(ZooKeeperServer server, boolean initialIsUp,
       boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService)
   {
+    this(server, initialIsUp, isDarkWarmupEnabled, warmupClusterName, warmupDuration, executorService,
+        new LogOnlyServiceDiscoveryEventEmitter()); // default to use log-only event emitter
+  }
+
+  public ZooKeeperAnnouncer(ZooKeeperServer server, boolean initialIsUp,
+      boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService, ServiceDiscoveryEventEmitter eventEmitter)
+  {
     _server = server;
     // initialIsUp is used for delay mark up. If it's false, there won't be markup when the announcer is started.
     _isUp = initialIsUp;
@@ -129,6 +173,9 @@ public class ZooKeeperAnnouncer
     _warmupClusterName = warmupClusterName;
     _warmupDuration = warmupDuration;
     _executorService = executorService;
+    _eventEmitter = eventEmitter;
+
+    _server.setServiceDiscoveryEventHelper(this);
   }
 
   /**
@@ -221,6 +268,7 @@ public class ZooKeeperAnnouncer
       @Override
       public void onError(Throwable e)
       {
+        emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, true, false, _markUpStartAtRef.get());
         if (e instanceof KeeperException.ConnectionLossException || e instanceof KeeperException.SessionExpiredException)
         {
           _log.warn("failed to mark up uri {} for cluster {} due to {}.", _uri, _cluster, e.getClass().getSimpleName());
@@ -247,6 +295,7 @@ public class ZooKeeperAnnouncer
       @Override
       public void onSuccess(None result)
       {
+        emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, true, true, _markUpStartAtRef.get());
         _markUpFailed = false;
         _log.info("markUp for uri = {} on cluster {} succeeded.", _uri, _cluster);
         // Note that the pending callbacks we see at this point are
@@ -280,6 +329,7 @@ public class ZooKeeperAnnouncer
       @Override
       public void onError(Throwable e)
       {
+        emitSDStatusActiveUpdateIntentAndWriteEvents(_warmupClusterName, false, false, _warmupClusterMarkDownStartAtRef.get());
         // It is important here to retry the markDown for warm-up cluster.
         // We cannot go ahead to markUp the regular cluster, as the warm-up cluster to uris association has not been deleted
         // from the zookeeper store.
@@ -296,6 +346,7 @@ public class ZooKeeperAnnouncer
         else
         {
           //continue to mark up to the regular cluster
+          _markUpStartAtRef.set(System.currentTimeMillis());
           _server.markUp(_cluster, _uri, _partitionDataMap, _uriSpecificProperties, markUpCallback);
         }
       }
@@ -303,7 +354,7 @@ public class ZooKeeperAnnouncer
       @Override
       public void onSuccess(None result)
       {
-
+        emitSDStatusActiveUpdateIntentAndWriteEvents(_warmupClusterName, false, true, _warmupClusterMarkDownStartAtRef.get());
         // Mark _isWarmingUp to false to indicate warm up has completed
         _isWarmingUp = false;
 
@@ -315,6 +366,7 @@ public class ZooKeeperAnnouncer
           _pendingWarmupMarkDown.clear();
         }
         _log.info("markDown for uri {} on warm-up cluster {} has completed, now marking up regular cluster {}", _uri, _warmupClusterName, _cluster);
+        _markUpStartAtRef.set(System.currentTimeMillis());
         _server.markUp(_cluster, _uri, _partitionDataMap, _uriSpecificProperties, markUpCallback);
       }
     };
@@ -325,6 +377,7 @@ public class ZooKeeperAnnouncer
       @Override
       public void onError(Throwable e)
       {
+        emitSDStatusActiveUpdateIntentAndWriteEvents(_warmupClusterName, true, false, _warmupClusterMarkUpStartAtRef.get());
         if (e instanceof KeeperException.ConnectionLossException || e instanceof KeeperException.SessionExpiredException)
         {
           _log.warn("failed to mark up uri {} for warm-up cluster {} due to {}.", _uri, _cluster, e.getClass().getSimpleName());
@@ -343,6 +396,7 @@ public class ZooKeeperAnnouncer
         {
           // Try markUp to regular cluster. We give up on the attempt to warm up in this case.
           _log.warn("failed to mark up uri {} for warm-up cluster {}", _uri, e);
+          _markUpStartAtRef.set(System.currentTimeMillis());
           _server.markUp(_cluster, _uri, _partitionDataMap, _uriSpecificProperties, markUpCallback);
         }
       }
@@ -350,6 +404,7 @@ public class ZooKeeperAnnouncer
       @Override
       public void onSuccess(None result)
       {
+        emitSDStatusActiveUpdateIntentAndWriteEvents(_warmupClusterName, true, true, _warmupClusterMarkUpStartAtRef.get());
         _log.info("markUp for uri {} on warm-up cluster {} succeeded", _uri, _warmupClusterName);
         // Mark _isWarmingUp to true to indicate warm up is in progress
         _isWarmingUp = true;
@@ -358,8 +413,10 @@ public class ZooKeeperAnnouncer
         _pendingWarmupMarkDown.add(warmupMarkDownCallback);
         // Run warm-up for _warmupDuration seconds and then schedule a mark down for the warm-up cluster
         _log.debug("warm-up will run for {} seconds.", _warmupDuration);
-        _executorService.schedule(() -> _server.markDown(_warmupClusterName, _uri, warmupMarkDownCallback),
-              _warmupDuration, TimeUnit.SECONDS);
+        _executorService.schedule(() -> {
+            _warmupClusterMarkDownStartAtRef.set(System.currentTimeMillis());
+            _server.markDown(_warmupClusterName, _uri, warmupMarkDownCallback);
+          }, _warmupDuration, TimeUnit.SECONDS);
       }
     };
 
@@ -370,6 +427,7 @@ public class ZooKeeperAnnouncer
       // then complete the pending markDown for the warm-up cluster and announce to the regular cluster
       if (_isWarmingUp)
       {
+        _warmupClusterMarkDownStartAtRef.set(System.currentTimeMillis());
         _server.markDown(_warmupClusterName, _uri, warmupMarkDownCallback);
       }
       // Otherwise, if the connection with ZooKeeper was lost during warm-up but was re-established before the warm-up duration completed,
@@ -378,10 +436,12 @@ public class ZooKeeperAnnouncer
     else if (_isDarkWarmupEnabled && _warmupDuration > 0 && _warmupClusterName != null && _executorService != null)
     {
       _log.info("Starting dark warm-up with cluster {}", _warmupClusterName);
+      _warmupClusterMarkUpStartAtRef.set(System.currentTimeMillis());
       _server.markUp(_warmupClusterName, _uri, _partitionDataMap, _uriSpecificProperties, doWarmupCallback);
     }
     else
     {
+      _markUpStartAtRef.set(System.currentTimeMillis());
       _server.markUp(_cluster, _uri, _partitionDataMap, _uriSpecificProperties, markUpCallback);
     }
   }
@@ -395,12 +455,13 @@ public class ZooKeeperAnnouncer
 
   private synchronized void doMarkDown(Callback<None> callback)
   {
+    _markDownStartAtRef.set(System.currentTimeMillis());
     _server.markDown(_cluster, _uri, new Callback<None>()
     {
       @Override
       public void onError(Throwable e)
       {
-
+        emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, false, false, _markDownStartAtRef.get());
         if (e instanceof KeeperException.ConnectionLossException || e instanceof KeeperException.SessionExpiredException)
         {
           _log.warn("failed to mark down uri {} due to {}.", _uri, e.getClass().getSimpleName());
@@ -417,6 +478,7 @@ public class ZooKeeperAnnouncer
       @Override
       public void onSuccess(None result)
       {
+        emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, false, true, _markDownStartAtRef.get());
         _log.info("markDown for uri = {} succeeded.", _uri);
         // Note that the pending callbacks we see at this point are
         // from the requests that are filed before us because zookeeper
@@ -493,6 +555,18 @@ public class ZooKeeperAnnouncer
 
   public void setStore(ZooKeeperEphemeralStore<UriProperties> store)
   {
+    store.setZnodePathAndDataCallback((cluster, path, data) -> {
+      if (cluster.equals(_cluster)) {
+        _znodePathRef.set(path);
+        _znodeDataRef.set(data);
+      } else if (cluster.equals(_warmupClusterName)) {
+        _warmupClusterZnodePathRef.set(path);
+        _warmupClusterZnodeDataRef.set(data);
+      } else {
+        _log.warn("znode path and data callback is called with unknown cluster: " + cluster + ", node path: " + path + ", and data: " + data);
+      }
+    });
+    store.setServiceDiscoveryEventHelper(this);
     _server.setStore(store);
   }
 
@@ -629,4 +703,70 @@ public class ZooKeeperAnnouncer
     return _markUpFailed;
   }
 
+  public void setEventEmitter(ServiceDiscoveryEventEmitter emitter) {
+    _eventEmitter = emitter;
+  }
+
+  @Override
+  public void emitSDStatusInitialRequestEvent(String cluster, long duration, boolean succeeded) {
+    if (_eventEmitter == null) {
+      _log.info("Service discovery event emitter in ZookeeperAnnouncer is null. Skipping emitting events.");
+      return;
+    }
+
+    _eventEmitter.emitSDStatusInitialRequestEvent(cluster, false, duration, succeeded);
+  }
+
+  @Override
+  public void emitSDStatusActiveUpdateIntentAndWriteEvents(String cluster, boolean isMarkUp, boolean succeeded, long startAt) {
+    if (_eventEmitter == null) {
+      _log.info("Service discovery event emitter in ZookeeperAnnouncer is null. Skipping emitting events.");
+      return;
+    }
+
+    if (startAt == Long.MAX_VALUE) {
+      _log.warn("Error in startAt timestamp. Skipping emitting events.");
+    }
+
+    ImmutablePair<String, String> pathAndData = getZnodePathAndData(cluster);
+    if (pathAndData.left == null) {
+      _log.warn("Failed to emit SDStatusWriteEvent. Missing znode path and data.");
+      return;
+    }
+    long timeNow = System.currentTimeMillis();
+    StatusUpdateActionType actionType = isMarkUp ? StatusUpdateActionType.MARK_READY : StatusUpdateActionType.MARK_DOWN;
+    // NOTE: For D2, tracingId is the same as the ephemeral znode path, and the node data version is always 0 since uri node data is never updated
+    // (instead update is done by removing old node and creating a new node).
+    _eventEmitter.emitSDStatusActiveUpdateIntentEvent(Collections.singletonList(cluster), actionType, false, pathAndData.left, startAt);
+    _eventEmitter.emitSDStatusWriteEvent(cluster, _uri.getHost(), _uri.getPort(), actionType, _server.getConnectString(), pathAndData.left, pathAndData.right,
+        succeeded ? 0 : null, pathAndData.left, succeeded, timeNow);
+  }
+
+  @Override
+  public void emitSDStatusUpdateReceiptEvent(String cluster, String host, int port, boolean isMarkUp, String zkConnectString, String nodePath, String nodeData, long timestamp) {
+    if (_eventEmitter == null) {
+      _log.info("Service discovery event emitter in ZookeeperAnnouncer is null. Skipping emitting events.");
+      return;
+    }
+
+    // NOTE: For D2, tracingId is the same as the ephemeral znode path, and the node data version is always 0 since uri node data is never updated
+    // (instead update is done by removing old node and creating a new node).
+    _eventEmitter.emitSDStatusUpdateReceiptEvent(cluster, host, port, isMarkUp ? StatusUpdateActionType.MARK_READY : StatusUpdateActionType.MARK_DOWN,
+        false, zkConnectString, nodePath, nodeData, 0, nodePath, timestamp);
+  }
+
+  private ImmutablePair<String, String> getZnodePathAndData(String cluster) {
+    String nodePath = null;
+    String nodeData = null;
+    if (cluster.equals(_cluster)) {
+      nodePath = _znodePathRef.get();
+      nodeData = _znodeDataRef.get();
+    } else if (cluster.equals(_warmupClusterName)) {
+      nodePath = _warmupClusterZnodePathRef.get();
+      nodeData = _warmupClusterZnodeDataRef.get();
+    } else {
+      _log.warn("Node path and data can't be found with unknown cluster: " + cluster + ". Ignored.");
+    }
+    return new ImmutablePair<>(nodePath, nodeData);
+  }
 }

@@ -30,6 +30,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+
+/**
+ * NOTE: NOT IN USE
+ */
 public class ZooKeeperServerJmx implements ZooKeeperServerJmxMXBean
 {
   private final ZooKeeperServer _server;
