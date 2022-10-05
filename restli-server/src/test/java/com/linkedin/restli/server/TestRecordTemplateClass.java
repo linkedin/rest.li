@@ -4,7 +4,8 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 
 
-public class TestRecordTemplateClass {
+public class TestRecordTemplateClass
+{
 
   static class Foo extends RecordTemplate
   {
