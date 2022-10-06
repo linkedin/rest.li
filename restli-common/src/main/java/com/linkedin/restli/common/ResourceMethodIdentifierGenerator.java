@@ -18,7 +18,7 @@ package com.linkedin.restli.common;
 
 /**
  * This class generates a unique identifier for each resource method. The identifier is based on the resource
- * baseUriTemplate (with properties removed), the resource method, and any action or finder if appropriate.
+ * baseUriTemplate (with key names removed), the resource method, and any action or finder if appropriate.
  *
  * The resourceMethodIdentifier is available from the Request, and ResourceMethodDescriptor APIs.
  *
@@ -35,7 +35,7 @@ public class ResourceMethodIdentifierGenerator
   }
 
   /**
-   * Builds the operation string for a method
+   * Builds the resource method identifier string for a method
    */
   public static String generate(String baseUriTemplate, ResourceMethod method, String methodName) {
     final StringBuilder builder = new StringBuilder();
@@ -43,7 +43,7 @@ public class ResourceMethodIdentifierGenerator
     if (baseUriTemplate != null) {
       builder.append(baseUriTemplate);
 
-      // Remove any pathKeys (example: album/{id}/photo -> album/photo)
+      // Remove any path key names (example: album/{id}/photo -> album/{}/photo)
       int index = baseUriTemplate.indexOf(KEY_START_CHAR);
 
       if (index >= 0) {
@@ -53,13 +53,9 @@ public class ResourceMethodIdentifierGenerator
 
             while (++index < builder.length()) {
               if (builder.charAt(index) == KEY_END_CHAR) {
-                if (startingIndex > 0 && builder.charAt(startingIndex - 1) == PATH_SEPARATOR_KEY) {
-                  builder.replace(startingIndex - 1, index + 1, "");
-                } else {
-                  builder.replace(startingIndex, index + 1, "");
-                }
+                builder.delete(startingIndex + 1, index);
 
-                index -= index - startingIndex + 1;
+                index = startingIndex + 2;
                 break;
               }
             }
@@ -71,5 +67,51 @@ public class ResourceMethodIdentifierGenerator
     }
 
     return builder.append(RESOURCE_METHOD_SEPARATOR).append(OperationNameGenerator.generate(method, methodName)).toString();
+  }
+
+  /**
+   * Removes any path key patterns from the resource method identifier
+   * @param resourceMethodIdentifier the original resource method identifier
+   * @return the resource method identifier with any path keys removed
+   */
+  public static String stripPathKeys(String resourceMethodIdentifier) {
+    if (resourceMethodIdentifier == null || resourceMethodIdentifier.isEmpty()) {
+      return resourceMethodIdentifier;
+    }
+
+    int index = resourceMethodIdentifier.indexOf(KEY_START_CHAR);
+
+    if (index >= 0) {
+      final StringBuilder builder = new StringBuilder(resourceMethodIdentifier);
+
+      while (index < builder.length()) {
+        if (builder.charAt(index) == KEY_START_CHAR) {
+          final int startingIndex = index;
+
+          while (++index < builder.length()) {
+            if (builder.charAt(index) == KEY_END_CHAR) {
+              // Remove any proceeding path separator
+              if (startingIndex > 0 && builder.charAt(startingIndex - 1) == PATH_SEPARATOR_KEY) {
+                builder.delete(startingIndex - 1, index + 1);
+                index = startingIndex - 1;
+              } else {
+                builder.delete(startingIndex, index + 1);
+                index = startingIndex;
+              }
+
+              break;
+            }
+          }
+        } else if (builder.charAt(index) == RESOURCE_METHOD_SEPARATOR) {
+          break;
+        } else {
+          index++;
+        }
+      }
+
+      return builder.toString();
+    }
+
+    return resourceMethodIdentifier;
   }
 }

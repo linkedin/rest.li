@@ -14,6 +14,11 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.39.5] - 2022-10-05
+Add `RestLiTraceInfo` to the `RequestContext` for both incoming and outgoing requests.
+Added `Request.getResourceMethodIdentifier()`,
+ `ResourceDefinition.getBaseUriTemplate()`, and `ResourceMethodDescriptor.getResourceMethodIdentifier()`.
+
 ## [29.39.4] - 2022-09-30
 Add JMX metrics for DNS resolution and clarify DNS timeout errors.
 
@@ -5359,7 +5364,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.39.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.39.5...master
+[29.39.5]: https://github.com/linkedin/rest.li/compare/v29.39.4...v29.39.5
 [29.39.4]: https://github.com/linkedin/rest.li/compare/v29.39.3...v29.39.4
 [29.39.3]: https://github.com/linkedin/rest.li/compare/v29.39.2...v29.39.3
 [29.39.2]: https://github.com/linkedin/rest.li/compare/v29.39.1...v29.39.2
