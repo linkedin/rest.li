@@ -13,6 +13,10 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add equals and hashCode methods to `CollectionResult`, `GetResult`, `UpdateResponse` and `UpdateEntityResponse`.
+
+## [29.39.5] - 2022-10-04
+- Emit service discovery status related events
 
 ## [29.39.5] - 2022-10-05
 Add `RestLiTraceInfo` to the `RequestContext` for both incoming and outgoing requests.

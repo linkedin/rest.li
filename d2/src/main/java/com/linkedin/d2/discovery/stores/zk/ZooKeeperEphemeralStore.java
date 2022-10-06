@@ -20,9 +20,11 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.CallbackAdapter;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.util.FileSystemDirectory;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.PropertySerializer;
+import com.linkedin.d2.discovery.event.D2ServiceDiscoveryEventHelper;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import com.linkedin.d2.discovery.stores.file.FileStore;
 import java.io.File;
@@ -38,9 +40,13 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zookeeper.AsyncCallback;
 import org.apache.zookeeper.CreateMode;
@@ -77,6 +83,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
                                                                          LoggerFactory.getLogger(ZooKeeperEphemeralStore.class);
   private static final Pattern PATH_PATTERN    = Pattern.compile("(.*)/(.*)$");
   public static final String DEFAULT_PREFIX = "ephemoral";
+  public static final String PUT_FAILURE_PATH_SUFFIX = "FAILURE";
 
   private final ZooKeeperPropertyMerger<T>                      _merger;
   private final ConcurrentMap<String, EphemeralStoreWatcher> _ephemeralStoreWatchers = new ConcurrentHashMap<>();
@@ -90,6 +97,9 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   private final int _zookeeperReadWindowMs;
   private final ZookeeperChildFilter _zookeeperChildFilter;
   private final ZookeeperEphemeralPrefixGenerator _prefixGenerator;
+  private D2ServiceDiscoveryEventHelper _eventHelper;
+  // callback when announcements happened (for the regular and warmup clusters in ZookeeperAnnouncer only) to notify the new znode path and data.
+  private final AtomicReference<ZookeeperNodePathAndDataCallback> _znodePathAndDataCallbackRef;
 
   public ZooKeeperEphemeralStore(ZKConnection client,
                                  PropertySerializer<T> serializer,
@@ -188,7 +198,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     if (watchChildNodes && ephemeralNodesFilePath != null)
     {
       throw new IllegalArgumentException("watchChildNodes and ephemeralNodesFilePath, which enables a local cache for " +
-        "ChildNodes, can not both be enabled together.");
+          "ChildNodes, can not both be enabled together.");
     }
 
     if (ephemeralNodesFilePath != null && !useNewWatcher)
@@ -205,6 +215,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     _ephemeralNodesFilePath = ephemeralNodesFilePath;
     _executorService = executorService;
     _zookeeperReadWindowMs = zookeeperReadWindowMs;
+    _znodePathAndDataCallbackRef = new AtomicReference<>();
   }
 
   @Override
@@ -227,21 +238,19 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
         }
         final String ephemeralPath = path + "/" + ephemeralPrefix + "-";
 
-        AsyncCallback.StringCallback stringCallback = new AsyncCallback.StringCallback()
-        {
-          @Override
-          public void processResult(int rc, String path, Object ctx, String name)
+        AsyncCallback.StringCallback stringCallback = (rc, path1, ctx, name) -> {
+          KeeperException.Code code = KeeperException.Code.get(rc);
+          switch (code)
           {
-            KeeperException.Code code = KeeperException.Code.get(rc);
-            switch (code)
-            {
-              case OK:
-                callback.onSuccess(None.none());
-                break;
-              default:
-                callback.onError(KeeperException.create(code));
-                break;
-            }
+            case OK:
+              notifyZnodePathAndDataCallback(prop, name, value.toString()); // set the created znode path, such as "/d2/uris/ClusterA/hostA-1234"
+              callback.onSuccess(None.none());
+              break;
+            default:
+              // error case, use failure path: "/d2/uris/ClusterA/hostA-FAILURE"
+              notifyZnodePathAndDataCallback(prop, ephemeralPath + PUT_FAILURE_PATH_SUFFIX, value.toString());
+              callback.onError(KeeperException.create(code));
+              break;
           }
         };
 
@@ -450,8 +459,13 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 
     if (_useNewWatcher)
     {
+      boolean isInitialFetch = !_ephemeralStoreWatchers.containsKey(prop);
       EphemeralStoreWatcher watcher = _ephemeralStoreWatchers.computeIfAbsent(prop, k -> new EphemeralStoreWatcher(prop));
       watcher.addWatch(prop);
+      if (isInitialFetch) {
+        watcher._isInitialFetchRef.set(true);
+        watcher._initialFetchStartAtNanosRef.set(System.nanoTime());
+      }
       _zk.getChildren(getPath(prop), watcher, watcher, true);
     }
     else
@@ -480,9 +494,31 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     }
   }
 
+  public String getConnectString() {
+    return _zkConn.getConnectString();
+  }
+
   public int getListenerCount()
   {
     return _useNewWatcher ? _ephemeralStoreWatchers.size() : _zkStoreWatcher.getWatchCount();
+  }
+
+  public void setServiceDiscoveryEventHelper(D2ServiceDiscoveryEventHelper helper) {
+    _eventHelper = helper;
+  }
+
+  public void setZnodePathAndDataCallback(ZookeeperNodePathAndDataCallback callback) {
+    _znodePathAndDataCallbackRef.set(callback);
+  }
+
+  private void notifyZnodePathAndDataCallback(String cluster, String path, String data) {
+    if (_znodePathAndDataCallbackRef.get() != null) {
+      _znodePathAndDataCallbackRef.get().setPathAndDataForCluster(cluster, path, data);
+    }
+  }
+
+  public interface ZookeeperNodePathAndDataCallback {
+    void setPathAndDataForCluster(String cluster, String nodePath, String data);
   }
 
   // Note ChildrenCallback is compatible with a ZK 3.2 server; Children2Callback is
@@ -661,6 +697,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 
     // property that is being watched
     private final String _prop;
+    private final String _propPath;
 
     // id of the transaction that caused the parent node to be created
     private long _czxid = 0;
@@ -668,9 +705,13 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     // FileStore to save unmodifiable nodes' data
     private FileStore<T> _fileStore = null;
 
+    private final AtomicBoolean _isInitialFetchRef = new AtomicBoolean(false);
+    private final AtomicLong _initialFetchStartAtNanosRef = new AtomicLong(Long.MAX_VALUE);
+
     EphemeralStoreWatcher(String prop)
     {
       _prop = prop;
+      _propPath = getPath(prop);
     }
 
     @Override
@@ -682,8 +723,12 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
         // Delay setting the watch based on configured _readWindowMs
         int midPoint = _zookeeperReadWindowMs / 2;
         int delay = midPoint + ThreadLocalRandom.current().nextInt(midPoint);
-        _executorService.schedule(() -> _zk.getChildren(getPath(propertyName), this, this, false),
-            delay, TimeUnit.MILLISECONDS);
+        _executorService.schedule(() -> {
+          if (_isInitialFetchRef.get()) { // if the cluster node is just created, it will be an initial fetch. Set the start time.
+            _initialFetchStartAtNanosRef.set(System.nanoTime());
+          }
+          _zk.getChildren(getPath(propertyName), this, this, false);
+          }, delay, TimeUnit.MILLISECONDS);
       }
       else
       {
@@ -706,6 +751,12 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       {
         case OK:
         {
+          if (_isInitialFetchRef.get()) {
+            // reset initial fetch states
+            _isInitialFetchRef.set(false);
+            emitSDStatusInitialRequestEvent(property, true);
+            _initialFetchStartAtNanosRef.set(Long.MAX_VALUE);
+          }
           initCurrentNode(stat);
           Set<String> newChildren = calculateChildrenDeltaAndUpdateState(children);
           getChildrenData(path, newChildren, getChildrenDataCallback(path, init, property));
@@ -713,6 +764,12 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
         }
         case NONODE:
           // The node whose children we are monitoring is gone; set an exists watch on it
+          if (_isInitialFetchRef.get()) {
+            emitSDStatusInitialRequestEvent(property, false);
+            // don't need to reset initial fetch states, when exists watch is triggered, it's still an initial fetch.
+          }
+          _isInitialFetchRef.set(true); // set isInitialFetch to true so that when the exists watch is triggered, it's an initial fetch.
+          _initialFetchStartAtNanosRef.set(System.nanoTime());
           _log.debug("{}: node is not present, calling exists", path);
           _zk.exists(path, this, this, false);
           if (init)
@@ -755,6 +812,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
         @Override
         public void onSuccess(Map<String, T> result)
         {
+          emitSDStatusUpdateReceiptEvents(result, true); // emit status update receipt event for new children
           _childrenMap.putAll(result);
           if (_fileStore != null)
           {
@@ -809,7 +867,18 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     {
       // remove children that have been evicted from the map
       Set<String> oldChildren = new HashSet<>(_childrenMap.keySet());
-      oldChildren.removeAll(children);
+      oldChildren.removeAll(children); // old children contains the deleted children
+      // emit status update receipt event for deleted children
+      Map<String, T> oldChildrenMap = _childrenMap.entrySet().stream()
+          .filter(entry -> oldChildren.contains(entry.getKey()))
+          .collect(Collectors.toMap(
+              Map.Entry::getKey,
+              Map.Entry::getValue
+          ));
+      if (!oldChildrenMap.isEmpty()) {
+        emitSDStatusUpdateReceiptEvents(oldChildrenMap, false);
+      }
+
       oldChildren.forEach(_childrenMap::remove);
       if (_fileStore != null)
       {
@@ -845,6 +914,42 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
           _log.error("exists: unexpected error: {}: {}", code, path);
           break;
       }
+    }
+
+    private void emitSDStatusInitialRequestEvent(String property, boolean succeeded) {
+      if (_eventHelper == null) {
+        _log.info("D2 service discovery event helper in ZookeeperEphemeralStore is null. Skipping emitting events.");
+        return;
+      }
+
+      // measure request duration and convert to milli-seconds
+      long initialFetchDurationMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - _initialFetchStartAtNanosRef.get());
+      if (initialFetchDurationMillis < 0) {
+        _log.warn("Failed to log ServiceDiscoveryStatusInitialRequest event, initialFetchStartAt time is greater than current time.");
+        return;
+      }
+      // emit service discovery status initial request event for success
+      _eventHelper.emitSDStatusInitialRequestEvent(property, initialFetchDurationMillis, succeeded);
+    }
+
+    private void emitSDStatusUpdateReceiptEvents(Map<String, T> updates, boolean isMarkUp) {
+      if (_eventHelper == null) {
+        _log.info("D2 service discovery event helper in ZookeeperEphemeralStore is null. Skipping emitting events.");
+        return;
+      }
+
+      long timestamp = System.currentTimeMillis();
+      updates.forEach((nodeName, uriProperty) -> {
+        if (!(uriProperty instanceof UriProperties)) {
+          _log.error("Unknown type of URI data, ignored: " + uriProperty.toString());
+          return;
+        }
+        UriProperties properties = (UriProperties) uriProperty;
+        properties.Uris().forEach(uri ->
+            _eventHelper.emitSDStatusUpdateReceiptEvent(_prop, uri.getHost(), uri.getPort(), isMarkUp, _zkConn.getConnectString(),
+                _propPath + "/" + nodeName, uriProperty.toString(), timestamp)
+        );
+      });
     }
   }
 

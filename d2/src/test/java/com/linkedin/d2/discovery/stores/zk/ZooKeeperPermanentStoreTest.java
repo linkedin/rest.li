@@ -19,6 +19,7 @@ package com.linkedin.d2.discovery.stores.zk;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -31,15 +32,20 @@ import java.io.IOException;
 
 public class ZooKeeperPermanentStoreTest extends PropertyStoreTest
 {
-  protected static final int PORT = 5000;
+  protected int _port;
 
   protected ZKServer _zkServer;
 
   @BeforeMethod
   public void setupServer() throws IOException, InterruptedException
   {
-    _zkServer = new ZKServer(PORT);
-    _zkServer.startup();
+    try {
+      _zkServer = new ZKServer();
+      _zkServer.startup();
+      _port = _zkServer.getPort();
+    } catch (IOException e) {
+      Assert.fail("unable to instantiate real zk server on port " + _port);
+    }
   }
 
   @AfterMethod
@@ -53,7 +59,7 @@ public class ZooKeeperPermanentStoreTest extends PropertyStoreTest
   {
     try
     {
-      ZKConnection client = new ZKConnection("localhost:" + PORT, 30000);
+      ZKConnection client = new ZKConnection("localhost:" + _port, 30000);
       client.start();
 
       ZooKeeperPermanentStore<String> store = new ZooKeeperPermanentStore<>(
