@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.39.6] - 2022-10-06
 - Add equals and hashCode methods to `CollectionResult`, `GetResult`, `UpdateResponse` and `UpdateEntityResponse`.
 
 Add `RestLiTraceInfo` to the `RequestContext` for both incoming and outgoing requests.
@@ -5367,7 +5369,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.39.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.39.6...master
+[29.39.6]: https://github.com/linkedin/rest.li/compare/v29.39.5...v29.39.6
 [29.39.5]: https://github.com/linkedin/rest.li/compare/v29.39.4...v29.39.5
 [29.39.4]: https://github.com/linkedin/rest.li/compare/v29.39.3...v29.39.4
 [29.39.3]: https://github.com/linkedin/rest.li/compare/v29.39.2...v29.39.3
