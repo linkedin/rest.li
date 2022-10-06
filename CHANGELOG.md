@@ -15,13 +15,12 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 - Add equals and hashCode methods to `CollectionResult`, `GetResult`, `UpdateResponse` and `UpdateEntityResponse`.
 
-## [29.39.5] - 2022-10-04
-- Emit service discovery status related events
-
-## [29.39.5] - 2022-10-05
 Add `RestLiTraceInfo` to the `RequestContext` for both incoming and outgoing requests.
 Added `Request.getResourceMethodIdentifier()`,
  `ResourceDefinition.getBaseUriTemplate()`, and `ResourceMethodDescriptor.getResourceMethodIdentifier()`.
+
+## [29.39.5] - 2022-10-04
+- Emit service discovery status related events
 
 ## [29.39.4] - 2022-09-30
 Add JMX metrics for DNS resolution and clarify DNS timeout errors.
