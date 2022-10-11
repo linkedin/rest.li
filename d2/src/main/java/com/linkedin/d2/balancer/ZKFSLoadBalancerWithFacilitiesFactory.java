@@ -95,7 +95,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                                    config.zookeeperReadWindowMs,
                                                    config.deterministicSubsettingMetadataProvider,
                                                    config.failoutConfigProviderFactory,
-                                                   config.canaryDistributionProvider
+                                                   config.canaryDistributionProvider,
+                                                   config.serviceDiscoveryEventEmitter
     );
   }
 }

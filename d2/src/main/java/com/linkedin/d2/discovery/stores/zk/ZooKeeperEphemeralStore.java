@@ -25,6 +25,7 @@ import com.linkedin.d2.balancer.util.FileSystemDirectory;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.event.D2ServiceDiscoveryEventHelper;
+import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import com.linkedin.d2.discovery.stores.file.FileStore;
 import java.io.File;
@@ -97,7 +98,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   private final int _zookeeperReadWindowMs;
   private final ZookeeperChildFilter _zookeeperChildFilter;
   private final ZookeeperEphemeralPrefixGenerator _prefixGenerator;
-  private D2ServiceDiscoveryEventHelper _eventHelper;
+  private ServiceDiscoveryEventEmitter _eventEmitter;
   // callback when announcements happened (for the regular and warmup clusters in ZookeeperAnnouncer only) to notify the new znode path and data.
   private final AtomicReference<ZookeeperNodePathAndDataCallback> _znodePathAndDataCallbackRef;
 
@@ -216,6 +217,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     _executorService = executorService;
     _zookeeperReadWindowMs = zookeeperReadWindowMs;
     _znodePathAndDataCallbackRef = new AtomicReference<>();
+    _eventEmitter = null;
   }
 
   @Override
@@ -503,8 +505,12 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     return _useNewWatcher ? _ephemeralStoreWatchers.size() : _zkStoreWatcher.getWatchCount();
   }
 
+  @Deprecated
   public void setServiceDiscoveryEventHelper(D2ServiceDiscoveryEventHelper helper) {
-    _eventHelper = helper;
+  }
+
+  public void setServiceDiscoveryEventEmitter(ServiceDiscoveryEventEmitter emitter) {
+    _eventEmitter = emitter;
   }
 
   public void setZnodePathAndDataCallback(ZookeeperNodePathAndDataCallback callback) {
@@ -812,7 +818,9 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
         @Override
         public void onSuccess(Map<String, T> result)
         {
-          emitSDStatusUpdateReceiptEvents(result, true); // emit status update receipt event for new children
+          if (!result.isEmpty()) {
+            emitSDStatusUpdateReceiptEvents(result, true); // emit status update receipt event for new children
+          }
           _childrenMap.putAll(result);
           if (_fileStore != null)
           {
@@ -917,8 +925,8 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     }
 
     private void emitSDStatusInitialRequestEvent(String property, boolean succeeded) {
-      if (_eventHelper == null) {
-        _log.info("D2 service discovery event helper in ZookeeperEphemeralStore is null. Skipping emitting events.");
+      if (_eventEmitter == null) {
+        _log.info("Service discovery event emitter in ZookeeperEphemeralStore is null. Skipping emitting events.");
         return;
       }
 
@@ -929,12 +937,12 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
         return;
       }
       // emit service discovery status initial request event for success
-      _eventHelper.emitSDStatusInitialRequestEvent(property, initialFetchDurationMillis, succeeded);
+      _eventEmitter.emitSDStatusInitialRequestEvent(property, false, initialFetchDurationMillis, succeeded);
     }
 
     private void emitSDStatusUpdateReceiptEvents(Map<String, T> updates, boolean isMarkUp) {
-      if (_eventHelper == null) {
-        _log.info("D2 service discovery event helper in ZookeeperEphemeralStore is null. Skipping emitting events.");
+      if (_eventEmitter == null) {
+        _log.info("Service discovery event emitter in ZookeeperEphemeralStore is null. Skipping emitting events.");
         return;
       }
 
@@ -945,14 +953,24 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
           return;
         }
         UriProperties properties = (UriProperties) uriProperty;
+        String nodePath = _propPath + "/" + nodeName;
         properties.Uris().forEach(uri ->
-            _eventHelper.emitSDStatusUpdateReceiptEvent(_prop, uri.getHost(), uri.getPort(), isMarkUp, _zkConn.getConnectString(),
-                _propPath + "/" + nodeName, uriProperty.toString(), timestamp)
+            _eventEmitter.emitSDStatusUpdateReceiptEvent(
+                _prop,
+                uri.getHost(),
+                uri.getPort(),
+                isMarkUp ? ServiceDiscoveryEventEmitter.StatusUpdateActionType.MARK_READY : ServiceDiscoveryEventEmitter.StatusUpdateActionType.MARK_DOWN,
+                false,
+                _zkConn.getConnectString(),
+                nodePath,
+                uriProperty.toString(),
+                0,
+                nodePath,
+                timestamp)
         );
       });
     }
   }
-
 
   private class ChildCollector implements AsyncCallback.DataCallback
   {

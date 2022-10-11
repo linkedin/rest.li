@@ -44,6 +44,7 @@ import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
+import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.d2.jmx.JmxManager;
@@ -184,7 +185,9 @@ public class D2ClientBuilder
                   _config.canaryDistributionProvider,
                   _config.enableClusterFailout,
                   _config.failoutConfigProviderFactory,
-                  _config.failoutRedirectStrategy);
+                  _config.failoutRedirectStrategy,
+                  _config.serviceDiscoveryEventEmitter
+    );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
@@ -581,6 +584,11 @@ public class D2ClientBuilder
   public D2ClientBuilder setFailoutRedirectStrategy(FailoutRedirectStrategy failoutRedirectStrategy)
   {
     _config.failoutRedirectStrategy = failoutRedirectStrategy;
+    return this;
+  }
+
+  public D2ClientBuilder setServiceDiscoveryEventEmitter(ServiceDiscoveryEventEmitter emitter) {
+    _config.serviceDiscoveryEventEmitter = emitter;
     return this;
   }
 

@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.40.1] - 2022-10-13
+Add service discovery event emitter to d2 client
+
 ## [29.40.0] - 2022-10-13
 - Empty commit to bump pegasus minor version 
 
@@ -5372,7 +5375,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.1...master
+[29.40.1]: https://github.com/linkedin/rest.li/compare/v29.40.0...v29.40.1
 [29.40.0]: https://github.com/linkedin/rest.li/compare/v29.39.6...v29.40.0
 [29.39.6]: https://github.com/linkedin/rest.li/compare/v29.39.5...v29.39.6
 [29.39.5]: https://github.com/linkedin/rest.li/compare/v29.39.4...v29.39.5

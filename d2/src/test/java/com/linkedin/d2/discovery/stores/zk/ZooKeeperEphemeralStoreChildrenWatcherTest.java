@@ -141,8 +141,8 @@ public class ZooKeeperEphemeralStoreChildrenWatcherTest
     client.start();
 
     final ZooKeeperEphemeralStore<UriProperties> publisher = getStore(client);
-    TestDataHelper.MockD2ServiceDiscoveryEventHelper mockEventHelper = getMockD2ServiceDiscoveryEventHelper();
-    publisher.setServiceDiscoveryEventHelper(mockEventHelper);
+    TestDataHelper.MockServiceDiscoveryEventEmitter mockEventEmitter = getMockServiceDiscoveryEventEmitter();
+    publisher.setServiceDiscoveryEventEmitter(mockEventEmitter);
 
     final CountDownLatch initLatch = new CountDownLatch(1);
     final CountDownLatch addLatch = new CountDownLatch(1);
@@ -194,14 +194,15 @@ public class ZooKeeperEphemeralStoreChildrenWatcherTest
     }
 
     // 1 initial request succeeded
-    mockEventHelper.verifySDStatusInitialRequestEvents(Collections.singletonList(CLUSTER_NAME), Collections.singletonList(true));
+    mockEventEmitter.verifySDStatusInitialRequestEvents(Collections.singletonList(CLUSTER_NAME), Collections.singletonList(true));
     // 3 markups
-    mockEventHelper.verifySDStatusUpdateReceiptEvents(
+    mockEventEmitter.verifySDStatusUpdateReceiptEvents(
         ImmutableSet.of(CLUSTER_NAME, CLUSTER_NAME, CLUSTER_NAME),
         ImmutableSet.of(HOST_1, HOST_2, HOST_3),
         ImmutableSet.of(PORT_1, PORT_2, PORT_3),
         ImmutableSet.of(CHILD_PATH_1, CHILD_PATH_2, CHILD_PATH_3),
         ImmutableSet.of(PROPERTIES_1.toString(), PROPERTIES_2.toString(), PROPERTIES_3.toString()),
+        ImmutableSet.of(CHILD_PATH_1, CHILD_PATH_2, CHILD_PATH_3),
         true
     );
 
@@ -214,16 +215,16 @@ public class ZooKeeperEphemeralStoreChildrenWatcherTest
       Assert.fail("The EphemeralStore shouldn't watch for data change");
     }
     // no more markups
-    Assert.assertEquals(mockEventHelper._receiptMarkUpHosts.size(), 3);
+    Assert.assertEquals(mockEventEmitter._receiptMarkUpHosts.size(), 3);
     // 0 markdown
-    Assert.assertEquals(mockEventHelper._receiptMarkDownHosts.size(), 0);
+    Assert.assertEquals(mockEventEmitter._receiptMarkDownHosts.size(), 0);
     Assert.assertEquals(_outputData, MERGER.merge(CLUSTER_NAME, _testData.values()));
     _eventBus.unregister(Collections.singleton(CLUSTER_NAME), subscriber);
     client.shutdown();
   }
 
   private ZooKeeperEphemeralStore<UriProperties> getStore(ZKConnection client) {
-    return new ZooKeeperEphemeralStore<>(client, SERIALIZER, MERGER, "/", false, true);
+    return new ZooKeeperEphemeralStore<>(client, SERIALIZER, MERGER, "/", false, true); // use new child watcher
   }
 
   @Test
@@ -233,8 +234,8 @@ public class ZooKeeperEphemeralStoreChildrenWatcherTest
     client.start();
 
     final ZooKeeperEphemeralStore<UriProperties> publisher = getStore(client);
-    TestDataHelper.MockD2ServiceDiscoveryEventHelper mockEventHelper = getMockD2ServiceDiscoveryEventHelper();
-    publisher.setServiceDiscoveryEventHelper(mockEventHelper);
+    TestDataHelper.MockServiceDiscoveryEventEmitter mockEventEmitter = getMockServiceDiscoveryEventEmitter();
+    publisher.setServiceDiscoveryEventEmitter(mockEventEmitter);
 
     final CountDownLatch initLatch = new CountDownLatch(1);
     final CountDownLatch addLatch = new CountDownLatch(1);
@@ -293,14 +294,15 @@ public class ZooKeeperEphemeralStoreChildrenWatcherTest
     }
 
     // 1 initial request succeeded
-    mockEventHelper.verifySDStatusInitialRequestEvents(Collections.singletonList(CLUSTER_NAME), Collections.singletonList(true));
+    mockEventEmitter.verifySDStatusInitialRequestEvents(Collections.singletonList(CLUSTER_NAME), Collections.singletonList(true));
     // 4 mark ups
-    mockEventHelper.verifySDStatusUpdateReceiptEvents(
+    mockEventEmitter.verifySDStatusUpdateReceiptEvents(
         ImmutableSet.of(CLUSTER_NAME, CLUSTER_NAME, CLUSTER_NAME, CLUSTER_NAME),
         ImmutableSet.of(HOST_1, HOST_2, HOST_3, HOST_4),
         ImmutableSet.of(PORT_1, PORT_2, PORT_3, PORT_4),
         ImmutableSet.of(CHILD_PATH_1, CHILD_PATH_2, CHILD_PATH_3, CHILD_PATH_4),
         ImmutableSet.of(PROPERTIES_1.toString(), PROPERTIES_2.toString(), PROPERTIES_3.toString(), PROPERTIES_4.toString()),
+        ImmutableSet.of(CHILD_PATH_1, CHILD_PATH_2, CHILD_PATH_3, CHILD_PATH_4),
         true
     );
     _testData.put(CHILD_PATH_4, PROPERTIES_4);
@@ -316,8 +318,8 @@ public class ZooKeeperEphemeralStoreChildrenWatcherTest
     client.start();
 
     final ZooKeeperEphemeralStore<UriProperties> publisher = getStore(client);
-    TestDataHelper.MockD2ServiceDiscoveryEventHelper mockEventHelper = getMockD2ServiceDiscoveryEventHelper();
-    publisher.setServiceDiscoveryEventHelper(mockEventHelper);
+    TestDataHelper.MockServiceDiscoveryEventEmitter mockEventEmitter = getMockServiceDiscoveryEventEmitter();
+    publisher.setServiceDiscoveryEventEmitter(mockEventEmitter);
 
     final CountDownLatch initLatch = new CountDownLatch(1);
     final CountDownLatch addLatch = new CountDownLatch(1);
@@ -370,14 +372,15 @@ public class ZooKeeperEphemeralStoreChildrenWatcherTest
     }
 
     // 1 initial request succeeded
-    mockEventHelper.verifySDStatusInitialRequestEvents(Collections.singletonList(CLUSTER_NAME), Collections.singletonList(true));
+    mockEventEmitter.verifySDStatusInitialRequestEvents(Collections.singletonList(CLUSTER_NAME), Collections.singletonList(true));
     // 3 markups
-    mockEventHelper.verifySDStatusUpdateReceiptEvents(
+    mockEventEmitter.verifySDStatusUpdateReceiptEvents(
         ImmutableSet.of(CLUSTER_NAME, CLUSTER_NAME, CLUSTER_NAME),
         ImmutableSet.of(HOST_1, HOST_2, HOST_3),
         ImmutableSet.of(PORT_1, PORT_2, PORT_3),
         ImmutableSet.of(CHILD_PATH_1, CHILD_PATH_2, CHILD_PATH_3),
         ImmutableSet.of(PROPERTIES_1.toString(), PROPERTIES_2.toString(), PROPERTIES_3.toString()),
+        ImmutableSet.of(CHILD_PATH_1, CHILD_PATH_2, CHILD_PATH_3),
         true
     );
     FutureCallback<None> callback = new FutureCallback<>();
@@ -390,8 +393,14 @@ public class ZooKeeperEphemeralStoreChildrenWatcherTest
     }
 
     // 1 markdown
-    mockEventHelper.verifySDStatusUpdateReceiptEvents(ImmutableSet.of(CLUSTER_NAME), ImmutableSet.of(HOST_1), ImmutableSet.of(1),
-        ImmutableSet.of(CHILD_PATH_1), ImmutableSet.of(PROPERTIES_1.toString()), false);
+    mockEventEmitter.verifySDStatusUpdateReceiptEvents(
+        ImmutableSet.of(CLUSTER_NAME),
+        ImmutableSet.of(HOST_1),
+        ImmutableSet.of(1),
+        ImmutableSet.of(CHILD_PATH_1),
+        ImmutableSet.of(PROPERTIES_1.toString()),
+        ImmutableSet.of(CHILD_PATH_1),
+        false);
     _testData.remove(CHILD_PATH_1);
     Assert.assertEquals(_outputData, MERGER.merge(CLUSTER_NAME, _testData.values()));
     _eventBus.unregister(Collections.singleton(CLUSTER_NAME), subscriber);

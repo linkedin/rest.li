@@ -32,6 +32,8 @@ public interface D2ServiceDiscoveryEventHelper {
    */
   void emitSDStatusActiveUpdateIntentAndWriteEvents(String cluster, boolean isMarkUp, boolean succeeded, long startAt);
 
+
+  // NOTE: Deprecated, client side events should be directly emitted with {@link ServiceDiscoveryEventEmitter}
   //---- d2 client-side events ----//
 
   /**
@@ -42,7 +44,9 @@ public interface D2ServiceDiscoveryEventHelper {
    * @param nodeData data in the uri ephemeral znode.
    * @param timestamp when the update is received.
    */
-  void emitSDStatusUpdateReceiptEvent(String cluster, String host, int port, boolean isMarkUp, String zkConnectString, String nodePath, String nodeData, long timestamp);
+  @Deprecated
+  default void emitSDStatusUpdateReceiptEvent(String cluster, String host, int port, boolean isMarkUp, String zkConnectString, String nodePath, String nodeData, long timestamp) {
+  };
 
   /**
    * To emit ServiceDiscoveryStatusInitialRequestEvent, when a new service discovery request is sent for a cache miss,
@@ -51,5 +55,7 @@ public interface D2ServiceDiscoveryEventHelper {
    * @param duration duration the request took.
    * @param succeeded true if the request succeeded, o.w failed.
    */
-  void emitSDStatusInitialRequestEvent(String cluster, long duration, boolean succeeded);
+  @Deprecated
+  default void emitSDStatusInitialRequestEvent(String cluster, long duration, boolean succeeded) {
+  };
 }
