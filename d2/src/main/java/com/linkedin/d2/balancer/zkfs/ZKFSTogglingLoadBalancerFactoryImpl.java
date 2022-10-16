@@ -44,6 +44,7 @@ import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistryImpl;
 import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
+import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import com.linkedin.d2.discovery.stores.file.FileStore;
 import com.linkedin.d2.discovery.stores.toggling.TogglingPublisher;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
@@ -93,6 +94,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   private final DeterministicSubsettingMetadataProvider _deterministicSubsettingMetadataProvider;
   private final CanaryDistributionProvider _canaryDistributionProvider;
   private final FailoutConfigProviderFactory _failoutConfigProviderFactory;
+  private final ServiceDiscoveryEventEmitter _serviceDiscoveryEventEmitter;
 
   private static final Logger _log = LoggerFactory.getLogger(ZKFSTogglingLoadBalancerFactoryImpl.class);
 
@@ -310,6 +312,53 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                              FailoutConfigProviderFactory failoutConfigProviderFactory,
                                              CanaryDistributionProvider canaryDistributionProvider)
   {
+    this(factory,
+        timeout,
+        timeoutUnit,
+        baseZKPath,
+        fsBasePath,
+        clientFactories,
+        loadBalancerStrategyFactories,
+        d2ServicePath,
+        sslContext,
+        sslParameters,
+        isSSLEnabled,
+        clientServicesConfig,
+        useNewEphemeralStoreWatcher,
+        partitionAccessorRegistry,
+        enableSaveUriDataOnDisk,
+        sslSessionValidatorFactory,
+        d2ClientJmxManager,
+        zookeeperReadWindowMs,
+        deterministicSubsettingMetadataProvider,
+        failoutConfigProviderFactory,
+        canaryDistributionProvider,
+        null);
+  }
+
+  public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
+      long timeout,
+      TimeUnit timeoutUnit,
+      String baseZKPath,
+      String fsBasePath,
+      Map<String, TransportClientFactory> clientFactories,
+      Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+      String d2ServicePath,
+      SSLContext sslContext,
+      SSLParameters sslParameters,
+      boolean isSSLEnabled,
+      Map<String, Map<String, Object>> clientServicesConfig,
+      boolean useNewEphemeralStoreWatcher,
+      PartitionAccessorRegistry partitionAccessorRegistry,
+      boolean enableSaveUriDataOnDisk,
+      SslSessionValidatorFactory sslSessionValidatorFactory,
+      D2ClientJmxManager d2ClientJmxManager,
+      int zookeeperReadWindowMs,
+      DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
+      FailoutConfigProviderFactory failoutConfigProviderFactory,
+      CanaryDistributionProvider canaryDistributionProvider,
+      ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter)
+  {
     _factory = factory;
     _lbTimeout = timeout;
     _lbTimeoutUnit = timeoutUnit;
@@ -331,6 +380,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     _deterministicSubsettingMetadataProvider = deterministicSubsettingMetadataProvider;
     _failoutConfigProviderFactory = failoutConfigProviderFactory;
     _canaryDistributionProvider = canaryDistributionProvider;
+    _serviceDiscoveryEventEmitter = serviceDiscoveryEventEmitter;
   }
 
   @Override
@@ -356,6 +406,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     ZooKeeperEphemeralStore<UriProperties> zkUriRegistry =  createEphemeralStore(
       zkConnection, ZKFSUtil.uriPath(_baseZKPath), new UriPropertiesJsonSerializer(),
       new UriPropertiesMerger(), _useNewEphemeralStoreWatcher, backupStoreFilePath, executorService, _zookeeperReadWindowMs);
+    zkUriRegistry.setServiceDiscoveryEventEmitter(_serviceDiscoveryEventEmitter);
     _d2ClientJmxManager.setZkUriRegistry(zkUriRegistry);
 
     FileStore<ClusterProperties> fsClusterStore = createFileStore(FileSystemDirectory.getClusterDirectory(_fsd2DirPath), new ClusterPropertiesJsonSerializer());

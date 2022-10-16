@@ -12,9 +12,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.testng.Assert;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 
 public class TestDataHelper {
@@ -73,22 +73,6 @@ public class TestDataHelper {
     public final List<Boolean> _activeUpdateIntentAndWriteIsMarkUpFlags = new ArrayList<>();
     public final List<Boolean> _activeUpdateIntentAndWriteSucceededFlags = new ArrayList<>();
 
-    public final Set<String> _receiptMarkUpClusters = new HashSet<>();
-    public final Set<String> _receiptMarkUpHosts = new HashSet<>();
-    public final Set<Integer> _receiptMarkUpPorts = new HashSet<>();
-    public final Set<String> _receiptMarkUpPaths = new HashSet<>();
-    public final Set<String> _receiptMarkUpProperties = new HashSet<>();
-
-    public final Set<String> _receiptMarkDownClusters = new HashSet<>();
-    public final Set<String> _receiptMarkDownHosts = new HashSet<>();
-    public final Set<Integer> _receiptMarkDownPorts = new HashSet<>();
-    public final Set<String> _receiptMarkDownPaths = new HashSet<>();
-    public final Set<String> _receiptMarkDownProperties = new HashSet<>();
-
-    public final List<String> _initialRequestClusters = new ArrayList<>();
-    public final List<Long> _initialRequestDurations = new ArrayList<>();
-    public final List<Boolean> _initialRequestSucceededFlags = new ArrayList<>();
-
     @Override
     public void emitSDStatusActiveUpdateIntentAndWriteEvents(String cluster, boolean isMarkUp, boolean succeeded,
         long startAt) {
@@ -97,51 +81,10 @@ public class TestDataHelper {
       _activeUpdateIntentAndWriteSucceededFlags.add(succeeded);
     }
 
-    @Override
-    public void emitSDStatusUpdateReceiptEvent(String cluster, String host, int port, boolean isMarkUp,
-        String zkConnectString, String nodePath, String properties, long timestamp) {
-      if (isMarkUp) {
-        _receiptMarkUpClusters.add(cluster);
-        _receiptMarkUpHosts.add(host);
-        _receiptMarkUpPorts.add(port);
-        _receiptMarkUpPaths.add(nodePath);
-        _receiptMarkUpProperties.add(properties);
-      } else {
-        _receiptMarkDownClusters.add(cluster);
-        _receiptMarkDownHosts.add(host);
-        _receiptMarkDownPorts.add(port);
-        _receiptMarkDownPaths.add(nodePath);
-        _receiptMarkDownProperties.add(properties);
-      }
-    }
-
-    @Override
-    public void emitSDStatusInitialRequestEvent(String cluster, long duration, boolean succeeded) {
-      _initialRequestClusters.add(cluster);
-      _initialRequestDurations.add(duration);
-      _initialRequestSucceededFlags.add(succeeded);
-    }
-
     public void verifySDStatusActiveUpdateIntentAndWriteEvents(List<String> clusters, List<Boolean> isMarkUpFlags, List<Boolean> succeededFlags) {
       assertEquals(clusters, _activeUpdateIntentAndWriteClusters, "incorrect clusters");
       assertEquals(isMarkUpFlags, _activeUpdateIntentAndWriteIsMarkUpFlags, "incorrect isMarkUp flags");
       assertEquals(succeededFlags, _activeUpdateIntentAndWriteSucceededFlags, "incorrect succeeded flags");
-    }
-
-    public void verifySDStatusUpdateReceiptEvents(Set<String> clusters, Set<String> hosts, Set<Integer> ports,
-        Set<String> nodePaths, Set<String> properties, boolean isForMarkUp) {
-      assertEquals(clusters, isForMarkUp ? _receiptMarkUpClusters : _receiptMarkDownClusters, "incorrect clusters");
-      assertEquals(hosts, isForMarkUp ? _receiptMarkUpHosts : _receiptMarkDownHosts, "incorrect hosts");
-      assertEquals(ports, isForMarkUp ? _receiptMarkUpPorts : _receiptMarkDownPorts, "incorrect ports");
-      assertEquals(nodePaths, isForMarkUp ? _receiptMarkUpPaths : _receiptMarkDownPaths, "incorrect node paths");
-      assertEquals(properties, isForMarkUp ? _receiptMarkUpProperties : _receiptMarkDownProperties, "incorrect node properties");
-    }
-
-    public void verifySDStatusInitialRequestEvents(List<String> clusters, List<Boolean> succeededFlags) {
-      assertEquals(clusters, _initialRequestClusters, "incorrect clusters");
-      // the duration could be 0 when requests took < 1ms,
-      _initialRequestDurations.forEach(duration -> assertTrue(duration >= 0, "incorrect durations"));
-      assertEquals(succeededFlags, _initialRequestSucceededFlags, "incorrect succeeded flags");
     }
   }
 
@@ -158,6 +101,24 @@ public class TestDataHelper {
     public final List<Integer> _writeServiceRegistryVersions = new ArrayList<>();
     public final List<String> _writeTracingIds = new ArrayList<>();
     public final List<Boolean> _writeSucceededFlags = new ArrayList<>();
+
+    public final Set<String> _receiptMarkUpClusters = new HashSet<>();
+    public final Set<String> _receiptMarkUpHosts = new HashSet<>();
+    public final Set<Integer> _receiptMarkUpPorts = new HashSet<>();
+    public final Set<String> _receiptMarkUpPaths = new HashSet<>();
+    public final Set<String> _receiptMarkUpProperties = new HashSet<>();
+    public final Set<String> _receiptMarkUpTracingIds = new HashSet<>();
+
+    public final Set<String> _receiptMarkDownClusters = new HashSet<>();
+    public final Set<String> _receiptMarkDownHosts = new HashSet<>();
+    public final Set<Integer> _receiptMarkDownPorts = new HashSet<>();
+    public final Set<String> _receiptMarkDownPaths = new HashSet<>();
+    public final Set<String> _receiptMarkDownProperties = new HashSet<>();
+    public final Set<String> _receiptMarkDownTracingIds = new HashSet<>();
+
+    public final List<String> _initialRequestClusters = new ArrayList<>();
+    public final List<Long> _initialRequestDurations = new ArrayList<>();
+    public final List<Boolean> _initialRequestSucceededFlags = new ArrayList<>();
 
     @Override
     public void emitSDStatusActiveUpdateIntentEvent(List<String> clustersClaimed, StatusUpdateActionType actionType,
@@ -185,10 +146,33 @@ public class TestDataHelper {
     public void emitSDStatusUpdateReceiptEvent(String cluster, String host, int port, StatusUpdateActionType actionType,
         boolean isNextGen, String serviceRegistry, String serviceRegistryKey, String serviceRegistryValue,
         Integer serviceRegistryVersion, String tracingId, long timestamp) {
+      if (actionType == StatusUpdateActionType.MARK_READY) {
+        _receiptMarkUpClusters.add(cluster);
+        _receiptMarkUpHosts.add(host);
+        _receiptMarkUpPorts.add(port);
+        _receiptMarkUpPaths.add(serviceRegistryKey);
+        _receiptMarkUpProperties.add(serviceRegistryValue);
+        _receiptMarkUpTracingIds.add(tracingId);
+      } else if (actionType == StatusUpdateActionType.MARK_DOWN){
+        _receiptMarkDownClusters.add(cluster);
+        _receiptMarkDownHosts.add(host);
+        _receiptMarkDownPorts.add(port);
+        _receiptMarkDownPaths.add(serviceRegistryKey);
+        _receiptMarkDownProperties.add(serviceRegistryValue);
+        _receiptMarkDownTracingIds.add(tracingId);
+      } else {
+        Assert.fail("Invalid action type in status update receipt. In D2, status update received should be either MARK_READY or MARK_DOWN.");
+      }
+      assertFalse(isNextGen);
+      assertEquals(serviceRegistryVersion.intValue(), 0);
     }
 
     @Override
     public void emitSDStatusInitialRequestEvent(String cluster, boolean isNextGen, long duration, boolean succeeded) {
+      _initialRequestClusters.add(cluster);
+      _initialRequestDurations.add(duration);
+      _initialRequestSucceededFlags.add(succeeded);
+      assertFalse(isNextGen);
     }
 
     public void verifySDStatusActiveUpdateIntentEvents(List<List<String>> clustersClaimedList, List<StatusUpdateActionType> actionTypes,
@@ -208,6 +192,23 @@ public class TestDataHelper {
       assertEquals(serviceRegistryVersions, _writeServiceRegistryVersions, "incorrect serviceRegistryVersions");
       assertEquals(tracingIds, _writeTracingIds, "incorrect tracingIds");
       assertEquals(succeededFlags, _writeSucceededFlags, "incorrect succeededFlags");
+    }
+
+    public void verifySDStatusUpdateReceiptEvents(Set<String> clusters, Set<String> hosts, Set<Integer> ports,
+        Set<String> nodePaths, Set<String> properties, Set<String> tracingIds, boolean isForMarkUp) {
+      assertEquals(clusters, isForMarkUp ? _receiptMarkUpClusters : _receiptMarkDownClusters, "incorrect clusters");
+      assertEquals(hosts, isForMarkUp ? _receiptMarkUpHosts : _receiptMarkDownHosts, "incorrect hosts");
+      assertEquals(ports, isForMarkUp ? _receiptMarkUpPorts : _receiptMarkDownPorts, "incorrect ports");
+      assertEquals(nodePaths, isForMarkUp ? _receiptMarkUpPaths : _receiptMarkDownPaths, "incorrect node paths");
+      assertEquals(properties, isForMarkUp ? _receiptMarkUpProperties : _receiptMarkDownProperties, "incorrect node properties");
+      assertEquals(tracingIds, isForMarkUp ? _receiptMarkUpTracingIds : _receiptMarkDownTracingIds, "incorrect tracing ids");
+    }
+
+    public void verifySDStatusInitialRequestEvents(List<String> clusters, List<Boolean> succeededFlags) {
+      assertEquals(clusters, _initialRequestClusters, "incorrect clusters");
+      // the duration could be 0 when requests took < 1ms,
+      _initialRequestDurations.forEach(duration -> assertTrue(duration >= 0, "incorrect durations"));
+      assertEquals(succeededFlags, _initialRequestSucceededFlags, "incorrect succeeded flags");
     }
   }
 }

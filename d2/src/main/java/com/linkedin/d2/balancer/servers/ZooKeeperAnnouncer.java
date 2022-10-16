@@ -566,7 +566,6 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
         _log.warn("znode path and data callback is called with unknown cluster: " + cluster + ", node path: " + path + ", and data: " + data);
       }
     });
-    store.setServiceDiscoveryEventHelper(this);
     _server.setStore(store);
   }
 
@@ -708,16 +707,6 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   }
 
   @Override
-  public void emitSDStatusInitialRequestEvent(String cluster, long duration, boolean succeeded) {
-    if (_eventEmitter == null) {
-      _log.info("Service discovery event emitter in ZookeeperAnnouncer is null. Skipping emitting events.");
-      return;
-    }
-
-    _eventEmitter.emitSDStatusInitialRequestEvent(cluster, false, duration, succeeded);
-  }
-
-  @Override
   public void emitSDStatusActiveUpdateIntentAndWriteEvents(String cluster, boolean isMarkUp, boolean succeeded, long startAt) {
     if (_eventEmitter == null) {
       _log.info("Service discovery event emitter in ZookeeperAnnouncer is null. Skipping emitting events.");
@@ -734,25 +723,14 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
       return;
     }
     long timeNow = System.currentTimeMillis();
+    // D2's mark-down is actually a mark-running action (running but not serving traffic), but since D2 removes hosts
+    // in "running" status on ZK, which is a mark-down action, so we use mark-down action in D2.
     StatusUpdateActionType actionType = isMarkUp ? StatusUpdateActionType.MARK_READY : StatusUpdateActionType.MARK_DOWN;
     // NOTE: For D2, tracingId is the same as the ephemeral znode path, and the node data version is always 0 since uri node data is never updated
     // (instead update is done by removing old node and creating a new node).
     _eventEmitter.emitSDStatusActiveUpdateIntentEvent(Collections.singletonList(cluster), actionType, false, pathAndData.left, startAt);
     _eventEmitter.emitSDStatusWriteEvent(cluster, _uri.getHost(), _uri.getPort(), actionType, _server.getConnectString(), pathAndData.left, pathAndData.right,
         succeeded ? 0 : null, pathAndData.left, succeeded, timeNow);
-  }
-
-  @Override
-  public void emitSDStatusUpdateReceiptEvent(String cluster, String host, int port, boolean isMarkUp, String zkConnectString, String nodePath, String nodeData, long timestamp) {
-    if (_eventEmitter == null) {
-      _log.info("Service discovery event emitter in ZookeeperAnnouncer is null. Skipping emitting events.");
-      return;
-    }
-
-    // NOTE: For D2, tracingId is the same as the ephemeral znode path, and the node data version is always 0 since uri node data is never updated
-    // (instead update is done by removing old node and creating a new node).
-    _eventEmitter.emitSDStatusUpdateReceiptEvent(cluster, host, port, isMarkUp ? StatusUpdateActionType.MARK_READY : StatusUpdateActionType.MARK_DOWN,
-        false, zkConnectString, nodePath, nodeData, 0, nodePath, timestamp);
   }
 
   private ImmutablePair<String, String> getZnodePathAndData(String cluster) {
