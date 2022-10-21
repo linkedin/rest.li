@@ -115,7 +115,10 @@ class IndentedPdlBuilder extends PdlBuilder
       writeLine("/**");
       for (String line : doc.split("\n"))
       {
-        indent().write(" * ").write(line).newline();
+        String commentPrefix = line.isBlank()
+          ? " *"
+          : " * ";
+        indent().write(commentPrefix).write(line).newline();
       }
       writeLine(" */");
       return true;
