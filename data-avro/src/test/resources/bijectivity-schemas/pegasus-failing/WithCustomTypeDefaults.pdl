@@ -1,0 +1,6 @@
+record WithCustomTypeDefaults {
+  intField:
+    @java.class = "com.linkedin.pegasus.generator.test.pdl.fixtures.WithCustomTypeDefaultsCustomInt"
+    @java.coercerClass = "com.linkedin.pegasus.generator.test.pdl.fixtures.WithCustomTypeDefaultsCustomIntCoercer"
+    typeref WithCustomTypeDefaultsCustomInt = int = 0
+}

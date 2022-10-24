@@ -1,0 +1,9 @@
+record ArrayWithTypeRefs {
+  ints: array[IntTypeRef]
+  arrays: array[array[IntTypeRef]]
+  maps: array[map[string, IntTypeRef]]
+  unions: array[
+    typeref WithCustomTypesArrayUnion = union[int, string]
+  ]
+  `fixed`: array[IntTypeRef]
+}

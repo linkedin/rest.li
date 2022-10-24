@@ -1,0 +1,4 @@
+record WithAnonymousUnionArray {
+  unionsArray: array[union[int, string]]
+  unionsMap: map[string, union[string, int]]
+}

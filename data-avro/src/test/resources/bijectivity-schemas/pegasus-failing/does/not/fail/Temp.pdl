@@ -1,0 +1,4 @@
+namespace does.not.fail
+record Temp {
+  x: int
+}

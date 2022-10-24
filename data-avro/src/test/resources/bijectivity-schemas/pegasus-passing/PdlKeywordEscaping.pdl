@@ -1,0 +1,9 @@
+namespace com.linkedin.pegasus.generator.test.idl.escaping
+
+record PdlKeywordEscaping {
+  `namespace`: string
+  `record`: string
+  `null`: string
+  `enum`: string
+  recordName: record `record` { }
+}

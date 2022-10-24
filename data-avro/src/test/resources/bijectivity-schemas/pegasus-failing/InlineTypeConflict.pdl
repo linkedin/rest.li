@@ -1,0 +1,14 @@
+/**
+ * Simple type cannot be imported as it conflicts with an inline type
+ */
+record InlineTypeConflict includes does.not.fail.Temp {
+  /**
+   * This inline type takes precedence over 'Simple' record from external namespace.
+   */
+  inlineType: record Temp {
+    /**
+     * Fields with conflicting types should also have fully qualified name.
+     */
+    foo: does.not.fail.Temp
+  }
+}

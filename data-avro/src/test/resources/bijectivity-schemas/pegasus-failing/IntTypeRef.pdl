@@ -1,0 +1,3 @@
+@java.class = "com.linkedin.pegasus.generator.test.pdl.fixtures.CustomInt"
+@java.coercerClass = "com.linkedin.pegasus.generator.test.pdl.fixtures.CustomIntCoercer"
+typeref IntTypeRef = int
