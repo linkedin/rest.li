@@ -16,29 +16,10 @@
 
 package com.linkedin.r2.netty.client;
 
-import com.linkedin.common.stats.LongStats;
+public interface DnsMetricsCallback {
+  void start();
 
+  void success(long latencyMilliseconds);
 
-public class HttpNettyClientJmx implements HttpNettyClientJmxMBean {
-  private HttpNettyClient _client;
-
-  public HttpNettyClientJmx(HttpNettyClient client)
-  {
-    _client = client;
-  }
-
-  @Override
-  public long getDnsResolutions() {
-    return _client.getDnsResolutions();
-  }
-
-  @Override
-  public long getDnsResolutionErrors() {
-    return _client.getDnsResolutionErrors();
-  }
-
-  @Override
-  public LongStats getDnsResolutionLatency() {
-    return _client.getDnsResolutionLatency();
-  }
+  void error();
 }
