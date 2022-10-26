@@ -80,6 +80,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,6 +117,7 @@ public class HttpNettyClient implements TransportClient
   private final AtomicLong _dnsResolutionErrors = new AtomicLong(0);
   private final AtomicLong _dnsResolutions = new AtomicLong(0);
   private final LongTracker _dnsResolutionLatency = new LongTracking();
+  private final Object _lock = new Object();
 
   @Deprecated
   public HttpNettyClient(
@@ -338,7 +340,9 @@ public class HttpNettyClient implements TransportClient
         _dnsResolutions.incrementAndGet();
         long startTime = _clock.currentTimeMillis();
         address = resolveAddress(request, requestContext);
-        _dnsResolutionLatency.addValue(_clock.currentTimeMillis() - startTime);
+        synchronized (_lock) {
+          _dnsResolutionLatency.addValue(_clock.currentTimeMillis() - startTime);
+        }
         TimingContextUtil.markTiming(requestContext, TIMING_KEY);
       } catch (Exception e) {
         _dnsResolutionErrors.incrementAndGet();
