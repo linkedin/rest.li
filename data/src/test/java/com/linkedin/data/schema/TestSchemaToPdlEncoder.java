@@ -193,4 +193,52 @@ public class TestSchemaToPdlEncoder
         .map(String::trim)
         .collect(Collectors.joining()), compactSchema);
   }
+
+  @Test
+  public void testNamespaceAndCommentsOnNestedSchemas() throws IOException
+  {
+    String inputSchema = String.join("\n",
+        "namespace com.linkedin.test.RecordDataSchema",
+        "/**",
+        "* some schem doc string",
+        "*/",
+        "record A {",
+        "",
+        "  b:",
+        "  {",
+        "    namespace com.linkedin.test.RecordDataSchema.A",
+        "    /**",
+        "    * some schema doc string",
+        "    */",
+        "    record B {",
+        "    b1: string",
+        "",
+        "    }",
+        "  }",
+        "}");
+
+    DataSchema schema = TestUtil.dataSchemaFromPdlString(inputSchema);
+
+    String indentedSchema = SchemaToPdlEncoder.schemaToPdl(schema, SchemaToPdlEncoder.EncodingStyle.INDENTED);
+
+    assertEquals(String.join("\n",
+        "namespace com.linkedin.test.RecordDataSchema",
+        "",
+        "/**",
+        " * some schem doc string",
+        " */",
+        "record A {",
+        "",
+        "  b: ",
+        "    {",
+        "      namespace com.linkedin.test.RecordDataSchema.A",
+        "      /**",
+        "       * some schema doc string",
+        "       */",
+        "      record B {",
+        "        b1: string",
+        "      }",
+        "    }",
+        "}"), indentedSchema);
+  }
 }

@@ -214,26 +214,27 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       hasPackageOverride = !StringUtils.isEmpty(namedSchema.getPackage()) && !namedSchema.getPackage().equals(surroundingPackage);
       if (hasNamespaceOverride || hasPackageOverride)
       {
-        _builder.write("{")
+        _builder.indent()
+            .write("{")
             .newline()
-            .increaseIndent()
-            .indent();
+            .increaseIndent();
         if (hasNamespaceOverride)
         {
-          _builder.write("namespace")
+          _builder
+              .indent()
+              .write("namespace")
               .writeSpace()
               .writeIdentifier(namedSchema.getNamespace())
-              .newline()
-              .indent();
+              .newline();
           _namespace = namedSchema.getNamespace();
         }
         if (hasPackageOverride)
         {
-          _builder.write("package")
+          _builder.indent()
+              .write("package")
               .writeSpace()
               .writeIdentifier(namedSchema.getPackage())
-              .newline()
-              .indent();
+              .newline();
           _package = namedSchema.getPackage();
         }
       }
