@@ -234,7 +234,7 @@ public class TestSchemaToPdlEncoder
         "      namespace com.linkedin.test.RecordDataSchema.A",
         "      /**",
         "       * some inner schema doc string",
-        "       */ ",
+        "       */",
         "      record B {",
         "        b1: string",
         "      }",
