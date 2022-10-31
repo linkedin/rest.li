@@ -290,9 +290,20 @@ public class GenerateRestClientTask extends DefaultTask
     _enableArgFile = enable;
   }
 
+  /**
+   * @deprecated by {@link #isGenerateLowercasePath()} ()} because Gradle 7
+   *     requires input and output properties to be annotated on getters, which
+   *     have a prefix of "is" or "get".
+   */
+  @Deprecated
+  public Boolean generateLowercasePath()
+  {
+    return isGenerateLowercasePath();
+  }
+
   @Optional
   @Input
-  public Boolean generateLowercasePath()
+  public Boolean isGenerateLowercasePath()
   {
     return _generateLowercasePath;
   }
@@ -322,6 +333,7 @@ public class GenerateRestClientTask extends DefaultTask
    * @deprecated use {@link #isRestli2FormatSuppressed()} instead
    */
   @Deprecated
+  @Internal
   public boolean getIsRestli2FormatSuppressed()
   {
     return isRestli2FormatSuppressed();
@@ -336,6 +348,7 @@ public class GenerateRestClientTask extends DefaultTask
    * @deprecated use {@link #isRestli2FormatSuppressed()} instead
    */
   @Deprecated
+  @Internal
   public boolean isIsRestli2FormatSuppressed()
   {
     return isRestli2FormatSuppressed();
@@ -397,6 +410,7 @@ public class GenerateRestClientTask extends DefaultTask
    * @deprecated use {@link #isRestli1BuildersDeprecated()} instead
    */
   @Deprecated
+  @Internal
   public boolean get_isRestli1BuildersDeprecated()
   {
     return isRestli1BuildersDeprecated();
@@ -411,6 +425,7 @@ public class GenerateRestClientTask extends DefaultTask
    * @deprecated use {@link #isRestli1BuildersDeprecated()} instead
    */
   @Deprecated
+  @Internal
   public boolean is_isRestli1BuildersDeprecated()
   {
     return isRestli1BuildersDeprecated();
