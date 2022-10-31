@@ -1,3 +1,19 @@
+/*
+   Copyright (c) 2012 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.data.avro;
 
 import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
@@ -16,67 +32,56 @@ import org.apache.avro.Schema;
  *
  * NOTE: This is temporary until avro-util supports an equality check between 2 avro schemas
  */
-public class AvroSchemaEquals {
-  private AvroSchemaEquals() {
+public class AvroSchemaEquals
+{
+  private AvroSchemaEquals()
+  {
     //utility class
   }
 
-  public static boolean equals(
-      Schema a,
-      Schema b,
-      boolean considerStringJsonProps,
-      boolean considerNonStringJsonProps,
-      boolean considerAliases
-  ) {
+  public static boolean equals(Schema a, Schema b, boolean considerStringJsonProps, boolean considerNonStringJsonProps,
+      boolean considerAliases)
+  {
     return equals(a, b, considerStringJsonProps, considerNonStringJsonProps, considerAliases, new HashSet<>(3));
   }
 
-  private static boolean equals(
-      Schema a,
-      Schema b,
-      boolean considerStringJsonProps,
-      boolean considerNonStringJsonProps,
-      boolean considerAliases,
-      Set<SeenPair> seen
-  ) {
-    if (a == null && b == null) {
+  private static boolean equals(Schema a, Schema b, boolean considerStringJsonProps, boolean considerNonStringJsonProps,
+      boolean considerAliases, Set<SeenPair> seen)
+  {
+    if (a == null && b == null)
+    {
       return true;
     }
-    if (a == null || b == null) {
+    if (a == null || b == null)
+    {
       return false;
     }
     Schema.Type type = a.getType();
-    if (!Objects.equals(type, b.getType())) {
+    if (!Objects.equals(type, b.getType()))
+    {
       return false;
     }
-    switch (type) {
+    switch (type)
+    {
       //all of these have nothing more to compare by beyond their type (and we ignore props)
       case NULL:
         return true;
       case BOOLEAN:
-        return true;
       case INT:
-        return true;
       case LONG:
-        return true;
       case FLOAT:
-        return true;
       case DOUBLE:
-        return true;
       case STRING:
-        return true;
       case BYTES:
         return true;
 
       //named types
 
       case ENUM:
-        return a.getFullName().equals(b.getFullName())
-            && (!considerAliases || hasSameAliases(a, b))
+        return a.getFullName().equals(b.getFullName()) && (!considerAliases || hasSameAliases(a, b))
             && a.getEnumSymbols().equals(b.getEnumSymbols());
       case FIXED:
-        return a.getFullName().equals(b.getFullName())
-            && (!considerAliases || hasSameAliases(a, b))
+        return a.getFullName().equals(b.getFullName()) && (!considerAliases || hasSameAliases(a, b))
             && a.getFixedSize() == b.getFixedSize();
       case RECORD:
         return recordSchemaEquals(a, b, considerStringJsonProps, considerNonStringJsonProps, considerAliases, seen);
@@ -84,19 +89,24 @@ public class AvroSchemaEquals {
       //collections and union
 
       case ARRAY:
-        return equals(a.getElementType(), b.getElementType(), considerStringJsonProps, considerNonStringJsonProps, considerAliases, seen);
+        return equals(a.getElementType(), b.getElementType(), considerStringJsonProps, considerNonStringJsonProps,
+            considerAliases, seen);
       case MAP:
-        return equals(a.getValueType(), b.getValueType(), considerStringJsonProps, considerNonStringJsonProps, considerAliases, seen);
+        return equals(a.getValueType(), b.getValueType(), considerStringJsonProps, considerNonStringJsonProps,
+            considerAliases, seen);
       case UNION:
         List<Schema> aBranches = a.getTypes();
         List<Schema> bBranches = b.getTypes();
-        if (aBranches.size() != bBranches.size()) {
+        if (aBranches.size() != bBranches.size())
+        {
           return false;
         }
-        for (int i = 0; i < aBranches.size(); i++) {
+        for (int i = 0; i < aBranches.size(); i++)
+        {
           Schema aBranch = aBranches.get(i);
           Schema bBranch = bBranches.get(i);
-          if (!equals(aBranch, bBranch, considerStringJsonProps, considerNonStringJsonProps, considerAliases, seen)) {
+          if (!equals(aBranch, bBranch, considerStringJsonProps, considerNonStringJsonProps, considerAliases, seen))
+          {
             return false;
           }
         }
@@ -106,84 +116,94 @@ public class AvroSchemaEquals {
     }
   }
 
-  private static boolean recordSchemaEquals(
-      Schema a,
-      Schema b,
-      boolean considerStringJsonProps,
-      boolean considerNonStringJsonProps,
-      boolean considerAliases,
-      Set<SeenPair> seen
-  ) {
-    if (!a.getFullName().equals(b.getFullName())) {
+  private static boolean recordSchemaEquals(Schema a, Schema b, boolean considerStringJsonProps,
+      boolean considerNonStringJsonProps, boolean considerAliases, Set<SeenPair> seen)
+  {
+    if (!a.getFullName().equals(b.getFullName()))
+    {
       return false;
     }
     //loop protection for self-referencing schemas
     SeenPair pair = new SeenPair(a, b);
-    if (seen.contains(pair)) {
+    if (seen.contains(pair))
+    {
       return true;
     }
     seen.add(pair);
-    try {
-      if (considerAliases && !hasSameAliases(a, b)) {
+    try
+    {
+      if (considerAliases && !hasSameAliases(a, b))
+      {
         return false;
       }
 
-      if (!hasSameObjectProps(a, b, considerStringJsonProps, considerNonStringJsonProps)) {
+      if (!hasSameObjectProps(a, b, considerStringJsonProps, considerNonStringJsonProps))
+      {
         return false;
       }
 
       List<Schema.Field> aFields = a.getFields();
       List<Schema.Field> bFields = b.getFields();
-      if (aFields.size() != bFields.size()) {
+      if (aFields.size() != bFields.size())
+      {
         return false;
       }
-      for (int i = 0; i < aFields.size(); i++) {
+      for (int i = 0; i < aFields.size(); i++)
+      {
         Schema.Field aField = aFields.get(i);
         Schema.Field bField = bFields.get(i);
 
-        if (!aField.name().equals(bField.name())) {
+        if (!aField.name().equals(bField.name()))
+        {
           return false;
         }
-        if (!equals(aField.schema(), bField.schema(), considerStringJsonProps, considerNonStringJsonProps, considerAliases, seen)) {
+        if (!equals(aField.schema(), bField.schema(), considerStringJsonProps, considerNonStringJsonProps,
+            considerAliases, seen))
+        {
           return false;
         }
-        if (AvroCompatibilityHelper.fieldHasDefault(aField) && AvroCompatibilityHelper.fieldHasDefault(bField)) {
+        if (AvroCompatibilityHelper.fieldHasDefault(aField) && AvroCompatibilityHelper.fieldHasDefault(bField))
+        {
           //TODO - this is potentially an issue since it would call vanilla equals() between the schemas of the default values
           Object aDefaultValue = AvroCompatibilityHelper.getGenericDefaultValue(aField);
           Object bDefaultValue = AvroCompatibilityHelper.getGenericDefaultValue(bField);
-          if (!Objects.equals(aDefaultValue, bDefaultValue)) {
+          if (!Objects.equals(aDefaultValue, bDefaultValue))
+          {
             return false;
           }
-        } else if (AvroCompatibilityHelper.fieldHasDefault(aField) || AvroCompatibilityHelper.fieldHasDefault(bField)) {
+        } else if (AvroCompatibilityHelper.fieldHasDefault(aField) || AvroCompatibilityHelper.fieldHasDefault(bField))
+        {
           //means one field has a default value and the other does not
           return false;
         }
 
-        if (!Objects.equals(aField.order(), bField.order())) {
+        if (!Objects.equals(aField.order(), bField.order()))
+        {
           return false;
         }
 
-        if (!hasSameObjectProps(aField, bField, considerStringJsonProps, considerNonStringJsonProps)) {
+        if (!hasSameObjectProps(aField, bField, considerStringJsonProps, considerNonStringJsonProps))
+        {
           return false;
         }
       }
       return true;
-    } finally {
+    } finally
+    {
       seen.remove(pair);
     }
   }
 
-  private static boolean hasSameAliases(Schema a, Schema b) {
+  private static boolean hasSameAliases(Schema a, Schema b)
+  {
     return a.getAliases().equals(b.getAliases());
   }
 
-  private static boolean hasSameObjectProps(
-      JsonProperties a,
-      JsonProperties b,
-      boolean compareStringProps,
-      boolean compareNonStringProps
-  ) {
-    if (!compareStringProps && !compareNonStringProps) {
+  private static boolean hasSameObjectProps(JsonProperties a, JsonProperties b, boolean compareStringProps,
+      boolean compareNonStringProps)
+  {
+    if (!compareStringProps && !compareNonStringProps)
+    {
       return true;  // They do have the same props if you ignore everything
     }
 
@@ -191,69 +211,84 @@ public class AvroSchemaEquals {
     Map<String, Object> aProps = a.getObjectProps();
     Map<String, Object> bProps = b.getObjectProps();
 
-    if (compareStringProps && compareNonStringProps) {
+    if (compareStringProps && compareNonStringProps)
+    {
       return aProps.equals(bProps);
     }
 
-    if (compareStringProps) {
+    if (compareStringProps)
+    {
       Map<String, CharSequence> aStringProps = new HashMap<>(aProps.size());
-      aProps.forEach((k, v) -> {
-        if (v instanceof CharSequence) {
+      aProps.forEach((k, v) ->
+      {
+        if (v instanceof CharSequence)
+        {
           aStringProps.put(k, (CharSequence) v);
         }
       });
       Map<String, CharSequence> bStringProps = new HashMap<>(bProps.size());
-      bProps.forEach((k, v) -> {
-        if (v instanceof CharSequence) {
+      bProps.forEach((k, v) ->
+      {
+        if (v instanceof CharSequence)
+        {
           bStringProps.put(k, (CharSequence) v);
         }
       });
 
-      if (!aStringProps.equals(bStringProps)) {
+      if (!aStringProps.equals(bStringProps))
+      {
         return false;
       }
     }
 
-    if (compareNonStringProps) {
+    if (compareNonStringProps)
+    {
       Map<String, Object> aNonStringProps = new HashMap<>(aProps.size());
-      aProps.forEach((k, v) -> {
-        if (!(v instanceof CharSequence)) {
+      aProps.forEach((k, v) ->
+      {
+        if (!(v instanceof CharSequence))
+        {
           aNonStringProps.put(k, v);
         }
       });
       Map<String, Object> bNonStringProps = new HashMap<>(bProps.size());
-      bProps.forEach((k, v) -> {
-        if (!(v instanceof CharSequence)) {
+      bProps.forEach((k, v) ->
+      {
+        if (!(v instanceof CharSequence))
+        {
           bNonStringProps.put(k, v);
         }
       });
 
-      if (!aNonStringProps.equals(bNonStringProps)) {
-        return false;
-      }
+      return aNonStringProps.equals(bNonStringProps);
     }
 
     return true;
   }
 
-  private static class SeenPair {
-    private Schema s1;
-    private Schema s2;
+  private static class SeenPair
+  {
+    private final Schema s1;
+    private final Schema s2;
 
-    public SeenPair(Schema s1, Schema s2) {
+    public SeenPair(Schema s1, Schema s2)
+    {
       this.s1 = s1;
       this.s2 = s2;
     }
 
-    public boolean equals(Object o) {
-      if (!(o instanceof SeenPair)) {
+    public boolean equals(Object o)
+    {
+      if (!(o instanceof SeenPair))
+      {
         return false;
       }
       return this.s1 == ((SeenPair) o).s1 && this.s2 == ((SeenPair) o).s2;
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode()
+    {
       return System.identityHashCode(s1) + System.identityHashCode(s2);
     }
   }
