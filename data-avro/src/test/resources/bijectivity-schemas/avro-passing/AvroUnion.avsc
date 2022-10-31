@@ -1,0 +1,34 @@
+{
+  "type" : "record",
+  "name" : "AvroUnion",
+  "namespace" : "com.linkedin.bijectivity.test",
+  "fields" : [
+    {
+      "name": "unionWithNullDefault",
+      "type": ["null", "string"],
+      "default": null
+    },
+    {
+      "name" : "numericTypes",
+      "type" : ["int", "long"]
+    },
+    {
+      "name": "myRecord",
+      "type": {
+        "type": "record",
+        "name": "MyRecord",
+        "fields": [
+          {
+            "name": "f",
+            "type": ["double", "long"]
+          }
+        ]
+      }
+    },
+    {
+      "name": "recordUnion",
+      "type": ["null", "MyRecord", "string"],
+      "default": null
+    }
+  ]
+}

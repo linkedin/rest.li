@@ -1,0 +1,3 @@
+record WithFixed8 {
+  `fixed`: Fixed8
+}

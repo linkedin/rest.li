@@ -1,0 +1,129 @@
+{
+  "type": "record",
+  "namespace": "by19",
+  "name": "TestRecord",
+  "doc": "nothing fancy",
+  "fields": [
+    {
+      "name": "booleanField",
+      "type": "boolean"
+    },
+    {
+      "name": "intField",
+      "type": "int"
+    },
+    {
+      "name": "nullField",
+      "type": "null"
+    },
+    {
+      "name": "longField",
+      "type": "long"
+    },
+    {
+      "name": "floatField",
+      "type": "float"
+    },
+    {
+      "name": "doubleField",
+      "type": "double"
+    },
+    {
+      "name": "bytesField",
+      "type": "bytes"
+    },
+    {
+      "name": "stringField",
+      "type": "string"
+    },
+    {
+      "name": "schema",
+      "type": "string"
+    },
+    {
+      "name": "enumField",
+      "type": {
+        "type": "enum",
+        "name": "SimpleEnum",
+        "namespace": "innerNamespace",
+        "symbols": ["A", "B", "C"],
+        "default": "A"
+      }
+    },
+    {
+      "name": "fixedField",
+      "type": {
+        "type": "fixed",
+        "name": "SimpleFixed",
+        "size": 7
+      }
+    },
+    {
+      "name": "nullArrayField",
+      "type": {
+        "type": "array",
+        "items": "null"
+      },
+      "doc": "this is silly, but legal"
+    },
+    {
+      "name": "strArrayField",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "default": [""],
+      "doc": "this is silly, but legal"
+    },
+    {
+      "name": "stringMapField",
+      "type": {
+        "type": "map",
+        "values": ["null", "string"]
+      },
+      "doc": "back-ref to a schema defined earlier in the same file"
+    },
+    {
+      "name": "fixedMapField",
+      "type": {
+        "type": "map",
+        "values": "by19.SimpleFixed"
+      },
+      "doc": "back-ref to a schema defined earlier in the same file"
+    },
+    {
+      "name": "enumMapField",
+      "type": {
+        "type": "map",
+        "values": "innerNamespace.SimpleEnum"
+      },
+      "doc": "back-ref to a schema defined earlier in the same file"
+    },
+    {
+      "name": "recordField",
+      "type": {
+        "type": "record",
+        "name": "InnerUnionRecord",
+        "fields" : [
+          {"name": "f", "type": "int"}
+        ]
+      }
+    },
+    {
+      "name": "package",
+      "type": "string"
+    },
+    {
+      "name": "exception",
+      "type": "float"
+    },
+    {
+      "name": "int",
+      "type": "double"
+    },
+    {
+      "name": "true",
+      "type": "boolean"
+    }
+  ]
+}
