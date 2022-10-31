@@ -40,6 +40,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.netty.client.DnsMetricsCallback;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
@@ -217,6 +218,7 @@ public class HttpClientFactory implements TransportClientFactory
   private int                              _clientsOutstanding  = 0;
   private Callback<None>                   _factoryShutdownCallback;
   private ChannelPoolManagerFactory        _channelPoolManagerFactory;
+  private DnsMetricsCallback _dnsMetricsCallback;
 
   /**
    * Construct a new instance using an empty filter chain.
@@ -627,6 +629,36 @@ public class HttpClientFactory implements TransportClientFactory
   }
 
   private HttpClientFactory(FilterChain filters,
+      EventLoopGroup eventLoopGroup,
+      boolean shutdownFactory,
+      ScheduledExecutorService executor,
+      boolean shutdownExecutor,
+      ExecutorService callbackExecutorGroup,
+      boolean shutdownCallbackExecutor,
+      AbstractJmxManager jmxManager,
+      final int requestCompressionThresholdDefault,
+      final Map<String, CompressionConfig> requestCompressionConfigs,
+      final Map<String, CompressionConfig> responseCompressionConfigs,
+      Executor compressionExecutor,
+      HttpProtocolVersion defaultHttpVersion,
+      boolean shareConnection,
+      EventProviderRegistry eventProviderRegistry,
+      boolean enableSSLSessionResumption,
+      boolean usePipelineV2,
+      List<ExecutorService> executorsToShutDown,
+      int connectTimeout,
+      int sslHandShakeTimeout,
+      int channelPoolWaiterTimeout,
+      String udsAddress)
+  {
+    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
+        shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
+        responseCompressionConfigs, compressionExecutor, defaultHttpVersion, shareConnection, eventProviderRegistry,
+        enableSSLSessionResumption, usePipelineV2, executorsToShutDown, DEFAULT_CONNECT_TIMEOUT,
+        DEFAULT_SSL_HANDSHAKE_TIMEOUT, DEFAULT_CHANNELPOOL_WAITER_TIMEOUT, udsAddress, null);
+  }
+
+  private HttpClientFactory(FilterChain filters,
                             EventLoopGroup eventLoopGroup,
                             boolean shutdownFactory,
                             ScheduledExecutorService executor,
@@ -647,7 +679,8 @@ public class HttpClientFactory implements TransportClientFactory
                             int connectTimeout,
                             int sslHandShakeTimeout,
                             int channelPoolWaiterTimeout,
-                            String udsAddress)
+                            String udsAddress,
+                            DnsMetricsCallback dnsMetricsCallback)
   {
     _filters = filters;
     _eventLoopGroup = eventLoopGroup;
@@ -664,6 +697,7 @@ public class HttpClientFactory implements TransportClientFactory
     _sslHandShakeTimeout = sslHandShakeTimeout;
     _channelPoolWaiterTimeout = channelPoolWaiterTimeout;
     _udsAddress = udsAddress;
+    _dnsMetricsCallback = dnsMetricsCallback;
     if (requestCompressionConfigs == null)
     {
       throw new IllegalArgumentException("requestCompressionConfigs should not be null.");
@@ -724,6 +758,7 @@ public class HttpClientFactory implements TransportClientFactory
     private int _connectTimeout = DEFAULT_CONNECT_TIMEOUT;
     private int _sslHandShakeTimeout = DEFAULT_SSL_HANDSHAKE_TIMEOUT;
     private int _channelPoolWaiterTimeout = DEFAULT_CHANNELPOOL_WAITER_TIMEOUT;
+    private DnsMetricsCallback _dnsMetricsCallback;
 
     /**
      * @param eventLoopGroup the {@link EventLoopGroup} that all Clients created by this
@@ -764,6 +799,12 @@ public class HttpClientFactory implements TransportClientFactory
     public Builder setCallbackExecutor(ExecutorService callbackExecutor)
     {
       _callbackExecutorGroup = callbackExecutor;
+      return this;
+    }
+
+    public Builder setDnsMetricsCallback(DnsMetricsCallback dnsMetricsCallback)
+    {
+      _dnsMetricsCallback = dnsMetricsCallback;
       return this;
     }
 
@@ -962,7 +1003,7 @@ public class HttpClientFactory implements TransportClientFactory
         _requestCompressionThresholdDefault, _requestCompressionConfigs, _responseCompressionConfigs,
         compressionExecutor, _defaultHttpVersion, _shareConnection, eventProviderRegistry, _enableSSLSessionResumption,
           _usePipelineV2, executorsToShutDown, _connectTimeout, _sslHandShakeTimeout, _channelPoolWaiterTimeout,
-          _udsAddress);
+          _udsAddress, _dnsMetricsCallback);
     }
 
   }
@@ -1426,7 +1467,7 @@ public class HttpClientFactory implements TransportClientFactory
 
       return new com.linkedin.r2.netty.client.HttpNettyClient(_eventLoopGroup, _executor, _callbackExecutorGroup,
           channelPoolManager, sslChannelPoolManager, httpProtocolVersion, SystemClock.instance(),
-              requestTimeout, streamingTimeout, shutdownTimeout, _udsAddress);
+              requestTimeout, streamingTimeout, shutdownTimeout, _udsAddress, _dnsMetricsCallback);
     }
 
     TransportClient streamClient;

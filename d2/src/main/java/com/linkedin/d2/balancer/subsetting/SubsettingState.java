@@ -93,7 +93,7 @@ public class SubsettingState
       }
       else
       {
-        LOG.info("Force updating subset cache for service " + serviceName);
+        LOG.debug("Force updating subset cache for service " + serviceName);
         Set<URI> doNotSlowStartUris = new HashSet<>();
 
         if (subsetCache != null)
@@ -114,6 +114,7 @@ public class SubsettingState
         }
         else
         {
+          LOG.info("Cluster subsetting enabled for service: " + serviceName);
           Map<Integer, Set<URI>> servicePossibleUris = new HashMap<>();
           Map<Integer, Map<URI, Double>> serviceWeightedSubset = new HashMap<>();
           servicePossibleUris.put(partitionId, possibleUris.keySet());

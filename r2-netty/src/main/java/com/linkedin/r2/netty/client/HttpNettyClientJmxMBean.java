@@ -24,5 +24,5 @@ public interface HttpNettyClientJmxMBean {
 
   long getDnsResolutionErrors();
 
-  LongStats getDnsResolutionLatency();
+  LongStats getDnsResolutionLatencyMs();
 }

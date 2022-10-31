@@ -110,12 +110,9 @@ public class HttpNettyClient implements TransportClient
   private final long _streamingTimeout;
   private final long _shutdownTimeout;
   private final String _udsAddress;
+  private final DnsMetricsCallback _dnsMetricsCallback;
 
   private final AtomicReference<NettyClientState> _state;
-
-  private final AtomicLong _dnsResolutionErrors = new AtomicLong(0);
-  private final AtomicLong _dnsResolutions = new AtomicLong(0);
-  private final LongTracker _dnsResolutionLatency = new LongTracking();
 
   @Deprecated
   public HttpNettyClient(
@@ -162,6 +159,40 @@ public class HttpNettyClient implements TransportClient
       long shutdownTimeout,
       String udsAddress)
   {
+    this(eventLoopGroup, scheduler, callbackExecutor, channelPoolManager, sslChannelPoolManager, protocolVersion,
+        clock, requestTimeout, streamingTimeout, shutdownTimeout, udsAddress, null);
+  }
+
+  /**
+   * Creates a new instance of {@link HttpNettyClient}.
+   *
+   * @param eventLoopGroup Non-blocking event loop group implementation for selectors and channels
+   * @param callbackExecutor Executor service for executing user callbacks. The executor must be provided
+   *                         because user callbacks can potentially be blocking. If executed with the
+   *                         event loop group, threads might be blocked and cause channels to hang.
+   * @param channelPoolManager Channel pool manager for non-SSL channels
+   * @param sslChannelPoolManager Channel pool manager for SSL channels
+   * @param protocolVersion HTTP version the client uses to send requests and receive responses
+   * @param clock Clock to get current time
+   * @param requestTimeout Time in milliseconds before an error response is returned in the callback
+   *                       with a {@link TimeoutException}
+   * @param shutdownTimeout Client shutdown timeout
+   * @param udsAddress Unix Domain Socket Address, used while using side car proxy for external communication
+   */
+  public HttpNettyClient(
+      EventLoopGroup eventLoopGroup,
+      ScheduledExecutorService scheduler,
+      ExecutorService callbackExecutor,
+      ChannelPoolManager channelPoolManager,
+      ChannelPoolManager sslChannelPoolManager,
+      HttpProtocolVersion protocolVersion,
+      Clock clock,
+      long requestTimeout,
+      long streamingTimeout,
+      long shutdownTimeout,
+      String udsAddress,
+      DnsMetricsCallback dnsMetricsCallback)
+  {
     ArgumentUtil.notNull(eventLoopGroup, "eventLoopGroup");
     ArgumentUtil.notNull(scheduler, "scheduler");
     ArgumentUtil.notNull(callbackExecutor, "callbackExecutor");
@@ -189,6 +220,7 @@ public class HttpNettyClient implements TransportClient
     _streamingTimeout = streamingTimeout;
     _shutdownTimeout = shutdownTimeout;
     _udsAddress = udsAddress;
+    _dnsMetricsCallback = dnsMetricsCallback;
 
 
     _state = new AtomicReference<>(NettyClientState.RUNNING);
@@ -335,13 +367,19 @@ public class HttpNettyClient implements TransportClient
     if (StringUtils.isEmpty(_udsAddress)) {
       try {
         TimingContextUtil.markTiming(requestContext, TIMING_KEY);
-        _dnsResolutions.incrementAndGet();
+        if (_dnsMetricsCallback != null) {
+          _dnsMetricsCallback.start();
+        }
         long startTime = _clock.currentTimeMillis();
         address = resolveAddress(request, requestContext);
-        _dnsResolutionLatency.addValue(_clock.currentTimeMillis() - startTime);
+        if (_dnsMetricsCallback != null) {
+          _dnsMetricsCallback.success(_clock.currentTimeMillis() - startTime);
+        }
         TimingContextUtil.markTiming(requestContext, TIMING_KEY);
       } catch (Exception e) {
-        _dnsResolutionErrors.incrementAndGet();
+        if (_dnsMetricsCallback != null) {
+          _dnsMetricsCallback.error();
+        }
         decoratedCallback.onResponse(TransportResponseImpl.error(e));
         return;
       }
@@ -606,15 +644,5 @@ public class HttpNettyClient implements TransportClient
     requestContext.putLocalAttr(R2Constants.REMOTE_SERVER_PORT, port);
 
     return address;
-  }
-
-  public long getDnsResolutions() { return _dnsResolutions.get(); }
-
-  public long getDnsResolutionErrors() {
-    return _dnsResolutionErrors.get();
-  }
-
-  public LongStats getDnsResolutionLatency() {
-    return _dnsResolutionLatency.getStats();
   }
 }

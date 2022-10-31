@@ -14,6 +14,15 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.40.4] - 2022-10-31
+Update SchemaToPdlEncoder to fix nested schema encoding layout
+
+## [29.40.3] - 2022-10-25
+Change logging level of D2 cluster subsetting updates to DEBUG
+
+## [29.40.2] - 2022-10-25
+Refactor the Netty JMX handling for injection of the metrics handling into the client rather than the other way around.
+
 ## [29.40.1] - 2022-10-13
 Add service discovery event emitter to d2 client
 
@@ -5375,7 +5384,10 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.4...master
+[29.40.4]: https://github.com/linkedin/rest.li/compare/v29.40.3...v29.40.4
+[29.40.3]: https://github.com/linkedin/rest.li/compare/v29.40.2...v29.40.3
+[29.40.2]: https://github.com/linkedin/rest.li/compare/v29.40.1...v29.40.2
 [29.40.1]: https://github.com/linkedin/rest.li/compare/v29.40.0...v29.40.1
 [29.40.0]: https://github.com/linkedin/rest.li/compare/v29.39.6...v29.40.0
 [29.39.6]: https://github.com/linkedin/rest.li/compare/v29.39.5...v29.39.6
