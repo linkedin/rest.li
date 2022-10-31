@@ -1,0 +1,31 @@
+namespace com.linkedin.pegasus.generator.test.idl.unions
+
+record WithAliases {
+  `union`: union[
+    null,
+    A: int,
+
+    /**
+     * Doc for B.
+     */
+    B: string,
+
+    @proppy
+    C: map[string, long]
+
+    /**
+     * Doc for D.
+     */
+    @proppy = "outer"
+    D:
+      @proppy = "inlineRecord"
+      record Foo {}
+
+    /**
+     * Reserved keywords used as aliases must be escaped.
+     */
+    `record`: long
+
+    E: int
+  ]
+}
