@@ -1,0 +1,12 @@
+{
+  "type" : "record",
+  "name" : "AvroUnion",
+  "namespace" : "com.linkedin.bijectivity.test",
+  "aliases": ["com.linkedin.another.name.AvroOldUnion"],
+  "fields" : [
+    {
+      "name" : "simpleField",
+      "type" : "string"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+namespace com.linkedin.pegasus.generator.test.idl.enums
+
+enum DeprecatedSymbols {
+  @deprecated
+  RED
+
+  @deprecated
+  GREEN
+  BLUE
+}

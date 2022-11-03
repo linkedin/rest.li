@@ -1,0 +1,11 @@
+{
+  "type" : "record",
+  "name" : "AvroUnion",
+  "namespace" : "com.linkedin.bijectivity.test",
+  "fields" : [
+    {
+      "name" : "nullUnion",
+      "type" : ["string", "null"]
+    }
+  ]
+}
