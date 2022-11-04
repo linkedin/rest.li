@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.40.5] - 2022-11-03
+Fix the Gradle 7 validation errors in GenerateRestClientTask
+
 ## [29.40.4] - 2022-10-31
 Update SchemaToPdlEncoder to fix nested schema encoding layout
 
@@ -5384,7 +5387,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.5...master
+[29.40.5]: https://github.com/linkedin/rest.li/compare/v29.40.4...v29.40.5
 [29.40.4]: https://github.com/linkedin/rest.li/compare/v29.40.3...v29.40.4
 [29.40.3]: https://github.com/linkedin/rest.li/compare/v29.40.2...v29.40.3
 [29.40.2]: https://github.com/linkedin/rest.li/compare/v29.40.1...v29.40.2
