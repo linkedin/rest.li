@@ -1838,7 +1838,7 @@ public class PegasusPlugin implements Plugin<Project>
 
     // include additional dependencies into the appropriate configuration used to compile the input source set
     // must include the generated data template classes and their dependencies the configuration
-    String compileConfigName = isTestSourceSet(sourceSet) ? "testCompile" : "compile";
+    String compileConfigName = isTestSourceSet(sourceSet) ? "testImplementation" : project.getConfigurations().findByName("api") != null ? "api" : "implementation";
 
     Configuration compileConfig = project.getConfigurations().maybeCreate(compileConfigName);
     compileConfig.extendsFrom(
