@@ -16,12 +16,14 @@
 
 package com.linkedin.data.schema;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.linkedin.data.schema.DataSchemaConstants.FIELD_NAME_PATTERN;
 
@@ -566,6 +568,17 @@ public final class RecordDataSchema extends NamedDataSchema
   public List<NamedDataSchema> getInclude()
   {
     return _include;
+  }
+
+  /**
+   * Get the Set of {@link NamedDataSchema} declared as inline includes.
+   * The order of declined inline includes can be obtained by calling {@link #getInclude()}.
+   *
+   * @return the set of included {@link NamedDataSchema}s declared as inlined.
+   */
+  public Set<NamedDataSchema> getIncludesDeclaredInline()
+  {
+    return _includesDeclaredInline;
   }
 
   /**
