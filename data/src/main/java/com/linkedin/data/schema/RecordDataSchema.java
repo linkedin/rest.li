@@ -570,7 +570,7 @@ public final class RecordDataSchema extends NamedDataSchema
 
   /**
    * Get the Set of {@link NamedDataSchema} declared as inline includes.
-   * The order of declined inline includes can be obtained by calling {@link #getInclude()}.
+   * The order of declared inline includes can be obtained by calling {@link #getInclude()}.
    *
    * @return the set of included {@link NamedDataSchema}s declared as inlined.
    */
