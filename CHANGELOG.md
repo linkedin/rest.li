@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.40.7] - 2022-11-07
+Remove @PathSensitive from property idlDestinationDir in GenerateRestModelTask
+
 ## [29.40.6] - 2022-11-06
 Add getter of IncludesDeclaredInline in RecordDataSchema
 
@@ -5390,7 +5393,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.7...master
+[29.40.7]: https://github.com/linkedin/rest.li/compare/v29.40.6...v29.40.7
 [29.40.6]: https://github.com/linkedin/rest.li/compare/v29.40.5...v29.40.6
 [29.40.5]: https://github.com/linkedin/rest.li/compare/v29.40.4...v29.40.5
 [29.40.4]: https://github.com/linkedin/rest.li/compare/v29.40.3...v29.40.4
