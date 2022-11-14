@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.40.8] - 2022-11-14
+Upgrade Apache Commons Text to 1.10.0 as vulnerability fix (CVE-2022-42889)
+
 ## [29.40.7] - 2022-11-07
 Remove @PathSensitive from property idlDestinationDir in GenerateRestModelTask
 
@@ -5393,7 +5396,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.8...master
+[29.40.8]: https://github.com/linkedin/rest.li/compare/v29.40.7...v29.40.8
 [29.40.7]: https://github.com/linkedin/rest.li/compare/v29.40.6...v29.40.7
 [29.40.6]: https://github.com/linkedin/rest.li/compare/v29.40.5...v29.40.6
 [29.40.5]: https://github.com/linkedin/rest.li/compare/v29.40.4...v29.40.5
