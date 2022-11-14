@@ -105,6 +105,7 @@ public class CheckSnapshotTask extends DefaultTask
   }
 
   @InputDirectory
+  @PathSensitive(PathSensitivity.RELATIVE)
   public File getPreviousSnapshotDirectory()
   {
     return _previousSnapshotDirectory;
@@ -157,6 +158,7 @@ public class CheckSnapshotTask extends DefaultTask
    * @deprecated use {@link #isModelCompatible()} instead
    */
   @Deprecated
+  @Internal
   public boolean getIsModelCompatible()
   {
     return isModelCompatible();
@@ -171,6 +173,7 @@ public class CheckSnapshotTask extends DefaultTask
    * @deprecated use {@link #isModelCompatible()} instead
    */
   @Deprecated
+  @Internal
   public boolean isIsModelCompatible()
   {
     return isModelCompatible();
@@ -191,6 +194,7 @@ public class CheckSnapshotTask extends DefaultTask
    * @deprecated use {@link #isRestSpecCompatible()} instead
    */
   @Deprecated
+  @Internal
   public boolean getIsRestSpecCompatible()
   {
     return isRestSpecCompatible();
@@ -205,6 +209,7 @@ public class CheckSnapshotTask extends DefaultTask
    * @deprecated use {@link #isRestSpecCompatible()} instead
    */
   @Deprecated
+  @Internal
   public boolean isIsRestSpecCompatible()
   {
     return isRestSpecCompatible();
@@ -225,6 +230,7 @@ public class CheckSnapshotTask extends DefaultTask
    * @deprecated use {@link #isEquivalent()} instead
    */
   @Deprecated
+  @Internal
   public boolean getIsEquivalent()
   {
     return isEquivalent();
@@ -239,6 +245,7 @@ public class CheckSnapshotTask extends DefaultTask
    * @deprecated use {@link #isEquivalent()} instead
    */
   @Deprecated
+  @Internal
   public boolean isIsEquivalent()
   {
     return isEquivalent();
@@ -259,6 +266,7 @@ public class CheckSnapshotTask extends DefaultTask
    * @deprecated use {@link #isRestSpecEquivalent()} instead
    */
   @Deprecated
+  @Internal
   public boolean getIsRestSpecEquivalent()
   {
     return isRestSpecEquivalent();
@@ -273,6 +281,7 @@ public class CheckSnapshotTask extends DefaultTask
    * @deprecated use {@link #isRestSpecEquivalent()} instead
    */
   @Deprecated
+  @Internal
   public boolean isIsRestSpecEquivalent()
   {
     return isRestSpecEquivalent();
