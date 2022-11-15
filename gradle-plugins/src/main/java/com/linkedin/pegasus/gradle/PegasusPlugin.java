@@ -1838,7 +1838,14 @@ public class PegasusPlugin implements Plugin<Project>
 
     // include additional dependencies into the appropriate configuration used to compile the input source set
     // must include the generated data template classes and their dependencies the configuration
-    String compileConfigName = isTestSourceSet(sourceSet) ? "testImplementation" : project.getConfigurations().findByName("api") != null ? "api" : "implementation";
+    String compileConfigName;
+    if (isAtLeastGradle7()) {
+      compileConfigName = isTestSourceSet(sourceSet) ? "testImplementation" : project.getConfigurations().findByName("api") != null ? "api" : "implementation";
+    }
+    else
+    {
+      compileConfigName = isTestSourceSet(sourceSet) ? "testCompile" : "compile";
+    }
 
     Configuration compileConfig = project.getConfigurations().maybeCreate(compileConfigName);
     compileConfig.extendsFrom(
@@ -2396,5 +2403,9 @@ public class PegasusPlugin implements Plugin<Project>
   protected static boolean isAtLeastGradle61()
   {
     return GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.1")) >= 0;
+  }
+
+  public static boolean isAtLeastGradle7() {
+    return GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("7.0")) >= 0;
   }
 }
