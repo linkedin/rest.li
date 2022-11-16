@@ -48,3 +48,6 @@ integTest {
   systemProperty 'integTest.pegasusPluginDependencies', "'${configurations.pegasusPluginForTesting.join("', '")}'"
 }
 
+validateTaskProperties {
+  failOnWarning = true
+}
