@@ -129,7 +129,7 @@ public class DataComplexUtil {
     return result;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private static HashMap<String, Object> convertToJavaMap(Map input, boolean retainNulls) {
     if (input instanceof HashMap) {
       return (HashMap) input;
@@ -166,7 +166,7 @@ public class DataComplexUtil {
     return result;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private static ArrayList<Object> convertToJavaList(List input, boolean retainNulls) {
     if (input instanceof ArrayList) {
       return (ArrayList) input;
