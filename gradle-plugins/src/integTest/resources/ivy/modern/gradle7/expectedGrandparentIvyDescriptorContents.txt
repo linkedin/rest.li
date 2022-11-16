@@ -15,6 +15,7 @@
     <artifact name="grandparent" type="jar" ext="jar" conf="testGeneratedDataTemplateApiElements,testGeneratedDataTemplateRuntimeElements" m:classifier="test-data-template"/>
   </publications>
   <dependencies>
+    <dependency org="com.google.code.findbugs" name="jsr305" rev="3.0.2" conf="runtime-&gt;default"/>
     <dependency org="com.google.code.findbugs" name="jsr305" rev="3.0.2" conf="mainGeneratedDataTemplateApiElements-&gt;default"/>
     <dependency org="com.google.code.findbugs" name="jsr305" rev="3.0.2" conf="mainGeneratedDataTemplateRuntimeElements-&gt;default"/>
     <dependency org="com.google.code.findbugs" name="jsr305" rev="3.0.2" conf="testGeneratedDataTemplateApiElements-&gt;default"/>
