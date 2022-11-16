@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.40.10] - 2022-11-16
+Fix the deprecated configuration name used in the PegasusPlugin
+
 ## [29.40.9] - 2022-11-15
 Enable validation check in the build of the gradle plugin and fix some validation errors with Gradle 7
 
@@ -5399,7 +5402,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.9...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.10...master
+[29.40.10]: https://github.com/linkedin/rest.li/compare/v29.40.9...v29.40.10
 [29.40.9]: https://github.com/linkedin/rest.li/compare/v29.40.8...v29.40.9
 [29.40.8]: https://github.com/linkedin/rest.li/compare/v29.40.7...v29.40.8
 [29.40.7]: https://github.com/linkedin/rest.li/compare/v29.40.6...v29.40.7
