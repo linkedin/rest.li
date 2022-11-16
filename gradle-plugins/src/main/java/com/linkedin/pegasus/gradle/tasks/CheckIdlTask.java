@@ -175,6 +175,7 @@ public class CheckIdlTask extends DefaultTask
    * @deprecated use {@link #isModelCompatible()} instead
    */
   @Deprecated
+  @Internal
   public boolean getIsModelCompatible()
   {
     return isModelCompatible();
@@ -189,6 +190,7 @@ public class CheckIdlTask extends DefaultTask
    * @deprecated use {@link #isModelCompatible()} instead
    */
   @Deprecated
+  @Internal
   public boolean isIsModelCompatible()
   {
     return isModelCompatible();
@@ -209,6 +211,7 @@ public class CheckIdlTask extends DefaultTask
    * @deprecated use {@link #isRestSpecCompatible()} instead
    */
   @Deprecated
+  @Internal
   public boolean getIsRestSpecCompatible()
   {
     return isRestSpecCompatible();
@@ -223,6 +226,7 @@ public class CheckIdlTask extends DefaultTask
    * @deprecated use {@link #isRestSpecCompatible()} instead
    */
   @Deprecated
+  @Internal
   public boolean isIsRestSpecCompatible()
   {
     return isRestSpecCompatible();
@@ -243,6 +247,7 @@ public class CheckIdlTask extends DefaultTask
    * @deprecated use {@link #isEquivalent()} instead
    */
   @Deprecated
+  @Internal
   public boolean getIsEquivalent()
   {
     return _equivalent;
@@ -257,6 +262,7 @@ public class CheckIdlTask extends DefaultTask
    * @deprecated use {@link #isEquivalent()} instead
    */
   @Deprecated
+  @Internal
   public boolean isIsEquivalent()
   {
     return _equivalent;

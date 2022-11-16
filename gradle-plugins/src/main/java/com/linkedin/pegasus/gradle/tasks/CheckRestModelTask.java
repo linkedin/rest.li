@@ -210,6 +210,7 @@ public class CheckRestModelTask extends DefaultTask
    * @deprecated use {@link #isModelCompatible()} instead
    */
   @Deprecated
+  @Internal
   public boolean getIsModelCompatible()
   {
     return isModelCompatible();
@@ -224,6 +225,7 @@ public class CheckRestModelTask extends DefaultTask
    * @deprecated use {@link #isModelCompatible()} instead
    */
   @Deprecated
+  @Internal
   public boolean isIsModelCompatible()
   {
     return isModelCompatible();
@@ -244,6 +246,7 @@ public class CheckRestModelTask extends DefaultTask
    * @deprecated use {@link #isRestSpecCompatible()} instead
    */
   @Deprecated
+  @Internal
   public boolean getIsRestSpecCompatible()
   {
     return isRestSpecCompatible();
@@ -258,6 +261,7 @@ public class CheckRestModelTask extends DefaultTask
    * @deprecated use {@link #isRestSpecCompatible()} instead
    */
   @Deprecated
+  @Internal
   public boolean isIsRestSpecCompatible()
   {
     return isRestSpecCompatible();
@@ -278,6 +282,7 @@ public class CheckRestModelTask extends DefaultTask
    * @deprecated use {@link #isEquivalent()} instead
    */
   @Deprecated
+  @Internal
   public boolean getIsEquivalent()
   {
     return isEquivalent();
@@ -292,6 +297,7 @@ public class CheckRestModelTask extends DefaultTask
    * @deprecated use {@link #isEquivalent()} instead
    */
   @Deprecated
+  @Internal
   public boolean isIsEquivalent()
   {
     return isEquivalent();
@@ -312,6 +318,7 @@ public class CheckRestModelTask extends DefaultTask
    * @deprecated use {@link #isRestSpecEquivalent()} instead
    */
   @Deprecated
+  @Internal
   public boolean getIsRestSpecEquivalent()
   {
     return isRestSpecEquivalent();
@@ -326,6 +333,7 @@ public class CheckRestModelTask extends DefaultTask
    * @deprecated use {@link #isRestSpecEquivalent()} instead
    */
   @Deprecated
+  @Internal
   public boolean isIsRestSpecEquivalent()
   {
     return isRestSpecEquivalent();
