@@ -14,7 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.40.10] - 2022-11-17
+## [29.40.11] - 2022-11-17
 Add util class to convert generic List/Map to DataList/DataMap or vice versa
 
 ## [29.40.10] - 2022-11-16
