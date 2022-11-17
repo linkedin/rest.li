@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.40.11] - 2022-11-17
+Add util class to convert generic List/Map to DataList/DataMap or vice versa
+
 ## [29.40.10] - 2022-11-16
 Fix the deprecated configuration name used in the PegasusPlugin
 
@@ -5402,7 +5405,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.10...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.11...master
+[29.40.11]: https://github.com/linkedin/rest.li/compare/v29.40.10...v29.40.11
 [29.40.10]: https://github.com/linkedin/rest.li/compare/v29.40.9...v29.40.10
 [29.40.9]: https://github.com/linkedin/rest.li/compare/v29.40.8...v29.40.9
 [29.40.8]: https://github.com/linkedin/rest.li/compare/v29.40.7...v29.40.8
