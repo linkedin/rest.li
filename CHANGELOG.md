@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.40.12] - 2022-11-30
+Add D2 loggings for tracking the initial received D2 Clusters and D2 Uris
+
 ## [29.40.11] - 2022-11-17
 Add util class to convert generic List/Map to DataList/DataMap or vice versa
 

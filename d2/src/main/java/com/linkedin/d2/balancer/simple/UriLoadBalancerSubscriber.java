@@ -31,8 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.linkedin.d2.discovery.util.LogUtil.debug;
-import static com.linkedin.d2.discovery.util.LogUtil.warn;
+import static com.linkedin.d2.discovery.util.LogUtil.*;
+
 
 /**
  * Subscriber to the uri data to update the SimpleLoadBalancerState
@@ -109,10 +109,13 @@ class UriLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<UriProper
     }
 
     // replace the URI properties
-    _simpleLoadBalancerState.getUriProperties().put(cluster,
+    LoadBalancerStateItem<UriProperties> existingLBItem = _simpleLoadBalancerState.getUriProperties().put(cluster,
       new LoadBalancerStateItem<>(uriProperties,
         _simpleLoadBalancerState.getVersionAccess().incrementAndGet(),
         System.currentTimeMillis()));
+    if (existingLBItem == null) {
+      info(_log, "getting new UriProperties for cluster ", cluster);
+    }
 
     // now remove URIs that we're tracking, but have been removed from the new uri properties
     if (uriProperties != null)
