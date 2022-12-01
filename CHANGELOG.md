@@ -14,8 +14,11 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.40.12] - 2022-11-30
+## [29.40.13] - 2022-12-01
 Add D2 loggings for tracking the initial received D2 Clusters and D2 Uris
+
+## [29.40.12] - 2022-11-30
+Add channel writability to streaming timeout exception
 
 ## [29.40.11] - 2022-11-17
 Add util class to convert generic List/Map to DataList/DataMap or vice versa
@@ -5408,7 +5411,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.11...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.12...master
+[29.40.12]: https://github.com/linkedin/rest.li/compare/v29.40.11...v29.40.12
 [29.40.11]: https://github.com/linkedin/rest.li/compare/v29.40.10...v29.40.11
 [29.40.10]: https://github.com/linkedin/rest.li/compare/v29.40.9...v29.40.10
 [29.40.9]: https://github.com/linkedin/rest.li/compare/v29.40.8...v29.40.9
