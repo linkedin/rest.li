@@ -1,10 +1,13 @@
 package com.linkedin.pegasus.gradle.publishing
 
+
+import com.linkedin.pegasus.gradle.IntegTestingUtil
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import java.util.zip.ZipFile
 
@@ -34,7 +37,8 @@ class PegasusPluginLegacyIvyPublishIntegrationTest extends Specification {
     localIvyRepo = localRepo.newFolder('local-ivy-repo').toURI().toURL()
   }
 
-  def 'publishes and consumes dataTemplate configurations'() {
+  @Unroll
+  def 'publishes and consumes dataTemplate configurations with Gradle #gradleVersion'() {
     given:
     def gradlePropertiesFile = grandparentProject.newFile('gradle.properties')
     gradlePropertiesFile << '''
@@ -79,6 +83,7 @@ class PegasusPluginLegacyIvyPublishIntegrationTest extends Specification {
 
     when:
     def grandparentRunner = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
         .withProjectDir(grandparentProject.root)
         .withPluginClasspath()
         .withArguments('uploadDataTemplate', 'uploadTestDataTemplate', 'uploadAvroSchema', 'uploadTestAvroSchema', 'uploadArchives', '-is')
@@ -155,6 +160,7 @@ class PegasusPluginLegacyIvyPublishIntegrationTest extends Specification {
       |}'''.stripMargin()
 
     def parentRunner = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
         .withProjectDir(parentProject.root)
         .withPluginClasspath()
         .withArguments('uploadDataTemplate', 'uploadTestDataTemplate', 'uploadAvroSchema', 'uploadTestAvroSchema', 'uploadArchives', '-is')
@@ -235,6 +241,7 @@ class PegasusPluginLegacyIvyPublishIntegrationTest extends Specification {
       |}'''.stripMargin()
 
     def childRunner = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
         .withProjectDir(childProject.root)
         .withPluginClasspath()
         .withArguments('uploadDataTemplate', 'uploadTestDataTemplate', 'uploadAvroSchema', 'uploadTestAvroSchema', 'uploadArchives', '-is')
@@ -261,6 +268,9 @@ class PegasusPluginLegacyIvyPublishIntegrationTest extends Specification {
 
     assertZipContains(childProjectDataTemplateArtifact, 'com/linkedin/child/Photo.class')
     assertZipContains(childProjectDataTemplateArtifact, 'pegasus/com/linkedin/child/Photo.pdl')
+
+    where:
+    gradleVersion << IntegTestingUtil.OLD_PUBLISHING_SUPPORTED_GRADLE_VERSIONS
   }
 
   private static boolean assertZipContains(File zip, String path) {

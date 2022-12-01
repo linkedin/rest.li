@@ -1,5 +1,29 @@
-// Setup integTests
-apply from: "${buildScriptDirPath}/integTest.gradle"
+apply plugin: 'groovy'
+apply plugin: 'java-gradle-plugin'
+
+sourceSets {
+  integTest {
+    groovy.srcDir file('src/integTest/groovy')
+    resources.srcDir file('src/integTest/resources')
+    compileClasspath += sourceSets.main.output + configurations.testRuntime
+    runtimeClasspath += output + compileClasspath
+  }
+}
+
+dependencies {
+  integTestImplementation externalDependency.spock
+}
+
+// Setup integration tests
+task integTest(type: Test) {
+  description = 'Runs the integration tests.'
+  group = 'verification'
+  testClassesDirs = sourceSets.integTest.output.classesDirs
+  classpath = sourceSets.integTest.runtimeClasspath
+  mustRunAfter test
+}
+
+check.dependsOn integTest
 
 configurations {
   dataTemplateForTesting

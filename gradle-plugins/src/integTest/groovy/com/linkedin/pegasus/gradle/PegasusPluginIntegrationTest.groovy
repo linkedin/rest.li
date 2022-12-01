@@ -34,7 +34,7 @@ class PegasusPluginIntegrationTest extends Specification {
     result.task(':mainDataTemplateJar').outcome == SUCCESS
 
     where:
-    gradleVersion << [ '4.0', '5.2.1', '5.6.4', '6.9', '7.0.2', '7.5.1' ]
+    gradleVersion << IntegTestingUtil.ALL_SUPPORTED_GRADLE_VERSIONS
   }
 
   @Unroll
@@ -102,12 +102,14 @@ class PegasusPluginIntegrationTest extends Specification {
     assertZipContains(dataTemplateArtifact, 'extensions/com/linkedin/LatLongExtensions.pdl')
 
     where:
-    gradleVersion << [ '4.0', '5.2.1', '5.6.4', '6.9', '7.0.2', '7.5.1' ]
+    gradleVersion << IntegTestingUtil.ALL_SUPPORTED_GRADLE_VERSIONS
   }
 
-  def 'mainCopySchema task will remove stale PDSC'() {
+  @Unroll
+  def 'mainCopySchema task will remove stale PDSC with Gradle #gradleVersion'() {
     setup:
     def runner = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
         .withProjectDir(tempDir.root)
         .withPluginClasspath()
         .withArguments('mainDataTemplateJar')
@@ -170,6 +172,9 @@ class PegasusPluginIntegrationTest extends Specification {
     result.task(':mainCopySchemas').getOutcome() == SUCCESS
     !preparedPdscFile1.exists()
     preparedPdscFile2.exists()
+
+    where:
+    gradleVersion << IntegTestingUtil.ALL_SUPPORTED_GRADLE_VERSIONS
   }
 
   @Unroll
@@ -262,7 +267,7 @@ class PegasusPluginIntegrationTest extends Specification {
     result.task(':impl:compileJava').outcome == SUCCESS
 
     where:
-    gradleVersion << [ '4.0', '5.2.1', '5.6.4', '6.9', '7.0.2', '7.5.1' ]
+    gradleVersion << IntegTestingUtil.ALL_SUPPORTED_GRADLE_VERSIONS
   }
 
   private static boolean assertZipContains(File zip, String path) {
