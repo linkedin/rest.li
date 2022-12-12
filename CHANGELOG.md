@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.40.15] - 2022-12-08
+Allow disabling the ivy publication preconfiguration in the Pegasus Gradle plugin
+
 ## [29.40.14] - 2022-12-06
 Make CurrentSchemaEntryMode public so that all TraverserContext interface getters can be accessed by restli users
 
@@ -5414,7 +5417,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.14...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.15...master
+[29.40.15]: https://github.com/linkedin/rest.li/compare/v29.40.14...v29.40.15
 [29.40.14]: https://github.com/linkedin/rest.li/compare/v29.40.13...v29.40.14
 [29.40.13]: https://github.com/linkedin/rest.li/compare/v29.40.12...v29.40.13
 [29.40.12]: https://github.com/linkedin/rest.li/compare/v29.40.11...v29.40.12
