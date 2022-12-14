@@ -25,6 +25,11 @@ import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorFactory;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static com.linkedin.d2.discovery.util.LogUtil.*;
+
 
 /**
  * Subscriber to the cluster data to update the SimpleLoadBalancerState
@@ -32,6 +37,7 @@ import com.linkedin.d2.discovery.event.PropertyEventBus;
 class ClusterLoadBalancerSubscriber extends
   AbstractLoadBalancerSubscriber<ClusterProperties>
 {
+  private static final Logger _log = LoggerFactory.getLogger(ClusterLoadBalancerSubscriber.class);
 
   final private SimpleLoadBalancerState _simpleLoadBalancerState;
   final private PartitionAccessorRegistry _partitionAccessorRegistry;
@@ -59,7 +65,11 @@ class ClusterLoadBalancerSubscriber extends
               _partitionAccessorRegistry,
               pickedPropertiesResult.clusterProperties.getPartitionProperties()),
           pickedPropertiesResult.distribution, getFailoutProperties(discoveryProperties));
-      _simpleLoadBalancerState.getClusterInfo().put(listenTo, newClusterInfoItem);
+
+      if (_simpleLoadBalancerState.getClusterInfo().put(listenTo, newClusterInfoItem) == null) {
+        info(_log, "getting new ClusterInfoItem for cluster ", listenTo, ": ", newClusterInfoItem);
+      }
+
       _simpleLoadBalancerState.notifyListenersOnClusterInfoUpdates(newClusterInfoItem);
       // notify the cluster listeners only when discoveryProperties is not null, because we don't
       // want to count initialization (just because listenToCluster is called)

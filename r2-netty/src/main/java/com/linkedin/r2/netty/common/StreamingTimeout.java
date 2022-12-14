@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class StreamingTimeout
 {
-  public static final String STREAMING_TIMEOUT_MESSAGE = "Exceeded stream idle timeout of %sms";
+  public static final String STREAMING_TIMEOUT_MESSAGE = "Exceeded stream idle timeout of %sms (writable=%b)";
 
   private final ScheduledExecutorService _scheduler;
   private final long _streamingTimeout;
@@ -90,7 +90,7 @@ public class StreamingTimeout
     }
     else
     {
-      _channel.pipeline().fireExceptionCaught(new TimeoutException(String.format(STREAMING_TIMEOUT_MESSAGE, _streamingTimeout)));
+      _channel.pipeline().fireExceptionCaught(new TimeoutException(String.format(STREAMING_TIMEOUT_MESSAGE, _streamingTimeout, _channel.isWritable())));
     }
   }
 
