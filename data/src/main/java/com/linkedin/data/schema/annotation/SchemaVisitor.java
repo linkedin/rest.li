@@ -52,6 +52,13 @@ public interface SchemaVisitor
   SchemaVisitorTraversalResult getSchemaVisitorTraversalResult();
 
   /**
+   * @return True if we should record typeref nodes in the path spec when traversing the schema, false otherwise.
+   */
+  default boolean shouldIncludeTyperefsInPathSpec() {
+    return false;
+  }
+
+  /**
    * A context that is defined and handled by {@link SchemaVisitor}
    *
    * The {@link DataSchemaRichContextTraverser} will get the initial context and then

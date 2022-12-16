@@ -18,7 +18,9 @@ package com.linkedin.data.schema.annotation;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
-import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
@@ -28,14 +30,38 @@ class TraverserContextImpl implements TraverserContext
 {
   private Boolean _shouldContinue = null;
   private DataSchema _parentSchema;
-  private DataSchema _currentSchema;
-  private DataSchema _originalTopLevelSchema;
-  private ArrayDeque<String> _traversePath = new ArrayDeque<>();
-  private ArrayDeque<String> _schemaPathSpec = new ArrayDeque<>();
   private RecordDataSchema.Field _enclosingField;
   private UnionDataSchema.Member _enclosingUnionMember;
   private CurrentSchemaEntryMode _currentSchemaEntryMode;
   private SchemaVisitor.VisitorContext _visitorContext;
+
+  private final DataSchema _originalTopLevelSchema;
+  private final DataSchema _currentSchema;
+  private final ArrayList<String> _traversePath;
+  private final ArrayList<String> _schemaPathSpec;
+  private final int _traversePathLimit;
+  private final int _schemaPathLimit;
+
+  TraverserContextImpl(DataSchema originalTopLevelSchema, DataSchema currentSchema, SchemaVisitor.VisitorContext visitorContext) {
+    _originalTopLevelSchema = originalTopLevelSchema;
+    _currentSchema = currentSchema;
+    _visitorContext = visitorContext;
+    _traversePath = new ArrayList<>();
+    _traversePath.add(currentSchema.getUnionMemberKey());
+    _schemaPathSpec = new ArrayList<>();
+    _traversePathLimit = 1;
+    _schemaPathLimit = 0;
+  }
+
+  private TraverserContextImpl(TraverserContextImpl existing, DataSchema nextSchema, int newSchemaPathLimit, int newTraversePathLimit) {
+    _originalTopLevelSchema = existing._originalTopLevelSchema;
+    _currentSchema = nextSchema;
+    _visitorContext = existing._visitorContext;
+    _traversePath = existing._traversePath;
+    _schemaPathSpec = existing._schemaPathSpec;
+    _schemaPathLimit = newSchemaPathLimit;
+    _traversePathLimit = newTraversePathLimit;
+  }
 
   @Override
   public SchemaVisitor.VisitorContext getVisitorContext()
@@ -44,7 +70,8 @@ class TraverserContextImpl implements TraverserContext
   }
 
   /**
-   * Generate a new {@link TraverserContext} for next recursion in {@link DataSchemaRichContextTraverser#doRecursiveTraversal(TraverserContextImpl)}
+   * Generate a new {@link TraverserContext} for next recursion in
+   * {@link DataSchemaRichContextTraverser#doRecursiveTraversal(TraverserContextImpl)}
    *
    * @param nextTraversePathComponent pathComponent of the traverse path of the next dataSchema to be traversed
    * @param nextSchemaPathSpecComponent pathComponent of the schema path of the next dataSchema to be traversed
@@ -55,33 +82,27 @@ class TraverserContextImpl implements TraverserContext
   TraverserContextImpl getNextContext(String nextTraversePathComponent, String nextSchemaPathSpecComponent,
                                       DataSchema nextSchema, CurrentSchemaEntryMode nextSchemaEntryMode)
   {
-    TraverserContextImpl nextContext = new TraverserContextImpl();
-    nextContext.setOriginalTopLevelSchema(this.getTopLevelSchema());
+    // SchemaPathSpecComponent could be null if nextSchema is a TypeRefDataSchema
+    final boolean hasNextSchemaComponent = (nextSchemaPathSpecComponent != null);
+    final int newSchemaPathLimit = hasNextSchemaComponent ? _schemaPathLimit + 1 : _schemaPathLimit;
+    TraverserContextImpl nextContext =
+        new TraverserContextImpl(this, nextSchema, newSchemaPathLimit, _traversePathLimit + 2);
     nextContext.setParentSchema(this.getCurrentSchema());
-    nextContext.setSchemaPathSpec(new ArrayDeque<>(this.getSchemaPathSpec()));
-    nextContext.setVisitorContext(this.getVisitorContext());
     nextContext.setEnclosingField(this.getEnclosingField());
     nextContext.setEnclosingUnionMember(this.getEnclosingUnionMember());
 
-    // Need to make a copy so if it is modified in next recursion
-    // it won't affect this recursion
-    nextContext.setTraversePath(new ArrayDeque<>(this.getTraversePath()));
-    nextContext.getTraversePath().add(nextTraversePathComponent);
-    // Same as traversePath, we need to make a copy.
-    nextContext.setSchemaPathSpec(new ArrayDeque<>(this.getSchemaPathSpec()));
-    // SchemaPathSpecComponent could be null if nextSchema is a TypeRefDataSchema
-    if (nextSchemaPathSpecComponent != null)
-    {
-      nextContext.getSchemaPathSpec().add(nextSchemaPathSpecComponent);
+    // Add the next component to the traverse path.
+    safeAdd(_traversePath, _traversePathLimit, nextTraversePathComponent);
+    // Add full name of the schema to the traverse path.
+    safeAdd(_traversePath, _traversePathLimit + 1, nextSchema.getUnionMemberKey());
+
+    // Add the schema path.
+    if (hasNextSchemaComponent) {
+      safeAdd(_schemaPathSpec, _schemaPathLimit, nextSchemaPathSpecComponent);
     }
-    nextContext.setCurrentSchema(nextSchema);
+
     nextContext.setCurrentSchemaEntryMode(nextSchemaEntryMode);
     return nextContext;
-  }
-
-  void setOriginalTopLevelSchema(DataSchema originalTopLevelSchema)
-  {
-    _originalTopLevelSchema = originalTopLevelSchema;
   }
 
   public Boolean shouldContinue()
@@ -108,14 +129,9 @@ class TraverserContextImpl implements TraverserContext
   }
 
   @Override
-  public ArrayDeque<String> getSchemaPathSpec()
+  public List<String> getSchemaPathSpec()
   {
-    return _schemaPathSpec;
-  }
-
-  private void setSchemaPathSpec(ArrayDeque<String> schemaPathSpec)
-  {
-    _schemaPathSpec = schemaPathSpec;
+    return Collections.unmodifiableList(_schemaPathSpec.subList(0, _schemaPathLimit));
   }
 
   @Override
@@ -124,20 +140,10 @@ class TraverserContextImpl implements TraverserContext
     return _currentSchema;
   }
 
-  void setCurrentSchema(DataSchema currentSchema)
-  {
-    _currentSchema = currentSchema;
-  }
-
   @Override
-  public ArrayDeque<String> getTraversePath()
+  public List<String> getTraversePath()
   {
-    return _traversePath;
-  }
-
-  private void setTraversePath(ArrayDeque<String> traversePath)
-  {
-    this._traversePath = traversePath;
+    return Collections.unmodifiableList(_traversePath.subList(0, _traversePathLimit));
   }
 
   @Override
@@ -182,5 +188,14 @@ class TraverserContextImpl implements TraverserContext
   private void setCurrentSchemaEntryMode(CurrentSchemaEntryMode currentSchemaEntryMode)
   {
     _currentSchemaEntryMode = currentSchemaEntryMode;
+  }
+
+  private static void safeAdd(List<String> list, int index, String value) {
+    assert value != null;
+    if (index < list.size()) {
+      list.set(index, value);
+    } else {
+      list.add(index, value);
+    }
   }
 }

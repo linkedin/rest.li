@@ -6,8 +6,10 @@ import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 
 
 /**
@@ -69,7 +71,7 @@ public class AnnotationEntry
   // the actual property value that this AnnotationEntry stored
   private Object _annotationValue;
   // The traverser path of the annotatedTarget(field, or DataSchema) that this AnnotationEntry is constructed from, relative to the schema root
-  private final ArrayDeque<String> _pathToAnnotatedTarget;
+  private final List<String> _pathToAnnotatedTarget;
   // The annotatedTarget(field, dataSchema, etc) that this entry was annotated at.
   private final Object _annotatedTarget;
 
@@ -145,7 +147,7 @@ public class AnnotationEntry
   AnnotationEntry(String pathSpecStr,
                   Object annotationValue,
                   AnnotationType annotationType,
-                  ArrayDeque<String> pathToAnnotatedTarget,
+                  List<String> pathToAnnotatedTarget,
                   Object annotatedTarget)
   {
     _remainingPaths = new ArrayDeque<>(Arrays.asList(pathSpecStr.split(Character.toString(PathSpec.SEPARATOR))));
@@ -153,7 +155,7 @@ public class AnnotationEntry
     _annotationValue = annotationValue;
     _overridePathSpecStr = pathSpecStr;
     _annotationType = annotationType;
-    _pathToAnnotatedTarget = new ArrayDeque<>(pathToAnnotatedTarget);
+    _pathToAnnotatedTarget = new ArrayList<>(pathToAnnotatedTarget);
     _annotatedTarget = annotatedTarget;
   }
 
@@ -215,7 +217,7 @@ public class AnnotationEntry
   }
 
 
-  ArrayDeque<String> getPathToAnnotatedTarget()
+  List<String> getPathToAnnotatedTarget()
   {
     return _pathToAnnotatedTarget;
   }

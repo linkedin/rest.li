@@ -25,7 +25,6 @@ import com.linkedin.data.schema.StringDataSchema;
 import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.schema.util.CopySchemaUtil;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -278,7 +277,8 @@ public class PathSpecBasedSchemaAnnotationVisitor implements SchemaVisitor
     if (parentSchema != null && !(parentSchema.getType() == DataSchema.Type.TYPEREF))
     {
       // skip if parent is Typeref because schemaPathSpec would not contain Typeref component.
-      String pathSpecMatchingSegment = context.getSchemaPathSpec().peekLast();
+      List<String> schemaPathSpec = context.getSchemaPathSpec();
+      String pathSpecMatchingSegment = schemaPathSpec.isEmpty() ? null : schemaPathSpec.get(schemaPathSpec.size() - 1);
       currentAnnotationEntries = currentAnnotationEntries.stream()
                                          // Filter out overrides that matched to current path segment for match.
                                          .filter(annotationEntry ->
@@ -306,9 +306,9 @@ public class PathSpecBasedSchemaAnnotationVisitor implements SchemaVisitor
       {
         case RECORD:
           RecordDataSchema.Field enclosingField = context.getEnclosingField();
-          ArrayDeque<String> fullTraversePath = new ArrayDeque<>(context.getTraversePath());
+          List<String> fullTraversePath = new ArrayList<>(context.getTraversePath());
           // Need to exclude this currentSchema's path so that it is field's path
-          fullTraversePath.pollLast();
+          fullTraversePath.remove(fullTraversePath.size() - 1);
           currentAnnotationEntries.addAll(generateAnnotationEntryFromField(enclosingField, fullTraversePath));
 
           break;
@@ -441,7 +441,7 @@ public class PathSpecBasedSchemaAnnotationVisitor implements SchemaVisitor
   }
 
   private List<AnnotationEntry> generateAnnotationEntryFromInclude(DataSchema dataSchema,
-                                                                   ArrayDeque<String> pathToAnnotatedTarget)
+                                                                   List<String> pathToAnnotatedTarget)
   {
     // properties within Record shouldn't be processed, unless this Record has includes and
     // those properties should be overrides.
@@ -488,7 +488,7 @@ public class PathSpecBasedSchemaAnnotationVisitor implements SchemaVisitor
 
 
   private List<AnnotationEntry> generateAnnotationEntryFromField(RecordDataSchema.Field field,
-                                                                 ArrayDeque<String> pathToAnnotatedTarget)
+                                                                 List<String> pathToAnnotatedTarget)
   {
     if (field.getProperties().get(getAnnotationNamespace()) == null)
     {
@@ -513,7 +513,7 @@ public class PathSpecBasedSchemaAnnotationVisitor implements SchemaVisitor
   }
 
   private List<AnnotationEntry> generateAnnotationEntryFromTypeRefSchema(TyperefDataSchema dataSchema,
-                                                                         ArrayDeque<String> pathToAnnotatedTarget)
+                                                                         List<String> pathToAnnotatedTarget)
   {
     if (dataSchema.getProperties().get(getAnnotationNamespace()) == null)
     {
@@ -546,7 +546,7 @@ public class PathSpecBasedSchemaAnnotationVisitor implements SchemaVisitor
     return typeRefAnnotationEntries;
   }
 
-  private List<AnnotationEntry> generateAnnotationEntryFromNamedSchema(DataSchema dataSchema, ArrayDeque<String> pathToAnnotatedTarget)
+  private List<AnnotationEntry> generateAnnotationEntryFromNamedSchema(DataSchema dataSchema, List<String> pathToAnnotatedTarget)
   {
     if (dataSchema.getProperties().get(getAnnotationNamespace()) == null)
     {
@@ -573,7 +573,7 @@ public class PathSpecBasedSchemaAnnotationVisitor implements SchemaVisitor
 
   private List<AnnotationEntry> constructNonOverrideAnnotationEntryFromProperties(Object annotationValue,
                                                                                   AnnotationEntry.AnnotationType annotationType,
-                                                                                  ArrayDeque<String> pathToAnnotatedTarget,
+                                                                                  List<String> pathToAnnotatedTarget,
                                                                                   Object annotatedTarget)
   {
     // annotationValue has been null-checked, no other checks needed.
@@ -585,7 +585,7 @@ public class PathSpecBasedSchemaAnnotationVisitor implements SchemaVisitor
   @SuppressWarnings("unchecked")
   private List<AnnotationEntry> constructOverrideAnnotationEntryFromProperties(Map<String, Object> schemaProperties,
                                                                                AnnotationEntry.AnnotationType annotationType,
-                                                                               ArrayDeque<String> pathToAnnotatedTarget,
+                                                                               List<String> pathToAnnotatedTarget,
                                                                                Object annotatedTarget,
                                                                                String startSchemaName)
   {
@@ -722,7 +722,7 @@ public class PathSpecBasedSchemaAnnotationVisitor implements SchemaVisitor
    * @param pathSpecComponents components list of current pathSpec to the location where this resolution happens
    * @return a map whose key is the annotationNamespace and value be the resolved property object.
    */
-  private Map<String, Object> resolveAnnotationEntries(List<AnnotationEntry> propertiesOverrides, ArrayDeque<String> pathSpecComponents)
+  private Map<String, Object> resolveAnnotationEntries(List<AnnotationEntry> propertiesOverrides, List<String> pathSpecComponents)
   {
     List<Pair<String, Object>> propertiesOverridesPairs = propertiesOverrides.stream()
                                                                              .map(annotationEntry -> new ImmutablePair<>(
