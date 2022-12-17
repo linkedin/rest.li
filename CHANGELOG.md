@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.41.0] - 2022-12-15
+Reduce memory allocations during rich schema traversal
+
 ## [29.40.15] - 2022-12-08
 Allow disabling the ivy publication preconfiguration in the Pegasus Gradle plugin
 
@@ -5417,7 +5420,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.40.15...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.0...master
+[29.41.0]: https://github.com/linkedin/rest.li/compare/v29.40.15...v29.41.0
 [29.40.15]: https://github.com/linkedin/rest.li/compare/v29.40.14...v29.40.15
 [29.40.14]: https://github.com/linkedin/rest.li/compare/v29.40.13...v29.40.14
 [29.40.13]: https://github.com/linkedin/rest.li/compare/v29.40.12...v29.40.13

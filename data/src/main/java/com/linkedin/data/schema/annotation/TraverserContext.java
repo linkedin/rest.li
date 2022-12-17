@@ -20,7 +20,7 @@ import com.linkedin.data.schema.DataSchemaTraverse;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
-import java.util.ArrayDeque;
+import java.util.List;
 
 
 /**
@@ -100,13 +100,25 @@ public interface TraverserContext
    * The traversePath to the f2 field would be as detailed as "/Test/f1/Nested/f2/TypeRef_Name/int"
    * Meanwhile its schema pathSpec is as simple as "/f1/f2"
    *
+   * <p>The returned list is unmodifiable, but the underlying list may be mutated once the
+   * {@link SchemaVisitor#callbackOnContext(TraverserContext, DataSchemaTraverse.Order)} method finishes. Implementers
+   * who want to modify this list locally, or are sensitive to this mutation should make a copy of this list during the
+   * callback.</p>
    */
-  ArrayDeque<String> getTraversePath();
+  List<String> getTraversePath();
 
   /**
-   * This is the path components corresponds to {@link PathSpec}, it would not have TypeRef component inside its component list, also it would only contain field's name
+   * This is the path components corresponds to {@link PathSpec}, containing field names in the path. Note that
+   * any typerefs in the path are omitted by default, and are represenred via
+   * {@link com.linkedin.data.schema.DataSchemaConstants#TYPEREF_REF} only if
+   * {@link SchemaVisitor#shouldIncludeTyperefsInPathSpec()} returns true.
+   *
+   * <p>The returned list is unmodifiable, but the underlying list may be mutated once the
+   * {@link SchemaVisitor#callbackOnContext(TraverserContext, DataSchemaTraverse.Order)} method finishes. Implementers
+   * who want to modify this list locally, or are sensitive to this mutation should make a copy of this list during the
+   * callback.</p>
    */
-  ArrayDeque<String> getSchemaPathSpec();
+  List<String> getSchemaPathSpec();
 
   /**
    * This attribute tells how currentSchema stored in the context is linked from its parentSchema

@@ -76,25 +76,19 @@ public class DataSchemaRichContextTraverser
   public void traverse(DataSchema schema)
   {
     _originalTopLevelSchemaUnderTraversal = schema;
-    TraverserContextImpl traverserContext = new TraverserContextImpl();
-    traverserContext.setOriginalTopLevelSchema(_originalTopLevelSchemaUnderTraversal);
-    traverserContext.setCurrentSchema(schema);
-    traverserContext.setVisitorContext(_schemaVisitor.getInitialVisitorContext());
+    TraverserContextImpl traverserContext =
+        new TraverserContextImpl(_originalTopLevelSchemaUnderTraversal, schema, _schemaVisitor.getInitialVisitorContext());
     doRecursiveTraversal(traverserContext);
   }
 
   private void doRecursiveTraversal(TraverserContextImpl context)
   {
-
-    // Add full name to the context's TraversePath
     DataSchema schema = context.getCurrentSchema();
-    ArrayDeque<String> path = context.getTraversePath();
-    path.add(schema.getUnionMemberKey());
 
     // visitors
     _schemaVisitor.callbackOnContext(context, DataSchemaTraverse.Order.PRE_ORDER);
 
-    /**
+    /*
      * By default {@link DataSchemaRichContextTraverser} will only decide whether or not keep traversing based on whether the new
      * data schema has been seen.
      *
@@ -110,15 +104,16 @@ public class DataSchemaRichContextTraverser
       _seenAncestorsDataSchema.put(schema, Boolean.TRUE);
 
       // Pass new context in every recursion
-      TraverserContextImpl nextContext = null;
-
+      TraverserContextImpl nextContext;
       switch (schema.getType())
       {
         case TYPEREF:
           TyperefDataSchema typerefDataSchema = (TyperefDataSchema) schema;
-
-          nextContext = context.getNextContext(DataSchemaConstants.REF_KEY, null, typerefDataSchema.getRef(),
-                                               CurrentSchemaEntryMode.TYPEREF_REF);
+          String nextSchemaPathComponent =
+              _schemaVisitor.shouldIncludeTyperefsInPathSpec() ? DataSchemaConstants.TYPEREF_REF : null;
+          nextContext =
+              context.getNextContext(DataSchemaConstants.REF_KEY, nextSchemaPathComponent, typerefDataSchema.getRef(),
+                  CurrentSchemaEntryMode.TYPEREF_REF);
           doRecursiveTraversal(nextContext);
           break;
         case MAP:

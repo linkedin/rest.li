@@ -18,6 +18,7 @@ package com.linkedin.data.schema.annotation;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaTraverse;
 import com.linkedin.data.schema.annotation.SchemaAnnotationHandler.AnnotationValidationResult;
+import java.util.ArrayDeque;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +53,7 @@ public class SchemaAnnotationValidationVisitor implements SchemaVisitor
     DataSchema schema = context.getCurrentSchema();
     SchemaAnnotationHandler.ValidationMetaData metaData = new SchemaAnnotationHandler.ValidationMetaData();
     metaData.setDataSchema(context.getCurrentSchema());
-    metaData.setPathToSchema(context.getTraversePath());
+    metaData.setPathToSchema(new ArrayDeque<>(context.getTraversePath()));
     AnnotationValidationResult annotationValidationResult = _schemaAnnotationHandler.validate(schema.getResolvedProperties(),
                                                                                               metaData);
     if (!annotationValidationResult.isValid())
