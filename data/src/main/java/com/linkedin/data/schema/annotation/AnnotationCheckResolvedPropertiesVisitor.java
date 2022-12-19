@@ -20,7 +20,6 @@ import com.linkedin.data.schema.DataSchemaTraverse;
 import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.schema.annotation.SchemaAnnotationHandler.CompatibilityCheckContext;
 import java.util.ArrayDeque;
@@ -40,9 +39,8 @@ public class AnnotationCheckResolvedPropertiesVisitor implements SchemaVisitor
 {
   private Map<PathSpec, Pair<CompatibilityCheckContext, Map<String, Object>>> _nodeToResolvedPropertiesMap = new HashMap<>();
 
-  private final String FIELD_INDICATOR = "$field";
-  private final String UNION_MEMBER_KEY_INDICATOR = "$unionMemberKey";
-  private final String TYPEREF_INDICATOR = "$typeref";
+  private static final String FIELD_INDICATOR = "$field";
+  private static final String UNION_MEMBER_KEY_INDICATOR = "$unionMemberKey";
 
   @Override
   public void callbackOnContext(TraverserContext context, DataSchemaTraverse.Order order)
@@ -58,18 +56,10 @@ public class AnnotationCheckResolvedPropertiesVisitor implements SchemaVisitor
     RecordDataSchema.Field schemaField = context.getEnclosingField();
     UnionDataSchema.Member unionMember = context.getEnclosingUnionMember();
 
-    ArrayDeque<String> pathToSchema = context.getSchemaPathSpec().clone();
+    ArrayDeque<String> pathToSchema = new ArrayDeque<>(context.getSchemaPathSpec());
     pathToSchema.addFirst(((NamedDataSchema)context.getTopLevelSchema()).getName());
 
-    // If current schema is a typeref schema, add TYPEREF_INDICATOR in the pathSpec
-    // to avoid this node and it's child node have the same pathSpec.
-    if (currentSchema instanceof TyperefDataSchema)
-    {
-      context.getSchemaPathSpec().addLast(TYPEREF_INDICATOR);
-    }
-
-
-    if (schemaField != null && pathToSchema.getLast().equals(context.getEnclosingField().getName()))
+    if (schemaField != null && pathToSchema.peekLast().equals(context.getEnclosingField().getName()))
     {
       // Current node is a field of a record schema, get the field's annotation.
       // Add FIELD_INDICATOR in the pathSpec to differentiate field annotation and field type schema annotation.
@@ -81,7 +71,7 @@ public class AnnotationCheckResolvedPropertiesVisitor implements SchemaVisitor
               chooseProperties(schemaField.getResolvedProperties(), schemaField.getProperties())));
       pathToSchema.removeLast();
     }
-    else if (unionMember!= null && pathToSchema.getLast().equals(context.getEnclosingUnionMember().getUnionMemberKey()))
+    else if (unionMember!= null && pathToSchema.peekLast().equals(context.getEnclosingUnionMember().getUnionMemberKey()))
     {
       // Current node is a union member, get the union member key's annotation.
       // Add UNION_MEMBER_KEY_INDICATOR in the pathSpec to differentiate union member key annotation and union type schema annotation.
@@ -109,6 +99,12 @@ public class AnnotationCheckResolvedPropertiesVisitor implements SchemaVisitor
   public SchemaVisitorTraversalResult getSchemaVisitorTraversalResult()
   {
     return null;
+  }
+
+  @Override
+  public boolean shouldIncludeTyperefsInPathSpec() {
+    // Record typerefs in the path spec to avoid the typeref node and its child node from having the same pathSpec.
+    return true;
   }
 
   public Map<PathSpec, Pair<CompatibilityCheckContext, Map<String, Object>>>  getNodeToResolvedPropertiesMap()

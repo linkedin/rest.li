@@ -125,7 +125,7 @@ public class SchemaVisitorTraversalResult
    *
    * @see Message
    */
-  public void addMessage(ArrayDeque<String> path, String format, Object... args)
+  public void addMessage(List<String> path, String format, Object... args)
   {
     Message msg = new Message(path.toArray(), format, args);
     addMessage(msg);
@@ -140,10 +140,10 @@ public class SchemaVisitorTraversalResult
    *
    * @see Message
    */
-  public void addMessages(ArrayDeque<String> path, Collection<? extends Message> messages)
+  public void addMessages(List<String> path, Collection<? extends Message> messages)
   {
     List<Message> msgs = messages.stream()
-                                 .map(msg -> new Message(path.toArray(), ((Message) msg).toString()))
+                                 .map(msg -> new Message(path.toArray(), msg.toString()))
                                  .collect(Collectors.toList());
     _messages.addAll(msgs);
     MessageUtil.appendMessages(getMessageBuilder(), msgs);
