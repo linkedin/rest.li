@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.41.1] - 2022-12-19
+Replace the API call getArchivePath() with getArchiveFile() on Gradle 7 in the Pegasus Plugin
+
 ## [29.41.0] - 2022-12-15
 Reduce memory allocations during rich schema traversal
 
@@ -5420,7 +5423,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.1...master
+[29.41.1]: https://github.com/linkedin/rest.li/compare/v29.41.0...v29.41.1
 [29.41.0]: https://github.com/linkedin/rest.li/compare/v29.40.15...v29.41.0
 [29.40.15]: https://github.com/linkedin/rest.li/compare/v29.40.14...v29.40.15
 [29.40.14]: https://github.com/linkedin/rest.li/compare/v29.40.13...v29.40.14

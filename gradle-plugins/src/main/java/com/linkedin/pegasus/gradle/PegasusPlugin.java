@@ -1860,8 +1860,11 @@ public class PegasusPlugin implements Plugin<Project>
         getDataModelConfig(project, sourceSet),
         project.getConfigurations().getByName("dataTemplateCompile"));
 
-    // FIXME change to #getArchiveFile(); breaks backwards-compatibility before 5.1
-    project.getDependencies().add(compileConfigName, project.files(dataTemplateJarTask.getArchivePath()));
+    // The getArchivePath() API doesn’t carry any task dependency and has been deprecated.
+    // Replace it with getArchiveFile() on Gradle 7,
+    // but keep getArchivePath() to be backwards-compatibility with Gradle version older than 5.1
+    project.getDependencies().add(compileConfigName, project.files(
+        isAtLeastGradle7() ? dataTemplateJarTask.getArchiveFile() : dataTemplateJarTask.getArchivePath()));
 
     if (_configureIvyPublications) {
       // The below Action is only applied when the 'ivy-publish' is applied by the consumer.
@@ -2008,8 +2011,11 @@ public class PegasusPlugin implements Plugin<Project>
         System.out.println("sourceSet " + sourceSet.getName() + " has generated sourceSet " + dataTemplateSourceSetName);
       }
       dataTemplateJarTask = (Jar) project.getTasks().getByName(sourceSet.getName() + "DataTemplateJar");
-      // FIXME change to #getArchiveFile(); breaks backwards-compatibility before 5.1
-      dataModels = dataModelConfig.plus(project.files(dataTemplateJarTask.getArchivePath()));
+      // The getArchivePath() API doesn’t carry any task dependency and has been deprecated.
+      // Replace it with getArchiveFile() on Gradle 7,
+      // but keep getArchivePath() to be backwards-compatibility with Gradle version older than 5.1
+      dataModels = dataModelConfig.plus(project.files(
+          isAtLeastGradle7() ? dataTemplateJarTask.getArchiveFile() : dataTemplateJarTask.getArchivePath()));
     }
     else
     {
