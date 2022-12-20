@@ -20,6 +20,8 @@ import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.properties.FailoutProperties;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -88,6 +90,10 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
   {
     final FailedoutClusterManager failedoutClusterManager = _failedoutClusterManagers.get(clusterName);
     return failedoutClusterManager != null ? failedoutClusterManager.getFailoutConfig() : null;
+  }
+
+  public Set<String> getClusters() {
+    return new HashSet<>(_failedoutClusterManagers.keySet());
   }
 
   @Override
