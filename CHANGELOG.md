@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.41.2] - 2022-12-21
+Enable enumeration of clusters in `ZKFailoutConfigProvider`.
+
 ## [29.41.1] - 2022-12-19
 Replace the API call getArchivePath() with getArchiveFile() on Gradle 7 in the Pegasus Plugin
 
@@ -5423,7 +5426,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.2...master
+[29.41.2]: https://github.com/linkedin/rest.li/compare/v29.41.1...v29.41.2
 [29.41.1]: https://github.com/linkedin/rest.li/compare/v29.41.0...v29.41.1
 [29.41.0]: https://github.com/linkedin/rest.li/compare/v29.40.15...v29.41.0
 [29.40.15]: https://github.com/linkedin/rest.li/compare/v29.40.14...v29.40.15
