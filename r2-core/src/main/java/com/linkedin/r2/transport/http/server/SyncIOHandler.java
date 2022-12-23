@@ -128,6 +128,10 @@ public class SyncIOHandler implements Writer, Reader
     }
   }
 
+  public void writeResponseHeaders(Runnable writeResponse) {
+    _eventQueue.add(new Event(EventType.WriteResponseHeaders, writeResponse));
+  }
+
   public void loop() throws ServletException, IOException
   {
     try
@@ -252,6 +256,10 @@ public class SyncIOHandler implements Writer, Reader
           }
           break;
         }
+        case WriteResponseHeaders:
+          Runnable writeResponse = (Runnable) event.getData();
+          writeResponse.run();
+          break;
         case ForceExit:
         {
           _forceExit = true;
@@ -288,6 +296,7 @@ public class SyncIOHandler implements Writer, Reader
     WriteRequestPossible,
     WriteRequestAborted,
     DrainRequest,
+    WriteResponseHeaders,
     FullResponseReceived,
     ResponseDataAvailable,
     ResponseDataError,

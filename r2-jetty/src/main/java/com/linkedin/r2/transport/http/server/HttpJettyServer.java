@@ -36,6 +36,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
+
 /**
  * @author Steven Ihde
  * @version $Revision: $
@@ -188,5 +189,10 @@ public class HttpJettyServer implements HttpServer
     }
 
     return httpServlet;
+  }
+
+  // exposed for testing
+  Server getInternalServer() {
+    return _server;
   }
 }

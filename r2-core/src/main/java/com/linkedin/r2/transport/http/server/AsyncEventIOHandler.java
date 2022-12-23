@@ -77,13 +77,9 @@ public class AsyncEventIOHandler extends SyncIOHandler
   }
 
   @Override
-  public void onInit(ReadHandle rh)
-  {
-    synchronized (this)
-    {
-      _responseWriteStarted = true;
-    }
-    super.onInit(rh);
+  public void writeResponseHeaders(Runnable writeResponse) {
+    _responseWriteStarted = true;
+    super.writeResponseHeaders(writeResponse);
   }
 
   @Override
