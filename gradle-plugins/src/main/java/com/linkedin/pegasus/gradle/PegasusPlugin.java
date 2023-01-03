@@ -561,7 +561,9 @@ public class PegasusPlugin implements Plugin<Project>
 
   private static final Pattern TEST_DIR_REGEX = Pattern.compile("^(integ)?[Tt]est");
   private static final String SNAPSHOT_NO_PUBLISH = "rest.model.noPublish";
+  private static final String SNAPSHOT_FORCE_PUBLISH = "rest.model.forcePublish";
   private static final String IDL_NO_PUBLISH = "rest.idl.noPublish";
+  private static final String IDL_FORCE_PUBLISH = "rest.idl.forcePublish";
   private static final String SKIP_IDL_CHECK = "rest.idl.skipCheck";
   // gradle property to skip running GenerateRestModel task.
   // Note it affects GenerateRestModel task only, and does not skip tasks depends on GenerateRestModel.
@@ -1375,6 +1377,8 @@ public class PegasusPlugin implements Plugin<Project>
             task.setSuffix(SNAPSHOT_FILE_SUFFIX);
 
             task.onlyIf(t ->
+                isPropertyTrue(project, SNAPSHOT_FORCE_PUBLISH) ||
+                (
                     !isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) &&
                     (
                       (
@@ -1389,7 +1393,8 @@ public class PegasusPlugin implements Plugin<Project>
                          checkRestModelTask.getSummaryTarget().exists() &&
                         !isResultEquivalent(checkRestModelTask.getSummaryTarget())
                       )
-                    ));
+                    ))
+                );
           });
 
       Task publishRestliIdlTask = project.getTasks()
@@ -1400,6 +1405,8 @@ public class PegasusPlugin implements Plugin<Project>
             task.setSuffix(IDL_FILE_SUFFIX);
 
             task.onlyIf(t ->
+                isPropertyTrue(project, IDL_FORCE_PUBLISH) ||
+                (
                     !isPropertyTrue(project, IDL_NO_PUBLISH) &&
                     (
                       (
@@ -1419,7 +1426,8 @@ public class PegasusPlugin implements Plugin<Project>
                                 !isResultEquivalent(checkIdlTask.getSummaryTarget()))
                          )
                       )
-                    ));
+                    ))
+                );
           });
 
       project.getLogger().info("API project selected for {} is {}",
