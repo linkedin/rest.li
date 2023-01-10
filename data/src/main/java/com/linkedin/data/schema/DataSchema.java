@@ -184,5 +184,5 @@ public abstract class DataSchema implements Cloneable
   }
 
   private final Type _type;
-  Map<String, Object> _resolvedProperties = new HashMap<>();
+  Map<String, Object> _resolvedProperties = new HashMap<>(0);
 }

@@ -415,7 +415,7 @@ public final class RecordDataSchema extends NamedDataSchema
     private RecordDataSchema _record = null;
     private List<String> _aliases = _emptyAliases;
     private Map<String, Object> _properties = _emptyProperties;
-    private Map<String, Object> _resolvedProperties = new HashMap<>();
+    private Map<String, Object> _resolvedProperties = new HashMap<>(0);
     private boolean _declaredInline = false;
 
     static private final Map<String, Object> _emptyProperties = Collections.emptyMap();

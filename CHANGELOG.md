@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.41.4] - 2023-01-09
+change the innitialize size of resolvedProperties to 0 in order to save memory pre-allocated
+
 ## [29.41.3] - 2023-01-03
 Add option to force publish idl and snapshot
 
@@ -5429,7 +5432,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.4...master
+[29.41.4]: https://github.com/linkedin/rest.li/compare/v29.41.3...v29.41.4
 [29.41.3]: https://github.com/linkedin/rest.li/compare/v29.41.2...v29.41.3
 [29.41.2]: https://github.com/linkedin/rest.li/compare/v29.41.1...v29.41.2
 [29.41.1]: https://github.com/linkedin/rest.li/compare/v29.41.0...v29.41.1
