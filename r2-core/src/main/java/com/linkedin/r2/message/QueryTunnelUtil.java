@@ -26,6 +26,8 @@ import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.util.IOUtil;
 
+import java.util.HashSet;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,6 +86,7 @@ public class QueryTunnelUtil
   private static final String MIXED = "mixed";
   private static final String CONTENT_LENGTH = "Content-Length";
   private static final String UTF8 = "UTF-8";
+  private static final Set<String> VALID_HTTP_VERBS = getValidHttpVerbs();
   static final Logger LOG = LoggerFactory.getLogger(QueryTunnelUtil.class);
 
   /**
@@ -92,6 +95,16 @@ public class QueryTunnelUtil
   private QueryTunnelUtil()
   {
 
+  }
+
+  private static Set<String> getValidHttpVerbs() {
+    Set<String> verbs = new HashSet<String>();
+    verbs.add(RestMethod.GET);
+    verbs.add(RestMethod.POST);
+    verbs.add(RestMethod.PUT);
+    verbs.add(RestMethod.DELETE);
+    verbs.add(RestMethod.OPTIONS);
+    return verbs;
   }
 
   /**
@@ -178,7 +191,8 @@ public class QueryTunnelUtil
     // Set the base uri, supply the original method in the override header, set/update content length
     // header to the new entity length, and change method to POST
     requestBuilder.setURI(newUri);
-    requestBuilder.setHeader(HEADER_METHOD_OVERRIDE, requestBuilder.getMethod());
+    requestBuilder.setHeader(HEADER_METHOD_OVERRIDE,
+        validateOverride(request, request.getMethod()));
     requestBuilder.setHeader(CONTENT_LENGTH, Integer.toString(requestBuilder.getEntity().length()));
     requestBuilder.setMethod(RestMethod.POST);
 
@@ -408,11 +422,19 @@ public class QueryTunnelUtil
     }
     requestBuilder.setEntity(entity);
     requestBuilder.setHeaders(h);
-    requestBuilder.setMethod(request.getHeader(HEADER_METHOD_OVERRIDE));
+    requestBuilder.setMethod(validateOverride(request, request.getHeader(HEADER_METHOD_OVERRIDE)));
 
     requestContext.putLocalAttr(R2Constants.IS_QUERY_TUNNELED, true);
 
     return requestBuilder.build();
+  }
+
+  private static String validateOverride(RestRequest request, String method) throws IOException {
+    if (!VALID_HTTP_VERBS.contains(method)) {
+      LOG.warn("Invalid HTTP method override header, rejecting request.");
+      throw new IOException("Invalid HTTP method override header.");
+    }
+    return method;
   }
 
 

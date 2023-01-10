@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -42,6 +43,9 @@ public class ZooKeeperEphemeralStoreTest
   protected File     _dataPath;
   protected File     _logPath;
   protected int      _port;
+  private final AtomicReference<String> _clusterInCallback = new AtomicReference<>();
+  private final AtomicReference<String> _nodePathInCallback = new AtomicReference<>();
+  private final AtomicReference<String> _dataInCallback = new AtomicReference<>();
 
   @BeforeSuite
   public void doOneTimeSetUp() throws InterruptedException
@@ -99,23 +103,39 @@ public class ZooKeeperEphemeralStoreTest
           throws InterruptedException, IOException, PropertyStoreException, ExecutionException
   {
     ZooKeeperEphemeralStore<String> store = getStore();
+    store.setZnodePathAndDataCallback(((cluster, nodePath, data) -> {
+      _clusterInCallback.set(cluster);
+      _nodePathInCallback.set(nodePath);
+      _dataInCallback.set(data);
+    }));
 
-    store.put("service-1", "1");
-    store.put("service-1", "2");
-    store.put("service-2", "3");
+    String service_1 = "service-1";
+    String path_1 = "/test-path/" + service_1 + "/ephemoral-0000000000";
+    String data_1 = "1";
+    String path_2 = "/test-path/" + service_1 + "/ephemoral-0000000001";
+    String data_2 = "2";
 
-    assertTrue(store.get("service-1").equals("1,2")
-        || store.get("service-1").equals("2,1"));
-    assertEquals(store.get("service-2"), "3");
+    String service_2 = "service-2";
+    String data_3 = "3";
+    String path_3 = "/test-path/" + service_2 + "/ephemoral-0000000000";
+
+    store.put(service_1, data_1);
+    verifyClusterPathAndDataInCallback(service_1, path_1, data_1);
+    store.put(service_1, data_2);
+    verifyClusterPathAndDataInCallback(service_1, path_2, data_2);
+    store.put(service_2, data_3);
+    verifyClusterPathAndDataInCallback(service_2, path_3, data_3);
+
+    assertTrue(store.get(service_1).equals("1,2")
+        || store.get(service_1).equals("2,1"));
+    assertEquals(store.get(service_2), data_3);
     assertNull(store.get("service-3"));
 
-    store.removePartial("service-1", "2");
+    store.removePartial(service_1, data_2);
+    assertEquals(store.get(service_1), data_1);
 
-    assertEquals(store.get("service-1"), "1");
-
-    store.remove("service-2");
-
-    assertNull(store.get("service-2"));
+    store.remove(service_2);
+    assertNull(store.get(service_2));
 
     final FutureCallback<None> callback = new FutureCallback<>();
     store.shutdown(callback);
@@ -147,4 +167,9 @@ public class ZooKeeperEphemeralStoreTest
     }
   }
 
+  private void verifyClusterPathAndDataInCallback(String cluster, String path, String data) {
+    assertEquals(_clusterInCallback.get(), cluster);
+    assertEquals(_nodePathInCallback.get(), path);
+    assertEquals(_dataInCallback.get(), data);
+  }
 }

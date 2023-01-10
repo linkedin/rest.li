@@ -1,0 +1,6 @@
+{
+  "type": "fixed",
+  "size": 16,
+  "name": "FixedType",
+  "namespace": "com.linkedin.test"
+}

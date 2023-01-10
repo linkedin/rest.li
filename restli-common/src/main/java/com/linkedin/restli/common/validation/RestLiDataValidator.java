@@ -556,9 +556,8 @@ public class RestLiDataValidator
       return checkSetResult;
     }
     // Custom validation rules and Rest.li annotations for set operations are checked here.
-    // It's okay if required fields are absent in a partial update request, so use ignore mode.
     return ValidateDataAgainstSchema.validate(new SimpleDataElement(entity.data(), entity.schema()),
-        new ValidationOptions(RequiredMode.IGNORE), getValidatorForInputEntityValidation(entity.schema()));
+        getValidationOptionsForInputEntityValidation(true), getValidatorForInputEntityValidation(entity.schema()));
   }
 
   /**
@@ -633,18 +632,14 @@ public class RestLiDataValidator
 
   private ValidationResult validateInputEntity(RecordTemplate entity)
   {
-    ValidationOptions validationOptions = new ValidationOptions();
-    // Even if ReadOnly fields are required,
-    //  the client cannot supply them in a create request, so they should be treated as optional.
-    //  similarly for update requests used as upsert (update to create), they are treated as optional.
-    validationOptions.setTreatOptional(_readOnlyOptionalPredicate);
-    return ValidateDataAgainstSchema.validate(entity, validationOptions, getValidatorForInputEntityValidation(entity.schema()));
+    return ValidateDataAgainstSchema.validate(entity, getValidationOptionsForInputEntityValidation(false),
+    getValidatorForInputEntityValidation(entity.schema()));
   }
 
   private ValidationResult validateOutputEntity(RecordTemplate entity, DataSchema validatingSchema)
   {
-    return ValidateDataAgainstSchema.validate(entity.data(), validatingSchema, new ValidationOptions(),
-        getValidatorForOutputEntityValidation(validatingSchema));
+    return ValidateDataAgainstSchema.validate(entity.data(), validatingSchema,
+        getValidationOptionsForOutputEntityValidation(), getValidatorForOutputEntityValidation(validatingSchema));
   }
 
   protected Validator getValidatorForOutputEntityValidation(DataSchema validatingSchema)
@@ -652,9 +647,31 @@ public class RestLiDataValidator
     return new DataSchemaAnnotationValidator(validatingSchema);
   }
 
+  protected ValidationOptions getValidationOptionsForOutputEntityValidation()
+  {
+    return new ValidationOptions();
+  }
+
   protected Validator getValidatorForInputEntityValidation(DataSchema validatingSchema)
   {
     return new DataValidator(validatingSchema);
+  }
+
+  protected ValidationOptions getValidationOptionsForInputEntityValidation(boolean isPatch)
+  {
+    ValidationOptions validationOptions = new ValidationOptions();
+    // Even if ReadOnly fields are required, the client cannot supply them in a create request, so they should be
+    // treated as optional. similarly for update requests used as upsert (update to create), they are treated as
+    // optional.
+    validationOptions.setTreatOptional(_readOnlyOptionalPredicate);
+
+    // It's okay if required fields are absent in a partial update request, so use ignore mode for required fields.
+    if (isPatch)
+    {
+      validationOptions.setRequiredMode(RequiredMode.IGNORE);
+    }
+
+    return validationOptions;
   }
 
   private static ValidationErrorResult validationResultWithErrorMessage(String errorMessage)

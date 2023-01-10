@@ -31,6 +31,8 @@ import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory;
+import com.linkedin.d2.discovery.event.LogOnlyServiceDiscoveryEventEmitter;
+import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
@@ -113,6 +115,7 @@ public class D2ClientConfig
   boolean enableClusterFailout = false;
   FailoutConfigProviderFactory failoutConfigProviderFactory;
   FailoutRedirectStrategy failoutRedirectStrategy;
+  ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter = new LogOnlyServiceDiscoveryEventEmitter(); // default to use log-only emitter
 
   public D2ClientConfig()
   {
@@ -172,7 +175,8 @@ public class D2ClientConfig
                  CanaryDistributionProvider canaryDistributionProvider,
                  boolean enableClusterFailout,
                  FailoutConfigProviderFactory failoutConfigProviderFactory,
-                 FailoutRedirectStrategy failoutRedirectStrategy)
+                 FailoutRedirectStrategy failoutRedirectStrategy,
+                 ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter)
   {
     this.zkHosts = zkHosts;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -229,5 +233,6 @@ public class D2ClientConfig
     this.enableClusterFailout = enableClusterFailout;
     this.failoutConfigProviderFactory = failoutConfigProviderFactory;
     this.failoutRedirectStrategy = failoutRedirectStrategy;
+    this.serviceDiscoveryEventEmitter = serviceDiscoveryEventEmitter;
   }
 }

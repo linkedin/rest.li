@@ -1,0 +1,12 @@
+namespace com.linkedin.pegasus.generator.test.idl.enums
+
+enum EnumProperties {
+  @color = "red"
+  APPLE
+
+  @color = "orange"
+  ORANGE
+
+  @color = "yellow"
+  BANANA
+}

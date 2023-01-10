@@ -25,31 +25,18 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static com.linkedin.d2.util.TestDataHelper.*;
+
+
 public class UriPropertiesTest
 {
   @Test
   public void testUriProperties()
   {
-    URI uri1 = URI.create("http://google.com");
-    URI uri2 = URI.create("http://linkedin.com");
-    URI uri3 = URI.create("https://linkedin.com");
-
-    Map<Integer, PartitionData> map1 = new HashMap<>();
-    map1.put(0, new PartitionData(1));
-    map1.put(1, new PartitionData(2));
-
-    Map<Integer, PartitionData> map2 = new HashMap<>();
-    map2.put(1, new PartitionData(0.5));
-
-    Map<Integer, PartitionData> map3 = new HashMap<>();
-    map3.put(1, new PartitionData(2));
-    map3.put(3, new PartitionData(3.5));
-    map3.put(4, new PartitionData(1));
-
     Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
-    uriData.put(uri1, map1);
-    uriData.put(uri2, map2);
-    uriData.put(uri3, map3);
+    uriData.put(URI_1, MAP_1);
+    uriData.put(URI_2, MAP_2);
+    uriData.put(URI_3, MAP_3);
 
     String clusterName = "TestCluster";
     UriProperties properties = new UriProperties(clusterName, uriData);
@@ -58,32 +45,32 @@ public class UriPropertiesTest
     Assert.assertEquals(clusterName, properties.getClusterName());
     Assert.assertEquals(properties.getPartitionDesc(), uriData);
     Assert.assertEquals(properties.Uris(), uriData.keySet());
-    Assert.assertEquals(properties.getPartitionDataMap(uri1), map1);
-    Assert.assertEquals(properties.getPartitionDataMap(uri2), map2);
-    Assert.assertEquals(properties.getPartitionDataMap(uri3), map3);
+    Assert.assertEquals(properties.getPartitionDataMap(URI_1), MAP_1);
+    Assert.assertEquals(properties.getPartitionDataMap(URI_2), MAP_2);
+    Assert.assertEquals(properties.getPartitionDataMap(URI_3), MAP_3);
 
     // test getUriBySchemeAndPartition
     Set<URI> set = new HashSet<>(1);
-    set.add(uri1);
+    set.add(URI_1);
     Assert.assertEquals(properties.getUriBySchemeAndPartition("http", 0), set);
-    set.add(uri2);
+    set.add(URI_2);
     Assert.assertEquals(properties.getUriBySchemeAndPartition("http", 1), set);
     set.clear();
-    set.add(uri3);
+    set.add(URI_3);
     Assert.assertEquals(properties.getUriBySchemeAndPartition("https", 1), set);
     Assert.assertNull(properties.getUriBySchemeAndPartition("rtp", 0));
     Assert.assertNull(properties.getUriBySchemeAndPartition("http", 2));
 
     // test unmodifiability
     Map<URI, Map<Integer, PartitionData>> partitionDesc = properties.getPartitionDesc();
-    Map<Integer, PartitionData> partitionDataMap = properties.getPartitionDataMap(uri1);
+    Map<Integer, PartitionData> partitionDataMap = properties.getPartitionDataMap(URI_1);
     URI testUri = URI.create("test");
     try
     {
       partitionDesc.put(testUri, null);
       Assert.fail("Should not be modifiable");
     }
-    catch (UnsupportedOperationException e)
+    catch (UnsupportedOperationException ignored)
     {
 
     }
@@ -92,7 +79,7 @@ public class UriPropertiesTest
       partitionDataMap.put(1, new PartitionData(1));
       Assert.fail("Should not be modifiable");
     }
-    catch (UnsupportedOperationException e)
+    catch (UnsupportedOperationException ignored)
     {
 
     }

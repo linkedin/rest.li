@@ -20,8 +20,11 @@ import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.properties.FailoutProperties;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -36,10 +39,28 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
   private static final Logger _log = LoggerFactory.getLogger(FailedoutClusterManager.class);
   private final ConcurrentMap<String, FailedoutClusterManager> _failedoutClusterManagers = new ConcurrentHashMap<>();
   private final LoadBalancerState _loadBalancerState;
+  /**
+   * If provided, this executor will be used to schedule peer cluster watch removal.
+   */
+  private final ScheduledExecutorService _scheduledExecutorService;
+  /**
+   * {@link #_scheduledExecutorService} must be provided for this config to be effective.
+   * This controls the delay that we will wait before removing peer cluster watches after the failout is over, which
+   * helps to make sure that any pending requests to the peer clusters are finished.
+   */
+  private final long _peerWatchTeardownDelayMs;
 
   public ZKFailoutConfigProvider(@Nonnull LoadBalancerState loadBalancerState)
   {
+    this(loadBalancerState, 0, null);
+  }
+
+  public ZKFailoutConfigProvider(@Nonnull LoadBalancerState loadBalancerState,
+      long peerWatchTeardownDelayMs, ScheduledExecutorService scheduledExecutorService)
+  {
     _loadBalancerState = loadBalancerState;
+    _peerWatchTeardownDelayMs = peerWatchTeardownDelayMs;
+    _scheduledExecutorService = scheduledExecutorService;
   }
 
   @Override
@@ -53,6 +74,7 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
   public void shutdown()
   {
     _loadBalancerState.unregisterClusterListener(this);
+    _failedoutClusterManagers.values().forEach(FailedoutClusterManager::shutdown);
   }
 
   /**
@@ -61,14 +83,17 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
    * @return Parsed and processed config that's ready to be used for routing requests.
    */
   public abstract @Nullable
-  FailoutConfig createFailoutConfig(@Nonnull String clusterName,
-                                    @Nullable FailoutProperties failoutProperties);
+  FailoutConfig createFailoutConfig(@Nonnull String clusterName, @Nullable FailoutProperties failoutProperties);
 
   @Override
   public FailoutConfig getFailoutConfig(String clusterName)
   {
     final FailedoutClusterManager failedoutClusterManager = _failedoutClusterManagers.get(clusterName);
     return failedoutClusterManager != null ? failedoutClusterManager.getFailoutConfig() : null;
+  }
+
+  public Set<String> getClusters() {
+    return new HashSet<>(_failedoutClusterManagers.keySet());
   }
 
   @Override
@@ -81,7 +106,9 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
       _log.info("Detected cluster failout property change for cluster: {}. New properties: {}", clusterName, failoutProperties);
 
       final FailoutConfig failoutConfig = createFailoutConfig(clusterName, failoutProperties);
-      _failedoutClusterManagers.computeIfAbsent(clusterName, name -> new FailedoutClusterManager(clusterName, _loadBalancerState))
+      _failedoutClusterManagers
+        .computeIfAbsent(clusterName, name -> new FailedoutClusterManager(clusterName, _loadBalancerState,
+            createConnectionWarmUpHandler(), _peerWatchTeardownDelayMs, _scheduledExecutorService))
         .updateFailoutConfig(failoutConfig);
     }
     else
@@ -99,5 +126,21 @@ public abstract class ZKFailoutConfigProvider implements FailoutConfigProvider, 
       _log.info("Cluster: {} removed. Resetting cluster failout config.", clusterName);
       manager.updateFailoutConfig(null);
     }
+  }
+
+  /**
+   * Creates a {@link FailedoutClusterConnectionWarmUpHandler} to warm-up the connection to peer clusters before
+   * sending the actual request. Establishing connections can be costly and possibly overload the peer clusters
+   * when a large number of clients trying to connect to the peer clusters at the same time when fail out starts.
+   * Sub-classes can override this method to return a non-null handler to warm up the connections. Method will be
+   * invoked for each cluster failed out.
+   * @return null if no connection warm-up is required.
+   *         An instance of {@link FailedoutClusterConnectionWarmUpHandler} to handle warm-up.
+   *         Handler will be invoked once when we first start watching a peer cluster.
+   */
+  @Nullable
+  public FailedoutClusterConnectionWarmUpHandler createConnectionWarmUpHandler()
+  {
+    return null;
   }
 }

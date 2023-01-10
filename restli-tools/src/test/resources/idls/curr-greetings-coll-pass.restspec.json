@@ -55,6 +55,7 @@
     } ],
     "finders" : [ {
       "name" : "search",
+      "linkedBatchFinderName" : "someBatchFinder",
       "parameters" : [ {
         "name" : "tone",
         "type" : "array",

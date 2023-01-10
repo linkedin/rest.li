@@ -10,8 +10,10 @@ import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.ErrorResponse;
 import com.linkedin.restli.common.HttpStatus;
+import com.linkedin.restli.common.OperationNameGenerator;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.RestLiTraceInfo;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
 import com.linkedin.restli.internal.common.HeaderUtil;
 import com.linkedin.restli.internal.common.ProtocolVersionUtil;
@@ -226,6 +228,12 @@ abstract class BaseRestLiServer
   {
     ServerResourceContext context = routingResult.getContext();
     ResourceMethodDescriptor method = routingResult.getResourceMethod();
+
+    RestLiTraceInfo.inject(context.getRawRequestContext(),
+        method.getResourceName(),
+        OperationNameGenerator.generate(method.getMethodType(), method.getMethodName()),
+        method.getResourceModel().getBaseUriTemplate(),
+        method.getResourceMethodIdentifier());
 
     FilterRequestContext filterContext;
     RestLiArgumentBuilder argumentBuilder;

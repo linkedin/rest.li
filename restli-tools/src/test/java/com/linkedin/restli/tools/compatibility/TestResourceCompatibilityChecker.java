@@ -379,6 +379,9 @@ public class TestResourceCompatibilityChecker
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "finders", "search", "assocKeys"),
                                                  CompatibilityInfo.Type.VALUE_NOT_EQUAL,
                                                  new StringArray("q", "s"), new StringArray("q", "changed_key")));
+    resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "finders", "search", "linkedBatchFinderName"),
+                                                 CompatibilityInfo.Type.VALUE_NOT_EQUAL,
+                                                 "someBatchFinder", "someOtherBatchFinder"));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "finders", "find_assocKey_downgrade", "assocKeys"),
                                                  CompatibilityInfo.Type.FINDER_ASSOCKEYS_DOWNGRADE));
     resourceTestErrors.add(new CompatibilityInfo(Arrays.asList("", "collection", "actions", "oneAction", "parameters", "bitfield", "items"),

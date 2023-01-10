@@ -569,6 +569,17 @@ public final class RecordDataSchema extends NamedDataSchema
   }
 
   /**
+   * Get the Set of {@link NamedDataSchema} declared as inline includes.
+   * The order of declared inline includes can be obtained by calling {@link #getInclude()}.
+   *
+   * @return the set of included {@link NamedDataSchema}s declared as inlined.
+   */
+  public Set<NamedDataSchema> getIncludesDeclaredInline()
+  {
+    return _includesDeclaredInline;
+  }
+
+  /**
    * Set the list of included {@link RecordDataSchema}'s.
    *
    * The schema's must resolve to a record. The type is {@link NamedDataSchema}

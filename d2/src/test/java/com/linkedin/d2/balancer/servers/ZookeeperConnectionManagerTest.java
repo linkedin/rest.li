@@ -1,9 +1,14 @@
 package com.linkedin.d2.balancer.servers;
 
+import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
+import com.linkedin.d2.util.TestDataHelper;
 import com.linkedin.test.util.retry.ThreeRetries;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -30,6 +35,7 @@ import com.linkedin.d2.discovery.stores.zk.ZKTestUtil;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.test.util.AssertionMethods;
 
+import static com.linkedin.d2.util.TestDataHelper.getMockServiceDiscoveryEventEmitter;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNotNull;
@@ -41,7 +47,6 @@ import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
 
 
 /**
@@ -57,6 +62,7 @@ public class ZookeeperConnectionManagerTest
   protected ZKServer _zkServer;
   private String _uri;
   private String _cluster;
+  private String _expectedUriNodePath;
   private int testId = 0;
   private static final double WEIGHT = 0.5d;
   private static final int PARTITION1_ID = 1;
@@ -81,6 +87,7 @@ public class ZookeeperConnectionManagerTest
     testId++;
     _uri = "http://cluster-" + testId + "/test";
     _cluster = "cluster-" + testId;
+    _expectedUriNodePath = "/d2/uris/" + _cluster + "/ephemoral-0000000000";
   }
 
   @AfterMethod
@@ -95,14 +102,27 @@ public class ZookeeperConnectionManagerTest
     throws Exception
   {
     ZooKeeperAnnouncer announcer = getZooKeeperAnnouncer(_cluster, _uri, WEIGHT);
+    TestDataHelper.MockServiceDiscoveryEventEmitter eventEmitter = getMockServiceDiscoveryEventEmitter();
+    announcer.setEventEmitter(eventEmitter);
 
     ZooKeeperConnectionManager manager = createManager(true, announcer);
 
-    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
+    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore(announcer);
     UriProperties properties = store.get(_cluster);
     assertNotNull(properties);
     assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
     assertEquals(properties.Uris().size(), 1);
+
+    List<String> expectedClusters = Collections.singletonList(_cluster);
+    List<ServiceDiscoveryEventEmitter.StatusUpdateActionType> expectedActionTypes = Collections.singletonList(ServiceDiscoveryEventEmitter.StatusUpdateActionType.MARK_READY);
+    List<String> expectedUriNodePaths = Collections.singletonList(_expectedUriNodePath);
+    eventEmitter.verifySDStatusActiveUpdateIntentEvents(
+        Collections.singletonList(expectedClusters),
+        expectedActionTypes,
+        expectedUriNodePaths
+    );
+    eventEmitter.verifySDStatusWriteEvents(expectedClusters, expectedClusters, expectedActionTypes, expectedUriNodePaths,
+        Collections.singletonList(properties.toString()), Collections.singletonList(0), expectedUriNodePaths, Collections.singletonList(true));
 
     shutdownManager(manager);
   }
@@ -195,10 +215,12 @@ public class ZookeeperConnectionManagerTest
     throws Exception
   {
     ZooKeeperAnnouncer announcer = getZooKeeperAnnouncer(_cluster, _uri, WEIGHT);
+    TestDataHelper.MockServiceDiscoveryEventEmitter eventEmitter = getMockServiceDiscoveryEventEmitter();
+    announcer.setEventEmitter(eventEmitter);
 
     ZooKeeperConnectionManager manager = createManager(true, announcer);
 
-    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
+    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore(announcer);
     UriProperties properties = store.get(_cluster);
     assertNotNull(properties);
     assertEquals(properties.getPartitionDataMap(URI.create(_uri)).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), WEIGHT);
@@ -208,9 +230,21 @@ public class ZookeeperConnectionManagerTest
     announcer.markDown(markDownCallback);
     markDownCallback.get();
 
-    properties = store.get(_cluster);
-    assertNotNull(properties);
-    assertEquals(properties.Uris().size(), 0);
+    UriProperties propertiesAfterMarkdown = store.get(_cluster);
+    assertNotNull(propertiesAfterMarkdown);
+    assertEquals(propertiesAfterMarkdown.Uris().size(), 0);
+
+    List<ServiceDiscoveryEventEmitter.StatusUpdateActionType> expectedActionTypes = Arrays.asList(ServiceDiscoveryEventEmitter.StatusUpdateActionType.MARK_READY,
+      ServiceDiscoveryEventEmitter.StatusUpdateActionType.MARK_DOWN);
+    List<String> expectedUriNodePaths = Arrays.asList(_expectedUriNodePath, _expectedUriNodePath);
+    eventEmitter.verifySDStatusActiveUpdateIntentEvents(
+        Arrays.asList(Collections.singletonList(_cluster), Collections.singletonList(_cluster)),
+        expectedActionTypes,
+        expectedUriNodePaths
+    );
+    List<String> expectedWriteClusters = Arrays.asList(_cluster, _cluster);
+    eventEmitter.verifySDStatusWriteEvents(expectedWriteClusters, expectedWriteClusters, expectedActionTypes, expectedUriNodePaths,
+        Arrays.asList(properties.toString(), properties.toString()), Arrays.asList(0, 0), expectedUriNodePaths, Arrays.asList(true, true));
 
     shutdownManager(manager);
   }
@@ -566,11 +600,17 @@ public class ZookeeperConnectionManagerTest
     ScheduledExecutorService warmupExecutorService = Executors.newSingleThreadScheduledExecutor();
     boolean isDarkWarmupEnabled = true;
     String warmupClusterName = "warmup" + _cluster;
+    String expectedWarmupUriNodePath = "/d2/uris/" + warmupClusterName + "/ephemoral-0000000000";
     int warmupDuration = 2; //run warm-up for 2 seconds
+    Map<Integer, PartitionData> partitions = Collections.singletonMap(0, new PartitionData(0.5));
+    UriProperties warmupProperties = new UriProperties(warmupClusterName, Collections.singletonMap(URI.create(_uri), partitions));
 
     ZooKeeperAnnouncer announcer = getZooKeeperWarmupAnnouncer(_cluster, _uri, WEIGHT, isDarkWarmupEnabled, warmupClusterName, warmupDuration, warmupExecutorService);
+    TestDataHelper.MockServiceDiscoveryEventEmitter eventEmitter = getMockServiceDiscoveryEventEmitter();
+    announcer.setEventEmitter(eventEmitter);
+
     ZooKeeperConnectionManager manager = createManagerForWarmupTests(false, warmupDuration, announcer);
-    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore();
+    ZooKeeperEphemeralStore<UriProperties> store = createAndStartUriStore(announcer);
     FutureCallback<None> managerStartCallback = new FutureCallback<>();
     manager.start(managerStartCallback);
 
@@ -583,9 +623,24 @@ public class ZookeeperConnectionManagerTest
     assertEquals(properties.Uris().size(), 1);
 
     // If warm up has happened, mark down for the warm up cluster should be successful
-    properties = store.get(warmupClusterName);
-    assertNotNull(properties);
-    assertEquals(properties.Uris().size(), 0);
+    UriProperties warmupPropertiesAfterMarkdown = store.get(warmupClusterName);
+    assertNotNull(warmupPropertiesAfterMarkdown);
+    assertEquals(warmupPropertiesAfterMarkdown.Uris().size(), 0);
+
+    List<ServiceDiscoveryEventEmitter.StatusUpdateActionType> expectedActionTypes = Arrays.asList(
+        ServiceDiscoveryEventEmitter.StatusUpdateActionType.MARK_READY,
+        ServiceDiscoveryEventEmitter.StatusUpdateActionType.MARK_DOWN,
+        ServiceDiscoveryEventEmitter.StatusUpdateActionType.MARK_READY);
+    List<String> expectedUriNodePaths = Arrays.asList(expectedWarmupUriNodePath, expectedWarmupUriNodePath, _expectedUriNodePath);
+    eventEmitter.verifySDStatusActiveUpdateIntentEvents(
+        Arrays.asList(Collections.singletonList(warmupClusterName), Collections.singletonList(warmupClusterName), Collections.singletonList(_cluster)),
+        expectedActionTypes,
+        expectedUriNodePaths
+    );
+    List<String> expectedWriteClusters = Arrays.asList(warmupClusterName, warmupClusterName, _cluster);
+    eventEmitter.verifySDStatusWriteEvents(expectedWriteClusters, Arrays.asList(_cluster, _cluster, _cluster),
+        expectedActionTypes, expectedUriNodePaths, Arrays.asList(warmupProperties.toString(), warmupProperties.toString(), properties.toString()),
+        Arrays.asList(0, 0, 0), expectedUriNodePaths, Arrays.asList(true, true, true));
 
     shutdownManager(manager);
   }
@@ -853,11 +908,20 @@ public class ZookeeperConnectionManagerTest
   private static ZooKeeperEphemeralStore<UriProperties> createAndStartUriStore()
     throws IOException, ExecutionException, InterruptedException
   {
+    return createAndStartUriStore(null);
+  }
+
+  private static ZooKeeperEphemeralStore<UriProperties> createAndStartUriStore(ZooKeeperAnnouncer announcer)
+      throws IOException, ExecutionException, InterruptedException
+  {
     ZKConnection zkClient = new ZKConnection("localhost:" + PORT, 5000);
     zkClient.start();
 
     ZooKeeperEphemeralStore<UriProperties> store =
-      new ZooKeeperEphemeralStore<>(zkClient, new UriPropertiesJsonSerializer(), new UriPropertiesMerger(), "/d2/uris");
+        new ZooKeeperEphemeralStore<>(zkClient, new UriPropertiesJsonSerializer(), new UriPropertiesMerger(), "/d2/uris");
+    if (announcer != null) {
+      announcer.setStore(store);
+    }
     FutureCallback<None> callback = new FutureCallback<>();
     store.start(callback);
     callback.get();

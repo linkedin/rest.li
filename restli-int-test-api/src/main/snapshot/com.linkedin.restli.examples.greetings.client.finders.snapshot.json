@@ -57,6 +57,7 @@
     "path" : "/finders",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.FindersResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.FindersResource",
     "collection" : {
       "identifier" : {
         "name" : "findersId",
@@ -64,16 +65,20 @@
       },
       "supports" : [ ],
       "finders" : [ {
-        "name" : "basicSearch"
+        "name" : "basicSearch",
+        "javaMethodName" : "basicSearch"
       }, {
-        "name" : "predefinedSearch"
+        "name" : "predefinedSearch",
+        "javaMethodName" : "predefinedSearch"
       }, {
         "name" : "searchWithMetadata",
+        "javaMethodName" : "searchWithMetadata",
         "metadata" : {
           "type" : "com.linkedin.restli.examples.greetings.api.SearchMetadata"
         }
       }, {
-        "name" : "searchWithoutMetadata"
+        "name" : "searchWithoutMetadata",
+        "javaMethodName" : "search"
       } ],
       "entity" : {
         "path" : "/finders/{findersId}"

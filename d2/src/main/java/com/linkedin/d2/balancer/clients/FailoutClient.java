@@ -90,8 +90,6 @@ public class FailoutClient extends D2ClientDelegator
         FailoutClient.super.restRequest(redirectedRequest, requestContext, callback);
       }
     });
-
-    super.restRequest(request, requestContext, callback);
   }
 
   @Override

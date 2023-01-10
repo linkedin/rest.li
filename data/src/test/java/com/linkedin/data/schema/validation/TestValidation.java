@@ -2373,4 +2373,79 @@ public class TestValidation
       Assert.assertTrue(message.contains(expected), message + " does not contain " + expected);
     }
   }
+
+  @Test
+  public void testFixBase64EncodedFixedField() throws IOException
+  {
+    String schemaText =
+        "{\n" +
+            "  \"name\" : \"Foo\",\n" +
+            "  \"type\" : \"record\",\n" +
+            "  \"fields\" : [\n" +
+            "    { \"name\" : \"fixedField\",\n" +
+            "      \"type\" : {\n" +
+            "        \"type\": \"fixed\", \"size\": 16, \"name\": \"fixed16\"\n" +
+            "      },\n" +
+            "       \"optional\" : true\n" +
+            "     }\n" +
+            "  ]\n" +
+            "}\n";
+
+    DataSchema schema = dataSchemaFromString(schemaText);
+
+    DataMap validBase64StringWithCorrectSizeMap = new DataMap();
+    validBase64StringWithCorrectSizeMap.put("fixedField", "YWJjZGVmaH59QDEzNDU2Nw==");
+
+    DataMap validBase64StringWithIncorrectSizeMap = new DataMap();
+    validBase64StringWithIncorrectSizeMap.put("fixedField", "YWJjZGVmaH59QDEzNA==");
+
+    DataMap invalidBase64StringMap = new DataMap();
+    invalidBase64StringMap.put("fixedField", "~@#4");
+
+    ValidationResult result;
+    ValidationOptions optionsWithoutFixBase64 = new ValidationOptions();
+
+    result = validate(validBase64StringWithCorrectSizeMap, schema, optionsWithoutFixBase64);
+    Assert.assertFalse(result.hasFix());
+    Assert.assertFalse(result.isValid());
+    Assert.assertEquals(result.getMessages().size(), 1);
+    Assert.assertTrue(result.getMessages().toString().contains("ERROR :: /fixedField :: \"YWJjZGVmaH59QDEzNDU2Nw==\"" +
+        " length (24) is inconsistent with expected fixed size of 16"));
+
+    result = validate(validBase64StringWithIncorrectSizeMap, schema, optionsWithoutFixBase64);
+    Assert.assertFalse(result.hasFix());
+    Assert.assertFalse(result.isValid());
+    Assert.assertEquals(result.getMessages().size(), 1);
+    Assert.assertTrue(result.getMessages().toString().contains("ERROR :: /fixedField :: \"YWJjZGVmaH59QDEzNA==\"" +
+        " length (20) is inconsistent with expected fixed size of 16"));
+
+    result = validate(invalidBase64StringMap, schema, optionsWithoutFixBase64);
+    Assert.assertFalse(result.hasFix());
+    Assert.assertFalse(result.isValid());
+    Assert.assertEquals(result.getMessages().size(), 1);
+    Assert.assertTrue(result.getMessages().toString().contains("ERROR :: /fixedField :: \"~@#4\" length (4) is " +
+        "inconsistent with expected fixed size of 16"));
+
+    ValidationOptions optionsWithFixBase64 = new ValidationOptions();
+    optionsWithFixBase64.setShouldFixBase64EncodedFixedValues(true);
+
+    result = validate(validBase64StringWithCorrectSizeMap, schema, optionsWithFixBase64);
+    Assert.assertTrue(result.hasFix());
+    Assert.assertTrue(result.isValid());
+
+    result = validate(validBase64StringWithIncorrectSizeMap, schema, optionsWithFixBase64);
+    Assert.assertFalse(result.hasFix());
+    Assert.assertFalse(result.isValid());
+    Assert.assertEquals(result.getMessages().size(), 1);
+    Assert.assertTrue(result.getMessages().toString().contains("ERROR :: /fixedField :: Both encoded " +
+        "\"YWJjZGVmaH59QDEzNA==\" length (20) and Base64 decoded length (13) are inconsistent with expected fixed " +
+        "size of 16"));
+
+    result = validate(invalidBase64StringMap, schema, optionsWithFixBase64);
+    Assert.assertFalse(result.hasFix());
+    Assert.assertFalse(result.isValid());
+    Assert.assertEquals(result.getMessages().size(), 1);
+    Assert.assertTrue(result.getMessages().toString().contains("ERROR :: /fixedField :: \"~@#4\" length (4) is " +
+        "inconsistent with expected fixed size of 16. Base64 decoding failed."));
+  }
 }

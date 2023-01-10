@@ -96,8 +96,8 @@ public class TestData
     illegalObjects.add(new AtomicLong(-13));
     illegalObjects.add(new BigDecimal(13));
     illegalObjects.add(new BigInteger("13"));
-    illegalObjects.add(new Byte("13"));
-    illegalObjects.add(new Short("13"));
+    illegalObjects.add(Byte.valueOf("13"));
+    illegalObjects.add(Short.valueOf("13"));
 
     illegalObjects.add(new ArrayList<>());
     illegalObjects.add(new HashMap<>());

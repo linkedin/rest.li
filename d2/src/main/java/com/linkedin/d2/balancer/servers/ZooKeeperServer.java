@@ -32,6 +32,7 @@ import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.UriProperties;
+import com.linkedin.d2.discovery.event.D2ServiceDiscoveryEventHelper;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 
 import org.apache.zookeeper.KeeperException;
@@ -47,6 +48,7 @@ public class
   private static final Logger _log = LoggerFactory.getLogger(ZooKeeperServer.class);
 
   private volatile ZooKeeperEphemeralStore<UriProperties> _store;
+  private D2ServiceDiscoveryEventHelper _eventHelper = null;
 
   public ZooKeeperServer()
   {
@@ -55,6 +57,10 @@ public class
   public ZooKeeperServer(ZooKeeperEphemeralStore<UriProperties> store)
   {
     _store = store;
+  }
+
+  public String getConnectString() {
+    return _store.getConnectString();
   }
 
   @Override
@@ -246,6 +252,8 @@ public class
    * for given uri.
    * 2. Mark down existing node.
    * 3. Mark up new node for uri with modified UriProperties and given partitionDataMap.
+   * 4. Emit service discovery active change and write events for mark-down and mark-up. NOTE: active change event has to be emitted AFTER
+   *    mark-up/down complete because the znode path (tracingId in the event) is set to {@link ZooKeeperAnnouncer} during the mark-up/down.
    */
   @Override
   public void addUriSpecificProperty(String clusterName,
@@ -284,21 +292,41 @@ public class
           Map<String, Object> uriSpecificProperties = uriProperties.getUriSpecificProperties().getOrDefault(uri, new HashMap<>());
           uriSpecificProperties.put(uriSpecificPropertiesName, uriSpecificPropertiesValue);
 
-          Callback<None> markUpCallback = new Callback<None>()
+          long markDownStartAt = System.currentTimeMillis(); // record mark down start at
+          Callback<None> markDownCallback = new Callback<None>()
           {
             @Override
             public void onError(Throwable e)
             {
+              emitSDStatusActiveUpdateIntentAndWriteEvents(clusterName, false, false, markDownStartAt);
               callback.onError(e);
             }
 
             @Override
             public void onSuccess(None result)
             {
-              markUp(clusterName, uri, partitionDataMap, uriSpecificProperties, callback);
+              emitSDStatusActiveUpdateIntentAndWriteEvents(clusterName, false, true, markDownStartAt);
+
+              long markUpStartAt = System.currentTimeMillis(); // record mark up start at
+              Callback<None> markUpCallback = new Callback<None>()
+              {
+                @Override
+                public void onSuccess(None result) {
+                  emitSDStatusActiveUpdateIntentAndWriteEvents(clusterName, true, true, markUpStartAt);
+
+                  callback.onSuccess(result);
+                }
+
+                @Override
+                public void onError(Throwable e) {
+                  emitSDStatusActiveUpdateIntentAndWriteEvents(clusterName, true, false, markUpStartAt);
+                  callback.onError(e);
+                }
+              };
+              markUp(clusterName, uri, partitionDataMap, uriSpecificProperties, markUpCallback);
             }
           };
-          markDown(clusterName, uri, markUpCallback);
+          markDown(clusterName, uri, markDownCallback);
         }
       }
 
@@ -317,6 +345,10 @@ public class
     _store = store;
 
     info(_log, "store set to new store: ", _store);
+  }
+
+  public void setServiceDiscoveryEventHelper(D2ServiceDiscoveryEventHelper helper) {
+    _eventHelper = helper;
   }
 
   public void shutdown()
@@ -352,4 +384,11 @@ public class
     }
   }
 
+  private void emitSDStatusActiveUpdateIntentAndWriteEvents(String cluster, boolean isMarkUp, boolean succeeded, long startAt) {
+    if (_eventHelper == null) {
+      _log.warn("D2 service discovery event helper in ZookeeperServer is null. Skipping emitting events.");
+      return;
+    }
+    _eventHelper.emitSDStatusActiveUpdateIntentAndWriteEvents(cluster, isMarkUp, succeeded, startAt);
+  }
 }

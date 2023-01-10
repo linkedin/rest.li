@@ -62,13 +62,17 @@ public class ActionArgumentBuilder implements RestLiArgumentBuilder
     }
     DynamicRecordTemplate template = new DynamicRecordTemplate(data, resourceMethodDescriptor.getRequestDataSchema());
     ValidationResult result =
-        ValidateDataAgainstSchema.validate(data, template.schema(), new ValidationOptions(RequiredMode.IGNORE,
-                                                                                          CoercionMode.NORMAL));
+        ValidateDataAgainstSchema.validate(data, template.schema(), getValidationOptions());
     if (!result.isValid())
     {
       throw new RoutingException("Parameters of method '" + resourceMethodDescriptor.getActionName()
           + "' failed validation with error '" + result.getMessages() + "'", HttpStatus.S_400_BAD_REQUEST.getCode());
     }
     return new RestLiRequestDataImpl.Builder().entity(template).build();
+  }
+
+  protected ValidationOptions getValidationOptions()
+  {
+    return new ValidationOptions(RequiredMode.IGNORE, CoercionMode.NORMAL);
   }
 }

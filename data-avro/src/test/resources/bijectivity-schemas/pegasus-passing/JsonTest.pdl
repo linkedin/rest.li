@@ -1,0 +1,7 @@
+namespace com.linkedin.pegasus.generator.test.idl.records
+
+@json = {
+  "negativeNumber": -3000000000
+}
+record JsonTest {
+}

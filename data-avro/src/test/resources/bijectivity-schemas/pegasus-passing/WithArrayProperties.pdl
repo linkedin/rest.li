@@ -1,0 +1,5 @@
+record WithArrayProperties {
+  empties:
+    @custom = "foo"
+    array[string]
+}

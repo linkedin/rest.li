@@ -137,7 +137,7 @@ public class TestStreamingTimeout extends AbstractServiceTest
     final Throwable rootCause = ExceptionUtils.getRootCause(throwable.get());
     Assert.assertTrue(rootCause instanceof TimeoutException);
     final TimeoutException timeoutException = (TimeoutException) rootCause;
-    Assert.assertEquals(timeoutException.getMessage(), String.format(StreamingTimeout.STREAMING_TIMEOUT_MESSAGE, HTTP_STREAMING_TIMEOUT));
+    assertTimeoutMessage(timeoutException.getMessage());
   }
 
   @Test
@@ -204,7 +204,12 @@ public class TestStreamingTimeout extends AbstractServiceTest
     final Throwable rootCause = ExceptionUtils.getRootCause(throwable.get());
     Assert.assertTrue(rootCause instanceof TimeoutException);
     final TimeoutException timeoutException = (TimeoutException) rootCause;
-    Assert.assertEquals(timeoutException.getMessage(), String.format(StreamingTimeout.STREAMING_TIMEOUT_MESSAGE, HTTP_STREAMING_TIMEOUT));
+    assertTimeoutMessage(timeoutException.getMessage());
+  }
+
+  private static void assertTimeoutMessage(String message) {
+    String normalizedMessage = message.replaceFirst("writable=(false|true)", "writable=false");
+    Assert.assertEquals(normalizedMessage, String.format(StreamingTimeout.STREAMING_TIMEOUT_MESSAGE, HTTP_STREAMING_TIMEOUT, false));
   }
 
   private static Callback<StreamResponse> expectSuccessCallback(final CountDownLatch latch, final AtomicInteger status)

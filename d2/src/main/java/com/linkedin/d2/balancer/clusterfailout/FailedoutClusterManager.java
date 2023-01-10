@@ -22,6 +22,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -40,13 +42,22 @@ public class FailedoutClusterManager
   private static final Logger _log = LoggerFactory.getLogger(FailedoutClusterManager.class);
   private final String _clusterName;
   private final LoadBalancerState _loadBalancerState;
-  private final ConcurrentMap<String, LoadBalancerStateListenerCallback> _clusterListeners = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, PeerWatchState> _peerWatches = new ConcurrentHashMap<>();
+  private final FailedoutClusterConnectionWarmUpHandler _connectionWarmUpHandler;
+  private final long _peerWatchTeardownDelayMs;
+  private final ScheduledExecutorService _scheduledExecutorService;
   private FailoutConfig _failoutConfig;
 
-  public FailedoutClusterManager(@Nonnull String clusterName, @Nonnull LoadBalancerState loadBalancerState)
+  public FailedoutClusterManager(@Nonnull String clusterName, @Nonnull LoadBalancerState loadBalancerState,
+                                 @Nullable FailedoutClusterConnectionWarmUpHandler connectionWarmUpHandler,
+                                 long peerWatchTeardownDelayMs,
+                                 @Nullable ScheduledExecutorService scheduledExecutorService)
   {
     _clusterName = clusterName;
     _loadBalancerState = loadBalancerState;
+    _connectionWarmUpHandler = connectionWarmUpHandler;
+    _peerWatchTeardownDelayMs = peerWatchTeardownDelayMs;
+    _scheduledExecutorService = scheduledExecutorService;
   }
 
   public String getClusterName()
@@ -65,10 +76,13 @@ public class FailedoutClusterManager
 
   /**
    * Updates to a new failout config version.
-   * @param failoutConfig The new failout config. Null when there is not active failout associated with the cluster.
+   * @param failoutConfig The new failout config. Null when there is no active failout associated with the cluster.
    */
   public void updateFailoutConfig(@Nullable FailoutConfig failoutConfig)
   {
+    // Updating config first so that clients will get the latest config while we are processing the updates.
+    _failoutConfig = failoutConfig;
+
     if (failoutConfig == null)
     {
       removePeerClusterWatches();
@@ -77,8 +91,14 @@ public class FailedoutClusterManager
     {
       processNewConfig(failoutConfig);
     }
+  }
 
-    _failoutConfig = failoutConfig;
+  public void shutdown()
+  {
+    if (_connectionWarmUpHandler != null)
+    {
+      _connectionWarmUpHandler.shutdown();
+    }
   }
 
   /**
@@ -94,7 +114,7 @@ public class FailedoutClusterManager
     else
     {
       Set<String> peerClusters = failoutConfig.getPeerClusters();
-      addPeerClusterWatches(peerClusters);
+      addPeerClusterWatches(peerClusters, failoutConfig);
     }
   }
 
@@ -102,9 +122,9 @@ public class FailedoutClusterManager
    * Call this method when a cluster is failed out and/or new peer clusters of the failed out downstream cluster are identified.
    * @param newPeerClusters Name of the peer clusters of the failed out downstream clusters
    */
-  void addPeerClusterWatches(@Nonnull Set<String> newPeerClusters)
+  void addPeerClusterWatches(@Nonnull Set<String> newPeerClusters, @Nonnull FailoutConfig failoutConfig)
   {
-    final Set<String> existingPeerClusters = _clusterListeners.keySet();
+    final Set<String> existingPeerClusters = _peerWatches.keySet();
 
     if (newPeerClusters.isEmpty())
     {
@@ -117,7 +137,7 @@ public class FailedoutClusterManager
 
     if (!peerClustersToAdd.isEmpty())
     {
-      addClusterWatches(peerClustersToAdd);
+      addClusterWatches(peerClustersToAdd, failoutConfig);
     }
 
     final Set<String> peerClustersToRemove = new HashSet<>(existingPeerClusters);
@@ -134,10 +154,10 @@ public class FailedoutClusterManager
    */
   void removePeerClusterWatches()
   {
-    removeClusterWatches(_clusterListeners.keySet());
+    removeClusterWatches(_peerWatches.keySet());
   }
 
-  private void addClusterWatches(@Nonnull Set<String> clustersToWatch)
+  private void addClusterWatches(@Nonnull Set<String> clustersToWatch, @Nonnull FailoutConfig failoutConfig)
   {
     if (_log.isDebugEnabled())
     {
@@ -145,11 +165,23 @@ public class FailedoutClusterManager
     }
     for (final String cluster : clustersToWatch)
     {
-      _clusterListeners.computeIfAbsent(cluster, clusterName -> {
-        // TODO(RESILIEN-50): Establish connections to peer clusters when listener#done() is invoked.
-        LoadBalancerStateListenerCallback listener = new LoadBalancerState.NullStateListenerCallback();
-        _loadBalancerState.listenToCluster(cluster, listener);
-        return listener;
+      _peerWatches.computeIfAbsent(cluster, clusterName ->
+      {
+        boolean watchExistsBeforeFailout = _loadBalancerState.isListeningToCluster(clusterName);
+        PeerWatchState peerWatchState = new PeerWatchState(watchExistsBeforeFailout);
+
+        LoadBalancerStateListenerCallback listenerCallback = (type, name) ->
+        {
+          if (_connectionWarmUpHandler != null)
+          {
+            _log.debug("Warming up connections to: " + cluster);
+            _connectionWarmUpHandler.warmUpConnections(cluster, failoutConfig);
+          }
+          peerWatchState.setWatchEstablished(true);
+        };
+        _loadBalancerState.listenToCluster(cluster, listenerCallback);
+
+        return peerWatchState;
       });
     }
   }
@@ -162,11 +194,58 @@ public class FailedoutClusterManager
     }
     for (String cluster : clustersToRemove)
     {
-      final LoadBalancerStateListenerCallback listener = _clusterListeners.remove(cluster);
-      if (listener != null)
+      final PeerWatchState peerWatchState = _peerWatches.remove(cluster);
+      if (peerWatchState == null)
       {
-        // TODO(RESILIEN-51): Unregister watches when failout is over
+        continue;
       }
+      if (_connectionWarmUpHandler != null)
+      {
+        _log.debug("Cancel pending requests to: {}", cluster);
+        _connectionWarmUpHandler.cancelPendingRequests(cluster);
+      }
+
+      if (peerWatchState.shouldUnregisterWatches())
+      {
+        if (_scheduledExecutorService == null)
+        {
+          _log.debug("Stop listening to: {}", cluster);
+          _loadBalancerState.stopListenToCluster(cluster, new LoadBalancerState.NullStateListenerCallback());
+        }
+        else
+        {
+          _log.debug("Scheduling listening to: {} to be removed in {} ms", _clusterName, _peerWatchTeardownDelayMs);
+          _scheduledExecutorService.schedule(
+              () -> _loadBalancerState.stopListenToCluster(cluster, new LoadBalancerState.NullStateListenerCallback()),
+              _peerWatchTeardownDelayMs,
+              TimeUnit.MILLISECONDS);
+        }
+      }
+    }
+  }
+
+  private static class PeerWatchState
+  {
+    private final boolean _watchExistsBeforeFailout;
+    private boolean _watchEstablished = false;
+
+    public PeerWatchState(boolean watchExistsBeforeFailout)
+    {
+      _watchExistsBeforeFailout = watchExistsBeforeFailout;
+    }
+
+    public void setWatchEstablished(boolean watchEstablished)
+    {
+      _watchEstablished = watchEstablished;
+    }
+
+    public boolean shouldUnregisterWatches()
+    {
+      // Only unregister watches:
+      // - If watches do not exist before failout. In this case, watches were likely added for
+      //   achieving failout and only used for failout. They were unlikely to be used by other code paths.
+      // - If they have been established successfully.
+      return !_watchExistsBeforeFailout && _watchEstablished;
     }
   }
 }

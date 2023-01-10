@@ -1,0 +1,12 @@
+namespace com.linkedin.pegasus.generator.test.idl.records
+
+record WithPrimitiveDefaults {
+  intWithDefault: int = 1
+  longWithDefault: long = 3000000000
+  floatWithDefault: float = 3.3
+  doubleWithDefault: double = 4.4E38
+  booleanWithDefault: boolean = true
+  stringWithDefault: string = "DEFAULT"
+  bytesWithDefault: bytes = "abc\u0000\u0001\u0002"
+  bytesWithEmptyDefault: bytes = ""
+}

@@ -53,6 +53,7 @@
     } ],
     "finders" : [ {
       "name" : "search",
+      "linkedBatchFinderName" : "someOtherBatchFinder",
       "default" : true,
       "parameters" : [ {
         "name" : "tone",

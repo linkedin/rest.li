@@ -1,0 +1,19 @@
+{
+  "type" : "record",
+  "name" : "RecordWithRecordOfRecord",
+  "namespace" : "by19",
+  "doc" : "Record With Record of enum.",
+  "fields" : [ {
+    "name" : "state",
+    "type" : [ "null", {
+      "type" : "record",
+      "name" : "InnerRecord",
+      "fields": [{
+        "name" : "innerRecordField",
+        "type": "string"
+      }]
+    } ],
+    "default" : null,
+    "doc" : "State of the app when this event was queued."
+  }]
+}

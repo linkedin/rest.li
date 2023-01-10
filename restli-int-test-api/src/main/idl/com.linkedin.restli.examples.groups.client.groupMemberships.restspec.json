@@ -4,6 +4,7 @@
   "path" : "/groupMemberships",
   "schema" : "com.linkedin.restli.examples.groups.api.GroupMembership",
   "doc" : "Association between members and groups\n\ngenerated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupMembershipsResource2",
+  "resourceClass" : "com.linkedin.restli.examples.groups.server.rest.impl.GroupMembershipsResource2",
   "association" : {
     "identifier" : "groupMembershipsId",
     "assocKeys" : [ {
@@ -15,27 +16,37 @@
     } ],
     "supports" : [ "batch_delete", "batch_get", "batch_partial_update", "batch_update", "delete", "get", "get_all", "partial_update", "update" ],
     "methods" : [ {
-      "method" : "get"
+      "method" : "get",
+      "javaMethodName" : "get"
     }, {
-      "method" : "update"
+      "method" : "update",
+      "javaMethodName" : "update"
     }, {
-      "method" : "partial_update"
+      "method" : "partial_update",
+      "javaMethodName" : "update"
     }, {
-      "method" : "delete"
+      "method" : "delete",
+      "javaMethodName" : "delete"
     }, {
-      "method" : "batch_get"
+      "method" : "batch_get",
+      "javaMethodName" : "batchGet"
     }, {
-      "method" : "batch_update"
+      "method" : "batch_update",
+      "javaMethodName" : "batchUpdate"
     }, {
-      "method" : "batch_partial_update"
+      "method" : "batch_partial_update",
+      "javaMethodName" : "batchUpdate"
     }, {
-      "method" : "batch_delete"
+      "method" : "batch_delete",
+      "javaMethodName" : "batchDelete"
     }, {
       "method" : "get_all",
+      "javaMethodName" : "getAll",
       "pagingSupported" : true
     } ],
     "finders" : [ {
       "name" : "group",
+      "javaMethodName" : "getMemberships",
       "parameters" : [ {
         "name" : "level",
         "type" : "string",
@@ -61,6 +72,7 @@
       "pagingSupported" : true
     }, {
       "name" : "member",
+      "javaMethodName" : "getMemberships",
       "assocKeys" : [ "memberID" ],
       "pagingSupported" : true
     } ],

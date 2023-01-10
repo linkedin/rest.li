@@ -33,9 +33,11 @@
     "namespace" : "com.linkedin.restli.examples.greetings.client",
     "path" : "/asyncErrors",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.AsyncErrorResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.AsyncErrorResource",
     "actionsSet" : {
       "actions" : [ {
         "name" : "callback",
+        "javaMethodName" : "callback",
         "parameters" : [ {
           "name" : "id",
           "type" : "string"
@@ -43,6 +45,7 @@
         "returns" : "com.linkedin.restli.examples.greetings.api.Greeting"
       }, {
         "name" : "promise",
+        "javaMethodName" : "promise",
         "parameters" : [ {
           "name" : "id",
           "type" : "string"
@@ -50,6 +53,7 @@
         "returns" : "com.linkedin.restli.examples.greetings.api.Greeting"
       }, {
         "name" : "task",
+        "javaMethodName" : "task",
         "parameters" : [ {
           "name" : "id",
           "type" : "string"

@@ -1,0 +1,5 @@
+import does.not.fail.Temp
+
+record IncludeSchema includes Temp {
+  y: int
+}

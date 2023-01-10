@@ -4,6 +4,7 @@
   "path" : "/exceptions",
   "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
   "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ExceptionsResource",
+  "resourceClass" : "com.linkedin.restli.examples.greetings.server.ExceptionsResource",
   "collection" : {
     "identifier" : {
       "name" : "exceptionsId",
@@ -12,25 +13,34 @@
     "supports" : [ "batch_create", "create", "get" ],
     "methods" : [ {
       "method" : "create",
+      "javaMethodName" : "create",
       "doc" : "Responds with an error for requests to create insulting greetings, responds\n with 201 created for all other requests."
     }, {
-      "method" : "get"
+      "method" : "get",
+      "javaMethodName" : "get"
     }, {
       "method" : "batch_create",
+      "javaMethodName" : "batchCreate",
       "doc" : "For a batch create request, responds with an error for requests to create insulting greetings, responds\n with 201 created for all other requests."
     } ],
     "actions" : [ {
-      "name" : "errorResponseFormatMessageAndDetails"
+      "name" : "errorResponseFormatMessageAndDetails",
+      "javaMethodName" : "errorResponseFormatMessageAndDetails"
     }, {
-      "name" : "errorResponseFormatMessageAndServiceCode"
+      "name" : "errorResponseFormatMessageAndServiceCode",
+      "javaMethodName" : "errorResponseFormatMessageAndServiceCode"
     }, {
-      "name" : "errorResponseFormatMessageAndServiceCodeAndExceptionClass"
+      "name" : "errorResponseFormatMessageAndServiceCodeAndExceptionClass",
+      "javaMethodName" : "errorResponseFormatMessageAndServiceCodeAndExceptionClass"
     }, {
-      "name" : "errorResponseFormatMessageOnly"
+      "name" : "errorResponseFormatMessageOnly",
+      "javaMethodName" : "errorResponseFormatMessageOnly"
     }, {
-      "name" : "errorResponseFormatMinimal"
+      "name" : "errorResponseFormatMinimal",
+      "javaMethodName" : "errorResponseFormatMinimal"
     }, {
-      "name" : "errorWithEmptyStatus"
+      "name" : "errorWithEmptyStatus",
+      "javaMethodName" : "errorWithEmptyStatus"
     } ],
     "entity" : {
       "path" : "/exceptions/{exceptionsId}"

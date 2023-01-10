@@ -1,0 +1,14 @@
+{
+  "type" : "record",
+  "name" : "MultiplexedRequestContent",
+  "namespace" : "com.linkedin.restli.common.multiplexer",
+  "doc" : "Represents multiple HTTP requests to send as a single multiplexed HTTP request",
+  "fields" : [ {
+    "name" : "requests",
+    "type" : {
+      "type" : "map",
+      "values" : "IndividualRequest"
+    },
+    "doc" : "Individual HTTP requests executed in parallel.  Keys of the requests are used to correlate responses with requests. They should be unique within the multiplexed request"
+  } ]
+}

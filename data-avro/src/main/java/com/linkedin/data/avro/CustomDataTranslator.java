@@ -20,6 +20,7 @@ package com.linkedin.data.avro;
 import com.linkedin.data.Data;
 import com.linkedin.data.schema.DataSchema;
 import org.apache.avro.Schema;
+import org.apache.avro.specific.SpecificRecord;
 
 
 /**
@@ -51,4 +52,9 @@ public interface CustomDataTranslator
    * @return the Avro generic representation of data.
    */
   Object dataToAvroGeneric(DataTranslatorContext context, Object data, DataSchema schema, Schema avroSchema);
+
+  default <T extends SpecificRecord> T dataToAvroSpecific(DataTranslatorContext context, Object data, DataSchema schema,
+      Schema avroSchema) {
+    return null;
+  }
 }

@@ -15,6 +15,8 @@
     <artifact name="parent" type="jar" ext="jar" conf="testGeneratedDataTemplateApiElements,testGeneratedDataTemplateRuntimeElements" m:classifier="test-data-template"/>
   </publications>
   <dependencies>
+    <dependency org="com.linkedin.pegasus-grandparent-demo" name="grandparent" rev="1.0.0" conf="runtime-&gt;dataTemplate"/>
+    <dependency org="com.google.code.findbugs" name="jsr305" rev="3.0.2" conf="runtime-&gt;default"/>
     <dependency org="com.linkedin.pegasus-grandparent-demo" name="grandparent" rev="1.0.0" conf="mainGeneratedDataTemplateApiElements-&gt;dataTemplate"/>
     <dependency org="com.google.code.findbugs" name="jsr305" rev="3.0.2" conf="mainGeneratedDataTemplateApiElements-&gt;default"/>
     <dependency org="com.linkedin.pegasus-grandparent-demo" name="grandparent" rev="1.0.0" conf="mainGeneratedDataTemplateRuntimeElements-&gt;dataTemplate"/>

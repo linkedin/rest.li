@@ -34,7 +34,7 @@ class PegasusPluginIntegrationTest extends Specification {
     result.task(':mainDataTemplateJar').outcome == SUCCESS
 
     where:
-    gradleVersion << [ '4.0', '5.2.1', '5.6.4', '6.9', '7.0.2' ]
+    gradleVersion << [ '4.0', '5.2.1', '5.6.4', '6.9', '7.0.2', '7.5.1' ]
   }
 
   @Unroll
@@ -102,7 +102,7 @@ class PegasusPluginIntegrationTest extends Specification {
     assertZipContains(dataTemplateArtifact, 'extensions/com/linkedin/LatLongExtensions.pdl')
 
     where:
-    gradleVersion << [ '4.0', '5.2.1', '5.6.4', '6.9', '7.0.2' ]
+    gradleVersion << [ '4.0', '5.2.1', '5.6.4', '6.9', '7.0.2', '7.5.1' ]
   }
 
   def 'mainCopySchema task will remove stale PDSC'() {
@@ -170,6 +170,99 @@ class PegasusPluginIntegrationTest extends Specification {
     result.task(':mainCopySchemas').getOutcome() == SUCCESS
     !preparedPdscFile1.exists()
     preparedPdscFile2.exists()
+  }
+
+  @Unroll
+  def "data-template classes in api moudle can be consumed by other modules with Gradle #gradleVersion"() {
+    setup:
+    tempDir.newFile('build.gradle') << """
+    |version = '1.0.0'
+    """.stripMargin()
+
+    tempDir.newFile('settings.gradle') << '''
+    |rootProject.name = 'root'
+    |include 'api'
+    |include 'impl'
+    '''.stripMargin()
+
+    def apiProjectDir = tempDir.newFolder('api')
+
+    new File(apiProjectDir, 'build.gradle') << """
+    |plugins {
+    |  id 'java-library'
+    |  id 'pegasus'
+    |}
+    |
+    |repositories {
+    |  mavenCentral()
+    |}
+    |
+    |dependencies {
+    |  dataTemplateCompile files(${System.getProperty('integTest.dataTemplateCompileDependencies')})
+    |  pegasusPlugin files(${System.getProperty('integTest.pegasusPluginDependencies')})
+    |}
+    |
+    |version = '1.0.0'
+    """.stripMargin()
+
+    def schemaDir = tempDir.newFolder('api', 'src', 'main', 'pegasus', 'com', 'linkedin')
+
+    def pdlSchemaName = 'LatLong.pdl'
+    new File(schemaDir, pdlSchemaName) << '''
+    |namespace com.linkedin
+    |
+    |record LatLong {
+    |  latitude: optional float
+    |  longitude: optional float
+    |}
+    '''.stripMargin()
+
+    def implProjectDir = tempDir.newFolder('impl')
+
+    new File(implProjectDir, 'build.gradle') << """
+    |plugins {
+    |  id 'pegasus'
+    |}
+    |
+    |repositories {
+    |  mavenCentral()
+    |}
+    |
+    |dependencies {
+    | implementation project(path: ':api', configuration: 'dataTemplate')
+    |}
+    """.stripMargin()
+
+    def javaDir = tempDir.newFolder('impl', 'src', 'main', 'java', 'com', 'linkedin')
+
+    def javaSrcName = 'test.java'
+    new File(javaDir, javaSrcName) << '''
+    |package com.linkedin;
+    |
+    |import com.linkedin.LatLong;
+    '''.stripMargin()
+
+    when:
+    def result = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
+        .withProjectDir(tempDir.root)
+        .withPluginClasspath()
+        .withArguments('build')
+        .forwardOutput()
+//        .withDebug(true)
+        .build()
+
+    then:
+    result.task(':api:mainDataTemplateJar').outcome == SUCCESS
+
+    def dataTemplateArtifact = new File(tempDir.root, 'api/build/libs/api-data-template-1.0.0.jar')
+
+    assertZipContains(dataTemplateArtifact, 'com/linkedin/LatLong.class')
+
+    result.task(':impl:compileJava').outcome == SUCCESS
+
+    where:
+    gradleVersion << [ '4.0', '5.2.1', '5.6.4', '6.9', '7.0.2', '7.5.1' ]
   }
 
   private static boolean assertZipContains(File zip, String path) {

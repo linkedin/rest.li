@@ -18,6 +18,7 @@ package com.linkedin.restli.server;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.HttpStatus;
+import java.util.Objects;
 
 
 /**
@@ -46,5 +47,30 @@ public class UpdateEntityResponse<V extends RecordTemplate> extends UpdateRespon
   public V getEntity()
   {
     return _entity;
+  }
+
+  @Override
+  public boolean equals(Object object)
+  {
+    if (this == object)
+    {
+      return true;
+    }
+    if (object == null || getClass() != object.getClass())
+    {
+      return false;
+    }
+    if (!super.equals(object))
+    {
+      return false;
+    }
+    UpdateEntityResponse<?> that = (UpdateEntityResponse<?>) object;
+    return Objects.equals(_entity, that._entity);
+  }
+
+  @Override
+  public int hashCode()
+  {
+    return Objects.hash(super.hashCode(), _entity);
   }
 }

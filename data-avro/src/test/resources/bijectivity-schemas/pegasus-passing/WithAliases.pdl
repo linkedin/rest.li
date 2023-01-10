@@ -1,0 +1,8 @@
+namespace com.linkedin.pegasus.generator.test.idl.enums
+
+@aliases = ["org.example.EnumAlias1", "com.linkedin.pegasus.generator.test.idl.enums.EnumAlias2"]
+enum WithAliases {
+  A,
+  B,
+  C
+}

@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.quorum;
 
+import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -80,7 +81,7 @@ public class ZKQuorum
     int electionPort = ZKTestUtil.getRandomPort() + 1001;
     ZKPeer zkpeer = new ZKPeer(id, ZKTestUtil.createTempDir("zkdata"+id), ZKTestUtil.createTempDir("zklog"+id), HOST, clientPort, quorumPort, electionPort);
     _peers.put(id, zkpeer);
-    _peersView.put(Long.valueOf(id), new QuorumServer(id, HOST, quorumPort, electionPort, LearnerType.PARTICIPANT));
+    _peersView.put(Long.valueOf(id), new QuorumServer(id, new InetSocketAddress(HOST, quorumPort), new InetSocketAddress(HOST, electionPort), new InetSocketAddress(HOST, clientPort), LearnerType.PARTICIPANT));
 
     _log.info("Created peer #" + id + " with ports:" + clientPort + "/" + quorumPort + "/" + electionPort + "  peer server addr:"+_peersView.get(Long.valueOf(id)).addr+"  peer server electionAddr:"+_peersView.get(Long.valueOf(id)).electionAddr);
   }

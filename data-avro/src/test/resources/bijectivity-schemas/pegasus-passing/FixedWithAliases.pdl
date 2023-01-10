@@ -1,0 +1,4 @@
+namespace com.linkedin.pegasus.generator.test.idl.`fixed`
+
+@aliases = ["org.example.FixedAlias1", "com.linkedin.pegasus.generator.test.idl.fixed.FixedAlias2"]
+fixed WithAliases 16

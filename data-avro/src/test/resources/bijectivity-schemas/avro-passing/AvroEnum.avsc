@@ -1,0 +1,33 @@
+{
+  "type": "record",
+  "namespace": "com.acme.outer",
+  "name": "OuterRecord",
+  "doc": "this record demonstrates https://issues.apache.org/jira/browse/AVRO-702",
+  "fields": [
+    {
+      "name": "outerField",
+      "type": {
+        "type": "record",
+        "name": "MiddleRecord1",
+        "namespace": "com.acme.middle",
+        "fields": [
+          {
+            "name": "middleField",
+            "type": {
+              "type": "enum",
+              "name": "InnerEnum",
+              "namespace": "com.acme.outer",
+              "doc": "this enums namespace gets messed up under avro 1.4",
+              "symbols": ["A", "B"]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "outerField2",
+      "type": "com.acme.outer.InnerEnum",
+      "doc": "this wont even parse() after 1.4 is done with it (as InnerEnum will be renamed above)"
+    }
+  ]
+}

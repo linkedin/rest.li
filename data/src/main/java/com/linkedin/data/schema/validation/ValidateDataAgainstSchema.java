@@ -47,6 +47,7 @@ import com.linkedin.data.template.DataTemplateUtil;
 import com.linkedin.data.template.TemplateOutputCastException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
@@ -628,11 +629,45 @@ public final class ValidateDataAgainstSchema
         boolean error = false;
         if (str.length() != size)
         {
-          addMessage(element,
-                     "\"%1$s\" length (%2$d) is inconsistent with expected fixed size of %3$d",
-                     str,
-                     str.length(),
-                     size);
+          // If the length doesn't match and fixing base64 encoded values is enabled, then try decoding the string
+          // as base64 to check if there is a size match.
+          if (_options.shouldFixBase64EncodedFixedValues())
+          {
+            try
+            {
+              byte[] decodedValue = Base64.getDecoder().decode(str);
+              if (decodedValue.length == size)
+              {
+                _hasFix = true;
+                fixed = ByteString.unsafeWrap(decodedValue);
+              }
+              else
+              {
+                addMessage(element,
+                    "Both encoded \"%1$s\" length (%2$d) and Base64 decoded length (%3$d) are inconsistent with expected fixed size of %4$d",
+                    str,
+                    str.length(),
+                    decodedValue.length,
+                    size);
+              }
+            }
+            catch (IllegalArgumentException e)
+            {
+              addMessage(element,
+                  "\"%1$s\" length (%2$d) is inconsistent with expected fixed size of %3$d. Base64 decoding failed.",
+                  str,
+                  str.length(),
+                  size);
+            }
+          }
+          else
+          {
+            addMessage(element,
+                "\"%1$s\" length (%2$d) is inconsistent with expected fixed size of %3$d",
+                str,
+                str.length(),
+                size);
+          }
         }
         else
         {

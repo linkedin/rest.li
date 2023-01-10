@@ -323,7 +323,8 @@ public class ZKConnection
       zk = _zkRef.get();
       if (zk == null)
       {
-        throw new IllegalStateException("Null zkRef after countdownlatch.");
+        throw new IllegalStateException("Null zkRef after countdownlatch. If this happened at shutdown, please check if your app has custom de-announcements. "
+            + "Mis-coordinating custom de-announcement with the default de-announcement could cause double de-announcing and lead to this exception.");
       }
     }
     catch (InterruptedException e)
@@ -826,7 +827,17 @@ public class ZKConnection
     @Override
     public void process(WatchedEvent watchedEvent)
     {
-      ZooKeeper zk = zk();
+      ZooKeeper zk;
+      try
+      {
+        zk = zk();
+      }
+      catch (IllegalStateException e)
+      {
+        // if connection state change event is received after zk object is gone, it is a legitimate race.
+        LOG.debug("Watched event received after connection shutdown (type {}, state {}.", watchedEvent.getType(), watchedEvent.getState());
+        return;
+      }
       long sessionID = zk.getSessionId();
 
       if (watchedEvent.getType() == Event.EventType.None)

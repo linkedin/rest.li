@@ -789,6 +789,10 @@ public class ResourceCompatibilityChecker
                           prevRec.getName(GetMode.DEFAULT),
                           currRec.getName(GetMode.DEFAULT));
 
+    checkEqualSingleValue(prevRec.schema().getField("linkedBatchFinderName"),
+                          prevRec.getLinkedBatchFinderName(),
+                          currRec.getLinkedBatchFinderName());
+
     checkDoc(prevRec.schema().getField("doc"), prevRec.getDoc(GetMode.DEFAULT), currRec.getDoc(GetMode.DEFAULT));
 
     checkAnnotationsMap(prevRec.schema().getField("annotations"),

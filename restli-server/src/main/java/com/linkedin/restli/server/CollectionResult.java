@@ -19,6 +19,8 @@ package com.linkedin.restli.server;
 import java.util.List;
 
 import com.linkedin.data.template.RecordTemplate;
+import java.util.Objects;
+
 
 public class CollectionResult<T extends RecordTemplate, MD extends RecordTemplate>
 {
@@ -150,5 +152,29 @@ public class CollectionResult<T extends RecordTemplate, MD extends RecordTemplat
   public MD getMetadata()
   {
     return _metadata;
+  }
+
+  @Override
+  public boolean equals(Object object)
+  {
+    if (this == object)
+    {
+      return true;
+    }
+    if (object == null || getClass() != object.getClass())
+    {
+      return false;
+    }
+    CollectionResult<?, ?> that = (CollectionResult<?, ?>) object;
+    return Objects.equals(_elements, that._elements)
+        && Objects.equals(_metadata, that._metadata)
+        && Objects.equals(_total, that._total)
+        && _pageIncrement == that._pageIncrement;
+  }
+
+  @Override
+  public int hashCode()
+  {
+    return Objects.hash(_elements, _metadata, _total, _pageIncrement);
   }
 }

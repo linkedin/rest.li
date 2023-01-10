@@ -19,7 +19,7 @@ package com.linkedin.data.schema.annotation;
  * During schema traversal, this enum tells how the current schema being visited is linked from its parentSchema as a child schema
  * Used by {@link DataSchemaRichContextTraverser} and {@link TraverserContext}
  */
-enum CurrentSchemaEntryMode
+public enum CurrentSchemaEntryMode
 {
   // child schema is for a record's field
   FIELD,

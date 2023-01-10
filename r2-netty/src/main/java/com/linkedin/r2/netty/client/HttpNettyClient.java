@@ -18,6 +18,9 @@ package com.linkedin.r2.netty.client;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.MultiCallback;
+import com.linkedin.common.stats.LongStats;
+import com.linkedin.common.stats.LongTracker;
+import com.linkedin.common.stats.LongTracking;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Messages;
@@ -32,10 +35,10 @@ import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.r2.message.timing.TimingImportance;
 import com.linkedin.r2.message.timing.TimingKey;
 import com.linkedin.r2.netty.callback.StreamExecutionCallback;
-import com.linkedin.r2.netty.common.StreamingTimeout;
 import com.linkedin.r2.netty.common.NettyChannelAttributes;
 import com.linkedin.r2.netty.common.NettyClientState;
 import com.linkedin.r2.netty.common.ShutdownTimeoutException;
+import com.linkedin.r2.netty.common.StreamingTimeout;
 import com.linkedin.r2.netty.common.UnknownSchemeException;
 import com.linkedin.r2.netty.handler.common.SslHandshakeTimingHandler;
 import com.linkedin.r2.transport.common.MessageType;
@@ -60,6 +63,7 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.pool.ChannelPool;
+import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.handler.codec.http.HttpScheme;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -74,7 +78,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,7 +109,26 @@ public class HttpNettyClient implements TransportClient
   private final long _requestTimeout;
   private final long _streamingTimeout;
   private final long _shutdownTimeout;
+  private final String _udsAddress;
+  private final DnsMetricsCallback _dnsMetricsCallback;
+
   private final AtomicReference<NettyClientState> _state;
+
+  @Deprecated
+  public HttpNettyClient(
+      EventLoopGroup eventLoopGroup,
+      ScheduledExecutorService scheduler,
+      ExecutorService callbackExecutor,
+      ChannelPoolManager channelPoolManager,
+      ChannelPoolManager sslChannelPoolManager,
+      HttpProtocolVersion protocolVersion,
+      Clock clock,
+      long requestTimeout,
+      long streamingTimeout,
+      long shutdownTimeout) {
+    this(eventLoopGroup, scheduler, callbackExecutor, channelPoolManager, sslChannelPoolManager, protocolVersion,
+        clock, requestTimeout, streamingTimeout, shutdownTimeout, null);
+  }
 
   /**
    * Creates a new instance of {@link HttpNettyClient}.
@@ -119,6 +144,7 @@ public class HttpNettyClient implements TransportClient
    * @param requestTimeout Time in milliseconds before an error response is returned in the callback
    *                       with a {@link TimeoutException}
    * @param shutdownTimeout Client shutdown timeout
+   * @param udsAddress Unix Domain Socket Address, used while using side car proxy for external communication
    */
   public HttpNettyClient(
       EventLoopGroup eventLoopGroup,
@@ -130,7 +156,42 @@ public class HttpNettyClient implements TransportClient
       Clock clock,
       long requestTimeout,
       long streamingTimeout,
-      long shutdownTimeout)
+      long shutdownTimeout,
+      String udsAddress)
+  {
+    this(eventLoopGroup, scheduler, callbackExecutor, channelPoolManager, sslChannelPoolManager, protocolVersion,
+        clock, requestTimeout, streamingTimeout, shutdownTimeout, udsAddress, null);
+  }
+
+  /**
+   * Creates a new instance of {@link HttpNettyClient}.
+   *
+   * @param eventLoopGroup Non-blocking event loop group implementation for selectors and channels
+   * @param callbackExecutor Executor service for executing user callbacks. The executor must be provided
+   *                         because user callbacks can potentially be blocking. If executed with the
+   *                         event loop group, threads might be blocked and cause channels to hang.
+   * @param channelPoolManager Channel pool manager for non-SSL channels
+   * @param sslChannelPoolManager Channel pool manager for SSL channels
+   * @param protocolVersion HTTP version the client uses to send requests and receive responses
+   * @param clock Clock to get current time
+   * @param requestTimeout Time in milliseconds before an error response is returned in the callback
+   *                       with a {@link TimeoutException}
+   * @param shutdownTimeout Client shutdown timeout
+   * @param udsAddress Unix Domain Socket Address, used while using side car proxy for external communication
+   */
+  public HttpNettyClient(
+      EventLoopGroup eventLoopGroup,
+      ScheduledExecutorService scheduler,
+      ExecutorService callbackExecutor,
+      ChannelPoolManager channelPoolManager,
+      ChannelPoolManager sslChannelPoolManager,
+      HttpProtocolVersion protocolVersion,
+      Clock clock,
+      long requestTimeout,
+      long streamingTimeout,
+      long shutdownTimeout,
+      String udsAddress,
+      DnsMetricsCallback dnsMetricsCallback)
   {
     ArgumentUtil.notNull(eventLoopGroup, "eventLoopGroup");
     ArgumentUtil.notNull(scheduler, "scheduler");
@@ -158,6 +219,9 @@ public class HttpNettyClient implements TransportClient
     _requestTimeout = requestTimeout;
     _streamingTimeout = streamingTimeout;
     _shutdownTimeout = shutdownTimeout;
+    _udsAddress = udsAddress;
+    _dnsMetricsCallback = dnsMetricsCallback;
+
 
     _state = new AtomicReference<>(NettyClientState.RUNNING);
   }
@@ -294,20 +358,38 @@ public class HttpNettyClient implements TransportClient
     // responsibility of invoking the callback is handed over to the pipeline.
     final Timeout<None> timeout = new Timeout<>(_scheduler, resolvedRequestTimeout, TimeUnit.MILLISECONDS, None.none());
     timeout.addTimeoutTask(() -> decoratedCallback.onResponse(TransportResponseImpl.error(
-        new TimeoutException("Exceeded request timeout of " + resolvedRequestTimeout + "ms"))));
+        new TimeoutException("Exceeded request timeout of " + resolvedRequestTimeout + "ms" +
+            (requestContext.getLocalAttr(R2Constants.REMOTE_SERVER_ADDR) == null ? " (timeout during DNS resolution)" : "")))));
 
     // resolve address
     final SocketAddress address;
-    try
-    {
-      TimingContextUtil.markTiming(requestContext, TIMING_KEY);
-      address = resolveAddress(request, requestContext);
-      TimingContextUtil.markTiming(requestContext, TIMING_KEY);
-    }
-    catch (Exception e)
-    {
-      decoratedCallback.onResponse(TransportResponseImpl.error(e));
-      return;
+
+    if (StringUtils.isEmpty(_udsAddress)) {
+      try {
+        TimingContextUtil.markTiming(requestContext, TIMING_KEY);
+        if (_dnsMetricsCallback != null) {
+          _dnsMetricsCallback.start();
+        }
+        long startTime = _clock.currentTimeMillis();
+        address = resolveAddress(request, requestContext);
+        if (_dnsMetricsCallback != null) {
+          _dnsMetricsCallback.success(_clock.currentTimeMillis() - startTime);
+        }
+        TimingContextUtil.markTiming(requestContext, TIMING_KEY);
+      } catch (Exception e) {
+        if (_dnsMetricsCallback != null) {
+          _dnsMetricsCallback.error();
+        }
+        decoratedCallback.onResponse(TransportResponseImpl.error(e));
+        return;
+      }
+    } else {
+      try {
+        address = new DomainSocketAddress(_udsAddress);
+      } catch (Exception e) {
+        decoratedCallback.onResponse(TransportResponseImpl.error(e));
+        return;
+      }
     }
 
     // Serialize wire attributes
@@ -555,8 +637,8 @@ public class HttpNettyClient implements TransportClient
       port = HTTP_SCHEME.equalsIgnoreCase(scheme) ? HTTP_DEFAULT_PORT : HTTPS_DEFAULT_PORT;
     }
 
-    // TODO investigate DNS resolution and timing
     final InetAddress inetAddress = InetAddress.getByName(host);
+
     final SocketAddress address = new InetSocketAddress(inetAddress, port);
     requestContext.putLocalAttr(R2Constants.REMOTE_SERVER_ADDR, inetAddress.getHostAddress());
     requestContext.putLocalAttr(R2Constants.REMOTE_SERVER_PORT, port);

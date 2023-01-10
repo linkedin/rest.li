@@ -334,7 +334,7 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
     assertZipContains(childProjectDataTemplateArtifact, 'pegasus/com/linkedin/child/Photo.pdl')
 
     where:
-    gradleVersion << [ '6.1', '6.9', '7.0.2' ]
+    gradleVersion << [ '6.1', '6.9', '7.0.2', '7.5.1' ]
   }
 
   def 'ivy-publish fails gracefully with Gradle 5.2.1'() {

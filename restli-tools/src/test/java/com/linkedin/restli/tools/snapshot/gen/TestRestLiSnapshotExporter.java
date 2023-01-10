@@ -102,6 +102,13 @@ public class TestRestLiSnapshotExporter
                 "circular-circular.snapshot.json" } },
             { "twitter", new String[] { "com.linkedin.restli.tools.twitter" }, new String[] {
                 "twitter-statuses.snapshot.json",
+                "twitter-statusesWrapped.snapshot.json",
+                "twitter-statusesAsync.snapshot.json",
+                "twitter-statusesAsyncWrapped.snapshot.json",
+                "twitter-statusPromises.snapshot.json",
+                "twitter-statusPromisesWrapped.snapshot.json",
+                "twitter-statusTasks.snapshot.json",
+                "twitter-statusTasksWrapped.snapshot.json",
                 "twitter-statusesParams.snapshot.json",
                 "twitter-follows.snapshot.json",
                 "twitter-accounts.snapshot.json",

@@ -28,6 +28,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.stream.StreamRequest;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -459,6 +460,33 @@ public class TestQueryTunnel
 
     RestRequest decoded = decode(request);
     Assert.assertEquals(decoded, decode(decoded), "Decoded RestRequest did not stay the same after another decode");
+  }
+
+  @Test
+  public void testEncodeRejectsInvalidVerbs() throws Exception
+  {
+    RestRequest request = new RestRequestBuilder(new URI("http://localhost:7279?q=123"))
+        .setMethod("Invalid")
+        .setHeader("Content-Type", "application/x-www-form-urlencoded")
+        .setEntity(new String("q=123").getBytes()).build();
+    Assert.assertThrows(() -> {
+      QueryTunnelUtil.encode(request, 1);
+    });
+  }
+
+  @Test
+  public void testDecodeRejectsInvalidVerbs() throws Exception
+  {
+    RestRequest request = new RestRequestBuilder(new URI("http://localhost:7279"))
+        .setMethod("POST")
+        .setHeader("X-HTTP-Method-Override", "Invalid")
+        .setHeader("Content-Type", "application/x-www-form-urlencoded")
+        .setEntity(new String("q=123").getBytes()).build();
+
+    RequestContext requestContext = new RequestContext();
+    Assert.assertThrows(() -> {
+      RestRequest decoded = decode(request, requestContext);
+    });
   }
 
   @DataProvider

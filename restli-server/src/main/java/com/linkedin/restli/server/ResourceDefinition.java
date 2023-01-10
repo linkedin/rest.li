@@ -53,6 +53,14 @@ public interface ResourceDefinition
   String getD2ServiceName();
 
   /**
+   * Gets the base uri template.
+   * @return the base uri template.
+   */
+  default String getBaseUriTemplate() {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
    * Gets the rest.li resource java class.
    *
    * @return java class for this rest.li resource.

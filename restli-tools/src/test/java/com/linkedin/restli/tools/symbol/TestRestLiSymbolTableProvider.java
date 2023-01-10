@@ -16,14 +16,12 @@
 
 package com.linkedin.restli.tools.symbol;
 
-import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.data.codec.symbol.InMemorySymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTable;
 import com.linkedin.data.codec.symbol.SymbolTableSerializer;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.EnumDataSchema;
 import com.linkedin.data.schema.Name;
-import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
@@ -38,7 +36,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nullable;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -46,7 +43,8 @@ import org.testng.annotations.Test;
 import static org.mockito.Mockito.*;
 
 
-public class TestRestLiSymbolTableProvider {
+public class TestRestLiSymbolTableProvider
+{
   private Client _client;
   private RestLiSymbolTableProvider _provider;
   private RestLiSymbolTableProvider _nullServerNodeUriProvider;
@@ -54,10 +52,10 @@ public class TestRestLiSymbolTableProvider {
 
   @SuppressWarnings("unchecked")
   @BeforeMethod
-  public void setup() {
+  public void setup()
+  {
     _client = mock(Client.class);
-    _provider = new RestLiSymbolTableProvider(_client, "d2://", 10, 1000L, "Test", "https://Host:100/service",
-        null, Collections.singletonMap("routingHint", URI.create("https://blah/bleh")));
+    _provider = new RestLiSymbolTableProvider(_client, "d2://", 10, "Test", "https://Host:100/service");
     _nullServerNodeUriProvider = new RestLiSymbolTableProvider(_client, "d2://", 10, "Test", (String) null);
 
     _resourceDefinition = mock(ResourceDefinition.class);
@@ -71,66 +69,63 @@ public class TestRestLiSymbolTableProvider {
   }
 
   @Test
-  public void testGetResponseSymbolTableBeforeInit() {
-    Assert.assertNull(
-        _provider.getResponseSymbolTable(URI.create("https://Host:100/service/symbolTable"), Collections.emptyMap()));
+  public void testGetResponseSymbolTableBeforeInit()
+  {
+    Assert.assertNull(_provider.getResponseSymbolTable(URI.create("https://Host:100/service/symbolTable"), Collections.emptyMap()));
   }
 
   @Test
-  public void testGetResponseSymbolTableBeforeInitNullServerNodeUriProvider() {
-    Assert.assertNull(
-        _nullServerNodeUriProvider.getResponseSymbolTable(URI.create("https://Host:100/service/symbolTable"),
-            Collections.emptyMap()));
+  public void testGetResponseSymbolTableBeforeInitNullServerNodeUriProvider()
+  {
+    Assert.assertNull(_nullServerNodeUriProvider.getResponseSymbolTable(URI.create("https://Host:100/service/symbolTable"), Collections.emptyMap()));
   }
 
   @Test
-  public void testGetResponseSymbolTableAfterInit() {
-    _provider.onInitialized(
-        Collections.unmodifiableMap(Collections.singletonMap("TestResourceName", _resourceDefinition)));
+  public void testGetResponseSymbolTableAfterInit()
+  {
+    _provider.onInitialized(Collections.unmodifiableMap(Collections.singletonMap("TestResourceName", _resourceDefinition)));
 
-    SymbolTable symbolTable =
-        _provider.getResponseSymbolTable(URI.create("https://Host:100/service/symbolTable"), Collections.emptyMap());
+    SymbolTable symbolTable = _provider.getResponseSymbolTable(URI.create("https://Host:100/service/symbolTable"), Collections.emptyMap());
     Assert.assertNotNull(symbolTable);
     Assert.assertEquals(39, symbolTable.size());
     Assert.assertEquals("https://Host:100/service|Test--332004310", symbolTable.getName());
   }
 
   @Test
-  public void testGetResponseSymbolTableAfterInitNullServerNodeUriProvider() {
-    _nullServerNodeUriProvider.onInitialized(
-        Collections.unmodifiableMap(Collections.singletonMap("TestResourceName", _resourceDefinition)));
-    Assert.assertNull(
-        _nullServerNodeUriProvider.getResponseSymbolTable(URI.create("https://Host:100/service/symbolTable"),
-            Collections.emptyMap()));
+  public void testGetResponseSymbolTableAfterInitNullServerNodeUriProvider()
+  {
+    _nullServerNodeUriProvider.onInitialized(Collections.unmodifiableMap(Collections.singletonMap("TestResourceName", _resourceDefinition)));
+    Assert.assertNull(_nullServerNodeUriProvider.getResponseSymbolTable(URI.create("https://Host:100/service/symbolTable"), Collections.emptyMap()));
   }
 
   @Test
-  public void testGetValidLocalSymbolTable() {
-    _provider.onInitialized(
-        Collections.unmodifiableMap(Collections.singletonMap("TestResourceName", _resourceDefinition)));
+  public void testGetValidLocalSymbolTable()
+  {
+    _provider.onInitialized(Collections.unmodifiableMap(Collections.singletonMap("TestResourceName", _resourceDefinition)));
     SymbolTable symbolTable = _provider.getSymbolTable("https://Host:100/service|Test--332004310");
     Assert.assertNotNull(symbolTable);
   }
 
   @Test(expectedExceptions = IllegalStateException.class)
-  public void testGetMissingLocalSymbolTable() {
-    _provider.onInitialized(
-        Collections.unmodifiableMap(Collections.singletonMap("TestResourceName", _resourceDefinition)));
+  public void testGetMissingLocalSymbolTable()
+  {
+    _provider.onInitialized(Collections.unmodifiableMap(Collections.singletonMap("TestResourceName", _resourceDefinition)));
     _provider.getSymbolTable("https://Host:100/service|Blah-100");
   }
 
   @Test
-  public void testGetRemoteSymbolTableFetchSuccess() throws IOException {
+  public void testGetRemoteSymbolTableFetchSuccess() throws IOException
+  {
     RestResponseBuilder builder = new RestResponseBuilder();
     builder.setStatus(200);
     SymbolTable symbolTable = new InMemorySymbolTable("https://OtherHost:100/service|Test--332004310",
         Collections.unmodifiableList(Arrays.asList("Haha", "Hehe")));
     builder.setEntity(SymbolTableSerializer.toByteString(ContentType.PROTOBUF2.getCodec(), symbolTable));
     builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, ContentType.PROTOBUF2.getHeaderKey());
-    when(_client.restRequest(
-        eq(new RestRequestBuilder(URI.create("https://OtherHost:100/service/symbolTable/Test--332004310")).setHeaders(
-            Collections.singletonMap(RestConstants.HEADER_FETCH_SYMBOL_TABLE, Boolean.TRUE.toString())).build()),
-        any(RequestContext.class))).thenReturn(CompletableFuture.completedFuture(builder.build()));
+    when(_client.restRequest(eq(new RestRequestBuilder(
+            URI.create("https://OtherHost:100/service/symbolTable/Test--332004310"))
+            .setHeaders(Collections.singletonMap(RestConstants.HEADER_FETCH_SYMBOL_TABLE, Boolean.TRUE.toString()))
+            .build()))).thenReturn(CompletableFuture.completedFuture(builder.build()));
 
     SymbolTable remoteSymbolTable = _provider.getSymbolTable("https://OtherHost:100/service|Test--332004310");
     Assert.assertNotNull(remoteSymbolTable);
@@ -138,33 +133,34 @@ public class TestRestLiSymbolTableProvider {
     Assert.assertEquals(2, remoteSymbolTable.size());
 
     // Subsequent fetch should not trigger network fetch and get the table from the cache.
-    when(_client.restRequest(any(RestRequest.class), any(RequestContext.class))).thenThrow(new IllegalStateException());
+    when(_client.restRequest(any(RestRequest.class))).thenThrow(new IllegalStateException());
     SymbolTable cachedSymbolTable = _provider.getSymbolTable("https://OtherHost:100/service|Test--332004310");
     Assert.assertSame(remoteSymbolTable, cachedSymbolTable);
   }
 
   @Test(expectedExceptions = IllegalStateException.class)
-  public void testGetRemoteSymbolTableFetchError() {
+  public void testGetRemoteSymbolTableFetchError()
+  {
     RestResponseBuilder builder = new RestResponseBuilder();
     builder.setStatus(404);
-    when(_client.restRequest(
-        eq(new RestRequestBuilder(URI.create("https://OtherHost:100/service/symbolTable/Test--332004310")).build()),
-        any(RequestContext.class))).thenReturn(CompletableFuture.completedFuture(builder.build()));
+    when(_client.restRequest(eq(new RestRequestBuilder(URI.create("https://OtherHost:100/service/symbolTable/Test--332004310")).build())))
+        .thenReturn(CompletableFuture.completedFuture(builder.build()));
 
     _provider.getSymbolTable("https://OtherHost:100/service|Test--332004310");
   }
 
   @Test
-  public void testGetRemoteRequestSymbolTableFetchSuccess() throws IOException {
+  public void testGetRemoteRequestSymbolTableFetchSuccess() throws IOException
+  {
     RestResponseBuilder builder = new RestResponseBuilder();
     builder.setStatus(200);
     SymbolTable symbolTable = new InMemorySymbolTable("https://OtherHost:100/service|Test--332004310",
         Collections.unmodifiableList(Arrays.asList("Haha", "Hehe")));
     builder.setEntity(SymbolTableSerializer.toByteString(ContentType.PROTOBUF2.getCodec(), symbolTable));
     builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, ContentType.PROTOBUF2.getHeaderKey());
-    when(_client.restRequest(eq(new RestRequestBuilder(URI.create("d2://someservice/symbolTable")).setHeaders(
-        Collections.singletonMap(RestConstants.HEADER_FETCH_SYMBOL_TABLE, Boolean.TRUE.toString()))
-        .build()), any(RequestContext.class))).thenReturn(CompletableFuture.completedFuture(builder.build()));
+    when(_client.restRequest(eq(new RestRequestBuilder(URI.create("d2://someservice/symbolTable"))
+        .setHeaders(Collections.singletonMap(RestConstants.HEADER_FETCH_SYMBOL_TABLE, Boolean.TRUE.toString())).build())))
+        .thenReturn(CompletableFuture.completedFuture(builder.build()));
 
     SymbolTable remoteSymbolTable = _provider.getRequestSymbolTable(URI.create("d2://someservice/path"));
     Assert.assertNotNull(remoteSymbolTable);
@@ -173,7 +169,7 @@ public class TestRestLiSymbolTableProvider {
 
     // Subsequent fetch should not trigger network fetch and get the table from the cache, regardless of
     // whether the table is fetched by request URI or symbol table name.
-    when(_client.restRequest(any(RestRequest.class), any(RequestContext.class))).thenThrow(new IllegalStateException());
+    when(_client.restRequest(any(RestRequest.class))).thenThrow(new IllegalStateException());
     SymbolTable cachedSymbolTable = _provider.getRequestSymbolTable(URI.create("d2://someservice/path"));
     Assert.assertSame(remoteSymbolTable, cachedSymbolTable);
     cachedSymbolTable = _provider.getSymbolTable("https://OtherHost:100/service|Test--332004310");
@@ -181,33 +177,37 @@ public class TestRestLiSymbolTableProvider {
   }
 
   @Test
-  public void testGetRemoteRequestSymbolTableDifferentUriPrefix() {
+  public void testGetRemoteRequestSymbolTableDifferentUriPrefix()
+  {
     Assert.assertNull(_provider.getRequestSymbolTable(URI.create("http://blah:100/bleh")));
   }
 
   @Test
-  public void testGetRemoteRequestSymbolTableFetch404Error() {
+  public void testGetRemoteRequestSymbolTableFetch404Error()
+  {
     RestResponseBuilder builder = new RestResponseBuilder();
     builder.setStatus(404);
 
     Assert.assertNull(_provider.getRequestSymbolTable(URI.create("d2://serviceName")));
 
     // Subsequent fetch should not trigger network fetch and get the table from the cache.
-    when(_client.restRequest(any(RestRequest.class), any(RequestContext.class))).thenThrow(new IllegalStateException());
+    when(_client.restRequest(any(RestRequest.class))).thenThrow(new IllegalStateException());
     Assert.assertNull(_provider.getRequestSymbolTable(URI.create("d2://serviceName")));
   }
 
   @Test
-  public void testGetRemoteRequestSymbolTableFetchNon404Error() {
+  public void testGetRemoteRequestSymbolTableFetchNon404Error()
+  {
     AtomicInteger networkCallCount = new AtomicInteger(0);
     RestResponseBuilder builder = new RestResponseBuilder();
     builder.setStatus(500);
-    when(_client.restRequest(eq(new RestRequestBuilder(URI.create("d2://serviceName/symbolTable")).setHeaders(
-        Collections.singletonMap(RestConstants.HEADER_FETCH_SYMBOL_TABLE, Boolean.TRUE.toString()))
-        .build()), any(RequestContext.class))).thenAnswer(invocation -> {
-      networkCallCount.incrementAndGet();
-      return CompletableFuture.completedFuture(builder.build());
-    });
+    when(_client.restRequest(eq(new RestRequestBuilder(URI.create("d2://serviceName/symbolTable"))
+        .setHeaders(Collections.singletonMap(RestConstants.HEADER_FETCH_SYMBOL_TABLE, Boolean.TRUE.toString()))
+        .build()))).thenAnswer(
+        invocation -> {
+          networkCallCount.incrementAndGet();
+          return CompletableFuture.completedFuture(builder.build());
+        });
 
     // First fetch should trigger a network request.
     Assert.assertNull(_provider.getRequestSymbolTable(URI.create("d2://serviceName")));
@@ -216,26 +216,5 @@ public class TestRestLiSymbolTableProvider {
     // Subsequent fetch should also trigger a network request because response should not have been cached.
     Assert.assertNull(_provider.getRequestSymbolTable(URI.create("d2://serviceName")));
     Assert.assertEquals(networkCallCount.get(), 2);
-  }
-
-  @Test
-  public void testGetRemoteRequestSymbolTableD2RoutingHint() throws Exception {
-    RequestContext context = new RequestContext();
-    KeyMapper.TargetHostHints.setRequestContextTargetHost(context, URI.create("https://blah/bleh"));
-
-    RestResponseBuilder builder = new RestResponseBuilder();
-    builder.setStatus(200);
-    SymbolTable symbolTable = new InMemorySymbolTable("https://blah/bleh:100/service|Test--332004310",
-        Collections.unmodifiableList(Arrays.asList("Haha", "Hehe")));
-    builder.setEntity(SymbolTableSerializer.toByteString(ContentType.PROTOBUF2.getCodec(), symbolTable));
-    builder.setHeader(RestConstants.HEADER_CONTENT_TYPE, ContentType.PROTOBUF2.getHeaderKey());
-    when(_client.restRequest(eq(new RestRequestBuilder(URI.create("d2://routingHint/symbolTable")).setHeaders(
-        Collections.singletonMap(RestConstants.HEADER_FETCH_SYMBOL_TABLE, Boolean.TRUE.toString()))
-        .build()), eq(context))).thenReturn(CompletableFuture.completedFuture(builder.build()));
-
-    SymbolTable remoteSymbolTable = _provider.getRequestSymbolTable(URI.create("d2://routingHint/path"));
-    Assert.assertNotNull(remoteSymbolTable);
-    Assert.assertEquals("https://Host:100/service|Test--332004310", remoteSymbolTable.getName());
-    Assert.assertEquals(2, remoteSymbolTable.size());
   }
 }

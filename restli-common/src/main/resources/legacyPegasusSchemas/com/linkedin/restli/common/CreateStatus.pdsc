@@ -1,0 +1,24 @@
+{
+  "type" : "record",
+  "name" : "CreateStatus",
+  "namespace" : "com.linkedin.restli.common",
+  "doc" : "A rest.li create status.",
+  "fields" : [ {
+    "name" : "status",
+    "type" : "int"
+  }, {
+    "name" : "id",
+    "type" : "string",
+    "optional" : true,
+    "deprecated" : "The serialized form of the returned key. You can get a strongly-typed form of the key by casting CreateStatus to CreateIdStatus and calling .getKey()"
+  }, {
+    "name" : "location",
+    "type" : "string",
+    "doc" : "The location url to retrieve the newly created entity",
+    "optional" : true
+  }, {
+    "name" : "error",
+    "type" : "ErrorResponse",
+    "optional" : true
+  } ]
+}

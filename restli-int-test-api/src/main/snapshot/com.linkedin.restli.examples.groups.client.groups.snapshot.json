@@ -412,6 +412,7 @@
     "path" : "/groups",
     "schema" : "com.linkedin.restli.examples.groups.api.Group",
     "doc" : "TODO Derive path, resourceClass and keyName from class names (GroupsResource => /groups, GroupResource.class, \"groupId\")\n\ngenerated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupsResource2",
+    "resourceClass" : "com.linkedin.restli.examples.groups.server.rest.impl.GroupsResource2",
     "collection" : {
       "identifier" : {
         "name" : "groupID",
@@ -419,18 +420,24 @@
       },
       "supports" : [ "batch_get", "create", "delete", "get", "partial_update" ],
       "methods" : [ {
-        "method" : "create"
+        "method" : "create",
+        "javaMethodName" : "create"
       }, {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get"
       }, {
-        "method" : "partial_update"
+        "method" : "partial_update",
+        "javaMethodName" : "update"
       }, {
-        "method" : "delete"
+        "method" : "delete",
+        "javaMethodName" : "delete"
       }, {
-        "method" : "batch_get"
+        "method" : "batch_get",
+        "javaMethodName" : "batchGet"
       } ],
       "finders" : [ {
         "name" : "complexCircuit",
+        "javaMethodName" : "complexCircuit",
         "doc" : "Test the default value for various types",
         "parameters" : [ {
           "name" : "nativeArray",
@@ -476,6 +483,7 @@
         "pagingSupported" : true
       }, {
         "name" : "emailDomain",
+        "javaMethodName" : "findByEmailDomain",
         "parameters" : [ {
           "name" : "emailDomain",
           "type" : "string"
@@ -483,6 +491,7 @@
         "pagingSupported" : true
       }, {
         "name" : "manager",
+        "javaMethodName" : "findByManager",
         "parameters" : [ {
           "name" : "managerMemberID",
           "type" : "int"
@@ -490,6 +499,7 @@
         "pagingSupported" : true
       }, {
         "name" : "search",
+        "javaMethodName" : "search",
         "parameters" : [ {
           "name" : "keywords",
           "type" : "string",
@@ -509,6 +519,7 @@
         "path" : "/groups/{groupID}",
         "actions" : [ {
           "name" : "sendTestAnnouncement",
+          "javaMethodName" : "sendTestAnnouncement",
           "parameters" : [ {
             "name" : "subject",
             "type" : "string"
@@ -521,6 +532,7 @@
           } ]
         }, {
           "name" : "transferOwnership",
+          "javaMethodName" : "transferOwnership",
           "parameters" : [ {
             "name" : "request",
             "type" : "com.linkedin.restli.examples.groups.api.TransferOwnershipRequest"
@@ -532,6 +544,7 @@
           "path" : "/groups/{groupID}/contacts",
           "schema" : "com.linkedin.restli.examples.groups.api.GroupContact",
           "doc" : "TODO Not implemented in MongoDB yet\n\ngenerated from: com.linkedin.restli.examples.groups.server.rest.impl.GroupContactsResource2",
+          "resourceClass" : "com.linkedin.restli.examples.groups.server.rest.impl.GroupContactsResource2",
           "collection" : {
             "identifier" : {
               "name" : "contactID",
@@ -539,18 +552,24 @@
             },
             "supports" : [ "batch_get", "create", "delete", "get", "partial_update" ],
             "methods" : [ {
-              "method" : "create"
+              "method" : "create",
+              "javaMethodName" : "create"
             }, {
-              "method" : "get"
+              "method" : "get",
+              "javaMethodName" : "get"
             }, {
-              "method" : "partial_update"
+              "method" : "partial_update",
+              "javaMethodName" : "update"
             }, {
-              "method" : "delete"
+              "method" : "delete",
+              "javaMethodName" : "delete"
             }, {
-              "method" : "batch_get"
+              "method" : "batch_get",
+              "javaMethodName" : "batchGet"
             } ],
             "actions" : [ {
-              "name" : "spamContacts"
+              "name" : "spamContacts",
+              "javaMethodName" : "spamContacts"
             } ],
             "entity" : {
               "path" : "/groups/{groupID}/contacts/{contactID}"

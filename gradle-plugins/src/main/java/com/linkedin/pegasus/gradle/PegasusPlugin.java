@@ -561,7 +561,9 @@ public class PegasusPlugin implements Plugin<Project>
 
   private static final Pattern TEST_DIR_REGEX = Pattern.compile("^(integ)?[Tt]est");
   private static final String SNAPSHOT_NO_PUBLISH = "rest.model.noPublish";
+  private static final String SNAPSHOT_FORCE_PUBLISH = "rest.model.forcePublish";
   private static final String IDL_NO_PUBLISH = "rest.idl.noPublish";
+  private static final String IDL_FORCE_PUBLISH = "rest.idl.forcePublish";
   private static final String SKIP_IDL_CHECK = "rest.idl.skipCheck";
   // gradle property to skip running GenerateRestModel task.
   // Note it affects GenerateRestModel task only, and does not skip tasks depends on GenerateRestModel.
@@ -632,6 +634,7 @@ public class PegasusPlugin implements Plugin<Project>
   private Task _generateSourcesJarTask;
   private Javadoc _generateJavadocTask;
   private Task _generateJavadocJarTask;
+  private boolean _configureIvyPublications = true;
 
   public void setPluginType(Class<? extends Plugin<Project>> pluginType)
   {
@@ -646,6 +649,10 @@ public class PegasusPlugin implements Plugin<Project>
   public void setJavadocJarTask(Task javadocJarTask)
   {
     _generateJavadocJarTask = javadocJarTask;
+  }
+
+  public void setConfigureIvyPublications(boolean configureIvyPublications) {
+    _configureIvyPublications = configureIvyPublications;
   }
 
   @Override
@@ -1370,6 +1377,8 @@ public class PegasusPlugin implements Plugin<Project>
             task.setSuffix(SNAPSHOT_FILE_SUFFIX);
 
             task.onlyIf(t ->
+                isPropertyTrue(project, SNAPSHOT_FORCE_PUBLISH) ||
+                (
                     !isPropertyTrue(project, SNAPSHOT_NO_PUBLISH) &&
                     (
                       (
@@ -1384,7 +1393,8 @@ public class PegasusPlugin implements Plugin<Project>
                          checkRestModelTask.getSummaryTarget().exists() &&
                         !isResultEquivalent(checkRestModelTask.getSummaryTarget())
                       )
-                    ));
+                    ))
+                );
           });
 
       Task publishRestliIdlTask = project.getTasks()
@@ -1395,6 +1405,8 @@ public class PegasusPlugin implements Plugin<Project>
             task.setSuffix(IDL_FILE_SUFFIX);
 
             task.onlyIf(t ->
+                isPropertyTrue(project, IDL_FORCE_PUBLISH) ||
+                (
                     !isPropertyTrue(project, IDL_NO_PUBLISH) &&
                     (
                       (
@@ -1414,7 +1426,8 @@ public class PegasusPlugin implements Plugin<Project>
                                 !isResultEquivalent(checkIdlTask.getSummaryTarget()))
                          )
                       )
-                    ));
+                    ))
+                );
           });
 
       project.getLogger().info("API project selected for {} is {}",
@@ -1837,38 +1850,52 @@ public class PegasusPlugin implements Plugin<Project>
     }
 
     // include additional dependencies into the appropriate configuration used to compile the input source set
-    // must include the generated data template classes and their dependencies the configuration
-    String compileConfigName = isTestSourceSet(sourceSet) ? "testCompile" : "compile";
+    // must include the generated data template classes and their dependencies the configuration.
+    // "compile" and "testCompile" configurations have been removed in Gradle 7,
+    // but to keep the maximum backward compatibility, here we handle Gradle 7 and earlier version differently
+    // Once MIN_REQUIRED_VERSION reaches 7.0, we can remove the check of isAtLeastGradle7()
+    String compileConfigName;
+    if (isAtLeastGradle7()) {
+      compileConfigName = isTestSourceSet(sourceSet) ? "testImplementation" : project.getConfigurations().findByName("api") != null ? "api" : "implementation";
+    }
+    else
+    {
+      compileConfigName = isTestSourceSet(sourceSet) ? "testCompile" : "compile";
+    }
 
     Configuration compileConfig = project.getConfigurations().maybeCreate(compileConfigName);
     compileConfig.extendsFrom(
         getDataModelConfig(project, sourceSet),
         project.getConfigurations().getByName("dataTemplateCompile"));
 
-    // FIXME change to #getArchiveFile(); breaks backwards-compatibility before 5.1
-    project.getDependencies().add(compileConfigName, project.files(dataTemplateJarTask.getArchivePath()));
+    // The getArchivePath() API doesn’t carry any task dependency and has been deprecated.
+    // Replace it with getArchiveFile() on Gradle 7,
+    // but keep getArchivePath() to be backwards-compatibility with Gradle version older than 5.1
+    project.getDependencies().add(compileConfigName, project.files(
+        isAtLeastGradle7() ? dataTemplateJarTask.getArchiveFile() : dataTemplateJarTask.getArchivePath()));
 
-    // The below Action is only applied when the 'ivy-publish' is applied by the consumer.
-    // If the consumer does not use ivy-publish, this is a noop.
-    // this Action prepares the project applying the pegasus plugin to publish artifacts using these steps:
-    // 1. Registers "feature variants" for pegasus-specific artifacts;
-    //      see https://docs.gradle.org/6.1/userguide/feature_variants.html
-    // 2. Wires legacy configurations like `dataTemplateCompile` to auto-generated feature variant *Api and
-    //      *Implementation configurations for backwards compatibility.
-    // 3. Configures the Ivy Publication to include auto-generated feature variant *Api and *Implementation
-    //      configurations and their dependencies.
-    project.getPlugins().withType(IvyPublishPlugin.class, ivyPublish -> {
-      if (!isAtLeastGradle61())
-      {
-        throw new GradleException("Using the ivy-publish plugin with the pegasus plugin requires Gradle 6.1 or higher " +
-                "at build time.  Please upgrade.");
-      }
+    if (_configureIvyPublications) {
+      // The below Action is only applied when the 'ivy-publish' is applied by the consumer.
+      // If the consumer does not use ivy-publish, this is a noop.
+      // this Action prepares the project applying the pegasus plugin to publish artifacts using these steps:
+      // 1. Registers "feature variants" for pegasus-specific artifacts;
+      //      see https://docs.gradle.org/6.1/userguide/feature_variants.html
+      // 2. Wires legacy configurations like `dataTemplateCompile` to auto-generated feature variant *Api and
+      //      *Implementation configurations for backwards compatibility.
+      // 3. Configures the Ivy Publication to include auto-generated feature variant *Api and *Implementation
+      //      configurations and their dependencies.
+      project.getPlugins().withType(IvyPublishPlugin.class, ivyPublish -> {
+        if (!isAtLeastGradle61())
+        {
+          throw new GradleException("Using the ivy-publish plugin with the pegasus plugin requires Gradle 6.1 or higher " +
+              "at build time.  Please upgrade.");
+        }
 
-      JavaPluginExtension java = project.getExtensions().getByType(JavaPluginExtension.class);
-      // create new capabilities per source set; automatically creates api and implementation configurations
-      String featureName = mapSourceSetToFeatureName(targetSourceSet);
-      try
-      {
+        JavaPluginExtension java = project.getExtensions().getByType(JavaPluginExtension.class);
+        // create new capabilities per source set; automatically creates api and implementation configurations
+        String featureName = mapSourceSetToFeatureName(targetSourceSet);
+        try
+        {
         /*
          reflection is required to preserve compatibility with Gradle 5.2.1 and below
          TODO once Gradle 5.3+ is required, remove reflection and replace with:
@@ -1876,37 +1903,38 @@ public class PegasusPlugin implements Plugin<Project>
              featureSpec.usingSourceSet(targetSourceSet);
             });
         */
-        Method registerFeature = JavaPluginExtension.class.getDeclaredMethod("registerFeature", String.class, Action.class);
-        Action<?>/*<org.gradle.api.plugins.FeatureSpec>*/ featureSpecAction = createFeatureVariantFromSourceSet(targetSourceSet);
-        registerFeature.invoke(java, featureName, featureSpecAction);
-      }
-      catch (ReflectiveOperationException e)
-      {
-        throw new GradleException("Unable to register new feature variant", e);
-      }
+          Method registerFeature = JavaPluginExtension.class.getDeclaredMethod("registerFeature", String.class, Action.class);
+          Action<?>/*<org.gradle.api.plugins.FeatureSpec>*/ featureSpecAction = createFeatureVariantFromSourceSet(targetSourceSet);
+          registerFeature.invoke(java, featureName, featureSpecAction);
+        }
+        catch (ReflectiveOperationException e)
+        {
+          throw new GradleException("Unable to register new feature variant", e);
+        }
 
-      // expose transitive dependencies to consumers via variant configurations
-      Configuration featureConfiguration = project.getConfigurations().getByName(featureName);
-      Configuration mainGeneratedDataTemplateApi = project.getConfigurations().getByName(targetSourceSet.getApiConfigurationName());
-      featureConfiguration.extendsFrom(mainGeneratedDataTemplateApi);
-      mainGeneratedDataTemplateApi.extendsFrom(
-              getDataModelConfig(project, targetSourceSet),
-              project.getConfigurations().getByName("dataTemplateCompile"));
+        // expose transitive dependencies to consumers via variant configurations
+        Configuration featureConfiguration = project.getConfigurations().getByName(featureName);
+        Configuration mainGeneratedDataTemplateApi = project.getConfigurations().getByName(targetSourceSet.getApiConfigurationName());
+        featureConfiguration.extendsFrom(mainGeneratedDataTemplateApi);
+        mainGeneratedDataTemplateApi.extendsFrom(
+            getDataModelConfig(project, targetSourceSet),
+            project.getConfigurations().getByName("dataTemplateCompile"));
 
-      // Configure the existing IvyPublication
-      // For backwards-compatibility, make the legacy dataTemplate/testDataTemplate configurations extend
-      // their replacements, auto-created when we registered the new feature variant
-      project.afterEvaluate(p -> {
-        PublishingExtension publishing = p.getExtensions().getByType(PublishingExtension.class);
-        // When configuring a Gradle Publication, use this value to find the name of the publication to configure.  Defaults to "ivy".
-        String publicationName = p.getExtensions().getExtraProperties().getProperties().getOrDefault("PegasusPublicationName", "ivy").toString();
-        IvyPublication ivyPublication = publishing.getPublications().withType(IvyPublication.class).getByName(publicationName);
-        ivyPublication.configurations(configurations -> configurations.create(featureName, legacyConfiguration -> {
-          legacyConfiguration.extend(p.getConfigurations().getByName(targetSourceSet.getApiElementsConfigurationName()).getName());
-          legacyConfiguration.extend(p.getConfigurations().getByName(targetSourceSet.getRuntimeElementsConfigurationName()).getName());
-        }));
+        // Configure the existing IvyPublication
+        // For backwards-compatibility, make the legacy dataTemplate/testDataTemplate configurations extend
+        // their replacements, auto-created when we registered the new feature variant
+        project.afterEvaluate(p -> {
+          PublishingExtension publishing = p.getExtensions().getByType(PublishingExtension.class);
+          // When configuring a Gradle Publication, use this value to find the name of the publication to configure.  Defaults to "ivy".
+          String publicationName = p.getExtensions().getExtraProperties().getProperties().getOrDefault("PegasusPublicationName", "ivy").toString();
+          IvyPublication ivyPublication = publishing.getPublications().withType(IvyPublication.class).getByName(publicationName);
+          ivyPublication.configurations(configurations -> configurations.create(featureName, legacyConfiguration -> {
+            legacyConfiguration.extend(p.getConfigurations().getByName(targetSourceSet.getApiElementsConfigurationName()).getName());
+            legacyConfiguration.extend(p.getConfigurations().getByName(targetSourceSet.getRuntimeElementsConfigurationName()).getName());
+          }));
+        });
       });
-    });
+    }
 
     if (debug)
     {
@@ -1991,8 +2019,11 @@ public class PegasusPlugin implements Plugin<Project>
         System.out.println("sourceSet " + sourceSet.getName() + " has generated sourceSet " + dataTemplateSourceSetName);
       }
       dataTemplateJarTask = (Jar) project.getTasks().getByName(sourceSet.getName() + "DataTemplateJar");
-      // FIXME change to #getArchiveFile(); breaks backwards-compatibility before 5.1
-      dataModels = dataModelConfig.plus(project.files(dataTemplateJarTask.getArchivePath()));
+      // The getArchivePath() API doesn’t carry any task dependency and has been deprecated.
+      // Replace it with getArchiveFile() on Gradle 7,
+      // but keep getArchivePath() to be backwards-compatibility with Gradle version older than 5.1
+      dataModels = dataModelConfig.plus(project.files(
+          isAtLeastGradle7() ? dataTemplateJarTask.getArchiveFile() : dataTemplateJarTask.getArchivePath()));
     }
     else
     {
@@ -2396,5 +2427,9 @@ public class PegasusPlugin implements Plugin<Project>
   protected static boolean isAtLeastGradle61()
   {
     return GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.1")) >= 0;
+  }
+
+  public static boolean isAtLeastGradle7() {
+    return GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("7.0")) >= 0;
   }
 }

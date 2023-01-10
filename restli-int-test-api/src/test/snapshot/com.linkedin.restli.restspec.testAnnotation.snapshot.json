@@ -17,6 +17,7 @@
     "path" : "/testAnnotation",
     "schema" : "com.linkedin.restli.examples.MockRecord",
     "doc" : "generated from: com.linkedin.restli.restspec.TestAnnotationResource",
+    "resourceClass": "com.linkedin.restli.restspec.TestAnnotationResource",
     "collection" : {
       "identifier" : {
         "name" : "testAnnotationId",
@@ -31,7 +32,8 @@
             "myName" : "resource method annotation 2"
           }
         },
-        "method" : "create"
+        "method" : "create",
+        "javaMethodName" : "create"
       }, {
         "annotations" : {
           "namedAnnotation" : {
@@ -42,6 +44,7 @@
           }
         },
         "method" : "get",
+        "javaMethodName" : "getWithResult",
         "parameters" : [ {
           "annotations" : {
             "com.linkedin.restli.restspec.UnnamedAnnotation" : {
@@ -70,6 +73,7 @@
           }
         },
         "name" : "testFinder",
+        "javaMethodName" : "testFinder",
         "parameters" : [ {
           "annotations" : {
             "namedAnnotation" : {
@@ -100,6 +104,7 @@
           }
         },
         "name" : "testAction",
+        "javaMethodName" : "testAction",
         "parameters" : [ {
           "annotations" : {
             "com.linkedin.restli.restspec.UnnamedAnnotation" : {
@@ -122,6 +127,7 @@
           "path" : "/testAnnotation/{testAnnotationId}/testAnnotationSub",
           "schema" : "com.linkedin.restli.examples.MockRecord",
           "doc" : "generated from: com.linkedin.restli.restspec.TestAnnotationSubresource",
+          "resourceClass": "com.linkedin.restli.restspec.TestAnnotationSubresource",
           "collection" : {
             "identifier" : {
               "name" : "testAnnotationSubId",
@@ -134,7 +140,8 @@
                   "used" : 1
                 }
               },
-              "method" : "delete"
+              "method" : "delete",
+              "javaMethodName" : "delete"
             } ],
             "entity" : {
               "path" : "/testAnnotation/{testAnnotationId}/testAnnotationSub/{testAnnotationSubId}"

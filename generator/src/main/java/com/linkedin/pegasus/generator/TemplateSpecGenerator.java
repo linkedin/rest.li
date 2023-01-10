@@ -21,6 +21,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.ArrayDataSchema;
 import com.linkedin.data.schema.ComplexDataSchema;
 import com.linkedin.data.schema.DataSchema;
+import com.linkedin.data.schema.DataSchemaConstants;
 import com.linkedin.data.schema.DataSchemaLocation;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.EnumDataSchema;
@@ -45,8 +46,8 @@ import com.linkedin.pegasus.generator.spec.TyperefTemplateSpec;
 import com.linkedin.pegasus.generator.spec.UnionTemplateSpec;
 import com.linkedin.util.CustomTypeUtil;
 
-import java.io.File;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
@@ -55,6 +56,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
+import java.util.regex.Pattern;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,6 +101,11 @@ public class TemplateSpecGenerator
   private final String _customTypeLanguage;
   private final String _templatePackageName;
 
+  /**
+   * List of regex pattern of schema full names to identify which schema need to skip deprecated fields when generating its spec.
+   */
+  private final List<Pattern> _skipDeprecatedFieldPatterns = new ArrayList<>();
+
   public TemplateSpecGenerator(DataSchemaResolver schemaResolver)
   {
     this(schemaResolver, CustomTypeUtil.JAVA_PROPERTY, DataTemplate.class.getPackage().getName());
@@ -138,9 +146,31 @@ public class TemplateSpecGenerator
     return result;
   }
 
+  /**
+   * Do not use this deprecated method. If need to skip deprecated field when generating specs, please use setSkipDeprecatedPatterns
+   * and generate(DataSchema schema, DataSchemaLocation location) instead.
+   */
+  @Deprecated
+  public ClassTemplateSpec generate(DataSchema schema, DataSchemaLocation location, boolean skipDeprecatedField)
+  {
+    return generate(schema, location);
+  }
+
   public Collection<ClassTemplateSpec> getGeneratedSpecs()
   {
     return _classTemplateSpecs;
+  }
+
+  /**
+   * Set the regex name patterns for schemas which needs to skip deprecated fields when generating the specs.
+   * For any record schema with a fully-qualified name that matches any of the provided patterns, all its fields
+   * marked as deprecated will be skipped during spec generation.
+   *
+   * @param skipDeprecatedFieldPatterns list of regex name patterns to be set.
+   */
+  public void setSkipDeprecatedFieldPatterns(@Nonnull List<Pattern> skipDeprecatedFieldPatterns) {
+    _skipDeprecatedFieldPatterns.clear();
+    _skipDeprecatedFieldPatterns.addAll(skipDeprecatedFieldPatterns);
   }
 
   /**
@@ -749,8 +779,13 @@ public class TemplateSpecGenerator
 
     final Map<CustomInfoSpec, Object> customInfoMap = new IdentityHashMap<>(schema.getFields().size() * 2);
 
+    boolean skipDeprecatedField = shouldSkipDeprecatedFields(schema);
     for (RecordDataSchema.Field field : schema.getFields())
     {
+      // If skipDeprecatedField is set, spec generator will skip deprecated field, its type and types referenced within this type
+      if (skipDeprecatedField && isDeprecated(field)) {
+        continue;
+      }
       final ClassTemplateSpec fieldClass = processSchema(field.getType(), recordClass, field.getName());
       final RecordTemplateSpec.Field newField = new RecordTemplateSpec.Field();
       newField.setSchemaField(field);
@@ -772,6 +807,31 @@ public class TemplateSpecGenerator
     }
 
     return recordClass;
+  }
+
+  private boolean isDeprecated(RecordDataSchema.Field field) {
+    Map<String, Object> properties = field.getProperties();
+    if (properties.containsKey(DataSchemaConstants.DEPRECATED_KEY)) {
+      Object property = properties.get(DataSchemaConstants.DEPRECATED_KEY);
+      if (property instanceof Boolean)
+      {
+        return (Boolean) property;
+      }
+      else if (property instanceof String)
+      {
+        return true;
+      }
+      else
+      {
+        throw new IllegalArgumentException("Expected boolean or string value for '" + DataSchemaConstants.DEPRECATED_KEY + "' property in " + field.getRecord().getFullName());
+      }
+    } else {
+      return false;
+    }
+  }
+
+  private boolean shouldSkipDeprecatedFields(NamedDataSchema dataSchema) {
+    return _skipDeprecatedFieldPatterns.stream().anyMatch(pattern -> pattern.matcher(dataSchema.getFullName()).matches());
   }
 
   /*

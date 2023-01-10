@@ -17,6 +17,7 @@
 package com.linkedin.d2.discovery.stores.zk.builder;
 
 import com.linkedin.d2.discovery.PropertySerializer;
+import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPropertyMerger;
@@ -51,6 +52,7 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
   private int _zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
   private ZookeeperChildFilter _zookeeperChildFilter = null;
   private ZookeeperEphemeralPrefixGenerator _zookeeperEphemeralPrefixGenerator = null;
+  private ServiceDiscoveryEventEmitter _eventEmitter = null;
   private List<Consumer<ZooKeeperEphemeralStore<T>>> _onBuildListeners = new ArrayList<>();
 
   @Override
@@ -122,6 +124,11 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
     return this;
   }
 
+  public ZooKeeperEphemeralStoreBuilder<T> setServiceDiscoveryEventEmitter(ServiceDiscoveryEventEmitter emitter) {
+    this._eventEmitter = emitter;
+    return this;
+  }
+
   @Override
   public ZooKeeperEphemeralStoreBuilder<T> addOnBuildListener(Consumer<ZooKeeperEphemeralStore<T>> onBuildListener)
   {
@@ -140,6 +147,7 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
     ZooKeeperEphemeralStore<T> zooKeeperEphemeralStore =
       new ZooKeeperEphemeralStore<>(_client, _serializer, _merger, _path, _watchChildNodes, _useNewWatcher,
                                     backupStoreFilePath, _executorService, _zookeeperReadWindowMs, _zookeeperChildFilter, _zookeeperEphemeralPrefixGenerator);
+    zooKeeperEphemeralStore.setServiceDiscoveryEventEmitter(_eventEmitter);
 
     for (Consumer<ZooKeeperEphemeralStore<T>> onBuildListener : _onBuildListeners)
     {

@@ -89,6 +89,7 @@
     "path" : "/fillInDefaults",
     "schema" : "com.linkedin.restli.examples.defaults.api.HighLevelRecordWithDefault",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.defaults.FieldFillInDefaultResources",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.defaults.FieldFillInDefaultResources",
     "collection" : {
       "identifier" : {
         "name" : "fillInDefaultsId",
@@ -96,11 +97,14 @@
       },
       "supports" : [ "batch_get", "get", "get_all" ],
       "methods" : [ {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get"
       }, {
-        "method" : "batch_get"
+        "method" : "batch_get",
+        "javaMethodName" : "batchGet"
       }, {
         "method" : "get_all",
+        "javaMethodName" : "getAllHighLevelRecordWithDefault",
         "metadata" : {
           "type" : "com.linkedin.restli.examples.defaults.api.LowLevelRecordWithDefault"
         },
@@ -108,6 +112,7 @@
       } ],
       "finders" : [ {
         "name" : "findRecords",
+        "javaMethodName" : "findRecords",
         "parameters" : [ {
           "name" : "noDefaultFieldA",
           "type" : "int"
@@ -118,6 +123,7 @@
       } ],
       "batchFinders" : [ {
         "name" : "searchRecords",
+        "javaMethodName" : "searchRecords",
         "parameters" : [ {
           "name" : "criteria",
           "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.defaults.api.RecordCriteria\" }"
@@ -129,6 +135,7 @@
       } ],
       "actions" : [ {
         "name" : "defaultFillAction",
+        "javaMethodName" : "takeAction",
         "parameters" : [ {
           "name" : "actionParam",
           "type" : "long"

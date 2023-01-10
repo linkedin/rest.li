@@ -40,6 +40,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
+import com.linkedin.r2.netty.client.DnsMetricsCallback;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
@@ -127,6 +128,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final String HTTP_SERVICE_NAME = "http.serviceName";
   public static final String HTTP_POOL_STATS_NAME_PREFIX = "http.poolStatsNamePrefix";
   public static final String HTTP_POOL_STRATEGY = "http.poolStrategy";
+  public static final String TRANSPORT_PROTOCOL = "transport.protocol";
   public static final String HTTP_POOL_MIN_SIZE = "http.poolMinSize";
   public static final String HTTP_MAX_HEADER_SIZE = "http.maxHeaderSize";
   public static final String HTTP_MAX_CHUNK_SIZE = "http.maxChunkSize";
@@ -199,6 +201,7 @@ public class HttpClientFactory implements TransportClientFactory
   private final int _connectTimeout;
   private final int _sslHandShakeTimeout;
   private final int _channelPoolWaiterTimeout;
+  private final String _udsAddress;
   /** Request compression config for each http service. */
   private final Map<String, CompressionConfig> _requestCompressionConfigs;
   /** Response compression config for each http service. */
@@ -215,6 +218,7 @@ public class HttpClientFactory implements TransportClientFactory
   private int                              _clientsOutstanding  = 0;
   private Callback<None>                   _factoryShutdownCallback;
   private ChannelPoolManagerFactory        _channelPoolManagerFactory;
+  private DnsMetricsCallback _dnsMetricsCallback;
 
   /**
    * Construct a new instance using an empty filter chain.
@@ -621,7 +625,37 @@ public class HttpClientFactory implements TransportClientFactory
         shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
         responseCompressionConfigs, compressionExecutor, defaultHttpVersion, shareConnection, eventProviderRegistry,
         enableSSLSessionResumption, usePipelineV2, executorsToShutDown, DEFAULT_CONNECT_TIMEOUT,
-        DEFAULT_SSL_HANDSHAKE_TIMEOUT, DEFAULT_CHANNELPOOL_WAITER_TIMEOUT);
+        DEFAULT_SSL_HANDSHAKE_TIMEOUT, DEFAULT_CHANNELPOOL_WAITER_TIMEOUT, null);
+  }
+
+  private HttpClientFactory(FilterChain filters,
+      EventLoopGroup eventLoopGroup,
+      boolean shutdownFactory,
+      ScheduledExecutorService executor,
+      boolean shutdownExecutor,
+      ExecutorService callbackExecutorGroup,
+      boolean shutdownCallbackExecutor,
+      AbstractJmxManager jmxManager,
+      final int requestCompressionThresholdDefault,
+      final Map<String, CompressionConfig> requestCompressionConfigs,
+      final Map<String, CompressionConfig> responseCompressionConfigs,
+      Executor compressionExecutor,
+      HttpProtocolVersion defaultHttpVersion,
+      boolean shareConnection,
+      EventProviderRegistry eventProviderRegistry,
+      boolean enableSSLSessionResumption,
+      boolean usePipelineV2,
+      List<ExecutorService> executorsToShutDown,
+      int connectTimeout,
+      int sslHandShakeTimeout,
+      int channelPoolWaiterTimeout,
+      String udsAddress)
+  {
+    this(filters, eventLoopGroup, shutdownFactory, executor, shutdownExecutor, callbackExecutorGroup,
+        shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
+        responseCompressionConfigs, compressionExecutor, defaultHttpVersion, shareConnection, eventProviderRegistry,
+        enableSSLSessionResumption, usePipelineV2, executorsToShutDown, DEFAULT_CONNECT_TIMEOUT,
+        DEFAULT_SSL_HANDSHAKE_TIMEOUT, DEFAULT_CHANNELPOOL_WAITER_TIMEOUT, udsAddress, null);
   }
 
   private HttpClientFactory(FilterChain filters,
@@ -644,7 +678,9 @@ public class HttpClientFactory implements TransportClientFactory
                             List<ExecutorService> executorsToShutDown,
                             int connectTimeout,
                             int sslHandShakeTimeout,
-                            int channelPoolWaiterTimeout)
+                            int channelPoolWaiterTimeout,
+                            String udsAddress,
+                            DnsMetricsCallback dnsMetricsCallback)
   {
     _filters = filters;
     _eventLoopGroup = eventLoopGroup;
@@ -660,6 +696,8 @@ public class HttpClientFactory implements TransportClientFactory
     _connectTimeout = connectTimeout;
     _sslHandShakeTimeout = sslHandShakeTimeout;
     _channelPoolWaiterTimeout = channelPoolWaiterTimeout;
+    _udsAddress = udsAddress;
+    _dnsMetricsCallback = dnsMetricsCallback;
     if (requestCompressionConfigs == null)
     {
       throw new IllegalArgumentException("requestCompressionConfigs should not be null.");
@@ -706,6 +744,7 @@ public class HttpClientFactory implements TransportClientFactory
     private FilterChain                _filters = FilterChains.empty();
     private boolean                    _useClientCompression = true;
     private boolean                    _usePipelineV2 = false;
+    private String                     _udsAddress = null;
     private int                        _pipelineV2MinimumMaturityLevel = PIPELINE_V2_MATURITY_LEVEL;
     private Executor                   _customCompressionExecutor = null;
     private AbstractJmxManager         _jmxManager = AbstractJmxManager.NULL_JMX_MANAGER;
@@ -719,6 +758,7 @@ public class HttpClientFactory implements TransportClientFactory
     private int _connectTimeout = DEFAULT_CONNECT_TIMEOUT;
     private int _sslHandShakeTimeout = DEFAULT_SSL_HANDSHAKE_TIMEOUT;
     private int _channelPoolWaiterTimeout = DEFAULT_CHANNELPOOL_WAITER_TIMEOUT;
+    private DnsMetricsCallback _dnsMetricsCallback;
 
     /**
      * @param eventLoopGroup the {@link EventLoopGroup} that all Clients created by this
@@ -759,6 +799,12 @@ public class HttpClientFactory implements TransportClientFactory
     public Builder setCallbackExecutor(ExecutorService callbackExecutor)
     {
       _callbackExecutorGroup = callbackExecutor;
+      return this;
+    }
+
+    public Builder setDnsMetricsCallback(DnsMetricsCallback dnsMetricsCallback)
+    {
+      _dnsMetricsCallback = dnsMetricsCallback;
       return this;
     }
 
@@ -895,6 +941,12 @@ public class HttpClientFactory implements TransportClientFactory
       return this;
     }
 
+    public Builder setUdsAddress(String udsAddress)
+    {
+      _udsAddress = udsAddress;
+      return this;
+    }
+
     public Builder setPipelineV2MinimumMaturityLevel(int pipelineV2MinimumMaturityLevel)
     {
       _pipelineV2MinimumMaturityLevel = pipelineV2MinimumMaturityLevel;
@@ -950,7 +1002,8 @@ public class HttpClientFactory implements TransportClientFactory
         _shutdownExecutor, callbackExecutorGroup, _shutdownCallbackExecutor, _jmxManager,
         _requestCompressionThresholdDefault, _requestCompressionConfigs, _responseCompressionConfigs,
         compressionExecutor, _defaultHttpVersion, _shareConnection, eventProviderRegistry, _enableSSLSessionResumption,
-          _usePipelineV2, executorsToShutDown, _connectTimeout, _sslHandShakeTimeout, _channelPoolWaiterTimeout);
+          _usePipelineV2, executorsToShutDown, _connectTimeout, _sslHandShakeTimeout, _channelPoolWaiterTimeout,
+          _udsAddress, _dnsMetricsCallback);
     }
 
   }
@@ -1361,7 +1414,7 @@ public class HttpClientFactory implements TransportClientFactory
       .setPoolWaiterSize(poolWaiterSize).setSSLParameters(sslParameters).setStrategy(strategy).setMinPoolSize(poolMinSize)
       .setMaxHeaderSize(maxHeaderSize).setMaxChunkSize(maxChunkSize)
       .setMaxConcurrentConnectionInitializations(maxConcurrentConnectionInitializations)
-      .setTcpNoDelay(tcpNoDelay).setPoolStatsNamePrefix(poolStatsNamePrefix).build();
+      .setTcpNoDelay(tcpNoDelay).setPoolStatsNamePrefix(poolStatsNamePrefix).setUdsAddress(_udsAddress).build();
   }
 
   TransportClient getRawClient(Map<String, ? extends Object> properties,
@@ -1414,7 +1467,7 @@ public class HttpClientFactory implements TransportClientFactory
 
       return new com.linkedin.r2.netty.client.HttpNettyClient(_eventLoopGroup, _executor, _callbackExecutorGroup,
           channelPoolManager, sslChannelPoolManager, httpProtocolVersion, SystemClock.instance(),
-              requestTimeout, streamingTimeout, shutdownTimeout);
+              requestTimeout, streamingTimeout, shutdownTimeout, _udsAddress, _dnsMetricsCallback);
     }
 
     TransportClient streamClient;

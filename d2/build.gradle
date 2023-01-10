@@ -1,3 +1,15 @@
+// internal api inaccessible starting 1.9
+if (JavaVersion.current() > JavaVersion.VERSION_1_9) {
+  project.tasks.withType(JavaCompile) {
+    options.compilerArgs += [ "--add-exports", "jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED" ]
+  }
+  javadoc {
+    options {
+      addStringOption('-add-exports', 'jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED')
+    }
+  }
+}
+
 dependencies {
   compile project(':degrader')
   compile project(':r2-core')
@@ -19,6 +31,9 @@ dependencies {
   compile externalDependency.jdkTools
   compile externalDependency.zero_allocation_hashing
   compile externalDependency.xchart
+  compileOnly externalDependency.findbugs
+  testCompile externalDependency.metricsCore
+  testCompile externalDependency.xerialSnappy
   testCompile externalDependency.testng
   testCompile externalDependency.junit
   testCompile externalDependency.commonsIo
@@ -28,6 +43,7 @@ dependencies {
   testCompile project(':r2-jetty')
   testCompile project(':test-util')
   testCompile project(':d2-test-api')
+  testCompileOnly externalDependency.findbugs
 }
 
 task packup(dependsOn: configurations.default.allArtifacts, type: Copy) {

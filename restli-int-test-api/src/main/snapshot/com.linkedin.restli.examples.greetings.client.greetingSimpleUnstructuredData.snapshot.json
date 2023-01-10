@@ -6,10 +6,12 @@
     "path" : "/greetingSimpleUnstructuredData",
     "entityType" : "UNSTRUCTURED_DATA",
     "doc" : "This resource models an simple resource that produces unstructured data entities as results.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataSimpleResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.GreetingUnstructuredDataSimpleResource",
     "simple" : {
       "supports" : [ "get" ],
       "methods" : [ {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get"
       } ],
       "entity" : {
         "path" : "/greetingSimpleUnstructuredData"

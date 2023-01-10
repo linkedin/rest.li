@@ -39,6 +39,7 @@
     "path" : "/typerefKeys",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.TyperefKeysResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.TyperefKeysResource",
     "collection" : {
       "identifier" : {
         "name" : "typerefKeysId",
@@ -46,9 +47,11 @@
       },
       "supports" : [ "batch_get", "create" ],
       "methods" : [ {
-        "method" : "create"
+        "method" : "create",
+        "javaMethodName" : "create"
       }, {
-        "method" : "batch_get"
+        "method" : "batch_get",
+        "javaMethodName" : "batchGet"
       } ],
       "entity" : {
         "path" : "/typerefKeys/{typerefKeysId}"

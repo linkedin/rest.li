@@ -15,11 +15,210 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 - Change commons-httpclient dependency with httpcomponents.client5:httpclient5 to fix security vulnerability
 
+## [29.41.3] - 2023-01-03
+Add option to force publish idl and snapshot
+
+## [29.41.2] - 2022-12-21
+Enable enumeration of clusters in `ZKFailoutConfigProvider`.
+
+## [29.41.1] - 2022-12-19
+Replace the API call getArchivePath() with getArchiveFile() on Gradle 7 in the Pegasus Plugin
+
+## [29.41.0] - 2022-12-15
+Reduce memory allocations during rich schema traversal
+
+## [29.40.15] - 2022-12-08
+Allow disabling the ivy publication preconfiguration in the Pegasus Gradle plugin
+
+## [29.40.14] - 2022-12-06
+Make CurrentSchemaEntryMode public so that all TraverserContext interface getters can be accessed by restli users
+
+## [29.40.13] - 2022-12-01
+Add D2 loggings for tracking the initial received D2 Clusters and D2 Uris
+
+## [29.40.12] - 2022-11-30
+Add channel writability to streaming timeout exception
+
+## [29.40.11] - 2022-11-17
+Add util class to convert generic List/Map to DataList/DataMap or vice versa
+
+## [29.40.10] - 2022-11-16
+Fix the deprecated configuration name used in the PegasusPlugin
+
+## [29.40.9] - 2022-11-15
+Enable validation check in the build of the gradle plugin and fix some validation errors with Gradle 7
+
+## [29.40.8] - 2022-11-14
+Upgrade Apache Commons Text to 1.10.0 as vulnerability fix (CVE-2022-42889)
+
+## [29.40.7] - 2022-11-07
+Remove @PathSensitive from property idlDestinationDir in GenerateRestModelTask
+
+## [29.40.6] - 2022-11-06
+Add getter of IncludesDeclaredInline in RecordDataSchema
+
+## [29.40.5] - 2022-11-03
+Fix the Gradle 7 validation errors in GenerateRestClientTask
+
+## [29.40.4] - 2022-10-31
+Update SchemaToPdlEncoder to fix nested schema encoding layout
+
+## [29.40.3] - 2022-10-25
+Change logging level of D2 cluster subsetting updates to DEBUG
+
+## [29.40.2] - 2022-10-25
+Refactor the Netty JMX handling for injection of the metrics handling into the client rather than the other way around.
+
+## [29.40.1] - 2022-10-13
+Add service discovery event emitter to d2 client
+
+## [29.40.0] - 2022-10-13
+- Empty commit to bump pegasus minor version 
+
+## [29.39.6] - 2022-10-06
+- Add equals and hashCode methods to `CollectionResult`, `GetResult`, `UpdateResponse` and `UpdateEntityResponse`.
+
+- Add `RestLiTraceInfo` to the `RequestContext` for both incoming and outgoing requests.
+Added `Request.getResourceMethodIdentifier()`,
+ `ResourceDefinition.getBaseUriTemplate()`, and `ResourceMethodDescriptor.getResourceMethodIdentifier()`.
+
+## [29.39.5] - 2022-10-04
+- Emit service discovery status related events
+
+## [29.39.4] - 2022-09-30
+Add JMX metrics for DNS resolution and clarify DNS timeout errors.
+
+## [29.39.3] - 2022-09-26
+Catch exceptions when zk connection state change event is received after zk connection shutdown.
+
+## [29.39.2] - 2022-09-23
+Remove unnessary extra IDL annotations due to recent restriction of adding new method into bridged service and emit resourceC
+lass for javaparser to use to update rest.li resource.
+
+## [29.39.1] - 2022-09-20
+Expose an easy way to override validation options for ActionArgumentBuilder
+
+## [29.39.0] - 2022-09-19
+Releasing support for UDS in HTTP/2 stack
+
+## [29.38.6] - 2022-09-15
+Add a validation option to coerce base64 encoded fixed values
+
+## [29.38.5] - 2022-09-15
+Update the error message to better guide users when zkRef is null.
+
+## [29.38.4] - 2022-09-08
+- Use ZooKeeper 3.6.3
+
+## [29.38.3] - 2022-09-07
+- Emit java method name in the IDL/Snapshot to enable us to generate a java stub back from the IDL.
+
+## [29.38.2] - 2022-09-07
+- Removing the release candidate version number
+
+## [29.38.1-rc.1] - 2022-09-06
+- Add Support for UDS transport protocol in R2 outbound traffic
+
+## [29.38.0] - 2022-08-31
+- Upgrade Netty to 4.1.79 and remove ZooKeeper Netty exclusions.
+
+## [29.37.19] - 2022-08-31
+- Emit some additional information in the IDL/Snapshot to enable us to generate a java stub back from the IDL
+
+## [29.37.18] - 2022-08-29
+- Support supplying D2 subsetting peer cluster name at run-time
+ 
+## [29.37.17] - 2022-08-29
+- Add "notify" to reversed word set when generating data template
+
+## [29.37.16] - 2022-08-24
+- Make `DefaultDocumentationRequestHandler` blocking again to avoid the `503` errors users were frequently seeing for `OPTIONS` calls.
+  - Introduce the existing non-blocking ("fail fast") variant as optional subclass `NonBlockingDocumentationRequestHandler`.
+
+## [29.37.15] - 2022-08-23
+- Exclude transitive Netty dependency for ZooKeeper client.
+
+## [29.37.14] - 2022-08-19
+- Avoid casting classloader to `URLLoader` in `ResourceModelEncoder` and use `ClassGraph` to search for restspec file
+
+## [29.37.13] - 2022-08-15
+- Fix `d2-test-api` dependencies
+
+## [29.37.12] - 2022-08-10
+- Support removing cluster watches created due to cluster failout
+
+## [29.37.11] - 2022-08-09
+- Avoid using `SmileFactoryBuilder` to be more compatible with pre-`2.10` jackson at runtime
+
+## [29.37.10] - 2022-08-08
+- Fix `PrimitiveTemplateSpec` not having `className`
+
+## [29.37.9] - 2022-08-07
+- Add null-checks for cluster and service properties in `D2ClientJmxManager`
+
+## [29.37.8] - 2022-08-04
+- Switch to use name regex pattern to skip deprecated fields in spec generation
+
+## [29.37.7] - 2022-08-03
+- Bugfix: mark a dark request as sent if it is sent to any dark clusters
+
+## [29.37.6] - 2022-07-28
+- Bump ZooKeeper client version to [3.7.1](https://zookeeper.apache.org/releases.html#releasenotes) (latest stable version at the time).
+
+## [29.37.5] - 2022-07-28
+- Add option to skip deprecated field when recursively generate class spec
+
+## [29.37.4] - 2022-07-25
+- Serialize ZK data with non-null fields only 
+
+## [29.37.3] - 2022-07-18
+- Add connection warm up support when a failout has been initiated
+
+## [29.37.2] - 2022-07-18
+- Validate HTTP override header for query tunneling.
+
+## [29.37.1] - 2022-06-29
+- Handle method order when validating methods to ensure consistent linked batch finder validation
+
+## [29.37.0] - 2022-06-23
+- Package translated legacy PDSC models into `:restli-common` JAR
+
+## [29.36.1] - 2022-06-22
+- Fix FailoutClient delegated client's restRequest invocation 
+
+## [29.36.0] - 2022-06-21
+- Add Enum symbols order change as compatible message in checker. This will make equivalent compatibility check to fail and publish the new snapshot files.
+
+## [29.35.0] - 2022-06-15
+- Avoid using JsonFactoryBuilder to be more compatible with pre 2.10 jackson at runtime
+
+## [29.34.3] - 2022-06-06
+- Translate Data.null to Avro null if schema field is optional
+
+## [29.34.2] - 2022-06-03
+- Provide a way to link a finder with a functionally equivalent batch finder declaratively
+
+## [29.34.1] - 2022-05-28
+- fix passing in canary distribution provider from ZKFS load balancer factory.
+
+## [29.34.0] - 2022-05-11
+- update d2 partitioning logic to map unmapped URIs to default partition 0
+
+## [29.33.9] - 2022-05-10
+- Experimental optimization of action request building
+- Revert "Provide a mechanism to set a routing hint for the d2 request to get request symbol table (#787)"
+
+## [29.33.8] - 2022-05-10
+- Add (currently unused) models for `D2FailoutProperties`.
+
+## [29.33.7] - 2022-05-04
+- Silence Zookeeper errors in logs on race condition between watched events and async shutdown.
+
 ## [29.33.6] - 2022-05-03
 - Provide a mechanism to set a routing hint for the d2 request to get request symbol table.
 
 ## [29.33.5] - 2022-05-02
-- Expose RestLiConfig from RestLiServer.
+- Expose `RestLiConfig` from `RestLiServer`.
 
 ## [29.33.4] - 2022-04-26
 - Support failout redirection in D2 client.
@@ -34,7 +233,7 @@ and what APIs have changed, if applicable.
 - Fix an Avro translation bug where optional fields in a partial default record are not treated properly.
 
 ## [29.33.0] - 2022-03-28
-- Add Support for ByteString[] Query Parameters
+- Add Support for `ByteString[]` Query Parameters
 
 ## [29.32.5] - 2022-03-22
 - Updating newInstance usage which is deprecated in Java 9+
@@ -5231,7 +5430,71 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.33.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.3...master
+[29.41.3]: https://github.com/linkedin/rest.li/compare/v29.41.2...v29.41.3
+[29.41.2]: https://github.com/linkedin/rest.li/compare/v29.41.1...v29.41.2
+[29.41.1]: https://github.com/linkedin/rest.li/compare/v29.41.0...v29.41.1
+[29.41.0]: https://github.com/linkedin/rest.li/compare/v29.40.15...v29.41.0
+[29.40.15]: https://github.com/linkedin/rest.li/compare/v29.40.14...v29.40.15
+[29.40.14]: https://github.com/linkedin/rest.li/compare/v29.40.13...v29.40.14
+[29.40.13]: https://github.com/linkedin/rest.li/compare/v29.40.12...v29.40.13
+[29.40.12]: https://github.com/linkedin/rest.li/compare/v29.40.11...v29.40.12
+[29.40.11]: https://github.com/linkedin/rest.li/compare/v29.40.10...v29.40.11
+[29.40.10]: https://github.com/linkedin/rest.li/compare/v29.40.9...v29.40.10
+[29.40.9]: https://github.com/linkedin/rest.li/compare/v29.40.8...v29.40.9
+[29.40.8]: https://github.com/linkedin/rest.li/compare/v29.40.7...v29.40.8
+[29.40.7]: https://github.com/linkedin/rest.li/compare/v29.40.6...v29.40.7
+[29.40.6]: https://github.com/linkedin/rest.li/compare/v29.40.5...v29.40.6
+[29.40.5]: https://github.com/linkedin/rest.li/compare/v29.40.4...v29.40.5
+[29.40.4]: https://github.com/linkedin/rest.li/compare/v29.40.3...v29.40.4
+[29.40.3]: https://github.com/linkedin/rest.li/compare/v29.40.2...v29.40.3
+[29.40.2]: https://github.com/linkedin/rest.li/compare/v29.40.1...v29.40.2
+[29.40.1]: https://github.com/linkedin/rest.li/compare/v29.40.0...v29.40.1
+[29.40.0]: https://github.com/linkedin/rest.li/compare/v29.39.6...v29.40.0
+[29.39.6]: https://github.com/linkedin/rest.li/compare/v29.39.5...v29.39.6
+[29.39.5]: https://github.com/linkedin/rest.li/compare/v29.39.4...v29.39.5
+[29.39.4]: https://github.com/linkedin/rest.li/compare/v29.39.3...v29.39.4
+[29.39.3]: https://github.com/linkedin/rest.li/compare/v29.39.2...v29.39.3
+[29.39.2]: https://github.com/linkedin/rest.li/compare/v29.39.1...v29.39.2
+[29.39.1]: https://github.com/linkedin/rest.li/compare/v29.39.0...v29.39.1
+[29.39.0]: https://github.com/linkedin/rest.li/compare/v29.38.6...v29.39.0
+[29.38.6]: https://github.com/linkedin/rest.li/compare/v29.38.5...v29.38.6
+[29.38.5]: https://github.com/linkedin/rest.li/compare/v29.38.4...v29.38.5
+[29.38.4]: https://github.com/linkedin/rest.li/compare/v29.38.3...v29.38.4
+[29.38.3]: https://github.com/linkedin/rest.li/compare/v29.38.2...v29.38.3
+[29.38.2]: https://github.com/linkedin/rest.li/compare/v29.38.1-rc.1...v29.38.2
+[29.38.1-rc.1]: https://github.com/linkedin/rest.li/compare/v29.38.0...v29.38.1-rc.1
+[29.38.0]: https://github.com/linkedin/rest.li/compare/v29.37.19...v29.38.0
+[29.37.19]: https://github.com/linkedin/rest.li/compare/v29.37.18...v29.37.19
+[29.37.18]: https://github.com/linkedin/rest.li/compare/v29.37.17...v29.37.18
+[29.37.17]: https://github.com/linkedin/rest.li/compare/v29.37.16...v29.37.17
+[29.37.16]: https://github.com/linkedin/rest.li/compare/v29.37.15...v29.37.16
+[29.37.15]: https://github.com/linkedin/rest.li/compare/v29.37.14...v29.37.15
+[29.37.14]: https://github.com/linkedin/rest.li/compare/v29.37.13...v29.37.14
+[29.37.13]: https://github.com/linkedin/rest.li/compare/v29.37.12...v29.37.13
+[29.37.12]: https://github.com/linkedin/rest.li/compare/v29.37.11...v29.37.12
+[29.37.11]: https://github.com/linkedin/rest.li/compare/v29.37.10...v29.37.11
+[29.37.10]: https://github.com/linkedin/rest.li/compare/v29.37.9...v29.37.10
+[29.37.9]: https://github.com/linkedin/rest.li/compare/v29.37.8...v29.37.9
+[29.37.8]: https://github.com/linkedin/rest.li/compare/v29.37.7...v29.37.8
+[29.37.7]: https://github.com/linkedin/rest.li/compare/v29.37.6...v29.37.7
+[29.37.6]: https://github.com/linkedin/rest.li/compare/v29.37.5...v29.37.6
+[29.37.5]: https://github.com/linkedin/rest.li/compare/v29.37.4...v29.37.5
+[29.37.4]: https://github.com/linkedin/rest.li/compare/v29.37.3...v29.37.4
+[29.37.3]: https://github.com/linkedin/rest.li/compare/v29.37.2...v29.37.3
+[29.37.2]: https://github.com/linkedin/rest.li/compare/v29.37.1...v29.37.2
+[29.37.1]: https://github.com/linkedin/rest.li/compare/v29.37.0...v29.37.1
+[29.37.0]: https://github.com/linkedin/rest.li/compare/v29.36.1...v29.37.0
+[29.36.1]: https://github.com/linkedin/rest.li/compare/v29.36.0...v29.36.1
+[29.36.0]: https://github.com/linkedin/rest.li/compare/v29.35.0...v29.36.0
+[29.35.0]: https://github.com/linkedin/rest.li/compare/v29.34.3...v29.35.0
+[29.34.3]: https://github.com/linkedin/rest.li/compare/v29.34.2...v29.34.3
+[29.34.2]: https://github.com/linkedin/rest.li/compare/v29.34.1...v29.34.2
+[29.34.1]: https://github.com/linkedin/rest.li/compare/v29.34.0...v29.34.1
+[29.34.0]: https://github.com/linkedin/rest.li/compare/v29.33.7...v29.34.0
+[29.33.9]: https://github.com/linkedin/rest.li/compare/v29.33.8...v29.33.9
+[29.33.8]: https://github.com/linkedin/rest.li/compare/v29.33.7...v29.33.8
+[29.33.7]: https://github.com/linkedin/rest.li/compare/v29.33.6...v29.33.7
 [29.33.6]: https://github.com/linkedin/rest.li/compare/v29.33.5...v29.33.6
 [29.33.5]: https://github.com/linkedin/rest.li/compare/v29.33.4...v29.33.5
 [29.33.4]: https://github.com/linkedin/rest.li/compare/v29.33.3...v29.33.4

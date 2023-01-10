@@ -47,10 +47,10 @@ import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.message.stream.entitystream.FullEntityReader;
 import com.linkedin.r2.message.stream.entitystream.Observer;
 import com.linkedin.restli.common.ErrorResponse;
-import com.linkedin.restli.common.HttpMethod;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.ProtocolVersion;
 import com.linkedin.restli.common.RestConstants;
+import com.linkedin.restli.common.RestLiTraceInfo;
 import com.linkedin.restli.common.attachments.RestLiAttachmentReader;
 import com.linkedin.restli.docgen.DefaultDocumentationRequestHandler;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
@@ -537,9 +537,11 @@ public class TestRestLiServer
       }
     };
 
+    final RequestContext requestContext = new RequestContext();
+
     if (restOrStream == RestOrStream.REST)
     {
-      restLiServer.handleRequest(request, new RequestContext(), restResponseCallback);
+      restLiServer.handleRequest(request, requestContext, restResponseCallback);
     }
     else
     {
@@ -571,12 +573,14 @@ public class TestRestLiServer
         }
       };
 
-      restLiServer.handleRequest(streamRequest, new RequestContext(), streamResponseCallback);
+      restLiServer.handleRequest(streamRequest, requestContext, streamResponseCallback);
     }
     if (filters)
     {
       EasyMock.verify(_mockFilter, _mockFilter);
     }
+
+    Assert.assertNotNull(RestLiTraceInfo.from(requestContext), "RestLiTraceInfo not found in request context");
   }
 
   @Test(dataProvider = "invalidClientProtocolVersionData")

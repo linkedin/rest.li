@@ -398,7 +398,7 @@ public class TestHttpNettyStreamClient
     };
   }
 
-  @Test(dataProvider = "responseSizeClients")
+  @Test(dataProvider = "responseSizeClients", retryAnalyzer = ThreeRetries.class)
   public void testMaxResponseSizeOK(AbstractNettyStreamClient client) throws Exception
   {
     testResponseSize(client, TEST_MAX_RESPONSE_SIZE - 1, RESPONSE_OK);

@@ -49,6 +49,7 @@
     "path" : "/complexArray",
     "schema" : "com.linkedin.restli.examples.greetings.api.Greeting",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.ComplexArrayResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.ComplexArrayResource",
     "collection" : {
       "identifier" : {
         "name" : "complexArrayId",
@@ -57,12 +58,15 @@
       },
       "supports" : [ "batch_get", "get" ],
       "methods" : [ {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get"
       }, {
-        "method" : "batch_get"
+        "method" : "batch_get",
+        "javaMethodName" : "batchGet"
       } ],
       "finders" : [ {
         "name" : "finder",
+        "javaMethodName" : "finder",
         "parameters" : [ {
           "name" : "array",
           "type" : "com.linkedin.restli.examples.greetings.api.ComplexArray"
@@ -70,6 +74,7 @@
       } ],
       "actions" : [ {
         "name" : "action",
+        "javaMethodName" : "action",
         "parameters" : [ {
           "name" : "array",
           "type" : "com.linkedin.restli.examples.greetings.api.ComplexArray"

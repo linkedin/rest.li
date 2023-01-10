@@ -33,12 +33,15 @@
     "namespace" : "com.linkedin.restli.examples.greetings.client",
     "path" : "/actions",
     "doc" : "Various action tasks that demonstrate usual behavior, timeout, and exceptions.\n\ngenerated from: com.linkedin.restli.examples.greetings.server.ActionsResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.ActionsResource",
     "actionsSet" : {
       "actions" : [ {
         "name" : "arrayPromise",
+        "javaMethodName" : "arrayPromise",
         "returns" : "{ \"type\" : \"array\", \"items\" : \"int\" }"
       }, {
         "name" : "customTypeRef",
+        "javaMethodName" : "customTypeRef",
         "parameters" : [ {
           "name" : "customLong",
           "type" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
@@ -46,6 +49,7 @@
         "returns" : "com.linkedin.restli.examples.typeref.api.CustomLongRef"
       }, {
         "name" : "echo",
+        "javaMethodName" : "echo",
         "parameters" : [ {
           "name" : "input",
           "type" : "string"
@@ -53,6 +57,7 @@
         "returns" : "string"
       }, {
         "name" : "echoMessage",
+        "javaMethodName" : "echoMessage",
         "parameters" : [ {
           "name" : "message",
           "type" : "com.linkedin.restli.examples.greetings.api.Message"
@@ -60,6 +65,7 @@
         "returns" : "com.linkedin.restli.examples.greetings.api.Message"
       }, {
         "name" : "echoMessageArray",
+        "javaMethodName" : "echoMessage",
         "parameters" : [ {
           "name" : "messages",
           "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Message\" }"
@@ -67,6 +73,7 @@
         "returns" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Message\" }"
       }, {
         "name" : "echoStringArray",
+        "javaMethodName" : "echoStringArray",
         "parameters" : [ {
           "name" : "strings",
           "type" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
@@ -74,6 +81,7 @@
         "returns" : "{ \"type\" : \"array\", \"items\" : \"string\" }"
       }, {
         "name" : "echoToneArray",
+        "javaMethodName" : "echoToneArray",
         "parameters" : [ {
           "name" : "tones",
           "type" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Tone\" }"
@@ -81,36 +89,47 @@
         "returns" : "{ \"type\" : \"array\", \"items\" : \"com.linkedin.restli.examples.greetings.api.Tone\" }"
       }, {
         "name" : "failCallbackCall",
+        "javaMethodName" : "failCall",
         "doc" : "Action that fails by calling the callback"
       }, {
         "name" : "failCallbackThrow",
+        "javaMethodName" : "failThrow",
         "doc" : "Action that fails by throwing an exception"
       }, {
         "name" : "failPromiseCall",
+        "javaMethodName" : "failPromiseCall",
         "doc" : "Action that fails by calling SettablePromise.fail"
       }, {
         "name" : "failPromiseThrow",
+        "javaMethodName" : "failPromiseThrow",
         "doc" : "Action that fails by throwing an exception, returning a promise"
       }, {
         "name" : "failTaskCall",
+        "javaMethodName" : "failTaskCall",
         "doc" : "Action that fails by calling SettablePromise.fail promise in a task"
       }, {
         "name" : "failTaskThrow",
+        "javaMethodName" : "failTaskThrow",
         "doc" : "Action that fails by throwing an exception, returning a task"
       }, {
         "name" : "failThrowInTask",
+        "javaMethodName" : "failThrowInTask",
         "doc" : "Action that fails by throwing an exception in the task"
       }, {
         "name" : "get",
+        "javaMethodName" : "get",
         "returns" : "string"
       }, {
         "name" : "nullPromise",
+        "javaMethodName" : "nullPromise",
         "returns" : "string"
       }, {
         "name" : "nullTask",
+        "javaMethodName" : "nullTask",
         "returns" : "string"
       }, {
         "name" : "parseq",
+        "javaMethodName" : "parseqAction",
         "doc" : "Performs three \"slow\" tasks and collects the results. This uses the passed context\n parameter to execute tasks. The position of the context argument is arbitrary.\nService Returns: Concatenation of binary representation of a, all caps of b, and string value\nof c",
         "parameters" : [ {
           "name" : "a",
@@ -125,6 +144,7 @@
         "returns" : "string"
       }, {
         "name" : "parseq3",
+        "javaMethodName" : "parseqAction3",
         "doc" : "Performs three \"slow\" tasks and collects the results. This returns a task and lets\n the RestLi server invoke it.\nService Returns: Concatenation of binary representation of a, all caps of b, and string value\nof c",
         "parameters" : [ {
           "name" : "a",
@@ -139,9 +159,11 @@
         "returns" : "string"
       }, {
         "name" : "returnBool",
+        "javaMethodName" : "returnBool",
         "returns" : "boolean"
       }, {
         "name" : "returnBoolOptionalParam",
+        "javaMethodName" : "returnBoolOptionalParam",
         "parameters" : [ {
           "name" : "param",
           "type" : "boolean",
@@ -150,9 +172,11 @@
         "returns" : "boolean"
       }, {
         "name" : "returnInt",
+        "javaMethodName" : "returnPrimitive",
         "returns" : "int"
       }, {
         "name" : "returnIntOptionalParam",
+        "javaMethodName" : "returnIntOptionalParam",
         "parameters" : [ {
           "name" : "param",
           "type" : "int",
@@ -160,9 +184,11 @@
         } ],
         "returns" : "int"
       }, {
-        "name" : "returnVoid"
+        "name" : "returnVoid",
+        "javaMethodName" : "returnVoid"
       }, {
         "name" : "taskCreationDelay",
+        "javaMethodName" : "taskCreationDelay",
         "doc" : "Simulates a delay in an asynchronous resource caused by ParSeq execution plan creation. The delay is simulated as\n {@link Thread#sleep(long)} because execution plan creation is a synchronous operation.\nService Returns: Nothing",
         "parameters" : [ {
           "name" : "delay",
@@ -171,6 +197,7 @@
         } ]
       }, {
         "name" : "taskExecutionDelay",
+        "javaMethodName" : "taskExecutionDelay",
         "doc" : "Simulates a delay in an asynchronous resource. The delay is simulated using a scheduled task (asynchronously).\n That is how a typical async resource looks like in terms of delays.\nService Returns: Nothing",
         "parameters" : [ {
           "name" : "delay",
@@ -178,11 +205,14 @@
           "doc" : "the number of milliseconds it will take this resource to create an execution plan"
         } ]
       }, {
-        "name" : "timeout"
+        "name" : "timeout",
+        "javaMethodName" : "timeout"
       }, {
-        "name" : "timeoutCallback"
+        "name" : "timeoutCallback",
+        "javaMethodName" : "timeout"
       }, {
         "name" : "ultimateAnswer",
+        "javaMethodName" : "testAction",
         "returns" : "int"
       } ]
     }

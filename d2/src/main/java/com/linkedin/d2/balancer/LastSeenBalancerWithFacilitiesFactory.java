@@ -131,6 +131,7 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
       .setUseNewWatcher(config.useNewEphemeralStoreWatcher)
       .setExecutorService(executorService)
       .setZookeeperReadWindowMs(zookeeperReadWindowMs)
+      .setServiceDiscoveryEventEmitter(config.serviceDiscoveryEventEmitter)
       // register jmx every time the object is created
       .addOnBuildListener(d2ClientJmxManager::setZkUriRegistry);
 

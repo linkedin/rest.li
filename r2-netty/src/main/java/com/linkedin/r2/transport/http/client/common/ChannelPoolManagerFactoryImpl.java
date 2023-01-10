@@ -202,7 +202,8 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
           channelPoolManagerKey.isTcpNoDelay(),
           _enableSSLSessionResumption,
           _connectTimeout,
-          _sslHandShakeTimeout);
+          _sslHandShakeTimeout,
+          channelPoolManagerKey.getUdsAddress());
     }
     else
     {

@@ -1,0 +1,10 @@
+/**
+ * Ensures that a root schema with no namespace can be encoded correctly.
+ */
+record EmptyNamespace {
+  x: {
+    namespace com.linkedin.pegasus.generator.test.idl.records
+
+    record NamespaceOverride {}
+  }
+}

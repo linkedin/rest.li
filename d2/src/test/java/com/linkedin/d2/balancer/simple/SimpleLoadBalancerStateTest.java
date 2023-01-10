@@ -53,9 +53,7 @@ import com.linkedin.d2.discovery.stores.mock.MockStore;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
-import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequestBuilder;
-import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportCallbackAdapter;
@@ -85,6 +83,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import java.util.concurrent.TimeoutException;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import org.testng.Assert;
@@ -511,6 +510,93 @@ public class SimpleLoadBalancerStateTest
     assertTrue(_state.isListeningToCluster("cluster-1"));
     assertNotNull(_state.getClusterProperties("cluster-1"));
     assertEquals(_state.getClusterProperties("cluster-1").getProperty(), property);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testStopListenToCluster() throws InterruptedException, ExecutionException, TimeoutException {
+    reset();
+
+    List<String> schemes = new ArrayList<>();
+
+    schemes.add("http");
+
+    assertFalse(_state.isListeningToCluster("cluster-1"));
+    assertNull(_state.getClusterProperties("cluster-1"));
+
+    final CountDownLatch latch = new CountDownLatch(1);
+    LoadBalancerStateListenerCallback callback = new LoadBalancerStateListenerCallback()
+    {
+      @Override
+      public void done(int type, String name)
+      {
+        latch.countDown();
+      }
+    };
+
+    _state.listenToCluster("cluster-1", callback);
+
+    if (!latch.await(5, TimeUnit.SECONDS))
+    {
+      fail("didn't get callback when listenToCluster was called");
+    }
+
+    assertTrue(_state.isListeningToCluster("cluster-1"));
+    assertNotNull(_state.getClusterProperties("cluster-1"));
+    assertNull(_state.getClusterProperties("cluster-1").getProperty());
+
+    ClusterProperties firstProperty = new ClusterProperties("cluster-1", schemes);
+
+    _clusterRegistry.put("cluster-1", firstProperty);
+
+    assertTrue(_state.isListeningToCluster("cluster-1"));
+    assertNotNull(_state.getClusterProperties("cluster-1"));
+    assertEquals(_state.getClusterProperties("cluster-1").getProperty(), firstProperty);
+
+
+    // Start listening again, and we should be getting the new property this time
+    final CountDownLatch stopListenLatch = new CountDownLatch(1);
+    LoadBalancerStateListenerCallback stopListenCallback = new LoadBalancerStateListenerCallback()
+    {
+      @Override
+      public void done(int type, String name)
+      {
+        stopListenLatch.countDown();
+      }
+    };
+
+    _state.stopListenToCluster("cluster-1", stopListenCallback);
+
+    if (!stopListenLatch.await(5, TimeUnit.SECONDS))
+    {
+      fail("didn't get callback when stopListenLatch was called");
+    }
+
+    assertFalse(_state.isListeningToCluster("cluster-1"));
+
+    ClusterProperties newProperty = new ClusterProperties("cluster-1");
+    _clusterRegistry.put("cluster-1", newProperty);
+    // Property should not be updated since we have stopped listening
+    assertEquals(_state.getClusterProperties("cluster-1").getProperty(), firstProperty);
+
+    // Start listening again, and we should be getting the new property this time
+    final CountDownLatch newLatch = new CountDownLatch(1);
+    LoadBalancerStateListenerCallback newCallback = new LoadBalancerStateListenerCallback()
+    {
+      @Override
+      public void done(int type, String name)
+      {
+        newLatch.countDown();
+      }
+    };
+
+    _state.listenToCluster("cluster-1", newCallback);
+
+    if (!newLatch.await(5, TimeUnit.SECONDS))
+    {
+      fail("didn't get callback when listenToCluster was called");
+    }
+
+    assertEquals(_state.getClusterProperties("cluster-1").getProperty(), newProperty);
   }
 
   @Test(groups = { "small", "back-end" })

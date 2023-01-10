@@ -37,6 +37,7 @@
     "path" : "/annotatedComplexKeys",
     "schema" : "com.linkedin.restli.examples.greetings.api.Message",
     "doc" : "generated from: com.linkedin.restli.examples.greetings.server.AnnotatedComplexKeysResource",
+    "resourceClass" : "com.linkedin.restli.examples.greetings.server.AnnotatedComplexKeysResource",
     "collection" : {
       "identifier" : {
         "name" : "annotatedComplexKeyId",
@@ -45,19 +46,26 @@
       },
       "supports" : [ "batch_delete", "batch_get", "batch_partial_update", "batch_update", "create", "get", "partial_update" ],
       "methods" : [ {
-        "method" : "create"
+        "method" : "create",
+        "javaMethodName" : "create"
       }, {
-        "method" : "get"
+        "method" : "get",
+        "javaMethodName" : "get"
       }, {
-        "method" : "partial_update"
+        "method" : "partial_update",
+        "javaMethodName" : "update"
       }, {
-        "method" : "batch_get"
+        "method" : "batch_get",
+        "javaMethodName" : "batchGet"
       }, {
-        "method" : "batch_update"
+        "method" : "batch_update",
+        "javaMethodName" : "batchUpdate"
       }, {
-        "method" : "batch_partial_update"
+        "method" : "batch_partial_update",
+        "javaMethodName" : "batchUpdate"
       }, {
-        "method" : "batch_delete"
+        "method" : "batch_delete",
+        "javaMethodName" : "batchDelete"
       } ],
       "finders" : [ {
         "annotations" : {
@@ -66,6 +74,7 @@
           }
         },
         "name" : "prefix",
+        "javaMethodName" : "prefix",
         "doc" : "Example javadoc",
         "parameters" : [ {
           "name" : "prefix",

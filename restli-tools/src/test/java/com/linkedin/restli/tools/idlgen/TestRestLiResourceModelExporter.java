@@ -16,16 +16,12 @@
 
 package com.linkedin.restli.tools.idlgen;
 
-
+import com.linkedin.pegasus.generator.GeneratorResult;
 import com.linkedin.restli.tools.ExporterTestUtils;
 import java.io.File;
 import java.io.IOException;
-
-import com.linkedin.pegasus.generator.GeneratorResult;
-import org.apache.commons.io.FileUtils;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -49,23 +45,17 @@ public class TestRestLiResourceModelExporter
   // If you create test in IDE, make sure the working directory is always the module directory
   private String moduleDir;
 
-  @BeforeClass
+  @BeforeMethod
   public void setUp() throws IOException
   {
     outdir = ExporterTestUtils.createTmpDir();
     moduleDir = System.getProperty("user.dir");
   }
 
-  @AfterClass
+  @AfterMethod
   public void tearDown()
   {
     ExporterTestUtils.rmdir(outdir);
-  }
-
-  @BeforeMethod
-  public void testSetup() throws IOException
-  {
-    FileUtils.cleanDirectory(outdir);
   }
 
   @DataProvider(name = "resourceModelData")
@@ -75,6 +65,13 @@ public class TestRestLiResourceModelExporter
         {
             { "twitter", new String[] { "com.linkedin.restli.tools.twitter" }, IDLS_DIR, new String[] {
                 "twitter-statuses.restspec.json",
+                "twitter-statusesWrapped.restspec.json",
+                "twitter-statusesAsync.restspec.json",
+                "twitter-statusesAsyncWrapped.restspec.json",
+                "twitter-statusPromises.restspec.json",
+                "twitter-statusPromisesWrapped.restspec.json",
+                "twitter-statusTasks.restspec.json",
+                "twitter-statusTasksWrapped.restspec.json",
                 "twitter-statusesParams.restspec.json",
                 "twitter-follows.restspec.json",
                 "twitter-accounts.restspec.json",

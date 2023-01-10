@@ -65,7 +65,7 @@ public class ResourceModel implements ResourceDefinition
   private final boolean                         _root;
   private final Class<?>                        _parentResourceClass;
   private ResourceModel                         _parentResourceModel;
-
+  private String                                _baseUriTemplate;
   private final Set<Key>                        _keys;
   private final Key                             _primaryKey;
   // These are the classes of the complex resource key RecordTemplate-derived
@@ -167,6 +167,8 @@ public class ResourceModel implements ResourceDefinition
     _primaryKey = primaryKey;
     _resourceType = resourceType;
     _pathSubResourceMap = new HashMap<>();
+
+    generateBaseUriTemplate();
   }
 
   /**
@@ -189,7 +191,7 @@ public class ResourceModel implements ResourceDefinition
     this(null,
          null,
          null,
-         Collections.<Key>emptySet(),
+         Collections.emptySet(),
          valueClass,
          resourceClass,
          parentResourceClass,
@@ -220,7 +222,7 @@ public class ResourceModel implements ResourceDefinition
     this(null,
         null,
         null,
-        Collections.<Key>emptySet(),
+        Collections.emptySet(),
         valueClass,
         resourceClass,
         parentResourceClass,
@@ -348,6 +350,29 @@ public class ResourceModel implements ResourceDefinition
   public void setParentResourceModel(final ResourceModel parentResourceModel)
   {
     _parentResourceModel = parentResourceModel;
+
+    // This will modify the baseUriTemplate, so we need to regenerate it
+    generateBaseUriTemplate();
+  }
+
+  /**
+   * This method generates the resource template identical to com.linkedin.restli.client.Request.getBaseUriTemplate()
+   */
+  private void generateBaseUriTemplate() {
+    final String baseUriTemplate = ResourceModelEncoder.buildPath(this);
+
+    _baseUriTemplate = baseUriTemplate.charAt(0) == '/' ? baseUriTemplate.substring(1) : baseUriTemplate;
+
+    // Ensure any sub-resources have the correct template
+    _pathSubResourceMap.values().forEach(ResourceModel::generateBaseUriTemplate);
+
+    // Ensure any defined ResourceMethodDescriptors are updated
+    _resourceMethodDescriptors.forEach(ResourceMethodDescriptor::generateResourceMethodIdentifier);
+  }
+
+  @Override
+  public String getBaseUriTemplate() {
+    return _baseUriTemplate;
   }
 
   public void setCustomAnnotation(DataMap customAnnotationData)

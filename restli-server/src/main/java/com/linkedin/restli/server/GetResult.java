@@ -19,6 +19,7 @@ package com.linkedin.restli.server;
 
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.restli.common.HttpStatus;
+import java.util.Objects;
 
 
 /**
@@ -49,5 +50,26 @@ public class GetResult<V extends RecordTemplate>
   public HttpStatus getStatus()
   {
     return _status;
+  }
+
+  @Override
+  public boolean equals(Object object)
+  {
+    if (this == object)
+    {
+      return true;
+    }
+    if (object == null || getClass() != object.getClass())
+    {
+      return false;
+    }
+    GetResult<?> getResult = (GetResult<?>) object;
+    return Objects.equals(_value, getResult._value) && _status == getResult._status;
+  }
+
+  @Override
+  public int hashCode()
+  {
+    return Objects.hash(_value, _status);
   }
 }

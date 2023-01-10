@@ -30,6 +30,17 @@ import com.linkedin.restli.common.ComplexResourceKey;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.Link;
+import com.linkedin.restli.internal.server.model.SampleResources.ActionReturnTypeIntegerResource;
+import com.linkedin.restli.internal.server.model.SampleResources.ActionReturnTypeRecordResource;
+import com.linkedin.restli.internal.server.model.SampleResources.ActionReturnTypeVoidResource;
+import com.linkedin.restli.internal.server.model.SampleResources.ActionsOnlyResource;
+import com.linkedin.restli.internal.server.model.SampleResources.CustomAnnotatedMethodResource;
+import com.linkedin.restli.internal.server.model.SampleResources.FinderSupportedComplexKeyDataResource;
+import com.linkedin.restli.internal.server.model.SampleResources.FooResource1;
+import com.linkedin.restli.internal.server.model.SampleResources.FooResource3;
+import com.linkedin.restli.internal.server.model.SampleResources.ParentResource;
+import com.linkedin.restli.internal.server.model.SampleResources.PathKeyParamAnnotationsResource;
+import com.linkedin.restli.internal.server.model.SampleResources.TestResource;
 import com.linkedin.restli.server.BatchFinderResult;
 import com.linkedin.restli.server.CreateResponse;
 import com.linkedin.restli.server.ResourceConfigException;
@@ -50,7 +61,10 @@ import com.linkedin.restli.server.annotations.RestMethod;
 import com.linkedin.restli.server.resources.AssociationResourceTemplate;
 import com.linkedin.restli.server.resources.CollectionResourceTemplate;
 import com.linkedin.restli.server.resources.SimpleResourceTemplate;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -58,8 +72,6 @@ import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import com.linkedin.restli.internal.server.model.SampleResources.*;
 
 
 public class TestRestLiAnnotationReader
@@ -882,9 +894,55 @@ public class TestRestLiAnnotationReader
     Assert.fail("#validateSimpleResource should fail throwing a ResourceConfigException");
   }
 
+  @Test
+  public void testMethodRankingOrderForAnnotationProcessing() throws NoSuchMethodException {
+    // Method is a final class, so we can't mock it. To get around it create use methods of a dummy class with
+    // annotated methods.
+    Class<?>[] parameterType = null;
+    Method batchFinderMethod = DummyResourceClass.class.getMethod("batchFinder", parameterType);
+    Method finderMethod = DummyResourceClass.class.getMethod("finder", parameterType);
+    Method actionMethod = DummyResourceClass.class.getMethod("action", parameterType);
+
+    // Create a list and shuffle its contents randomly.
+    List<Method> list = new ArrayList<>(3);
+    list.add(finderMethod);
+    list.add(actionMethod);
+    list.add(batchFinderMethod);
+    Collections.shuffle(list);
+
+    List<Method> sortedList = list.stream()
+        .sorted(Comparator.comparing(RestLiAnnotationReader::getMethodIndex))
+        .collect(Collectors.toList());
+
+    Assert.assertEquals(sortedList.get(0), batchFinderMethod);
+    Assert.assertEquals(sortedList.get(1), finderMethod);
+    Assert.assertEquals(sortedList.get(2), actionMethod);
+  }
+
   // ----------------------------------------------------------------------
   // helper types used in tests
   // ----------------------------------------------------------------------
+
+  private static class DummyResourceClass
+  {
+    @BatchFinder(batchParam = "haha", value = "batchFinder")
+    public void batchFinder()
+    {
+
+    }
+
+    @Finder(value = "finder")
+    public void finder()
+    {
+
+    }
+
+    @Action(name = "action")
+    public void action()
+    {
+
+    }
+  }
 
   private static final class BrokenTypeRef extends TyperefInfo {
     private BrokenTypeRef() {

@@ -140,7 +140,7 @@ public class ClientSelector
           .findAny().orElse(null);
       if (trackerClient != null)
       {
-        LOG.warn("Did not find a valid client from the ring, picked {} instead", trackerClient.getUri());
+        LOG.debug("Did not find a valid client from the ring, picked {} instead", trackerClient.getUri());
       }
     }
 

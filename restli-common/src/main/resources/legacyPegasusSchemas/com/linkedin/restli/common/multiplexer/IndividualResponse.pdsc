@@ -1,0 +1,24 @@
+{
+  "type" : "record",
+  "name" : "IndividualResponse",
+  "namespace" : "com.linkedin.restli.common.multiplexer",
+  "doc" : "Individual HTTP response within a multiplexed response",
+  "fields" : [ {
+    "name" : "status",
+    "type" : "int",
+    "doc" : "HTTP status code"
+  }, {
+    "name" : "headers",
+    "type" : {
+      "type" : "map",
+      "values" : "string"
+    },
+    "doc" : "HTTP headers",
+    "default" : { }
+  }, {
+    "name" : "body",
+    "type" : "IndividualBody",
+    "doc" : "Response body",
+    "optional" : true
+  } ]
+}

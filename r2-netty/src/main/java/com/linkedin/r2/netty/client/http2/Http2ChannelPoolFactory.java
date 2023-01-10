@@ -28,12 +28,17 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.EpollDomainSocketChannel;
+import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.channel.unix.DomainSocketAddress;
 import java.net.SocketAddress;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+import org.apache.commons.lang3.StringUtils;
+
 
 /**
  * Factory class to produce {@link AsyncPool}&#060;{@link Channel}&#062; for Http2 channels
@@ -53,6 +58,32 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
   private final ChannelGroup _allChannels;
   private final ScheduledExecutorService _scheduler;
   private final AsyncPoolImpl.Strategy _strategy;
+  private final String _udsAddress;
+
+  @Deprecated
+  public Http2ChannelPoolFactory(
+      ScheduledExecutorService scheduler,
+      EventLoopGroup eventLoopGroup,
+      ChannelGroup channelGroup,
+      AsyncPoolImpl.Strategy strategy,
+      SSLContext sslContext,
+      SSLParameters sslParameters,
+      int maxPoolSize,
+      int minPoolSize,
+      int maxPoolWaiterSize,
+      int maxInitialLineLength,
+      int maxHeaderSize,
+      int maxChunkSize,
+      long idleTimeout,
+      long maxContentLength,
+      boolean tcpNoDelay,
+      boolean enableSSLSessionResumption,
+      int connectTimeout,
+      int sslHandShakeTimeout) {
+    this(scheduler, eventLoopGroup, channelGroup, strategy, sslContext, sslParameters, maxPoolSize, minPoolSize,
+        maxPoolWaiterSize, maxInitialLineLength, maxHeaderSize, maxChunkSize, idleTimeout, maxContentLength, tcpNoDelay,
+        enableSSLSessionResumption, connectTimeout, sslHandShakeTimeout, null);
+  }
 
   public Http2ChannelPoolFactory(
       ScheduledExecutorService scheduler,
@@ -72,9 +103,10 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
       boolean tcpNoDelay,
       boolean enableSSLSessionResumption,
       int connectTimeout,
-      int sslHandShakeTimeout)
+      int sslHandShakeTimeout,
+      String udsAddress)
   {
-    final ChannelInitializer<NioSocketChannel> initializer = new Http2ChannelInitializer(
+    final ChannelInitializer<Channel> initializer = new Http2ChannelInitializer(
         sslContext, sslParameters, maxInitialLineLength, maxHeaderSize, maxChunkSize, maxContentLength,
         enableSSLSessionResumption, sslHandShakeTimeout);
 
@@ -87,12 +119,23 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
     _idleTimeout = idleTimeout;
     _maxContentLength = maxContentLength;
     _tcpNoDelay = tcpNoDelay;
+    _udsAddress = udsAddress;
 
-    _bootstrap = new Bootstrap().
-        group(eventLoopGroup).
-        channel(NioSocketChannel.class).
-        option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout).
-        handler(initializer);
+
+    if (!StringUtils.isEmpty(_udsAddress)) {
+      _bootstrap = new Bootstrap().
+          group(new EpollEventLoopGroup()).
+          channel(EpollDomainSocketChannel.class).
+          option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout).
+          handler(initializer);
+    } else {
+      _bootstrap = new Bootstrap().
+          group(eventLoopGroup).
+          channel(NioSocketChannel.class).
+          option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout).
+          handler(initializer);
+    }
+
     _ssl = sslContext != null && sslParameters != null;
   }
 
