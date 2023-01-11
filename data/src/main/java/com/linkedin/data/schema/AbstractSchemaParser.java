@@ -43,6 +43,7 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -129,7 +130,12 @@ abstract public class AbstractSchemaParser implements PegasusSchemaParser
     {
       for (Name aliasName : aliasNames)
       {
-        ok &= bindNameToSchema(aliasName, schema);
+        // Avro allows for self referential aliases (where the alias is the same as the FQN).
+        // There is no need to bind a self-referential alias to itself.
+        if (!Objects.equals(aliasName.getFullName(), name.getFullName()))
+        {
+          ok &= bindNameToSchema(aliasName, schema);
+        }
       }
     }
     return ok;

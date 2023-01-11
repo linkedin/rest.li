@@ -3066,6 +3066,11 @@ public class TestSchemaTranslator
                 // Translated union member property contains default value.
                 "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"string\", \"null\" ], \"doc\" : \"Success message\", \"default\" : \"Union with aliases.\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"null\" ], \"default\" : { \"fieldDiscriminator\" : \"success\", \"success\" : \"Union with aliases.\", \"failure\" : null } } ] }",
                 "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : \"string\", \"doc\" : \"Success message\", \"default\" : \"Union with aliases.\", \"optional\" : true }, { \"name\" : \"failure\", \"type\" : \"string\", \"doc\" : \"Failure message\", \"optional\" : true }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"default\" : { \"success\" : \"Union with aliases.\", \"fieldDiscriminator\" : \"success\" }, \"optional\" : true } ] }"
+            },
+            {
+                // Avro schema with self-referential alias
+                "{ \"type\" : \"record\", \"namespace\" : \"com.linkedin\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"aliases\" : [\"com.linkedin.Foo\"] }",
+                "{ \"type\" : \"record\", \"namespace\" : \"com.linkedin\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"aliases\" : [\"com.linkedin.Foo\"] }"
             }
         };
   }

@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.41.5] - 2023-01-11
+Handle Avro self-referential aliases in Avro to Proto schema translation.
+
 ## [29.41.4] - 2023-01-09
 change the innitialize size of resolvedProperties to 0 in order to save memory pre-allocated
 
@@ -5432,7 +5435,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.5...master
+[29.41.5]: https://github.com/linkedin/rest.li/compare/v29.41.4...v29.41.5
 [29.41.4]: https://github.com/linkedin/rest.li/compare/v29.41.3...v29.41.4
 [29.41.3]: https://github.com/linkedin/rest.li/compare/v29.41.2...v29.41.3
 [29.41.2]: https://github.com/linkedin/rest.li/compare/v29.41.1...v29.41.2
