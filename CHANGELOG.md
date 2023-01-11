@@ -15,6 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.41.5] - 2023-01-11
+Handle Avro self-referential aliases in Avro to Proto schema translation.
 
 ## [29.41.4] - 2023-01-09
 change the innitialize size of resolvedProperties to 0 in order to save memory pre-allocated
