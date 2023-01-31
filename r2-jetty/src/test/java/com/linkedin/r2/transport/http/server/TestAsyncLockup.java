@@ -35,7 +35,7 @@ import org.testng.annotations.Test;
 public class TestAsyncLockup {
   private static final int PORT = 9000;
   private static final String CONTEXT = "/context";
-  private static final int THREAD_POOL_SIZE = 20; // must be greater than 8 (minimum)
+  private static final int THREAD_POOL_SIZE = 20; // must be greater than 8 (minimum supported by QueuedThreadPool)
   private static final String URL = "http://localhost:" + PORT + CONTEXT;
   private static final int TIMEOUT_MILLIS = 1000;
 
