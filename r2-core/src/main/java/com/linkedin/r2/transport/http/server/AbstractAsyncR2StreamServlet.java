@@ -165,6 +165,10 @@ public abstract class AbstractAsyncR2StreamServlet extends HttpServlet
       {
         if (startedResponding.compareAndSet(false, true))
         {
+          ioHandler.writeResponseHeaders(() -> {
+            StreamResponse streamResponse = ServletHelper.writeResponseHeadersToServletResponse(response, resp);
+            streamResponse.getEntityStream().setReader(ioHandler);
+          });
           ctx.start(new Runnable()
           {
             @Override
@@ -172,8 +176,6 @@ public abstract class AbstractAsyncR2StreamServlet extends HttpServlet
             {
               try
               {
-                StreamResponse streamResponse = ServletHelper.writeResponseHeadersToServletResponse(response, resp);
-                streamResponse.getEntityStream().setReader(ioHandler);
                 ioHandler.loop();
               }
               catch (Exception e)

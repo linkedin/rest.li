@@ -7,4 +7,6 @@ dependencies {
   compile externalDependency.jettyServer
   compile externalDependency.jettyUtil
   compile externalDependency.servletApi
+  testCompile externalDependency.testng
+  testCompile externalDependency.httpclient
 }
