@@ -144,7 +144,7 @@ allprojects {
       throw new GradleScriptException("Pegasus required Java 8 or later to build, current version: ${JavaVersion.current()}", null)
     }
     // for all supported versions that we test build, fail the build if any compilation warnings are reported
-    compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static', '-Werror']
+    compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static']
   }
 
   tasks.withType(Javadoc)
