@@ -32,13 +32,10 @@ import com.linkedin.r2.netty.handler.http2.UnsupportedHandler;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPromise;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpClientUpgradeHandler;
 import io.netty.handler.codec.http2.Http2ClientUpgradeCodec;
-import io.netty.handler.codec.http2.Http2ConnectionHandler;
 import io.netty.handler.codec.http2.Http2FrameCodec;
-import io.netty.handler.codec.http2.Http2FrameCodecBuilder;
 import io.netty.handler.codec.http2.Http2MultiplexHandler;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
@@ -203,20 +200,21 @@ class Http2ChannelInitializer extends ChannelInitializer<Channel>
     UnsupportedHandler unsupportedHandler = new UnsupportedHandler();
     Http2MultiplexHandler multiplexHandler = new Http2MultiplexHandler(unsupportedHandler, unsupportedHandler);
 
-    Http2ClientUpgradeCodec upgradeCodec = new Http2ClientUpgradeCodec(
-        (Http2ConnectionHandler) Http2FrameCodecBuilder
-        .forClient()
-        .initialSettings(createHttp2Settings())
-        .build(),
-        multiplexHandler
-        );
+//    Http2ClientUpgradeCodec upgradeCodec = new Http2ClientUpgradeCodec(
+//        (Http2ConnectionHandler) Http2FrameCodecBuilder
+//        .forClient()
+//        .initialSettings(createHttp2Settings())
+//        .build(),
+//        multiplexHandler
+//        );
 
     final ChannelPromise upgradePromise = channel.newPromise();
     channel.attr(NettyChannelAttributes.INITIALIZATION_FUTURE).set(upgradePromise);
+    upgradePromise.setSuccess();
 
     channel.pipeline().addLast(sourceCodec);
-    channel.pipeline().addLast(new HttpClientUpgradeHandler(sourceCodec, upgradeCodec, _maxContentLength));
-    channel.pipeline().addLast(new Http2ProtocolUpgradeHandler(upgradePromise));
+//    channel.pipeline().addLast(new HttpClientUpgradeHandler(sourceCodec, upgradeCodec, _maxContentLength));
+//    channel.pipeline().addLast(new Http2ProtocolUpgradeHandler(upgradePromise));
   }
 
   private Http2Settings createHttp2Settings()
