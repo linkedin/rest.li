@@ -269,6 +269,7 @@ public final class RestLiAnnotationReader
    * @param model The {@link com.linkedin.restli.internal.server.model.ResourceModel} that we are building.
    * @param resourceClass The resource {@link java.lang.Class}.
    */
+  @SuppressWarnings("deprecation")
   private static void addAlternativeKeys(ResourceModel model, Class<?> resourceClass)
   {
     if (resourceClass.isAnnotationPresent(AlternativeKey.class) || resourceClass.isAnnotationPresent(AlternativeKeys.class))
@@ -305,6 +306,7 @@ public final class RestLiAnnotationReader
    * @param altKeyAnnotation The {@link com.linkedin.restli.server.annotations.AlternativeKey} annotation.
    * @return {@link com.linkedin.restli.server.AlternativeKey} object.
    */
+  @SuppressWarnings("deprecation")
   private static com.linkedin.restli.server.AlternativeKey<?, ?> buildAlternativeKey(String resourceName,
                                                                                      AlternativeKey altKeyAnnotation)
   {

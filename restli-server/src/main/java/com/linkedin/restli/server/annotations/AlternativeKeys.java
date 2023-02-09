@@ -29,6 +29,7 @@ import java.util.List;
  * This will become deprecated when rest.li upgrades to java 8.
  * @author Moira Tagle
  */
+@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface AlternativeKeys

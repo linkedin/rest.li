@@ -29,6 +29,7 @@ import java.lang.annotation.Target;
 /**
  * @author Moira Tagle
  */
+@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface AlternativeKey

@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.41.7] - 2023-02-09
+Mark AlternativeKey annotation as deprecated.
+
 ## [29.41.6] - 2023-01-25
 Fix Async R2 Servlet deadlock condition
 
@@ -5438,7 +5441,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.7...master
+[29.41.7]: https://github.com/linkedin/rest.li/compare/v29.41.6...v29.41.7
 [29.41.6]: https://github.com/linkedin/rest.li/compare/v29.41.5...v29.41.6
 [29.41.5]: https://github.com/linkedin/rest.li/compare/v29.41.4...v29.41.5
 [29.41.4]: https://github.com/linkedin/rest.li/compare/v29.41.3...v29.41.4
