@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+Split getPotentialClients impl between subsetting and not-subsetting cases
 
 ## [29.41.6] - 2023-01-25
 Fix Async R2 Servlet deadlock condition
