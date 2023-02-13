@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.41.7] - 2023-02-13
 Split getPotentialClients impl between subsetting and not-subsetting cases
 
 ## [29.41.6] - 2023-01-25
@@ -5439,7 +5441,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.7...master
+[29.41.7]: https://github.com/linkedin/rest.li/compare/v29.41.6...v29.41.7
 [29.41.6]: https://github.com/linkedin/rest.li/compare/v29.41.5...v29.41.6
 [29.41.5]: https://github.com/linkedin/rest.li/compare/v29.41.4...v29.41.5
 [29.41.4]: https://github.com/linkedin/rest.li/compare/v29.41.3...v29.41.4
