@@ -72,6 +72,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
@@ -80,6 +81,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -801,49 +803,59 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
                                                   long version)
   {
     Set<URI> possibleUris = uris.getUriBySchemeAndPartition(scheme, partitionId);
+    Map<URI, TrackerClient> clientsToBalance = Collections.emptyMap();
+    boolean shouldForceUpdate = false;
 
-    Map<URI, Double> weightedUris = possibleUris == null ? Collections.emptyMap()
-        : possibleUris.stream().collect(Collectors.toMap(uri -> uri,
-            uri -> uris.getPartitionDataMap(uri).get(partitionId).getWeight()));
+    if (possibleUris != null)
+    {
+      if (!serviceProperties.isEnableClusterSubsetting())
+      {
+        clientsToBalance = getPotentialClientsNotSubsetting(serviceName, serviceProperties, clusterProperties, possibleUris);
+      }
+      else
+      {
+        Map<URI, Double> weightedUris = possibleUris.stream()
+            .collect(Collectors.toMap(
+                uri -> uri,
+                uri -> uris.getPartitionDataMap(uri).get(partitionId).getWeight()));
 
-    SubsettingState.SubsetItem subsetItem = serviceProperties.isEnableClusterSubsetting() ?
-        _state.getClientsSubset(serviceName, serviceProperties.getMinClusterSubsetSize(),
-            partitionId, weightedUris, version) :
-        new SubsettingState.SubsetItem(false, false, weightedUris, Collections.emptySet());
+        SubsettingState.SubsetItem subsetItem = _state.getClientsSubset(serviceName,
+            serviceProperties.getMinClusterSubsetSize(), partitionId, weightedUris, version);
 
-    Map<URI, TrackerClient> clientsToBalance = getPotentialClients(serviceName, serviceProperties,
-        clusterProperties, possibleUris, partitionId, subsetItem);
+        clientsToBalance = getPotentialClientsSubsetting(serviceName, serviceProperties,
+            clusterProperties, possibleUris, partitionId, subsetItem);
+
+        shouldForceUpdate = subsetItem.shouldForceUpdate();
+      }
+    }
+
+    debug(_log,
+        "got clients to load balance for ",
+        serviceName,
+        ": ",
+        clientsToBalance);
 
     if (clientsToBalance.isEmpty())
     {
       info(_log, "Can not find a host for service: ", serviceName, ", scheme: ", scheme, ", partition: ", partitionId);
     }
-    return new TrackerClientSubsetItem(subsetItem.shouldForceUpdate(), clientsToBalance);
+    return new TrackerClientSubsetItem(shouldForceUpdate, clientsToBalance);
   }
 
-  private Map<URI, TrackerClient> getPotentialClients(String serviceName,
+  private Map<URI, TrackerClient> getPotentialClientsSubsetting(String serviceName,
                                                   ServiceProperties serviceProperties,
                                                   ClusterProperties clusterProperties,
                                                   Set<URI> possibleUris,
                                                   int partitionId,
                                                   SubsettingState.SubsetItem subsetItem)
   {
-    Map<URI, TrackerClient> clientsToLoadBalance;
-    if (possibleUris == null)
-    {
-      // just return an empty list if possibleUris is 'null'.
-      clientsToLoadBalance = Collections.emptyMap();
-    }
-    else
-    {
-      Map<URI, Double> weightedSubset = subsetItem.getWeightedUriSubset();;
-      Set<URI> doNotSlowStartUris = subsetItem.getDoNotSlowStartUris();
-      clientsToLoadBalance = new HashMap<>(possibleUris.size());
-      for (URI possibleUri : possibleUris)
-      {
-        // don't pay attention to this uri if it's banned or not in the subset
-        if (!serviceProperties.isBanned(possibleUri) && !clusterProperties.isBanned(possibleUri))
+    Map<URI, Double> weightedSubset = subsetItem.getWeightedUriSubset();;
+    Set<URI> doNotSlowStartUris = subsetItem.getDoNotSlowStartUris();
+
+    return getPotentialClients(serviceProperties, clusterProperties, possibleUris,
+        possibleUri ->
         {
+          // ignore if URI is not in the subset
           if (weightedSubset.containsKey(possibleUri))
           {
             TrackerClient possibleTrackerClient = _state.getClient(serviceName, possibleUri);
@@ -859,22 +871,41 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
               {
                 possibleTrackerClient.setSubsetWeight(partitionId, weightedSubset.get(possibleUri));
               }
-              clientsToLoadBalance.put(possibleUri, possibleTrackerClient);
+              return Optional.of(possibleTrackerClient);
             }
           }
-        }
-        else
-        {
-          warn(_log, "skipping banned uri: ", possibleUri);
-        }
+          return Optional.empty();
+        });
+  }
+
+  private Map<URI, TrackerClient> getPotentialClientsNotSubsetting(String serviceName,
+                                                               ServiceProperties serviceProperties,
+                                                               ClusterProperties clusterProperties,
+                                                               Set<URI> possibleUris) {
+    return getPotentialClients(serviceProperties, clusterProperties, possibleUris,
+        possibleUri -> Optional.ofNullable(_state.getClient(serviceName, possibleUri)));
+  }
+
+  private Map<URI, TrackerClient> getPotentialClients(ServiceProperties serviceProperties,
+                                                  ClusterProperties clusterProperties,
+                                                  Set<URI> possibleUris,
+                                                  Function<URI, Optional<TrackerClient>> trackerClientFinder)
+  {
+    Map<URI, TrackerClient> clientsToLoadBalance = new HashMap<>(possibleUris.size());
+    for (URI possibleUri : possibleUris)
+    {
+      // don't pay attention to this uri if it's banned
+      if (!serviceProperties.isBanned(possibleUri) && !clusterProperties.isBanned(possibleUri))
+      {
+        trackerClientFinder.apply(possibleUri)
+            .ifPresent(trackerClient -> clientsToLoadBalance.put(possibleUri, trackerClient));
+      }
+      else
+      {
+        warn(_log, "skipping banned uri: ", possibleUri);
       }
     }
 
-    debug(_log,
-        "got clients to load balancer for ",
-        serviceName,
-        ": ",
-        clientsToLoadBalance);
     return clientsToLoadBalance;
   }
 
