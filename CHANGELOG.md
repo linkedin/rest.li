@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.41.9] - 2023-02-15
+Handle infinity/-infinity/NaN in DataSchema -> Avro record data translation.
+
 ## [29.41.8] - 2023-02-14
 Allow annotation `@ExcludedInGraphQL` on extension schema fields.
 
@@ -5444,7 +5447,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.8...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.9...master
+[29.41.9]: https://github.com/linkedin/rest.li/compare/v29.41.8...v29.41.9
 [29.41.8]: https://github.com/linkedin/rest.li/compare/v29.41.7...v29.41.8
 [29.41.7]: https://github.com/linkedin/rest.li/compare/v29.41.6...v29.41.7
 [29.41.6]: https://github.com/linkedin/rest.li/compare/v29.41.5...v29.41.6
