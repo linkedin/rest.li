@@ -1075,6 +1075,40 @@ public class TestDataTranslator
     }
   }
 
+  @Test
+  public void testInfinityAndNan() throws IOException {
+    String schemaText =
+        "{\n" +
+          "  \"type\" : \"record\",\n" +
+          "  \"name\" : \"Foo\",\n" +
+          "  \"fields\" : [\n" +
+          "    { \"name\" : \"doubleRequired\", \"type\" : \"double\" }\n" +
+          "  ]\n" +
+          "}\n";
+    // First element is the input, second element is the expected output
+    Object[][] inputs = {
+        {
+            "{ \"doubleRequired\" : \"Infinity\"}",
+            Double.POSITIVE_INFINITY
+        }, {
+            "{ \"doubleRequired\" : \"NaN\"}",
+            Double.NaN
+        }, {
+            "{ \"doubleRequired\" : \"-Infinity\"}",
+            Double.NEGATIVE_INFINITY
+        }
+    };
+    RecordDataSchema recordDataSchema = (RecordDataSchema) TestUtil.dataSchemaFromString(schemaText);
+    for (Object[] input : inputs) {
+      DataMap dataMap = TestUtil.dataMapFromString((String) input[0]);
+      Schema avroSchema = SchemaTranslator.dataToAvroSchema(recordDataSchema);
+      GenericRecord avroRecord = DataTranslator.dataMapToGenericRecord(dataMap, recordDataSchema, avroSchema);
+      assertEquals(avroRecord.get("doubleRequired"), input[1]);
+    }
+
+
+  }
+
   private void testDataTranslation(String schemaText, String[][] row) throws IOException
   {
     boolean debug = false;

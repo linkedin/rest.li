@@ -32,6 +32,7 @@ import com.linkedin.data.schema.FixedDataSchema;
 import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
+import com.linkedin.data.template.DataTemplateUtil;
 import java.nio.ByteBuffer;
 import java.util.AbstractMap;
 import java.util.ArrayDeque;
@@ -797,10 +798,10 @@ public class DataTranslator implements DataTranslatorContext
           result = ((Number) value).longValue();
           break;
         case FLOAT:
-          result = ((Number) value).floatValue();
+          result = DataTemplateUtil.coerceFloatOutput(value);
           break;
         case DOUBLE:
-          result = ((Number) value).doubleValue();
+          result = DataTemplateUtil.coerceDoubleOutput(value);
           break;
         case STRING:
           result = new Utf8((String) value);
