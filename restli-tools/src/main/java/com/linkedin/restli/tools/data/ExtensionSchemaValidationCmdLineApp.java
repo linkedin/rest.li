@@ -35,9 +35,12 @@ import com.linkedin.restli.common.ExtensionSchemaAnnotation;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -75,6 +78,13 @@ public class ExtensionSchemaValidationCmdLineApp
   private static final String RESOURCE_KEY_ANNOTATION_NAMESPACE = "resourceKey";
   private static final String EXTENSIONS_SUFFIX = "Extensions";
   private static final String VERSION_SUFFIX = "versionSuffix";
+  private static final Set<String> ALLOWED_EXTENSION_FIELD_ANNOTATIONS = new HashSet<>(Arrays.asList(
+      // The "extension" annotation is always allowed of course...
+      EXTENSION_ANNOTATION_NAMESPACE,
+      // The following are special-cased annotations, this list should be minimized
+      // TODO: This is only present as a workaround, remove this once the feature gap is filled
+      "ExcludedInGraphQL"
+  ));
 
   static
   {
@@ -188,13 +198,24 @@ public class ExtensionSchemaValidationCmdLineApp
   {
     for (RecordDataSchema.Field field : extensionSchemaFields)
     {
-      // check extension schema field annotation
+      // Check extension schema field annotations
       Map<String, Object> properties = field.getProperties();
-      if (properties.isEmpty() || properties.keySet().size() != 1 || !properties.containsKey(
-          EXTENSION_ANNOTATION_NAMESPACE))
+      // First, assert that the extension field has the required "extensions" annotation
+      if (properties.isEmpty() || !properties.containsKey(EXTENSION_ANNOTATION_NAMESPACE))
       {
-        throw new InvalidExtensionSchemaException("The field : " + field.getName() + " of extension schema must and only be annotated with 'extension'");
+        throw new InvalidExtensionSchemaException("The extension schema field '"
+            + field.getName() + "' must be annotated with 'extension'");
       }
+      // Assert that there are no unexpected annotations on this field
+      for (String annotationKey : properties.keySet())
+      {
+        if (!ALLOWED_EXTENSION_FIELD_ANNOTATIONS.contains(annotationKey))
+        {
+          throw new InvalidExtensionSchemaException("The extension schema field '"
+              + field.getName() + "' is annotated with unexpected annotation '" + annotationKey + "'");
+        }
+      }
+
       Object dataElement = properties.get(EXTENSION_ANNOTATION_NAMESPACE);
 
       ValidationOptions validationOptions =
