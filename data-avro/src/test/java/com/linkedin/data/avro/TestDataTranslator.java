@@ -1090,13 +1090,16 @@ public class TestDataTranslator
     Object[][] inputs = {
         {
             "{ \"doubleRequired\" : \"Infinity\", \"floatRequired\" : \"Infinity\"}",
-            Double.POSITIVE_INFINITY
+            Double.POSITIVE_INFINITY,
+            Float.POSITIVE_INFINITY
         }, {
             "{ \"doubleRequired\" : \"NaN\", \"floatRequired\" : \"NaN\"}",
-            Double.NaN
+            Double.NaN,
+            Float.NaN
         }, {
             "{ \"doubleRequired\" : \"-Infinity\", \"floatRequired\" : \"-Infinity\"}",
-            Double.NEGATIVE_INFINITY
+            Double.NEGATIVE_INFINITY,
+             Float.NEGATIVE_INFINITY
         }
     };
     RecordDataSchema recordDataSchema = (RecordDataSchema) TestUtil.dataSchemaFromString(schemaText);
@@ -1105,6 +1108,7 @@ public class TestDataTranslator
       Schema avroSchema = SchemaTranslator.dataToAvroSchema(recordDataSchema);
       GenericRecord avroRecord = DataTranslator.dataMapToGenericRecord(dataMap, recordDataSchema, avroSchema);
       assertEquals(avroRecord.get("doubleRequired"), input[1]);
+      assertEquals(avroRecord.get("floatRequired"), input[2]);
     }
 
 
