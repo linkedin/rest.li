@@ -1082,19 +1082,20 @@ public class TestDataTranslator
           "  \"type\" : \"record\",\n" +
           "  \"name\" : \"Foo\",\n" +
           "  \"fields\" : [\n" +
-          "    { \"name\" : \"doubleRequired\", \"type\" : \"double\" }\n" +
+          "    { \"name\" : \"doubleRequired\", \"type\" : \"double\" },\n" +
+          "    { \"name\" : \"floatRequired\", \"type\" : \"float\" }\n" +
           "  ]\n" +
           "}\n";
     // First element is the input, second element is the expected output
     Object[][] inputs = {
         {
-            "{ \"doubleRequired\" : \"Infinity\"}",
+            "{ \"doubleRequired\" : \"Infinity\", \"floatRequired\" : \"Infinity\"}",
             Double.POSITIVE_INFINITY
         }, {
-            "{ \"doubleRequired\" : \"NaN\"}",
+            "{ \"doubleRequired\" : \"NaN\", \"floatRequired\" : \"NaN\"}",
             Double.NaN
         }, {
-            "{ \"doubleRequired\" : \"-Infinity\"}",
+            "{ \"doubleRequired\" : \"-Infinity\", \"floatRequired\" : \"-Infinity\"}",
             Double.NEGATIVE_INFINITY
         }
     };
