@@ -543,10 +543,10 @@ public class DataTranslator implements DataTranslatorContext
           fieldVal = ((Number) fieldVal).longValue();
           break;
         case FLOAT:
-          fieldVal = ((Number) fieldVal).floatValue();
+          fieldVal = DataTemplateUtil.coerceFloatOutput(fieldVal);
           break;
         case DOUBLE:
-          fieldVal = ((Number) fieldVal).doubleValue();
+          fieldVal = DataTemplateUtil.coerceDoubleOutput(fieldVal);
           break;
         case STRING:
           fieldVal =  String.valueOf(fieldVal);
