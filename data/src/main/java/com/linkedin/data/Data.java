@@ -399,12 +399,31 @@ public class Data
     }
 
     /**
+     * @deprecated Use {@link #startKey(String)} instead.
+     */
+    @Deprecated
+    default void key(String key) throws IOException
+    {
+    }
+
+    /**
      * Invoked when the key of {@link DataMap} entry is traversed.
      * This callback is invoked before the value callback.
      *
      * @param key of the {@link DataMap} entry.
      */
-    default void key(String key) throws IOException
+    default void startKey(String key) throws IOException
+    {
+      key(key);
+    }
+
+    /**
+     * Invoked when the key of {@link DataMap} entry is finished being traversed.
+     * This callback is invoked after the value callback.
+     *
+     * @param key of the {@link DataMap} entry.
+     */
+    default void endKey(String key) throws IOException
     {
     }
 
@@ -525,8 +544,9 @@ public class Data
                 {
                   try
                   {
-                    callback.key(key);
+                    callback.startKey(key);
                     traverse(value, callback, cycleChecker);
+                    callback.endKey(key);
                   }
                   catch (IOException e)
                   {
@@ -550,8 +570,9 @@ public class Data
             {
               for (Map.Entry<String, Object> entry : orderedEntrySet)
               {
-                callback.key(entry.getKey());
+                callback.startKey(entry.getKey());
                 traverse(entry.getValue(), callback, cycleChecker);
+                callback.endKey(entry.getKey());
               }
             }
 

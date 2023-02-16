@@ -332,7 +332,7 @@ public abstract class AbstractJacksonDataCodec implements DataCodec
     }
 
     @Override
-    public void key(String key) throws IOException
+    public void startKey(String key) throws IOException
     {
       _generator.writeFieldName(key);
     }
