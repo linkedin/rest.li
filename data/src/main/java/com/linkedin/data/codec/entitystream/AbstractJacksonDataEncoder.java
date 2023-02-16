@@ -143,7 +143,7 @@ abstract class AbstractJacksonDataEncoder extends AbstractDataEncoder
     }
 
     @Override
-    public void key(String key) throws IOException
+    public void startKey(String key) throws IOException
     {
       writeFieldName(key);
     }

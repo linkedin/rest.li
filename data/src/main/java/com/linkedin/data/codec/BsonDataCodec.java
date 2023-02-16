@@ -314,7 +314,7 @@ public class BsonDataCodec implements DataCodec
     }
 
     @Override
-    public void key(String key)
+    public void startKey(String key)
     {
       _currentName = key;
     }

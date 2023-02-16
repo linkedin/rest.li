@@ -427,7 +427,7 @@ public class PsonDataCodec implements DataCodec
     }
 
     @Override
-    public void key(String key) throws CharacterCodingException
+    public void startKey(String key) throws CharacterCodingException
     {
       Integer found = _keyMap.get(key);
       int index;
