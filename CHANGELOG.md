@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.41.10] - 2023-02-23
+use proper UTF8 encoding in AvroUtil.jsonFromGenericRecord, also deprecate AvroUtil and bump avro-util dependency
+
 ## [29.41.9] - 2023-02-15
 Handle infinity/-infinity/NaN in DataSchema -> Avro record data translation.
 
@@ -5447,7 +5450,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.9...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.10...master
+[29.41.10]: https://github.com/linkedin/rest.li/compare/v29.41.9...v29.41.10
 [29.41.9]: https://github.com/linkedin/rest.li/compare/v29.41.8...v29.41.9
 [29.41.8]: https://github.com/linkedin/rest.li/compare/v29.41.7...v29.41.8
 [29.41.7]: https://github.com/linkedin/rest.li/compare/v29.41.6...v29.41.7

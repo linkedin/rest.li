@@ -21,6 +21,7 @@ import com.linkedin.avroutil1.compatibility.AvroVersion;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
@@ -28,6 +29,11 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.Encoder;
 
+
+/**
+ * @deprecated please use {@link com.linkedin.avroutil1.compatibility.AvroCodecUtil}
+ */
+@Deprecated
 public class AvroUtil
 {
   public static String jsonFromGenericRecord(GenericRecord record) throws IOException
@@ -61,7 +67,7 @@ public class AvroUtil
     writer.setSchema(record.getSchema());
     writer.write(record, jsonEncoder);
     jsonEncoder.flush();
-    return outputStream.toString();
+    return outputStream.toString(StandardCharsets.UTF_8.name());
   }
 
   public static byte[] bytesFromGenericRecord(GenericRecord record) throws IOException
@@ -87,9 +93,8 @@ public class AvroUtil
 
   public static GenericRecord genericRecordFromJson(String json, Schema schema) throws IOException
   {
-    GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>();
+    GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(schema, schema);
     Decoder jsonDecoder = AvroCompatibilityHelper.newCompatibleJsonDecoder(schema, json);
-    reader.setSchema(schema);
     GenericRecord record = reader.read(null, jsonDecoder);
     return record;
   }
