@@ -14,8 +14,11 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.41.10] - 2023-02-16
+## [29.41.11] - 2023-03-07
 Updates Data.TraverseCallback to have a callback for 'endKey'.
+
+## [29.41.10] - 2023-02-23
+use proper UTF8 encoding in AvroUtil.jsonFromGenericRecord, also deprecate AvroUtil and bump avro-util dependency
 
 ## [29.41.9] - 2023-02-15
 Handle infinity/-infinity/NaN in DataSchema -> Avro record data translation.
