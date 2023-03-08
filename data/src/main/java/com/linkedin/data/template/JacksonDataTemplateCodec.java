@@ -451,7 +451,7 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
     }
 
     @Override
-    public void startKey(String key)
+    public void key(String key)
       throws IOException
     {
       DataSchema newSchema = null;
@@ -478,7 +478,7 @@ public class JacksonDataTemplateCodec extends JacksonDataCodec
         }
       }
       _pendingSchema = newSchema;
-      super.startKey(key);
+      super.key(key);
     }
 
     @Override

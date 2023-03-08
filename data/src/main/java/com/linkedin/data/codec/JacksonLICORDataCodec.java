@@ -242,7 +242,7 @@ public class JacksonLICORDataCodec extends AbstractJacksonDataCodec
     }
 
     @Override
-    public void startKey(String key) throws IOException {
+    public void key(String key) throws IOException {
       int token;
       if (_symbolTable != null && (token = _symbolTable.getSymbolId(key)) != SymbolTable.UNKNOWN_SYMBOL_ID)
       {

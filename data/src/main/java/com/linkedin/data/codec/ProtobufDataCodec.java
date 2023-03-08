@@ -527,7 +527,7 @@ public class ProtobufDataCodec implements DataCodec
      *
      * @param key of the {@link DataMap} entry.
      */
-    public void startKey(String key) throws IOException
+    public void key(String key) throws IOException
     {
       stringValue(key);
     }
