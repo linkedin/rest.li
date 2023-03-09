@@ -409,6 +409,16 @@ public class Data
     }
 
     /**
+     * Invoked when the key of {@link DataMap} entry is finished being traversed.
+     * This callback is invoked after the value callback.
+     *
+     * @param key of the {@link DataMap} entry.
+     */
+    default void endKey(String key) throws IOException
+    {
+    }
+
+    /**
      * Invoked when the end of {@link DataMap} is traversed.
      */
     default void endMap() throws IOException
@@ -527,6 +537,7 @@ public class Data
                   {
                     callback.key(key);
                     traverse(value, callback, cycleChecker);
+                    callback.endKey(key);
                   }
                   catch (IOException e)
                   {
@@ -552,6 +563,7 @@ public class Data
               {
                 callback.key(entry.getKey());
                 traverse(entry.getValue(), callback, cycleChecker);
+                callback.endKey(entry.getKey());
               }
             }
 

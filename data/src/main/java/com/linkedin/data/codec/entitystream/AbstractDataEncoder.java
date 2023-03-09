@@ -249,6 +249,7 @@ public abstract class AbstractDataEncoder implements DataEncoder
           Map.Entry<String, ?> entry = (Map.Entry<String, ?>) currItem;
           _traverseCallback.key(entry.getKey());
           writeValue(entry.getValue());
+          _traverseCallback.endKey(entry.getKey());
         }
         else
         {
