@@ -528,6 +528,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
   private void writePrimitive(PrimitiveDataSchema schema) throws IOException
   {
+    writeProperties(schema.getProperties());
     _builder.write(schema.getUnionMemberKey());
   }
 
