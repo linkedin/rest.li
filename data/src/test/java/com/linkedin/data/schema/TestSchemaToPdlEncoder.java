@@ -20,6 +20,7 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -240,5 +241,38 @@ public class TestSchemaToPdlEncoder
         "      }",
         "    }",
         "}"), indentedSchema);
+  }
+
+  @Test
+  public void TestEncodePrimitiveSchemaProperties()
+  {
+    DataSchema primitiveIntSchemaWithProperties = new PrimitiveDataSchema(
+        DataSchema.Type.INT,
+        DataSchemaConstants.INTEGER_TYPE
+    )
+    {
+      @Override
+      public Map<String, Object> getProperties() {
+        Map<String, Object> primitiveIntMap = new HashMap<>();
+        primitiveIntMap.put("testKey", "testValue");
+        return primitiveIntMap;
+      }
+    };
+    RecordDataSchema recordDataSchema = new RecordDataSchema(new Name("TestRecord", null),
+        RecordDataSchema.RecordType.RECORD);
+    RecordDataSchema.Field field = new RecordDataSchema.Field(primitiveIntSchemaWithProperties);
+    field.setName("intField", null);
+    field.setRecord(recordDataSchema);
+    recordDataSchema.setFields(Arrays.asList(field), null);
+
+
+    String translatedSchema = SchemaToPdlEncoder.schemaToPdl(recordDataSchema,
+        SchemaToPdlEncoder.EncodingStyle.INDENTED);
+
+    assertEquals("record TestRecord {\n"
+        + "  intField:   @testKey = \"testValue\" int\n"
+        + "}",
+        translatedSchema);
+
   }
 }

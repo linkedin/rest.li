@@ -137,6 +137,15 @@ abstract class PdlBuilder
    */
   PdlBuilder writeProperties(List<String> prefix, Map<String, Object> properties) throws IOException
   {
+    return writeProperties(prefix, properties, false);
+  }
+
+  /**
+   * Similar to {@link #writeProperties(List, Map)}, but take another parameter to indicate whether single properties
+   *  could be encoded as inline.
+   */
+  PdlBuilder writeProperties(List<String> prefix, Map<String, Object> properties, boolean inline) throws IOException
+  {
     List<Map.Entry<String, Object>> orderedProperties =  properties.entrySet().stream()
         .sorted(Map.Entry.comparingByKey())
         .collect(Collectors.toList());
@@ -161,7 +170,7 @@ abstract class PdlBuilder
         else
         {
           // encode value property like @x = { "y": { "z": "value" } }
-          writeProperty(pathParts, dm);
+          writeProperty(pathParts, dm, inline);
         }
       }
       else if (Boolean.TRUE.equals(value))
@@ -172,7 +181,7 @@ abstract class PdlBuilder
       }
       else
       {
-        writeProperty(pathParts, value);
+        writeProperty(pathParts, value, inline);
       }
     }
     return this;
@@ -183,10 +192,15 @@ abstract class PdlBuilder
    * @param path provides the property's full path.
    * @param value provides the property's value, it may be any valid pegasus Data binding type (DataList, DataMap,
    *              String, Int, Long, Float, Double, Boolean, ByteArray)
+   * @param inline whether the property could be coded as inline. If true, encoder will continue encoding in same line.
    */
-  private void writeProperty(List<String> path, Object value) throws IOException
-  {
-    indent().write("@").writePath(path).writeSpace().write("=").writeSpace().writeJson(value).newline();
+  private void writeProperty(List<String> path, Object value, boolean inline) throws IOException {
+    indent().write("@").writePath(path).writeSpace().write("=").writeSpace().writeJson(value);
+    if (inline) {
+      writeSpace();
+    } else {
+      newline();
+    }
   }
 
   /**
