@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.41.12] - 2023-03-27
+Encode PrimitiveSchema's properties in PdlEncoder
+
 ## [29.41.11] - 2023-03-09
 Updates Data.TraverseCallback to have a callback for 'endKey'.
 
@@ -5453,7 +5456,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.11...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.12...master
+[29.41.12]: https://github.com/linkedin/rest.li/compare/v29.41.11...v29.41.12
 [29.41.11]: https://github.com/linkedin/rest.li/compare/v29.41.10...v29.41.11
 [29.41.10]: https://github.com/linkedin/rest.li/compare/v29.41.9...v29.41.10
 [29.41.9]: https://github.com/linkedin/rest.li/compare/v29.41.8...v29.41.9
