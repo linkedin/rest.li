@@ -14,86 +14,91 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.41.12] - 2023-04-06
+- Introduce `@extension.injectedUrnParts` ER annotation.
+  - This will be used as the replacement for using `@extension.params` to specify injected URN parts.
+  - `@extension.params` will now primarily be used for specifying injection query parameters.
+
 ## [29.41.11] - 2023-03-09
-Updates Data.TraverseCallback to have a callback for 'endKey'.
+- Updates `Data.TraverseCallback` to have a callback for 'endKey'.
 
 ## [29.41.10] - 2023-02-23
-use proper UTF8 encoding in AvroUtil.jsonFromGenericRecord, also deprecate AvroUtil and bump avro-util dependency
+- Use proper UTF8 encoding in AvroUtil.jsonFromGenericRecord, also deprecate AvroUtil and bump avro-util dependency
 
 ## [29.41.9] - 2023-02-15
-Handle infinity/-infinity/NaN in DataSchema -> Avro record data translation.
+- Handle infinity/-infinity/NaN in DataSchema -> Avro record data translation.
 
 ## [29.41.8] - 2023-02-14
-Allow annotation `@ExcludedInGraphQL` on extension schema fields.
+- Allow annotation `@ExcludedInGraphQL` on extension schema fields.
 
 ## [29.41.7] - 2023-02-13
-Split getPotentialClients impl between subsetting and not-subsetting cases
+- Split getPotentialClients impl between subsetting and not-subsetting cases
 
 ## [29.41.6] - 2023-01-25
-Fix Async R2 Servlet deadlock condition
+- Fix Async R2 Servlet deadlock condition
 
 ## [29.41.5] - 2023-01-11
-Handle Avro self-referential aliases in Avro to Proto schema translation.
+- Handle Avro self-referential aliases in Avro to Proto schema translation.
 
 ## [29.41.4] - 2023-01-09
-change the innitialize size of resolvedProperties to 0 in order to save memory pre-allocated
+- Change the innitialize size of resolvedProperties to 0 in order to save memory pre-allocated
 
 ## [29.41.3] - 2023-01-03
-Add option to force publish idl and snapshot
+- Add option to force publish idl and snapshot
 
 ## [29.41.2] - 2022-12-21
-Enable enumeration of clusters in `ZKFailoutConfigProvider`.
+- Enable enumeration of clusters in `ZKFailoutConfigProvider`.
 
 ## [29.41.1] - 2022-12-19
-Replace the API call getArchivePath() with getArchiveFile() on Gradle 7 in the Pegasus Plugin
+- Replace the API call getArchivePath() with getArchiveFile() on Gradle 7 in the Pegasus Plugin
 
 ## [29.41.0] - 2022-12-15
-Reduce memory allocations during rich schema traversal
+- Reduce memory allocations during rich schema traversal
 
 ## [29.40.15] - 2022-12-08
-Allow disabling the ivy publication preconfiguration in the Pegasus Gradle plugin
+- Allow disabling the ivy publication preconfiguration in the Pegasus Gradle plugin
 
 ## [29.40.14] - 2022-12-06
-Make CurrentSchemaEntryMode public so that all TraverserContext interface getters can be accessed by restli users
+- Make CurrentSchemaEntryMode public so that all TraverserContext interface getters can be accessed by restli users
 
 ## [29.40.13] - 2022-12-01
-Add D2 loggings for tracking the initial received D2 Clusters and D2 Uris
+- Add D2 loggings for tracking the initial received D2 Clusters and D2 Uris
 
 ## [29.40.12] - 2022-11-30
-Add channel writability to streaming timeout exception
+- Add channel writability to streaming timeout exception
 
 ## [29.40.11] - 2022-11-17
-Add util class to convert generic List/Map to DataList/DataMap or vice versa
+- Add util class to convert generic List/Map to DataList/DataMap or vice versa
 
 ## [29.40.10] - 2022-11-16
-Fix the deprecated configuration name used in the PegasusPlugin
+- Fix the deprecated configuration name used in the PegasusPlugin
 
 ## [29.40.9] - 2022-11-15
-Enable validation check in the build of the gradle plugin and fix some validation errors with Gradle 7
+- Enable validation check in the build of the gradle plugin and fix some validation errors with Gradle 7
 
 ## [29.40.8] - 2022-11-14
-Upgrade Apache Commons Text to 1.10.0 as vulnerability fix (CVE-2022-42889)
+- Upgrade Apache Commons Text to 1.10.0 as vulnerability fix (CVE-2022-42889)
 
 ## [29.40.7] - 2022-11-07
-Remove @PathSensitive from property idlDestinationDir in GenerateRestModelTask
+- Remove @PathSensitive from property idlDestinationDir in GenerateRestModelTask
 
 ## [29.40.6] - 2022-11-06
-Add getter of IncludesDeclaredInline in RecordDataSchema
+- Add getter of IncludesDeclaredInline in RecordDataSchema
 
 ## [29.40.5] - 2022-11-03
-Fix the Gradle 7 validation errors in GenerateRestClientTask
+- Fix the Gradle 7 validation errors in GenerateRestClientTask
 
 ## [29.40.4] - 2022-10-31
-Update SchemaToPdlEncoder to fix nested schema encoding layout
+- Update SchemaToPdlEncoder to fix nested schema encoding layout
 
 ## [29.40.3] - 2022-10-25
-Change logging level of D2 cluster subsetting updates to DEBUG
+- Change logging level of D2 cluster subsetting updates to DEBUG
 
 ## [29.40.2] - 2022-10-25
-Refactor the Netty JMX handling for injection of the metrics handling into the client rather than the other way around.
+- Refactor the Netty JMX handling for injection of the metrics handling into the client rather than the other way around.
 
 ## [29.40.1] - 2022-10-13
-Add service discovery event emitter to d2 client
+- Add service discovery event emitter to d2 client
 
 ## [29.40.0] - 2022-10-13
 - Empty commit to bump pegasus minor version 
@@ -109,26 +114,26 @@ Added `Request.getResourceMethodIdentifier()`,
 - Emit service discovery status related events
 
 ## [29.39.4] - 2022-09-30
-Add JMX metrics for DNS resolution and clarify DNS timeout errors.
+- Add JMX metrics for DNS resolution and clarify DNS timeout errors.
 
 ## [29.39.3] - 2022-09-26
-Catch exceptions when zk connection state change event is received after zk connection shutdown.
+- Catch exceptions when zk connection state change event is received after zk connection shutdown.
 
 ## [29.39.2] - 2022-09-23
-Remove unnessary extra IDL annotations due to recent restriction of adding new method into bridged service and emit resourceC
-lass for javaparser to use to update rest.li resource.
+- Remove unnessary extra IDL annotations due to recent restriction of adding new method into bridged service and emit
+  resourceClass for javaparser to use to update rest.li resource.
 
 ## [29.39.1] - 2022-09-20
-Expose an easy way to override validation options for ActionArgumentBuilder
+- Expose an easy way to override validation options for ActionArgumentBuilder
 
 ## [29.39.0] - 2022-09-19
-Releasing support for UDS in HTTP/2 stack
+- Releasing support for UDS in HTTP/2 stack
 
 ## [29.38.6] - 2022-09-15
-Add a validation option to coerce base64 encoded fixed values
+- Add a validation option to coerce base64 encoded fixed values
 
 ## [29.38.5] - 2022-09-15
-Update the error message to better guide users when zkRef is null.
+- Update the error message to better guide users when zkRef is null.
 
 ## [29.38.4] - 2022-09-08
 - Use ZooKeeper 3.6.3
@@ -5453,7 +5458,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.11...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.12...master
+[29.41.12]: https://github.com/linkedin/rest.li/compare/v29.41.11...v29.41.12
 [29.41.11]: https://github.com/linkedin/rest.li/compare/v29.41.10...v29.41.11
 [29.41.10]: https://github.com/linkedin/rest.li/compare/v29.41.9...v29.41.10
 [29.41.9]: https://github.com/linkedin/rest.li/compare/v29.41.8...v29.41.9
