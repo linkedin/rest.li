@@ -6,14 +6,23 @@ namespace com.linkedin.restli.common
 record ExtensionSchemaAnnotation {
 
   /**
-   * Specifies only for one to many relationship. It can use either GET_ALL("get_all") or a FINDER("finder:<method name>").
+   * The Rest.li method used for this injection.
+   * For 1-to-many relationships, can use either GET_ALL ("get_all"), FINDER ("finder:<method name>").
+   * For 1-to-1 relationships, it must be omitted for collection resources or use GET ("get") for simple resources.
    */
   using: optional string
 
   /**
-   * Specifies parameters if any of them are specified. It is also used for FINDER.
+   * Used to specify query parameters in the injection request for 1-to-many relationships.
    */
   params: optional map[string, string]
+
+  /**
+   * Used to specify the injected URN's parts so that it may be reconstructed and its resolver can be used.
+   * For 1-to-1 relationships, the injected URN resolver is needed so that the injected entity can be fetched.
+   * For 1-to-many relationships on a subresource, the resolver is needed for its parent path keys.
+   */
+  injectedUrnParts: optional map[string, string]
 
   /**
    * Specifies versionSuffix in multi-version scenario. If is is not provided, will pick first version by default.
