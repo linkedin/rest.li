@@ -6,7 +6,7 @@
   "fields" : [ {
     "name" : "using",
     "type" : "string",
-    "doc" : "The Rest.li method used for this injection.\nFor 1-to-many relationships, can use either GET_ALL (\"get_all\"), FINDER (\"finder:<method name>\").For 1-to-1 relationships, it must be omitted for collection resources or use GET (\"get\") for simple resources.",
+    "doc" : "The Rest.li method used for this injection.\nFor 1-to-many relationships, can use either GET_ALL (\"get_all\"), FINDER (\"finder:<method name>\").\nFor 1-to-1 relationships, it must be omitted for collection resources or use GET (\"get\") for simple resources.",
     "optional" : true
   }, {
     "name" : "params",
