@@ -6,7 +6,7 @@
   "fields" : [ {
     "name" : "using",
     "type" : "string",
-    "doc" : "Specifies only for one to many relationship. It can use either GET_ALL(\"get_all\") or a FINDER(\"finder:<method name>\").",
+    "doc" : "The Rest.li method used for this injection.\nFor 1-to-many relationships, can use either GET_ALL (\"get_all\"), FINDER (\"finder:<method name>\").\nFor 1-to-1 relationships, it must be omitted for collection resources or use GET (\"get\") for simple resources.",
     "optional" : true
   }, {
     "name" : "params",
@@ -14,7 +14,15 @@
       "type" : "map",
       "values" : "string"
     },
-    "doc" : "Specifies parameters if any of them are specified. It is also used for FINDER.",
+    "doc" : "Used to specify query parameters in the injection request for 1-to-many relationships.",
+    "optional" : true
+  }, {
+    "name" : "injectedUrnParts",
+    "type" : {
+      "type" : "map",
+      "values" : "string"
+    },
+    "doc" : "Used to specify the injected URN's parts so that it may be reconstructed and its resolver can be used.\nFor 1-to-1 relationships, the injected URN resolver is needed so that the injected entity can be fetched.\nFor 1-to-many relationships on a subresource, the resolver is needed for its parent path keys.",
     "optional" : true
   }, {
     "name" : "versionSuffix",
