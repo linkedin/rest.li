@@ -37,7 +37,7 @@ public class FieldDef<T>
   private final DataSchema _dataSchema;
   private final Class<?> _dataClass;
   private final RecordDataSchema.Field _field;
-  private final int _hashCode;
+  private Integer _hashCode;
 
   public FieldDef(String name, Class<T> type)
   {
@@ -49,7 +49,6 @@ public class FieldDef<T>
     _name = name;
     _type = type;
     _dataSchema = dataSchema;
-    _hashCode = computeHashCode();
     /**
      * FieldDefs representing context, pagination, or things relating to synchronization will not
      * have schemas, so dataSchema and thus dataClass can be null.
@@ -129,6 +128,11 @@ public class FieldDef<T>
   @Override
   public int hashCode()
   {
+      if (_hashCode == null) {
+          // If this method is called by multiple thread, there might be multiple concurrent write
+          // here, but since the hashCode should be the same it is tolerable
+          _hashCode = computeHashCode();
+      }
       return _hashCode;
   }
 
