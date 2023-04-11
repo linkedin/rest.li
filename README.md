@@ -1,3 +1,5 @@
+<p style="color:red;"><b>At LinkedIn, we are focusing are efforts on advanced automation to enable a seamless, LinkedIn-wide migration from Rest.li to <a href="https://grpc.io/">gRPC</a>. gRPC will offer better performance, support for more programming languages, streaming, and a robust open source community. There is no active development at LinkedIn on new features for Rest.li. The repository will also be deprecated soon once we have migrated services to use gRPC. Refer to <a href="https://engineering.linkedin.com/blog/2023/linkedin-integrates-protocol-buffers-with-rest-li-for-improved-m">this blog</a> for more details on why we are moving to gRPC.</b></p>
+
 <p align="center">
   <img src="https://github.com/linkedin/rest.li/wiki/restli-logo-white-small.png"/>
 </p>
