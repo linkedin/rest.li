@@ -77,7 +77,6 @@ and what APIs have changed, if applicable.
 
 ## [29.43.5] - 2023-06-27
 - Remove a delegated method in LoadBalancerWithFacilitiesDelegator
-
 ## [29.43.4] - 2023-06-22
 - Refactor ZookeeperServer, making functionality to generate URI properties for node accessible to subclasses
 
