@@ -50,7 +50,6 @@ and what APIs have changed, if applicable.
 
 ## [29.43.5] - 2023-06-27
 - Remove a delegated method in LoadBalancerWithFacilitiesDelegator
-
 ## [29.43.4] - 2023-06-22
 - Refactor ZookeeperServer, making functionality to generate URI properties for node accessible to subclasses
 
@@ -5527,6 +5526,7 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
+<<<<<<< HEAD
 [Unreleased]: https://github.com/linkedin/rest.li/compare/v29.45.1...master
 [29.45.1]: https://github.com/linkedin/rest.li/compare/v29.45.0...v29.45.1
 [29.45.0]: https://github.com/linkedin/rest.li/compare/v30.0.0...v29.45.0
@@ -5549,6 +5549,10 @@ patch operations can re-use these classes for generating patch messages.
 [29.42.2]: https://github.com/linkedin/rest.li/compare/v29.42.1...v29.42.2
 [29.42.1]: https://github.com/linkedin/rest.li/compare/v29.42.0...v29.42.1
 [29.42.0]: https://github.com/linkedin/rest.li/compare/v29.41.12...v29.42.0
+=======
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.13...master
+[29.41.13]: https://github.com/linkedin/rest.li/compare/v29.41.12...v29.41.13
+>>>>>>> da67a387a (update version and changelog)
 [29.41.12]: https://github.com/linkedin/rest.li/compare/v29.41.11...v29.41.12
 [29.41.11]: https://github.com/linkedin/rest.li/compare/v29.41.10...v29.41.11
 [29.41.10]: https://github.com/linkedin/rest.li/compare/v29.41.9...v29.41.10
