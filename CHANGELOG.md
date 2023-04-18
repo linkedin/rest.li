@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add support for returning location of schema elements from the PDL schema encoder.
 
 ## [29.42.0] - 2023-05-02
 - Remove the overriding of content-length for HEADER requests as per HTTP Spec

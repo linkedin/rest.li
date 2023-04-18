@@ -21,7 +21,10 @@ import com.linkedin.data.schema.AbstractSchemaEncoder.TypeReferenceFormat;
 import com.linkedin.data.schema.AbstractSchemaParser;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
+import com.linkedin.data.schema.NamedDataSchema;
+import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaToPdlEncoder;
+import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
 import com.linkedin.pegasus.generator.test.idl.EncodingStyle;
@@ -31,6 +34,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -147,6 +151,71 @@ public class PdlEncoderTest extends GeneratorTest
             "Encoding using the \"" + encodingStyle + "\" style resulted in a different/invalid schema.");
       }
     }
+  }
+
+  @Test(dataProvider = "pdlFilePaths")
+  public void testTrackWriteLocations(String pdlFilePath) throws IOException
+  {
+    assertRoundTripLineColumnNumbersMatch(pdlFilePath);
+  }
+
+  private void assertRoundTripLineColumnNumbersMatch(String relativeName) throws IOException {
+    String fullName = "com.linkedin.pegasus.generator.test.idl." + relativeName;
+    File file = new File(pegasusSrcDir, "/" + fullName.replace('.', '/') + ".pdl");
+
+    TypeReferenceFormat referenceFormat = TypeReferenceFormat.PRESERVE;
+
+    // Test all encoding styles
+    for (SchemaToPdlEncoder.EncodingStyle encodingStyle : SchemaToPdlEncoder.EncodingStyle.values()) {
+      String encoded = readAndStandardizeFormat(file, referenceFormat, encodingStyle);
+
+      DataSchemaResolver resolver = MultiFormatDataSchemaResolver.withBuiltinFormats(pegasusSrcDir.getAbsolutePath());
+      PdlSchemaParser parser = new PdlSchemaParser(resolver, true);
+      parser.parse(encoded);
+      Map<Object, PdlSchemaParser.ParseLocation> parsedLocations = parser.getParseLocations();
+      DataSchema parsed = extractSchema(parser, file.getAbsolutePath());
+
+      StringWriter writer = new StringWriter();
+      SchemaToPdlEncoder encoder = new SchemaToPdlEncoder(writer, true);
+      encoder.setTypeReferenceFormat(referenceFormat);
+      encoder.setEncodingStyle(encodingStyle);
+      encoder.encode(parsed);
+      Map<Object, PdlSchemaParser.ParseLocation> writeLocations = encoder.getWriteLocations();
+
+      for (Map.Entry<Object, PdlSchemaParser.ParseLocation> expected : parsedLocations.entrySet()) {
+        PdlSchemaParser.ParseLocation actual = writeLocations.get(expected.getKey());
+
+        Assert.assertNotNull(actual,
+            "Missing location for " + expected.getKey() + " in " + file.getAbsolutePath() + ":"
+                + expected.getValue().getStartLine() + ":" + expected.getValue().getStartColumn());
+        Assert.assertEquals(actual.getStartLine(), expected.getValue().getStartLine(),
+            "Start line for " + expected.getKey() + " in " + file.getAbsolutePath() + ":"
+                + expected.getValue().getStartLine() + ":" + expected.getValue().getStartColumn());
+        Assert.assertEquals(actual.getStartColumn(), expected.getValue().getStartColumn(),
+            "Start col for " + expected.getKey() + " in " + file.getAbsolutePath() + ":"
+                + expected.getValue().getStartLine() + ":" + expected.getValue().getStartColumn());
+        Assert.assertEquals(actual.getEndLine(), expected.getValue().getEndLine(),
+            "End line for " + expected.getKey() + " in " + file.getAbsolutePath() + ":"
+                + expected.getValue().getStartLine() + ":" + expected.getValue().getStartColumn());
+        Assert.assertEquals(actual.getEndColumn(), expected.getValue().getEndColumn(),
+            "End col for " + expected.getKey() + " in " + file.getAbsolutePath() + ":"
+                + expected.getValue().getStartLine() + ":" + expected.getValue().getStartColumn());
+      }
+
+      Assert.assertEquals(parsedLocations.size(), writeLocations.size(),
+          "Different numer of element locations for " + file.getAbsolutePath());
+    }
+  }
+
+  private String readAndStandardizeFormat(File file, TypeReferenceFormat typeReferenceFormat,
+      SchemaToPdlEncoder.EncodingStyle encodingStyle) throws IOException {
+    DataSchema parsed = parseSchema(file);
+    StringWriter writer = new StringWriter();
+    SchemaToPdlEncoder encoder = new SchemaToPdlEncoder(writer);
+    encoder.setEncodingStyle(encodingStyle);
+    encoder.setTypeReferenceFormat(typeReferenceFormat);
+    encoder.encode(parsed);
+    return writer.toString();
   }
 
   private DataSchema parseSchema(File file) throws IOException

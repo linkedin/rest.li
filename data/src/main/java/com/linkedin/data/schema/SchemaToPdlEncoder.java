@@ -18,11 +18,14 @@ package com.linkedin.data.schema;
 
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
+import com.linkedin.data.schema.grammar.PdlSchemaParser;
+import com.linkedin.util.LineColumnNumberWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -107,6 +110,10 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   private String _namespace = "";
   private String _package = "";
 
+  private final boolean _trackWriteLocations;
+
+  private final Map<Object, PdlSchemaParser.ParseLocation> _writeLocations;
+
   /**
    * Construct a .pdl source code encoder.
    *
@@ -114,8 +121,31 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
    */
   public SchemaToPdlEncoder(Writer out)
   {
-    _writer = out;
+    this(out, false);
+  }
+
+  /**
+   * Construct a .pdl source code encoder.
+   *
+   * @param out provides the encoded .pdl destination.
+   * @param returnContextLocations Enable recording the context locations of schema elements during parsing. The
+   *                              locations can be retrieved using {@link #getWriteLocations()} after parsing.
+   */
+  public SchemaToPdlEncoder(Writer out, boolean returnContextLocations)
+  {
+    if (returnContextLocations) {
+      _writeLocations = new IdentityHashMap<>();
+      // Wrap the Writer to track line/column numbers to report to elementWriteListener
+      LineColumnNumberWriter lineColumnNumberWriter = new LineColumnNumberWriter(out);
+      // When counting column numbers, CompactPDLBuilder treats ',' as whitespace
+      lineColumnNumberWriter.setIsWhitespaceFunction(c -> Character.isWhitespace(c) || c == ',');
+      _writer = lineColumnNumberWriter;
+    } else {
+      _writer = out;
+      _writeLocations = Collections.emptyMap();
+    }
     _encodingStyle = EncodingStyle.INDENTED;
+    _trackWriteLocations = returnContextLocations;
   }
 
   /**
@@ -150,10 +180,12 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       {
         if (hasNamespace)
         {
+          markSchemaElementStartLocation();
           _builder.write("namespace")
               .writeSpace()
               .writeIdentifier(namedSchema.getNamespace())
               .newline();
+          recordSchemaElementLocation(namedSchema.getNamespace());
           _namespace = namedSchema.getNamespace();
         }
         if (hasPackage)
@@ -220,12 +252,14 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
             .increaseIndent();
         if (hasNamespaceOverride)
         {
+          markSchemaElementStartLocation();
           _builder
               .indent()
               .write("namespace")
               .writeSpace()
               .writeIdentifier(namedSchema.getNamespace())
               .newline();
+          recordSchemaElementLocation(namedSchema.getNamespace());
           _namespace = namedSchema.getNamespace();
         }
         if (hasPackageOverride)
@@ -291,8 +325,13 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     }
   }
 
+  public Map<Object, PdlSchemaParser.ParseLocation> getWriteLocations() {
+    return _writeLocations;
+  }
+
   private void writeRecord(RecordDataSchema schema) throws IOException
   {
+    markSchemaElementStartLocation();
     writeDocAndProperties(schema);
     _builder.write("record")
         .writeSpace()
@@ -327,6 +366,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     {
       writeIncludes(schema, includes);
     }
+    recordSchemaElementLocation(schema);
   }
 
   /**
@@ -335,6 +375,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
    */
   private void writeField(RecordDataSchema.Field field) throws IOException
   {
+    markSchemaElementStartLocation();
     writeDocAndProperties(field);
     _builder.indent()
         .writeIdentifier(field.getName())
@@ -353,6 +394,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
           .writeSpace()
           .writeJson(field.getDefault(), field.getType());
     }
+    recordSchemaElementLocation(field);
     _builder.newline();
   }
 
@@ -382,6 +424,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
         DataSchemaConstants.DEPRECATED_SYMBOLS_KEY,
         properties.get(DataSchemaConstants.DEPRECATED_SYMBOLS_KEY));
 
+    markSchemaElementStartLocation();
     writeDocAndProperties(schema);
     _builder.write("enum")
         .writeSpace()
@@ -395,6 +438,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
     for (String symbol : schema.getSymbols())
     {
+      markSchemaElementStartLocation();
       String docString = docs.get(symbol);
       DataMap symbolProperties = coercePropertyToDataMapOrFail(schema,
           DataSchemaConstants.SYMBOL_PROPERTIES_KEY + "." + symbol,
@@ -414,24 +458,29 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       _builder.indent()
           .writeIdentifier(symbol)
           .newline();
+      recordSchemaElementLocation(symbol);
     }
     _builder.decreaseIndent()
         .indent()
         .write("}");
+    recordSchemaElementLocation(schema);
   }
 
   private void writeFixed(FixedDataSchema schema) throws IOException
   {
+    markSchemaElementStartLocation();
     writeDocAndProperties(schema);
     _builder.write("fixed")
         .writeSpace()
         .writeIdentifier(schema.getName())
         .writeSpace()
         .write(String.valueOf(schema.getSize()));
+    recordSchemaElementLocation(schema);
   }
 
   private void writeTyperef(TyperefDataSchema schema) throws IOException
   {
+    markSchemaElementStartLocation();
     writeDocAndProperties(schema);
     _builder.write("typeref")
         .writeSpace()
@@ -441,24 +490,29 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
         .writeSpace();
     DataSchema ref = schema.getRef();
     writeReferenceOrInline(ref, schema.isRefDeclaredInline());
+    recordSchemaElementLocation(schema);
   }
 
   private void writeMap(MapDataSchema schema) throws IOException
   {
+    markSchemaElementStartLocation();
     writeProperties(schema.getProperties());
     _builder.write("map[string")
         .writeComma()
         .writeSpace();
     writeReferenceOrInline(schema.getValues(), schema.isValuesDeclaredInline());
     _builder.write("]");
+    recordSchemaElementLocation(schema);
   }
 
   private void writeArray(ArrayDataSchema schema) throws IOException
   {
+    markSchemaElementStartLocation();
     writeProperties(schema.getProperties());
     _builder.write("array[");
     writeReferenceOrInline(schema.getItems(), schema.isItemsDeclaredInline());
     _builder.write("]");
+    recordSchemaElementLocation(schema);
   }
 
   /**
@@ -467,6 +521,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
    */
   private void writeUnion(UnionDataSchema schema) throws IOException
   {
+    markSchemaElementStartLocation();
     writeProperties(schema.getProperties());
     _builder.write("union[");
     final boolean useMultilineFormat = schema.areMembersAliased() || schema.getMembers().size() >= UNION_MULTILINE_THRESHOLD;
@@ -496,6 +551,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
           .indent();
     }
     _builder.write("]");
+    recordSchemaElementLocation(schema);
   }
 
   /**
@@ -505,6 +561,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
    */
   private void writeUnionMember(UnionDataSchema.Member member, boolean useMultilineFormat) throws IOException
   {
+    markSchemaElementStartLocation();
     if (member.hasAlias())
     {
       if (StringUtils.isNotBlank(member.getDoc()) || !member.getProperties().isEmpty() || member.isDeclaredInline())
@@ -524,6 +581,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       _builder.indent();
     }
     writeReferenceOrInline(member.getType(), member.isDeclaredInline());
+    recordSchemaElementLocation(member);
   }
 
   private void writePrimitive(PrimitiveDataSchema schema) throws IOException
@@ -863,6 +921,23 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     else
     {
       _builder.writeIdentifier(schema.getFullName());
+    }
+  }
+
+  void markSchemaElementStartLocation() {
+    if (_trackWriteLocations) {
+      ((LineColumnNumberWriter) _writer).saveCurrentPosition();
+    }
+  }
+
+  private void recordSchemaElementLocation(Object schemaElement) {
+    if (_trackWriteLocations) {
+      LineColumnNumberWriter.CharacterPosition startPosition = ((LineColumnNumberWriter) _writer).popSavedPosition();
+      LineColumnNumberWriter.CharacterPosition endPosition =
+          ((LineColumnNumberWriter) _writer).getLastNonWhitespacePosition();
+      _writeLocations.put(schemaElement,
+          new PdlSchemaParser.ParseLocation(startPosition.getLine(), startPosition.getColumn(), endPosition.getLine(),
+              endPosition.getColumn()));
     }
   }
 }
