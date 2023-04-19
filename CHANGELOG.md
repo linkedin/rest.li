@@ -13,7 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
-
+- Remove the overriding of content-length for HEADER requests as per HTTP Spec
+  More details about this issue can be found @ https://jira01.corp.linkedin.com:8443/browse/SI-31814
 ## [29.41.12] - 2023-04-06
 - Introduce `@extension.injectedUrnParts` ER annotation.
   - This will be used as the replacement for using `@extension.params` to specify injected URN parts.
