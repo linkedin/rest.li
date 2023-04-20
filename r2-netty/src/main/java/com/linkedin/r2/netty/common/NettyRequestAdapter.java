@@ -204,7 +204,7 @@ public class NettyRequestAdapter
       //   header field names MUST be treated as malformed (Section 8.1.2.6).
       String name = entry.getKey().toLowerCase();
       String value = entry.getValue();
-      headers.set(name, value);
+      headers.set(name, value == null ? "" : value);
     }
 
     // Split up cookies to allow for better header compression
