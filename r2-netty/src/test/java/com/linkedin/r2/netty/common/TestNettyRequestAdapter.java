@@ -225,4 +225,11 @@ public class TestNettyRequestAdapter
     Assert.assertNotNull(cookies);
     Assert.assertEquals(cookies.size(), 10);
   }
+
+  @Test
+  public void testNullHeaderValue() throws Exception {
+    RestRequestBuilder restRequestBuilder = new RestRequestBuilder(new URI(ANY_URI));
+    restRequestBuilder.setHeader("a-header", null);
+    NettyRequestAdapter.toHttp2Headers(restRequestBuilder.build());
+  }
 }

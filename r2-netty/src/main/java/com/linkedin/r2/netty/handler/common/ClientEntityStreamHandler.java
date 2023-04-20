@@ -73,11 +73,11 @@ public class ClientEntityStreamHandler extends ChannelDuplexHandler
 
       // Sets reader after the headers have been flushed on the channel
       OrderedEntityStreamReader orderedReader = new OrderedEntityStreamReader(ctx, new StreamReader(ctx));
-      ctx.write(request).addListener(future -> request.getEntityStream().setReader(orderedReader));
+      ctx.write(request, promise).addListener(future -> request.getEntityStream().setReader(orderedReader));
     }
     else
     {
-      ctx.write(msg);
+      ctx.write(msg, promise);
     }
   }
 
