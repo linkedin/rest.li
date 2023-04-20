@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.42.0-rc.1] - 2023-04-19
 - Remove the overriding of content-length for HEADER requests as per HTTP Spec
   More details about this issue can be found @ https://jira01.corp.linkedin.com:8443/browse/SI-31814
 ## [29.41.12] - 2023-04-06
@@ -5459,7 +5461,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.12...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.42.0-rc.1...master
+[29.42.0-rc.1]: https://github.com/linkedin/rest.li/compare/v29.41.12...v29.42.0-rc.1
 [29.41.12]: https://github.com/linkedin/rest.li/compare/v29.41.11...v29.41.12
 [29.41.11]: https://github.com/linkedin/rest.li/compare/v29.41.10...v29.41.11
 [29.41.10]: https://github.com/linkedin/rest.li/compare/v29.41.9...v29.41.10
