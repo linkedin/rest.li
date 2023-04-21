@@ -55,6 +55,8 @@ import java.util.concurrent.Future;
 public abstract class AbstractClient implements Client
 {
 
+  public static final String HTTP_HEAD_METHOD = "HEAD";
+
   @Override
   public Future<RestResponse> restRequest(RestRequest request)
   {
@@ -89,7 +91,10 @@ public abstract class AbstractClient implements Client
     // This is needed as the legacy R2 server (before 2.8.0) does not support chunked transfer encoding.
     requestContext.putLocalAttr(R2Constants.IS_FULL_REQUEST, true);
     // here we add back the content-length header for the response because some client code depends on this header
-    streamRequest(streamRequest, requestContext, Messages.toStreamCallback(callback, true));
+
+    boolean addContentLengthHeader = !HTTP_HEAD_METHOD.equalsIgnoreCase(request.getMethod());
+
+    streamRequest(streamRequest, requestContext, Messages.toStreamCallback(callback, addContentLengthHeader));
   }
 
   @Override

@@ -54,6 +54,7 @@ import org.eclipse.jetty.server.Server;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 
@@ -124,6 +125,7 @@ public class TestHttp2NettyStreamClient
    * When a request fails due to {@link TimeoutException}, connection should not be destroyed.
    * @throws Exception
    */
+  @Ignore("Test is too flaky and Http2NettyStreamClient is no longer used after enabling PipelineV2")
   @Test(timeOut = TEST_TIMEOUT)
   public void testChannelReusedAfterRequestTimeout() throws Exception
   {
