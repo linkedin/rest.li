@@ -136,10 +136,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     if (returnContextLocations) {
       _writeLocations = new IdentityHashMap<>();
       // Wrap the Writer to track line/column numbers to report to elementWriteListener
-      LineColumnNumberWriter lineColumnNumberWriter = new LineColumnNumberWriter(out);
-      // When counting column numbers, CompactPDLBuilder treats ',' as whitespace
-      lineColumnNumberWriter.setIsWhitespaceFunction(c -> Character.isWhitespace(c) || c == ',');
-      _writer = lineColumnNumberWriter;
+      _writer = new LineColumnNumberWriter(out);
     } else {
       _writer = out;
       _writeLocations = Collections.emptyMap();
@@ -169,6 +166,15 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   {
     // Initialize a new builder for the preferred encoding style
     _builder = _encodingStyle.newBuilderInstance(_writer);
+
+    // When counting column numbers, CompactPDLBuilder treats ',' as whitespace
+    if (_writer instanceof LineColumnNumberWriter) {
+      if (_encodingStyle == EncodingStyle.COMPACT) {
+        ((LineColumnNumberWriter) _writer).setIsWhitespaceFunction(c -> Character.isWhitespace(c) || c == ',');
+      } else {
+        ((LineColumnNumberWriter) _writer).setIsWhitespaceFunction(Character::isWhitespace);
+      }
+    }
 
     // Set and write root namespace/package
     if (schema instanceof NamedDataSchema)
