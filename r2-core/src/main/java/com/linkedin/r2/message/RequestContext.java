@@ -54,12 +54,14 @@ public class RequestContext
    */
   public RequestContext(RequestContext other)
   {
-    _localAttrs = Collections.synchronizedMap(new HashMap<>(other._localAttrs));
+    synchronized (other._localAttrs) {
+      _localAttrs = Collections.synchronizedMap(new HashMap<>(other._localAttrs));
+    }
   }
 
   private RequestContext(Map<String, Object> localAttrs)
   {
-    _localAttrs = localAttrs;
+    _localAttrs = Collections.synchronizedMap(localAttrs);
   }
 
   /**
@@ -117,7 +119,7 @@ public class RequestContext
   public boolean equals(Object o)
   {
     return (o instanceof RequestContext) &&
-            ((RequestContext)o)._localAttrs.equals(this._localAttrs);
+        ((RequestContext)o)._localAttrs.equals(this._localAttrs);
   }
 
   @Override
