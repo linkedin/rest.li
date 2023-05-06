@@ -10,7 +10,8 @@ import java.util.function.Predicate;
 /**
  * Wraps a {@link Writer} and tracks current line and column numbers
  */
-public class LineColumnNumberWriter extends Writer {
+public class LineColumnNumberWriter extends Writer
+{
 
   private final Writer _writer;
   private final Stack<CharacterPosition> _savedPositionStack = new Stack<>();
@@ -25,7 +26,8 @@ public class LineColumnNumberWriter extends Writer {
    *
    * @param out a Writer object to provide the underlying stream.
    */
-  public LineColumnNumberWriter(Writer out) {
+  public LineColumnNumberWriter(Writer out)
+  {
     _writer = out;
     _column = 1;
     _line = 1;
@@ -37,14 +39,16 @@ public class LineColumnNumberWriter extends Writer {
   /**
    * Returns 1 based indices of row and column next character will be written to
    */
-  public CharacterPosition getCurrentPosition() {
+  public CharacterPosition getCurrentPosition()
+  {
     return new CharacterPosition(_line, _column);
   }
 
   /**
    * Returns 1 based indices of last row and column ignoring trailing whitespace characters
    */
-  public CharacterPosition getLastNonWhitespacePosition() {
+  public CharacterPosition getLastNonWhitespacePosition()
+  {
     return _lastNonWhitespacePosition;
   }
 
@@ -57,14 +61,16 @@ public class LineColumnNumberWriter extends Writer {
    * and then write four spaces followed by non-whitespace, the column number returned by
    * {@link #popSavedPosition()} will be x + 4.
    */
-  public void saveCurrentPosition() {
+  public void saveCurrentPosition()
+  {
     _savedPositionStack.push(new CharacterPosition(_line, _column));
   }
 
   /**
    * Retrieves row and column from the last time {@link #saveCurrentPosition()} was called
    */
-  public CharacterPosition popSavedPosition() {
+  public CharacterPosition popSavedPosition()
+  {
     return _savedPositionStack.pop();
   }
 
@@ -72,22 +78,27 @@ public class LineColumnNumberWriter extends Writer {
    * Override definition of whitespace used to adjust character positions to skip
    * whitespace. By default, the definition of whitespace is provided by {@link java.lang.Character#isWhitespace}
    */
-  public void setIsWhitespaceFunction(Predicate<Character> isWhitespaceFunction) {
+  public void setIsWhitespaceFunction(Predicate<Character> isWhitespaceFunction)
+  {
     _isWhitespaceFunction = isWhitespaceFunction;
   }
 
   @Override
-  public void write(char[] cbuf, int off, int len) throws IOException {
+  public void write(char[] cbuf, int off, int len) throws IOException
+  {
     _writer.write(cbuf, off, len);
-    for (; len > 0; len--) {
+    for (; len > 0; len--)
+    {
       char c = cbuf[off++];
       int lastLine = _line;
       int lastColumn = _column;
       updateCurrentPosition(c);
       _previousChar = c;
-      if (_isWhitespaceFunction.test(c)) {
+      if (_isWhitespaceFunction.test(c))
+      {
         updateSavedPositionsForWhitespace(lastLine, lastColumn);
-      } else {
+      } else
+      {
         _lastNonWhitespacePosition.line = lastLine;
         _lastNonWhitespacePosition.column = lastColumn;
       }
@@ -95,31 +106,40 @@ public class LineColumnNumberWriter extends Writer {
   }
 
   @Override
-  public void flush() throws IOException {
+  public void flush() throws IOException
+  {
     _writer.flush();
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException
+  {
     _writer.close();
   }
 
   @Override
-  public String toString() {
+  public String toString()
+  {
     return _writer.toString();
   }
 
-  private void updateCurrentPosition(char c) {
-    if (_previousChar == '\r') {
-      if (c == '\n') {
+  private void updateCurrentPosition(char c)
+  {
+    if (_previousChar == '\r')
+    {
+      if (c == '\n')
+      {
         _column = 1;
-      } else {
+      } else
+      {
         _column = 2;
       }
-    } else if (c == '\n' || c == '\r') {
+    } else if (c == '\n' || c == '\r')
+    {
       _column = 1;
       ++_line;
-    } else {
+    } else
+    {
       ++_column;
     }
   }
@@ -129,13 +149,17 @@ public class LineColumnNumberWriter extends Writer {
    * remove leading whitespace. Once the first non-whitespace character is written, the current position will be
    * different from any saved positions and the current position will advance.
    */
-  private void updateSavedPositionsForWhitespace(int lastLine, int lastColumn) {
-    for (int i = _savedPositionStack.size() - 1; i >= 0; --i) {
+  private void updateSavedPositionsForWhitespace(int lastLine, int lastColumn)
+  {
+    for (int i = _savedPositionStack.size() - 1; i >= 0; --i)
+    {
       CharacterPosition savedCharacterPosition = _savedPositionStack.get(i);
-      if (savedCharacterPosition.line == lastLine && savedCharacterPosition.column == lastColumn) {
+      if (savedCharacterPosition.line == lastLine && savedCharacterPosition.column == lastColumn)
+      {
         savedCharacterPosition.line = _line;
         savedCharacterPosition.column = _column;
-      } else {
+      } else
+      {
         break;
       }
     }
@@ -144,12 +168,14 @@ public class LineColumnNumberWriter extends Writer {
   /**
    * Row and column numbers of a character in Writer output
    */
-  public static class CharacterPosition {
+  public static class CharacterPosition
+  {
 
     private int line;
     private int column;
 
-    CharacterPosition(int line, int column) {
+    CharacterPosition(int line, int column)
+    {
       this.line = line;
       this.column = column;
     }
@@ -157,23 +183,28 @@ public class LineColumnNumberWriter extends Writer {
     /**
      * 1-based index of line in writer output
      */
-    public int getLine() {
+    public int getLine()
+    {
       return line;
     }
 
     /**
      * 1-based index of column in writer output
      */
-    public int getColumn() {
+    public int getColumn()
+    {
       return column;
     }
 
     @Override
-    public boolean equals(Object o) {
-      if (this == o) {
+    public boolean equals(Object o)
+    {
+      if (this == o)
+      {
         return true;
       }
-      if (o == null || getClass() != o.getClass()) {
+      if (o == null || getClass() != o.getClass())
+      {
         return false;
       }
       CharacterPosition characterPosition = (CharacterPosition) o;
@@ -181,12 +212,14 @@ public class LineColumnNumberWriter extends Writer {
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode()
+    {
       return Objects.hash(line, column);
     }
 
     @Override
-    public String toString() {
+    public String toString()
+    {
       return "CharacterPosition{" + "line=" + line + ", column=" + column + '}';
     }
   }

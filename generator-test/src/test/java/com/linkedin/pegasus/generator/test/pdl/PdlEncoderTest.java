@@ -159,14 +159,16 @@ public class PdlEncoderTest extends GeneratorTest
     assertRoundTripLineColumnNumbersMatch(pdlFilePath);
   }
 
-  private void assertRoundTripLineColumnNumbersMatch(String relativeName) throws IOException {
+  private void assertRoundTripLineColumnNumbersMatch(String relativeName) throws IOException
+  {
     String fullName = "com.linkedin.pegasus.generator.test.idl." + relativeName;
     File file = new File(pegasusSrcDir, "/" + fullName.replace('.', '/') + ".pdl");
 
     TypeReferenceFormat referenceFormat = TypeReferenceFormat.PRESERVE;
 
     // Test all encoding styles
-    for (SchemaToPdlEncoder.EncodingStyle encodingStyle : SchemaToPdlEncoder.EncodingStyle.values()) {
+    for (SchemaToPdlEncoder.EncodingStyle encodingStyle : SchemaToPdlEncoder.EncodingStyle.values())
+    {
       String encoded = readAndStandardizeFormat(file, referenceFormat, encodingStyle);
 
       DataSchemaResolver resolver = MultiFormatDataSchemaResolver.withBuiltinFormats(pegasusSrcDir.getAbsolutePath());
@@ -182,7 +184,8 @@ public class PdlEncoderTest extends GeneratorTest
       encoder.encode(parsed);
       Map<Object, PdlSchemaParser.ParseLocation> writeLocations = encoder.getWriteLocations();
 
-      for (Map.Entry<Object, PdlSchemaParser.ParseLocation> expected : parsedLocations.entrySet()) {
+      for (Map.Entry<Object, PdlSchemaParser.ParseLocation> expected : parsedLocations.entrySet())
+      {
         PdlSchemaParser.ParseLocation actual = writeLocations.get(expected.getKey());
 
         Assert.assertNotNull(actual,
@@ -208,7 +211,8 @@ public class PdlEncoderTest extends GeneratorTest
   }
 
   private String readAndStandardizeFormat(File file, TypeReferenceFormat typeReferenceFormat,
-      SchemaToPdlEncoder.EncodingStyle encodingStyle) throws IOException {
+      SchemaToPdlEncoder.EncodingStyle encodingStyle) throws IOException
+  {
     DataSchema parsed = parseSchema(file);
     StringWriter writer = new StringWriter();
     SchemaToPdlEncoder encoder = new SchemaToPdlEncoder(writer);

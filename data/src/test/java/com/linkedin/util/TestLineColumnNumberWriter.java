@@ -6,10 +6,12 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 
-public class TestLineColumnNumberWriter {
+public class TestLineColumnNumberWriter
+{
 
   @Test
-  public void testHandlesDifferentNewlines() throws IOException {
+  public void testHandlesDifferentNewlines() throws IOException
+  {
     LineColumnNumberWriter writer = new LineColumnNumberWriter(new StringWriter());
     writer.write("1\n2\n3\n");
     Assert.assertEquals(writer.getCurrentPosition(), new LineColumnNumberWriter.CharacterPosition(4, 1));
@@ -20,7 +22,8 @@ public class TestLineColumnNumberWriter {
   }
 
   @Test
-  public void testSavedPositionIgnoresLeadingWhitespace() throws IOException {
+  public void testSavedPositionIgnoresLeadingWhitespace() throws IOException
+  {
     LineColumnNumberWriter writer = new LineColumnNumberWriter(new StringWriter());
     writer.write("123\n");
     writer.saveCurrentPosition();
@@ -35,7 +38,8 @@ public class TestLineColumnNumberWriter {
   }
 
   @Test
-  public void testGetLastNonWhitespacePosition() throws IOException {
+  public void testGetLastNonWhitespacePosition() throws IOException
+  {
     LineColumnNumberWriter writer = new LineColumnNumberWriter(new StringWriter());
     writer.write("123");
     Assert.assertEquals(writer.getLastNonWhitespacePosition(), new LineColumnNumberWriter.CharacterPosition(1, 3));

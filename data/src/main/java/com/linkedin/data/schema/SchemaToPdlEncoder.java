@@ -133,11 +133,13 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
    */
   public SchemaToPdlEncoder(Writer out, boolean returnContextLocations)
   {
-    if (returnContextLocations) {
+    if (returnContextLocations)
+    {
       _writeLocations = new IdentityHashMap<>();
       // Wrap the Writer to track line/column numbers to report to elementWriteListener
       _writer = new LineColumnNumberWriter(out);
-    } else {
+    } else
+    {
       _writer = out;
       _writeLocations = Collections.emptyMap();
     }
@@ -168,10 +170,13 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     _builder = _encodingStyle.newBuilderInstance(_writer);
 
     // When counting column numbers, CompactPDLBuilder treats ',' as whitespace
-    if (_writer instanceof LineColumnNumberWriter) {
-      if (_encodingStyle == EncodingStyle.COMPACT) {
+    if (_writer instanceof LineColumnNumberWriter)
+    {
+      if (_encodingStyle == EncodingStyle.COMPACT)
+      {
         ((LineColumnNumberWriter) _writer).setIsWhitespaceFunction(c -> Character.isWhitespace(c) || c == ',');
-      } else {
+      } else
+      {
         ((LineColumnNumberWriter) _writer).setIsWhitespaceFunction(Character::isWhitespace);
       }
     }
@@ -331,7 +336,8 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     }
   }
 
-  public Map<Object, PdlSchemaParser.ParseLocation> getWriteLocations() {
+  public Map<Object, PdlSchemaParser.ParseLocation> getWriteLocations()
+  {
     return _writeLocations;
   }
 
@@ -930,14 +936,18 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
     }
   }
 
-  void markSchemaElementStartLocation() {
-    if (_trackWriteLocations) {
+  void markSchemaElementStartLocation()
+  {
+    if (_trackWriteLocations)
+    {
       ((LineColumnNumberWriter) _writer).saveCurrentPosition();
     }
   }
 
-  private void recordSchemaElementLocation(Object schemaElement) {
-    if (_trackWriteLocations) {
+  private void recordSchemaElementLocation(Object schemaElement)
+  {
+    if (_trackWriteLocations)
+    {
       LineColumnNumberWriter.CharacterPosition startPosition = ((LineColumnNumberWriter) _writer).popSavedPosition();
       LineColumnNumberWriter.CharacterPosition endPosition =
           ((LineColumnNumberWriter) _writer).getLastNonWhitespacePosition();
