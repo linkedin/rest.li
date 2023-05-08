@@ -147,7 +147,7 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
       _writer = out;
       _writeLocations = Collections.emptyMap();
     }
-    _encodingStyle = EncodingStyle.INDENTED;
+    setEncodingStyle(EncodingStyle.INDENTED);
     _trackWriteLocations = returnContextLocations;
   }
 
@@ -159,6 +159,18 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   public void setEncodingStyle(EncodingStyle encodingStyle)
   {
     _encodingStyle = encodingStyle;
+
+    // When counting column numbers, CompactPDLBuilder treats ',' as whitespace
+    if (_writer instanceof LineColumnNumberWriter)
+    {
+      if (_encodingStyle == EncodingStyle.COMPACT)
+      {
+        ((LineColumnNumberWriter) _writer).setIsWhitespaceFunction(c -> Character.isWhitespace(c) || c == ',');
+      } else
+      {
+        ((LineColumnNumberWriter) _writer).setIsWhitespaceFunction(Character::isWhitespace);
+      }
+    }
   }
 
   /**
@@ -172,18 +184,6 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   {
     // Initialize a new builder for the preferred encoding style
     _builder = _encodingStyle.newBuilderInstance(_writer);
-
-    // When counting column numbers, CompactPDLBuilder treats ',' as whitespace
-    if (_writer instanceof LineColumnNumberWriter)
-    {
-      if (_encodingStyle == EncodingStyle.COMPACT)
-      {
-        ((LineColumnNumberWriter) _writer).setIsWhitespaceFunction(c -> Character.isWhitespace(c) || c == ',');
-      } else
-      {
-        ((LineColumnNumberWriter) _writer).setIsWhitespaceFunction(Character::isWhitespace);
-      }
-    }
 
     // Set and write root namespace/package
     if (schema instanceof NamedDataSchema)
