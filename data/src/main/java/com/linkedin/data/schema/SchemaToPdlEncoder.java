@@ -116,6 +116,8 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
 
   /**
    * Construct a .pdl source code encoder.
+   * The encoding style defaults to {@link EncodingStyle#INDENTED} but may be changed by calling
+   * {@link #setEncodingStyle(EncodingStyle)}.
    *
    * @param out provides the encoded .pdl destination.
    */
@@ -125,7 +127,9 @@ public class SchemaToPdlEncoder extends AbstractSchemaEncoder
   }
 
   /**
-   * Construct a .pdl source code encoder.
+   * Construct a .pdl source code encoder with the option to track line/column of schema elements during writing.
+   * The encoding style defaults to {@link EncodingStyle#INDENTED} but may be changed by calling
+   * {@link #setEncodingStyle(EncodingStyle)}.
    *
    * @param out provides the encoded .pdl destination.
    * @param returnContextLocations Enable recording the context locations of schema elements during parsing. The

@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 /**
  * Wraps a {@link Writer} and tracks current line and column numbers
  */
-public class LineColumnNumberWriter extends Writer
+public final class LineColumnNumberWriter extends Writer
 {
 
   private final Writer _writer;
