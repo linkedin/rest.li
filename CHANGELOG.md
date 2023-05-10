@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.41.13] - 2023-05-10
+- Support Unix sockets (UDS) for HTTP/1
+
 ## [29.41.12] - 2023-04-06
 - Introduce `@extension.injectedUrnParts` ER annotation.
   - This will be used as the replacement for using `@extension.params` to specify injected URN parts.
