@@ -57,7 +57,6 @@ public class HttpChannelPoolFactory implements ChannelPoolFactory
   private final ScheduledExecutorService _scheduler;
   private final AsyncPoolImpl.Strategy _strategy;
   private int _channelPoolWaiterTimeout;
-  private String _udsAddress;
 
   public HttpChannelPoolFactory(
       ScheduledExecutorService scheduler,
@@ -96,9 +95,9 @@ public class HttpChannelPoolFactory implements ChannelPoolFactory
     _tcpNoDelay = tcpNoDelay;
     _channelPoolWaiterTimeout = channelPoolWaiterTimeout;
 
-    if (!StringUtils.isEmpty(_udsAddress)) {
+    if (!StringUtils.isEmpty(udsAddress)) {
       _bootstrap = new Bootstrap().
-          group(new EpollEventLoopGroup()).
+          group(eventLoopGroup).
           channel(EpollDomainSocketChannel.class).
           option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout).
           handler(initializer);

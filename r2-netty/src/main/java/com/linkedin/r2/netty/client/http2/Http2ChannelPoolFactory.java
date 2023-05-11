@@ -124,7 +124,7 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
 
     if (!StringUtils.isEmpty(_udsAddress)) {
       _bootstrap = new Bootstrap().
-          group(new EpollEventLoopGroup()).
+          group(eventLoopGroup).
           channel(EpollDomainSocketChannel.class).
           option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout).
           handler(initializer);
