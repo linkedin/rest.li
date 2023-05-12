@@ -155,7 +155,7 @@ public final class ByteString
       return empty();
     }
     byte[] bytes = new byte[size];
-    byteBuffer.get(bytes);
+    System.arraycopy(byteBuffer.array(), byteBuffer.arrayOffset(), bytes, 0, size);
     return new ByteString(bytes);
   }
 
