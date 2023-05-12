@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.42.1] - 2023-05-11
+- Add support for returning location of schema elements from the PDL schema encoder.
+  
 ## [29.42.0] - 2023-05-02
 - Remove the overriding of content-length for HEADER requests as per HTTP Spec
   More details about this issue can be found @ https://jira01.corp.linkedin.com:8443/browse/SI-31814
@@ -5462,7 +5465,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.42.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.42.1...master
+[29.42.1]: https://github.com/linkedin/rest.li/compare/v29.42.0...v29.42.1
 [29.42.0]: https://github.com/linkedin/rest.li/compare/v29.41.12...v29.42.0
 [29.41.12]: https://github.com/linkedin/rest.li/compare/v29.41.11...v29.41.12
 [29.41.11]: https://github.com/linkedin/rest.li/compare/v29.41.10...v29.41.11
