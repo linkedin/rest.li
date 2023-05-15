@@ -59,6 +59,7 @@ import com.linkedin.r2.util.ConfigValueExtractor;
 import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.util.clock.SystemClock;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -74,6 +75,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -960,7 +962,9 @@ public class HttpClientFactory implements TransportClientFactory
       EventLoopGroup eventLoopGroup = _eventLoopGroup;
       if (eventLoopGroup == null)
       {
-        eventLoopGroup = new NioEventLoopGroup(0 /* use default settings */, new NamedThreadFactory("R2 Nio Event Loop"));
+        eventLoopGroup = StringUtils.isEmpty(_udsAddress) ?
+              new NioEventLoopGroup(0 /* use default settings */, new NamedThreadFactory("R2 Nio Event Loop"))
+            : new EpollEventLoopGroup(0, new NamedThreadFactory("R2 Domain Socket Loop"));
       }
 
       ScheduledExecutorService scheduledExecutorService = _executor;

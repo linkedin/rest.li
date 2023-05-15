@@ -29,15 +29,12 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.EpollDomainSocketChannel;
-import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.channel.unix.DomainSocketAddress;
 import java.net.SocketAddress;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
-import org.apache.commons.lang3.StringUtils;
 
 
 /**
@@ -58,7 +55,6 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
   private final ChannelGroup _allChannels;
   private final ScheduledExecutorService _scheduler;
   private final AsyncPoolImpl.Strategy _strategy;
-  private final String _udsAddress;
 
   @Deprecated
   public Http2ChannelPoolFactory(
@@ -119,23 +115,14 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
     _idleTimeout = idleTimeout;
     _maxContentLength = maxContentLength;
     _tcpNoDelay = tcpNoDelay;
-    _udsAddress = udsAddress;
 
+    Bootstrap bootstrap = !org.apache.commons.lang.StringUtils.isEmpty(udsAddress) ?
+        new Bootstrap().channel(EpollDomainSocketChannel.class): new Bootstrap().channel(NioSocketChannel.class);
 
-    if (!StringUtils.isEmpty(_udsAddress)) {
-      _bootstrap = new Bootstrap().
-          group(eventLoopGroup).
-          channel(EpollDomainSocketChannel.class).
-          option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout).
-          handler(initializer);
-    } else {
-      _bootstrap = new Bootstrap().
-          group(eventLoopGroup).
-          channel(NioSocketChannel.class).
-          option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout).
-          handler(initializer);
-    }
-
+    _bootstrap = bootstrap
+        .group(eventLoopGroup)
+        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout)
+        .handler(initializer);
     _ssl = sslContext != null && sslParameters != null;
   }
 
