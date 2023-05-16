@@ -14,8 +14,8 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.41.13] - 2023-05-10
-- Support Unix sockets (UDS) for HTTP/1
+## [29.41.13] - 2023-05-15
+- Support for UDS sockets for HTTP/1
 
 ## [29.42.2] - 2023-05-11
 - Fix synchronization on `RequestContext` to prevent `ConcurrentModificationException`.
@@ -5471,7 +5471,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.42.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.13...master
+[29.41.13]: https://github.com/linkedin/rest.li/compare/v29.42.2...v29.41.13
 [29.42.2]: https://github.com/linkedin/rest.li/compare/v29.42.1...v29.42.2
 [29.42.1]: https://github.com/linkedin/rest.li/compare/v29.42.0...v29.42.1
 [29.42.0]: https://github.com/linkedin/rest.li/compare/v29.41.12...v29.42.0
