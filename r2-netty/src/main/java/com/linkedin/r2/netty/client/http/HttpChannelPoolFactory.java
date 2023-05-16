@@ -28,12 +28,15 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.EpollDomainSocketChannel;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import java.net.SocketAddress;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+import org.apache.commons.lang.StringUtils;
+
 
 /**
  * Factory class to produce {@link AsyncPool}&#060;{@link Channel}&#062; for Http Channels
@@ -74,9 +77,10 @@ public class HttpChannelPoolFactory implements ChannelPoolFactory
       boolean enableSSLSessionResumption,
       int channelPoolWaiterTimeout,
       int connectTimeout,
-      int sslHandShakeTimeout)
+      int sslHandShakeTimeout,
+      String udsAddress)
   {
-    ChannelInitializer<NioSocketChannel> initializer = new HttpChannelInitializer(sslContext, sslParameters,
+    ChannelInitializer<Channel> initializer = new HttpChannelInitializer(sslContext, sslParameters,
         maxInitialLineLength, maxHeaderSize, maxChunkSize, maxContentLength, enableSSLSessionResumption, sslHandShakeTimeout);
 
     _scheduler = scheduler;
@@ -90,8 +94,13 @@ public class HttpChannelPoolFactory implements ChannelPoolFactory
     _tcpNoDelay = tcpNoDelay;
     _channelPoolWaiterTimeout = channelPoolWaiterTimeout;
 
-    _bootstrap = new Bootstrap().group(eventLoopGroup).channel(NioSocketChannel.class).
-        option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout).handler(initializer);
+    Bootstrap bootstrap = !StringUtils.isEmpty(udsAddress) ?
+        new Bootstrap().channel(EpollDomainSocketChannel.class) : new Bootstrap().channel(NioSocketChannel.class);
+
+    _bootstrap = bootstrap
+        .group(eventLoopGroup)
+        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout)
+        .handler(initializer);
   }
 
   @Override

@@ -144,7 +144,8 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
           _enableSSLSessionResumption,
           _channelPoolWaiterTimeout,
           _connectTimeout,
-          _sslHandShakeTimeout);
+          _sslHandShakeTimeout,
+          channelPoolManagerKey.getUdsAddress());
     }
     else
     {
