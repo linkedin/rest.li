@@ -20,6 +20,8 @@
 
 package com.linkedin.d2.balancer.servers;
 
+import com.linkedin.d2.discovery.event.IndisAnnouncer;
+import com.linkedin.d2.discovery.event.NoopIndisAnnouncer;
 import java.net.URI;
 import java.util.ArrayDeque;
 import java.util.Collections;
@@ -96,6 +98,8 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
 
   private ServiceDiscoveryEventEmitter _eventEmitter;
 
+  private final IndisAnnouncer _announcer;
+
   /**
    * Field that indicates if the user requested the server to be up or down. If it is requested to be up,
    * it will try to bring up the server again on ZK if the connection goes down, or a new store is set
@@ -154,11 +158,11 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
       boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService)
   {
     this(server, initialIsUp, isDarkWarmupEnabled, warmupClusterName, warmupDuration, executorService,
-        new LogOnlyServiceDiscoveryEventEmitter()); // default to use log-only event emitter
+        new LogOnlyServiceDiscoveryEventEmitter(), new NoopIndisAnnouncer()); // default to use log-only event emitter
   }
 
   public ZooKeeperAnnouncer(ZooKeeperServer server, boolean initialIsUp,
-      boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService, ServiceDiscoveryEventEmitter eventEmitter)
+      boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService, ServiceDiscoveryEventEmitter eventEmitter, IndisAnnouncer announcer)
   {
     _server = server;
     // initialIsUp is used for delay mark up. If it's false, there won't be markup when the announcer is started.
@@ -174,6 +178,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     _warmupDuration = warmupDuration;
     _executorService = executorService;
     _eventEmitter = eventEmitter;
+    _announcer = announcer;
 
     _server.setServiceDiscoveryEventHelper(this);
   }
