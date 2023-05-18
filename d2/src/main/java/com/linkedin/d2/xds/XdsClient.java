@@ -1,6 +1,22 @@
+/*
+   Copyright (c) 2023 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.d2.xds;
 
-import indis.Diskzk;
+import indis.XdsD2;
 import io.grpc.Status;
 import java.util.Map;
 
@@ -40,14 +56,14 @@ public abstract class XdsClient
 
   static final class D2NodeUpdate implements ResourceUpdate
   {
-    Diskzk.D2Node _nodeData;
+    XdsD2.D2Node _nodeData;
 
-    D2NodeUpdate(Diskzk.D2Node nodeData)
+    D2NodeUpdate(XdsD2.D2Node nodeData)
     {
       _nodeData = nodeData;
     }
 
-    Diskzk.D2Node getNodeData()
+    XdsD2.D2Node getNodeData()
     {
       return _nodeData;
     }
@@ -55,14 +71,14 @@ public abstract class XdsClient
 
   static final class D2NodeMapUpdate implements ResourceUpdate
   {
-    Map<String, Diskzk.D2Node> _nodeDataMap;
+    Map<String, XdsD2.D2Node> _nodeDataMap;
 
-    D2NodeMapUpdate(Map<String, Diskzk.D2Node> nodeDataMap)
+    D2NodeMapUpdate(Map<String, XdsD2.D2Node> nodeDataMap)
     {
       _nodeDataMap = nodeDataMap;
     }
 
-    public Map<String, Diskzk.D2Node> getNodeDataMap()
+    public Map<String, XdsD2.D2Node> getNodeDataMap()
     {
       return _nodeDataMap;
     }

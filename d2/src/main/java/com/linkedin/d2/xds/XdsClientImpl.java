@@ -1,9 +1,25 @@
+/*
+   Copyright (c) 2023 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.d2.xds;
 
 import com.google.common.base.Joiner;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.rpc.Code;
-import indis.Diskzk;
+import indis.XdsD2;
 import io.envoyproxy.envoy.service.discovery.v3.AggregatedDiscoveryServiceGrpc;
 import io.envoyproxy.envoy.service.discovery.v3.DeltaDiscoveryRequest;
 import io.envoyproxy.envoy.service.discovery.v3.DeltaDiscoveryResponse;
@@ -111,7 +127,7 @@ public class XdsClientImpl extends XdsClient
       String resourceName = resource.getName();
       try
       {
-        Diskzk.D2Node d2Node = resource.getResource().unpack(Diskzk.D2Node.class);
+        XdsD2.D2Node d2Node = resource.getResource().unpack(XdsD2.D2Node.class);
         updates.put(resourceName, new D2NodeUpdate(d2Node));
       } catch (InvalidProtocolBufferException e)
       {
@@ -133,8 +149,8 @@ public class XdsClientImpl extends XdsClient
       String resourceName = resource.getName();
       try
       {
-        Diskzk.D2NodeMap d2Node = resource.getResource().unpack(Diskzk.D2NodeMap.class);
-        Map<String, Diskzk.D2Node> nodeData = d2Node.getNodesMap();
+        XdsD2.D2NodeMap d2NodeMap = resource.getResource().unpack(XdsD2.D2NodeMap.class);
+        Map<String, XdsD2.D2Node> nodeData = d2NodeMap.getNodesMap();
         updates.put(resourceName, new D2NodeMapUpdate(nodeData));
       } catch (InvalidProtocolBufferException e)
       {

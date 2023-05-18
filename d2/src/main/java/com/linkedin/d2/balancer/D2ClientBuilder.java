@@ -134,6 +134,7 @@ public class D2ClientBuilder
 
     final D2ClientConfig cfg = new D2ClientConfig(_config.zkHosts,
                   _config.xdsServer,
+                  _config.hostName,
                   _config.zkSessionTimeoutInMs,
                   _config.zkStartupTimeoutInMs,
                   _config.lbWaitTimeout,
@@ -274,6 +275,13 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setHostName(String hostName)
+  {
+    _config.hostName = hostName;
+    return this;
+  }
+
+
   public D2ClientBuilder setZkSessionTimeout(long zkSessionTimeout, TimeUnit unit)
   {
     _config.zkSessionTimeoutInMs = unit.toMillis(zkSessionTimeout);
@@ -325,8 +333,8 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setGrpcSslContext(SslContext grpcSslContext)
   {
-   _config.grpcSslContext = grpcSslContext;
-   return this;
+    _config.grpcSslContext = grpcSslContext;
+    return this;
   }
 
   public D2ClientBuilder setSSLParameters(SSLParameters sslParameters)

@@ -1,3 +1,19 @@
+/*
+   Copyright (c) 2023 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.d2.xds.balancer;
 
 import com.linkedin.d2.balancer.D2ClientConfig;
@@ -14,16 +30,21 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 
+/**
+ * Implementation of {@link LoadBalancerWithFacilitiesFactory} interface, which creates
+ * an instance of {@link XdsLoadBalancer}.
+ */
 public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFacilitiesFactory
 {
   @Override
   public LoadBalancerWithFacilities create(D2ClientConfig config)
   {
-    D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(config.d2JmxManagerPrefix, config.jmxManager);
+    D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(config.d2JmxManagerPrefix + "-xDS",
+        config.jmxManager);
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(
-        new NamedThreadFactory("D2 PropertyEventExecutor"));
+        new NamedThreadFactory("D2 xDS PropertyEventExecutor"));
 
-    XdsClient xdsClient = new XdsClientImpl(Node.DEFAULT_NODE,
+    XdsClient xdsClient = new XdsClientImpl(new Node(config.hostName),
         new XdsChannelFactory(config.grpcSslContext, config.xdsServer).createChannel(), executorService);
     XdsToD2PropertiesAdaptor adaptor = new XdsToD2PropertiesAdaptor(xdsClient);
 

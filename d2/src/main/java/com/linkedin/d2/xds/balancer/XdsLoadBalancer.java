@@ -1,3 +1,19 @@
+/*
+   Copyright (c) 2023 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.d2.xds.balancer;
 
 import com.linkedin.common.callback.Callback;
@@ -25,6 +41,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+/**
+ * A load balancer which does service discovery through xDS protocol.
+ *
+ * @see <a href="https://www.envoyproxy.io/docs/envoy/latest/api-docs/xds_protocol">xDS protocol</a>
+ *
+ * It connects to xDS server and reads back D2 properties through {@link XdsToD2PropertiesAdaptor}.
+ * When xDS connection is temporarily unavailable, it switches back to discover from backup file store.
+ * It reconnects and rebuilds state when the connection is back alive.
+ */
 public class XdsLoadBalancer implements LoadBalancerWithFacilities
 {
   private static final Logger _log = LoggerFactory.getLogger(XdsLoadBalancer.class);
@@ -93,6 +118,7 @@ public class XdsLoadBalancer implements LoadBalancerWithFacilities
   @Override
   public Directory getDirectory()
   {
+    // TODO: get a list of all ZK services and clusters names
     throw new UnsupportedOperationException();
   }
 

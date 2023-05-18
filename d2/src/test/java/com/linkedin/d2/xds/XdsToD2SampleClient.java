@@ -17,9 +17,9 @@ public class XdsToD2SampleClient
   {
     Options options = new Options();
 
-    Option nodeIdOption = new Option("nodeId", true, "The node identifier for the xds client node");
-    nodeIdOption.setRequired(false);
-    options.addOption(nodeIdOption);
+    Option hostNameOption = new Option("hostName", true, "The node identifier for the xds client node");
+    hostNameOption.setRequired(false);
+    options.addOption(hostNameOption);
 
     Option nodeClusterOption =
         new Option("nodeCluster", true, "The local service cluster name where xds client is running");
@@ -58,9 +58,9 @@ public class XdsToD2SampleClient
     CommandLine cmd = parser.parse(options, args);
 
     Node node = Node.DEFAULT_NODE;
-    if (cmd.hasOption("nodeId") && cmd.hasOption("nodeCluster"))
+    if (cmd.hasOption("hostName") && cmd.hasOption("nodeCluster"))
     {
-      node = new Node(cmd.getOptionValue("nodeId"), cmd.getOptionValue("nodeCluster"), "gRPC", null);
+      node = new Node(cmd.getOptionValue("hostName"), cmd.getOptionValue("nodeCluster"), "gRPC", null);
     }
 
     String xdsServer = cmd.getOptionValue("xds", "localhost:32123");

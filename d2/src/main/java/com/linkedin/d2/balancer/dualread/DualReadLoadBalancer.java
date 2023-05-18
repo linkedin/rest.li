@@ -1,3 +1,19 @@
+/*
+   Copyright (c) 2023 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.d2.balancer.dualread;
 
 import com.google.common.util.concurrent.RateLimiter;
@@ -27,6 +43,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+/**
+ * A load balancer that supports dual read from two different service discovery data sources. It can be
+ * used to roll out a new load balancer by reading from it, monitoring it, but still rely on the old
+ * balancer to do the actual service discovery. This helps validate the correctness and efficiency of
+ * the new load balancer and ensures a safer transition from the old load balancer to the new load balancer.
+ *
+ * If supports three read modes, OLD_LB_ONLY, NEW_LB_ONLY and DUAL_READ.
+ *
+ * In OLD_LB_ONLY mode, it reads exclusively from the old load balancer.
+ * In NEW_LB_ONLY mode, it reads exclusively from the new load balancer.
+ * In DUAL_READ mode, it reads from both the old and the new load balancer, but relys on the data from old
+ * load balancer only.
+ */
 @SuppressWarnings("UnstableApiUsage")
 public class DualReadLoadBalancer implements LoadBalancerWithFacilities
 {
@@ -170,9 +199,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   @Override
   public Directory getDirectory()
   {
-    DualReadModeProvider.DualReadMode dualReadMode = getDualReadMode();
-    if (dualReadMode == DualReadModeProvider.DualReadMode.DUAL_READ
-        || dualReadMode == DualReadModeProvider.DualReadMode.OLD_LB_ONLY)
+    if (shouldReadFromOldLb())
     {
       return _oldLb.getDirectory();
     } else
@@ -184,9 +211,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   @Override
   public PartitionInfoProvider getPartitionInfoProvider()
   {
-    DualReadModeProvider.DualReadMode dualReadMode = getDualReadMode();
-    if (dualReadMode == DualReadModeProvider.DualReadMode.DUAL_READ
-        || dualReadMode == DualReadModeProvider.DualReadMode.OLD_LB_ONLY)
+    if (shouldReadFromOldLb())
     {
       return _oldLb.getPartitionInfoProvider();
     } else
@@ -198,9 +223,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   @Override
   public HashRingProvider getHashRingProvider()
   {
-    DualReadModeProvider.DualReadMode dualReadMode = getDualReadMode();
-    if (dualReadMode == DualReadModeProvider.DualReadMode.DUAL_READ
-        || dualReadMode == DualReadModeProvider.DualReadMode.OLD_LB_ONLY)
+    if (shouldReadFromOldLb())
     {
       return _oldLb.getHashRingProvider();
     } else
@@ -212,9 +235,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   @Override
   public KeyMapper getKeyMapper()
   {
-    DualReadModeProvider.DualReadMode dualReadMode = getDualReadMode();
-    if (dualReadMode == DualReadModeProvider.DualReadMode.DUAL_READ
-        || dualReadMode == DualReadModeProvider.DualReadMode.OLD_LB_ONLY)
+    if (shouldReadFromOldLb())
     {
       return _oldLb.getKeyMapper();
     } else
@@ -226,9 +247,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   @Override
   public TransportClientFactory getClientFactory(String scheme)
   {
-    DualReadModeProvider.DualReadMode dualReadMode = getDualReadMode();
-    if (dualReadMode == DualReadModeProvider.DualReadMode.DUAL_READ
-        || dualReadMode == DualReadModeProvider.DualReadMode.OLD_LB_ONLY)
+    if (shouldReadFromOldLb())
     {
       return _oldLb.getClientFactory(scheme);
     } else
@@ -240,9 +259,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   @Override
   public ClusterInfoProvider getClusterInfoProvider()
   {
-    DualReadModeProvider.DualReadMode dualReadMode = getDualReadMode();
-    if (dualReadMode == DualReadModeProvider.DualReadMode.DUAL_READ
-        || dualReadMode == DualReadModeProvider.DualReadMode.OLD_LB_ONLY)
+    if (shouldReadFromOldLb())
     {
       return _oldLb.getClusterInfoProvider();
     } else
@@ -275,6 +292,13 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         }
       }
     });
+  }
+
+  private boolean shouldReadFromOldLb()
+  {
+    DualReadModeProvider.DualReadMode dualReadMode = getDualReadMode();
+    return (dualReadMode == DualReadModeProvider.DualReadMode.DUAL_READ
+        || dualReadMode == DualReadModeProvider.DualReadMode.OLD_LB_ONLY);
   }
 
   private DualReadModeProvider.DualReadMode getDualReadMode()

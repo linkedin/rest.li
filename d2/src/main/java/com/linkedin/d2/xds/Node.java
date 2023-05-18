@@ -1,3 +1,19 @@
+/*
+   Copyright (c) 2023 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
 package com.linkedin.d2.xds;
 
 import com.google.protobuf.ListValue;
@@ -15,7 +31,8 @@ import javax.annotation.Nullable;
  */
 public final class Node
 {
-  public static final Node DEFAULT_NODE = new Node("restli~127.0.0.1~.default~default.svc.cluster.local",
+  private static final String NODE_ID_FORMAT = "restli~%s~.default~default.svc.cluster.local";
+  public static final Node DEFAULT_NODE = new Node(String.format(NODE_ID_FORMAT, "127.0.0.1"),
       "svc.cluster.local", "rest.li", null);
 
   private final String _id;
@@ -24,9 +41,14 @@ public final class Node
   @Nullable
   private final Map<String, ?> _metadata;
 
-  Node(String id, String cluster, String userAgentName, @Nullable Map<String, ?> metadata)
+  public Node(String hostName)
   {
-    _id = id;
+    this(hostName, "svc.cluster.local", "rest.li", null);
+  }
+
+  Node(String hostName, String cluster, String userAgentName, @Nullable Map<String, ?> metadata)
+  {
+    _id = String.format(NODE_ID_FORMAT, hostName);
     _cluster = cluster;
     _userAgentName = userAgentName;
     _metadata = metadata;

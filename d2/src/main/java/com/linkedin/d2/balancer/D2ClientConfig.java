@@ -52,6 +52,7 @@ public class D2ClientConfig
 {
   String zkHosts = null;
   public String xdsServer = null;
+  public String hostName = null;
   long zkSessionTimeoutInMs = 3600000L;
   long zkStartupTimeoutInMs = 10000L;
   public long lbWaitTimeout = 5000L;
@@ -126,6 +127,7 @@ public class D2ClientConfig
 
   D2ClientConfig(String zkHosts,
                  String xdsServer,
+                 String hostName,
                  long zkSessionTimeoutInMs,
                  long zkStartupTimeoutInMs,
                  long lbWaitTimeout,
@@ -185,6 +187,7 @@ public class D2ClientConfig
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
+    this.hostName = hostName;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
     this.zkStartupTimeoutInMs = zkStartupTimeoutInMs;
     this.lbWaitTimeout = lbWaitTimeout;

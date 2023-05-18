@@ -4,8 +4,6 @@ package indis;
 
 import "google/protobuf/struct.proto";
 
-option go_package = "golnkd.in/indis-registry-observer/diskzk/schema";
-
 message Stat {
   // The zxid of the change that caused this znode to be created.
   int64 Czxid = 1;
