@@ -168,6 +168,6 @@ public class ValidateExtensionSchemaTask extends DefaultTask
       javaExecSpec.setErrorOutput(validationOutput);
     });
 
-    IOUtil.writeText(getOutputFile(), validationOutput.toString(StandardCharsets.UTF_8));
+    IOUtil.writeText(getOutputFile(), validationOutput.toString(StandardCharsets.UTF_8.name()));
   }
 }
