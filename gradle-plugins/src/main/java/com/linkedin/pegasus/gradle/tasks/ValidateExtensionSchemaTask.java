@@ -15,11 +15,14 @@
 */
 package com.linkedin.pegasus.gradle.tasks;
 
+import com.linkedin.pegasus.gradle.IOUtil;
 import com.linkedin.pegasus.gradle.PathingJarUtil;
 import com.linkedin.pegasus.gradle.PegasusPlugin;
 import com.linkedin.pegasus.gradle.internal.ArgumentFileGenerator;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -57,6 +60,7 @@ public class ValidateExtensionSchemaTask extends DefaultTask
   private FileCollection _resolverPath;
   private FileCollection _classPath;
   private boolean _enableArgFile;
+  private File _outputFile = new File(getProject().getBuildDir(), "reports/validateExtensionSchemas/output.txt");
 
   /**
    * Directory containing the extension schema files.
@@ -110,6 +114,15 @@ public class ValidateExtensionSchemaTask extends DefaultTask
     _enableArgFile = enable;
   }
 
+  @OutputFile
+  public File getOutputFile() {
+    return _outputFile;
+  }
+
+  public void setOutputFile(File outputFile) {
+    _outputFile = outputFile;
+  }
+
   @TaskAction
   public void validateExtensionSchema() throws IOException
   {
@@ -138,6 +151,8 @@ public class ValidateExtensionSchemaTask extends DefaultTask
       throw new GradleException("Error occurred generating pathing JAR.", e);
     }
 
+    ByteArrayOutputStream validationOutput = new ByteArrayOutputStream();
+
     getProject().javaexec(javaExecSpec -> {
       String resolverPathArg = resolverPathStr;
       if (isEnableArgFile())
@@ -149,6 +164,10 @@ public class ValidateExtensionSchemaTask extends DefaultTask
       javaExecSpec.setClasspath(_pathedClasspath);
       javaExecSpec.args(resolverPathArg);
       javaExecSpec.args(_inputDir.getAbsolutePath());
+      javaExecSpec.setStandardOutput(validationOutput);
+      javaExecSpec.setErrorOutput(validationOutput);
     });
+
+    IOUtil.writeText(getOutputFile(), validationOutput.toString(StandardCharsets.UTF_8));
   }
 }
