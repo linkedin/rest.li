@@ -35,8 +35,8 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -67,9 +67,9 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   private final RateLimiter _rateLimiter;
 
   // Stores service-level dual read mode
-  private final Map<String, DualReadModeProvider.DualReadMode> _serviceDualReadModes;
+  private final ConcurrentMap<String, DualReadModeProvider.DualReadMode> _serviceDualReadModes;
   // Stores global dual read mode
-  private DualReadModeProvider.DualReadMode _dualReadMode = DualReadModeProvider.DualReadMode.OLD_LB_ONLY;
+  private volatile DualReadModeProvider.DualReadMode _dualReadMode = DualReadModeProvider.DualReadMode.OLD_LB_ONLY;
   private boolean _isNewLbReady;
 
   public DualReadLoadBalancer(LoadBalancerWithFacilities oldLb, LoadBalancerWithFacilities newLb,
@@ -80,7 +80,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
     _dualReadModeProvider = dualReadModeProvider;
     _executorService = executorService;
     _rateLimiter = RateLimiter.create((double) 1 / modeSwitchInterval);
-    _serviceDualReadModes = new HashMap<>();
+    _serviceDualReadModes = new ConcurrentHashMap<>();
     _isNewLbReady = false;
   }
 
@@ -135,7 +135,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
           public void onSuccess(ServiceProperties result)
           {
             String clusterName = result.getClusterName();
-            _newLb.getLoadBalancedClusterProperties(clusterName, new Callback<Pair<ClusterProperties, UriProperties>>()
+            _newLb.getLoadBalancedClusterAndUriProperties(clusterName, new Callback<Pair<ClusterProperties, UriProperties>>()
             {
               @Override
               public void onError(Throwable e)
@@ -178,21 +178,21 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   }
 
   @Override
-  public void getLoadBalancedClusterProperties(String clusterName,
+  public void getLoadBalancedClusterAndUriProperties(String clusterName,
       Callback<Pair<ClusterProperties, UriProperties>> callback)
   {
     switch (getDualReadMode())
     {
       case NEW_LB_ONLY:
-        _newLb.getLoadBalancedClusterProperties(clusterName, callback);
+        _newLb.getLoadBalancedClusterAndUriProperties(clusterName, callback);
         break;
       case DUAL_READ:
-        _newLb.getLoadBalancedClusterProperties(clusterName, Callbacks.empty());
-        _oldLb.getLoadBalancedClusterProperties(clusterName, callback);
+        _newLb.getLoadBalancedClusterAndUriProperties(clusterName, Callbacks.empty());
+        _oldLb.getLoadBalancedClusterAndUriProperties(clusterName, callback);
         break;
       case OLD_LB_ONLY:
       default:
-        _oldLb.getLoadBalancedClusterProperties(clusterName, callback);
+        _oldLb.getLoadBalancedClusterAndUriProperties(clusterName, callback);
     }
   }
 

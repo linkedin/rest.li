@@ -56,12 +56,14 @@ public class XdsLoadBalancer implements LoadBalancerWithFacilities
 
   private final TogglingLoadBalancer _loadBalancer;
   private final XdsToD2PropertiesAdaptor _xdsAdaptor;
+  private final ScheduledExecutorService _executorService;
 
   public XdsLoadBalancer(XdsToD2PropertiesAdaptor xdsAdaptor, ScheduledExecutorService executorService,
       XdsTogglingLoadBalancerFactory factory)
   {
     _xdsAdaptor = xdsAdaptor;
     _loadBalancer = factory.create(executorService, xdsAdaptor);
+    _executorService = executorService;
     registerXdsFSToggle();
   }
 
@@ -129,10 +131,10 @@ public class XdsLoadBalancer implements LoadBalancerWithFacilities
   }
 
   @Override
-  public void getLoadBalancedClusterProperties(String clusterName,
+  public void getLoadBalancedClusterAndUriProperties(String clusterName,
       Callback<Pair<ClusterProperties, UriProperties>> callback)
   {
-    _loadBalancer.getLoadBalancedClusterProperties(clusterName, callback);
+    _loadBalancer.getLoadBalancedClusterAndUriProperties(clusterName, callback);
   }
 
   @Override
@@ -176,6 +178,7 @@ public class XdsLoadBalancer implements LoadBalancerWithFacilities
   public void shutdown(PropertyEventThread.PropertyEventShutdownCallback shutdown)
   {
     _xdsAdaptor.shutdown();
+    _executorService.shutdown();
     shutdown.done();
   }
 }

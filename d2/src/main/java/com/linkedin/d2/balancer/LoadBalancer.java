@@ -87,7 +87,7 @@ public interface LoadBalancer
     }
   }
 
-  default void getLoadBalancedClusterProperties(String clusterName,
+  default void getLoadBalancedClusterAndUriProperties(String clusterName,
       Callback<Pair<ClusterProperties, UriProperties>> callback)
   {
     throw new UnsupportedOperationException();

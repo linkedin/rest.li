@@ -284,7 +284,7 @@ public class ZKFSLoadBalancer
   }
 
   @Override
-  public void getLoadBalancedClusterProperties(String clusterName,
+  public void getLoadBalancedClusterAndUriProperties(String clusterName,
       Callback<Pair<ClusterProperties, UriProperties>> callback)
   {
     if (_currentLoadBalancer == null)
@@ -292,7 +292,7 @@ public class ZKFSLoadBalancer
       callback.onSuccess(null);
       return;
     }
-    _currentLoadBalancer.getLoadBalancedClusterProperties(clusterName, callback);
+    _currentLoadBalancer.getLoadBalancedClusterAndUriProperties(clusterName, callback);
   }
 
   @Override

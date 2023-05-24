@@ -120,10 +120,10 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
   }
 
   @Override
-  public void getLoadBalancedClusterProperties(String clusterName,
+  public void getLoadBalancedClusterAndUriProperties(String clusterName,
       Callback<Pair<ClusterProperties, UriProperties>> callback)
   {
-    _balancer.getLoadBalancedClusterProperties(clusterName, callback);
+    _balancer.getLoadBalancedClusterAndUriProperties(clusterName, callback);
   }
 
   @Override

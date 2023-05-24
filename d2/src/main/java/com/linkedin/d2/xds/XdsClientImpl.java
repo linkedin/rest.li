@@ -113,8 +113,6 @@ public class XdsClientImpl extends XdsClient
         _adsStream.close(Status.CANCELLED.withDescription("shutdown").asException());
       }
     });
-
-    _executorService.shutdown();
   }
 
   private void handleD2NodeResponse(DiscoveryResponseData data)
@@ -512,6 +510,7 @@ public class XdsClientImpl extends XdsClient
       {
         return;
       }
+      _responseReceived = true;
       String respNonce = response.getNonce();
       ResourceType resourceType = response.getResourceType();
       switch (resourceType)

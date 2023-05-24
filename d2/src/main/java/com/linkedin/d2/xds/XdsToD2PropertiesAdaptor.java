@@ -129,9 +129,10 @@ public class XdsToD2PropertiesAdaptor
           try
           {
             _serviceEventBus.publishInitialize(serviceName, toServiceProperties(update.getNodeData().getData()));
-          } catch (InvalidProtocolBufferException | PropertySerializationException e)
+          }
+          catch (InvalidProtocolBufferException | PropertySerializationException e)
           {
-            _log.error("Failed to parse D2 service properties from xDS update", e);
+            _log.error("Failed to parse D2 service properties from xDS update. Service name: " + serviceName, e);
           }
         }
       }
@@ -162,9 +163,10 @@ public class XdsToD2PropertiesAdaptor
           try
           {
             _clusterEventBus.publishInitialize(clusterName, toClusterProperties(update.getNodeData().getData()));
-          } catch (InvalidProtocolBufferException | PropertySerializationException e)
+          }
+          catch (InvalidProtocolBufferException | PropertySerializationException e)
           {
-            _log.error("Failed to parse D2 cluster properties from xDS update", e);
+            _log.error("Failed to parse D2 cluster properties from xDS update. Cluster name: " + clusterName, e);
           }
         }
       }
@@ -195,9 +197,10 @@ public class XdsToD2PropertiesAdaptor
           try
           {
             _uriEventBus.publishInitialize(clusterName, toUriProperties(clusterName, update.getNodeDataMap()));
-          }  catch (InvalidProtocolBufferException | PropertySerializationException e)
+          }
+          catch (InvalidProtocolBufferException | PropertySerializationException e)
           {
-            _log.error("Failed to parse D2 URI properties from xDS update", e);
+            _log.error("Failed to parse D2 uri properties from xDS update. Cluster name: " + clusterName, e);
           }
         }
       }

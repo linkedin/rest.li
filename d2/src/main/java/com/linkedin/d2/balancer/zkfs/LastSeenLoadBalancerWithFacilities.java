@@ -143,10 +143,10 @@ public class LastSeenLoadBalancerWithFacilities implements LoadBalancerWithFacil
   }
 
   @Override
-  public void getLoadBalancedClusterProperties(String clusterName,
+  public void getLoadBalancedClusterAndUriProperties(String clusterName,
       Callback<Pair<ClusterProperties, UriProperties>> callback)
   {
-    _loadBalancer.getLoadBalancedClusterProperties(clusterName, callback);
+    _loadBalancer.getLoadBalancedClusterAndUriProperties(clusterName, callback);
   }
 
   /**

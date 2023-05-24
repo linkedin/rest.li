@@ -795,7 +795,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   @Override
-  public void getLoadBalancedClusterProperties(String clusterName,
+  public void getLoadBalancedClusterAndUriProperties(String clusterName,
       Callback<Pair<ClusterProperties, UriProperties>> callback)
   {
     boolean waitForUpdatedValue = _timeout > 0;
@@ -818,10 +818,10 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         }
       }, "Timeout while fetching cluster");
     }
-    getLoadBalancedClusterProperties(clusterName, waitForUpdatedValue, callback);
+    getLoadBalancedClusterAndUriProperties(clusterName, waitForUpdatedValue, callback);
   }
 
-  public void getLoadBalancedClusterProperties(String clusterName, boolean waitForUpdatedValue,
+  public void getLoadBalancedClusterAndUriProperties(String clusterName, boolean waitForUpdatedValue,
       Callback<Pair<ClusterProperties, UriProperties>> pairCallback)
   {
     Runnable callback = () ->

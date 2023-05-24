@@ -30,23 +30,23 @@ import java.util.concurrent.Executors;
  * discovery data sources: direct ZooKeeper data and xDS data. The {@link DualReadModeProvider} will
  * determine dynamically at run-time which read mode to use.
  */
-public class DualReadXdsLoadBalancerFactory implements LoadBalancerWithFacilitiesFactory
+public class DualReadZkAndXdsLoadBalancerFactory implements LoadBalancerWithFacilitiesFactory
 {
-  private final LoadBalancerWithFacilitiesFactory _oldLbFactory;
-  private final LoadBalancerWithFacilitiesFactory _newLbFactory;
+  private final LoadBalancerWithFacilitiesFactory _zkLbFactory;
+  private final LoadBalancerWithFacilitiesFactory _xdsLbFactory;
   private final DualReadModeProvider _dualReadModeProvider;
 
-  public DualReadXdsLoadBalancerFactory(DualReadModeProvider dualReadModeProvider)
+  public DualReadZkAndXdsLoadBalancerFactory(DualReadModeProvider dualReadModeProvider)
   {
-    _oldLbFactory = new ZKFSLoadBalancerWithFacilitiesFactory();
-    _newLbFactory = new XdsLoadBalancerWithFacilitiesFactory();
+    _zkLbFactory = new ZKFSLoadBalancerWithFacilitiesFactory();
+    _xdsLbFactory = new XdsLoadBalancerWithFacilitiesFactory();
     _dualReadModeProvider = dualReadModeProvider;
   }
 
   @Override
   public LoadBalancerWithFacilities create(D2ClientConfig config)
   {
-    return new DualReadLoadBalancer(_oldLbFactory.create(config), _newLbFactory.create(config), _dualReadModeProvider,
+    return new DualReadLoadBalancer(_zkLbFactory.create(config), _xdsLbFactory.create(config), _dualReadModeProvider,
         Executors.newSingleThreadScheduledExecutor(), 10);
   }
 }
