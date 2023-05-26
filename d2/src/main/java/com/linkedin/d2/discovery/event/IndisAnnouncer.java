@@ -6,15 +6,7 @@ package com.linkedin.d2.discovery.event;
  * that open-source restli users can use (or provide their own implementation for their own service discovery system)
  */
 public interface IndisAnnouncer {
-  void emitAnnouncement(String cluster, String host, int port,
-      HealthStatus healthStatus);
+  void announce(String cluster, String protocol, String host, int port);
 
-  enum HealthStatus {
-    // Ready to serve traffic
-    READY,
-    // Running but not ready to serve traffic (or intentionally taken out of service). Expected to be READY in the future
-    UP,
-    // Not running; in some error state. Not expected to be READY without intervention.
-    DOWN
-  }
+  void deannounce(String cluster, String protocol, String host, int port);
 }

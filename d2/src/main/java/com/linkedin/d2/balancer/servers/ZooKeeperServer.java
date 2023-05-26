@@ -16,6 +16,8 @@
 
 package com.linkedin.d2.balancer.servers;
 
+import com.linkedin.d2.discovery.event.IndisAnnouncer;
+import com.linkedin.d2.discovery.event.NoopIndisAnnouncer;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,16 +44,25 @@ import org.slf4j.LoggerFactory;
 import static com.linkedin.d2.discovery.util.LogUtil.info;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
+// TODO move indisannouncer to this class
 public class
         ZooKeeperServer implements LoadBalancerServer
 {
   private static final Logger _log = LoggerFactory.getLogger(ZooKeeperServer.class);
+
+  // we set a default NoopIndisAnnouncer so that even if the user doesn't provide an announcer the class functions without
+  // throwing a NPE when marking up or down
+  private IndisAnnouncer _indisAnnouncer = new NoopIndisAnnouncer();
 
   private volatile ZooKeeperEphemeralStore<UriProperties> _store;
   private D2ServiceDiscoveryEventHelper _eventHelper = null;
 
   public ZooKeeperServer()
   {
+  }
+
+  public ZooKeeperServer(IndisAnnouncer indisAnnouncer) {
+    _indisAnnouncer = indisAnnouncer;
   }
 
   public ZooKeeperServer(ZooKeeperEphemeralStore<UriProperties> store)
@@ -131,7 +142,7 @@ public class
           info(_log, sb);
         }
         _store.put(clusterName, new UriProperties(clusterName, partitionDesc, myUriSpecificProperties), callback);
-
+        _indisAnnouncer.announce(clusterName, uri.getScheme(), uri.getHost(), uri.getPort());
       }
 
       @Override
@@ -209,6 +220,7 @@ public class
           Map<URI, Map<Integer, PartitionData>> partitionData = new HashMap<>(2);
           partitionData.put(uri, Collections.emptyMap());
           _store.removePartial(clusterName, new UriProperties(clusterName, partitionData), callback);
+          _indisAnnouncer.deannounce(clusterName, uri.getScheme(), uri.getHost(), uri.getPort());
         }
 
       }
