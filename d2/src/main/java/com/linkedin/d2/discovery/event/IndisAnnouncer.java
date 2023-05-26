@@ -7,5 +7,14 @@ package com.linkedin.d2.discovery.event;
  */
 public interface IndisAnnouncer {
   void emitAnnouncement(String cluster, String host, int port,
-      ServiceDiscoveryEventEmitter.StatusUpdateActionType actionType, String uriProperties);
+      HealthStatus healthStatus);
+
+  enum HealthStatus {
+    // Ready to serve traffic
+    READY,
+    // Running but not ready to serve traffic (or intentionally taken out of service). Expected to be READY in the future
+    UP,
+    // Not running; in some error state. Not expected to be READY without intervention.
+    DOWN
+  }
 }

@@ -98,7 +98,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
 
   private ServiceDiscoveryEventEmitter _eventEmitter;
 
-  private final IndisAnnouncer _announcer;
+  private IndisAnnouncer _indisAnnouncer;
 
   /**
    * Field that indicates if the user requested the server to be up or down. If it is requested to be up,
@@ -162,7 +162,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   }
 
   public ZooKeeperAnnouncer(ZooKeeperServer server, boolean initialIsUp,
-      boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService, ServiceDiscoveryEventEmitter eventEmitter, IndisAnnouncer announcer)
+      boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService, ServiceDiscoveryEventEmitter eventEmitter, IndisAnnouncer indisAnnouncer)
   {
     _server = server;
     // initialIsUp is used for delay mark up. If it's false, there won't be markup when the announcer is started.
@@ -178,7 +178,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     _warmupDuration = warmupDuration;
     _executorService = executorService;
     _eventEmitter = eventEmitter;
-    _announcer = announcer;
+    _indisAnnouncer = indisAnnouncer;
 
     _server.setServiceDiscoveryEventHelper(this);
   }
@@ -268,6 +268,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
 
   private synchronized void doMarkUp(Callback<None> callback)
   {
+    _indisAnnouncer.emitAnnouncement(_cluster, _uri.getHost(), _uri.getPort(), IndisAnnouncer.HealthStatus.READY);
     final Callback<None> markUpCallback = new Callback<None>()
     {
       @Override
@@ -461,6 +462,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   private synchronized void doMarkDown(Callback<None> callback)
   {
     _markDownStartAtRef.set(System.currentTimeMillis());
+    _indisAnnouncer.emitAnnouncement(_cluster, _uri.getHost(), _uri.getPort(), IndisAnnouncer.HealthStatus.DOWN);
     _server.markDown(_cluster, _uri, new Callback<None>()
     {
       @Override
@@ -709,6 +711,10 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
 
   public void setEventEmitter(ServiceDiscoveryEventEmitter emitter) {
     _eventEmitter = emitter;
+  }
+
+  public void setIndisAnnouncer(IndisAnnouncer indisAnnouncer) {
+    _indisAnnouncer = indisAnnouncer;
   }
 
   @Override
