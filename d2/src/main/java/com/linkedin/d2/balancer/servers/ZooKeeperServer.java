@@ -107,6 +107,13 @@ public class
       @Override
       public void onSuccess(None none)
       {
+        try {
+          _indisAnnouncer.announce(clusterName, uri.getScheme(), uri.getHost(), uri.getPort());
+        } catch (Exception e) {
+          _log.warn(String.format("Failed to announce cluster %s to INDIS", clusterName), e);
+        }
+
+
         Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<>();
         partitionDesc.put(uri, partitionDataMap);
 
@@ -142,7 +149,6 @@ public class
           info(_log, sb);
         }
         _store.put(clusterName, new UriProperties(clusterName, partitionDesc, myUriSpecificProperties), callback);
-        _indisAnnouncer.announce(clusterName, uri.getScheme(), uri.getHost(), uri.getPort());
       }
 
       @Override
@@ -195,6 +201,12 @@ public class
   @Override
   public void markDown(final String clusterName, final URI uri, final Callback<None> callback)
   {
+    try {
+      _indisAnnouncer.deannounce(clusterName, uri.getScheme(), uri.getHost(), uri.getPort());
+    } catch (Exception e) {
+      _log.warn(String.format("Failed to deannounce cluster %s to INDIS", clusterName), e);
+    }
+
     Callback<UriProperties> getCallback = new Callback<UriProperties>()
     {
       @Override
@@ -220,7 +232,6 @@ public class
           Map<URI, Map<Integer, PartitionData>> partitionData = new HashMap<>(2);
           partitionData.put(uri, Collections.emptyMap());
           _store.removePartial(clusterName, new UriProperties(clusterName, partitionData), callback);
-          _indisAnnouncer.deannounce(clusterName, uri.getScheme(), uri.getHost(), uri.getPort());
         }
 
       }
