@@ -81,6 +81,8 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.activation.MimeTypeParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.linkedin.r2.disruptor.DisruptContext.*;
 
@@ -131,6 +133,7 @@ import static com.linkedin.r2.disruptor.DisruptContext.*;
  * @author Eran Leshem
  */
 public class RestClient implements Client {
+  private static final Logger LOG = LoggerFactory.getLogger(RestClient.class);
   private static final List<ContentType>  DEFAULT_ACCEPT_TYPES = Collections.emptyList();
   private static final ContentType DEFAULT_CONTENT_TYPE = ContentType.JSON;
   private static final Random RANDOM_INSTANCE = new Random();
@@ -1108,6 +1111,9 @@ public class RestClient implements Client {
         if (mappingResults == null || mappingResults.getMappedKeys().isEmpty())
         {
           // Strategy returns null URIMappingResult or empty mapped hosts, assuming no scatter is needed
+          LOG.error("ScatterGatherStrategy cannot map URIs for request: " + request
+              + ", requestContext: " + requestContext
+              + ", ScatterGatherStrategy needScatterGatherStrategy value: " +  strategy.needScatterGather(request));
           callback.onError(new RestLiScatterGatherException("ScatterGatherStrategy cannot map URIs, this should not happen!"));
           return;
         }

@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.42.4] - 2023-06-02
+- Add log message in RestClient for ScatterGatherStrategy map URIs empty case
+
 ## [29.42.3] - 2023-05-18
 - Support for UDS sockets for HTTP/1
 - Make ValidationExtensionSchemaTask cacheable
@@ -5472,7 +5475,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.42.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.42.4...master
+[29.42.4]: https://github.com/linkedin/rest.li/compare/v29.42.3...v29.42.4
 [29.42.3]: https://github.com/linkedin/rest.li/compare/v29.42.2...v29.42.3
 [29.42.2]: https://github.com/linkedin/rest.li/compare/v29.42.1...v29.42.2
 [29.42.1]: https://github.com/linkedin/rest.li/compare/v29.42.0...v29.42.1
