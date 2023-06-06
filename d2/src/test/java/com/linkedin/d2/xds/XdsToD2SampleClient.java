@@ -1,6 +1,12 @@
 package com.linkedin.d2.xds;
 
+import com.linkedin.d2.balancer.dualread.DualReadLoadBalancerJmx;
+import com.linkedin.d2.balancer.dualread.DualReadModeProvider;
+import com.linkedin.d2.balancer.dualread.DualReadStateManager;
+import com.linkedin.d2.jmx.D2ClientJmxManager;
+import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.d2.xds.util.SslContextUtil;
+import com.linkedin.util.clock.SystemClock;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import java.io.File;
 import java.util.concurrent.Executors;
@@ -85,7 +91,11 @@ public class XdsToD2SampleClient
     XdsClient xdsClient = new XdsClientImpl(node, xdsChannelFactory.createChannel(),
         Executors.newSingleThreadScheduledExecutor());
 
-    XdsToD2PropertiesAdaptor adaptor = new XdsToD2PropertiesAdaptor(xdsClient);
+    DualReadStateManager dualReadStateManager = new DualReadStateManager(
+        () -> DualReadModeProvider.DualReadMode.DUAL_READ,
+        Executors.newSingleThreadScheduledExecutor(), new D2ClientJmxManager("xDS", new JmxManager()));
+
+    XdsToD2PropertiesAdaptor adaptor = new XdsToD2PropertiesAdaptor(xdsClient, dualReadStateManager);
     adaptor.listenToService(serviceName);
     adaptor.listenToCluster("TokiBackendGrpc");
 

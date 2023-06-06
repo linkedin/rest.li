@@ -19,6 +19,7 @@ package com.linkedin.d2.xds;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Struct;
 import com.google.protobuf.util.JsonFormat;
+import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -35,6 +36,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,22 +57,29 @@ public class XdsToD2PropertiesAdaptor
   private final ClusterPropertiesJsonSerializer _clusterPropertiesJsonSerializer;
   private final UriPropertiesJsonSerializer _uriPropertiesJsonSerializer;
   private final UriPropertiesMerger _uriPropertiesMerger;
-  private boolean _isAvailable;
+  private final DualReadStateManager _dualReadStateManager;
+  private final ConcurrentMap<String, XdsClient.D2NodeResourceWatcher> _watchedClusterResources;
+  private final ConcurrentMap<String, XdsClient.D2NodeResourceWatcher> _watchedServiceResources;
+  private final ConcurrentMap<String, XdsClient.D2NodeMapResourceWatcher> _watchedUriResources;
 
+  private boolean _isAvailable;
   private PropertyEventBus<UriProperties> _uriEventBus;
   private PropertyEventBus<ServiceProperties> _serviceEventBus;
   private PropertyEventBus<ClusterProperties> _clusterEventBus;
 
-  public XdsToD2PropertiesAdaptor(XdsClient xdsClient)
+  public XdsToD2PropertiesAdaptor(XdsClient xdsClient, DualReadStateManager dualReadStateManager)
   {
     _xdsClient = xdsClient;
+    _dualReadStateManager = dualReadStateManager;
     _xdsConnectionListeners = Collections.synchronizedList(new ArrayList<>());
-
     _servicePropertiesJsonSerializer = new ServicePropertiesJsonSerializer();
     _clusterPropertiesJsonSerializer = new ClusterPropertiesJsonSerializer();
     _uriPropertiesJsonSerializer = new UriPropertiesJsonSerializer();
     _uriPropertiesMerger = new UriPropertiesMerger();
     _isAvailable = false;
+    _watchedClusterResources = new ConcurrentHashMap<>();
+    _watchedServiceResources = new ConcurrentHashMap<>();
+    _watchedUriResources = new ConcurrentHashMap<>();
   }
 
   public void start()
@@ -104,17 +115,35 @@ public class XdsToD2PropertiesAdaptor
 
   public void listenToCluster(String clusterName)
   {
-    _xdsClient.watchXdsResource(D2_CLUSTER_NODE_PREFIX + clusterName, XdsClient.ResourceType.D2_NODE,
-        getClusterResourceWatcher(clusterName));
+    _watchedClusterResources.computeIfAbsent(clusterName, k ->
+    {
+      XdsClient.D2NodeResourceWatcher watcher = getClusterResourceWatcher(clusterName);
+      _xdsClient.watchXdsResource(D2_CLUSTER_NODE_PREFIX + clusterName, XdsClient.ResourceType.D2_NODE,
+          watcher);
+      return watcher;
+    });
+  }
 
-    _xdsClient.watchXdsResource(D2_URI_NODE_PREFIX + clusterName, XdsClient.ResourceType.D2_NODE_MAP,
-        getUriResourceWatcher(clusterName));
+  public void listenToUris(String clusterName)
+  {
+    _watchedUriResources.computeIfAbsent(clusterName, k ->
+    {
+      XdsClient.D2NodeMapResourceWatcher watcher = getUriResourceWatcher(clusterName);
+      _xdsClient.watchXdsResource(D2_URI_NODE_PREFIX + clusterName, XdsClient.ResourceType.D2_NODE_MAP,
+          watcher);
+      return watcher;
+    });
   }
 
   public void listenToService(String serviceName)
   {
-    _xdsClient.watchXdsResource(D2_SERVICE_NODE_PREFIX + serviceName, XdsClient.ResourceType.D2_NODE,
-        getServiceResourceWatcher(serviceName));
+    _watchedServiceResources.computeIfAbsent(serviceName, k ->
+    {
+      XdsClient.D2NodeResourceWatcher watcher = getServiceResourceWatcher(serviceName);
+      _xdsClient.watchXdsResource(D2_SERVICE_NODE_PREFIX + serviceName, XdsClient.ResourceType.D2_NODE,
+          watcher);
+      return watcher;
+    });
   }
 
   XdsClient.D2NodeResourceWatcher getServiceResourceWatcher(String serviceName)
@@ -128,7 +157,13 @@ public class XdsToD2PropertiesAdaptor
         {
           try
           {
-            _serviceEventBus.publishInitialize(serviceName, toServiceProperties(update.getNodeData().getData()));
+            ServiceProperties serviceProperties = toServiceProperties(update.getNodeData().getData(),
+                update.getNodeData().getStat().getMzxid());
+            _serviceEventBus.publishInitialize(serviceName, serviceProperties);
+            if (_dualReadStateManager != null)
+            {
+              _dualReadStateManager.reportData(serviceName, serviceProperties, true);
+            }
           }
           catch (InvalidProtocolBufferException | PropertySerializationException e)
           {
@@ -162,7 +197,13 @@ public class XdsToD2PropertiesAdaptor
         {
           try
           {
-            _clusterEventBus.publishInitialize(clusterName, toClusterProperties(update.getNodeData().getData()));
+            ClusterProperties clusterProperties = toClusterProperties(update.getNodeData().getData(),
+                update.getNodeData().getStat().getMzxid());
+            _clusterEventBus.publishInitialize(clusterName, clusterProperties);
+            if (_dualReadStateManager != null)
+            {
+              _dualReadStateManager.reportData(clusterName, clusterProperties, true);
+            }
           }
           catch (InvalidProtocolBufferException | PropertySerializationException e)
           {
@@ -196,7 +237,12 @@ public class XdsToD2PropertiesAdaptor
         {
           try
           {
-            _uriEventBus.publishInitialize(clusterName, toUriProperties(clusterName, update.getNodeDataMap()));
+            UriProperties uriProperties = toUriProperties(clusterName, update.getNodeDataMap());
+            _uriEventBus.publishInitialize(clusterName, uriProperties);
+            if (_dualReadStateManager != null)
+            {
+              _dualReadStateManager.reportData(clusterName, uriProperties, true);
+            }
           }
           catch (InvalidProtocolBufferException | PropertySerializationException e)
           {
@@ -242,18 +288,18 @@ public class XdsToD2PropertiesAdaptor
     }
   }
 
-  private ServiceProperties toServiceProperties(Struct serviceProperties)
+  private ServiceProperties toServiceProperties(Struct serviceProperties, long version)
       throws InvalidProtocolBufferException, PropertySerializationException
   {
     return _servicePropertiesJsonSerializer.fromBytes(
-        JsonFormat.printer().print(serviceProperties).getBytes(StandardCharsets.UTF_8));
+        JsonFormat.printer().print(serviceProperties).getBytes(StandardCharsets.UTF_8), version);
   }
 
-  private ClusterProperties toClusterProperties(Struct clusterProperties)
+  private ClusterProperties toClusterProperties(Struct clusterProperties, long version)
       throws InvalidProtocolBufferException, PropertySerializationException
   {
     return _clusterPropertiesJsonSerializer.fromBytes(
-        JsonFormat.printer().print(clusterProperties).getBytes(StandardCharsets.UTF_8));
+        JsonFormat.printer().print(clusterProperties).getBytes(StandardCharsets.UTF_8), version);
   }
 
   private UriProperties toUriProperties(String clusterName, Map<String, XdsD2.D2Node> uriDataMap)
@@ -264,7 +310,7 @@ public class XdsToD2PropertiesAdaptor
     for (XdsD2.D2Node d2Node : uriDataMap.values())
     {
       UriProperties uriProperties = _uriPropertiesJsonSerializer.fromBytes(
-          JsonFormat.printer().print(d2Node.getData()).getBytes(StandardCharsets.UTF_8));
+          JsonFormat.printer().print(d2Node.getData()).getBytes(StandardCharsets.UTF_8), d2Node.getStat().getMzxid());
       allUriProperties.add(uriProperties);
     }
 

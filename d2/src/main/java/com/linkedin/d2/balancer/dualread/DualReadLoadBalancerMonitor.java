@@ -19,74 +19,195 @@ package com.linkedin.d2.balancer.dualread;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalCause;
-import java.util.concurrent.TimeUnit;
+import com.linkedin.d2.balancer.properties.ClusterProperties;
+import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.properties.UriProperties;
+import com.linkedin.util.RateLimitedLogger;
+import com.linkedin.util.clock.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-public class DualReadLoadBalancerMonitor<T>
+public abstract class DualReadLoadBalancerMonitor<T>
 {
-  private static final Logger _log = LoggerFactory.getLogger(DualReadLoadBalancerMonitor.class);
-  private static final int MAX_CACHE_SIZE = 1000;
-  private static final int CACHE_EXPIRATION_SECOND = 30;
+  private static final Logger LOG = LoggerFactory.getLogger(DualReadLoadBalancerMonitor.class);
+  public final static String DEFAULT_DATE_FORMAT = "YYYY/MM/dd HH:mm:ss.SSS";
+  private static final long ERROR_REPORT_PERIOD = 10 * 1000; // Limit error report logging to every 10 seconds
+  private static final int MAX_CACHE_SIZE = 10000;
   private final Cache<String, CacheEntry<T>> _oldLbPropertyCache;
   private final Cache<String, CacheEntry<T>> _newLbPropertyCache;
+  private final RateLimitedLogger _rateLimitedLogger;
+  private final Clock _clock;
+  private final DateTimeFormatter _format;
 
-  public DualReadLoadBalancerMonitor()
+
+  public DualReadLoadBalancerMonitor(Clock clock)
   {
     _oldLbPropertyCache = buildCache();
     _newLbPropertyCache = buildCache();
+    _rateLimitedLogger = new RateLimitedLogger(LOG, ERROR_REPORT_PERIOD, clock);
+    _clock = clock;
+    _format = DateTimeFormatter.ofPattern(DEFAULT_DATE_FORMAT);
   }
 
-  public void reportData(String propertyName, T property, long propertyVersion, boolean fromNewLb)
+  public void reportData(String propertyName, T property, String propertyVersion, boolean fromNewLb)
   {
     Cache<String, CacheEntry<T>> cacheToAdd = fromNewLb ? _newLbPropertyCache : _oldLbPropertyCache;
     Cache<String, CacheEntry<T>> cacheToCompare = fromNewLb ? _oldLbPropertyCache : _newLbPropertyCache;
 
     CacheEntry<T> entry = cacheToCompare.getIfPresent(propertyName);
 
-    if (entry != null && entry._version == propertyVersion)
+    if (entry != null && Objects.equals(entry._version, propertyVersion))
     {
-      // TODO: Compare service discovery data correctness here
+      CacheEntry<T> newEntry = new CacheEntry<>(propertyVersion, getTimestamp(), property);
+      if (!compareEntries(entry, newEntry))
+      {
+        _rateLimitedLogger.warn("Received mismatched properties from dual read. Old LB: {}, New LB: {}",
+            entry, newEntry);
+      }
       cacheToCompare.invalidate(propertyName);
     }
-
-    cacheToAdd.put(propertyName, new CacheEntry<>(propertyVersion, property));
+    else
+    {
+      cacheToAdd.put(propertyName, new CacheEntry<>(propertyVersion, getTimestamp(), property));
+    }
   }
+
+  abstract boolean compareEntries(CacheEntry<T> oldLbEntry, CacheEntry<T> newLbEntry);
+
+  abstract void onEvict();
 
   private Cache<String, CacheEntry<T>> buildCache()
   {
     return CacheBuilder.newBuilder()
         .maximumSize(MAX_CACHE_SIZE)
-        // Invalidate cache entry after 30s to avoid overflow
-        .expireAfterWrite(CACHE_EXPIRATION_SECOND, TimeUnit.SECONDS)
         .removalListener(notification ->
         {
-          // If a cache entry is evicted due to TTL, print a WARN log because it only
+          // If a cache entry is evicted due to maximum capacity, print a WARN log because it only
           // receives update from one source
-          if (notification.getCause().equals(RemovalCause.EXPIRED))
+          if (notification.getCause().equals(RemovalCause.SIZE))
           {
-            _log.warn("Cache entry evicted after {} s: {}", CACHE_EXPIRATION_SECOND, notification.getValue());
+            _rateLimitedLogger.warn("Cache entry evicted since cache is full: {}", notification.getValue());
+            onEvict();
           }
         })
         .build();
   }
 
+  private String getTimestamp() {
+    return ZonedDateTime.ofInstant(Instant.ofEpochMilli(_clock.currentTimeMillis()), ZoneId.systemDefault())
+        .format(_format);
+  }
+
   private static final class CacheEntry<T>
   {
-    final long _version;
+    final String _version;
+    final String _timeStamp;
     final T _data;
 
-    CacheEntry(long version, T data)
+    CacheEntry(String version, String timeStamp, T data)
     {
       _version = version;
+      _timeStamp = timeStamp;
       _data = data;
     }
 
     @Override
     public String toString()
     {
-      return "CacheEntry{" + "_version=" + _version + ", _data=" + _data + '}';
+      return "CacheEntry{" + "_version=" + _version + ", _timeStamp='" + _timeStamp + '\'' + ", _data=" + _data + '}';
+    }
+  }
+
+  public static final class ClusterPropertiesDualReadMonitor extends DualReadLoadBalancerMonitor<ClusterProperties>
+  {
+    private final DualReadLoadBalancerJmx _dualReadLoadBalancerJmx;
+
+    public ClusterPropertiesDualReadMonitor(DualReadLoadBalancerJmx dualReadLoadBalancerJmx, Clock clock)
+    {
+      super(clock);
+      _dualReadLoadBalancerJmx = dualReadLoadBalancerJmx;
+    }
+
+    @Override
+    boolean compareEntries(CacheEntry<ClusterProperties> oldLbEntry, CacheEntry<ClusterProperties> newLbEntry)
+    {
+      if (!oldLbEntry._data.equals(newLbEntry._data))
+      {
+        _dualReadLoadBalancerJmx.incrementClusterPropertiesErrorCount();
+        return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    void onEvict()
+    {
+      _dualReadLoadBalancerJmx.incrementClusterPropertiesEvictCount();
+    }
+  }
+
+  public static final class ServicePropertiesDualReadMonitor extends DualReadLoadBalancerMonitor<ServiceProperties>
+  {
+    private final DualReadLoadBalancerJmx _dualReadLoadBalancerJmx;
+
+    public ServicePropertiesDualReadMonitor(DualReadLoadBalancerJmx dualReadLoadBalancerJmx, Clock clock)
+    {
+      super(clock);
+      _dualReadLoadBalancerJmx = dualReadLoadBalancerJmx;
+    }
+
+    @Override
+    boolean compareEntries(CacheEntry<ServiceProperties> oldLbEntry, CacheEntry<ServiceProperties> newLbEntry)
+    {
+      if (!oldLbEntry._data.equals(newLbEntry._data))
+      {
+        _dualReadLoadBalancerJmx.incrementServicePropertiesErrorCount();
+        return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    void onEvict()
+    {
+      _dualReadLoadBalancerJmx.incrementServicePropertiesEvictCount();
+    }
+  }
+
+  public static final class UriPropertiesDualReadMonitor extends DualReadLoadBalancerMonitor<UriProperties>
+  {
+    private final DualReadLoadBalancerJmx _dualReadLoadBalancerJmx;
+
+    public UriPropertiesDualReadMonitor(DualReadLoadBalancerJmx dualReadLoadBalancerJmx, Clock clock)
+    {
+      super(clock);
+      _dualReadLoadBalancerJmx = dualReadLoadBalancerJmx;
+    }
+
+    @Override
+    boolean compareEntries(CacheEntry<UriProperties> oldLbEntry, CacheEntry<UriProperties> newLbEntry)
+    {
+      if (oldLbEntry._data.Uris().size() != newLbEntry._data.Uris().size())
+      {
+        _dualReadLoadBalancerJmx.incrementUriPropertiesErrorCount();
+        return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    void onEvict()
+    {
+      _dualReadLoadBalancerJmx.incrementUriPropertiesEvictCount();
     }
   }
 }

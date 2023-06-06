@@ -23,6 +23,7 @@ package com.linkedin.d2.balancer.zkfs;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
+import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -95,6 +96,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   private final CanaryDistributionProvider _canaryDistributionProvider;
   private final FailoutConfigProviderFactory _failoutConfigProviderFactory;
   private final ServiceDiscoveryEventEmitter _serviceDiscoveryEventEmitter;
+  private final DualReadStateManager _dualReadStateManager;
 
   private static final Logger _log = LoggerFactory.getLogger(ZKFSTogglingLoadBalancerFactoryImpl.class);
 
@@ -333,6 +335,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
         deterministicSubsettingMetadataProvider,
         failoutConfigProviderFactory,
         canaryDistributionProvider,
+        null,
         null);
   }
 
@@ -357,7 +360,8 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
       DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
       FailoutConfigProviderFactory failoutConfigProviderFactory,
       CanaryDistributionProvider canaryDistributionProvider,
-      ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter)
+      ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter,
+      DualReadStateManager dualReadStateManager)
   {
     _factory = factory;
     _lbTimeout = timeout;
@@ -381,6 +385,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     _failoutConfigProviderFactory = failoutConfigProviderFactory;
     _canaryDistributionProvider = canaryDistributionProvider;
     _serviceDiscoveryEventEmitter = serviceDiscoveryEventEmitter;
+    _dualReadStateManager = dualReadStateManager;
   }
 
   @Override
@@ -390,11 +395,13 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     ZooKeeperPermanentStore<ClusterProperties> zkClusterRegistry = createPermanentStore(
       zkConnection, ZKFSUtil.clusterPath(_baseZKPath),
       new ClusterPropertiesJsonSerializer(), executorService, _zookeeperReadWindowMs);
+    zkClusterRegistry.setDualReadStateManager(_dualReadStateManager);
     _d2ClientJmxManager.setZkClusterRegistry(zkClusterRegistry);
 
     ZooKeeperPermanentStore<ServiceProperties> zkServiceRegistry = createPermanentStore(
       zkConnection, ZKFSUtil.servicePath(_baseZKPath, _d2ServicePath),
       new ServicePropertiesJsonSerializer(_clientServicesConfig), executorService, _zookeeperReadWindowMs);
+    zkServiceRegistry.setDualReadStateManager(_dualReadStateManager);
     _d2ClientJmxManager.setZkServiceRegistry(zkServiceRegistry);
 
     String backupStoreFilePath = null;
@@ -407,6 +414,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
       zkConnection, ZKFSUtil.uriPath(_baseZKPath), new UriPropertiesJsonSerializer(),
       new UriPropertiesMerger(), _useNewEphemeralStoreWatcher, backupStoreFilePath, executorService, _zookeeperReadWindowMs);
     zkUriRegistry.setServiceDiscoveryEventEmitter(_serviceDiscoveryEventEmitter);
+    zkUriRegistry.setDualReadStateManager(_dualReadStateManager);
     _d2ClientJmxManager.setZkUriRegistry(zkUriRegistry);
 
     FileStore<ClusterProperties> fsClusterStore = createFileStore(FileSystemDirectory.getClusterDirectory(_fsd2DirPath), new ClusterPropertiesJsonSerializer());

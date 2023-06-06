@@ -96,7 +96,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                                    config.deterministicSubsettingMetadataProvider,
                                                    config.failoutConfigProviderFactory,
                                                    config.canaryDistributionProvider,
-                                                   config.serviceDiscoveryEventEmitter
+                                                   config.serviceDiscoveryEventEmitter,
+                                                   config.dualReadStateManager
     );
   }
 }

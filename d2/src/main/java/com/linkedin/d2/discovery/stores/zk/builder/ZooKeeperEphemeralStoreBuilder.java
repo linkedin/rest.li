@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.discovery.stores.zk.builder;
 
+import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
@@ -53,6 +54,7 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
   private ZookeeperChildFilter _zookeeperChildFilter = null;
   private ZookeeperEphemeralPrefixGenerator _zookeeperEphemeralPrefixGenerator = null;
   private ServiceDiscoveryEventEmitter _eventEmitter = null;
+  private DualReadStateManager _dualReadStateManager = null;
   private List<Consumer<ZooKeeperEphemeralStore<T>>> _onBuildListeners = new ArrayList<>();
 
   @Override
@@ -129,6 +131,11 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
     return this;
   }
 
+  public ZooKeeperEphemeralStoreBuilder<T> setDualReadStateManager(DualReadStateManager manager) {
+    this._dualReadStateManager = manager;
+    return this;
+  }
+
   @Override
   public ZooKeeperEphemeralStoreBuilder<T> addOnBuildListener(Consumer<ZooKeeperEphemeralStore<T>> onBuildListener)
   {
@@ -148,6 +155,7 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
       new ZooKeeperEphemeralStore<>(_client, _serializer, _merger, _path, _watchChildNodes, _useNewWatcher,
                                     backupStoreFilePath, _executorService, _zookeeperReadWindowMs, _zookeeperChildFilter, _zookeeperEphemeralPrefixGenerator);
     zooKeeperEphemeralStore.setServiceDiscoveryEventEmitter(_eventEmitter);
+    zooKeeperEphemeralStore.setDualReadStateManager(_dualReadStateManager);
 
     for (Consumer<ZooKeeperEphemeralStore<T>> onBuildListener : _onBuildListeners)
     {

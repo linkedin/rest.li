@@ -194,6 +194,14 @@ public class ServicePropertiesJsonSerializer implements
     }
   }
 
+  @Override
+  public ServiceProperties fromBytes(byte[] bytes, long version) throws PropertySerializationException
+  {
+    ServiceProperties serviceProperties = fromBytes(bytes);
+    serviceProperties.setVersion(version);
+    return serviceProperties;
+  }
+
   /**
    * Always return the composite class {@link ServiceStoreProperties} to include ALL properties stored on service registry (like Zookeeper),
    * such as canary configs, distribution strategy, etc.

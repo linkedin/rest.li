@@ -21,4 +21,9 @@ public interface PropertySerializer<T>
   byte[] toBytes(T property);
 
   T fromBytes(byte[] bytes) throws PropertySerializationException;
+
+  default T fromBytes(byte[] bytes, long version) throws PropertySerializationException
+  {
+    return fromBytes(bytes);
+  }
 }

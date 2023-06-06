@@ -102,6 +102,14 @@ public class UriPropertiesJsonSerializer implements PropertySerializer<UriProper
   }
 
   @Override
+  public UriProperties fromBytes(byte[] bytes, long version) throws PropertySerializationException
+  {
+    UriProperties uriProperties = fromBytes(bytes);
+    uriProperties.setVersion(version);
+    return uriProperties;
+  }
+
+  @Override
   @SuppressWarnings("unchecked")
   public UriProperties fromMap(Map<String, Object> map)
   {

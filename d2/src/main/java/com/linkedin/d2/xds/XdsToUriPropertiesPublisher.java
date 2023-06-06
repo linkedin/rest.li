@@ -41,7 +41,7 @@ public class XdsToUriPropertiesPublisher implements PropertyEventPublisher<UriPr
   @Override
   public void startPublishing(String clusterName)
   {
-    _adaptor.listenToCluster(clusterName);
+    _adaptor.listenToUris(clusterName);
   }
 
   @Override

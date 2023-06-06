@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.properties;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,6 +24,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+@JsonIgnoreProperties({ "version" })
 public class UriProperties
 {
   private final String                              _clusterName;
@@ -36,6 +38,8 @@ public class UriProperties
   // Properties specific to a particular machine in the cluster
   private final Map<URI, Map<String, Object>> _uriSpecificProperties;
 
+  private long _version;
+
   public UriProperties(String clusterName, Map<URI, Map<Integer, PartitionData>> partitionDescriptions)
   {
     this(clusterName, partitionDescriptions, Collections.<URI, Map<String, Object>>emptyMap());
@@ -45,7 +49,16 @@ public class UriProperties
                        Map<URI, Map<Integer, PartitionData>> partitionDescriptions,
                        Map<URI, Map<String, Object>> uriSpecificProperties)
   {
+    this(clusterName, partitionDescriptions, uriSpecificProperties, -1);
+  }
+
+  public UriProperties(String clusterName,
+      Map<URI, Map<Integer, PartitionData>> partitionDescriptions,
+      Map<URI, Map<String, Object>> uriSpecificProperties,
+      long version)
+  {
     _clusterName = clusterName;
+    _version = version;
     Map<URI, Map<Integer, PartitionData>> partitionDescriptionsMap = new HashMap<>(partitionDescriptions.size() * 2);
     for (Map.Entry<URI, Map<Integer, PartitionData>> entry : partitionDescriptions.entrySet())
     {
@@ -101,6 +114,16 @@ public class UriProperties
   public String getClusterName()
   {
     return _clusterName;
+  }
+
+  public void setVersion(long version)
+  {
+    _version = version;
+  }
+
+  public long getVersion()
+  {
+    return _version;
   }
 
   public Set<URI> Uris()

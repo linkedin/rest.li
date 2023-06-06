@@ -56,10 +56,12 @@ public abstract class XdsClient
 
   static final class D2NodeUpdate implements ResourceUpdate
   {
+    String _version;
     XdsD2.D2Node _nodeData;
 
-    D2NodeUpdate(XdsD2.D2Node nodeData)
+    D2NodeUpdate(String version, XdsD2.D2Node nodeData)
     {
+      _version = version;
       _nodeData = nodeData;
     }
 
@@ -67,20 +69,32 @@ public abstract class XdsClient
     {
       return _nodeData;
     }
+
+    public String getVersion()
+    {
+      return _version;
+    }
   }
 
   static final class D2NodeMapUpdate implements ResourceUpdate
   {
+    String _version;
     Map<String, XdsD2.D2Node> _nodeDataMap;
 
-    D2NodeMapUpdate(Map<String, XdsD2.D2Node> nodeDataMap)
+    D2NodeMapUpdate(String version, Map<String, XdsD2.D2Node> nodeDataMap)
     {
+      _version = version;
       _nodeDataMap = nodeDataMap;
     }
 
     public Map<String, XdsD2.D2Node> getNodeDataMap()
     {
       return _nodeDataMap;
+    }
+
+    public String getVersion()
+    {
+      return _version;
     }
   }
 

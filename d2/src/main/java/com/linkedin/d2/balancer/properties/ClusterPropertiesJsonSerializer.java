@@ -77,6 +77,14 @@ public class ClusterPropertiesJsonSerializer implements
     }
   }
 
+  @Override
+  public ClusterProperties fromBytes(byte[] bytes, long version) throws PropertySerializationException
+  {
+    ClusterProperties clusterProperties = fromBytes(bytes);
+    clusterProperties.setVersion(version);
+    return clusterProperties;
+  }
+
   @SuppressWarnings("unchecked")
   private static <T> T mapGetOrDefault(Map<String, Object> map, String key, T defaultValue)
   {

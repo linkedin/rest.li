@@ -126,7 +126,7 @@ public class XdsClientImpl extends XdsClient
       try
       {
         XdsD2.D2Node d2Node = resource.getResource().unpack(XdsD2.D2Node.class);
-        updates.put(resourceName, new D2NodeUpdate(d2Node));
+        updates.put(resourceName, new D2NodeUpdate(resource.getVersion(), d2Node));
       } catch (InvalidProtocolBufferException e)
       {
         _log.warn("Failed to unpack D2Node response", e);
@@ -149,7 +149,7 @@ public class XdsClientImpl extends XdsClient
       {
         XdsD2.D2NodeMap d2NodeMap = resource.getResource().unpack(XdsD2.D2NodeMap.class);
         Map<String, XdsD2.D2Node> nodeData = d2NodeMap.getNodesMap();
-        updates.put(resourceName, new D2NodeMapUpdate(nodeData));
+        updates.put(resourceName, new D2NodeMapUpdate(resource.getVersion(), nodeData));
       } catch (InvalidProtocolBufferException e)
       {
         _log.warn("Failed to unpack D2NodeMap response", e);

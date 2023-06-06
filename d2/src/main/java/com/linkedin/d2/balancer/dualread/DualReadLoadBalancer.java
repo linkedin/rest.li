@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.balancer.dualread;
 
-import com.google.common.util.concurrent.RateLimiter;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.util.None;
@@ -35,9 +34,7 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ScheduledExecutorService;
+import javax.annotation.Nonnull;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,34 +50,24 @@ import org.slf4j.LoggerFactory;
  *
  * In OLD_LB_ONLY mode, it reads exclusively from the old load balancer.
  * In NEW_LB_ONLY mode, it reads exclusively from the new load balancer.
- * In DUAL_READ mode, it reads from both the old and the new load balancer, but relys on the data from old
+ * In DUAL_READ mode, it reads from both the old and the new load balancer, but relies on the data from old
  * load balancer only.
  */
-@SuppressWarnings("UnstableApiUsage")
 public class DualReadLoadBalancer implements LoadBalancerWithFacilities
 {
-  private static final Logger _log = LoggerFactory.getLogger(DualReadLoadBalancer.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DualReadLoadBalancer.class);
   private final LoadBalancerWithFacilities _oldLb;
   private final LoadBalancerWithFacilities _newLb;
-  private final DualReadModeProvider _dualReadModeProvider;
-  private final ScheduledExecutorService _executorService;
-  private final RateLimiter _rateLimiter;
+  private final DualReadStateManager _dualReadStateManager;
 
-  // Stores service-level dual read mode
-  private final ConcurrentMap<String, DualReadModeProvider.DualReadMode> _serviceDualReadModes;
-  // Stores global dual read mode
-  private volatile DualReadModeProvider.DualReadMode _dualReadMode = DualReadModeProvider.DualReadMode.OLD_LB_ONLY;
   private boolean _isNewLbReady;
 
   public DualReadLoadBalancer(LoadBalancerWithFacilities oldLb, LoadBalancerWithFacilities newLb,
-      DualReadModeProvider dualReadModeProvider, ScheduledExecutorService executorService, int modeSwitchInterval)
+      @Nonnull DualReadStateManager dualReadStateManager)
   {
     _oldLb = oldLb;
     _newLb = newLb;
-    _dualReadModeProvider = dualReadModeProvider;
-    _executorService = executorService;
-    _rateLimiter = RateLimiter.create((double) 1 / modeSwitchInterval);
-    _serviceDualReadModes = new ConcurrentHashMap<>();
+    _dualReadStateManager = dualReadStateManager;
     _isNewLbReady = false;
   }
 
@@ -92,14 +79,14 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
       @Override
       public void onError(Throwable e)
       {
-        _log.warn("Failed to start new load balancer. Fall back to read from old balancer only", e);
+        LOG.warn("Failed to start new load balancer. Fall back to read from old balancer only", e);
         _isNewLbReady = false;
       }
 
       @Override
       public void onSuccess(None result)
       {
-        _log.info("New load balancer successfully started");
+        LOG.info("New load balancer successfully started");
         _isNewLbReady = true;
       }
     });
@@ -109,7 +96,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
     _oldLb.start(callback);
 
     // Prefetch the global dual read mode
-    _dualReadMode = _dualReadModeProvider.getDualReadMode();
+    _dualReadStateManager.checkAndSwitchMode(null);
   }
 
   @Override
@@ -122,31 +109,31 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         _newLb.getClient(request, requestContext, clientCallback);
         break;
       case DUAL_READ:
-
         _newLb.getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
         {
           @Override
           public void onError(Throwable e)
           {
-            _log.error("Double read failure. Unable to read service properties from: " + serviceName, e);
+            LOG.error("Double read failure. Unable to read service properties from: " + serviceName, e);
           }
 
           @Override
           public void onSuccess(ServiceProperties result)
           {
             String clusterName = result.getClusterName();
+            _dualReadStateManager.updateCluster(clusterName, DualReadModeProvider.DualReadMode.DUAL_READ);
             _newLb.getLoadBalancedClusterAndUriProperties(clusterName, new Callback<Pair<ClusterProperties, UriProperties>>()
             {
               @Override
               public void onError(Throwable e)
               {
-                _log.error("Dual read failure. Unable to read cluster properties from: " + clusterName, e);
+                LOG.error("Dual read failure. Unable to read cluster properties from: " + clusterName, e);
               }
 
               @Override
               public void onSuccess(Pair<ClusterProperties, UriProperties> result)
               {
-                _log.debug("Dual read is successful. Get cluster and uri properties: " + result);
+                LOG.debug("Dual read is successful. Get cluster and uri properties: " + result);
               }
             });
           }
@@ -268,32 +255,6 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
     }
   }
 
-  /**
-   * Asynchronously check and update the dual read mode for the given D2 service
-   * @param d2ServiceName the name of the D2 service
-   */
-  public void checkAndSwitchMode(String d2ServiceName)
-  {
-    _executorService.submit(() ->
-    {
-      boolean shouldCheck = _rateLimiter.tryAcquire();
-      if (shouldCheck)
-      {
-        // Check and switch global dual read mode
-        _dualReadMode = _dualReadModeProvider.getDualReadMode();
-        _log.debug("Global dual read mode updated: " + _dualReadMode);
-
-        // Check and switch service-level dual read mode}
-        if (d2ServiceName != null)
-        {
-          DualReadModeProvider.DualReadMode mode = _dualReadModeProvider.getDualReadMode(d2ServiceName);
-          _serviceDualReadModes.put(d2ServiceName, mode);
-          _log.debug("Dual read mode for service " + d2ServiceName + " updated: " + mode);
-        }
-      }
-    });
-  }
-
   private boolean shouldReadFromOldLb()
   {
     DualReadModeProvider.DualReadMode dualReadMode = getDualReadMode();
@@ -308,8 +269,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
       return DualReadModeProvider.DualReadMode.OLD_LB_ONLY;
     }
 
-    checkAndSwitchMode(null);
-    return _dualReadMode;
+    return _dualReadStateManager.getDualReadMode();
   }
 
   private DualReadModeProvider.DualReadMode getDualReadMode(String d2ServiceName)
@@ -319,8 +279,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
       return DualReadModeProvider.DualReadMode.OLD_LB_ONLY;
     }
 
-    checkAndSwitchMode(d2ServiceName);
-    return _serviceDualReadModes.getOrDefault(d2ServiceName, _dualReadMode);
+    return _dualReadStateManager.getServiceDualReadMode(d2ServiceName);
   }
 
   @Override
@@ -328,7 +287,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   {
     _newLb.shutdown(() ->
     {
-      _log.info("New load balancer successfully shut down");
+      LOG.info("New load balancer successfully shut down");
     });
 
     _oldLb.shutdown(callback);

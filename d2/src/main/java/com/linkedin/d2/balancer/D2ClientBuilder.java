@@ -28,6 +28,7 @@ import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.clients.RequestTimeoutClient;
 import com.linkedin.d2.balancer.clients.RetryClient;
 import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
+import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -190,7 +191,8 @@ public class D2ClientBuilder
                   _config.enableClusterFailout,
                   _config.failoutConfigProviderFactory,
                   _config.failoutRedirectStrategy,
-                  _config.serviceDiscoveryEventEmitter
+                  _config.serviceDiscoveryEventEmitter,
+                  _config.dualReadStateManager
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -612,6 +614,11 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setServiceDiscoveryEventEmitter(ServiceDiscoveryEventEmitter emitter) {
     _config.serviceDiscoveryEventEmitter = emitter;
+    return this;
+  }
+
+  public D2ClientBuilder setDualReadStateManager(DualReadStateManager dualReadStateManager) {
+    _config.dualReadStateManager = dualReadStateManager;
     return this;
   }
 

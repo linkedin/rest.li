@@ -19,6 +19,7 @@ import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
 import com.linkedin.d2.balancer.clients.FailoutRedirectStrategy;
 import com.linkedin.d2.balancer.clients.RetryClient;
 import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
+import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -120,6 +121,7 @@ public class D2ClientConfig
   public FailoutConfigProviderFactory failoutConfigProviderFactory;
   FailoutRedirectStrategy failoutRedirectStrategy;
   ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter = new LogOnlyServiceDiscoveryEventEmitter(); // default to use log-only emitter
+  public DualReadStateManager dualReadStateManager = null;
 
   public D2ClientConfig()
   {
@@ -183,7 +185,8 @@ public class D2ClientConfig
                  boolean enableClusterFailout,
                  FailoutConfigProviderFactory failoutConfigProviderFactory,
                  FailoutRedirectStrategy failoutRedirectStrategy,
-                 ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter)
+                 ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter,
+                 DualReadStateManager dualReadStateManager)
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -244,5 +247,6 @@ public class D2ClientConfig
     this.failoutConfigProviderFactory = failoutConfigProviderFactory;
     this.failoutRedirectStrategy = failoutRedirectStrategy;
     this.serviceDiscoveryEventEmitter = serviceDiscoveryEventEmitter;
+    this.dualReadStateManager = dualReadStateManager;
   }
 }

@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.dualread.DualReadModeProvider;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
@@ -26,6 +27,7 @@ import com.linkedin.d2.discovery.event.PropertyEventThread.PropertyEventShutdown
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -96,6 +98,11 @@ public interface LoadBalancer
   void start(Callback<None> callback);
 
   void shutdown(PropertyEventShutdownCallback shutdown);
+
+  default void updateDualReadStatus(Map<String, DualReadModeProvider.DualReadMode> dualReadStatus)
+  {
+    // Default to no-op
+  }
 
   // ################## Methods to deprecate Section ##################
 

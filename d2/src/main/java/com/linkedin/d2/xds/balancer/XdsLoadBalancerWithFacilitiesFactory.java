@@ -41,12 +41,13 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
   {
     D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(config.d2JmxManagerPrefix + "-xDS",
         config.jmxManager);
+    d2ClientJmxManager.registerDualReadLoadBalancerJmx(config.dualReadStateManager.getDualReadLoadBalancerJmx());
     ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(
         new NamedThreadFactory("D2 xDS PropertyEventExecutor"));
 
     XdsClient xdsClient = new XdsClientImpl(new Node(config.hostName),
         new XdsChannelFactory(config.grpcSslContext, config.xdsServer).createChannel(), executorService);
-    XdsToD2PropertiesAdaptor adaptor = new XdsToD2PropertiesAdaptor(xdsClient);
+    XdsToD2PropertiesAdaptor adaptor = new XdsToD2PropertiesAdaptor(xdsClient, config.dualReadStateManager);
 
     return new XdsLoadBalancer(adaptor, executorService,
         new XdsTogglingLoadBalancerFactory(config.lbWaitTimeout, config.lbWaitUnit, config.fsBasePath,
