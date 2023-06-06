@@ -44,14 +44,13 @@ import org.slf4j.LoggerFactory;
 import static com.linkedin.d2.discovery.util.LogUtil.info;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
-// TODO move indisannouncer to this class
 public class
         ZooKeeperServer implements LoadBalancerServer
 {
   private static final Logger _log = LoggerFactory.getLogger(ZooKeeperServer.class);
 
-  // we set a default NoopIndisAnnouncer so that even if the user doesn't provide an announcer the class functions without
-  // throwing a NPE when marking up or down
+  // we set a default NoopIndisAnnouncer so that even if the user doesn't provide an announcer the class
+  // functions without throwing a NPE when marking up or down
   private IndisAnnouncer _indisAnnouncer = new NoopIndisAnnouncer();
 
   private volatile ZooKeeperEphemeralStore<UriProperties> _store;
@@ -102,18 +101,17 @@ public class
                      final Map<String, Object> uriSpecificProperties,
                      final Callback<None> callback)
   {
+    try {
+      _indisAnnouncer.announce(clusterName, uri.getScheme(), uri.getHost(), uri.getPort());
+    } catch (Exception e) {
+      _log.warn(String.format("Failed to announce cluster %s to INDIS", clusterName), e);
+    }
+
     final Callback<None> doPutCallback = new Callback<None>()
     {
       @Override
       public void onSuccess(None none)
       {
-        try {
-          _indisAnnouncer.announce(clusterName, uri.getScheme(), uri.getHost(), uri.getPort());
-        } catch (Exception e) {
-          _log.warn(String.format("Failed to announce cluster %s to INDIS", clusterName), e);
-        }
-
-
         Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<>();
         partitionDesc.put(uri, partitionDataMap);
 
