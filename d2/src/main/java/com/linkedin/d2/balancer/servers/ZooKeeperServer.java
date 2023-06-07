@@ -102,7 +102,7 @@ public class
                      final Callback<None> callback)
   {
     try {
-      _indisAnnouncer.announce(clusterName, uri.getScheme(), uri.getHost(), uri.getPort());
+      _indisAnnouncer.announce(clusterName, uri.getScheme(), uri.getHost(), uri.getPort(), partitionDataMap, uriSpecificProperties);
     } catch (Exception e) {
       _log.warn(String.format("Failed to announce cluster %s to INDIS", clusterName), e);
     }
