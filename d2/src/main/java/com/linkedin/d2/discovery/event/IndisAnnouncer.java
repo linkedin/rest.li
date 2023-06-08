@@ -11,8 +11,8 @@ import java.util.Map;
 public interface IndisAnnouncer {
   void start();
   void stop();
-  void announce(String cluster, String protocol, String host, int port, Map<Integer, PartitionData> partitionDataMap,
+  void announce(String cluster, String protocol, String host, int port, String path, Map<Integer, PartitionData> partitionDataMap,
       Map<String, Object> uriSpecificProperties);
 
-  void deannounce(String cluster, String protocol, String host, int port);
+  void deannounce(String cluster, String protocol, String host, int port, String path);
 }

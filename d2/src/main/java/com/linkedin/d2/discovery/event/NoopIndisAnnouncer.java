@@ -16,13 +16,12 @@ public class NoopIndisAnnouncer implements IndisAnnouncer {
   }
 
   @Override
-  public void announce(String cluster, String protocol, String host, int port,
-      Map<Integer, PartitionData> partitionDataMap, Map<String, Object> uriSpecificProperties) {
+  public void announce(String cluster, String protocol, String host, int port, String path, Map<Integer, PartitionData> partitionDataMap, Map<String, Object> uriSpecificProperties) {
     // do nothing
   }
 
   @Override
-  public void deannounce(String cluster, String protocol, String host, int port) {
+  public void deannounce(String cluster, String protocol, String host, int port, String path) {
     // do nothing
   }
 }

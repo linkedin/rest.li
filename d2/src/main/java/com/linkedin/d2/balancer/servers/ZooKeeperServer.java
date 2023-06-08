@@ -102,7 +102,10 @@ public class
                      final Callback<None> callback)
   {
     try {
-      _indisAnnouncer.announce(clusterName, uri.getScheme(), uri.getHost(), uri.getPort(), partitionDataMap, uriSpecificProperties);
+      // we separate the INDIS and Zookeeper markUp actions as they are independent of each other -- the success or
+      // failure of the INDIS announcement shouldn't affect the Zookeeper markDown below
+      _indisAnnouncer.announce(clusterName, uri.getScheme(), uri.getHost(), uri.getPort(), uri.getPath(), partitionDataMap,
+          uriSpecificProperties);
     } catch (Exception e) {
       _log.warn(String.format("Failed to announce cluster %s to INDIS", clusterName), e);
     }
@@ -199,8 +202,10 @@ public class
   @Override
   public void markDown(final String clusterName, final URI uri, final Callback<None> callback)
   {
+    // we separate the INDIS and Zookeeper markDown actions as they are independent of each other -- the success or
+    // failure of the INDIS deannouncement shouldn't affect the Zookeeper markDown below
     try {
-      _indisAnnouncer.deannounce(clusterName, uri.getScheme(), uri.getHost(), uri.getPort());
+      _indisAnnouncer.deannounce(clusterName, uri.getScheme(), uri.getHost(), uri.getPort(), uri.getPath());
     } catch (Exception e) {
       _log.warn(String.format("Failed to deannounce cluster %s to INDIS", clusterName), e);
     }

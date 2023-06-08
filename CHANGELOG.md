@@ -14,6 +14,8 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.42.5] - 2023-06-08
+
 ## [29.42.4] - 2023-06-02
 - Add log message in RestClient for ScatterGatherStrategy map URIs empty case
 
@@ -5475,7 +5477,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.42.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.42.5...master
+[29.42.5]: https://github.com/linkedin/rest.li/compare/v29.42.4...v29.42.5
 [29.42.4]: https://github.com/linkedin/rest.li/compare/v29.42.3...v29.42.4
 [29.42.3]: https://github.com/linkedin/rest.li/compare/v29.42.2...v29.42.3
 [29.42.2]: https://github.com/linkedin/rest.li/compare/v29.42.1...v29.42.2
