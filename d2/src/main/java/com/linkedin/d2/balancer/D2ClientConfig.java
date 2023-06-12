@@ -120,7 +120,7 @@ public class D2ClientConfig
   boolean enableClusterFailout = false;
   public FailoutConfigProviderFactory failoutConfigProviderFactory;
   FailoutRedirectStrategy failoutRedirectStrategy;
-  ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter = new LogOnlyServiceDiscoveryEventEmitter(); // default to use log-only emitter
+  public ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter = new LogOnlyServiceDiscoveryEventEmitter(); // default to use log-only emitter
   public DualReadStateManager dualReadStateManager = null;
 
   public D2ClientConfig()

@@ -115,6 +115,12 @@ public class XdsClientImpl extends XdsClient
     });
   }
 
+  @Override
+  String getXdsServerAuthority()
+  {
+    return _managedChannel.authority();
+  }
+
   private void handleD2NodeResponse(DiscoveryResponseData data)
   {
     Map<String, D2NodeUpdate> updates = new HashMap<>();

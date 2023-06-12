@@ -74,6 +74,9 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   @Override
   public void start(Callback<None> callback)
   {
+    // Prefetch the global dual read mode
+    _dualReadStateManager.checkAndSwitchMode(null);
+
     _newLb.start(new Callback<None>()
     {
       @Override
@@ -94,9 +97,6 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
     // Call back will succeed as long as the old balancer is successfully started. New load balancer failure
     // won't block application start up.
     _oldLb.start(callback);
-
-    // Prefetch the global dual read mode
-    _dualReadStateManager.checkAndSwitchMode(null);
   }
 
   @Override

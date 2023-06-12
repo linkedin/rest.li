@@ -135,4 +135,6 @@ public abstract class XdsClient
   abstract void startRpcStream();
 
   abstract void shutdown();
+
+  abstract String getXdsServerAuthority();
 }

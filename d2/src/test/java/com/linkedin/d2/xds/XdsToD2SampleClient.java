@@ -93,9 +93,9 @@ public class XdsToD2SampleClient
 
     DualReadStateManager dualReadStateManager = new DualReadStateManager(
         () -> DualReadModeProvider.DualReadMode.DUAL_READ,
-        Executors.newSingleThreadScheduledExecutor(), new D2ClientJmxManager("xDS", new JmxManager()));
+        Executors.newSingleThreadScheduledExecutor());
 
-    XdsToD2PropertiesAdaptor adaptor = new XdsToD2PropertiesAdaptor(xdsClient, dualReadStateManager);
+    XdsToD2PropertiesAdaptor adaptor = new XdsToD2PropertiesAdaptor(xdsClient, dualReadStateManager, null);
     adaptor.listenToService(serviceName);
     adaptor.listenToCluster("TokiBackendGrpc");
 

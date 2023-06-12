@@ -116,7 +116,7 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     {
       balancer = new WarmUpLoadBalancer(balancer, lastSeenLoadBalancer, config.startUpExecutorService, config.fsBasePath,
                                         config.d2ServicePath, config.downstreamServicesFetcher, config.warmUpTimeoutSeconds,
-                                        config.warmUpConcurrentRequests);
+                                        config.warmUpConcurrentRequests, config.dualReadStateManager);
     }
 
     return balancer;

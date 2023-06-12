@@ -16,6 +16,8 @@
 
 package com.linkedin.d2.xds;
 
+import com.google.common.collect.MapDifference;
+import com.google.common.collect.Maps;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Struct;
 import com.google.protobuf.util.JsonFormat;
@@ -29,16 +31,19 @@ import com.linkedin.d2.balancer.properties.UriPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.UriPropertiesMerger;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
+import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import indis.XdsD2;
 import io.grpc.Status;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,13 +66,15 @@ public class XdsToD2PropertiesAdaptor
   private final ConcurrentMap<String, XdsClient.D2NodeResourceWatcher> _watchedClusterResources;
   private final ConcurrentMap<String, XdsClient.D2NodeResourceWatcher> _watchedServiceResources;
   private final ConcurrentMap<String, XdsClient.D2NodeMapResourceWatcher> _watchedUriResources;
+  private final ServiceDiscoveryEventEmitter _eventEmitter;
 
   private boolean _isAvailable;
   private PropertyEventBus<UriProperties> _uriEventBus;
   private PropertyEventBus<ServiceProperties> _serviceEventBus;
   private PropertyEventBus<ClusterProperties> _clusterEventBus;
 
-  public XdsToD2PropertiesAdaptor(XdsClient xdsClient, DualReadStateManager dualReadStateManager)
+  public XdsToD2PropertiesAdaptor(XdsClient xdsClient, DualReadStateManager dualReadStateManager,
+      ServiceDiscoveryEventEmitter eventEmitter)
   {
     _xdsClient = xdsClient;
     _dualReadStateManager = dualReadStateManager;
@@ -80,6 +87,7 @@ public class XdsToD2PropertiesAdaptor
     _watchedClusterResources = new ConcurrentHashMap<>();
     _watchedServiceResources = new ConcurrentHashMap<>();
     _watchedUriResources = new ConcurrentHashMap<>();
+    _eventEmitter = eventEmitter;
   }
 
   public void start()
@@ -228,41 +236,7 @@ public class XdsToD2PropertiesAdaptor
 
   XdsClient.D2NodeMapResourceWatcher getUriResourceWatcher(String clusterName)
   {
-    return new XdsClient.D2NodeMapResourceWatcher()
-    {
-      @Override
-      public void onChanged(XdsClient.D2NodeMapUpdate update)
-      {
-        if (_uriEventBus != null)
-        {
-          try
-          {
-            UriProperties uriProperties = toUriProperties(clusterName, update.getNodeDataMap());
-            _uriEventBus.publishInitialize(clusterName, uriProperties);
-            if (_dualReadStateManager != null)
-            {
-              _dualReadStateManager.reportData(clusterName, uriProperties, true);
-            }
-          }
-          catch (InvalidProtocolBufferException | PropertySerializationException e)
-          {
-            _log.error("Failed to parse D2 uri properties from xDS update. Cluster name: " + clusterName, e);
-          }
-        }
-      }
-
-      @Override
-      public void onError(Status error)
-      {
-        notifyAvailabilityChanges(false);
-      }
-
-      @Override
-      public void onReconnect()
-      {
-        notifyAvailabilityChanges(true);
-      }
-    };
+    return new UriPropertiesResourceWatcher(clusterName);
   }
 
   private void notifyAvailabilityChanges(boolean isAvailable)
@@ -302,19 +276,138 @@ public class XdsToD2PropertiesAdaptor
         JsonFormat.printer().print(clusterProperties).getBytes(StandardCharsets.UTF_8), version);
   }
 
-  private UriProperties toUriProperties(String clusterName, Map<String, XdsD2.D2Node> uriDataMap)
+  private Map<String, UriProperties> toUriProperties(Map<String, XdsD2.D2Node> uriDataMap)
       throws InvalidProtocolBufferException, PropertySerializationException
   {
-    List<UriProperties> allUriProperties = new ArrayList<>();
+    Map<String, UriProperties> parsedMap = new HashMap<>();
 
-    for (XdsD2.D2Node d2Node : uriDataMap.values())
+    for (Map.Entry<String, XdsD2.D2Node> entry : uriDataMap.entrySet())
     {
+      XdsD2.D2Node d2Node = entry.getValue();
       UriProperties uriProperties = _uriPropertiesJsonSerializer.fromBytes(
           JsonFormat.printer().print(d2Node.getData()).getBytes(StandardCharsets.UTF_8), d2Node.getStat().getMzxid());
-      allUriProperties.add(uriProperties);
+      parsedMap.put(entry.getKey(), uriProperties);
     }
 
-    return _uriPropertiesMerger.merge(clusterName, allUriProperties);
+    return parsedMap;
+  }
+
+  private class UriPropertiesResourceWatcher implements XdsClient.D2NodeMapResourceWatcher
+  {
+    final String _clusterName;
+    final AtomicBoolean _init;
+    final long _initFetchStart;
+
+    Map<String, UriProperties> _currentData = new HashMap<>();
+
+    public UriPropertiesResourceWatcher(String clusterName)
+    {
+      _clusterName = clusterName;
+      _init = new AtomicBoolean();
+      _initFetchStart = System.nanoTime();
+    }
+
+    @Override
+    public void onChanged(XdsClient.D2NodeMapUpdate update)
+    {
+      if (_init.compareAndSet(false, true))
+      {
+        emitSDStatusInitialRequestEvent(_clusterName);
+      }
+
+      if (_uriEventBus != null)
+      {
+        try
+        {
+          Map<String, UriProperties> updates = toUriProperties(update.getNodeDataMap());
+          emitSDStatusUpdateReceiptEvents(updates);
+          _currentData = updates;
+          UriProperties mergedUriProperties = _uriPropertiesMerger.merge(_clusterName, _currentData.values());
+          _uriEventBus.publishInitialize(_clusterName, mergedUriProperties);
+          if (_dualReadStateManager != null)
+          {
+            _dualReadStateManager.reportData(_clusterName, mergedUriProperties, true);
+          }
+        }
+        catch (InvalidProtocolBufferException | PropertySerializationException e)
+        {
+          _log.error("Failed to parse D2 uri properties from xDS update. Cluster name: " + _clusterName, e);
+        }
+      }
+    }
+
+    @Override
+    public void onError(Status error)
+    {
+      notifyAvailabilityChanges(false);
+    }
+
+    @Override
+    public void onReconnect()
+    {
+      notifyAvailabilityChanges(true);
+    }
+
+    private void emitSDStatusInitialRequestEvent(String cluster)
+    {
+      if (_eventEmitter == null)
+      {
+        _log.info("Service discovery event emitter in ZookeeperEphemeralStore is null. Skipping emitting events.");
+        return;
+      }
+
+      // measure request duration and convert to milli-seconds
+      long initialFetchDurationMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - _initFetchStart);
+      if (initialFetchDurationMillis < 0)
+      {
+        _log.warn("Failed to log ServiceDiscoveryStatusInitialRequest event, initialFetchStartAt time is greater than current time.");
+        return;
+      }
+      // emit service discovery status initial request event for success
+      _eventEmitter.emitSDStatusInitialRequestEvent(cluster, true, initialFetchDurationMillis, true);
+
+    }
+
+    private void emitSDStatusUpdateReceiptEvents(Map<String, UriProperties> updates)
+    {
+      if (_eventEmitter == null)
+      {
+        _log.info("Service discovery event emitter in ZookeeperEphemeralStore is null. Skipping emitting events.");
+        return;
+      }
+
+      long timestamp = System.currentTimeMillis();
+
+      MapDifference<String, UriProperties> mapDifference = Maps.difference(_currentData, updates);
+      Map<String, UriProperties> markedDownUris = mapDifference.entriesOnlyOnLeft();
+      Map<String, UriProperties> markedUpUris = mapDifference.entriesOnlyOnRight();
+
+      emitSDStatusUpdateReceiptEvents(markedUpUris, true, timestamp);
+      emitSDStatusUpdateReceiptEvents(markedDownUris, false, timestamp);
+    }
+
+    private void emitSDStatusUpdateReceiptEvents(Map<String, UriProperties> updates, boolean isMarkUp, long timestamp)
+    {
+      updates.forEach((nodeName, data) ->
+      {
+        String nodePath = D2_URI_NODE_PREFIX + _clusterName + "/" + nodeName;
+        data.Uris().forEach(uri ->
+            _eventEmitter.emitSDStatusUpdateReceiptEvent(
+                _clusterName,
+                uri.getHost(),
+                uri.getPort(),
+                isMarkUp ? ServiceDiscoveryEventEmitter.StatusUpdateActionType.MARK_READY :
+                    ServiceDiscoveryEventEmitter.StatusUpdateActionType.MARK_DOWN,
+                true,
+                _xdsClient.getXdsServerAuthority(),
+                nodePath,
+                data.toString(),
+                0,
+                nodePath,
+                timestamp)
+        );
+      });
+    }
   }
 
   public interface XdsConnectionListener
