@@ -170,7 +170,25 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
         {
           DualReadModeProvider dualReadModeProvider = _dualReadStateManager.getDualReadModeProvider();
           serviceNames.forEach(serviceName ->
-              _dualReadStateManager.updateService(serviceName, dualReadModeProvider.getDualReadMode(serviceName)));
+          {
+            DualReadModeProvider.DualReadMode dualReadMode = dualReadModeProvider.getDualReadMode(serviceName);
+            _dualReadStateManager.updateService(serviceName, dualReadMode);
+
+            getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
+            {
+              @Override
+              public void onError(Throwable e)
+              {
+                LOG.warn("Failed to warm up dual read mode for service: " + serviceName, e);
+              }
+
+              @Override
+              public void onSuccess(ServiceProperties result)
+              {
+                _dualReadStateManager.updateCluster(result.getClusterName(), dualReadMode);
+              }
+            });
+          });
         }
         WarmUpTask warmUpTask = new WarmUpTask(serviceNames, timeoutCallback);
 

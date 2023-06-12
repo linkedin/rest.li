@@ -115,7 +115,8 @@ public class D2ClientBuilder
 
     if (_config.downstreamServicesFetcher == null)
     {
-      _config.downstreamServicesFetcher = new FSBasedDownstreamServicesFetcher(_config.fsBasePath, _config.d2ServicePath);
+      _config.downstreamServicesFetcher = new FSBasedDownstreamServicesFetcher(_config.fsBasePath,
+          _config.indisFsBasePath, _config.d2ServicePath);
     }
 
     if (_config.jmxManager == null)
@@ -143,6 +144,7 @@ public class D2ClientBuilder
                   _config.flagFile,
                   _config.basePath,
                   _config.fsBasePath,
+                  _config.indisFsBasePath,
                   _config.componentFactory,
                   transportClientFactories,
                   _config.lbWithFacilitiesFactory,
@@ -318,6 +320,12 @@ public class D2ClientBuilder
   public D2ClientBuilder setFsBasePath(String fsBasePath)
   {
     _config.fsBasePath = fsBasePath;
+    return this;
+  }
+
+  public D2ClientBuilder setIndisFsBasePath(String indisFsBasePath)
+  {
+    _config.indisFsBasePath = indisFsBasePath;
     return this;
   }
 

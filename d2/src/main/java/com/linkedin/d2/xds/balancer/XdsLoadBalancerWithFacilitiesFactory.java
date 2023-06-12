@@ -55,7 +55,7 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
         config.serviceDiscoveryEventEmitter);
 
     return new XdsLoadBalancer(adaptor, executorService,
-        new XdsTogglingLoadBalancerFactory(config.lbWaitTimeout, config.lbWaitUnit, config.fsBasePath,
+        new XdsTogglingLoadBalancerFactory(config.lbWaitTimeout, config.lbWaitUnit, config.indisFsBasePath,
             config.clientFactories, config.loadBalancerStrategyFactories, config.d2ServicePath, config.sslContext,
             config.sslParameters, config.isSSLEnabled, config.clientServicesConfig, config.partitionAccessorRegistry,
             config.sslSessionValidatorFactory, d2ClientJmxManager, config.deterministicSubsettingMetadataProvider,

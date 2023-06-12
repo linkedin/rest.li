@@ -61,6 +61,7 @@ public class D2ClientConfig
   String flagFile = "/no/flag/file/set";
   String basePath = "/d2";
   public String fsBasePath = "/tmp/d2";
+  public String indisFsBasePath = "/tmp/d2/indis";
   ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory componentFactory = null;
   public Map<String, TransportClientFactory> clientFactories = null;
   LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory = null;
@@ -137,6 +138,7 @@ public class D2ClientConfig
                  String flagFile,
                  String basePath,
                  String fsBasePath,
+                 String indisFsBasePath,
                  ComponentFactory componentFactory,
                  Map<String, TransportClientFactory> clientFactories,
                  LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory,
@@ -198,6 +200,7 @@ public class D2ClientConfig
     this.flagFile = flagFile;
     this.basePath = basePath;
     this.fsBasePath = fsBasePath;
+    this.indisFsBasePath = indisFsBasePath;
     this.componentFactory = componentFactory;
     this.clientFactories = clientFactories;
     this.lbWithFacilitiesFactory = lbWithFacilitiesFactory;

@@ -18,7 +18,10 @@ package com.linkedin.d2.balancer.util.downstreams;
 
 import com.linkedin.common.callback.SuccessCallback;
 import com.linkedin.d2.balancer.util.FileSystemDirectory;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -30,18 +33,34 @@ import java.util.List;
 public class FSBasedDownstreamServicesFetcher implements DownstreamServicesFetcher
 {
   private final String _d2FsPath;
+  private final String _indisFsPath;
   private final String _d2ServicePath;
 
   public FSBasedDownstreamServicesFetcher(String d2FsPath, String d2ServicePath)
   {
+    this(d2FsPath, null, d2ServicePath);
+  }
+
+  public FSBasedDownstreamServicesFetcher(String d2FsPath, String indisFsPath, String d2ServicePath)
+  {
     _d2FsPath = d2FsPath;
+    _indisFsPath = indisFsPath;
     _d2ServicePath = d2ServicePath;
   }
 
   @Override
   public void getServiceNames(SuccessCallback<List<String>> callback)
   {
+
     FileSystemDirectory fsDirectory = new FileSystemDirectory(_d2FsPath, _d2ServicePath);
-    callback.onSuccess(fsDirectory.getServiceNames());
+    Set<String> serviceNames = new HashSet<>(fsDirectory.getServiceNames());
+
+    if (_indisFsPath != null)
+    {
+      FileSystemDirectory indisFsDirectory = new FileSystemDirectory(_indisFsPath, _d2ServicePath);
+      serviceNames.addAll(indisFsDirectory.getServiceNames());
+    }
+
+    callback.onSuccess(new ArrayList<>(serviceNames));
   }
 }
