@@ -69,6 +69,12 @@ public class
     _store = store;
   }
 
+  public ZooKeeperServer(ZooKeeperEphemeralStore<UriProperties> store, IndisAnnouncer indisAnnouncer)
+  {
+    _store = store;
+    _indisAnnouncer = indisAnnouncer;
+  }
+
   public String getConnectString() {
     return _store.getConnectString();
   }
@@ -119,7 +125,7 @@ public class
 
     try {
       // we separate the INDIS and Zookeeper markUp actions as they are independent of each other -- the success or
-      // failure of the INDIS announcement shouldn't affect the Zookeeper markDown below
+      // failure of the INDIS announcement shouldn't affect the Zookeeper markUp below
       _indisAnnouncer.announce(clusterName, uri.getScheme(), uri.getHost(), uri.getPort(), uri.getPath(), partitionDataMap,
           uriSpecificProperties, d2UriProperties);
     } catch (Exception e) {

@@ -16,7 +16,7 @@
 
 package com.linkedin.d2.balancer.servers;
 
-
+import com.google.common.collect.ImmutableMap;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.properties.PartitionData;
@@ -25,6 +25,7 @@ import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.properties.UriPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.UriPropertiesMerger;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
+import com.linkedin.d2.discovery.event.IndisAnnouncer;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZKServer;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
@@ -32,22 +33,21 @@ import com.linkedin.d2.util.TestDataHelper;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.mockito.Mockito.*;
+import static org.testng.Assert.*;
 
 public class ZooKeeperServerTest
 {
@@ -64,11 +64,14 @@ public class ZooKeeperServerTest
   private Map<Integer, PartitionData> _partitionWeight;
   private Map<String, Object> _uri1SpecificProperties;
   private Map<String, Object> _uri2SpecificProperties;
+  @Mock
+  private IndisAnnouncer _indisAnnouncer;
 
 
   @BeforeMethod
   public void setUp() throws Exception
   {
+    MockitoAnnotations.initMocks(this);
     try
     {
       _zkServer = new ZKServer(PORT);
@@ -90,7 +93,7 @@ public class ZooKeeperServerTest
     _store.start(callback);
     callback.get();
 
-    _server = new ZooKeeperServer(_store);
+    _server = new ZooKeeperServer(_store, _indisAnnouncer);
     _mockEventHelper = TestDataHelper.getMockD2ServiceDiscoveryEventHelper();
     _server.setServiceDiscoveryEventHelper(_mockEventHelper);
     _partitionWeight = new HashMap<>();
@@ -112,6 +115,9 @@ public class ZooKeeperServerTest
     assertEquals(properties.getPartitionDataMap(URI_1).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 0.5d);
     assertEquals(properties.Uris().size(), 1);
 
+    verify(_indisAnnouncer).announce(CLUSTER_1, URI_1.getScheme(), URI_1.getHost(), URI_1.getPort(), URI_1.getPath()
+        , properties.getPartitionDataMap(URI_1), Collections.emptyMap(), properties);
+
     // test mark up when already up call
     markUp(_server, CLUSTER_1, URI_1, 2d);
 
@@ -129,8 +135,9 @@ public class ZooKeeperServerTest
     assertEquals(properties.Uris().size(), 2);
 
     // bring down uri 1
+    reset(_indisAnnouncer);
     markDown(_server, CLUSTER_1, URI_1);
-
+    verify(_indisAnnouncer).deannounce(CLUSTER_1, URI_1.getScheme(), URI_1.getHost(), URI_1.getPort(), URI_1.getPath());
     properties = _store.get(CLUSTER_1);
     assertNotNull(properties);
     assertEquals(properties.getPartitionDataMap(URI_2).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 1.5d);
@@ -173,6 +180,7 @@ public class ZooKeeperServerTest
 
     // bring up uri2 with uri specific properties
 
+    reset(_indisAnnouncer);
     markUp(_server, CLUSTER_1, URI_2, _partitionWeight, _uri2SpecificProperties);
 
     properties = _store.get(CLUSTER_1);
@@ -183,6 +191,13 @@ public class ZooKeeperServerTest
     assertNotNull(properties.getUriSpecificProperties());
     assertEquals(properties.getUriSpecificProperties().size(), 1);
     assertEquals(properties.getUriSpecificProperties().get(URI_2), _uri2SpecificProperties);
+
+    UriProperties propertiesForUri2 = new UriProperties(properties.getClusterName(),
+        ImmutableMap.of(URI_2, properties.getPartitionDataMap(URI_2)),
+        ImmutableMap.of(URI_2, _uri2SpecificProperties));
+
+    verify(_indisAnnouncer).announce(CLUSTER_1, URI_2.getScheme(), URI_2.getHost(), URI_2.getPort(), URI_2.getPath()
+        , _partitionWeight, _uri2SpecificProperties, propertiesForUri2);
 
     // bring down uri1 and bring it back up again with properties
 
