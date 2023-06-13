@@ -101,11 +101,27 @@ public class
                      final Map<String, Object> uriSpecificProperties,
                      final Callback<None> callback)
   {
+    Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<>();
+    partitionDesc.put(uri, partitionDataMap);
+
+    Map<URI, Map<String, Object>> myUriSpecificProperties;
+    if (uriSpecificProperties != null && !uriSpecificProperties.isEmpty())
+    {
+      myUriSpecificProperties = new HashMap<>();
+      myUriSpecificProperties.put(uri, uriSpecificProperties);
+    }
+    else
+    {
+      myUriSpecificProperties = Collections.emptyMap();
+    }
+
+    UriProperties d2UriProperties = new UriProperties(clusterName, partitionDesc, myUriSpecificProperties);
+
     try {
       // we separate the INDIS and Zookeeper markUp actions as they are independent of each other -- the success or
       // failure of the INDIS announcement shouldn't affect the Zookeeper markDown below
       _indisAnnouncer.announce(clusterName, uri.getScheme(), uri.getHost(), uri.getPort(), uri.getPath(), partitionDataMap,
-          uriSpecificProperties);
+          uriSpecificProperties, d2UriProperties);
     } catch (Exception e) {
       _log.warn(String.format("Failed to announce cluster %s to INDIS", clusterName), e);
     }
@@ -115,20 +131,6 @@ public class
       @Override
       public void onSuccess(None none)
       {
-        Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<>();
-        partitionDesc.put(uri, partitionDataMap);
-
-        Map<URI, Map<String, Object>> myUriSpecificProperties;
-        if (uriSpecificProperties != null && !uriSpecificProperties.isEmpty())
-        {
-          myUriSpecificProperties = new HashMap<>();
-          myUriSpecificProperties.put(uri, uriSpecificProperties);
-        }
-        else
-        {
-          myUriSpecificProperties = Collections.emptyMap();
-        }
-
         if (_log.isInfoEnabled())
         {
           StringBuilder sb = new StringBuilder();
@@ -149,7 +151,7 @@ public class
           sb.append("}");
           info(_log, sb);
         }
-        _store.put(clusterName, new UriProperties(clusterName, partitionDesc, myUriSpecificProperties), callback);
+        _store.put(clusterName, d2UriProperties, callback);
       }
 
       @Override

@@ -1,6 +1,7 @@
 package com.linkedin.d2.discovery.event;
 
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.d2.balancer.properties.UriProperties;
 import java.util.Map;
 
 /**
@@ -12,7 +13,7 @@ public interface IndisAnnouncer {
   void start();
   void stop();
   void announce(String cluster, String protocol, String host, int port, String path, Map<Integer, PartitionData> partitionDataMap,
-      Map<String, Object> uriSpecificProperties);
+      Map<String, Object> uriSpecificProperties, UriProperties d2UriProperties);
 
   void deannounce(String cluster, String protocol, String host, int port, String path);
 }
