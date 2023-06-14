@@ -115,8 +115,12 @@ public class D2ClientBuilder
 
     if (_config.downstreamServicesFetcher == null)
     {
-      _config.downstreamServicesFetcher = new FSBasedDownstreamServicesFetcher(_config.fsBasePath,
-          _config.indisFsBasePath, _config.d2ServicePath);
+      _config.downstreamServicesFetcher = new FSBasedDownstreamServicesFetcher(_config.fsBasePath, _config.d2ServicePath);
+    }
+
+    if (_config.indisDownstreamServicesFetcher == null)
+    {
+      _config.indisDownstreamServicesFetcher = new FSBasedDownstreamServicesFetcher(_config.indisFsBasePath, _config.d2ServicePath);
     }
 
     if (_config.jmxManager == null)
@@ -169,6 +173,7 @@ public class D2ClientBuilder
                   _config.warmUpTimeoutSeconds,
                   _config.warmUpConcurrentRequests,
                   _config.downstreamServicesFetcher,
+                  _config.indisDownstreamServicesFetcher,
                   _config.backupRequestsEnabled,
                   _config.backupRequestsStrategyStatsConsumer,
                   _config.backupRequestsLatencyNotificationInterval,
@@ -528,6 +533,12 @@ public class D2ClientBuilder
   public D2ClientBuilder setDownstreamServicesFetcher(DownstreamServicesFetcher downstreamServicesFetcher)
   {
     _config.downstreamServicesFetcher = downstreamServicesFetcher;
+    return this;
+  }
+
+  public D2ClientBuilder setIndisDownstreamServicesFetcher(DownstreamServicesFetcher indisDownstreamServicesFetcher)
+  {
+    _config.indisDownstreamServicesFetcher = indisDownstreamServicesFetcher;
     return this;
   }
 

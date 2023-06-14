@@ -310,9 +310,11 @@ public class XdsToD2PropertiesAdaptor
     @Override
     public void onChanged(XdsClient.D2NodeMapUpdate update)
     {
-      if (_init.compareAndSet(false, true))
+      boolean isInit = _init.compareAndSet(false, true);
+
+      if (isInit)
       {
-        emitSDStatusInitialRequestEvent(_clusterName);
+        emitSDStatusInitialRequestEvent(_clusterName, true);
       }
 
       if (_uriEventBus != null)
@@ -320,7 +322,10 @@ public class XdsToD2PropertiesAdaptor
         try
         {
           Map<String, UriProperties> updates = toUriProperties(update.getNodeDataMap());
-          emitSDStatusUpdateReceiptEvents(updates);
+          if (!isInit)
+          {
+            emitSDStatusUpdateReceiptEvents(updates);
+          }
           _currentData = updates;
           UriProperties mergedUriProperties = _uriPropertiesMerger.merge(_clusterName, _currentData.values());
           _uriEventBus.publishInitialize(_clusterName, mergedUriProperties);
@@ -339,6 +344,10 @@ public class XdsToD2PropertiesAdaptor
     @Override
     public void onError(Status error)
     {
+      if (_init.compareAndSet(false, true))
+      {
+        emitSDStatusInitialRequestEvent(_clusterName, false);
+      }
       notifyAvailabilityChanges(false);
     }
 
@@ -348,11 +357,11 @@ public class XdsToD2PropertiesAdaptor
       notifyAvailabilityChanges(true);
     }
 
-    private void emitSDStatusInitialRequestEvent(String cluster)
+    private void emitSDStatusInitialRequestEvent(String cluster, boolean succeeded)
     {
       if (_eventEmitter == null)
       {
-        _log.info("Service discovery event emitter in ZookeeperEphemeralStore is null. Skipping emitting events.");
+        _log.info("Service discovery event emitter in XdsToD2PropertiesAdaptor is null. Skipping emitting events.");
         return;
       }
 
@@ -364,7 +373,7 @@ public class XdsToD2PropertiesAdaptor
         return;
       }
       // emit service discovery status initial request event for success
-      _eventEmitter.emitSDStatusInitialRequestEvent(cluster, true, initialFetchDurationMillis, true);
+      _eventEmitter.emitSDStatusInitialRequestEvent(cluster, true, initialFetchDurationMillis, succeeded);
 
     }
 
@@ -372,7 +381,7 @@ public class XdsToD2PropertiesAdaptor
     {
       if (_eventEmitter == null)
       {
-        _log.info("Service discovery event emitter in ZookeeperEphemeralStore is null. Skipping emitting events.");
+        _log.info("Service discovery event emitter in XdsToD2PropertiesAdaptor is null. Skipping emitting events.");
         return;
       }
 

@@ -269,7 +269,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
       return DualReadModeProvider.DualReadMode.OLD_LB_ONLY;
     }
 
-    return _dualReadStateManager.getDualReadMode();
+    return _dualReadStateManager.getGlobalDualReadMode();
   }
 
   private DualReadModeProvider.DualReadMode getDualReadMode(String d2ServiceName)

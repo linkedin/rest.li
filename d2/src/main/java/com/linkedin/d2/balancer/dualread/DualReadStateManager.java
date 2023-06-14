@@ -28,6 +28,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+/**
+ * Checks and manages the global and per-service dual read state.
+ * Provides monitoring of the dual read data.
+ *
+ * The dual read state is broken down into global and per-service state. Per-service dual read
+ * mode has a higher priority. Only if per-service dual read mode is not defined, global
+ * dual read mode will be used.
+ */
 @SuppressWarnings("UnstableApiUsage")
 public class DualReadStateManager
 {
@@ -85,7 +94,7 @@ public class DualReadStateManager
     LOG.debug("Dual read mode for cluster " + cluster + " updated: " + mode);
   }
 
-  public DualReadModeProvider.DualReadMode getDualReadMode()
+  public DualReadModeProvider.DualReadMode getGlobalDualReadMode()
   {
     checkAndSwitchMode(null);
     return _dualReadMode;

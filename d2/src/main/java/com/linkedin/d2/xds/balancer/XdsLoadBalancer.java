@@ -21,6 +21,7 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.Directory;
 import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
+import com.linkedin.d2.balancer.WarmUpService;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
@@ -50,7 +51,7 @@ import org.slf4j.LoggerFactory;
  * When xDS connection is temporarily unavailable, it switches back to discover from backup file store.
  * It reconnects and rebuilds state when the connection is back alive.
  */
-public class XdsLoadBalancer implements LoadBalancerWithFacilities
+public class XdsLoadBalancer implements LoadBalancerWithFacilities, WarmUpService
 {
   private static final Logger _log = LoggerFactory.getLogger(XdsLoadBalancer.class);
 
@@ -59,7 +60,7 @@ public class XdsLoadBalancer implements LoadBalancerWithFacilities
   private final ScheduledExecutorService _executorService;
 
   public XdsLoadBalancer(XdsToD2PropertiesAdaptor xdsAdaptor, ScheduledExecutorService executorService,
-      XdsTogglingLoadBalancerFactory factory)
+      XdsFsTogglingLoadBalancerFactory factory)
   {
     _xdsAdaptor = xdsAdaptor;
     _loadBalancer = factory.create(executorService, xdsAdaptor);
@@ -180,5 +181,11 @@ public class XdsLoadBalancer implements LoadBalancerWithFacilities
     _xdsAdaptor.shutdown();
     _executorService.shutdown();
     shutdown.done();
+  }
+
+  @Override
+  public void warmUpService(String serviceName, Callback<None> callback)
+  {
+    _loadBalancer.warmUpService(serviceName, callback);
   }
 }

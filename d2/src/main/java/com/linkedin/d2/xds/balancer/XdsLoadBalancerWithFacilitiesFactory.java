@@ -19,6 +19,7 @@ package com.linkedin.d2.xds.balancer;
 import com.linkedin.d2.balancer.D2ClientConfig;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilitiesFactory;
+import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
 import com.linkedin.d2.jmx.D2ClientJmxManager;
 import com.linkedin.d2.xds.Node;
 import com.linkedin.d2.xds.XdsChannelFactory;
@@ -54,11 +55,22 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
     XdsToD2PropertiesAdaptor adaptor = new XdsToD2PropertiesAdaptor(xdsClient, config.dualReadStateManager,
         config.serviceDiscoveryEventEmitter);
 
-    return new XdsLoadBalancer(adaptor, executorService,
-        new XdsTogglingLoadBalancerFactory(config.lbWaitTimeout, config.lbWaitUnit, config.indisFsBasePath,
+    XdsLoadBalancer xdsLoadBalancer = new XdsLoadBalancer(adaptor, executorService,
+        new XdsFsTogglingLoadBalancerFactory(config.lbWaitTimeout, config.lbWaitUnit, config.indisFsBasePath,
             config.clientFactories, config.loadBalancerStrategyFactories, config.d2ServicePath, config.sslContext,
             config.sslParameters, config.isSSLEnabled, config.clientServicesConfig, config.partitionAccessorRegistry,
             config.sslSessionValidatorFactory, d2ClientJmxManager, config.deterministicSubsettingMetadataProvider,
             config.failoutConfigProviderFactory, config.canaryDistributionProvider));
+
+    LoadBalancerWithFacilities balancer = xdsLoadBalancer;
+
+    if (config.warmUp)
+    {
+      balancer = new WarmUpLoadBalancer(balancer, xdsLoadBalancer, config.startUpExecutorService, config.indisFsBasePath,
+          config.d2ServicePath, config.indisDownstreamServicesFetcher, config.warmUpTimeoutSeconds,
+          config.warmUpConcurrentRequests, config.dualReadStateManager);
+    }
+
+    return balancer;
   }
 }

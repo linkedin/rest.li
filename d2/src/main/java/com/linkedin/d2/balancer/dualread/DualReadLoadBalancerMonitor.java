@@ -33,6 +33,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+/**
+ * Monitors dual read service discovery data and compares the correctness of the data.
+ *
+ * For each service discovery properties, there will be a cache for old load balancer data, and a cache
+ * for new load balancer data.
+ *
+ * When a new service discovery data is reported, it will check the cache of the other data source
+ * and see if there is a match based on the property name and version. If there is a match, it will
+ * use the {@link DualReadLoadBalancerMonitor#isEqual(CacheEntry, CacheEntry)} method to compare whether
+ * the two entries are equal.
+ */
 public abstract class DualReadLoadBalancerMonitor<T>
 {
   private static final Logger LOG = LoggerFactory.getLogger(DualReadLoadBalancerMonitor.class);
@@ -65,7 +76,7 @@ public abstract class DualReadLoadBalancerMonitor<T>
     if (entry != null && Objects.equals(entry._version, propertyVersion))
     {
       CacheEntry<T> newEntry = new CacheEntry<>(propertyVersion, getTimestamp(), property);
-      if (!compareEntries(entry, newEntry))
+      if (!isEqual(entry, newEntry))
       {
         _rateLimitedLogger.warn("Received mismatched properties from dual read. Old LB: {}, New LB: {}",
             entry, newEntry);
@@ -78,7 +89,7 @@ public abstract class DualReadLoadBalancerMonitor<T>
     }
   }
 
-  abstract boolean compareEntries(CacheEntry<T> oldLbEntry, CacheEntry<T> newLbEntry);
+  abstract boolean isEqual(CacheEntry<T> oldLbEntry, CacheEntry<T> newLbEntry);
 
   abstract void onEvict();
 
@@ -135,7 +146,7 @@ public abstract class DualReadLoadBalancerMonitor<T>
     }
 
     @Override
-    boolean compareEntries(CacheEntry<ClusterProperties> oldLbEntry, CacheEntry<ClusterProperties> newLbEntry)
+    boolean isEqual(CacheEntry<ClusterProperties> oldLbEntry, CacheEntry<ClusterProperties> newLbEntry)
     {
       if (!oldLbEntry._data.equals(newLbEntry._data))
       {
@@ -164,7 +175,7 @@ public abstract class DualReadLoadBalancerMonitor<T>
     }
 
     @Override
-    boolean compareEntries(CacheEntry<ServiceProperties> oldLbEntry, CacheEntry<ServiceProperties> newLbEntry)
+    boolean isEqual(CacheEntry<ServiceProperties> oldLbEntry, CacheEntry<ServiceProperties> newLbEntry)
     {
       if (!oldLbEntry._data.equals(newLbEntry._data))
       {
@@ -193,7 +204,7 @@ public abstract class DualReadLoadBalancerMonitor<T>
     }
 
     @Override
-    boolean compareEntries(CacheEntry<UriProperties> oldLbEntry, CacheEntry<UriProperties> newLbEntry)
+    boolean isEqual(CacheEntry<UriProperties> oldLbEntry, CacheEntry<UriProperties> newLbEntry)
     {
       if (oldLbEntry._data.Uris().size() != newLbEntry._data.Uris().size())
       {

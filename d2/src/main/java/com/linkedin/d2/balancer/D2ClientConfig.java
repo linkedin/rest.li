@@ -93,11 +93,12 @@ public class D2ClientConfig
   int retryLimit = DEFAULT_RETRY_LIMIT;
   long retryUpdateIntervalMs = RetryClient.DEFAULT_UPDATE_INTERVAL_MS;
   int retryAggregatedIntervalNum = RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM;
-  boolean warmUp = true;
-  int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
+  public boolean warmUp = true;
+  public int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
   int zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
-  int warmUpConcurrentRequests = WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS;
-  DownstreamServicesFetcher downstreamServicesFetcher = null;
+  public int warmUpConcurrentRequests = WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS;
+  public DownstreamServicesFetcher downstreamServicesFetcher = null;
+  public DownstreamServicesFetcher indisDownstreamServicesFetcher = null;
   boolean backupRequestsEnabled = true;
   BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer = null;
   long backupRequestsLatencyNotificationInterval = 1;
@@ -111,7 +112,7 @@ public class D2ClientConfig
   boolean requestTimeoutHandlerEnabled = false;
   public SslSessionValidatorFactory sslSessionValidatorFactory = null;
   ZKPersistentConnection zkConnectionToUseForLB = null;
-  ScheduledExecutorService startUpExecutorService = null;
+  public ScheduledExecutorService startUpExecutorService = null;
   public JmxManager jmxManager = new NoOpJmxManager();
   public String d2JmxManagerPrefix = "UnknownPrefix";
   boolean enableRelativeLoadBalancer = false;
@@ -163,6 +164,7 @@ public class D2ClientConfig
                  int warmUpTimeoutSeconds,
                  int warmUpConcurrentRequests,
                  DownstreamServicesFetcher downstreamServicesFetcher,
+                 DownstreamServicesFetcher indisDownstreamServicesFetcher,
                  boolean backupRequestsEnabled,
                  BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer,
                  long backupRequestsLatencyNotificationInterval,
@@ -225,6 +227,7 @@ public class D2ClientConfig
     this.warmUpTimeoutSeconds = warmUpTimeoutSeconds;
     this.warmUpConcurrentRequests = warmUpConcurrentRequests;
     this.downstreamServicesFetcher = downstreamServicesFetcher;
+    this.indisDownstreamServicesFetcher = indisDownstreamServicesFetcher;
     this.backupRequestsEnabled = backupRequestsEnabled;
     this.backupRequestsStrategyStatsConsumer = backupRequestsStrategyStatsConsumer;
     this.backupRequestsLatencyNotificationInterval = backupRequestsLatencyNotificationInterval;

@@ -19,7 +19,6 @@ package com.linkedin.d2.xds.balancer;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
-import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
@@ -60,13 +59,13 @@ import org.slf4j.LoggerFactory;
 /**
  * A factory that creates a load balancer with xDS and file store toggles for service discovery
  */
-public class XdsTogglingLoadBalancerFactory
+public class XdsFsTogglingLoadBalancerFactory
 {
-  private static final Logger _log = LoggerFactory.getLogger(XdsTogglingLoadBalancerFactory.class);
+  private static final Logger _log = LoggerFactory.getLogger(XdsFsTogglingLoadBalancerFactory.class);
 
   private final long _lbTimeout;
   private final TimeUnit _lbTimeoutUnit;
-  private final String _fsd2DirPath;
+  private final String _fsIndisDirPath;
   private final String _d2ServicePath;
   private final D2ClientJmxManager _d2ClientJmxManager;
   private final Map<String, TransportClientFactory> _clientFactories;
@@ -82,7 +81,7 @@ public class XdsTogglingLoadBalancerFactory
   private final CanaryDistributionProvider _canaryDistributionProvider;
   private final FailoutConfigProviderFactory _failoutConfigProviderFactory;
 
-  public XdsTogglingLoadBalancerFactory(long timeout, TimeUnit timeoutUnit, String fsBasePath,
+  public XdsFsTogglingLoadBalancerFactory(long timeout, TimeUnit timeoutUnit, String fsBasePath,
       Map<String, TransportClientFactory> clientFactories,
       Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
       String d2ServicePath, SSLContext sslContext, SSLParameters sslParameters, boolean isSSLEnabled,
@@ -93,7 +92,7 @@ public class XdsTogglingLoadBalancerFactory
   {
     _lbTimeout = timeout;
     _lbTimeoutUnit = timeoutUnit;
-    _fsd2DirPath = fsBasePath;
+    _fsIndisDirPath = fsBasePath;
     _clientFactories = clientFactories;
     _loadBalancerStrategyFactories = loadBalancerStrategyFactories;
     _d2ServicePath = d2ServicePath;
@@ -116,16 +115,16 @@ public class XdsTogglingLoadBalancerFactory
     PropertyEventBus<UriProperties> uriBus = new PropertyEventBusImpl<>(executorService);
 
     FileStore<ClusterProperties> fsClusterStore =
-        createFileStore(FileSystemDirectory.getClusterDirectory(_fsd2DirPath), new ClusterPropertiesJsonSerializer());
+        createFileStore(FileSystemDirectory.getClusterDirectory(_fsIndisDirPath), new ClusterPropertiesJsonSerializer());
     _d2ClientJmxManager.setFsClusterStore(fsClusterStore);
 
     FileStore<ServiceProperties> fsServiceStore =
-        createFileStore(FileSystemDirectory.getServiceDirectory(_fsd2DirPath, _d2ServicePath),
+        createFileStore(FileSystemDirectory.getServiceDirectory(_fsIndisDirPath, _d2ServicePath),
             new ServicePropertiesJsonSerializer());
     _d2ClientJmxManager.setFsServiceStore(fsServiceStore);
 
     FileStore<UriProperties> fsUriStore =
-        createFileStore(_fsd2DirPath + File.separator + "uris", new UriPropertiesJsonSerializer());
+        createFileStore(_fsIndisDirPath + File.separator + "uris", new UriPropertiesJsonSerializer());
     _d2ClientJmxManager.setFsUriStore(fsUriStore);
 
     // This ensures the filesystem store receives the events from the event bus so that
