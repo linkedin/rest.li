@@ -15,6 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.42.5] - 2023-06-08
+- Add a new service discovery announcer `IndisAnnouncer` and wire it into existing Zookeeper flow
 
 ## [29.42.4] - 2023-06-02
 - Add log message in RestClient for ScatterGatherStrategy map URIs empty case
