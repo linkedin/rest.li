@@ -115,8 +115,8 @@ public class ZooKeeperServerTest
     assertEquals(properties.getPartitionDataMap(URI_1).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 0.5d);
     assertEquals(properties.Uris().size(), 1);
 
-    verify(_indisAnnouncer).announce(CLUSTER_1, URI_1.getScheme(), URI_1.getHost(), URI_1.getPort(), URI_1.getPath()
-        , properties.getPartitionDataMap(URI_1), Collections.emptyMap(), properties);
+    verify(_indisAnnouncer).announce(CLUSTER_1, URI_1, properties.getPartitionDataMap(URI_1),
+        Collections.emptyMap(), properties);
 
     // test mark up when already up call
     markUp(_server, CLUSTER_1, URI_1, 2d);
@@ -137,7 +137,7 @@ public class ZooKeeperServerTest
     // bring down uri 1
     reset(_indisAnnouncer);
     markDown(_server, CLUSTER_1, URI_1);
-    verify(_indisAnnouncer).deannounce(CLUSTER_1, URI_1.getScheme(), URI_1.getHost(), URI_1.getPort(), URI_1.getPath());
+    verify(_indisAnnouncer).deannounce(CLUSTER_1, URI_1);
     properties = _store.get(CLUSTER_1);
     assertNotNull(properties);
     assertEquals(properties.getPartitionDataMap(URI_2).get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(), 1.5d);
@@ -196,8 +196,7 @@ public class ZooKeeperServerTest
         ImmutableMap.of(URI_2, properties.getPartitionDataMap(URI_2)),
         ImmutableMap.of(URI_2, _uri2SpecificProperties));
 
-    verify(_indisAnnouncer).announce(CLUSTER_1, URI_2.getScheme(), URI_2.getHost(), URI_2.getPort(), URI_2.getPath()
-        , _partitionWeight, _uri2SpecificProperties, propertiesForUri2);
+    verify(_indisAnnouncer).announce(CLUSTER_1, URI_2, _partitionWeight, _uri2SpecificProperties, propertiesForUri2);
 
     // bring down uri1 and bring it back up again with properties
 

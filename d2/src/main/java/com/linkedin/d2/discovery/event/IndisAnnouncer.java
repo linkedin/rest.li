@@ -2,6 +2,7 @@ package com.linkedin.d2.discovery.event;
 
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.UriProperties;
+import java.net.URI;
 import java.util.Map;
 
 /**
@@ -10,10 +11,8 @@ import java.util.Map;
  * that open-source restli users can use (or provide their own implementation for their own service discovery system)
  */
 public interface IndisAnnouncer {
-  void start();
-  void stop();
-  void announce(String cluster, String protocol, String host, int port, String path, Map<Integer, PartitionData> partitionDataMap,
+  void announce(String cluster, URI uri, Map<Integer, PartitionData> partitionDataMap,
       Map<String, Object> uriSpecificProperties, UriProperties d2UriProperties);
 
-  void deannounce(String cluster, String protocol, String host, int port, String path);
+  void deannounce(String cluster, URI uri);
 }

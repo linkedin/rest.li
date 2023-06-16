@@ -16,16 +16,6 @@
 
 package com.linkedin.d2.balancer.servers;
 
-import com.linkedin.d2.discovery.event.IndisAnnouncer;
-import com.linkedin.d2.discovery.event.NoopIndisAnnouncer;
-import java.net.URI;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
@@ -35,14 +25,21 @@ import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.discovery.event.D2ServiceDiscoveryEventHelper;
+import com.linkedin.d2.discovery.event.IndisAnnouncer;
+import com.linkedin.d2.discovery.event.NoopIndisAnnouncer;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
-
+import java.net.URI;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.linkedin.d2.discovery.util.LogUtil.info;
-import static com.linkedin.d2.discovery.util.LogUtil.warn;
+import static com.linkedin.d2.discovery.util.LogUtil.*;
 
 public class
         ZooKeeperServer implements LoadBalancerServer
@@ -97,7 +94,7 @@ public class
                      final Map<Integer, PartitionData> partitionDataMap,
                      final Callback<None> callback)
   {
-    markUp(clusterName, uri, partitionDataMap, Collections.<String, Object>emptyMap(), callback);
+    markUp(clusterName, uri, partitionDataMap, Collections.emptyMap(), callback);
   }
 
   @Override
@@ -107,29 +104,23 @@ public class
                      final Map<String, Object> uriSpecificProperties,
                      final Callback<None> callback)
   {
-    Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<>();
-    partitionDesc.put(uri, partitionDataMap);
+    Map<URI, Map<Integer, PartitionData>> partitionDesc = Collections.singletonMap(uri, partitionDataMap);
 
-    Map<URI, Map<String, Object>> myUriSpecificProperties;
-    if (uriSpecificProperties != null && !uriSpecificProperties.isEmpty())
-    {
-      myUriSpecificProperties = new HashMap<>();
-      myUriSpecificProperties.put(uri, uriSpecificProperties);
-    }
-    else
-    {
-      myUriSpecificProperties = Collections.emptyMap();
+    Map<URI, Map<String, Object>> uriToUriSpecificProperties;
+    if (uriSpecificProperties != null && !uriSpecificProperties.isEmpty()) {
+      uriToUriSpecificProperties = Collections.singletonMap(uri, uriSpecificProperties);
+    } else {
+      uriToUriSpecificProperties = Collections.emptyMap();
     }
 
-    UriProperties d2UriProperties = new UriProperties(clusterName, partitionDesc, myUriSpecificProperties);
+    UriProperties d2UriProperties = new UriProperties(clusterName, partitionDesc, uriToUriSpecificProperties);
 
     try {
       // we separate the INDIS and Zookeeper markUp actions as they are independent of each other -- the success or
       // failure of the INDIS announcement shouldn't affect the Zookeeper markUp below
-      _indisAnnouncer.announce(clusterName, uri.getScheme(), uri.getHost(), uri.getPort(), uri.getPath(), partitionDataMap,
-          uriSpecificProperties, d2UriProperties);
+      _indisAnnouncer.announce(clusterName, uri, partitionDataMap, uriSpecificProperties, d2UriProperties);
     } catch (Exception e) {
-      _log.warn(String.format("Failed to announce cluster %s to INDIS", clusterName), e);
+      _log.warn("Failed to announce cluster {} to INDIS", clusterName, e);
     }
 
     final Callback<None> doPutCallback = new Callback<None>()
@@ -213,9 +204,9 @@ public class
     // we separate the INDIS and Zookeeper markDown actions as they are independent of each other -- the success or
     // failure of the INDIS deannouncement shouldn't affect the Zookeeper markDown below
     try {
-      _indisAnnouncer.deannounce(clusterName, uri.getScheme(), uri.getHost(), uri.getPort(), uri.getPath());
+      _indisAnnouncer.deannounce(clusterName, uri);
     } catch (Exception e) {
-      _log.warn(String.format("Failed to deannounce cluster %s to INDIS", clusterName), e);
+      _log.warn("Failed to deannounce cluster {} to INDIS", clusterName, e);
     }
 
     Callback<UriProperties> getCallback = new Callback<UriProperties>()
