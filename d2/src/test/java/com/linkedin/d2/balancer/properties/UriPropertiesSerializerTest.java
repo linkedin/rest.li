@@ -133,7 +133,7 @@ public class UriPropertiesSerializerTest
   }
 
   @Test
-  public void testWithApplicationProperties()
+  public void testWithApplicationPropertiesAndVersion()
       throws PropertySerializationException
   {
     UriPropertiesJsonSerializer jsonSerializer = new UriPropertiesJsonSerializer();
@@ -153,7 +153,8 @@ public class UriPropertiesSerializerTest
 
     partitionDesc.put(uri, partitions);
 
-    UriProperties properties = new UriProperties("test", partitionDesc, Collections.singletonMap(uri, applicationProperties));
+    UriProperties properties = new UriProperties("test", partitionDesc,
+        Collections.singletonMap(uri, applicationProperties), 0);
     UriProperties stored = jsonSerializer.fromBytes(jsonSerializer.toBytes(properties));
     assertEquals(stored, properties);
 

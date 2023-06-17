@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.properties;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.linkedin.d2.balancer.subsetting.SubsettingStrategy;
 import com.linkedin.util.ArgumentUtil;
 
@@ -36,6 +37,7 @@ import java.util.Set;
  * certain objects are serialized differently than how Jackson would serialize the object (for instance, using different key names), and
  * that will cause problems in serialization/deserialization.
  */
+@JsonIgnoreProperties({ "version" })
 public class ServiceProperties
 {
   private final String _serviceName;
@@ -52,6 +54,7 @@ public class ServiceProperties
   private final Map<String, Object> _serviceMetadataProperties;
   private final boolean _enableClusterSubsetting;
   private final int _minClusterSubsetSize;
+  private long _version;
 
   public ServiceProperties(String serviceName,
                            String clusterName,
@@ -158,6 +161,28 @@ public class ServiceProperties
       boolean enableClusterSubsetting,
       int minClusterSubsetSize)
   {
+    this(serviceName, clusterName, path, prioritizedStrategyList, loadBalancerStrategyProperties,
+        transportClientProperties, degraderProperties, prioritizedSchemes, banned,
+        serviceMetadataProperties, backupRequests, relativeStrategyProperties, enableClusterSubsetting,
+        minClusterSubsetSize, -1);
+  }
+
+  public ServiceProperties(String serviceName,
+      String clusterName,
+      String path,
+      List<String> prioritizedStrategyList,
+      Map<String,Object> loadBalancerStrategyProperties,
+      Map<String,Object> transportClientProperties,
+      Map<String,String> degraderProperties,
+      List<String> prioritizedSchemes,
+      Set<URI> banned,
+      Map<String,Object> serviceMetadataProperties,
+      List<Map<String,Object>> backupRequests,
+      Map<String, Object> relativeStrategyProperties,
+      boolean enableClusterSubsetting,
+      int minClusterSubsetSize,
+      long version)
+  {
     ArgumentUtil.notNull(serviceName, PropertyKeys.SERVICE_NAME);
     ArgumentUtil.notNull(clusterName, PropertyKeys.CLUSTER_NAME);
     ArgumentUtil.notNull(path, PropertyKeys.PATH);
@@ -188,6 +213,7 @@ public class ServiceProperties
         ? relativeStrategyProperties : Collections.emptyMap();
     _enableClusterSubsetting = enableClusterSubsetting;
     _minClusterSubsetSize = minClusterSubsetSize;
+    _version = version;
   }
 
   public ServiceProperties(ServiceProperties other)
@@ -218,6 +244,16 @@ public class ServiceProperties
   public String getServiceName()
   {
     return _serviceName;
+  }
+
+  public void setVersion(long version)
+  {
+    _version = version;
+  }
+
+  public long getVersion()
+  {
+    return _version;
   }
 
   /**

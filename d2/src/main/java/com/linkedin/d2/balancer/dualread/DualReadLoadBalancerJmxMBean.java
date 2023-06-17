@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2023 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,16 +14,19 @@
    limitations under the License.
 */
 
-package com.linkedin.d2.discovery;
+package com.linkedin.d2.balancer.dualread;
 
-public interface PropertySerializer<T>
+public interface DualReadLoadBalancerJmxMBean
 {
-  byte[] toBytes(T property);
+  int getServicePropertiesErrorCount();
 
-  T fromBytes(byte[] bytes) throws PropertySerializationException;
+  int getClusterPropertiesErrorCount();
 
-  default T fromBytes(byte[] bytes, long version) throws PropertySerializationException
-  {
-    return fromBytes(bytes);
-  }
+  int getUriPropertiesErrorCount();
+
+  int getServicePropertiesEvictCount();
+
+  int getClusterPropertiesEvictCount();
+
+  int getUriPropertiesEvictCount();
 }

@@ -28,6 +28,7 @@ import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.clients.RequestTimeoutClient;
 import com.linkedin.d2.balancer.clients.RetryClient;
 import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
+import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -54,6 +55,7 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.util.ArgumentUtil;
 import com.linkedin.util.clock.SystemClock;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -116,6 +118,11 @@ public class D2ClientBuilder
       _config.downstreamServicesFetcher = new FSBasedDownstreamServicesFetcher(_config.fsBasePath, _config.d2ServicePath);
     }
 
+    if (_config.indisDownstreamServicesFetcher == null)
+    {
+      _config.indisDownstreamServicesFetcher = new FSBasedDownstreamServicesFetcher(_config.indisFsBasePath, _config.d2ServicePath);
+    }
+
     if (_config.jmxManager == null)
     {
       _config.jmxManager = new NoOpJmxManager();
@@ -132,6 +139,8 @@ public class D2ClientBuilder
         createDefaultLoadBalancerStrategyFactories();
 
     final D2ClientConfig cfg = new D2ClientConfig(_config.zkHosts,
+                  _config.xdsServer,
+                  _config.hostName,
                   _config.zkSessionTimeoutInMs,
                   _config.zkStartupTimeoutInMs,
                   _config.lbWaitTimeout,
@@ -139,10 +148,12 @@ public class D2ClientBuilder
                   _config.flagFile,
                   _config.basePath,
                   _config.fsBasePath,
+                  _config.indisFsBasePath,
                   _config.componentFactory,
                   transportClientFactories,
                   _config.lbWithFacilitiesFactory,
                   _config.sslContext,
+                  _config.grpcSslContext,
                   _config.sslParameters,
                   _config.isSSLEnabled,
                   _config.shutdownAsynchronously,
@@ -162,6 +173,7 @@ public class D2ClientBuilder
                   _config.warmUpTimeoutSeconds,
                   _config.warmUpConcurrentRequests,
                   _config.downstreamServicesFetcher,
+                  _config.indisDownstreamServicesFetcher,
                   _config.backupRequestsEnabled,
                   _config.backupRequestsStrategyStatsConsumer,
                   _config.backupRequestsLatencyNotificationInterval,
@@ -186,7 +198,8 @@ public class D2ClientBuilder
                   _config.enableClusterFailout,
                   _config.failoutConfigProviderFactory,
                   _config.failoutRedirectStrategy,
-                  _config.serviceDiscoveryEventEmitter
+                  _config.serviceDiscoveryEventEmitter,
+                  _config.dualReadStateManager
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -265,6 +278,19 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setXdsServer(String xdsServer)
+  {
+    _config.xdsServer = xdsServer;
+    return this;
+  }
+
+  public D2ClientBuilder setHostName(String hostName)
+  {
+    _config.hostName = hostName;
+    return this;
+  }
+
+
   public D2ClientBuilder setZkSessionTimeout(long zkSessionTimeout, TimeUnit unit)
   {
     _config.zkSessionTimeoutInMs = unit.toMillis(zkSessionTimeout);
@@ -302,6 +328,12 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setIndisFsBasePath(String indisFsBasePath)
+  {
+    _config.indisFsBasePath = indisFsBasePath;
+    return this;
+  }
+
   public D2ClientBuilder setComponentFactory(ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory componentFactory)
   {
     _config.componentFactory = componentFactory;
@@ -311,6 +343,12 @@ public class D2ClientBuilder
   public D2ClientBuilder setSSLContext(SSLContext sslContext)
   {
     _config.sslContext = sslContext;
+    return this;
+  }
+
+  public D2ClientBuilder setGrpcSslContext(SslContext grpcSslContext)
+  {
+    _config.grpcSslContext = grpcSslContext;
     return this;
   }
 
@@ -498,6 +536,12 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setIndisDownstreamServicesFetcher(DownstreamServicesFetcher indisDownstreamServicesFetcher)
+  {
+    _config.indisDownstreamServicesFetcher = indisDownstreamServicesFetcher;
+    return this;
+  }
+
   public D2ClientBuilder setEnableSaveUriDataOnDisk(boolean enableSaveUriDataOnDisk){
     _config.enableSaveUriDataOnDisk = enableSaveUriDataOnDisk;
     return this;
@@ -589,6 +633,11 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setServiceDiscoveryEventEmitter(ServiceDiscoveryEventEmitter emitter) {
     _config.serviceDiscoveryEventEmitter = emitter;
+    return this;
+  }
+
+  public D2ClientBuilder setDualReadStateManager(DualReadStateManager dualReadStateManager) {
+    _config.dualReadStateManager = dualReadStateManager;
     return this;
   }
 

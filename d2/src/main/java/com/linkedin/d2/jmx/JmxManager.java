@@ -17,6 +17,7 @@
 package com.linkedin.d2.jmx;
 
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
+import com.linkedin.d2.balancer.dualread.DualReadLoadBalancerJmx;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.servers.ZooKeeperAnnouncer;
 import com.linkedin.d2.balancer.servers.ZooKeeperConnectionManager;
@@ -169,6 +170,12 @@ public class JmxManager
   public synchronized JmxManager registerRelativeLoadBalancerStrategyJmxBean(String name, RelativeLoadBalancerStrategyJmxMBean strategyJmx)
   {
     checkReg(strategyJmx, name);
+    return this;
+  }
+
+  public synchronized  JmxManager registerDualReadLoadBalancerJmxBean(String name, DualReadLoadBalancerJmx dualReadLoadBalancerJmx)
+  {
+    checkReg(dualReadLoadBalancerJmx, name);
     return this;
   }
 

@@ -140,7 +140,7 @@ public class ServicePropertiesSerializerTest
   }
 
   @Test
-  public void testServicePropertiesSerializerWithRelativeStrategy() throws PropertySerializationException
+  public void testServicePropertiesSerializerWithRelativeStrategyAndVersion() throws PropertySerializationException
   {
     ServicePropertiesJsonSerializer serializer = new ServicePropertiesJsonSerializer();
 
@@ -148,7 +148,8 @@ public class ServicePropertiesSerializerTest
     ServiceProperties property =
         new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/foo", Arrays.asList("rr"), new HashMap<>(),
             null, null, Arrays.asList("HTTPS"), Collections.emptySet(),
-            Collections.emptyMap(), Collections.emptyList(), RelativeStrategyPropertiesConverter.toMap(relativeStrategyProperties));
+            Collections.emptyMap(), Collections.emptyList(), RelativeStrategyPropertiesConverter.toMap(relativeStrategyProperties),
+            false, -1, 0);
     assertEquals(serializer.fromBytes(serializer.toBytes(property)), new ServiceStoreProperties(property, null, null));
   }
 

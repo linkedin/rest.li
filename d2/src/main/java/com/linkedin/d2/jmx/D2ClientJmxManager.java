@@ -18,6 +18,7 @@ package com.linkedin.d2.jmx;
 
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.dualread.DualReadLoadBalancerJmx;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.simple.ClusterInfoItem;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
@@ -171,5 +172,10 @@ public class D2ClientJmxManager
   public <T> void setFsServiceStore(FileStore<T> serviceStore)
   {
     _jmxManager.registerFileStore(_prefix + "-FileStoreServiceStore", serviceStore);
+  }
+
+  public void registerDualReadLoadBalancerJmx(DualReadLoadBalancerJmx dualReadLoadBalancerJmx)
+  {
+    _jmxManager.registerDualReadLoadBalancerJmxBean(_prefix + "-DualReadLoadBalancerJmx", dualReadLoadBalancerJmx);
   }
 }

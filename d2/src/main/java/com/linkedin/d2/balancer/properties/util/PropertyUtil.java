@@ -141,6 +141,10 @@ public class PropertyUtil
         return (T) Boolean.valueOf(Boolean.parseBoolean(str));
       }
     }
+    else if (value instanceof Double && clazz.equals(Integer.class))
+    {
+      return (T) Integer.valueOf((int) ((Double) value).doubleValue());
+    }
     else
     {
       throw new IllegalArgumentException("Cannot convert value of " + value.getClass() +

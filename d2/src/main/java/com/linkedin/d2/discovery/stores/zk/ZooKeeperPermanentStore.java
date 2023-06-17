@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
+import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +42,7 @@ public class ZooKeeperPermanentStore<T> extends ZooKeeperStore<T>
   private final ZKStoreWatcher _zkStoreWatcher = new ZKStoreWatcher();
   private final ScheduledExecutorService _executorService;
   private int _zookeeperReadWindowMs;
+  private DualReadStateManager _dualReadStateManager;
 
   public ZooKeeperPermanentStore(ZKConnection client,
                                  PropertySerializer<T> serializer,
@@ -189,13 +191,14 @@ public class ZooKeeperPermanentStore<T> extends ZooKeeperStore<T>
           T propertyValue;
           try
           {
-            propertyValue = _serializer.fromBytes(bytes);
+            propertyValue = _serializer.fromBytes(bytes, stat.getMzxid());
           }
           catch (PropertySerializationException e)
           {
             _log.error("Failed to deserialize property " + propertyName + ", value in bytes:" + new String(bytes), e);
             propertyValue = null;
           }
+          reportDualReadData(propertyName, propertyValue);
           if (init)
           {
             _eventBus.publishInitialize(propertyName, propertyValue);
@@ -255,6 +258,18 @@ public class ZooKeeperPermanentStore<T> extends ZooKeeperStore<T>
           _log.error("exists: unexpected error: {}: {}", code, path);
       }
     }
+
+    private void reportDualReadData(String name, T property)
+    {
+      if (_dualReadStateManager != null)
+      {
+        _dualReadStateManager.reportData(name, property, false);
+      }
+    }
   }
 
+  public void setDualReadStateManager(DualReadStateManager dualReadStateManager)
+  {
+    _dualReadStateManager = dualReadStateManager;
+  }
 }

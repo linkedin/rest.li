@@ -40,6 +40,7 @@ import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import java.io.IOException;
 import java.util.Collections;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -139,6 +140,13 @@ public class LastSeenLoadBalancerWithFacilities implements LoadBalancerWithFacil
   public void getLoadBalancedServiceProperties(String serviceName, Callback<ServiceProperties> clientCallback)
   {
     _loadBalancer.getLoadBalancedServiceProperties(serviceName, clientCallback);
+  }
+
+  @Override
+  public void getLoadBalancedClusterAndUriProperties(String clusterName,
+      Callback<Pair<ClusterProperties, UriProperties>> callback)
+  {
+    _loadBalancer.getLoadBalancedClusterAndUriProperties(clusterName, callback);
   }
 
   /**

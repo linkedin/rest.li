@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.discovery.stores.zk.builder;
 
+import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.stores.zk.ZKConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
@@ -38,6 +39,7 @@ public class ZooKeeperPermanentStoreBuilder<T> implements ZooKeeperStoreBuilder<
   private String path;
   private ScheduledExecutorService executorService;
   private int zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
+  private DualReadStateManager dualReadStateManager = null;
   private List<Consumer<ZooKeeperPermanentStore<T>>> _onBuildListeners = new ArrayList<>();
 
   public void setZkConnection(ZKConnection client)
@@ -66,6 +68,12 @@ public class ZooKeeperPermanentStoreBuilder<T> implements ZooKeeperStoreBuilder<
   public ZooKeeperPermanentStoreBuilder<T> setZookeeperReadWindowMs(int zookeeperReadWindowMs)
   {
     this.zookeeperReadWindowMs = zookeeperReadWindowMs;
+    return this;
+  }
+
+  public ZooKeeperPermanentStoreBuilder<T> setDualReadStateManager(DualReadStateManager manager)
+  {
+    this.dualReadStateManager = manager;
     return this;
   }
 

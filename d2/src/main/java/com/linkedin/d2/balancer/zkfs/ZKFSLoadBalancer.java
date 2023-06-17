@@ -32,7 +32,9 @@ import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.WarmUpService;
 import com.linkedin.d2.balancer.clusterfailout.FailoutConfig;
+import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.d2.balancer.util.DirectoryProvider;
@@ -64,6 +66,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
@@ -278,6 +281,18 @@ public class ZKFSLoadBalancer
       return;
     }
     _currentLoadBalancer.getLoadBalancedServiceProperties(serviceName, clientCallback);
+  }
+
+  @Override
+  public void getLoadBalancedClusterAndUriProperties(String clusterName,
+      Callback<Pair<ClusterProperties, UriProperties>> callback)
+  {
+    if (_currentLoadBalancer == null)
+    {
+      callback.onSuccess(null);
+      return;
+    }
+    _currentLoadBalancer.getLoadBalancedClusterAndUriProperties(clusterName, callback);
   }
 
   @Override

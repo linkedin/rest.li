@@ -19,6 +19,7 @@ import com.linkedin.d2.backuprequests.BackupRequestsStrategyStatsConsumer;
 import com.linkedin.d2.balancer.clients.FailoutRedirectStrategy;
 import com.linkedin.d2.balancer.clients.RetryClient;
 import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
+import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.balancer.event.EventEmitter;
 import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -39,6 +40,7 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
 import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.d2.jmx.NoOpJmxManager;
 import com.linkedin.r2.transport.common.TransportClientFactory;
+import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
@@ -50,23 +52,27 @@ import javax.net.ssl.SSLParameters;
 public class D2ClientConfig
 {
   String zkHosts = null;
+  public String xdsServer = null;
+  public String hostName = null;
   long zkSessionTimeoutInMs = 3600000L;
   long zkStartupTimeoutInMs = 10000L;
-  long lbWaitTimeout = 5000L;
-  TimeUnit lbWaitUnit = TimeUnit.MILLISECONDS;
+  public long lbWaitTimeout = 5000L;
+  public TimeUnit lbWaitUnit = TimeUnit.MILLISECONDS;
   String flagFile = "/no/flag/file/set";
   String basePath = "/d2";
-  String fsBasePath = "/tmp/d2";
+  public String fsBasePath = "/tmp/d2";
+  public String indisFsBasePath = "/tmp/d2/indis";
   ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory componentFactory = null;
-  Map<String, TransportClientFactory> clientFactories = null;
+  public Map<String, TransportClientFactory> clientFactories = null;
   LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory = null;
-  String d2ServicePath = null;
-  SSLContext sslContext = null;
-  SSLParameters sslParameters = null;
-  boolean isSSLEnabled = false;
+  public String d2ServicePath = null;
+  public SSLContext sslContext = null;
+  public SslContext grpcSslContext = null;
+  public SSLParameters sslParameters = null;
+  public boolean isSSLEnabled = false;
   boolean shutdownAsynchronously = false;
   boolean isSymlinkAware = true;
-  Map<String, Map<String, Object>> clientServicesConfig = Collections.<String, Map<String, Object>>emptyMap();
+  public Map<String, Map<String, Object>> clientServicesConfig = Collections.<String, Map<String, Object>>emptyMap();
   boolean useNewEphemeralStoreWatcher = true;
   HealthCheckOperations healthCheckOperations = null;
   boolean enableSaveUriDataOnDisk = false;
@@ -87,11 +93,12 @@ public class D2ClientConfig
   int retryLimit = DEFAULT_RETRY_LIMIT;
   long retryUpdateIntervalMs = RetryClient.DEFAULT_UPDATE_INTERVAL_MS;
   int retryAggregatedIntervalNum = RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM;
-  boolean warmUp = true;
-  int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
+  public boolean warmUp = true;
+  public int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
   int zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
-  int warmUpConcurrentRequests = WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS;
-  DownstreamServicesFetcher downstreamServicesFetcher = null;
+  public int warmUpConcurrentRequests = WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS;
+  public DownstreamServicesFetcher downstreamServicesFetcher = null;
+  public DownstreamServicesFetcher indisDownstreamServicesFetcher = null;
   boolean backupRequestsEnabled = true;
   BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer = null;
   long backupRequestsLatencyNotificationInterval = 1;
@@ -99,29 +106,32 @@ public class D2ClientConfig
   // TODO: Once the change is fully verified, we should always enable the async feature
   boolean enableBackupRequestsClientAsync = false;
   EventEmitter eventEmitter = null;
-  PartitionAccessorRegistry partitionAccessorRegistry = null;
+  public PartitionAccessorRegistry partitionAccessorRegistry = null;
   Function<ZooKeeper, ZooKeeper> zooKeeperDecorator = null;
-  Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories = Collections.emptyMap();
+  public Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories = Collections.emptyMap();
   boolean requestTimeoutHandlerEnabled = false;
-  SslSessionValidatorFactory sslSessionValidatorFactory = null;
+  public SslSessionValidatorFactory sslSessionValidatorFactory = null;
   ZKPersistentConnection zkConnectionToUseForLB = null;
-  ScheduledExecutorService startUpExecutorService = null;
-  JmxManager jmxManager = new NoOpJmxManager();
-  String d2JmxManagerPrefix = "UnknownPrefix";
+  public ScheduledExecutorService startUpExecutorService = null;
+  public JmxManager jmxManager = new NoOpJmxManager();
+  public String d2JmxManagerPrefix = "UnknownPrefix";
   boolean enableRelativeLoadBalancer = false;
-  DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider = null;
-  CanaryDistributionProvider canaryDistributionProvider = null;
+  public DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider = null;
+  public CanaryDistributionProvider canaryDistributionProvider = null;
   public static final int DEFAULT_RETRY_LIMIT = 3;
   boolean enableClusterFailout = false;
-  FailoutConfigProviderFactory failoutConfigProviderFactory;
+  public FailoutConfigProviderFactory failoutConfigProviderFactory;
   FailoutRedirectStrategy failoutRedirectStrategy;
-  ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter = new LogOnlyServiceDiscoveryEventEmitter(); // default to use log-only emitter
+  public ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter = new LogOnlyServiceDiscoveryEventEmitter(); // default to use log-only emitter
+  public DualReadStateManager dualReadStateManager = null;
 
   public D2ClientConfig()
   {
   }
 
   D2ClientConfig(String zkHosts,
+                 String xdsServer,
+                 String hostName,
                  long zkSessionTimeoutInMs,
                  long zkStartupTimeoutInMs,
                  long lbWaitTimeout,
@@ -129,10 +139,12 @@ public class D2ClientConfig
                  String flagFile,
                  String basePath,
                  String fsBasePath,
+                 String indisFsBasePath,
                  ComponentFactory componentFactory,
                  Map<String, TransportClientFactory> clientFactories,
                  LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory,
                  SSLContext sslContext,
+                 SslContext grpcSslContext,
                  SSLParameters sslParameters,
                  boolean isSSLEnabled,
                  boolean shutdownAsynchronously,
@@ -152,6 +164,7 @@ public class D2ClientConfig
                  int warmUpTimeoutSeconds,
                  int warmUpConcurrentRequests,
                  DownstreamServicesFetcher downstreamServicesFetcher,
+                 DownstreamServicesFetcher indisDownstreamServicesFetcher,
                  boolean backupRequestsEnabled,
                  BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer,
                  long backupRequestsLatencyNotificationInterval,
@@ -176,9 +189,12 @@ public class D2ClientConfig
                  boolean enableClusterFailout,
                  FailoutConfigProviderFactory failoutConfigProviderFactory,
                  FailoutRedirectStrategy failoutRedirectStrategy,
-                 ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter)
+                 ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter,
+                 DualReadStateManager dualReadStateManager)
   {
     this.zkHosts = zkHosts;
+    this.xdsServer = xdsServer;
+    this.hostName = hostName;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
     this.zkStartupTimeoutInMs = zkStartupTimeoutInMs;
     this.lbWaitTimeout = lbWaitTimeout;
@@ -186,10 +202,12 @@ public class D2ClientConfig
     this.flagFile = flagFile;
     this.basePath = basePath;
     this.fsBasePath = fsBasePath;
+    this.indisFsBasePath = indisFsBasePath;
     this.componentFactory = componentFactory;
     this.clientFactories = clientFactories;
     this.lbWithFacilitiesFactory = lbWithFacilitiesFactory;
     this.sslContext = sslContext;
+    this.grpcSslContext = grpcSslContext;
     this.sslParameters = sslParameters;
     this.isSSLEnabled = isSSLEnabled;
     this.shutdownAsynchronously = shutdownAsynchronously;
@@ -209,6 +227,7 @@ public class D2ClientConfig
     this.warmUpTimeoutSeconds = warmUpTimeoutSeconds;
     this.warmUpConcurrentRequests = warmUpConcurrentRequests;
     this.downstreamServicesFetcher = downstreamServicesFetcher;
+    this.indisDownstreamServicesFetcher = indisDownstreamServicesFetcher;
     this.backupRequestsEnabled = backupRequestsEnabled;
     this.backupRequestsStrategyStatsConsumer = backupRequestsStrategyStatsConsumer;
     this.backupRequestsLatencyNotificationInterval = backupRequestsLatencyNotificationInterval;
@@ -234,5 +253,6 @@ public class D2ClientConfig
     this.failoutConfigProviderFactory = failoutConfigProviderFactory;
     this.failoutRedirectStrategy = failoutRedirectStrategy;
     this.serviceDiscoveryEventEmitter = serviceDiscoveryEventEmitter;
+    this.dualReadStateManager = dualReadStateManager;
   }
 }

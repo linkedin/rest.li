@@ -20,6 +20,7 @@ import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.CallbackAdapter;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.util.FileSystemDirectory;
 import com.linkedin.d2.discovery.PropertySerializationException;
@@ -99,6 +100,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   private final ZookeeperChildFilter _zookeeperChildFilter;
   private final ZookeeperEphemeralPrefixGenerator _prefixGenerator;
   private ServiceDiscoveryEventEmitter _eventEmitter;
+  private DualReadStateManager _dualReadStateManager;
   // callback when announcements happened (for the regular and warmup clusters in ZookeeperAnnouncer only) to notify the new znode path and data.
   private final AtomicReference<ZookeeperNodePathAndDataCallback> _znodePathAndDataCallbackRef;
 
@@ -218,6 +220,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     _zookeeperReadWindowMs = zookeeperReadWindowMs;
     _znodePathAndDataCallbackRef = new AtomicReference<>();
     _eventEmitter = null;
+    _dualReadStateManager = null;
   }
 
   @Override
@@ -511,6 +514,11 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 
   public void setServiceDiscoveryEventEmitter(ServiceDiscoveryEventEmitter emitter) {
     _eventEmitter = emitter;
+  }
+
+  public void setDualReadStateManager(DualReadStateManager dualReadStateManager)
+  {
+    _dualReadStateManager = dualReadStateManager;
   }
 
   public void setZnodePathAndDataCallback(ZookeeperNodePathAndDataCallback callback) {
@@ -822,18 +830,21 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
             emitSDStatusUpdateReceiptEvents(result, true); // emit status update receipt event for new children
           }
           _childrenMap.putAll(result);
+          T mergedProperty = _merger.merge(property, _childrenMap.values());
+          reportDualReadData(property, mergedProperty);
+
           if (_fileStore != null)
           {
             result.forEach(_fileStore::put);
           }
           if (init)
           {
-            _eventBus.publishInitialize(property, _merger.merge(property, _childrenMap.values()));
+            _eventBus.publishInitialize(property, mergedProperty);
             _log.debug("{}: published init", path);
           }
           else
           {
-            _eventBus.publishAdd(property, _merger.merge(property, _childrenMap.values()));
+            _eventBus.publishAdd(property, mergedProperty);
             _log.debug("{}: published add", path);
           }
         }
@@ -924,15 +935,18 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       }
     }
 
-    private void emitSDStatusInitialRequestEvent(String property, boolean succeeded) {
-      if (_eventEmitter == null) {
+    private void emitSDStatusInitialRequestEvent(String property, boolean succeeded)
+    {
+      if (_eventEmitter == null)
+      {
         _log.info("Service discovery event emitter in ZookeeperEphemeralStore is null. Skipping emitting events.");
         return;
       }
 
       // measure request duration and convert to milli-seconds
       long initialFetchDurationMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - _initialFetchStartAtNanosRef.get());
-      if (initialFetchDurationMillis < 0) {
+      if (initialFetchDurationMillis < 0)
+      {
         _log.warn("Failed to log ServiceDiscoveryStatusInitialRequest event, initialFetchStartAt time is greater than current time.");
         return;
       }
@@ -940,15 +954,19 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       _eventEmitter.emitSDStatusInitialRequestEvent(property, false, initialFetchDurationMillis, succeeded);
     }
 
-    private void emitSDStatusUpdateReceiptEvents(Map<String, T> updates, boolean isMarkUp) {
-      if (_eventEmitter == null) {
+    private void emitSDStatusUpdateReceiptEvents(Map<String, T> updates, boolean isMarkUp)
+    {
+      if (_eventEmitter == null)
+      {
         _log.info("Service discovery event emitter in ZookeeperEphemeralStore is null. Skipping emitting events.");
         return;
       }
 
       long timestamp = System.currentTimeMillis();
-      updates.forEach((nodeName, uriProperty) -> {
-        if (!(uriProperty instanceof UriProperties)) {
+      updates.forEach((nodeName, uriProperty) ->
+      {
+        if (!(uriProperty instanceof UriProperties))
+        {
           _log.error("Unknown type of URI data, ignored: " + uriProperty.toString());
           return;
         }
@@ -969,6 +987,14 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
                 timestamp)
         );
       });
+    }
+
+    private void reportDualReadData(String name, T property)
+    {
+      if (_dualReadStateManager != null)
+      {
+        _dualReadStateManager.reportData(name, property, false);
+      }
     }
   }
 
@@ -996,7 +1022,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
           try
           {
             String childPath = s.substring(s.lastIndexOf('/') + 1);
-            T value = _serializer.fromBytes(bytes);
+            T value = _serializer.fromBytes(bytes, stat.getMzxid());
             _properties.put(childPath, value);
             if (_count == 0)
             {

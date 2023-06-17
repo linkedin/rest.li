@@ -22,6 +22,8 @@ import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilitiesDelegator;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.WarmUpService;
+import com.linkedin.d2.balancer.dualread.DualReadModeProvider;
+import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
@@ -69,6 +71,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
   private final int _concurrentRequests;
   private final ScheduledExecutorService _executorService;
   private final DownstreamServicesFetcher _downstreamServicesFetcher;
+  private final DualReadStateManager _dualReadStateManager;
   private volatile boolean _shuttingDown = false;
 
   /**
@@ -82,6 +85,14 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
                             String d2FsDirPath, String d2ServicePath, DownstreamServicesFetcher downstreamServicesFetcher,
                             int warmUpTimeoutSeconds, int concurrentRequests)
   {
+    this(balancer, serviceWarmupper, executorService, d2FsDirPath, d2ServicePath, downstreamServicesFetcher,
+        warmUpTimeoutSeconds, concurrentRequests, null);
+  }
+
+  public WarmUpLoadBalancer(LoadBalancerWithFacilities balancer, WarmUpService serviceWarmupper, ScheduledExecutorService executorService,
+      String d2FsDirPath, String d2ServicePath, DownstreamServicesFetcher downstreamServicesFetcher,
+      int warmUpTimeoutSeconds, int concurrentRequests, DualReadStateManager dualReadStateManager)
+  {
     super(balancer);
     _serviceWarmupper = serviceWarmupper;
     _executorService = executorService;
@@ -92,6 +103,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
     _concurrentRequests = concurrentRequests;
     _outstandingRequests = new ConcurrentLinkedDeque<>();
     _usedServices = new HashSet<>();
+    _dualReadStateManager = dualReadStateManager;
   }
 
   @Override
@@ -154,6 +166,30 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
           return;
         }
 
+        if (_dualReadStateManager != null)
+        {
+          DualReadModeProvider dualReadModeProvider = _dualReadStateManager.getDualReadModeProvider();
+          serviceNames.forEach(serviceName ->
+          {
+            DualReadModeProvider.DualReadMode dualReadMode = dualReadModeProvider.getDualReadMode(serviceName);
+            _dualReadStateManager.updateService(serviceName, dualReadMode);
+
+            getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
+            {
+              @Override
+              public void onError(Throwable e)
+              {
+                LOG.warn("Failed to warm up dual read mode for service: " + serviceName, e);
+              }
+
+              @Override
+              public void onSuccess(ServiceProperties result)
+              {
+                _dualReadStateManager.updateCluster(result.getClusterName(), dualReadMode);
+              }
+            });
+          });
+        }
         WarmUpTask warmUpTask = new WarmUpTask(serviceNames, timeoutCallback);
 
         // get the min value because it makes no sense have an higher concurrency than the number of request to be made

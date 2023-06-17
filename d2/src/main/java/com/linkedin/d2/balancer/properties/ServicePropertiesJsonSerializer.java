@@ -194,6 +194,14 @@ public class ServicePropertiesJsonSerializer implements
     }
   }
 
+  @Override
+  public ServiceProperties fromBytes(byte[] bytes, long version) throws PropertySerializationException
+  {
+    ServiceProperties serviceProperties = fromBytes(bytes);
+    serviceProperties.setVersion(version);
+    return serviceProperties;
+  }
+
   /**
    * Always return the composite class {@link ServiceStoreProperties} to include ALL properties stored on service registry (like Zookeeper),
    * such as canary configs, distribution strategy, etc.
@@ -232,7 +240,7 @@ public class ServicePropertiesJsonSerializer implements
     Map<String, Object> relativeStrategyProperties = mapGetOrDefault(map, PropertyKeys.RELATIVE_STRATEGY_PROPERTIES, Collections.emptyMap());
     boolean enableClusterSubsetting = map.containsKey(PropertyKeys.ENABLE_CLUSTER_SUBSETTING) ? PropertyUtil.coerce(
         map.get(PropertyKeys.ENABLE_CLUSTER_SUBSETTING), Boolean.class) : SubsettingStrategy.DEFAULT_ENABLE_CLUSTER_SUBSETTING;
-    int minClusterSubsetSize = map.containsKey(PropertyKeys.MIN_CLUSTER_SUBSET_SIZE) ? PropertyUtil.coerce(
+    Integer minClusterSubsetSize = map.containsKey(PropertyKeys.MIN_CLUSTER_SUBSET_SIZE) ? PropertyUtil.coerce(
         map.get(PropertyKeys.MIN_CLUSTER_SUBSET_SIZE), Integer.class) : SubsettingStrategy.DEFAULT_CLUSTER_SUBSET_SIZE;
 
     List<URI> bannedList = mapGetOrDefault(map, PropertyKeys.BANNED_URIS, Collections.emptyList());

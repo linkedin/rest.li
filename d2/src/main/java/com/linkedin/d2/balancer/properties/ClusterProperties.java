@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.properties;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.config.DarkClustersConverter;
 
@@ -40,6 +41,7 @@ import java.util.Set;
  * is a Map<String, Object> and not DarkClusterConfigMap. For simple objects that won't ever be
  * expanded it may be ok to reuse the pegasus objects.
  */
+@JsonIgnoreProperties({ "version" })
 public class ClusterProperties
 {
   public static final float DARK_CLUSTER_DEFAULT_MULTIPLIER = 0.0f;
@@ -57,6 +59,7 @@ public class ClusterProperties
   private final List<String>          _prioritizedSchemes;
   private final Map<String, Object> _darkClusters;
   private final boolean              _delegated;
+  private long               _version;
 
   public ClusterProperties(String clusterName)
   {
@@ -149,6 +152,20 @@ public class ClusterProperties
                            Map<String, Object> darkClusters,
                            boolean delegated)
   {
+    this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings,
+        darkClusters, delegated, -1);
+  }
+
+  public ClusterProperties(String clusterName,
+      List<String> prioritizedSchemes,
+      Map<String, String> properties,
+      Set<URI> bannedUris,
+      PartitionProperties partitionProperties,
+      List<String> sslSessionValidationStrings,
+      Map<String, Object> darkClusters,
+      boolean delegated,
+      long version)
+  {
     _clusterName = clusterName;
     _prioritizedSchemes =
         (prioritizedSchemes != null) ? Collections.unmodifiableList(prioritizedSchemes)
@@ -160,6 +177,7 @@ public class ClusterProperties
         sslSessionValidationStrings);
     _darkClusters = darkClusters == null ? new HashMap<>() : darkClusters;
     _delegated = delegated;
+    _version = version;
   }
 
   public ClusterProperties(ClusterProperties other)
@@ -181,6 +199,16 @@ public class ClusterProperties
   public String getClusterName()
   {
     return _clusterName;
+  }
+
+  public void setVersion(long version)
+  {
+    _version = version;
+  }
+
+  public long getVersion()
+  {
+    return _version;
   }
 
   public List<String> getPrioritizedSchemes()

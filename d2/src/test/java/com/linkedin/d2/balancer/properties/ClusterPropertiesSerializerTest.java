@@ -111,6 +111,10 @@ public class ClusterPropertiesSerializerTest
         Arrays.asList("principal1", "principal2"), (Map<String, Object>)null, false);
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), new ClusterStoreProperties(property, null, null));
 
+    property = new ClusterProperties("test", schemes, supProperties, new HashSet<>(), NullPartitionProperties.getInstance(),
+        Arrays.asList("principal1", "principal2"), null, false, 0);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), new ClusterStoreProperties(property, null, null));
+
     try
     {
       new HashBasedPartitionProperties("blah", 150, HashBasedPartitionProperties.HashAlgorithm.valueOf("sha-256"));

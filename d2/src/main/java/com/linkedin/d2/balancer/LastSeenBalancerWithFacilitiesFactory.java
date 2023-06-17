@@ -116,7 +116,7 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     {
       balancer = new WarmUpLoadBalancer(balancer, lastSeenLoadBalancer, config.startUpExecutorService, config.fsBasePath,
                                         config.d2ServicePath, config.downstreamServicesFetcher, config.warmUpTimeoutSeconds,
-                                        config.warmUpConcurrentRequests);
+                                        config.warmUpConcurrentRequests, config.dualReadStateManager);
     }
 
     return balancer;
@@ -132,6 +132,7 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
       .setExecutorService(executorService)
       .setZookeeperReadWindowMs(zookeeperReadWindowMs)
       .setServiceDiscoveryEventEmitter(config.serviceDiscoveryEventEmitter)
+      .setDualReadStateManager(config.dualReadStateManager)
       // register jmx every time the object is created
       .addOnBuildListener(d2ClientJmxManager::setZkUriRegistry);
 
@@ -184,6 +185,7 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
       .setSerializer(new ClusterPropertiesJsonSerializer()).setPath(ZKFSUtil.clusterPath(config.basePath))
       .setExecutorService(executorService)
       .setZookeeperReadWindowMs(zookeeperReadWindowMs)
+      .setDualReadStateManager(config.dualReadStateManager)
       // register jmx every time the object is created
       .addOnBuildListener(d2ClientJmxManager::setZkClusterRegistry);
 
