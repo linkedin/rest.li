@@ -2,7 +2,9 @@ package com.linkedin.d2.balancer;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
@@ -11,6 +13,8 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
+import org.apache.commons.lang3.tuple.Pair;
+
 
 /**
  * Abstract class implementing the delegating methods for {@link LoadBalancerWithFacilities}
@@ -83,5 +87,18 @@ public abstract class LoadBalancerWithFacilitiesDelegator implements LoadBalance
   public ServiceProperties getLoadBalancedServiceProperties(String serviceName) throws ServiceUnavailableException
   {
     return _loadBalancer.getLoadBalancedServiceProperties(serviceName);
+  }
+
+  @Override
+  public void getLoadBalancedServiceProperties(String serviceName, Callback<ServiceProperties> clientCallback)
+  {
+    _loadBalancer.getLoadBalancedServiceProperties(serviceName, clientCallback);
+  }
+
+  @Override
+  public void getLoadBalancedClusterAndUriProperties(String clusterName,
+      Callback<Pair<ClusterProperties, UriProperties>> callback)
+  {
+    _loadBalancer.getLoadBalancedClusterAndUriProperties(clusterName, callback);
   }
 }
