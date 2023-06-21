@@ -765,15 +765,16 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       {
         case OK:
         {
-          if (_isInitialFetchRef.get()) {
+          boolean isInitialFetch = _isInitialFetchRef.get();
+          if (isInitialFetch) {
             // reset initial fetch states
             _isInitialFetchRef.set(false);
             emitSDStatusInitialRequestEvent(property, true);
             _initialFetchStartAtNanosRef.set(Long.MAX_VALUE);
           }
           initCurrentNode(stat);
-          Set<String> newChildren = calculateChildrenDeltaAndUpdateState(children);
-          getChildrenData(path, newChildren, getChildrenDataCallback(path, init, property));
+          Set<String> newChildren = calculateChildrenDeltaAndUpdateState(children, isInitialFetch);
+          getChildrenData(path, newChildren, getChildrenDataCallback(path, init, property, isInitialFetch));
           break;
         }
         case NONODE:
@@ -808,7 +809,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       }
     }
 
-    private Callback<Map<String, T>> getChildrenDataCallback(String path, boolean init, String property)
+    private Callback<Map<String, T>> getChildrenDataCallback(String path, boolean init, String property, boolean isInitialFetch)
     {
       return new Callback<Map<String, T>>()
       {
@@ -826,8 +827,10 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
         @Override
         public void onSuccess(Map<String, T> result)
         {
-          if (!result.isEmpty()) {
-            emitSDStatusUpdateReceiptEvents(result, true); // emit status update receipt event for new children
+          // initial fetch will yield false end-to-end latency spike when the server status change happened very long time ago,
+          // only emit status update receipt event for non-initial request
+          if (!isInitialFetch && !result.isEmpty()) {
+            emitSDStatusUpdateReceiptEvents(result, true);
           }
           _childrenMap.putAll(result);
           T mergedProperty = _merger.merge(property, _childrenMap.values());
@@ -882,7 +885,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       }
     }
 
-    private Set<String> calculateChildrenDeltaAndUpdateState(List<String> children)
+    private Set<String> calculateChildrenDeltaAndUpdateState(List<String> children, boolean isInitialFetch)
     {
       // remove children that have been evicted from the map
       Set<String> oldChildren = new HashSet<>(_childrenMap.keySet());
@@ -894,7 +897,9 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
               Map.Entry::getKey,
               Map.Entry::getValue
           ));
-      if (!oldChildrenMap.isEmpty()) {
+      // initial fetch will yield false end-to-end latency spike when the server status change happened very long time ago,
+      // only emit status update receipt event for non-initial request
+      if (!isInitialFetch && !oldChildrenMap.isEmpty()) {
         emitSDStatusUpdateReceiptEvents(oldChildrenMap, false);
       }
 

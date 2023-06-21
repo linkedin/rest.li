@@ -210,5 +210,10 @@ public class TestDataHelper {
       _initialRequestDurations.forEach(duration -> assertTrue(duration >= 0, "incorrect durations"));
       assertEquals(succeededFlags, _initialRequestSucceededFlags, "incorrect succeeded flags");
     }
+
+    public void verifyZeroEmissionOfSDStatusUpdateReceiptEvents() {
+      assertTrue(_receiptMarkUpClusters.isEmpty());
+      assertTrue(_receiptMarkDownClusters.isEmpty());
+    }
   }
 }

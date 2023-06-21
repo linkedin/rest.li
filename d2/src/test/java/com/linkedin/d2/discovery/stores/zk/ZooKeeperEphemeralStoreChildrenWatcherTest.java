@@ -195,16 +195,8 @@ public class ZooKeeperEphemeralStoreChildrenWatcherTest
 
     // 1 initial request succeeded
     mockEventEmitter.verifySDStatusInitialRequestEvents(Collections.singletonList(CLUSTER_NAME), Collections.singletonList(true));
-    // 3 markups
-    mockEventEmitter.verifySDStatusUpdateReceiptEvents(
-        ImmutableSet.of(CLUSTER_NAME, CLUSTER_NAME, CLUSTER_NAME),
-        ImmutableSet.of(HOST_1, HOST_2, HOST_3),
-        ImmutableSet.of(PORT_1, PORT_2, PORT_3),
-        ImmutableSet.of(CHILD_PATH_1, CHILD_PATH_2, CHILD_PATH_3),
-        ImmutableSet.of(PROPERTIES_1.toString(), PROPERTIES_2.toString(), PROPERTIES_3.toString()),
-        ImmutableSet.of(CHILD_PATH_1, CHILD_PATH_2, CHILD_PATH_3),
-        true
-    );
+    // no update receipt event emitted for initial request
+    mockEventEmitter.verifyZeroEmissionOfSDStatusUpdateReceiptEvents();
 
     FutureCallback<None> callback = new FutureCallback<>();
     _zkClient.setDataUnsafe(CHILD_PATH_1, SERIALIZER.toBytes(PROPERTIES_4), callback);
@@ -214,10 +206,9 @@ public class ZooKeeperEphemeralStoreChildrenWatcherTest
     {
       Assert.fail("The EphemeralStore shouldn't watch for data change");
     }
-    // no more markups
-    Assert.assertEquals(mockEventEmitter._receiptMarkUpHosts.size(), 3);
-    // 0 markdown
-    Assert.assertEquals(mockEventEmitter._receiptMarkDownHosts.size(), 0);
+    // no update receipt event emitted for changing zk data directly (since zk watcher doesn't watch for that)
+    mockEventEmitter.verifyZeroEmissionOfSDStatusUpdateReceiptEvents();
+
     Assert.assertEquals(_outputData, MERGER.merge(CLUSTER_NAME, _testData.values()));
     _eventBus.unregister(Collections.singleton(CLUSTER_NAME), subscriber);
     client.shutdown();
@@ -286,26 +277,27 @@ public class ZooKeeperEphemeralStoreChildrenWatcherTest
     {
       Assert.fail("unable to publish initial property value");
     }
-    addNode(CHILD_PATH_4, PROPERTIES_4);
+    // 1 initial request succeeded
+    mockEventEmitter.verifySDStatusInitialRequestEvents(Collections.singletonList(CLUSTER_NAME), Collections.singletonList(true));
+    mockEventEmitter.verifyZeroEmissionOfSDStatusUpdateReceiptEvents();
 
+    addNode(CHILD_PATH_4, PROPERTIES_4);
     if (!addLatch.await(5, TimeUnit.SECONDS))
     {
       Assert.fail("didn't get notified for the new node");
     }
 
-    // 1 initial request succeeded
-    mockEventEmitter.verifySDStatusInitialRequestEvents(Collections.singletonList(CLUSTER_NAME), Collections.singletonList(true));
-    // 4 mark ups
+    _testData.put(CHILD_PATH_4, PROPERTIES_4);
+    // 1 mark up
     mockEventEmitter.verifySDStatusUpdateReceiptEvents(
-        ImmutableSet.of(CLUSTER_NAME, CLUSTER_NAME, CLUSTER_NAME, CLUSTER_NAME),
-        ImmutableSet.of(HOST_1, HOST_2, HOST_3, HOST_4),
-        ImmutableSet.of(PORT_1, PORT_2, PORT_3, PORT_4),
-        ImmutableSet.of(CHILD_PATH_1, CHILD_PATH_2, CHILD_PATH_3, CHILD_PATH_4),
-        ImmutableSet.of(PROPERTIES_1.toString(), PROPERTIES_2.toString(), PROPERTIES_3.toString(), PROPERTIES_4.toString()),
-        ImmutableSet.of(CHILD_PATH_1, CHILD_PATH_2, CHILD_PATH_3, CHILD_PATH_4),
+        ImmutableSet.of(CLUSTER_NAME),
+        ImmutableSet.of(HOST_4),
+        ImmutableSet.of(PORT_4),
+        ImmutableSet.of(CHILD_PATH_4),
+        ImmutableSet.of(PROPERTIES_4.toString()),
+        ImmutableSet.of(CHILD_PATH_4),
         true
     );
-    _testData.put(CHILD_PATH_4, PROPERTIES_4);
     Assert.assertEquals(_outputData, MERGER.merge(CLUSTER_NAME, _testData.values()));
     _eventBus.unregister(Collections.singleton(CLUSTER_NAME), subscriber);
     client.shutdown();
@@ -373,16 +365,8 @@ public class ZooKeeperEphemeralStoreChildrenWatcherTest
 
     // 1 initial request succeeded
     mockEventEmitter.verifySDStatusInitialRequestEvents(Collections.singletonList(CLUSTER_NAME), Collections.singletonList(true));
-    // 3 markups
-    mockEventEmitter.verifySDStatusUpdateReceiptEvents(
-        ImmutableSet.of(CLUSTER_NAME, CLUSTER_NAME, CLUSTER_NAME),
-        ImmutableSet.of(HOST_1, HOST_2, HOST_3),
-        ImmutableSet.of(PORT_1, PORT_2, PORT_3),
-        ImmutableSet.of(CHILD_PATH_1, CHILD_PATH_2, CHILD_PATH_3),
-        ImmutableSet.of(PROPERTIES_1.toString(), PROPERTIES_2.toString(), PROPERTIES_3.toString()),
-        ImmutableSet.of(CHILD_PATH_1, CHILD_PATH_2, CHILD_PATH_3),
-        true
-    );
+    mockEventEmitter.verifyZeroEmissionOfSDStatusUpdateReceiptEvents();
+
     FutureCallback<None> callback = new FutureCallback<>();
     _zkClient.removeNodeUnsafe(CHILD_PATH_1, callback);
     callback.get();

@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.43.1] - 2023-06-20
+- mute SD update receipt event for initial request on a new cluster
+
 ## [29.43.0] - 2023-06-16
 - Implement rest.li xDS service discovery flow and DualRead loadbalancer
 
@@ -5478,7 +5481,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.43.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.43.1...master
+[29.43.1]: https://github.com/linkedin/rest.li/compare/v29.43.0...v29.43.1
 [29.43.0]: https://github.com/linkedin/rest.li/compare/v29.42.4...v29.43.0
 [29.42.4]: https://github.com/linkedin/rest.li/compare/v29.42.3...v29.42.4
 [29.42.3]: https://github.com/linkedin/rest.li/compare/v29.42.2...v29.42.3
