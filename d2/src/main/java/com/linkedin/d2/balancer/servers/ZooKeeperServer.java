@@ -96,19 +96,6 @@ public class
       @Override
       public void onSuccess(None none)
       {
-        Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<>();
-        partitionDesc.put(uri, partitionDataMap);
-
-        Map<URI, Map<String, Object>> myUriSpecificProperties;
-        if (uriSpecificProperties != null && !uriSpecificProperties.isEmpty())
-        {
-          myUriSpecificProperties = new HashMap<>();
-          myUriSpecificProperties.put(uri, uriSpecificProperties);
-        }
-        else
-        {
-          myUriSpecificProperties = Collections.emptyMap();
-        }
 
         if (_log.isInfoEnabled())
         {
@@ -130,7 +117,7 @@ public class
           sb.append("}");
           info(_log, sb);
         }
-        _store.put(clusterName, new UriProperties(clusterName, partitionDesc, myUriSpecificProperties), callback);
+        _store.put(clusterName, constructUriPropertiesForNode(clusterName, uri, partitionDataMap, uriSpecificProperties), callback);
 
       }
 
@@ -370,6 +357,23 @@ public class
     {
       warn(_log, "unable to shut down propertly.. got interrupt exception while waiting");
     }
+  }
+
+  protected UriProperties constructUriPropertiesForNode(final String clusterName, final URI uri, final Map<Integer, PartitionData> partitionDataMap, final Map<String, Object> uriSpecificProperties) {
+    Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<>();
+    partitionDesc.put(uri, partitionDataMap);
+
+    Map<URI, Map<String, Object>> uriToUriSpecificProperties;
+    if (uriSpecificProperties != null && !uriSpecificProperties.isEmpty())
+    {
+      uriToUriSpecificProperties = new HashMap<>();
+      uriToUriSpecificProperties.put(uri, uriSpecificProperties);
+    }
+    else
+    {
+      uriToUriSpecificProperties = Collections.emptyMap();
+    }
+    return new UriProperties(clusterName, partitionDesc, uriToUriSpecificProperties);
   }
 
   private void storeGet(final String clusterName, final Callback<UriProperties> callback)

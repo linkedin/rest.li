@@ -15,6 +15,9 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.43.3] - 2023-06-22
+- Refactor ZookeeperServer, making functionality to generate URI properties for node accessible to subclasses
+
+## [29.43.3] - 2023-06-22
 - Bump jfrog build-info-extractor-gradle to 4.32.0
 
 ## [29.43.2] - 2023-06-21
