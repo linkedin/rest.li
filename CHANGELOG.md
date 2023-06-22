@@ -14,7 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.43.3] - 2023-06-22
+## [29.43.4] - 2023-06-22
 - Refactor ZookeeperServer, making functionality to generate URI properties for node accessible to subclasses
 
 ## [29.43.3] - 2023-06-22
@@ -5490,7 +5490,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.43.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.43.4...master
+[29.43.4]: https://github.com/linkedin/rest.li/compare/v29.43.3...v29.43.4
 [29.43.3]: https://github.com/linkedin/rest.li/compare/v29.43.2...v29.43.3
 [29.43.2]: https://github.com/linkedin/rest.li/compare/v29.43.1...v29.43.2
 [29.43.1]: https://github.com/linkedin/rest.li/compare/v29.43.0...v29.43.1
