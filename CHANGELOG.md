@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.43.3] - 2023-06-22
+- Bump jfrog build-info-extractor-gradle to 4.32.0
+
 ## [29.43.2] - 2023-06-21
 - Add missing interface method in LoadBalancerWithFacilitiesDelegator
 
@@ -5484,7 +5487,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.43.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.43.3...master
+[29.43.3]: https://github.com/linkedin/rest.li/compare/v29.43.2...v29.43.3
 [29.43.2]: https://github.com/linkedin/rest.li/compare/v29.43.1...v29.43.2
 [29.43.1]: https://github.com/linkedin/rest.li/compare/v29.43.0...v29.43.1
 [29.43.0]: https://github.com/linkedin/rest.li/compare/v29.42.4...v29.43.0
