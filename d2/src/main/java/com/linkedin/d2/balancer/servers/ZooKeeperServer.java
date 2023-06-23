@@ -16,14 +16,6 @@
 
 package com.linkedin.d2.balancer.servers;
 
-import java.net.URI;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
@@ -34,13 +26,18 @@ import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.discovery.event.D2ServiceDiscoveryEventHelper;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
-
+import java.net.URI;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.linkedin.d2.discovery.util.LogUtil.info;
-import static com.linkedin.d2.discovery.util.LogUtil.warn;
+import static com.linkedin.d2.discovery.util.LogUtil.*;
 
 public class
         ZooKeeperServer implements LoadBalancerServer
@@ -96,19 +93,6 @@ public class
       @Override
       public void onSuccess(None none)
       {
-        Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<>();
-        partitionDesc.put(uri, partitionDataMap);
-
-        Map<URI, Map<String, Object>> myUriSpecificProperties;
-        if (uriSpecificProperties != null && !uriSpecificProperties.isEmpty())
-        {
-          myUriSpecificProperties = new HashMap<>();
-          myUriSpecificProperties.put(uri, uriSpecificProperties);
-        }
-        else
-        {
-          myUriSpecificProperties = Collections.emptyMap();
-        }
 
         if (_log.isInfoEnabled())
         {
@@ -130,7 +114,7 @@ public class
           sb.append("}");
           info(_log, sb);
         }
-        _store.put(clusterName, new UriProperties(clusterName, partitionDesc, myUriSpecificProperties), callback);
+        _store.put(clusterName, constructUriPropertiesForNode(clusterName, uri, partitionDataMap, uriSpecificProperties), callback);
 
       }
 
@@ -361,15 +345,26 @@ public class
     {
       callback.get(5, TimeUnit.SECONDS);
       info(_log, "shutting down complete");
-    }
-    catch (TimeoutException e)
-    {
+    } catch (TimeoutException e) {
       warn(_log, "unable to shut down propertly");
-    }
-    catch (InterruptedException | ExecutionException e)
-    {
+    } catch (InterruptedException | ExecutionException e) {
       warn(_log, "unable to shut down propertly.. got interrupt exception while waiting");
     }
+  }
+
+  protected UriProperties constructUriPropertiesForNode(final String clusterName, final URI uri,
+      final Map<Integer, PartitionData> partitionDataMap, final Map<String, Object> uriSpecificProperties) {
+    Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<>();
+    partitionDesc.put(uri, partitionDataMap);
+
+    Map<URI, Map<String, Object>> uriToUriSpecificProperties;
+    if (uriSpecificProperties != null && !uriSpecificProperties.isEmpty()) {
+      uriToUriSpecificProperties = new HashMap<>();
+      uriToUriSpecificProperties.put(uri, uriSpecificProperties);
+    } else {
+      uriToUriSpecificProperties = Collections.emptyMap();
+    }
+    return new UriProperties(clusterName, partitionDesc, uriToUriSpecificProperties);
   }
 
   private void storeGet(final String clusterName, final Callback<UriProperties> callback)
