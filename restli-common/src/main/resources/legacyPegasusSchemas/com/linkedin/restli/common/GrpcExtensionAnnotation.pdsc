@@ -1,0 +1,33 @@
+{
+  "type" : "record",
+  "name" : "GrpcExtensionAnnotation",
+  "namespace" : "com.linkedin.restli.common",
+  "doc" : "Specifies the extension schema field annotation format for gRPC downstreams.",
+  "fields" : [ {
+    "name" : "rpc",
+    "type" : "string",
+    "doc" : "The RPC method used for this injection.\nFor 1-to-many relationships, can use either GET_ALL or FINDER.\nFor 1-to-1 relationships, it must be omitted for collection resources or use GET for simple resources.",
+    "optional" : true
+  }, {
+    "name" : "params",
+    "type" : {
+      "type" : "map",
+      "values" : "string"
+    },
+    "doc" : "How to construct the RPC message in the injection request for 1-to-many relations.",
+    "optional" : true
+  }, {
+    "name" : "injectedUrnParts",
+    "type" : {
+      "type" : "map",
+      "values" : "string"
+    },
+    "doc" : "Used to specify the injected URN's parts so that it may be reconstructed and its resolver can be used.\nFor 1-to-1 relationships, the injected URN resolver is needed so that the injected entity can be fetched.",
+    "optional" : true
+  }, {
+    "name" : "versionSuffix",
+    "type" : "string",
+    "doc" : "Specifies versionSuffix in multi-version scenario. If is is not provided, will pick first version by default.",
+    "optional" : true
+  } ]
+}
