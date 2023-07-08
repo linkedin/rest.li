@@ -333,16 +333,16 @@
 <p>There is currently one “true” implementation of a LoadBalancer in com.linkedin.d2.balancer. This implementation is called <b>SimpleLoadBalancer</b>. There are other implementations of LoadBalancer that <b>will wrap</b> this SimpleLoadBalancer for example: ZKFSLoadBalancer. In any case, the simple load balancer contains one important method: getClient. The getClient method is called with a URN such as “urn:MyService:/getWidget”. The responsibility of the load balancer is to return a client that can handle the request, if one is available, or to throw a ServiceUnavailableException, if no client is available.</p>
 
 <p>When getClient is called on the simple load balancer, it:
-        &lt;ul&gt;
-            &lt;li&gt;First tries to extract the service name from the URI that was provided. &lt;/li&gt;
-            &lt;li&gt; It then makes sure that it’s listening to that service in the LoadBalancerState. &lt;/li&gt;
-            &lt;li&gt; It then makes sure that it’s listening to the service’s cluster in the LoadBalancerState &lt;/li&gt;
-            &lt;li&gt; If either the service or cluster is unknown, it will throw a ServiceUnavailableException. &lt;/li&gt;
-            &lt;li&gt; It will then iterate through the prioritized schemes (prpc, http, etc) for the cluster.   &lt;/li&gt;
-            &lt;li&gt; For each scheme, it will get all URIs in the service’s cluster for that scheme, and ask the service’s load balancer strategy to load balance them.&lt;/li&gt;
-            &lt;li&gt; If the load balancer strategy returns a client, it will be returned, otherwise the next scheme will be tried.&lt;/li&gt;
-            &lt;li&gt;If all schemes are exhausted, and no client was found, a ServiceUnavailableException will be thrown. &lt;/li&gt;
-        &lt;/ul&gt;</p>
+<ul>
+<li> First tries to extract the service name from the URI that was provided. </li>
+<li> It then makes sure that it’s listening to that service in the LoadBalancerState. </li>
+<li> It then makes sure that it’s listening to the service’s cluster in the LoadBalancerState </li>
+<li> If either the service or cluster is unknown, it will throw a ServiceUnavailableException. </li>
+<li> It will then iterate through the prioritized schemes (prpc, http, etc) for the cluster.   </li>
+<li> For each scheme, it will get all URIs in the service’s cluster for that scheme, and ask the service’s load balancer strategy to load balance them.</li>
+<li> If the load balancer strategy returns a client, it will be returned, otherwise the next scheme will be tried.</li>
+<li> If all schemes are exhausted, and no client was found, a ServiceUnavailableException will be thrown. </li>
+</ul></p>
 
 <h3> Strategies </h3>
 
