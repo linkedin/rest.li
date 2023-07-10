@@ -45,6 +45,7 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -444,7 +445,7 @@ public class TestD2Config
 
       @Override
       public boolean checkSupportable(String settings) {
-        return "TestPartitionAccessor1!Settings".equals(settings);
+        return settings.startsWith("TestPartitionAccessor1!");
       }
     };
 
@@ -485,7 +486,9 @@ public class TestD2Config
     final String legalUri2 = "/cap?wid=99&id=176&randid=301";
     final String legalUri3 = "/seas?id=3324";
     final String illegalUri = "/?id=1000000000000000000000000000000000000000000000111111111";
-
+    Field realAccessorField = accessor.getClass().getDeclaredField("_partitionAccessor");
+    realAccessorField.setAccessible(true);
+    assertEquals(TestPartitionAccessor1.class, realAccessorField.get(accessor).getClass());
     assertEquals(0, accessor.getPartitionId(URI.create(legalUri1)));
     assertEquals(1, accessor.getPartitionId(URI.create(legalUri2)));
     assertEquals(2, accessor.getPartitionId(URI.create(legalUri3)));

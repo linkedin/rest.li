@@ -15,6 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.43.6] - 2023-07-10
+- Enable passing settings to custom partition accessor
 
 ## [29.43.5] - 2023-06-27
 - Remove a delegated method in LoadBalancerWithFacilitiesDelegator
