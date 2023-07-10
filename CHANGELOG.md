@@ -14,6 +14,8 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.43.6] - 2023-07-10
+
 ## [29.43.5] - 2023-06-27
 - Remove a delegated method in LoadBalancerWithFacilitiesDelegator
 
@@ -5493,7 +5495,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.43.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.43.6...master
+[29.43.6]: https://github.com/linkedin/rest.li/compare/v29.43.5...v29.43.6
 [29.43.5]: https://github.com/linkedin/rest.li/compare/v29.43.4...v29.43.5
 [29.43.4]: https://github.com/linkedin/rest.li/compare/v29.43.3...v29.43.4
 [29.43.3]: https://github.com/linkedin/rest.li/compare/v29.43.2...v29.43.3
