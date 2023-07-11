@@ -33,6 +33,11 @@ public class FSBasedDownstreamServicesFetcher implements DownstreamServicesFetch
   private final String _d2ServicePath;
   private final String _fsFileExtension;
 
+  public FSBasedDownstreamServicesFetcher(String d2FsPath, String d2ServicePath)
+  {
+    this(d2FsPath, d2ServicePath, FileSystemDirectory.FILE_STORE_EXTENSION);
+  }
+
   public FSBasedDownstreamServicesFetcher(String d2FsPath, String d2ServicePath, String fsFileExtension)
   {
     _d2FsPath = d2FsPath;
