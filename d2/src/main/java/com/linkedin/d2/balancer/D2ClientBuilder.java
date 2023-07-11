@@ -38,6 +38,7 @@ import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFact
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
+import com.linkedin.d2.balancer.util.FileSystemDirectory;
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetcher;
@@ -115,12 +116,14 @@ public class D2ClientBuilder
 
     if (_config.downstreamServicesFetcher == null)
     {
-      _config.downstreamServicesFetcher = new FSBasedDownstreamServicesFetcher(_config.fsBasePath, _config.d2ServicePath);
+      _config.downstreamServicesFetcher = new FSBasedDownstreamServicesFetcher(_config.fsBasePath, _config.d2ServicePath,
+          FileSystemDirectory.FILE_STORE_EXTENSION);
     }
 
     if (_config.indisDownstreamServicesFetcher == null)
     {
-      _config.indisDownstreamServicesFetcher = new FSBasedDownstreamServicesFetcher(_config.indisFsBasePath, _config.d2ServicePath);
+      _config.indisDownstreamServicesFetcher = new FSBasedDownstreamServicesFetcher(_config.indisFsBasePath, _config.d2ServicePath,
+          FileSystemDirectory.FILE_STORE_EXTENSION);
     }
 
     if (_config.jmxManager == null)

@@ -321,7 +321,8 @@ public class WarmUpLoadBalancerTest
   public void createTempdir() throws IOException
   {
     _tmpdir = LoadBalancerUtil.createTempDirectory("d2FileStore");
-    _FSBasedDownstreamServicesFetcher = new FSBasedDownstreamServicesFetcher(_tmpdir.getAbsolutePath(), MY_SERVICES_FS);
+    _FSBasedDownstreamServicesFetcher = new FSBasedDownstreamServicesFetcher(_tmpdir.getAbsolutePath(), MY_SERVICES_FS,
+        FileSystemDirectory.FILE_STORE_EXTENSION);
   }
 
   @AfterMethod

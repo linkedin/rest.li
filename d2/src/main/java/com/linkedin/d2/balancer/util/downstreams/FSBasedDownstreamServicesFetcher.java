@@ -31,17 +31,19 @@ public class FSBasedDownstreamServicesFetcher implements DownstreamServicesFetch
 {
   private final String _d2FsPath;
   private final String _d2ServicePath;
+  private final String _fsFileExtension;
 
-  public FSBasedDownstreamServicesFetcher(String d2FsPath, String d2ServicePath)
+  public FSBasedDownstreamServicesFetcher(String d2FsPath, String d2ServicePath, String fsFileExtension)
   {
     _d2FsPath = d2FsPath;
     _d2ServicePath = d2ServicePath;
+    _fsFileExtension = fsFileExtension;
   }
 
   @Override
   public void getServiceNames(SuccessCallback<List<String>> callback)
   {
-    FileSystemDirectory fsDirectory = new FileSystemDirectory(_d2FsPath, _d2ServicePath);
+    FileSystemDirectory fsDirectory = new FileSystemDirectory(_d2FsPath, _d2ServicePath, _fsFileExtension);
     callback.onSuccess(fsDirectory.getServiceNames());
   }
 }
