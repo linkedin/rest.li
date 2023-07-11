@@ -77,6 +77,11 @@ public class FileSystemDirectory
     removeAllPropertiesFromDirectory(getServiceDirectory(_d2FsDirPath, _d2ServicePath), serviceNames, _fsFileExtension);
   }
 
+  public static void removeAllPropertiesFromDirectory(String path, List<String> properties)
+  {
+    removeAllPropertiesFromDirectory(path, properties, FILE_STORE_EXTENSION);
+  }
+
   public static void removeAllPropertiesFromDirectory(String path, List<String> properties, String fileExtension)
   {
     for (String property : properties)
@@ -95,6 +100,11 @@ public class FileSystemDirectory
   {
     return getFileListWithoutExtension(getClusterDirectory(_d2ServicePath),
         _fsFileExtension);
+  }
+
+  public static List<String> getFileListWithoutExtension(String path)
+  {
+    return getFileListWithoutExtension(path, FILE_STORE_EXTENSION);
   }
 
   public static List<String> getFileListWithoutExtension(String path, String fileExtension)
