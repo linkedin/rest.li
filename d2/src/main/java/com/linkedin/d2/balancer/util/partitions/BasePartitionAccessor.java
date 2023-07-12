@@ -18,6 +18,8 @@
 package com.linkedin.d2.balancer.util.partitions;
 
 import java.net.URI;
+import java.util.Objects;
+
 
 /**
  * BasePartitionAccessor returns partitionId according to the given URI.
@@ -33,5 +35,13 @@ public interface BasePartitionAccessor
    * @throws PartitionAccessException see {@link PartitionAccessException}
    */
   int getPartitionId(URI uri) throws PartitionAccessException;
+
+  /**
+   * Given the setting of the partition accessor, check if the setting can be supported
+   * @return true if supportable
+   */
+  default boolean checkSupportable(String settings) {
+    return Objects.equals(getClass().getSimpleName(), settings);
+  }
 }
 

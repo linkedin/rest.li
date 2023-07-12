@@ -90,8 +90,8 @@ public class PartitionAccessorFactory
       return DefaultPartitionAccessor.getInstance();
     }
 
-    List<String> requestedClassList = customizedProperties.getPartitionAccessorList();
-    if (requestedClassList == null || requestedClassList.isEmpty())
+    List<String> partitionAccessorSettingsList = customizedProperties.getPartitionAccessorList();
+    if (partitionAccessorSettingsList == null || partitionAccessorSettingsList.isEmpty())
     {
       // If the no classList is defined, use the first class registered
       BasePartitionAccessor partitionAccessor = partitionAccessors.get(0);
@@ -99,13 +99,13 @@ public class PartitionAccessorFactory
           + " (out of " + partitionAccessors.size() + ") registration");
       return new CustomizedPartitionAccessor(customizedProperties, partitionAccessor);
     }
-    for (String className : requestedClassList)
+    for (String setting : partitionAccessorSettingsList)
     {
       for (BasePartitionAccessor accessor : partitionAccessors)
       {
-        if (className.equals(accessor.getClass().getSimpleName()))
+        if (accessor.checkSupportable(setting))
         {
-          _log.info("Use matched partitionAccessor for cluster: " + clusterName + ", class: " + accessor.getClass().getSimpleName());
+          _log.info("Use matched partitionAccessor for cluster: " + clusterName + ", class: " + accessor.getClass().getSimpleName() + ", setting: " + setting);
           return new CustomizedPartitionAccessor(customizedProperties, accessor);
         }
       }

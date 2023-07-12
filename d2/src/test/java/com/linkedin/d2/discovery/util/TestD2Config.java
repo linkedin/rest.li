@@ -45,6 +45,7 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -386,6 +387,108 @@ public class TestD2Config
     final String legalUri3 = "/seas?id=3324";
     final String illegalUri = "/?id=1000000000000000000000000000000000000000000000111111111";
 
+    assertEquals(0, accessor.getPartitionId(URI.create(legalUri1)));
+    assertEquals(1, accessor.getPartitionId(URI.create(legalUri2)));
+    assertEquals(2, accessor.getPartitionId(URI.create(legalUri3)));
+    assertEquals(0, accessor.getPartitionId(URI.create(illegalUri)));
+  }
+
+  // Test PartitionAccessorFactory: match ClassList with custom matching logic
+  @Test
+  public static void testPartitionAccessorFactoryWithCustomMatchingLogic() throws IOException, InterruptedException, URISyntaxException, Exception
+  {
+    @SuppressWarnings("serial")
+    final Map<String,List<String>> clustersData = new HashMap<String,List<String>>()
+    {{
+      put("partitioned-cluster", Arrays.asList(new String[]{"partitioned-service-1", "partitioned-service-2"}));
+    }};
+
+    final Map<String, Object> partitionProperties = new HashMap<>();
+    Map<String, Object> customized = new HashMap<>();
+    List<String> classList = Arrays.asList("TestPartitionAccessor1!Settings", "TestPartitionAccessor2");
+    customized.put("partitionType", "CUSTOM");
+    customized.put("partitionCount", "10");
+    customized.put("partitionAccessorList", classList);
+    partitionProperties.put("partitionProperties", customized);
+
+    final PartitionAccessorRegistry registry = new PartitionAccessorRegistry()
+    {
+      final private Map<String, List<BasePartitionAccessor>> _registry = new HashMap<>();
+
+      @Override
+      public void register(String clusterName, BasePartitionAccessor accessor)
+      {
+        List<BasePartitionAccessor> accessors = _registry.computeIfAbsent(clusterName, k -> new ArrayList<>());
+        accessors.add(accessor);
+      }
+
+      @Override
+      public List<BasePartitionAccessor> getPartitionAccessors(String clusterName)
+      {
+        return _registry.get(clusterName);
+      }
+    };
+
+    class TestPartitionAccessor1 implements PartitionAccessor
+    {
+      @Override
+      public int getPartitionId(URI uri) throws PartitionAccessException
+      {
+        return testGetPartitionId(uri);
+      }
+
+      @Override
+      public int getMaxPartitionId()
+      {
+        return 10;
+      }
+
+      @Override
+      public boolean checkSupportable(String settings) {
+        return settings.startsWith("TestPartitionAccessor1!");
+      }
+    };
+
+    class TestPartitionAccessor2 implements PartitionAccessor
+    {
+      @Override
+      public int getPartitionId(URI uri) throws PartitionAccessException
+      {
+        return 8;
+      }
+
+      @Override
+      public int getMaxPartitionId()
+      {
+        return 10;
+      }
+    };
+
+    PartitionAccessor testAccessor1 = new TestPartitionAccessor1();
+    PartitionAccessor testAccessor2 = new TestPartitionAccessor2();
+
+    registry.register("partitioned-cluster", DefaultPartitionAccessor.getInstance());
+    registry.register("partitioned-cluster", testAccessor1);
+    registry.register("partitioned-cluster", testAccessor2);
+
+    D2ConfigTestUtil d2Conf = new D2ConfigTestUtil(clustersData, partitionProperties);
+
+    assertEquals(d2Conf.runDiscovery(_zkHosts), 0);
+
+    verifyPartitionProperties("partitioned-cluster", partitionProperties);
+
+    final ClusterProperties clusterprops = getClusterProperties(_zkclient, "partitioned-cluster" );
+
+    final PartitionAccessor accessor = PartitionAccessorFactory.getPartitionAccessor("partitioned-cluster",
+        registry, clusterprops.getPartitionProperties());
+
+    final String legalUri1 = "/profiles?field=position&id=100";
+    final String legalUri2 = "/cap?wid=99&id=176&randid=301";
+    final String legalUri3 = "/seas?id=3324";
+    final String illegalUri = "/?id=1000000000000000000000000000000000000000000000111111111";
+    Field realAccessorField = accessor.getClass().getDeclaredField("_partitionAccessor");
+    realAccessorField.setAccessible(true);
+    assertEquals(TestPartitionAccessor1.class, realAccessorField.get(accessor).getClass());
     assertEquals(0, accessor.getPartitionId(URI.create(legalUri1)));
     assertEquals(1, accessor.getPartitionId(URI.create(legalUri2)));
     assertEquals(2, accessor.getPartitionId(URI.create(legalUri3)));
