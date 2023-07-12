@@ -44,39 +44,51 @@ public class FileSystemDirectory
 
   private final String _d2FsDirPath;
   private String _d2ServicePath;
+  private final String _fsFileExtension;
 
   public FileSystemDirectory(String d2FsDirPath, String d2ServicePath)
   {
+    this(d2FsDirPath, d2ServicePath, FILE_STORE_EXTENSION);
+  }
+
+  public FileSystemDirectory(String d2FsDirPath, String d2ServicePath, String fsFileExtension)
+  {
     _d2FsDirPath = d2FsDirPath;
     _d2ServicePath = d2ServicePath;
+    _fsFileExtension = fsFileExtension;
   }
 
   public List<String> getServiceNames()
   {
-    return getFileListWithoutExtension(getServiceDirectory(_d2FsDirPath, _d2ServicePath));
+    return getFileListWithoutExtension(getServiceDirectory(_d2FsDirPath, _d2ServicePath), _fsFileExtension);
   }
 
   public void removeAllServicesWithExcluded(Set<String> excludedServices)
   {
     List<String> serviceNames = getServiceNames();
     serviceNames.removeAll(excludedServices);
-    removeAllPropertiesFromDirectory(getServiceDirectory(_d2FsDirPath, _d2ServicePath), serviceNames);
+    removeAllPropertiesFromDirectory(getServiceDirectory(_d2FsDirPath, _d2ServicePath), serviceNames, _fsFileExtension);
   }
 
   public void removeAllClustersWithExcluded(Set<String> excludedClusters)
   {
     List<String> serviceNames = getClusterNames();
     serviceNames.removeAll(excludedClusters);
-    removeAllPropertiesFromDirectory(getServiceDirectory(_d2FsDirPath, _d2ServicePath), serviceNames);
+    removeAllPropertiesFromDirectory(getServiceDirectory(_d2FsDirPath, _d2ServicePath), serviceNames, _fsFileExtension);
   }
 
   public static void removeAllPropertiesFromDirectory(String path, List<String> properties)
+  {
+    removeAllPropertiesFromDirectory(path, properties, FILE_STORE_EXTENSION);
+  }
+
+  public static void removeAllPropertiesFromDirectory(String path, List<String> properties, String fileExtension)
   {
     for (String property : properties)
     {
       try
       {
-        Files.deleteIfExists(Paths.get(path + File.separator + property + FileSystemDirectory.FILE_STORE_EXTENSION));
+        Files.deleteIfExists(Paths.get(path + File.separator + property + fileExtension));
       } catch (IOException e)
       {
         LOG.warn("IO Error, continuing deletion", e);
@@ -86,13 +98,19 @@ public class FileSystemDirectory
 
   public List<String> getClusterNames()
   {
-    return getFileListWithoutExtension(getClusterDirectory(_d2ServicePath));
+    return getFileListWithoutExtension(getClusterDirectory(_d2ServicePath),
+        _fsFileExtension);
   }
 
   public static List<String> getFileListWithoutExtension(String path)
   {
+    return getFileListWithoutExtension(path, FILE_STORE_EXTENSION);
+  }
+
+  public static List<String> getFileListWithoutExtension(String path, String fileExtension)
+  {
     File dir = new File(path);
-    File[] files = dir.listFiles((dir1, name) -> name.endsWith(FileSystemDirectory.FILE_STORE_EXTENSION));
+    File[] files = dir.listFiles((dir1, name) -> name.endsWith(fileExtension));
     if (files == null)
     {
       return Collections.emptyList();
@@ -100,7 +118,7 @@ public class FileSystemDirectory
 
     // cleaning the list from the extension
     return Arrays.stream(files)
-      .map(file -> file.getName().replace(FILE_STORE_EXTENSION, ""))
+      .map(file -> file.getName().replace(fileExtension, ""))
       .collect(Collectors.toList());
   }
 

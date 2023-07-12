@@ -185,7 +185,7 @@ public class FileStore<T> implements PropertyStore<T>, PropertyEventSubscriber<T
     List<String> propertyNames;
     try
     {
-      propertyNames = FileSystemDirectory.getFileListWithoutExtension(_fsPath);
+      propertyNames = FileSystemDirectory.getFileListWithoutExtension(_fsPath, _fsFileExtension);
 
       Map<String, T> result = new HashMap<>();
       for (String propertyName : propertyNames)
