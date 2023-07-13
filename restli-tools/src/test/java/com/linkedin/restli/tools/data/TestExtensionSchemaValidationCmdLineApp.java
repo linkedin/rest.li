@@ -44,7 +44,7 @@ public class TestExtensionSchemaValidationCmdLineApp
             {
                 "invalidVersionSuffix",
                 false,
-                "versionSuffix value: 'V3' does not match the versionSuffix value which was defined in resourceKey annotation"
+                "versionSuffix value: 'V3' does not match the versionSuffix value which was defined in resourceKey/grpcService annotation"
             },
             {
                 "invalidExtensionSchemaName",

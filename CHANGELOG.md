@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.43.8] - 2023-07-13
+- Add support for gRPC-downstream extension annotations (`@grpcExtension`, `@grpcService`).
+
 ## [29.43.7] - 2023-07-11
 - Make file extension of D2 ZKFS file store fully customizable.
 
@@ -5499,7 +5502,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.43.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.43.8...master
+[29.43.8]: https://github.com/linkedin/rest.li/compare/v29.43.7...v29.43.8
 [29.43.7]: https://github.com/linkedin/rest.li/compare/v29.43.6...v29.43.7
 [29.43.6]: https://github.com/linkedin/rest.li/compare/v29.43.5...v29.43.6
 [29.43.5]: https://github.com/linkedin/rest.li/compare/v29.43.4...v29.43.5

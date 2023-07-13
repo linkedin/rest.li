@@ -24,7 +24,6 @@ import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.grammar.PdlSchemaParser;
 import com.linkedin.data.schema.resolver.MultiFormatDataSchemaResolver;
-import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import com.linkedin.data.schema.validation.CoercionMode;
 import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.UnrecognizedFieldMode;
@@ -32,6 +31,8 @@ import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
 import com.linkedin.restli.common.ExtensionSchemaAnnotation;
+import com.linkedin.restli.common.GrpcExtensionAnnotation;
+import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -53,7 +54,8 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.linkedin.data.schema.annotation.ExtensionSchemaAnnotationHandler.EXTENSION_ANNOTATION_NAMESPACE;
+import static com.linkedin.data.schema.annotation.ExtensionSchemaAnnotationHandler.*;
+import static com.linkedin.data.schema.annotation.GrpcExtensionAnnotationHandler.*;
 
 
 /**
@@ -61,12 +63,11 @@ import static com.linkedin.data.schema.annotation.ExtensionSchemaAnnotationHandl
  * 1. The extension schema is a valid schema.
  * 2. The extension schema name has to follow the naming convention: <baseSchemaName> + "Extensions"
  * 3. The extension schema can only include the base schema.
- * 4. The extension schema's field annotation keys must be in the "extension" namespace
- * 5. The extension schema's field annotations must conform to {@link ExtensionSchemaAnnotation}.
- * 6. The extension schema's fields can only be Typeref or array of Typeref
- * 7. The extension schema's field schema's annotation keys must be in the "resourceKey" namespace.
- * 8. The extension schema's field annotation versionSuffix value has to match the versionSuffix value in "resourceKey" annotation on the field schema.
- *
+ * 4. The extension schema's field annotation keys must be in the "extension" or "grpcExtension" namespaces (but not both).
+ * 5. The extension schema's field annotations must conform to {@link ExtensionSchemaAnnotation} or {@link GrpcExtensionAnnotation}.
+ * 6. The extension schema's fields can only be Typeref or array of Typeref.
+ * 7. The extension schema's field schema's annotation keys must be in the "resourceKey" and/or "grpcService" namespaces.
+ * 8. The extension schema's field annotation versionSuffix value has to match the versionSuffix value in "resourceKey"/"grpcService" annotation on the field schema.
  *
  * @author Yingjie Bi
  */
@@ -76,11 +77,13 @@ public class ExtensionSchemaValidationCmdLineApp
   private static final Options _options = new Options();
   private static final String PDL = "pdl";
   private static final String RESOURCE_KEY_ANNOTATION_NAMESPACE = "resourceKey";
+  private static final String GRPC_SERVICE_ANNOTATION_NAMESPACE = "grpcService";
   private static final String EXTENSIONS_SUFFIX = "Extensions";
   private static final String VERSION_SUFFIX = "versionSuffix";
   private static final Set<String> ALLOWED_EXTENSION_FIELD_ANNOTATIONS = new HashSet<>(Arrays.asList(
-      // The "extension" annotation is always allowed of course...
+      // The "extension" and "grpcExtension" annotations are always allowed of course...
       EXTENSION_ANNOTATION_NAMESPACE,
+      GRPC_EXTENSION_ANNOTATION_NAMESPACE,
       // The following are special-cased annotations, this list should be minimized
       // TODO: This is only present as a workaround, remove this once the feature gap is filled
       "ExcludedInGraphQL"
@@ -159,23 +162,29 @@ public class ExtensionSchemaValidationCmdLineApp
      {
        throw new InvalidExtensionSchemaException("Could not parse extension schema : " + inputFile.getAbsolutePath());
      }
+
+     // Validate that the schema is a named schema
      DataSchema topLevelDataSchema = topLevelDataSchemas.get(0);
      if (!(topLevelDataSchema instanceof NamedDataSchema))
      {
        throw new InvalidExtensionSchemaException("Invalid extension schema : " + inputFile.getAbsolutePath() + ", the schema is not a named schema.");
      }
+
+     // Validate that the schema has the proper suffix in its name
      if (!((NamedDataSchema) topLevelDataSchema).getName().endsWith(EXTENSIONS_SUFFIX))
      {
        throw new InvalidExtensionSchemaException(
            "Invalid extension schema name: '" + ((NamedDataSchema) topLevelDataSchema).getName() + "'. The name of the extension schema must be <baseSchemaName> + 'Extensions'");
      }
 
+     // Validate that the schema includes exactly one base schema
      List<NamedDataSchema> includes = ((RecordDataSchema) topLevelDataSchema).getInclude();
      if (includes.size() != 1)
      {
        throw new InvalidExtensionSchemaException("The extension schema: '" + ((NamedDataSchema) topLevelDataSchema).getName() + "' should include and only include the base schema");
      }
 
+     // Validate that the schema's name is suffixed with the name of the base schema
      NamedDataSchema includeSchema = includes.get(0);
      if (!((NamedDataSchema) topLevelDataSchema).getName().startsWith(includeSchema.getName()))
      {
@@ -189,6 +198,7 @@ public class ExtensionSchemaValidationCmdLineApp
           .filter(f -> !((RecordDataSchema) topLevelDataSchema).isFieldFromIncludes(f))
           .collect(Collectors.toList());
 
+      // Validate all the extension fields
       checkExtensionSchemaFields(extensionSchemaFields);
     }
   }
@@ -200,12 +210,13 @@ public class ExtensionSchemaValidationCmdLineApp
     {
       // Check extension schema field annotations
       Map<String, Object> properties = field.getProperties();
-      // First, assert that the extension field has the required "extensions" annotation
-      if (properties.isEmpty() || !properties.containsKey(EXTENSION_ANNOTATION_NAMESPACE))
+      // First, assert that the extension field is annotated with anything
+      if (properties.isEmpty())
       {
         throw new InvalidExtensionSchemaException("The extension schema field '"
-            + field.getName() + "' must be annotated with 'extension'");
+            + field.getName() + "' must be annotated with 'extension' or 'grpcExtension'");
       }
+
       // Assert that there are no unexpected annotations on this field
       for (String annotationKey : properties.keySet())
       {
@@ -216,48 +227,99 @@ public class ExtensionSchemaValidationCmdLineApp
         }
       }
 
-      Object dataElement = properties.get(EXTENSION_ANNOTATION_NAMESPACE);
-
-      ValidationOptions validationOptions =
-          new ValidationOptions(RequiredMode.MUST_BE_PRESENT, CoercionMode.STRING_TO_PRIMITIVE, UnrecognizedFieldMode.DISALLOW);
-      try
+      // Validate the actual content/structure of the annotation value
+      if (properties.containsKey(EXTENSION_ANNOTATION_NAMESPACE))
       {
-        if (!(dataElement instanceof DataMap))
-        {
-          throw new InvalidExtensionSchemaException("Extension schema annotation is not a datamap!");
-        }
-        DataSchema extensionSchemaAnnotationSchema = new ExtensionSchemaAnnotation().schema();
-        ValidationResult result = ValidateDataAgainstSchema.validate(dataElement, extensionSchemaAnnotationSchema, validationOptions);
-        if (!result.isValid())
-        {
-          throw new InvalidExtensionSchemaException("Extension schema annotation is not valid: " + result.getMessages());
-        }
+        validateRestLiExtensionField(field);
       }
-      catch (InvalidExtensionSchemaException e)
+      else if (properties.containsKey(GRPC_EXTENSION_ANNOTATION_NAMESPACE))
       {
-        throw e;
+        validateGrpcExtensionField(field);
       }
-      catch (Exception e)
-      {
-        _logger.error("Error while checking extension schema field annotation: " + e.getMessage());
-        System.exit(1);
-      }
-      checkExtensionSchemaFieldSchema(field.getType(), properties);
     }
   }
 
-  private static void checkExtensionSchemaFieldSchema(DataSchema fieldSchema, Map<String, Object> extensionAnnotations)
+  private static void validateRestLiExtensionField(RecordDataSchema.Field field)
+      throws InvalidExtensionSchemaException {
+    Map<String, Object> properties = field.getProperties();
+    // Validate that it doesn't also contain gRPC downstream info
+    if (properties.containsKey(GRPC_EXTENSION_ANNOTATION_NAMESPACE))
+    {
+      throw new InvalidExtensionSchemaException("The extension schema field '"
+          + field.getName() + "' cannot be annotated with both 'extension' and 'grpcExtension'");
+    }
+
+    // Validate the actual content/structure of the annotation value
+    validateFieldAnnotation(properties.get(EXTENSION_ANNOTATION_NAMESPACE), new ExtensionSchemaAnnotation().schema());
+
+    // Validate that the field has the appropriate type
+    DataSchema injectedUrnType = getExtensionSchemaFieldSchema(field.getType());
+
+    // Validate that the URN type has a resourceKey annotation with the corresponding suffix (if present)
+    isAnnotatedWithResourceKey(injectedUrnType, properties);
+  }
+
+  private static void validateGrpcExtensionField(RecordDataSchema.Field field)
+      throws InvalidExtensionSchemaException {
+    Map<String, Object> properties = field.getProperties();
+    // Validate that it doesn't also contain Rest.li downstream info
+    if (properties.containsKey(EXTENSION_ANNOTATION_NAMESPACE))
+    {
+      throw new InvalidExtensionSchemaException("The extension schema field '"
+          + field.getName() + "' cannot be annotated with both 'extension' and 'grpcExtension'");
+    }
+
+    // Validate the actual content/structure of the annotation value
+    validateFieldAnnotation(properties.get(GRPC_EXTENSION_ANNOTATION_NAMESPACE), new GrpcExtensionAnnotation().schema());
+
+    // Validate that the field has the appropriate type
+    DataSchema injectedUrnType = getExtensionSchemaFieldSchema(field.getType());
+
+    // Validate that the URN type has a grpcService annotation with the corresponding suffix (if present)
+    isAnnotatedWithGrpcService(injectedUrnType, properties);
+  }
+
+  private static void validateFieldAnnotation(Object dataElement, DataSchema annotationSchema)
       throws InvalidExtensionSchemaException
   {
-      if (fieldSchema.getType() == DataSchema.Type.ARRAY)
+    ValidationOptions validationOptions =
+        new ValidationOptions(RequiredMode.MUST_BE_PRESENT, CoercionMode.STRING_TO_PRIMITIVE, UnrecognizedFieldMode.DISALLOW);
+    try
+    {
+      if (!(dataElement instanceof DataMap))
       {
-        fieldSchema = ((ArrayDataSchema) fieldSchema).getItems();
+        throw new InvalidExtensionSchemaException("Extension schema annotation is not a datamap!");
       }
-      if (fieldSchema.getType() != DataSchema.Type.TYPEREF)
+      ValidationResult result = ValidateDataAgainstSchema.validate(dataElement, annotationSchema, validationOptions);
+      if (!result.isValid())
       {
-        throw new InvalidExtensionSchemaException("Field schema: '" + fieldSchema.toString() + "' is not a TypeRef type.");
+        throw new InvalidExtensionSchemaException("Extension schema annotation is not valid: " + result.getMessages());
       }
-      isAnnotatedWithResourceKey(fieldSchema, extensionAnnotations);
+    }
+    catch (InvalidExtensionSchemaException e)
+    {
+      throw e;
+    }
+    catch (Exception e)
+    {
+      _logger.error("Error while checking extension schema field annotation: " + e.getMessage());
+      System.exit(1);
+    }
+  }
+
+  private static DataSchema getExtensionSchemaFieldSchema(DataSchema fieldSchema)
+      throws InvalidExtensionSchemaException
+  {
+      DataSchema resolvedSchema = fieldSchema;
+      if (resolvedSchema.getType() == DataSchema.Type.ARRAY)
+      {
+        resolvedSchema = ((ArrayDataSchema) resolvedSchema).getItems();
+      }
+      if (resolvedSchema.getType() != DataSchema.Type.TYPEREF)
+      {
+        throw new InvalidExtensionSchemaException("Field schema: '" + resolvedSchema.toString() + "' is not a TypeRef type.");
+      }
+      return resolvedSchema;
   }
 
   private static void isAnnotatedWithResourceKey(DataSchema fieldSchema, Map<String, Object> extensionAnnotations)
@@ -266,7 +328,13 @@ public class ExtensionSchemaValidationCmdLineApp
     Map<String, Object> fieldAnnotation = fieldSchema.getProperties();
     if (!fieldAnnotation.isEmpty() && fieldAnnotation.containsKey(RESOURCE_KEY_ANNOTATION_NAMESPACE))
     {
-     checkExtensionVersionSuffixValue(fieldAnnotation, extensionAnnotations);
+      // If the extension field explicitly references a version, validate that version exists on the resource key
+      final DataMap extensionAnnotationMap = (DataMap) extensionAnnotations.getOrDefault(EXTENSION_ANNOTATION_NAMESPACE, new DataMap());
+      if (extensionAnnotationMap.containsKey(VERSION_SUFFIX))
+      {
+        final DataList restLiResolvers = (DataList) fieldAnnotation.getOrDefault(RESOURCE_KEY_ANNOTATION_NAMESPACE, new DataList());
+        checkExtensionVersionSuffixValue(restLiResolvers, (String) extensionAnnotationMap.get(VERSION_SUFFIX));
+      }
     }
     else
     {
@@ -274,33 +342,53 @@ public class ExtensionSchemaValidationCmdLineApp
     }
   }
 
-  private static void checkExtensionVersionSuffixValue(Map<String, Object> resourceKeyAnnotations, Map<String, Object> extensionAnnotations)
+  private static void isAnnotatedWithGrpcService(DataSchema fieldSchema, Map<String, Object> extensionAnnotations)
       throws InvalidExtensionSchemaException
   {
-    DataMap extensionAnnotationMap = (DataMap) extensionAnnotations.getOrDefault(EXTENSION_ANNOTATION_NAMESPACE, new DataMap());
-    if (extensionAnnotationMap.containsKey(VERSION_SUFFIX))
+    Map<String, Object> fieldAnnotation = fieldSchema.getProperties();
+    if (!fieldAnnotation.isEmpty() && fieldAnnotation.containsKey(GRPC_SERVICE_ANNOTATION_NAMESPACE))
     {
-      boolean versionSuffixValueIsValid = false;
-      DataList resourceKeyAnnotationList = (DataList) resourceKeyAnnotations.getOrDefault(RESOURCE_KEY_ANNOTATION_NAMESPACE, new DataList());
-      if (resourceKeyAnnotationList.size() < 2)
+      // If the extension field explicitly references a version, validate that version exists on the gRPC service
+      final DataMap extensionAnnotationMap = (DataMap) extensionAnnotations.getOrDefault(GRPC_EXTENSION_ANNOTATION_NAMESPACE, new DataMap());
+      if (extensionAnnotationMap.containsKey(VERSION_SUFFIX))
       {
-        throw new InvalidExtensionSchemaException("resourceKey annotation: "+ resourceKeyAnnotations.toString()  + " is not defined as multiple versions");
+        final DataList grpcResolvers = (DataList) fieldAnnotation.getOrDefault(GRPC_SERVICE_ANNOTATION_NAMESPACE, new DataList());
+        checkExtensionVersionSuffixValue(grpcResolvers, (String) extensionAnnotationMap.get(VERSION_SUFFIX));
       }
-      for (int i = 1; i < resourceKeyAnnotationList.size(); i++)
+    }
+    else
+    {
+      throw new InvalidExtensionSchemaException("Field schema: " + fieldSchema.toString() + " is not annotated with 'grpcService'");
+    }
+  }
+
+  /**
+   * Validates that a particular version suffix is defined in the provided resolver list.
+   * @param resolvers List of Rest.li resolvers (resourceKey) or gRPC resolvers (grpcService)
+   * @param extensionVersionSuffix The version suffix referenced by the extension schema field
+   */
+  private static void checkExtensionVersionSuffixValue(DataList resolvers, String extensionVersionSuffix)
+      throws InvalidExtensionSchemaException
+  {
+    boolean versionSuffixValueIsValid = false;
+    if (resolvers.size() < 2)
+    {
+      throw new InvalidExtensionSchemaException("resourceKey/grpcService annotation: "+ resolvers  + " does not have multiple versions");
+    }
+    for (int i = 1; i < resolvers.size(); i++)
+    {
+      DataMap resolverAnnotation = (DataMap) resolvers.get(i);
+      String versionSuffixValueInResolver = (String) resolverAnnotation.get(VERSION_SUFFIX);
+      if (extensionVersionSuffix.equals(versionSuffixValueInResolver))
       {
-        DataMap resourceKeyAnnotation = (DataMap) resourceKeyAnnotationList.get(i);
-        String versionSuffixValueInResourceKey = (String) resourceKeyAnnotation.get(VERSION_SUFFIX);
-        if (((String)extensionAnnotationMap.get(VERSION_SUFFIX)).equals(versionSuffixValueInResourceKey))
-        {
-          versionSuffixValueIsValid = true;
-          break;
-        }
+        versionSuffixValueIsValid = true;
+        break;
       }
-      if (!versionSuffixValueIsValid)
-      {
-        throw new InvalidExtensionSchemaException("versionSuffix value: '" + (String)extensionAnnotationMap.get(VERSION_SUFFIX) +
-            "' does not match the versionSuffix value which was defined in resourceKey annotation");
-      }
+    }
+    if (!versionSuffixValueIsValid)
+    {
+      throw new InvalidExtensionSchemaException("versionSuffix value: '" + extensionVersionSuffix +
+          "' does not match the versionSuffix value which was defined in resourceKey/grpcService annotation");
     }
   }
 
