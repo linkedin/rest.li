@@ -15,7 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.43.9] - 2023-07-18
-- add `rest.idl.autoGeneration.enabled` property in `PegasusPlugin` to support IDL files auto generation
+- add `rest.idl.processEmptyIdlDir` property in `PegasusPlugin` to support IDL files auto generation
   - If this property is true, plugin will create rest client gradle tasks even if IDL dir is empty.
 
 ## [29.43.8] - 2023-07-13
