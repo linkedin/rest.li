@@ -16,7 +16,6 @@
 
 package com.linkedin.restli.tools.idlgen;
 
-
 import com.linkedin.pegasus.generator.GeneratorResult;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.server.model.ResourceModel;
@@ -27,22 +26,16 @@ import com.linkedin.restli.restspec.ResourceSchema;
 import com.linkedin.restli.restspec.RestSpecCodec;
 import com.linkedin.restli.server.RestLiConfig;
 import com.linkedin.restli.server.util.FileClassNameScanner;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.apache.commons.io.output.NullWriter;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +52,7 @@ public class RestLiResourceModelExporter
 
   /**
    * @param apiName the name of the API
-   * @param classpath classpath to to load the resources. this is purely for Javadoc Doclet {@link RestLiDoclet}
+   * @param classpath classpath to load the resources. this is purely for Javadoc Doclet {@link RestLiDoclet}
    * @param sourcePaths paths to scan for resource Java source files. this is purely for Javadoc Doclet {@link RestLiDoclet}
    * @param resourcePackages packages to scan for resources
    * @param outdir directory in which to output the IDL files
@@ -110,7 +103,7 @@ public class RestLiResourceModelExporter
 
   /**
    * @param apiName the name of the API
-   * @param classpath classpath to to load the resources. this is purely for Javadoc Doclet {@link RestLiDoclet}
+   * @param classpath classpath to load the resources. this is purely for Javadoc Doclet {@link RestLiDoclet}
    * @param sourcePaths paths to scan for resource Java source files. this is purely for Javadoc Doclet {@link RestLiDoclet}
    *                    if both resourcePackages and resourceClasses is null, all classes defined in the directories will be scanned
    * @param resourcePackages packages to scan for resources

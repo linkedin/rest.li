@@ -562,6 +562,7 @@ public class PegasusPlugin implements Plugin<Project>
   private static final Pattern TEST_DIR_REGEX = Pattern.compile("^(integ)?[Tt]est");
   private static final String SNAPSHOT_NO_PUBLISH = "rest.model.noPublish";
   private static final String SNAPSHOT_FORCE_PUBLISH = "rest.model.forcePublish";
+  private static final String IDL_AUTO_GENERATION_ENABLED = "rest.idl.autoGeneration.enabled";
   private static final String IDL_NO_PUBLISH = "rest.idl.noPublish";
   private static final String IDL_FORCE_PUBLISH = "rest.idl.forcePublish";
   private static final String SKIP_IDL_CHECK = "rest.idl.skipCheck";
@@ -1991,11 +1992,11 @@ public class PegasusPlugin implements Plugin<Project>
   {
     // idl directory for api project
     File idlDir = project.file(getIdlPath(project, sourceSet));
-    if (SharedFileUtils.getSuffixedFiles(project, idlDir, IDL_FILE_SUFFIX).isEmpty())
+    if (SharedFileUtils.getSuffixedFiles(project, idlDir, IDL_FILE_SUFFIX).isEmpty() && !isPropertyTrue(project,
+        IDL_AUTO_GENERATION_ENABLED))
     {
       return;
     }
-
     File generatedRestClientDir = project.file(getGeneratedDirPath(project, sourceSet, REST_GEN_TYPE)
         + File.separatorChar + "java");
 

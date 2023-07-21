@@ -14,6 +14,10 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.43.9] - 2023-07-18
+- add `rest.idl.autoGeneration.enabled` property in `PegasusPlugin` to support IDL files auto generation
+  - If this property is true, plugin will create rest client gradle tasks even if IDL dir is empty.
+
 ## [29.43.8] - 2023-07-13
 - Add support for gRPC-downstream extension annotations (`@grpcExtension`, `@grpcService`).
 
@@ -5502,7 +5506,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.43.8...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.43.9...master
+[29.43.9]: https://github.com/linkedin/rest.li/compare/v29.43.8...v29.43.9
 [29.43.8]: https://github.com/linkedin/rest.li/compare/v29.43.7...v29.43.8
 [29.43.7]: https://github.com/linkedin/rest.li/compare/v29.43.6...v29.43.7
 [29.43.6]: https://github.com/linkedin/rest.li/compare/v29.43.5...v29.43.6
