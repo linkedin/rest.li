@@ -79,19 +79,19 @@ public class DualReadStateManager
   public void updateGlobal(DualReadModeProvider.DualReadMode mode)
   {
     _dualReadMode = mode;
-    LOG.debug("Global dual read mode updated: " + mode);
+    LOG.info("Global dual read mode updated: {}", mode);
   }
 
   public void updateService(String service, DualReadModeProvider.DualReadMode mode)
   {
     _serviceDualReadModes.put(service, mode);
-    LOG.debug("Dual read mode for service " + service + " updated: " + mode);
+    LOG.info("Dual read mode for service {} updated: {}", service, mode);
   }
 
   public void updateCluster(String cluster, DualReadModeProvider.DualReadMode mode)
   {
     _clusterDualReadModes.put(cluster, mode);
-    LOG.debug("Dual read mode for cluster " + cluster + " updated: " + mode);
+    LOG.info("Dual read mode for cluster {} updated: {}", cluster, mode);
   }
 
   public DualReadModeProvider.DualReadMode getGlobalDualReadMode()

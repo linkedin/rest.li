@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.43.10] - 2023-07-24
+- set log level of dual read mode changes to info.
+
 ## [29.43.9] - 2023-07-18
 - add `rest.idl.processEmptyIdlDir` property in `PegasusPlugin` to support IDL files auto generation
   - If this property is true, plugin will create rest client gradle tasks even if IDL dir is empty.
@@ -5506,7 +5509,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.43.9...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.43.10...master
+[29.43.10]: https://github.com/linkedin/rest.li/compare/v29.43.9...v29.43.10
 [29.43.9]: https://github.com/linkedin/rest.li/compare/v29.43.8...v29.43.9
 [29.43.8]: https://github.com/linkedin/rest.li/compare/v29.43.7...v29.43.8
 [29.43.7]: https://github.com/linkedin/rest.li/compare/v29.43.6...v29.43.7
