@@ -127,19 +127,23 @@ public class D2ClientJmxManager
         }
       }
 
+      private String getPrefixForLBJmxNames() {
+        return _prefix.contains("-xDS") ? String.format("%s-", _prefix) : "";
+      }
+
       private String getClusterInfoJmxName(String clusterName)
       {
-        return String.format("%s-ClusterInfo", clusterName);
+        return String.format("%s%s-ClusterInfo", getPrefixForLBJmxNames(), clusterName);
       }
 
       private String getServicePropertiesJmxName(String serviceName)
       {
-        return String.format("%s-ServiceProperties", serviceName);
+        return String.format("%s%s-ServiceProperties", getPrefixForLBJmxNames(), serviceName);
       }
 
       private String getLoadBalancerStrategyJmxName(String serviceName, String scheme)
       {
-        return serviceName + "-" + scheme + "-LoadBalancerStrategy";
+        return String.format("%s%s-%s-LoadBalancerStrategy", getPrefixForLBJmxNames(), serviceName, scheme);
       }
     });
   }

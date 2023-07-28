@@ -13,9 +13,10 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
-
-## [29.43.11] - 2023-08-01
 - fix logging issues about observer host and dual read mode
+
+## [29.43.11] - 2023-07-28
+- differentiate LB metrics between ZK and xDS read flows.
 
 ## [29.43.10] - 2023-07-24
 - set log level of dual read mode changes to info.
