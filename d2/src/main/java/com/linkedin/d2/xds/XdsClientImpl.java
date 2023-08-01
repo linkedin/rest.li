@@ -99,7 +99,7 @@ public class XdsClientImpl extends XdsClient
         AggregatedDiscoveryServiceGrpc.newStub(_managedChannel);
     _adsStream = new AdsStream(stub);
     _adsStream.start();
-    _log.info("ADS stream started");
+    _log.info("ADS stream started, connected to server: {}", _managedChannel.authority());
   }
 
   @Override
