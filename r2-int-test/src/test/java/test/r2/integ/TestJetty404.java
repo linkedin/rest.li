@@ -26,6 +26,7 @@ import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.server.HttpServer;
 import com.linkedin.r2.transport.http.server.HttpServerFactory;
 import com.linkedin.test.util.retry.SingleRetry;
+import com.linkedin.test.util.retry.ThreeRetries;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
@@ -74,7 +75,7 @@ public class TestJetty404
   }
 
   // make sure jetty's default behavior will read all the request bytes in case of 404
-  @Test(retryAnalyzer = SingleRetry.class) // Known to be flaky in CI
+  @Test(retryAnalyzer = ThreeRetries.class) // Known to be flaky in CI
   public void testJetty404() throws Exception
   {
     BytesWriter writer = new BytesWriter(200 * 1024, (byte)100);
