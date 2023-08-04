@@ -78,20 +78,27 @@ public class DualReadStateManager
 
   public void updateGlobal(DualReadModeProvider.DualReadMode mode)
   {
+    boolean updated = _dualReadMode != mode;
     _dualReadMode = mode;
-    LOG.info("Global dual read mode updated: {}", mode);
+    if (updated) {
+      LOG.info("Global dual read mode updated: {}", mode);
+    }
   }
 
   public void updateService(String service, DualReadModeProvider.DualReadMode mode)
   {
-    _serviceDualReadModes.put(service, mode);
-    LOG.info("Dual read mode for service {} updated: {}", service, mode);
+    DualReadModeProvider.DualReadMode oldMode = _serviceDualReadModes.put(service, mode);
+    if (oldMode != mode) {
+      LOG.info("Dual read mode for service {} updated: {}", service, mode);
+    }
   }
 
   public void updateCluster(String cluster, DualReadModeProvider.DualReadMode mode)
   {
-    _clusterDualReadModes.put(cluster, mode);
-    LOG.info("Dual read mode for cluster {} updated: {}", cluster, mode);
+    DualReadModeProvider.DualReadMode oldMode = _clusterDualReadModes.put(cluster, mode);
+    if (oldMode != mode) {
+      LOG.info("Dual read mode for cluster {} updated: {}", cluster, mode);
+    }
   }
 
   public DualReadModeProvider.DualReadMode getGlobalDualReadMode()
@@ -173,7 +180,7 @@ public class DualReadStateManager
         // Check and switch global dual read mode
         updateGlobal(_dualReadModeProvider.getDualReadMode());
 
-        // Check and switch service-level dual read mode}
+        // Check and switch service-level dual read mode
         if (d2ServiceName != null)
         {
           updateService(d2ServiceName, _dualReadModeProvider.getDualReadMode(d2ServiceName));

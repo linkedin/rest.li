@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.43.11] - 2023-08-01
+- fix logging issues about observer host and dual read mode
+
 ## [29.43.10] - 2023-07-24
 - set log level of dual read mode changes to info.
 
@@ -5509,7 +5512,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.43.10...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.43.11...master
+[29.43.11]: https://github.com/linkedin/rest.li/compare/v29.43.10...v29.43.11
 [29.43.10]: https://github.com/linkedin/rest.li/compare/v29.43.9...v29.43.10
 [29.43.9]: https://github.com/linkedin/rest.li/compare/v29.43.8...v29.43.9
 [29.43.8]: https://github.com/linkedin/rest.li/compare/v29.43.7...v29.43.8
