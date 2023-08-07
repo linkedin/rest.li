@@ -16,13 +16,14 @@
 
 package com.linkedin.d2.jmx;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.dualread.DualReadLoadBalancerJmx;
 import com.linkedin.d2.balancer.dualread.DualReadModeProvider;
 import com.linkedin.d2.balancer.dualread.DualReadStateManager;
+import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.simple.ClusterInfoItem;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
@@ -32,9 +33,6 @@ import com.linkedin.d2.discovery.stores.file.FileStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
 import com.linkedin.util.ArgumentUtil;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -73,8 +71,8 @@ public class D2ClientJmxManager
 
   private final String _secondaryPrefixForLbPropertyJmxName;
 
-  @SuppressWarnings("rawtypes")
-  private final ConcurrentMap<String, D2ClientJmxDualReadModeWatcher> _dualReadStateWatchers;
+  private final D2ClientJmxDualReadModeWatcherManager _watcherManager;
+
 
   public enum DiscoverySourceType
   {
@@ -111,40 +109,18 @@ public class D2ClientJmxManager
     _dualReadStateManager = dualReadStateManager;
     _secondaryGlobalPrefix = String.format("%s-%s", _primaryGlobalPrefix, _discoverySourceType.getPrintName());
     _secondaryPrefixForLbPropertyJmxName = String.format("%s-", _discoverySourceType.getPrintName());
-    _dualReadStateWatchers = new ConcurrentHashMap<>();
+    _watcherManager = new D2ClientJmxDualReadModeWatcherManager(_dualReadStateManager);
   }
 
-  @SuppressWarnings({"unchecked"})
   public void setSimpleLoadBalancer(SimpleLoadBalancer balancer)
   {
-    if (_dualReadStateManager != null)
-    {
-      String watcherName = balancer.getClass().getSimpleName();
-      D2ClientJmxDualReadModeWatcher<SimpleLoadBalancer> currentWatcher = _dualReadStateWatchers.computeIfAbsent(watcherName, k ->
-      {
-        D2ClientJmxDualReadModeWatcher<SimpleLoadBalancer> watcher = new D2ClientJmxDualReadModeWatcher<>(balancer, this::doRegisterLoadBalancer);
-        _dualReadStateManager.addGlobalWatcher(watcher);
-        return watcher;
-      });
-      currentWatcher.setLatestJmxProperty(balancer);
-    }
+    _watcherManager.updateWatcher(balancer, this::doRegisterLoadBalancer);
     doRegisterLoadBalancer(balancer);
   }
 
-  @SuppressWarnings({"unchecked"})
   public void setSimpleLoadBalancerState(SimpleLoadBalancerState state)
   {
-    if (_dualReadStateManager != null)
-    {
-      String watcherName = state.getClass().getSimpleName();
-      D2ClientJmxDualReadModeWatcher<SimpleLoadBalancerState> currentWatcher = _dualReadStateWatchers.computeIfAbsent(watcherName, k ->
-      {
-        D2ClientJmxDualReadModeWatcher<SimpleLoadBalancerState> watcher = new D2ClientJmxDualReadModeWatcher<>(state, this::doRegisterLoadBalancerState);
-        _dualReadStateManager.addGlobalWatcher(watcher);
-        return watcher;
-      });
-      currentWatcher.setLatestJmxProperty(state);
-    }
+    _watcherManager.updateWatcher(state, this::doRegisterLoadBalancerState);
     doRegisterLoadBalancerState(state);
 
     state.register(new SimpleLoadBalancerStateListener()
@@ -152,29 +128,14 @@ public class D2ClientJmxManager
       @Override
       public void onStrategyAdded(String serviceName, String scheme, LoadBalancerStrategy strategy)
       {
-        if (_dualReadStateManager != null)
-        {
-          D2ClientJmxDualReadModeWatcher<LoadBalancerStrategy> currentWatcher =
-              _dualReadStateWatchers.computeIfAbsent(getWatcherNameForLoadBalancerStrategy(serviceName, scheme), k ->
-              {
-                Consumer<LoadBalancerStrategy> callback = i -> doRegisterLoadBalancerStrategy(serviceName, scheme, i);
-                D2ClientJmxDualReadModeWatcher<LoadBalancerStrategy> watcher = new D2ClientJmxDualReadModeWatcher<>(strategy, callback);
-                _dualReadStateManager.addServiceWatcher(serviceName, watcher);
-                return watcher;
-              });
-          currentWatcher.setLatestJmxProperty(strategy);
-        }
+        _watcherManager.updateWatcher(serviceName, scheme, strategy, i -> doRegisterLoadBalancerStrategy(serviceName, scheme, i));
         doRegisterLoadBalancerStrategy(serviceName, scheme, strategy);
       }
 
       @Override
       public void onStrategyRemoved(String serviceName, String scheme, LoadBalancerStrategy strategy)
       {
-        DualReadStateManager.DualReadModeWatcher watcher = _dualReadStateWatchers.remove(getWatcherNameForLoadBalancerStrategy(serviceName, scheme));
-        if (_dualReadStateManager != null && watcher != null)
-        {
-          _dualReadStateManager.removeServiceWatcher(serviceName, watcher);
-        }
+        _watcherManager.removeWatcherForLoadBalancerStrategy(serviceName, scheme);
         _jmxManager.unregister(getLoadBalancerStrategyJmxName(serviceName, scheme));
       }
 
@@ -200,18 +161,7 @@ public class D2ClientJmxManager
             && clusterInfoItem.getClusterPropertiesItem().getProperty() != null)
         {
           String clusterName = clusterInfoItem.getClusterPropertiesItem().getProperty().getClusterName();
-          if (_dualReadStateManager != null)
-          {
-            D2ClientJmxDualReadModeWatcher<ClusterInfoItem> currentWatcher =
-                _dualReadStateWatchers.computeIfAbsent(getWatcherNameForClusterInfoItem(clusterName), k ->
-                {
-                  Consumer<ClusterInfoItem> callback = i -> doRegisterClusterInfo(clusterName, i);
-                  D2ClientJmxDualReadModeWatcher<ClusterInfoItem> watcher = new D2ClientJmxDualReadModeWatcher<>(clusterInfoItem, callback);
-                  _dualReadStateManager.addClusterWatcher(clusterName, watcher);
-                  return watcher;
-                });
-            currentWatcher.setLatestJmxProperty(clusterInfoItem);
-          }
+          _watcherManager.updateWatcher(clusterName, clusterInfoItem, i -> doRegisterClusterInfo(clusterName, i));
           doRegisterClusterInfo(clusterName, clusterInfoItem);
         }
       }
@@ -223,11 +173,7 @@ public class D2ClientJmxManager
             && clusterInfoItem.getClusterPropertiesItem().getProperty() != null)
         {
           String clusterName = clusterInfoItem.getClusterPropertiesItem().getProperty().getClusterName();
-          DualReadStateManager.DualReadModeWatcher watcher = _dualReadStateWatchers.remove(getWatcherNameForClusterInfoItem(clusterName));
-          if (_dualReadStateManager != null && watcher != null)
-          {
-            _dualReadStateManager.removeClusterWatcher(clusterName, watcher);
-          }
+          _watcherManager.removeWatcherForClusterInfoItem(clusterName);
           _jmxManager.unregister(getClusterInfoJmxName(clusterName));
         }
       }
@@ -238,19 +184,7 @@ public class D2ClientJmxManager
         if (serviceProperties != null && serviceProperties.getProperty() != null)
         {
           String serviceName = serviceProperties.getProperty().getServiceName();
-          if (_dualReadStateManager != null)
-          {
-            D2ClientJmxDualReadModeWatcher<LoadBalancerStateItem<ServiceProperties>> currentWatcher =
-                _dualReadStateWatchers.computeIfAbsent(getWatcherNameForServiceProperties(serviceName), k ->
-                {
-                  Consumer<LoadBalancerStateItem<ServiceProperties>> callback = i -> doRegisterServiceProperties(serviceName, i);
-                  D2ClientJmxDualReadModeWatcher<LoadBalancerStateItem<ServiceProperties>> watcher =
-                      new D2ClientJmxDualReadModeWatcher<>(serviceProperties, callback);
-                  _dualReadStateManager.addServiceWatcher(serviceName, watcher);
-                  return watcher;
-                });
-            currentWatcher.setLatestJmxProperty(serviceProperties);
-          }
+          _watcherManager.updateWatcher(serviceName, serviceProperties, i -> doRegisterServiceProperties(serviceName, i));
           doRegisterServiceProperties(serviceName, serviceProperties);
         }
       }
@@ -261,11 +195,7 @@ public class D2ClientJmxManager
         if (serviceProperties != null && serviceProperties.getProperty() != null)
         {
           String serviceName = serviceProperties.getProperty().getServiceName();
-          DualReadStateManager.DualReadModeWatcher watcher = _dualReadStateWatchers.remove(getWatcherNameForServiceProperties(serviceName));
-          if (_dualReadStateManager != null && watcher != null)
-          {
-            _dualReadStateManager.removeServiceWatcher(serviceName, watcher);
-          }
+          _watcherManager.removeWatcherForServiceProperties(serviceName);
           _jmxManager.unregister(getServicePropertiesJmxName(serviceName));
         }
       }
@@ -285,19 +215,6 @@ public class D2ClientJmxManager
       private void doRegisterServiceProperties(String serviceName, LoadBalancerStateItem<ServiceProperties> serviceProperties)
       {
         _jmxManager.registerServiceProperties(getServicePropertiesJmxName(serviceName), serviceProperties);
-      }
-
-      private String getWatcherNameForLoadBalancerStrategy(String serviceName, String scheme)
-      {
-        return String.format("%s-%s-LoadBalancerStrategy", serviceName, scheme);
-      }
-
-      private String getWatcherNameForClusterInfoItem(String clusterName) {
-        return String.format("%s-ClusterInfoItem", clusterName);
-      }
-
-      private String getWatcherNameForServiceProperties(String serviceName) {
-        return String.format("%s-LoadBalancerStateItem-ServiceProperties", serviceName);
       }
 
       private String getClusterInfoJmxName(String clusterName)
@@ -347,21 +264,21 @@ public class D2ClientJmxManager
     _jmxManager.registerZooKeeperPermanentStore(jmxName, serviceRegistry);
   }
 
-  public <T> void setFsUriStore(FileStore<T> uriStore)
+  public void setFsUriStore(FileStore<UriProperties> uriStore)
   {
-    addDualReadModeWatcherForFileStore("UriProperties", uriStore, this::doRegisterUriFileStore);
+    _watcherManager.updateWatcherForFileStoreUriProperties(uriStore, this::doRegisterUriFileStore);
     doRegisterUriFileStore(uriStore);
   }
 
-  public <T> void setFsClusterStore(FileStore<T> clusterStore)
+  public void setFsClusterStore(FileStore<ClusterProperties> clusterStore)
   {
-    addDualReadModeWatcherForFileStore("ClusterProperties", clusterStore, this::doRegisterClusterFileStore);
+    _watcherManager.updateWatcherForFileStoreClusterProperties(clusterStore, this::doRegisterClusterFileStore);
     doRegisterClusterFileStore(clusterStore);
   }
 
-  public <T> void setFsServiceStore(FileStore<T> serviceStore)
+  public void setFsServiceStore(FileStore<ServiceProperties> serviceStore)
   {
-    addDualReadModeWatcherForFileStore("ServiceProperties", serviceStore, this::doRegisterServiceFileStore);
+    _watcherManager.updateWatcherForFileStoreServiceProperties(serviceStore, this::doRegisterServiceFileStore);
     doRegisterServiceFileStore(serviceStore);
   }
 
@@ -403,22 +320,6 @@ public class D2ClientJmxManager
   {
     final String jmxName = String.format("%s-FileStoreServiceStore", getGlobalPrefix());
     _jmxManager.registerFileStore(jmxName, serviceStore);
-  }
-
-  @SuppressWarnings("unchecked")
-  private <T> void addDualReadModeWatcherForFileStore(String watcherNameSuffix, FileStore<T> store, Consumer<FileStore<T>> watcherCallback)
-  {
-    if (_dualReadStateManager != null)
-    {
-      String watcherName = String.format("%s-%s", store.getClass().getSimpleName(), watcherNameSuffix);
-      D2ClientJmxDualReadModeWatcher<FileStore<T>> currentWatcher = _dualReadStateWatchers.computeIfAbsent(watcherName, k ->
-      {
-        D2ClientJmxDualReadModeWatcher<FileStore<T>> watcher = new D2ClientJmxDualReadModeWatcher<>(store, watcherCallback);
-        _dualReadStateManager.addGlobalWatcher(watcher);
-        return watcher;
-      });
-      currentWatcher.setLatestJmxProperty(store);
-    }
   }
 
   private String getGlobalPrefix()
@@ -475,35 +376,6 @@ public class D2ClientJmxManager
       default:
         _log.warn("Unknown dual read mode {}, falling back to ZK as primary source.", dualReadMode);
         return _discoverySourceType == DiscoverySourceType.ZK;
-    }
-  }
-
-  static final class D2ClientJmxDualReadModeWatcher<T> implements DualReadStateManager.DualReadModeWatcher
-  {
-    private T _latestJmxProperty;
-    private final Consumer<T> _callback;
-
-    D2ClientJmxDualReadModeWatcher(T initialJmxProperty, Consumer<T> callback)
-    {
-      _latestJmxProperty = initialJmxProperty;
-      _callback = callback;
-    }
-
-    @VisibleForTesting
-    T getLatestJmxProperty()
-    {
-      return _latestJmxProperty;
-    }
-
-    public void setLatestJmxProperty(T latestJmxProperty)
-    {
-      _latestJmxProperty = latestJmxProperty;
-    }
-
-    @Override
-    public void onChanged()
-    {
-      _callback.accept(_latestJmxProperty);
     }
   }
 }

@@ -100,7 +100,7 @@ public class D2ClientJmxManagerTest {
     ArgumentCaptor<LoadBalancerStateItem<ServiceProperties>> _servicePropertiesArgumentCaptor;
     @SuppressWarnings("rawtypes")
     @Captor
-    ArgumentCaptor<D2ClientJmxManager.D2ClientJmxDualReadModeWatcher> _addWatcherCaptor;
+    ArgumentCaptor<D2ClientJmxDualReadModeWatcherManager.D2ClientJmxDualReadModeWatcher> _addWatcherCaptor;
 
     D2ClientJmxManager _d2ClientJmxManager;
     private final ClusterInfoItem _clusterInfoItem;
@@ -277,18 +277,19 @@ public class D2ClientJmxManagerTest {
     D2ClientJmxManager d2ClientJmxManager = fixture.getD2ClientJmxManager("Foo", D2ClientJmxManager.DiscoverySourceType.XDS, true);
     // Initial dual read mode is ZK only.
     DualReadStateManager dualReadStateManager = fixture._dualReadStateManager;
+    dualReadStateManager.updateGlobal(DualReadModeProvider.DualReadMode.OLD_LB_ONLY);
     Mockito.doReturn(DualReadModeProvider.DualReadMode.OLD_LB_ONLY).when(dualReadStateManager).getGlobalDualReadMode();
     Mockito.doReturn(DualReadModeProvider.DualReadMode.OLD_LB_ONLY).when(dualReadStateManager).getServiceDualReadMode(any());
     Mockito.doReturn(DualReadModeProvider.DualReadMode.OLD_LB_ONLY).when(dualReadStateManager).getClusterDualReadMode(any());
 
     d2ClientJmxManager.setSimpleLoadBalancerState(fixture._simpleLoadBalancerState);
     SimpleLoadBalancerState.SimpleLoadBalancerStateListener lbStateListener = fixture._simpleLoadBalancerStateListenerCaptor.getValue();
-    ArgumentCaptor<D2ClientJmxManager.D2ClientJmxDualReadModeWatcher> addWatcherCaptor = fixture._addWatcherCaptor;
+    ArgumentCaptor<D2ClientJmxDualReadModeWatcherManager.D2ClientJmxDualReadModeWatcher> addWatcherCaptor = fixture._addWatcherCaptor;
 
     lbStateListener.onServicePropertiesUpdate(SERVICE_PROPERTIES_LOAD_BALANCER_STATE_ITEM);
     // Verify watcher is added with properties inside
     verify(dualReadStateManager).addServiceWatcher(eq("S_Foo"), addWatcherCaptor.capture());
-    D2ClientJmxManager.D2ClientJmxDualReadModeWatcher<LoadBalancerStateItem<ServiceProperties>> watcher = addWatcherCaptor.getValue();
+    D2ClientJmxDualReadModeWatcherManager.D2ClientJmxDualReadModeWatcher<LoadBalancerStateItem<ServiceProperties>> watcher = addWatcherCaptor.getValue();
     Assert.assertEquals(watcher.getLatestJmxProperty(), SERVICE_PROPERTIES_LOAD_BALANCER_STATE_ITEM);
 
     lbStateListener.onServicePropertiesUpdate(UPDATED_SERVICE_PROPERTIES_LB_STATE_ITEM);
@@ -310,18 +311,19 @@ public class D2ClientJmxManagerTest {
     d2ClientJmxManager.setSimpleLoadBalancerState(fixture._simpleLoadBalancerState);
     // Initial dual read mode is ZK only.
     DualReadStateManager dualReadStateManager = fixture._dualReadStateManager;
+    dualReadStateManager.updateGlobal(DualReadModeProvider.DualReadMode.OLD_LB_ONLY);
     Mockito.doReturn(DualReadModeProvider.DualReadMode.OLD_LB_ONLY).when(dualReadStateManager).getGlobalDualReadMode();
     Mockito.doReturn(DualReadModeProvider.DualReadMode.OLD_LB_ONLY).when(dualReadStateManager).getServiceDualReadMode(any());
     Mockito.doReturn(DualReadModeProvider.DualReadMode.OLD_LB_ONLY).when(dualReadStateManager).getClusterDualReadMode(any());
 
     SimpleLoadBalancerState.SimpleLoadBalancerStateListener lbStateListener = fixture._simpleLoadBalancerStateListenerCaptor.getValue();
-    ArgumentCaptor<D2ClientJmxManager.D2ClientJmxDualReadModeWatcher> addWatcherCaptor = fixture._addWatcherCaptor;
+    ArgumentCaptor<D2ClientJmxDualReadModeWatcherManager.D2ClientJmxDualReadModeWatcher> addWatcherCaptor = fixture._addWatcherCaptor;
 
     lbStateListener.onClusterInfoUpdate(fixture._clusterInfoItem);
 
     // Verify watcher is added with properties inside
     verify(dualReadStateManager).addClusterWatcher(eq("C_Foo"), addWatcherCaptor.capture());
-    D2ClientJmxManager.D2ClientJmxDualReadModeWatcher<ClusterInfoItem> watcher = addWatcherCaptor.getValue();
+    D2ClientJmxDualReadModeWatcherManager.D2ClientJmxDualReadModeWatcher<ClusterInfoItem> watcher = addWatcherCaptor.getValue();
     Assert.assertEquals(watcher.getLatestJmxProperty(), fixture._clusterInfoItem);
 
     lbStateListener.onClusterInfoUpdate(fixture._updatedClusterInfoItem);
