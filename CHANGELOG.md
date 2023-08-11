@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [30.0.1] - 2023-08-22
+- Rewrite the Java Doc logic in Java 11 APIs and use multi-release jar to be backward compatible with Java 8 upstreams
+
 ## [30.0.0] - 2023-08-15
 - Remove resetTogglingStores functionality from LoadBalancerClientCli, which is incompatible with Java 17
 
@@ -5518,7 +5521,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v30.0.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v30.0.1...master
+[30.0.1]: https://github.com/linkedin/rest.li/compare/v30.0.0...v30.0.1
 [30.0.0]: https://github.com/linkedin/rest.li/compare/v29.44.0...v30.0.0
 [29.44.0]: https://github.com/linkedin/rest.li/compare/v29.43.11...v29.44.0
 [29.43.11]: https://github.com/linkedin/rest.li/compare/v29.43.10...v29.43.11
