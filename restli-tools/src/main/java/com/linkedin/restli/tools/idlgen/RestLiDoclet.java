@@ -17,35 +17,21 @@
 package com.linkedin.restli.tools.idlgen;
 
 
-import com.sun.source.doctree.DocCommentTree;
-import com.sun.source.doctree.DocTree;
-import com.sun.source.doctree.ParamTree;
-import com.sun.source.doctree.DeprecatedTree;
-import jdk.javadoc.doclet.Doclet;
-import jdk.javadoc.doclet.DocletEnvironment;
-import jdk.javadoc.doclet.Reporter;
+import com.sun.javadoc.ClassDoc;
+import com.sun.javadoc.MethodDoc;
+import com.sun.javadoc.Parameter;
+import com.sun.javadoc.RootDoc;
+import com.sun.javadoc.Type;
+import com.sun.tools.javadoc.Main;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.SourceVersion;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.TypeMirror;
-import javax.tools.DocumentationTool;
-import javax.tools.JavaFileObject;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.ToolProvider;
+
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 
 /**
@@ -55,77 +41,45 @@ import java.util.stream.Collectors;
  * cleanly integrate the output into the {@link RestLiResourceModelExporter} tool. Thus, we're just
  * dumping the docs into a static Map which can be accessed by {@link RestLiResourceModelExporter}.
  *
- * This class supports multiple runs of Javadoc Doclet API {@link DocumentationTool}.
+ * This class supports multiple runs of Javadoc Doclet API {@link Main#execute(String[])}.
  * Each run will be assigned an unique "Doclet ID", returned by
- * {@link #generateDoclet(String, java.io.PrintWriter, java.io.PrintWriter, java.io.PrintWriter, String, List<String>)}.
+ * {@link #generateDoclet(String, java.io.PrintWriter, java.io.PrintWriter, java.io.PrintWriter, String[])}.
  * The Doclet ID should be subsequently used to initialize {@link DocletDocsProvider}.
  *
  * This class is thread-safe. However, #generateJavadoc() will be synchronized.
  *
  * @author dellamag
+ * @see Main#execute(String, java.io.PrintWriter, java.io.PrintWriter, java.io.PrintWriter, String, String[])
  */
-public class RestLiDoclet implements Doclet
+public class RestLiDoclet
 {
   private static RestLiDoclet _currentDocLet = null;
+
   private final DocInfo _docInfo;
-  private final DocletEnvironment _docEnv;
 
   /**
-   * Generate Javadoc and return the generated RestLiDoclet instance.
+   * Generate Javadoc and return associated Doclet ID.
    * This method is synchronized.
    *
    * @param programName Name of the program (for error messages).
    * @param errWriter PrintWriter to receive error messages.
    * @param warnWriter PrintWriter to receive warning messages.
    * @param noticeWriter PrintWriter to receive notice messages.
-   * @param flatClassPath Flat path to classes to be used.
-   * @param sourceFiles List of Java source files to be analyzed.
-   * @return the generated RestLiDoclet instance.
+   * @param args The command line parameters.
+   * @return an unique doclet ID which represent the subsequent Main#execute() run.
+   * @throws IllegalStateException if the generated doclet ID is already used. Try again.
    * @throws IllegalArgumentException if Javadoc fails to generate docs.
    */
   public static synchronized RestLiDoclet generateDoclet(String programName,
       PrintWriter errWriter,
       PrintWriter warnWriter,
       PrintWriter noticeWriter,
-      String flatClassPath,
-      List<String> sourceFiles
-  )
+      String[] args)
   {
-    noticeWriter.println("Generating Javadoc for " + programName);
-
-    DocumentationTool docTool = ToolProvider.getSystemDocumentationTool();
-    StandardJavaFileManager fileManager = docTool.getStandardFileManager(null, null, null);
-    Iterable<? extends JavaFileObject> fileObjects = fileManager.getJavaFileObjectsFromPaths(
-        sourceFiles.stream().map(Paths::get).collect(Collectors.toList()));
-
-    // Set up the Javadoc task options
-    List<String> taskOptions = new ArrayList<>();
-    taskOptions.add("-classpath");
-    taskOptions.add(flatClassPath);
-
-    // Create and run the Javadoc task
-    DocumentationTool.DocumentationTask task = docTool.getTask(errWriter,
-        fileManager, diagnostic -> {
-          switch (diagnostic.getKind()) {
-            case ERROR:
-              errWriter.println(diagnostic.getMessage(Locale.getDefault()));
-              break;
-            case WARNING:
-              warnWriter.println(diagnostic.getMessage(Locale.getDefault()));
-              break;
-            case NOTE:
-              noticeWriter.println(diagnostic.getMessage(Locale.getDefault()));
-              break;
-          }
-        },
-        RestLiDoclet.class,
-        taskOptions,
-        fileObjects);
-
-    boolean success = task.call();
-    if (!success)
+    final int javadocRetCode = Main.execute(programName, errWriter, warnWriter, noticeWriter, RestLiDoclet.class.getName(), args);
+    if (javadocRetCode != 0)
     {
-      throw new IllegalArgumentException("Javadoc generation failed");
+      throw new IllegalArgumentException("Javadoc failed with return code " + javadocRetCode);
     }
 
     return _currentDocLet;
@@ -134,112 +88,80 @@ public class RestLiDoclet implements Doclet
   /**
    * Entry point for Javadoc Doclet.
    *
-   * @param docEnv {@link DocletEnvironment} passed in by Javadoc
+   * @param root {@link RootDoc} passed in by Javadoc
    * @return is successful or not
    */
-  @Override
-  public boolean run(DocletEnvironment docEnv) {
+  public static boolean start(RootDoc root)
+  {
     final DocInfo docInfo = new DocInfo();
 
-    // Iterate through the TypeElements (class and interface declarations)
-    for (Element element : docEnv.getIncludedElements()) {
-      if (element instanceof TypeElement) {
-        TypeElement typeElement = (TypeElement) element;
-        docInfo.setClassDoc(typeElement.getQualifiedName().toString(), typeElement);
+    for (ClassDoc classDoc : root.classes())
+    {
+      docInfo.setClassDoc(classDoc.qualifiedName(), classDoc);
 
-        // Iterate through the methods of the TypeElement
-        for (Element enclosedElement : typeElement.getEnclosedElements()) {
-          if (enclosedElement instanceof ExecutableElement) {
-            ExecutableElement methodElement = (ExecutableElement) enclosedElement;
-            docInfo.setMethodDoc(MethodIdentity.create(methodElement), methodElement);
-          }
-        }
+      for (MethodDoc methodDoc : classDoc.methods())
+      {
+        docInfo.setMethodDoc(MethodIdentity.create(methodDoc), methodDoc);
       }
     }
 
-    _currentDocLet = new RestLiDoclet(docInfo, docEnv);
+    _currentDocLet = new RestLiDoclet(docInfo);
 
     return true;
   }
 
-  @Override
-  public void init(Locale locale, Reporter reporter) {
-    // no-ops
-  }
-
-  @Override
-  public String getName() {
-    return this.getClass().getSimpleName();
-  }
-
-  @Override
-  public Set<? extends Option> getSupportedOptions() {
-    return Set.of();
-  }
-
-  @Override
-  public SourceVersion getSupportedSourceVersion() {
-    return SourceVersion.latest();
-  }
-
-  private RestLiDoclet(DocInfo docInfo, DocletEnvironment docEnv)
+  private RestLiDoclet(DocInfo docInfo)
   {
     _docInfo = docInfo;
-    _docEnv = docEnv;
   }
 
   /**
-   * The reason why we create a public empty constructor is because JavadocTaskImpl in JDK 11 requires it when using reflection.
-   * Otherwise, there will be NoSuchMethodException: com.linkedin.restli.tools.idlgen.RestLiDoclet.<init>()
-   */
-  public RestLiDoclet() {
-    _docInfo = null;
-    _docEnv = null;
-  }
-
-  /**
-   * Query Javadoc {@link TypeElement} for the specified resource class.
+   * Query Javadoc {@link ClassDoc} for the specified resource class.
    *
    * @param resourceClass resource class to be queried
-   * @return corresponding {@link TypeElement}
+   * @return corresponding {@link ClassDoc}
    */
-  public TypeElement getClassDoc(Class<?> resourceClass)
+  public ClassDoc getClassDoc(Class<?> resourceClass)
   {
     return _docInfo.getClassDoc(resourceClass.getCanonicalName());
   }
 
   /**
-   * Query Javadoc {@link ExecutableElement} for the specified Java method.
+   * Query Javadoc {@link MethodDoc} for the specified Java method.
    *
    * @param method Java method to be queried
-   * @return corresponding {@link ExecutableElement}
+   * @return corresponding {@link MethodDoc}
    */
-  public ExecutableElement getMethodDoc(Method method)
+  public MethodDoc getMethodDoc(Method method)
   {
     final MethodIdentity methodId = MethodIdentity.create(method);
-      return _docInfo.getMethodDoc(methodId);
+    return _docInfo.getMethodDoc(methodId);
   }
 
   private static class DocInfo
   {
-    public TypeElement getClassDoc(String className) {
+    public ClassDoc getClassDoc(String className)
+    {
       return _classNameToClassDoc.get(className);
     }
 
-    public ExecutableElement getMethodDoc(MethodIdentity methodId) {
+    public MethodDoc getMethodDoc(MethodIdentity methodId)
+    {
       return _methodIdToMethodDoc.get(methodId);
     }
 
-    public void setClassDoc(String className, TypeElement classDoc) {
+    public void setClassDoc(String className, ClassDoc classDoc)
+    {
       _classNameToClassDoc.put(className, classDoc);
     }
 
-    public void setMethodDoc(MethodIdentity methodId, ExecutableElement methodDoc) {
+    public void setMethodDoc(MethodIdentity methodId, MethodDoc methodDoc)
+    {
       _methodIdToMethodDoc.put(methodId, methodDoc);
     }
 
-    private final Map<String, TypeElement> _classNameToClassDoc = new HashMap<>();
-    private final Map<MethodIdentity, ExecutableElement> _methodIdToMethodDoc = new HashMap<>();
+    private final Map<String, ClassDoc> _classNameToClassDoc = new HashMap<>();
+    private final Map<MethodIdentity, MethodDoc> _methodIdToMethodDoc = new HashMap<>();
   }
 
   private static class MethodIdentity
@@ -260,16 +182,16 @@ public class RestLiDoclet implements Doclet
       return new MethodIdentity(method.getDeclaringClass().getName() + "." + method.getName(), parameterTypeNames);
     }
 
-    public static MethodIdentity create(ExecutableElement method)
+    public static MethodIdentity create(MethodDoc method)
     {
       final List<String> parameterTypeNames = new ArrayList<>();
-      for (VariableElement param : method.getParameters()) {
-        TypeMirror type = param.asType();
-        parameterTypeNames.add(DocletHelper.getCanonicalName(type.toString()));
+      for (Parameter param: method.parameters())
+      {
+        Type type = param.type();
+        parameterTypeNames.add(type.qualifiedTypeName() + type.dimension());
       }
 
-      return new MethodIdentity(method.getEnclosingElement().toString() + "." + method.getSimpleName().toString(),
-          parameterTypeNames);
+      return new MethodIdentity(method.qualifiedName(), parameterTypeNames);
     }
 
     private MethodIdentity(String methodQualifiedName, List<String> parameterTypeNames)
@@ -314,92 +236,5 @@ public class RestLiDoclet implements Doclet
 
     private final String _methodQualifiedName;
     private final List<String> _parameterTypeNames;
-  }
-
-  /**
-   * Get the list of deprecated tags for the specified element.
-   *
-   * @param element {@link Element} to be queried
-   * @return list of deprecated tags for the specified element
-   */
-  public List<String> getDeprecatedTags(Element element) {
-    List<String> deprecatedTags = new ArrayList<>();
-    DocCommentTree docCommentTree = getDocCommentTreeForElement(element);
-    if (docCommentTree == null) {
-      return deprecatedTags;
-    }
-    for (DocTree docTree :docCommentTree.getBlockTags()) {
-      if (docTree.getKind() == DocTree.Kind.DEPRECATED) {
-        DeprecatedTree deprecatedTree = (DeprecatedTree) docTree;
-        String deprecatedComment = deprecatedTree.getBody().toString();
-        deprecatedTags.add(deprecatedComment);
-      }
-    }
-    return deprecatedTags;
-  }
-
-  /**
-   * Get the map from param name to param comment for the specified executableElement.
-   *
-   * @param executableElement {@link ExecutableElement} to be queried
-   * @return map from param name to param comment for the specified executableElement
-   */
-  public Map<String, String> getParamTags(ExecutableElement executableElement) {
-    Map<String, String> paramTags = new HashMap<>();
-    DocCommentTree docCommentTree = getDocCommentTreeForElement(executableElement);
-    if (docCommentTree == null) {
-      return paramTags;
-    }
-    for (DocTree docTree : docCommentTree.getBlockTags()) {
-      if (docTree.getKind() == DocTree.Kind.PARAM) {
-        ParamTree paramTree = (ParamTree) docTree;
-        String paramName = paramTree.getName().toString();
-        String paramComment = paramTree.getDescription().toString();
-        if (paramComment != null) {
-          paramTags.put(paramName, paramComment);
-        }
-      }
-    }
-    return paramTags;
-  }
-
-  /**
-   * Get the {@link DocCommentTree} for the specified element.
-   *
-   * @param element {@link Element} to be queried
-   * @return {@link DocCommentTree} for the specified element
-   */
-  public DocCommentTree getDocCommentTreeForElement(Element element) {
-    return element == null ? null : _docEnv.getDocTrees().getDocCommentTree(element);
-  }
-
-  /**
-   * Get the Doc Comment string for the specified element.
-   *
-   * @param element {@link Element} to be queried
-   * @return Doc Comment string for the specified element
-   */
-  public String getDocCommentStrForElement(Element element) {
-    DocCommentTree docCommentTree = getDocCommentTreeForElement(element);
-    return docCommentTree == null ? null : docCommentTree.getFullBody().toString();
-  }
-
-  /**
-   * Get the {@link DocCommentTree} for the specified method.
-   *
-   * @param method {@link Method} to be queried
-   * @return {@link DocCommentTree} for the specified method
-   */
-  public DocCommentTree getDocCommentTreeForMethod(Method method) {
-    TypeElement typeElement = getClassDoc(method.getDeclaringClass());
-    if (typeElement == null) {
-      return null;
-    }
-    for (Element element : typeElement.getEnclosedElements()) {
-      if (element.getSimpleName().toString().equals(method.getName())) {
-        return getDocCommentTreeForElement(element);
-      }
-    }
-    return null;
   }
 }
