@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        java: [8] # TODO: Add 11 once build issues are resolved
+        java: [11] # TODO: Add 11 once build issues are resolved
     name: Java ${{ matrix.java }} on ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
