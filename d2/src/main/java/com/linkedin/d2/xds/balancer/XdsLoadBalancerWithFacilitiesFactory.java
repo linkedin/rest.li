@@ -40,8 +40,8 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
   @Override
   public LoadBalancerWithFacilities create(D2ClientConfig config)
   {
-    D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(config.d2JmxManagerPrefix + "-xDS",
-        config.jmxManager);
+    D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(config.d2JmxManagerPrefix, config.jmxManager,
+        D2ClientJmxManager.DiscoverySourceType.XDS, config.dualReadStateManager);
 
     if (config.dualReadStateManager != null)
     {

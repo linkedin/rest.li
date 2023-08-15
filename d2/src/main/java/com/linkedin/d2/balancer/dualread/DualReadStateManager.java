@@ -22,9 +22,11 @@ import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +34,6 @@ import org.slf4j.LoggerFactory;
 /**
  * Checks and manages the global and per-service dual read state.
  * Provides monitoring of the dual read data.
- *
  * The dual read state is broken down into global and per-service state. Per-service dual read
  * mode has a higher priority. Only if per-service dual read mode is not defined, global
  * dual read mode will be used.
@@ -52,6 +53,10 @@ public class DualReadStateManager
   private final RateLimiter _rateLimiter;
   // Stores global dual read mode
   private volatile DualReadModeProvider.DualReadMode _dualReadMode = DualReadModeProvider.DualReadMode.OLD_LB_ONLY;
+  private final Set<DualReadModeWatcher> _globalDualReadModeWatchers;
+  private final ConcurrentMap<String, Set<DualReadModeWatcher>> _serviceDualReadModeWatchers;
+  private final ConcurrentMap<String, Set<DualReadModeWatcher>> _clusterDualReadModeWatchers;
+
   private final DualReadLoadBalancerJmx _dualReadLoadBalancerJmx;
 
   private final DualReadLoadBalancerMonitor.UriPropertiesDualReadMonitor _uriPropertiesDualReadMonitor;
@@ -74,6 +79,9 @@ public class DualReadStateManager
     _dualReadModeProvider = dualReadModeProvider;
     _executorService = executorService;
     _rateLimiter = RateLimiter.create((double) 1 / DUAL_READ_MODE_SWITCH_MIN_INTERVAL);
+    _globalDualReadModeWatchers = ConcurrentHashMap.newKeySet();
+    _serviceDualReadModeWatchers = new ConcurrentHashMap<>();
+    _clusterDualReadModeWatchers = new ConcurrentHashMap<>();
   }
 
   public void updateGlobal(DualReadModeProvider.DualReadMode mode)
@@ -82,6 +90,7 @@ public class DualReadStateManager
     _dualReadMode = mode;
     if (updated) {
       LOG.info("Global dual read mode updated: {}", mode);
+      notifyGlobalWatchers(_dualReadMode);
     }
   }
 
@@ -90,6 +99,7 @@ public class DualReadStateManager
     DualReadModeProvider.DualReadMode oldMode = _serviceDualReadModes.put(service, mode);
     if (oldMode != mode) {
       LOG.info("Dual read mode for service {} updated: {}", service, mode);
+      notifyServiceWatchers(service, mode);
     }
   }
 
@@ -98,6 +108,7 @@ public class DualReadStateManager
     DualReadModeProvider.DualReadMode oldMode = _clusterDualReadModes.put(cluster, mode);
     if (oldMode != mode) {
       LOG.info("Dual read mode for cluster {} updated: {}", cluster, mode);
+      notifyClusterWatchers(cluster, mode);
     }
   }
 
@@ -197,5 +208,76 @@ public class DualReadStateManager
   public DualReadModeProvider getDualReadModeProvider()
   {
     return _dualReadModeProvider;
+  }
+
+  // Add watchers watching for global dual read mode. The watcher will be notified when the global dual read mode changes.
+  public void addGlobalWatcher(DualReadModeWatcher watcher)
+  {
+    _globalDualReadModeWatchers.add(watcher);
+  }
+
+  // Add watchers watching for dual read mode of a service. The watcher will be notified when the dual read mode changes.
+  public void addServiceWatcher(String serviceName, DualReadModeWatcher watcher)
+  {
+    Set<DualReadModeWatcher> watchers = _serviceDualReadModeWatchers.computeIfAbsent(serviceName, k -> ConcurrentHashMap.newKeySet());
+    watchers.add(watcher);
+  }
+
+  // Add watchers watching for dual read mode of a cluster. The watcher will be notified when the dual read mode changes.
+  public void addClusterWatcher(String clusterName, DualReadModeWatcher watcher)
+  {
+    Set<DualReadModeWatcher> watchers = _clusterDualReadModeWatchers.computeIfAbsent(clusterName, k -> ConcurrentHashMap.newKeySet());
+    watchers.add(watcher);
+  }
+
+  // Remove watchers for dual read mode of a service.
+  public void removeServiceWatcher(String serviceName, DualReadModeWatcher watcher)
+  {
+    Set<DualReadModeWatcher> watchers = _serviceDualReadModeWatchers.get(serviceName);
+    if (watchers != null)
+    {
+      watchers.remove(watcher);
+    }
+  }
+
+  // Remove watchers for dual read mode of a cluster.
+  public void removeClusterWatcher(String clusterName, DualReadModeWatcher watcher)
+  {
+    Set<DualReadModeWatcher> watchers = _clusterDualReadModeWatchers.get(clusterName);
+    if (watchers != null)
+    {
+      watchers.remove(watcher);
+    }
+  }
+
+  private void notifyGlobalWatchers(DualReadModeProvider.DualReadMode mode)
+  {
+    notifyWatchers(_globalDualReadModeWatchers, mode);
+  }
+
+  private void notifyServiceWatchers(String serviceName, DualReadModeProvider.DualReadMode mode)
+  {
+    notifyWatchers(_serviceDualReadModeWatchers.get(serviceName), mode);
+  }
+
+  private void notifyClusterWatchers(String clusterName, DualReadModeProvider.DualReadMode mode)
+  {
+    notifyWatchers(_clusterDualReadModeWatchers.get(clusterName), mode);
+  }
+
+  private static void notifyWatchers(Set<DualReadModeWatcher> watchers, DualReadModeProvider.DualReadMode mode)
+  {
+    if (watchers != null)
+    {
+      for (DualReadModeWatcher w : watchers)
+      {
+        w.onChanged(mode);
+      }
+    }
+  }
+
+  public interface DualReadModeWatcher
+  {
+    void onChanged(@Nonnull DualReadModeProvider.DualReadMode mode);
   }
 }

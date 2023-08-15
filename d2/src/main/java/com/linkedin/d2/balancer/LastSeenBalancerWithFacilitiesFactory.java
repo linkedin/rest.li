@@ -59,7 +59,8 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
   {
     LOG.info("Creating D2 LoadBalancer based on LastSeenLoadBalancerWithFacilities");
 
-    D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(config.d2JmxManagerPrefix, config.jmxManager);
+    D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(config.d2JmxManagerPrefix, config.jmxManager,
+        D2ClientJmxManager.DiscoverySourceType.ZK, config.dualReadStateManager);
 
     // init connection
     ZKConnectionBuilder zkConnectionBuilder = new ZKConnectionBuilder(config.zkHosts);

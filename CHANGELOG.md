@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.44.0] - 2023-08-06
+- dynamically switch jmx/sensor names based on dual read mode and source type
+
 ## [29.43.11] - 2023-08-01
 - fix logging issues about observer host and dual read mode
 
@@ -5512,7 +5515,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.43.11...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.44.0...master
+[29.44.0]: https://github.com/linkedin/rest.li/compare/v29.43.11...v29.44.0
 [29.43.11]: https://github.com/linkedin/rest.li/compare/v29.43.10...v29.43.11
 [29.43.10]: https://github.com/linkedin/rest.li/compare/v29.43.9...v29.43.10
 [29.43.9]: https://github.com/linkedin/rest.li/compare/v29.43.8...v29.43.9

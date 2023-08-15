@@ -246,8 +246,10 @@ public class JmxManager
       {
         _server.unregisterMBean(oName);
       }
-      _registeredNames.remove(oName);
-      _log.info("Unregistered MBean {}", oName);
+      if (_registeredNames.remove(oName))
+      {
+        _log.info("Unregistered MBean {}", oName);
+      }
     }
     catch (Exception e)
     {

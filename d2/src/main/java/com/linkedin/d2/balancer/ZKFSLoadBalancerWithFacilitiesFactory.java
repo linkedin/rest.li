@@ -73,7 +73,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
       loadBalancerComponentFactory = config.componentFactory;
     }
 
-    D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(config.d2JmxManagerPrefix, config.jmxManager);
+    D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(config.d2JmxManagerPrefix, config.jmxManager,
+        D2ClientJmxManager.DiscoverySourceType.ZK, config.dualReadStateManager);
 
     return new ZKFSTogglingLoadBalancerFactoryImpl(loadBalancerComponentFactory,
                                                    config.lbWaitTimeout,
