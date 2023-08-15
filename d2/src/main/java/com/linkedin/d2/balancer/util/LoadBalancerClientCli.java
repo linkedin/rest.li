@@ -16,10 +16,8 @@
 
 package com.linkedin.d2.balancer.util;
 
-
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
-import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
@@ -62,15 +60,7 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
-
 import com.linkedin.util.clock.SystemClock;
-import java.util.concurrent.ScheduledExecutorService;
-import javax.management.MBeanServerConnection;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
-import javax.management.remote.JMXConnector;
-import javax.management.remote.JMXConnectorFactory;
-import javax.management.remote.JMXServiceURL;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -88,7 +78,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -99,8 +88,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.jvmstat.monitor.HostIdentifier;
-import sun.jvmstat.monitor.MonitoredHost;
 
 
 public class LoadBalancerClientCli
@@ -141,8 +128,6 @@ public class LoadBalancerClientCli
     OPTIONS.addOption("h", "help", false, "Show help.");
     OPTIONS.addOption("z", "zkserver", true, "Zookeeper server string (example:zk://localhost:2121).");
     OPTIONS.addOption("p", "path", true, "Discovery path (example: /d2).");
-    OPTIONS.addOption("h", "host", true, "Host name.");
-    OPTIONS.addOption("b", "enabled", true, "Enabled toggling store (value either 'true' or 'false'.");
     OPTIONS.addOption("f", "file", true, "D2 clusters/services configuration file.");
     OPTIONS.addOption("c", "cluster", true, "Cluster name.");
     OPTIONS.addOption("s", "service", true, "Service name.");
@@ -157,7 +142,6 @@ public class LoadBalancerClientCli
     OPTIONS.addOption("H", "printschema", false, "Print service schema.");
     OPTIONS.addOption("R", "sendrequest", false, "Send request to service.");
     OPTIONS.addOption("e", "endpoints", false, "Print service endpoints.");
-    OPTIONS.addOption("T", "toggle", false, "Reset toggling store.");
 
     CommandLine cl = null;
     try
@@ -191,13 +175,6 @@ public class LoadBalancerClientCli
       else if (cl.hasOption("S"))
       {
         System.err.println(printStores(clobj.getZKClient(), cl.getOptionValue("z"), cl.getOptionValue("p")));
-      }
-      else if (cl.hasOption("T") && cl.hasOption("h") && cl.hasOption("b"))
-      {
-        String host = cl.getOptionValue("h");
-        boolean toggled = !"false".equals(cl.getOptionValue("b"));
-
-        resetTogglingStores((host == null) ? "localhost" : host, toggled);
       }
       else if (cl.hasOption("c") && cl.hasOption("s"))
       {
@@ -300,8 +277,6 @@ public class LoadBalancerClientCli
     sb.append("\nExample Send request to service: lb-client.sh --zkserver zk://localhost:2181 --path /d2 --cluster 'cluster-1' --service service-1_1 --request 'test' --sendrequest");
     sb.append("\nExample Send request to service: lb-client.sh -z zk://localhost:2181 -p /d2 -c 'history-write-1' -s HistoryService -m getCube -r 'test' -R");
     sb.append("\nExample Send request to service: lb-client.sh --zkserver zk://localhost:2181 --path /d2 --cluster 'history-write-1' --service HistoryService --method getCube --request 'test' --sendrequest");
-    sb.append("\nExample Reset toggling stores: lb-client.sh -z zk://localhost:2121 -p /d2 -h localhost -b false -T");
-    sb.append("\nExample Reset toggling stores: lb-client.sh --zkserver zk://localhost:2121 --path /d2 --host localhost --enabled false --toggle");
     sb.append("\n");
 
     final HelpFormatter formatter = new HelpFormatter();
@@ -1088,74 +1063,6 @@ public class LoadBalancerClientCli
     }
 
     return sb.toString();
-  }
-
-  public static void resetTogglingStores(String host, boolean enabled) throws Exception
-  {
-
-    MonitoredHost _host = MonitoredHost.getMonitoredHost(new HostIdentifier(host));
-
-    for (Object pidObj : _host.activeVms())
-    {
-      int pid = (Integer) pidObj;
-
-      System.out.println("checking pid: " + pid);
-
-      JMXServiceURL jmxUrl = null;
-      com.sun.tools.attach.VirtualMachine vm =
-          com.sun.tools.attach.VirtualMachine.attach(pid + "");
-
-      try
-      {
-        // get the connector address
-        String connectorAddress = vm.getAgentProperties().getProperty(CONNECTOR_ADDRESS);
-        // establish connection to connector server
-        if (connectorAddress != null)
-        {
-          jmxUrl = new JMXServiceURL(connectorAddress);
-        }
-      }
-      finally
-      {
-        vm.detach();
-      }
-
-      if (jmxUrl != null)
-      {
-        System.out.println("got jmx url: " + jmxUrl);
-
-        // connect to jmx
-        JMXConnector connector = JMXConnectorFactory.connect(jmxUrl);
-
-        connector.connect();
-
-        MBeanServerConnection mbeanServer = connector.getMBeanServerConnection();
-
-        // look for all beans in the d2 name space
-        Set<ObjectInstance> objectInstances =
-            mbeanServer.queryMBeans(new ObjectName("com.linkedin.d2:*"), null);
-
-        for (ObjectInstance objectInstance : objectInstances)
-        {
-          System.err.println("checking object: " + objectInstance.getObjectName());
-
-          // if we've found a toggling store, then toggle it
-          if (objectInstance.getObjectName().toString().endsWith("TogglingStore"))
-          {
-            System.out.println("found toggling zk store, so toggling to: " + enabled);
-
-            mbeanServer.invoke(objectInstance.getObjectName(),
-                               "setEnabled",
-                               new Object[] { enabled },
-                               new String[] { "boolean" });
-          }
-        }
-      }
-      else
-      {
-        System.out.println("pid is not a jmx process: " + pid);
-      }
-    }
   }
 
   private void deleteTempDir() throws IOException
