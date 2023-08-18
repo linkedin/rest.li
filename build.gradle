@@ -154,10 +154,17 @@ allprojects {
     }
     // for all supported versions that we test build, fail the build if any compilation warnings are reported
     compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static']
+<<<<<<< HEAD
     // Set the default Java bytecode level to version 8 to ensure backward compatibility
     if (JavaVersion.current() >= JavaVersion.VERSION_11) {
       sourceCompatibility = 8
       targetCompatibility = 8
+=======
+
+    if (JavaVersion.current() >= JavaVersion.VERSION_11 && !compile.getName().equals('compileJava11Java')) {
+      sourceCompatibility = '1.8'
+      targetCompatibility = '1.8'
+>>>>>>> 03a3494ee (Update github workflow to use Java 11)
     }
   }
 

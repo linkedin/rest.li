@@ -4,7 +4,7 @@ plugins {
 
 // This block is only supported and required when building with JDK11+
 if (JavaVersion.current() >= JavaVersion.VERSION_11) {
-  //We need a custom source set for JDK11+ classes
+  // We need a custom source set for JDK11+ classes
   sourceSets {
     java11 {
       java {
@@ -52,13 +52,7 @@ dependencies {
   compile externalDependency.commonsLang
   compile externalDependency.jacksonCore
   compile externalDependency.jacksonDataBind
-  // tools.jar, which is packaged by jdkTools, have been removed after Java 11 and most of the functionalities have been move to JDK internals.
-  // So using jdkTools after Java 11 will result in "file dose not exist" error. Depending on the error handling, there are 2 possible outcomes:
-  // 1. falling back to JDK internal implementations.
-  // 2. not falling back to JDK internal implementations and throwing a build error. This is the case for protobuf plugin.
-  if (JavaVersion.current() < JavaVersion.VERSION_11) {
-    compile externalDependency.jdkTools
-  }
+  compile externalDependency.jdkTools
   compile externalDependency.velocity
 
   testCompile externalDependency.mockito
