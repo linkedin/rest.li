@@ -13,13 +13,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [8]
+        java: [11]
     name: Java ${{ matrix.java }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v2
         with:
-          distribution: zulu
           java-version: ${{ matrix.java }}
           # Do NOT use caching, since we want to ensure published artifacts are fresh
       - run: ./.github/scripts/publish.sh
