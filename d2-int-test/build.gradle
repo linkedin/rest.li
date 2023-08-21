@@ -11,7 +11,6 @@ dependencies {
   compile externalDependency.commonsIo
   compile externalDependency.commonsHttpClient
   compile externalDependency.zookeeper
-  compile externalDependency.jdkTools
   compile externalDependency.netty
   testCompile externalDependency.testng
   testCompile externalDependency.commonsIo
