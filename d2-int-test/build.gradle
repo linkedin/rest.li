@@ -11,10 +11,6 @@ dependencies {
   compile externalDependency.commonsIo
   compile externalDependency.commonsHttpClient
   compile externalDependency.zookeeper
-<<<<<<< HEAD
-=======
-  compile externalDependency.jdkTools
->>>>>>> 03a3494ee (Update github workflow to use Java 11)
   compile externalDependency.netty
   testCompile externalDependency.testng
   testCompile externalDependency.commonsIo
