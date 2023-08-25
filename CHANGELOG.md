@@ -14,6 +14,12 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.45.0] - 2023-08-25
+
+- Downgrade major version back to 29. Technically this is not semver-compatible
+  but we feel that the impact should be less severe than the impact of bumping
+  the major version.
+
 ## [30.0.0] - 2023-08-15
 - Remove resetTogglingStores functionality from LoadBalancerClientCli, which is incompatible with Java 17
 
@@ -5518,7 +5524,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v30.0.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.45.0...master
+[29.45.0]: https://github.com/linkedin/rest.li/compare/v30.0.0...v29.45.0
 [30.0.0]: https://github.com/linkedin/rest.li/compare/v29.44.0...v30.0.0
 [29.44.0]: https://github.com/linkedin/rest.li/compare/v29.43.11...v29.44.0
 [29.43.11]: https://github.com/linkedin/rest.li/compare/v29.43.10...v29.43.11
