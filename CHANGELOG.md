@@ -14,16 +14,14 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-<<<<<<< HEAD
+## [29.46.0] - 2023-08-25
+- Rewrite the Java Doc logic in Java 11 APIs and use multi-release jar to be backward compatible with Java 8 consumers
+
 ## [29.45.0] - 2023-08-25
 
 - Downgrade major version back to 29. Technically this is not semver-compatible
   but we feel that the impact should be less severe than the impact of bumping
   the major version.
-=======
-## [30.0.1] - 2023-08-22
-- Rewrite the Java Doc logic in Java 11 APIs and use multi-release jar to be backward compatible with Java 8 upstreams
->>>>>>> d4abb632f (Rewrite the Java Doc logic in Java 11 APIs and use multi-release jar to be backward compatible with Java 8 upstreams)
 
 ## [30.0.0] - 2023-08-15
 - Remove resetTogglingStores functionality from LoadBalancerClientCli, which is incompatible with Java 17
