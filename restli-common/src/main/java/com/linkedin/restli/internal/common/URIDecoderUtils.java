@@ -67,6 +67,7 @@
 package com.linkedin.restli.internal.common;
 
 import java.nio.ByteBuffer;
+import java.nio.Buffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -198,7 +199,7 @@ public class URIDecoderUtils
       byte b = decodeOctet(s, i + 1);
       bb.put(b);
     }
-    bb.flip();
+    ((Buffer)bb).flip();
     return bb;
   }
 

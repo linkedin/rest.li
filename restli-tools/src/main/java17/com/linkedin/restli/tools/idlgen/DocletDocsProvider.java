@@ -278,7 +278,7 @@ public class DocletDocsProvider implements DocsProvider
   {
     if (docText != null && !docText.isEmpty())
     {
-      return DocletHelper.processDocCommentStr(docText);
+      return docText;
     }
     return null;
   }

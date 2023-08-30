@@ -265,7 +265,7 @@ public class RestLiDoclet implements Doclet
       final List<String> parameterTypeNames = new ArrayList<>();
       for (VariableElement param : method.getParameters()) {
         TypeMirror type = param.asType();
-        parameterTypeNames.add(DocletHelper.getCanonicalName(type.toString()));
+        parameterTypeNames.add(type.toString());
       }
 
       return new MethodIdentity(method.getEnclosingElement().toString() + "." + method.getSimpleName().toString(),
