@@ -1119,6 +1119,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       final JMethod getterWithMode = templateClass.method(JMod.PUBLIC, type, getterName);
       addAccessorDoc(templateClass, getterWithMode, schemaField, "Getter");
       setDeprecatedAnnotationAndJavadoc(getterWithMode, schemaField);
+      getterWithMode.annotate(Nullable.class);
       JVar modeParam = getterWithMode.param(_getModeClass, "mode");
       final JBlock getterWithModeBody = getterWithMode.body();
 
@@ -1200,6 +1201,7 @@ public class JavaDataTemplateGenerator extends JavaCodeGeneratorBase
       addAccessorDoc(templateClass, setterWithMode, schemaField, "Setter");
       setDeprecatedAnnotationAndJavadoc(setterWithMode, schemaField);
       JVar param = setterWithMode.param(type, "value");
+      param.annotate(Nullable.class);
       JVar modeParam = setterWithMode.param(_setModeClass, "mode");
       JSwitch modeSwitch = setterWithMode.body()._switch(modeParam);
       JCase disallowNullCase = modeSwitch._case(JExpr.ref("DISALLOW_NULL"));
