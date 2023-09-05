@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.45.1] - 2023-09-05
+- add @Nullable annotations to pegasus java getters and setters with mode
+
 ## [29.45.0] - 2023-08-25
 
 - Downgrade major version back to 29. Technically this is not semver-compatible
