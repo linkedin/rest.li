@@ -14,7 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.46.0] - 2023-08-25
+## [29.46.0] - 2023-09-05
 - Rewrite the Java Doc logic in Java 11 APIs and use multi-release jar to be backward compatible with Java 8 consumers
 
 ## [29.45.0] - 2023-08-25
