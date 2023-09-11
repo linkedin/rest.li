@@ -1268,7 +1268,7 @@ public class PegasusPlugin implements Plugin<Project>
       // generate the rest model
       FileCollection restModelCodegenClasspath = project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION)
           .plus(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME))
-          .plus(sourceSet.getRuntimeClasspath()).plus(sourceSet.getCompileClasspath());
+          .plus(sourceSet.getRuntimeClasspath());
       String destinationDirPrefix = getGeneratedDirPath(project, sourceSet, REST_GEN_TYPE) + File.separatorChar;
       FileCollection restModelResolverPath = apiProject.files(getDataSchemaPath(project, sourceSet))
           .plus(getDataModelConfig(apiProject, sourceSet));

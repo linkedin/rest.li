@@ -59,8 +59,7 @@ import javax.lang.model.element.VariableElement;
  *
  * @author dellamag
  */
-public class DocletDocsProvider implements DocsProvider
-{
+public class DocletDocsProvider implements DocsProvider {
   private static final Logger log = LoggerFactory.getLogger(DocletDocsProvider.class);
 
   private final String _apiName;
@@ -73,8 +72,7 @@ public class DocletDocsProvider implements DocsProvider
   public DocletDocsProvider(String apiName,
       String[] classpath,
       String[] sourcePaths,
-      String[] resourcePackages)
-  {
+      String[] resourcePackages) {
     _apiName = apiName;
     _classpath = classpath;
     _sourcePaths = sourcePaths;
@@ -82,8 +80,7 @@ public class DocletDocsProvider implements DocsProvider
   }
 
   @Override
-  public Set<String> supportedFileExtensions()
-  {
+  public Set<String> supportedFileExtensions() {
     return Collections.singleton(".java");
   }
 
@@ -126,31 +123,25 @@ public class DocletDocsProvider implements DocsProvider
   }
 
   @Override
-  public void registerSourceFiles(Collection<String> sourceFileNames)
-  {
+  public void registerSourceFiles(Collection<String> sourceFileNames) {
     log.debug("Executing Javadoc tool...");
     final String flatClasspath;
-    if (_classpath == null)
-    {
+    if (_classpath == null) {
       flatClasspath = System.getProperty("java.class.path");
     }
-    else
-    {
+    else {
       flatClasspath = StringUtils.join(_classpath, ":");
     }
 
     final PrintWriter sysoutWriter = new PrintWriter(System.out, true);
     final PrintWriter nullWriter = new PrintWriter(new NullWriter());
 
-
     List<String> sourceFiles;
-    try
-    {
+    try {
       sourceFiles = collectSourceFiles(Arrays.asList(_sourcePaths),
           _resourcePackages == null ? null : Arrays.asList(_resourcePackages));
     }
-    catch (IOException e)
-    {
+    catch (IOException e) {
       throw new RuntimeException("Failed to collect source files", e);
     }
 
@@ -164,11 +155,9 @@ public class DocletDocsProvider implements DocsProvider
   }
 
   @Override
-  public String getClassDoc(Class<?> resourceClass)
-  {
+  public String getClassDoc(Class<?> resourceClass) {
     final TypeElement doc = _doclet.getClassDoc(resourceClass);
-    if (doc == null)
-    {
+    if (doc == null) {
       return null;
     }
     return buildDoc(_doclet.getDocCommentStrForElement(doc));
@@ -198,11 +187,9 @@ public class DocletDocsProvider implements DocsProvider
     }
   }
   @Override
-  public String getMethodDoc(Method method)
-  {
+  public String getMethodDoc(Method method) {
     final ExecutableElement doc = _doclet.getMethodDoc(method);
-    if (doc == null)
-    {
+    if (doc == null) {
       return null;
     }
 
@@ -210,38 +197,28 @@ public class DocletDocsProvider implements DocsProvider
   }
 
   @Override
-  public String getMethodDeprecatedTag(Method method)
-  {
+  public String getMethodDeprecatedTag(Method method) {
     final ExecutableElement doc = _doclet.getMethodDoc(method);
-    if (doc == null)
-    {
+    if (doc == null) {
       return null;
     }
-
     return formatDeprecatedTags(doc);
   }
 
 
   @Override
-  public String getParamDoc(Method method, String name)
-  {
+  public String getParamDoc(Method method, String name) {
     final ExecutableElement methodDoc = _doclet.getMethodDoc(method);
 
-    if (methodDoc == null)
-    {
+    if (methodDoc == null) {
       return null;
     }
     Map<String, String> paramTags = _doclet.getParamTags(methodDoc);
-    for (VariableElement parameter : methodDoc.getParameters())
-    {
-      for (AnnotationMirror annotationMirror : parameter.getAnnotationMirrors())
-      {
-        if (isQueryParamAnnotation(annotationMirror) || isActionParamAnnotation(annotationMirror))
-        {
-          for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : annotationMirror.getElementValues().entrySet())
-          {
-            if ("value".equals(entry.getKey().getSimpleName().toString()) && name.equals(entry.getValue().getValue()))
-            {
+    for (VariableElement parameter : methodDoc.getParameters()) {
+      for (AnnotationMirror annotationMirror : parameter.getAnnotationMirrors()) {
+        if (isQueryParamAnnotation(annotationMirror) || isActionParamAnnotation(annotationMirror)) {
+          for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : annotationMirror.getElementValues().entrySet()) {
+            if ("value".equals(entry.getKey().getSimpleName().toString()) && name.equals(entry.getValue().getValue())) {
               return paramTags.get(parameter.getSimpleName().toString());
             }
           }
@@ -253,8 +230,7 @@ public class DocletDocsProvider implements DocsProvider
   }
 
   @Override
-  public String getReturnDoc(Method method)
-  {
+  public String getReturnDoc(Method method) {
     ExecutableElement methodElement = _doclet.getMethodDoc(method);
     if (methodElement != null) {
       for (DocTree docTree : _doclet.getDocCommentTreeForMethod(method).getBlockTags()) {
@@ -264,33 +240,28 @@ public class DocletDocsProvider implements DocsProvider
         DocTree.Kind kind = docTree.getKind();
         if (kind == DocTree.Kind.RETURN) {
           ReturnTree returnTree = (ReturnTree) docTree;
-          return buildDoc(returnTree.getDescription().toString());
+           return buildDoc(DocletHelper.convertDocTreeListToStr(returnTree.getDescription()));
         } else if (kind == DocTree.Kind.UNKNOWN_BLOCK_TAG) {
           UnknownBlockTagTree unknownBlockTagTree = (UnknownBlockTagTree) docTree;
-          return buildDoc(unknownBlockTagTree.getContent().toString());
+          return buildDoc(DocletHelper.convertDocTreeListToStr(unknownBlockTagTree.getContent()));
         }
       }
     }
     return null;
   }
 
-  private static String buildDoc(String docText)
-  {
-    if (docText != null && !docText.isEmpty())
-    {
-//      return docText;
-      return DocletHelper.processDocCommentStr(docText);
+  private static String buildDoc(String docText) {
+    if (docText != null && !docText.isEmpty()) {
+      return docText;
     }
     return null;
   }
 
-  private static boolean isQueryParamAnnotation(AnnotationMirror annotationMirror)
-  {
+  private static boolean isQueryParamAnnotation(AnnotationMirror annotationMirror) {
     return QueryParam.class.getCanonicalName().equals(annotationMirror.getAnnotationType().toString());
   }
 
-  private static boolean isActionParamAnnotation(AnnotationMirror annotationMirror)
-  {
+  private static boolean isActionParamAnnotation(AnnotationMirror annotationMirror) {
     return ActionParam.class.getCanonicalName().equals(annotationMirror.getAnnotationType().toString());
   }
 }
