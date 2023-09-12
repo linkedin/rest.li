@@ -158,6 +158,10 @@ allprojects {
     if (JavaVersion.current() >= JavaVersion.VERSION_11) {
       sourceCompatibility = 8
       targetCompatibility = 8
+      // Ideally we should uncomment the line below to set the release option to Java 8 to restrict the use of new APIs after Java 8.
+      // However, com.sun.javadoc APIs were moved from tools.jar in Java 8 to JDK internals in Java 11.
+      // Therefore, if we set the release option to Java 8, we will not be able to use the APIs in JDK internals when compiling in Java 11.
+      // compile.options.compilerArgs.addAll(['--release', '8'])
     }
   }
 
