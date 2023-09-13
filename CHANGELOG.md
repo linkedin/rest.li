@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.45.2] - 2023-09-13
+- Update FieldDef so that it will lazily cache the hashCode.
+
 ## [29.45.1] - 2023-09-05
 - add @Nullable annotations to pegasus java getters and setters with mode
 
@@ -5550,7 +5553,8 @@ patch operations can re-use these classes for generating patch messages.
 [29.42.1]: https://github.com/linkedin/rest.li/compare/v29.42.0...v29.42.1
 [29.42.0]: https://github.com/linkedin/rest.li/compare/v29.41.12...v29.42.0
 =======
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.41.13...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.45.2...master
+[29.45.2]: https://github.com/linkedin/rest.li/compare/v29.41.13...v29.45.2
 [29.41.13]: https://github.com/linkedin/rest.li/compare/v29.41.12...v29.41.13
 >>>>>>> da67a387a (update version and changelog)
 [29.41.12]: https://github.com/linkedin/rest.li/compare/v29.41.11...v29.41.12
