@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.46.9] - 2023-10-31
+- Update FieldDef so that it will lazily cache the hashCode.
+
 ## [29.46.8] - 2023-10-11
 - add metrics about xds connection status and count
 
