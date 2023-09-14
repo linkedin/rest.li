@@ -49,6 +49,9 @@ import java.util.stream.Collectors;
 
 
 /**
+ * This file is using Java 11 APIs to implement the same logic as its Java 8 counterpart located in
+ * restli-tools/src/main/java/com/linkedin/restli/tools/idlgen/RestLiDoclet.java
+ *
  * Custom Javadoc processor that merges documentation into the restspec.json. The embedded Javadoc
  * generator is basically a commandline tool wrapper and it runs in complete isolation from the rest
  * of the application. Due to the fact that the Javadoc tool instantiates RestLiDoclet, we cannot
@@ -62,7 +65,7 @@ import java.util.stream.Collectors;
  *
  * This class is thread-safe. However, #generateJavadoc() will be synchronized.
  *
- * @author dellamag
+ * @author Yan Zhou
  */
 public class RestLiDoclet implements Doclet {
   private static RestLiDoclet _currentDocLet = null;

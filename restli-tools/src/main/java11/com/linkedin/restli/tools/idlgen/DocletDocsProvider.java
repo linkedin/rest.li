@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2012 LinkedIn Corp.
+   Copyright (c) 2023 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -55,9 +55,12 @@ import javax.lang.model.element.VariableElement;
 
 
 /**
+ * This file is using Java 11 APIs to implement the same logic as its Java 8 counterpart located in
+ * restli-tools/src/main/java/com/linkedin/restli/tools/idlgen/DocletDocsProvider.java
+ *
  * Specialized {@link DocsProvider} whose documentation comes from the Javadoc Doclet {@link RestLiDoclet}.
  *
- * @author dellamag
+ * @author Yan Zhou
  */
 public class DocletDocsProvider implements DocsProvider {
   private static final Logger log = LoggerFactory.getLogger(DocletDocsProvider.class);
