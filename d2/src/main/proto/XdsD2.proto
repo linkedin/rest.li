@@ -34,6 +34,11 @@ message D2Node {
   google.protobuf.Struct data = 2;
 }
 
+message D2SymlinkNode {
+  Stat stat = 1;
+  string masterClusterNodePath = 2;
+}
+
 message D2NodeMap {
   map<string, D2Node> nodes = 1;
 }
