@@ -10,8 +10,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ubuntu-latest
-        java: 8 # TODO: Add 11 once build issues are resolved
+        os: [ubuntu-latest]
+        java: [8] # TODO: Add 11 once build issues are resolved. Debug
     name: Java ${{ matrix.java }} on ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-java@v2
         with:
           distribution: zulu
-          java-version: 8
+          java-version: ${{ matrix.java }}
           cache: gradle
       - run: ./.github/scripts/build.sh
 
