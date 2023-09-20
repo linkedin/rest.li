@@ -153,7 +153,16 @@ allprojects {
       throw new GradleScriptException("Pegasus required Java 8 or later to build, current version: ${JavaVersion.current()}", null)
     }
     // for all supported versions that we test build, fail the build if any compilation warnings are reported
-    compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static', '-Werror']
+    compile.options.compilerArgs = ['-Xlint', '-Xlint:-path', '-Xlint:-static']
+    // Set the default Java bytecode level to version 8 to ensure backward compatibility
+    if (JavaVersion.current() >= JavaVersion.VERSION_11) {
+      sourceCompatibility = 8
+      targetCompatibility = 8
+      // Ideally we should uncomment the line below to set the release option to Java 8 to restrict the use of new APIs after Java 8.
+      // However, com.sun.javadoc APIs were moved from tools.jar in Java 8 to JDK internals in Java 11.
+      // Therefore, if we set the release option to Java 8, we will not be able to use the APIs in JDK internals when compiling in Java 11.
+      // compile.options.compilerArgs.addAll(['--release', '8'])
+    }
   }
 
   tasks.withType(Javadoc)

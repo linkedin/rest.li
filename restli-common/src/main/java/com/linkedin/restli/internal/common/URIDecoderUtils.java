@@ -67,6 +67,7 @@
 package com.linkedin.restli.internal.common;
 
 import java.nio.ByteBuffer;
+import java.nio.Buffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -198,7 +199,9 @@ public class URIDecoderUtils
       byte b = decodeOctet(s, i + 1);
       bb.put(b);
     }
-    bb.flip();
+    // Fix java.lang.NoSuchMethodError: java.nio.ByteBuffer.flip()Ljava/nio/ByteBuffer based on the suggestions from
+    // https://stackoverflow.com/questions/61267495/exception-in-thread-main-java-lang-nosuchmethoderror-java-nio-bytebuffer-flip
+    ((Buffer)bb).flip();
     return bb;
   }
 

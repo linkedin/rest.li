@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.46.0] - 2023-09-05
+- Rewrite the Java Doc logic in Java 11 APIs and use multi-release jar to be backward compatible with Java 8 consumers
+
 ## [29.45.1] - 2023-09-05
 - add @Nullable annotations to pegasus java getters and setters with mode
 
@@ -5527,7 +5530,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.45.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.46.0...master
+[29.46.0]: https://github.com/linkedin/rest.li/compare/v29.45.1...v29.46.0
 [29.45.1]: https://github.com/linkedin/rest.li/compare/v29.45.0...v29.45.1
 [29.45.0]: https://github.com/linkedin/rest.li/compare/v30.0.0...v29.45.0
 [30.0.0]: https://github.com/linkedin/rest.li/compare/v29.44.0...v30.0.0
