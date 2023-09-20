@@ -128,11 +128,6 @@ public class XdsToD2PropertiesAdaptor
     _clusterEventBus = clusterEventBus;
   }
 
-  private boolean isSymlinkNode(String nodeNameOrPath)
-  {
-    return nodeNameOrPath != null && nodeNameOrPath.indexOf(SYMLINK_NODE_IDENTIFIER) >= 0;
-  }
-
   public void registerXdsConnectionListener(XdsConnectionListener listener)
   {
     _xdsConnectionListeners.add(listener);
@@ -142,7 +137,7 @@ public class XdsToD2PropertiesAdaptor
   {
     // if cluster name is a symlink, watch for D2SymlinkNode instead
     String resourceName = D2_CLUSTER_NODE_PREFIX + clusterName;
-    if (!checkAndListenToSymlink(clusterName, resourceName))
+    if (shouldNotListenToSymlink(clusterName, resourceName))
     {
       _watchedClusterResources.computeIfAbsent(clusterName, k ->
       {
@@ -158,7 +153,7 @@ public class XdsToD2PropertiesAdaptor
   {
     // if cluster name is a symlink, watch for D2SymlinkNode instead
     String resourceName = D2_URI_NODE_PREFIX + clusterName;
-    if (!checkAndListenToSymlink(clusterName, resourceName))
+    if (shouldNotListenToSymlink(clusterName, resourceName))
     {
       _watchedUriResources.computeIfAbsent(clusterName, k ->
       {
@@ -170,7 +165,18 @@ public class XdsToD2PropertiesAdaptor
     }
   }
 
-  private boolean checkAndListenToSymlink(String symlinkName, String fullResourceName)
+  public void listenToService(String serviceName)
+  {
+    _watchedServiceResources.computeIfAbsent(serviceName, k ->
+    {
+      XdsClient.D2NodeResourceWatcher watcher = getServiceResourceWatcher(serviceName);
+      _xdsClient.watchXdsResource(D2_SERVICE_NODE_PREFIX + serviceName, XdsClient.ResourceType.D2_NODE,
+          watcher);
+      return watcher;
+    });
+  }
+
+  private boolean shouldNotListenToSymlink(String symlinkName, String fullResourceName)
   {
     boolean isSymlink = isSymlinkNode(symlinkName);
     if (isSymlink)
@@ -187,18 +193,12 @@ public class XdsToD2PropertiesAdaptor
       });
     }
 
-    return isSymlink;
+    return !isSymlink;
   }
 
-  public void listenToService(String serviceName)
+  private boolean isSymlinkNode(String nodeNameOrPath)
   {
-    _watchedServiceResources.computeIfAbsent(serviceName, k ->
-    {
-      XdsClient.D2NodeResourceWatcher watcher = getServiceResourceWatcher(serviceName);
-      _xdsClient.watchXdsResource(D2_SERVICE_NODE_PREFIX + serviceName, XdsClient.ResourceType.D2_NODE,
-          watcher);
-      return watcher;
-    });
+    return nodeNameOrPath != null && nodeNameOrPath.indexOf(SYMLINK_NODE_IDENTIFIER) >= 0;
   }
 
   XdsClient.D2NodeResourceWatcher getServiceResourceWatcher(String serviceName)
@@ -239,6 +239,60 @@ public class XdsToD2PropertiesAdaptor
         notifyAvailabilityChanges(true);
       }
     };
+  }
+
+  XdsClient.D2NodeResourceWatcher getClusterResourceWatcher(String clusterName)
+  {
+    return new XdsClient.D2NodeResourceWatcher()
+    {
+      @Override
+      public void onChanged(XdsClient.D2NodeUpdate update)
+      {
+        if (_clusterEventBus != null)
+        {
+          try
+          {
+            ClusterProperties clusterProperties = toClusterProperties(update.getNodeData().getData(),
+                update.getNodeData().getStat().getMzxid());
+            // For symlink clusters, ClusterLoadBalancerSubscriber subscribed to the symlinks, instead of the actual node, in event bus,
+            // so we need to publish under the symlink names.
+            // For other clusters, publish under its original name. Note that these clusters could be either:
+            // 1) regular clusters requested normally.
+            // 2) clusters that were pointed by a symlink previously, but no longer the case after the symlink points to other clusters.
+            // For case #2: the actualResourceToSymlink map will no longer has an entry for this cluster (removed in
+            // D2SymlinkNodeResourceWatcher::onChanged), thus the updates will be published under the original cluster name
+            // (like "FooCluster-prod-ltx1"), which has no subscribers anyway, so no harm to publish.
+            String clusterNameToPublish = _actualNodeToSymlink.getOrDefault(clusterName, clusterName);
+            _clusterEventBus.publishInitialize(clusterNameToPublish, clusterProperties);
+            if (_dualReadStateManager != null)
+            {
+              _dualReadStateManager.reportData(clusterName, clusterProperties, true);
+            }
+          }
+          catch (InvalidProtocolBufferException | PropertySerializationException e)
+          {
+            _log.error("Failed to parse D2 cluster properties from xDS update. Cluster name: " + clusterName, e);
+          }
+        }
+      }
+
+      @Override
+      public void onError(Status error)
+      {
+        notifyAvailabilityChanges(false);
+      }
+
+      @Override
+      public void onReconnect()
+      {
+        notifyAvailabilityChanges(true);
+      }
+    };
+  }
+
+  XdsClient.D2NodeMapResourceWatcher getUriResourceWatcher(String clusterName)
+  {
+    return new UriPropertiesResourceWatcher(clusterName);
   }
 
   XdsClient.D2SymlinkNodeResourceWatcher getSymlinkResourceWatcher(String symlinkName)
@@ -304,60 +358,6 @@ public class XdsToD2PropertiesAdaptor
     {
       return path.substring(idx + prefix.length());
     }
-  }
-
-  XdsClient.D2NodeResourceWatcher getClusterResourceWatcher(String clusterName)
-  {
-    return new XdsClient.D2NodeResourceWatcher()
-    {
-      @Override
-      public void onChanged(XdsClient.D2NodeUpdate update)
-      {
-        if (_clusterEventBus != null)
-        {
-          try
-          {
-            ClusterProperties clusterProperties = toClusterProperties(update.getNodeData().getData(),
-                update.getNodeData().getStat().getMzxid());
-            // For symlink clusters, ClusterLoadBalancerSubscriber subscribed to the symlinks, instead of the actual node, in event bus,
-            // so we need to publish under the symlink names.
-            // For other clusters, publish under its original name. Note that these clusters could be either:
-            // 1) regular clusters requested normally.
-            // 2) clusters that were pointed by a symlink previously, but no longer the case after the symlink points to other clusters.
-            // For case #2: the actualResourceToSymlink map will no longer has an entry for this cluster (removed in
-            // D2SymlinkNodeResourceWatcher::onChanged), thus the updates will be published under the original cluster name
-            // (like "FooCluster-prod-ltx1"), which has no subscribers anyway, so no harm to publish.
-            String clusterNameToPublish = _actualNodeToSymlink.getOrDefault(clusterName, clusterName);
-            _clusterEventBus.publishInitialize(clusterNameToPublish, clusterProperties);
-            if (_dualReadStateManager != null)
-            {
-              _dualReadStateManager.reportData(clusterName, clusterProperties, true);
-            }
-          }
-          catch (InvalidProtocolBufferException | PropertySerializationException e)
-          {
-            _log.error("Failed to parse D2 cluster properties from xDS update. Cluster name: " + clusterName, e);
-          }
-        }
-      }
-
-      @Override
-      public void onError(Status error)
-      {
-        notifyAvailabilityChanges(false);
-      }
-
-      @Override
-      public void onReconnect()
-      {
-        notifyAvailabilityChanges(true);
-      }
-    };
-  }
-
-  XdsClient.D2NodeMapResourceWatcher getUriResourceWatcher(String clusterName)
-  {
-    return new UriPropertiesResourceWatcher(clusterName);
   }
 
   private void notifyAvailabilityChanges(boolean isAvailable)

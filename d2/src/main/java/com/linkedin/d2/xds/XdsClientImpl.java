@@ -547,7 +547,6 @@ public class XdsClientImpl extends XdsClient
       _responseReceived = true;
       String respNonce = response.getNonce();
       ResourceType resourceType = response.getResourceType();
-      // TODO: handle D2_SYMLINK_NODE type
       switch (resourceType)
       {
         case D2_NODE:

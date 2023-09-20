@@ -128,7 +128,6 @@ public abstract class XdsClient
 
   enum ResourceType
   {
-    // TODO: add D2_SYMLINK_NODE type
     UNKNOWN, D2_NODE, D2_SYMLINK_NODE, D2_NODE_MAP;
 
     static ResourceType fromTypeUrl(String typeUrl)
