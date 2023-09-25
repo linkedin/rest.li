@@ -40,6 +40,16 @@ public class SimpleLoadBalancerJmx implements SimpleLoadBalancerJmxMBean
   }
 
   @Override
+  public long getServiceNotFoundCount() {
+    return _loadBalancer.getServiceNotFoundStats().getCount();
+  }
+
+  @Override
+  public long getClusterNotFoundCount() {
+    return _loadBalancer.getClusterNotFoundStats().getCount();
+  }
+
+  @Override
   public String toString()
   {
     return "SimpleLoadBalancerJmx [_loadBalancer=" + _loadBalancer + "]";

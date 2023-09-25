@@ -80,14 +80,25 @@ public abstract class DualReadLoadBalancerMonitor<T>
       {
         _rateLimitedLogger.warn("Received mismatched properties from dual read. Old LB: {}, New LB: {}",
             entry, newEntry);
+        incrementEntryOutOfSyncCount(); // increment the out-of-sync count for the entry received later
+      }
+      else
+      { // entries are in-sync, decrement the out-of-sync count for the entry received earlier
+        decrementEntryOutOfSyncCount();
       }
       cacheToCompare.invalidate(propertyName);
     }
     else
     {
       cacheToAdd.put(propertyName, new CacheEntry<>(propertyVersion, getTimestamp(), property));
+      // if version is different, entries of both the old version and the new version will increment the out-of-sync count
+      incrementEntryOutOfSyncCount();
     }
   }
+
+  abstract void incrementEntryOutOfSyncCount();
+
+  abstract void decrementEntryOutOfSyncCount();
 
   abstract boolean isEqual(CacheEntry<T> oldLbEntry, CacheEntry<T> newLbEntry);
 
@@ -146,6 +157,16 @@ public abstract class DualReadLoadBalancerMonitor<T>
     }
 
     @Override
+    void incrementEntryOutOfSyncCount() {
+      _dualReadLoadBalancerJmx.incrementClusterPropertiesOutOfSyncCount();
+    }
+
+    @Override
+    void decrementEntryOutOfSyncCount() {
+      _dualReadLoadBalancerJmx.decrementClusterPropertiesOutOfSyncCount();
+    }
+
+    @Override
     boolean isEqual(CacheEntry<ClusterProperties> oldLbEntry, CacheEntry<ClusterProperties> newLbEntry)
     {
       if (!oldLbEntry._data.equals(newLbEntry._data))
@@ -175,6 +196,16 @@ public abstract class DualReadLoadBalancerMonitor<T>
     }
 
     @Override
+    void incrementEntryOutOfSyncCount() {
+      _dualReadLoadBalancerJmx.incrementServicePropertiesOutOfSyncCount();
+    }
+
+    @Override
+    void decrementEntryOutOfSyncCount() {
+      _dualReadLoadBalancerJmx.decrementServicePropertiesOutOfSyncCount();
+    }
+
+    @Override
     boolean isEqual(CacheEntry<ServiceProperties> oldLbEntry, CacheEntry<ServiceProperties> newLbEntry)
     {
       if (!oldLbEntry._data.equals(newLbEntry._data))
@@ -201,6 +232,16 @@ public abstract class DualReadLoadBalancerMonitor<T>
     {
       super(clock);
       _dualReadLoadBalancerJmx = dualReadLoadBalancerJmx;
+    }
+
+    @Override
+    void incrementEntryOutOfSyncCount() {
+      _dualReadLoadBalancerJmx.incrementUriPropertiesOutOfSyncCount();
+    }
+
+    @Override
+    void decrementEntryOutOfSyncCount() {
+      _dualReadLoadBalancerJmx.decrementUriPropertiesOutOfSyncCount();
     }
 
     @Override

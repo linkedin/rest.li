@@ -29,6 +29,11 @@ public class DualReadLoadBalancerJmx implements DualReadLoadBalancerJmxMBean
   private final AtomicInteger _clusterPropertiesEvictCount = new AtomicInteger();
   private final AtomicInteger _uriPropertiesEvictCount = new AtomicInteger();
 
+  private final AtomicInteger _servicePropertiesOutOfSyncCount = new AtomicInteger();
+  private final AtomicInteger _clusterPropertiesOutOfSyncCount = new AtomicInteger();
+  private final AtomicInteger _uriPropertiesOutOfSyncCount = new AtomicInteger();
+
+
   @Override
   public int getServicePropertiesErrorCount()
   {
@@ -65,6 +70,21 @@ public class DualReadLoadBalancerJmx implements DualReadLoadBalancerJmxMBean
     return _uriPropertiesEvictCount.get();
   }
 
+  @Override
+  public int getServicePropertiesOutOfSyncCount() {
+    return _servicePropertiesOutOfSyncCount.get();
+  }
+
+  @Override
+  public int getClusterPropertiesOutOfSyncCount() {
+    return _clusterPropertiesOutOfSyncCount.get();
+  }
+
+  @Override
+  public int getUriPropertiesOutOfSyncCount() {
+    return _uriPropertiesOutOfSyncCount.get();
+  }
+
   public void incrementServicePropertiesErrorCount()
   {
     _servicePropertiesErrorCount.incrementAndGet();
@@ -93,5 +113,35 @@ public class DualReadLoadBalancerJmx implements DualReadLoadBalancerJmxMBean
   public void incrementUriPropertiesEvictCount()
   {
     _uriPropertiesEvictCount.incrementAndGet();
+  }
+
+  public void incrementServicePropertiesOutOfSyncCount()
+  {
+    _servicePropertiesOutOfSyncCount.incrementAndGet();
+  }
+
+  public void incrementClusterPropertiesOutOfSyncCount()
+  {
+    _clusterPropertiesOutOfSyncCount.incrementAndGet();
+  }
+
+  public void incrementUriPropertiesOutOfSyncCount()
+  {
+    _uriPropertiesOutOfSyncCount.incrementAndGet();
+  }
+
+  public void decrementServicePropertiesOutOfSyncCount()
+  {
+    _servicePropertiesOutOfSyncCount.decrementAndGet();
+  }
+
+  public void decrementClusterPropertiesOutOfSyncCount()
+  {
+    _clusterPropertiesOutOfSyncCount.decrementAndGet();
+  }
+
+  public void decrementUriPropertiesOutOfSyncCount()
+  {
+    _uriPropertiesOutOfSyncCount.decrementAndGet();
   }
 }

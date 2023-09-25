@@ -103,6 +103,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   private final LoadBalancerState _state;
   private final Stats _serviceUnavailableStats;
   private final Stats _serviceAvailableStats;
+  private final Stats _serviceNotFoundStats; // service is not present in service discovery system
+  private final Stats _clusterNotFoundStats; // cluster is not present in service discovery system
   private final long              _timeout;
   private final TimeUnit          _unit;
   private final ScheduledExecutorService _executor;
@@ -137,6 +139,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     _state = state;
     _serviceUnavailableStats = serviceUnavailableStats;
     _serviceAvailableStats = serviceAvailableStats;
+    _serviceNotFoundStats = new Stats(1000);
+    _clusterNotFoundStats = new Stats(1000);
     _timeout = timeout;
     _unit = unit;
     _executor = executor;
@@ -149,6 +153,16 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     {
       _failoutConfigProvider = null;
     }
+  }
+
+  public Stats getServiceNotFoundStats()
+  {
+    return _serviceNotFoundStats;
+  }
+
+  public Stats getClusterNotFoundStats()
+  {
+    return _clusterNotFoundStats;
   }
 
   public Stats getServiceUnavailableStats()
@@ -749,6 +763,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         @Override
         public void onError(Throwable e)
         {
+          _serviceNotFoundStats.inc();
           finalCallback.onError(new ServiceUnavailableException(serviceName, "PEGA_1011. " + e.getMessage(), e));
         }
 
@@ -808,6 +823,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         @Override
         public void onError(Throwable e)
         {
+          _clusterNotFoundStats.inc();
           finalCallback.onError(new ServiceUnavailableException(clusterName, "PEGA_1011. " + e.getMessage(), e));
         }
 
