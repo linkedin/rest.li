@@ -18,15 +18,28 @@ package com.linkedin.d2.balancer.dualread;
 
 public interface DualReadLoadBalancerJmxMBean
 {
+  // Error count is incremented only when data of the same version is unequal
   int getServicePropertiesErrorCount();
 
   int getClusterPropertiesErrorCount();
 
   int getUriPropertiesErrorCount();
 
+  // Evict count is incremented when cache grows to the max size and entries get evicted.
   int getServicePropertiesEvictCount();
 
   int getClusterPropertiesEvictCount();
 
   int getUriPropertiesEvictCount();
+
+  // Entries become out of sync when:
+  // 1) data of the same version is unequal.
+  // OR. 2) data of a newer version is received in one cache before the other cache receives the older version to compare.
+  // Note that entries in each cache are counted individually.
+  // For example: A1 != A2 is considered as TWO entries being out of sync.
+  int getServicePropertiesOutOfSyncCount();
+
+  int getClusterPropertiesOutOfSyncCount();
+
+  int getUriPropertiesOutOfSyncCount();
 }

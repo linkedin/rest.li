@@ -22,5 +22,9 @@ public interface SimpleLoadBalancerJmxMBean
 
   long getClientNotFoundCount();
 
+  long getServiceNotFoundCount();
+
+  long getClusterNotFoundCount();
+
   String toString();
 }
