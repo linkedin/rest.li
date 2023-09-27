@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.46.3] - 2023-09-26
+- Fix ByteBuffer errors to be compatible with Java 8 runtimes.
+
 ## [29.46.2] - 2023-09-25
 - add service/cluster-not-found count to simple load balancer jmx. And add entry-out-of-sync count to dual read monitoring.
 
@@ -5536,7 +5539,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.46.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.46.3...master
+[29.46.3]: https://github.com/linkedin/rest.li/compare/v29.46.2...v29.46.3
 [29.46.2]: https://github.com/linkedin/rest.li/compare/v29.46.1...v29.46.2
 [29.46.1]: https://github.com/linkedin/rest.li/compare/v29.46.0...v29.46.1
 [29.46.0]: https://github.com/linkedin/rest.li/compare/v29.45.1...v29.46.0
