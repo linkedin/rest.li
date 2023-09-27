@@ -25,6 +25,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.Reader;
+import java.nio.Buffer;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -261,11 +262,11 @@ public class BufferChain
     {
       _currentIndex++;
       _currentBuffer = _bufferList.get(_currentIndex);
-      _currentBuffer.position(0);
+      ((Buffer)_currentBuffer).position(0);
     }
     else
     {
-      _currentBuffer.position(pos._position);
+      ((Buffer)_currentBuffer).position(pos._position);
     }
     return this;
   }
@@ -424,10 +425,10 @@ public class BufferChain
     else
     {
       buffer = _currentBuffer.slice();
-      buffer.limit(length);
-      _currentBuffer.position(_currentBuffer.position() + length);
+      ((Buffer)buffer).limit(length);
+      ((Buffer)_currentBuffer).position(_currentBuffer.position() + length);
     }
-    buffer.flip();
+    ((Buffer)buffer).flip();
     return buffer;
   }
 
@@ -634,7 +635,7 @@ public class BufferChain
 
     ByteBuffer byteBuffer = ByteBuffer.wrap(array, arrayStart, bytesInCurrentBuffer);
     byteBuffer.order(_order);
-    _currentBuffer.position(newPosition);
+    ((Buffer)_currentBuffer).position(newPosition);
     if (bufferList == null)
       bufferList = new ArrayList<>();
     bufferList.add(byteBuffer);
@@ -653,11 +654,11 @@ public class BufferChain
       _decoder.reset();
       CharBuffer charBuffer = CharBuffer.allocate(numBytes); // char should be smaller than # of bytes in buffer.
       int limit = _currentBuffer.limit();
-      _currentBuffer.limit(_currentBuffer.position() + numBytes);
+      ((Buffer)_currentBuffer).limit(_currentBuffer.position() + numBytes);
       checkCoderResult(_decoder.decode(_currentBuffer, charBuffer, true));
-      _currentBuffer.limit(limit);
+      ((Buffer)_currentBuffer).limit(limit);
       _decoder.flush(charBuffer);
-      charBuffer.flip();
+      ((Buffer)charBuffer).flip();
       result = charBuffer.toString();
     }
     else
@@ -947,7 +948,7 @@ public class BufferChain
   {
     if (_currentBuffer.remaining() > 0)
     {
-      _currentBuffer.limit(_currentBuffer.position());
+      ((Buffer)_currentBuffer).limit(_currentBuffer.position());
     }
     rewind();
     int size = 0;
@@ -979,7 +980,7 @@ public class BufferChain
     for (ByteBuffer buffer : _bufferList)
     {
       // out.println("limit " + buffer.limit());
-      buffer.rewind();
+      ((Buffer)buffer).rewind();
       // out.println("limit after rewind " + buffer.limit());
     }
     _currentIndex = 0;
@@ -1015,7 +1016,7 @@ public class BufferChain
       if (bytesRead != -1)
       {
         int newPosition = _currentBuffer.position() + bytesRead;
-        _currentBuffer.position(newPosition);
+        ((Buffer)_currentBuffer).position(newPosition);
       }
       if (bytesRead < remaining)
       {
@@ -1036,7 +1037,7 @@ public class BufferChain
   {
     if (_currentBuffer.remaining() > 0)
     {
-      _currentBuffer.limit(_currentBuffer.position());
+      ((Buffer)_currentBuffer).limit(_currentBuffer.position());
     }
     rewind();
     for (ByteBuffer buffer : _bufferList)
@@ -1235,7 +1236,7 @@ public class BufferChain
   {
     if (_currentBuffer.remaining() < size)
     {
-      _currentBuffer.limit(_currentBuffer.position());
+      ((Buffer)_currentBuffer).limit(_currentBuffer.position());
       _currentBuffer = allocateByteBuffer(size);
       _currentIndex++;
     }
