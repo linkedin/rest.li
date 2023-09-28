@@ -33,6 +33,7 @@ import com.linkedin.data.schema.MapDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.UnionDataSchema;
 import com.linkedin.data.template.DataTemplateUtil;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.AbstractMap;
 import java.util.ArrayDeque;
@@ -292,7 +293,7 @@ public class DataTranslator implements DataTranslatorContext
         case BYTES:
           ByteBuffer byteBuffer = (ByteBuffer) value;
           ByteString byteString = ByteString.copy(byteBuffer);
-          byteBuffer.rewind();
+          ((Buffer)byteBuffer).rewind();
           result = byteString;
           break;
         case ENUM:

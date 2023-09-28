@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.46.4] - 2023-09-27
+- Conduct a more thorough search and fix the remaining ByteBuffer errors to be compatible with Java 8 runtimes.
+
 ## [29.46.3] - 2023-09-26
 - Fix ByteBuffer errors to be compatible with Java 8 runtimes.
 
@@ -5539,7 +5542,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.46.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.46.4...master
+[29.46.4]: https://github.com/linkedin/rest.li/compare/v29.46.3...v29.46.4
 [29.46.3]: https://github.com/linkedin/rest.li/compare/v29.46.2...v29.46.3
 [29.46.2]: https://github.com/linkedin/rest.li/compare/v29.46.1...v29.46.2
 [29.46.1]: https://github.com/linkedin/rest.li/compare/v29.46.0...v29.46.1
