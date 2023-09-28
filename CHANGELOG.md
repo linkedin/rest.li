@@ -15,7 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.46.4] - 2023-09-27
-- Perform a more extensive search and fix the remaining ByteBuffer errors to be compatible with Java 8 runtimes.
+- Conduct a more thorough search and fix the remaining ByteBuffer errors to be compatible with Java 8 runtimes.
 
 ## [29.46.3] - 2023-09-26
 - Fix ByteBuffer errors to be compatible with Java 8 runtimes.
