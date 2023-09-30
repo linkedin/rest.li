@@ -260,15 +260,21 @@ public class XdsToD2PropertiesAdaptor
             ClusterProperties clusterProperties = toClusterProperties(update.getNodeData().getData(),
                 update.getNodeData().getStat().getMzxid());
             // For symlink clusters, ClusterLoadBalancerSubscriber subscribed to the symlinks, instead of the actual node, in event bus,
-            // so we need to publish under the symlink names.
+            // so we need to publish under the symlink names. Also, rarely and possibly, the original cluster could have subscribers
+            // too when calls are made directly to the original cluster, so we publish for it too.
             // For other clusters, publish under its original name. Note that these clusters could be either:
             // 1) regular clusters requested normally.
             // 2) clusters that were pointed by a symlink previously, but no longer the case after the symlink points to other clusters.
             // For case #2: the symlinkAndActualNode map will no longer has an entry for this cluster (removed in
             // D2SymlinkNodeResourceWatcher::onChanged), thus the updates will be published under the original cluster name
-            // (like "FooCluster-prod-ltx1"), which has no subscribers anyway, so no harm to publish.
-            String clusterNameToPublish = StringUtils.defaultString(getSymlink(clusterName), clusterName);
-            _clusterEventBus.publishInitialize(clusterNameToPublish, clusterProperties);
+            // (like "FooCluster-prod-ltx1"), which has no symlink subscribers anyway, so no harm to publish.
+            _clusterEventBus.publishInitialize(clusterName, clusterProperties);
+            String symlinkName = getSymlink(clusterName);
+            if (symlinkName != null)
+            {
+              _clusterEventBus.publishInitialize(symlinkName, clusterProperties);
+            }
+
             if (_dualReadStateManager != null)
             {
               _dualReadStateManager.reportData(clusterName, clusterProperties, true);
@@ -431,7 +437,8 @@ public class XdsToD2PropertiesAdaptor
     }
 
     // For symlink clusters, UriLoadBalancerSubscriber subscribed to the symlinks, instead of the actual node, in event bus,
-    // so we need to publish under the symlink names.
+    // so we need to publish under the symlink names. Also, rarely but possibly, the original cluster could have subscribers
+    // too when calls are made directly to the original cluster, so we publish for it too.
     // For other clusters, publish under its original name. Note that these clusters could be either:
     // 1) regular clusters requested normally.
     // 2) clusters that were pointed by a symlink previously, but no longer the case after the symlink points to other clusters.
@@ -460,8 +467,13 @@ public class XdsToD2PropertiesAdaptor
           _currentData = updates;
           UriProperties mergedUriProperties = _uriPropertiesMerger.merge(_clusterName, _currentData.values());
 
-          String clusterNameToPublish = StringUtils.defaultString(getSymlink(_clusterName), _clusterName);
-          _uriEventBus.publishInitialize(clusterNameToPublish, mergedUriProperties);
+          _uriEventBus.publishInitialize(_clusterName, mergedUriProperties);
+          String symlinkName = getSymlink(_clusterName);
+          if (symlinkName != null)
+          {
+            _uriEventBus.publishInitialize(symlinkName, mergedUriProperties);
+          }
+
           if (_dualReadStateManager != null)
           {
             _dualReadStateManager.reportData(_clusterName, mergedUriProperties, true);
