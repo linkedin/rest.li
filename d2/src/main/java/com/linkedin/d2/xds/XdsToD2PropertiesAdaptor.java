@@ -45,7 +45,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +56,7 @@ public class XdsToD2PropertiesAdaptor
   private static final String D2_SERVICE_NODE_PREFIX = "/d2/services/";
   private static final String D2_URI_NODE_PREFIX = "/d2/uris/";
   private static final char SYMLINK_NODE_IDENTIFIER = '$';
+  private static final char PATH_SEPARATOR = '/';
 
   private final XdsClient _xdsClient;
   private final List<XdsConnectionListener> _xdsConnectionListeners;
@@ -313,20 +313,17 @@ public class XdsToD2PropertiesAdaptor
       @Override
       public void onChanged(String resourceName, XdsClient.D2SymlinkNodeUpdate update)
       {
-        // update maps between symlink name and actual node name, listen to the actual node
+        // Update maps between symlink name and actual node name
         String actualResourceName = update.getNodeData().getMasterClusterNodePath();
-        if (resourceName.contains(D2_CLUSTER_NODE_PREFIX))
-        {
-          String actualNodeName = removeNodePathPrefix(actualResourceName, D2_CLUSTER_NODE_PREFIX);
-          updateSymlinkAndActualNodeMap(symlinkName, actualNodeName);
-          listenToCluster(actualNodeName);
-        }
-        else
-        {
-          String actualNodeName = removeNodePathPrefix(actualResourceName, D2_URI_NODE_PREFIX);
-          updateSymlinkAndActualNodeMap(symlinkName, actualNodeName);
-          listenToUris(actualNodeName);
-        }
+        String actualNodeName = getNodeName(actualResourceName);
+        updateSymlinkAndActualNodeMap(symlinkName, actualNodeName);
+        // listen to the actual nodes
+        // Note: since cluster symlink and uri parent symlink always point to the same actual node name, and it's a
+        // redundancy and a burden for the symlink-update tool to maintain two symlinks for the same actual node name,
+        // we optimize here to use the cluster symlink to listen to the actual nodes for both cluster
+        // and uri parent.
+        listenToCluster(actualNodeName);
+        listenToUris(actualNodeName);
       }
 
       @Override
@@ -355,17 +352,9 @@ public class XdsToD2PropertiesAdaptor
     }
   }
 
-  private static String removeNodePathPrefix(String path, String prefix)
+  private static String getNodeName(String path)
   {
-    int idx = path.indexOf(prefix);
-    if (idx == -1)
-    {
-      return path;
-    }
-    else
-    {
-      return path.substring(idx + prefix.length());
-    }
+    return path.substring(path.lastIndexOf(PATH_SEPARATOR) + 1);
   }
 
   private void notifyAvailabilityChanges(boolean isAvailable)
