@@ -354,15 +354,7 @@ public class XdsToD2PropertiesAdaptor
 
   private static String getNodeName(String path)
   {
-    int idx = path.lastIndexOf(PATH_SEPARATOR);
-    if (idx == -1)
-    {
-      return path;
-    }
-    else
-    {
-      return path.substring(idx + 1);
-    }
+    return path.substring(path.lastIndexOf(PATH_SEPARATOR) + 1);
   }
 
   private void notifyAvailabilityChanges(boolean isAvailable)
