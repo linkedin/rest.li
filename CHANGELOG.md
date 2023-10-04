@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.46.6] - 2023-10-04
+- simplify symlink subscription in xds flow
+
 ## [29.46.5] - 2023-10-02
 - support d2 symlink in indis flow
 
@@ -5545,7 +5548,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.46.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.46.6...master
+[29.46.6]: https://github.com/linkedin/rest.li/compare/v29.46.5...v29.46.6
 [29.46.5]: https://github.com/linkedin/rest.li/compare/v29.45.1...v29.45.2
 [29.46.4]: https://github.com/linkedin/rest.li/compare/v29.46.3...v29.46.4
 [29.46.3]: https://github.com/linkedin/rest.li/compare/v29.46.2...v29.46.3
