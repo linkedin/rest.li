@@ -28,6 +28,8 @@ import io.grpc.ManagedChannel;
 import io.grpc.Status;
 import io.grpc.internal.BackoffPolicy;
 import io.grpc.internal.ExponentialBackoffPolicy;
+import io.grpc.stub.ClientCallStreamObserver;
+import io.grpc.stub.ClientResponseObserver;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,6 +41,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -49,6 +52,7 @@ import org.slf4j.LoggerFactory;
 public class XdsClientImpl extends XdsClient
 {
   private static final Logger _log = LoggerFactory.getLogger(XdsClientImpl.class);
+  private static final long DEFAULT_READY_TIMEOUT_MILLIS = 5000L;
 
   private final Map<String, ResourceSubscriber> _d2NodeSubscribers = new HashMap<>();
   private final Map<String, ResourceSubscriber> _d2SymlinkNodeSubscribers = new HashMap<>();
@@ -62,13 +66,23 @@ public class XdsClientImpl extends XdsClient
   private BackoffPolicy _retryBackoffPolicy;
   private AdsStream _adsStream;
   private boolean _shutdown;
+  private ScheduledFuture<?> _retryRpcStreamFuture;
+  private ScheduledFuture<?> _readyTimeoutFuture;
+  private final long _readyTimeoutMillis;
 
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService)
   {
+    this(node, managedChannel, executorService, DEFAULT_READY_TIMEOUT_MILLIS);
+  }
+
+  public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService,
+      long readyTimeoutMillis) {
+    _readyTimeoutMillis = readyTimeoutMillis;
     _node = node;
     _managedChannel = managedChannel;
     _executorService = executorService;
   }
+
 
   @Override
   void watchXdsResource(String resourceName, ResourceType type, ResourceWatcher watcher)
@@ -83,11 +97,13 @@ public class XdsClientImpl extends XdsClient
         subscriber = new ResourceSubscriber(type, resourceName);
         resourceSubscriberMap.put(resourceName, subscriber);
 
-        if (_adsStream == null)
+        if (_adsStream == null && !isInBackoff())
         {
-          startRpcStream();
+          startRpcStreamLocal();
         }
-        _adsStream.sendDiscoveryRequest(type, Collections.singletonList(resourceName));
+        if (_adsStream != null) {
+          _adsStream.sendDiscoveryRequest(type, Collections.singletonList(resourceName));
+        }
       }
       subscriber.addWatcher(watcher);
     });
@@ -96,9 +112,32 @@ public class XdsClientImpl extends XdsClient
   @Override
   public void startRpcStream()
   {
+    _executorService.execute(() -> {
+      if (!isInBackoff()) {
+        startRpcStreamLocal();
+      }
+    });
+  }
+
+  // Start RPC stream. Must be called from the executor, and only if we're not backed off.
+  private void startRpcStreamLocal() {
+    if (_shutdown) {
+      _log.warn("RPC stream cannot be started after shutdown!");
+      return;
+    }
+    // Check rpc stream is null to ensure duplicate RPC retry tasks are no-op
+    if (_adsStream != null) {
+      _log.warn("Tried to create duplicate RPC stream, ignoring!");
+      return;
+    }
     AggregatedDiscoveryServiceGrpc.AggregatedDiscoveryServiceStub stub =
         AggregatedDiscoveryServiceGrpc.newStub(_managedChannel);
     _adsStream = new AdsStream(stub);
+    _readyTimeoutFuture = _executorService.schedule(() -> {
+      _log.warn("ADS stream not ready within {} milliseconds", _readyTimeoutMillis);
+      // notify subscribers about the error and wait for the stream to be ready by keeping it open.
+      notifyStreamError(Status.DEADLINE_EXCEEDED);
+    }, _readyTimeoutMillis, TimeUnit.MILLISECONDS);
     _adsStream.start();
     _log.info("ADS stream started, connected to server: {}", _managedChannel.authority());
   }
@@ -120,6 +159,37 @@ public class XdsClientImpl extends XdsClient
   String getXdsServerAuthority()
   {
     return _managedChannel.authority();
+  }
+
+  /**
+   * The client may be in backoff if there are RPC stream failures, and if it's waiting to establish the stream again.
+   * NOTE: Must be called from the executor.
+   * @return {@code true} if the client is in backoff
+   */
+  private boolean isInBackoff() {
+    return _adsStream == null && _retryRpcStreamFuture != null && !_retryRpcStreamFuture.isDone();
+  }
+
+  /**
+   * Handles ready callbacks from the RPC stream. Must be called from the executor.
+   */
+  private void readyHandler() {
+    _log.debug("Received ready callback from the ADS stream");
+    if (_adsStream == null || isInBackoff()) {
+      _log.warn("Unexpected state, ready called on null or backed off ADS stream!");
+      return;
+    }
+    // confirm ready state to neglect spurious callbacks; we'll get another callback whenever it is ready again.
+    if (_adsStream.isReady()) {
+      // if the ready timeout future is non-null, a reconnect notification hasn't been sent yet.
+      if (_readyTimeoutFuture != null) {
+        // timeout task will be cancelled only if it hasn't already executed.
+        boolean cancelledTimeout = _readyTimeoutFuture.cancel(false);
+        _log.info("ADS stream ready, cancelled timeout task: {}", cancelledTimeout);
+        _readyTimeoutFuture = null; // set it to null to avoid repeat notifications to subscribers.
+        notifyStreamReconnect();
+      }
+    }
   }
 
   private void handleD2NodeResponse(DiscoveryResponseData data)
@@ -213,7 +283,7 @@ public class XdsClientImpl extends XdsClient
     }
   }
 
-  private void handleStreamClosed(Status error) {
+  private void notifyStreamError(Status error) {
     for (ResourceSubscriber subscriber : _d2NodeSubscribers.values()) {
       subscriber.onError(error);
     }
@@ -222,7 +292,7 @@ public class XdsClientImpl extends XdsClient
     }
   }
 
-  private void handleStreamRestarted() {
+  private void notifyStreamReconnect() {
     for (ResourceSubscriber subscriber : _d2NodeSubscribers.values()) {
       subscriber.onReconnect();
     }
@@ -328,10 +398,7 @@ public class XdsClientImpl extends XdsClient
   final class RpcRetryTask implements Runnable {
     @Override
     public void run() {
-      if (_shutdown) {
-        return;
-      }
-      startRpcStream();
+      startRpcStreamLocal();
       for (ResourceType type : ResourceType.values()) {
         if (type == ResourceType.UNKNOWN) {
           continue;
@@ -342,7 +409,6 @@ public class XdsClientImpl extends XdsClient
           _adsStream.sendDiscoveryRequest(type, resources);
         }
       }
-      handleStreamRestarted();
     }
   }
 
@@ -477,36 +543,44 @@ public class XdsClientImpl extends XdsClient
       _responseReceived = false;
     }
 
-    private void start()
-    {
-      StreamObserver<DeltaDiscoveryResponse> responseReader = new StreamObserver<DeltaDiscoveryResponse>()
-      {
-        @Override
-        public void onNext(DeltaDiscoveryResponse response)
-        {
-          _executorService.execute(() ->
-          {
-            _log.debug("Received {} response:\n{}", ResourceType.fromTypeUrl(response.getTypeUrl()), response);
-            DiscoveryResponseData responseData = DiscoveryResponseData.fromEnvoyProto(response);
-            handleResponse(responseData);
-          });
-        }
-
-        @Override
-        public void onError(Throwable t)
-        {
-          _executorService.execute(() -> handleRpcError(t));
-        }
-
-        @Override
-        public void onCompleted()
-        {
-          _executorService.execute(() -> handleRpcCompleted());
-        }
-      };
-      _requestWriter = _stub.withWaitForReady().deltaAggregatedResources(responseReader);
+    public boolean isReady() {
+      return _requestWriter != null && ((ClientCallStreamObserver<?>) _requestWriter).isReady();
     }
 
+    private void start()
+    {
+      StreamObserver<DeltaDiscoveryResponse> responseReader =
+          new ClientResponseObserver<DeltaDiscoveryRequest, DeltaDiscoveryResponse>() {
+            @Override
+            public void beforeStart(ClientCallStreamObserver<DeltaDiscoveryRequest> requestStream) {
+              requestStream.setOnReadyHandler(() -> _executorService.execute(XdsClientImpl.this::readyHandler));
+            }
+
+            @Override
+            public void onNext(DeltaDiscoveryResponse response)
+            {
+              _executorService.execute(() ->
+              {
+                _log.debug("Received {} response:\n{}", ResourceType.fromTypeUrl(response.getTypeUrl()), response);
+                DiscoveryResponseData responseData = DiscoveryResponseData.fromEnvoyProto(response);
+                handleResponse(responseData);
+              });
+            }
+
+            @Override
+            public void onError(Throwable t)
+            {
+              _executorService.execute(() -> handleRpcError(t));
+            }
+
+            @Override
+            public void onCompleted()
+            {
+              _executorService.execute(() -> handleRpcCompleted());
+            }
+          };
+      _requestWriter = _stub.withWaitForReady().deltaAggregatedResources(responseReader);
+    }
 
     /**
      * Sends a client-initiated discovery request.
@@ -576,6 +650,7 @@ public class XdsClientImpl extends XdsClient
       handleRpcStreamClosed(Status.UNAVAILABLE.withDescription("ADS stream closed by server"));
     }
 
+    // Must be called from the executor.
     private void handleRpcStreamClosed(Status error)
     {
       if (_closed)
@@ -585,7 +660,7 @@ public class XdsClientImpl extends XdsClient
       _log.error("ADS stream closed with status {}: {}. Cause: {}", error.getCode(), error.getDescription(),
           error.getCause());
       _closed = true;
-      handleStreamClosed(error);
+      notifyStreamError(error);
       cleanUp();
       if (_responseReceived || _retryBackoffPolicy == null) {
         // Reset the backoff sequence if had received a response, or backoff sequence
@@ -597,7 +672,7 @@ public class XdsClientImpl extends XdsClient
         delayNanos = _retryBackoffPolicy.nextBackoffNanos();
       }
       _log.info("Retry ADS stream in {} ns", delayNanos);
-      _executorService.schedule(new RpcRetryTask(), delayNanos, TimeUnit.NANOSECONDS);
+      _retryRpcStreamFuture = _executorService.schedule(new RpcRetryTask(), delayNanos, TimeUnit.NANOSECONDS);
     }
 
     private void close(Exception error) {

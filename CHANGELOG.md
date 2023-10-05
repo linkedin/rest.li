@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- fix xDS client bugs and race conditions
 
 ## [29.46.6] - 2023-10-04
 - simplify symlink subscription in xds flow
