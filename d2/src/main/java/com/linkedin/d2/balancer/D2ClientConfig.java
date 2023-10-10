@@ -125,6 +125,9 @@ public class D2ClientConfig
   public ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter = new LogOnlyServiceDiscoveryEventEmitter(); // default to use log-only emitter
   public DualReadStateManager dualReadStateManager = null;
 
+  public ScheduledExecutorService xdsExecutorService = null;
+  public Long xdsStreamReadyTimeout = null;
+
   public D2ClientConfig()
   {
   }
@@ -190,7 +193,9 @@ public class D2ClientConfig
                  FailoutConfigProviderFactory failoutConfigProviderFactory,
                  FailoutRedirectStrategy failoutRedirectStrategy,
                  ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter,
-                 DualReadStateManager dualReadStateManager)
+                 DualReadStateManager dualReadStateManager,
+                 ScheduledExecutorService xdsExecutorService,
+                 Long xdsStreamReadyTimeout)
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -254,5 +259,7 @@ public class D2ClientConfig
     this.failoutRedirectStrategy = failoutRedirectStrategy;
     this.serviceDiscoveryEventEmitter = serviceDiscoveryEventEmitter;
     this.dualReadStateManager = dualReadStateManager;
+    this.xdsExecutorService = xdsExecutorService;
+    this.xdsStreamReadyTimeout = xdsStreamReadyTimeout;
   }
 }

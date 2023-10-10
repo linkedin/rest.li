@@ -52,7 +52,7 @@ import org.slf4j.LoggerFactory;
 public class XdsClientImpl extends XdsClient
 {
   private static final Logger _log = LoggerFactory.getLogger(XdsClientImpl.class);
-  private static final long DEFAULT_READY_TIMEOUT_MILLIS = 2000L;
+  public static final long DEFAULT_READY_TIMEOUT_MILLIS = 2000L;
 
   private final Map<String, ResourceSubscriber> _d2NodeSubscribers = new HashMap<>();
   private final Map<String, ResourceSubscriber> _d2SymlinkNodeSubscribers = new HashMap<>();
