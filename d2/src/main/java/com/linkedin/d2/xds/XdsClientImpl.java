@@ -52,7 +52,7 @@ import org.slf4j.LoggerFactory;
 public class XdsClientImpl extends XdsClient
 {
   private static final Logger _log = LoggerFactory.getLogger(XdsClientImpl.class);
-  private static final long DEFAULT_READY_TIMEOUT_MILLIS = 5000L;
+  private static final long DEFAULT_READY_TIMEOUT_MILLIS = 2000L;
 
   private final Map<String, ResourceSubscriber> _d2NodeSubscribers = new HashMap<>();
   private final Map<String, ResourceSubscriber> _d2SymlinkNodeSubscribers = new HashMap<>();
@@ -70,6 +70,7 @@ public class XdsClientImpl extends XdsClient
   private ScheduledFuture<?> _readyTimeoutFuture;
   private final long _readyTimeoutMillis;
 
+  @Deprecated
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService)
   {
     this(node, managedChannel, executorService, DEFAULT_READY_TIMEOUT_MILLIS);
@@ -82,7 +83,6 @@ public class XdsClientImpl extends XdsClient
     _managedChannel = managedChannel;
     _executorService = executorService;
   }
-
 
   @Override
   void watchXdsResource(String resourceName, ResourceType type, ResourceWatcher watcher)
