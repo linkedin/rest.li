@@ -57,6 +57,7 @@ public class XdsToD2PropertiesAdaptor
   private static final String D2_URI_NODE_PREFIX = "/d2/uris/";
   private static final char SYMLINK_NODE_IDENTIFIER = '$';
   private static final char PATH_SEPARATOR = '/';
+  private static final String NON_EXISTENT_CLUSTER = "NonExistentCluster";
 
   private final XdsClient _xdsClient;
   private final List<XdsConnectionListener> _xdsConnectionListeners;
@@ -82,7 +83,7 @@ public class XdsToD2PropertiesAdaptor
   private final Object _symlinkAndActualNodeLock = new Object();
   private final ServiceDiscoveryEventEmitter _eventEmitter;
 
-  private boolean _isAvailable;
+  private Boolean _isAvailable;
   private PropertyEventBus<UriProperties> _uriEventBus;
   private PropertyEventBus<ServiceProperties> _serviceEventBus;
   private PropertyEventBus<ClusterProperties> _clusterEventBus;
@@ -97,7 +98,8 @@ public class XdsToD2PropertiesAdaptor
     _clusterPropertiesJsonSerializer = new ClusterPropertiesJsonSerializer();
     _uriPropertiesJsonSerializer = new UriPropertiesJsonSerializer();
     _uriPropertiesMerger = new UriPropertiesMerger();
-    _isAvailable = false;
+    // set to null so that the first notification on connection establishment success/failure is always sent
+    _isAvailable = null;
     _watchedClusterResources = new ConcurrentHashMap<>();
     _watchedSymlinkResources = new ConcurrentHashMap<>();
     _watchedServiceResources = new ConcurrentHashMap<>();
@@ -108,7 +110,10 @@ public class XdsToD2PropertiesAdaptor
   public void start()
   {
     _xdsClient.startRpcStream();
-    notifyAvailabilityChanges(true);
+    // Watch any resource to get notified of xds connection updates, including initial connection establishment.
+    // TODO: Note, this is a workaround since the xDS client implementation currently integrates connection
+    //   error/success notifications along with the resource updates. This can be improved in a future refactor.
+    listenToCluster(NON_EXISTENT_CLUSTER);
   }
 
   public void shutdown()
@@ -361,7 +366,7 @@ public class XdsToD2PropertiesAdaptor
   {
     synchronized (_xdsConnectionListeners)
     {
-      if (_isAvailable != isAvailable)
+      if (_isAvailable == null || _isAvailable != isAvailable)
       {
         _isAvailable = isAvailable;
 

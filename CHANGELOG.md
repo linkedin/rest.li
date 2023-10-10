@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.46.7] - 2023-10-10
+- fix xDS client bugs and race conditions
+
 ## [29.46.6] - 2023-10-04
 - simplify symlink subscription in xds flow
 
@@ -5548,7 +5551,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.46.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.46.7...master
+[29.46.7]: https://github.com/linkedin/rest.li/compare/v29.46.6...v29.46.7
 [29.46.6]: https://github.com/linkedin/rest.li/compare/v29.46.5...v29.46.6
 [29.46.5]: https://github.com/linkedin/rest.li/compare/v29.45.1...v29.45.2
 [29.46.4]: https://github.com/linkedin/rest.li/compare/v29.46.3...v29.46.4

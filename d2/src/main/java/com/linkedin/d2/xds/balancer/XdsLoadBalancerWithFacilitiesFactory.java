@@ -29,6 +29,7 @@ import com.linkedin.d2.xds.XdsToD2PropertiesAdaptor;
 import com.linkedin.r2.util.NamedThreadFactory;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import org.apache.commons.lang3.ObjectUtils;
 
 
 /**
@@ -47,11 +48,13 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
     {
       d2ClientJmxManager.registerDualReadLoadBalancerJmx(config.dualReadStateManager.getDualReadLoadBalancerJmx());
     }
-    ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(
-        new NamedThreadFactory("D2 xDS PropertyEventExecutor"));
-
+    ScheduledExecutorService executorService = ObjectUtils.defaultIfNull(config.xdsExecutorService,
+        Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 xDS PropertyEventExecutor")));
+    long xdsStreamReadyTimeout = ObjectUtils.defaultIfNull(config.xdsStreamReadyTimeout,
+        XdsClientImpl.DEFAULT_READY_TIMEOUT_MILLIS);
     XdsClient xdsClient = new XdsClientImpl(new Node(config.hostName),
-        new XdsChannelFactory(config.grpcSslContext, config.xdsServer).createChannel(), executorService);
+        new XdsChannelFactory(config.grpcSslContext, config.xdsServer).createChannel(), executorService,
+        xdsStreamReadyTimeout);
     XdsToD2PropertiesAdaptor adaptor = new XdsToD2PropertiesAdaptor(xdsClient, config.dualReadStateManager,
         config.serviceDiscoveryEventEmitter);
 

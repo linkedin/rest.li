@@ -199,7 +199,9 @@ public class D2ClientBuilder
                   _config.failoutConfigProviderFactory,
                   _config.failoutRedirectStrategy,
                   _config.serviceDiscoveryEventEmitter,
-                  _config.dualReadStateManager
+                  _config.dualReadStateManager,
+                  _config.xdsExecutorService,
+                  _config.xdsStreamReadyTimeout
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -638,6 +640,19 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setDualReadStateManager(DualReadStateManager dualReadStateManager) {
     _config.dualReadStateManager = dualReadStateManager;
+    return this;
+  }
+
+  /**
+   * Single-threaded executor service for xDS communication.
+   */
+  public D2ClientBuilder setXdsExecutorService(ScheduledExecutorService xdsExecutorService) {
+    _config.xdsExecutorService = xdsExecutorService;
+    return this;
+  }
+
+  public D2ClientBuilder setXdsStreamReadyTimeout(long xdsStreamReadyTimeout) {
+    _config.xdsStreamReadyTimeout = xdsStreamReadyTimeout;
     return this;
   }
 
