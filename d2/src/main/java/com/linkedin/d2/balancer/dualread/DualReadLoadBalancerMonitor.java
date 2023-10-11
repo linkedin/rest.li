@@ -79,7 +79,7 @@ public abstract class DualReadLoadBalancerMonitor<T>
       if (!isEqual(entry, newEntry))
       {
         _rateLimitedLogger.warn("Received mismatched properties from dual read. Old LB: {}, New LB: {}",
-            entry, newEntry);
+            fromNewLb ? entry : newEntry, fromNewLb ? newEntry : entry);
         incrementEntryOutOfSyncCount(); // increment the out-of-sync count for the entry received later
       }
       else
