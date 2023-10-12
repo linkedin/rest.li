@@ -179,7 +179,7 @@ public class JmxManager
     return this;
   }
 
-  public synchronized  JmxManager registerXdsClientJmx(String name, XdsClientJmx xdsClientJmx)
+  public synchronized  JmxManager registerXdsClientJmxBean(String name, XdsClientJmxMBean xdsClientJmx)
   {
     checkReg(xdsClientJmx, name);
     return this;

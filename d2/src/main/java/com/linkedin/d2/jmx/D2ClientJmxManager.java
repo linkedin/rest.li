@@ -306,7 +306,7 @@ public class D2ClientJmxManager
       _log.warn("Setting XdsClientJmx for Non-XDS source type: {}", _discoverySourceType);
     }
     final String jmxName = String.format("%s-XdsClientJmx", getGlobalPrefix(null));
-    _jmxManager.registerXdsClientJmx(jmxName, xdsClientJmx);
+    _jmxManager.registerXdsClientJmxBean(jmxName, xdsClientJmx);
   }
 
   private void doRegisterLoadBalancer(SimpleLoadBalancer balancer, @Nullable DualReadModeProvider.DualReadMode mode)
