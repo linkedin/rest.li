@@ -19,6 +19,7 @@ package com.linkedin.d2.xds;
 import com.google.common.base.Joiner;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.rpc.Code;
+import com.linkedin.d2.jmx.XdsClientJmx;
 import indis.XdsD2;
 import io.envoyproxy.envoy.service.discovery.v3.AggregatedDiscoveryServiceGrpc;
 import io.envoyproxy.envoy.service.discovery.v3.DeltaDiscoveryRequest;
@@ -70,6 +71,8 @@ public class XdsClientImpl extends XdsClient
   private ScheduledFuture<?> _readyTimeoutFuture;
   private final long _readyTimeoutMillis;
 
+  private final XdsClientJmx _xdsClientJmx;
+
   @Deprecated
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService)
   {
@@ -77,11 +80,13 @@ public class XdsClientImpl extends XdsClient
   }
 
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService,
-      long readyTimeoutMillis) {
+      long readyTimeoutMillis)
+  {
     _readyTimeoutMillis = readyTimeoutMillis;
     _node = node;
     _managedChannel = managedChannel;
     _executorService = executorService;
+    _xdsClientJmx = new XdsClientJmx();
   }
 
   @Override
@@ -117,6 +122,12 @@ public class XdsClientImpl extends XdsClient
         startRpcStreamLocal();
       }
     });
+  }
+
+  @Override
+  public XdsClientJmx getXdsClientJmx()
+  {
+    return _xdsClientJmx;
   }
 
   // Start RPC stream. Must be called from the executor, and only if we're not backed off.
@@ -166,29 +177,38 @@ public class XdsClientImpl extends XdsClient
    * NOTE: Must be called from the executor.
    * @return {@code true} if the client is in backoff
    */
-  private boolean isInBackoff() {
+  private boolean isInBackoff()
+  {
     return _adsStream == null && _retryRpcStreamFuture != null && !_retryRpcStreamFuture.isDone();
   }
 
   /**
    * Handles ready callbacks from the RPC stream. Must be called from the executor.
    */
-  private void readyHandler() {
+  private void readyHandler()
+  {
     _log.debug("Received ready callback from the ADS stream");
-    if (_adsStream == null || isInBackoff()) {
+    if (_adsStream == null || isInBackoff())
+    {
       _log.warn("Unexpected state, ready called on null or backed off ADS stream!");
       return;
     }
     // confirm ready state to neglect spurious callbacks; we'll get another callback whenever it is ready again.
-    if (_adsStream.isReady()) {
+    if (_adsStream.isReady())
+    {
       // if the ready timeout future is non-null, a reconnect notification hasn't been sent yet.
-      if (_readyTimeoutFuture != null) {
+      if (_readyTimeoutFuture != null)
+      {
         // timeout task will be cancelled only if it hasn't already executed.
         boolean cancelledTimeout = _readyTimeoutFuture.cancel(false);
         _log.info("ADS stream ready, cancelled timeout task: {}", cancelledTimeout);
         _readyTimeoutFuture = null; // set it to null to avoid repeat notifications to subscribers.
+        _xdsClientJmx.incrementReconnectionCount();
         notifyStreamReconnect();
+        // note: no need to start a retry task explicitly since xds stream internally will keep on retrying to connect
+        // to one of the sub-channels (unless an error or complete callback is called).
       }
+      _xdsClientJmx.setIsConnected(true);
     }
   }
 
@@ -642,11 +662,15 @@ public class XdsClientImpl extends XdsClient
 
     private void handleRpcError(Throwable t)
     {
+      _xdsClientJmx.incrementConnectionLostCount();
+      _xdsClientJmx.setIsConnected(false);
       handleRpcStreamClosed(Status.fromThrowable(t));
     }
 
     private void handleRpcCompleted()
     {
+      _xdsClientJmx.incrementConnectionClosedCount();
+      _xdsClientJmx.setIsConnected(false);
       handleRpcStreamClosed(Status.UNAVAILABLE.withDescription("ADS stream closed by server"));
     }
 

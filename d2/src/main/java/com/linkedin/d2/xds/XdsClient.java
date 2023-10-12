@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.xds;
 
+import com.linkedin.d2.jmx.XdsClientJmx;
 import indis.XdsD2;
 import io.grpc.Status;
 import java.util.Map;
@@ -171,4 +172,6 @@ public abstract class XdsClient
   abstract void shutdown();
 
   abstract String getXdsServerAuthority();
+
+  abstract public XdsClientJmx getXdsClientJmx();
 }

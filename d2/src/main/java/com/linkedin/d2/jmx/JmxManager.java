@@ -179,6 +179,12 @@ public class JmxManager
     return this;
   }
 
+  public synchronized  JmxManager registerXdsClientJmx(String name, XdsClientJmx xdsClientJmx)
+  {
+    checkReg(xdsClientJmx, name);
+    return this;
+  }
+
   public synchronized JmxManager registerZooKeeperAnnouncer(String name,
                                                             ZooKeeperAnnouncer announcer)
   {
