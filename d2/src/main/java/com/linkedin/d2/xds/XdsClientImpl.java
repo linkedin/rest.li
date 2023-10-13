@@ -148,6 +148,8 @@ public class XdsClientImpl extends XdsClient
       _log.warn("ADS stream not ready within {} milliseconds", _readyTimeoutMillis);
       // notify subscribers about the error and wait for the stream to be ready by keeping it open.
       notifyStreamError(Status.DEADLINE_EXCEEDED);
+      // note: no need to start a retry task explicitly since xds stream internally will keep on retrying to connect
+      // to one of the sub-channels (unless an error or complete callback is called).
     }, _readyTimeoutMillis, TimeUnit.MILLISECONDS);
     _adsStream.start();
     _log.info("ADS stream started, connected to server: {}", _managedChannel.authority());
@@ -205,8 +207,6 @@ public class XdsClientImpl extends XdsClient
         _readyTimeoutFuture = null; // set it to null to avoid repeat notifications to subscribers.
         _xdsClientJmx.incrementReconnectionCount();
         notifyStreamReconnect();
-        // note: no need to start a retry task explicitly since xds stream internally will keep on retrying to connect
-        // to one of the sub-channels (unless an error or complete callback is called).
       }
       _xdsClientJmx.setIsConnected(true);
     }
