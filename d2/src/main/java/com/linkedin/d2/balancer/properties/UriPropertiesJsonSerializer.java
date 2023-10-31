@@ -16,18 +16,18 @@
 
 package com.linkedin.d2.balancer.properties;
 
-
+import com.google.protobuf.ByteString;
 import com.linkedin.d2.balancer.properties.util.PropertyUtil;
 import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.PropertySerializer;
-import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -103,6 +103,29 @@ public class UriPropertiesJsonSerializer implements PropertySerializer<UriProper
 
   @Override
   public UriProperties fromBytes(byte[] bytes, long version) throws PropertySerializationException
+  {
+    UriProperties uriProperties = fromBytes(bytes);
+    uriProperties.setVersion(version);
+    return uriProperties;
+  }
+
+  @Override
+  public UriProperties fromBytes(ByteString bytes) throws PropertySerializationException
+  {
+    try
+    {
+      @SuppressWarnings("unchecked")
+      Map<String, Object> untyped = JacksonUtil.getObjectMapper().readValue(bytes.newInput(), HashMap.class);
+      return fromMap(untyped);
+    }
+    catch (Exception e)
+    {
+      throw new PropertySerializationException(e);
+    }
+  }
+
+  @Override
+  public UriProperties fromBytes(ByteString bytes, long version) throws PropertySerializationException
   {
     UriProperties uriProperties = fromBytes(bytes);
     uriProperties.setVersion(version);

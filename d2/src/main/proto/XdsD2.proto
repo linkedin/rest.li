@@ -30,15 +30,30 @@ message Stat {
 }
 
 message D2Node {
+  // Deprecated in favor of Node
+  option deprecated = true;
   Stat stat = 1;
   google.protobuf.Struct data = 2;
 }
 
 message D2SymlinkNode {
+  // Deprecated in favor of Node
+  option deprecated = true;
   Stat stat = 1;
   string masterClusterNodePath = 2;
 }
 
 message D2NodeMap {
+  // Deprecated in favor of NodeMap
+  option deprecated = true;
   map<string, D2Node> nodes = 1;
+}
+
+message Node {
+  Stat stat = 1;
+  bytes data = 2 ;
+}
+
+message NodeMap {
+  map<string, Node> nodes = 1;
 }

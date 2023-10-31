@@ -56,7 +56,6 @@ public class XdsClientImpl extends XdsClient
   public static final long DEFAULT_READY_TIMEOUT_MILLIS = 2000L;
 
   private final Map<String, ResourceSubscriber> _d2NodeSubscribers = new HashMap<>();
-  private final Map<String, ResourceSubscriber> _d2SymlinkNodeSubscribers = new HashMap<>();
   private final Map<String, ResourceSubscriber> _d2NodeMapSubscribers = new HashMap<>();
 
   private final Node _node;
@@ -214,7 +213,7 @@ public class XdsClientImpl extends XdsClient
 
   private void handleD2NodeResponse(DiscoveryResponseData data)
   {
-    Map<String, D2NodeUpdate> updates = new HashMap<>();
+    Map<String, NodeUpdate> updates = new HashMap<>();
     List<String> errors = new ArrayList<>();
 
     for (Resource resource: data.getResourcesList())
@@ -222,8 +221,8 @@ public class XdsClientImpl extends XdsClient
       String resourceName = resource.getName();
       try
       {
-        XdsD2.D2Node d2Node = resource.getResource().unpack(XdsD2.D2Node.class);
-        updates.put(resourceName, new D2NodeUpdate(resource.getVersion(), d2Node));
+        XdsD2.Node d2Node = resource.getResource().unpack(XdsD2.Node.class);
+        updates.put(resourceName, new NodeUpdate(resource.getVersion(), d2Node));
       } catch (InvalidProtocolBufferException e)
       {
         _log.warn("Failed to unpack D2Node response", e);
@@ -234,31 +233,9 @@ public class XdsClientImpl extends XdsClient
     handleResourceUpdate(updates, data.getResourceType(), data.getNonce(), errors);
   }
 
-  private void handleD2SymlinkNodeResponse(DiscoveryResponseData data)
-  {
-    Map<String, D2SymlinkNodeUpdate> updates = new HashMap<>();
-    List<String> errors = new ArrayList<>();
-
-    for (Resource resource: data.getResourcesList())
-    {
-      String resourceName = resource.getName();
-      try
-      {
-        XdsD2.D2SymlinkNode symlinkNode = resource.getResource().unpack(XdsD2.D2SymlinkNode.class);
-        updates.put(resourceName, new D2SymlinkNodeUpdate(resource.getVersion(), symlinkNode));
-      } catch (InvalidProtocolBufferException e)
-      {
-        _log.warn("Failed to unpack D2SymlinkNode response", e);
-        errors.add("Failed to unpack D2SymlinkNode response");
-      }
-    }
-
-    handleResourceUpdate(updates, data.getResourceType(), data.getNonce(), errors);
-  }
-
   private void handleD2NodeMapResponse(DiscoveryResponseData data)
   {
-    Map<String, D2NodeMapUpdate> updates = new HashMap<>();
+    Map<String, NodeMapUpdate> updates = new HashMap<>();
     List<String> errors = new ArrayList<>();
 
     for (Resource resource: data.getResourcesList())
@@ -266,9 +243,9 @@ public class XdsClientImpl extends XdsClient
       String resourceName = resource.getName();
       try
       {
-        XdsD2.D2NodeMap d2NodeMap = resource.getResource().unpack(XdsD2.D2NodeMap.class);
-        Map<String, XdsD2.D2Node> nodeData = d2NodeMap.getNodesMap();
-        updates.put(resourceName, new D2NodeMapUpdate(resource.getVersion(), nodeData));
+        XdsD2.NodeMap nodeMap = resource.getResource().unpack(XdsD2.NodeMap.class);
+        Map<String, XdsD2.Node> nodeData = nodeMap.getNodesMap();
+        updates.put(resourceName, new NodeMapUpdate(resource.getVersion(), nodeData));
       } catch (InvalidProtocolBufferException e)
       {
         _log.warn("Failed to unpack D2NodeMap response", e);
@@ -325,11 +302,9 @@ public class XdsClientImpl extends XdsClient
   {
     switch (type)
     {
-      case D2_NODE:
+      case NODE:
         return _d2NodeSubscribers;
-      case D2_SYMLINK_NODE:
-        return _d2SymlinkNodeSubscribers;
-      case D2_NODE_MAP:
+      case NODE_MAP:
         return _d2NodeMapSubscribers;
       case UNKNOWN:
       default:
@@ -369,14 +344,15 @@ public class XdsClientImpl extends XdsClient
     {
       switch (_type)
       {
-        case D2_NODE:
-          ((D2NodeResourceWatcher) watcher).onChanged((D2NodeUpdate) update);
+        case NODE:
+          if (watcher instanceof  NodeResourceWatcher) {
+            ((NodeResourceWatcher) watcher).onChanged((NodeUpdate) update);
+          } else {
+            ((SymlinkNodeResourceWatcher) watcher).onChanged(_resource, (NodeUpdate) update);
+          }
           break;
-        case D2_SYMLINK_NODE:
-          ((D2SymlinkNodeResourceWatcher) watcher).onChanged(_resource, (D2SymlinkNodeUpdate) update);
-          break;
-        case D2_NODE_MAP:
-          ((D2NodeMapResourceWatcher) watcher).onChanged((D2NodeMapUpdate) update);
+        case NODE_MAP:
+          ((NodeMapResourceWatcher) watcher).onChanged((NodeMapUpdate) update);
           break;
         case UNKNOWN:
         default:
@@ -643,13 +619,10 @@ public class XdsClientImpl extends XdsClient
       ResourceType resourceType = response.getResourceType();
       switch (resourceType)
       {
-        case D2_NODE:
+        case NODE:
           handleD2NodeResponse(response);
           break;
-        case D2_SYMLINK_NODE:
-          handleD2SymlinkNodeResponse(response);
-          break;
-        case D2_NODE_MAP:
+        case NODE_MAP:
           handleD2NodeMapResponse(response);
           break;
         case UNKNOWN:
