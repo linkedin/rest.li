@@ -16,9 +16,12 @@
 
 package com.linkedin.d2.balancer.properties.util;
 
-import com.linkedin.data.template.TemplateOutputCastException;
+import com.google.protobuf.Struct;
+import com.google.protobuf.Value;
 import com.linkedin.util.ArgumentUtil;
-
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class PropertyUtil
@@ -151,5 +154,61 @@ public class PropertyUtil
           " to class = " + clazz.getName());
     }
     return (T) value;
+  }
+
+  /**
+   * Efficiently translates a proto JSON {@link Struct} into a {@code Map<String, Object>} without additional
+   * serialization or deserialization.
+   */
+  public static Map<String, Object> protoStructToMap(Struct struct)
+  {
+    Map<String, Object> map = new HashMap<>(struct.getFieldsMap().size());
+    for (Map.Entry<String, Value> entry : struct.getFieldsMap().entrySet())
+    {
+      map.put(entry.getKey(), valueToObject(entry.getValue()));
+    }
+    return map;
+  }
+
+  private static Object valueToObject(Value value)
+  {
+    if (value.hasBoolValue())
+    {
+      return value.getBoolValue();
+    }
+    else if (value.hasStringValue())
+    {
+      return value.getStringValue();
+    }
+    else if (value.hasNumberValue())
+    {
+      return value.getNumberValue();
+    }
+    else if (value.hasNullValue())
+    {
+      return null;
+    }
+    else if (value.hasStructValue())
+    {
+      Map<String, Object> map = new HashMap<>(value.getStructValue().getFieldsCount());
+      for (Map.Entry<String, Value> entry : value.getStructValue().getFieldsMap().entrySet())
+      {
+        map.put(entry.getKey(), valueToObject(entry.getValue()));
+      }
+      return map;
+    }
+    else if (value.hasListValue())
+    {
+      List<Object> list = new ArrayList<>(value.getListValue().getValuesCount());
+      for (Value element : value.getListValue().getValuesList())
+      {
+        list.add(valueToObject(element));
+      }
+      return list;
+    }
+    else
+    {
+      throw new RuntimeException("Unexpected proto value of unknown type: " + value);
+    }
   }
 }

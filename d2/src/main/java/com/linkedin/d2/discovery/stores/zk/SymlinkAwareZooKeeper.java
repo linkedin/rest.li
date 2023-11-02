@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.discovery.stores.zk;
 
-import com.google.protobuf.ByteString;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.PropertySerializer;
 import org.apache.zookeeper.AsyncCallback;
@@ -595,19 +594,6 @@ public class SymlinkAwareZooKeeper extends AbstractZooKeeper
       try
       {
         return new String(bytes, "UTF-8");
-      }
-      catch (UnsupportedEncodingException e)
-      {
-        throw new PropertySerializationException(e);
-      }
-    }
-
-    @Override
-    public String fromBytes(ByteString bytes) throws PropertySerializationException
-    {
-      try
-      {
-        return bytes.toString("UTF-8");
       }
       catch (UnsupportedEncodingException e)
       {

@@ -16,7 +16,7 @@
 
 package com.linkedin.d2.balancer.properties;
 
-import com.google.protobuf.ByteString;
+import com.google.protobuf.Struct;
 import com.linkedin.d2.balancer.properties.util.PropertyUtil;
 import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.discovery.PropertyBuilder;
@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.linkedin.d2.balancer.properties.util.PropertyUtil.mapGet;
+import static com.linkedin.d2.balancer.properties.util.PropertyUtil.protoStructToMap;
 
 
 /**
@@ -86,27 +87,18 @@ public class ClusterPropertiesJsonSerializer implements
     return clusterProperties;
   }
   
-  @Override
-  public ClusterProperties fromBytes(ByteString bytes) throws PropertySerializationException
+  public ClusterProperties fromStruct(Struct struct, long version) throws PropertySerializationException
   {
     try
     {
-      @SuppressWarnings("unchecked")
-      Map<String, Object> untyped = JacksonUtil.getObjectMapper().readValue(bytes.newInput(), HashMap.class);
-      return fromMap(untyped);
+      ClusterProperties clusterProperties = fromMap(protoStructToMap(struct));
+      clusterProperties.setVersion(version);
+      return clusterProperties;
     }
     catch (Exception e)
     {
       throw new PropertySerializationException(e);
     }
-  }
-
-  @Override
-  public ClusterProperties fromBytes(ByteString bytes, long version) throws PropertySerializationException
-  {
-    ClusterProperties clusterProperties = fromBytes(bytes);
-    clusterProperties.setVersion(version);
-    return clusterProperties;
   }
 
   @SuppressWarnings("unchecked")

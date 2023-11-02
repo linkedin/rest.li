@@ -16,9 +16,6 @@
 
 package com.linkedin.d2.discovery;
 
-import com.google.protobuf.ByteString;
-
-
 public interface PropertySerializer<T>
 {
   byte[] toBytes(T property);
@@ -26,19 +23,6 @@ public interface PropertySerializer<T>
   T fromBytes(byte[] bytes) throws PropertySerializationException;
 
   default T fromBytes(byte[] bytes, long version) throws PropertySerializationException
-  {
-    return fromBytes(bytes);
-  }
-
-  default T fromBytes(ByteString bytes) throws PropertySerializationException
-  {
-    // This default implementation provides no benefit over calling fromByte(byte[]) as it creates a copy of the
-    // underlying byte array. More efficient implementations should use ByteString#newInput to read the underlying
-    // buffer without copying it.
-    return fromBytes(bytes.toByteArray());
-  }
-
-  default T fromBytes(ByteString bytes, long version) throws PropertySerializationException
   {
     return fromBytes(bytes);
   }

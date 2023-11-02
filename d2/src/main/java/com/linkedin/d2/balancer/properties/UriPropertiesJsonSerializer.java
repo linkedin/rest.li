@@ -16,18 +16,19 @@
 
 package com.linkedin.d2.balancer.properties;
 
-import com.google.protobuf.ByteString;
+import com.google.protobuf.Struct;
 import com.linkedin.d2.balancer.properties.util.PropertyUtil;
 import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.PropertySerializer;
+import indis.XdsD2;
+import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -109,27 +110,64 @@ public class UriPropertiesJsonSerializer implements PropertySerializer<UriProper
     return uriProperties;
   }
 
-  @Override
-  public UriProperties fromBytes(ByteString bytes) throws PropertySerializationException
+  public UriProperties fromProto(XdsD2.D2URI uri) throws PropertySerializationException
   {
     try
     {
-      @SuppressWarnings("unchecked")
-      Map<String, Object> untyped = JacksonUtil.getObjectMapper().readValue(bytes.newInput(), HashMap.class);
-      return fromMap(untyped);
+      Map<URI, Map<String, Object>> applicationProperties = new HashMap<>(uri.getUriSpecificPropertiesCount());
+      for (Map.Entry<String, Struct> entry : uri.getUriSpecificPropertiesMap().entrySet())
+      {
+        applicationProperties.put(URI.create(entry.getKey()), PropertyUtil.protoStructToMap(entry.getValue()));
+      }
+
+      Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<>();
+      for (Map.Entry<String, XdsD2.D2URI.PartitionData> entry : uri.getPartitionDescMap().entrySet())
+      {
+        Map<Integer, PartitionData> partitions = new HashMap<>(entry.getValue().getWeightsCount());
+        for (Map.Entry<Integer, Double> partition : entry.getValue().getWeightsMap().entrySet())
+        {
+          partitions.put(partition.getKey(), new PartitionData(partition.getValue()));
+        }
+        partitionDesc.put(URI.create(entry.getKey()), partitions);
+      }
+
+
+      Map<URI, Map<Integer, PartitionData>> partitionDescFromWeights = new HashMap<>(uri.getWeightsCount());
+      for (Map.Entry<String, Double> entry : uri.getWeightsMap().entrySet())
+      {
+        partitionDescFromWeights.put(URI.create(entry.getKey()), Collections.singletonMap(
+            DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
+            new PartitionData(entry.getValue())
+        ));
+      }
+
+      // if both partitionDesc and weights exist, check consistency
+      if (!partitionDesc.isEmpty() && !partitionDescFromWeights.isEmpty())
+      {
+        if (!partitionDesc.equals(partitionDescFromWeights))
+        {
+          _log.error("Inconsistency detected between partitionDesc and weights {} {}",
+              partitionDesc, partitionDescFromWeights);
+        }
+      }
+
+      // always trust partitionDesc over weights
+      if (partitionDesc.isEmpty())
+      {
+        partitionDesc = partitionDescFromWeights;
+      }
+
+      return new UriProperties(
+          uri.getClusterName(),
+          partitionDesc,
+          applicationProperties,
+          uri.getStat().getMzxid()
+      );
     }
     catch (Exception e)
     {
       throw new PropertySerializationException(e);
     }
-  }
-
-  @Override
-  public UriProperties fromBytes(ByteString bytes, long version) throws PropertySerializationException
-  {
-    UriProperties uriProperties = fromBytes(bytes);
-    uriProperties.setVersion(version);
-    return uriProperties;
   }
 
   @Override

@@ -30,30 +30,32 @@ message Stat {
 }
 
 message D2Node {
-  // Deprecated in favor of Node
-  option deprecated = true;
   Stat stat = 1;
   google.protobuf.Struct data = 2;
 }
 
 message D2SymlinkNode {
-  // Deprecated in favor of Node
-  option deprecated = true;
   Stat stat = 1;
   string masterClusterNodePath = 2;
 }
 
 message D2NodeMap {
-  // Deprecated in favor of NodeMap
+  // Deprecated in favor of D2UriMap
   option deprecated = true;
   map<string, D2Node> nodes = 1;
 }
 
-message Node {
+message D2URI {
   Stat stat = 1;
-  bytes data = 2 ;
+  map<string, google.protobuf.Struct> uriSpecificProperties = 2;
+  message PartitionData {
+    map<int32, double> weights = 1;
+  }
+  map<string, PartitionData> partitionDesc = 3;
+  map<string, double> weights = 4;
+  string clusterName = 5;
 }
 
-message NodeMap {
-  map<string, Node> nodes = 1;
+message D2URIMap {
+  map<string, D2URI> nodes = 1;
 }
