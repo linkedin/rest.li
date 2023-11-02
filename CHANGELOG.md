@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.46.9] - 2023-11-02
+- Update FieldDef so that it will lazily cache the hashCode.
+
 ## [29.46.8] - 2023-10-11
 - add metrics about xds connection status and count
 
@@ -5554,7 +5557,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.46.8...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.46.9...master
+[29.46.9]: https://github.com/linkedin/rest.li/compare/v29.46.8...v29.46.9
 [29.46.8]: https://github.com/linkedin/rest.li/compare/v29.46.7...v29.46.8
 [29.46.7]: https://github.com/linkedin/rest.li/compare/v29.46.6...v29.46.7
 [29.46.6]: https://github.com/linkedin/rest.li/compare/v29.46.5...v29.46.6
