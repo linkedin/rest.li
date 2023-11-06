@@ -184,18 +184,6 @@ public class TestXdsToD2PropertiesAdaptor {
         .putUriSpecificProperties(localhost.toString(), Struct.newBuilder()
             .putFields("foo", Value.newBuilder().setStringValue("bar").build())
             .build())
-        .putWeights(localhost.toString(), 42)
-        .build();
-
-    UriProperties properties = new UriPropertiesJsonSerializer().fromProto(uri);
-    Assert.assertEquals(properties.getClusterName(), PRIMARY_CLUSTER_NAME);
-    Assert.assertEquals(properties.getVersion(), DUMMY_STAT.getMzxid());
-    Assert.assertEquals(properties.getUriSpecificProperties(),
-        Collections.singletonMap(localhost, Collections.singletonMap("foo", "bar")));
-    Assert.assertEquals(properties.getPartitionDesc(),
-        Collections.singletonMap(localhost, Collections.singletonMap(0, new PartitionData(42))));
-
-    XdsD2.D2URI uriWithPartitionDesc = XdsD2.D2URI.newBuilder(uri)
         .putPartitionDesc(localhost.toString(), XdsD2.D2URI.PartitionData.newBuilder()
             .putWeights(0, 42)
             .putWeights(1, 27)
@@ -203,8 +191,11 @@ public class TestXdsToD2PropertiesAdaptor {
         )
         .build();
 
-    // Check that weights is ignored if partitionDesc is present
-    properties = new UriPropertiesJsonSerializer().fromProto(uriWithPartitionDesc);
+    UriProperties properties = new UriPropertiesJsonSerializer().fromProto(uri);
+    Assert.assertEquals(properties.getClusterName(), PRIMARY_CLUSTER_NAME);
+    Assert.assertEquals(properties.getVersion(), DUMMY_STAT.getMzxid());
+    Assert.assertEquals(properties.getUriSpecificProperties(),
+        Collections.singletonMap(localhost, Collections.singletonMap("foo", "bar")));
     Assert.assertEquals(properties.getPartitionDesc(),
         Collections.singletonMap(localhost, ImmutableMap.of(
             0, new PartitionData(42),

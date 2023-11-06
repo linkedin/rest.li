@@ -45,15 +45,45 @@ message D2NodeMap {
   map<string, D2Node> nodes = 1;
 }
 
+// D2URI is a proto representation of com.linkedin.d2.balancer.properties.UriProperties. Note that a D2 UriProperties is
+// actually an announcement from a single machine for potentially multiple URIs. This class is a misnomer but it seems
+// important to be consistent with the old naming strategy as this new proto bridges the old type. The string keys in
+// the maps of the message below will be the URIs of this announcement. Here is a sample ZK announcement for additional
+// clarity:
+//	{
+//		"weights": {
+//			"https://foo.stg.linkedin.com:18792/Toki/resources": 1.0
+//		},
+//		"partitionDesc": {
+//			"https://foo.stg.linkedin.com:18792/Toki/resources": {
+//				"0": {
+//					"weight": 1.0
+//				}
+//			}
+//		},
+//		"uriSpecificProperties": {
+//			"https://foo.stg.linkedin.com:18792/Toki/resources": {
+//				"com.linkedin.app.version": "0.1.76"
+//			}
+//		},
+//		"clusterName": "Toki"
+//	}
 message D2URI {
+  // The ZK stat of the node that contained this announcement.
   Stat stat = 1;
-  map<string, google.protobuf.Struct> uriSpecificProperties = 2;
+
+  // The name of the cluster this announcement belongs to.
+  string clusterName = 2;
+
   message PartitionData {
+    // Maps the partition number to the desired D2 weight for that partition.
     map<int32, double> weights = 1;
   }
+  // The partitions for each URI contained in this announcement.
   map<string, PartitionData> partitionDesc = 3;
-  map<string, double> weights = 4;
-  string clusterName = 5;
+
+  // Additional metadata for each URI in this announcement.
+  map<string, google.protobuf.Struct> uriSpecificProperties = 4;
 }
 
 message D2URIMap {

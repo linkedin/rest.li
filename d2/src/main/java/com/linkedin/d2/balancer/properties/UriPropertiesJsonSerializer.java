@@ -24,13 +24,12 @@ import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.PropertySerializer;
 import indis.XdsD2;
-import java.util.Collections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.URI;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UriPropertiesJsonSerializer implements PropertySerializer<UriProperties>, PropertyBuilder<UriProperties>
 {
@@ -129,32 +128,6 @@ public class UriPropertiesJsonSerializer implements PropertySerializer<UriProper
           partitions.put(partition.getKey(), new PartitionData(partition.getValue()));
         }
         partitionDesc.put(URI.create(entry.getKey()), partitions);
-      }
-
-
-      Map<URI, Map<Integer, PartitionData>> partitionDescFromWeights = new HashMap<>(uri.getWeightsCount());
-      for (Map.Entry<String, Double> entry : uri.getWeightsMap().entrySet())
-      {
-        partitionDescFromWeights.put(URI.create(entry.getKey()), Collections.singletonMap(
-            DefaultPartitionAccessor.DEFAULT_PARTITION_ID,
-            new PartitionData(entry.getValue())
-        ));
-      }
-
-      // if both partitionDesc and weights exist, check consistency
-      if (!partitionDesc.isEmpty() && !partitionDescFromWeights.isEmpty())
-      {
-        if (!partitionDesc.equals(partitionDescFromWeights))
-        {
-          _log.error("Inconsistency detected between partitionDesc and weights {} {}",
-              partitionDesc, partitionDescFromWeights);
-        }
-      }
-
-      // always trust partitionDesc over weights
-      if (partitionDesc.isEmpty())
-      {
-        partitionDesc = partitionDescFromWeights;
       }
 
       return new UriProperties(
