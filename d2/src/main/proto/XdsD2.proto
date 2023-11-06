@@ -72,18 +72,21 @@ message D2URI {
   // The ZK stat of the node that contained this announcement.
   Stat stat = 1;
 
-  // The name of the cluster this announcement belongs to.
-  string clusterName = 2;
+  // The name of the cluster this announcement belongs to. This is inferred from the original "clusterName" field.
+  string cluster_name = 2;
 
   message PartitionData {
     // Maps the partition number to the desired D2 weight for that partition.
     map<int32, double> weights = 1;
   }
-  // The partitions for each URI contained in this announcement.
-  map<string, PartitionData> partitionDesc = 3;
+  // The partitions for each URI contained in this announcement. This is inferred from the original "partitionDesc" and
+  // "weights" fields. If "partitionDesc" is present in the original ZK node, it is always used regardless of "weights".
+  // Otherwise, "weights" is assumed to be for partition 0, as specified in UriProperties.
+  map<string, PartitionData> partition_desc = 3;
 
-  // Additional metadata for each URI in this announcement.
-  map<string, google.protobuf.Struct> uriSpecificProperties = 4;
+  // Additional metadata for each URI in this announcement. This is inferred from the original "uriSpecificProperties"
+  // fields.
+  map<string, google.protobuf.Struct> uri_specific_properties = 4;
 }
 
 message D2URIMap {
