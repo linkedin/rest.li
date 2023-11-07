@@ -48,8 +48,9 @@ message D2NodeMap {
 // D2URI is a proto representation of com.linkedin.d2.balancer.properties.UriProperties. Note that a D2 UriProperties is
 // actually an announcement from a single machine for potentially multiple URIs. This class is a misnomer but it seems
 // important to be consistent with the old naming strategy as this new proto bridges the old type. The string keys in
-// the maps of the message below will be the URIs of this announcement. Here is a sample ZK announcement for additional
-// clarity:
+// the maps of the message below will be the URIs of this announcement.
+//
+// Here is a sample ZK announcement for additional clarity on what it originally looked like:
 //	{
 //		"weights": {
 //			"https://foo.stg.linkedin.com:18792/Toki/resources": 1.0
