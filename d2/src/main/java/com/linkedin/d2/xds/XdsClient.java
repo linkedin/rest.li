@@ -24,8 +24,7 @@ import java.util.Map;
 
 public abstract class XdsClient
 {
-  private static final String D2_NODE_TYPE_URL = "type.googleapis.com/indis.D2Node";
-  private static final String D2_SYMLINK_NODE_TYPE_URL = "type.googleapis.com/indis.D2SymlinkNode";
+  private static final String NODE_TYPE_URL = "type.googleapis.com/indis.Node";
   private static final String D2_URI_MAP_TYPE_URL = "type.googleapis.com/indis.D2URIMap";
 
   interface ResourceWatcher
@@ -41,14 +40,14 @@ public abstract class XdsClient
     void onReconnect();
   }
 
-  interface D2NodeResourceWatcher extends ResourceWatcher
+  interface NodeResourceWatcher extends ResourceWatcher
   {
-    void onChanged(D2NodeUpdate update);
+    void onChanged(NodeUpdate update);
   }
 
-  interface D2SymlinkNodeResourceWatcher extends ResourceWatcher
+  interface SymlinkNodeResourceWatcher extends ResourceWatcher
   {
-    void onChanged(String resourceName, D2SymlinkNodeUpdate update);
+    void onChanged(String resourceName, NodeUpdate update);
   }
 
   interface D2URIMapResourceWatcher extends ResourceWatcher
@@ -61,40 +60,18 @@ public abstract class XdsClient
   }
 
 
-  static final class D2NodeUpdate implements ResourceUpdate
+  static final class NodeUpdate implements ResourceUpdate
   {
     String _version;
-    XdsD2.D2Node _nodeData;
+    XdsD2.Node _nodeData;
 
-    D2NodeUpdate(String version, XdsD2.D2Node nodeData)
+    NodeUpdate(String version, XdsD2.Node nodeData)
     {
       _version = version;
       _nodeData = nodeData;
     }
 
-    XdsD2.D2Node getNodeData()
-    {
-      return _nodeData;
-    }
-
-    public String getVersion()
-    {
-      return _version;
-    }
-  }
-
-  static final class D2SymlinkNodeUpdate implements ResourceUpdate
-  {
-    String _version;
-    XdsD2.D2SymlinkNode _nodeData;
-
-    D2SymlinkNodeUpdate(String version, XdsD2.D2SymlinkNode nodeData)
-    {
-      _version = version;
-      _nodeData = nodeData;
-    }
-
-    XdsD2.D2SymlinkNode getNodeData()
+    XdsD2.Node getNodeData()
     {
       return _nodeData;
     }
@@ -108,17 +85,17 @@ public abstract class XdsClient
   static final class D2URIMapUpdate implements ResourceUpdate
   {
     String _version;
-    Map<String, XdsD2.D2URI> _nodeDataMap;
+    Map<String, XdsD2.D2URI> _uriMap;
 
-    D2URIMapUpdate(String version, Map<String, XdsD2.D2URI> nodeDataMap)
+    D2URIMapUpdate(String version, Map<String, XdsD2.D2URI> uriMap)
     {
       _version = version;
-      _nodeDataMap = nodeDataMap;
+      _uriMap = uriMap;
     }
 
     public Map<String, XdsD2.D2URI> getURIMap()
     {
-      return _nodeDataMap;
+      return _uriMap;
     }
 
     public String getVersion()
@@ -129,17 +106,13 @@ public abstract class XdsClient
 
   enum ResourceType
   {
-    UNKNOWN, D2_NODE, D2_SYMLINK_NODE, D2_URI_MAP;
+    UNKNOWN, NODE, D2_URI_MAP;
 
     static ResourceType fromTypeUrl(String typeUrl)
     {
-      if (typeUrl.equals(D2_NODE_TYPE_URL))
+      if (typeUrl.equals(NODE_TYPE_URL))
       {
-        return D2_NODE;
-      }
-      if (typeUrl.equals(D2_SYMLINK_NODE_TYPE_URL))
-      {
-        return D2_SYMLINK_NODE;
+        return NODE;
       }
       if (typeUrl.equals(D2_URI_MAP_TYPE_URL))
       {
@@ -152,10 +125,8 @@ public abstract class XdsClient
     {
       switch (this)
       {
-        case D2_NODE:
-          return D2_NODE_TYPE_URL;
-        case D2_SYMLINK_NODE:
-          return D2_SYMLINK_NODE_TYPE_URL;
+        case NODE:
+          return NODE_TYPE_URL;
         case D2_URI_MAP:
           return D2_URI_MAP_TYPE_URL;
         case UNKNOWN:

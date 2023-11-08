@@ -56,7 +56,6 @@ public class XdsClientImpl extends XdsClient
   public static final long DEFAULT_READY_TIMEOUT_MILLIS = 2000L;
 
   private final Map<String, ResourceSubscriber> _d2NodeSubscribers = new HashMap<>();
-  private final Map<String, ResourceSubscriber> _d2SymlinkNodeSubscribers = new HashMap<>();
   private final Map<String, ResourceSubscriber> _d2URIMapSubscribers = new HashMap<>();
 
   private final Node _node;
@@ -214,7 +213,7 @@ public class XdsClientImpl extends XdsClient
 
   private void handleD2NodeResponse(DiscoveryResponseData data)
   {
-    Map<String, D2NodeUpdate> updates = new HashMap<>();
+    Map<String, NodeUpdate> updates = new HashMap<>();
     List<String> errors = new ArrayList<>();
 
     for (Resource resource: data.getResourcesList())
@@ -222,34 +221,12 @@ public class XdsClientImpl extends XdsClient
       String resourceName = resource.getName();
       try
       {
-        XdsD2.D2Node d2Node = resource.getResource().unpack(XdsD2.D2Node.class);
-        updates.put(resourceName, new D2NodeUpdate(resource.getVersion(), d2Node));
+        XdsD2.Node d2Node = resource.getResource().unpack(XdsD2.Node.class);
+        updates.put(resourceName, new NodeUpdate(resource.getVersion(), d2Node));
       } catch (InvalidProtocolBufferException e)
       {
-        _log.warn("Failed to unpack D2Node response", e);
-        errors.add("Failed to unpack D2Node response");
-      }
-    }
-
-    handleResourceUpdate(updates, data.getResourceType(), data.getNonce(), errors);
-  }
-
-  private void handleD2SymlinkNodeResponse(DiscoveryResponseData data)
-  {
-    Map<String, D2SymlinkNodeUpdate> updates = new HashMap<>();
-    List<String> errors = new ArrayList<>();
-
-    for (Resource resource: data.getResourcesList())
-    {
-      String resourceName = resource.getName();
-      try
-      {
-        XdsD2.D2SymlinkNode symlinkNode = resource.getResource().unpack(XdsD2.D2SymlinkNode.class);
-        updates.put(resourceName, new D2SymlinkNodeUpdate(resource.getVersion(), symlinkNode));
-      } catch (InvalidProtocolBufferException e)
-      {
-        _log.warn("Failed to unpack D2SymlinkNode response", e);
-        errors.add("Failed to unpack D2SymlinkNode response");
+        _log.warn("Failed to unpack Node response", e);
+        errors.add("Failed to unpack Node response");
       }
     }
 
@@ -271,8 +248,8 @@ public class XdsClientImpl extends XdsClient
         updates.put(resourceName, new D2URIMapUpdate(resource.getVersion(), nodeData));
       } catch (InvalidProtocolBufferException e)
       {
-        _log.warn("Failed to unpack D2NodeMap response", e);
-        errors.add("Failed to unpack D2NodeMap response");
+        _log.warn("Failed to unpack D2URIMap response", e);
+        errors.add("Failed to unpack D2URIMap response");
       }
     }
 
@@ -325,10 +302,8 @@ public class XdsClientImpl extends XdsClient
   {
     switch (type)
     {
-      case D2_NODE:
+      case NODE:
         return _d2NodeSubscribers;
-      case D2_SYMLINK_NODE:
-        return _d2SymlinkNodeSubscribers;
       case D2_URI_MAP:
         return _d2URIMapSubscribers;
       case UNKNOWN:
@@ -369,11 +344,12 @@ public class XdsClientImpl extends XdsClient
     {
       switch (_type)
       {
-        case D2_NODE:
-          ((D2NodeResourceWatcher) watcher).onChanged((D2NodeUpdate) update);
-          break;
-        case D2_SYMLINK_NODE:
-          ((D2SymlinkNodeResourceWatcher) watcher).onChanged(_resource, (D2SymlinkNodeUpdate) update);
+        case NODE:
+          if (watcher instanceof  NodeResourceWatcher) {
+            ((NodeResourceWatcher) watcher).onChanged((NodeUpdate) update);
+          } else {
+            ((SymlinkNodeResourceWatcher) watcher).onChanged(_resource, (NodeUpdate) update);
+          }
           break;
         case D2_URI_MAP:
           ((D2URIMapResourceWatcher) watcher).onChanged((D2URIMapUpdate) update);
@@ -643,11 +619,8 @@ public class XdsClientImpl extends XdsClient
       ResourceType resourceType = response.getResourceType();
       switch (resourceType)
       {
-        case D2_NODE:
+        case NODE:
           handleD2NodeResponse(response);
-          break;
-        case D2_SYMLINK_NODE:
-          handleD2SymlinkNodeResponse(response);
           break;
         case D2_URI_MAP:
           handleD2URIMapResponse(response);

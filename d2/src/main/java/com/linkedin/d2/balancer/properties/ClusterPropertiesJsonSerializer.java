@@ -16,7 +16,7 @@
 
 package com.linkedin.d2.balancer.properties;
 
-import com.google.protobuf.Struct;
+import com.google.protobuf.ByteString;
 import com.linkedin.d2.balancer.properties.util.PropertyUtil;
 import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.discovery.PropertyBuilder;
@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.linkedin.d2.balancer.properties.util.PropertyUtil.mapGet;
-import static com.linkedin.d2.balancer.properties.util.PropertyUtil.protoStructToMap;
 
 
 /**
@@ -87,11 +86,13 @@ public class ClusterPropertiesJsonSerializer implements
     return clusterProperties;
   }
   
-  public ClusterProperties fromStruct(Struct struct, long version) throws PropertySerializationException
+  public ClusterProperties fromBytes(ByteString bytes, long version) throws PropertySerializationException
   {
     try
     {
-      ClusterProperties clusterProperties = fromMap(protoStructToMap(struct));
+      @SuppressWarnings("unchecked")
+      Map<String, Object> untyped = JacksonUtil.getObjectMapper().readValue(bytes.newInput(), HashMap.class);
+      ClusterProperties clusterProperties = fromMap(untyped);
       clusterProperties.setVersion(version);
       return clusterProperties;
     }
