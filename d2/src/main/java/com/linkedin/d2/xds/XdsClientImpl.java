@@ -267,7 +267,7 @@ public class XdsClientImpl extends XdsClient
       try
       {
         XdsD2.D2URIMap uriMap = resource.getResource().unpack(XdsD2.D2URIMap.class);
-        Map<String, XdsD2.D2URI> nodeData = uriMap.getNodesMap();
+        Map<String, XdsD2.D2URI> nodeData = uriMap.getUrisMap();
         updates.put(resourceName, new D2URIMapUpdate(resource.getVersion(), nodeData));
       } catch (InvalidProtocolBufferException e)
       {

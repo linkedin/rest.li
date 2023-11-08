@@ -41,9 +41,7 @@ public class TestXdsToD2PropertiesAdaptor {
 
   private static final XdsClient.D2URIMapUpdate DUMMY_NODE_MAP_UPDATE = new XdsClient.D2URIMapUpdate("",
       Collections.emptyMap());
-  private static final XdsD2.Stat DUMMY_STAT = XdsD2.Stat.newBuilder()
-      .setMzxid(123)
-      .build();
+  private static final long DUMMY_VERSION = 123;
 
   @Test
   public void testListenToService()
@@ -179,21 +177,18 @@ public class TestXdsToD2PropertiesAdaptor {
   {
     URI localhost = URI.create("https://localhost:8443");
     XdsD2.D2URI uri = XdsD2.D2URI.newBuilder()
-        .setStat(DUMMY_STAT)
+        .setVersion(DUMMY_VERSION)
         .setClusterName(PRIMARY_CLUSTER_NAME)
-        .putUriSpecificProperties(localhost.toString(), Struct.newBuilder()
+        .setUriSpecificProperties(Struct.newBuilder()
             .putFields("foo", Value.newBuilder().setStringValue("bar").build())
             .build())
-        .putPartitionDesc(localhost.toString(), XdsD2.D2URI.PartitionData.newBuilder()
-            .putWeights(0, 42)
-            .putWeights(1, 27)
-            .build()
-        )
+        .putPartitionDesc(0, 42)
+        .putPartitionDesc(1, 27)
         .build();
 
     UriProperties properties = new UriPropertiesJsonSerializer().fromProto(uri);
     Assert.assertEquals(properties.getClusterName(), PRIMARY_CLUSTER_NAME);
-    Assert.assertEquals(properties.getVersion(), DUMMY_STAT.getMzxid());
+    Assert.assertEquals(properties.getVersion(), DUMMY_VERSION);
     Assert.assertEquals(properties.getUriSpecificProperties(),
         Collections.singletonMap(localhost, Collections.singletonMap("foo", "bar")));
     Assert.assertEquals(properties.getPartitionDesc(),

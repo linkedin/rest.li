@@ -46,11 +46,15 @@ message D2NodeMap {
 }
 
 // D2URI is a proto representation of com.linkedin.d2.balancer.properties.UriProperties. Note that a D2 UriProperties is
-// actually an announcement from a single machine for potentially multiple URIs. This class is a misnomer but it seems
-// important to be consistent with the old naming strategy as this new proto bridges the old type. The string keys in
-// the maps of the message below will be the URIs of this announcement.
+// is designed to hold all the announcements of a cluster, which is why it's represented as a map of URI to data. The
+// UriProperties class is reused wholesale for serialization to write the data to ZK, which is why all fields are
+// actually maps, even though these maps only ever have one key in them. It is clear from the implementation of
+// ZooKeeperServer and ZooKeeperAnnouncer that there cannot ever be more than one URI in one ZK announcement, therefore
+// this new proto representation does not need to share the same shortcomings and can, instead, represent things more
+// linearly.
 //
-// Here is a sample ZK announcement for additional clarity on what it originally looked like:
+// Here is a sample ZK announcement in JSON serialized from a UriProperties for additional clarity on the fields that
+// are represented as maps when they do not need to be:
 //	{
 //		"weights": {
 //			"https://foo.stg.linkedin.com:18792/Toki/resources": 1.0
@@ -70,26 +74,24 @@ message D2NodeMap {
 //		"clusterName": "Toki"
 //	}
 message D2URI {
-  // The ZK stat of the node that contained this announcement.
-  Stat stat = 1;
+  // The version of this announcement. When coming from ZK, this will be the node's mzxid.
+  int64 version = 1;
 
   // The name of the cluster this announcement belongs to. This is inferred from the original "clusterName" field.
   string cluster_name = 2;
 
-  message PartitionData {
-    // Maps the partition number to the desired D2 weight for that partition.
-    map<int32, double> weights = 1;
-  }
-  // The partitions for each URI contained in this announcement. This is inferred from the original "partitionDesc" and
-  // "weights" fields. If "partitionDesc" is present in the original ZK node, it is always used regardless of "weights".
-  // Otherwise, "weights" is assumed to be for partition 0, as specified in UriProperties.
-  map<string, PartitionData> partition_desc = 3;
+  // The URI for this announcement, i.e. the host, port and context path that requests should be sent to.
+  string uri = 3;
 
-  // Additional metadata for each URI in this announcement. This is inferred from the original "uriSpecificProperties"
-  // fields.
-  map<string, google.protobuf.Struct> uri_specific_properties = 4;
+  // The partitions and their corresponding weight for this announcement. This is inferred from the original
+  // "partitionDesc" and "weights" fields. If "partitionDesc" is present in the original ZK node, it is always used
+  // regardless of "weights". Otherwise, "weights" is assumed to be for partition 0, as specified in UriProperties.
+  map<int32, double> partition_desc = 4;
+
+  // Additional metadata for this announcement. This is inferred from the original "uriSpecificProperties" field.
+  google.protobuf.Struct uri_specific_properties = 5;
 }
 
 message D2URIMap {
-  map<string, D2URI> nodes = 1;
+  map<string, D2URI> uris = 1;
 }

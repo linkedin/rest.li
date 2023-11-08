@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.balancer.properties;
 
-import com.google.protobuf.Struct;
 import com.linkedin.d2.balancer.properties.util.PropertyUtil;
 import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
@@ -109,32 +108,25 @@ public class UriPropertiesJsonSerializer implements PropertySerializer<UriProper
     return uriProperties;
   }
 
-  public UriProperties fromProto(XdsD2.D2URI uri) throws PropertySerializationException
+  public UriProperties fromProto(XdsD2.D2URI protoUri) throws PropertySerializationException
   {
     try
     {
-      Map<URI, Map<String, Object>> applicationProperties = new HashMap<>(uri.getUriSpecificPropertiesCount());
-      for (Map.Entry<String, Struct> entry : uri.getUriSpecificPropertiesMap().entrySet())
+      URI uri = URI.create(protoUri.getUri());
+
+      Map<Integer, PartitionData> partitionDesc = new HashMap<>(protoUri.getPartitionDescCount());
+      for (Map.Entry<Integer, Double> partition : protoUri.getPartitionDescMap().entrySet())
       {
-        applicationProperties.put(URI.create(entry.getKey()), PropertyUtil.protoStructToMap(entry.getValue()));
+        partitionDesc.put(partition.getKey(), new PartitionData(partition.getValue()));
       }
 
-      Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<>();
-      for (Map.Entry<String, XdsD2.D2URI.PartitionData> entry : uri.getPartitionDescMap().entrySet())
-      {
-        Map<Integer, PartitionData> partitions = new HashMap<>(entry.getValue().getWeightsCount());
-        for (Map.Entry<Integer, Double> partition : entry.getValue().getWeightsMap().entrySet())
-        {
-          partitions.put(partition.getKey(), new PartitionData(partition.getValue()));
-        }
-        partitionDesc.put(URI.create(entry.getKey()), partitions);
-      }
+      Map<String, Object> applicationProperties = PropertyUtil.protoStructToMap(protoUri.getUriSpecificProperties());
 
       return new UriProperties(
-          uri.getClusterName(),
-          partitionDesc,
-          applicationProperties,
-          uri.getStat().getMzxid()
+          protoUri.getClusterName(),
+          Collections.singletonMap(uri, partitionDesc),
+          Collections.singletonMap(uri, applicationProperties),
+          protoUri.getVersion()
       );
     }
     catch (Exception e)

@@ -20,6 +20,7 @@ import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 import com.linkedin.util.ArgumentUtil;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -162,6 +163,9 @@ public class PropertyUtil
    */
   public static Map<String, Object> protoStructToMap(Struct struct)
   {
+    if (struct.getFieldsCount() == 0) {
+      return Collections.emptyMap();
+    }
     Map<String, Object> map = new HashMap<>(struct.getFieldsMap().size());
     for (Map.Entry<String, Value> entry : struct.getFieldsMap().entrySet())
     {
