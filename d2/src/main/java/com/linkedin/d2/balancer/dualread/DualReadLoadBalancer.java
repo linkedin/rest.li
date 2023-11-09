@@ -30,6 +30,8 @@ import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.d2.discovery.event.PropertyEventThread;
+import com.linkedin.d2.xds.LoadBalanceTaskPool.NewLoadBalancerTaskthreadPool;
+import com.linkedin.d2.xds.LoadBalanceTaskPool.NewBalanceGetPropertiesTask;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
@@ -59,15 +61,15 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   private final LoadBalancerWithFacilities _oldLb;
   private final LoadBalancerWithFacilities _newLb;
   private final DualReadStateManager _dualReadStateManager;
-
+  private final NewLoadBalancerTaskthreadPool _newNewLoadBalancerTaskThreadPool;
   private boolean _isNewLbReady;
 
   public DualReadLoadBalancer(LoadBalancerWithFacilities oldLb, LoadBalancerWithFacilities newLb,
-      @Nonnull DualReadStateManager dualReadStateManager)
-  {
+      @Nonnull DualReadStateManager dualReadStateManager, NewLoadBalancerTaskthreadPool newLoadBalancerTaskThreadPool) {
     _oldLb = oldLb;
     _newLb = newLb;
     _dualReadStateManager = dualReadStateManager;
+    _newNewLoadBalancerTaskThreadPool = newLoadBalancerTaskThreadPool;
     _isNewLbReady = false;
   }
 
@@ -109,35 +111,8 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         _newLb.getClient(request, requestContext, clientCallback);
         break;
       case DUAL_READ:
-        _newLb.getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
-        {
-          @Override
-          public void onError(Throwable e)
-          {
-            LOG.error("Double read failure. Unable to read service properties from: " + serviceName, e);
-          }
-
-          @Override
-          public void onSuccess(ServiceProperties result)
-          {
-            String clusterName = result.getClusterName();
-            _dualReadStateManager.updateCluster(clusterName, DualReadModeProvider.DualReadMode.DUAL_READ);
-            _newLb.getLoadBalancedClusterAndUriProperties(clusterName, new Callback<Pair<ClusterProperties, UriProperties>>()
-            {
-              @Override
-              public void onError(Throwable e)
-              {
-                LOG.error("Dual read failure. Unable to read cluster properties from: " + clusterName, e);
-              }
-
-              @Override
-              public void onSuccess(Pair<ClusterProperties, UriProperties> result)
-              {
-                LOG.debug("Dual read is successful. Get cluster and uri properties: " + result);
-              }
-            });
-          }
-        });
+        _newNewLoadBalancerTaskThreadPool.execute(
+            new NewBalanceGetPropertiesTask(_newLb, _dualReadStateManager, serviceName));
         _oldLb.getClient(request, requestContext, clientCallback);
         break;
       case OLD_LB_ONLY:

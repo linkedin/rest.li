@@ -20,6 +20,7 @@ import com.linkedin.d2.balancer.ZKFSLoadBalancerWithFacilitiesFactory;
 import com.linkedin.d2.balancer.dualread.DualReadLoadBalancer;
 import com.linkedin.d2.balancer.dualread.DualReadModeProvider;
 import com.linkedin.d2.balancer.dualread.DualReadStateManager;
+import com.linkedin.d2.xds.LoadBalanceTaskPool.NewLoadBalancerTaskthreadPool;
 import javax.annotation.Nonnull;
 
 
@@ -33,17 +34,20 @@ public class DualReadZkAndXdsLoadBalancerFactory implements LoadBalancerWithFaci
   private final LoadBalancerWithFacilitiesFactory _zkLbFactory;
   private final LoadBalancerWithFacilitiesFactory _xdsLbFactory;
   private final DualReadStateManager _dualReadStateManager;
+  private final NewLoadBalancerTaskthreadPool _newNewLoadBalancerTaskThreadPool;
 
   public DualReadZkAndXdsLoadBalancerFactory(@Nonnull DualReadStateManager dualReadStateManager)
   {
     _zkLbFactory = new ZKFSLoadBalancerWithFacilitiesFactory();
     _xdsLbFactory = new XdsLoadBalancerWithFacilitiesFactory();
     _dualReadStateManager = dualReadStateManager;
+    _newNewLoadBalancerTaskThreadPool = new NewLoadBalancerTaskthreadPool();
   }
 
   @Override
   public LoadBalancerWithFacilities create(D2ClientConfig config)
   {
-    return new DualReadLoadBalancer(_zkLbFactory.create(config), _xdsLbFactory.create(config), _dualReadStateManager);
+    return new DualReadLoadBalancer(_zkLbFactory.create(config), _xdsLbFactory.create(config), _dualReadStateManager,
+        _newNewLoadBalancerTaskThreadPool);
   }
 }
