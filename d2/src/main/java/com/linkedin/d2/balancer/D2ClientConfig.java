@@ -44,6 +44,7 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import javax.net.ssl.SSLContext;
@@ -127,6 +128,7 @@ public class D2ClientConfig
 
   public ScheduledExecutorService xdsExecutorService = null;
   public Long xdsStreamReadyTimeout = null;
+  public ThreadPoolExecutor loadBalancerThreadPool = null;
 
   public D2ClientConfig()
   {
@@ -195,7 +197,8 @@ public class D2ClientConfig
                  ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter,
                  DualReadStateManager dualReadStateManager,
                  ScheduledExecutorService xdsExecutorService,
-                 Long xdsStreamReadyTimeout)
+                 Long xdsStreamReadyTimeout,
+                 ThreadPoolExecutor loadBalancerThreadPool)
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -261,5 +264,6 @@ public class D2ClientConfig
     this.dualReadStateManager = dualReadStateManager;
     this.xdsExecutorService = xdsExecutorService;
     this.xdsStreamReadyTimeout = xdsStreamReadyTimeout;
+    this.loadBalancerThreadPool = loadBalancerThreadPool;
   }
 }
