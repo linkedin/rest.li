@@ -182,6 +182,7 @@ public class TestXdsToD2PropertiesAdaptor {
     URI localhost = URI.create("https://localhost:8443");
     XdsD2.D2URI uri = XdsD2.D2URI.newBuilder()
         .setVersion(DUMMY_VERSION)
+        .setUri(localhost.toString())
         .setClusterName(PRIMARY_CLUSTER_NAME)
         .setUriSpecificProperties(Struct.newBuilder()
             .putFields("foo", Value.newBuilder().setStringValue("bar").build())
