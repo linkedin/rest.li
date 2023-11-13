@@ -15,7 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.47.0] - 2023-11-13
-- Use Node(Map) instead of D2node(Map)
+- Use Node instead of D2Node and D2URIMap instead of NodeMap for xDS flow
 
 ## [29.46.9] - 2023-11-02
 - Update FieldDef so that it will lazily cache the hashCode.
