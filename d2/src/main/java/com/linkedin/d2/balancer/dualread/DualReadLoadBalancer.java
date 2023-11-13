@@ -153,7 +153,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities {
         _newLb.getLoadBalancedServiceProperties(serviceName, clientCallback);
         break;
       case DUAL_READ:
-        _newLb.getLoadBalancedServiceProperties(serviceName, Callbacks.empty());
+        getLoadBalancerThreadPool().execute(() -> _newLb.getLoadBalancedServiceProperties(serviceName, Callbacks.empty()));
         _oldLb.getLoadBalancedServiceProperties(serviceName, clientCallback);
         break;
       case OLD_LB_ONLY:
@@ -172,7 +172,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities {
         _newLb.getLoadBalancedClusterAndUriProperties(clusterName, callback);
         break;
       case DUAL_READ:
-        _newLb.getLoadBalancedClusterAndUriProperties(clusterName, Callbacks.empty());
+        getLoadBalancerThreadPool().execute(() -> _newLb.getLoadBalancedClusterAndUriProperties(clusterName, Callbacks.empty()));
         _oldLb.getLoadBalancedClusterAndUriProperties(clusterName, callback);
         break;
       case OLD_LB_ONLY:
