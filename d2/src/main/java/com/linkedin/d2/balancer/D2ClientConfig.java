@@ -43,8 +43,8 @@ import com.linkedin.r2.transport.common.TransportClientFactory;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import javax.net.ssl.SSLContext;
@@ -128,7 +128,7 @@ public class D2ClientConfig
 
   public ScheduledExecutorService xdsExecutorService = null;
   public Long xdsStreamReadyTimeout = null;
-  public ThreadPoolExecutor loadBalancerThreadPool = null;
+  public ExecutorService loadBalancerExecutor = null;
 
   public D2ClientConfig()
   {
@@ -198,7 +198,7 @@ public class D2ClientConfig
                  DualReadStateManager dualReadStateManager,
                  ScheduledExecutorService xdsExecutorService,
                  Long xdsStreamReadyTimeout,
-                 ThreadPoolExecutor loadBalancerThreadPool)
+                 ExecutorService loadBalancerExecutor)
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -264,6 +264,6 @@ public class D2ClientConfig
     this.dualReadStateManager = dualReadStateManager;
     this.xdsExecutorService = xdsExecutorService;
     this.xdsStreamReadyTimeout = xdsStreamReadyTimeout;
-    this.loadBalancerThreadPool = loadBalancerThreadPool;
+    this.loadBalancerExecutor = loadBalancerExecutor;
   }
 }

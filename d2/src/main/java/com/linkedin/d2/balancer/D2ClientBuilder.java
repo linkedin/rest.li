@@ -65,7 +65,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import javax.net.ssl.SSLContext;
@@ -203,7 +202,7 @@ public class D2ClientBuilder
                   _config.dualReadStateManager,
                   _config.xdsExecutorService,
                   _config.xdsStreamReadyTimeout,
-                  _config.loadBalancerThreadPool
+                  _config.loadBalancerExecutor
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -645,8 +644,8 @@ public class D2ClientBuilder
     return this;
   }
 
-  public D2ClientBuilder setLoadBalancerThreadPool(ThreadPoolExecutor loadBalancerThreadPool) {
-    _config.loadBalancerThreadPool = loadBalancerThreadPool;
+  public D2ClientBuilder setLoadBalancerExecutor(ExecutorService loadBalancerExecutor) {
+    _config.loadBalancerExecutor = loadBalancerExecutor;
     return this;
   }
 

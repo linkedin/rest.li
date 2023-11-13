@@ -44,8 +44,6 @@ public class DualReadZkAndXdsLoadBalancerFactory implements LoadBalancerWithFaci
   @Override
   public LoadBalancerWithFacilities create(D2ClientConfig config)
   {
-    DualReadLoadBalancer loadBalancer = new DualReadLoadBalancer(_zkLbFactory.create(config), _xdsLbFactory.create(config), _dualReadStateManager);
-    loadBalancer.setLoadBalancerThreadPool(config.loadBalancerThreadPool);
-    return loadBalancer;
+    return new DualReadLoadBalancer(_zkLbFactory.create(config), _xdsLbFactory.create(config), _dualReadStateManager, config.loadBalancerExecutor);
   }
 }

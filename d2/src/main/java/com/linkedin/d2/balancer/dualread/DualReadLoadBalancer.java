@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.dualread;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.util.None;
@@ -34,9 +35,7 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -61,16 +60,31 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities {
   private final LoadBalancerWithFacilities _oldLb;
   private final LoadBalancerWithFacilities _newLb;
   private final DualReadStateManager _dualReadStateManager;
-  private ThreadPoolExecutor _loadBalancerThreadPool;
+  private ExecutorService _executor;
   private boolean _isNewLbReady;
 
+  @Deprecated
   public DualReadLoadBalancer(LoadBalancerWithFacilities oldLb, LoadBalancerWithFacilities newLb,
-      @Nonnull DualReadStateManager dualReadStateManager)
+      @Nonnull DualReadStateManager dualReadStateManager) {
+    this(oldLb, newLb, dualReadStateManager, null);
+    LOG.warn("Deprecated DualReadLoadBalancer constructor used without a threadpool");
+  }
+
+  public DualReadLoadBalancer(LoadBalancerWithFacilities oldLb, LoadBalancerWithFacilities newLb,
+      @Nonnull DualReadStateManager dualReadStateManager, ExecutorService executor)
   {
     _oldLb = oldLb;
     _newLb = newLb;
     _dualReadStateManager = dualReadStateManager;
     _isNewLbReady = false;
+    if(executor == null){
+      // Using a direct executor here means the code is executed directly,
+      // blocking the caller. This means the old behavior is preserved.
+      _executor = MoreExecutors.newDirectExecutorService();
+      LOG.warn("Deprecated DualReadLoadBalancer constructor used without a threadpool executor");
+    }else{
+      _executor = executor;
+    }
   }
 
   @Override
@@ -111,11 +125,11 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities {
         _newLb.getClient(request, requestContext, clientCallback);
         break;
       case DUAL_READ:
-        getLoadBalancerThreadPool().execute(
+        _executor.execute(
             () -> _newLb.getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>() {
               @Override
               public void onError(Throwable e) {
-                LOG.error("Double read failure. Unable to read service properties from: " + serviceName, e);
+                LOG.error("Double read failure. Unable to read service properties from: {}", serviceName, e);
               }
 
               @Override
@@ -126,12 +140,12 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities {
                     new Callback<Pair<ClusterProperties, UriProperties>>() {
                       @Override
                       public void onError(Throwable e) {
-                        LOG.error("Dual read failure. Unable to read cluster properties from: " + clusterName, e);
+                        LOG.error("Dual read failure. Unable to read cluster properties from: {}", clusterName, e);
                       }
 
                       @Override
                       public void onSuccess(Pair<ClusterProperties, UriProperties> result) {
-                        LOG.debug("Dual read is successful. Get cluster and uri properties: " + result);
+                        LOG.debug("Dual read is successful. Get cluster and uri properties: {}", result);
                       }
                     });
               }
@@ -153,7 +167,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities {
         _newLb.getLoadBalancedServiceProperties(serviceName, clientCallback);
         break;
       case DUAL_READ:
-        getLoadBalancerThreadPool().execute(() -> _newLb.getLoadBalancedServiceProperties(serviceName, Callbacks.empty()));
+        _executor.execute(() -> _newLb.getLoadBalancedServiceProperties(serviceName, Callbacks.empty()));
         _oldLb.getLoadBalancedServiceProperties(serviceName, clientCallback);
         break;
       case OLD_LB_ONLY:
@@ -172,7 +186,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities {
         _newLb.getLoadBalancedClusterAndUriProperties(clusterName, callback);
         break;
       case DUAL_READ:
-        getLoadBalancerThreadPool().execute(() -> _newLb.getLoadBalancedClusterAndUriProperties(clusterName, Callbacks.empty()));
+        _executor.execute(() -> _newLb.getLoadBalancedClusterAndUriProperties(clusterName, Callbacks.empty()));
         _oldLb.getLoadBalancedClusterAndUriProperties(clusterName, callback);
         break;
       case OLD_LB_ONLY:
@@ -280,29 +294,6 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities {
     return _dualReadStateManager.getServiceDualReadMode(d2ServiceName);
   }
 
-
-  /**
-   * Get the thread pool for load balancer tasks. If not set, a default thread pool will be used.
-   */
-  public ThreadPoolExecutor getLoadBalancerThreadPool() {
-    return _loadBalancerThreadPool;
-  }
-
-  /**
-   * Set the thread pool for load balancer tasks. If not set, a default thread pool will be used.
-   */
-  public void setLoadBalancerThreadPool(ThreadPoolExecutor loadBalancerThreadPool) {
-    if (loadBalancerThreadPool != null) {
-      this._loadBalancerThreadPool = loadBalancerThreadPool;
-    } else {
-      LOG.info("LoadBalancerTaskThreadPool is null, using default thread pool");
-      this._loadBalancerThreadPool =
-          new ThreadPoolExecutor(2, 3, 200, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(1000), (r, executor) -> {
-            LOG.error("LoadBalancerTaskThreadPool rejected execution, isNewReady: " + _isNewLbReady);
-          });
-    }
-  }
-
   @Override
   public void shutdown(PropertyEventThread.PropertyEventShutdownCallback callback)
   {
@@ -312,6 +303,5 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities {
     });
 
     _oldLb.shutdown(callback);
-    _loadBalancerThreadPool.shutdown();
   }
 }
