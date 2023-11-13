@@ -55,7 +55,8 @@ import org.slf4j.LoggerFactory;
  * In DUAL_READ mode, it reads from both the old and the new load balancer, but relies on the data from old
  * load balancer only.
  */
-public class DualReadLoadBalancer implements LoadBalancerWithFacilities {
+public class DualReadLoadBalancer implements LoadBalancerWithFacilities
+{
   private static final Logger LOG = LoggerFactory.getLogger(DualReadLoadBalancer.class);
   private final LoadBalancerWithFacilities _oldLb;
   private final LoadBalancerWithFacilities _newLb;
@@ -65,7 +66,8 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities {
 
   @Deprecated
   public DualReadLoadBalancer(LoadBalancerWithFacilities oldLb, LoadBalancerWithFacilities newLb,
-      @Nonnull DualReadStateManager dualReadStateManager) {
+      @Nonnull DualReadStateManager dualReadStateManager)
+  {
     this(oldLb, newLb, dualReadStateManager, null);
     LOG.warn("Deprecated DualReadLoadBalancer constructor used without a threadpool");
   }
@@ -77,12 +79,15 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities {
     _newLb = newLb;
     _dualReadStateManager = dualReadStateManager;
     _isNewLbReady = false;
-    if(executor == null){
+    if(executor == null)
+    {
       // Using a direct executor here means the code is executed directly,
       // blocking the caller. This means the old behavior is preserved.
       _executor = MoreExecutors.newDirectExecutorService();
       LOG.warn("Deprecated DualReadLoadBalancer constructor used without a threadpool executor");
-    }else{
+    }
+    else
+    {
       _executor = executor;
     }
   }
@@ -126,25 +131,30 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities {
         break;
       case DUAL_READ:
         _executor.execute(
-            () -> _newLb.getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>() {
+            () -> _newLb.getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
+            {
               @Override
-              public void onError(Throwable e) {
+              public void onError(Throwable e)
+              {
                 LOG.error("Double read failure. Unable to read service properties from: {}", serviceName, e);
               }
 
               @Override
-              public void onSuccess(ServiceProperties result) {
+              public void onSuccess(ServiceProperties result)
+              {
                 String clusterName = result.getClusterName();
                 _dualReadStateManager.updateCluster(clusterName, DualReadModeProvider.DualReadMode.DUAL_READ);
-                _newLb.getLoadBalancedClusterAndUriProperties(clusterName,
-                    new Callback<Pair<ClusterProperties, UriProperties>>() {
+                _newLb.getLoadBalancedClusterAndUriProperties(clusterName, new Callback<Pair<ClusterProperties, UriProperties>>()
+                    {
                       @Override
-                      public void onError(Throwable e) {
+                      public void onError(Throwable e)
+                      {
                         LOG.error("Dual read failure. Unable to read cluster properties from: {}", clusterName, e);
                       }
 
                       @Override
-                      public void onSuccess(Pair<ClusterProperties, UriProperties> result) {
+                      public void onSuccess(Pair<ClusterProperties, UriProperties> result)
+                      {
                         LOG.debug("Dual read is successful. Get cluster and uri properties: {}", result);
                       }
                     });
