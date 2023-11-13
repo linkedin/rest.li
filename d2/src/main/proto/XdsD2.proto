@@ -3,6 +3,7 @@ syntax = "proto3";
 package indis;
 
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 
 message Stat {
   // The zxid of the change that caused this znode to be created.
@@ -86,19 +87,22 @@ message D2URI {
   // The version of this announcement. When coming from ZK, this will be the node's mzxid.
   int64 version = 1;
 
+  // The time at which this announcement was last updated. When coming from ZK this will be the node's mtime.
+  google.protobuf.Timestamp modified_time = 2;
+
   // The name of the cluster this announcement belongs to. This is inferred from the original "clusterName" field.
-  string cluster_name = 2;
+  string cluster_name = 3;
 
   // The URI for this announcement, i.e. the host, port and context path that requests should be sent to.
-  string uri = 3;
+  string uri = 4;
 
   // The partitions and their corresponding weight for this announcement. This is inferred from the original
   // "partitionDesc" and "weights" fields. If "partitionDesc" is present in the original ZK node, it is always used
   // regardless of "weights". Otherwise, "weights" is assumed to be for partition 0, as specified in UriProperties.
-  map<int32, double> partition_desc = 4;
+  map<int32, double> partition_desc = 5;
 
   // Additional metadata for this announcement. This is inferred from the original "uriSpecificProperties" field.
-  google.protobuf.Struct uri_specific_properties = 5;
+  google.protobuf.Struct uri_specific_properties = 6;
 }
 
 message D2URIMap {

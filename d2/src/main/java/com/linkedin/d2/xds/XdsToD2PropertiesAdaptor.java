@@ -223,7 +223,7 @@ public class XdsToD2PropertiesAdaptor
               _dualReadStateManager.reportData(serviceName, serviceProperties, true);
             }
           }
-          catch (InvalidProtocolBufferException | PropertySerializationException e)
+          catch (PropertySerializationException e)
           {
             _log.error("Failed to parse D2 service properties from xDS update. Service name: " + serviceName, e);
           }
@@ -462,7 +462,7 @@ public class XdsToD2PropertiesAdaptor
             _dualReadStateManager.reportData(_clusterName, mergedUriProperties, true);
           }
         }
-        catch (InvalidProtocolBufferException | PropertySerializationException e)
+        catch (PropertySerializationException e)
         {
           _log.error("Failed to parse D2 uri properties from xDS update. Cluster name: " + _clusterName, e);
         }

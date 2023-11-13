@@ -234,7 +234,7 @@ public class TestXdsToD2PropertiesAdaptor {
   private void verifyClusterNodeUpdate(XdsToD2PropertiesAdaptorFixture fixture, String clusterName, String symlinkName,
       ClusterStoreProperties expectedPublishProp)
   {
-    XdsClient.D2NodeResourceWatcher watcher = (XdsClient.D2NodeResourceWatcher)
+    XdsClient.NodeResourceWatcher watcher = (XdsClient.NodeResourceWatcher)
         fixture._clusterWatcherArgumentCaptor.getValue();
     watcher.onChanged(getClusterNodeUpdate(clusterName));
     verify(fixture._clusterEventBus).publishInitialize(clusterName, expectedPublishProp);
