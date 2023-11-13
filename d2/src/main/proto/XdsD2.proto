@@ -3,6 +3,7 @@ syntax = "proto3";
 package indis;
 
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 
 message Stat {
   // The zxid of the change that caused this znode to be created.
@@ -30,15 +31,80 @@ message Stat {
 }
 
 message D2Node {
+  // Deprecated in favor of Node
+  option deprecated = true;
   Stat stat = 1;
   google.protobuf.Struct data = 2;
 }
 
 message D2SymlinkNode {
+  // Deprecated in favor of Node
+  option deprecated = true;
   Stat stat = 1;
   string masterClusterNodePath = 2;
 }
 
 message D2NodeMap {
+  // Deprecated in favor of D2UriMap
+  option deprecated = true;
   map<string, D2Node> nodes = 1;
+}
+
+message Node {
+  Stat stat = 1;
+  bytes data = 2 ;
+}
+
+// D2URI is a proto representation of com.linkedin.d2.balancer.properties.UriProperties. Note that a D2 UriProperties is
+// is designed to hold all the announcements of a cluster, which is why it's represented as a map of URI to data. The
+// UriProperties class is reused wholesale for serialization to write the data to ZK, which is why all fields are
+// actually maps, even though these maps only ever have one key in them. It is clear from the implementation of
+// ZooKeeperServer and ZooKeeperAnnouncer that there cannot ever be more than one URI in one ZK announcement, therefore
+// this new proto representation does not need to share the same shortcomings and can, instead, represent things more
+// linearly.
+//
+// Here is a sample ZK announcement in JSON serialized from a UriProperties for additional clarity on the fields that
+// are represented as maps when they do not need to be:
+//	{
+//		"weights": {
+//			"https://foo.stg.linkedin.com:18792/Toki/resources": 1.0
+//		},
+//		"partitionDesc": {
+//			"https://foo.stg.linkedin.com:18792/Toki/resources": {
+//				"0": {
+//					"weight": 1.0
+//				}
+//			}
+//		},
+//		"uriSpecificProperties": {
+//			"https://foo.stg.linkedin.com:18792/Toki/resources": {
+//				"com.linkedin.app.version": "0.1.76"
+//			}
+//		},
+//		"clusterName": "Toki"
+//	}
+message D2URI {
+  // The version of this announcement. When coming from ZK, this will be the node's mzxid.
+  int64 version = 1;
+
+  // The time at which this announcement was last updated. When coming from ZK this will be the node's mtime.
+  google.protobuf.Timestamp modified_time = 2;
+
+  // The name of the cluster this announcement belongs to. This is inferred from the original "clusterName" field.
+  string cluster_name = 3;
+
+  // The URI for this announcement, i.e. the host, port and context path that requests should be sent to.
+  string uri = 4;
+
+  // The partitions and their corresponding weight for this announcement. This is inferred from the original
+  // "partitionDesc" and "weights" fields. If "partitionDesc" is present in the original ZK node, it is always used
+  // regardless of "weights". Otherwise, "weights" is assumed to be for partition 0, as specified in UriProperties.
+  map<int32, double> partition_desc = 5;
+
+  // Additional metadata for this announcement. This is inferred from the original "uriSpecificProperties" field.
+  google.protobuf.Struct uri_specific_properties = 6;
+}
+
+message D2URIMap {
+  map<string, D2URI> uris = 1;
 }
