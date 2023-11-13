@@ -37,6 +37,7 @@ public class FieldDef<T>
   private final DataSchema _dataSchema;
   private final Class<?> _dataClass;
   private final RecordDataSchema.Field _field;
+  private Integer _hashCode;
 
   public FieldDef(String name, Class<T> type)
   {
@@ -126,6 +127,16 @@ public class FieldDef<T>
 
   @Override
   public int hashCode()
+  {
+      if (_hashCode == null) {
+          // If this method is called by multiple thread, there might be multiple concurrent write
+          // here, but since the hashCode should be the same it is tolerable
+          _hashCode = computeHashCode();
+      }
+      return _hashCode;
+  }
+
+  private int computeHashCode()
   {
     return 13*_name.hashCode() + 17*_type.hashCode() + 23*(_dataSchema == null? 1 :_dataSchema.hashCode());
   }
