@@ -16,20 +16,19 @@
 
 package com.linkedin.d2.balancer.properties;
 
-
 import com.linkedin.d2.balancer.properties.util.PropertyUtil;
 import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.PropertySerializer;
-import java.util.Collections;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import indis.XdsD2;
 import java.net.URI;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UriPropertiesJsonSerializer implements PropertySerializer<UriProperties>, PropertyBuilder<UriProperties>
 {
@@ -107,6 +106,33 @@ public class UriPropertiesJsonSerializer implements PropertySerializer<UriProper
     UriProperties uriProperties = fromBytes(bytes);
     uriProperties.setVersion(version);
     return uriProperties;
+  }
+
+  public UriProperties fromProto(XdsD2.D2URI protoUri) throws PropertySerializationException
+  {
+    try
+    {
+      URI uri = URI.create(protoUri.getUri());
+
+      Map<Integer, PartitionData> partitionDesc = new HashMap<>(protoUri.getPartitionDescCount());
+      for (Map.Entry<Integer, Double> partition : protoUri.getPartitionDescMap().entrySet())
+      {
+        partitionDesc.put(partition.getKey(), new PartitionData(partition.getValue()));
+      }
+
+      Map<String, Object> applicationProperties = PropertyUtil.protoStructToMap(protoUri.getUriSpecificProperties());
+
+      return new UriProperties(
+          protoUri.getClusterName(),
+          Collections.singletonMap(uri, partitionDesc),
+          Collections.singletonMap(uri, applicationProperties),
+          protoUri.getVersion()
+      );
+    }
+    catch (Exception e)
+    {
+      throw new PropertySerializationException(e);
+    }
   }
 
   @Override

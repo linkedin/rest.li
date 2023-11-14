@@ -17,6 +17,7 @@
 package com.linkedin.d2.balancer.properties;
 
 
+import com.google.protobuf.ByteString;
 import com.linkedin.d2.balancer.properties.util.PropertyUtil;
 import com.linkedin.d2.balancer.subsetting.SubsettingStrategy;
 import com.linkedin.d2.balancer.util.JacksonUtil;
@@ -200,6 +201,22 @@ public class ServicePropertiesJsonSerializer implements
     ServiceProperties serviceProperties = fromBytes(bytes);
     serviceProperties.setVersion(version);
     return serviceProperties;
+  }
+
+  public ServiceProperties fromBytes(ByteString bytes, long version) throws PropertySerializationException
+  {
+    try
+    {
+      @SuppressWarnings("unchecked")
+      Map<String, Object> untyped = JacksonUtil.getObjectMapper().readValue(bytes.newInput(), Map.class);
+      ServiceProperties serviceProperties = fromMap(untyped);
+      serviceProperties.setVersion(version);
+      return serviceProperties;
+    }
+    catch (Exception e)
+    {
+      throw new PropertySerializationException(e);
+    }
   }
 
   /**
