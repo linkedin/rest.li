@@ -14,7 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.46.10] - 2023-11-13
+## [29.47.0] - 2023-11-13
 Fix dual-read potential risk that newLb may impact oldLb
 
 ## [29.46.9] - 2023-11-02
@@ -5560,8 +5560,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.46.10...master
-[29.46.10]: https://github.com/linkedin/rest.li/compare/v29.46.9...v29.46.10
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.47.0...master
+[29.47.0]: https://github.com/linkedin/rest.li/compare/v29.46.9...v29.47.0
 [29.46.9]: https://github.com/linkedin/rest.li/compare/v29.46.8...v29.46.9
 [29.46.8]: https://github.com/linkedin/rest.li/compare/v29.46.7...v29.46.8
 [29.46.7]: https://github.com/linkedin/rest.li/compare/v29.46.6...v29.46.7

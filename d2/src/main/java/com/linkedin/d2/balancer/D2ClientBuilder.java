@@ -202,7 +202,7 @@ public class D2ClientBuilder
                   _config.dualReadStateManager,
                   _config.xdsExecutorService,
                   _config.xdsStreamReadyTimeout,
-                  _config.loadBalancerExecutor
+                  _config.dualReadNewLbExecutor
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -644,8 +644,8 @@ public class D2ClientBuilder
     return this;
   }
 
-  public D2ClientBuilder setLoadBalancerExecutor(ExecutorService loadBalancerExecutor) {
-    _config.loadBalancerExecutor = loadBalancerExecutor;
+  public D2ClientBuilder setDualReadNewLbExecutor(ExecutorService dualReadNewLbExecutor) {
+    _config.dualReadNewLbExecutor = dualReadNewLbExecutor;
     return this;
   }
 

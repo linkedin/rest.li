@@ -128,7 +128,7 @@ public class D2ClientConfig
 
   public ScheduledExecutorService xdsExecutorService = null;
   public Long xdsStreamReadyTimeout = null;
-  public ExecutorService loadBalancerExecutor = null;
+  public ExecutorService dualReadNewLbExecutor = null;
 
   public D2ClientConfig()
   {
@@ -198,7 +198,7 @@ public class D2ClientConfig
                  DualReadStateManager dualReadStateManager,
                  ScheduledExecutorService xdsExecutorService,
                  Long xdsStreamReadyTimeout,
-                 ExecutorService loadBalancerExecutor)
+                 ExecutorService dualReadNewLbExecutor)
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -264,6 +264,6 @@ public class D2ClientConfig
     this.dualReadStateManager = dualReadStateManager;
     this.xdsExecutorService = xdsExecutorService;
     this.xdsStreamReadyTimeout = xdsStreamReadyTimeout;
-    this.loadBalancerExecutor = loadBalancerExecutor;
+    this.dualReadNewLbExecutor = dualReadNewLbExecutor;
   }
 }

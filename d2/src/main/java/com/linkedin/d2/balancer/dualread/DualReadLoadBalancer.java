@@ -61,7 +61,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   private final LoadBalancerWithFacilities _oldLb;
   private final LoadBalancerWithFacilities _newLb;
   private final DualReadStateManager _dualReadStateManager;
-  private ExecutorService _executor;
+  private ExecutorService _newLbExecutor;
   private boolean _isNewLbReady;
 
   @Deprecated
@@ -73,22 +73,22 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   }
 
   public DualReadLoadBalancer(LoadBalancerWithFacilities oldLb, LoadBalancerWithFacilities newLb,
-      @Nonnull DualReadStateManager dualReadStateManager, ExecutorService executor)
+      @Nonnull DualReadStateManager dualReadStateManager, ExecutorService newLbExecutor)
   {
     _oldLb = oldLb;
     _newLb = newLb;
     _dualReadStateManager = dualReadStateManager;
     _isNewLbReady = false;
-    if(executor == null)
+    if(newLbExecutor == null)
     {
       // Using a direct executor here means the code is executed directly,
       // blocking the caller. This means the old behavior is preserved.
-      _executor = MoreExecutors.newDirectExecutorService();
-      LOG.warn("Deprecated DualReadLoadBalancer constructor used without a threadpool executor");
+      _newLbExecutor = MoreExecutors.newDirectExecutorService();
+      LOG.warn("The newLbExecutor is null, will use a direct executor instead.");
     }
     else
     {
-      _executor = executor;
+      _newLbExecutor = newLbExecutor;
     }
   }
 
@@ -130,13 +130,13 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         _newLb.getClient(request, requestContext, clientCallback);
         break;
       case DUAL_READ:
-        _executor.execute(
+        _newLbExecutor.execute(
             () -> _newLb.getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
             {
               @Override
               public void onError(Throwable e)
               {
-                LOG.error("Double read failure. Unable to read service properties from: {}", serviceName, e);
+                LOG.error("Dual read failure. Unable to read service properties from: {}", serviceName, e);
               }
 
               @Override
@@ -177,7 +177,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         _newLb.getLoadBalancedServiceProperties(serviceName, clientCallback);
         break;
       case DUAL_READ:
-        _executor.execute(() -> _newLb.getLoadBalancedServiceProperties(serviceName, Callbacks.empty()));
+        _newLbExecutor.execute(() -> _newLb.getLoadBalancedServiceProperties(serviceName, Callbacks.empty()));
         _oldLb.getLoadBalancedServiceProperties(serviceName, clientCallback);
         break;
       case OLD_LB_ONLY:
@@ -196,7 +196,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         _newLb.getLoadBalancedClusterAndUriProperties(clusterName, callback);
         break;
       case DUAL_READ:
-        _executor.execute(() -> _newLb.getLoadBalancedClusterAndUriProperties(clusterName, Callbacks.empty()));
+        _newLbExecutor.execute(() -> _newLb.getLoadBalancedClusterAndUriProperties(clusterName, Callbacks.empty()));
         _oldLb.getLoadBalancedClusterAndUriProperties(clusterName, callback);
         break;
       case OLD_LB_ONLY:
