@@ -69,7 +69,6 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
       @Nonnull DualReadStateManager dualReadStateManager)
   {
     this(oldLb, newLb, dualReadStateManager, null);
-    LOG.warn("Deprecated DualReadLoadBalancer constructor used without a threadpool");
   }
 
   public DualReadLoadBalancer(LoadBalancerWithFacilities oldLb, LoadBalancerWithFacilities newLb,
