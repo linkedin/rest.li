@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.dualread;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.util.None;
@@ -34,6 +35,7 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
+import java.util.concurrent.ExecutorService;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -59,16 +61,34 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   private final LoadBalancerWithFacilities _oldLb;
   private final LoadBalancerWithFacilities _newLb;
   private final DualReadStateManager _dualReadStateManager;
-
+  private ExecutorService _newLbExecutor;
   private boolean _isNewLbReady;
 
+  @Deprecated
   public DualReadLoadBalancer(LoadBalancerWithFacilities oldLb, LoadBalancerWithFacilities newLb,
       @Nonnull DualReadStateManager dualReadStateManager)
+  {
+    this(oldLb, newLb, dualReadStateManager, null);
+  }
+
+  public DualReadLoadBalancer(LoadBalancerWithFacilities oldLb, LoadBalancerWithFacilities newLb,
+      @Nonnull DualReadStateManager dualReadStateManager, ExecutorService newLbExecutor)
   {
     _oldLb = oldLb;
     _newLb = newLb;
     _dualReadStateManager = dualReadStateManager;
     _isNewLbReady = false;
+    if (newLbExecutor == null)
+    {
+      // Using a direct executor here means the code is executed directly,
+      // blocking the caller. This means the old behavior is preserved.
+      _newLbExecutor = MoreExecutors.newDirectExecutorService();
+      LOG.warn("The newLbExecutor is null, will use a direct executor instead.");
+    }
+    else
+    {
+      _newLbExecutor = newLbExecutor;
+    }
   }
 
   @Override
@@ -109,35 +129,36 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         _newLb.getClient(request, requestContext, clientCallback);
         break;
       case DUAL_READ:
-        _newLb.getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
-        {
-          @Override
-          public void onError(Throwable e)
-          {
-            LOG.error("Double read failure. Unable to read service properties from: " + serviceName, e);
-          }
-
-          @Override
-          public void onSuccess(ServiceProperties result)
-          {
-            String clusterName = result.getClusterName();
-            _dualReadStateManager.updateCluster(clusterName, DualReadModeProvider.DualReadMode.DUAL_READ);
-            _newLb.getLoadBalancedClusterAndUriProperties(clusterName, new Callback<Pair<ClusterProperties, UriProperties>>()
+        _newLbExecutor.execute(
+            () -> _newLb.getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
             {
               @Override
               public void onError(Throwable e)
               {
-                LOG.error("Dual read failure. Unable to read cluster properties from: " + clusterName, e);
+                LOG.error("Dual read failure. Unable to read service properties from: {}", serviceName, e);
               }
 
               @Override
-              public void onSuccess(Pair<ClusterProperties, UriProperties> result)
+              public void onSuccess(ServiceProperties result)
               {
-                LOG.debug("Dual read is successful. Get cluster and uri properties: " + result);
+                String clusterName = result.getClusterName();
+                _dualReadStateManager.updateCluster(clusterName, DualReadModeProvider.DualReadMode.DUAL_READ);
+                _newLb.getLoadBalancedClusterAndUriProperties(clusterName, new Callback<Pair<ClusterProperties, UriProperties>>()
+                    {
+                      @Override
+                      public void onError(Throwable e)
+                      {
+                        LOG.error("Dual read failure. Unable to read cluster properties from: {}", clusterName, e);
+                      }
+
+                      @Override
+                      public void onSuccess(Pair<ClusterProperties, UriProperties> result)
+                      {
+                        LOG.debug("Dual read is successful. Get cluster and uri properties: {}", result);
+                      }
+                    });
               }
-            });
-          }
-        });
+            }));
         _oldLb.getClient(request, requestContext, clientCallback);
         break;
       case OLD_LB_ONLY:
@@ -155,7 +176,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         _newLb.getLoadBalancedServiceProperties(serviceName, clientCallback);
         break;
       case DUAL_READ:
-        _newLb.getLoadBalancedServiceProperties(serviceName, Callbacks.empty());
+        _newLbExecutor.execute(() -> _newLb.getLoadBalancedServiceProperties(serviceName, Callbacks.empty()));
         _oldLb.getLoadBalancedServiceProperties(serviceName, clientCallback);
         break;
       case OLD_LB_ONLY:
@@ -174,7 +195,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         _newLb.getLoadBalancedClusterAndUriProperties(clusterName, callback);
         break;
       case DUAL_READ:
-        _newLb.getLoadBalancedClusterAndUriProperties(clusterName, Callbacks.empty());
+        _newLbExecutor.execute(() -> _newLb.getLoadBalancedClusterAndUriProperties(clusterName, Callbacks.empty()));
         _oldLb.getLoadBalancedClusterAndUriProperties(clusterName, callback);
         break;
       case OLD_LB_ONLY:
