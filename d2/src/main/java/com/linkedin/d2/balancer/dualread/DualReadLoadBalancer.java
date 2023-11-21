@@ -78,7 +78,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
     _newLb = newLb;
     _dualReadStateManager = dualReadStateManager;
     _isNewLbReady = false;
-    if(newLbExecutor == null)
+    if (newLbExecutor == null)
     {
       // Using a direct executor here means the code is executed directly,
       // blocking the caller. This means the old behavior is preserved.
