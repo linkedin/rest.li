@@ -13,6 +13,9 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+## [29.48.1] - 2023-11-27
+- Update SimpleLoadBalancer to use for loop instead of Map
+
 ## [29.48.0] - 2023-11-13
 - Fix dual-read potential risk that newLb may impact oldLb
 
@@ -5562,7 +5565,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.48.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.48.1...master
+[29.48.1]: https://github.com/linkedin/rest.li/compare/v29.48.0...v29.48.1
 [29.48.0]: https://github.com/linkedin/rest.li/compare/v29.47.0...v29.48.0
 [29.47.0]: https://github.com/linkedin/rest.li/compare/v29.46.9...v29.47.0
 [29.46.9]: https://github.com/linkedin/rest.li/compare/v29.46.8...v29.46.9
