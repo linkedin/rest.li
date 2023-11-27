@@ -892,10 +892,11 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       }
       else
       {
-        Map<URI, Double> weightedUris = possibleUris.stream()
-            .collect(Collectors.toMap(
-                uri -> uri,
-                uri -> uris.getPartitionDataMap(uri).get(partitionId).getWeight()));
+        Map<URI, Double> weightedUris = new HashMap<>(possibleUris.size());
+        for (URI possibleUri : possibleUris)
+        {
+           weightedUris.put(possibleUri, uris.getPartitionDataMap(possibleUri).get(partitionId).getWeight());
+        }
 
         SubsettingState.SubsetItem subsetItem = _state.getClientsSubset(serviceName,
             serviceProperties.getMinClusterSubsetSize(), partitionId, weightedUris, version);
