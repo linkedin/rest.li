@@ -41,9 +41,9 @@ import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.subsetting.SubsettingState;
-import com.linkedin.d2.balancer.util.CustomAffinityRoutingURIProvider;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
+import com.linkedin.d2.balancer.util.CustomAffinityRoutingURIProvider;
 import com.linkedin.d2.balancer.util.HostOverrideList;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.KeysAndHosts;
@@ -72,7 +72,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
@@ -88,9 +87,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.linkedin.d2.discovery.util.LogUtil.debug;
-import static com.linkedin.d2.discovery.util.LogUtil.info;
-import static com.linkedin.d2.discovery.util.LogUtil.warn;
+import static com.linkedin.d2.discovery.util.LogUtil.*;
 
 public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, ClientFactoryProvider, PartitionInfoProvider, WarmUpService,
                                            ClusterInfoProvider
@@ -949,10 +946,10 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
               {
                 possibleTrackerClient.setSubsetWeight(partitionId, weightedSubset.get(possibleUri));
               }
-              return Optional.of(possibleTrackerClient);
+              return possibleTrackerClient;
             }
           }
-          return Optional.empty();
+          return null;
         });
   }
 
@@ -961,13 +958,13 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
                                                                ClusterProperties clusterProperties,
                                                                Set<URI> possibleUris) {
     return getPotentialClients(serviceProperties, clusterProperties, possibleUris,
-        possibleUri -> Optional.ofNullable(_state.getClient(serviceName, possibleUri)));
+        possibleUri -> _state.getClient(serviceName, possibleUri));
   }
 
   private Map<URI, TrackerClient> getPotentialClients(ServiceProperties serviceProperties,
                                                   ClusterProperties clusterProperties,
                                                   Set<URI> possibleUris,
-                                                  Function<URI, Optional<TrackerClient>> trackerClientFinder)
+                                                  Function<URI, TrackerClient> trackerClientFinder)
   {
     Map<URI, TrackerClient> clientsToLoadBalance = new HashMap<>(possibleUris.size());
     for (URI possibleUri : possibleUris)
@@ -975,8 +972,11 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       // don't pay attention to this uri if it's banned
       if (!serviceProperties.isBanned(possibleUri) && !clusterProperties.isBanned(possibleUri))
       {
-        trackerClientFinder.apply(possibleUri)
-            .ifPresent(trackerClient -> clientsToLoadBalance.put(possibleUri, trackerClient));
+        TrackerClient trackerClient = trackerClientFinder.apply(possibleUri);
+        if (trackerClient != null)
+        {
+          clientsToLoadBalance.put(possibleUri, trackerClient);
+        }
       }
       else
       {
