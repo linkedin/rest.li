@@ -1,0 +1,13 @@
+namespace com.linkedin.restli.common
+
+/**
+ * Metadata for cursor based pagination with collections.
+ */
+record CursorPagination {
+
+  /**
+   * Pagination cursor that points to the end of the current page and can be used to fetch the next page.
+   * Not populated if the current page is the last page.
+   */
+  next: optional string
+}

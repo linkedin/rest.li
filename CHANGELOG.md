@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.48.3] - 2023-11-28
+- Add standardized models for cursor based pagination
+
 ## [29.48.2] - 2023-11-27
 - Remove usage of Optional from SimpleLoadBalancer
 
@@ -5569,7 +5572,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.48.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.48.3...master
+[29.48.3]: https://github.com/linkedin/rest.li/compare/v29.48.2...v29.48.3
 [29.48.2]: https://github.com/linkedin/rest.li/compare/v29.48.1...v29.48.2
 [29.48.1]: https://github.com/linkedin/rest.li/compare/v29.48.0...v29.48.1
 [29.48.0]: https://github.com/linkedin/rest.li/compare/v29.47.0...v29.48.0
