@@ -241,8 +241,10 @@ public class LoadBalancerQuarantine
         // Nothing to do for now. Just keep waiting
         if (_timeTilNextCheck > ERROR_REPORT_PERIOD)
         {
-          _rateLimitedLogger.error("Client {}  for service {} is being kept in quarantine for {} seconds, "
-              + "Please check to make sure it is healthy", _trackerClient.getUri(), _serviceName, (1.0 *_timeTilNextCheck / 1000));
+          _rateLimitedLogger.info("Host {} for service {} is being kept in quarantine for {} seconds, "
+              + "This is a capacity loss and could potentially cause availability issue. Please contact the service owner to"
+              + " make sure the host is healthy, if needed", _trackerClient.getUri(), _serviceName,
+              (1.0 *_timeTilNextCheck / 1000));
         }
         break;
       case SUCCESS:
