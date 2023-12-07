@@ -820,7 +820,6 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         @Override
         public void onError(Throwable e)
         {
-          _clusterNotFoundStats.inc();
           finalCallback.onError(new ServiceUnavailableException(clusterName, "PEGA_1011. " + e.getMessage(), e));
         }
 
@@ -849,6 +848,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       {
         warn(_log, "unable to find cluster: ", clusterName);
 
+        _clusterNotFoundStats.inc();
         die(pairCallback, clusterName, "PEGA_1012. no cluster properties in lb state");
         return;
       }
