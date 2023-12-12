@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.48.4] - 2023-12-06
+- Rename next to nextPageToken in standardized models for cursor based pagination
+
 ## [29.48.3] - 2023-11-28
 - Add standardized models for cursor based pagination
 
@@ -5572,7 +5575,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.48.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.48.4...master
+[29.48.4]: https://github.com/linkedin/rest.li/compare/v29.48.3...v29.48.4
 [29.48.3]: https://github.com/linkedin/rest.li/compare/v29.48.2...v29.48.3
 [29.48.2]: https://github.com/linkedin/rest.li/compare/v29.48.1...v29.48.2
 [29.48.1]: https://github.com/linkedin/rest.li/compare/v29.48.0...v29.48.1
