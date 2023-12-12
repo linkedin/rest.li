@@ -71,29 +71,37 @@ public abstract class DualReadLoadBalancerMonitor<T>
     Cache<String, CacheEntry<T>> cacheToAdd = fromNewLb ? _newLbPropertyCache : _oldLbPropertyCache;
     Cache<String, CacheEntry<T>> cacheToCompare = fromNewLb ? _oldLbPropertyCache : _newLbPropertyCache;
 
-    CacheEntry<T> entry = cacheToCompare.getIfPresent(propertyName);
+    CacheEntry<T> entryToCompare = cacheToCompare.getIfPresent(propertyName);
+    CacheEntry<T> newEntry = new CacheEntry<>(propertyVersion, getTimestamp(), property);
 
-    if (entry != null && Objects.equals(entry._version, propertyVersion))
+    if (entryToCompare != null && Objects.equals(entryToCompare._version, propertyVersion))
     {
-      CacheEntry<T> newEntry = new CacheEntry<>(propertyVersion, getTimestamp(), property);
-      if (!isEqual(entry, newEntry))
+      if (!isEqual(entryToCompare, newEntry))
       {
         _rateLimitedLogger.warn("Received mismatched properties from dual read. Old LB: {}, New LB: {}",
-            fromNewLb ? entry : newEntry, fromNewLb ? newEntry : entry);
+            fromNewLb ? entryToCompare : newEntry, fromNewLb ? newEntry : entryToCompare);
         incrementEntryOutOfSyncCount(); // increment the out-of-sync count for the entry received later
       }
       else
       { // entries are in-sync, decrement the out-of-sync count for the entry received earlier
         decrementEntryOutOfSyncCount();
+        _rateLimitedLogger.debug("Matched properties from dual read. Old LB: {}, New LB: {}.",
+            fromNewLb ? entryToCompare : newEntry, fromNewLb ? newEntry : entryToCompare);
       }
       cacheToCompare.invalidate(propertyName);
     }
     else
     {
-      cacheToAdd.put(propertyName, new CacheEntry<>(propertyVersion, getTimestamp(), property));
+      cacheToAdd.put(propertyName, newEntry);
       // if version is different, entries of both the old version and the new version will increment the out-of-sync count
       incrementEntryOutOfSyncCount();
+      _rateLimitedLogger.debug("Added new entry to dual read cache for {} LB.",
+          fromNewLb ? "New" : "Old");
     }
+    entryToCompare = cacheToCompare.getIfPresent(propertyName);
+    newEntry = cacheToAdd.getIfPresent(propertyName);
+    _rateLimitedLogger.debug("Current entries on dual read caches: Old LB {}, New LB {}",
+        fromNewLb ? entryToCompare : newEntry, fromNewLb ? newEntry : entryToCompare);
   }
 
   abstract void incrementEntryOutOfSyncCount();

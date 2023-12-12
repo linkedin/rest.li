@@ -183,6 +183,11 @@ public class DualReadStateManager
    */
   public void checkAndSwitchMode(String d2ServiceName)
   {
+    if (_executorService.isShutdown())
+    {
+      return;
+    }
+
     _executorService.execute(() ->
     {
       boolean shouldCheck = _rateLimiter.tryAcquire();

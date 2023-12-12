@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.48.5] - 2023-12-12
+- add debug log to dual read caches
+
 ## [29.48.4] - 2023-12-06
 - correct where to increment the clusterNotFound count and adjust quarantine log level
 
@@ -5575,7 +5578,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.48.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.48.5...master
+[29.48.5]: https://github.com/linkedin/rest.li/compare/v29.48.4...v29.48.5
 [29.48.4]: https://github.com/linkedin/rest.li/compare/v29.48.3...v29.48.4
 [29.48.3]: https://github.com/linkedin/rest.li/compare/v29.48.2...v29.48.3
 [29.48.2]: https://github.com/linkedin/rest.li/compare/v29.48.1...v29.48.2
