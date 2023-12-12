@@ -185,6 +185,7 @@ public class DualReadStateManager
   {
     if (_executorService.isShutdown())
     {
+      LOG.info("Dual read mode executor is shut down already. Skipping getting the latest dual read mode.");
       return;
     }
 

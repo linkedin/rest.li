@@ -73,20 +73,19 @@ public abstract class DualReadLoadBalancerMonitor<T>
 
     CacheEntry<T> entryToCompare = cacheToCompare.getIfPresent(propertyName);
     CacheEntry<T> newEntry = new CacheEntry<>(propertyVersion, getTimestamp(), property);
+    String entriesLogMsg = getEntriesMessage(fromNewLb, entryToCompare, newEntry);
 
     if (entryToCompare != null && Objects.equals(entryToCompare._version, propertyVersion))
     {
       if (!isEqual(entryToCompare, newEntry))
       {
-        _rateLimitedLogger.warn("Received mismatched properties from dual read. Old LB: {}, New LB: {}",
-            fromNewLb ? entryToCompare : newEntry, fromNewLb ? newEntry : entryToCompare);
         incrementEntryOutOfSyncCount(); // increment the out-of-sync count for the entry received later
+        _rateLimitedLogger.warn("Received mismatched properties from dual read. {}", entriesLogMsg);
       }
       else
       { // entries are in-sync, decrement the out-of-sync count for the entry received earlier
         decrementEntryOutOfSyncCount();
-        _rateLimitedLogger.debug("Matched properties from dual read. Old LB: {}, New LB: {}.",
-            fromNewLb ? entryToCompare : newEntry, fromNewLb ? newEntry : entryToCompare);
+        _rateLimitedLogger.debug("Matched properties from dual read. {}", entriesLogMsg);
       }
       cacheToCompare.invalidate(propertyName);
     }
@@ -100,8 +99,14 @@ public abstract class DualReadLoadBalancerMonitor<T>
     }
     entryToCompare = cacheToCompare.getIfPresent(propertyName);
     newEntry = cacheToAdd.getIfPresent(propertyName);
-    _rateLimitedLogger.debug("Current entries on dual read caches: Old LB {}, New LB {}",
-        fromNewLb ? entryToCompare : newEntry, fromNewLb ? newEntry : entryToCompare);
+    entriesLogMsg = getEntriesMessage(fromNewLb, entryToCompare, newEntry);
+    _rateLimitedLogger.debug("Current entries on dual read caches: {}", entriesLogMsg);
+  }
+
+  private String getEntriesMessage(boolean fromNewLb, CacheEntry<T> oldE, CacheEntry<T> newE)
+  {
+    return String.format("Old LB: {}, New LB: {}.",
+        fromNewLb? oldE : newE, fromNewLb? newE : oldE);
   }
 
   abstract void incrementEntryOutOfSyncCount();
