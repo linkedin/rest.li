@@ -20,16 +20,4 @@ public class CursorCollectionResult<T extends RecordTemplate> extends Collection
   {
     super(elements, null, pagination);
   }
-
-  /**
-   * Constructor
-   *
-   * @param elements       List of elements in the current page.
-   * @param total          Provides the total elements
-   * @param pagination     The cursor pagination metadata.
-   */
-  public CursorCollectionResult(final List<T> elements, final Integer total, CursorPagination pagination)
-  {
-    super(elements, total, pagination);
-  }
 }
