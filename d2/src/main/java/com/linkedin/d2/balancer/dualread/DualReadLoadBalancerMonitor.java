@@ -103,12 +103,6 @@ public abstract class DualReadLoadBalancerMonitor<T>
     _rateLimitedLogger.debug("Current entries on dual read caches: {}", entriesLogMsg);
   }
 
-  private String getEntriesMessage(boolean fromNewLb, CacheEntry<T> oldE, CacheEntry<T> newE)
-  {
-    return String.format("Old LB: {}, New LB: {}.",
-        fromNewLb? oldE : newE, fromNewLb? newE : oldE);
-  }
-
   abstract void incrementEntryOutOfSyncCount();
 
   abstract void decrementEntryOutOfSyncCount();
@@ -132,6 +126,12 @@ public abstract class DualReadLoadBalancerMonitor<T>
           }
         })
         .build();
+  }
+
+  private String getEntriesMessage(boolean fromNewLb, CacheEntry<T> oldE, CacheEntry<T> newE)
+  {
+    return String.format("Old LB: {}, New LB: {}.",
+        fromNewLb? oldE : newE, fromNewLb? newE : oldE);
   }
 
   private String getTimestamp() {
