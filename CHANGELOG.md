@@ -14,8 +14,11 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.48.5] - 2023-12-12
+## [29.48.6] - 2023-12-12
 - Rename next to nextPageToken in standardized models for cursor based pagination
+
+## [29.48.5] - 2023-12-12
+- add debug log to dual read caches
 
 ## [29.48.4] - 2023-12-06
 - correct where to increment the clusterNotFound count and adjust quarantine log level
@@ -5578,7 +5581,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.48.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.48.6...master
+[29.48.6]: https://github.com/linkedin/rest.li/compare/v29.48.5...v29.48.6
 [29.48.5]: https://github.com/linkedin/rest.li/compare/v29.48.4...v29.48.5
 [29.48.4]: https://github.com/linkedin/rest.li/compare/v29.48.3...v29.48.4
 [29.48.3]: https://github.com/linkedin/rest.li/compare/v29.48.2...v29.48.3
