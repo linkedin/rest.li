@@ -4,7 +4,7 @@
   "namespace" : "com.linkedin.restli.common",
   "doc" : "Metadata for cursor based pagination with collections.",
   "fields" : [ {
-    "name" : "next",
+    "name" : "nextPageToken",
     "type" : "string",
     "doc" : "Pagination cursor that points to the end of the current page and can be used to fetch the next page.\nNot populated if the current page is the last page.",
     "optional" : true
