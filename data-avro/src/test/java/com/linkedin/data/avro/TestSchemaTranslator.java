@@ -896,6 +896,25 @@ public class TestSchemaTranslator
               null
           },
           {
+              "{\n" + "  \"type\": \"record\",\n" + "  \"name\": \"Outer\",\n" + "  \"namespace\": \"foo\",\n"
+                  + "  \"fields\": [\n" + "    {\n" + "      \"name\": \"f1\",\n" + "      \"type\": {\n"
+                  + "        \"type\": \"record\",\n" + "        \"name\": \"Inner\",\n"
+                  + "        \"namespace\": \"bar\",\n" + "        \"fields\": [\n" + "          {\n"
+                  + "            \"name\": \"innerArray\",\n" + "            \"type\": {\n"
+                  + "              \"type\": \"array\",\n" + "              \"items\": \"string\"\n" + "            },\n"
+                  + "            \"default\": [],\n" + "            \"optional\": true\n" + "          },\n"
+                  + "          {\n" + "            \"name\": \"innerMap\",\n" + "            \"type\": {\n"
+                  + "              \"type\": \"map\",\n" + "              \"values\": \"string\"\n" + "            },\n"
+                  + "            \"default\": {},\n" + "            \"optional\": true\n" + "          }\n"
+                  + "        ]\n" + "      },\n" + "      \"default\": {},\n" + "      \"optional\": true\n" + "    }\n"
+                  + "  ]\n" + "}",
+              translateDefault,
+              "{ \"type\" : \"record\", \"name\" : \"Outer\", \"namespace\" : \"foo\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"Inner\", \"namespace\" : \"bar\", \"fields\" : [ { \"name\" : \"innerArray\", \"type\" : [ { \"type\" : \"array\", \"items\" : \"string\" }, \"null\" ], \"default\" : [  ] }, { \"name\" : \"innerMap\", \"type\" : [ { \"type\" : \"map\", \"values\" : \"string\" }, \"null\" ], \"default\" : {  } } ] }, \"null\" ], \"default\" : { \"innerArray\" : [  ], \"innerMap\" : {  } } } ] }",
+              null,
+              null,
+              null
+          },
+          {
               // required, optional not specified
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END } ] }",
               allModes,
@@ -2644,36 +2663,6 @@ public class TestSchemaTranslator
                 translateDefault,
                 IllegalArgumentException.class,
                 "cannot translate union value"
-            },
-            {
-                // inconsistent default,
-                // a referenced record has an optional field "frank" with default,
-                // but field of referenced record type has default value which does not provide value for "frank"
-                "{ " +
-                    "  \"type\" : \"record\", " +
-                    "  \"name\" : \"Bar\", " +
-                    "  \"fields\" : [ " +
-                    "    { " +
-                    "      \"name\" : \"barbara\", " +
-                    "      \"type\" : { " +
-                    "        \"type\" : \"record\", " +
-                    "        \"name\" : \"Foo\", " +
-                    "        \"fields\" : [ " +
-                    "          { " +
-                    "            \"name\" : \"frank\", " +
-                    "            \"type\" : \"string\", " +
-                    "            \"default\" : \"abc\", " +
-                    "            \"optional\" : true" +
-                    "          } " +
-                    "        ] " +
-                    "      }, " +
-                    "      \"default\" : { } " +
-                    "    } " +
-                    "  ]" +
-                    "}",
-                translateDefault,
-                IllegalArgumentException.class,
-                "cannot translate absent optional field (to have null value) because this field is optional and has a default value"
             },
             {
                 // inconsistent default,
