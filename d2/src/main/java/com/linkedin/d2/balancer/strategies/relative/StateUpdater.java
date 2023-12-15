@@ -159,8 +159,7 @@ public class StateUpdater
   int getTotalHostsInAllPartitions()
   {
     return _partitionLoadBalancerStateMap.values().stream()
-        .map(partitionState -> partitionState.getTrackerClients().size())
-        .mapToInt(Integer::intValue)
+        .mapToInt(partitionState -> partitionState.getTrackerClients().size())
         .sum();
   }
 
