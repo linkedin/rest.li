@@ -19,7 +19,6 @@ package com.linkedin.d2.xds;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
@@ -31,6 +30,7 @@ import com.linkedin.d2.balancer.properties.UriPropertiesMerger;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
+import com.linkedin.d2.discovery.stores.zk.SymlinkUtil;
 import indis.XdsD2;
 import io.grpc.Status;
 import java.nio.charset.StandardCharsets;
@@ -54,7 +54,6 @@ public class XdsToD2PropertiesAdaptor
   private static final String D2_CLUSTER_NODE_PREFIX = "/d2/clusters/";
   private static final String D2_SERVICE_NODE_PREFIX = "/d2/services/";
   private static final String D2_URI_NODE_PREFIX = "/d2/uris/";
-  private static final char SYMLINK_NODE_IDENTIFIER = '$';
   private static final char PATH_SEPARATOR = '/';
   private static final String NON_EXISTENT_CLUSTER = "NonExistentCluster";
 
@@ -144,7 +143,7 @@ public class XdsToD2PropertiesAdaptor
   {
     // if cluster name is a symlink, watch for D2SymlinkNode instead
     String resourceName = D2_CLUSTER_NODE_PREFIX + clusterName;
-    if (isSymlinkNode(clusterName))
+    if (SymlinkUtil.isSymlinkNodeOrPath(clusterName))
     {
       listenToSymlink(clusterName, resourceName);
     }
@@ -163,7 +162,7 @@ public class XdsToD2PropertiesAdaptor
   {
     // if cluster name is a symlink, watch for D2SymlinkNode instead
     String resourceName = D2_URI_NODE_PREFIX + clusterName;
-    if (isSymlinkNode(clusterName))
+    if (SymlinkUtil.isSymlinkNodeOrPath(clusterName))
     {
       listenToSymlink(clusterName, resourceName);
     }
@@ -186,11 +185,6 @@ public class XdsToD2PropertiesAdaptor
       _xdsClient.watchXdsResource(D2_SERVICE_NODE_PREFIX + serviceName, XdsClient.ResourceType.NODE, watcher);
       return watcher;
     });
-  }
-
-  private static boolean isSymlinkNode(String nodeNameOrPath)
-  {
-    return nodeNameOrPath != null && nodeNameOrPath.indexOf(SYMLINK_NODE_IDENTIFIER) >= 0;
   }
 
   private void listenToSymlink(String name, String fullResourceName)

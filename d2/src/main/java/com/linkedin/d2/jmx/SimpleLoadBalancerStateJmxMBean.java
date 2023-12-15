@@ -25,6 +25,8 @@ public interface SimpleLoadBalancerStateJmxMBean
 
   int getClusterCount();
 
+  long getSymlinkClusterCount();
+
   int getServiceCount();
 
   long getVersion();
