@@ -1027,7 +1027,12 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
           try
           {
             String childPath = s.substring(s.lastIndexOf('/') + 1);
-            T value = _serializer.fromBytes(bytes, stat.getMzxid());
+            long version = stat.getMzxid();
+            if (version <= 0)
+            {
+              _log.warn("ZK data from {} has invalid version: {}", s, version);
+            }
+            T value = _serializer.fromBytes(bytes, version);
             _properties.put(childPath, value);
             if (_count == 0)
             {
