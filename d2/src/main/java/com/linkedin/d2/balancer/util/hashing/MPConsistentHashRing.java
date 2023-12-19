@@ -58,7 +58,7 @@ public class MPConsistentHashRing<T> implements Ring<T>
       LongHashFunction.class.getMethod("xx_r39", long.class);
     } catch (NoSuchMethodException ex) {
       // SI-36497
-      LOG.error("Required method xx_39 not found, this means an supported version of the "
+      LOG.error("Required method xx_r39 not found, this means an unsupported version of the "
           + "zero-allocation-hashing library is being used. Do not use later than 0.7 if you want to use pegasus", ex);
       throw new RuntimeException(ex);
     }
