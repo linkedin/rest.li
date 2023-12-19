@@ -39,12 +39,10 @@ public class UriPropertiesMerger implements ZooKeeperPropertyMerger<UriPropertie
 
     String clusterName = propertyName;
     long maxVersion = -1;
-    long propertyVersion;
 
     for (UriProperties property : propertiesToMerge)
     {
-      propertyVersion = property.getVersion();
-      maxVersion = Long.max(maxVersion, propertyVersion);
+      maxVersion = Long.max(maxVersion, property.getVersion());
       for (Map.Entry<URI, Map<Integer, PartitionData>> entry : property.getPartitionDesc().entrySet())
       {
         partitionData.put(entry.getKey(), entry.getValue());
