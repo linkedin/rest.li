@@ -55,7 +55,7 @@ public class UriPropertiesMerger implements ZooKeeperPropertyMerger<UriPropertie
 
     if (maxVersion == -1)
     {
-      LOG.warn("Merged Uri properties has invalid version -1. It should be > -1.");
+      LOG.warn("Merged Uri properties for cluster {} has invalid version -1. It should be > -1.", propertyName);
     }
     return new UriProperties(clusterName, partitionData, uriSpecificProperties, maxVersion);
   }
