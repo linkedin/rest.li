@@ -19,7 +19,6 @@ package com.linkedin.d2.xds;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
@@ -31,6 +30,7 @@ import com.linkedin.d2.balancer.properties.UriPropertiesMerger;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
+import com.linkedin.d2.discovery.stores.zk.SymlinkUtil;
 import indis.XdsD2;
 import io.grpc.Status;
 import java.nio.charset.StandardCharsets;
@@ -43,6 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +54,6 @@ public class XdsToD2PropertiesAdaptor
   private static final String D2_CLUSTER_NODE_PREFIX = "/d2/clusters/";
   private static final String D2_SERVICE_NODE_PREFIX = "/d2/services/";
   private static final String D2_URI_NODE_PREFIX = "/d2/uris/";
-  private static final char SYMLINK_NODE_IDENTIFIER = '$';
   private static final char PATH_SEPARATOR = '/';
   private static final String NON_EXISTENT_CLUSTER = "NonExistentCluster";
 
@@ -143,7 +143,7 @@ public class XdsToD2PropertiesAdaptor
   {
     // if cluster name is a symlink, watch for D2SymlinkNode instead
     String resourceName = D2_CLUSTER_NODE_PREFIX + clusterName;
-    if (isSymlinkNode(clusterName))
+    if (SymlinkUtil.isSymlinkNodeOrPath(clusterName))
     {
       listenToSymlink(clusterName, resourceName);
     }
@@ -162,7 +162,7 @@ public class XdsToD2PropertiesAdaptor
   {
     // if cluster name is a symlink, watch for D2SymlinkNode instead
     String resourceName = D2_URI_NODE_PREFIX + clusterName;
-    if (isSymlinkNode(clusterName))
+    if (SymlinkUtil.isSymlinkNodeOrPath(clusterName))
     {
       listenToSymlink(clusterName, resourceName);
     }
@@ -185,11 +185,6 @@ public class XdsToD2PropertiesAdaptor
       _xdsClient.watchXdsResource(D2_SERVICE_NODE_PREFIX + serviceName, XdsClient.ResourceType.NODE, watcher);
       return watcher;
     });
-  }
-
-  private static boolean isSymlinkNode(String nodeNameOrPath)
-  {
-    return nodeNameOrPath != null && nodeNameOrPath.indexOf(SYMLINK_NODE_IDENTIFIER) >= 0;
   }
 
   private void listenToSymlink(String name, String fullResourceName)
@@ -256,25 +251,20 @@ public class XdsToD2PropertiesAdaptor
           try
           {
             ClusterProperties clusterProperties = toClusterProperties(update.getNodeData());
-            // For symlink clusters, ClusterLoadBalancerSubscriber subscribed to the symlinks, instead of the actual node, in event bus,
-            // so we need to publish under the symlink names. Also, rarely and possibly, the original cluster could have subscribers
-            // too when calls are made directly to the original cluster, so we publish for it too.
+            // For symlink clusters, ClusterLoadBalancerSubscriber subscribed to the symlinks instead of the actual node in event bus,
+            // so we need to publish under the symlink names.
             // For other clusters, publish under its original name. Note that these clusters could be either:
             // 1) regular clusters requested normally.
             // 2) clusters that were pointed by a symlink previously, but no longer the case after the symlink points to other clusters.
             // For case #2: the symlinkAndActualNode map will no longer has an entry for this cluster (removed in
             // D2SymlinkNodeResourceWatcher::onChanged), thus the updates will be published under the original cluster name
             // (like "FooCluster-prod-ltx1"), which has no symlink subscribers anyway, so no harm to publish.
-            _clusterEventBus.publishInitialize(clusterName, clusterProperties);
-            String symlinkName = getSymlink(clusterName);
-            if (symlinkName != null)
-            {
-              _clusterEventBus.publishInitialize(symlinkName, clusterProperties);
-            }
+            String publishName = StringUtils.defaultIfEmpty(getSymlink(clusterName), clusterName);
+            _clusterEventBus.publishInitialize(publishName, clusterProperties);
 
             if (_dualReadStateManager != null)
             {
-              _dualReadStateManager.reportData(clusterName, clusterProperties, true);
+              _dualReadStateManager.reportData(publishName, clusterProperties, true);
             }
           }
           catch (PropertySerializationException e)
@@ -419,16 +409,6 @@ public class XdsToD2PropertiesAdaptor
       _initFetchStart = System.nanoTime();
     }
 
-    // For symlink clusters, UriLoadBalancerSubscriber subscribed to the symlinks, instead of the actual node, in event bus,
-    // so we need to publish under the symlink names. Also, rarely but possibly, the original cluster could have subscribers
-    // too when calls are made directly to the original cluster, so we publish for it too.
-    // For other clusters, publish under its original name. Note that these clusters could be either:
-    // 1) regular clusters requested normally.
-    // 2) clusters that were pointed by a symlink previously, but no longer the case after the symlink points to other clusters.
-    // For case #2: the actualResourceToSymlink map will no longer has an entry for this cluster (removed in
-    // D2SymlinkNodeResourceWatcher::onChanged), thus the updates will be published under the original cluster name
-    // (like "FooCluster-prod-ltx1"), which has no subscribers anyway, so no harm to publish. Yet, we still emit the tracking
-    // events about receiving uri updates of this cluster for measuring update propagation latencies.
     @Override
     public void onChanged(XdsClient.D2URIMapUpdate update)
     {
@@ -448,18 +428,23 @@ public class XdsToD2PropertiesAdaptor
             emitSDStatusUpdateReceiptEvents(updates);
           }
           _currentData = updates;
-          UriProperties mergedUriProperties = _uriPropertiesMerger.merge(_clusterName, _currentData.values());
 
-          _uriEventBus.publishInitialize(_clusterName, mergedUriProperties);
-          String symlinkName = getSymlink(_clusterName);
-          if (symlinkName != null)
-          {
-            _uriEventBus.publishInitialize(symlinkName, mergedUriProperties);
-          }
+          // For symlink clusters, UriLoadBalancerSubscriber subscribed to the symlinks instead of the actual node in event bus,
+          // so we need to publish under the symlink names.
+          // For other clusters, publish under its original name. Note that these clusters could be either:
+          // 1) regular clusters requested normally.
+          // 2) clusters that were pointed by a symlink previously, but no longer the case after the symlink points to other clusters.
+          // For case #2: the actualResourceToSymlink map will no longer has an entry for this cluster (removed in
+          // D2SymlinkNodeResourceWatcher::onChanged), thus the updates will be published under the original cluster name
+          // (like "FooCluster-prod-ltx1"), which has no subscribers anyway, so no harm to publish. Yet, we still emit the tracking
+          // events about receiving uri updates of this cluster for measuring update propagation latencies.
+          String publishName = StringUtils.defaultIfEmpty(getSymlink(_clusterName), _clusterName);
+          UriProperties mergedUriProperties = _uriPropertiesMerger.merge(publishName, _currentData.values());
+          _uriEventBus.publishInitialize(publishName, mergedUriProperties);
 
           if (_dualReadStateManager != null)
           {
-            _dualReadStateManager.reportData(_clusterName, mergedUriProperties, true);
+            _dualReadStateManager.reportData(publishName, mergedUriProperties, true);
           }
         }
         catch (PropertySerializationException e)
