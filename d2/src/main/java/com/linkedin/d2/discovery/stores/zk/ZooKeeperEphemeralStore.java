@@ -81,8 +81,7 @@ import static com.linkedin.d2.discovery.util.LogUtil.trace;
  */
 public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 {
-  private static final Logger                                      _log =
-                                                                         LoggerFactory.getLogger(ZooKeeperEphemeralStore.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperEphemeralStore.class);
   private static final Pattern PATH_PATTERN    = Pattern.compile("(.*)/(.*)$");
   public static final String DEFAULT_PREFIX = "ephemoral";
   public static final String PUT_FAILURE_PATH_SUFFIX = "FAILURE";
@@ -206,7 +205,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 
     if (ephemeralNodesFilePath != null && !useNewWatcher)
     {
-      _log.warn("Forcing enabling useNewWatcher with ephemeralNodesFilePath!=null");
+      LOG.warn("Forcing enabling useNewWatcher with ephemeralNodesFilePath!=null");
       useNewWatcher = true;
     }
 
@@ -228,7 +227,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   {
     _putStats.inc();
 
-    trace(_log, "put ", prop, ": ", value);
+    trace(LOG, "put ", prop, ": ", value);
 
     final String path = getPath(prop);
     _zkConn.ensurePersistentNodeExists(path, new Callback<None>()
@@ -284,7 +283,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   {
     _removeStats.inc();
 
-    trace(_log, "remove: ", prop);
+    trace(LOG, "remove: ", prop);
 
     String path = getPath(prop);
     _zkConn.removeNodeUnsafeRecursive(path, callback);
@@ -302,7 +301,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   {
     final String path = getPath(prop);
 
-    trace(_log, "remove partial ", prop, ": ", value);
+    trace(LOG, "remove partial ", prop, ": ", value);
 
     final Callback<Map<String, T>> childrenCallback = new Callback<Map<String, T>>()
     {
@@ -352,7 +351,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
             }
             else
             {
-              _log.warn("Ignoring request to removePartial with no children: {}", path);
+              LOG.warn("Ignoring request to removePartial with no children: {}", path);
               callback.onSuccess(None.none());
             }
             break;
@@ -401,7 +400,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     final String propertyName = getPropertyForPath(path);
     if (children.size() > 0)
     {
-      _log.debug("getMergedChildren: collecting {}", children);
+      LOG.debug("getMergedChildren: collecting {}", children);
       ChildCollector collector = new ChildCollector(children.size(), new CallbackAdapter<T, Map<String, T>>(callback)
       {
         @Override
@@ -417,7 +416,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     }
     else
     {
-      _log.debug("getMergedChildren: no children");
+      LOG.debug("getMergedChildren: no children");
       callback.onSuccess(_merger.merge(propertyName, Collections.emptyList()));
     }
   }
@@ -430,13 +429,13 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   {
     if (children.size() > 0)
     {
-      _log.debug("getChildrenData: collecting {}", children);
+      LOG.debug("getChildrenData: collecting {}", children);
       ChildCollector collector = new ChildCollector(children.size(), callback);
       children.forEach(child -> _zk.getData(path + "/" + child, null, collector, null));
     }
     else
     {
-      _log.debug("getChildrenData: no children");
+      LOG.debug("getChildrenData: no children");
       callback.onSuccess(Collections.emptyMap());
     }
   }
@@ -444,7 +443,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   @Override
   public void startPublishing(final String prop)
   {
-    trace(_log, "register: ", prop);
+    trace(LOG, "register: ", prop);
 
     if (_eventBus == null)
     {
@@ -483,7 +482,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   @Override
   public void stopPublishing(String prop)
   {
-    trace(_log, "unregister: ", prop);
+    trace(LOG, "unregister: ", prop);
 
     if (_useNewWatcher)
     {
@@ -609,7 +608,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     public void processResult(int rc, final String path, Object ctx, List<String> children)
     {
       KeeperException.Code code = KeeperException.Code.get(rc);
-      _log.debug("{}: getChildren returned {}: {}", new Object[]{path, code, children});
+      LOG.debug("{}: getChildren returned {}: {}", new Object[]{path, code, children});
       final boolean init = (Boolean)ctx;
       final String property = getPropertyForPath(path);
       switch (code)
@@ -623,23 +622,23 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
               if (init)
               {
                 _eventBus.publishInitialize(property, value);
-                _log.debug("{}: published init", path);
+                LOG.debug("{}: published init", path);
               }
               else
               {
                 _eventBus.publishAdd(property, value);
-                _log.debug("{}: published add", path);
+                LOG.debug("{}: published add", path);
               }
             }
 
             @Override
             public void onError(Throwable e)
             {
-              _log.error("Failed to merge children for path " + path, e);
+              LOG.error("Failed to merge children for path " + path, e);
               if (init)
               {
                 _eventBus.publishInitialize(property, null);
-                _log.debug("{}: published init", path);
+                LOG.debug("{}: published init", path);
               }
             }
           });
@@ -648,22 +647,22 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 
         case NONODE:
           // The node whose children we are monitoring is gone; set an exists watch on it
-          _log.debug("{}: node is not present, calling exists", path);
+          LOG.debug("{}: node is not present, calling exists", path);
           _zk.exists(path, this, this, false);
           if (init)
           {
             _eventBus.publishInitialize(property, null);
-            _log.debug("{}: published init", path);
+            LOG.debug("{}: published init", path);
           }
           else
           {
             _eventBus.publishRemove(property);
-            _log.debug("{}: published remove", path);
+            LOG.debug("{}: published remove", path);
           }
           break;
 
         default:
-          _log.error("getChildren: unexpected error: {}: {}", code, path);
+          LOG.error("getChildren: unexpected error: {}: {}", code, path);
           break;
       }
     }
@@ -675,22 +674,22 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     public void processResult(int rc, String path, Object ctx, Stat stat)
     {
       KeeperException.Code code = KeeperException.Code.get(rc);
-      _log.debug("{}: exists returned {}", path, code);
+      LOG.debug("{}: exists returned {}", path, code);
       switch (code)
       {
         case OK:
           // The node is back, get children and set child watch
-          _log.debug("{}: calling getChildren", path);
+          LOG.debug("{}: calling getChildren", path);
           _zk.getChildren(path, this, this, false);
           break;
 
         case NONODE:
           // The node doesn't exist; OK, the watch is set so now we wait.
-          _log.debug("{}: set exists watch", path);
+          LOG.debug("{}: set exists watch", path);
           break;
 
         default:
-          _log.error("exists: unexpected error: {}: {}", code, path);
+          LOG.error("exists: unexpected error: {}: {}", code, path);
           break;
       }
 
@@ -758,7 +757,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     public void processResult(int rc, String path, Object ctx, List<String> children, Stat stat)
     {
       KeeperException.Code code = KeeperException.Code.get(rc);
-      _log.debug("{}: getChildren returned {}: {}", new Object[]{path, code, children});
+      LOG.debug("{}: getChildren returned {}: {}", new Object[]{path, code, children});
       final boolean init = (Boolean)ctx;
       final String property = getPropertyForPath(path);
       switch (code)
@@ -785,17 +784,17 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
           }
           _isInitialFetchRef.set(true); // set isInitialFetch to true so that when the exists watch is triggered, it's an initial fetch.
           _initialFetchStartAtNanosRef.set(System.nanoTime());
-          _log.debug("{}: node is not present, calling exists", path);
+          LOG.debug("{}: node is not present, calling exists", path);
           _zk.exists(path, this, this, false);
           if (init)
           {
             _eventBus.publishInitialize(property, null);
-            _log.debug("{}: published init", path);
+            LOG.debug("{}: published init", path);
           }
           else
           {
             _eventBus.publishRemove(property);
-            _log.debug("{}: published remove", path);
+            LOG.debug("{}: published remove", path);
           }
           if (_fileStore != null)
           {
@@ -804,7 +803,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
           break;
 
         default:
-          _log.error("getChildren: unexpected error: {}: {}", code, path);
+          LOG.error("getChildren: unexpected error: {}: {}", code, path);
           break;
       }
     }
@@ -816,12 +815,12 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
         @Override
         public void onError(Throwable e)
         {
-          _log.error("Failed to merge children for path " + path, e);
+          LOG.error("Failed to merge children for path " + path, e);
           if (init)
           {
             _eventBus.publishInitialize(property, null);
           }
-          _log.debug("{}: published init", path);
+          LOG.debug("{}: published init", path);
         }
 
         @Override
@@ -843,12 +842,12 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
           if (init)
           {
             _eventBus.publishInitialize(property, mergedProperty);
-            _log.debug("{}: published init", path);
+            LOG.debug("{}: published init", path);
           }
           else
           {
             _eventBus.publishAdd(property, mergedProperty);
-            _log.debug("{}: published add", path);
+            LOG.debug("{}: published add", path);
           }
         }
       };
@@ -920,22 +919,22 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     public void processResult(int rc, String path, Object ctx, Stat stat)
     {
       KeeperException.Code code = KeeperException.Code.get(rc);
-      _log.debug("{}: exists returned {}", path, code);
+      LOG.debug("{}: exists returned {}", path, code);
       switch (code)
       {
         case OK:
           // The node is back, get children and set child watch
-          _log.debug("{}: calling getChildren", path);
+          LOG.debug("{}: calling getChildren", path);
           _zk.getChildren(path, this, this, false);
           break;
 
         case NONODE:
           // The node doesn't exist; OK, the watch is set so now we wait.
-          _log.debug("{}: set exists watch", path);
+          LOG.debug("{}: set exists watch", path);
           break;
 
         default:
-          _log.error("exists: unexpected error: {}: {}", code, path);
+          LOG.error("exists: unexpected error: {}: {}", code, path);
           break;
       }
     }
@@ -944,7 +943,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     {
       if (_eventEmitter == null)
       {
-        _log.info("Service discovery event emitter in ZookeeperEphemeralStore is null. Skipping emitting events.");
+        LOG.info("Service discovery event emitter in ZookeeperEphemeralStore is null. Skipping emitting events.");
         return;
       }
 
@@ -952,7 +951,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       long initialFetchDurationMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - _initialFetchStartAtNanosRef.get());
       if (initialFetchDurationMillis < 0)
       {
-        _log.warn("Failed to log ServiceDiscoveryStatusInitialRequest event, initialFetchStartAt time is greater than current time.");
+        LOG.warn("Failed to log ServiceDiscoveryStatusInitialRequest event, initialFetchStartAt time is greater than current time.");
         return;
       }
       // emit service discovery status initial request event for success
@@ -963,7 +962,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     {
       if (_eventEmitter == null)
       {
-        _log.info("Service discovery event emitter in ZookeeperEphemeralStore is null. Skipping emitting events.");
+        LOG.info("Service discovery event emitter in ZookeeperEphemeralStore is null. Skipping emitting events.");
         return;
       }
 
@@ -972,7 +971,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       {
         if (!(uriProperty instanceof UriProperties))
         {
-          _log.error("Unknown type of URI data, ignored: " + uriProperty.toString());
+          LOG.error("Unknown type of URI data, ignored: " + uriProperty.toString());
           return;
         }
         UriProperties properties = (UriProperties) uriProperty;
@@ -1030,7 +1029,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
             long version = stat.getMzxid();
             if (version <= 0)
             {
-              _log.warn("ZK data from {} has invalid version: {}", s, version);
+              LOG.warn("ZK data from {} has invalid version: {}", s, version);
             }
             T value = _serializer.fromBytes(bytes, version);
             _properties.put(childPath, value);
@@ -1051,7 +1050,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
           {
             _callback.onSuccess(_properties);
           }
-          _log.debug("{} doesn't exist, count={}", s, _count);
+          LOG.debug("{} doesn't exist, count={}", s, _count);
           break;
 
         default:
