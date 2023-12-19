@@ -45,10 +45,6 @@ public class UriPropertiesMerger implements ZooKeeperPropertyMerger<UriPropertie
     {
       propertyVersion = property.getVersion();
       maxVersion = Long.max(maxVersion, propertyVersion);
-      if (maxVersion == -1)
-      {
-        _log.warn("Uri properties has invalid version: {}. It should be > -1.", propertyVersion);
-      }
       for (Map.Entry<URI, Map<Integer, PartitionData>> entry : property.getPartitionDesc().entrySet())
       {
         partitionData.put(entry.getKey(), entry.getValue());
@@ -59,6 +55,10 @@ public class UriPropertiesMerger implements ZooKeeperPropertyMerger<UriPropertie
       }
     }
 
+    if (maxVersion == -1)
+    {
+      _log.warn("Merged Uri properties has invalid version -1. It should be > -1.");
+    }
     return new UriProperties(clusterName, partitionData, uriSpecificProperties, maxVersion);
   }
 
