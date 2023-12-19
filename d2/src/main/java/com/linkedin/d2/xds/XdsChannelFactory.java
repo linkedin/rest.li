@@ -17,6 +17,7 @@
 package com.linkedin.d2.xds;
 
 import io.grpc.ManagedChannel;
+import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import java.util.concurrent.TimeUnit;
@@ -53,6 +54,7 @@ public class XdsChannelFactory
     }
 
     return builder.keepAliveTime(5, TimeUnit.MINUTES)
+        .proxyDetector(GrpcUtil.NOOP_PROXY_DETECTOR)
         .build();
   }
 }
