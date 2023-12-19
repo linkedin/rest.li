@@ -49,6 +49,15 @@ import org.slf4j.LoggerFactory;
  */
 public class MPConsistentHashRing<T> implements Ring<T>
 {
+  static {
+    try {
+      LongHashFunction.class.getMethod("xx_r39", long.class);
+    } catch (NoSuchMethodException ex) {
+      // SI-36497
+      throw new RuntimeException("Required method xx_39 not found, this means an supported version of the "
+          + "zero-allocation-hashing library is being used. Do not use later than 0.0.7 if you want to use pegasus");
+    }
+  }
   public static final int DEFAULT_NUM_PROBES = 21;
   public static final int DEFAULT_POINTS_PER_HOST = 1;
 

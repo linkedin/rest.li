@@ -16,6 +16,7 @@ and what APIs have changed, if applicable.
 
 ## [29.48.7] - 2023-12-19
 - No-op proxy detector for xDS gRPC channel builder.
+- Warning for unsupported `zero-allocation-hashing` library versions.
 
 ## [29.48.6] - 2023-12-12
 - Rename next to nextPageToken in standardized models for cursor based pagination
