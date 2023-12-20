@@ -53,16 +53,7 @@ public class MPConsistentHashRing<T> implements Ring<T>
   public static final int DEFAULT_POINTS_PER_HOST = 1;
 
   private static final Logger LOG = LoggerFactory.getLogger(ConsistentHashRing.class);
-  static {
-    try {
-      LongHashFunction.class.getMethod("xx_r39", long.class);
-    } catch (NoSuchMethodException ex) {
-      LOG.error("Required method xx_r39 not found, this means an unsupported version of the "
-          + "zero-allocation-hashing library is being used. Do not use later than 0.7 if you want to use pegasus", ex);
-      throw new RuntimeException(ex);
-    }
-  }
-  private static final LongHashFunction HASH_FUNCTION_0 = LongHashFunction.xx_r39(0xDEADBEEF);
+  private static final LongHashFunction HASH_FUNCTION_0 = LongHashFunction.xx(0xDEADBEEF);
   private static final Charset UTF8 = Charset.forName("UTF-8");
   /* we will only use the lower 32 bit of the hash code to avoid overflow */
   private static final long MASK = 0x00000000FFFFFFFFL;
@@ -114,7 +105,7 @@ public class MPConsistentHashRing<T> implements Ring<T>
     _hashFunctions = new LongHashFunction[_numProbes];
     for (int i = 0; i < _numProbes; i++)
     {
-      _hashFunctions[i] = LongHashFunction.xx_r39(i);
+      _hashFunctions[i] = LongHashFunction.xx(i);
     }
   }
 
