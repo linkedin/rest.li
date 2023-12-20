@@ -154,6 +154,16 @@ public class StateUpdater
   }
 
   /**
+   * Return the total tracker clients in all partitions regardless of their statuses.
+   */
+  int getTotalHostsInAllPartitions()
+  {
+    return _partitionLoadBalancerStateMap.values().stream()
+        .mapToInt(partitionState -> partitionState.getTrackerClients().size())
+        .sum();
+  }
+
+  /**
    * Return the first valid partition id. This is mainly used for monitoring at least one valid partition.
    */
   int getFirstValidPartitionId()

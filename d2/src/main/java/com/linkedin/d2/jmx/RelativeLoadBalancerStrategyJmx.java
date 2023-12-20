@@ -146,6 +146,28 @@ public class RelativeLoadBalancerStrategyJmx implements RelativeLoadBalancerStra
   }
 
   @Override
+  public int getTotalHostsInAllPartitionsCount()
+  {
+    if (isPartitionDataUnavailable())
+    {
+      return DEFAULT_INT_METRICS;
+    }
+
+    return _strategy.getTotalHostsInAllPartitions();
+  }
+
+  @Override
+  public int getTotalHostsCount()
+  {
+    if (isPartitionDataUnavailable())
+    {
+      return DEFAULT_INT_METRICS;
+    }
+
+    return _strategy.getPartitionState(_strategy.getFirstValidPartitionId()).getTrackerClientStateMap().size();
+  }
+
+  @Override
   public int getUnhealthyHostsCount()
   {
     if (isPartitionDataUnavailable())
