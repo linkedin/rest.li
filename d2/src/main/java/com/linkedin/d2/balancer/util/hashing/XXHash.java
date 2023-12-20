@@ -26,7 +26,7 @@ import net.openhft.hashing.LongHashFunction;
 public class XXHash implements HashFunction<String[]> {
   //In order to ensure the consistency of the hashing function,
   // we seed the hash function in the beginning with fixed seed.
-  private static final LongHashFunction hashFunction = LongHashFunction.xx_r39(0xDEADBEEF);
+  private static final LongHashFunction hashFunction = LongHashFunction.xx(0xDEADBEEF);
 
   @Override
   public int hash(String[] keyTokens) {
