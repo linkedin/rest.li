@@ -54,6 +54,7 @@ public class XdsChannelFactory
     }
 
     return builder.keepAliveTime(5, TimeUnit.MINUTES)
+        // No proxy wanted here; the default proxy detector can mistakenly detect forwarded ports as proxies.
         .proxyDetector(GrpcUtil.NOOP_PROXY_DETECTOR)
         .build();
   }
