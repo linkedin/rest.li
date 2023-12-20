@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.48.8] - 2023-12-19
+- add warn logs about invalid property versions
+
 ## [29.48.7] - 2023-12-13
 - fix publishing uri and cluster properties for symlink clusters
 
@@ -5584,7 +5587,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.48.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.48.8...master
+[29.48.8]: https://github.com/linkedin/rest.li/compare/v29.48.7...v29.48.8
 [29.48.7]: https://github.com/linkedin/rest.li/compare/v29.48.6...v29.48.7
 [29.48.6]: https://github.com/linkedin/rest.li/compare/v29.48.5...v29.48.6
 [29.48.5]: https://github.com/linkedin/rest.li/compare/v29.48.4...v29.48.5

@@ -23,9 +23,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class UriPropertiesMerger implements ZooKeeperPropertyMerger<UriProperties>
 {
+  private static final Logger LOG = LoggerFactory.getLogger(UriPropertiesMerger.class);
+
   @Override
   public UriProperties merge(String propertyName, Collection<UriProperties> propertiesToMerge)
   {
@@ -48,6 +53,10 @@ public class UriPropertiesMerger implements ZooKeeperPropertyMerger<UriPropertie
       }
     }
 
+    if (maxVersion == -1)
+    {
+      LOG.warn("Merged Uri properties for cluster {} has invalid version -1. It should be > -1.", propertyName);
+    }
     return new UriProperties(clusterName, partitionData, uriSpecificProperties, maxVersion);
   }
 
