@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.49.2] - 2024-01-02
+- add back publish original cluster for symlink cluster
+
 ## [29.49.1] - 2023-12-21
 - Use a separate indis warmup executor service
 
@@ -5597,7 +5600,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.49.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.49.2...master
+[29.49.2]: https://github.com/linkedin/rest.li/compare/v29.49.1...v29.49.2
 [29.49.1]: https://github.com/linkedin/rest.li/compare/v29.49.0...v29.49.1
 [29.49.0]: https://github.com/linkedin/rest.li/compare/v29.48.9...v29.49.0
 [29.48.9]: https://github.com/linkedin/rest.li/compare/v29.48.8...v29.48.9
