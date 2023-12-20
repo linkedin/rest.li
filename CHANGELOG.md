@@ -18,7 +18,6 @@ and what APIs have changed, if applicable.
 - No-op proxy detector for xDS gRPC channel builder.
 - Warning for unsupported `zero-allocation-hashing` library versions.
 
-
 ## [29.48.8] - 2023-12-19
 - add warn logs about invalid property versions
 
