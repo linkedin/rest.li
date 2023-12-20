@@ -14,9 +14,8 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.48.8] - 2023-12-20
-- No-op proxy detector for xDS gRPC channel builder.
-- Warning for unsupported `zero-allocation-hashing` library versions.
+## [29.48.8] - 2023-12-19
+- add warn logs about invalid property versions
 
 ## [29.48.7] - 2023-12-13
 - fix publishing uri and cluster properties for symlink clusters

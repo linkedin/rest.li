@@ -50,7 +50,7 @@ import org.slf4j.LoggerFactory;
 
 public class XdsToD2PropertiesAdaptor
 {
-  private static final Logger _log = LoggerFactory.getLogger(XdsToD2PropertiesAdaptor.class);
+  private static final Logger LOG = LoggerFactory.getLogger(XdsToD2PropertiesAdaptor.class);
   private static final String D2_CLUSTER_NODE_PREFIX = "/d2/clusters/";
   private static final String D2_SERVICE_NODE_PREFIX = "/d2/services/";
   private static final String D2_URI_NODE_PREFIX = "/d2/uris/";
@@ -220,7 +220,7 @@ public class XdsToD2PropertiesAdaptor
           }
           catch (PropertySerializationException e)
           {
-            _log.error("Failed to parse D2 service properties from xDS update. Service name: " + serviceName, e);
+            LOG.error("Failed to parse D2 service properties from xDS update. Service name: " + serviceName, e);
           }
         }
       }
@@ -269,7 +269,7 @@ public class XdsToD2PropertiesAdaptor
           }
           catch (PropertySerializationException e)
           {
-            _log.error("Failed to parse D2 cluster properties from xDS update. Cluster name: " + clusterName, e);
+            LOG.error("Failed to parse D2 cluster properties from xDS update. Cluster name: " + clusterName, e);
           }
         }
       }
@@ -388,6 +388,10 @@ public class XdsToD2PropertiesAdaptor
     {
       XdsD2.D2URI d2URI = entry.getValue();
       UriProperties uriProperties = _uriPropertiesJsonSerializer.fromProto(d2URI);
+      if (uriProperties.getVersion() < 0)
+      {
+        LOG.warn("xDS data for {} has invalid version: {}", entry.getKey(), uriProperties.getVersion());
+      }
       parsedMap.put(entry.getKey(), uriProperties);
     }
 
@@ -449,7 +453,7 @@ public class XdsToD2PropertiesAdaptor
         }
         catch (PropertySerializationException e)
         {
-          _log.error("Failed to parse D2 uri properties from xDS update. Cluster name: " + _clusterName, e);
+          LOG.error("Failed to parse D2 uri properties from xDS update. Cluster name: " + _clusterName, e);
         }
       }
     }
@@ -474,7 +478,7 @@ public class XdsToD2PropertiesAdaptor
     {
       if (_eventEmitter == null)
       {
-        _log.info("Service discovery event emitter in XdsToD2PropertiesAdaptor is null. Skipping emitting events.");
+        LOG.info("Service discovery event emitter in XdsToD2PropertiesAdaptor is null. Skipping emitting events.");
         return;
       }
 
@@ -482,7 +486,7 @@ public class XdsToD2PropertiesAdaptor
       long initialFetchDurationMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - _initFetchStart);
       if (initialFetchDurationMillis < 0)
       {
-        _log.warn("Failed to log ServiceDiscoveryStatusInitialRequest event, initialFetchStartAt time is greater than current time.");
+        LOG.warn("Failed to log ServiceDiscoveryStatusInitialRequest event, initialFetchStartAt time is greater than current time.");
         return;
       }
       // emit service discovery status initial request event for success
@@ -494,7 +498,7 @@ public class XdsToD2PropertiesAdaptor
     {
       if (_eventEmitter == null)
       {
-        _log.info("Service discovery event emitter in XdsToD2PropertiesAdaptor is null. Skipping emitting events.");
+        LOG.info("Service discovery event emitter in XdsToD2PropertiesAdaptor is null. Skipping emitting events.");
         return;
       }
 
