@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- bump minor version
 
 ## [29.48.9] - 2023-12-20
 - No-op proxy detector for xDS gRPC channel builder.
