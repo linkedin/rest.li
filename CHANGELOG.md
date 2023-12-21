@@ -15,7 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.49.0] - 2023-12-21
-- bump minor version
+- Bump minor version due to internal LinkedIn tooling requirement. No functional changes.
 
 ## [29.48.9] - 2023-12-20
 - No-op proxy detector for xDS gRPC channel builder.
