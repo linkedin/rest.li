@@ -541,6 +541,18 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setStartUpExecutorService(ScheduledExecutorService executorService)
+  {
+    _config.startUpExecutorService = executorService;
+    return this;
+  }
+
+  public D2ClientBuilder setIndisStartUpExecutorService(ScheduledExecutorService executorService)
+  {
+    _config.indisStartUpExecutorService = executorService;
+    return this;
+  }
+
   public D2ClientBuilder setDownstreamServicesFetcher(DownstreamServicesFetcher downstreamServicesFetcher)
   {
     _config.downstreamServicesFetcher = downstreamServicesFetcher;
