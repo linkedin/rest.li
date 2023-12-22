@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.49.1] - 2023-12-21
+- Use a separate indis warmup executor service
+
 ## [29.49.0] - 2023-12-21
 - Bump minor version due to internal LinkedIn tooling requirement. No functional changes.
 
@@ -5594,7 +5597,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.49.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.49.1...master
+[29.49.1]: https://github.com/linkedin/rest.li/compare/v29.49.0...v29.49.1
 [29.49.0]: https://github.com/linkedin/rest.li/compare/v29.48.9...v29.49.0
 [29.48.9]: https://github.com/linkedin/rest.li/compare/v29.48.8...v29.48.9
 [29.48.8]: https://github.com/linkedin/rest.li/compare/v29.48.7...v29.48.8
