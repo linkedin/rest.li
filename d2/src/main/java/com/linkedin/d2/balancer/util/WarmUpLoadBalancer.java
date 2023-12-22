@@ -72,6 +72,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
   private final ScheduledExecutorService _executorService;
   private final DownstreamServicesFetcher _downstreamServicesFetcher;
   private final DualReadStateManager _dualReadStateManager;
+  private final boolean _isIndis; // whether warming up for Indis (false means warming up for ZK)
   private volatile boolean _shuttingDown = false;
 
   /**
@@ -86,12 +87,12 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
                             int warmUpTimeoutSeconds, int concurrentRequests)
   {
     this(balancer, serviceWarmupper, executorService, d2FsDirPath, d2ServicePath, downstreamServicesFetcher,
-        warmUpTimeoutSeconds, concurrentRequests, null);
+        warmUpTimeoutSeconds, concurrentRequests, null, false);
   }
 
   public WarmUpLoadBalancer(LoadBalancerWithFacilities balancer, WarmUpService serviceWarmupper, ScheduledExecutorService executorService,
       String d2FsDirPath, String d2ServicePath, DownstreamServicesFetcher downstreamServicesFetcher,
-      int warmUpTimeoutSeconds, int concurrentRequests, DualReadStateManager dualReadStateManager)
+      int warmUpTimeoutSeconds, int concurrentRequests, DualReadStateManager dualReadStateManager, boolean isIndis)
   {
     super(balancer);
     _serviceWarmupper = serviceWarmupper;
@@ -104,6 +105,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
     _outstandingRequests = new ConcurrentLinkedDeque<>();
     _usedServices = new HashSet<>();
     _dualReadStateManager = dualReadStateManager;
+    _isIndis = isIndis;
   }
 
   @Override
@@ -166,30 +168,6 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
           return;
         }
 
-        if (_dualReadStateManager != null)
-        {
-          DualReadModeProvider dualReadModeProvider = _dualReadStateManager.getDualReadModeProvider();
-          serviceNames.forEach(serviceName ->
-          {
-            DualReadModeProvider.DualReadMode dualReadMode = dualReadModeProvider.getDualReadMode(serviceName);
-            _dualReadStateManager.updateService(serviceName, dualReadMode);
-
-            getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
-            {
-              @Override
-              public void onError(Throwable e)
-              {
-                LOG.warn("Failed to warm up dual read mode for service: " + serviceName, e);
-              }
-
-              @Override
-              public void onSuccess(ServiceProperties result)
-              {
-                _dualReadStateManager.updateCluster(result.getClusterName(), dualReadMode);
-              }
-            });
-          });
-        }
         WarmUpTask warmUpTask = new WarmUpTask(serviceNames, timeoutCallback);
 
         // get the min value because it makes no sense have an higher concurrency than the number of request to be made
@@ -242,8 +220,50 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
         return;
       }
 
-      LOG.info("{}/{} Starting to warm up service {}", new Object[]{_requestStartedCount.incrementAndGet(), _serviceNames.size(), serviceName});
+      DualReadModeProvider.DualReadMode dualReadMode = DualReadModeProvider.DualReadMode.OLD_LB_ONLY;
 
+      if (_dualReadStateManager != null)
+      {
+        DualReadModeProvider dualReadModeProvider = _dualReadStateManager.getDualReadModeProvider();
+        dualReadMode = dualReadModeProvider.getDualReadMode(serviceName);
+        _dualReadStateManager.updateService(serviceName, dualReadMode);
+
+        // dual read mode can be fine-tuned per service, check if the specific mode for this service should start
+        // the warm-up. If not, skip this service.
+        if (!isModeToWarmUp(dualReadMode, _isIndis))
+        {
+          return;
+        }
+      }
+
+      LOG.info("{}/{} Starting to warm up service {}", _requestStartedCount.incrementAndGet(), _serviceNames.size(),
+          serviceName);
+
+      // warm up dual read mode for the service and its belonging cluster. This is needed so that when the actual data
+      // of service/cluster/uri is received, they can be reported to dual read monitoring under dual read mode.
+      // NOTE: this will actually fetch the service data SYNCHRONOUSLY.
+      if (_dualReadStateManager != null)
+      {
+        DualReadModeProvider.DualReadMode finalDualReadMode = dualReadMode;
+        // NOTE: this call blocks!
+        getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
+        {
+          @Override
+          public void onError(Throwable e)
+          {
+            LOG.warn("Failed to warm up dual read mode for service: {}", serviceName, e);
+          }
+
+          @Override
+          public void onSuccess(ServiceProperties result)
+          {
+            _dualReadStateManager.updateCluster(result.getClusterName(), finalDualReadMode);
+          }
+        });
+      }
+
+      // for services that have warmed up dual read mode above, their service data will be stored in event bus already,
+      // so warming up the service data will complete instantly.
       _serviceWarmupper.warmUpService(serviceName, new Callback<None>()
       {
         private void executeNextTask()
@@ -274,6 +294,13 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
         }
       });
     }
+  }
+
+  private static boolean isModeToWarmUp(DualReadModeProvider.DualReadMode mode, boolean isIndis)
+  {
+    return mode == DualReadModeProvider.DualReadMode.DUAL_READ
+        || mode == (isIndis ?
+        DualReadModeProvider.DualReadMode.NEW_LB_ONLY : DualReadModeProvider.DualReadMode.OLD_LB_ONLY);
   }
 
   @Override

@@ -96,8 +96,10 @@ public class D2ClientConfig
   int retryAggregatedIntervalNum = RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM;
   public boolean warmUp = true;
   public int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
+  public int indisWarmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
   int zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
   public int warmUpConcurrentRequests = WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS;
+  public int indisWarmUpConcurrentRequests = WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS;
   public DownstreamServicesFetcher downstreamServicesFetcher = null;
   public DownstreamServicesFetcher indisDownstreamServicesFetcher = null;
   boolean backupRequestsEnabled = true;
@@ -168,7 +170,9 @@ public class D2ClientConfig
                  int retryAggregatedIntervalNum,
                  boolean warmUp,
                  int warmUpTimeoutSeconds,
+                 int indisWarmUpTimeoutSeconds,
                  int warmUpConcurrentRequests,
+                 int indisWarmUpConcurrentRequests,
                  DownstreamServicesFetcher downstreamServicesFetcher,
                  DownstreamServicesFetcher indisDownstreamServicesFetcher,
                  boolean backupRequestsEnabled,
@@ -235,7 +239,9 @@ public class D2ClientConfig
     this.retryAggregatedIntervalNum = retryAggregatedIntervalNum;
     this.warmUp = warmUp;
     this.warmUpTimeoutSeconds = warmUpTimeoutSeconds;
+    this.indisWarmUpTimeoutSeconds = indisWarmUpTimeoutSeconds;
     this.warmUpConcurrentRequests = warmUpConcurrentRequests;
+    this.indisWarmUpConcurrentRequests = indisWarmUpConcurrentRequests;
     this.downstreamServicesFetcher = downstreamServicesFetcher;
     this.indisDownstreamServicesFetcher = indisDownstreamServicesFetcher;
     this.backupRequestsEnabled = backupRequestsEnabled;

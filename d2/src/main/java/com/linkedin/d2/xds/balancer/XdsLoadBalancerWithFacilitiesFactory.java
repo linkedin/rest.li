@@ -73,7 +73,7 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
     {
       balancer = new WarmUpLoadBalancer(balancer, xdsLoadBalancer, config.indisStartUpExecutorService, config.indisFsBasePath,
           config.d2ServicePath, config.indisDownstreamServicesFetcher, config.warmUpTimeoutSeconds,
-          config.warmUpConcurrentRequests, config.dualReadStateManager);
+          config.warmUpConcurrentRequests, config.dualReadStateManager, true);
     }
 
     return balancer;

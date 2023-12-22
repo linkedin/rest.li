@@ -178,7 +178,9 @@ public class D2ClientBuilder
                   _config.retryAggregatedIntervalNum,
                   _config.warmUp,
                   _config.warmUpTimeoutSeconds,
+                  _config.indisWarmUpTimeoutSeconds,
                   _config.warmUpConcurrentRequests,
+                  _config.indisWarmUpConcurrentRequests,
                   _config.downstreamServicesFetcher,
                   _config.indisDownstreamServicesFetcher,
                   _config.backupRequestsEnabled,
@@ -526,18 +528,33 @@ public class D2ClientBuilder
     return this;
   }
 
-  public D2ClientBuilder setWarmUpTimeoutSeconds(int warmUpTimeoutSeconds){
+  public D2ClientBuilder setWarmUpTimeoutSeconds(int warmUpTimeoutSeconds)
+  {
     _config.warmUpTimeoutSeconds = warmUpTimeoutSeconds;
     return this;
   }
 
-  public D2ClientBuilder setZookeeperReadWindowMs(int zookeeperReadWindowMs){
+  public D2ClientBuilder setIndisWarmUpTimeoutSeconds(int indisWarmUpTimeoutSeconds)
+  {
+    _config.indisWarmUpTimeoutSeconds = indisWarmUpTimeoutSeconds;
+    return this;
+  }
+
+  public D2ClientBuilder setZookeeperReadWindowMs(int zookeeperReadWindowMs)
+  {
     _config.zookeeperReadWindowMs = zookeeperReadWindowMs;
     return this;
   }
 
-  public D2ClientBuilder setWarmUpConcurrentRequests(int warmUpConcurrentRequests){
+  public D2ClientBuilder setWarmUpConcurrentRequests(int warmUpConcurrentRequests)
+  {
     _config.warmUpConcurrentRequests = warmUpConcurrentRequests;
+    return this;
+  }
+
+  public D2ClientBuilder setIndisWarmUpConcurrentRequests(int indisWarmUpConcurrentRequests)
+  {
+    _config.indisWarmUpConcurrentRequests = indisWarmUpConcurrentRequests;
     return this;
   }
 

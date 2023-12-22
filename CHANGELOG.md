@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Make warm-up to respect dual read mode, and separate warmup configs for indis.
+
 ## [29.49.3] - 2024-01-03
 - Fix rate limiter for dual-read mode switch
 
