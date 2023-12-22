@@ -104,6 +104,13 @@ public class D2ClientBuilder
       executorsToShutDown.add(_config.startUpExecutorService);
     }
 
+    if (_config.indisStartUpExecutorService == null)
+    {
+      _config.indisStartUpExecutorService =
+          Executors.newScheduledThreadPool(0, new NamedThreadFactory("INDIS D2 StartupOnlyExecutor"));
+      executorsToShutDown.add(_config.indisStartUpExecutorService);
+    }
+
     if (_config._executorService == null)
     {
       LOG.warn("No executor service passed as argument. Pass it for " +
@@ -189,6 +196,7 @@ public class D2ClientBuilder
                   _config.sslSessionValidatorFactory,
                   _config.zkConnectionToUseForLB,
                   _config.startUpExecutorService,
+                  _config.indisStartUpExecutorService,
                   _config.jmxManager,
                   _config.d2JmxManagerPrefix,
                   _config.zookeeperReadWindowMs,

@@ -114,6 +114,7 @@ public class D2ClientConfig
   public SslSessionValidatorFactory sslSessionValidatorFactory = null;
   ZKPersistentConnection zkConnectionToUseForLB = null;
   public ScheduledExecutorService startUpExecutorService = null;
+  public ScheduledExecutorService indisStartUpExecutorService = null;
   public JmxManager jmxManager = new NoOpJmxManager();
   public String d2JmxManagerPrefix = "UnknownPrefix";
   boolean enableRelativeLoadBalancer = false;
@@ -185,6 +186,7 @@ public class D2ClientConfig
                  SslSessionValidatorFactory sslSessionValidatorFactory,
                  ZKPersistentConnection zkConnection,
                  ScheduledExecutorService startUpExecutorService,
+                 ScheduledExecutorService indisStartUpExecutorService,
                  JmxManager jmxManager,
                  String d2JmxManagerPrefix,
                  int zookeeperReadWindowMs,
@@ -251,6 +253,7 @@ public class D2ClientConfig
     this.sslSessionValidatorFactory = sslSessionValidatorFactory;
     this.zkConnectionToUseForLB = zkConnection;
     this.startUpExecutorService = startUpExecutorService;
+    this.indisStartUpExecutorService = indisStartUpExecutorService;
     this.jmxManager = jmxManager;
     this.d2JmxManagerPrefix = d2JmxManagerPrefix;
     this.zookeeperReadWindowMs = zookeeperReadWindowMs;
