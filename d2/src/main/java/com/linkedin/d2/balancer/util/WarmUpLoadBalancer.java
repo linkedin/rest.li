@@ -42,6 +42,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +76,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
   private final boolean _isIndis; // whether warming up for Indis (false means warming up for ZK)
   private final String _printName; // name of this warmup load balancer based on it's indis or not.
   private volatile boolean _shuttingDown = false;
+  private long _allWarmUpStartTime;
 
   /**
    * Since the list might from the fetcher might not be complete (new behavior, old data, etc..), and the user might
@@ -139,6 +141,8 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
    */
   private void warmUpServices(Callback<None> startUpCallback)
   {
+    _allWarmUpStartTime = SystemClock.instance().currentTimeMillis();
+
     Callback<None> timeoutCallback = new TimeoutCallback<>(_executorService, _warmUpTimeoutSeconds, TimeUnit.SECONDS, new Callback<None>()
     {
       @Override
@@ -165,11 +169,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
         LOG.info("{} Trying to warmup {} services: [{}]",
             _printName, serviceNames.size(), String.join(", ", serviceNames));
 
-        if (serviceNames.size() == 0)
-        {
-          timeoutCallback.onSuccess(None.none());
-          return;
-        }
+        List<String> servicesToWarmup = serviceNames;
 
         if (_dualReadStateManager != null)
         {
@@ -177,20 +177,21 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
           // data of service/cluster/uri (in the WarmUpTask below), so that when the actual data is received, they can
           // be reported to dual read monitoring under dual read mode.
           DualReadModeProvider dualReadModeProvider = _dualReadStateManager.getDualReadModeProvider();
-          serviceNames.forEach(serviceName ->
-          {
+          servicesToWarmup = serviceNames.stream().filter(serviceName -> {
             DualReadModeProvider.DualReadMode dualReadMode = dualReadModeProvider.getDualReadMode(serviceName);
             _dualReadStateManager.updateService(serviceName, dualReadMode);
 
-            // dual read mode can be fine-tuned per service, check if the specific mode for this service should start
-            // the warm-up. If not, skip this service.
-            if (!isModeToWarmUp(dualReadMode, _isIndis))
+            boolean res = isModeToWarmUp(dualReadMode, _isIndis);
+            if (!res)
             {
               LOG.info("{} is skipping service: {} based on its dual read mode: {}",
                   _printName, serviceName, dualReadMode);
-              return;
             }
+            return res;
+          }).collect(Collectors.toList());
 
+          servicesToWarmup.forEach(serviceName ->
+          {
             // To warm up the cluster dual read mode, we need to fetch the service data to know its belonging cluster.
             // Submit the task to executor that fetches the service data SYNCHRONOUSLY. NOTE that this requires the
             // warmup executor to be single-threaded, so that all dual read mode can be fetched before any WarmUpTask
@@ -210,18 +211,25 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
                   @Override
                   public void onSuccess(ServiceProperties result)
                   {
-                    _dualReadStateManager.updateCluster(result.getClusterName(), dualReadMode);
+                    _dualReadStateManager.updateCluster(result.getClusterName(),
+                        _dualReadStateManager.getServiceDualReadMode(result.getServiceName()));
                   }
                 })
             );
           });
         }
 
+        if (servicesToWarmup.isEmpty())
+        {
+          timeoutCallback.onSuccess(None.none());
+          return;
+        }
+
         // the WarmUpTask fetches the cluster and uri data, since the service data is already fetched
-        WarmUpTask warmUpTask = new WarmUpTask(serviceNames, timeoutCallback);
+        WarmUpTask warmUpTask = new WarmUpTask(servicesToWarmup, timeoutCallback);
 
         // get the min value because it makes no sense have an higher concurrency than the number of request to be made
-        int concurrentRequests = Math.min(serviceNames.size(), _concurrentRequests);
+        int concurrentRequests = Math.min(servicesToWarmup.size(), _concurrentRequests);
         IntStream.range(0, concurrentRequests)
           .forEach(i -> _outstandingRequests.add(_executorService.submit(warmUpTask::execute)));
       }
@@ -281,6 +289,8 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
         {
           if (_requestCompletedCount.incrementAndGet() == _serviceNames.size())
           {
+            LOG.info("{} completed warming up {} services in {}ms",
+                _printName, _serviceNames.size(), SystemClock.instance().currentTimeMillis() - _allWarmUpStartTime);
             _callback.onSuccess(None.none());
             _outstandingRequests.clear();
             return;
