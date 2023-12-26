@@ -149,6 +149,8 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
       public void onError(Throwable e)
       {
         LOG.info("{} hit timeout, continuing startup. The WarmUp will continue in background", _printName, e);
+        long now = SystemClock.instance().currentTimeMillis();
+        LOG.info("{} hit timeout at timestamp: {}, {}s since all warmup start time.", _printName, now, (now - _allWarmUpStartTime) / 1000);
         startUpCallback.onSuccess(None.none());
       }
 
@@ -178,6 +180,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
           // be reported to dual read monitoring under dual read mode.
           DualReadModeProvider dualReadModeProvider = _dualReadStateManager.getDualReadModeProvider();
           servicesToWarmup = serviceNames.stream().filter(serviceName -> {
+            LOG.info("{} fetching dual read mode for service: {}", _printName, serviceName);
             DualReadModeProvider.DualReadMode dualReadMode = dualReadModeProvider.getDualReadMode(serviceName);
             _dualReadStateManager.updateService(serviceName, dualReadMode);
 
@@ -199,8 +202,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
             // If the timeout passed, the executor will complete fetching the current service and execute the timeout
             // callback.
             _executorService.execute(() -> {
-              LOG.info("{} fetching dual read mode and service data for service: {}",
-                  _printName, serviceName);
+              LOG.info("{} fetching service data for service: {}", _printName, serviceName);
 
               // NOTE: This call blocks!
               getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
