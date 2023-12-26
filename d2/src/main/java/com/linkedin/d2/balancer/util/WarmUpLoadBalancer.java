@@ -198,24 +198,27 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
             // is executed.
             // If the timeout passed, the executor will complete fetching the current service and execute the timeout
             // callback.
-            _executorService.execute(() ->
-                // NOTE: This call blocks!
-                getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
-                {
-                  @Override
-                  public void onError(Throwable e)
-                  {
-                    LOG.warn("{} failed to warm up dual read mode for service: {}", _printName, serviceName, e);
-                  }
+            _executorService.execute(() -> {
+              LOG.info("{} fetching dual read mode and service data for service: {}",
+                  _printName, serviceName);
 
-                  @Override
-                  public void onSuccess(ServiceProperties result)
-                  {
-                    _dualReadStateManager.updateCluster(result.getClusterName(),
-                        _dualReadStateManager.getServiceDualReadMode(result.getServiceName()));
-                  }
-                })
-            );
+              // NOTE: This call blocks!
+              getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
+              {
+                @Override
+                public void onError(Throwable e)
+                {
+                  LOG.warn("{} failed to warm up dual read mode for service: {}", _printName, serviceName, e);
+                }
+
+                @Override
+                public void onSuccess(ServiceProperties result)
+                {
+                  _dualReadStateManager.updateCluster(result.getClusterName(),
+                      _dualReadStateManager.getServiceDualReadMode(result.getServiceName()));
+                }
+              });
+            });
           });
         }
 
@@ -309,7 +312,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator
         @Override
         public void onSuccess(None result)
         {
-          LOG.info("{} service {} warmed up in {}ms, completed {}/{}",
+          LOG.info("{} completed warming up service {} in {}ms, completed {}/{}",
               _printName, serviceName, SystemClock.instance().currentTimeMillis() - startTime,
               _requestCompletedCount.get() + 1, _serviceNames.size());
           executeNextTask();
