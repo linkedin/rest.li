@@ -97,15 +97,15 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
     // Prefetch the global dual read mode
     DualReadModeProvider.DualReadMode mode = _dualReadStateManager.getGlobalDualReadMode();
 
-    _newLb.start(getStartUpCallback(true,
-        null //mode == DualReadModeProvider.DualReadMode.NEW_LB_ONLY ? callback : null
+    // if in new-lb-only mode, new lb needs to start successfully to call the callback. Otherwise, the old lb does.
+    // Use a separate executor service to start the new lb, so both lbs can start concurrently.
+    _newLbExecutor.execute(() -> _newLb.start(getStartUpCallback(true,
+        mode == DualReadModeProvider.DualReadMode.NEW_LB_ONLY ? callback : null)
     ));
 
-    // Call back will succeed as long as the old balancer is successfully started. New load balancer failure
-    // won't block application start up.
     _oldLb.start(getStartUpCallback(false,
-        callback //mode == DualReadModeProvider.DualReadMode.NEW_LB_ONLY ? null : callback
-        ));
+        mode == DualReadModeProvider.DualReadMode.NEW_LB_ONLY ? null : callback
+    ));
   }
 
   private Callback<None> getStartUpCallback(boolean isForNewLb, Callback<None> callback)
