@@ -77,7 +77,6 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
   private final String _printName; // name of this warmup load balancer based on it's indis or not.
   private volatile boolean _shuttingDown = false;
   private long _allStartTime;
-  private Future<?> _prepareTaskFuture = null;
   private List<String> _servicesToWarmUp = null;
 
   /**
@@ -125,10 +124,10 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
       public void onSuccess(None result) {
         _allStartTime = SystemClock.instance().currentTimeMillis();
 
-        _prepareTaskFuture = _executorService.submit(() -> prepareWarmUp());
+        Future<?> prepareTaskFuture = _executorService.submit(() -> prepareWarmUp());
         try
         {
-          _prepareTaskFuture.get(_warmUpTimeoutSeconds, TimeUnit.SECONDS);
+          prepareTaskFuture.get(_warmUpTimeoutSeconds, TimeUnit.SECONDS);
         }
         catch (TimeoutException e)
         {

@@ -20,6 +20,8 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.dualread.DualReadModeProvider;
+import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetcher;
 import com.linkedin.r2.message.RequestContext;
@@ -35,10 +37,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import static com.linkedin.d2.balancer.dualread.DualReadModeProvider.DualReadMode.*;
+import static org.mockito.Mockito.*;
 
 
 public class WarmUpLoadBalancerTest
@@ -54,6 +61,7 @@ public class WarmUpLoadBalancerTest
   );
 
   private static final List<String> VALID_AND_UNVALID_FILES = new ArrayList<>();
+  private static final int DEFAULT_DEVIATION = 100; // ms
   private FSBasedDownstreamServicesFetcher _FSBasedDownstreamServicesFetcher;
 
   static
@@ -63,6 +71,40 @@ public class WarmUpLoadBalancerTest
   }
 
   private File _tmpdir;
+  private DualReadModeProvider _dualReadModeProvider;
+  private DualReadStateManager _dualReadStateManager;
+
+  @BeforeMethod
+  public void beforeTest() throws IOException
+  {
+    _tmpdir = LoadBalancerUtil.createTempDirectory("d2FileStore");
+    _FSBasedDownstreamServicesFetcher = new FSBasedDownstreamServicesFetcher(_tmpdir.getAbsolutePath(), MY_SERVICES_FS);
+
+    _dualReadModeProvider = Mockito.mock(DualReadModeProvider.class);
+    _dualReadStateManager = Mockito.mock(DualReadStateManager.class);
+    when(_dualReadStateManager.getDualReadModeProvider()).thenReturn(_dualReadModeProvider);
+    doNothing().when(_dualReadStateManager).updateService(any(), any());
+    doNothing().when(_dualReadStateManager).updateCluster(any(), any());
+  }
+
+  private void setDualReadMode(DualReadModeProvider.DualReadMode mode)
+  {
+    when(_dualReadModeProvider.getDualReadMode(any())).thenReturn(mode);
+    when(_dualReadStateManager.getServiceDualReadMode(any())).thenReturn(mode);
+  }
+
+  @AfterMethod
+  public void afterTest() throws IOException
+  {
+    if (_tmpdir != null)
+    {
+      rmrf(_tmpdir);
+      _tmpdir = null;
+    }
+
+    _dualReadModeProvider = null;
+    _dualReadStateManager = null;
+  }
 
   @Test(timeOut = 10000)
   public void testMakingWarmUpRequests() throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
@@ -78,7 +120,7 @@ public class WarmUpLoadBalancerTest
 
     FutureCallback<None> callback = new FutureCallback<>();
     warmUpLoadBalancer.start(callback);
-    callback.get(5000, TimeUnit.MILLISECONDS);
+    callback.get(50, TimeUnit.MILLISECONDS); // 3 services should take at most 3 * 10ms
 
     Assert.assertEquals(VALID_FILES.size(), requestCount.get());
   }
@@ -316,22 +358,124 @@ public class WarmUpLoadBalancerTest
       "Expected # of requests between " + expectedRequests + " +/-" + deviation + ", found:" + requestCount.get());
   }
 
-
-  @BeforeMethod
-  public void createTempdir() throws IOException
+  @DataProvider // to test dual read modes under which the specific type of warmup load balancer should do warmup
+  public Object[][] modesToWarmUpDataProvider()
   {
-    _tmpdir = LoadBalancerUtil.createTempDirectory("d2FileStore");
-    _FSBasedDownstreamServicesFetcher = new FSBasedDownstreamServicesFetcher(_tmpdir.getAbsolutePath(), MY_SERVICES_FS);
+    return new Object[][]
+        {// @params: {dual read mode, isIndis}
+            {NEW_LB_ONLY, true},
+            {OLD_LB_ONLY, false},
+            // under dual read mode, both INDIS and ZK warmup should do warmup
+            {DUAL_READ, true},
+            {DUAL_READ, false}
+        };
   }
 
-  @AfterMethod
-  public void removeTempdir() throws IOException
+  @Test(dataProvider = "modesToWarmUpDataProvider")
+  public void testSuccessWithDualRead(DualReadModeProvider.DualReadMode mode, Boolean isIndis)
+      throws InterruptedException, ExecutionException, TimeoutException
   {
-    if (_tmpdir != null)
-    {
-      rmrf(_tmpdir);
-      _tmpdir = null;
-    }
+    int warmUpTimeout = 3;
+    createDefaultServicesIniFiles();
+    setDualReadMode(mode);
+
+    // 3 dual read fetches take 1.5s, 3 warmups take at most 3 * (500 +/- 10) ms
+    TestLoadBalancer balancer = new TestLoadBalancer(500, 500);
+    AtomicInteger completedWarmUpCount = balancer.getCompletedRequestCount();
+    LoadBalancer warmUpLb = new WarmUpLoadBalancer(balancer, balancer, Executors.newSingleThreadScheduledExecutor(),
+        _tmpdir.getAbsolutePath(), MY_SERVICES_FS, _FSBasedDownstreamServicesFetcher, warmUpTimeout,
+        WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS, _dualReadStateManager, isIndis);
+
+    FutureCallback<None> callback = new FutureCallback<>();
+    warmUpLb.start(callback);
+
+    callback.get(warmUpTimeout * 1000 + DEFAULT_DEVIATION, TimeUnit.MILLISECONDS);
+    // all dual read (service data) fetched
+    verify(_dualReadStateManager, times(VALID_FILES.size())).updateCluster(any(), any());
+    // all warmups completed
+    Assert.assertEquals(completedWarmUpCount.get(), VALID_FILES.size());
+  }
+
+  @Test(dataProvider = "modesToWarmUpDataProvider")
+  public void testDualReadHitTimeout(DualReadModeProvider.DualReadMode mode, Boolean isIndis)
+      throws InterruptedException, ExecutionException, TimeoutException
+  {
+    int warmUpTimeout = 1;
+    createDefaultServicesIniFiles();
+    setDualReadMode(mode);
+
+    // 3 dual read fetches take 1.5s
+    TestLoadBalancer balancer = new TestLoadBalancer(0, 500);
+    AtomicInteger completedWarmUpCount = balancer.getCompletedRequestCount();
+    LoadBalancer warmUpLb = new WarmUpLoadBalancer(balancer, balancer, Executors.newSingleThreadScheduledExecutor(),
+        _tmpdir.getAbsolutePath(), MY_SERVICES_FS, _FSBasedDownstreamServicesFetcher, warmUpTimeout,
+        WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS, _dualReadStateManager, isIndis);
+
+    FutureCallback<None> callback = new FutureCallback<>();
+    warmUpLb.start(callback);
+
+    callback.get(warmUpTimeout * 1000 + DEFAULT_DEVIATION, TimeUnit.MILLISECONDS);
+    // verify that at most 2 service data were fetched within the timeout
+    verify(_dualReadStateManager, atMost(2)).updateCluster(any(), any());
+    // warmups are not started
+    Assert.assertEquals(completedWarmUpCount.get(), 0);
+  }
+
+  @Test(dataProvider = "modesToWarmUpDataProvider")
+  public void testDualReadCompleteWarmUpHitTimeout(DualReadModeProvider.DualReadMode mode, Boolean isIndis)
+      throws InterruptedException, ExecutionException, TimeoutException
+  {
+    int warmUpTimeout = 2;
+    createDefaultServicesIniFiles();
+    setDualReadMode(mode);
+
+    // 3 dual read fetches take 1.5s, 3 warmups take 3 * (500 +/- 10) ms
+    TestLoadBalancer balancer = new TestLoadBalancer(500, 500);
+    AtomicInteger completedWarmUpCount = balancer.getCompletedRequestCount();
+    LoadBalancer warmUpLb = new WarmUpLoadBalancer(balancer, balancer, Executors.newSingleThreadScheduledExecutor(),
+        _tmpdir.getAbsolutePath(), MY_SERVICES_FS, _FSBasedDownstreamServicesFetcher, warmUpTimeout,
+        WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS, _dualReadStateManager, isIndis);
+
+    FutureCallback<None> callback = new FutureCallback<>();
+    warmUpLb.start(callback);
+
+    callback.get(warmUpTimeout * 1000 + DEFAULT_DEVIATION, TimeUnit.MILLISECONDS);
+    // verify dual read (service data) are all fetched
+    verify(_dualReadStateManager, times(VALID_FILES.size())).updateCluster(any(), any());
+    // only partial warmups completed
+    Assert.assertTrue(completedWarmUpCount.get() < VALID_FILES.size());
+  }
+
+  @DataProvider // to test dual read modes under which the specific type of warmup load balancer should skip warmup
+  public Object[][] modesToSkipDataProvider()
+  {
+    return new Object[][]
+        { // @params: {dual read mode, isIndis}
+            {NEW_LB_ONLY, false},
+            {OLD_LB_ONLY, true}
+        };
+  }
+  @Test(dataProvider = "modesToSkipDataProvider")
+  public void testSkipWarmup(DualReadModeProvider.DualReadMode mode, Boolean isIndis)
+      throws ExecutionException, InterruptedException, TimeoutException {
+    int warmUpTimeout = 1;
+    createDefaultServicesIniFiles();
+    setDualReadMode(mode);
+
+    TestLoadBalancer balancer = new TestLoadBalancer(0, 0);
+    AtomicInteger completedWarmUpCount = balancer.getCompletedRequestCount();
+    LoadBalancer warmUpLb = new WarmUpLoadBalancer(balancer, balancer, Executors.newSingleThreadScheduledExecutor(),
+        _tmpdir.getAbsolutePath(), MY_SERVICES_FS, _FSBasedDownstreamServicesFetcher, warmUpTimeout,
+        WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS, _dualReadStateManager, isIndis);
+
+    FutureCallback<None> callback = new FutureCallback<>();
+    warmUpLb.start(callback);
+
+    callback.get(DEFAULT_DEVIATION, TimeUnit.MILLISECONDS); // skipping warmup should call back nearly immediately
+    // no service data fetched
+    verify(_dualReadStateManager, never()).updateCluster(any(), any());
+    // warmups are not started
+    Assert.assertEquals(completedWarmUpCount.get(), 0);
   }
 
   // ############################# Util Section #############################
