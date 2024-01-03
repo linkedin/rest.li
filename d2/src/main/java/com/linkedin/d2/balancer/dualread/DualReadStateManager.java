@@ -51,6 +51,7 @@ public class DualReadStateManager
   private final DualReadModeProvider _dualReadModeProvider;
   private final ScheduledExecutorService _executorService;
   private final RateLimiter _rateLimiter;
+  private final ConcurrentMap<String, RateLimiter> _serviceToRateLimiterMap;
   // Stores global dual read mode
   private volatile DualReadModeProvider.DualReadMode _dualReadMode = DualReadModeProvider.DualReadMode.OLD_LB_ONLY;
   private final Set<DualReadModeWatcher> _globalDualReadModeWatchers;
@@ -79,6 +80,7 @@ public class DualReadStateManager
     _dualReadModeProvider = dualReadModeProvider;
     _executorService = executorService;
     _rateLimiter = RateLimiter.create((double) 1 / DUAL_READ_MODE_SWITCH_MIN_INTERVAL);
+    _serviceToRateLimiterMap = new ConcurrentHashMap<>();
     _globalDualReadModeWatchers = ConcurrentHashMap.newKeySet();
     _serviceDualReadModeWatchers = new ConcurrentHashMap<>();
     _clusterDualReadModeWatchers = new ConcurrentHashMap<>();
@@ -191,15 +193,21 @@ public class DualReadStateManager
 
     _executorService.execute(() ->
     {
-      boolean shouldCheck = _rateLimiter.tryAcquire();
-      if (shouldCheck)
+      if (d2ServiceName == null)
       {
-        // Check and switch global dual read mode
-        updateGlobal(_dualReadModeProvider.getDualReadMode());
-
-        // Check and switch service-level dual read mode
-        if (d2ServiceName != null)
+        if (_rateLimiter.tryAcquire())
         {
+          // Check and switch global dual read mode
+          updateGlobal(_dualReadModeProvider.getDualReadMode());
+        }
+      }
+      else
+      {
+        RateLimiter serviceRateLimiter = _serviceToRateLimiterMap.computeIfAbsent(d2ServiceName,
+            key -> RateLimiter.create((double) 1 / DUAL_READ_MODE_SWITCH_MIN_INTERVAL));
+        if (serviceRateLimiter.tryAcquire())
+        {
+          // Check and switch service-level dual read mode
           updateService(d2ServiceName, _dualReadModeProvider.getDualReadMode(d2ServiceName));
         }
       }
