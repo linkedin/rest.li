@@ -375,11 +375,11 @@ public class WarmUpLoadBalancerTest
   public void testSuccessWithDualRead(DualReadModeProvider.DualReadMode mode, Boolean isIndis)
       throws InterruptedException, ExecutionException, TimeoutException
   {
-    int warmUpTimeout = 3;
+    int warmUpTimeout = 4;
     createDefaultServicesIniFiles();
     setDualReadMode(mode);
 
-    // 3 dual read fetches take 1.5s, 3 warmups take at most 3 * (500 +/- 10) ms
+    // 3 dual read fetches take 1.5s, 3 warmups take at most 3 * (500 +/- 10) ms. Total at most is 3030 ms.
     TestLoadBalancer balancer = new TestLoadBalancer(500, 500);
     AtomicInteger completedWarmUpCount = balancer.getCompletedRequestCount();
     LoadBalancer warmUpLb = new WarmUpLoadBalancer(balancer, balancer, Executors.newSingleThreadScheduledExecutor(),
