@@ -111,8 +111,9 @@ public class TestXdsToD2PropertiesAdaptor {
         (XdsClient.NodeResourceWatcher) fixture._clusterWatcherArgumentCaptor.getValue();
     clusterNodeWatcher.onChanged(getClusterNodeUpdate(PRIMARY_CLUSTER_NAME));
 
-    // verify cluster data is published under symlink name
+    // verify cluster data is published under symlink name and actual cluster name
     verify(fixture._clusterEventBus).publishInitialize(SYMLINK_NAME, PRIMARY_CLUSTER_PROPERTIES);
+    verify(fixture._clusterEventBus).publishInitialize(PRIMARY_CLUSTER_NAME, PRIMARY_CLUSTER_PROPERTIES);
 
     // test update symlink to a new primary cluster
     String primaryClusterResourceName2 = CLUSTER_NODE_PREFIX + PRIMARY_CLUSTER_NAME_2;
@@ -130,8 +131,8 @@ public class TestXdsToD2PropertiesAdaptor {
     clusterNodeWatcher.onChanged(getClusterNodeUpdate(PRIMARY_CLUSTER_NAME_2));
 
     verify(fixture._clusterEventBus).publishInitialize(PRIMARY_CLUSTER_NAME, primaryClusterProperties2);
-    verify(fixture._clusterEventBus, times(1)) // verify symlink is published just once
-        .publishInitialize(SYMLINK_NAME, primaryClusterProperties2);
+    // verify symlink is published just once
+    verify(fixture._clusterEventBus).publishInitialize(SYMLINK_NAME, primaryClusterProperties2);
   }
 
   @Test
@@ -158,7 +159,7 @@ public class TestXdsToD2PropertiesAdaptor {
         (XdsClient.SymlinkNodeResourceWatcher) fixture._clusterWatcherArgumentCaptor.getValue();
     symlinkNodeWatcher.onChanged(URI_SYMLINK_RESOURCE_NAME, getSymlinkNodeUpdate(PRIMARY_URI_RESOURCE_NAME));
 
-    // verify actual cluster is watched
+    // verify actual cluster of the uris is watched
     verify(fixture._xdsClient).watchXdsResource(eq(PRIMARY_URI_RESOURCE_NAME), eq(XdsClient.ResourceType.D2_URI_MAP), any());
 
     // update uri data
@@ -166,9 +167,10 @@ public class TestXdsToD2PropertiesAdaptor {
         (XdsClient.D2URIMapResourceWatcher) fixture._uriWatcherArgumentCaptor.getValue();
     watcher.onChanged(DUMMY_NODE_MAP_UPDATE);
 
-    // verify uri data is merged and published under symlink name
-    UriProperties uriProps = new UriProperties(SYMLINK_NAME, Collections.emptyMap(), Collections.emptyMap());
-    verify(fixture._uriEventBus).publishInitialize(SYMLINK_NAME, uriProps);
+    // verify uri data is merged and published under symlink name and the actual cluster name
+    UriProperties uriProps = getDefaultUriProperties(PRIMARY_CLUSTER_NAME);
+    verify(fixture._uriEventBus).publishInitialize(SYMLINK_NAME, getDefaultUriProperties(SYMLINK_NAME));
+    verify(fixture._uriEventBus).publishInitialize(PRIMARY_CLUSTER_NAME, uriProps);
 
     // test update symlink to a new primary cluster
     String primaryUriResourceName2 = URI_NODE_PREFIX + PRIMARY_CLUSTER_NAME_2;
@@ -244,23 +246,35 @@ public class TestXdsToD2PropertiesAdaptor {
   private void verifyClusterNodeUpdate(XdsToD2PropertiesAdaptorFixture fixture, String clusterName, String symlinkName,
       ClusterStoreProperties expectedPublishProp)
   {
-    String publishName = symlinkName != null ? symlinkName : clusterName;
     XdsClient.NodeResourceWatcher watcher = (XdsClient.NodeResourceWatcher)
         fixture._clusterWatcherArgumentCaptor.getValue();
     watcher.onChanged(getClusterNodeUpdate(clusterName));
-    verify(fixture._clusterEventBus).publishInitialize(publishName, expectedPublishProp);
+    verify(fixture._clusterEventBus).publishInitialize(clusterName, expectedPublishProp);
+    if (symlinkName != null)
+    {
+      verify(fixture._clusterEventBus).publishInitialize(symlinkName, expectedPublishProp);
+    }
   }
 
   private void verifyUriUpdate(XdsToD2PropertiesAdaptorFixture fixture, String clusterName, String symlinkName)
-      throws PropertySerializationException {
-    String publishName = symlinkName != null ? symlinkName : clusterName;
-
+      throws PropertySerializationException
+  {
     XdsClient.D2URIMapResourceWatcher watcher = (XdsClient.D2URIMapResourceWatcher)
         fixture._uriWatcherArgumentCaptor.getValue();
     watcher.onChanged(new XdsClient.D2URIMapUpdate("",
         Collections.singletonMap("ltx1-dummyhost123", getD2URI(clusterName))));
-    verify(fixture._uriEventBus).publishInitialize(publishName,
-        new UriPropertiesJsonSerializer().fromProto(getD2URI(publishName)));
+    verify(fixture._uriEventBus).publishInitialize(clusterName,
+        new UriPropertiesJsonSerializer().fromProto(getD2URI(clusterName)));
+    if (symlinkName != null)
+    {
+      verify(fixture._uriEventBus).publishInitialize(symlinkName,
+          new UriPropertiesJsonSerializer().fromProto(getD2URI(symlinkName)));
+    }
+  }
+
+  private UriProperties getDefaultUriProperties(String clusterName)
+  {
+    return new UriProperties(clusterName, Collections.emptyMap(), Collections.emptyMap(), -1);
   }
 
   private static class XdsToD2PropertiesAdaptorFixture

@@ -16,6 +16,9 @@ and what APIs have changed, if applicable.
 ## [29.49.2] - 2024-01-02
 - Fix rate limiter for dual-read mode switch
 
+## [29.49.2] - 2024-01-02
+- add back publish original cluster for symlink cluster
+
 ## [29.49.1] - 2023-12-21
 - Use a separate indis warmup executor service
 
