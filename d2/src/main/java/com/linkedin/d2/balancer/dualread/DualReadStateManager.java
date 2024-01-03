@@ -50,6 +50,7 @@ public class DualReadStateManager
   private final ConcurrentMap<String, DualReadModeProvider.DualReadMode> _clusterDualReadModes;
   private final DualReadModeProvider _dualReadModeProvider;
   private final ScheduledExecutorService _executorService;
+  private final RateLimiter _rateLimiter;
   private final ConcurrentMap<String, RateLimiter> _serviceToRateLimiterMap;
   // Stores global dual read mode
   private volatile DualReadModeProvider.DualReadMode _dualReadMode = DualReadModeProvider.DualReadMode.OLD_LB_ONLY;
@@ -78,6 +79,7 @@ public class DualReadStateManager
     _clusterDualReadModes = new ConcurrentHashMap<>();
     _dualReadModeProvider = dualReadModeProvider;
     _executorService = executorService;
+    _rateLimiter = RateLimiter.create((double) 1 / DUAL_READ_MODE_SWITCH_MIN_INTERVAL);
     _serviceToRateLimiterMap = new ConcurrentHashMap<>();
     _globalDualReadModeWatchers = ConcurrentHashMap.newKeySet();
     _serviceDualReadModeWatchers = new ConcurrentHashMap<>();
@@ -188,23 +190,24 @@ public class DualReadStateManager
       LOG.info("Dual read mode executor is shut down already. Skipping getting the latest dual read mode.");
       return;
     }
-    if (d2ServiceName == null)
-    {
-      return;
-    }
+
     _executorService.execute(() ->
     {
-      RateLimiter serviceRateLimiter = _serviceToRateLimiterMap.computeIfAbsent(d2ServiceName,
-          key -> RateLimiter.create((double) 1 / DUAL_READ_MODE_SWITCH_MIN_INTERVAL));
-      boolean shouldCheck = serviceRateLimiter.tryAcquire();
-      if (shouldCheck)
+      if (d2ServiceName == null)
       {
-        // Check and switch global dual read mode
-        updateGlobal(_dualReadModeProvider.getDualReadMode());
-
-        // Check and switch service-level dual read mode
-        if (d2ServiceName != null)
+        if (_rateLimiter.tryAcquire())
         {
+          // Check and switch global dual read mode
+          updateGlobal(_dualReadModeProvider.getDualReadMode());
+        }
+      }
+      else
+      {
+        RateLimiter serviceRateLimiter = _serviceToRateLimiterMap.computeIfAbsent(d2ServiceName,
+            key -> RateLimiter.create((double) 1 / DUAL_READ_MODE_SWITCH_MIN_INTERVAL));
+        if (serviceRateLimiter.tryAcquire())
+        {
+          // Check and switch service-level dual read mode
           updateService(d2ServiceName, _dualReadModeProvider.getDualReadMode(d2ServiceName));
         }
       }
