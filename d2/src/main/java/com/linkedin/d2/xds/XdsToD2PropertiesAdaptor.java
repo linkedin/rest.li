@@ -251,26 +251,38 @@ public class XdsToD2PropertiesAdaptor
           try
           {
             ClusterProperties clusterProperties = toClusterProperties(update.getNodeData());
-            // For symlink clusters, ClusterLoadBalancerSubscriber subscribed to the symlinks instead of the actual node in event bus,
-            // so we need to publish under the symlink names.
+            // For symlink clusters, ClusterLoadBalancerSubscriber subscribed to the symlinks ($FooClusterMaster) instead of
+            // the original cluster (FooCluster-prod-ltx1) in event bus, so we need to publish under the symlink names.
+            // Also, rarely but possibly, calls can be made directly to the colo-suffixed service (FooService-prod-ltx1) under
+            // the original cluster (FooCluster-prod-ltx1) via curli, hard-coded custom code, etc, so there could be direct
+            // subscribers to the original cluster, thus we need to publish under the original cluster too.
+            //
             // For other clusters, publish under its original name. Note that these clusters could be either:
             // 1) regular clusters requested normally.
             // 2) clusters that were pointed by a symlink previously, but no longer the case after the symlink points to other clusters.
             // For case #2: the symlinkAndActualNode map will no longer has an entry for this cluster (removed in
             // D2SymlinkNodeResourceWatcher::onChanged), thus the updates will be published under the original cluster name
-            // (like "FooCluster-prod-ltx1"), which has no symlink subscribers anyway, so no harm to publish.
-            String publishName = StringUtils.defaultIfEmpty(getSymlink(clusterName), clusterName);
-            _clusterEventBus.publishInitialize(publishName, clusterProperties);
-
-            if (_dualReadStateManager != null)
+            // (like "FooCluster-prod-ltx1") in case there are direct subscribers.
+            String symlinkName = getSymlink(clusterName);
+            if (symlinkName != null)
             {
-              _dualReadStateManager.reportData(publishName, clusterProperties, true);
+              publishClusterData(symlinkName, clusterProperties);
             }
+            publishClusterData(clusterName, clusterProperties);
           }
           catch (PropertySerializationException e)
           {
             LOG.error("Failed to parse D2 cluster properties from xDS update. Cluster name: " + clusterName, e);
           }
+        }
+      }
+
+      private void publishClusterData(String clusterName, ClusterProperties properties)
+      {
+        _clusterEventBus.publishInitialize(clusterName, properties);
+        if (_dualReadStateManager != null)
+        {
+          _dualReadStateManager.reportData(clusterName, properties, true);
         }
       }
 
@@ -433,28 +445,40 @@ public class XdsToD2PropertiesAdaptor
           }
           _currentData = updates;
 
-          // For symlink clusters, UriLoadBalancerSubscriber subscribed to the symlinks instead of the actual node in event bus,
-          // so we need to publish under the symlink names.
+          // For symlink clusters, UriLoadBalancerSubscriber subscribed to the symlinks ($FooClusterMaster) instead of
+          // the original cluster (FooCluster-prod-ltx1) in event bus, so we need to publish under the symlink names.
+          // Also, rarely but possibly, calls can be made directly to the colo-suffixed service (FooService-prod-ltx1) under
+          // the original cluster (FooCluster-prod-ltx1) via curli, hard-coded custom code, etc, so there could be direct
+          // subscribers to the original cluster, thus we need to publish under the original cluster too.
+          //
           // For other clusters, publish under its original name. Note that these clusters could be either:
           // 1) regular clusters requested normally.
           // 2) clusters that were pointed by a symlink previously, but no longer the case after the symlink points to other clusters.
-          // For case #2: the actualResourceToSymlink map will no longer has an entry for this cluster (removed in
+          // For case #2: the symlinkAndActualNode map will no longer has an entry for this cluster (removed in
           // D2SymlinkNodeResourceWatcher::onChanged), thus the updates will be published under the original cluster name
-          // (like "FooCluster-prod-ltx1"), which has no subscribers anyway, so no harm to publish. Yet, we still emit the tracking
-          // events about receiving uri updates of this cluster for measuring update propagation latencies.
-          String publishName = StringUtils.defaultIfEmpty(getSymlink(_clusterName), _clusterName);
-          UriProperties mergedUriProperties = _uriPropertiesMerger.merge(publishName, _currentData.values());
-          _uriEventBus.publishInitialize(publishName, mergedUriProperties);
-
-          if (_dualReadStateManager != null)
+          // (like "FooCluster-prod-ltx1") in case there are direct subscribers.
+          String symlinkName = getSymlink(_clusterName);
+          if (symlinkName != null)
           {
-            _dualReadStateManager.reportData(publishName, mergedUriProperties, true);
+            mergeAndPublishUris(symlinkName); // under symlink name, merge data and publish it
           }
+          mergeAndPublishUris(_clusterName); // under original cluster name, merge data and publish it
         }
         catch (PropertySerializationException e)
         {
           LOG.error("Failed to parse D2 uri properties from xDS update. Cluster name: " + _clusterName, e);
         }
+      }
+    }
+
+    private void mergeAndPublishUris(String clusterName)
+    {
+      UriProperties mergedUriProperties = _uriPropertiesMerger.merge(clusterName, _currentData.values());
+      _uriEventBus.publishInitialize(clusterName, mergedUriProperties);
+
+      if (_dualReadStateManager != null)
+      {
+        _dualReadStateManager.reportData(clusterName, mergedUriProperties, true);
       }
     }
 
