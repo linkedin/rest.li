@@ -188,16 +188,14 @@ public class DualReadStateManager
       LOG.info("Dual read mode executor is shut down already. Skipping getting the latest dual read mode.");
       return;
     }
-
+    if (d2ServiceName == null)
+    {
+      return;
+    }
     _executorService.execute(() ->
     {
-      if(d2ServiceName == null){
-        return;
-      }
-      RateLimiter serviceRateLimiter = _serviceToRateLimiterMap.computeIfAbsent(
-          d2ServiceName,
-          key -> RateLimiter.create((double) 1 / DUAL_READ_MODE_SWITCH_MIN_INTERVAL)
-      );
+      RateLimiter serviceRateLimiter = _serviceToRateLimiterMap.computeIfAbsent(d2ServiceName,
+          key -> RateLimiter.create((double) 1 / DUAL_READ_MODE_SWITCH_MIN_INTERVAL));
       boolean shouldCheck = serviceRateLimiter.tryAcquire();
       if (shouldCheck)
       {
