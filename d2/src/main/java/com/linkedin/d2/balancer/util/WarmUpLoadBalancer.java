@@ -153,7 +153,8 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
 
   private void prepareWarmUp(Callback<None> callback)
   {
-    AtomicBoolean hasTimedOut = new AtomicBoolean(false);
+    // not to be thread-safe, but just to be effectively final to be used in lambdas
+    final AtomicBoolean hasTimedOut = new AtomicBoolean(false);
 
     try {
       _downstreamServicesFetcher.getServiceNames(serviceNames -> {
