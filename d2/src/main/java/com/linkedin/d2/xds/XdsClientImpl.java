@@ -443,19 +443,21 @@ public class XdsClientImpl extends XdsClient
   {
     private final ResourceType _resourceType;
     private final List<Resource> _resources;
+    private final List<String> _removedResources;
     private final String _nonce;
 
-    DiscoveryResponseData(ResourceType resourceType, List<Resource> resources, String nonce)
+    DiscoveryResponseData(ResourceType resourceType, List<Resource> resources, List<String> removedResources, String nonce)
     {
       _resourceType = resourceType;
       _resources = resources;
+      _removedResources = removedResources;
       _nonce = nonce;
     }
 
     static DiscoveryResponseData fromEnvoyProto(DeltaDiscoveryResponse proto)
     {
       return new DiscoveryResponseData(ResourceType.fromTypeUrl(proto.getTypeUrl()), proto.getResourcesList(),
-          proto.getNonce());
+          proto.getRemovedResourcesList(), proto.getNonce());
     }
 
     ResourceType getResourceType()
@@ -466,6 +468,11 @@ public class XdsClientImpl extends XdsClient
     List<Resource> getResourcesList()
     {
       return _resources;
+    }
+
+    List<String> getRemovedResources()
+    {
+      return _removedResources;
     }
 
     String getNonce()
