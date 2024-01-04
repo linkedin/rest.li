@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.49.4] - 2024-01-04
 - Make warm-up to respect dual read mode, and separate warmup configs for indis.
 
 ## [29.49.3] - 2024-01-03
@@ -5604,7 +5606,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.49.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.49.4...master
+[29.49.4]: https://github.com/linkedin/rest.li/compare/v29.49.3...v29.49.4
 [29.49.3]: https://github.com/linkedin/rest.li/compare/v29.49.2...v29.49.3
 [29.49.2]: https://github.com/linkedin/rest.li/compare/v29.49.1...v29.49.2
 [29.49.1]: https://github.com/linkedin/rest.li/compare/v29.49.0...v29.49.1
