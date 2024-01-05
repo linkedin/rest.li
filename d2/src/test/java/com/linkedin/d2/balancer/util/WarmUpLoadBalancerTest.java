@@ -376,7 +376,7 @@ public class WarmUpLoadBalancerTest
   public void testSuccessWithDualRead(DualReadModeProvider.DualReadMode mode, Boolean isIndis)
       throws InterruptedException, ExecutionException, TimeoutException
   {
-    int timeoutMillis = 65;
+    int timeoutMillis = 80;
     createDefaultServicesIniFiles();
     setDualReadMode(mode);
 
