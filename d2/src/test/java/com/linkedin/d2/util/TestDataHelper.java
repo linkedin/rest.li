@@ -7,11 +7,16 @@ import com.linkedin.d2.discovery.event.D2ServiceDiscoveryEventHelper;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 
 import static org.testng.Assert.*;
@@ -215,5 +220,24 @@ public class TestDataHelper {
       assertTrue(_receiptMarkUpClusters.isEmpty());
       assertTrue(_receiptMarkDownClusters.isEmpty());
     }
+  }
+
+  // A time supplier that proceed with speedMillis but could freeze on special calls specified in freezedCalls.
+  // This is for convenience when the code being tested has calls where the time shouldn't move forward (no
+  // time-consuming work is done before this call).
+  public static Supplier<Long> getTimeSupplier(long speedMillis, int... freezedCalls)
+  {
+    return new Supplier<Long>() {
+      private AtomicLong _time = new AtomicLong(0);
+      private Set<Integer> _freezedCalls = Arrays.stream(freezedCalls).boxed().collect(Collectors.toSet());
+      private AtomicInteger _callCount = new AtomicInteger(0);
+
+      @Override
+      public Long get() {
+        return _freezedCalls.contains(_callCount.getAndIncrement())
+            ? _time.get() // freeze on special calls
+            : _time.addAndGet(speedMillis);
+      }
+    };
   }
 }

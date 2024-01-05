@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.util;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
@@ -44,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.slf4j.Logger;
@@ -69,7 +71,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
   private WarmUpService _serviceWarmupper;
   private final String _d2FsDirPath;
   private final String _d2ServicePath;
-  private final int _warmUpTimeoutSeconds;
+  private final int _warmUpTimeoutMillis;
   private final int _concurrentRequests;
   private final ScheduledExecutorService _executorService;
   private final DownstreamServicesFetcher _downstreamServicesFetcher;
@@ -79,6 +81,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
   private volatile boolean _shuttingDown = false;
   private long _allStartTime;
   private List<String> _servicesToWarmUp = null;
+  private Supplier<Long> _timeSupplier = () -> SystemClock.instance().currentTimeMillis();
 
   /**
    * Since the list might from the fetcher might not be complete (new behavior, old data, etc..), and the user might
@@ -88,28 +91,43 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
   private final Set<String> _usedServices;
 
   public WarmUpLoadBalancer(LoadBalancerWithFacilities balancer, WarmUpService serviceWarmupper,
-      ScheduledExecutorService executorService, String d2FsDirPath, String d2ServicePath, DownstreamServicesFetcher downstreamServicesFetcher,
-      int warmUpTimeoutSeconds, int concurrentRequests) {
+      ScheduledExecutorService executorService, String d2FsDirPath, String d2ServicePath,
+      DownstreamServicesFetcher downstreamServicesFetcher, int warmUpTimeoutSeconds, int concurrentRequests) {
     this(balancer, serviceWarmupper, executorService, d2FsDirPath, d2ServicePath, downstreamServicesFetcher,
         warmUpTimeoutSeconds, concurrentRequests, null, false);
   }
 
   public WarmUpLoadBalancer(LoadBalancerWithFacilities balancer, WarmUpService serviceWarmupper,
-      ScheduledExecutorService executorService, String d2FsDirPath, String d2ServicePath, DownstreamServicesFetcher downstreamServicesFetcher,
-      int warmUpTimeoutSeconds, int concurrentRequests, DualReadStateManager dualReadStateManager, boolean isIndis) {
+      ScheduledExecutorService executorService, String d2FsDirPath, String d2ServicePath,
+      DownstreamServicesFetcher downstreamServicesFetcher, int warmUpTimeoutSeconds, int concurrentRequests,
+      DualReadStateManager dualReadStateManager, boolean isIndis) {
+    this(balancer, serviceWarmupper, executorService, d2FsDirPath, d2ServicePath, downstreamServicesFetcher,
+        warmUpTimeoutSeconds * 1000, concurrentRequests, dualReadStateManager, isIndis, null);
+  }
+
+  @VisibleForTesting
+  WarmUpLoadBalancer(LoadBalancerWithFacilities balancer, WarmUpService serviceWarmupper,
+      ScheduledExecutorService executorService, String d2FsDirPath, String d2ServicePath,
+      DownstreamServicesFetcher downstreamServicesFetcher, int warmUpTimeoutMillis, int concurrentRequests,
+      DualReadStateManager dualReadStateManager, boolean isIndis, Supplier<Long> timeSupplierForTest)
+  {
     super(balancer);
     _serviceWarmupper = serviceWarmupper;
     _executorService = executorService;
     _d2FsDirPath = d2FsDirPath;
     _d2ServicePath = d2ServicePath;
     _downstreamServicesFetcher = downstreamServicesFetcher;
-    _warmUpTimeoutSeconds = warmUpTimeoutSeconds;
+    _warmUpTimeoutMillis = warmUpTimeoutMillis;
     _concurrentRequests = concurrentRequests;
     _outstandingRequests = new ConcurrentLinkedDeque<>();
     _usedServices = new HashSet<>();
     _dualReadStateManager = dualReadStateManager;
     _isIndis = isIndis;
     _printName = String.format("%s WarmUp", _isIndis ? "xDS" : "ZK");
+    if (timeSupplierForTest != null)
+    {
+      _timeSupplier = timeSupplierForTest;
+    }
   }
 
   @Override
@@ -121,7 +139,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
       public void onError(Throwable e) {
         if (e instanceof TimeoutException)
         {
-          LOG.info("{} hit timeout: {}s. The WarmUp will continue in background", _printName, _warmUpTimeoutSeconds);
+          LOG.info("{} hit timeout: {}ms. The WarmUp will continue in background", _printName, _warmUpTimeoutMillis);
           callback.onSuccess(None.none());
         }
         else
@@ -145,7 +163,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
 
       @Override
       public void onSuccess(None result) {
-        _allStartTime = SystemClock.instance().currentTimeMillis();
+        _allStartTime = _timeSupplier.get();
         _executorService.submit(() -> prepareWarmUp(prepareWarmUpCallback));
       }
     });
@@ -161,8 +179,8 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
         // The downstreamServicesFetcher is the core group of the services that will be used during the lifecycle
         _usedServices.addAll(serviceNames);
 
-        LOG.info("{} starting to fetch dual read mode with timeout: {}s, for {} services: [{}]",
-            _printName, _warmUpTimeoutSeconds, serviceNames.size(), String.join(", ", serviceNames));
+        LOG.info("{} starting to fetch dual read mode with timeout: {}ms, for {} services: [{}]",
+            _printName, _warmUpTimeoutMillis, serviceNames.size(), String.join(", ", serviceNames));
 
         _servicesToWarmUp = serviceNames;
 
@@ -188,7 +206,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
           _servicesToWarmUp.forEach(serviceName -> {
             // check timeout before continue
             if (!hasTimedOut.get()
-                && SystemClock.instance().currentTimeMillis() - _allStartTime > _warmUpTimeoutSeconds * 1000L)
+                && _timeSupplier.get() - _allStartTime > _warmUpTimeoutMillis)
             {
               hasTimedOut.set(true);
               callback.onError(new TimeoutException());
@@ -213,7 +231,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
           });
 
           LOG.info("{} fetched dual read mode for {} services in {}ms. {} services need to warm up.",
-              _printName, serviceNames.size(), SystemClock.instance().currentTimeMillis() - _allStartTime,
+              _printName, serviceNames.size(), _timeSupplier.get() - _allStartTime,
               _servicesToWarmUp.size());
         }
 
@@ -250,8 +268,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
    */
   private void warmUpServices(Callback<None> startUpCallback)
   {
-    long timeoutMilli = Math.max(0,
-        _warmUpTimeoutSeconds * 1000L - (SystemClock.instance().currentTimeMillis() - _allStartTime));
+    long timeoutMilli = Math.max(0, _warmUpTimeoutMillis - (_timeSupplier.get() - _allStartTime));
     LOG.info("{} starting to warm up with timeout: {}ms for {} services: [{}]",
         _printName, timeoutMilli, _servicesToWarmUp.size(), String.join(", ", _servicesToWarmUp));
 
@@ -263,7 +280,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
           {
             LOG.info("{} hit timeout after {}ms since initial start time, continuing startup. "
                     + "Warmup will continue in background",
-                _printName, SystemClock.instance().currentTimeMillis() - _allStartTime, e);
+                _printName, _timeSupplier.get() - _allStartTime, e);
             startUpCallback.onSuccess(None.none());
           }
 
@@ -322,7 +339,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
 
     void execute()
     {
-      final long startTime = SystemClock.instance().currentTimeMillis();
+      final long startTime = _timeSupplier.get();
 
       final String serviceName = _serviceNamesQueue.poll();
       if (serviceName == null || _shuttingDown)
@@ -342,7 +359,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
           if (_requestCompletedCount.incrementAndGet() == _serviceNames.size())
           {
             LOG.info("{} completed warming up {} services in {}ms",
-                _printName, _serviceNames.size(), SystemClock.instance().currentTimeMillis() - _allStartTime);
+                _printName, _serviceNames.size(), _timeSupplier.get() - _allStartTime);
             _callback.onSuccess(None.none());
             _outstandingRequests.clear();
             return;
@@ -362,7 +379,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
         public void onSuccess(None result)
         {
           LOG.info("{} completed warming up service {} in {}ms, completed {}/{}",
-              _printName, serviceName, SystemClock.instance().currentTimeMillis() - startTime,
+              _printName, serviceName, _timeSupplier.get() - startTime,
               _requestCompletedCount.get() + 1, _serviceNames.size());
           executeNextTask();
         }

@@ -50,7 +50,7 @@ public class TestLoadBalancer implements LoadBalancerWithFacilities, WarmUpServi
   private int _warmUpDelayMs = 0;
   private int _serviceDataDelayMs = 0;
 
-  private final int DELAY_STANDARD_DEVIATION = 10; //ms
+  private final int DELAY_STANDARD_DEVIATION = 5; //ms
   private final ScheduledExecutorService _executorService = Executors.newSingleThreadScheduledExecutor();
 
   public TestLoadBalancer() {}
@@ -75,14 +75,15 @@ public class TestLoadBalancer implements LoadBalancerWithFacilities, WarmUpServi
   @Override
   public void warmUpService(String serviceName, Callback<None> callback)
   {
+    double g = Math.min(1.0, Math.max(-1.0, new Random().nextGaussian()));
+    int actualDelay = Math.max(0,
+        _warmUpDelayMs + ((int) g * DELAY_STANDARD_DEVIATION)); // +/- DELAY_STANDARD_DEVIATION ms
     _requestCount.incrementAndGet();
     _executorService.schedule(() ->
     {
       _completedRequestCount.incrementAndGet();
       callback.onSuccess(None.none());
-    }, Math.max(0, _warmUpDelayMs
-        // +/- DELAY_STANDARD_DEVIATION ms (any kind of random delay works for the test)
-        + ((int) new Random().nextGaussian() * DELAY_STANDARD_DEVIATION)), TimeUnit.MILLISECONDS);
+    }, actualDelay, TimeUnit.MILLISECONDS);
   }
 
   @Override
