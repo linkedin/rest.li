@@ -73,7 +73,7 @@ public class WarmUpLoadBalancerTest
   private File _tmpdir;
   private DualReadModeProvider _dualReadModeProvider;
   private DualReadStateManager _dualReadStateManager;
-  private static final int[] TIME_FREEZED_CALLS = {5}; // the first call in warmUpServices which sets timeout
+  private static final int TIME_FREEZED_CALL = 5; // the first call in warmUpServices which sets timeout
 
   @BeforeMethod
   public void beforeTest() throws IOException
@@ -386,7 +386,7 @@ public class WarmUpLoadBalancerTest
     LoadBalancer warmUpLb = new WarmUpLoadBalancer(balancer, balancer, Executors.newSingleThreadScheduledExecutor(),
         _tmpdir.getAbsolutePath(), MY_SERVICES_FS, _FSBasedDownstreamServicesFetcher, timeoutMillis,
         WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS, _dualReadStateManager, isIndis,
-        TestDataHelper.getTimeSupplier(10, TIME_FREEZED_CALLS));
+        TestDataHelper.getTimeSupplier(10, TIME_FREEZED_CALL));
 
     FutureCallback<None> callback = new FutureCallback<>();
     warmUpLb.start(callback);
@@ -412,7 +412,7 @@ public class WarmUpLoadBalancerTest
     LoadBalancer warmUpLb = new WarmUpLoadBalancer(balancer, balancer, Executors.newSingleThreadScheduledExecutor(),
         _tmpdir.getAbsolutePath(), MY_SERVICES_FS, _FSBasedDownstreamServicesFetcher, timeoutMillis,
         WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS, _dualReadStateManager, isIndis,
-        TestDataHelper.getTimeSupplier(30, TIME_FREEZED_CALLS));
+        TestDataHelper.getTimeSupplier(30, TIME_FREEZED_CALL));
 
     FutureCallback<None> callback = new FutureCallback<>();
     warmUpLb.start(callback);
@@ -438,7 +438,7 @@ public class WarmUpLoadBalancerTest
     LoadBalancer warmUpLb = new WarmUpLoadBalancer(balancer, balancer, Executors.newSingleThreadScheduledExecutor(),
         _tmpdir.getAbsolutePath(), MY_SERVICES_FS, _FSBasedDownstreamServicesFetcher, timeoutMillis,
         WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS, _dualReadStateManager, isIndis,
-        TestDataHelper.getTimeSupplier(30, TIME_FREEZED_CALLS));
+        TestDataHelper.getTimeSupplier(30, TIME_FREEZED_CALL));
 
     FutureCallback<None> callback = new FutureCallback<>();
     warmUpLb.start(callback);
@@ -471,7 +471,7 @@ public class WarmUpLoadBalancerTest
     LoadBalancer warmUpLb = new WarmUpLoadBalancer(balancer, balancer, Executors.newSingleThreadScheduledExecutor(),
         _tmpdir.getAbsolutePath(), MY_SERVICES_FS, _FSBasedDownstreamServicesFetcher, timeoutMillis,
         WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS, _dualReadStateManager, isIndis,
-        TestDataHelper.getTimeSupplier(0, TIME_FREEZED_CALLS));
+        TestDataHelper.getTimeSupplier(0, TIME_FREEZED_CALL));
 
     FutureCallback<None> callback = new FutureCallback<>();
     warmUpLb.start(callback);
