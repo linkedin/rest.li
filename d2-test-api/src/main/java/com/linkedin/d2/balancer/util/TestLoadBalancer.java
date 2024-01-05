@@ -47,15 +47,23 @@ public class TestLoadBalancer implements LoadBalancerWithFacilities, WarmUpServi
 
   private final AtomicInteger _requestCount = new AtomicInteger();
   private final AtomicInteger _completedRequestCount = new AtomicInteger();
-  private int _delayMs = 0;
-  private final int DELAY_STANDARD_DEVIATION = 10; //ms
+  private int _warmUpDelayMs = 0;
+  private int _serviceDataDelayMs = 0;
+
+  private final int DELAY_STANDARD_DEVIATION = 5; //ms
   private final ScheduledExecutorService _executorService = Executors.newSingleThreadScheduledExecutor();
 
   public TestLoadBalancer() {}
 
-  public TestLoadBalancer(int delayMs)
+  public TestLoadBalancer(int warmUpDelayMs)
   {
-    _delayMs = delayMs;
+    this(warmUpDelayMs, 0);
+  }
+
+  public TestLoadBalancer(int warmUpDelayMs, int serviceDataDelayMs)
+  {
+    _warmUpDelayMs = warmUpDelayMs;
+    _serviceDataDelayMs = serviceDataDelayMs;
   }
 
   @Override
@@ -67,14 +75,15 @@ public class TestLoadBalancer implements LoadBalancerWithFacilities, WarmUpServi
   @Override
   public void warmUpService(String serviceName, Callback<None> callback)
   {
+    double g = Math.min(1.0, Math.max(-1.0, new Random().nextGaussian()));
+    int actualDelay = Math.max(0,
+        _warmUpDelayMs + ((int) g * DELAY_STANDARD_DEVIATION)); // +/- DELAY_STANDARD_DEVIATION ms
     _requestCount.incrementAndGet();
     _executorService.schedule(() ->
     {
       _completedRequestCount.incrementAndGet();
       callback.onSuccess(None.none());
-    }, Math.max(0, _delayMs
-        // any kind of random delay works for the test
-        + ((int) new Random().nextGaussian() * DELAY_STANDARD_DEVIATION)), TimeUnit.MILLISECONDS);
+    }, actualDelay, TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -92,6 +101,14 @@ public class TestLoadBalancer implements LoadBalancerWithFacilities, WarmUpServi
   @Override
   public void getLoadBalancedServiceProperties(String serviceName, Callback<ServiceProperties> clientCallback)
   {
+    if (_serviceDataDelayMs > 0)
+    {
+      try {
+        Thread.sleep(_serviceDataDelayMs);
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
     clientCallback.onSuccess(new ServiceProperties(serviceName, "clustername", "/foo", Arrays.asList("rr")));
   }
 

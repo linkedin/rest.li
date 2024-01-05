@@ -95,28 +95,50 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   public void start(Callback<None> callback)
   {
     // Prefetch the global dual read mode
-    _dualReadStateManager.checkAndSwitchMode(null);
+    DualReadModeProvider.DualReadMode mode = _dualReadStateManager.getGlobalDualReadMode();
 
-    _newLb.start(new Callback<None>()
-    {
+    // if in new-lb-only mode, new lb needs to start successfully to call the callback. Otherwise, the old lb does.
+    // Use a separate executor service to start the new lb, so both lbs can start concurrently.
+    _newLbExecutor.execute(() -> _newLb.start(getStartUpCallback(true,
+        mode == DualReadModeProvider.DualReadMode.NEW_LB_ONLY ? callback : null)
+    ));
+
+    _oldLb.start(getStartUpCallback(false,
+        mode == DualReadModeProvider.DualReadMode.NEW_LB_ONLY ? null : callback
+    ));
+  }
+
+  private Callback<None> getStartUpCallback(boolean isForNewLb, Callback<None> callback)
+  {
+    return new Callback<None>() {
       @Override
-      public void onError(Throwable e)
-      {
-        LOG.warn("Failed to start new load balancer. Fall back to read from old balancer only", e);
-        _isNewLbReady = false;
+      public void onError(Throwable e) {
+        LOG.warn("Failed to start {} load balancer.", isForNewLb ? "new" : "old", e);
+        if (isForNewLb)
+        {
+          _isNewLbReady = false;
+        }
+
+        if (callback != null)
+        {
+          callback.onError(e);
+        }
       }
 
       @Override
-      public void onSuccess(None result)
-      {
-        LOG.info("New load balancer successfully started");
-        _isNewLbReady = true;
-      }
-    });
+      public void onSuccess(None result) {
+        LOG.info("{} load balancer successfully started", isForNewLb ? "New" : "Old");
+        if (isForNewLb)
+        {
+          _isNewLbReady = true;
+        }
 
-    // Call back will succeed as long as the old balancer is successfully started. New load balancer failure
-    // won't block application start up.
-    _oldLb.start(callback);
+        if (callback != null)
+        {
+          callback.onSuccess(None.none());
+        }
+      }
+    };
   }
 
   @Override

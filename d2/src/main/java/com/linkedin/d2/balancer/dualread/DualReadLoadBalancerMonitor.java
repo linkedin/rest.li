@@ -69,6 +69,24 @@ public abstract class DualReadLoadBalancerMonitor<T>
   public void reportData(String propertyName, T property, String propertyVersion, boolean fromNewLb)
   {
     Cache<String, CacheEntry<T>> cacheToAdd = fromNewLb ? _newLbPropertyCache : _oldLbPropertyCache;
+    CacheEntry<T> existingEntry = cacheToAdd.getIfPresent(propertyName);
+    if (existingEntry != null)
+    {
+      if (existingEntry._version.equals(propertyVersion) && existingEntry._data.equals(property))
+      {
+        _rateLimitedLogger.debug("Reported duplicate for {} LB for property: {}, version: {}, data: {}",
+            fromNewLb ? "New" : "Old", propertyName, propertyVersion, property);
+        return; // skip setting duplicate data to avoid incorrectly incrementing OutOfSync metric
+      }
+      else if (existingEntry._data.equals(property))
+      {
+        _rateLimitedLogger.warn("Reported data that only differs in version for {} LB for property: {}. "
+                + "Old version: {}, New version: {}, with the same data: {}", fromNewLb ? "New" : "Old", propertyName,
+            existingEntry._version, propertyVersion, existingEntry._data);
+        // since the version is different, we don't skipping setting it to the cache
+      }
+    }
+
     Cache<String, CacheEntry<T>> cacheToCompare = fromNewLb ? _oldLbPropertyCache : _newLbPropertyCache;
 
     CacheEntry<T> entryToCompare = cacheToCompare.getIfPresent(propertyName);
