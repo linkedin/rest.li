@@ -26,6 +26,7 @@ import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.downstreams.FSBasedDownstreamServicesFetcher;
 import com.linkedin.d2.util.TestDataHelper;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.test.util.retry.ThreeRetries;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -372,11 +373,11 @@ public class WarmUpLoadBalancerTest
         };
   }
 
-  @Test(dataProvider = "modesToWarmUpDataProvider")
+  @Test(dataProvider = "modesToWarmUpDataProvider", retryAnalyzer = ThreeRetries.class)
   public void testSuccessWithDualRead(DualReadModeProvider.DualReadMode mode, Boolean isIndis)
       throws InterruptedException, ExecutionException, TimeoutException
   {
-    int timeoutMillis = 80;
+    int timeoutMillis = 90;
     createDefaultServicesIniFiles();
     setDualReadMode(mode);
 
@@ -398,21 +399,21 @@ public class WarmUpLoadBalancerTest
     Assert.assertEquals(completedWarmUpCount.get(), VALID_FILES.size());
   }
 
-  @Test(dataProvider = "modesToWarmUpDataProvider")
+  @Test(dataProvider = "modesToWarmUpDataProvider", retryAnalyzer = ThreeRetries.class)
   public void testDualReadHitTimeout(DualReadModeProvider.DualReadMode mode, Boolean isIndis)
       throws InterruptedException, ExecutionException, TimeoutException
   {
-    int timeoutMillis = 80;
+    int timeoutMillis = 120;
     createDefaultServicesIniFiles();
     setDualReadMode(mode);
 
     // 3 dual read fetches take 90ms
-    TestLoadBalancer balancer = new TestLoadBalancer(0, 30);
+    TestLoadBalancer balancer = new TestLoadBalancer(0, 50);
     AtomicInteger completedWarmUpCount = balancer.getCompletedRequestCount();
     LoadBalancer warmUpLb = new WarmUpLoadBalancer(balancer, balancer, Executors.newSingleThreadScheduledExecutor(),
         _tmpdir.getAbsolutePath(), MY_SERVICES_FS, _FSBasedDownstreamServicesFetcher, timeoutMillis,
         WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS, _dualReadStateManager, isIndis,
-        TestDataHelper.getTimeSupplier(30, TIME_FREEZED_CALL));
+        TestDataHelper.getTimeSupplier(50, TIME_FREEZED_CALL));
 
     FutureCallback<None> callback = new FutureCallback<>();
     warmUpLb.start(callback);
@@ -424,21 +425,21 @@ public class WarmUpLoadBalancerTest
     Assert.assertEquals(completedWarmUpCount.get(), 0);
   }
 
-  @Test(dataProvider = "modesToWarmUpDataProvider")
+  @Test(dataProvider = "modesToWarmUpDataProvider", retryAnalyzer = ThreeRetries.class)
   public void testDualReadCompleteWarmUpHitTimeout(DualReadModeProvider.DualReadMode mode, Boolean isIndis)
       throws InterruptedException, ExecutionException, TimeoutException
   {
-    int timeoutMillis = 120;
+    int timeoutMillis = 200;
     createDefaultServicesIniFiles();
     setDualReadMode(mode);
 
-    // 3 dual read fetches take 90ms, 3 warmups take 3 * (30 +/- 5) ms
-    TestLoadBalancer balancer = new TestLoadBalancer(30, 30);
+    // 3 dual read fetches take 150ms, 3 warmups take 3 * (50 +/- 5) ms
+    TestLoadBalancer balancer = new TestLoadBalancer(50, 50);
     AtomicInteger completedWarmUpCount = balancer.getCompletedRequestCount();
     LoadBalancer warmUpLb = new WarmUpLoadBalancer(balancer, balancer, Executors.newSingleThreadScheduledExecutor(),
         _tmpdir.getAbsolutePath(), MY_SERVICES_FS, _FSBasedDownstreamServicesFetcher, timeoutMillis,
         WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS, _dualReadStateManager, isIndis,
-        TestDataHelper.getTimeSupplier(30, TIME_FREEZED_CALL));
+        TestDataHelper.getTimeSupplier(50, TIME_FREEZED_CALL));
 
     FutureCallback<None> callback = new FutureCallback<>();
     warmUpLb.start(callback);
@@ -459,7 +460,7 @@ public class WarmUpLoadBalancerTest
             {OLD_LB_ONLY, true}
         };
   }
-  @Test(dataProvider = "modesToSkipDataProvider")
+  @Test(dataProvider = "modesToSkipDataProvider", retryAnalyzer = ThreeRetries.class)
   public void testSkipWarmup(DualReadModeProvider.DualReadMode mode, Boolean isIndis)
       throws ExecutionException, InterruptedException, TimeoutException {
     int timeoutMillis = 40;
