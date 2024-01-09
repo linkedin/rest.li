@@ -28,8 +28,11 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollDomainSocketChannel;
 import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.kqueue.KQueue;
+import io.netty.channel.kqueue.KQueueDomainSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import java.net.SocketAddress;
 import java.util.concurrent.ScheduledExecutorService;
@@ -94,8 +97,19 @@ public class HttpChannelPoolFactory implements ChannelPoolFactory
     _tcpNoDelay = tcpNoDelay;
     _channelPoolWaiterTimeout = channelPoolWaiterTimeout;
 
-    Bootstrap bootstrap = !StringUtils.isEmpty(udsAddress) ?
-        new Bootstrap().channel(EpollDomainSocketChannel.class) : new Bootstrap().channel(NioSocketChannel.class);
+    final Class channelClass;
+    if (org.apache.commons.lang.StringUtils.isEmpty(udsAddress)) {
+      channelClass = NioSocketChannel.class;
+    } else {
+      if (Epoll.isAvailable()) {
+        channelClass = EpollDomainSocketChannel.class;
+      } else if (KQueue.isAvailable()){
+        channelClass = KQueueDomainSocketChannel.class;
+      } else {
+        throw new IllegalStateException("Neither Epoll or Kqueue domain socket transport available");
+      }
+    }
+    Bootstrap bootstrap = new Bootstrap().channel(channelClass);
 
     _bootstrap = bootstrap
         .group(eventLoopGroup)
