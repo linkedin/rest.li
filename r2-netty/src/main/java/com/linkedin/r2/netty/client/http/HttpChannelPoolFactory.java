@@ -38,7 +38,7 @@ import java.net.SocketAddress;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 
 /**
@@ -97,19 +97,8 @@ public class HttpChannelPoolFactory implements ChannelPoolFactory
     _tcpNoDelay = tcpNoDelay;
     _channelPoolWaiterTimeout = channelPoolWaiterTimeout;
 
-    final Class channelClass;
-    if (org.apache.commons.lang.StringUtils.isEmpty(udsAddress)) {
-      channelClass = NioSocketChannel.class;
-    } else {
-      if (Epoll.isAvailable()) {
-        channelClass = EpollDomainSocketChannel.class;
-      } else if (KQueue.isAvailable()){
-        channelClass = KQueueDomainSocketChannel.class;
-      } else {
-        throw new IllegalStateException("Neither Epoll or Kqueue domain socket transport available");
-      }
-    }
-    Bootstrap bootstrap = new Bootstrap().channel(channelClass);
+    Bootstrap bootstrap = !StringUtils.isEmpty(udsAddress) ?
+        new Bootstrap().channel(getDomainSocketClass()) : new Bootstrap().channel(NioSocketChannel.class);
 
     _bootstrap = bootstrap
         .group(eventLoopGroup)
