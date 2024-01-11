@@ -12,4 +12,9 @@ record BirthInfo {
     name: optional string
   }
   name: string
+  eyeColor: enum Color {
+    BLUE
+    BROWN
+    OTHER
+  }
 }

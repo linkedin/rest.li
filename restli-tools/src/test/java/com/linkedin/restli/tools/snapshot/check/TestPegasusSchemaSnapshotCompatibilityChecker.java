@@ -48,7 +48,8 @@ public class TestPegasusSchemaSnapshotCompatibilityChecker
 
   @Test(dataProvider = "incompatibleInputFiles")
   public void testIncompatiblePegasusSchemaSnapshot(String prevSchema, String currSchema,
-      Collection<CompatibilityInfo> expectedIncompatibilityErrors, Collection<CompatibilityInfo> expectedCompatibilityDiffs )
+      Collection<CompatibilityInfo> expectedIncompatibilityErrors, Collection<CompatibilityInfo> expectedWireCompatibilityDiffs,
+      Collection<CompatibilityInfo> expectedCompatibilityDiffs )
   {
     PegasusSchemaSnapshotCompatibilityChecker checker = new PegasusSchemaSnapshotCompatibilityChecker();
     CompatibilityInfoMap infoMap = checker.checkPegasusSchemaCompatibility(snapshotDir + FS + prevSchema, snapshotDir + FS + currSchema,
@@ -58,12 +59,18 @@ public class TestPegasusSchemaSnapshotCompatibilityChecker
     Assert.assertTrue(infoMap.isModelCompatible(CompatibilityLevel.IGNORE));
 
     final Collection<CompatibilityInfo> modelIncompatibles = infoMap.getModelIncompatibles();
+    final Collection<CompatibilityInfo> modelWireCompatibles = infoMap.getModelWireCompatibles();
     final Collection<CompatibilityInfo> modelCompatibles = infoMap.getModelCompatibles();
 
     for (CompatibilityInfo error : expectedIncompatibilityErrors)
     {
       Assert.assertTrue(modelIncompatibles.contains(error), "Reported model incompatibles should contain: " + error.toString());
       modelIncompatibles.remove(error);
+    }
+    for (CompatibilityInfo diff : expectedWireCompatibilityDiffs)
+    {
+      Assert.assertTrue(modelWireCompatibles.contains(diff), "Reported model wireCompatibles should contain: " + diff.toString());
+      modelWireCompatibles.remove(diff);
     }
     for (CompatibilityInfo diff : expectedCompatibilityDiffs)
     {
@@ -72,6 +79,7 @@ public class TestPegasusSchemaSnapshotCompatibilityChecker
     }
 
     Assert.assertTrue(modelIncompatibles.isEmpty());
+    Assert.assertTrue(modelWireCompatibles.isEmpty());
     Assert.assertTrue(modelCompatibles.isEmpty());
   }
 
@@ -145,8 +153,9 @@ public class TestPegasusSchemaSnapshotCompatibilityChecker
   {
     return new Object[][]
         {
-            { "BirthInfo.pdl", "compatibleSchemaSnapshot/BirthInfo.pdl", CompatibilityLevel.EQUIVALENT, CompatibilityOptions.Mode.DATA },
+            { "Date.pdl", "compatibleSchemaSnapshot/Date.pdl", CompatibilityLevel.EQUIVALENT, CompatibilityOptions.Mode.DATA },
             { "Foo.pdl", "compatibleSchemaSnapshot/Foo.pdl", CompatibilityLevel.BACKWARDS, CompatibilityOptions.Mode.EXTENSION },
+            { "BirthInfo.pdl", "compatibleSchemaSnapshot/BirthInfo.pdl", CompatibilityLevel.WIRE_COMPATIBLE, CompatibilityOptions.Mode.DATA },
         };
   }
 
@@ -169,8 +178,16 @@ public class TestPegasusSchemaSnapshotCompatibilityChecker
             {   "BirthInfo.pdl",
                 "incompatibleSchemaSnapshot/BirthInfo.pdl",
                 incompatibilityErrors,
+                new HashSet<>(),
                 compatibilityDiffs
-            }
+            },
+            {   "BirthInfo.pdl",
+                "compatibleSchemaSnapshot/BirthInfo.pdl", // This is combination is compatible with WIRE_COMPATIBLE, but not with BACKWARDS
+                new HashSet<>(),
+                new HashSet<>(Arrays.asList(new CompatibilityInfo(Arrays.<Object>asList("BirthInfo", "eyeColor", "Color", "symbols"),
+                    CompatibilityInfo.Type.ENUM_VALUE_ADDED, "new enum added symbols GREEN"))),
+                new HashSet<>()
+            },
         };
   }
 }

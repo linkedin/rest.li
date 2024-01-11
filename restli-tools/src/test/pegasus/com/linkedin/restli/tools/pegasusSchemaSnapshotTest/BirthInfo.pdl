@@ -6,4 +6,10 @@ record BirthInfo {
   year: int
 
   location: optional Location
+
+  eyeColor: enum Color {
+    BLUE
+    BROWN
+    OTHER
+  }
 }

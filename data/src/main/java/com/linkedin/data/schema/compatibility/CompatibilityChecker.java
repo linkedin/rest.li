@@ -553,7 +553,7 @@ public class CompatibilityChecker
 
     if (!newerOnlySymbols.isEmpty())
     {
-      appendMessage(CompatibilityMessage.Impact.BREAKS_OLD_READER,
+      appendMessage(CompatibilityMessage.Impact.ENUM_VALUE_ADDED,
                     "new enum added symbols %s",
                     newerOnlySymbols);
     }

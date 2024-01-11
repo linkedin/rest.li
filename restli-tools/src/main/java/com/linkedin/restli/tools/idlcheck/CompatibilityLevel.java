@@ -28,6 +28,7 @@ public enum CompatibilityLevel
 {
   OFF,
   IGNORE,
+  WIRE_COMPATIBLE,
   BACKWARDS,
   EQUIVALENT;
 
