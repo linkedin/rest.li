@@ -14,6 +14,11 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.49.5] - 2024-01-11
+
+## [29.4.5] - 2024-01-11
+- Added KQueue support for domain sockets.
+- 
 ## [29.49.4] - 2024-01-04
 - Make warm-up to respect dual read mode, and separate warmup configs for indis.
 
@@ -5606,7 +5611,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.49.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.49.5...master
+[29.49.5]: https://github.com/linkedin/rest.li/compare/v29.49.4...v29.49.5
 [29.49.4]: https://github.com/linkedin/rest.li/compare/v29.49.3...v29.49.4
 [29.49.3]: https://github.com/linkedin/rest.li/compare/v29.49.2...v29.49.3
 [29.49.2]: https://github.com/linkedin/rest.li/compare/v29.49.1...v29.49.2
