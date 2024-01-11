@@ -15,10 +15,8 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.49.5] - 2024-01-11
-
-## [29.4.5] - 2024-01-11
 - Added KQueue support for domain sockets.
-- 
+
 ## [29.49.4] - 2024-01-04
 - Make warm-up to respect dual read mode, and separate warmup configs for indis.
 
