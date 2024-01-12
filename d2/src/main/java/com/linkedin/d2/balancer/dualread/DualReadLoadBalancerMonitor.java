@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.dualread;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalCause;
@@ -146,9 +147,10 @@ public abstract class DualReadLoadBalancerMonitor<T>
         .build();
   }
 
-  private String getEntriesMessage(boolean fromNewLb, CacheEntry<T> oldE, CacheEntry<T> newE)
+  @VisibleForTesting
+  String getEntriesMessage(boolean fromNewLb, CacheEntry<T> oldE, CacheEntry<T> newE)
   {
-    return String.format("Old LB: {}, New LB: {}.",
+    return String.format("\nOld LB: %s\nNew LB: %s",
         fromNewLb? oldE : newE, fromNewLb? newE : oldE);
   }
 
@@ -157,7 +159,8 @@ public abstract class DualReadLoadBalancerMonitor<T>
         .format(_format);
   }
 
-  private static final class CacheEntry<T>
+  @VisibleForTesting
+  static final class CacheEntry<T>
   {
     final String _version;
     final String _timeStamp;
