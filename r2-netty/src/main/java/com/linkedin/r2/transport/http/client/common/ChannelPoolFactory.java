@@ -23,6 +23,11 @@ package com.linkedin.r2.transport.http.client.common;
 
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import io.netty.channel.Channel;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollDomainSocketChannel;
+import io.netty.channel.kqueue.KQueue;
+import io.netty.channel.kqueue.KQueueDomainSocketChannel;
+import io.netty.channel.unix.DomainSocketChannel;
 import java.net.SocketAddress;
 
 /**
@@ -36,4 +41,14 @@ public interface ChannelPoolFactory
    * and destruction of the channels.
    */
   AsyncPool<Channel> getPool(SocketAddress address);
+
+  default Class<? extends DomainSocketChannel> getDomainSocketClass() {
+    if (Epoll.isAvailable()) {
+     return EpollDomainSocketChannel.class;
+    } else if (KQueue.isAvailable()){
+      return KQueueDomainSocketChannel.class;
+    } else {
+      throw new IllegalStateException("Neither Epoll or Kqueue domain socket transport available");
+    }
+  }
 }

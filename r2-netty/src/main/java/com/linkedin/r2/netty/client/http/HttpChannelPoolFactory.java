@@ -28,7 +28,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.EpollDomainSocketChannel;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import java.net.SocketAddress;
@@ -95,7 +94,7 @@ public class HttpChannelPoolFactory implements ChannelPoolFactory
     _channelPoolWaiterTimeout = channelPoolWaiterTimeout;
 
     Bootstrap bootstrap = !StringUtils.isEmpty(udsAddress) ?
-        new Bootstrap().channel(EpollDomainSocketChannel.class) : new Bootstrap().channel(NioSocketChannel.class);
+        new Bootstrap().channel(getDomainSocketClass()) : new Bootstrap().channel(NioSocketChannel.class);
 
     _bootstrap = bootstrap
         .group(eventLoopGroup)
