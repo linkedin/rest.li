@@ -5,6 +5,7 @@ import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.discovery.event.D2ServiceDiscoveryEventHelper;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
+import com.linkedin.util.clock.Clock;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -239,5 +240,11 @@ public class TestDataHelper {
             : _time.addAndGet(speedMillis);
       }
     };
+  }
+
+  public static Clock getClock()
+  {
+    Supplier<Long> timeSupplier = TestDataHelper.getTimeSupplier(100);
+    return () -> timeSupplier.get();
   }
 }
