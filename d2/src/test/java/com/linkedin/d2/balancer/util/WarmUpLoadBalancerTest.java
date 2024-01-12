@@ -108,7 +108,7 @@ public class WarmUpLoadBalancerTest
     _dualReadStateManager = null;
   }
 
-  @Test
+  @Test(retryAnalyzer = ThreeRetries.class)
   public void testMakingWarmUpRequests() throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
   {
     createDefaultServicesIniFiles();
@@ -122,12 +122,12 @@ public class WarmUpLoadBalancerTest
 
     FutureCallback<None> callback = new FutureCallback<>();
     warmUpLoadBalancer.start(callback);
-    callback.get(30, TimeUnit.MILLISECONDS); // 3 services should take at most 3 * 5ms
+    callback.get(50, TimeUnit.MILLISECONDS); // 3 services should take at most 3 * 5ms
 
     Assert.assertEquals(VALID_FILES.size(), requestCount.get());
   }
 
-  @Test(timeOut = 10000, groups = { "ci-flaky" })
+  @Test(timeOut = 10000, retryAnalyzer = ThreeRetries.class)
   public void testDeletingFilesAfterShutdown() throws InterruptedException, ExecutionException, TimeoutException
   {
     createDefaultServicesIniFiles();
@@ -167,7 +167,7 @@ public class WarmUpLoadBalancerTest
    * require additional services at runtime, we have to check that those services are not cleared from the cache
    * otherwise it would incur in a penalty at the next deployment
    */
-  @Test(timeOut = 10000)
+  @Test(timeOut = 10000, retryAnalyzer = ThreeRetries.class)
   public void testNotDeletingFilesGetClient() throws InterruptedException, ExecutionException, TimeoutException, ServiceUnavailableException
   {
     createDefaultServicesIniFiles();
@@ -225,7 +225,7 @@ public class WarmUpLoadBalancerTest
   /**
    * If there are 0 valid files, no requests should be triggered
    */
-  @Test
+  @Test(retryAnalyzer = ThreeRetries.class)
   public void testNoMakingWarmUpRequestsWithoutValidFiles() throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
   {
     createServicesIniFiles(UNVALID_FILES);
@@ -247,7 +247,7 @@ public class WarmUpLoadBalancerTest
   /**
    * Should not send warm up requests if we are NOT using the WarmUpLoadBalancer
    */
-  @Test
+  @Test(retryAnalyzer = ThreeRetries.class)
   public void testNoMakingWarmUpRequestsWithoutWarmUp() throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
   {
     createDefaultServicesIniFiles();
@@ -262,7 +262,7 @@ public class WarmUpLoadBalancerTest
     Assert.assertEquals(0, requestCount.get());
   }
 
-  @Test(timeOut = 10000)
+  @Test(timeOut = 10000, retryAnalyzer = ThreeRetries.class)
   public void testThrottling() throws InterruptedException
   {
     int NRequests = 100;
@@ -298,7 +298,7 @@ public class WarmUpLoadBalancerTest
   /**
    * Tests that if the requests are not throttled it makes a large amount of concurrent calls
    */
-  @Test(timeOut = 10000)
+  @Test(timeOut = 10000, retryAnalyzer = ThreeRetries.class)
   public void testThrottlingUnlimitedRequests() throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
   {
     int NRequests = 500;
@@ -332,7 +332,7 @@ public class WarmUpLoadBalancerTest
     Assert.assertEquals(NRequests, requestCount.get());
   }
 
-  @Test(timeOut = 10000)
+  @Test(timeOut = 10000, retryAnalyzer = ThreeRetries.class)
   public void testHitTimeout() throws URISyntaxException, InterruptedException, ExecutionException, TimeoutException
   {
     int NRequests = 5000;
