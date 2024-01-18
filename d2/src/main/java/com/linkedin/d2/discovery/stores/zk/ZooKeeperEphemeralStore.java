@@ -1029,7 +1029,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
             long version = stat.getMzxid();
             if (version <= 0)
             {
-              LOG.warn("ZK data from {} has invalid version: {}", s, version);
+              LOG.warn("ZK data has invalid version: {}, from path {}", version, s);
             }
             T value = _serializer.fromBytes(bytes, version);
             _properties.put(childPath, value);
