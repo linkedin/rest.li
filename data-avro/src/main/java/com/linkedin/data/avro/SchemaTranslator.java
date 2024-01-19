@@ -16,7 +16,6 @@
 
 package com.linkedin.data.avro;
 
-
 import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
 import com.linkedin.avroutil1.compatibility.SchemaParseConfiguration;
 import com.linkedin.data.DataMap;
@@ -24,22 +23,19 @@ import com.linkedin.data.DataMapBuilder;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.DataSchemaTraverse;
+import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaFormatType;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
-import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.SchemaToPdlEncoder;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
-import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.template.DataTemplateUtil;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
-
 import org.apache.avro.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -179,12 +175,24 @@ public class SchemaTranslator
       // translationMode == TRANSLATE or no embedded schema
 
       DataSchemaTraverse traverse = new DataSchemaTraverse();
-      traverse.traverse(dataSchema, AvroToDataSchemaConvertCallback.INSTANCE);
-      // convert default values
-      traverse.traverse(dataSchema, DefaultAvroToDataConvertCallback.INSTANCE);
-      // make sure it can round-trip
-      String dataSchemaJson = dataSchema.toString();
-      resultDataSchema = DataTemplateUtil.parseSchema(dataSchemaJson);
+      DataSchemaTraverse.Callback callback = (path, schema) -> {
+        // convert values
+        AvroToDataSchemaConvertCallback.INSTANCE.callback(path, schema);
+        // convert default values
+        DefaultAvroToDataConvertCallback.INSTANCE.callback(path, schema);
+      };
+      traverse.traverse(dataSchema, callback);
+
+      // make sure it can round-trip if configured to do so.
+      if (options.shouldRoundTripTranslatedSchemas())
+      {
+        String dataSchemaJson = dataSchema.toString();
+        resultDataSchema = DataTemplateUtil.parseSchema(dataSchemaJson);
+      }
+      else
+      {
+        resultDataSchema = dataSchema;
+      }
     }
     return resultDataSchema;
   }
@@ -342,15 +350,13 @@ public class SchemaTranslator
   }
 
   /**
-   * Allows caller to specify a file path for schema resolution.
+   * Allows caller to specify a custom {@link DataSchemaResolver} for schema resolution.
    */
   private static DataSchemaResolver getResolver(SchemaParserFactory parserFactory, AvroToDataSchemaTranslationOptions options)
   {
-    String resolverPath = options.getFileResolutionPaths();
-    if (resolverPath != null)
+    DataSchemaResolver resolver = options.getDataSchemaResolver(parserFactory);
+    if (resolver != null)
     {
-      FileDataSchemaResolver resolver = new FileDataSchemaResolver(parserFactory, resolverPath);
-      resolver.setExtension(AVRO_FILE_EXTENSION);
       return resolver;
     }
     else
