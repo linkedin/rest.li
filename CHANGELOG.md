@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.49.8] - 2024-01-19
+- add WIRE_COMPATIBLE compatility checker mode.
+
 ## [29.49.7] - 2024-01-18
 adjust dual read monitoring data match logic and log rate limiter
 
@@ -5615,7 +5618,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.49.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.49.8...master
+[29.49.8]: https://github.com/linkedin/rest.li/compare/v29.49.7...v29.49.8
 [29.49.7]: https://github.com/linkedin/rest.li/compare/v29.49.6...v29.49.7
 [29.49.6]: https://github.com/linkedin/rest.li/compare/v29.49.5...v29.49.6
 [29.49.5]: https://github.com/linkedin/rest.li/compare/v29.49.4...v29.49.5
