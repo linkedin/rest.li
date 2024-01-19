@@ -175,13 +175,10 @@ public class SchemaTranslator
       // translationMode == TRANSLATE or no embedded schema
 
       DataSchemaTraverse traverse = new DataSchemaTraverse();
-      DataSchemaTraverse.Callback callback = (path, schema) -> {
-        // convert values
-        AvroToDataSchemaConvertCallback.INSTANCE.callback(path, schema);
-        // convert default values
-        DefaultAvroToDataConvertCallback.INSTANCE.callback(path, schema);
-      };
-      traverse.traverse(dataSchema, callback);
+      // convert values
+      traverse.traverse(dataSchema, AvroToDataSchemaConvertCallback.INSTANCE);
+      // convert default values
+      traverse.traverse(dataSchema, DefaultAvroToDataConvertCallback.INSTANCE);
 
       // make sure it can round-trip if configured to do so.
       if (options.shouldRoundTripTranslatedSchemas())
