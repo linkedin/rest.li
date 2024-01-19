@@ -31,7 +31,7 @@ public class CompatibilityInfo
     COMPATIBLE,
 
     /**
-     * Serialization and deserialization is backwards compatible, but the change may be mishandled by clients
+     * Old readers can deserialize changes serialized by new writers, but may not be able to handle them correctly.
      * Currently only used for adding new enum values.
      **/
     WIRE_COMPATIBLE
