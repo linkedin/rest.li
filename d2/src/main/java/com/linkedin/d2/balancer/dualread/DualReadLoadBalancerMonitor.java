@@ -23,6 +23,7 @@ import com.google.common.cache.RemovalCause;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
+import com.linkedin.util.RateLimitedLogger;
 import com.linkedin.util.clock.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -46,9 +47,12 @@ public abstract class DualReadLoadBalancerMonitor<T>
 {
   private static final Logger LOG = LoggerFactory.getLogger(DualReadLoadBalancerMonitor.class);
   public final static String DEFAULT_DATE_FORMAT = "YYYY/MM/dd HH:mm:ss.SSS";
+  public final static String VERSION_FROM_FS = "-1";
+  private static final long ERROR_REPORT_PERIOD = 10 * 1000; // Limit error report logging to every 10 seconds
   private static final int MAX_CACHE_SIZE = 10000;
   private final Cache<String, CacheEntry<T>> _oldLbPropertyCache;
   private final Cache<String, CacheEntry<T>> _newLbPropertyCache;
+  private final RateLimitedLogger _rateLimitedLogger;
   private final Clock _clock;
   private final DateTimeFormatter _format;
 
@@ -57,6 +61,7 @@ public abstract class DualReadLoadBalancerMonitor<T>
   {
     _oldLbPropertyCache = buildCache();
     _newLbPropertyCache = buildCache();
+    _rateLimitedLogger = new RateLimitedLogger(LOG, ERROR_REPORT_PERIOD, clock);
     _clock = clock;
     _format = DateTimeFormatter.ofPattern(DEFAULT_DATE_FORMAT);
   }
@@ -67,12 +72,13 @@ public abstract class DualReadLoadBalancerMonitor<T>
     Cache<String, CacheEntry<T>> cacheToAdd = fromNewLb ? _newLbPropertyCache : _oldLbPropertyCache;
     CacheEntry<T> existingEntry = cacheToAdd.getIfPresent(propertyName);
     String propertyClassName = property.getClass().getSimpleName();
+    boolean isUriProp = property instanceof UriProperties;
 
     if (existingEntry != null && existingEntry._data.equals(property))
     {
       if (existingEntry._version.equals(propertyVersion))
       {
-        LOG.debug("Reported duplicate {} for {} for {} LB, version: {}, data: {}",
+        LOG.debug("Reported duplicated {} for {} for {} LB, version: {}, data: {}",
             propertyClassName, propertyName, fromNewLb ? "New" : "Old", propertyVersion, property);
         return; // skip setting duplicate data to avoid incorrectly incrementing OutOfSync metric
       }
@@ -81,16 +87,19 @@ public abstract class DualReadLoadBalancerMonitor<T>
         // Existing data is the same but with a different version. Some scenarios can cause this:
         // 1) uris flip their status down-then-up quickly within an update receipt interval (ZK: ~10s,
         // xDS: rate limiter ~0.5s) will end up with the same uri properties that only differs in the
-        // version, skip setting it to the cache
-        // 2) uris data read from FS has a version of -1. When read new data from ZK/xDS, the version will be different
-        //
-        // We don't need to put such data in the cache but could allow matching data that only
-        // differ in version (see below).
-        LOG.debug("Received data that only differs in version for {} LB for {}: {}. "
-                + "Old version: {}, New version: {}, with the same data: {}. Skip putting it in the cache.",
-            fromNewLb ? "New" : "Old", propertyClassName, propertyName, existingEntry._version, propertyVersion,
-            existingEntry._data);
-        return; // skip setting data that only differs in version to avoid incorrectly incrementing OutOfSync metric
+        // version.
+        // 2) uris data read from FS has a version of "-1|x". When read new data from ZK/xDS, the version will be
+        // different.
+        if (!isReadFromFS(existingEntry._version, propertyVersion))
+        {
+          warnByPropType(isUriProp,
+              String.format("Received same data of different versions in %s LB for %s: %s."
+                      + " Old version: %s, New version: %s, Data: %s",
+                  fromNewLb ? "New" : "Old", propertyClassName, propertyName, existingEntry._version,
+                  propertyVersion, property)
+          );
+        }
+        // still need to put in the cache, don't skip
       }
     }
 
@@ -103,33 +112,38 @@ public abstract class DualReadLoadBalancerMonitor<T>
     CacheEntry<T> newEntry = new CacheEntry<>(propertyVersion, getTimestamp(), property);
     String entriesLogMsg = getEntriesMessage(fromNewLb, entryToCompare, newEntry);
 
-    if (entryToCompare == null || (!isVersionEqual && !isDataEqual)) // both version and data are different
-    {
-      cacheToAdd.put(propertyName, newEntry);
-      incrementEntryOutOfSyncCount(); // increment the out-of-sync count for the entry received earlier
-      LOG.debug("Added new entry {} for {} for {} LB.", propertyClassName, propertyName, fromNewLb ? "New" : "Old");
-    }
-    else
-    {
-      if (isDataEqual)
-      { // data is the same, even version is different, count them as a match
-        decrementEntryOutOfSyncCount(); // decrement the out-of-sync count for the entry received earlier
-        if (!isVersionEqual)
-        {
-          LOG.debug("Matched {} for {} that only differ in version. {}",
-              propertyClassName, propertyName, entriesLogMsg);
-        }
-        else {
-          LOG.debug("Matched {} for {}. {}", propertyClassName, propertyName, entriesLogMsg);
-        }
+    if (isDataEqual && (isVersionEqual || isReadFromFS(propertyVersion, entryToCompare._version)))
+    { // data is the same AND version is the same or read from FS. it's a match
+      decrementEntryOutOfSyncCount(); // decrement the out-of-sync count for the entry received earlier
+      if (!isVersionEqual)
+      {
+        LOG.debug("Matched {} for {} that only differ in version. {}",
+            propertyClassName, propertyName, entriesLogMsg);
       }
-      else
-      { // data is not the same but version is the same, a mismatch!
-        incrementPropertiesErrorCount();
-        incrementEntryOutOfSyncCount(); // increment the out-of-sync count for the entry received later
-        LOG.warn("Received mismatched {} for {}. {}", propertyClassName, propertyName, entriesLogMsg);
+      else {
+        LOG.debug("Matched {} for {}. {}", propertyClassName, propertyName, entriesLogMsg);
       }
       cacheToCompare.invalidate(propertyName);
+    }
+    else if (!isDataEqual && isVersionEqual)
+    { // data is not the same but version is the same, a mismatch!
+      incrementPropertiesErrorCount();
+      incrementEntryOutOfSyncCount(); // increment the out-of-sync count for the entry received later
+      warnByPropType(isUriProp,
+          String.format("Received mismatched %s for %s. %s", propertyClassName, propertyName, entriesLogMsg));
+      cacheToCompare.invalidate(propertyName);
+    }
+    else {
+      if (isDataEqual)
+      {
+        warnByPropType(isUriProp,
+            String.format("Received same data of %s for %s but with different versions: %s",
+                propertyClassName, propertyName, entriesLogMsg)
+        );
+      }
+      cacheToAdd.put(propertyName, newEntry);
+      incrementEntryOutOfSyncCount();
+      LOG.debug("Added new entry {} for {} for {} LB.", propertyClassName, propertyName, fromNewLb ? "New" : "Old");
     }
 
     // after cache entry add/delete above, re-log the latest entries on caches
@@ -137,6 +151,18 @@ public abstract class DualReadLoadBalancerMonitor<T>
     newEntry = cacheToAdd.getIfPresent(propertyName);
     entriesLogMsg = getEntriesMessage(fromNewLb, entryToCompare, newEntry);
     LOG.debug("Current entries of {} for {}: {}", propertyClassName, propertyName, entriesLogMsg);
+  }
+
+  @VisibleForTesting
+  Cache<String, CacheEntry<T>> getOldLbCache()
+  {
+    return _oldLbPropertyCache;
+  }
+
+  @VisibleForTesting
+  Cache<String, CacheEntry<T>> getNewLbCache()
+  {
+    return _newLbPropertyCache;
   }
 
   abstract void incrementEntryOutOfSyncCount();
@@ -164,6 +190,24 @@ public abstract class DualReadLoadBalancerMonitor<T>
         .build();
   }
 
+  private boolean isReadFromFS(String v1, String v2)
+  {
+    // uri prop version from FS is "-1|x", where x is the number of uris, so we use startsWith here
+    return v1.startsWith(VERSION_FROM_FS) || v2.startsWith(VERSION_FROM_FS);
+  }
+
+  private void warnByPropType(boolean isUriProp, String msg)
+  {
+    if (isUriProp)
+    {
+      _rateLimitedLogger.warn(msg);
+    }
+    else
+    {
+      LOG.warn(msg);
+    }
+  }
+
   @VisibleForTesting
   String getEntriesMessage(boolean fromNewLb, CacheEntry<T> oldE, CacheEntry<T> newE)
   {
@@ -174,18 +218,6 @@ public abstract class DualReadLoadBalancerMonitor<T>
   private String getTimestamp() {
     return ZonedDateTime.ofInstant(Instant.ofEpochMilli(_clock.currentTimeMillis()), ZoneId.systemDefault())
         .format(_format);
-  }
-
-  @VisibleForTesting
-  Cache<String, CacheEntry<T>> getOldLbCache()
-  {
-    return _oldLbPropertyCache;
-  }
-
-  @VisibleForTesting
-  Cache<String, CacheEntry<T>> getNewLbCache()
-  {
-    return _newLbPropertyCache;
   }
 
   @VisibleForTesting
