@@ -474,6 +474,10 @@ public class XdsToD2PropertiesAdaptor
     private void mergeAndPublishUris(String clusterName)
     {
       UriProperties mergedUriProperties = _uriPropertiesMerger.merge(clusterName, _currentData.values());
+      if (mergedUriProperties.getVersion() == -1)
+      {
+        LOG.warn("xDS UriProperties has invalid version -1. Raw uris: {}", _currentData.values());
+      }
       _uriEventBus.publishInitialize(clusterName, mergedUriProperties);
 
       if (_dualReadStateManager != null)

@@ -163,7 +163,8 @@ public class UriProperties
   public String toString()
   {
     return "UriProperties [_clusterName=" + _clusterName + ", _urisBySchemeAndPartition="
-        + _urisBySchemeAndPartition + ", _partitions=" + _partitionDesc + ", _uriSpecificProperties=" + _uriSpecificProperties + "]";
+        + _urisBySchemeAndPartition + ", _partitions=" + _partitionDesc + ", _uriSpecificProperties="
+        + _uriSpecificProperties + "]";
   }
 
   @Override
@@ -218,9 +219,18 @@ public class UriProperties
         return false;
     }
     else if (!_uriSpecificProperties.equals(other._uriSpecificProperties))
-      return false;
+    {
+      // only two effectively empty uri specific properties maps are equal
+      return isEffectivelyEmpty(_uriSpecificProperties)
+          && isEffectivelyEmpty(other._uriSpecificProperties);
+    }
 
     return true;
   }
 
+  private static boolean isEffectivelyEmpty(Map<URI, Map<String, Object>> m)
+  {
+    // the map is empty OR all inner maps are actually empty
+    return m.isEmpty() || m.values().stream().allMatch(Map::isEmpty);
+  }
 }
