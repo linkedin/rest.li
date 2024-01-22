@@ -7,4 +7,9 @@ record BirthInfo {
     longitude: float
     name: optional string
   }
+  eyeColor: enum Color {
+    BLUE
+    BROWN
+    OTHER
+  }
 }

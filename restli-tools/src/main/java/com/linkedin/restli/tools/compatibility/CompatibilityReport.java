@@ -26,7 +26,7 @@ public class CompatibilityReport
    *   <li>[RS-C] - String describing a restspec change that is backward compatible.</li>
    *   <li>[RS-I] - String describing a restspec change that is backward incompatible.</li>
    *   <li>[MD-C] - String describing a model(PDSC) change that is backward compatible.</li>
-   *   <li>[MD-C] - String describing a model(PDSC) change that is backward incompatible.</li>
+   *   <li>[MD-I] - String describing a model(PDSC) change that is backward incompatible.</li>
    *   <li>[RS-COMPAT] - Boolean indicating if the full compatibility check was restspec backward compatible for the provided compatibilityLevel</li>
    *   <li>[MD-COMPAT] - Boolean indicating if the full compatibility check was model backward compatible for the provided compatibilityLevel</li>
    * </ul>
