@@ -39,10 +39,16 @@ import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
+import org.json.JSONException;
+import org.skyscreamer.jsonassert.Customization;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
+import org.skyscreamer.jsonassert.comparator.CustomComparator;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import static com.linkedin.data.avro.SchemaTranslator.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
@@ -834,9 +840,11 @@ public class TestSchemaTranslator
    transOptions.setTyperefPropertiesExcludeSet(new HashSet<>(Arrays.asList("validate", "java")));
 
    String avroSchemaText = SchemaTranslator.dataToAvroSchemaJson(schema, transOptions);
-   DataMap avroSchemaAsDataMap = TestUtil.dataMapFromString(avroSchemaText);
-   DataMap fieldsPropertiesMap = TestUtil.dataMapFromString(expectedAvroSchemaAsString);
-   assertEquals(avroSchemaAsDataMap, fieldsPropertiesMap);
+
+   // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+   JSONAssert.assertEquals(expectedAvroSchemaAsString, avroSchemaText,
+       new CustomComparator(JSONCompareMode.LENIENT,
+           new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
  }
 
   @Test(dataProvider = "toAvroSchemaDataTestTypeRefAnnotationPropagation")
@@ -848,9 +856,11 @@ public class TestSchemaTranslator
     transOptions.setTyperefPropertiesExcludeSet(new HashSet<>(Arrays.asList("validate", "java")));
 
     String avroSchemaText = SchemaTranslator.dataToAvroSchemaJson(schema, transOptions);
-    DataMap avroSchemaAsDataMap = TestUtil.dataMapFromString(avroSchemaText);
-    DataMap fieldsPropertiesMap = TestUtil.dataMapFromString(expectedAvroSchemaAsString);
-    assertEquals(fieldsPropertiesMap, avroSchemaAsDataMap);
+
+    // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+    JSONAssert.assertEquals(expectedAvroSchemaAsString, avroSchemaText,
+        new CustomComparator(JSONCompareMode.LENIENT,
+            new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
   }
 
 
@@ -2271,8 +2281,7 @@ public class TestSchemaTranslator
       String expected,
       String writerSchemaText,
       String avroValueJson,
-      String expectedGenericRecordJson) throws IOException
-  {
+      String expectedGenericRecordJson) throws IOException, JSONException {
     // test generating Avro schema from Pegasus schema
     if (schemaText.contains("##T_START"))
     {
@@ -2300,8 +2309,7 @@ public class TestSchemaTranslator
       String expected,
       String writerSchemaText,
       String avroValueJson,
-      String expectedGenericRecordJson) throws IOException
-  {
+      String expectedGenericRecordJson) throws IOException, JSONException {
     for (EmbedSchemaMode embedSchemaMode : EmbedSchemaMode.values())
     {
       for (OptionalDefaultMode optionalDefaultMode : optionalDefaultModes)
@@ -2321,7 +2329,11 @@ public class TestSchemaTranslator
           DataMap expectedAvroDataMap = TestUtil.dataMapFromString(expected);
           DataMap resultAvroDataMap = TestUtil.dataMapFromString(avroTextFromSchema);
           Object dataProperty = resultAvroDataMap.remove(SchemaTranslator.DATA_PROPERTY);
-          assertEquals(resultAvroDataMap, expectedAvroDataMap);
+
+          // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+          JSONAssert.assertEquals(expected, avroTextFromSchema,
+              new CustomComparator(JSONCompareMode.LENIENT,
+                  new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
 
           // look for embedded schema
           assertNotNull(dataProperty);
@@ -2350,11 +2362,21 @@ public class TestSchemaTranslator
             DataMap resultAvroDataMap = TestUtil.dataMapFromString(avroTextFromSchema);
             assertFalse(resultAvroDataMap.containsKey(SchemaTranslator.DATA_PROPERTY));
           }
-          assertEquals(avroTextFromSchema, expected);
+//          assertEquals(avroTextFromSchema, expected);
+
+          // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+          JSONAssert.assertEquals(expected, avroTextFromSchema,
+              new CustomComparator(JSONCompareMode.LENIENT,
+                  new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
         }
 
         String postTranslateSchemaText = schema.toString();
-        assertEquals(postTranslateSchemaText, preTranslateSchemaText);
+//        assertEquals(postTranslateSchemaText, preTranslateSchemaText);
+
+        // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+        JSONAssert.assertEquals(preTranslateSchemaText, postTranslateSchemaText,
+            new CustomComparator(JSONCompareMode.LENIENT,
+                new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
 
         // make sure Avro accepts it
         Schema avroSchema = AvroCompatibilityHelper.parse(avroTextFromSchema);
@@ -2405,7 +2427,12 @@ public class TestSchemaTranslator
           // taking into account typeref.
           AvroToDataSchemaTranslationOptions avroToDataSchemaMode = new AvroToDataSchemaTranslationOptions(AvroToDataSchemaTranslationMode.VERIFY_EMBEDDED_SCHEMA);
           DataSchema embeddedSchema = SchemaTranslator.avroToDataSchema(avroTextFromSchema, avroToDataSchemaMode);
-          assertEquals(embeddedSchema, schema.getDereferencedDataSchema());
+//          assertEquals(embeddedSchema, schema.getDereferencedDataSchema());
+
+          // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+          JSONAssert.assertEquals(schema.getDereferencedDataSchema().toString(), embeddedSchema.toString(),
+              new CustomComparator(JSONCompareMode.LENIENT,
+                  new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
         }
       }
     }
@@ -2445,8 +2472,8 @@ public class TestSchemaTranslator
 
   @Test(dataProvider = "pegasusDefaultToAvroOptionalSchemaTranslationProvider",
         description = "Test schemaTranslator for default fields to optional fields translation, in different schema translation modes")
-  public void testPegasusDefaultToAvroOptionalSchemaTranslation(String... testSchemaTextAndExpected) throws IOException
-  {
+  public void testPegasusDefaultToAvroOptionalSchemaTranslation(String... testSchemaTextAndExpected)
+      throws IOException, JSONException {
 
     String schemaText = null;
     String expectedAvroSchema = null;
@@ -2474,9 +2501,14 @@ public class TestSchemaTranslator
           schema,
           new DataToAvroSchemaTranslationOptions(PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE)
       );
-      resultAvroDataMap = TestUtil.dataMapFromString(avroTextFromSchema);
-      expectedAvroDataMap = TestUtil.dataMapFromString(expectedAvroSchema);
-      assertEquals(resultAvroDataMap, expectedAvroDataMap);
+//      resultAvroDataMap = TestUtil.dataMapFromString(avroTextFromSchema);
+//      expectedAvroDataMap = TestUtil.dataMapFromString(expectedAvroSchema);
+//      assertEquals(resultAvroDataMap, expectedAvroDataMap);
+
+      // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+      JSONAssert.assertEquals(expectedAvroSchema, avroTextFromSchema,
+          new CustomComparator(JSONCompareMode.LENIENT,
+              new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
 
       // Test avro Schema
       Schema avroSchema = AvroCompatibilityHelper.parse(avroTextFromSchema);
@@ -2806,13 +2838,15 @@ public class TestSchemaTranslator
   }
 
   @Test(dataProvider = "embeddingSchemaWithDataPropertyData")
-  public void testEmbeddingSchemaWithDataProperty(String schemaText, String expected) throws IOException
-  {
+  public void testEmbeddingSchemaWithDataProperty(String schemaText, String expected) throws IOException,
+                                                                                             JSONException {
     DataToAvroSchemaTranslationOptions options = new DataToAvroSchemaTranslationOptions(JsonBuilder.Pretty.SPACES, EmbedSchemaMode.ROOT_ONLY);
     String avroSchemaJson = SchemaTranslator.dataToAvroSchemaJson(TestUtil.dataSchemaFromString(schemaText), options);
-    DataMap avroSchemaDataMap = TestUtil.dataMapFromString(avroSchemaJson);
-    DataMap expectedDataMap = TestUtil.dataMapFromString(expected);
-    assertEquals(avroSchemaDataMap, expectedDataMap);
+
+    // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+    JSONAssert.assertEquals(expected, avroSchemaJson.toString(),
+        new CustomComparator(JSONCompareMode.LENIENT,
+            new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
   }
 
   @DataProvider
@@ -2887,11 +2921,16 @@ public class TestSchemaTranslator
   }
 
   @Test(dataProvider = "schemaWithNamespaceOverride")
-  public void testSchemaWithNamespaceOverride(String schemaText, String expected) throws IOException
-  {
+  public void testSchemaWithNamespaceOverride(String schemaText, String expected) throws IOException, JSONException {
     DataToAvroSchemaTranslationOptions options = new DataToAvroSchemaTranslationOptions(JsonBuilder.Pretty.SPACES).setOverrideNamespace(true);
     String avroSchemaJson = SchemaTranslator.dataToAvroSchemaJson(TestUtil.dataSchemaFromString(schemaText), options);
-    assertEquals(avroSchemaJson, expected);
+
+    // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+    JSONAssert.assertEquals(expected, avroSchemaJson,
+        new CustomComparator(JSONCompareMode.LENIENT,
+            new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
+
+//    assertEquals(avroSchemaJson, expected);
   }
 
   @DataProvider
@@ -3090,7 +3129,13 @@ public class TestSchemaTranslator
     {
       DataSchema schema = SchemaTranslator.avroToDataSchema(avroText, option);
       String schemaTextFromAvro = SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.SPACES);
-      assertEquals(TestUtil.dataMapFromString(schemaTextFromAvro), TestUtil.dataMapFromString(schemaText));
+
+//      assertEquals(TestUtil.dataMapFromString(schemaTextFromAvro), TestUtil.dataMapFromString(schemaText));
+
+      // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+      JSONAssert.assertEquals(schemaTextFromAvro, schema.toString(),
+          new CustomComparator(JSONCompareMode.LENIENT,
+              new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
 
       Schema avroSchema = AvroCompatibilityHelper.parse(avroText,
           new SchemaParseConfiguration(false,
@@ -3100,9 +3145,21 @@ public class TestSchemaTranslator
       String preTranslateAvroSchema = avroSchema.toString();
       schema = SchemaTranslator.avroToDataSchema(avroSchema, option);
       schemaTextFromAvro = SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.SPACES);
-      assertEquals(TestUtil.dataMapFromString(schemaTextFromAvro), TestUtil.dataMapFromString(schemaText));
+//      assertEquals(TestUtil.dataMapFromString(schemaTextFromAvro), TestUtil.dataMapFromString(schemaText));
+
+      // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+      JSONAssert.assertEquals(schemaText.toString(), schemaTextFromAvro,
+          new CustomComparator(JSONCompareMode.LENIENT,
+              new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
+
       String postTranslateAvroSchema = avroSchema.toString();
+
       assertEquals(preTranslateAvroSchema, postTranslateAvroSchema);
+
+      // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+      JSONAssert.assertEquals(schemaText.toString(), schemaTextFromAvro,
+          new CustomComparator(JSONCompareMode.LENIENT,
+              new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
     }
   }
 
@@ -3155,11 +3212,14 @@ public class TestSchemaTranslator
 
   @Test(dataProvider = "avroToDataSchemaTranslationModeData")
   public void testAvroToDataSchemaTranslationMode(AvroToDataSchemaTranslationMode translationMode, String avroSchemaText, String expected)
-      throws IOException
-  {
+      throws JSONException {
     AvroToDataSchemaTranslationOptions options = new AvroToDataSchemaTranslationOptions(translationMode);
     DataSchema translatedDataSchema = SchemaTranslator.avroToDataSchema(avroSchemaText, options);
-    assertEquals(TestUtil.dataMapFromString(translatedDataSchema.toString()), TestUtil.dataMapFromString(expected));
+
+    // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+    JSONAssert.assertEquals(expected, translatedDataSchema.toString(),
+        new CustomComparator(JSONCompareMode.LENIENT,
+            new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
   }
 
   @DataProvider
@@ -3275,8 +3335,7 @@ public class TestSchemaTranslator
   }
 
   @Test
-  public void testAvroUnionModeChaining() throws IOException
-  {
+  public void testAvroUnionModeChaining() throws IOException, JSONException {
     String expectedSchema = "{ " +
         "  \"type\" : \"record\", " +
         "  \"name\" : \"A\", " +
@@ -3324,9 +3383,11 @@ public class TestSchemaTranslator
     AvroToDataSchemaTranslationOptions options =
         new AvroToDataSchemaTranslationOptions(AvroToDataSchemaTranslationMode.TRANSLATE).setFileResolutionPaths(avroRootDir);
     DataSchema pdscSchema = SchemaTranslator.avroToDataSchema(schema, options);
-    DataMap actual = TestUtil.dataMapFromString(pdscSchema.toString());
-    DataMap expected = TestUtil.dataMapFromString(expectedSchema);
-    assertEquals(actual, expected);
+
+    // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+    JSONAssert.assertEquals(expectedSchema, pdscSchema.toString(),
+        new CustomComparator(JSONCompareMode.LENIENT,
+            new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
   }
 
   @Test

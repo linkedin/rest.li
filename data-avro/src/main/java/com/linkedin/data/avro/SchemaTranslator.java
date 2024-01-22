@@ -18,12 +18,15 @@ package com.linkedin.data.avro;
 
 
 import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
+import com.linkedin.avroutil1.compatibility.ConfigurableSchemaComparator;
+import com.linkedin.avroutil1.compatibility.SchemaComparisonConfiguration;
 import com.linkedin.avroutil1.compatibility.SchemaParseConfiguration;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.DataMapBuilder;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
 import com.linkedin.data.schema.DataSchemaTraverse;
+import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.RecordDataSchema;
 import com.linkedin.data.schema.SchemaFormatType;
 import com.linkedin.data.schema.SchemaParser;
@@ -36,6 +39,7 @@ import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.template.DataTemplateUtil;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -53,6 +57,7 @@ public class SchemaTranslator
   private static final Logger log = LoggerFactory.getLogger(SchemaTranslator.class);
 
   public static final String DATA_PROPERTY = "com.linkedin.data";
+  public static final String TRANSLATED_FROM_SOURCE_OPTION = "li.data.translated.from";
   public static final String SCHEMA_PROPERTY = "schema";
   public static final String OPTIONAL_DEFAULT_MODE_PROPERTY = "optionalDefaultMode";
   public static final String AVRO_FILE_EXTENSION = ".avsc";
@@ -166,9 +171,12 @@ public class SchemaTranslator
             {
               avroSchemaFromEmbedded.addProp(DATA_PROPERTY, embededSchemaPropertyVal);
             }
-            if (!avroSchemaFromEmbedded.equals(avroSchemaFromJson))
-            {
-              throw new IllegalArgumentException("Embedded schema does not translate to input Avro schema: " + avroSchemaInJson);
+            // Compare using configuration equivalent to STRICT, except ignore TRANSLATED_FROM_SOURCE_OPTION
+            if (!ConfigurableSchemaComparator.equals(avroSchemaFromEmbedded, avroSchemaFromJson,
+                new SchemaComparisonConfiguration(true, true, true, false, true, true,
+                    Collections.singleton((TRANSLATED_FROM_SOURCE_OPTION))))) {
+              throw new IllegalArgumentException(
+                  "Embedded schema does not translate to input Avro schema: " + avroSchemaInJson);
             }
           }
         }
@@ -186,6 +194,9 @@ public class SchemaTranslator
       String dataSchemaJson = dataSchema.toString();
       resultDataSchema = DataTemplateUtil.parseSchema(dataSchemaJson);
     }
+
+    // add translated from annotation if this is a named dataSchema
+    resultDataSchema = addTranslatedPropToNamedDataSchema(resultDataSchema);
     return resultDataSchema;
   }
 
@@ -317,6 +328,8 @@ public class SchemaTranslator
    */
   public static String dataToAvroSchemaJson(DataSchema dataSchema, DataToAvroSchemaTranslationOptions options) throws IllegalArgumentException
   {
+    dataSchema = addTranslatedPropToNamedDataSchema(dataSchema);
+
     // Create a copy of the schema before the actual translation, since the translation process ends up modifying the
     // schema for unions with aliases, and we don't want to disturb the original schema. Use PDL to preserve annotations.
     final DataSchema translatedDataSchema = DataTemplateUtil.parseSchema(
@@ -339,6 +352,26 @@ public class SchemaTranslator
 
     schemaTraverser.traverse(translatedDataSchema, callbacks);
     return SchemaToAvroJsonEncoder.schemaToAvro(translatedDataSchema, dataSchema, defaultValueOverrides, options);
+  }
+
+  /**
+   * Adds TRANSLATED_FROM_SOURCE_OPTION property to named data schemas if not already present.
+   * @param dataSchema the data schema to add the property to
+   * @return the data schema with the property added if applicable.
+   */
+  private static DataSchema addTranslatedPropToNamedDataSchema(DataSchema dataSchema) {
+    // Add translated from annotation if this is a named dataSchema
+    if (dataSchema instanceof NamedDataSchema) {
+      NamedDataSchema namedDataSchema = (NamedDataSchema) dataSchema;
+      // Add annotation if not already present
+      if (!namedDataSchema.getProperties().containsKey(TRANSLATED_FROM_SOURCE_OPTION)) {
+        Map<String, Object> properties = new HashMap<>(namedDataSchema.getProperties());
+        properties.put(TRANSLATED_FROM_SOURCE_OPTION, namedDataSchema.getFullName());
+        namedDataSchema.setProperties(properties);
+      }
+      dataSchema = namedDataSchema;
+    }
+    return dataSchema;
   }
 
   /**
