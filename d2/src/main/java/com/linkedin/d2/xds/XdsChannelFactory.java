@@ -30,36 +30,40 @@ public class XdsChannelFactory
 {
   private static final Logger _log = LoggerFactory.getLogger(XdsChannelFactory.class);
 
+  public static final String ROUND_ROBIN_POLICY = "round_robin";
+
   private final SslContext _sslContext;
   private final String _xdsServerUri;
-  private final boolean _forceRandomIp;
+  @Nullable
+  private final String _defaultLoadBalancingPolicy;
 
   /**
-   * Invokes alternative constructor with {@code forceRandomIp} as false, to preserve previous behavior.
-   *
-   * @deprecated By {@link XdsChannelFactory#XdsChannelFactory(SslContext, String, boolean)}
+   * Invokes alternative constructor with {@code defaultLoadBalancingPolicy} as {@value ROUND_ROBIN_POLICY}.
    */
-  @Deprecated
   public XdsChannelFactory(SslContext sslContext, String xdsServerUri)
   {
-    this(sslContext, xdsServerUri, false);
+    this(sslContext, xdsServerUri, ROUND_ROBIN_POLICY);
   }
 
   /**
-   * @param sslContext    The sslContext to use. If {@code null}, SSL will not be used when connecting to the xDS
-   *                      server.
-   * @param xdsServerUri  The address of the xDS server. Can be an IP address or a domain with multiple underlying
-   *                      A/AAAA records.
-   * @param forceRandomIp If {@code true}, use the "round_robin" policy to pick the xDS server host to avoid poor
-   *                      IPv6-related routing.
+   * @param sslContext                 The sslContext to use. If {@code null}, SSL will not be used when connecting to
+   *                                   the xDS server.
+   * @param xdsServerUri               The address of the xDS server. Can be an IP address or a domain with multiple
+   *                                   underlying A/AAAA records.
+   * @param defaultLoadBalancingPolicy If provided, changes the default load balancing policy on the builder to the
+   *                                   given policy (see
+   *                                   {@link io.grpc.ManagedChannelBuilder#defaultLoadBalancingPolicy(String)}).
    * @see <a href="https://daniel.haxx.se/blog/2012/01/03/getaddrinfo-with-round-robin-dns-and-happy-eyeballs/"/>
    * Details on IPv6 routing.
    */
-  public XdsChannelFactory(@Nullable SslContext sslContext, String xdsServerUri, boolean forceRandomIp)
+  public XdsChannelFactory(
+      @Nullable SslContext sslContext,
+      String xdsServerUri,
+      @Nullable String defaultLoadBalancingPolicy)
   {
     _sslContext = sslContext;
     _xdsServerUri = xdsServerUri;
-    _forceRandomIp = forceRandomIp;
+    _defaultLoadBalancingPolicy = defaultLoadBalancingPolicy;
   }
 
   public ManagedChannel createChannel()
@@ -71,9 +75,9 @@ public class XdsChannelFactory
     }
 
     NettyChannelBuilder builder = NettyChannelBuilder.forTarget(_xdsServerUri);
-    if (_forceRandomIp)
+    if (_defaultLoadBalancingPolicy != null)
     {
-      builder = builder.defaultLoadBalancingPolicy("round_robin");
+      builder = builder.defaultLoadBalancingPolicy(_defaultLoadBalancingPolicy);
     }
 
     if (_sslContext != null)
