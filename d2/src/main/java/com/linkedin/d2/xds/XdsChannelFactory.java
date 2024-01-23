@@ -21,6 +21,7 @@ import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,10 +32,34 @@ public class XdsChannelFactory
 
   private final SslContext _sslContext;
   private final String _xdsServerUri;
+  private final boolean _forceRandomIp;
 
-  public XdsChannelFactory(SslContext sslContext, String xdsServerUri) {
+  /**
+   * Invokes alternative constructor with {@code forceRandomIp} as false, to preserve previous behavior.
+   *
+   * @deprecated By {@link XdsChannelFactory#XdsChannelFactory(SslContext, String, boolean)}
+   */
+  @Deprecated
+  public XdsChannelFactory(SslContext sslContext, String xdsServerUri)
+  {
+    this(sslContext, xdsServerUri, false);
+  }
+
+  /**
+   * @param sslContext    The sslContext to use. If {@code null}, SSL will not be used when connecting to the xDS
+   *                      server.
+   * @param xdsServerUri  The address of the xDS server. Can be an IP address or a domain with multiple underlying
+   *                      A/AAAA records.
+   * @param forceRandomIp If {@code true}, use the "round_robin" policy to pick the xDS server host to avoid poor
+   *                      IPv6-related routing.
+   * @see <a href="https://daniel.haxx.se/blog/2012/01/03/getaddrinfo-with-round-robin-dns-and-happy-eyeballs/"/>
+   * Details on IPv6 routing.
+   */
+  public XdsChannelFactory(@Nullable SslContext sslContext, String xdsServerUri, boolean forceRandomIp)
+  {
     _sslContext = sslContext;
     _xdsServerUri = xdsServerUri;
+    _forceRandomIp = forceRandomIp;
   }
 
   public ManagedChannel createChannel()
@@ -46,12 +71,20 @@ public class XdsChannelFactory
     }
 
     NettyChannelBuilder builder = NettyChannelBuilder.forTarget(_xdsServerUri);
+    if (_forceRandomIp)
+    {
+      builder = builder.defaultLoadBalancingPolicy("round_robin");
+    }
 
-    if (_sslContext != null) {
+    if (_sslContext != null)
+    {
       builder.sslContext(_sslContext);
-    } else {
+    }
+    else
+    {
       builder.usePlaintext();
     }
+
 
     return builder.keepAliveTime(5, TimeUnit.MINUTES)
         // No proxy wanted here; the default proxy detector can mistakenly detect forwarded ports as proxies.
