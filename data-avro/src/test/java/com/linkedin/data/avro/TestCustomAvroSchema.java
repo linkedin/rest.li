@@ -17,6 +17,8 @@
 package com.linkedin.data.avro;
 
 
+import com.linkedin.avroutil1.compatibility.ConfigurableSchemaComparator;
+import com.linkedin.avroutil1.compatibility.SchemaComparisonConfiguration;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.avro.util.AvroUtil;
@@ -26,11 +28,21 @@ import com.linkedin.data.schema.RecordDataSchema;
 import java.io.IOException;
 
 import com.linkedin.data.schema.PegasusSchemaParser;
+import java.util.Collections;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.skyscreamer.jsonassert.Customization;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
+import org.skyscreamer.jsonassert.JSONParser;
+import org.skyscreamer.jsonassert.comparator.CustomComparator;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.dataSchemaFromString;
+import static com.linkedin.data.avro.SchemaTranslator.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
@@ -175,8 +187,7 @@ public class TestCustomAvroSchema
   }
 
   @Test
-  public void testCustomSchemaAndDataTranslation() throws IOException
-  {
+  public void testCustomSchemaAndDataTranslation() throws IOException, JSONException {
     Object[][] inputs =
       {
         {
@@ -289,8 +300,7 @@ public class TestCustomAvroSchema
   }
 
   private void translate(String dataSchemaFieldsJson, String avroSchemaFieldsJson, String dataJson, String avroDataJson)
-    throws IOException
-  {
+      throws IOException, JSONException {
     boolean debug = false;
 
     String fullSchemaJson = DATA_SCHEMA_JSON_TEMPLATE.replace("##FIELDS", dataSchemaFieldsJson);
@@ -305,12 +315,22 @@ public class TestCustomAvroSchema
     RecordDataSchema schema = (RecordDataSchema) parser.topLevelDataSchemas().get(2);
 
     String avroJsonOutput = SchemaTranslator.dataToAvroSchemaJson(schema);
-    assertEquals(TestUtil.dataMapFromString(avroJsonOutput), TestUtil.dataMapFromString(fullAvroSchemaJson));
+
+    // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+    JSONAssert.assertEquals(fullAvroSchemaJson, avroJsonOutput,
+        new CustomComparator(JSONCompareMode.LENIENT,
+            new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
+    // output json should have the TRANSLATED_FROM_SOURCE_OPTION
+    assertNotNull(((JSONObject) JSONParser.parseJSON(avroJsonOutput)).get(TRANSLATED_FROM_SOURCE_OPTION));
+//    assertEquals(TestUtil.dataMapFromString(avroJsonOutput), TestUtil.dataMapFromString(fullAvroSchemaJson));
     Schema avroSchema = Schema.parse(avroJsonOutput);
     Schema avroSchema2 = SchemaTranslator.dataToAvroSchema(schema);
     assertEquals(avroSchema, avroSchema2);
-    String avroSchemaToString = avroSchema.toString();
-    assertEquals(Schema.parse(avroSchemaToString), Schema.parse(fullAvroSchemaJson));
+    Assert.assertFalse(avroSchema.getProp(SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION).isEmpty());
+    Assert.assertTrue(
+        ConfigurableSchemaComparator.equals(avroSchema, Schema.parse(fullAvroSchemaJson),
+            new SchemaComparisonConfiguration(true, true, true, false, true, true,
+                Collections.singleton((SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION)))));
 
     if (debug)
     {

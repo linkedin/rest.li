@@ -17,6 +17,8 @@
 package com.linkedin.data.avro;
 
 import com.google.common.collect.ImmutableMap;
+import com.linkedin.avroutil1.compatibility.ConfigurableSchemaComparator;
+import com.linkedin.avroutil1.compatibility.SchemaComparisonConfiguration;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
@@ -1879,7 +1881,13 @@ public class TestDataTranslator
 
         // AvroSchema translated needs to be as expected
         Schema expectedAvroSchema = Schema.parse(expectedAvroSchemaString);
-        assertEquals(avroSchema, expectedAvroSchema);
+
+        Assert.assertNotNull(avroSchema.getProp(SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION));
+        Assert.assertFalse(avroSchema.getProp(SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION).isEmpty());
+
+        Assert.assertTrue(ConfigurableSchemaComparator.equals(avroSchema, expectedAvroSchema,
+                new SchemaComparisonConfiguration(true, true, true, false, true, true,
+                    Collections.singleton((SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION)))));
 
         //Have a DataMap from pegasus schema
         DataMap dataMap = TestUtil.dataMapFromString(dataMapString);

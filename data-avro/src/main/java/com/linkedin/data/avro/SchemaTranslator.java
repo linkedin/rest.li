@@ -33,6 +33,7 @@ import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaParserFactory;
 import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.SchemaToPdlEncoder;
+import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.resolver.DefaultDataSchemaResolver;
 import com.linkedin.data.schema.resolver.FileDataSchemaResolver;
 import com.linkedin.data.schema.validation.ValidationOptions;
@@ -362,14 +363,24 @@ public class SchemaTranslator
   private static DataSchema addTranslatedPropToNamedDataSchema(DataSchema dataSchema) {
     // Add translated from annotation if this is a named dataSchema
     if (dataSchema instanceof NamedDataSchema) {
+      if (dataSchema instanceof TyperefDataSchema) {
+        ((TyperefDataSchema) dataSchema).setReferencedType(
+            addAnnotationToDataSchema(((TyperefDataSchema) dataSchema).getRef()));
+      } else {
+        return addAnnotationToDataSchema(dataSchema);
+      }
+    }
+    return dataSchema;
+  }
+
+  private static DataSchema addAnnotationToDataSchema(DataSchema dataSchema) {
+    if (dataSchema instanceof NamedDataSchema) {
       NamedDataSchema namedDataSchema = (NamedDataSchema) dataSchema;
-      // Add annotation if not already present
       if (!namedDataSchema.getProperties().containsKey(TRANSLATED_FROM_SOURCE_OPTION)) {
         Map<String, Object> properties = new HashMap<>(namedDataSchema.getProperties());
         properties.put(TRANSLATED_FROM_SOURCE_OPTION, namedDataSchema.getFullName());
         namedDataSchema.setProperties(properties);
       }
-      dataSchema = namedDataSchema;
     }
     return dataSchema;
   }
