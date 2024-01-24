@@ -58,7 +58,7 @@ public class SchemaTranslator
   private static final Logger log = LoggerFactory.getLogger(SchemaTranslator.class);
 
   public static final String DATA_PROPERTY = "com.linkedin.data";
-  public static final String TRANSLATED_FROM_SOURCE_OPTION = "li.data.translated.from";
+  public static final String TRANSLATED_FROM_SOURCE_OPTION = "schema.translated.from.src";
   public static final String SCHEMA_PROPERTY = "schema";
   public static final String OPTIONAL_DEFAULT_MODE_PROPERTY = "optionalDefaultMode";
   public static final String AVRO_FILE_EXTENSION = ".avsc";

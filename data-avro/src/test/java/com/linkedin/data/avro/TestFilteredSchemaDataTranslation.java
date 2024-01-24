@@ -137,7 +137,7 @@ public class TestFilteredSchemaDataTranslation
         "{ " +
         "  \"type\" : \"record\", " +
         "  \"name\" : \"Foo\", " +
-        "  \"li.data.translated.from\" : \"Foo\", " +
+        "  \"schema.translated.from.src\" : \"Foo\", " +
         "  \"fields\" : [ " +
         "    { \"name\" : \"a\", \"type\" : \"int\" }, " +
         "    { \"name\" : \"b\", \"type\" : \"int\", \"optional\" : true } " +
