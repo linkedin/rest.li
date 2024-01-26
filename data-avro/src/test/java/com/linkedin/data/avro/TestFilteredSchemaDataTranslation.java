@@ -97,8 +97,8 @@ public class TestFilteredSchemaDataTranslation
       Assert.assertFalse(filteredAvroSchema.getProp(SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION).isEmpty());
 
       Assert.assertTrue(ConfigurableSchemaComparator.equals(filteredAvroSchema, expectedAvroSchema,
-          new SchemaComparisonConfiguration(true, true, true, false, true, true,
-              Collections.singleton((SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION)))));
+          SchemaComparisonConfiguration.STRICT.jsonPropNamesToIgnore(
+              Collections.singleton(SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION))));
 
       while (i < row.length)
       {

@@ -174,8 +174,8 @@ public class SchemaTranslator
             }
             // Compare using configuration equivalent to STRICT, except ignore TRANSLATED_FROM_SOURCE_OPTION
             if (!ConfigurableSchemaComparator.equals(avroSchemaFromEmbedded, avroSchemaFromJson,
-                new SchemaComparisonConfiguration(true, true, true, false, true, true,
-                    Collections.singleton((TRANSLATED_FROM_SOURCE_OPTION))))) {
+                SchemaComparisonConfiguration.STRICT.jsonPropNamesToIgnore(
+                    Collections.singleton(SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION)))) {
               throw new IllegalArgumentException(
                   "Embedded schema does not translate to input Avro schema: " + avroSchemaInJson);
             }

@@ -61,8 +61,8 @@ public class TestSchemaTranslatorBijectivity {
     Assert.assertFalse(resultingAvroSchema.getProp(SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION).isEmpty());
 
     Assert.assertTrue(ConfigurableSchemaComparator.equals(resultingAvroSchema, initialAvroSchema,
-            new SchemaComparisonConfiguration(true, true, true, false, true, true,
-                Collections.singleton((SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION)))),
+            SchemaComparisonConfiguration.STRICT.jsonPropNamesToIgnore(
+                Collections.singleton(SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION))),
         initialAvroSchema + " ---------- " + resultingAvroSchema.toString());
   }
 

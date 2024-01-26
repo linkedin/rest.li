@@ -329,8 +329,8 @@ public class TestCustomAvroSchema
     Assert.assertFalse(avroSchema.getProp(SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION).isEmpty());
     Assert.assertTrue(
         ConfigurableSchemaComparator.equals(avroSchema, Schema.parse(fullAvroSchemaJson),
-            new SchemaComparisonConfiguration(true, true, true, false, true, true,
-                Collections.singleton((SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION)))));
+            SchemaComparisonConfiguration.STRICT.jsonPropNamesToIgnore(
+                Collections.singleton(SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION))));
 
     if (debug)
     {
