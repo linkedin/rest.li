@@ -77,6 +77,7 @@ public class XdsChannelFactory
     NettyChannelBuilder builder = NettyChannelBuilder.forTarget(_xdsServerUri);
     if (_defaultLoadBalancingPolicy != null)
     {
+      _log.info("Applying custom load balancing policy for xDS channel: {}", _defaultLoadBalancingPolicy);
       builder = builder.defaultLoadBalancingPolicy(_defaultLoadBalancingPolicy);
     }
 

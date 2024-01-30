@@ -15,6 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.49.9] - 2024-01-26
+- Introduce new config to randomly pick the xDS server host
 
 ## [29.49.8] - 2024-01-19
 - add WIRE_COMPATIBLE compatility checker mode.
