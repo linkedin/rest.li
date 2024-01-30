@@ -28,8 +28,16 @@ public enum ChannelPipelineEvent
 {
   /**
    * User event raised in the {@link ChannelPipeline} that indicates the
-   * response is fully received and the {@link Channel} is ready to be
-   * returned or disposed.
+   * request is fully written and the {@link Channel} may be ready to be
+   * returned or disposed. Channel may be returned once both the request
+   * and response are complete.
+   */
+  REQUEST_COMPLETE,
+  /**
+   * User event raised in the {@link ChannelPipeline} that indicates the
+   * response is fully received and the {@link Channel} may be ready to be
+   * returned or disposed. Channel may be returned once both the request
+   * and response are complete.
    */
   RESPONSE_COMPLETE
 }
