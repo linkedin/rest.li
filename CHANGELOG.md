@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.49.9] - 2024-01-26
+- Introduce new config to randomly pick the xDS server host
+
 ## [29.49.8] - 2024-01-19
 - add WIRE_COMPATIBLE compatility checker mode.
 
@@ -5618,7 +5621,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.49.8...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.49.9...master
+[29.49.9]: https://github.com/linkedin/rest.li/compare/v29.49.8...v29.49.9
 [29.49.8]: https://github.com/linkedin/rest.li/compare/v29.49.7...v29.49.8
 [29.49.7]: https://github.com/linkedin/rest.li/compare/v29.49.6...v29.49.7
 [29.49.6]: https://github.com/linkedin/rest.li/compare/v29.49.5...v29.49.6
