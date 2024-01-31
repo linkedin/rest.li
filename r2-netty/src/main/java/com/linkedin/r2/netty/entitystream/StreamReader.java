@@ -20,6 +20,7 @@ import com.linkedin.data.ByteString;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.stream.entitystream.ReadHandle;
 import com.linkedin.r2.message.stream.entitystream.Reader;
+import com.linkedin.r2.netty.common.ChannelPipelineEvent;
 import com.linkedin.r2.netty.common.NettyChannelAttributes;
 import com.linkedin.r2.netty.common.StreamingTimeout;
 import com.linkedin.util.clock.SystemClock;
@@ -96,6 +97,7 @@ public class StreamReader implements Reader
   public void onDone()
   {
     _ctx.writeAndFlush(EOF);
+    _ctx.fireUserEventTriggered(ChannelPipelineEvent.REQUEST_COMPLETE);
   }
 
   @Override
