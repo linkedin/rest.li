@@ -484,7 +484,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         @Override
         public void onError(Throwable e)
         {
-          finalCallback.onError(new ServiceUnavailableException(serviceName, "PEGA_1004. " +e.getMessage(), e));
+          processGetLoadBalancedServicePropertiesTimeout(e, serviceName, finalCallback);
         }
 
         @Override
@@ -523,6 +523,11 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     catch (TimeoutException e)
     {
+      ServiceProperties serviceProperties = getServicePropertyFromCache(serviceName, servicePropertiesFutureCallback);
+      if (serviceProperties != null)
+      {
+        return serviceProperties;
+      }
       throw new ServiceUnavailableException(serviceName, "PEGA_1005. Timeout occurred while fetching property. Timeout:" + _timeout, e);
     }
     catch (Exception e)
@@ -760,8 +765,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         @Override
         public void onError(Throwable e)
         {
-          _serviceNotFoundStats.inc();
-          finalCallback.onError(new ServiceUnavailableException(serviceName, "PEGA_1011. " + e.getMessage(), e));
+          processGetLoadBalancedServicePropertiesTimeout(e, serviceName, finalCallback);
         }
 
         @Override
@@ -778,20 +782,10 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   {
     Runnable callback = () ->
     {
-      LoadBalancerStateItem<ServiceProperties> serviceItem =
-          _state.getServiceProperties(serviceName);
-
-      if (serviceItem == null || serviceItem.getProperty() == null)
-      {
-        warn(_log, "unable to find service: ", serviceName);
-
-        die(servicePropertiesCallback, serviceName, "PEGA_1012. no service properties in lb state");
-        return;
+      ServiceProperties serviceProperties = getServicePropertyFromCache(serviceName, servicePropertiesCallback);
+      if(serviceProperties != null){
+        servicePropertiesCallback.onSuccess(serviceProperties);
       }
-
-      debug(_log, "got service: ", serviceItem);
-
-      servicePropertiesCallback.onSuccess(serviceItem.getProperty());
     };
 
     if (waitForUpdatedValue)
@@ -804,6 +798,32 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       _state.listenToService(serviceName, new NullStateListenerCallback());
       callback.run();
     }
+  }
+
+
+  public void processGetLoadBalancedServicePropertiesTimeout(Throwable e, String serviceName, Callback<ServiceProperties> servicePropertiesCallback){
+    ServiceProperties properties = getServicePropertyFromCache(serviceName, servicePropertiesCallback);
+    if(properties != null)
+    {
+      servicePropertiesCallback.onSuccess(properties);
+    }else{
+      servicePropertiesCallback.onError(new ServiceUnavailableException(serviceName, "PEGA_1011. " + e.getMessage(), e));
+    }
+  }
+
+  public ServiceProperties getServicePropertyFromCache(String serviceName, Callback<ServiceProperties> servicePropertiesCallback){
+    LoadBalancerStateItem<ServiceProperties> serviceItem = _state.getServiceProperties(serviceName);
+
+    if (serviceItem == null || serviceItem.getProperty() == null)
+    {
+      warn(_log, "unable to find service: ", serviceName);
+      _serviceNotFoundStats.inc();
+      die(servicePropertiesCallback, serviceName, "PEGA_1012. no service properties in lb state");
+      return null;
+    }
+
+    debug(_log, "got service: ", serviceItem);
+    return serviceItem.getProperty();
   }
 
   @Override
@@ -820,7 +840,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         @Override
         public void onError(Throwable e)
         {
-          finalCallback.onError(new ServiceUnavailableException(clusterName, "PEGA_1011. " + e.getMessage(), e));
+          processGetLoadBalancedClusterAndUriPropertiesTimeout(e, clusterName, finalCallback);
         }
 
         @Override
@@ -838,22 +858,10 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   {
     Runnable callback = () ->
     {
-      LoadBalancerStateItem<ClusterProperties> clusterItem =
-          _state.getClusterProperties(clusterName);
-
-      LoadBalancerStateItem<UriProperties> uriItem =
-          _state.getUriProperties(clusterName);
-
-      if (clusterItem == null || clusterItem.getProperty() == null || uriItem == null || uriItem.getProperty() == null)
-      {
-        warn(_log, "unable to find cluster: ", clusterName);
-
-        _clusterNotFoundStats.inc();
-        die(pairCallback, clusterName, "PEGA_1012. no cluster properties in lb state");
-        return;
+      Pair<ClusterProperties, UriProperties> pair = getClusterAndUriPropertiesFromCache(clusterName, pairCallback);
+      if(pair != null) {
+        pairCallback.onSuccess(pair);
       }
-
-      pairCallback.onSuccess(Pair.of(clusterItem.getProperty(), uriItem.getProperty()));
     };
 
     if (waitForUpdatedValue)
@@ -866,6 +874,34 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       _state.listenToCluster(clusterName, new NullStateListenerCallback());
       callback.run();
     }
+  }
+
+  public void processGetLoadBalancedClusterAndUriPropertiesTimeout(Throwable e, String clusterName,
+      Callback<Pair<ClusterProperties, UriProperties>> clusterAndUriPropertiesCallback) {
+    Pair<ClusterProperties, UriProperties> pair =
+        getClusterAndUriPropertiesFromCache(clusterName, clusterAndUriPropertiesCallback);
+    if (pair != null) {
+      clusterAndUriPropertiesCallback.onSuccess(pair);
+    } else {
+      clusterAndUriPropertiesCallback.onError(
+          new ServiceUnavailableException(clusterName, "PEGA_1011. " + e.getMessage(), e));
+    }
+  }
+
+  public Pair<ClusterProperties, UriProperties> getClusterAndUriPropertiesFromCache(String clusterName,
+      Callback<Pair<ClusterProperties, UriProperties>> clusterPropertiesCallback) {
+    LoadBalancerStateItem<ClusterProperties> clusterItem = _state.getClusterProperties(clusterName);
+
+    LoadBalancerStateItem<UriProperties> uriItem = _state.getUriProperties(clusterName);
+
+    if (clusterItem == null || clusterItem.getProperty() == null || uriItem == null || uriItem.getProperty() == null) {
+      warn(_log, "unable to find cluster: ", clusterName);
+
+      _clusterNotFoundStats.inc();
+      die(clusterPropertiesCallback, clusterName, "PEGA_1012. no cluster properties in lb state");
+      return null;
+    }
+    return Pair.of(clusterItem.getProperty(), uriItem.getProperty());
   }
 
   // supports partitioning
@@ -1141,6 +1177,14 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     catch (ExecutionException | TimeoutException | IllegalStateException | InterruptedException e )
     {
+      if(e instanceof TimeoutException && _state.getUriProperties(clusterName) != null && _state.getUriProperties(clusterName).getProperty() != null){
+        Set<URI> uris =
+            _state.getUriProperties(clusterName).getProperty().getUriBySchemeAndPartition(scheme, partitionId);
+        if(uris != null){
+          clusterCountFutureCallback.onSuccess(uris.size());
+        }
+        return 0;
+      }
       die("ClusterInfo", "PEGA_1017, unable to retrieve cluster count for cluster: " + clusterName +
           ", scheme: " + scheme + ", partition: " + partitionId + ", exception: " + e);
       return -1;
@@ -1159,6 +1203,12 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     catch (ExecutionException | TimeoutException | IllegalStateException | InterruptedException e )
     {
+      if(e instanceof TimeoutException){
+        if(_state.getClusterProperties(clusterName) != null && _state.getClusterProperties(clusterName).getProperty() != null){
+          ClusterProperties clusterProperties = _state.getClusterProperties(clusterName).getProperty();
+          return clusterProperties != null ? clusterProperties.accessDarkClusters() : new DarkClusterConfigMap();
+        }
+      }
       die("ClusterInfo", "PEGA_1018, unable to retrieve dark cluster info for cluster: " + clusterName  + ", exception: " + e);
       return new DarkClusterConfigMap();
     }

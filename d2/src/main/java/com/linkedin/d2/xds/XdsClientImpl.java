@@ -222,15 +222,21 @@ public class XdsClientImpl extends XdsClient
       try
       {
         XdsD2.Node d2Node = resource.getResource().unpack(XdsD2.Node.class);
-        updates.put(resourceName, new NodeUpdate(resource.getVersion(), d2Node));
+        if (d2Node != null && d2Node.getData().isEmpty() ) {
+          _log.warn("Received a Node response with no data, resource is : {}", resourceName);
+        }
+        else {
+          updates.put(resourceName, new NodeUpdate(resource.getVersion(), d2Node));
+        }
       } catch (InvalidProtocolBufferException e)
       {
         _log.warn("Failed to unpack Node response", e);
         errors.add("Failed to unpack Node response");
       }
     }
-
-    handleResourceUpdate(updates, data.getResourceType(), data.getNonce(), errors);
+    handleResponseACK(data.getResourceType(), data.getNonce(), errors);
+    handleResourceUpdate(updates, data.getResourceType());
+    handleResourceRemoval(data.getRemovedResources(), data.getResourceType());
   }
 
   private void handleD2URIMapResponse(DiscoveryResponseData data)
@@ -245,28 +251,33 @@ public class XdsClientImpl extends XdsClient
       {
         XdsD2.D2URIMap uriMap = resource.getResource().unpack(XdsD2.D2URIMap.class);
         Map<String, XdsD2.D2URI> nodeData = uriMap.getUrisMap();
-        updates.put(resourceName, new D2URIMapUpdate(resource.getVersion(), nodeData));
+        if(nodeData.isEmpty()){
+          _log.warn("Received a D2URIMap response with no data, resource is : {}", resourceName);
+        }else{
+          updates.put(resourceName, new D2URIMapUpdate(resource.getVersion(), nodeData));
+        }
       } catch (InvalidProtocolBufferException e)
       {
         _log.warn("Failed to unpack D2URIMap response", e);
         errors.add("Failed to unpack D2URIMap response");
       }
     }
-
-    handleResourceUpdate(updates, data.getResourceType(), data.getNonce(), errors);
+    handleResponseACK(data.getResourceType(), data.getNonce(), errors);
+    handleResourceUpdate(updates, data.getResourceType());
   }
 
-  private void handleResourceUpdate(Map<String, ? extends ResourceUpdate> updates, ResourceType type, String nonce,
-      List<String> errors)
-  {
-    if (errors.isEmpty())
-    {
+  private void handleResponseACK(ResourceType type, String nonce, List<String> errors) {
+    if (errors.isEmpty()) {
       _adsStream.sendAckRequest(type, nonce);
-    } else
-    {
+    } else {
       String errorDetail = Joiner.on('\n').join(errors);
       _adsStream.sendNackRequest(type, nonce, errorDetail);
     }
+  }
+
+  private void handleResourceUpdate(Map<String, ? extends ResourceUpdate> updates, ResourceType type)
+  {
+
 
     for (Map.Entry<String, ? extends ResourceUpdate> entry : updates.entrySet())
     {
@@ -276,6 +287,18 @@ public class XdsClientImpl extends XdsClient
       if (subscriber != null)
       {
         subscriber.onData(resourceUpdate);
+      }
+    }
+  }
+
+  private void handleResourceRemoval(List<String> removedResources, ResourceType type)
+  {
+    for (String resourceName : removedResources)
+    {
+      ResourceSubscriber subscriber = getResourceSubscriberMap(type).get(resourceName);
+      if (subscriber != null)
+      {
+        subscriber.onRemoval();
       }
     }
   }
@@ -389,6 +412,13 @@ public class XdsClientImpl extends XdsClient
         watcher.onReconnect();
       }
     }
+
+    private void onRemoval(){
+      for (ResourceWatcher watcher : _watchers)
+      {
+        notifyWatcher(watcher, _data);
+      }
+    }
   }
 
   final class RpcRetryTask implements Runnable {
@@ -443,19 +473,21 @@ public class XdsClientImpl extends XdsClient
   {
     private final ResourceType _resourceType;
     private final List<Resource> _resources;
+    private final List<String> _removedResources;
     private final String _nonce;
 
-    DiscoveryResponseData(ResourceType resourceType, List<Resource> resources, String nonce)
+    DiscoveryResponseData(ResourceType resourceType, List<Resource> resources, List<String> removedResources, String nonce)
     {
       _resourceType = resourceType;
       _resources = resources;
+      _removedResources = removedResources;
       _nonce = nonce;
     }
 
     static DiscoveryResponseData fromEnvoyProto(DeltaDiscoveryResponse proto)
     {
       return new DiscoveryResponseData(ResourceType.fromTypeUrl(proto.getTypeUrl()), proto.getResourcesList(),
-          proto.getNonce());
+          proto.getRemovedResourcesList(), proto.getNonce());
     }
 
     ResourceType getResourceType()
@@ -466,6 +498,11 @@ public class XdsClientImpl extends XdsClient
     List<Resource> getResourcesList()
     {
       return _resources;
+    }
+
+    List<String> getRemovedResources()
+    {
+      return _removedResources;
     }
 
     String getNonce()

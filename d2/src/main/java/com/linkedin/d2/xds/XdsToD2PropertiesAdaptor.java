@@ -43,7 +43,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -226,6 +225,12 @@ public class XdsToD2PropertiesAdaptor
       }
 
       @Override
+      public void onDelete(String name)
+      {
+        _serviceEventBus.publishRemove(name);
+      }
+
+      @Override
       public void onError(Status error)
       {
         notifyAvailabilityChanges(false);
@@ -287,6 +292,12 @@ public class XdsToD2PropertiesAdaptor
       }
 
       @Override
+      public void onDelete(String name)
+      {
+        _clusterEventBus.publishRemove(name);
+      }
+
+      @Override
       public void onError(Status error)
       {
         notifyAvailabilityChanges(false);
@@ -326,6 +337,13 @@ public class XdsToD2PropertiesAdaptor
       }
 
       @Override
+      public void onDelete(String resourceName)
+      {
+        // TODO: Is this all we need to do here?
+        removeSymlink(symlinkName);
+      }
+
+      @Override
       public void onError(Status error)
       {
         notifyAvailabilityChanges(false);
@@ -339,14 +357,26 @@ public class XdsToD2PropertiesAdaptor
     };
   }
 
-  private void updateSymlinkAndActualNodeMap(String symlinkName, String actualNodeName) {
-    synchronized (_symlinkAndActualNodeLock) {
+  private void updateSymlinkAndActualNodeMap(String symlinkName, String actualNodeName)
+  {
+    synchronized (_symlinkAndActualNodeLock)
+    {
       _symlinkAndActualNode.put(symlinkName, actualNodeName);
     }
   }
 
-  private String getSymlink(String actualNodeName) {
-    synchronized (_symlinkAndActualNodeLock) {
+  private String removeSymlink(String symlinkName)
+  {
+    synchronized (_symlinkAndActualNodeLock)
+    {
+      return _symlinkAndActualNode.remove(symlinkName);
+    }
+  }
+
+  private String getSymlink(String actualNodeName)
+  {
+    synchronized (_symlinkAndActualNodeLock)
+    {
       return _symlinkAndActualNode.inverse().get(actualNodeName);
     }
   }
@@ -484,6 +514,12 @@ public class XdsToD2PropertiesAdaptor
       {
         _dualReadStateManager.reportData(clusterName, mergedUriProperties, true);
       }
+    }
+
+    @Override
+    public void onDelete(String resourceName)
+    {
+      _uriEventBus.publishRemove(resourceName);
     }
 
     @Override

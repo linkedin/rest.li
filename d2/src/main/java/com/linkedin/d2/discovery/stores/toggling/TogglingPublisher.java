@@ -1,4 +1,4 @@
-/*
+ /*
    Copyright (c) 2012 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,7 +28,14 @@ import com.linkedin.d2.discovery.event.PropertyEventPublisher;
 import com.linkedin.d2.discovery.stores.PropertyStore;
 import com.linkedin.d2.discovery.stores.util.NullEventBus;
 import com.linkedin.d2.discovery.stores.util.StoreEventPublisher;
+import com.linkedin.d2.discovery.stores.zk.ZooKeeperConnectionAwareStore;
+import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
+import com.linkedin.d2.xds.XdsToClusterPropertiesPublisher;
+import com.linkedin.d2.xds.XdsToServicePropertiesPublisher;
+import com.linkedin.d2.xds.XdsToUriPropertiesPublisher;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Steven Ihde
@@ -41,6 +48,7 @@ public class TogglingPublisher<T>
   private final PublisherWithStatus<T> _backup;
   private final PropertyEventBus<T>       _eventBus;
   private final PropertyEventBus<T>       _nullBus = new NullEventBus<>();
+  private static final Logger LOG = LoggerFactory.getLogger(TogglingPublisher.class);
 
   public TogglingPublisher(PropertyEventPublisher<T> primary,
                            PropertyStore<T> backup,
@@ -80,6 +88,11 @@ public class TogglingPublisher<T>
         pubActivate.setBus(_eventBus);
         _eventBus.setPublisher(pubActivate);
 
+        if(deactivate != null && activate != null){
+          LOG.info("TogglingPublisher: activate publisher {}, deactivate publisher {}",
+              getPublisherName(activate.getPublisher()), getPublisherName(deactivate.getPublisher()));
+        }
+        
         if (deactivate.started())
         {
           PropertyEventPublisher<T> pubDeactivate = deactivate.getPublisher();
@@ -94,6 +107,15 @@ public class TogglingPublisher<T>
         callback.onError(e);
       }
     });
+  }
+
+  private String getPublisherName(PropertyEventPublisher<T> p){
+    if(p instanceof ZooKeeperConnectionAwareStore || p instanceof ZooKeeperStore){
+      return "Zookeeper store";
+    }else if(p instanceof XdsToClusterPropertiesPublisher || p instanceof XdsToServicePropertiesPublisher || p instanceof XdsToUriPropertiesPublisher){
+      return "INDIS store";
+    }
+    return "FS store";
   }
 
   public void shutdown(final Callback<None> callback)
