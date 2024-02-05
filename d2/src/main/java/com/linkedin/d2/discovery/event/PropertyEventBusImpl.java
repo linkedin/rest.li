@@ -188,7 +188,8 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
   {
     if (value == null)
     {
-      return; // never publish null value
+      _log.warn("Received a null event during publishInitialize for String prop = " + prop +
+                    ". Still publishing the null event.");
     }
     _thread.send(new PropertyEvent("PropertyEventBus.publishInitialize " + prop)
     {
@@ -198,7 +199,12 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
         // an "initialize", but if the bus has previously seen that property, we will treat
         // it as an "add" so that the publisher change will be transparent to the clients.
         boolean doAdd = _properties.containsKey(prop);
-        _properties.put(prop, value);
+        if(!doAdd || (doAdd && value != null)){
+          // null guard for doAdd, only put the value in following cases:
+          // case1: For initialization scenario : could put the nullable value in the map
+          // case2: For doAdd scenario, could only put the non-nullable value in the map
+          _properties.put(prop, value);
+        }
         List<PropertyEventSubscriber<T>> waiters = subscribers(prop);
         for (final PropertyEventSubscriber<T> waiter : waiters)
         {
@@ -230,7 +236,9 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
         // Ignore unless the property has been initialized
         if (_properties.containsKey(prop))
         {
-          _properties.put(prop, value);
+          if (value != null) {
+            _properties.put(prop, value);
+          }
           for (final PropertyEventSubscriber<T> subscriber : subscribers(prop))
           {
             subscriber.onAdd(prop, value);

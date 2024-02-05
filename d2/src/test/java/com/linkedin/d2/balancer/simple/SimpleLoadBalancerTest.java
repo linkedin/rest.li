@@ -23,7 +23,6 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.KeyMapper;
-import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.LoadBalancerTestState;
 import com.linkedin.d2.balancer.PartitionedLoadBalancerTestState;
@@ -85,6 +84,8 @@ import com.linkedin.test.util.retry.ThreeRetries;
 import com.linkedin.util.degrader.DegraderImpl;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -112,6 +113,7 @@ import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
@@ -425,6 +427,179 @@ public class SimpleLoadBalancerTest
                                                              new HashMap<>(), false));
     Assert.assertEquals(testClusterListener.getClusterAddedCount(CLUSTER1_NAME), 1, "expected unchanged add count of 1 because unregistered ");
     Assert.assertEquals(testClusterListener.getClusterRemovedCount(CLUSTER1_NAME), 0, "expected unchanged remove count of 0 because unregistered");
+  }
+
+  @Test
+  public void testListenToServiceAndClusterTimeout()
+      throws ExecutionException, InterruptedException, ClassNotFoundException, NoSuchMethodException,
+             InvocationTargetException, IllegalAccessException {
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
+    Class <?> clazz = Class.forName("com.linkedin.d2.balancer.simple.SimpleLoadBalancer");
+    Method callMethod = clazz.getDeclaredMethod("listenToServiceAndCluster", String.class, Callback.class);
+    callMethod.setAccessible(true);
+    // Test listenToCluster timeout and not hit the cache value
+    Callback<ServiceProperties> callback = new Callback<ServiceProperties>() {
+      @Override
+      public void onError(Throwable e) {
+        assertTrue(e instanceof ServiceUnavailableException);
+      }
+
+      @Override
+      public void onSuccess(ServiceProperties result) {
+
+      }
+    };
+    callMethod.invoke(loadBalancer, "foo", callback);
+
+    // Test listenToCluster timeout and hit the cache value
+
+    serviceRegistry.put("foo", new ServiceProperties("foo",
+        CLUSTER1_NAME,
+        "/foo",
+        Arrays.asList("degrader"),
+        Collections.<String,Object>emptyMap(),
+        null,
+        null,
+        Collections.emptyList(),
+        null));
+
+    callback = new Callback<ServiceProperties>() {
+      @Override
+      public void onError(Throwable e) {
+      }
+
+      @Override
+      public void onSuccess(ServiceProperties result) {
+        assertTrue(result != null);
+        assertTrue(result.getServiceName().equals("foo"));
+        assertTrue(result.getClusterName().equals(CLUSTER1_NAME));
+      }
+    };
+
+    callMethod.invoke(loadBalancer, "foo", callback);
+  }
+
+  @Test
+  public void testGetLoadBalancedClusterAndUriProperties()
+      throws ExecutionException, InterruptedException, ClassNotFoundException, NoSuchMethodException,
+             InvocationTargetException, IllegalAccessException {
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
+
+    Class <?> clazz = Class.forName("com.linkedin.d2.balancer.simple.SimpleLoadBalancer");
+    Method callMethod = clazz.getDeclaredMethod("getLoadBalancedClusterAndUriProperties", String.class, Callback.class);
+    callMethod.setAccessible(true);
+    Callback<Pair<ClusterProperties, UriProperties>> callback=  new Callback<Pair<ClusterProperties, UriProperties>>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        assertTrue(e instanceof ServiceUnavailableException);
+      }
+
+      @Override
+      public void onSuccess(Pair<ClusterProperties, UriProperties> result)
+      {
+
+      }
+    };
+    callMethod.invoke(loadBalancer, CLUSTER1_NAME, callback);
+
+    clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(),
+        Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(),
+        new HashMap<>(), true));
+    uriRegistry.put(CLUSTER1_NAME, new UriProperties(CLUSTER1_NAME, new HashMap<>()));
+    callback =  new Callback<Pair<ClusterProperties, UriProperties>>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+
+      }
+
+      @Override
+      public void onSuccess(Pair<ClusterProperties, UriProperties> result)
+      {
+        assertEquals(result.getLeft(), clusterRegistry.get(CLUSTER1_NAME));
+        assertEquals(result.getRight(), uriRegistry.get(CLUSTER1_NAME));
+      }
+    };
+    callMethod.invoke(loadBalancer, CLUSTER1_NAME, callback);
+  }
+
+
+
+  @Test
+  public void testGetClusterCountFromCache()
+      throws ExecutionException, InterruptedException, ServiceUnavailableException, ClassNotFoundException,
+             NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
+    int partitionId = 0;
+    int numHttp = 3;
+    int numHttps = 4;
+
+    populateUriRegistry(numHttp, numHttps, partitionId, uriRegistry);
+    ClusterProperties clusterProperties = new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(),
+        Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(), new HashMap<>(), false);
+    clusterRegistry.put(CLUSTER1_NAME, clusterProperties);
+    assertEquals(loadBalancer.getClusterCount(CLUSTER1_NAME, PropertyKeys.HTTP_SCHEME, partitionId), numHttp);
+
+    // Test getClusterCount from cache
+    Class <?> clazz = Class.forName("com.linkedin.d2.balancer.simple.SimpleLoadBalancer");
+    Method callMethod = clazz.getDeclaredMethod("getClusterCountFromCache", String.class, String.class, int.class);
+    callMethod.setAccessible(true);
+    int clusterCount= (int) callMethod.invoke(loadBalancer, CLUSTER1_NAME, PropertyKeys.HTTP_SCHEME, partitionId);
+    assertEquals(clusterCount, numHttp);
+  }
+
+
+  @Test
+  public void testGetDarkClusterConfigMapFromCache()
+      throws ExecutionException, InterruptedException, ServiceUnavailableException, ClassNotFoundException,
+             NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
+    Class <?> clazz = Class.forName("com.linkedin.d2.balancer.simple.SimpleLoadBalancer");
+    Method callMethod = clazz.getDeclaredMethod("getDarkClusterConfigMapFromCache", String.class);
+    callMethod.setAccessible(true);
+    DarkClusterConfigMap darkClusterConfigMap = new DarkClusterConfigMap();
+    DarkClusterConfig darkClusterConfig = new DarkClusterConfig()
+        .setMultiplier(1.0f)
+        .setDispatcherOutboundTargetRate(1)
+        .setDispatcherMaxRequestsToBuffer(1)
+        .setDispatcherBufferedRequestExpiryInSeconds(1);
+    darkClusterConfigMap.put(DARK_CLUSTER1_NAME, darkClusterConfig);
+    clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(),
+        Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(),
+        DarkClustersConverter.toProperties(darkClusterConfigMap), false));
+    loadBalancer.getDarkClusterConfigMap(CLUSTER1_NAME,
+        new Callback<DarkClusterConfigMap>()
+        {
+          @Override
+          public void onError(Throwable e)
+          {
+            Assert.fail("getDarkClusterConfigMap threw exception", e);
+          }
+
+          @Override
+          public void onSuccess(DarkClusterConfigMap returnedDarkClusterConfigMap)
+          {
+            Assert.assertEquals(returnedDarkClusterConfigMap, darkClusterConfigMap, "dark cluster configs should be equal");
+            Assert.assertEquals(returnedDarkClusterConfigMap.get(DARK_CLUSTER1_NAME).getMultiplier(), 1.0f, "multiplier should match");
+          }
+        });
+    DarkClusterConfigMap result = (DarkClusterConfigMap) callMethod.invoke(loadBalancer, CLUSTER1_NAME);
+    assertEquals(result, darkClusterConfigMap);
   }
 
   @Test(groups = { "small", "back-end" })

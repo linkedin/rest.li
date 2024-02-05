@@ -28,8 +28,6 @@ import com.linkedin.d2.discovery.stores.mock.MockStore;
 import com.linkedin.d2.discovery.stores.util.StoreEventPublisher;
 import org.testng.annotations.Test;
 
-import com.linkedin.d2.discovery.event.PropertyEventBus;
-
 public abstract class PropertyEventBusTest
 {
   public abstract PropertyEventBus<String> getBus();

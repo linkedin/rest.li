@@ -14,7 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 ## [29.50.2] - 2024-02-01
-- Fix null data and timeout issue for INDIS response
+- Null data guard for D2 cache and fix timeout issue for INDIS response
 
 ## [29.50.1] - 2024-01-31
 - Fix r2-netty illegal state exception due to premature channel recycling.

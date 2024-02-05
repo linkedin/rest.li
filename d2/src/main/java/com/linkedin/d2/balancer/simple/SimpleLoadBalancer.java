@@ -484,7 +484,12 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         @Override
         public void onError(Throwable e)
         {
-          processGetLoadBalancedServicePropertiesTimeout(e, serviceName, finalCallback);
+          if (e instanceof TimeoutException) {
+            // if timed out, should try to fetch the service properties from the cache
+            processGetLoadBalancedServicePropertiesTimeoutError(e, serviceName, finalCallback);
+          } else {
+            finalCallback.onError(new ServiceUnavailableException(serviceName, "PEGA_1004. " + e.getMessage(), e));
+          }
         }
 
         @Override
@@ -524,8 +529,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     catch (TimeoutException e)
     {
       ServiceProperties serviceProperties = getServicePropertyFromCache(serviceName, servicePropertiesFutureCallback);
-      if (serviceProperties != null)
-      {
+      if (serviceProperties != null) {
         return serviceProperties;
       }
       throw new ServiceUnavailableException(serviceName, "PEGA_1005. Timeout occurred while fetching property. Timeout:" + _timeout, e);
@@ -765,7 +769,12 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         @Override
         public void onError(Throwable e)
         {
-          processGetLoadBalancedServicePropertiesTimeout(e, serviceName, finalCallback);
+          if (e instanceof TimeoutException) {
+            processGetLoadBalancedServicePropertiesTimeoutError(e, serviceName, finalCallback);
+          } else {
+            _serviceNotFoundStats.inc();
+            finalCallback.onError(new ServiceUnavailableException(serviceName, "PEGA_1011. " + e.getMessage(), e));
+          }
         }
 
         @Override
@@ -783,7 +792,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     Runnable callback = () ->
     {
       ServiceProperties serviceProperties = getServicePropertyFromCache(serviceName, servicePropertiesCallback);
-      if(serviceProperties != null){
+      if (serviceProperties != null) {
         servicePropertiesCallback.onSuccess(serviceProperties);
       }
     };
@@ -800,22 +809,24 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
   }
 
-
-  public void processGetLoadBalancedServicePropertiesTimeout(Throwable e, String serviceName, Callback<ServiceProperties> servicePropertiesCallback){
+  public void processGetLoadBalancedServicePropertiesTimeoutError(Throwable e, String serviceName,
+      Callback<ServiceProperties> servicePropertiesCallback) {
     ServiceProperties properties = getServicePropertyFromCache(serviceName, servicePropertiesCallback);
-    if(properties != null)
-    {
+    if (properties != null) {
+      _log.info("get service properties timeout, so read from the cache successfully, service is {}", serviceName);
       servicePropertiesCallback.onSuccess(properties);
-    }else{
-      servicePropertiesCallback.onError(new ServiceUnavailableException(serviceName, "PEGA_1011. " + e.getMessage(), e));
+    } else {
+      _log.error("get service properties timeout, and there is no value in cache, service is {} ", serviceName);
+      servicePropertiesCallback.onError(
+          new ServiceUnavailableException(serviceName, "PEGA_1011. " + e.getMessage(), e));
     }
   }
 
-  public ServiceProperties getServicePropertyFromCache(String serviceName, Callback<ServiceProperties> servicePropertiesCallback){
+  public ServiceProperties getServicePropertyFromCache(String serviceName,
+      Callback<ServiceProperties> servicePropertiesCallback) {
     LoadBalancerStateItem<ServiceProperties> serviceItem = _state.getServiceProperties(serviceName);
 
-    if (serviceItem == null || serviceItem.getProperty() == null)
-    {
+    if (serviceItem == null || serviceItem.getProperty() == null) {
       warn(_log, "unable to find service: ", serviceName);
       _serviceNotFoundStats.inc();
       die(servicePropertiesCallback, serviceName, "PEGA_1012. no service properties in lb state");
@@ -840,7 +851,11 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         @Override
         public void onError(Throwable e)
         {
-          processGetLoadBalancedClusterAndUriPropertiesTimeout(e, clusterName, finalCallback);
+          if (e instanceof TimeoutException) {
+            processGetLoadBalancedClusterAndUriPropertiesTimeoutError(e, clusterName, finalCallback);
+          } else {
+            finalCallback.onError(new ServiceUnavailableException(clusterName, "PEGA_1011. " + e.getMessage(), e));
+          }
         }
 
         @Override
@@ -860,6 +875,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     {
       Pair<ClusterProperties, UriProperties> pair = getClusterAndUriPropertiesFromCache(clusterName, pairCallback);
       if(pair != null) {
+        _log.info("get cluster and uri properties timeout, so read from the cache, cluster name is {}", clusterName);
         pairCallback.onSuccess(pair);
       }
     };
@@ -876,7 +892,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
   }
 
-  public void processGetLoadBalancedClusterAndUriPropertiesTimeout(Throwable e, String clusterName,
+  public void processGetLoadBalancedClusterAndUriPropertiesTimeoutError(Throwable e, String clusterName,
       Callback<Pair<ClusterProperties, UriProperties>> clusterAndUriPropertiesCallback) {
     Pair<ClusterProperties, UriProperties> pair =
         getClusterAndUriPropertiesFromCache(clusterName, clusterAndUriPropertiesCallback);
@@ -888,7 +904,9 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
   }
 
-  public Pair<ClusterProperties, UriProperties> getClusterAndUriPropertiesFromCache(String clusterName,
+  // Get the cluster and uri properties from the cache, like INDIS, FStore(highest priority).
+  // If the properties are not found, call the callback with an error.
+  private Pair<ClusterProperties, UriProperties> getClusterAndUriPropertiesFromCache(String clusterName,
       Callback<Pair<ClusterProperties, UriProperties>> clusterPropertiesCallback) {
     LoadBalancerStateItem<ClusterProperties> clusterItem = _state.getClusterProperties(clusterName);
 
@@ -1177,18 +1195,25 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     catch (ExecutionException | TimeoutException | IllegalStateException | InterruptedException e )
     {
-      if(e instanceof TimeoutException && _state.getUriProperties(clusterName) != null && _state.getUriProperties(clusterName).getProperty() != null){
-        Set<URI> uris =
-            _state.getUriProperties(clusterName).getProperty().getUriBySchemeAndPartition(scheme, partitionId);
-        if(uris != null){
-          clusterCountFutureCallback.onSuccess(uris.size());
-        }
-        return 0;
+      if (e instanceof TimeoutException) {
+        return getClusterCountFromCache(clusterName, scheme, partitionId);
       }
       die("ClusterInfo", "PEGA_1017, unable to retrieve cluster count for cluster: " + clusterName +
           ", scheme: " + scheme + ", partition: " + partitionId + ", exception: " + e);
       return -1;
     }
+  }
+
+  // Get cluster count from cache, like INDIS, FS(highest priority).
+  private int getClusterCountFromCache(String clusterName, String scheme, int partitionId) {
+    if (_state.getUriProperties(clusterName) != null && _state.getUriProperties(clusterName).getProperty() != null) {
+      Set<URI> uris =
+          _state.getUriProperties(clusterName).getProperty().getUriBySchemeAndPartition(scheme, partitionId);
+      if (uris != null) {
+        return uris.size();
+      }
+    }
+    return 0;
   }
 
   @Override
@@ -1203,10 +1228,11 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     catch (ExecutionException | TimeoutException | IllegalStateException | InterruptedException e )
     {
-      if(e instanceof TimeoutException){
-        if(_state.getClusterProperties(clusterName) != null && _state.getClusterProperties(clusterName).getProperty() != null){
-          ClusterProperties clusterProperties = _state.getClusterProperties(clusterName).getProperty();
-          return clusterProperties != null ? clusterProperties.accessDarkClusters() : new DarkClusterConfigMap();
+      if (e instanceof TimeoutException) {
+        DarkClusterConfigMap darkClusterConfigMap = getDarkClusterConfigMapFromCache(clusterName);
+        if (darkClusterConfigMap != null) {
+          _log.info("get dark cluster config map timeout, so read from the cache, cluster name is {}", clusterName);
+          return darkClusterConfigMap;
         }
       }
       die("ClusterInfo", "PEGA_1018, unable to retrieve dark cluster info for cluster: " + clusterName  + ", exception: " + e);
@@ -1226,6 +1252,16 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
               clusterProperties.accessDarkClusters() : new DarkClusterConfigMap();
       wrappedCallback.onSuccess(darkClusterConfigMap);
     });
+  }
+
+  // Get DarClusterConfigMap from cache, like INDIS, FS(highest priority).
+  private DarkClusterConfigMap getDarkClusterConfigMapFromCache(String clusterName) {
+    if (_state.getClusterProperties(clusterName) != null
+        && _state.getClusterProperties(clusterName).getProperty() != null) {
+      ClusterProperties clusterProperties = _state.getClusterProperties(clusterName).getProperty();
+      return clusterProperties != null ? clusterProperties.accessDarkClusters() : new DarkClusterConfigMap();
+    }
+    return new DarkClusterConfigMap();
   }
 
   @Override

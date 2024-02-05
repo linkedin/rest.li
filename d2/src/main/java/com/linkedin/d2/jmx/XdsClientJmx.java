@@ -27,6 +27,7 @@ public class XdsClientJmx implements XdsClientJmxMBean {
   private final AtomicInteger _reconnectionCount = new AtomicInteger();
 
   private final AtomicBoolean _isConnected = new AtomicBoolean();
+  private final AtomicInteger _resourceNotFoundCount = new AtomicInteger();
 
   @Override
   public int getConnectionLostCount()
@@ -44,6 +45,12 @@ public class XdsClientJmx implements XdsClientJmxMBean {
   public int getReconnectionCount()
   {
     return _reconnectionCount.get();
+  }
+
+  @Override
+  public int getResourceNotFoundCount()
+  {
+    return _resourceNotFoundCount.get();
   }
 
   @Override
@@ -70,5 +77,10 @@ public class XdsClientJmx implements XdsClientJmxMBean {
   public void setIsConnected(boolean connected)
   {
     _isConnected.getAndSet(connected);
+  }
+
+  public void incrementResourceNotFoundCount()
+  {
+    _resourceNotFoundCount.incrementAndGet();
   }
 }

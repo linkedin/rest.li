@@ -219,6 +219,7 @@ public class XdsToD2PropertiesAdaptor
           }
           catch (PropertySerializationException e)
           {
+            _serviceEventBus.publishInitialize(serviceName, null); // notify the watchers that the service read the data from the cache directly.
             LOG.error("Failed to parse D2 service properties from xDS update. Service name: " + serviceName, e);
           }
         }
@@ -357,26 +358,20 @@ public class XdsToD2PropertiesAdaptor
     };
   }
 
-  private void updateSymlinkAndActualNodeMap(String symlinkName, String actualNodeName)
-  {
-    synchronized (_symlinkAndActualNodeLock)
-    {
+  private void updateSymlinkAndActualNodeMap(String symlinkName, String actualNodeName) {
+    synchronized (_symlinkAndActualNodeLock) {
       _symlinkAndActualNode.put(symlinkName, actualNodeName);
     }
   }
 
-  private String removeSymlink(String symlinkName)
-  {
-    synchronized (_symlinkAndActualNodeLock)
-    {
+  private String removeSymlink(String symlinkName) {
+    synchronized (_symlinkAndActualNodeLock) {
       return _symlinkAndActualNode.remove(symlinkName);
     }
   }
 
-  private String getSymlink(String actualNodeName)
-  {
-    synchronized (_symlinkAndActualNodeLock)
-    {
+  private String getSymlink(String actualNodeName) {
+    synchronized (_symlinkAndActualNodeLock) {
       return _symlinkAndActualNode.inverse().get(actualNodeName);
     }
   }

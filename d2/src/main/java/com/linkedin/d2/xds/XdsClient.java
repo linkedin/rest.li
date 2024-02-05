@@ -43,7 +43,8 @@ public abstract class XdsClient
   interface NodeResourceWatcher extends ResourceWatcher
   {
     void onChanged(NodeUpdate update);
-
+    // OnDelete method for interface functional completeness
+    // By now, OnDelete method should not be triggerred, as we don't want to delete the data from the cache which is just a design choice
     void onDelete(String resourceName);
   }
 
@@ -51,6 +52,8 @@ public abstract class XdsClient
   {
     void onChanged(String resourceName, NodeUpdate update);
 
+    // OnDelete method for interface functional completeness
+    // By now, OnDelete method should not be triggerred, as we don't want to delete the data from the cache which is just a design choice
     void onDelete(String resourceName);
   }
 
@@ -58,6 +61,8 @@ public abstract class XdsClient
   {
     void onChanged(D2URIMapUpdate update);
 
+    // OnDelete method for interface functional completeness
+    // By now, OnDelete method should not be triggerred, as we don't want to delete the data from the cache which is just a design choice
     void onDelete(String resourceName);
   }
 

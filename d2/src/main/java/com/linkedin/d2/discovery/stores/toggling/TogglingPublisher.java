@@ -1,4 +1,4 @@
- /*
+/*
    Copyright (c) 2012 LinkedIn Corp.
 
    Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ import com.linkedin.common.util.None;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.PropertyEventPublisher;
 import com.linkedin.d2.discovery.stores.PropertyStore;
+import com.linkedin.d2.discovery.stores.file.FileStore;
 import com.linkedin.d2.discovery.stores.util.NullEventBus;
 import com.linkedin.d2.discovery.stores.util.StoreEventPublisher;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperConnectionAwareStore;
@@ -88,11 +89,11 @@ public class TogglingPublisher<T>
         pubActivate.setBus(_eventBus);
         _eventBus.setPublisher(pubActivate);
 
-        if(deactivate != null && activate != null){
+        if (deactivate != null && activate != null) {
           LOG.info("TogglingPublisher: activate publisher {}, deactivate publisher {}",
               getPublisherName(activate.getPublisher()), getPublisherName(deactivate.getPublisher()));
         }
-        
+
         if (deactivate.started())
         {
           PropertyEventPublisher<T> pubDeactivate = deactivate.getPublisher();
@@ -109,13 +110,17 @@ public class TogglingPublisher<T>
     });
   }
 
-  private String getPublisherName(PropertyEventPublisher<T> p){
-    if(p instanceof ZooKeeperConnectionAwareStore || p instanceof ZooKeeperStore){
+  private String getPublisherName(PropertyEventPublisher<T> p) {
+    if (p instanceof ZooKeeperConnectionAwareStore || p instanceof ZooKeeperStore) {
       return "Zookeeper store";
-    }else if(p instanceof XdsToClusterPropertiesPublisher || p instanceof XdsToServicePropertiesPublisher || p instanceof XdsToUriPropertiesPublisher){
+    } else if (p instanceof XdsToClusterPropertiesPublisher || p instanceof XdsToServicePropertiesPublisher
+        || p instanceof XdsToUriPropertiesPublisher) {
       return "INDIS store";
+    } else if (p instanceof FileStore) {
+      return "FS store";
+    } else {
+      return "Unknown store";
     }
-    return "FS store";
   }
 
   public void shutdown(final Callback<None> callback)
