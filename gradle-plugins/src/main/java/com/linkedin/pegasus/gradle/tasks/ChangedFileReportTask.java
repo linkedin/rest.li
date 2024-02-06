@@ -6,7 +6,6 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.specs.Specs;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
-import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.work.ChangeType;
 import org.gradle.work.Incremental;
