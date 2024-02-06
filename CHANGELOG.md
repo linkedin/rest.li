@@ -14,8 +14,8 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [30.0.0] - 2024-02-06
-- Major version bump due to dropping support to Gradle versions below 6.9.4.
+## [29.51.0] - 2024-02-06
+- Minor version bump due to dropping support to Gradle versions below 6.9.4.
 - Make rest.li codebase use Gradle 6.9.4 to build itself
 - Make PegasusPlugin compatible with all Gradle version from 6.9.4 to 8.5
 
