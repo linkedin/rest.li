@@ -528,8 +528,8 @@ public class PegasusPlugin implements Plugin<Project>
 {
   public static boolean debug = false;
 
-  private static final GradleVersion MIN_REQUIRED_VERSION = GradleVersion.version("1.0"); // Next: 5.2.1
-  private static final GradleVersion MIN_SUGGESTED_VERSION = GradleVersion.version("5.2.1"); // Next: 5.3
+  private static final GradleVersion MIN_REQUIRED_VERSION = GradleVersion.version("6.9.4");
+  private static final GradleVersion MIN_SUGGESTED_VERSION = GradleVersion.version("6.9.4");
 
   //
   // Constants for generating sourceSet names and corresponding directory names
@@ -807,7 +807,7 @@ public class PegasusPlugin implements Plugin<Project>
 
     Properties properties = new Properties();
     InputStream inputStream = getClass().getResourceAsStream("/pegasus-version.properties");
-    if (inputStream != null)
+    if (inputStream != null && !"true".equals(System.getenv("PEGASUS_INTEGRATION_TESTING")))
     {
       try
       {
