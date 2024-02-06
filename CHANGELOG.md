@@ -14,6 +14,11 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [30.0.0] - 2024-02-06
+- Major version bump due to dropping support to Gradle versions below 6.9.4.
+- Make rest.li codebase use Gradle 6.9.4 to build itself
+- Make PegasusPlugin compatible with all Gradle version from 6.9.4 to 8.5
+
 ## [29.50.1] - 2024-01-31
 - Fix r2-netty illegal state exception due to premature channel recycling.
 
