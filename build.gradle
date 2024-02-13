@@ -124,9 +124,9 @@ project.ext.externalDependency = [
   "classgraph": "io.github.classgraph:classgraph:4.8.149",
 
   // for integrating with xDS service discovery
-  'grpcNettyShaded': 'io.grpc:grpc-netty-shaded:1.45.1',
-  'grpcProtobuf': 'io.grpc:grpc-protobuf:1.45.1',
-  'grpcStub': 'io.grpc:grpc-stub:1.45.1',
+  'grpcNettyShaded': 'io.grpc:grpc-netty-shaded:1.59.1',
+  'grpcProtobuf': 'io.grpc:grpc-protobuf:1.59.1',
+  'grpcStub': 'io.grpc:grpc-stub:1.59.1',
   'protoc': 'com.google.protobuf:protoc:3.21.7',
   'protobufJava': 'com.google.protobuf:protobuf-java:3.21.7',
   'protobufJavaUtil': 'com.google.protobuf:protobuf-java-util:3.21.7',
