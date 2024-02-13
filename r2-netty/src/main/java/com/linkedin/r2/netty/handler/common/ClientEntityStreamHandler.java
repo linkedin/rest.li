@@ -18,11 +18,13 @@ package com.linkedin.r2.netty.handler.common;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.data.ByteString;
+import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.StreamResponseBuilder;
 import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.message.stream.entitystream.Writer;
+import com.linkedin.r2.netty.common.ChannelPipelineEvent;
 import com.linkedin.r2.netty.common.NettyChannelAttributes;
 import com.linkedin.r2.netty.entitystream.StreamReader;
 import com.linkedin.r2.netty.entitystream.StreamWriter;
@@ -77,6 +79,10 @@ public class ClientEntityStreamHandler extends ChannelDuplexHandler
     }
     else
     {
+      if (msg instanceof RestRequest)
+      {
+        ctx.fireUserEventTriggered(ChannelPipelineEvent.REQUEST_COMPLETE);
+      }
       ctx.write(msg, promise);
     }
   }

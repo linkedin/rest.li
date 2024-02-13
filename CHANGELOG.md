@@ -14,6 +14,17 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.51.0] - 2024-02-06
+- Minor version bump due to dropping support to Gradle versions below 6.9.4.
+- Make rest.li codebase use Gradle 6.9.4 to build itself
+- Make PegasusPlugin compatible with all Gradle version from 6.9.4 to 8.5
+
+## [29.50.1] - 2024-01-31
+- Fix r2-netty illegal state exception due to premature channel recycling.
+
+## [29.50.0] - 2024-01-31
+- Minor version bump due to internal LinkedIn tooling requirement. No functional changes.
+
 ## [29.49.9] - 2024-01-26
 - Introduce new config to randomly pick the xDS server host
 
@@ -5621,7 +5632,10 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.49.9...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.51.0...master
+[29.51.0]: https://github.com/linkedin/rest.li/compare/v29.50.1...v29.51.0
+[29.50.1]: https://github.com/linkedin/rest.li/compare/v29.50.0...v29.50.1
+[29.50.0]: https://github.com/linkedin/rest.li/compare/v29.49.9...v29.50.0
 [29.49.9]: https://github.com/linkedin/rest.li/compare/v29.49.8...v29.49.9
 [29.49.8]: https://github.com/linkedin/rest.li/compare/v29.49.7...v29.49.8
 [29.49.7]: https://github.com/linkedin/rest.li/compare/v29.49.6...v29.49.7

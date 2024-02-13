@@ -39,6 +39,10 @@ public class ChannelLifecycleHandler extends ChannelInboundHandlerAdapter
 {
   private final boolean _recycle;
 
+  // State of the connection:
+  //   If the connection is half closed, then either the request has been fully sent, or the response fully received.
+  private boolean _halfClosed = false;
+
   public ChannelLifecycleHandler(boolean recycle)
   {
     _recycle = recycle;
@@ -71,15 +75,19 @@ public class ChannelLifecycleHandler extends ChannelInboundHandlerAdapter
   @Override
   public void userEventTriggered(ChannelHandlerContext ctx, Object evt)
   {
-    if (ChannelPipelineEvent.RESPONSE_COMPLETE == evt)
+    if (ChannelPipelineEvent.REQUEST_COMPLETE == evt || ChannelPipelineEvent.RESPONSE_COMPLETE == evt)
     {
-      if (_recycle)
-      {
-        tryReturnChannel(ctx);
-      }
-      else
-      {
-        tryDisposeChannel(ctx);
+      _halfClosed = !_halfClosed;
+
+      if (!_halfClosed) {
+        if (_recycle)
+        {
+          tryReturnChannel(ctx);
+        }
+        else
+        {
+          tryDisposeChannel(ctx);
+        }
       }
     }
     ctx.fireUserEventTriggered(evt);

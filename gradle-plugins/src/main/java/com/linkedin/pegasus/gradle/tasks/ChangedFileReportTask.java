@@ -1,26 +1,27 @@
 package com.linkedin.pegasus.gradle.tasks;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.specs.Specs;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
-import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.api.tasks.incremental.IncrementalTaskInputs;
+import org.gradle.work.ChangeType;
+import org.gradle.work.Incremental;
+import org.gradle.work.InputChanges;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
-public class ChangedFileReportTask extends DefaultTask
+public abstract class ChangedFileReportTask extends DefaultTask
 {
   private final Collection<String> _needCheckinFiles = new ArrayList<>();
-
-  private FileCollection _idlFiles = getProject().files();
-  private FileCollection _snapshotFiles = getProject().files();
 
   public ChangedFileReportTask()
   {
@@ -29,11 +30,11 @@ public class ChangedFileReportTask extends DefaultTask
   }
 
   @TaskAction
-  public void checkFilesForChanges(IncrementalTaskInputs inputs)
+  public void checkFilesForChanges(InputChanges inputs)
   {
     getLogger().lifecycle("Checking idl and snapshot files for changes...");
-    getLogger().info("idlFiles: " + _idlFiles.getAsPath());
-    getLogger().info("snapshotFiles: " + _snapshotFiles.getAsPath());
+    getLogger().info("idlFiles: " + getIdlFiles().getAsPath());
+    getLogger().info("snapshotFiles: " + getSnapshotFiles().getAsPath());
 
     Set<String> filesRemoved = new HashSet<>();
     Set<String> filesAdded = new HashSet<>();
@@ -41,24 +42,24 @@ public class ChangedFileReportTask extends DefaultTask
 
     if (inputs.isIncremental())
     {
-      inputs.outOfDate(inputFileDetails -> {
-        if (inputFileDetails.isAdded())
-        {
-          filesAdded.add(inputFileDetails.getFile().getAbsolutePath());
-        }
+      for (FileCollection fileCollection : Arrays.asList(getIdlFiles(), getSnapshotFiles())) {
+        inputs.getFileChanges(fileCollection).forEach(inputFileDetails -> {
+          if (inputFileDetails.getChangeType().equals(ChangeType.ADDED))
+          {
+            filesAdded.add(inputFileDetails.getFile().getAbsolutePath());
+          }
 
-        if (inputFileDetails.isRemoved())
-        {
-          filesRemoved.add(inputFileDetails.getFile().getAbsolutePath());
-        }
+          if (inputFileDetails.getChangeType().equals(ChangeType.REMOVED))
+          {
+            filesRemoved.add(inputFileDetails.getFile().getAbsolutePath());
+          }
 
-        if (inputFileDetails.isModified())
-        {
-          filesChanged.add(inputFileDetails.getFile().getAbsolutePath());
-        }
-      });
-
-      inputs.removed(inputFileDetails -> filesRemoved.add(inputFileDetails.getFile().getAbsolutePath()));
+          if (inputFileDetails.getChangeType().equals(ChangeType.MODIFIED))
+          {
+            filesChanged.add(inputFileDetails.getFile().getAbsolutePath());
+          }
+        });
+      }
 
       if (!filesRemoved.isEmpty())
       {
@@ -91,28 +92,12 @@ public class ChangedFileReportTask extends DefaultTask
   }
 
   @InputFiles
-  @SkipWhenEmpty
-  public FileCollection getSnapshotFiles()
-  {
-    return _snapshotFiles;
-  }
-
-  public void setSnapshotFiles(FileCollection snapshotFiles)
-  {
-    _snapshotFiles = snapshotFiles;
-  }
+  @Incremental
+  public abstract ConfigurableFileCollection getSnapshotFiles();
 
   @InputFiles
-  @SkipWhenEmpty
-  public FileCollection getIdlFiles()
-  {
-    return _idlFiles;
-  }
-
-  public void setIdlFiles(FileCollection idlFiles)
-  {
-    _idlFiles = idlFiles;
-  }
+  @Incremental
+  public abstract ConfigurableFileCollection getIdlFiles();
 
   @Internal
   public Collection<String> getNeedCheckinFiles()
