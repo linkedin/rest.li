@@ -14,6 +14,8 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.51.1] - 2024-02-13
+
 ## [29.51.0] - 2024-02-06
 - Minor version bump due to dropping support to Gradle versions below 6.9.4.
 - Make rest.li codebase use Gradle 6.9.4 to build itself
@@ -5632,7 +5634,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.51.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.51.1...master
+[29.51.1]: https://github.com/linkedin/rest.li/compare/v29.51.0...v29.51.1
 [29.51.0]: https://github.com/linkedin/rest.li/compare/v29.50.1...v29.51.0
 [29.50.1]: https://github.com/linkedin/rest.li/compare/v29.50.0...v29.50.1
 [29.50.0]: https://github.com/linkedin/rest.li/compare/v29.49.9...v29.50.0
