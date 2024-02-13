@@ -15,6 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.51.1] - 2024-02-13
+- Default to "pick_first" policy with shuffled addresses
 
 ## [29.51.0] - 2024-02-06
 - Minor version bump due to dropping support to Gradle versions below 6.9.4.
