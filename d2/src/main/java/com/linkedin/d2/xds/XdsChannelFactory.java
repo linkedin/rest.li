@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.xds;
 
-import com.google.gson.Gson;
 import io.grpc.ManagedChannel;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
@@ -27,30 +26,36 @@ import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
+
 
 public class XdsChannelFactory
 {
   private static final Logger _log = LoggerFactory.getLogger(XdsChannelFactory.class);
 
-
-  @SuppressWarnings("unchecked")
-  private static final Map<String, ?> DEFAULT_SHUFFLED_PICK_FIRST_CONFIG = new Gson().fromJson(
-      "{ \"loadBalancingConfig\": " +
-          "    [ { \"pick_first\": { \"shuffleAddressList\": true } } ]" +
-          "}",
-      Map.class);
-
   private final SslContext _sslContext;
   private final String _xdsServerUri;
   @Nullable
   private final String _defaultLoadBalancingPolicy;
+  @Nullable
+  private final Map<String, ?> _loadBalancingPolicyConfig;
 
   /**
-   * Invokes alternative constructor with {@code defaultLoadBalancingPolicy} as {@code null}.
+   * Invokes alternative constructor with {@code defaultLoadBalancingPolicy} and {@code loadBalancingPolicyConfig} as
+   * {@code null}.
    */
   public XdsChannelFactory(SslContext sslContext, String xdsServerUri)
   {
-    this(sslContext, xdsServerUri, null);
+    this(sslContext, xdsServerUri, null, null);
+  }
+
+  /**
+   * Invokes alternative constructor with {@code loadBalancingPolicyConfig} as {@code null}.
+   */
+  public XdsChannelFactory(SslContext sslContext, String xdsServerUri, @Nullable String defaultLoadBalancingPolicy)
+  {
+    this(sslContext, xdsServerUri, defaultLoadBalancingPolicy, null);
   }
 
   /**
@@ -61,20 +66,28 @@ public class XdsChannelFactory
    * @param defaultLoadBalancingPolicy If provided, changes the default load balancing policy on the builder to the
    *                                   given policy (see
    *                                   {@link io.grpc.ManagedChannelBuilder#defaultLoadBalancingPolicy(String)}).
-   *                                   Otherwise, by default it uses the "pick_first" policy, with the
-   *                                   "shuffleAddressList" config set to {@code true}. This will make the managed
-   *                                   channel always pick a random xDS server address.
+   * @param loadBalancingPolicyConfig  Can only be provided if {@code defaultLoadBalancingPolicy} is provided. Will be
+   *                                   provided to {@link io.grpc.ManagedChannelBuilder#defaultServiceConfig(Map)}})
+   *                                   after being wrapped in a "loadBalancingConfig" JSON context that corresponds
+   *                                   to the load balancing policy name provided by {@code defaultLoadBalancingPolicy}.
    * @see <a href="https://daniel.haxx.se/blog/2012/01/03/getaddrinfo-with-round-robin-dns-and-happy-eyeballs/"/>
    * Details on IPv6 routing.
    */
   public XdsChannelFactory(
       @Nullable SslContext sslContext,
       String xdsServerUri,
-      @Nullable String defaultLoadBalancingPolicy)
+      @Nullable String defaultLoadBalancingPolicy,
+      @Nullable Map<String, ?> loadBalancingPolicyConfig)
   {
     _sslContext = sslContext;
     _xdsServerUri = xdsServerUri;
+    if (defaultLoadBalancingPolicy == null && loadBalancingPolicyConfig != null)
+    {
+      throw new IllegalArgumentException("Cannot specify loadBalancingPolicyConfig without specifying " +
+          "defaultLoadBalancingPolicy");
+    }
     _defaultLoadBalancingPolicy = defaultLoadBalancingPolicy;
+    _loadBalancingPolicyConfig = loadBalancingPolicyConfig;
   }
 
   public ManagedChannel createChannel()
@@ -90,13 +103,15 @@ public class XdsChannelFactory
     {
       _log.info("Applying custom load balancing policy for xDS channel: {}", _defaultLoadBalancingPolicy);
       builder = builder.defaultLoadBalancingPolicy(_defaultLoadBalancingPolicy);
-    }
-    else
-    {
-      _log.info("Using \"pick_first\" policy with shuffleAddressList=true for xDS channel");
-      builder = builder
-          .defaultLoadBalancingPolicy("pick_first")
-          .defaultServiceConfig(DEFAULT_SHUFFLED_PICK_FIRST_CONFIG);
+
+      if (_loadBalancingPolicyConfig != null)
+      {
+        _log.info("Applying custom load balancing config for xDS channel: {}", _loadBalancingPolicyConfig);
+        builder = builder
+            .defaultServiceConfig(
+                singletonMap("loadBalancingConfig",
+                    singletonList(singletonMap(_defaultLoadBalancingPolicy, _loadBalancingPolicyConfig))));
+      }
     }
 
     if (_sslContext != null)
