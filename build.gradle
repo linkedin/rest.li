@@ -127,9 +127,9 @@ project.ext.externalDependency = [
   'grpcNettyShaded': 'io.grpc:grpc-netty-shaded:1.59.1',
   'grpcProtobuf': 'io.grpc:grpc-protobuf:1.59.1',
   'grpcStub': 'io.grpc:grpc-stub:1.59.1',
-  'protoc': 'com.google.protobuf:protoc:3.21.7',
-  'protobufJava': 'com.google.protobuf:protobuf-java:3.21.7',
-  'protobufJavaUtil': 'com.google.protobuf:protobuf-java-util:3.21.7',
+  'protoc': 'com.google.protobuf:protoc:3.24.0',
+  'protobufJava': 'com.google.protobuf:protobuf-java:3.24.0',
+  'protobufJavaUtil': 'com.google.protobuf:protobuf-java-util:3.24.0',
   'envoyApi': 'io.envoyproxy.controlplane:api:0.1.31',
 ];
 
