@@ -17,6 +17,7 @@
 package com.linkedin.d2.xds;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.rpc.Code;
 import com.linkedin.d2.jmx.XdsClientJmx;
@@ -444,18 +445,22 @@ public class XdsClientImpl extends XdsClient
     private final ResourceType _resourceType;
     private final List<Resource> _resources;
     private final String _nonce;
+    @Nullable
+    private final String _controlPlaneIdentifier;
 
-    DiscoveryResponseData(ResourceType resourceType, List<Resource> resources, String nonce)
+    DiscoveryResponseData(ResourceType resourceType, List<Resource> resources, String nonce,
+        @Nullable String controlPlaneIdentifier)
     {
       _resourceType = resourceType;
       _resources = resources;
       _nonce = nonce;
+      _controlPlaneIdentifier = controlPlaneIdentifier;
     }
 
     static DiscoveryResponseData fromEnvoyProto(DeltaDiscoveryResponse proto)
     {
       return new DiscoveryResponseData(ResourceType.fromTypeUrl(proto.getTypeUrl()), proto.getResourcesList(),
-          proto.getNonce());
+          proto.getNonce(), Strings.emptyToNull(proto.getControlPlane().getIdentifier()));
     }
 
     ResourceType getResourceType()
@@ -471,6 +476,12 @@ public class XdsClientImpl extends XdsClient
     String getNonce()
     {
       return _nonce;
+    }
+
+    @Nullable
+    String getControlPlaneIdentifier()
+    {
+      return _controlPlaneIdentifier;
     }
 
     @Override
@@ -613,6 +624,10 @@ public class XdsClientImpl extends XdsClient
       if (_closed)
       {
         return;
+      }
+      if (!_responseReceived && response.getControlPlaneIdentifier() != null)
+      {
+        _log.info("Successfully established stream with ADS server: {}", response.getControlPlaneIdentifier());
       }
       _responseReceived = true;
       String respNonce = response.getNonce();

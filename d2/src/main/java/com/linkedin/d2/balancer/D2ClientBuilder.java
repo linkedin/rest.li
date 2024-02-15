@@ -212,7 +212,9 @@ public class D2ClientBuilder
                   _config.dualReadStateManager,
                   _config.xdsExecutorService,
                   _config.xdsStreamReadyTimeout,
-                  _config.dualReadNewLbExecutor
+                  _config.dualReadNewLbExecutor,
+                  _config.xdsChannelLoadBalancingPolicy,
+                  _config.xdsChannelLoadBalancingPolicyConfig
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -696,6 +698,16 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setXdsStreamReadyTimeout(long xdsStreamReadyTimeout) {
     _config.xdsStreamReadyTimeout = xdsStreamReadyTimeout;
+    return this;
+  }
+
+  public D2ClientBuilder setXdsChannelLoadBalancingPolicy(String xdsChannelLoadBalancingPolicy) {
+    _config.xdsChannelLoadBalancingPolicy = xdsChannelLoadBalancingPolicy;
+    return this;
+  }
+
+  public D2ClientBuilder xdsChannelLoadBalancingPolicyConfig(Map<String, ?> xdsChannelLoadBalancingPolicyConfig) {
+    _config.xdsChannelLoadBalancingPolicyConfig = xdsChannelLoadBalancingPolicyConfig;
     return this;
   }
 
