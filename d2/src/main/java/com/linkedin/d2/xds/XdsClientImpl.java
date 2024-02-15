@@ -627,7 +627,7 @@ public class XdsClientImpl extends XdsClient
       }
       if (!_responseReceived && response.getControlPlaneIdentifier() != null)
       {
-        _log.info("Successfully established stream with ADS server {}", response.getControlPlaneIdentifier());
+        _log.info("Successfully established stream with ADS server: {}", response.getControlPlaneIdentifier());
       }
       _responseReceived = true;
       String respNonce = response.getNonce();
