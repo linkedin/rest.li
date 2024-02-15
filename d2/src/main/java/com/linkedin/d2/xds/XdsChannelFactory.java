@@ -83,8 +83,7 @@ public class XdsChannelFactory
     _xdsServerUri = xdsServerUri;
     if (defaultLoadBalancingPolicy == null && loadBalancingPolicyConfig != null)
     {
-      throw new IllegalArgumentException("Cannot specify loadBalancingPolicyConfig without specifying " +
-          "defaultLoadBalancingPolicy");
+      _log.warn("loadBalancingPolicyConfig ignored because defaultLoadBalancingPolicy was not provided.");
     }
     _defaultLoadBalancingPolicy = defaultLoadBalancingPolicy;
     _loadBalancingPolicyConfig = loadBalancingPolicyConfig;
