@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.51.2] - 2024-02-15
+- use tracingId in xDS flow for SD tracking events
+
 ## [29.51.1] - 2024-02-13
 - Default back to pick_first policy
 
@@ -5635,7 +5638,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.51.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.51.2...master
+[29.51.2]: https://github.com/linkedin/rest.li/compare/v29.51.1...v29.51.2
 [29.51.1]: https://github.com/linkedin/rest.li/compare/v29.51.0...v29.51.1
 [29.51.0]: https://github.com/linkedin/rest.li/compare/v29.50.1...v29.51.0
 [29.50.1]: https://github.com/linkedin/rest.li/compare/v29.50.0...v29.50.1

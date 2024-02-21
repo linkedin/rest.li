@@ -62,6 +62,8 @@ message Node {
 // ZooKeeperServer and ZooKeeperAnnouncer that there cannot ever be more than one URI in one ZK announcement, therefore
 // this new proto representation does not need to share the same shortcomings and can, instead, represent things more
 // linearly.
+// linearly. Note that since a URI can announce to multiple partitions, this is still represented as a map to capture
+// the weights for each partition.
 //
 // Here is a sample ZK announcement in JSON serialized from a UriProperties for additional clarity on the fields that
 // are represented as maps when they do not need to be:
@@ -74,6 +76,9 @@ message Node {
 //				"0": {
 //					"weight": 1.0
 //				}
+//				"1": {
+//					"weight": 2.0
+//				}
 //			}
 //		},
 //		"uriSpecificProperties": {
@@ -82,6 +87,19 @@ message Node {
 //			}
 //		},
 //		"clusterName": "Toki"
+//	}
+//
+// And here is what the corresponding D2URI would look like for this announcement:
+//	{
+//		"cluster_name": "Toki",
+//		"uri": "https://foo.stg.linkedin.com:18792/Toki/resources",
+//		"partition_desc": {
+//			"0": 1.0,
+//			"1": 2.0
+//		},
+//		"uri_specific_properties": {
+//			"com.linkedin.app.version": "0.1.76"
+//		}
 //	}
 message D2URI {
   // The version of this announcement. When coming from ZK, this will be the node's mzxid.
@@ -103,6 +121,11 @@ message D2URI {
 
   // Additional metadata for this announcement. This is inferred from the original "uriSpecificProperties" field.
   google.protobuf.Struct uri_specific_properties = 6;
+
+  // The tracing ID for this announcement, which should be unique to this announcement. For Kafka announcements, this
+  // comes from the announcing server (which sets a UUID for each announcement) and for Zookeeper,
+  // this will be the full path to the d2URI. eg: /d2/uris/FooCluster/lor1-app000-xxxxx
+  string tracing_id = 7;
 }
 
 message D2URIMap {

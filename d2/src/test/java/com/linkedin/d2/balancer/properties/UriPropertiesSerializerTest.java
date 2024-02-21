@@ -17,12 +17,16 @@
 package com.linkedin.d2.balancer.properties;
 
 
+import com.google.protobuf.Struct;
+import com.google.protobuf.Value;
 import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.discovery.PropertySerializationException;
 
+import indis.XdsD2;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,6 +37,21 @@ import static org.testng.Assert.assertEquals;
 
 public class UriPropertiesSerializerTest
 {
+  private static final URI TEST_URI = URI.create("https://www.linkedin.com");
+  private static final String CLUSTER_NAME = "test";
+  private static final Map<URI, Map<Integer, PartitionData>> PARTITION_DESC = new HashMap<>();
+  private static final UriProperties URI_PROP;
+
+  static {
+    Map<Integer, PartitionData> partitions = new HashMap<>();
+    partitions.put(0, new PartitionData(0.3d));
+    partitions.put(1000, new PartitionData(0.3d));
+    PARTITION_DESC.put(TEST_URI, partitions);
+
+    URI_PROP = new UriProperties("test", PARTITION_DESC,
+        Collections.emptyMap(), 0);
+  }
+
   // the old way of constructing uri properties; ideally we would like to keep it as a constructor
   // However, it has the same signature as the new one after type erasure if it is still a constructor
   public static UriProperties getInstanceWithOldArguments(String clusterName, Map<URI, Double> weights)
@@ -92,7 +111,6 @@ public class UriPropertiesSerializerTest
     byte[] bytesIncludingWeights = jsonSerializer.toBytes(createdNew);
     UriProperties result = fromOldFormatBytes(bytesIncludingWeights);
     assertEquals(createdNew, result);
-
   }
 
   public UriProperties fromOldFormatBytes(byte[] bytes) throws PropertySerializationException
@@ -101,7 +119,7 @@ public class UriPropertiesSerializerTest
     {
       @SuppressWarnings("unchecked")
       Map<String, Object> untyped =
-          JacksonUtil.getObjectMapper().readValue(new String(bytes, "UTF-8"), HashMap.class);
+          JacksonUtil.getObjectMapper().readValue(new String(bytes, StandardCharsets.UTF_8), HashMap.class);
       return fromOldFormatMap(untyped);
     }
     catch (Exception e)
@@ -137,38 +155,54 @@ public class UriPropertiesSerializerTest
       throws PropertySerializationException
   {
     UriPropertiesJsonSerializer jsonSerializer = new UriPropertiesJsonSerializer();
-    URI uri = URI.create("https://www.linkedin.com");
 
     // new constructor
-
     Map<String, Object> applicationProperties = new HashMap<>();
     applicationProperties.put("foo", "fooValue");
     applicationProperties.put("bar", "barValue");
     applicationProperties.put("baz", 1);
 
-    Map<URI, Map<Integer, PartitionData>> partitionDesc = new HashMap<>();
-    Map<Integer, PartitionData> partitions = new HashMap<>();
-    partitions.put(0, new PartitionData(0.3d));
-    partitions.put(1000, new PartitionData(0.3d));
+    UriProperties properties = new UriProperties("test", PARTITION_DESC,
+        Collections.singletonMap(TEST_URI, applicationProperties), 0);
 
-    partitionDesc.put(uri, partitions);
-
-    UriProperties properties = new UriProperties("test", partitionDesc,
-        Collections.singletonMap(uri, applicationProperties), 0);
     UriProperties stored = jsonSerializer.fromBytes(jsonSerializer.toBytes(properties));
     assertEquals(stored, properties);
 
     // from bytes that were stored using an old constructor
+    assertEquals(jsonSerializer.fromBytes(("{\"clusterName\":\"test\",\"partitionDesc\":{\"https://www.linkedin.com\""
+            + ":{\"0\":{\"weight\":0.3},\"1000\":{\"weight\":0.3}}}}").getBytes()), URI_PROP);
+  }
 
-    partitionDesc = new HashMap<>();
-    partitions = new HashMap<>();
-    partitions.put(0, new PartitionData(0.3d));
-    partitions.put(1000, new PartitionData(0.3d));
-    partitionDesc.put(uri, partitions);
+  @Test
+  public void testFromProto() throws PropertySerializationException {
+    UriPropertiesJsonSerializer jsonSerializer = new UriPropertiesJsonSerializer();
 
-    properties = new UriProperties("test", partitionDesc);
+    XdsD2.D2URI xdsUri = XdsD2.D2URI.newBuilder()
+        .setVersion(0)
+        .setUri(TEST_URI.toString())
+        .setClusterName(CLUSTER_NAME)
+        .putPartitionDesc(0, 0.3d)
+        .putPartitionDesc(1000, 0.3d)
+        .build();
+    UriProperties actual = jsonSerializer.fromProto(xdsUri);
+    assertEquals(actual, URI_PROP);
+    assertEquals(actual.toString(), URI_PROP.toString()); // string is also the same so that FS data is the same
 
-    assertEquals(jsonSerializer.fromBytes("{\"clusterName\":\"test\",\"partitionDesc\":{\"https://www.linkedin.com\":{\"0\":{\"weight\":0.3},\"1000\":{\"weight\":0.3}}}}".getBytes()),
-                 properties);
+    UriProperties expected = new UriProperties("test", PARTITION_DESC,
+        Collections.singletonMap(TEST_URI,
+            Collections.singletonMap("foo", "fooValue")), 1);
+    xdsUri = XdsD2.D2URI.newBuilder()
+        .setVersion(1)
+        .setUri(TEST_URI.toString())
+        .setClusterName(CLUSTER_NAME)
+        .putPartitionDesc(0, 0.3d)
+        .putPartitionDesc(1000, 0.3d)
+        .setUriSpecificProperties(Struct.newBuilder()
+            .putFields("foo", Value.newBuilder().setStringValue("fooValue").build())
+            .build())
+        .build();
+    actual = jsonSerializer.fromProto(xdsUri);
+    assertEquals(actual, expected);
+    assertEquals(actual.toString(), expected.toString()); // string is also the same so that FS data is the same
   }
 }

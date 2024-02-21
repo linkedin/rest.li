@@ -125,7 +125,9 @@ public class UriPropertiesJsonSerializer implements PropertySerializer<UriProper
       return new UriProperties(
           protoUri.getClusterName(),
           Collections.singletonMap(uri, partitionDesc),
-          Collections.singletonMap(uri, applicationProperties),
+          applicationProperties.isEmpty() ?
+              Collections.emptyMap() :
+              Collections.singletonMap(uri, applicationProperties),
           protoUri.getVersion()
       );
     }
