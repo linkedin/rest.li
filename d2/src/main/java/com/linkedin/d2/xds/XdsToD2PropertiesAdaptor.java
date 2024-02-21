@@ -476,7 +476,8 @@ public class XdsToD2PropertiesAdaptor
         uriProperties = _uriPropertiesJsonSerializer.fromProto(xdsUri);
         if (uriProperties.getVersion() < 0)
         {
-          LOG.warn("xDS data: {} for uri: {} has invalid version: {}", xdsUri, uriName, uriProperties.getVersion());
+          LOG.warn("xDS data: {} for uri: {} in cluster: {} has invalid version: {}",
+              xdsUri, uriName, _clusterName, uriProperties.getVersion());
         }
       }
       catch (PropertySerializationException e)
