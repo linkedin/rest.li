@@ -92,12 +92,19 @@ public abstract class DualReadLoadBalancerMonitor<T>
         // different.
         if (!isReadFromFS(existingEntry._version, propertyVersion))
         {
-          warnByPropType(isUriProp,
-              String.format("Received same data of different versions in %s LB for %s: %s."
+          String msg = String.format("Received same data of different versions in %s LB for %s: %s."
                       + " Old version: %s, New version: %s, Data: %s",
                   fromNewLb ? "New" : "Old", propertyClassName, propertyName, existingEntry._version,
-                  propertyVersion, property)
-          );
+                  propertyVersion, property);
+
+          if (isUriProp)
+          {
+            LOG.debug(msg);
+          }
+          else
+          {
+            warnByPropType(isUriProp, msg);
+          }
         }
         // still need to put in the cache, don't skip
       }
@@ -136,10 +143,16 @@ public abstract class DualReadLoadBalancerMonitor<T>
     else {
       if (isDataEqual)
       {
-        warnByPropType(isUriProp,
-            String.format("Received same data of %s for %s but with different versions: %s",
-                propertyClassName, propertyName, entriesLogMsg)
-        );
+        String msg = String.format("Received same data of %s for %s but with different versions: %s",
+            propertyClassName, propertyName, entriesLogMsg);
+        if (isUriProp)
+        {
+          LOG.debug(msg);
+        }
+        else
+        {
+          warnByPropType(isUriProp, msg);
+        }
       }
       cacheToAdd.put(propertyName, newEntry);
       incrementEntryOutOfSyncCount();

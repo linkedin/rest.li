@@ -35,6 +35,8 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
+import com.linkedin.util.RateLimitedLogger;
+import com.linkedin.util.clock.SystemClock;
 import java.util.concurrent.ExecutorService;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang3.tuple.Pair;
@@ -58,6 +60,8 @@ import org.slf4j.LoggerFactory;
 public class DualReadLoadBalancer implements LoadBalancerWithFacilities
 {
   private static final Logger LOG = LoggerFactory.getLogger(DualReadLoadBalancer.class);
+  private final RateLimitedLogger _rateLimitedLogger;
+  private static final long ERROR_REPORT_PERIOD = 10 * 1000; // Limit error report logging to every 10 seconds
   private final LoadBalancerWithFacilities _oldLb;
   private final LoadBalancerWithFacilities _newLb;
   private final DualReadStateManager _dualReadStateManager;
@@ -74,6 +78,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   public DualReadLoadBalancer(LoadBalancerWithFacilities oldLb, LoadBalancerWithFacilities newLb,
       @Nonnull DualReadStateManager dualReadStateManager, ExecutorService newLbExecutor)
   {
+    _rateLimitedLogger = new RateLimitedLogger(LOG, ERROR_REPORT_PERIOD, SystemClock.instance());
     _oldLb = oldLb;
     _newLb = newLb;
     _dualReadStateManager = dualReadStateManager;
@@ -157,7 +162,8 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
               @Override
               public void onError(Throwable e)
               {
-                LOG.error("Dual read failure. Unable to read service properties from: {}", serviceName, e);
+                _rateLimitedLogger.error("Dual read failure. Unable to read service properties from: {}",
+                    serviceName, e);
               }
 
               @Override
@@ -170,7 +176,8 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
                       @Override
                       public void onError(Throwable e)
                       {
-                        LOG.error("Dual read failure. Unable to read cluster properties from: {}", clusterName, e);
+                        _rateLimitedLogger.error("Dual read failure. Unable to read cluster and uri properties "
+                            + "from: {}", clusterName, e);
                       }
 
                       @Override
