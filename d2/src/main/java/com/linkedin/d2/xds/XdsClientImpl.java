@@ -278,7 +278,8 @@ public class XdsClientImpl extends XdsClient
     if (errors.isEmpty())
     {
       _adsStream.sendAckRequest(type, nonce);
-    } else
+    }
+    else
     {
       String errorDetail = Joiner.on('\n').join(errors);
       _adsStream.sendNackRequest(type, nonce, errorDetail);

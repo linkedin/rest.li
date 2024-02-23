@@ -817,8 +817,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
   }
 
-  public void processGetLoadBalancedServicePropertiesTimeoutError(Throwable e, String serviceName,
-                                                                  Callback<ServiceProperties> servicePropertiesCallback)
+  public void processGetLoadBalancedServicePropertiesTimeoutError(
+          Throwable e, String serviceName, Callback<ServiceProperties> servicePropertiesCallback)
   {
     ServiceProperties properties = getServicePropertyFromCache(serviceName, servicePropertiesCallback);
     if (properties != null)
@@ -908,8 +908,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
   }
 
-  public void processGetLoadBalancedClusterAndUriPropertiesTimeoutError(Throwable e, String clusterName,
-                                                                        Callback<Pair<ClusterProperties, UriProperties>> clusterAndUriPropertiesCallback)
+  public void processGetLoadBalancedClusterAndUriPropertiesTimeoutError(
+          Throwable e, String clusterName, Callback<Pair<ClusterProperties, UriProperties>> clusterAndUriPropertiesCallback)
   {
     Pair<ClusterProperties, UriProperties> pair = getClusterAndUriPropertiesFromCache(clusterName, clusterAndUriPropertiesCallback);
     if (pair != null)
