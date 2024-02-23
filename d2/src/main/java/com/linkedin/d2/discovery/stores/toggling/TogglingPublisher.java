@@ -89,9 +89,9 @@ public class TogglingPublisher<T>
         pubActivate.setBus(_eventBus);
         _eventBus.setPublisher(pubActivate);
 
-        if (deactivate != null && activate != null) {
-          LOG.info("TogglingPublisher: activate publisher {}, deactivate publisher {}",
-              getPublisherName(activate.getPublisher()), getPublisherName(deactivate.getPublisher()));
+        if (deactivate != null && activate != null)
+        {
+          LOG.info("TogglingPublisher: activate publisher {}, deactivate publisher {}", getPublisherName(activate.getPublisher()), getPublisherName(deactivate.getPublisher()));
         }
 
         if (deactivate.started())
@@ -110,15 +110,22 @@ public class TogglingPublisher<T>
     });
   }
 
-  private String getPublisherName(PropertyEventPublisher<T> p) {
-    if (p instanceof ZooKeeperConnectionAwareStore || p instanceof ZooKeeperStore) {
+  private String getPublisherName(PropertyEventPublisher<T> p)
+  {
+    if (p instanceof ZooKeeperConnectionAwareStore || p instanceof ZooKeeperStore)
+    {
       return "Zookeeper store";
-    } else if (p instanceof XdsToClusterPropertiesPublisher || p instanceof XdsToServicePropertiesPublisher
-        || p instanceof XdsToUriPropertiesPublisher) {
+    }
+    else if (p instanceof XdsToClusterPropertiesPublisher || p instanceof XdsToServicePropertiesPublisher || p instanceof XdsToUriPropertiesPublisher)
+    {
       return "INDIS store";
-    } else if (p instanceof FileStore) {
+    }
+    else if (p instanceof FileStore)
+    {
       return "FS store";
-    } else {
+    }
+    else
+    {
       return "Unknown store";
     }
   }

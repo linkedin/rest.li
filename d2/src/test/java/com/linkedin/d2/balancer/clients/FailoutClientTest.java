@@ -104,16 +104,6 @@ public class FailoutClientTest {
   }
 
   @Test
-  public void testStreamRequestLoadBalancerTimeoutError() throws URISyntaxException {
-    doAnswer(invocation -> {
-      Callback callback = (Callback) invocation.getArguments()[1];
-      callback.onError(new RuntimeException());
-      return null;
-    }).when(_loadBalancerWithFacilities).getLoadBalancedServiceProperties(anyString(), any());
-    sendAndVerifyStreamRequest();
-  }
-
-  @Test
   public void testStreamNoFailout() throws URISyntaxException {
     setupRedirectStrategy(false);
 

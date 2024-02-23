@@ -222,12 +222,16 @@ public class XdsClientImpl extends XdsClient
       try
       {
         XdsD2.Node d2Node = resource.getResource().unpack(XdsD2.Node.class);
-        if (d2Node != null && d2Node.getData().isEmpty()) {
+        if (d2Node != null && d2Node.getData().isEmpty())
+        {
           _log.warn("Received a Node response with no data, resource is : {}", resourceName);
-        } else {
+        }
+        else
+        {
           updates.put(resourceName, new NodeUpdate(resource.getVersion(), d2Node));
         }
-      } catch (InvalidProtocolBufferException e)
+      }
+      catch (InvalidProtocolBufferException e)
       {
         _log.warn("Failed to unpack Node response", e);
         errors.add("Failed to unpack Node response");
@@ -250,12 +254,16 @@ public class XdsClientImpl extends XdsClient
       {
         XdsD2.D2URIMap uriMap = resource.getResource().unpack(XdsD2.D2URIMap.class);
         Map<String, XdsD2.D2URI> nodeData = uriMap.getUrisMap();
-        if (nodeData.isEmpty()) {
+        if (nodeData.isEmpty())
+        {
           _log.warn("Received a D2URIMap response with no data, resource is : {}", resourceName);
-        } else {
+        }
+        else
+        {
           updates.put(resourceName, new D2URIMapUpdate(resource.getVersion(), nodeData));
         }
-      } catch (InvalidProtocolBufferException e)
+      }
+      catch (InvalidProtocolBufferException e)
       {
         _log.warn("Failed to unpack D2URIMap response", e);
         errors.add("Failed to unpack D2URIMap response");
@@ -265,32 +273,41 @@ public class XdsClientImpl extends XdsClient
     handleResourceUpdate(updates, data.getResourceType());
   }
 
-  private void sendAckOrNack(ResourceType type, String nonce, List<String> errors) {
-    if (errors.isEmpty()) {
+  private void sendAckOrNack(ResourceType type, String nonce, List<String> errors)
+  {
+    if (errors.isEmpty())
+    {
       _adsStream.sendAckRequest(type, nonce);
-    } else {
+    } else
+    {
       String errorDetail = Joiner.on('\n').join(errors);
       _adsStream.sendNackRequest(type, nonce, errorDetail);
     }
   }
 
-  private void handleResourceUpdate(Map<String, ? extends ResourceUpdate> updates, ResourceType type) {
-    for (Map.Entry<String, ? extends ResourceUpdate> entry : updates.entrySet()) {
+  private void handleResourceUpdate(Map<String, ? extends ResourceUpdate> updates, ResourceType type)
+  {
+    for (Map.Entry<String, ? extends ResourceUpdate> entry : updates.entrySet())
+    {
       String resourceName = entry.getKey();
       ResourceUpdate resourceUpdate = entry.getValue();
       ResourceSubscriber subscriber = getResourceSubscriberMap(type).get(resourceName);
-      if (subscriber != null) {
+      if (subscriber != null)
+      {
         subscriber.onData(resourceUpdate);
       }
     }
   }
 
-  private void handleResourceRemoval(List<String> removedResources, ResourceType type) {
-    for (String resourceName : removedResources) {
+  private void handleResourceRemoval(List<String> removedResources, ResourceType type)
+  {
+    for (String resourceName : removedResources)
+    {
       _xdsClientJmx.incrementResourceNotFoundCount();
       _log.info("Resource {} need to be removed", resourceName);
       ResourceSubscriber subscriber = getResourceSubscriberMap(type).get(resourceName);
-      if (subscriber != null) {
+      if (subscriber != null)
+      {
         subscriber.onRemoval();
       }
     }
@@ -383,7 +400,8 @@ public class XdsClientImpl extends XdsClient
         _log.debug("Received resource update data equal to the current data. Will not perform the update.");
         return;
       }
-      if (data != null) { // null value guard to avoid overwriting the property with null
+      if (data != null)
+      { // null value guard to avoid overwriting the property with null
         _data = data;
       }
       for (ResourceWatcher watcher : _watchers)
@@ -408,11 +426,13 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    private void onRemoval() {
+    private void onRemoval()
+    {
       // When the client receive the removal data from INDIS or ZK,
       // client side doesn't delete the data from the cache which is just a design choice by now.
       // So to avoid the eventbus watcher timeout, in there directly notify the watcher with cache data
-      for (ResourceWatcher watcher : _watchers) {
+      for (ResourceWatcher watcher : _watchers)
+      {
         notifyWatcher(watcher, _data);
       }
     }
@@ -484,7 +504,7 @@ public class XdsClientImpl extends XdsClient
     static DiscoveryResponseData fromEnvoyProto(DeltaDiscoveryResponse proto)
     {
       return new DiscoveryResponseData(ResourceType.fromTypeUrl(proto.getTypeUrl()), proto.getResourcesList(),
-          proto.getRemovedResourcesList(), proto.getNonce());
+              proto.getRemovedResourcesList(), proto.getNonce());
     }
 
     ResourceType getResourceType()

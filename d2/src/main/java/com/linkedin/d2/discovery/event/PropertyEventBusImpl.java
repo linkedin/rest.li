@@ -199,7 +199,8 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
         // an "initialize", but if the bus has previously seen that property, we will treat
         // it as an "add" so that the publisher change will be transparent to the clients.
         boolean doAdd = _properties.containsKey(prop);
-        if(!doAdd || (doAdd && value != null)){
+        if (!doAdd || (doAdd && value != null))
+        {
           // null guard for doAdd, only put the value in following cases:
           // case1: For initialization scenario : could put the nullable value in the map
           // case2: For doAdd scenario, could only put the non-nullable value in the map
@@ -236,7 +237,8 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
         // Ignore unless the property has been initialized
         if (_properties.containsKey(prop))
         {
-          if (value != null) {
+          if (value != null)
+          {
             _properties.put(prop, value);
           }
           for (final PropertyEventSubscriber<T> subscriber : subscribers(prop))

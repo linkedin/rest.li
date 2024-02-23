@@ -340,7 +340,6 @@ public class XdsToD2PropertiesAdaptor
       @Override
       public void onDelete(String resourceName)
       {
-        // TODO: Is this all we need to do here?
         removeSymlink(symlinkName);
       }
 
@@ -364,8 +363,10 @@ public class XdsToD2PropertiesAdaptor
     }
   }
 
-  private String removeSymlink(String symlinkName) {
-    synchronized (_symlinkAndActualNodeLock) {
+  private String removeSymlink(String symlinkName)
+  {
+    synchronized (_symlinkAndActualNodeLock)
+    {
       return _symlinkAndActualNode.remove(symlinkName);
     }
   }

@@ -126,9 +126,12 @@ public abstract class AbstractLoadBalancerSubscriber<T> implements
   public void onAdd(final String propertyName, final T propertyValue)
   {
     trace(_log, _name, ".onAdd: ", propertyName, ": ", propertyValue);
-    if (propertyValue != null) { // null value guard to avoid overwriting the property with null
+    if (propertyValue != null)
+    { // null value guard to avoid overwriting the property with null
       handlePut(propertyName, propertyValue);
-    } else {
+    }
+    else
+    {
       _log.info("Get the null value for property : {}", propertyName);
     }
 
