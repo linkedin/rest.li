@@ -97,14 +97,7 @@ public abstract class DualReadLoadBalancerMonitor<T>
                   fromNewLb ? "New" : "Old", propertyClassName, propertyName, existingEntry._version,
                   propertyVersion, property);
 
-          if (isUriProp)
-          {
-            LOG.debug(msg);
-          }
-          else
-          {
-            warnByPropType(isUriProp, msg);
-          }
+          logByPropType(isUriProp, msg);
         }
         // still need to put in the cache, don't skip
       }
@@ -136,7 +129,7 @@ public abstract class DualReadLoadBalancerMonitor<T>
     { // data is not the same but version is the same, a mismatch!
       incrementPropertiesErrorCount();
       incrementEntryOutOfSyncCount(); // increment the out-of-sync count for the entry received later
-      warnByPropType(isUriProp,
+      logByPropType(isUriProp,
           String.format("Received mismatched %s for %s. %s", propertyClassName, propertyName, entriesLogMsg));
       cacheToCompare.invalidate(propertyName);
     }
@@ -145,14 +138,7 @@ public abstract class DualReadLoadBalancerMonitor<T>
       {
         String msg = String.format("Received same data of %s for %s but with different versions: %s",
             propertyClassName, propertyName, entriesLogMsg);
-        if (isUriProp)
-        {
-          LOG.debug(msg);
-        }
-        else
-        {
-          warnByPropType(isUriProp, msg);
-        }
+        logByPropType(isUriProp, msg);
       }
       cacheToAdd.put(propertyName, newEntry);
       incrementEntryOutOfSyncCount();
@@ -209,11 +195,11 @@ public abstract class DualReadLoadBalancerMonitor<T>
     return v1.startsWith(VERSION_FROM_FS) || v2.startsWith(VERSION_FROM_FS);
   }
 
-  private void warnByPropType(boolean isUriProp, String msg)
+  private void logByPropType(boolean isUriProp, String msg)
   {
     if (isUriProp)
     {
-      _rateLimitedLogger.warn(msg);
+      _rateLimitedLogger.debug(msg);
     }
     else
     {
