@@ -156,6 +156,12 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         _newLb.getClient(request, requestContext, clientCallback);
         break;
       case DUAL_READ:
+        if (_newLbExecutor.isShutdown())
+        {
+          _rateLimitedLogger.error("Dual read failure. New load balancer executor is shutdown.");
+          _oldLb.getClient(request, requestContext, clientCallback);
+          return;
+        }
         _newLbExecutor.execute(
             () -> _newLb.getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
             {
