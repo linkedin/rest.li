@@ -48,7 +48,7 @@ public abstract class DualReadLoadBalancerMonitor<T>
   private static final Logger LOG = LoggerFactory.getLogger(DualReadLoadBalancerMonitor.class);
   public final static String DEFAULT_DATE_FORMAT = "YYYY/MM/dd HH:mm:ss.SSS";
   public final static String VERSION_FROM_FS = "-1";
-  private static final long ERROR_REPORT_PERIOD = 10 * 1000; // Limit error report logging to every 10 seconds
+  private static final long ERROR_REPORT_PERIOD = 600 * 1000; // Limit error report logging to every 10 minutes
   private static final int MAX_CACHE_SIZE = 10000;
   private final Cache<String, CacheEntry<T>> _oldLbPropertyCache;
   private final Cache<String, CacheEntry<T>> _newLbPropertyCache;
@@ -97,7 +97,14 @@ public abstract class DualReadLoadBalancerMonitor<T>
                   fromNewLb ? "New" : "Old", propertyClassName, propertyName, existingEntry._version,
                   propertyVersion, property);
 
-          logByPropType(isUriProp, msg);
+          if (isUriProp)
+          {
+            LOG.debug(msg);
+          }
+          else
+          {
+            warnByPropType(isUriProp, msg);
+          }
         }
         // still need to put in the cache, don't skip
       }
@@ -129,7 +136,7 @@ public abstract class DualReadLoadBalancerMonitor<T>
     { // data is not the same but version is the same, a mismatch!
       incrementPropertiesErrorCount();
       incrementEntryOutOfSyncCount(); // increment the out-of-sync count for the entry received later
-      logByPropType(isUriProp,
+      warnByPropType(isUriProp,
           String.format("Received mismatched %s for %s. %s", propertyClassName, propertyName, entriesLogMsg));
       cacheToCompare.invalidate(propertyName);
     }
@@ -138,7 +145,14 @@ public abstract class DualReadLoadBalancerMonitor<T>
       {
         String msg = String.format("Received same data of %s for %s but with different versions: %s",
             propertyClassName, propertyName, entriesLogMsg);
-        logByPropType(isUriProp, msg);
+        if (isUriProp)
+        {
+          LOG.debug(msg);
+        }
+        else
+        {
+          warnByPropType(isUriProp, msg);
+        }
       }
       cacheToAdd.put(propertyName, newEntry);
       incrementEntryOutOfSyncCount();
@@ -195,11 +209,11 @@ public abstract class DualReadLoadBalancerMonitor<T>
     return v1.startsWith(VERSION_FROM_FS) || v2.startsWith(VERSION_FROM_FS);
   }
 
-  private void logByPropType(boolean isUriProp, String msg)
+  private void warnByPropType(boolean isUriProp, String msg)
   {
     if (isUriProp)
     {
-      _rateLimitedLogger.debug(msg);
+      _rateLimitedLogger.warn(msg);
     }
     else
     {
