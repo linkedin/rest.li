@@ -14,7 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.51.3] - 2024-02-28
+## [29.51.4] - 2024-02-29
 - fix newLb executor in dual-read mode shutdown issue
 
 ## [29.51.3] - 2024-02-23
