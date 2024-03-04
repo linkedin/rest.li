@@ -77,6 +77,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -479,20 +480,27 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     if (waitForUpdatedValue)
     {
       Callback<ServiceProperties> finalCallback = callback;
-      callback = new TimeoutCallback<>(_executor, _timeout, _unit, new Callback<ServiceProperties>()
+      try
       {
-        @Override
-        public void onError(Throwable e)
+        callback = new TimeoutCallback<>(_executor, _timeout, _unit, new Callback<ServiceProperties>()
         {
-          finalCallback.onError(new ServiceUnavailableException(serviceName, "PEGA_1004. " +e.getMessage(), e));
-        }
+          @Override
+          public void onError(Throwable e)
+          {
+            finalCallback.onError(new ServiceUnavailableException(serviceName, "PEGA_1004. " +e.getMessage(), e));
+          }
 
-        @Override
-        public void onSuccess(ServiceProperties result)
-        {
-          finalCallback.onSuccess(result);
-        }
-      }, "Timeout while fetching service");
+          @Override
+          public void onSuccess(ServiceProperties result)
+          {
+            finalCallback.onSuccess(result);
+          }
+        }, "Timeout while fetching service");
+      }
+      catch (RejectedExecutionException e)
+      {
+        _log.debug("Executor rejected new tasks. It has shut down or its queue size has reached max limit");
+      }
     }
     listenToServiceAndCluster(serviceName, waitForUpdatedValue, callback);
   }
@@ -755,21 +763,28 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     if (waitForUpdatedValue)
     {
       Callback<ServiceProperties> finalCallback = callback;
-      callback = new TimeoutCallback<>(_executor, _timeout, _unit, new Callback<ServiceProperties>()
+      try
       {
-        @Override
-        public void onError(Throwable e)
+        callback = new TimeoutCallback<>(_executor, _timeout, _unit, new Callback<ServiceProperties>()
         {
-          _serviceNotFoundStats.inc();
-          finalCallback.onError(new ServiceUnavailableException(serviceName, "PEGA_1011. " + e.getMessage(), e));
-        }
+          @Override
+          public void onError(Throwable e)
+          {
+            _serviceNotFoundStats.inc();
+            finalCallback.onError(new ServiceUnavailableException(serviceName, "PEGA_1011. " + e.getMessage(), e));
+          }
 
-        @Override
-        public void onSuccess(ServiceProperties result)
-        {
-          finalCallback.onSuccess(result);
-        }
-      }, "Timeout while fetching service");
+          @Override
+          public void onSuccess(ServiceProperties result)
+          {
+            finalCallback.onSuccess(result);
+          }
+        }, "Timeout while fetching service");
+      }
+      catch (RejectedExecutionException e)
+      {
+        _log.debug("Executor rejected new tasks. It has shut down or its queue size has reached max limit");
+      }
     }
     getLoadBalancedServiceProperties(serviceName, waitForUpdatedValue, callback);
   }
@@ -815,20 +830,27 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     if (waitForUpdatedValue)
     {
       Callback<Pair<ClusterProperties, UriProperties>> finalCallback = callback;
-      callback = new TimeoutCallback<>(_executor, _timeout, _unit, new Callback<Pair<ClusterProperties, UriProperties>>()
+      try
       {
-        @Override
-        public void onError(Throwable e)
+        callback = new TimeoutCallback<>(_executor, _timeout, _unit, new Callback<Pair<ClusterProperties, UriProperties>>()
         {
-          finalCallback.onError(new ServiceUnavailableException(clusterName, "PEGA_1011. " + e.getMessage(), e));
-        }
+          @Override
+          public void onError(Throwable e)
+          {
+            finalCallback.onError(new ServiceUnavailableException(clusterName, "PEGA_1011. " + e.getMessage(), e));
+          }
 
-        @Override
-        public void onSuccess(Pair<ClusterProperties, UriProperties> result)
-        {
-          finalCallback.onSuccess(result);
-        }
-      }, "Timeout while fetching cluster");
+          @Override
+          public void onSuccess(Pair<ClusterProperties, UriProperties> result)
+          {
+            finalCallback.onSuccess(result);
+          }
+        }, "Timeout while fetching cluster");
+      }
+      catch (RejectedExecutionException e)
+      {
+        _log.debug("Executor rejected new tasks. It has shut down or its queue size has reached max limit");
+      }
     }
     getLoadBalancedClusterAndUriProperties(clusterName, waitForUpdatedValue, callback);
   }
@@ -1167,14 +1189,22 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   @Override
   public void getDarkClusterConfigMap(String clusterName, Callback<DarkClusterConfigMap> callback)
   {
-    Callback<DarkClusterConfigMap> wrappedCallback = new TimeoutCallback<>(_executor, _timeout,
-            _unit, callback);
+    Callback<DarkClusterConfigMap> wrappedCallback = callback;
+    try
+    {
+      wrappedCallback = new TimeoutCallback<>(_executor, _timeout, _unit, callback);
+    }
+    catch (RejectedExecutionException e)
+    {
+      _log.debug("Executor rejected new tasks. It has shut down or its queue size has reached max limit");
+    }
+    Callback<DarkClusterConfigMap> finalWrappedCallback = wrappedCallback;
     _state.listenToCluster(clusterName, (type, name) ->
     {
       ClusterProperties clusterProperties = _state.getClusterProperties(clusterName).getProperty();
       DarkClusterConfigMap darkClusterConfigMap = clusterProperties != null ?
               clusterProperties.accessDarkClusters() : new DarkClusterConfigMap();
-      wrappedCallback.onSuccess(darkClusterConfigMap);
+      finalWrappedCallback.onSuccess(darkClusterConfigMap);
     });
   }
 
