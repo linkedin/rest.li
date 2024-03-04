@@ -35,6 +35,8 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
+import com.linkedin.util.RateLimitedLogger;
+import com.linkedin.util.clock.SystemClock;
 import java.util.concurrent.ExecutorService;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang3.tuple.Pair;
@@ -58,6 +60,8 @@ import org.slf4j.LoggerFactory;
 public class DualReadLoadBalancer implements LoadBalancerWithFacilities
 {
   private static final Logger LOG = LoggerFactory.getLogger(DualReadLoadBalancer.class);
+  private final RateLimitedLogger _rateLimitedLogger;
+  private static final long ERROR_REPORT_PERIOD = 10 * 1000; // Limit error report logging to every 10 seconds
   private final LoadBalancerWithFacilities _oldLb;
   private final LoadBalancerWithFacilities _newLb;
   private final DualReadStateManager _dualReadStateManager;
@@ -74,6 +78,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   public DualReadLoadBalancer(LoadBalancerWithFacilities oldLb, LoadBalancerWithFacilities newLb,
       @Nonnull DualReadStateManager dualReadStateManager, ExecutorService newLbExecutor)
   {
+    _rateLimitedLogger = new RateLimitedLogger(LOG, ERROR_REPORT_PERIOD, SystemClock.instance());
     _oldLb = oldLb;
     _newLb = newLb;
     _dualReadStateManager = dualReadStateManager;
@@ -99,9 +104,12 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
 
     // if in new-lb-only mode, new lb needs to start successfully to call the callback. Otherwise, the old lb does.
     // Use a separate executor service to start the new lb, so both lbs can start concurrently.
-    _newLbExecutor.execute(() -> _newLb.start(getStartUpCallback(true,
-        mode == DualReadModeProvider.DualReadMode.NEW_LB_ONLY ? callback : null)
-    ));
+    if (!_newLbExecutor.isShutdown())
+    {
+      _newLbExecutor.execute(() -> _newLb.start(getStartUpCallback(true,
+              mode == DualReadModeProvider.DualReadMode.NEW_LB_ONLY ? callback : null)
+      ));
+    }
 
     _oldLb.start(getStartUpCallback(false,
         mode == DualReadModeProvider.DualReadMode.NEW_LB_ONLY ? null : callback
@@ -151,36 +159,42 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         _newLb.getClient(request, requestContext, clientCallback);
         break;
       case DUAL_READ:
-        _newLbExecutor.execute(
-            () -> _newLb.getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
+        if (_newLbExecutor.isShutdown())
+        {
+          _rateLimitedLogger.info("newLb executor is shutdown already. Skipping getClient on newLb executor.");
+        }
+        else
+        {
+          _newLbExecutor.execute(() -> _newLb.getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
+          {
+            @Override
+            public void onError(Throwable e)
             {
-              @Override
-              public void onError(Throwable e)
-              {
-                LOG.error("Dual read failure. Unable to read service properties from: {}", serviceName, e);
-              }
+              _rateLimitedLogger.error("Dual read failure. Unable to read service properties from: {}", serviceName, e);
+            }
 
-              @Override
-              public void onSuccess(ServiceProperties result)
+            @Override
+            public void onSuccess(ServiceProperties result)
+            {
+              String clusterName = result.getClusterName();
+              _dualReadStateManager.updateCluster(clusterName, DualReadModeProvider.DualReadMode.DUAL_READ);
+              _newLb.getLoadBalancedClusterAndUriProperties(clusterName, new Callback<Pair<ClusterProperties, UriProperties>>()
               {
-                String clusterName = result.getClusterName();
-                _dualReadStateManager.updateCluster(clusterName, DualReadModeProvider.DualReadMode.DUAL_READ);
-                _newLb.getLoadBalancedClusterAndUriProperties(clusterName, new Callback<Pair<ClusterProperties, UriProperties>>()
-                    {
-                      @Override
-                      public void onError(Throwable e)
-                      {
-                        LOG.error("Dual read failure. Unable to read cluster properties from: {}", clusterName, e);
-                      }
+                @Override
+                public void onError(Throwable e)
+                {
+                  _rateLimitedLogger.error("Dual read failure. Unable to read cluster and uri properties " + "from: {}", clusterName, e);
+                }
 
-                      @Override
-                      public void onSuccess(Pair<ClusterProperties, UriProperties> result)
-                      {
-                        LOG.debug("Dual read is successful. Get cluster and uri properties: {}", result);
-                      }
-                    });
-              }
-            }));
+                @Override
+                public void onSuccess(Pair<ClusterProperties, UriProperties> result)
+                {
+                  LOG.debug("Dual read is successful. Get cluster and uri properties: {}", result);
+                }
+              });
+            }
+          }));
+        }
         _oldLb.getClient(request, requestContext, clientCallback);
         break;
       case OLD_LB_ONLY:
@@ -198,7 +212,14 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         _newLb.getLoadBalancedServiceProperties(serviceName, clientCallback);
         break;
       case DUAL_READ:
-        _newLbExecutor.execute(() -> _newLb.getLoadBalancedServiceProperties(serviceName, Callbacks.empty()));
+        if (_newLbExecutor.isShutdown())
+        {
+          _rateLimitedLogger.info("newLb executor is shutdown already. Skipping getLoadBalancedServiceProperties on newLb executor.");
+        }
+        else
+        {
+          _newLbExecutor.execute(() -> _newLb.getLoadBalancedServiceProperties(serviceName, Callbacks.empty()));
+        }
         _oldLb.getLoadBalancedServiceProperties(serviceName, clientCallback);
         break;
       case OLD_LB_ONLY:
@@ -217,7 +238,14 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         _newLb.getLoadBalancedClusterAndUriProperties(clusterName, callback);
         break;
       case DUAL_READ:
-        _newLbExecutor.execute(() -> _newLb.getLoadBalancedClusterAndUriProperties(clusterName, Callbacks.empty()));
+        if (_newLbExecutor.isShutdown())
+        {
+          _rateLimitedLogger.info("newLb executor is shutdown already. Skipping getLoadBalancedClusterAndUriProperties on newLb executor.");
+        }
+        else
+        {
+          _newLbExecutor.execute(() -> _newLb.getLoadBalancedClusterAndUriProperties(clusterName, Callbacks.empty()));
+        }
         _oldLb.getLoadBalancedClusterAndUriProperties(clusterName, callback);
         break;
       case OLD_LB_ONLY:

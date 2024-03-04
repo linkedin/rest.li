@@ -17,6 +17,7 @@
 package com.linkedin.d2.xds;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.rpc.Code;
 import com.linkedin.d2.jmx.XdsClientJmx;
@@ -274,31 +275,31 @@ public class XdsClientImpl extends XdsClient
   }
 
   private void sendAckOrNack(ResourceType type, String nonce, List<String> errors)
-  {
-    if (errors.isEmpty())
     {
-      _adsStream.sendAckRequest(type, nonce);
+        if (errors.isEmpty())
+        {
+            _adsStream.sendAckRequest(type, nonce);
     }
     else
-    {
-      String errorDetail = Joiner.on('\n').join(errors);
-      _adsStream.sendNackRequest(type, nonce, errorDetail);
-    }
+        {
+            String errorDetail = Joiner.on('\n').join(errors);
+            _adsStream.sendNackRequest(type, nonce, errorDetail);
+        }
   }
 
   private void handleResourceUpdate(Map<String, ? extends ResourceUpdate> updates, ResourceType type)
   {
-    for (Map.Entry<String, ? extends ResourceUpdate> entry : updates.entrySet())
-    {
-      String resourceName = entry.getKey();
-      ResourceUpdate resourceUpdate = entry.getValue();
-      ResourceSubscriber subscriber = getResourceSubscriberMap(type).get(resourceName);
-      if (subscriber != null)
-      {
-        subscriber.onData(resourceUpdate);
-      }
+        for (Map.Entry<String, ? extends ResourceUpdate> entry : updates.entrySet())
+        {
+            String resourceName = entry.getKey();
+            ResourceUpdate resourceUpdate = entry.getValue();
+            ResourceSubscriber subscriber = getResourceSubscriberMap(type).get(resourceName);
+            if (subscriber != null)
+            {
+                subscriber.onData(resourceUpdate);
+            }
+        }
     }
-  }
 
   private void handleResourceRemoval(List<String> removedResources, ResourceType type)
   {
@@ -493,19 +494,23 @@ public class XdsClientImpl extends XdsClient
     private final List<Resource> _resources;
     private final List<String> _removedResources;
     private final String _nonce;
+    @Nullable
+    private final String _controlPlaneIdentifier;
 
-    DiscoveryResponseData(ResourceType resourceType, List<Resource> resources, List<String> removedResources, String nonce)
+    DiscoveryResponseData(ResourceType resourceType, List<Resource> resources, List<String> removedResources, String nonce,
+                        @Nullable String controlPlaneIdentifier)
     {
       _resourceType = resourceType;
       _resources = resources;
-      _removedResources = removedResources;
       _nonce = nonce;
+      _removedResources = removedResources;
+      _controlPlaneIdentifier = controlPlaneIdentifier;
     }
 
     static DiscoveryResponseData fromEnvoyProto(DeltaDiscoveryResponse proto)
     {
       return new DiscoveryResponseData(ResourceType.fromTypeUrl(proto.getTypeUrl()), proto.getResourcesList(),
-              proto.getRemovedResourcesList(), proto.getNonce());
+              proto.getRemovedResourcesList(), proto.getNonce(), Strings.emptyToNull(proto.getControlPlane().getIdentifier()));
     }
 
     ResourceType getResourceType()
@@ -526,6 +531,12 @@ public class XdsClientImpl extends XdsClient
     String getNonce()
     {
       return _nonce;
+    }
+
+    @Nullable
+    String getControlPlaneIdentifier()
+    {
+      return _controlPlaneIdentifier;
     }
 
     @Override
@@ -668,6 +679,10 @@ public class XdsClientImpl extends XdsClient
       if (_closed)
       {
         return;
+      }
+      if (!_responseReceived && response.getControlPlaneIdentifier() != null)
+      {
+        _log.info("Successfully established stream with ADS server: {}", response.getControlPlaneIdentifier());
       }
       _responseReceived = true;
       String respNonce = response.getNonce();

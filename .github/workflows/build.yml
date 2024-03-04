@@ -18,7 +18,7 @@ jobs:
         with:
           # Need to fetch 2 commits for the PR (base commit and head merge commit) so we can compute the diff
           fetch-depth: 2
-      - uses: actions/setup-java@v2
+      - uses: actions/setup-java@v4
         with:
           distribution: zulu
           java-version: ${{ matrix.java }}

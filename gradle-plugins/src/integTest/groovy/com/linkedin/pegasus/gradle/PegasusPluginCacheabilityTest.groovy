@@ -19,6 +19,7 @@ class PegasusPluginCacheabilityTest extends Specification {
     def runner = GradleRunner.create()
         .withGradleVersion(gradleVersion)
         .withProjectDir(tempDir.root)
+        .withEnvironment([PEGASUS_INTEGRATION_TESTING: 'true'])
         .withPluginClasspath()
         .withArguments('mainDataTemplateJar')
 
@@ -96,6 +97,6 @@ class PegasusPluginCacheabilityTest extends Specification {
     preparedSchema.exists()
 
     where:
-    gradleVersion << [ '5.2.1', '5.6.4', '6.9', '7.0.2' ]
+    gradleVersion << IntegTestingUtil.ALL_SUPPORTED_GRADLE_VERSIONS
   }
 }

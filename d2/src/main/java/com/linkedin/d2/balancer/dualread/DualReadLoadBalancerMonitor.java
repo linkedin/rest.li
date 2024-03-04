@@ -48,7 +48,7 @@ public abstract class DualReadLoadBalancerMonitor<T>
   private static final Logger LOG = LoggerFactory.getLogger(DualReadLoadBalancerMonitor.class);
   public final static String DEFAULT_DATE_FORMAT = "YYYY/MM/dd HH:mm:ss.SSS";
   public final static String VERSION_FROM_FS = "-1";
-  private static final long ERROR_REPORT_PERIOD = 10 * 1000; // Limit error report logging to every 10 seconds
+  private static final long ERROR_REPORT_PERIOD = 600 * 1000; // Limit error report logging to every 10 minutes
   private static final int MAX_CACHE_SIZE = 10000;
   private final Cache<String, CacheEntry<T>> _oldLbPropertyCache;
   private final Cache<String, CacheEntry<T>> _newLbPropertyCache;
@@ -92,12 +92,19 @@ public abstract class DualReadLoadBalancerMonitor<T>
         // different.
         if (!isReadFromFS(existingEntry._version, propertyVersion))
         {
-          warnByPropType(isUriProp,
-              String.format("Received same data of different versions in %s LB for %s: %s."
+          String msg = String.format("Received same data of different versions in %s LB for %s: %s."
                       + " Old version: %s, New version: %s, Data: %s",
                   fromNewLb ? "New" : "Old", propertyClassName, propertyName, existingEntry._version,
-                  propertyVersion, property)
-          );
+                  propertyVersion, property);
+
+          if (isUriProp)
+          {
+            LOG.debug(msg);
+          }
+          else
+          {
+            warnByPropType(isUriProp, msg);
+          }
         }
         // still need to put in the cache, don't skip
       }
@@ -136,10 +143,16 @@ public abstract class DualReadLoadBalancerMonitor<T>
     else {
       if (isDataEqual)
       {
-        warnByPropType(isUriProp,
-            String.format("Received same data of %s for %s but with different versions: %s",
-                propertyClassName, propertyName, entriesLogMsg)
-        );
+        String msg = String.format("Received same data of %s for %s but with different versions: %s",
+            propertyClassName, propertyName, entriesLogMsg);
+        if (isUriProp)
+        {
+          LOG.debug(msg);
+        }
+        else
+        {
+          warnByPropType(isUriProp, msg);
+        }
       }
       cacheToAdd.put(propertyName, newEntry);
       incrementEntryOutOfSyncCount();

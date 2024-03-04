@@ -16,6 +16,7 @@
 
 package com.linkedin.pegasus.gradle.publishing
 
+import com.linkedin.pegasus.gradle.IntegTestingUtil
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.util.GradleVersion
@@ -119,6 +120,7 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
 
     when:
     def grandparentRunner = GradleRunner.create()
+        .withEnvironment([PEGASUS_INTEGRATION_TESTING: 'true'])
         .withProjectDir(grandparentProject.root)
         .withGradleVersion(gradleVersion)
         .withPluginClasspath()
@@ -206,6 +208,7 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
       |}'''.stripMargin()
 
     def parentRunner = GradleRunner.create()
+        .withEnvironment([PEGASUS_INTEGRATION_TESTING: 'true'])
         .withProjectDir(parentProject.root)
         .withGradleVersion(gradleVersion)
         .withPluginClasspath()
@@ -304,6 +307,7 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
       |}'''.stripMargin()
 
     def childRunner = GradleRunner.create()
+        .withEnvironment([PEGASUS_INTEGRATION_TESTING: 'true'])
         .withProjectDir(childProject.root)
         .withGradleVersion(gradleVersion)
         .withPluginClasspath()
@@ -334,30 +338,7 @@ class PegasusPluginIvyPublishIntegrationTest extends Specification {
     assertZipContains(childProjectDataTemplateArtifact, 'pegasus/com/linkedin/child/Photo.pdl')
 
     where:
-    gradleVersion << [ '6.1', '6.9', '7.0.2', '7.5.1' ]
-  }
-
-  def 'ivy-publish fails gracefully with Gradle 5.2.1'() {
-    given:
-    grandparentProject.newFile('build.gradle') << """
-    |plugins {
-    |  id 'ivy-publish'
-    |  id 'pegasus'
-    |}""".stripMargin()
-
-    when:
-    def grandparentRunner = GradleRunner.create()
-        .withProjectDir(grandparentProject.root)
-        .withGradleVersion('5.2.1')
-        .withPluginClasspath()
-        .withArguments('tasks')
-        //.forwardOutput()
-        //.withDebug(true)
-
-    def grandparentResult = grandparentRunner.buildAndFail()
-
-    then:
-    grandparentResult.output.contains 'Using the ivy-publish plugin with the pegasus plugin requires Gradle 6.1 or higher'
+    gradleVersion << IntegTestingUtil.NEW_PUBLISHING_SUPPORTED_GRADLE_VERSIONS
   }
 
   private static boolean assertZipContains(File zip, String path) {

@@ -13,8 +13,28 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
-## [29.50.2] - 2024-02-01
+## [29.51.6] - 2024-03-04
 - Null data guard for D2 cache and fix timeout issue for INDIS response
+
+## [29.51.5] - 2024-02-29
+- increase time between rate limited logging to 10 minutes
+
+## [29.51.4] - 2024-02-29
+- fix newLb executor in dual-read mode shutdown issue
+
+## [29.51.3] - 2024-02-23
+- fix excessive logs in uri data/version mismatch and dual read failure
+
+## [29.51.2] - 2024-02-15
+- use tracingId in xDS flow for SD tracking events
+
+## [29.51.1] - 2024-02-13
+- Default back to pick_first policy
+
+## [29.51.0] - 2024-02-06
+- Minor version bump due to dropping support to Gradle versions below 6.9.4.
+- Make rest.li codebase use Gradle 6.9.4 to build itself
+- Make PegasusPlugin compatible with all Gradle version from 6.9.4 to 8.5
 
 ## [29.50.1] - 2024-01-31
 - Fix r2-netty illegal state exception due to premature channel recycling.
@@ -5629,8 +5649,7 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.50.2...master
-[29.50.2]: https://github.com/linkedin/rest.li/compare/v29.50.1...v29.50.2
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.50.1...master
 [29.50.1]: https://github.com/linkedin/rest.li/compare/v29.50.0...v29.50.1
 [29.50.0]: https://github.com/linkedin/rest.li/compare/v29.49.9...v29.50.0
 [29.49.9]: https://github.com/linkedin/rest.li/compare/v29.49.8...v29.49.9
