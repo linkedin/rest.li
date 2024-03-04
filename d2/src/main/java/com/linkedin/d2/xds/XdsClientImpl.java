@@ -217,7 +217,7 @@ public class XdsClientImpl extends XdsClient
     Map<String, NodeUpdate> updates = new HashMap<>();
     List<String> errors = new ArrayList<>();
 
-    for (Resource resource: data.getResourcesList())
+    for (Resource resource : data.getResourcesList())
     {
       String resourceName = resource.getName();
       try
@@ -227,10 +227,7 @@ public class XdsClientImpl extends XdsClient
         {
           _log.warn("Received a Node response with no data, resource is : {}", resourceName);
         }
-        else
-        {
-          updates.put(resourceName, new NodeUpdate(resource.getVersion(), d2Node));
-        }
+        updates.put(resourceName, new NodeUpdate(resource.getVersion(), d2Node));
       }
       catch (InvalidProtocolBufferException e)
       {
@@ -259,10 +256,7 @@ public class XdsClientImpl extends XdsClient
         {
           _log.warn("Received a D2URIMap response with no data, resource is : {}", resourceName);
         }
-        else
-        {
-          updates.put(resourceName, new D2URIMapUpdate(resource.getVersion(), nodeData));
-        }
+        updates.put(resourceName, new D2URIMapUpdate(resource.getVersion(), nodeData));
       }
       catch (InvalidProtocolBufferException e)
       {
@@ -272,41 +266,42 @@ public class XdsClientImpl extends XdsClient
     }
     sendAckOrNack(data.getResourceType(), data.getNonce(), errors);
     handleResourceUpdate(updates, data.getResourceType());
+    handleResourceRemoval(data.getRemovedResources(), data.getResourceType());
   }
 
   private void sendAckOrNack(ResourceType type, String nonce, List<String> errors)
+  {
+    if (errors.isEmpty())
     {
-        if (errors.isEmpty())
-        {
-            _adsStream.sendAckRequest(type, nonce);
+      _adsStream.sendAckRequest(type, nonce);
     }
     else
-        {
-            String errorDetail = Joiner.on('\n').join(errors);
-            _adsStream.sendNackRequest(type, nonce, errorDetail);
-        }
+    {
+      String errorDetail = Joiner.on('\n').join(errors);
+      _adsStream.sendNackRequest(type, nonce, errorDetail);
+    }
   }
 
   private void handleResourceUpdate(Map<String, ? extends ResourceUpdate> updates, ResourceType type)
   {
-        for (Map.Entry<String, ? extends ResourceUpdate> entry : updates.entrySet())
-        {
-            String resourceName = entry.getKey();
-            ResourceUpdate resourceUpdate = entry.getValue();
-            ResourceSubscriber subscriber = getResourceSubscriberMap(type).get(resourceName);
-            if (subscriber != null)
-            {
-                subscriber.onData(resourceUpdate);
-            }
-        }
+    for (Map.Entry<String, ? extends ResourceUpdate> entry : updates.entrySet())
+    {
+      String resourceName = entry.getKey();
+      ResourceUpdate resourceUpdate = entry.getValue();
+      ResourceSubscriber subscriber = getResourceSubscriberMap(type).get(resourceName);
+      if (subscriber != null)
+      {
+        subscriber.onData(resourceUpdate);
+      }
     }
+  }
 
   private void handleResourceRemoval(List<String> removedResources, ResourceType type)
   {
     for (String resourceName : removedResources)
     {
       _xdsClientJmx.incrementResourceNotFoundCount();
-      _log.info("Resource {} need to be removed", resourceName);
+      _log.warn("Received response that resource {} is removed", resourceName);
       ResourceSubscriber subscriber = getResourceSubscriberMap(type).get(resourceName);
       if (subscriber != null)
       {

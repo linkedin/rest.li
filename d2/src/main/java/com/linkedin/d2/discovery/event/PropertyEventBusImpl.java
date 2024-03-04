@@ -203,7 +203,7 @@ public class PropertyEventBusImpl<T> implements PropertyEventBus<T>
         {
           // null guard for doAdd, only put the value in following cases:
           // case1: For initialization scenario : could put the nullable value in the map
-          // case2: For doAdd scenario, could only put the non-nullable value in the map
+          // case2: For doAdd is true scenario, could only put the non-nullable value in the map
           _properties.put(prop, value);
         }
         List<PropertyEventSubscriber<T>> waiters = subscribers(prop);

@@ -221,7 +221,7 @@ public class XdsToD2PropertiesAdaptor
           }
           catch (PropertySerializationException e)
           {
-            _serviceEventBus.publishInitialize(serviceName, null); // notify the watchers that the service read the data from the cache directly.
+            _serviceEventBus.publishInitialize(serviceName, null); // still notify event bus to avoid timeout in case some subscribers are waiting for the data
             LOG.error("Failed to parse D2 service properties from xDS update. Service name: " + serviceName, e);
           }
         }
@@ -280,6 +280,7 @@ public class XdsToD2PropertiesAdaptor
           }
           catch (PropertySerializationException e)
           {
+            _clusterEventBus.publishInitialize(clusterName, null); // still notify event bus to avoid timeout in case some subscribers are waiting for the data
             LOG.error("Failed to parse D2 cluster properties from xDS update. Cluster name: " + clusterName, e);
           }
         }
@@ -359,8 +360,10 @@ public class XdsToD2PropertiesAdaptor
     };
   }
 
-  private void updateSymlinkAndActualNodeMap(String symlinkName, String actualNodeName) {
-    synchronized (_symlinkAndActualNodeLock) {
+  private void updateSymlinkAndActualNodeMap(String symlinkName, String actualNodeName)
+  {
+    synchronized (_symlinkAndActualNodeLock)
+    {
       _symlinkAndActualNode.put(symlinkName, actualNodeName);
     }
   }
@@ -373,8 +376,10 @@ public class XdsToD2PropertiesAdaptor
     }
   }
 
-  private String getSymlink(String actualNodeName) {
-    synchronized (_symlinkAndActualNodeLock) {
+  private String getSymlink(String actualNodeName)
+  {
+    synchronized (_symlinkAndActualNodeLock)
+    {
       return _symlinkAndActualNode.inverse().get(actualNodeName);
     }
   }
@@ -417,25 +422,6 @@ public class XdsToD2PropertiesAdaptor
   {
     return _clusterPropertiesJsonSerializer.fromBytes(clusterProperties.getData(),
         clusterProperties.getStat().getMzxid());
-  }
-
-  private Map<String, UriProperties> toUriProperties(Map<String, XdsD2.D2URI> uriDataMap)
-      throws PropertySerializationException
-  {
-    Map<String, UriProperties> parsedMap = new HashMap<>();
-
-    for (Map.Entry<String, XdsD2.D2URI> entry : uriDataMap.entrySet())
-    {
-      XdsD2.D2URI d2URI = entry.getValue();
-      UriProperties uriProperties = _uriPropertiesJsonSerializer.fromProto(d2URI);
-      if (uriProperties.getVersion() < 0)
-      {
-        LOG.warn("xDS data for {} has invalid version: {}", entry.getKey(), uriProperties.getVersion());
-      }
-      parsedMap.put(entry.getKey(), uriProperties);
-    }
-
-    return parsedMap;
   }
 
   private class UriPropertiesResourceWatcher implements XdsClient.D2URIMapResourceWatcher

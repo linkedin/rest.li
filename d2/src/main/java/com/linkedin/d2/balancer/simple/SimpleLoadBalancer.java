@@ -1236,7 +1236,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         return uris.size();
       }
     }
-    return 0;
+    return -1;
   }
 
   @Override
