@@ -397,13 +397,34 @@ public class XdsClientImpl extends XdsClient
         _log.debug("Received resource update data equal to the current data. Will not perform the update.");
         return;
       }
-      if (data != null)
+      if (!isEmptyData(data))
       { // null value guard to avoid overwriting the property with null
         _data = data;
       }
       for (ResourceWatcher watcher : _watchers)
       {
         notifyWatcher(watcher, data);
+      }
+    }
+
+
+    private boolean isEmptyData(ResourceUpdate data)
+    {
+      if (data == null)
+      {
+        return true;
+      }
+      switch (_type)
+      {
+        case NODE:
+          NodeUpdate nodeUpdate = (NodeUpdate) data;
+          return nodeUpdate.getNodeData() == null || nodeUpdate.getNodeData().getData().isEmpty();
+        case D2_URI_MAP:
+          D2URIMapUpdate uriMapUpdate = (D2URIMapUpdate) data;
+          return uriMapUpdate.getURIMap() == null || uriMapUpdate.getURIMap().isEmpty();
+        case UNKNOWN:
+        default:
+          return true;
       }
     }
 
