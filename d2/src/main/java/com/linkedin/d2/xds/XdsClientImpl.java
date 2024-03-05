@@ -212,7 +212,7 @@ public class XdsClientImpl extends XdsClient
     }
   }
 
-  private void handleD2NodeResponse(DiscoveryResponseData data)
+  void handleD2NodeResponse(DiscoveryResponseData data)
   {
     Map<String, NodeUpdate> updates = new HashMap<>();
     List<String> errors = new ArrayList<>();
@@ -240,7 +240,7 @@ public class XdsClientImpl extends XdsClient
     handleResourceRemoval(data.getRemovedResources(), data.getResourceType());
   }
 
-  private void handleD2URIMapResponse(DiscoveryResponseData data)
+  void handleD2URIMapResponse(DiscoveryResponseData data)
   {
     Map<String, D2URIMapUpdate> updates = new HashMap<>();
     List<String> errors = new ArrayList<>();
@@ -269,7 +269,7 @@ public class XdsClientImpl extends XdsClient
     handleResourceRemoval(data.getRemovedResources(), data.getResourceType());
   }
 
-  private void sendAckOrNack(ResourceType type, String nonce, List<String> errors)
+  void sendAckOrNack(ResourceType type, String nonce, List<String> errors)
   {
     if (errors.isEmpty())
     {
@@ -282,7 +282,7 @@ public class XdsClientImpl extends XdsClient
     }
   }
 
-  private void handleResourceUpdate(Map<String, ? extends ResourceUpdate> updates, ResourceType type)
+  void handleResourceUpdate(Map<String, ? extends ResourceUpdate> updates, ResourceType type)
   {
     for (Map.Entry<String, ? extends ResourceUpdate> entry : updates.entrySet())
     {
@@ -296,8 +296,12 @@ public class XdsClientImpl extends XdsClient
     }
   }
 
-  private void handleResourceRemoval(List<String> removedResources, ResourceType type)
+  void handleResourceRemoval(List<String> removedResources, ResourceType type)
   {
+    if (removedResources == null || removedResources.isEmpty())
+    {
+      return;
+    }
     for (String resourceName : removedResources)
     {
       _xdsClientJmx.incrementResourceNotFoundCount();
@@ -328,7 +332,7 @@ public class XdsClientImpl extends XdsClient
     }
   }
 
-  private Map<String, ResourceSubscriber> getResourceSubscriberMap(ResourceType type)
+  Map<String, ResourceSubscriber> getResourceSubscriberMap(ResourceType type)
   {
     switch (type)
     {
@@ -342,7 +346,7 @@ public class XdsClientImpl extends XdsClient
     }
   }
 
-  private static final class ResourceSubscriber
+  static class ResourceSubscriber
   {
     private final ResourceType _type;
     private final String _resource;
@@ -370,7 +374,7 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    private void notifyWatcher(ResourceWatcher watcher, ResourceUpdate update)
+    void notifyWatcher(ResourceWatcher watcher, ResourceUpdate update)
     {
       switch (_type)
       {
@@ -408,7 +412,7 @@ public class XdsClientImpl extends XdsClient
     }
 
 
-    private boolean isEmptyData(ResourceUpdate data)
+    boolean isEmptyData(ResourceUpdate data)
     {
       if (data == null)
       {
@@ -504,7 +508,7 @@ public class XdsClientImpl extends XdsClient
     }
   }
 
-  private static final class DiscoveryResponseData
+  public static final class DiscoveryResponseData
   {
     private final ResourceType _resourceType;
     private final List<Resource> _resources;
