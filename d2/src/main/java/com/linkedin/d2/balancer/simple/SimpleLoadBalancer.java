@@ -1189,23 +1189,21 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   @Override
   public void getDarkClusterConfigMap(String clusterName, Callback<DarkClusterConfigMap> callback)
   {
-    Callback<DarkClusterConfigMap> wrappedCallback = callback;
     try
     {
-      wrappedCallback = new TimeoutCallback<>(_executor, _timeout, _unit, callback);
+      Callback<DarkClusterConfigMap> wrappedCallback = new TimeoutCallback<>(_executor, _timeout, _unit, callback);
+      _state.listenToCluster(clusterName, (type, name) ->
+      {
+        ClusterProperties clusterProperties = _state.getClusterProperties(clusterName).getProperty();
+        DarkClusterConfigMap darkClusterConfigMap = clusterProperties != null ?
+            clusterProperties.accessDarkClusters() : new DarkClusterConfigMap();
+        wrappedCallback.onSuccess(darkClusterConfigMap);
+      });
     }
     catch (RejectedExecutionException e)
     {
       _log.debug("Executor rejected new tasks. It has shut down or its queue size has reached max limit");
     }
-    Callback<DarkClusterConfigMap> finalWrappedCallback = wrappedCallback;
-    _state.listenToCluster(clusterName, (type, name) ->
-    {
-      ClusterProperties clusterProperties = _state.getClusterProperties(clusterName).getProperty();
-      DarkClusterConfigMap darkClusterConfigMap = clusterProperties != null ?
-              clusterProperties.accessDarkClusters() : new DarkClusterConfigMap();
-      finalWrappedCallback.onSuccess(darkClusterConfigMap);
-    });
   }
 
   @Override
