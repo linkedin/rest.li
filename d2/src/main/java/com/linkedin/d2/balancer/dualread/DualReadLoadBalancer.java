@@ -38,6 +38,7 @@ import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.util.RateLimitedLogger;
 import com.linkedin.util.clock.SystemClock;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -104,11 +105,16 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
 
     // if in new-lb-only mode, new lb needs to start successfully to call the callback. Otherwise, the old lb does.
     // Use a separate executor service to start the new lb, so both lbs can start concurrently.
-    if (!_newLbExecutor.isShutdown())
+    try
     {
       _newLbExecutor.execute(() -> _newLb.start(getStartUpCallback(true,
               mode == DualReadModeProvider.DualReadMode.NEW_LB_ONLY ? callback : null)
       ));
+    }
+    catch (RejectedExecutionException e)
+    {
+      _rateLimitedLogger.debug("newLb executor rejected new task for start. "
+          + "It is shut down or its queue size has reached max limit");
     }
 
     _oldLb.start(getStartUpCallback(false,
@@ -159,11 +165,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         _newLb.getClient(request, requestContext, clientCallback);
         break;
       case DUAL_READ:
-        if (_newLbExecutor.isShutdown())
-        {
-          _rateLimitedLogger.info("newLb executor is shutdown already. Skipping getClient on newLb executor.");
-        }
-        else
+        try
         {
           _newLbExecutor.execute(() -> _newLb.getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
           {
@@ -195,6 +197,12 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
             }
           }));
         }
+        catch (RejectedExecutionException e)
+        {
+          _rateLimitedLogger.debug("newLb executor rejected new task for getClient. "
+              + "It is shut down or its queue size has reached max limit");
+        }
+
         _oldLb.getClient(request, requestContext, clientCallback);
         break;
       case OLD_LB_ONLY:
@@ -212,13 +220,14 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         _newLb.getLoadBalancedServiceProperties(serviceName, clientCallback);
         break;
       case DUAL_READ:
-        if (_newLbExecutor.isShutdown())
-        {
-          _rateLimitedLogger.info("newLb executor is shutdown already. Skipping getLoadBalancedServiceProperties on newLb executor.");
-        }
-        else
+        try
         {
           _newLbExecutor.execute(() -> _newLb.getLoadBalancedServiceProperties(serviceName, Callbacks.empty()));
+        }
+        catch (RejectedExecutionException e)
+        {
+          _rateLimitedLogger.debug("newLb executor rejected new task for getLoadBalancedServiceProperties. "
+              + "It is shut down or its queue size has reached max limit");
         }
         _oldLb.getLoadBalancedServiceProperties(serviceName, clientCallback);
         break;
@@ -238,13 +247,14 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         _newLb.getLoadBalancedClusterAndUriProperties(clusterName, callback);
         break;
       case DUAL_READ:
-        if (_newLbExecutor.isShutdown())
-        {
-          _rateLimitedLogger.info("newLb executor is shutdown already. Skipping getLoadBalancedClusterAndUriProperties on newLb executor.");
-        }
-        else
+        try
         {
           _newLbExecutor.execute(() -> _newLb.getLoadBalancedClusterAndUriProperties(clusterName, Callbacks.empty()));
+        }
+        catch (RejectedExecutionException e)
+        {
+          _rateLimitedLogger.debug("newLb executor rejected new task for getLoadBalancedClusterAndUriProperties. "
+              + "It is shut down or its queue size has reached max limit");
         }
         _oldLb.getLoadBalancedClusterAndUriProperties(clusterName, callback);
         break;
@@ -356,11 +366,8 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   @Override
   public void shutdown(PropertyEventThread.PropertyEventShutdownCallback callback)
   {
-    _newLb.shutdown(() ->
-    {
-      LOG.info("New load balancer successfully shut down");
-    });
-
+    _newLbExecutor.shutdown();
+    _newLb.shutdown(() -> LOG.info("New load balancer successfully shut down"));
     _oldLb.shutdown(callback);
   }
 }
