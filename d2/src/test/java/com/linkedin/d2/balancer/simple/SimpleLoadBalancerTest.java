@@ -84,7 +84,6 @@ import com.linkedin.test.util.retry.ThreeRetries;
 import com.linkedin.util.degrader.DegraderImpl;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -430,8 +429,7 @@ public class SimpleLoadBalancerTest
   }
 
   @Test
-  public void testListenToServiceAndClusterTimeout() throws ExecutionException, InterruptedException,
-          ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException
+  public void testListenToServiceAndClusterTimeout() throws Exception
   {
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
@@ -482,8 +480,7 @@ public class SimpleLoadBalancerTest
   }
 
   @Test
-  public void testGetLoadBalancedClusterAndUriProperties() throws ExecutionException, InterruptedException,
-          ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException
+  public void testGetLoadBalancedClusterAndUriProperties() throws Exception
   {
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
@@ -533,9 +530,7 @@ public class SimpleLoadBalancerTest
 
 
   @Test
-  public void testGetClusterCountFromCache() throws ExecutionException, InterruptedException,
-          ServiceUnavailableException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
-          IllegalAccessException
+  public void testGetClusterCountFromCache() throws Exception
   {
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
@@ -562,9 +557,7 @@ public class SimpleLoadBalancerTest
 
 
   @Test
-  public void testGetDarkClusterConfigMapFromCache() throws ExecutionException, InterruptedException,
-          ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
-          IllegalAccessException
+  public void testGetDarkClusterConfigMapFromCache() throws Exception
   {
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();

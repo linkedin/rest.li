@@ -221,7 +221,8 @@ public class XdsToD2PropertiesAdaptor
           }
           catch (PropertySerializationException e)
           {
-            _serviceEventBus.publishInitialize(serviceName, null); // still notify event bus to avoid timeout in case some subscribers are waiting for the data
+            _serviceEventBus.publishInitialize(serviceName, null);
+            // still notify event bus to avoid timeout in case some subscribers are waiting for the data
             LOG.error("Failed to parse D2 service properties from xDS update. Service name: " + serviceName, e);
           }
         }
@@ -280,7 +281,8 @@ public class XdsToD2PropertiesAdaptor
           }
           catch (PropertySerializationException e)
           {
-            _clusterEventBus.publishInitialize(clusterName, null); // still notify event bus to avoid timeout in case some subscribers are waiting for the data
+            _clusterEventBus.publishInitialize(clusterName, null);
+            // still notify event bus to avoid timeout in case some subscribers are waiting for the data
             LOG.error("Failed to parse D2 cluster properties from xDS update. Cluster name: " + clusterName, e);
           }
         }

@@ -306,7 +306,7 @@ public class XdsClientImpl extends XdsClient
     for (String resourceName : removedResources)
     {
       _xdsClientJmx.incrementResourceNotFoundCount();
-      _log.warn("Received response that resource {} is removed", resourceName);
+      _log.warn("Received response that resource {} was removed, type is {} ", resourceName, type);
       ResourceSubscriber subscriber = getResourceSubscriberMap(type).get(resourceName);
       if (subscriber != null)
       {
@@ -363,9 +363,9 @@ public class XdsClientImpl extends XdsClient
     }
 
     @VisibleForTesting
-    public void setData(@Nullable ResourceUpdate _data)
+    public void setData(@Nullable ResourceUpdate data)
     {
-      this._data = _data;
+      _data = data;
     }
 
     ResourceSubscriber(ResourceType type, String resource)
@@ -416,7 +416,8 @@ public class XdsClientImpl extends XdsClient
         return;
       }
       if (!isEmptyData(data))
-      { // null value guard to avoid overwriting the property with null
+      {
+        // null value guard to avoid overwriting the property with null
         _data = data;
       }
       for (ResourceWatcher watcher : _watchers)
@@ -462,11 +463,13 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
+    /**
+     * When the client receive the removal data from INDIS or ZK,client side doesn't delete the data from the cache
+     * which is just a design choice by now.So to avoid the eventbus watcher timeout, in there directly notify the
+     * watcher with cache data
+     */
     private void onRemoval()
     {
-      // When the client receive the removal data from INDIS or ZK,
-      // client side doesn't delete the data from the cache which is just a design choice by now.
-      // So to avoid the eventbus watcher timeout, in there directly notify the watcher with cache data
       for (ResourceWatcher watcher : _watchers)
       {
         notifyWatcher(watcher, _data);
@@ -531,8 +534,12 @@ public class XdsClientImpl extends XdsClient
     @Nullable
     private final String _controlPlaneIdentifier;
 
-    DiscoveryResponseData(ResourceType resourceType, List<Resource> resources, List<String> removedResources, String nonce,
-                        @Nullable String controlPlaneIdentifier)
+    DiscoveryResponseData(
+            ResourceType resourceType,
+            List<Resource> resources,
+            List<String> removedResources,
+            String nonce,
+            @Nullable String controlPlaneIdentifier)
     {
       _resourceType = resourceType;
       _resources = resources;
@@ -543,8 +550,12 @@ public class XdsClientImpl extends XdsClient
 
     static DiscoveryResponseData fromEnvoyProto(DeltaDiscoveryResponse proto)
     {
-      return new DiscoveryResponseData(ResourceType.fromTypeUrl(proto.getTypeUrl()), proto.getResourcesList(),
-              proto.getRemovedResourcesList(), proto.getNonce(), Strings.emptyToNull(proto.getControlPlane().getIdentifier()));
+      return new DiscoveryResponseData(
+              ResourceType.fromTypeUrl(proto.getTypeUrl()),
+              proto.getResourcesList(),
+              proto.getRemovedResourcesList(),
+              proto.getNonce(),
+              Strings.emptyToNull(proto.getControlPlane().getIdentifier()));
     }
 
     ResourceType getResourceType()

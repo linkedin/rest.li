@@ -43,8 +43,14 @@ public abstract class XdsClient
   interface NodeResourceWatcher extends ResourceWatcher
   {
     void onChanged(NodeUpdate update);
-    // OnDelete method for interface functional completeness
-    // By now, OnDelete method should not be triggerred, as we don't want to delete the data from the cache which is just a design choice
+
+    /**
+     * onDelete method for interface functional completeness
+     * We will explicitly ignore it. We still want to call it to ensure that the callback is invoked quickly with the
+     * cached value
+     *
+     * @param resourceName
+     */
     void onDelete(String resourceName);
   }
 
@@ -52,8 +58,13 @@ public abstract class XdsClient
   {
     void onChanged(String resourceName, NodeUpdate update);
 
-    // OnDelete method for interface functional completeness
-    // By now, OnDelete method should not be triggerred, as we don't want to delete the data from the cache which is just a design choice
+    /**
+     * onDelete method for interface functional completeness
+     * We will explicitly ignore it. We still want to call it to ensure that the callback is invoked quickly with the
+     * cached value
+     *
+     * @param resourceName
+     */
     void onDelete(String resourceName);
   }
 
@@ -61,8 +72,13 @@ public abstract class XdsClient
   {
     void onChanged(D2URIMapUpdate update);
 
-    // OnDelete method for interface functional completeness
-    // By now, OnDelete method should not be triggerred, as we don't want to delete the data from the cache which is just a design choice
+    /**
+     * onDelete method for interface functional completeness
+     * We will explicitly ignore it. We still want to call it to ensure that the callback is invoked quickly with the
+     * cached value
+     *
+     * @param resourceName
+     */
     void onDelete(String resourceName);
   }
 

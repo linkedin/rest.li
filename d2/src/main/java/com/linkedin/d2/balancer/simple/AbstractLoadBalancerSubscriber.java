@@ -127,12 +127,13 @@ public abstract class AbstractLoadBalancerSubscriber<T> implements
   {
     trace(_log, _name, ".onAdd: ", propertyName, ": ", propertyValue);
     if (propertyValue != null)
-    { // null value guard to avoid overwriting the property with null
+    {
+      // null value guard to avoid overwriting the property with null
       handlePut(propertyName, propertyValue);
     }
     else
     {
-      _log.info("Get the null value for property : {}", propertyName);
+      _log.info("Got the null value for property : {}", propertyName);
     }
 
     // if bad properties are received, then onInitialize()::handlePut might throw an exception and

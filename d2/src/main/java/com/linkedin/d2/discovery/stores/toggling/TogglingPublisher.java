@@ -45,11 +45,11 @@ import org.slf4j.LoggerFactory;
 
 public class TogglingPublisher<T>
 {
+  private static final Logger LOG = LoggerFactory.getLogger(TogglingPublisher.class);
   private final PublisherWithStatus<T> _primary;
   private final PublisherWithStatus<T> _backup;
   private final PropertyEventBus<T>       _eventBus;
   private final PropertyEventBus<T>       _nullBus = new NullEventBus<>();
-  private static final Logger LOG = LoggerFactory.getLogger(TogglingPublisher.class);
 
   public TogglingPublisher(PropertyEventPublisher<T> primary,
                            PropertyStore<T> backup,
@@ -91,7 +91,7 @@ public class TogglingPublisher<T>
 
         if (deactivate != null && activate != null)
         {
-          LOG.info("TogglingPublisher: activate publisher {}, deactivate publisher {}", getPublisherName(activate.getPublisher()), getPublisherName(deactivate.getPublisher()));
+          LOG.info("TogglingPublisher: activating publisher {}, deactivating publisher {}", getPublisherName(activate.getPublisher()), getPublisherName(deactivate.getPublisher()));
         }
 
         if (deactivate.started())
@@ -110,7 +110,7 @@ public class TogglingPublisher<T>
     });
   }
 
-  private String getPublisherName(PropertyEventPublisher<T> p)
+  public static String getPublisherName(PropertyEventPublisher<?> p)
   {
     if (p instanceof ZooKeeperConnectionAwareStore || p instanceof ZooKeeperStore)
     {
