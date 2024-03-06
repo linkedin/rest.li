@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.xds;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -245,7 +246,7 @@ public class XdsClientImpl extends XdsClient
     Map<String, D2URIMapUpdate> updates = new HashMap<>();
     List<String> errors = new ArrayList<>();
 
-    for (Resource resource: data.getResourcesList())
+    for (Resource resource : data.getResourcesList())
     {
       String resourceName = resource.getName();
       try
@@ -354,6 +355,19 @@ public class XdsClientImpl extends XdsClient
     @Nullable
     private ResourceUpdate _data;
 
+    @VisibleForTesting
+    @Nullable
+    public ResourceUpdate getData()
+    {
+      return _data;
+    }
+
+    @VisibleForTesting
+    public void setData(@Nullable ResourceUpdate _data)
+    {
+      this._data = _data;
+    }
+
     ResourceSubscriber(ResourceType type, String resource)
     {
       _type = type;
@@ -412,7 +426,7 @@ public class XdsClientImpl extends XdsClient
     }
 
 
-    boolean isEmptyData(ResourceUpdate data)
+    private boolean isEmptyData(ResourceUpdate data)
     {
       if (data == null)
       {
