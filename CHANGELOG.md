@@ -13,8 +13,11 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
-## [29.51.6] - 2024-03-04
+## [29.51.7] - 2024-03-05
 - Null data guard for D2 cache and fix timeout issue for INDIS response
+
+## [29.51.6] - 2024-03-04
+- shut down dualread executor properly and guard for rejected execution exceptions
 
 ## [29.51.5] - 2024-02-29
 - increase time between rate limited logging to 10 minutes
@@ -5649,7 +5652,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.51.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.51.7...master
+[29.51.7]: https://github.com/linkedin/rest.li/compare/v29.51.6...v29.51.7
 [29.51.6]: https://github.com/linkedin/rest.li/compare/v29.51.5...v29.51.6
 [29.51.5]: https://github.com/linkedin/rest.li/compare/v29.51.4...v29.51.5
 [29.51.4]: https://github.com/linkedin/rest.li/compare/v29.51.3...v29.51.4

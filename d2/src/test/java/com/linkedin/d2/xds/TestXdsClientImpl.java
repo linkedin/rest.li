@@ -69,7 +69,7 @@ public class TestXdsClientImpl
     private final List<Resource> URI_MAP_RESOURCE_WITH_EMPTY_DATA =
             Arrays.asList(Resource.newBuilder().setVersion(VERSION2).setName(RESOURCE_NAME).setResource(PACKED_D2_URI_MAP_WITH_EMPTY_DATA).build());
     private final List<String> REMOVED_RESOURCE = Arrays.asList(RESOURCE_NAME);
-    private final DiscoveryResponseData DISCOVERY_RESPONSE_NODE_DATA = new XdsClientImpl.DiscoveryResponseData(NODE,
+    private final DiscoveryResponseData DISCOVERY_RESPONSE_NODE_DATA1 = new XdsClientImpl.DiscoveryResponseData(NODE,
             NODE_RESOURCES_WITH_DATA1, null, NONCE, null);
     private final DiscoveryResponseData DISCOVERY_RESPONSE_NODE_DATA2 = new XdsClientImpl.DiscoveryResponseData(NODE,
             NODE_RESOURCES_WITH_DATA2, null, NONCE, null);
@@ -94,7 +94,7 @@ public class TestXdsClientImpl
         XdsClientImplFixture fixture = new XdsClientImplFixture();
         // subscriber original data is null
         fixture._nodeResourceSubscriber.setData(null);
-        fixture.getSpiedXdsClientImpl().handleD2NodeResponse(DISCOVERY_RESPONSE_NODE_DATA);
+        fixture.getSpiedXdsClientImpl().handleD2NodeResponse(DISCOVERY_RESPONSE_NODE_DATA1);
         verify(fixture._xdsClientImpl, times(1)).handleResourceUpdate(any(), any());
         verify(fixture._xdsClientImpl, times(1)).sendAckOrNack(any(), any(), any());
         verify(fixture._xdsClientImpl, times(1)).getResourceSubscriberMap(NODE);

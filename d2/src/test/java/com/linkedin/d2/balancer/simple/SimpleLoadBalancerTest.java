@@ -430,7 +430,8 @@ public class SimpleLoadBalancerTest
   }
 
   @Test
-  public void testListenToServiceAndClusterTimeout() throws ExecutionException, InterruptedException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException
+  public void testListenToServiceAndClusterTimeout() throws ExecutionException, InterruptedException,
+          ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException
   {
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
@@ -458,7 +459,8 @@ public class SimpleLoadBalancerTest
 
     // Test listenToCluster timeout and hit the cache value
 
-    serviceRegistry.put("foo", new ServiceProperties("foo", CLUSTER1_NAME, "/foo", Arrays.asList("degrader"), Collections.<String, Object>emptyMap(), null, null, Collections.emptyList(), null));
+    serviceRegistry.put("foo", new ServiceProperties("foo", CLUSTER1_NAME, "/foo", Arrays.asList("degrader"),
+            Collections.<String, Object>emptyMap(), null, null, Collections.emptyList(), null));
 
     callback = new Callback<ServiceProperties>()
     {
@@ -480,7 +482,8 @@ public class SimpleLoadBalancerTest
   }
 
   @Test
-  public void testGetLoadBalancedClusterAndUriProperties() throws ExecutionException, InterruptedException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException
+  public void testGetLoadBalancedClusterAndUriProperties() throws ExecutionException, InterruptedException,
+          ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException
   {
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
@@ -506,7 +509,9 @@ public class SimpleLoadBalancerTest
     };
     callMethod.invoke(loadBalancer, CLUSTER1_NAME, callback);
 
-    clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(), Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(), new HashMap<>(), true));
+    clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(),
+            Collections.emptyMap(), Collections.emptySet(), NullPartitionProperties.getInstance(),
+            Collections.emptyList(), new HashMap<>(), true));
     uriRegistry.put(CLUSTER1_NAME, new UriProperties(CLUSTER1_NAME, new HashMap<>()));
     callback = new Callback<Pair<ClusterProperties, UriProperties>>()
     {
@@ -528,7 +533,9 @@ public class SimpleLoadBalancerTest
 
 
   @Test
-  public void testGetClusterCountFromCache() throws ExecutionException, InterruptedException, ServiceUnavailableException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException
+  public void testGetClusterCountFromCache() throws ExecutionException, InterruptedException,
+          ServiceUnavailableException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
+          IllegalAccessException
   {
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
@@ -539,7 +546,9 @@ public class SimpleLoadBalancerTest
     int numHttps = 4;
 
     populateUriRegistry(numHttp, numHttps, partitionId, uriRegistry);
-    ClusterProperties clusterProperties = new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(), Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(), new HashMap<>(), false);
+    ClusterProperties clusterProperties = new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(),
+            Collections.emptyMap(), Collections.emptySet(), NullPartitionProperties.getInstance(),
+            Collections.emptyList(), new HashMap<>(), false);
     clusterRegistry.put(CLUSTER1_NAME, clusterProperties);
     assertEquals(loadBalancer.getClusterCount(CLUSTER1_NAME, PropertyKeys.HTTP_SCHEME, partitionId), numHttp);
 
@@ -553,7 +562,9 @@ public class SimpleLoadBalancerTest
 
 
   @Test
-  public void testGetDarkClusterConfigMapFromCache() throws ExecutionException, InterruptedException, ServiceUnavailableException, ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException
+  public void testGetDarkClusterConfigMapFromCache() throws ExecutionException, InterruptedException,
+          ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
+          IllegalAccessException
   {
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
@@ -563,9 +574,12 @@ public class SimpleLoadBalancerTest
     Method callMethod = clazz.getDeclaredMethod("getDarkClusterConfigMapFromCache", String.class);
     callMethod.setAccessible(true);
     DarkClusterConfigMap darkClusterConfigMap = new DarkClusterConfigMap();
-    DarkClusterConfig darkClusterConfig = new DarkClusterConfig().setMultiplier(1.0f).setDispatcherOutboundTargetRate(1).setDispatcherMaxRequestsToBuffer(1).setDispatcherBufferedRequestExpiryInSeconds(1);
+    DarkClusterConfig darkClusterConfig =
+            new DarkClusterConfig().setMultiplier(1.0f).setDispatcherOutboundTargetRate(1).setDispatcherMaxRequestsToBuffer(1).setDispatcherBufferedRequestExpiryInSeconds(1);
     darkClusterConfigMap.put(DARK_CLUSTER1_NAME, darkClusterConfig);
-    clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(), Collections.emptySet(), NullPartitionProperties.getInstance(), Collections.emptyList(), DarkClustersConverter.toProperties(darkClusterConfigMap), false));
+    clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(),
+            Collections.emptyMap(), Collections.emptySet(), NullPartitionProperties.getInstance(),
+            Collections.emptyList(), DarkClustersConverter.toProperties(darkClusterConfigMap), false));
     loadBalancer.getDarkClusterConfigMap(CLUSTER1_NAME, new Callback<DarkClusterConfigMap>()
     {
       @Override
@@ -578,7 +592,8 @@ public class SimpleLoadBalancerTest
       public void onSuccess(DarkClusterConfigMap returnedDarkClusterConfigMap)
       {
         Assert.assertEquals(returnedDarkClusterConfigMap, darkClusterConfigMap, "dark cluster configs should be equal");
-        Assert.assertEquals(returnedDarkClusterConfigMap.get(DARK_CLUSTER1_NAME).getMultiplier(), 1.0f, "multiplier should match");
+        Assert.assertEquals(returnedDarkClusterConfigMap.get(DARK_CLUSTER1_NAME).getMultiplier(), 1.0f, "multiplier " +
+                "should match");
       }
     });
     DarkClusterConfigMap result = (DarkClusterConfigMap) callMethod.invoke(loadBalancer, CLUSTER1_NAME);
