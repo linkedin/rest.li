@@ -91,7 +91,8 @@ public class TogglingPublisher<T>
 
         if (deactivate != null && activate != null)
         {
-          LOG.info("TogglingPublisher: activating publisher {}, deactivating publisher {}", getPublisherName(activate.getPublisher()), getPublisherName(deactivate.getPublisher()));
+          LOG.info("TogglingPublisher: activating publisher {}, deactivating publisher {}",
+              getPublisherName(activate.getPublisher()), getPublisherName(deactivate.getPublisher()));
         }
 
         if (deactivate.started())
@@ -110,13 +111,14 @@ public class TogglingPublisher<T>
     });
   }
 
-  public static String getPublisherName(PropertyEventPublisher<?> p)
+  private static String getPublisherName(PropertyEventPublisher<?> p)
   {
     if (p instanceof ZooKeeperConnectionAwareStore || p instanceof ZooKeeperStore)
     {
       return "Zookeeper store";
     }
-    else if (p instanceof XdsToClusterPropertiesPublisher || p instanceof XdsToServicePropertiesPublisher || p instanceof XdsToUriPropertiesPublisher)
+    else if (p instanceof XdsToClusterPropertiesPublisher || p instanceof XdsToServicePropertiesPublisher
+        || p instanceof XdsToUriPropertiesPublisher)
     {
       return "INDIS store";
     }

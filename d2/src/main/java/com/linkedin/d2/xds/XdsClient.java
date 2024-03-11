@@ -20,6 +20,7 @@ import com.linkedin.d2.jmx.XdsClientJmx;
 import indis.XdsD2;
 import io.grpc.Status;
 import java.util.Map;
+import java.util.Objects;
 
 
 public abstract class XdsClient
@@ -46,12 +47,8 @@ public abstract class XdsClient
 
     /**
      * onDelete method for interface functional completeness
-     * We will explicitly ignore it. We still want to call it to ensure that the callback is invoked quickly with the
-     * cached value
-     *
-     * @param resourceName
      */
-    void onDelete(String resourceName);
+    void onDelete();
   }
 
   interface SymlinkNodeResourceWatcher extends ResourceWatcher
@@ -60,12 +57,8 @@ public abstract class XdsClient
 
     /**
      * onDelete method for interface functional completeness
-     * We will explicitly ignore it. We still want to call it to ensure that the callback is invoked quickly with the
-     * cached value
-     *
-     * @param resourceName
      */
-    void onDelete(String resourceName);
+    void onDelete();
   }
 
   interface D2URIMapResourceWatcher extends ResourceWatcher
@@ -74,12 +67,8 @@ public abstract class XdsClient
 
     /**
      * onDelete method for interface functional completeness
-     * We will explicitly ignore it. We still want to call it to ensure that the callback is invoked quickly with the
-     * cached value
-     *
-     * @param resourceName
      */
-    void onDelete(String resourceName);
+    void onDelete();
   }
 
   interface ResourceUpdate
@@ -107,6 +96,27 @@ public abstract class XdsClient
     {
       return _version;
     }
+
+    @Override
+    public boolean equals(Object object)
+    {
+      if (this == object)
+      {
+        return true;
+      }
+      if (object == null || getClass() != object.getClass())
+      {
+        return false;
+      }
+      NodeUpdate that = (NodeUpdate) object;
+      return Objects.equals(_version, that._version) && Objects.equals(_nodeData, that._nodeData);
+    }
+
+    @Override
+    public int hashCode()
+    {
+      return Objects.hash(_version, _nodeData);
+    }
   }
 
   static final class D2URIMapUpdate implements ResourceUpdate
@@ -128,6 +138,27 @@ public abstract class XdsClient
     public String getVersion()
     {
       return _version;
+    }
+
+    @Override
+    public boolean equals(Object object)
+    {
+      if (this == object)
+      {
+        return true;
+      }
+      if (object == null || getClass() != object.getClass())
+      {
+        return false;
+      }
+      D2URIMapUpdate that = (D2URIMapUpdate) object;
+      return Objects.equals(_version, that._version) && Objects.equals(_uriMap, that._uriMap);
+    }
+
+    @Override
+    public int hashCode()
+    {
+      return Objects.hash(_version, _uriMap);
     }
   }
 

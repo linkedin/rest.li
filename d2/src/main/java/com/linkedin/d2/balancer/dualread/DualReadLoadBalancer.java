@@ -172,7 +172,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
             @Override
             public void onError(Throwable e)
             {
-              _rateLimitedLogger.error("Dual read failure. Unable to read service properties from: {}", serviceName, e);
+              _rateLimitedLogger.warn("Dual read failure. Unable to read service properties from: {}", serviceName, e);
             }
 
             @Override
@@ -185,7 +185,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
                 @Override
                 public void onError(Throwable e)
                 {
-                  _rateLimitedLogger.error("Dual read failure. Unable to read cluster and uri properties " + "from: {}", clusterName, e);
+                  _rateLimitedLogger.warn("Dual read failure. Unable to read cluster and uri properties " + "from: {}", clusterName, e);
                 }
 
                 @Override

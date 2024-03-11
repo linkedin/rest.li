@@ -219,7 +219,7 @@ public class XdsToD2PropertiesAdaptor
               _dualReadStateManager.reportData(serviceName, serviceProperties, true);
             }
           }
-          catch (PropertySerializationException e)
+          catch (Exception e)
           {
             _serviceEventBus.publishInitialize(serviceName, null);
             // still notify event bus to avoid timeout in case some subscribers are waiting for the data
@@ -229,9 +229,9 @@ public class XdsToD2PropertiesAdaptor
       }
 
       @Override
-      public void onDelete(String name)
+      public void onDelete()
       {
-        _serviceEventBus.publishRemove(name);
+        _serviceEventBus.publishRemove(serviceName);
       }
 
       @Override
@@ -279,7 +279,7 @@ public class XdsToD2PropertiesAdaptor
             }
             publishClusterData(clusterName, clusterProperties);
           }
-          catch (PropertySerializationException e)
+          catch (Exception e)
           {
             _clusterEventBus.publishInitialize(clusterName, null);
             // still notify event bus to avoid timeout in case some subscribers are waiting for the data
@@ -298,9 +298,9 @@ public class XdsToD2PropertiesAdaptor
       }
 
       @Override
-      public void onDelete(String name)
+      public void onDelete()
       {
-        _clusterEventBus.publishRemove(name);
+        _clusterEventBus.publishRemove(clusterName);
       }
 
       @Override
@@ -330,20 +330,27 @@ public class XdsToD2PropertiesAdaptor
       public void onChanged(String resourceName, XdsClient.NodeUpdate update)
       {
         // Update maps between symlink name and actual node name
-        String actualResourceName = update.getNodeData().getData().toString(StandardCharsets.UTF_8);
-        String actualNodeName = getNodeName(actualResourceName);
-        updateSymlinkAndActualNodeMap(symlinkName, actualNodeName);
-        // listen to the actual nodes
-        // Note: since cluster symlink and uri parent symlink always point to the same actual node name, and it's a
-        // redundancy and a burden for the symlink-update tool to maintain two symlinks for the same actual node name,
-        // we optimize here to use the cluster symlink to listen to the actual nodes for both cluster
-        // and uri parent.
-        listenToCluster(actualNodeName);
-        listenToUris(actualNodeName);
+        try
+        {
+          String actualResourceName = update.getNodeData().getData().toString(StandardCharsets.UTF_8);
+          String actualNodeName = getNodeName(actualResourceName);
+          updateSymlinkAndActualNodeMap(symlinkName, actualNodeName);
+          // listen to the actual nodes
+          // Note: since cluster symlink and uri parent symlink always point to the same actual node name, and it's a
+          // redundancy and a burden for the symlink-update tool to maintain two symlinks for the same actual node name,
+          // we optimize here to use the cluster symlink to listen to the actual nodes for both cluster
+          // and uri parent.
+          listenToCluster(actualNodeName);
+          listenToUris(actualNodeName);
+        }
+        catch (Exception e)
+        {
+          LOG.error("Failed to parse symlink data from xDS update. Symlink name: " + symlinkName, e);
+        }
       }
 
       @Override
-      public void onDelete(String resourceName)
+      public void onDelete()
       {
         removeSymlink(symlinkName);
       }
@@ -362,10 +369,8 @@ public class XdsToD2PropertiesAdaptor
     };
   }
 
-  private void updateSymlinkAndActualNodeMap(String symlinkName, String actualNodeName)
-  {
-    synchronized (_symlinkAndActualNodeLock)
-    {
+  private void updateSymlinkAndActualNodeMap(String symlinkName, String actualNodeName) {
+    synchronized (_symlinkAndActualNodeLock) {
       _symlinkAndActualNode.put(symlinkName, actualNodeName);
     }
   }
@@ -463,19 +468,27 @@ public class XdsToD2PropertiesAdaptor
       {
         emitSDStatusInitialRequestEvent(_clusterName, true);
       }
-
-      Map<String, XdsAndD2Uris> updates = update.getURIMap().entrySet().stream()
-          .collect(Collectors.toMap(
-              // for ZK data, the uri name has a unique number suffix (e.g: ltx1-app2253-0000000554), but Kafka data
-              // uri name is just the uri string, appending the version number will differentiate announcements made
-              // for the same uri (in case that an uri was de-announced then re-announced quickly).
-              e -> e.getKey() + e.getValue().getVersion(),
-              e -> {
-                UriProperties d2Uri = toUriProperties(e.getKey(), e.getValue());
-                return d2Uri == null ? null : new XdsAndD2Uris(e.getKey(), e.getValue(), d2Uri);
-              }
-          ));
-      updates.values().removeIf(Objects::isNull); // filter out properties that failed to parse
+      Map<String, XdsAndD2Uris> updates;
+      try
+      {
+        updates = update.getURIMap().entrySet().stream().collect(Collectors.toMap(
+            // for ZK data, the uri name has a unique number suffix (e.g: ltx1-app2253-0000000554), but
+            // Kafka data
+            // uri name is just the uri string, appending the version number will differentiate
+            // announcements made
+            // for the same uri (in case that an uri was de-announced then re-announced quickly).
+            e -> e.getKey() + e.getValue().getVersion(), e ->
+            {
+              UriProperties d2Uri = toUriProperties(e.getKey(), e.getValue());
+              return d2Uri == null ? null : new XdsAndD2Uris(e.getKey(), e.getValue(), d2Uri);
+            }));
+        updates.values().removeIf(Objects::isNull);
+      }
+      catch (Exception e)
+      {
+        updates = new HashMap<>();
+        LOG.error("Failed to parse D2 uri properties from xDS update. Cluster name: " + _clusterName, e);
+      }
 
       if (!isInit)
       {
@@ -544,9 +557,9 @@ public class XdsToD2PropertiesAdaptor
     }
 
     @Override
-    public void onDelete(String resourceName)
+    public void onDelete()
     {
-      _uriEventBus.publishRemove(resourceName);
+      _uriEventBus.publishRemove(_clusterName);
     }
 
     @Override
