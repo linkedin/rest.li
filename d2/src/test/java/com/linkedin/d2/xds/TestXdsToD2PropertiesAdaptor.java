@@ -67,7 +67,6 @@ public class TestXdsToD2PropertiesAdaptor {
   private static final String URI_NAME = "ltx1-dummyhost456";
 
   private static final String SERVICE_NAME = "FooService";
-
   private final UriPropertiesJsonSerializer uriSerializer = new UriPropertiesJsonSerializer();
 
   @Test

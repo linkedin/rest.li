@@ -242,10 +242,11 @@ public class TestXdsClientImpl
     XdsClientImplFixture fixture = new XdsClientImplFixture();
     fixture._nodeResourceSubscriber.setData(NODE_UPDATE1);
     fixture.getSpiedXdsClientImpl().handleD2NodeResponse(DISCOVERY_RESPONSE_NODE_DATA_WITH_REMOVAL);
-    verify(fixture._xdsClientImpl).handleResourceUpdate(new HashMap<>(), NODE);
+    verify(fixture._xdsClientImpl).handleResourceUpdate(eq(new HashMap<>()), eq(NODE));
     verify(fixture._xdsClientImpl).sendAckOrNack(any(), any(), any());
     verify(fixture._xdsClientImpl).getResourceSubscriberMap(NODE);
-    verify(fixture._nodeResourceSubscriber).notifyWatcher(any(), any());
+    verify(fixture._nodeResourceSubscriber).notifyWatcher(eq(fixture._resourceWatcher), eq(NODE_UPDATE1));
+    verify(fixture._nodeResourceSubscriber).onRemoval();
     XdsClient.NodeUpdate actualData = (XdsClient.NodeUpdate) fixture._nodeResourceSubscriber.getData();
     //  removed resource will not overwrite the original valid data
     Assert.assertEquals(actualData.getVersion(), NODE_UPDATE1.getVersion());
@@ -258,10 +259,10 @@ public class TestXdsClientImpl
     XdsClientImplFixture fixture = new XdsClientImplFixture();
     fixture._uriMapResourceSubscriber.setData(D2_URI_MAP_UPDATE_WITH_DATA1);
     fixture.getSpiedXdsClientImpl().handleD2URIMapResponse(DISCOVERY_RESPONSE_URI_MAP_DATA_WITH_REMOVAL);
-    verify(fixture._xdsClientImpl).handleResourceUpdate(new HashMap<>(), D2_URI_MAP);
+    verify(fixture._xdsClientImpl).handleResourceUpdate(eq(new HashMap<>()), eq(D2_URI_MAP));
     verify(fixture._xdsClientImpl).sendAckOrNack(any(), any(), any());
     verify(fixture._xdsClientImpl).getResourceSubscriberMap(D2_URI_MAP);
-    verify(fixture._uriMapResourceSubscriber).notifyWatcher(any(), any());
+    verify(fixture._uriMapResourceSubscriber).notifyWatcher(eq(fixture._resourceWatcher), eq(D2_URI_MAP_UPDATE_WITH_DATA1));
     verify(fixture._uriMapResourceSubscriber).onRemoval();
     XdsClient.D2URIMapUpdate actualData = (XdsClient.D2URIMapUpdate) fixture._uriMapResourceSubscriber.getData();
     // removed resource will not overwrite the original valid data
