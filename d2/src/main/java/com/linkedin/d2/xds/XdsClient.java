@@ -45,9 +45,6 @@ public abstract class XdsClient
   {
     void onChanged(NodeUpdate update);
 
-    /**
-     * onDelete method for interface functional completeness
-     */
     void onDelete();
   }
 
@@ -55,19 +52,13 @@ public abstract class XdsClient
   {
     void onChanged(String resourceName, NodeUpdate update);
 
-    /**
-     * onDelete method for interface functional completeness
-     */
     void onDelete();
   }
 
   interface D2URIMapResourceWatcher extends ResourceWatcher
   {
     void onChanged(D2URIMapUpdate update);
-
-    /**
-     * onDelete method for interface functional completeness
-     */
+    
     void onDelete();
   }
 

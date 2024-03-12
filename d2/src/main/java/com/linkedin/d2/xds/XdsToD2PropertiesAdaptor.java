@@ -472,10 +472,9 @@ public class XdsToD2PropertiesAdaptor
       try
       {
         updates = update.getURIMap().entrySet().stream().collect(Collectors.toMap(
-            // for ZK data, the uri name has a unique number suffix (e.g: ltx1-app2253-0000000554), but
-            // Kafka data
-            // uri name is just the uri string, appending the version number will differentiate
-            // announcements made
+            // for ZK data, the uri name has a unique number suffix (e.g: ltx1-app2253-0000000554),
+            // but Kafka data uri name is just the uri string,
+            // appending the version number will differentiate announcements made
             // for the same uri (in case that an uri was de-announced then re-announced quickly).
             e -> e.getKey() + e.getValue().getVersion(), e ->
             {
