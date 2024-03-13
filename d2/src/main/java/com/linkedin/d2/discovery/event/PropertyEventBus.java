@@ -99,6 +99,9 @@ public interface PropertyEventBus<T>
 
   /**
    * Publishes initialization of a property to the bus.
+   * case1: Initially called: put the nullable value to the bus.
+   * case2: For subsequent scenarios: should only put the non-nullable value to the bus.
+   * Both scenarios will trigger the callback for the waiters.
    * @param prop property name
    * @param value property value
    */
