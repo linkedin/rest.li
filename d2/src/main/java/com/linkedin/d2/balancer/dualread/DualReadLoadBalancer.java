@@ -172,7 +172,9 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
             @Override
             public void onError(Throwable e)
             {
-              _rateLimitedLogger.warn("Dual read failure. Unable to read service properties from: {}", serviceName, e);
+              _rateLimitedLogger.warn("Safe to ignore - dual read error. This is a side-way call to INDIS, "
+                  + "NOT being used for app's traffic. Unable to read from INDIS for service properties: {}",
+                  serviceName, e);
             }
 
             @Override
@@ -185,7 +187,9 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
                 @Override
                 public void onError(Throwable e)
                 {
-                  _rateLimitedLogger.warn("Dual read failure. Unable to read cluster and uri properties " + "from: {}", clusterName, e);
+                  _rateLimitedLogger.warn("Safe to ignore - dual read error. This is a side-way call to INDIS, "
+                      + "NOT being used for app's traffic. Unable to read from INDIS for cluster and uri properties: "
+                      + "{}", clusterName, e);
                 }
 
                 @Override
