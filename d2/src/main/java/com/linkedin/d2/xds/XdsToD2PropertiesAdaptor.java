@@ -221,17 +221,11 @@ public class XdsToD2PropertiesAdaptor
           }
           catch (Exception e)
           {
-            _serviceEventBus.publishInitialize(serviceName, null);
             // still notify event bus to avoid timeout in case some subscribers are waiting for the data
+            _serviceEventBus.publishInitialize(serviceName, null);
             LOG.error("Failed to parse D2 service properties from xDS update. Service name: " + serviceName, e);
           }
         }
-      }
-
-      @Override
-      public void onDelete()
-      {
-        _serviceEventBus.publishRemove(serviceName);
       }
 
       @Override
@@ -281,9 +275,9 @@ public class XdsToD2PropertiesAdaptor
           }
           catch (Exception e)
           {
-            _clusterEventBus.publishInitialize(clusterName, null);
             // still notify event bus to avoid timeout in case some subscribers are waiting for the data
-            LOG.error("Failed to parse D2 cluster properties from xDS update. Cluster name: " + clusterName, e);
+            _clusterEventBus.publishInitialize(clusterName, null);
+            LOG.error("Failed to parse D2 cluster properties from xDS update. Cluster name: {}", clusterName, e);
           }
         }
       }
@@ -295,12 +289,6 @@ public class XdsToD2PropertiesAdaptor
         {
           _dualReadStateManager.reportData(clusterName, properties, true);
         }
-      }
-
-      @Override
-      public void onDelete()
-      {
-        _clusterEventBus.publishRemove(clusterName);
       }
 
       @Override
@@ -345,14 +333,8 @@ public class XdsToD2PropertiesAdaptor
         }
         catch (Exception e)
         {
-          LOG.error("Failed to parse symlink data from xDS update. Symlink name: " + symlinkName, e);
+          LOG.error("Failed to parse symlink data from xDS update. Symlink name: {}",  symlinkName, e);
         }
-      }
-
-      @Override
-      public void onDelete()
-      {
-        removeSymlink(symlinkName);
       }
 
       @Override
@@ -486,7 +468,7 @@ public class XdsToD2PropertiesAdaptor
       catch (Exception e)
       {
         updates = new HashMap<>();
-        LOG.error("Failed to parse D2 uri properties from xDS update. Cluster name: " + _clusterName, e);
+        LOG.error("Failed to parse D2 uri properties from xDS update. Cluster name: {}", _clusterName, e);
       }
 
       if (!isInit)
@@ -553,12 +535,6 @@ public class XdsToD2PropertiesAdaptor
       {
         _dualReadStateManager.reportData(clusterName, mergedUriProperties, true);
       }
-    }
-
-    @Override
-    public void onDelete()
-    {
-      _uriEventBus.publishRemove(_clusterName);
     }
 
     @Override

@@ -45,21 +45,18 @@ public abstract class XdsClient
   {
     void onChanged(NodeUpdate update);
 
-    void onDelete();
   }
 
   interface SymlinkNodeResourceWatcher extends ResourceWatcher
   {
     void onChanged(String resourceName, NodeUpdate update);
 
-    void onDelete();
   }
 
   interface D2URIMapResourceWatcher extends ResourceWatcher
   {
     void onChanged(D2URIMapUpdate update);
-    
-    void onDelete();
+
   }
 
   interface ResourceUpdate

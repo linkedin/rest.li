@@ -56,8 +56,6 @@ public class XdsClientImpl extends XdsClient
 {
   private static final Logger _log = LoggerFactory.getLogger(XdsClientImpl.class);
   public static final long DEFAULT_READY_TIMEOUT_MILLIS = 2000L;
-  static final NodeUpdate EMPTY_NODE_DATA = new NodeUpdate("", null);
-  static final D2URIMapUpdate EMPTY_DATA_URI_MAP = new D2URIMapUpdate("", null);
   private final Map<String, ResourceSubscriber> _d2NodeSubscribers = new HashMap<>();
   private final Map<String, ResourceSubscriber> _d2URIMapSubscribers = new HashMap<>();
   private final Node _node;
@@ -234,7 +232,9 @@ public class XdsClientImpl extends XdsClient
       {
         _log.warn("Failed to unpack Node response", e);
         errors.add("Failed to unpack Node response");
-        updates.put(resourceName, EMPTY_NODE_DATA);
+        // Assume that the resource doesn't exist if it cannot be deserialized instead of simply ignoring it. This way
+        // any call waiting on the response can be satisfied instead of timing out.
+        updates.put(resourceName, new NodeUpdate(resource.getVersion(), null));
       }
     }
     sendAckOrNack(data.getResourceType(), data.getNonce(), errors);
@@ -265,7 +265,9 @@ public class XdsClientImpl extends XdsClient
       {
         _log.warn("Failed to unpack D2URIMap response", e);
         errors.add("Failed to unpack D2URIMap response");
-        updates.put(resourceName, EMPTY_DATA_URI_MAP);
+        // Assume that the resource doesn't exist if it cannot be deserialized instead of simply ignoring it. This way
+        // any call waiting on the response can be satisfied instead of timing out.
+        updates.put(resourceName, new D2URIMapUpdate(resource.getVersion(), null));
       }
     }
     sendAckOrNack(data.getResourceType(), data.getNonce(), errors);

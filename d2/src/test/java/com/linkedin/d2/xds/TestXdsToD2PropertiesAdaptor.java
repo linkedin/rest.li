@@ -42,8 +42,6 @@ import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import static com.linkedin.d2.xds.XdsClientImpl.EMPTY_DATA_URI_MAP;
-import static com.linkedin.d2.xds.XdsClientImpl.EMPTY_NODE_DATA;
 import static org.mockito.Mockito.*;
 
 
@@ -68,6 +66,9 @@ public class TestXdsToD2PropertiesAdaptor {
 
   private static final String SERVICE_NAME = "FooService";
   private final UriPropertiesJsonSerializer uriSerializer = new UriPropertiesJsonSerializer();
+
+  private static final XdsClient.NodeUpdate EMPTY_NODE_DATA = new XdsClient.NodeUpdate("", null);
+  private static final XdsClient.D2URIMapUpdate EMPTY_DATA_URI_MAP = new XdsClient.D2URIMapUpdate("", null);
 
   @Test
   public void testListenToService()
