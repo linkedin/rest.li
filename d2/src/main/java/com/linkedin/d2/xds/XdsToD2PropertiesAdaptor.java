@@ -337,7 +337,10 @@ public class XdsToD2PropertiesAdaptor
         }
         catch (Exception e)
         {
-          LOG.error("Failed to parse symlink data from xDS update. Symlink name: {}",  symlinkName, e);
+          if (resourceName.startsWith(D2_CLUSTER_NODE_PREFIX))
+          {
+            LOG.error("Failed to parse cluster symlink data from xDS update. Symlink name: {}", symlinkName, e);
+          }
         }
       }
 
