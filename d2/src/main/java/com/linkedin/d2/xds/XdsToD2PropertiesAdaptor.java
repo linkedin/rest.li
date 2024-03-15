@@ -467,8 +467,9 @@ public class XdsToD2PropertiesAdaptor
       }
       catch (Exception e)
       {
-        updates = new HashMap<>();
         LOG.error("Failed to parse D2 uri properties from xDS update. Cluster name: {}", _clusterName, e);
+        _uriEventBus.publishInitialize(_clusterName, null);
+        return;
       }
 
       if (!isInit)

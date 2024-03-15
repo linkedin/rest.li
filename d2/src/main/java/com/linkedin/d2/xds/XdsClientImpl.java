@@ -56,6 +56,7 @@ public class XdsClientImpl extends XdsClient
 {
   private static final Logger _log = LoggerFactory.getLogger(XdsClientImpl.class);
   public static final long DEFAULT_READY_TIMEOUT_MILLIS = 2000L;
+  private static final String VERSION_FOR_NULL_DATA = "VERSION_FOR_NULL_DATA";
   private final Map<String, ResourceSubscriber> _d2NodeSubscribers = new HashMap<>();
   private final Map<String, ResourceSubscriber> _d2URIMapSubscribers = new HashMap<>();
   private final Node _node;
@@ -444,9 +445,9 @@ public class XdsClientImpl extends XdsClient
       switch (_type)
       {
         case NODE:
-          return new NodeUpdate(_resource, null);
+          return new NodeUpdate(VERSION_FOR_NULL_DATA, null);
         case D2_URI_MAP:
-          return new D2URIMapUpdate(_resource, null);
+          return new D2URIMapUpdate(VERSION_FOR_NULL_DATA, null);
         case UNKNOWN:
         default:
           throw new AssertionError("should never be here");

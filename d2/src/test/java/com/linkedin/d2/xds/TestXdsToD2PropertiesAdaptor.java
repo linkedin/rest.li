@@ -268,7 +268,7 @@ public class TestXdsToD2PropertiesAdaptor {
     XdsClient.D2URIMapResourceWatcher uriWatcher =
         (XdsClient.D2URIMapResourceWatcher) fixture._uriWatcherArgumentCaptor.getValue();
     uriWatcher.onChanged(EMPTY_DATA_URI_MAP);
-    verify(fixture._uriEventBus).publishInitialize(PRIMARY_CLUSTER_NAME, getDefaultUriProperties(PRIMARY_CLUSTER_NAME));
+    verify(fixture._uriEventBus).publishInitialize(PRIMARY_CLUSTER_NAME, null);
   }
 
   private XdsD2.D2URI getD2URI(String clusterName)
