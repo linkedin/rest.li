@@ -243,7 +243,7 @@ public class TestXdsToD2PropertiesAdaptor {
   }
 
   @Test
-  public void testEventBusWithEmptyUpdate()
+  public void testOnChangedWithEmptyUpdate()
   {
     XdsToD2PropertiesAdaptorFixture fixture = new XdsToD2PropertiesAdaptorFixture();
     fixture.getSpiedAdaptor().listenToService(SERVICE_NAME);

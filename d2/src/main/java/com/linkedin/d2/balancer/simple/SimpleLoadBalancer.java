@@ -1241,9 +1241,9 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     {
       return clusterCountFutureCallback.get(_timeout, _unit);
     }
-    catch (ExecutionException | TimeoutException | IllegalStateException | InterruptedException e )
+    catch (ExecutionException | TimeoutException | IllegalStateException | InterruptedException e)
     {
-      if (e instanceof TimeoutException)
+      if (e instanceof TimeoutException || e.getCause() instanceof TimeoutException)
       {
         int clusterCount = getClusterCountFromCache(clusterName, scheme, partitionId);
         if (clusterCount >= 0)
@@ -1289,7 +1289,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     catch (ExecutionException | TimeoutException | IllegalStateException | InterruptedException e)
     {
-      if (e instanceof TimeoutException)
+      if (e instanceof TimeoutException || e.getCause() instanceof TimeoutException)
       {
         DarkClusterConfigMap darkClusterConfigMap = getDarkClusterConfigMapFromCache(clusterName);
         if (darkClusterConfigMap != null)

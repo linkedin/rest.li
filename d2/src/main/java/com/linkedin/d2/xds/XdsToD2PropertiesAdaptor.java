@@ -222,8 +222,10 @@ public class XdsToD2PropertiesAdaptor
           catch (Exception e)
           {
             // still notify event bus to avoid timeout in case some subscribers are waiting for the data
+            LOG.warn(
+                "Failed to parse D2 service properties from xDS update. Service name: {}.  Publishing null to event bus",
+                serviceName);
             _serviceEventBus.publishInitialize(serviceName, null);
-            LOG.error("Failed to parse D2 service properties from xDS update. Service name: " + serviceName, e);
           }
         }
       }
@@ -276,8 +278,10 @@ public class XdsToD2PropertiesAdaptor
           catch (Exception e)
           {
             // still notify event bus to avoid timeout in case some subscribers are waiting for the data
+            LOG.warn(
+                "Failed to parse D2 cluster properties from xDS update. Cluster name: {}, Publishing null to event bus",
+                clusterName);
             _clusterEventBus.publishInitialize(clusterName, null);
-            LOG.error("Failed to parse D2 cluster properties from xDS update. Cluster name: {}", clusterName, e);
           }
         }
       }
@@ -467,7 +471,8 @@ public class XdsToD2PropertiesAdaptor
       }
       catch (Exception e)
       {
-        LOG.error("Failed to parse D2 uri properties from xDS update. Cluster name: {}", _clusterName, e);
+        LOG.warn("Failed to parse D2 uri properties from xDS update. Cluster name: {}.  Publishing null to event bus",
+            _clusterName);
         _uriEventBus.publishInitialize(_clusterName, null);
         return;
       }

@@ -56,7 +56,7 @@ public class XdsClientImpl extends XdsClient
 {
   private static final Logger _log = LoggerFactory.getLogger(XdsClientImpl.class);
   public static final long DEFAULT_READY_TIMEOUT_MILLIS = 2000L;
-  private static final String VERSION_FOR_NULL_DATA = "VERSION_FOR_NULL_DATA";
+  public static final String VERSION_FOR_NULL_DATA = "VERSION_FOR_NULL_DATA";
   private final Map<String, ResourceSubscriber> _d2NodeSubscribers = new HashMap<>();
   private final Map<String, ResourceSubscriber> _d2URIMapSubscribers = new HashMap<>();
   private final Node _node;
@@ -432,7 +432,8 @@ public class XdsClientImpl extends XdsClient
       }
       if (_data == null)
       {
-        _data = initEmptyData();
+        _log.info("Initializing {} {} to empty data.", _type, _resource);
+        _data = initEmptyData(getUpdateVersion(data));
       }
       for (ResourceWatcher watcher : _watchers)
       {
@@ -440,14 +441,33 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    private ResourceUpdate initEmptyData()
+    private String getUpdateVersion(ResourceUpdate data)
     {
+      if (data == null)
+      {
+        return VERSION_FOR_NULL_DATA;
+      }
       switch (_type)
       {
         case NODE:
-          return new NodeUpdate(VERSION_FOR_NULL_DATA, null);
+          return ((NodeUpdate) data).getVersion();
         case D2_URI_MAP:
-          return new D2URIMapUpdate(VERSION_FOR_NULL_DATA, null);
+          return ((D2URIMapUpdate) data).getVersion();
+        case UNKNOWN:
+        default:
+          throw new AssertionError("should never be here");
+      }
+    }
+
+    private ResourceUpdate initEmptyData(String version)
+    {
+      String updatedVersion = version == null ? VERSION_FOR_NULL_DATA : version;
+      switch (_type)
+      {
+        case NODE:
+          return new NodeUpdate(updatedVersion, null);
+        case D2_URI_MAP:
+          return new D2URIMapUpdate(updatedVersion, null);
         case UNKNOWN:
         default:
           throw new AssertionError("should never be here");
@@ -500,7 +520,8 @@ public class XdsClientImpl extends XdsClient
     {
       if (_data == null)
       {
-        _data = initEmptyData();
+        _log.info("Initializing {} {} to empty data.", _type, _resource);
+        _data = initEmptyData(getUpdateVersion(null));
       }
       for (ResourceWatcher watcher : _watchers)
       {

@@ -444,9 +444,8 @@ public class SimpleLoadBalancerTest
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
     MockStore<UriProperties> uriRegistry = new MockStore<>();
-    LoadBalancerState state =
-        spy(new SimpleLoadBalancerState(new SynchronousExecutorService(), uriRegistry, clusterRegistry, serviceRegistry,
-            new HashMap<>(), new HashMap<>()));
+    LoadBalancerTestState state = spy(new LoadBalancerTestState());
+    state.listenToService = false;
     SimpleLoadBalancer loadBalancer = spy(setupLoadBalancer(state, serviceRegistry, clusterRegistry, uriRegistry));
     // case1: listenToService timeout, and simpleLoadBalancer not hit the cache value
     Callback<ServiceProperties> callback = new Callback<ServiceProperties>()
@@ -522,9 +521,9 @@ public class SimpleLoadBalancerTest
     // case2: getLoadBalancedClusterAndUriProperties timeout, and simpleLoadBalancer hit the cache value from state
     LoadBalancerStateItem<ClusterProperties> clusterItem = new LoadBalancerStateItem<>(CLUSTER_PROPERTIES, 1, 1);
     LoadBalancerStateItem<UriProperties> uriItem = new LoadBalancerStateItem<>(URI_PROPERTIES, 1, 1);
-    LoadBalancerState state =
-        spy(new SimpleLoadBalancerState(new SynchronousExecutorService(), uriRegistry, clusterRegistry, serviceRegistry,
-            new HashMap<>(), new HashMap<>()));
+    LoadBalancerTestState state  = spy(new LoadBalancerTestState());
+    state.listenToCluster = false;
+    state.listenToService = false;
     when(state.getClusterProperties(CLUSTER1_NAME)).thenReturn(clusterItem);
     when(state.getUriProperties(CLUSTER1_NAME)).thenReturn(uriItem);
     loadBalancer = spy(setupLoadBalancer(state, serviceRegistry, clusterRegistry, uriRegistry));
@@ -554,59 +553,45 @@ public class SimpleLoadBalancerTest
   }
 
   @Test
-  public void testGetClusterCountFromCache() throws Exception
+  public void testGetClusterCountTimeout() throws Exception
   {
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
     MockStore<UriProperties> uriRegistry = new MockStore<>();
-    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
     int partitionId = 0;
-    int numHttp = 3;
-    int numHttps = 4;
+    LoadBalancerTestState state = spy(new LoadBalancerTestState());
+    state.listenToCluster = false;
 
-    int clusterCount = loadBalancer.getClusterCountFromCache(CLUSTER1_NAME, PropertyKeys.HTTP_SCHEME, partitionId);
-    assertEquals(clusterCount, -1);
-    populateUriRegistry(numHttp, numHttps, partitionId, uriRegistry);
-    clusterRegistry.put(CLUSTER1_NAME, CLUSTER_PROPERTIES);
-    assertEquals(loadBalancer.getClusterCount(CLUSTER1_NAME, PropertyKeys.HTTP_SCHEME, partitionId), numHttp);
-    clusterCount = loadBalancer.getClusterCountFromCache(CLUSTER1_NAME, PropertyKeys.HTTP_SCHEME, partitionId);
-    assertEquals(clusterCount, numHttp);
+    SimpleLoadBalancer loadBalancer = spy(setupLoadBalancer(state, serviceRegistry, clusterRegistry, uriRegistry));
+    LoadBalancerStateItem<ClusterProperties> clusterItem = new LoadBalancerStateItem<>(CLUSTER_PROPERTIES, 1, 1);
+    LoadBalancerStateItem<UriProperties> uriItem = new LoadBalancerStateItem<>(URI_PROPERTIES, 1, 1);
+    when(state.getClusterProperties(CLUSTER1_NAME)).thenReturn(clusterItem);
+    when(state.getUriProperties(CLUSTER1_NAME)).thenReturn(uriItem);
+    assertEquals(loadBalancer.getClusterCount(CLUSTER1_NAME, PropertyKeys.HTTP_SCHEME, partitionId), 1);
+    verify(loadBalancer).getClusterCountFromCache(CLUSTER1_NAME, PropertyKeys.HTTP_SCHEME, partitionId);
   }
 
   @Test
-  public void testGetDarkClusterConfigMapFromCache() throws Exception
+  public void testGetDarkClusterConfigMapTimeout() throws Exception
   {
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
     MockStore<UriProperties> uriRegistry = new MockStore<>();
-    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
+    LoadBalancerTestState state = spy(new LoadBalancerTestState());
+    state.listenToCluster = false;
+    SimpleLoadBalancer loadBalancer = spy(setupLoadBalancer(state, serviceRegistry, clusterRegistry, uriRegistry));
     DarkClusterConfigMap darkClusterConfigMap = new DarkClusterConfigMap();
     DarkClusterConfig darkClusterConfig = new DarkClusterConfig().setMultiplier(1.0f)
         .setDispatcherOutboundTargetRate(1)
         .setDispatcherMaxRequestsToBuffer(1)
         .setDispatcherBufferedRequestExpiryInSeconds(1);
     darkClusterConfigMap.put(DARK_CLUSTER1_NAME, darkClusterConfig);
-    clusterRegistry.put(CLUSTER1_NAME,
+    when(state.getClusterProperties(CLUSTER1_NAME)).thenReturn(new LoadBalancerStateItem<>(
         new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(), Collections.emptySet(),
-            NullPartitionProperties.getInstance(), Collections.emptyList(),
-            DarkClustersConverter.toProperties(darkClusterConfigMap), false));
-    loadBalancer.getDarkClusterConfigMap(CLUSTER1_NAME, new Callback<DarkClusterConfigMap>()
-    {
-      @Override
-      public void onError(Throwable e)
-      {
-        throw new RuntimeException("getDarkClusterConfigMap threw exception", e);
-      }
-
-      @Override
-      public void onSuccess(DarkClusterConfigMap returnedDarkClusterConfigMap)
-      {
-        Assert.assertEquals(returnedDarkClusterConfigMap, darkClusterConfigMap, "dark cluster configs should be equal");
-        Assert.assertEquals(returnedDarkClusterConfigMap.get(DARK_CLUSTER1_NAME).getMultiplier(), 1.0f,
-            "multiplier " + "should match");
-      }
-    });
-    DarkClusterConfigMap result = loadBalancer.getDarkClusterConfigMapFromCache(CLUSTER1_NAME);
+                              NullPartitionProperties.getInstance(), Collections.emptyList(),
+                              DarkClustersConverter.toProperties(darkClusterConfigMap), false), 1, 1));
+    DarkClusterConfigMap result = loadBalancer.getDarkClusterConfigMap(CLUSTER1_NAME);
+    verify(loadBalancer).getDarkClusterConfigMapFromCache(CLUSTER1_NAME);
     assertEquals(result, darkClusterConfigMap);
   }
 
