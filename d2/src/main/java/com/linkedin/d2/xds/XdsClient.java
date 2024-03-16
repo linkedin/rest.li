@@ -20,6 +20,7 @@ import com.linkedin.d2.jmx.XdsClientJmx;
 import indis.XdsD2;
 import io.grpc.Status;
 import java.util.Map;
+import java.util.Objects;
 
 
 public abstract class XdsClient
@@ -43,16 +44,19 @@ public abstract class XdsClient
   interface NodeResourceWatcher extends ResourceWatcher
   {
     void onChanged(NodeUpdate update);
+
   }
 
   interface SymlinkNodeResourceWatcher extends ResourceWatcher
   {
     void onChanged(String resourceName, NodeUpdate update);
+
   }
 
   interface D2URIMapResourceWatcher extends ResourceWatcher
   {
     void onChanged(D2URIMapUpdate update);
+
   }
 
   interface ResourceUpdate
@@ -80,6 +84,27 @@ public abstract class XdsClient
     {
       return _version;
     }
+
+    @Override
+    public boolean equals(Object object)
+    {
+      if (this == object)
+      {
+        return true;
+      }
+      if (object == null || getClass() != object.getClass())
+      {
+        return false;
+      }
+      NodeUpdate that = (NodeUpdate) object;
+      return Objects.equals(_version, that._version) && Objects.equals(_nodeData, that._nodeData);
+    }
+
+    @Override
+    public int hashCode()
+    {
+      return Objects.hash(_version, _nodeData);
+    }
   }
 
   static final class D2URIMapUpdate implements ResourceUpdate
@@ -101,6 +126,27 @@ public abstract class XdsClient
     public String getVersion()
     {
       return _version;
+    }
+
+    @Override
+    public boolean equals(Object object)
+    {
+      if (this == object)
+      {
+        return true;
+      }
+      if (object == null || getClass() != object.getClass())
+      {
+        return false;
+      }
+      D2URIMapUpdate that = (D2URIMapUpdate) object;
+      return Objects.equals(_version, that._version) && Objects.equals(_uriMap, that._uriMap);
+    }
+
+    @Override
+    public int hashCode()
+    {
+      return Objects.hash(_version, _uriMap);
     }
   }
 
