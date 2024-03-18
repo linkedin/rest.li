@@ -19,6 +19,7 @@ package com.linkedin.d2.xds;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.rpc.Code;
 import com.linkedin.d2.jmx.XdsClientJmx;
@@ -35,6 +36,7 @@ import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
 import io.grpc.stub.StreamObserver;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,19 +48,26 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.linkedin.d2.xds.GlobCollectionUtils.globCollectionUrlFromResourceUrn;
+import static com.linkedin.d2.xds.GlobCollectionUtils.uriFromResourceUrn;
 
 
 public class XdsClientImpl extends XdsClient
 {
   private static final Logger _log = LoggerFactory.getLogger(XdsClientImpl.class);
   public static final long DEFAULT_READY_TIMEOUT_MILLIS = 2000L;
-  public static final String VERSION_FOR_NULL_DATA = "VERSION_FOR_NULL_DATA";
-  private final Map<String, ResourceSubscriber> _d2NodeSubscribers = new HashMap<>();
-  private final Map<String, ResourceSubscriber> _d2URIMapSubscribers = new HashMap<>();
+
+  private final Map<ResourceType, Map<String, ResourceSubscriber>> _resourceSubscribers = Maps.immutableEnumMap(
+      Arrays.stream(ResourceType.values())
+          .filter(e -> e.typeUrl() != null)
+          .collect(Collectors.toMap(Function.identity(), e -> new HashMap<>())));
   private final Node _node;
   private final ManagedChannel _managedChannel;
   private final ScheduledExecutorService _executorService;
@@ -227,7 +236,7 @@ public class XdsClientImpl extends XdsClient
         {
           _log.warn("Received a Node response with no data, resource is : {}", resourceName);
         }
-        updates.put(resourceName, new NodeUpdate(resource.getVersion(), d2Node));
+        updates.put(resourceName, new NodeUpdate(d2Node));
       }
       catch (InvalidProtocolBufferException e)
       {
@@ -235,7 +244,7 @@ public class XdsClientImpl extends XdsClient
         errors.add("Failed to unpack Node response");
         // Assume that the resource doesn't exist if it cannot be deserialized instead of simply ignoring it. This way
         // any call waiting on the response can be satisfied instead of timing out.
-        updates.put(resourceName, new NodeUpdate(resource.getVersion(), null));
+        updates.put(resourceName, new NodeUpdate(null));
       }
     }
     sendAckOrNack(data.getResourceType(), data.getNonce(), errors);
@@ -260,7 +269,7 @@ public class XdsClientImpl extends XdsClient
         {
           _log.warn("Received a D2URIMap response with no data, resource is : {}", resourceName);
         }
-        updates.put(resourceName, new D2URIMapUpdate(resource.getVersion(), nodeData));
+        updates.put(resourceName, new D2URIMapUpdate(nodeData));
       }
       catch (InvalidProtocolBufferException e)
       {
@@ -268,12 +277,54 @@ public class XdsClientImpl extends XdsClient
         errors.add("Failed to unpack D2URIMap response");
         // Assume that the resource doesn't exist if it cannot be deserialized instead of simply ignoring it. This way
         // any call waiting on the response can be satisfied instead of timing out.
-        updates.put(resourceName, new D2URIMapUpdate(resource.getVersion(), null));
+        updates.put(resourceName, new D2URIMapUpdate(null));
       }
     }
     sendAckOrNack(data.getResourceType(), data.getNonce(), errors);
     handleResourceUpdate(updates, data.getResourceType());
     handleResourceRemoval(data.getRemovedResources(), data.getResourceType());
+  }
+
+  @VisibleForTesting
+  void handleD2URIResponse(DiscoveryResponseData data)
+  {
+    Map<String, D2URICollectionUpdate> updates = new HashMap<>();
+    List<String> errors = new ArrayList<>();
+
+    for (Resource resource : data.getResourcesList())
+    {
+      try
+      {
+        XdsD2.D2URI uri = resource.getResource().unpack(XdsD2.D2URI.class);
+        getCollectionUpdate(updates, resource.getName())
+            .addUri(uriFromResourceUrn(resource.getName()), uri);
+      }
+      catch (InvalidProtocolBufferException e)
+      {
+        _log.warn("Failed to unpack D2URI glob collection response", e);
+        errors.add("Failed to unpack D2URI glob collection response");
+      }
+    }
+    for (String removedResource : data.getRemovedResources())
+    {
+      getCollectionUpdate(updates, removedResource)
+          .addRemovedUri(removedResource);
+    }
+    sendAckOrNack(data.getResourceType(), data.getNonce(), errors);
+    handleResourceUpdate(updates, data.getResourceType());
+  }
+
+  /**
+   * Returns the corresponding {@link D2URICollectionUpdate} for the given resource URN from the given map. If it does
+   * not already exist in the map, it is created. The key in the map is normalized to the glob collection URL since
+   * that is what the client subscribes to, and it matches the key in the map returned by
+   * {@link #getResourceSubscriberMap}.
+   */
+  private static D2URICollectionUpdate getCollectionUpdate(
+      Map<String, D2URICollectionUpdate> updates, String resourceUrn)
+  {
+    String globCollectionName = globCollectionUrlFromResourceUrn(resourceUrn);
+    return updates.computeIfAbsent(globCollectionName, k -> new D2URICollectionUpdate());
   }
 
   void sendAckOrNack(ResourceType type, String nonce, List<String> errors)
@@ -323,37 +374,33 @@ public class XdsClientImpl extends XdsClient
     }
   }
 
-  private void notifyStreamError(Status error) {
-    for (ResourceSubscriber subscriber : _d2NodeSubscribers.values()) {
-      subscriber.onError(error);
-    }
-    for (ResourceSubscriber subscriber : _d2URIMapSubscribers.values()) {
-      subscriber.onError(error);
+
+  private void notifyStreamError(Status error)
+  {
+    for (Map<String, ResourceSubscriber> subscriberMap : _resourceSubscribers.values())
+    {
+      for (ResourceSubscriber subscriber : subscriberMap.values())
+      {
+        subscriber.onError(error);
+      }
     }
   }
 
-  private void notifyStreamReconnect() {
-    for (ResourceSubscriber subscriber : _d2NodeSubscribers.values()) {
-      subscriber.onReconnect();
-    }
-    for (ResourceSubscriber subscriber : _d2URIMapSubscribers.values()) {
-      subscriber.onReconnect();
+  private void notifyStreamReconnect()
+  {
+    for (Map<String, ResourceSubscriber> subscriberMap : _resourceSubscribers.values())
+    {
+      for (ResourceSubscriber subscriber : subscriberMap.values())
+      {
+        subscriber.onReconnect();
+      }
     }
   }
 
   @VisibleForTesting
   Map<String, ResourceSubscriber> getResourceSubscriberMap(ResourceType type)
   {
-    switch (type)
-    {
-      case NODE:
-        return _d2NodeSubscribers;
-      case D2_URI_MAP:
-        return _d2URIMapSubscribers;
-      case UNKNOWN:
-      default:
-        throw new AssertionError("Unknown resource type");
-    }
+    return _resourceSubscribers.get(type);
   }
 
   static class ResourceSubscriber
@@ -403,16 +450,21 @@ public class XdsClientImpl extends XdsClient
       switch (_type)
       {
         case NODE:
-          if (watcher instanceof  NodeResourceWatcher) {
+          if (watcher instanceof NodeResourceWatcher)
+          {
             ((NodeResourceWatcher) watcher).onChanged((NodeUpdate) update);
-          } else {
+          }
+          else
+          {
             ((SymlinkNodeResourceWatcher) watcher).onChanged(_resource, (NodeUpdate) update);
           }
           break;
         case D2_URI_MAP:
           ((D2URIMapResourceWatcher) watcher).onChanged((D2URIMapUpdate) update);
           break;
-        case UNKNOWN:
+        case D2_URI:
+          ((D2URICollectionResourceWatcher) watcher).onChanged((D2URICollectionUpdate) update);
+          break;
         default:
           throw new AssertionError("should never be here");
       }
@@ -433,7 +485,7 @@ public class XdsClientImpl extends XdsClient
       if (_data == null)
       {
         _log.info("Initializing {} {} to empty data.", _type, _resource);
-        _data = initEmptyData(getUpdateVersion(data));
+        _data = initEmptyData();
       }
       for (ResourceWatcher watcher : _watchers)
       {
@@ -441,34 +493,16 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    private String getUpdateVersion(ResourceUpdate data)
+    private ResourceUpdate initEmptyData()
     {
-      if (data == null)
-      {
-        return VERSION_FOR_NULL_DATA;
-      }
       switch (_type)
       {
         case NODE:
-          return ((NodeUpdate) data).getVersion();
+          return new NodeUpdate(null);
         case D2_URI_MAP:
-          return ((D2URIMapUpdate) data).getVersion();
-        case UNKNOWN:
-        default:
-          throw new AssertionError("should never be here");
-      }
-    }
-
-    private ResourceUpdate initEmptyData(String version)
-    {
-      String updatedVersion = version == null ? VERSION_FOR_NULL_DATA : version;
-      switch (_type)
-      {
-        case NODE:
-          return new NodeUpdate(updatedVersion, null);
-        case D2_URI_MAP:
-          return new D2URIMapUpdate(updatedVersion, null);
-        case UNKNOWN:
+          return new D2URIMapUpdate(null);
+        case D2_URI:
+          return new D2URICollectionUpdate();
         default:
           throw new AssertionError("should never be here");
       }
@@ -488,9 +522,11 @@ public class XdsClientImpl extends XdsClient
         case D2_URI_MAP:
           D2URIMapUpdate uriMapUpdate = (D2URIMapUpdate) data;
           return uriMapUpdate.getURIMap() == null || uriMapUpdate.getURIMap().isEmpty();
-        case UNKNOWN:
+        case D2_URI:
+          D2URICollectionUpdate uriCollectionUpdate = (D2URICollectionUpdate) data;
+          return uriCollectionUpdate.getUris().isEmpty() && uriCollectionUpdate.getRemovedUris().isEmpty();
         default:
-          return true;
+          throw new AssertionError("should never be here");
       }
     }
 
@@ -521,7 +557,7 @@ public class XdsClientImpl extends XdsClient
       if (_data == null)
       {
         _log.info("Initializing {} {} to empty data.", _type, _resource);
-        _data = initEmptyData(getUpdateVersion(null));
+        _data = initEmptyData();
       }
       for (ResourceWatcher watcher : _watchers)
       {
@@ -535,9 +571,6 @@ public class XdsClientImpl extends XdsClient
     public void run() {
       startRpcStreamLocal();
       for (ResourceType type : ResourceType.values()) {
-        if (type == ResourceType.UNKNOWN) {
-          continue;
-        }
         Map<String, ResourceSubscriber> subscriberMap = getResourceSubscriberMap(type);
         Collection<String> resources = subscriberMap.isEmpty() ? null : subscriberMap.keySet();
         if (resources != null) {
@@ -714,7 +747,13 @@ public class XdsClientImpl extends XdsClient
             {
               _executorService.execute(() ->
               {
-                _log.debug("Received {} response:\n{}", ResourceType.fromTypeUrl(response.getTypeUrl()), response);
+                ResourceType resourceType = ResourceType.fromTypeUrl(response.getTypeUrl());
+                if (resourceType == null)
+                {
+                  _log.warn("Received unknown response type:\n{}", response);
+                  return;
+                }
+                _log.debug("Received {} response:\n{}", resourceType, response);
                 DiscoveryResponseData responseData = DiscoveryResponseData.fromEnvoyProto(response);
                 handleResponse(responseData);
               });
@@ -776,7 +815,6 @@ public class XdsClientImpl extends XdsClient
         _log.info("Successfully established stream with ADS server: {}", response.getControlPlaneIdentifier());
       }
       _responseReceived = true;
-      String respNonce = response.getNonce();
       ResourceType resourceType = response.getResourceType();
       switch (resourceType)
       {
@@ -786,8 +824,8 @@ public class XdsClientImpl extends XdsClient
         case D2_URI_MAP:
           handleD2URIMapResponse(response);
           break;
-        case UNKNOWN:
-          _log.warn("Received an unknown type of DiscoveryResponse\n{}", respNonce);
+        case D2_URI:
+          handleD2URIResponse(response);
           break;
         default:
           throw new AssertionError("Missing case in enum switch: " + resourceType);

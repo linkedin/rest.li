@@ -214,7 +214,8 @@ public class D2ClientBuilder
                   _config.xdsStreamReadyTimeout,
                   _config.dualReadNewLbExecutor,
                   _config.xdsChannelLoadBalancingPolicy,
-                  _config.xdsChannelLoadBalancingPolicyConfig
+                  _config.xdsChannelLoadBalancingPolicyConfig,
+                  _config.useGlobCollectionsForUriSubscriptions
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -708,6 +709,11 @@ public class D2ClientBuilder
 
   public D2ClientBuilder xdsChannelLoadBalancingPolicyConfig(Map<String, ?> xdsChannelLoadBalancingPolicyConfig) {
     _config.xdsChannelLoadBalancingPolicyConfig = xdsChannelLoadBalancingPolicyConfig;
+    return this;
+  }
+
+  public D2ClientBuilder setUseGlobCollectionsForUriSubscriptions(boolean useGlobCollectionsForUriSubscriptions) {
+    _config.useGlobCollectionsForUriSubscriptions = useGlobCollectionsForUriSubscriptions;
     return this;
   }
 

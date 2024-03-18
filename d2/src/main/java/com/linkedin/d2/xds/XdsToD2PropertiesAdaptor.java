@@ -48,6 +48,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.linkedin.d2.xds.GlobCollectionUtils.globCollectionUrlForCluster;
+
 
 public class XdsToD2PropertiesAdaptor
 {
@@ -59,17 +61,21 @@ public class XdsToD2PropertiesAdaptor
   private static final String NON_EXISTENT_CLUSTER = "NonExistentCluster";
 
   private final XdsClient _xdsClient;
-  private final List<XdsConnectionListener> _xdsConnectionListeners;
+  private final List<XdsConnectionListener> _xdsConnectionListeners = Collections.synchronizedList(new ArrayList<>());
 
-  private final ServicePropertiesJsonSerializer _servicePropertiesJsonSerializer;
-  private final ClusterPropertiesJsonSerializer _clusterPropertiesJsonSerializer;
-  private final UriPropertiesJsonSerializer _uriPropertiesJsonSerializer;
-  private final UriPropertiesMerger _uriPropertiesMerger;
+  private final ServicePropertiesJsonSerializer _servicePropertiesJsonSerializer = new ServicePropertiesJsonSerializer();
+  private final ClusterPropertiesJsonSerializer _clusterPropertiesJsonSerializer = new ClusterPropertiesJsonSerializer();
+  private final UriPropertiesJsonSerializer _uriPropertiesJsonSerializer = new UriPropertiesJsonSerializer();
+  private final UriPropertiesMerger _uriPropertiesMerger = new UriPropertiesMerger();
   private final DualReadStateManager _dualReadStateManager;
-  private final ConcurrentMap<String, XdsClient.NodeResourceWatcher> _watchedClusterResources;
-  private final ConcurrentMap<String, XdsClient.SymlinkNodeResourceWatcher> _watchedSymlinkResources;
-  private final ConcurrentMap<String, XdsClient.NodeResourceWatcher> _watchedServiceResources;
-  private final ConcurrentMap<String, XdsClient.D2URIMapResourceWatcher> _watchedUriResources;
+  private final ConcurrentMap<String, XdsClient.NodeResourceWatcher> _watchedClusterResources =
+      new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, XdsClient.SymlinkNodeResourceWatcher> _watchedSymlinkResources =
+      new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, XdsClient.NodeResourceWatcher> _watchedServiceResources =
+      new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, XdsClient.ResourceWatcher> _watchedUriResources =
+      new ConcurrentHashMap<>();
   // Mapping between a symlink name, like "$FooClusterMaster" and the actual node name it's pointing to, like
   // "FooCluster-prod-ltx1".
   // (Note that this name does NOT include the full path so that it works for both cluster symlink
@@ -81,8 +87,10 @@ public class XdsToD2PropertiesAdaptor
   // future.
   private final Object _symlinkAndActualNodeLock = new Object();
   private final ServiceDiscoveryEventEmitter _eventEmitter;
+  private final boolean _useUriGlobCollections;
 
-  private Boolean _isAvailable;
+  // set to null so that the first notification on connection establishment success/failure is always sent
+  private Boolean _isAvailable = null;
   private PropertyEventBus<UriProperties> _uriEventBus;
   private PropertyEventBus<ServiceProperties> _serviceEventBus;
   private PropertyEventBus<ClusterProperties> _clusterEventBus;
@@ -90,20 +98,16 @@ public class XdsToD2PropertiesAdaptor
   public XdsToD2PropertiesAdaptor(XdsClient xdsClient, DualReadStateManager dualReadStateManager,
       ServiceDiscoveryEventEmitter eventEmitter)
   {
+    this(xdsClient, dualReadStateManager, eventEmitter, false);
+  }
+
+  public XdsToD2PropertiesAdaptor(XdsClient xdsClient, DualReadStateManager dualReadStateManager,
+      ServiceDiscoveryEventEmitter eventEmitter, boolean useUriGlobCollections)
+  {
     _xdsClient = xdsClient;
     _dualReadStateManager = dualReadStateManager;
-    _xdsConnectionListeners = Collections.synchronizedList(new ArrayList<>());
-    _servicePropertiesJsonSerializer = new ServicePropertiesJsonSerializer();
-    _clusterPropertiesJsonSerializer = new ClusterPropertiesJsonSerializer();
-    _uriPropertiesJsonSerializer = new UriPropertiesJsonSerializer();
-    _uriPropertiesMerger = new UriPropertiesMerger();
-    // set to null so that the first notification on connection establishment success/failure is always sent
-    _isAvailable = null;
-    _watchedClusterResources = new ConcurrentHashMap<>();
-    _watchedSymlinkResources = new ConcurrentHashMap<>();
-    _watchedServiceResources = new ConcurrentHashMap<>();
-    _watchedUriResources = new ConcurrentHashMap<>();
     _eventEmitter = eventEmitter;
+    _useUriGlobCollections = useUriGlobCollections;
   }
 
   public void start()
@@ -171,9 +175,18 @@ public class XdsToD2PropertiesAdaptor
     {
       _watchedUriResources.computeIfAbsent(clusterName, k ->
       {
-        XdsClient.D2URIMapResourceWatcher watcher = getUriResourceWatcher(clusterName);
-        _xdsClient.watchXdsResource(resourceName, XdsClient.ResourceType.D2_URI_MAP, watcher);
-        return watcher;
+        if (_useUriGlobCollections)
+        {
+          XdsClient.D2URICollectionResourceWatcher watcher = getUriCollectionResourceWatcher(clusterName);
+          _xdsClient.watchXdsResource(globCollectionUrlForCluster(clusterName), XdsClient.ResourceType.D2_URI, watcher);
+          return watcher;
+        }
+        else
+        {
+          XdsClient.D2URIMapResourceWatcher watcher = getUriResourceWatcher(clusterName);
+          _xdsClient.watchXdsResource(resourceName, XdsClient.ResourceType.D2_URI_MAP, watcher);
+          return watcher;
+        }
       });
     }
   }
@@ -312,6 +325,11 @@ public class XdsToD2PropertiesAdaptor
   XdsClient.D2URIMapResourceWatcher getUriResourceWatcher(String clusterName)
   {
     return new UriPropertiesResourceWatcher(clusterName);
+  }
+
+  XdsClient.D2URICollectionResourceWatcher getUriCollectionResourceWatcher(String clusterName)
+  {
+    return new UriPropertiesCollectionResourceWatcher(clusterName);
   }
 
   XdsClient.SymlinkNodeResourceWatcher getSymlinkResourceWatcher(String symlinkName)
@@ -623,6 +641,41 @@ public class XdsToD2PropertiesAdaptor
                 timestamp)
         );
       });
+    }
+  }
+
+
+  private class UriPropertiesCollectionResourceWatcher implements XdsClient.D2URICollectionResourceWatcher
+  {
+    private final UriPropertiesResourceWatcher _delegate;
+
+    UriPropertiesCollectionResourceWatcher(String clusterName)
+    {
+      _delegate = new UriPropertiesResourceWatcher(clusterName);
+    }
+
+    @Override
+    public void onError(Status error)
+    {
+      _delegate.onError(error);
+    }
+
+    @Override
+    public void onReconnect()
+    {
+      _delegate.onReconnect();
+    }
+
+    @Override
+    public void onChanged(XdsClient.D2URICollectionUpdate update)
+    {
+      Map<String, XdsD2.D2URI> copy = new HashMap<>(Maps.transformValues(_delegate._currentData, uri -> uri._xdsUri));
+      copy.putAll(update.getUris());
+      for (String removedUri : update.getRemovedUris())
+      {
+        copy.remove(removedUri);
+      }
+      _delegate.onChanged(new XdsClient.D2URIMapUpdate(copy));
     }
   }
 

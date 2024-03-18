@@ -19,15 +19,19 @@ package com.linkedin.d2.xds;
 import com.linkedin.d2.jmx.XdsClientJmx;
 import indis.XdsD2;
 import io.grpc.Status;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 
 public abstract class XdsClient
 {
-  private static final String NODE_TYPE_URL = "type.googleapis.com/indis.Node";
-  private static final String D2_URI_MAP_TYPE_URL = "type.googleapis.com/indis.D2URIMap";
-
   interface ResourceWatcher
   {
     /**
@@ -59,6 +63,11 @@ public abstract class XdsClient
 
   }
 
+  interface D2URICollectionResourceWatcher extends ResourceWatcher
+  {
+    void onChanged(D2URICollectionUpdate update);
+  }
+
   interface ResourceUpdate
   {
   }
@@ -66,23 +75,16 @@ public abstract class XdsClient
 
   static final class NodeUpdate implements ResourceUpdate
   {
-    String _version;
     XdsD2.Node _nodeData;
 
-    NodeUpdate(String version, XdsD2.Node nodeData)
+    NodeUpdate(XdsD2.Node nodeData)
     {
-      _version = version;
       _nodeData = nodeData;
     }
 
     XdsD2.Node getNodeData()
     {
       return _nodeData;
-    }
-
-    public String getVersion()
-    {
-      return _version;
     }
 
     @Override
@@ -97,35 +99,28 @@ public abstract class XdsClient
         return false;
       }
       NodeUpdate that = (NodeUpdate) object;
-      return Objects.equals(_version, that._version) && Objects.equals(_nodeData, that._nodeData);
+      return Objects.equals(_nodeData, that._nodeData);
     }
 
     @Override
     public int hashCode()
     {
-      return Objects.hash(_version, _nodeData);
+      return Objects.hash(_nodeData);
     }
   }
 
   static final class D2URIMapUpdate implements ResourceUpdate
   {
-    String _version;
     Map<String, XdsD2.D2URI> _uriMap;
 
-    D2URIMapUpdate(String version, Map<String, XdsD2.D2URI> uriMap)
+    D2URIMapUpdate(Map<String, XdsD2.D2URI> uriMap)
     {
-      _version = version;
       _uriMap = uriMap;
     }
 
     public Map<String, XdsD2.D2URI> getURIMap()
     {
       return _uriMap;
-    }
-
-    public String getVersion()
-    {
-      return _version;
     }
 
     @Override
@@ -140,45 +135,91 @@ public abstract class XdsClient
         return false;
       }
       D2URIMapUpdate that = (D2URIMapUpdate) object;
-      return Objects.equals(_version, that._version) && Objects.equals(_uriMap, that._uriMap);
+      return Objects.equals(_uriMap, that._uriMap);
     }
 
     @Override
     public int hashCode()
     {
-      return Objects.hash(_version, _uriMap);
+      return Objects.hash(_uriMap);
+    }
+  }
+
+  static final class D2URICollectionUpdate implements ResourceUpdate
+  {
+    private final Map<String, XdsD2.D2URI> _uris = new HashMap<>();
+    private final List<String> _removedUris = new ArrayList<>();
+
+    public D2URICollectionUpdate addUri(String name, XdsD2.D2URI uri)
+    {
+      _uris.put(name, uri);
+      return this;
+    }
+
+    public Map<String, XdsD2.D2URI> getUris()
+    {
+      return _uris;
+    }
+
+    public D2URICollectionUpdate addRemovedUri(String uriName)
+    {
+      _removedUris.add(uriName);
+      return this;
+    }
+
+    public List<String> getRemovedUris()
+    {
+      return _removedUris;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+      if (this == o)
+      {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass())
+      {
+        return false;
+      }
+      D2URICollectionUpdate that = (D2URICollectionUpdate) o;
+      return Objects.equals(_uris, that._uris) && Objects.equals(_removedUris, that._removedUris);
+    }
+
+    @Override
+    public int hashCode()
+    {
+      return Objects.hash(_uris, _removedUris);
     }
   }
 
   enum ResourceType
   {
-    UNKNOWN, NODE, D2_URI_MAP;
+    NODE("type.googleapis.com/indis.Node"),
+    D2_URI_MAP("type.googleapis.com/indis.D2URIMap"),
+    D2_URI("type.googleapis.com/indis.D2URI");
 
-    static ResourceType fromTypeUrl(String typeUrl)
+    private static final Map<String, ResourceType> TYPE_URL_TO_ENUM = Arrays.stream(values())
+        .filter(e -> e.typeUrl() != null)
+        .collect(Collectors.toMap(ResourceType::typeUrl, Function.identity()));
+
+    private final String _typeUrl;
+
+    ResourceType(String typeUrl)
     {
-      if (typeUrl.equals(NODE_TYPE_URL))
-      {
-        return NODE;
-      }
-      if (typeUrl.equals(D2_URI_MAP_TYPE_URL))
-      {
-        return D2_URI_MAP;
-      }
-      return UNKNOWN;
+      _typeUrl = typeUrl;
     }
 
     String typeUrl()
     {
-      switch (this)
-      {
-        case NODE:
-          return NODE_TYPE_URL;
-        case D2_URI_MAP:
-          return D2_URI_MAP_TYPE_URL;
-        case UNKNOWN:
-        default:
-          throw new AssertionError("Unknown or missing case in enum switch: " + this);
-      }
+      return _typeUrl;
+    }
+
+    @Nullable
+    static ResourceType fromTypeUrl(String typeUrl)
+    {
+      return TYPE_URL_TO_ENUM.get(typeUrl);
     }
   }
 

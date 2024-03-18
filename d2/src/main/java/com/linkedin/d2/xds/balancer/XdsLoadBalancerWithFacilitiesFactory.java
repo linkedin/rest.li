@@ -58,7 +58,7 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
     d2ClientJmxManager.registerXdsClientJmx(xdsClient.getXdsClientJmx());
 
     XdsToD2PropertiesAdaptor adaptor = new XdsToD2PropertiesAdaptor(xdsClient, config.dualReadStateManager,
-        config.serviceDiscoveryEventEmitter);
+        config.serviceDiscoveryEventEmitter, config.useGlobCollectionsForUriSubscriptions);
 
     XdsLoadBalancer xdsLoadBalancer = new XdsLoadBalancer(adaptor, executorService,
         new XdsFsTogglingLoadBalancerFactory(config.lbWaitTimeout, config.lbWaitUnit, config.indisFsBasePath,
