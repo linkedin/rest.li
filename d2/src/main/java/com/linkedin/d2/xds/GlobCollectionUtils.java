@@ -14,20 +14,26 @@ public class GlobCollectionUtils
 
   public static class D2UriIdentifier
   {
-    private final String _clusterPath;
+    private final String _clusterResourceName;
     private final String _uriName;
 
-    private D2UriIdentifier(String clusterPath, String name)
+    private D2UriIdentifier(String clusterResourceName, String name)
     {
-      _clusterPath = clusterPath;
+      _clusterResourceName = clusterResourceName;
       _uriName = name;
     }
 
-    public String getClusterPath()
+    /**
+     * Returns the cluster resource's name, i.e. {@code /d2/uris/{CLUSTER_NAME}}.
+     */
+    public String getClusterResourceName()
     {
-      return _clusterPath;
+      return _clusterResourceName;
     }
 
+    /**
+     * Returns the name of the URI within that cluster.
+     */
     public String getUriName()
     {
       return _uriName;

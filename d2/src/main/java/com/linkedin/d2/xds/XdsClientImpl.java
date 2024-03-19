@@ -102,6 +102,10 @@ public class XdsClientImpl extends XdsClient
     _managedChannel = managedChannel;
     _executorService = executorService;
     _useUriGlobCollections = useUriGlobCollections;
+    if (_useUriGlobCollections)
+    {
+      _log.info("Glob collection support enabled");
+    }
     _xdsClientJmx = new XdsClientJmx();
   }
 
@@ -122,14 +126,13 @@ public class XdsClientImpl extends XdsClient
         {
           type = ResourceType.D2_URI;
           adjustedResourceName = GlobCollectionUtils.globCollectionUrlForClusterResource(resourceName);
-          _log.info("Glob collection support enabled, subscribing to {} resource: {}", type, adjustedResourceName);
         }
         else
         {
           type = watcher.getType();
           adjustedResourceName = resourceName;
-          _log.info("Subscribing to {} resource: {}", type, adjustedResourceName);
         }
+        _log.info("Subscribing to {} resource: {}", type, adjustedResourceName);
 
         if (_adsStream == null && !isInBackoff())
         {
@@ -343,16 +346,16 @@ public class XdsClientImpl extends XdsClient
         return;
       }
 
-      ResourceSubscriber subscriber = getResourceSubscriberMap(ResourceType.D2_URI_MAP).get(uriId.getClusterPath());
+      ResourceSubscriber subscriber = getResourceSubscriberMap(ResourceType.D2_URI_MAP).get(uriId.getClusterResourceName());
       if (subscriber == null)
       {
-        String msg = String.format("Ignoring D2URI resource update for untracked cluster: %s", uriId.getClusterPath());
+        String msg = String.format("Ignoring D2URI resource update for untracked cluster: %s", uriId.getClusterResourceName());
         _log.warn(msg);
         errors.add(msg);
         return;
       }
 
-      D2URIMapUpdate update = updates.computeIfAbsent(uriId.getClusterPath(), k ->
+      D2URIMapUpdate update = updates.computeIfAbsent(uriId.getClusterResourceName(), k ->
       {
         D2URIMapUpdate currentData = (D2URIMapUpdate) subscriber._data;
         if (currentData == null || currentData.isEmpty())
@@ -369,7 +372,7 @@ public class XdsClientImpl extends XdsClient
       {
         if ("*".equals(uriId.getUriName()))
         {
-          removedClusters.add(uriId.getClusterPath());
+          removedClusters.add(uriId.getClusterResourceName());
         }
         else
         {
