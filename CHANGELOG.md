@@ -14,7 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.51.9] - 2024-03-13
+## [29.51.9] - 2024-03-19
 - Fix StateUpdater memory leak issue
 
 ## [29.51.8] - 2024-03-13
