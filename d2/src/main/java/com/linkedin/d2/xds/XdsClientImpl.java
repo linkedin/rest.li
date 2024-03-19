@@ -243,7 +243,26 @@ public class XdsClientImpl extends XdsClient
   }
 
   @VisibleForTesting
-  void handleD2NodeResponse(DiscoveryResponseData data)
+  void handleResponse(DiscoveryResponseData response)
+  {
+    ResourceType resourceType = response.getResourceType();
+    switch (resourceType)
+    {
+      case NODE:
+        handleD2NodeResponse(response);
+        break;
+      case D2_URI_MAP:
+        handleD2URIMapResponse(response);
+        break;
+      case D2_URI:
+        handleD2URICollectionResponse(response);
+        break;
+      default:
+        throw new AssertionError("Missing case in enum switch: " + resourceType);
+    }
+  }
+
+  private void handleD2NodeResponse(DiscoveryResponseData data)
   {
     Map<String, NodeUpdate> updates = new HashMap<>();
     List<String> errors = new ArrayList<>();
@@ -274,8 +293,7 @@ public class XdsClientImpl extends XdsClient
     handleResourceRemoval(data.getRemovedResources(), data.getResourceType());
   }
 
-  @VisibleForTesting
-  void handleD2URIMapResponse(DiscoveryResponseData data)
+  private void handleD2URIMapResponse(DiscoveryResponseData data)
   {
     Map<String, D2URIMapUpdate> updates = new HashMap<>();
     List<String> errors = new ArrayList<>();
@@ -307,8 +325,7 @@ public class XdsClientImpl extends XdsClient
     handleResourceRemoval(data.getRemovedResources(), data.getResourceType());
   }
 
-  @VisibleForTesting
-  void handleD2URICollectionResponse(DiscoveryResponseData data)
+  private void handleD2URICollectionResponse(DiscoveryResponseData data)
   {
     Map<String, D2URIMapUpdate> updates = new HashMap<>();
     List<String> errors = new ArrayList<>();
@@ -368,6 +385,7 @@ public class XdsClientImpl extends XdsClient
     handleResourceUpdate(updates, ResourceType.D2_URI_MAP);
   }
 
+  @VisibleForTesting
   void sendAckOrNack(ResourceType type, String nonce, List<String> errors)
   {
     if (errors.isEmpty())
@@ -381,23 +399,20 @@ public class XdsClientImpl extends XdsClient
     }
   }
 
-  @VisibleForTesting
-  void handleResourceUpdate(Map<String, ? extends ResourceUpdate> updates, ResourceType type)
+  private void handleResourceUpdate(Map<String, ? extends ResourceUpdate> updates, ResourceType type)
   {
+    Map<String, ResourceSubscriber> subscribers = getResourceSubscriberMap(type);
     for (Map.Entry<String, ? extends ResourceUpdate> entry : updates.entrySet())
     {
-      String resourceName = entry.getKey();
-      ResourceUpdate resourceUpdate = entry.getValue();
-      ResourceSubscriber subscriber = getResourceSubscriberMap(type).get(resourceName);
+      ResourceSubscriber subscriber = subscribers.get(entry.getKey());
       if (subscriber != null)
       {
-        subscriber.onData(resourceUpdate);
+        subscriber.onData(entry.getValue());
       }
     }
   }
 
-  @VisibleForTesting
-  void handleResourceRemoval(List<String> removedResources, ResourceType type)
+  private void handleResourceRemoval(List<String> removedResources, ResourceType type)
   {
     if (removedResources == null || removedResources.isEmpty())
     {
@@ -754,6 +769,11 @@ public class XdsClientImpl extends XdsClient
             {
               _executorService.execute(() ->
               {
+                if (_closed)
+                {
+                  return;
+                }
+
                 ResourceType resourceType = ResourceType.fromTypeUrl(response.getTypeUrl());
                 if (resourceType == null)
                 {
@@ -762,6 +782,14 @@ public class XdsClientImpl extends XdsClient
                 }
                 _log.debug("Received {} response:\n{}", resourceType, response);
                 DiscoveryResponseData responseData = DiscoveryResponseData.fromEnvoyProto(response);
+
+                if (!_responseReceived && responseData.getControlPlaneIdentifier() != null)
+                {
+                  _log.info("Successfully established stream with ADS server: {}",
+                      responseData.getControlPlaneIdentifier());
+                }
+                _responseReceived = true;
+
                 handleResponse(responseData);
               });
             }
@@ -811,33 +839,6 @@ public class XdsClientImpl extends XdsClient
       _log.debug("Sent Nack\n{}", ack);
     }
 
-    private void handleResponse(DiscoveryResponseData response)
-    {
-      if (_closed)
-      {
-        return;
-      }
-      if (!_responseReceived && response.getControlPlaneIdentifier() != null)
-      {
-        _log.info("Successfully established stream with ADS server: {}", response.getControlPlaneIdentifier());
-      }
-      _responseReceived = true;
-      ResourceType resourceType = response.getResourceType();
-      switch (resourceType)
-      {
-        case NODE:
-          handleD2NodeResponse(response);
-          break;
-        case D2_URI_MAP:
-          handleD2URIMapResponse(response);
-          break;
-        case D2_URI:
-          handleD2URICollectionResponse(response);
-          break;
-        default:
-          throw new AssertionError("Missing case in enum switch: " + resourceType);
-      }
-    }
 
     private void handleRpcError(Throwable t)
     {
