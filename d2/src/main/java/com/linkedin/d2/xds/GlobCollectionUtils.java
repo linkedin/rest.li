@@ -5,7 +5,7 @@ import javax.annotation.Nullable;
 public class GlobCollectionUtils
 {
   private static final String D2_URIS_PREFIX = "/d2/uris/";
-  private static final String D2_URI_NODE_GLOB_COLLECTION_PREFIX = "xdstp:///indis.D2URI/d2/uris/";
+  private static final String D2_URI_NODE_GLOB_COLLECTION_PREFIX = "xdstp:///indis.D2URI/";
   private static final String GLOB_COLLECTION_SUFFIX = "/*";
 
   private GlobCollectionUtils()
@@ -48,15 +48,16 @@ public class GlobCollectionUtils
       {
         return null;
       }
+
       int lastIndex = resourceName.lastIndexOf('/');
-      if (lastIndex == 1)
+      if (lastIndex == -1)
       {
         return null;
       }
-      return new D2UriIdentifier(
-          D2_URIS_PREFIX + resourceName.substring(0, lastIndex) + GLOB_COLLECTION_SUFFIX,
-          resourceName.substring(lastIndex + 1)
-      );
+
+      String clusterName = resourceName.substring(D2_URI_NODE_GLOB_COLLECTION_PREFIX.length(), lastIndex);
+
+      return new D2UriIdentifier(D2_URIS_PREFIX + clusterName, resourceName.substring(lastIndex + 1));
     }
   }
 

@@ -330,6 +330,8 @@ public class XdsClientImpl extends XdsClient
     Map<String, D2URIMapUpdate> updates = new HashMap<>();
     List<String> errors = new ArrayList<>();
 
+    Set<String> removedClusters = new HashSet<>();
+
     data.foreach((resourceName, resource) ->
     {
       D2UriIdentifier uriId = D2UriIdentifier.parse(resourceName);
@@ -341,7 +343,7 @@ public class XdsClientImpl extends XdsClient
         return;
       }
 
-      ResourceSubscriber subscriber = _resourceSubscribers.get(ResourceType.D2_URI_MAP).get(uriId.getClusterPath());
+      ResourceSubscriber subscriber = getResourceSubscriberMap(ResourceType.D2_URI_MAP).get(uriId.getClusterPath());
       if (subscriber == null)
       {
         String msg = String.format("Ignoring D2URI resource update for untracked cluster: %s", uriId.getClusterPath());
@@ -365,7 +367,14 @@ public class XdsClientImpl extends XdsClient
 
       if (resource == null)
       {
-        update.getURIMap().remove(uriId.getUriName());
+        if ("*".equals(uriId.getUriName()))
+        {
+          removedClusters.add(uriId.getClusterPath());
+        }
+        else
+        {
+          update.getURIMap().remove(uriId.getUriName());
+        }
       }
       else
       {
@@ -382,7 +391,9 @@ public class XdsClientImpl extends XdsClient
       }
     });
     sendAckOrNack(data.getResourceType(), data.getNonce(), errors);
+
     handleResourceUpdate(updates, ResourceType.D2_URI_MAP);
+    handleResourceRemoval(removedClusters, ResourceType.D2_URI_MAP);
   }
 
   @VisibleForTesting
@@ -412,7 +423,7 @@ public class XdsClientImpl extends XdsClient
     }
   }
 
-  private void handleResourceRemoval(List<String> removedResources, ResourceType type)
+  private void handleResourceRemoval(Collection<String> removedResources, ResourceType type)
   {
     if (removedResources == null || removedResources.isEmpty())
     {
