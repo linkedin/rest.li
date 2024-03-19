@@ -48,8 +48,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.linkedin.d2.xds.GlobCollectionUtils.globCollectionUrlForCluster;
-
 
 public class XdsToD2PropertiesAdaptor
 {
@@ -70,7 +68,7 @@ public class XdsToD2PropertiesAdaptor
   private final DualReadStateManager _dualReadStateManager;
   private final ConcurrentMap<String, XdsClient.NodeResourceWatcher> _watchedClusterResources =
       new ConcurrentHashMap<>();
-  private final ConcurrentMap<String, XdsClient.SymlinkNodeResourceWatcher> _watchedSymlinkResources =
+  private final ConcurrentMap<String, XdsClient.NodeResourceWatcher> _watchedSymlinkResources =
       new ConcurrentHashMap<>();
   private final ConcurrentMap<String, XdsClient.NodeResourceWatcher> _watchedServiceResources =
       new ConcurrentHashMap<>();
@@ -87,7 +85,6 @@ public class XdsToD2PropertiesAdaptor
   // future.
   private final Object _symlinkAndActualNodeLock = new Object();
   private final ServiceDiscoveryEventEmitter _eventEmitter;
-  private final boolean _useUriGlobCollections;
 
   // set to null so that the first notification on connection establishment success/failure is always sent
   private Boolean _isAvailable = null;
@@ -98,16 +95,9 @@ public class XdsToD2PropertiesAdaptor
   public XdsToD2PropertiesAdaptor(XdsClient xdsClient, DualReadStateManager dualReadStateManager,
       ServiceDiscoveryEventEmitter eventEmitter)
   {
-    this(xdsClient, dualReadStateManager, eventEmitter, false);
-  }
-
-  public XdsToD2PropertiesAdaptor(XdsClient xdsClient, DualReadStateManager dualReadStateManager,
-      ServiceDiscoveryEventEmitter eventEmitter, boolean useUriGlobCollections)
-  {
     _xdsClient = xdsClient;
     _dualReadStateManager = dualReadStateManager;
     _eventEmitter = eventEmitter;
-    _useUriGlobCollections = useUriGlobCollections;
   }
 
   public void start()
@@ -157,7 +147,7 @@ public class XdsToD2PropertiesAdaptor
       _watchedClusterResources.computeIfAbsent(clusterName, k ->
       {
         XdsClient.NodeResourceWatcher watcher = getClusterResourceWatcher(clusterName);
-        _xdsClient.watchXdsResource(resourceName, XdsClient.ResourceType.NODE, watcher);
+        _xdsClient.watchXdsResource(resourceName, watcher);
         return watcher;
       });
     }
@@ -175,18 +165,9 @@ public class XdsToD2PropertiesAdaptor
     {
       _watchedUriResources.computeIfAbsent(clusterName, k ->
       {
-        if (_useUriGlobCollections)
-        {
-          XdsClient.D2URICollectionResourceWatcher watcher = getUriCollectionResourceWatcher(clusterName);
-          _xdsClient.watchXdsResource(globCollectionUrlForCluster(clusterName), XdsClient.ResourceType.D2_URI, watcher);
-          return watcher;
-        }
-        else
-        {
-          XdsClient.D2URIMapResourceWatcher watcher = getUriResourceWatcher(clusterName);
-          _xdsClient.watchXdsResource(resourceName, XdsClient.ResourceType.D2_URI_MAP, watcher);
-          return watcher;
-        }
+        XdsClient.D2URIMapResourceWatcher watcher = getUriResourceWatcher(clusterName);
+        _xdsClient.watchXdsResource(resourceName, watcher);
+        return watcher;
       });
     }
   }
@@ -196,7 +177,7 @@ public class XdsToD2PropertiesAdaptor
     _watchedServiceResources.computeIfAbsent(serviceName, k ->
     {
       XdsClient.NodeResourceWatcher watcher = getServiceResourceWatcher(serviceName);
-      _xdsClient.watchXdsResource(D2_SERVICE_NODE_PREFIX + serviceName, XdsClient.ResourceType.NODE, watcher);
+      _xdsClient.watchXdsResource(D2_SERVICE_NODE_PREFIX + serviceName, watcher);
       return watcher;
     });
   }
@@ -208,8 +189,8 @@ public class XdsToD2PropertiesAdaptor
     _watchedSymlinkResources.computeIfAbsent(fullResourceName, k ->
     {
       // use symlink name "$FooClusterMaster" to create the watcher
-      XdsClient.SymlinkNodeResourceWatcher watcher = getSymlinkResourceWatcher(name);
-      _xdsClient.watchXdsResource(k, XdsClient.ResourceType.NODE, watcher);
+      XdsClient.NodeResourceWatcher watcher = getSymlinkResourceWatcher(fullResourceName, name);
+      _xdsClient.watchXdsResource(k, watcher);
       return watcher;
     });
   }
@@ -327,17 +308,12 @@ public class XdsToD2PropertiesAdaptor
     return new UriPropertiesResourceWatcher(clusterName);
   }
 
-  XdsClient.D2URICollectionResourceWatcher getUriCollectionResourceWatcher(String clusterName)
+  XdsClient.NodeResourceWatcher getSymlinkResourceWatcher(String resourceName, String symlinkName)
   {
-    return new UriPropertiesCollectionResourceWatcher(clusterName);
-  }
-
-  XdsClient.SymlinkNodeResourceWatcher getSymlinkResourceWatcher(String symlinkName)
-  {
-    return new XdsClient.SymlinkNodeResourceWatcher()
+    return new XdsClient.NodeResourceWatcher()
     {
       @Override
-      public void onChanged(String resourceName, XdsClient.NodeUpdate update)
+      public void onChanged(XdsClient.NodeUpdate update)
       {
         // Update maps between symlink name and actual node name
         try
@@ -438,7 +414,7 @@ public class XdsToD2PropertiesAdaptor
         clusterProperties.getStat().getMzxid());
   }
 
-  private class UriPropertiesResourceWatcher implements XdsClient.D2URIMapResourceWatcher
+  private class UriPropertiesResourceWatcher extends XdsClient.D2URIMapResourceWatcher
   {
     final String _clusterName;
     final AtomicBoolean _isInit;
@@ -641,41 +617,6 @@ public class XdsToD2PropertiesAdaptor
                 timestamp)
         );
       });
-    }
-  }
-
-
-  private class UriPropertiesCollectionResourceWatcher implements XdsClient.D2URICollectionResourceWatcher
-  {
-    private final UriPropertiesResourceWatcher _delegate;
-
-    UriPropertiesCollectionResourceWatcher(String clusterName)
-    {
-      _delegate = new UriPropertiesResourceWatcher(clusterName);
-    }
-
-    @Override
-    public void onError(Status error)
-    {
-      _delegate.onError(error);
-    }
-
-    @Override
-    public void onReconnect()
-    {
-      _delegate.onReconnect();
-    }
-
-    @Override
-    public void onChanged(XdsClient.D2URICollectionUpdate update)
-    {
-      Map<String, XdsD2.D2URI> copy = new HashMap<>(Maps.transformValues(_delegate._currentData, uri -> uri._xdsUri));
-      copy.putAll(update.getUris());
-      for (String removedUri : update.getRemovedUris())
-      {
-        copy.remove(removedUri);
-      }
-      _delegate.onChanged(new XdsClient.D2URIMapUpdate(copy));
     }
   }
 

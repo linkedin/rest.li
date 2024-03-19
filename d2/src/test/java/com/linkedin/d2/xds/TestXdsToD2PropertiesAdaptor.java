@@ -32,11 +32,11 @@ import com.linkedin.d2.balancer.properties.UriPropertiesJsonSerializer;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
+import com.linkedin.d2.xds.XdsClient.D2URIMapResourceWatcher;
+import com.linkedin.d2.xds.XdsClient.NodeResourceWatcher;
 import indis.XdsD2;
 import java.net.URI;
 import java.util.Collections;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
@@ -77,10 +77,9 @@ public class TestXdsToD2PropertiesAdaptor {
     String serviceName = "FooService";
     fixture.getSpiedAdaptor().listenToService(serviceName);
 
-    verify(fixture._xdsClient).watchXdsResource(eq("/d2/services/" + serviceName), eq(XdsClient.ResourceType.NODE), any());
+    verify(fixture._xdsClient).watchXdsResource(eq("/d2/services/" + serviceName), anyNodeWatcher());
 
-    XdsClient.NodeResourceWatcher symlinkNodeWatcher =
-        (XdsClient.NodeResourceWatcher) fixture._clusterWatcherArgumentCaptor.getValue();
+    NodeResourceWatcher symlinkNodeWatcher = fixture._nodeWatcher;
     symlinkNodeWatcher.onChanged(new XdsClient.NodeUpdate(XdsD2.Node.newBuilder()
         .setData(
             ByteString.copyFrom(
@@ -109,7 +108,7 @@ public class TestXdsToD2PropertiesAdaptor {
     XdsToD2PropertiesAdaptorFixture fixture = new XdsToD2PropertiesAdaptorFixture();
     fixture.getSpiedAdaptor().listenToCluster(PRIMARY_CLUSTER_NAME);
 
-    verify(fixture._xdsClient).watchXdsResource(eq(PRIMARY_CLUSTER_RESOURCE_NAME), eq(XdsClient.ResourceType.NODE), any());
+    verify(fixture._xdsClient).watchXdsResource(eq(PRIMARY_CLUSTER_RESOURCE_NAME), anyNodeWatcher());
     verifyClusterNodeUpdate(fixture, PRIMARY_CLUSTER_NAME, null, PRIMARY_CLUSTER_PROPERTIES);
   }
 
@@ -120,20 +119,18 @@ public class TestXdsToD2PropertiesAdaptor {
     fixture.getSpiedAdaptor().listenToCluster(SYMLINK_NAME);
 
     // verify symlink is watched
-    verify(fixture._xdsClient).watchXdsResource(eq(CLUSTER_SYMLINK_RESOURCE_NAME), eq(XdsClient.ResourceType.NODE), any());
+    verify(fixture._xdsClient).watchXdsResource(eq(CLUSTER_SYMLINK_RESOURCE_NAME), anyNodeWatcher());
 
     // update symlink data
-    XdsClient.SymlinkNodeResourceWatcher symlinkNodeWatcher =
-        (XdsClient.SymlinkNodeResourceWatcher) fixture._clusterWatcherArgumentCaptor.getValue();
-    symlinkNodeWatcher.onChanged(CLUSTER_SYMLINK_RESOURCE_NAME, getSymlinkNodeUpdate(PRIMARY_CLUSTER_RESOURCE_NAME));
+    NodeResourceWatcher symlinkNodeWatcher = fixture._nodeWatcher;
+    fixture._nodeWatcher.onChanged(getSymlinkNodeUpdate(PRIMARY_CLUSTER_RESOURCE_NAME));
 
     // verify both cluster and uri data of the actual cluster is watched
-    verify(fixture._xdsClient).watchXdsResource(eq(PRIMARY_CLUSTER_RESOURCE_NAME), eq(XdsClient.ResourceType.NODE), any());
-    verify(fixture._xdsClient).watchXdsResource(eq(PRIMARY_URI_RESOURCE_NAME), eq(XdsClient.ResourceType.D2_URI_MAP), any());
+    verify(fixture._xdsClient).watchXdsResource(eq(PRIMARY_CLUSTER_RESOURCE_NAME), anyNodeWatcher());
+    verify(fixture._xdsClient).watchXdsResource(eq(PRIMARY_URI_RESOURCE_NAME), anyNodeWatcher());
 
     // update cluster data
-    XdsClient.NodeResourceWatcher clusterNodeWatcher =
-        (XdsClient.NodeResourceWatcher) fixture._clusterWatcherArgumentCaptor.getValue();
+    NodeResourceWatcher clusterNodeWatcher = fixture._nodeWatcher;
     clusterNodeWatcher.onChanged(getClusterNodeUpdate(PRIMARY_CLUSTER_NAME));
 
     // verify cluster data is published under symlink name and actual cluster name
@@ -144,11 +141,10 @@ public class TestXdsToD2PropertiesAdaptor {
     String primaryClusterResourceName2 = CLUSTER_NODE_PREFIX + PRIMARY_CLUSTER_NAME_2;
     ClusterStoreProperties primaryClusterProperties2 = new ClusterStoreProperties(PRIMARY_CLUSTER_NAME_2);
 
-    symlinkNodeWatcher.onChanged(CLUSTER_SYMLINK_RESOURCE_NAME, getSymlinkNodeUpdate(primaryClusterResourceName2));
+    symlinkNodeWatcher.onChanged(getSymlinkNodeUpdate(primaryClusterResourceName2));
 
-    verify(fixture._xdsClient).watchXdsResource(eq(primaryClusterResourceName2), eq(XdsClient.ResourceType.NODE), any());
-    verify(fixture._xdsClient).watchXdsResource(eq(URI_NODE_PREFIX + PRIMARY_CLUSTER_NAME_2),
-        eq(XdsClient.ResourceType.D2_URI_MAP), any());
+    verify(fixture._xdsClient).watchXdsResource(eq(primaryClusterResourceName2), anyNodeWatcher());
+    verify(fixture._xdsClient).watchXdsResource(eq(URI_NODE_PREFIX + PRIMARY_CLUSTER_NAME_2), anyMapWatcher());
     verifyClusterNodeUpdate(fixture, PRIMARY_CLUSTER_NAME_2, SYMLINK_NAME, primaryClusterProperties2);
 
     // if the old primary cluster gets an update, it will be published under its original cluster name
@@ -166,7 +162,7 @@ public class TestXdsToD2PropertiesAdaptor {
     XdsToD2PropertiesAdaptorFixture fixture = new XdsToD2PropertiesAdaptorFixture();
     fixture.getSpiedAdaptor().listenToUris(PRIMARY_CLUSTER_NAME);
 
-    verify(fixture._xdsClient).watchXdsResource(eq(PRIMARY_URI_RESOURCE_NAME), eq(XdsClient.ResourceType.D2_URI_MAP), any());
+    verify(fixture._xdsClient).watchXdsResource(eq(PRIMARY_URI_RESOURCE_NAME), anyMapWatcher());
     verifyUriUpdate(fixture, PRIMARY_CLUSTER_NAME, null);
   }
 
@@ -177,19 +173,17 @@ public class TestXdsToD2PropertiesAdaptor {
     fixture.getSpiedAdaptor().listenToUris(SYMLINK_NAME);
 
     // verify symlink is watched
-    verify(fixture._xdsClient).watchXdsResource(eq(URI_SYMLINK_RESOURCE_NAME), eq(XdsClient.ResourceType.NODE), any());
+    verify(fixture._xdsClient).watchXdsResource(eq(URI_SYMLINK_RESOURCE_NAME), anyNodeWatcher());
 
     // update symlink data
-    XdsClient.SymlinkNodeResourceWatcher symlinkNodeWatcher =
-        (XdsClient.SymlinkNodeResourceWatcher) fixture._clusterWatcherArgumentCaptor.getValue();
-    symlinkNodeWatcher.onChanged(URI_SYMLINK_RESOURCE_NAME, getSymlinkNodeUpdate(PRIMARY_URI_RESOURCE_NAME));
+    NodeResourceWatcher symlinkNodeWatcher = fixture._nodeWatcher;
+    symlinkNodeWatcher.onChanged(getSymlinkNodeUpdate(PRIMARY_URI_RESOURCE_NAME));
 
     // verify actual cluster of the uris is watched
-    verify(fixture._xdsClient).watchXdsResource(eq(PRIMARY_URI_RESOURCE_NAME), eq(XdsClient.ResourceType.D2_URI_MAP), any());
+    verify(fixture._xdsClient).watchXdsResource(eq(PRIMARY_URI_RESOURCE_NAME), anyMapWatcher());
 
     // update uri data
-    XdsClient.D2URIMapResourceWatcher watcher =
-        (XdsClient.D2URIMapResourceWatcher) fixture._uriWatcherArgumentCaptor.getValue();
+    D2URIMapResourceWatcher watcher = fixture._uriMapWatcher;
     watcher.onChanged(new XdsClient.D2URIMapUpdate(Collections.emptyMap()));
 
     // verify uri data is merged and published under symlink name and the actual cluster name
@@ -198,9 +192,9 @@ public class TestXdsToD2PropertiesAdaptor {
 
     // test update symlink to a new primary cluster
     String primaryUriResourceName2 = URI_NODE_PREFIX + PRIMARY_CLUSTER_NAME_2;
-    symlinkNodeWatcher.onChanged(URI_SYMLINK_RESOURCE_NAME, getSymlinkNodeUpdate(primaryUriResourceName2));
+    symlinkNodeWatcher.onChanged(getSymlinkNodeUpdate(primaryUriResourceName2));
 
-    verify(fixture._xdsClient).watchXdsResource(eq(primaryUriResourceName2), eq(XdsClient.ResourceType.D2_URI_MAP), any());
+    verify(fixture._xdsClient).watchXdsResource(eq(primaryUriResourceName2), anyMapWatcher());
     verifyUriUpdate(fixture, PRIMARY_CLUSTER_NAME_2, SYMLINK_NAME);
 
     // if the old primary cluster gets an update, it will be published under its original cluster name
@@ -247,26 +241,22 @@ public class TestXdsToD2PropertiesAdaptor {
   {
     XdsToD2PropertiesAdaptorFixture fixture = new XdsToD2PropertiesAdaptorFixture();
     fixture.getSpiedAdaptor().listenToService(SERVICE_NAME);
-    XdsClient.NodeResourceWatcher watcher =
-        (XdsClient.NodeResourceWatcher) fixture._clusterWatcherArgumentCaptor.getValue();
+    NodeResourceWatcher watcher = fixture._nodeWatcher;
     watcher.onChanged(EMPTY_NODE_DATA);
     verify(fixture._serviceEventBus).publishInitialize(SERVICE_NAME, null);
 
     fixture.getSpiedAdaptor().listenToCluster(PRIMARY_CLUSTER_NAME);
-    XdsClient.NodeResourceWatcher clusterWatcher =
-        (XdsClient.NodeResourceWatcher) fixture._clusterWatcherArgumentCaptor.getValue();
+    NodeResourceWatcher clusterWatcher = fixture._nodeWatcher;
     clusterWatcher.onChanged(EMPTY_NODE_DATA);
     verify(fixture._clusterEventBus).publishInitialize(PRIMARY_CLUSTER_NAME, null);
 
     fixture.getSpiedAdaptor().listenToCluster(SYMLINK_NAME);
-    XdsClient.SymlinkNodeResourceWatcher symlinkWatcher =
-        (XdsClient.SymlinkNodeResourceWatcher) fixture._clusterWatcherArgumentCaptor.getValue();
+    NodeResourceWatcher symlinkWatcher = fixture._nodeWatcher;
     // check no Exception
-    symlinkWatcher.onChanged(CLUSTER_SYMLINK_RESOURCE_NAME, EMPTY_NODE_DATA);
+    symlinkWatcher.onChanged(EMPTY_NODE_DATA);
 
     fixture.getSpiedAdaptor().listenToUris(PRIMARY_CLUSTER_NAME);
-    XdsClient.D2URIMapResourceWatcher uriWatcher =
-        (XdsClient.D2URIMapResourceWatcher) fixture._uriWatcherArgumentCaptor.getValue();
+    D2URIMapResourceWatcher uriWatcher = fixture._uriMapWatcher;
     uriWatcher.onChanged(EMPTY_DATA_URI_MAP);
     verify(fixture._uriEventBus).publishInitialize(PRIMARY_CLUSTER_NAME, null);
   }
@@ -313,8 +303,7 @@ public class TestXdsToD2PropertiesAdaptor {
   private void verifyClusterNodeUpdate(XdsToD2PropertiesAdaptorFixture fixture, String clusterName, String symlinkName,
       ClusterStoreProperties expectedPublishProp)
   {
-    XdsClient.NodeResourceWatcher watcher = (XdsClient.NodeResourceWatcher)
-        fixture._clusterWatcherArgumentCaptor.getValue();
+    NodeResourceWatcher watcher = fixture._nodeWatcher;
     watcher.onChanged(getClusterNodeUpdate(clusterName));
     verify(fixture._clusterEventBus).publishInitialize(clusterName, expectedPublishProp);
     if (symlinkName != null)
@@ -326,8 +315,7 @@ public class TestXdsToD2PropertiesAdaptor {
   private void verifyUriUpdate(XdsToD2PropertiesAdaptorFixture fixture, String clusterName, String symlinkName)
       throws PropertySerializationException
   {
-    XdsClient.D2URIMapResourceWatcher watcher = (XdsClient.D2URIMapResourceWatcher)
-        fixture._uriWatcherArgumentCaptor.getValue();
+    D2URIMapResourceWatcher watcher = fixture._uriMapWatcher;
     XdsD2.D2URI protoUri = getD2URI(clusterName);
     watcher.onChanged(new XdsClient.D2URIMapUpdate(Collections.singletonMap(URI_NAME, protoUri)));
     verify(fixture._uriEventBus).publishInitialize(clusterName, uriSerializer.fromProto(protoUri));
@@ -355,20 +343,27 @@ public class TestXdsToD2PropertiesAdaptor {
     PropertyEventBus<ServiceProperties> _serviceEventBus;
     @Mock
     PropertyEventBus<UriProperties> _uriEventBus;
-    @Captor
-    ArgumentCaptor<XdsClient.ResourceWatcher> _clusterWatcherArgumentCaptor;
-    @Captor
-    ArgumentCaptor<XdsClient.ResourceWatcher> _uriWatcherArgumentCaptor;
+    NodeResourceWatcher _nodeWatcher;
+    D2URIMapResourceWatcher _uriMapWatcher;
 
     XdsToD2PropertiesAdaptor _adaptor;
 
     XdsToD2PropertiesAdaptorFixture()
     {
       MockitoAnnotations.initMocks(this);
-      doNothing().when(_xdsClient).watchXdsResource(any(), eq(XdsClient.ResourceType.NODE),
-          _clusterWatcherArgumentCaptor.capture());
-      doNothing().when(_xdsClient).watchXdsResource(any(), eq(XdsClient.ResourceType.D2_URI_MAP),
-          _uriWatcherArgumentCaptor.capture());
+      doAnswer(a ->
+      {
+        XdsClient.ResourceWatcher watcher = (XdsClient.ResourceWatcher) a.getArguments()[1];
+        if (watcher instanceof NodeResourceWatcher)
+        {
+          _nodeWatcher = (NodeResourceWatcher) watcher;
+        }
+        else
+        {
+          _uriMapWatcher = (D2URIMapResourceWatcher) watcher;
+        }
+        return null;
+      }).when(_xdsClient).watchXdsResource(any(), any());
       doNothing().when(_clusterEventBus).publishInitialize(any(), any());
       doNothing().when(_serviceEventBus).publishInitialize(any(), any());
       doNothing().when(_uriEventBus).publishInitialize(any(), any());
@@ -378,12 +373,23 @@ public class TestXdsToD2PropertiesAdaptor {
               any(), any(), anyInt(), any(), anyBoolean(), any(), any(), any(), any(), any(), anyLong());
     }
 
-    XdsToD2PropertiesAdaptor getSpiedAdaptor() {
+    XdsToD2PropertiesAdaptor getSpiedAdaptor()
+    {
       _adaptor = spy(new XdsToD2PropertiesAdaptor(_xdsClient, null, _eventEmitter));
       _adaptor.setClusterEventBus(_clusterEventBus);
       _adaptor.setServiceEventBus(_serviceEventBus);
       _adaptor.setUriEventBus(_uriEventBus);
       return _adaptor;
     }
+  }
+
+  private static NodeResourceWatcher anyNodeWatcher()
+  {
+    return any(NodeResourceWatcher.class);
+  }
+
+  private static D2URIMapResourceWatcher anyMapWatcher()
+  {
+    return any(D2URIMapResourceWatcher.class);
   }
 }

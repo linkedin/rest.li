@@ -19,10 +19,8 @@ package com.linkedin.d2.xds;
 import com.linkedin.d2.jmx.XdsClientJmx;
 import indis.XdsD2;
 import io.grpc.Status;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -32,46 +30,74 @@ import javax.annotation.Nullable;
 
 public abstract class XdsClient
 {
-  interface ResourceWatcher
+  public static abstract class ResourceWatcher
   {
+    private final ResourceType _type;
+
+    /**
+     * Defining a private constructor means only classes that are defined in this file can extend this class. This way,
+     * it can be defined at compile-time that there can only be two implementations: {@link NodeResourceWatcher} and
+     * {@link D2URIMapResourceWatcher}, and the remainder of the code can be greatly simplified.
+     */
+    private ResourceWatcher(ResourceType type)
+    {
+      _type = type;
+    }
+
+    final ResourceType getType()
+    {
+      return _type;
+    }
+
     /**
      * Called when the resource discovery RPC encounters some transient error.
      */
-    void onError(Status error);
+    public abstract void onError(Status error);
 
     /**
      * Called when the resource discovery RPC reestablishes connection.
      */
-    void onReconnect();
+    public abstract void onReconnect();
+
+    abstract void onChanged(ResourceUpdate update);
   }
 
-  interface NodeResourceWatcher extends ResourceWatcher
+  public static abstract class NodeResourceWatcher extends ResourceWatcher
   {
-    void onChanged(NodeUpdate update);
+    public NodeResourceWatcher()
+    {
+      super(ResourceType.NODE);
+    }
 
+    public abstract void onChanged(NodeUpdate update);
+
+    @Override
+    final void onChanged(ResourceUpdate update)
+    {
+      onChanged((NodeUpdate) update);
+    }
   }
 
-  interface SymlinkNodeResourceWatcher extends ResourceWatcher
+  public static abstract class D2URIMapResourceWatcher extends ResourceWatcher
   {
-    void onChanged(String resourceName, NodeUpdate update);
+    public D2URIMapResourceWatcher()
+    {
+      super(ResourceType.D2_URI_MAP);
+    }
 
-  }
+    public abstract void onChanged(D2URIMapUpdate update);
 
-  interface D2URIMapResourceWatcher extends ResourceWatcher
-  {
-    void onChanged(D2URIMapUpdate update);
-
-  }
-
-  interface D2URICollectionResourceWatcher extends ResourceWatcher
-  {
-    void onChanged(D2URICollectionUpdate update);
+    @Override
+    final void onChanged(ResourceUpdate update)
+    {
+      onChanged((D2URIMapUpdate) update);
+    }
   }
 
   interface ResourceUpdate
   {
+    boolean isEmpty();
   }
-
 
   static final class NodeUpdate implements ResourceUpdate
   {
@@ -106,6 +132,12 @@ public abstract class XdsClient
     public int hashCode()
     {
       return Objects.hash(_nodeData);
+    }
+
+    @Override
+    public boolean isEmpty()
+    {
+      return _nodeData == null || _nodeData.getData().isEmpty();
     }
   }
 
@@ -143,77 +175,41 @@ public abstract class XdsClient
     {
       return Objects.hash(_uriMap);
     }
-  }
-
-  static final class D2URICollectionUpdate implements ResourceUpdate
-  {
-    private final Map<String, XdsD2.D2URI> _uris = new HashMap<>();
-    private final List<String> _removedUris = new ArrayList<>();
-
-    public D2URICollectionUpdate addUri(String name, XdsD2.D2URI uri)
-    {
-      _uris.put(name, uri);
-      return this;
-    }
-
-    public Map<String, XdsD2.D2URI> getUris()
-    {
-      return _uris;
-    }
-
-    public D2URICollectionUpdate addRemovedUri(String uriName)
-    {
-      _removedUris.add(uriName);
-      return this;
-    }
-
-    public List<String> getRemovedUris()
-    {
-      return _removedUris;
-    }
 
     @Override
-    public boolean equals(Object o)
+    public boolean isEmpty()
     {
-      if (this == o)
-      {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass())
-      {
-        return false;
-      }
-      D2URICollectionUpdate that = (D2URICollectionUpdate) o;
-      return Objects.equals(_uris, that._uris) && Objects.equals(_removedUris, that._removedUris);
-    }
-
-    @Override
-    public int hashCode()
-    {
-      return Objects.hash(_uris, _removedUris);
+      return _uriMap == null || _uriMap.isEmpty();
     }
   }
 
   enum ResourceType
   {
-    NODE("type.googleapis.com/indis.Node"),
-    D2_URI_MAP("type.googleapis.com/indis.D2URIMap"),
-    D2_URI("type.googleapis.com/indis.D2URI");
+    NODE("type.googleapis.com/indis.Node", new NodeUpdate(null)),
+    D2_URI_MAP("type.googleapis.com/indis.D2URIMap", new D2URIMapUpdate(null)),
+    D2_URI("type.googleapis.com/indis.D2URI", new D2URIMapUpdate(null));
 
     private static final Map<String, ResourceType> TYPE_URL_TO_ENUM = Arrays.stream(values())
         .filter(e -> e.typeUrl() != null)
         .collect(Collectors.toMap(ResourceType::typeUrl, Function.identity()));
 
     private final String _typeUrl;
+    private final ResourceUpdate _emptyData;
 
-    ResourceType(String typeUrl)
+    ResourceType(String typeUrl, ResourceUpdate emptyData)
     {
       _typeUrl = typeUrl;
+      _emptyData = emptyData;
     }
 
     String typeUrl()
     {
       return _typeUrl;
+    }
+
+    ResourceUpdate emptyData()
+    {
+      return _emptyData;
     }
 
     @Nullable
@@ -223,7 +219,7 @@ public abstract class XdsClient
     }
   }
 
-  abstract void watchXdsResource(String resourceName, ResourceType type, ResourceWatcher watcher);
+  abstract void watchXdsResource(String resourceName, ResourceWatcher watcher);
 
   abstract void startRpcStream();
 
