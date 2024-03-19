@@ -28,10 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -61,7 +58,7 @@ public class StateUpdater
   private final Lock _lock;
   private final List<PartitionStateUpdateListener.Factory<PartitionState>> _listenerFactories;
   private final String _serviceName;
-
+  private final ScheduledFuture<?> scheduledFuture;
   private ConcurrentMap<Integer, PartitionState> _partitionLoadBalancerStateMap;
   private int _firstPartitionId = -1;
 
@@ -89,8 +86,9 @@ public class StateUpdater
     _lock = new ReentrantLock();
     _serviceName = serviceName;
 
-    _executorService.scheduleWithFixedDelay(this::updateState, EXECUTOR_INITIAL_DELAY,
-        _relativeStrategyProperties.getUpdateIntervalMs(), TimeUnit.MILLISECONDS);
+    scheduledFuture = executorService.scheduleWithFixedDelay(this::updateState, EXECUTOR_INITIAL_DELAY,
+                                                             _relativeStrategyProperties.getUpdateIntervalMs(),
+                                                             TimeUnit.MILLISECONDS);
   }
 
   /**
@@ -543,5 +541,11 @@ public class StateUpdater
   private static String getClientStats(TrackerClient client, Map<TrackerClient, TrackerClientState> trackerClientStateMap)
   {
     return client.getUri() + ":" + trackerClientStateMap.get(client).getHealthScore();
+  }
+
+  public void shutdown()
+  {
+    LOG.debug("Shutting down the state updater for service: {}", _serviceName);
+    scheduledFuture.cancel(true);
   }
 }
