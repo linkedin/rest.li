@@ -328,6 +328,10 @@ public class XdsClientImpl extends XdsClient
     handleResourceRemoval(data.getRemovedResources(), data.getResourceType());
   }
 
+  /**
+   * Handles glob collection responses by looking up the existing {@link ResourceSubscriber}'s data and applying the
+   * patch received from the xDS server.
+   */
   private void handleD2URICollectionResponse(DiscoveryResponseData data)
   {
     Map<String, D2URIMapUpdate> updates = new HashMap<>();
@@ -346,15 +350,18 @@ public class XdsClientImpl extends XdsClient
         return;
       }
 
-      ResourceSubscriber subscriber = getResourceSubscriberMap(ResourceType.D2_URI_MAP).get(uriId.getClusterResourceName());
+      ResourceSubscriber subscriber =
+          getResourceSubscriberMap(ResourceType.D2_URI_MAP).get(uriId.getClusterResourceName());
       if (subscriber == null)
       {
-        String msg = String.format("Ignoring D2URI resource update for untracked cluster: %s", uriId.getClusterResourceName());
+        String msg =
+            String.format("Ignoring D2URI resource update for untracked cluster: %s", uriId.getClusterResourceName());
         _log.warn(msg);
         errors.add(msg);
         return;
       }
 
+      // Get or create a new D2URIMapUpdate which is a copy of the existing data for that cluster.
       D2URIMapUpdate update = updates.computeIfAbsent(uriId.getClusterResourceName(), k ->
       {
         D2URIMapUpdate currentData = (D2URIMapUpdate) subscriber._data;
@@ -368,14 +375,18 @@ public class XdsClientImpl extends XdsClient
         }
       });
 
+      // If the resource is null, it's being deleted
       if (resource == null)
       {
+        // This is the special case where the entire collection is being deleted. This either means the client
+        // subscribed to a cluster that does not exist, or all hosts stopped announcing to the cluster.
         if ("*".equals(uriId.getUriName()))
         {
           removedClusters.add(uriId.getClusterResourceName());
         }
         else
         {
+          // Else it's a standard delete for that host.
           update.getURIMap().remove(uriId.getUriName());
         }
       }
