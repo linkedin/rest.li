@@ -288,7 +288,7 @@ public class XdsClientImpl extends XdsClient
         errors.add("Failed to unpack Node response");
         // Assume that the resource doesn't exist if it cannot be deserialized instead of simply ignoring it. This way
         // any call waiting on the response can be satisfied instead of timing out.
-        updates.put(resourceName, new NodeUpdate(null));
+        updates.put(resourceName, EMPTY_NODE_UPDATE);
       }
     }
     sendAckOrNack(data.getResourceType(), data.getNonce(), errors);
@@ -320,7 +320,7 @@ public class XdsClientImpl extends XdsClient
         errors.add("Failed to unpack D2URIMap response");
         // Assume that the resource doesn't exist if it cannot be deserialized instead of simply ignoring it. This way
         // any call waiting on the response can be satisfied instead of timing out.
-        updates.put(resourceName, new D2URIMapUpdate(null));
+        updates.put(resourceName, EMPTY_D2_URI_MAP_UPDATE);
       }
     }
     sendAckOrNack(data.getResourceType(), data.getNonce(), errors);
@@ -365,9 +365,9 @@ public class XdsClientImpl extends XdsClient
       D2URIMapUpdate update = updates.computeIfAbsent(uriId.getClusterResourceName(), k ->
       {
         D2URIMapUpdate currentData = (D2URIMapUpdate) subscriber._data;
-        if (currentData == null || currentData.isEmpty())
+        if (currentData == null || !currentData.isValid())
         {
-          return new D2URIMapUpdate(new HashMap<>());
+          return new D2URIMapUpdate(null);
         }
         else
         {
@@ -387,7 +387,7 @@ public class XdsClientImpl extends XdsClient
         else
         {
           // Else it's a standard delete for that host.
-          update.getURIMap().remove(uriId.getUriName());
+          update.removeUri(uriId.getUriName());
         }
       }
       else
@@ -395,7 +395,7 @@ public class XdsClientImpl extends XdsClient
         try
         {
           XdsD2.D2URI uri = resource.getResource().unpack(XdsD2.D2URI.class);
-          update.getURIMap().put(uriId.getUriName(), uri);
+          update.putUri(uriId.getUriName(), uri);
         }
         catch (InvalidProtocolBufferException e)
         {
@@ -532,7 +532,7 @@ public class XdsClientImpl extends XdsClient
         _log.debug("Received resource update data equal to the current data. Will not perform the update.");
         return;
       }
-      if (data != null && !data.isEmpty())
+      if (data != null && data.isValid())
       {
         // null value guard to avoid overwriting the property with null
         _data = data;

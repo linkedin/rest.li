@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.xds;
 
+import com.google.common.base.MoreObjects;
 import com.linkedin.d2.jmx.XdsClientJmx;
 import indis.XdsD2;
 import io.grpc.Status;
@@ -94,12 +95,12 @@ public abstract class XdsClient
     }
   }
 
-  interface ResourceUpdate
+  public interface ResourceUpdate
   {
-    boolean isEmpty();
+    boolean isValid();
   }
 
-  static final class NodeUpdate implements ResourceUpdate
+  public static final class NodeUpdate implements ResourceUpdate
   {
     XdsD2.Node _nodeData;
 
@@ -135,13 +136,19 @@ public abstract class XdsClient
     }
 
     @Override
-    public boolean isEmpty()
+    public boolean isValid()
     {
-      return _nodeData == null || _nodeData.getData().isEmpty();
+      return _nodeData != null && !_nodeData.getData().isEmpty();
+    }
+
+    @Override
+    public String toString()
+    {
+      return MoreObjects.toStringHelper(this).add("_nodeData", _nodeData).toString();
     }
   }
 
-  static final class D2URIMapUpdate implements ResourceUpdate
+  public static final class D2URIMapUpdate implements ResourceUpdate
   {
     Map<String, XdsD2.D2URI> _uriMap;
 
@@ -153,6 +160,25 @@ public abstract class XdsClient
     public Map<String, XdsD2.D2URI> getURIMap()
     {
       return _uriMap;
+    }
+
+    D2URIMapUpdate putUri(String name, XdsD2.D2URI uri)
+    {
+      if (_uriMap == null)
+      {
+        _uriMap = new HashMap<>();
+      }
+      _uriMap.put(name, uri);
+      return this;
+    }
+
+    D2URIMapUpdate removeUri(String name)
+    {
+      if (_uriMap != null)
+      {
+        _uriMap.remove(name);
+      }
+      return this;
     }
 
     @Override
@@ -177,21 +203,31 @@ public abstract class XdsClient
     }
 
     @Override
-    public boolean isEmpty()
+    public boolean isValid()
     {
-      return _uriMap == null || _uriMap.isEmpty();
+      return _uriMap != null;
+    }
+
+    @Override
+    public String toString()
+    {
+      return MoreObjects.toStringHelper(this).add("_uriMap", _uriMap).toString();
     }
   }
 
+  public static final NodeUpdate EMPTY_NODE_UPDATE = new NodeUpdate(null);
+  public static final D2URIMapUpdate EMPTY_D2_URI_MAP_UPDATE = new D2URIMapUpdate(null);
+
   enum ResourceType
   {
-    NODE("type.googleapis.com/indis.Node", new NodeUpdate(null)),
-    D2_URI_MAP("type.googleapis.com/indis.D2URIMap", new D2URIMapUpdate(null)),
-    D2_URI("type.googleapis.com/indis.D2URI", new D2URIMapUpdate(null));
+    NODE("type.googleapis.com/indis.Node", EMPTY_NODE_UPDATE),
+    D2_URI_MAP("type.googleapis.com/indis.D2URIMap", EMPTY_D2_URI_MAP_UPDATE),
+    D2_URI("type.googleapis.com/indis.D2URI", EMPTY_D2_URI_MAP_UPDATE);
 
     private static final Map<String, ResourceType> TYPE_URL_TO_ENUM = Arrays.stream(values())
         .filter(e -> e.typeUrl() != null)
         .collect(Collectors.toMap(ResourceType::typeUrl, Function.identity()));
+
 
     private final String _typeUrl;
     private final ResourceUpdate _emptyData;
