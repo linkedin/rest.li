@@ -101,7 +101,7 @@ public class XdsClientImpl extends XdsClient
     _node = node;
     _managedChannel = managedChannel;
     _executorService = executorService;
-    _useUriGlobCollections = useUriGlobCollections;
+    _useUriGlobCollections = true;
     if (_useUriGlobCollections)
     {
       _log.info("Glob collection support enabled");
@@ -339,7 +339,7 @@ public class XdsClientImpl extends XdsClient
 
     Set<String> removedClusters = new HashSet<>();
 
-    data.foreach((resourceName, resource) ->
+    data.forEach((resourceName, resource) ->
     {
       D2UriIdentifier uriId = D2UriIdentifier.parse(resourceName);
       if (uriId == null)
@@ -354,8 +354,7 @@ public class XdsClientImpl extends XdsClient
           getResourceSubscriberMap(ResourceType.D2_URI_MAP).get(uriId.getClusterResourceName());
       if (subscriber == null)
       {
-        String msg =
-            String.format("Ignoring D2URI resource update for untracked cluster: %s", uriId.getClusterResourceName());
+        String msg = String.format("Ignoring D2URI resource update for untracked cluster: %s", resourceName);
         _log.warn(msg);
         errors.add(msg);
         return;
@@ -399,8 +398,8 @@ public class XdsClientImpl extends XdsClient
         }
         catch (InvalidProtocolBufferException e)
         {
-          _log.warn("Failed to unpack D2URI glob collection response", e);
-          errors.add("Failed to unpack D2URI glob collection response");
+          _log.warn("Failed to unpack D2URI", e);
+          errors.add("Failed to unpack D2URI");
         }
       }
     });
@@ -705,7 +704,7 @@ public class XdsClientImpl extends XdsClient
      * Invokes the given consumer for each resource in this response. If the {@link Resource} is not null, it is being
      * created/modified and if it is null, it is being removed.
      */
-    void foreach(BiConsumer<String, Resource> consumer)
+    void forEach(BiConsumer<String, Resource> consumer)
     {
       for (Resource resource : _resources)
       {

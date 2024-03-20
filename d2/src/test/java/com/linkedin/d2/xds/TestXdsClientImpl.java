@@ -79,7 +79,7 @@ public class TestXdsClientImpl
       .setName(CLUSTER_RESOURCE_NAME)
       .setResource(PACKED_D2_URI_MAP_WITH_DATA2)
       .build());
-  private static final List<Resource> URI_MAP_RESOURCE_WITH_NULL_RESOURCE_FILED = Collections.singletonList(
+  private static final List<Resource> EMPTY_URI_MAP_RESOURCE = Collections.singletonList(
       Resource.newBuilder()
           .setVersion(VERSION2)
           .setName(CLUSTER_RESOURCE_NAME)
@@ -126,8 +126,8 @@ public class TestXdsClientImpl
           null);
 
   // case2 : Resource field in Resource is null
-  private static final DiscoveryResponseData DISCOVERY_RESPONSE_URI_MAP_NULL_DATA_IN_RESOURCE_FILED =
-      new DiscoveryResponseData(D2_URI_MAP, URI_MAP_RESOURCE_WITH_NULL_RESOURCE_FILED, null, NONCE, null);
+  private static final DiscoveryResponseData DISCOVERY_RESPONSE_URI_MAP_EMPTY_MAP =
+      new DiscoveryResponseData(D2_URI_MAP, EMPTY_URI_MAP_RESOURCE, null, NONCE, null);
 
   // case3 : ResourceList is empty
   private static final DiscoveryResponseData DISCOVERY_RESPONSE_WITH_EMPTY_URI_MAP_RESPONSE =
@@ -247,7 +247,7 @@ public class TestXdsClientImpl
   {
     return new Object[][]{
         {DISCOVERY_RESPONSE_URI_MAP_RESOURCE_IS_NULL, true},
-        {DISCOVERY_RESPONSE_URI_MAP_NULL_DATA_IN_RESOURCE_FILED, false},
+        {DISCOVERY_RESPONSE_URI_MAP_EMPTY_MAP, false},
     };
   }
 
@@ -331,6 +331,17 @@ public class TestXdsClientImpl
     verify(fixture._resourceWatcher).onChanged(eq(expectedUpdate));
     Assert.assertEquals(actualData.getURIMap(), expectedUpdate.getURIMap());
     fixture.verifyAckSent(2);
+
+    // Finally sanity check that the client correctly handles the deletion of the final URI in the collection
+    DiscoveryResponseData deleteUri2 =
+        new DiscoveryResponseData(D2_URI, null, Collections.singletonList(URI_URN2), NONCE, null);
+    fixture._xdsClientImpl.handleResponse(deleteUri2);
+    actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
+    // subscriber data should be updated to D2_URI_MAP_UPDATE_WITH_DATA2
+    expectedUpdate = new D2URIMapUpdate(Collections.emptyMap());
+    verify(fixture._resourceWatcher).onChanged(eq(expectedUpdate));
+    Assert.assertEquals(actualData.getURIMap(), expectedUpdate.getURIMap());
+    fixture.verifyAckSent(3);
   }
 
   @Test
