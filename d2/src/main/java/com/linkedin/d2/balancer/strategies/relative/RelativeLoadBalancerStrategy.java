@@ -95,6 +95,15 @@ public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
     return _clientSelector.getTrackerClient(request, requestContext, ring, trackerClients);
   }
 
+  @Override
+  public void shutdown()
+  {
+    if (_stateUpdater != null)
+    {
+      _stateUpdater.shutdown();
+    }
+  }
+
   @Nonnull
   @Override
   public Ring<URI> getRing(long clusterGenerationId, int partitionId, Map<URI, TrackerClient> trackerClients)
