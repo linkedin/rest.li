@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.51.11] - 2024-03-20
+- Glob collections support
+
 ## [29.51.10] - 2024-03-20
 - Fix null guard log issue
 
@@ -5662,7 +5665,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.51.10...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.51.11...master
+[29.51.11]: https://github.com/linkedin/rest.li/compare/v29.51.10...v29.51.11
 [29.51.10]: https://github.com/linkedin/rest.li/compare/v29.51.9...v29.51.10
 [29.51.9]: https://github.com/linkedin/rest.li/compare/v29.51.8...v29.51.9
 [29.51.8]: https://github.com/linkedin/rest.li/compare/v29.51.7...v29.51.8
