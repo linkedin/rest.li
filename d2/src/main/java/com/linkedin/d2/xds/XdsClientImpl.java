@@ -70,7 +70,7 @@ public class XdsClientImpl extends XdsClient
   private final Node _node;
   private final ManagedChannel _managedChannel;
   private final ScheduledExecutorService _executorService;
-  private final boolean _useUriGlobCollections;
+  private final boolean _subscribeToUriGlobCollection;
   private final BackoffPolicy.Provider _backoffPolicyProvider = new ExponentialBackoffPolicy.Provider();
   private BackoffPolicy _retryBackoffPolicy;
   private AdsStream _adsStream;
@@ -95,14 +95,14 @@ public class XdsClientImpl extends XdsClient
   }
 
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService,
-      long readyTimeoutMillis, boolean useUriGlobCollections)
+      long readyTimeoutMillis, boolean subscribeToUriGlobCollection)
   {
     _readyTimeoutMillis = readyTimeoutMillis;
     _node = node;
     _managedChannel = managedChannel;
     _executorService = executorService;
-    _useUriGlobCollections = true;
-    if (_useUriGlobCollections)
+    _subscribeToUriGlobCollection = subscribeToUriGlobCollection;
+    if (_subscribeToUriGlobCollection)
     {
       _log.info("Glob collection support enabled");
     }
@@ -122,7 +122,7 @@ public class XdsClientImpl extends XdsClient
         resourceSubscriberMap.put(resourceName, subscriber);
         ResourceType type;
         String adjustedResourceName;
-        if (watcher.getType() == ResourceType.D2_URI_MAP && _useUriGlobCollections)
+        if (watcher.getType() == ResourceType.D2_URI_MAP && _subscribeToUriGlobCollection)
         {
           type = ResourceType.D2_URI;
           adjustedResourceName = GlobCollectionUtils.globCollectionUrlForClusterResource(resourceName);

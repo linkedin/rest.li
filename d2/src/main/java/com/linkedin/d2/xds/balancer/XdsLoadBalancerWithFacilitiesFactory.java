@@ -57,7 +57,7 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
         new XdsChannelFactory(config.grpcSslContext, config.xdsServer).createChannel(),
         executorService,
         xdsStreamReadyTimeout,
-        config.useGlobCollectionsForUriSubscriptions
+        config.subscribeToUriGlobCollection
     );
     d2ClientJmxManager.registerXdsClientJmx(xdsClient.getXdsClientJmx());
 

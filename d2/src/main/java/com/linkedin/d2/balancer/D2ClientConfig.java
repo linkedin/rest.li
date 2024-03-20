@@ -134,7 +134,7 @@ public class D2ClientConfig
   public ExecutorService dualReadNewLbExecutor = null;
   public String xdsChannelLoadBalancingPolicy = null;
   public Map<String, ?> xdsChannelLoadBalancingPolicyConfig = null;
-  public boolean useGlobCollectionsForUriSubscriptions = false;
+  public boolean subscribeToUriGlobCollection = false;
 
   public D2ClientConfig()
   {
@@ -210,7 +210,7 @@ public class D2ClientConfig
                  ExecutorService dualReadNewLbExecutor,
                  String xdsChannelLoadBalancingPolicy,
                  Map<String, ?> xdsChannelLoadBalancingPolicyConfig,
-                 boolean useGlobCollectionsForUriSubscriptions
+                 boolean subscribeToUriGlobCollection
       )
   {
     this.zkHosts = zkHosts;
@@ -283,6 +283,6 @@ public class D2ClientConfig
     this.dualReadNewLbExecutor = dualReadNewLbExecutor;
     this.xdsChannelLoadBalancingPolicy = xdsChannelLoadBalancingPolicy;
     this.xdsChannelLoadBalancingPolicyConfig = xdsChannelLoadBalancingPolicyConfig;
-    this.useGlobCollectionsForUriSubscriptions = useGlobCollectionsForUriSubscriptions;
+    this.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
   }
 }

@@ -215,7 +215,7 @@ public class D2ClientBuilder
                   _config.dualReadNewLbExecutor,
                   _config.xdsChannelLoadBalancingPolicy,
                   _config.xdsChannelLoadBalancingPolicyConfig,
-                  _config.useGlobCollectionsForUriSubscriptions
+                  _config.subscribeToUriGlobCollection
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -712,8 +712,8 @@ public class D2ClientBuilder
     return this;
   }
 
-  public D2ClientBuilder setUseGlobCollectionsForUriSubscriptions(boolean useGlobCollectionsForUriSubscriptions) {
-    _config.useGlobCollectionsForUriSubscriptions = useGlobCollectionsForUriSubscriptions;
+  public D2ClientBuilder setSubscribeToUriGlobCollection(boolean subscribeToUriGlobCollection) {
+    _config.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
     return this;
   }
 

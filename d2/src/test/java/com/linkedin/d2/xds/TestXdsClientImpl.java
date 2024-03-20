@@ -337,7 +337,7 @@ public class TestXdsClientImpl
         new DiscoveryResponseData(D2_URI, null, Collections.singletonList(URI_URN2), NONCE, null);
     fixture._xdsClientImpl.handleResponse(deleteUri2);
     actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
-    // subscriber data should be updated to D2_URI_MAP_UPDATE_WITH_DATA2
+    // subscriber data should be updated to empty map
     expectedUpdate = new D2URIMapUpdate(Collections.emptyMap());
     verify(fixture._resourceWatcher).onChanged(eq(expectedUpdate));
     Assert.assertEquals(actualData.getURIMap(), expectedUpdate.getURIMap());
