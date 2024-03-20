@@ -915,7 +915,6 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       Pair<ClusterProperties, UriProperties> pair = getClusterAndUriPropertiesFromCache(clusterName, pairCallback);
       if (pair != null)
       {
-        _log.info("getClusterAndUriProperties for {} timed out, used cached value instead.", clusterName);
         pairCallback.onSuccess(pair);
       }
     };
@@ -926,7 +925,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     else
     {
-      _log.info("No timeout for cluster {}", clusterName);
+      _log.debug("No timeout for cluster {}", clusterName);
       _state.listenToCluster(clusterName, new NullStateListenerCallback());
       callback.run();
     }
@@ -939,6 +938,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         getClusterAndUriPropertiesFromCache(clusterName, clusterAndUriPropertiesCallback);
     if (pair != null)
     {
+      _log.info("getClusterAndUriProperties for {} timed out, used cached value instead.", clusterName);
       clusterAndUriPropertiesCallback.onSuccess(pair);
     }
     else
