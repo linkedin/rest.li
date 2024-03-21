@@ -134,6 +134,7 @@ public class D2ClientConfig
   public ExecutorService dualReadNewLbExecutor = null;
   public String xdsChannelLoadBalancingPolicy = null;
   public Map<String, ?> xdsChannelLoadBalancingPolicyConfig = null;
+  public boolean subscribeToUriGlobCollection = false;
 
   public D2ClientConfig()
   {
@@ -208,7 +209,9 @@ public class D2ClientConfig
                  Long xdsStreamReadyTimeout,
                  ExecutorService dualReadNewLbExecutor,
                  String xdsChannelLoadBalancingPolicy,
-                 Map<String, ?> xdsChannelLoadBalancingPolicyConfig)
+                 Map<String, ?> xdsChannelLoadBalancingPolicyConfig,
+                 boolean subscribeToUriGlobCollection
+      )
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -280,5 +283,6 @@ public class D2ClientConfig
     this.dualReadNewLbExecutor = dualReadNewLbExecutor;
     this.xdsChannelLoadBalancingPolicy = xdsChannelLoadBalancingPolicy;
     this.xdsChannelLoadBalancingPolicyConfig = xdsChannelLoadBalancingPolicyConfig;
+    this.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
   }
 }

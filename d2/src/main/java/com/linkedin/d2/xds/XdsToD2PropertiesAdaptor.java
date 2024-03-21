@@ -59,17 +59,21 @@ public class XdsToD2PropertiesAdaptor
   private static final String NON_EXISTENT_CLUSTER = "NonExistentCluster";
 
   private final XdsClient _xdsClient;
-  private final List<XdsConnectionListener> _xdsConnectionListeners;
+  private final List<XdsConnectionListener> _xdsConnectionListeners = Collections.synchronizedList(new ArrayList<>());
 
-  private final ServicePropertiesJsonSerializer _servicePropertiesJsonSerializer;
-  private final ClusterPropertiesJsonSerializer _clusterPropertiesJsonSerializer;
-  private final UriPropertiesJsonSerializer _uriPropertiesJsonSerializer;
-  private final UriPropertiesMerger _uriPropertiesMerger;
+  private final ServicePropertiesJsonSerializer _servicePropertiesJsonSerializer = new ServicePropertiesJsonSerializer();
+  private final ClusterPropertiesJsonSerializer _clusterPropertiesJsonSerializer = new ClusterPropertiesJsonSerializer();
+  private final UriPropertiesJsonSerializer _uriPropertiesJsonSerializer = new UriPropertiesJsonSerializer();
+  private final UriPropertiesMerger _uriPropertiesMerger = new UriPropertiesMerger();
   private final DualReadStateManager _dualReadStateManager;
-  private final ConcurrentMap<String, XdsClient.NodeResourceWatcher> _watchedClusterResources;
-  private final ConcurrentMap<String, XdsClient.SymlinkNodeResourceWatcher> _watchedSymlinkResources;
-  private final ConcurrentMap<String, XdsClient.NodeResourceWatcher> _watchedServiceResources;
-  private final ConcurrentMap<String, XdsClient.D2URIMapResourceWatcher> _watchedUriResources;
+  private final ConcurrentMap<String, XdsClient.NodeResourceWatcher> _watchedClusterResources =
+      new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, XdsClient.NodeResourceWatcher> _watchedSymlinkResources =
+      new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, XdsClient.NodeResourceWatcher> _watchedServiceResources =
+      new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, XdsClient.ResourceWatcher> _watchedUriResources =
+      new ConcurrentHashMap<>();
   // Mapping between a symlink name, like "$FooClusterMaster" and the actual node name it's pointing to, like
   // "FooCluster-prod-ltx1".
   // (Note that this name does NOT include the full path so that it works for both cluster symlink
@@ -82,7 +86,8 @@ public class XdsToD2PropertiesAdaptor
   private final Object _symlinkAndActualNodeLock = new Object();
   private final ServiceDiscoveryEventEmitter _eventEmitter;
 
-  private Boolean _isAvailable;
+  // set to null so that the first notification on connection establishment success/failure is always sent
+  private Boolean _isAvailable = null;
   private PropertyEventBus<UriProperties> _uriEventBus;
   private PropertyEventBus<ServiceProperties> _serviceEventBus;
   private PropertyEventBus<ClusterProperties> _clusterEventBus;
@@ -92,17 +97,6 @@ public class XdsToD2PropertiesAdaptor
   {
     _xdsClient = xdsClient;
     _dualReadStateManager = dualReadStateManager;
-    _xdsConnectionListeners = Collections.synchronizedList(new ArrayList<>());
-    _servicePropertiesJsonSerializer = new ServicePropertiesJsonSerializer();
-    _clusterPropertiesJsonSerializer = new ClusterPropertiesJsonSerializer();
-    _uriPropertiesJsonSerializer = new UriPropertiesJsonSerializer();
-    _uriPropertiesMerger = new UriPropertiesMerger();
-    // set to null so that the first notification on connection establishment success/failure is always sent
-    _isAvailable = null;
-    _watchedClusterResources = new ConcurrentHashMap<>();
-    _watchedSymlinkResources = new ConcurrentHashMap<>();
-    _watchedServiceResources = new ConcurrentHashMap<>();
-    _watchedUriResources = new ConcurrentHashMap<>();
     _eventEmitter = eventEmitter;
   }
 
@@ -153,7 +147,7 @@ public class XdsToD2PropertiesAdaptor
       _watchedClusterResources.computeIfAbsent(clusterName, k ->
       {
         XdsClient.NodeResourceWatcher watcher = getClusterResourceWatcher(clusterName);
-        _xdsClient.watchXdsResource(resourceName, XdsClient.ResourceType.NODE, watcher);
+        _xdsClient.watchXdsResource(resourceName, watcher);
         return watcher;
       });
     }
@@ -172,7 +166,7 @@ public class XdsToD2PropertiesAdaptor
       _watchedUriResources.computeIfAbsent(clusterName, k ->
       {
         XdsClient.D2URIMapResourceWatcher watcher = getUriResourceWatcher(clusterName);
-        _xdsClient.watchXdsResource(resourceName, XdsClient.ResourceType.D2_URI_MAP, watcher);
+        _xdsClient.watchXdsResource(resourceName, watcher);
         return watcher;
       });
     }
@@ -183,7 +177,7 @@ public class XdsToD2PropertiesAdaptor
     _watchedServiceResources.computeIfAbsent(serviceName, k ->
     {
       XdsClient.NodeResourceWatcher watcher = getServiceResourceWatcher(serviceName);
-      _xdsClient.watchXdsResource(D2_SERVICE_NODE_PREFIX + serviceName, XdsClient.ResourceType.NODE, watcher);
+      _xdsClient.watchXdsResource(D2_SERVICE_NODE_PREFIX + serviceName, watcher);
       return watcher;
     });
   }
@@ -195,8 +189,8 @@ public class XdsToD2PropertiesAdaptor
     _watchedSymlinkResources.computeIfAbsent(fullResourceName, k ->
     {
       // use symlink name "$FooClusterMaster" to create the watcher
-      XdsClient.SymlinkNodeResourceWatcher watcher = getSymlinkResourceWatcher(name);
-      _xdsClient.watchXdsResource(k, XdsClient.ResourceType.NODE, watcher);
+      XdsClient.NodeResourceWatcher watcher = getSymlinkResourceWatcher(fullResourceName, name);
+      _xdsClient.watchXdsResource(k, watcher);
       return watcher;
     });
   }
@@ -314,12 +308,12 @@ public class XdsToD2PropertiesAdaptor
     return new UriPropertiesResourceWatcher(clusterName);
   }
 
-  XdsClient.SymlinkNodeResourceWatcher getSymlinkResourceWatcher(String symlinkName)
+  XdsClient.NodeResourceWatcher getSymlinkResourceWatcher(String resourceName, String symlinkName)
   {
-    return new XdsClient.SymlinkNodeResourceWatcher()
+    return new XdsClient.NodeResourceWatcher()
     {
       @Override
-      public void onChanged(String resourceName, XdsClient.NodeUpdate update)
+      public void onChanged(XdsClient.NodeUpdate update)
       {
         // Update maps between symlink name and actual node name
         try
@@ -420,7 +414,7 @@ public class XdsToD2PropertiesAdaptor
         clusterProperties.getStat().getMzxid());
   }
 
-  private class UriPropertiesResourceWatcher implements XdsClient.D2URIMapResourceWatcher
+  private class UriPropertiesResourceWatcher extends XdsClient.D2URIMapResourceWatcher
   {
     final String _clusterName;
     final AtomicBoolean _isInit;

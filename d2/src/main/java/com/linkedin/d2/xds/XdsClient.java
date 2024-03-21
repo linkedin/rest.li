@@ -16,73 +16,102 @@
 
 package com.linkedin.d2.xds;
 
+import com.google.common.base.MoreObjects;
 import com.linkedin.d2.jmx.XdsClientJmx;
 import indis.XdsD2;
 import io.grpc.Status;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 
 public abstract class XdsClient
 {
-  private static final String NODE_TYPE_URL = "type.googleapis.com/indis.Node";
-  private static final String D2_URI_MAP_TYPE_URL = "type.googleapis.com/indis.D2URIMap";
-
-  interface ResourceWatcher
+  public static abstract class ResourceWatcher
   {
+    private final ResourceType _type;
+
+    /**
+     * Defining a private constructor means only classes that are defined in this file can extend this class. This way,
+     * it can be defined at compile-time that there can only be two implementations: {@link NodeResourceWatcher} and
+     * {@link D2URIMapResourceWatcher}, and the remainder of the code can be greatly simplified.
+     */
+    private ResourceWatcher(ResourceType type)
+    {
+      _type = type;
+    }
+
+    final ResourceType getType()
+    {
+      return _type;
+    }
+
     /**
      * Called when the resource discovery RPC encounters some transient error.
      */
-    void onError(Status error);
+    public abstract void onError(Status error);
 
     /**
      * Called when the resource discovery RPC reestablishes connection.
      */
-    void onReconnect();
+    public abstract void onReconnect();
+
+    abstract void onChanged(ResourceUpdate update);
   }
 
-  interface NodeResourceWatcher extends ResourceWatcher
+  public static abstract class NodeResourceWatcher extends ResourceWatcher
   {
-    void onChanged(NodeUpdate update);
+    public NodeResourceWatcher()
+    {
+      super(ResourceType.NODE);
+    }
 
+    public abstract void onChanged(NodeUpdate update);
+
+    @Override
+    final void onChanged(ResourceUpdate update)
+    {
+      onChanged((NodeUpdate) update);
+    }
   }
 
-  interface SymlinkNodeResourceWatcher extends ResourceWatcher
+  public static abstract class D2URIMapResourceWatcher extends ResourceWatcher
   {
-    void onChanged(String resourceName, NodeUpdate update);
+    public D2URIMapResourceWatcher()
+    {
+      super(ResourceType.D2_URI_MAP);
+    }
 
+    public abstract void onChanged(D2URIMapUpdate update);
+
+    @Override
+    final void onChanged(ResourceUpdate update)
+    {
+      onChanged((D2URIMapUpdate) update);
+    }
   }
 
-  interface D2URIMapResourceWatcher extends ResourceWatcher
+  public interface ResourceUpdate
   {
-    void onChanged(D2URIMapUpdate update);
-
+    boolean isValid();
   }
 
-  interface ResourceUpdate
+  public static final class NodeUpdate implements ResourceUpdate
   {
-  }
-
-
-  static final class NodeUpdate implements ResourceUpdate
-  {
-    String _version;
     XdsD2.Node _nodeData;
 
-    NodeUpdate(String version, XdsD2.Node nodeData)
+    NodeUpdate(XdsD2.Node nodeData)
     {
-      _version = version;
       _nodeData = nodeData;
     }
 
     XdsD2.Node getNodeData()
     {
       return _nodeData;
-    }
-
-    public String getVersion()
-    {
-      return _version;
     }
 
     @Override
@@ -97,24 +126,34 @@ public abstract class XdsClient
         return false;
       }
       NodeUpdate that = (NodeUpdate) object;
-      return Objects.equals(_version, that._version) && Objects.equals(_nodeData, that._nodeData);
+      return Objects.equals(_nodeData, that._nodeData);
     }
 
     @Override
     public int hashCode()
     {
-      return Objects.hash(_version, _nodeData);
+      return Objects.hash(_nodeData);
+    }
+
+    @Override
+    public boolean isValid()
+    {
+      return _nodeData != null && !_nodeData.getData().isEmpty();
+    }
+
+    @Override
+    public String toString()
+    {
+      return MoreObjects.toStringHelper(this).add("_nodeData", _nodeData).toString();
     }
   }
 
-  static final class D2URIMapUpdate implements ResourceUpdate
+  public static final class D2URIMapUpdate implements ResourceUpdate
   {
-    String _version;
     Map<String, XdsD2.D2URI> _uriMap;
 
-    D2URIMapUpdate(String version, Map<String, XdsD2.D2URI> uriMap)
+    D2URIMapUpdate(Map<String, XdsD2.D2URI> uriMap)
     {
-      _version = version;
       _uriMap = uriMap;
     }
 
@@ -123,9 +162,23 @@ public abstract class XdsClient
       return _uriMap;
     }
 
-    public String getVersion()
+    D2URIMapUpdate putUri(String name, XdsD2.D2URI uri)
     {
-      return _version;
+      if (_uriMap == null)
+      {
+        _uriMap = new HashMap<>();
+      }
+      _uriMap.put(name, uri);
+      return this;
+    }
+
+    D2URIMapUpdate removeUri(String name)
+    {
+      if (_uriMap != null)
+      {
+        _uriMap.remove(name);
+      }
+      return this;
     }
 
     @Override
@@ -140,49 +193,69 @@ public abstract class XdsClient
         return false;
       }
       D2URIMapUpdate that = (D2URIMapUpdate) object;
-      return Objects.equals(_version, that._version) && Objects.equals(_uriMap, that._uriMap);
+      return Objects.equals(_uriMap, that._uriMap);
     }
 
     @Override
     public int hashCode()
     {
-      return Objects.hash(_version, _uriMap);
+      return Objects.hash(_uriMap);
+    }
+
+    @Override
+    public boolean isValid()
+    {
+      return _uriMap != null;
+    }
+
+    @Override
+    public String toString()
+    {
+      return MoreObjects.toStringHelper(this).add("_uriMap", _uriMap).toString();
     }
   }
 
+  public static final NodeUpdate EMPTY_NODE_UPDATE = new NodeUpdate(null);
+  public static final D2URIMapUpdate EMPTY_D2_URI_MAP_UPDATE = new D2URIMapUpdate(null);
+
   enum ResourceType
   {
-    UNKNOWN, NODE, D2_URI_MAP;
+    NODE("type.googleapis.com/indis.Node", EMPTY_NODE_UPDATE),
+    D2_URI_MAP("type.googleapis.com/indis.D2URIMap", EMPTY_D2_URI_MAP_UPDATE),
+    D2_URI("type.googleapis.com/indis.D2URI", EMPTY_D2_URI_MAP_UPDATE);
 
-    static ResourceType fromTypeUrl(String typeUrl)
+    private static final Map<String, ResourceType> TYPE_URL_TO_ENUM = Arrays.stream(values())
+        .filter(e -> e.typeUrl() != null)
+        .collect(Collectors.toMap(ResourceType::typeUrl, Function.identity()));
+
+
+    private final String _typeUrl;
+    private final ResourceUpdate _emptyData;
+
+    ResourceType(String typeUrl, ResourceUpdate emptyData)
     {
-      if (typeUrl.equals(NODE_TYPE_URL))
-      {
-        return NODE;
-      }
-      if (typeUrl.equals(D2_URI_MAP_TYPE_URL))
-      {
-        return D2_URI_MAP;
-      }
-      return UNKNOWN;
+      _typeUrl = typeUrl;
+      _emptyData = emptyData;
     }
 
     String typeUrl()
     {
-      switch (this)
-      {
-        case NODE:
-          return NODE_TYPE_URL;
-        case D2_URI_MAP:
-          return D2_URI_MAP_TYPE_URL;
-        case UNKNOWN:
-        default:
-          throw new AssertionError("Unknown or missing case in enum switch: " + this);
-      }
+      return _typeUrl;
+    }
+
+    ResourceUpdate emptyData()
+    {
+      return _emptyData;
+    }
+
+    @Nullable
+    static ResourceType fromTypeUrl(String typeUrl)
+    {
+      return TYPE_URL_TO_ENUM.get(typeUrl);
     }
   }
 
-  abstract void watchXdsResource(String resourceName, ResourceType type, ResourceWatcher watcher);
+  abstract void watchXdsResource(String resourceName, ResourceWatcher watcher);
 
   abstract void startRpcStream();
 

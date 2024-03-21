@@ -52,9 +52,13 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
         Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 xDS PropertyEventExecutor")));
     long xdsStreamReadyTimeout = ObjectUtils.defaultIfNull(config.xdsStreamReadyTimeout,
         XdsClientImpl.DEFAULT_READY_TIMEOUT_MILLIS);
-    XdsClient xdsClient = new XdsClientImpl(new Node(config.hostName),
-        new XdsChannelFactory(config.grpcSslContext, config.xdsServer).createChannel(), executorService,
-        xdsStreamReadyTimeout);
+    XdsClient xdsClient = new XdsClientImpl(
+        new Node(config.hostName),
+        new XdsChannelFactory(config.grpcSslContext, config.xdsServer).createChannel(),
+        executorService,
+        xdsStreamReadyTimeout,
+        config.subscribeToUriGlobCollection
+    );
     d2ClientJmxManager.registerXdsClientJmx(xdsClient.getXdsClientJmx());
 
     XdsToD2PropertiesAdaptor adaptor = new XdsToD2PropertiesAdaptor(xdsClient, config.dualReadStateManager,
