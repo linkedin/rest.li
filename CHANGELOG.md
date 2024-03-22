@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.51.12] - 2024-03-22
+- Address the multiple onError calls in dual read and enhance unit test rigorously
+
 ## [29.51.11] - 2024-03-20
 - Glob collections support
 
@@ -5665,7 +5668,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.51.11...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.51.12...master
+[29.51.12]: https://github.com/linkedin/rest.li/compare/v29.51.11...v29.51.12
 [29.51.11]: https://github.com/linkedin/rest.li/compare/v29.51.10...v29.51.11
 [29.51.10]: https://github.com/linkedin/rest.li/compare/v29.51.9...v29.51.10
 [29.51.9]: https://github.com/linkedin/rest.li/compare/v29.51.8...v29.51.9
