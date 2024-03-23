@@ -439,7 +439,7 @@ public class SimpleLoadBalancerTest
   }
 
   @Test
-  public void testListenToServiceAndClusterTimeout()
+  public void testListenToServiceAndClusterTimeout() throws ExecutionException, InterruptedException
   {
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
@@ -449,36 +449,50 @@ public class SimpleLoadBalancerTest
                                         new HashMap<>(), new HashMap<>()));
     doAnswer(invocation ->
              {
-               Thread.sleep(100);
+               Thread.sleep(10);
                return null;
              }).when(state).listenToService(any(), any());
     SimpleLoadBalancer loadBalancer = spy(new SimpleLoadBalancer(state, 1, TimeUnit.MILLISECONDS, _d2Executor));
     // case1: listenToService timeout, and simpleLoadBalancer not hit the cache value
     FutureCallback<ServiceProperties> callback = spy(new FutureCallback<>());
     loadBalancer.listenToServiceAndCluster(SERVICE_NAME, callback);
+    try
+    {
+      callback.get();
+    }
+    catch (Exception e)
+    {
+      Assert.assertTrue(e.getCause() instanceof ServiceUnavailableException);
+    }
     // Make sure the onError is called with ServiceUnavailableException only once.
-    verify(callback).onError(any(ServiceUnavailableException.class));
     verify(loadBalancer).handleTimeoutFromGetServiceProperties(eq(SERVICE_NAME), eq(callback));
+    verify(callback).onError(any(ServiceUnavailableException.class));
 
     // case2: listenToService timeout, and simpleLoadBalancer hit the cache value from state
     LoadBalancerStateItem<ServiceProperties> serviceItem = new LoadBalancerStateItem<>(SERVICE_PROPERTIES, 1, 1);
     when(state.getServiceProperties(SERVICE_NAME)).thenReturn(serviceItem);
+    callback = spy(new FutureCallback<>());
     loadBalancer.listenToServiceAndCluster(SERVICE_NAME, callback);
     // Make sure the onSuccess is called with SERVICE_PROPERTIES only once.
+    callback.get();
     verify(callback).onSuccess(eq(SERVICE_PROPERTIES));
 
     // case3: listenToService without timeout
     serviceRegistry.put(SERVICE_NAME, SERVICE_PROPERTIES);
-    doNothing().when(state).listenToService(any(), any());
+    state =
+        spy(new SimpleLoadBalancerState(new SynchronousExecutorService(), uriRegistry, clusterRegistry, serviceRegistry,
+                                        new HashMap<>(), new HashMap<>()));
     loadBalancer = spy(new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor));
+    callback = spy(new FutureCallback<>());
     loadBalancer.listenToServiceAndCluster(SERVICE_NAME, callback);
+    callback.get();
     verify(callback).onSuccess(eq(SERVICE_PROPERTIES));
-    // Make sure there is no timeout error.
+    // Make sure there is no timeout.
     verify(loadBalancer, never()).handleTimeoutFromGetServiceProperties(any(), any());
   }
 
   @Test
-  public void testGetLoadBalancedClusterAndUriProperties()
+  public void testGetLoadBalancedClusterAndUriProperties() throws InterruptedException, ExecutionException
   {
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
@@ -489,30 +503,46 @@ public class SimpleLoadBalancerTest
 
     doAnswer(invocation ->
              {
-               Thread.sleep(100);
+               Thread.sleep(10);
                return null;
              }).when(state).listenToCluster(any(), any());
+
     SimpleLoadBalancer loadBalancer = spy(new SimpleLoadBalancer(state, 1, TimeUnit.MILLISECONDS, _d2Executor));
     FutureCallback<Pair<ClusterProperties, UriProperties>> callback = spy(new FutureCallback<>());
     // case1: listenToCluster timeout, and simpleLoadBalancer not hit the cache value
     loadBalancer.getLoadBalancedClusterAndUriProperties(CLUSTER1_NAME, callback);
-    verify(callback).onError(any(ServiceUnavailableException.class));
+    try
+    {
+      callback.get();
+    }
+    catch (ExecutionException e)
+    {
+      Assert.assertTrue(e.getCause() instanceof ServiceUnavailableException);
+    }
     verify(loadBalancer).handleTimeoutFromGetClusterAndUriProperties(eq(CLUSTER1_NAME), eq(callback));
+    verify(callback).onError(any(ServiceUnavailableException.class));
 
     // case2: listenToCluster timeout, and simpleLoadBalancer hit the cache value from state
     LoadBalancerStateItem<ClusterProperties> clusterItem = new LoadBalancerStateItem<>(CLUSTER_PROPERTIES, 1, 1);
     LoadBalancerStateItem<UriProperties> uriItem = new LoadBalancerStateItem<>(URI_PROPERTIES, 1, 1);
     when(state.getClusterProperties(CLUSTER1_NAME)).thenReturn(clusterItem);
     when(state.getUriProperties(CLUSTER1_NAME)).thenReturn(uriItem);
+    callback = spy(new FutureCallback<>());
     loadBalancer.getLoadBalancedClusterAndUriProperties(CLUSTER1_NAME, callback);
+    callback.get();
     verify(callback).onSuccess(eq(Pair.of(CLUSTER_PROPERTIES, URI_PROPERTIES)));
 
+
     // case3: getLoadBalancedClusterAndUriProperties without timeout
+    state =
+        spy(new SimpleLoadBalancerState(new SynchronousExecutorService(), uriRegistry, clusterRegistry, serviceRegistry,
+                                        new HashMap<>(), new HashMap<>()));
     loadBalancer = spy(new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor));
-    doNothing().when(state).listenToCluster(any(), any());
     clusterRegistry.put(CLUSTER1_NAME, CLUSTER_PROPERTIES);
     uriRegistry.put(CLUSTER1_NAME, new UriProperties(CLUSTER1_NAME, new HashMap<>()));
+    callback = spy(new FutureCallback<>());
     loadBalancer.getLoadBalancedClusterAndUriProperties(CLUSTER1_NAME, callback);
+    callback.get();
     verify(loadBalancer, never()).handleTimeoutFromGetClusterAndUriProperties(any(), any());
   }
 
@@ -530,7 +560,7 @@ public class SimpleLoadBalancerTest
 
     doAnswer(invocation ->
              {
-               Thread.sleep(100);
+               Thread.sleep(10);
                return null;
              }).when(state).listenToCluster(any(), any());
     SimpleLoadBalancer loadBalancer = spy(new SimpleLoadBalancer(state, 1, TimeUnit.MILLISECONDS, _d2Executor));
@@ -553,7 +583,7 @@ public class SimpleLoadBalancerTest
                                         new HashMap<>(), new HashMap<>()));
     doAnswer(invocation ->
              {
-               Thread.sleep(100);
+               Thread.sleep(10);
                return null;
              }).when(state).listenToCluster(any(), any());
     SimpleLoadBalancer loadBalancer = spy(new SimpleLoadBalancer(state, 1, TimeUnit.MILLISECONDS, _d2Executor));

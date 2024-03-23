@@ -840,7 +840,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     else
     {
-      _log.error("getServiceProperties for {} timed out, but no value in cache!", serviceName);
+      _log.warn("getServiceProperties for {} timed out, but no value in cache!", serviceName);
     }
   }
 
@@ -929,6 +929,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
   }
 
+  @VisibleForTesting
   public void handleTimeoutFromGetClusterAndUriProperties(String clusterName,
       Callback<Pair<ClusterProperties, UriProperties>> clusterAndUriPropertiesCallback)
   {
@@ -941,7 +942,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     else
     {
-      _log.error("getClusterAndUriProperties for {} timed out, but no value in cache!", clusterName);
+      _log.warn("getClusterAndUriProperties for {} timed out, but no value in cache!", clusterName);
     }
   }
 

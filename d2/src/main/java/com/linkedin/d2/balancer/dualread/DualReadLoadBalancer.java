@@ -116,10 +116,6 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
       _rateLimitedLogger.debug("newLb executor rejected new task for start. "
           + "It is shut down or its queue size has reached max limit");
     }
-    catch (Exception e)
-    {
-      _rateLimitedLogger.debug("Failed to execute newLb task for start. ", e);
-    }
 
     _oldLb.start(getStartUpCallback(false,
         mode == DualReadModeProvider.DualReadMode.NEW_LB_ONLY ? null : callback
@@ -210,10 +206,6 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
           _rateLimitedLogger.debug("newLb executor rejected new task for getClient. "
               + "It is shut down or its queue size has reached max limit");
         }
-        catch (Exception e)
-        {
-          _rateLimitedLogger.debug("Failed to execute newLb task for getClient. ", e);
-        }
 
         _oldLb.getClient(request, requestContext, clientCallback);
         break;
@@ -241,10 +233,6 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
           _rateLimitedLogger.debug("newLb executor rejected new task for getLoadBalancedServiceProperties. "
               + "It is shut down or its queue size has reached max limit");
         }
-        catch (Exception e)
-        {
-          _rateLimitedLogger.debug("Failed to execute newLb task for getLoadBalancedServiceProperties. ", e);
-        }
         _oldLb.getLoadBalancedServiceProperties(serviceName, clientCallback);
         break;
       case OLD_LB_ONLY:
@@ -271,10 +259,6 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         {
           _rateLimitedLogger.debug("newLb executor rejected new task for getLoadBalancedClusterAndUriProperties. "
               + "It is shut down or its queue size has reached max limit");
-        }
-        catch (Exception e)
-        {
-          _rateLimitedLogger.debug("Failed to execute newLb task for getLoadBalancedClusterAndUriProperties. ", e);
         }
         _oldLb.getLoadBalancedClusterAndUriProperties(clusterName, callback);
         break;
