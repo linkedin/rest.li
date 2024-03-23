@@ -486,9 +486,9 @@ public class SimpleLoadBalancerTest
     callback = spy(new FutureCallback<>());
     loadBalancer.listenToServiceAndCluster(SERVICE_NAME, callback);
     callback.get();
-    verify(callback).onSuccess(eq(SERVICE_PROPERTIES));
     // Make sure there is no timeout.
     verify(loadBalancer, never()).handleTimeoutFromGetServiceProperties(any(), any());
+    verify(callback).onSuccess(eq(SERVICE_PROPERTIES));
   }
 
   @Test
@@ -539,11 +539,12 @@ public class SimpleLoadBalancerTest
                                         new HashMap<>(), new HashMap<>()));
     loadBalancer = spy(new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor));
     clusterRegistry.put(CLUSTER1_NAME, CLUSTER_PROPERTIES);
-    uriRegistry.put(CLUSTER1_NAME, new UriProperties(CLUSTER1_NAME, new HashMap<>()));
+    uriRegistry.put(CLUSTER1_NAME, URI_PROPERTIES);
     callback = spy(new FutureCallback<>());
     loadBalancer.getLoadBalancedClusterAndUriProperties(CLUSTER1_NAME, callback);
     callback.get();
     verify(loadBalancer, never()).handleTimeoutFromGetClusterAndUriProperties(any(), any());
+    verify(callback).onSuccess(eq(Pair.of(CLUSTER_PROPERTIES, URI_PROPERTIES)));
   }
 
   @Test
