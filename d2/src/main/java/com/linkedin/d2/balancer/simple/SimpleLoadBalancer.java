@@ -487,7 +487,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
             if (e instanceof TimeoutException)
             {
               // if timed out, should try to fetch the service properties from the cache
-              handleTimeoutFromGetServiceProperties(e, serviceName, finalCallback);
+              handleTimeoutFromGetServiceProperties(serviceName, finalCallback);
             }
             else
             {
@@ -782,7 +782,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
           {
             if (e instanceof TimeoutException)
             {
-              handleTimeoutFromGetServiceProperties(e, serviceName, finalCallback);
+              handleTimeoutFromGetServiceProperties(serviceName, finalCallback);
             }
             else
             {
@@ -829,7 +829,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
   }
 
-  public void handleTimeoutFromGetServiceProperties(Throwable e, String serviceName,
+  public void handleTimeoutFromGetServiceProperties(String serviceName,
       Callback<ServiceProperties> servicePropertiesCallback)
   {
     ServiceProperties properties = getServicePropertiesFromCache(serviceName, servicePropertiesCallback);
@@ -840,9 +840,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     else
     {
-      _log.error("getServiceProperties for {} timed out, but no value in cache!", serviceName);
-      servicePropertiesCallback.onError(
-          new ServiceUnavailableException(serviceName, "PEGA_1011. " + e.getMessage(), e));
+      _log.warn("getServiceProperties for {} timed out, but no value in cache!", serviceName);
     }
   }
 
@@ -883,7 +881,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
               {
                 if (e instanceof TimeoutException)
                 {
-                  handleTimeoutFromGetClusterAndUriProperties(e, clusterName, finalCallback);
+                  handleTimeoutFromGetClusterAndUriProperties(clusterName, finalCallback);
                 }
                 else
                 {
@@ -931,7 +929,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
   }
 
-  private void handleTimeoutFromGetClusterAndUriProperties(Throwable e, String clusterName,
+  @VisibleForTesting
+  public void handleTimeoutFromGetClusterAndUriProperties(String clusterName,
       Callback<Pair<ClusterProperties, UriProperties>> clusterAndUriPropertiesCallback)
   {
     Pair<ClusterProperties, UriProperties> pair =
@@ -943,8 +942,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     }
     else
     {
-      clusterAndUriPropertiesCallback.onError(
-          new ServiceUnavailableException(clusterName, "PEGA_1011. " + e.getMessage(), e));
+      _log.warn("getClusterAndUriProperties for {} timed out, but no value in cache!", clusterName);
     }
   }
 
