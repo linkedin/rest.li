@@ -89,7 +89,7 @@ public class XdsToD2SampleClient
 
     XdsChannelFactory xdsChannelFactory = new XdsChannelFactory(sslContext, xdsServer);
     XdsClient xdsClient = new XdsClientImpl(node, xdsChannelFactory.createChannel(),
-        Executors.newSingleThreadScheduledExecutor());
+        Executors.newSingleThreadScheduledExecutor(), XdsClientImpl.DEFAULT_READY_TIMEOUT_MILLIS);
 
     DualReadStateManager dualReadStateManager = new DualReadStateManager(
         () -> DualReadModeProvider.DualReadMode.DUAL_READ,

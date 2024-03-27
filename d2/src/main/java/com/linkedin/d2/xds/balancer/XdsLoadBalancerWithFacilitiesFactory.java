@@ -52,9 +52,13 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
         Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 xDS PropertyEventExecutor")));
     long xdsStreamReadyTimeout = ObjectUtils.defaultIfNull(config.xdsStreamReadyTimeout,
         XdsClientImpl.DEFAULT_READY_TIMEOUT_MILLIS);
-    XdsClient xdsClient = new XdsClientImpl(new Node(config.hostName),
-        new XdsChannelFactory(config.grpcSslContext, config.xdsServer).createChannel(), executorService,
-        xdsStreamReadyTimeout);
+    XdsClient xdsClient = new XdsClientImpl(
+        new Node(config.hostName),
+        new XdsChannelFactory(config.grpcSslContext, config.xdsServer).createChannel(),
+        executorService,
+        xdsStreamReadyTimeout,
+        config.subscribeToUriGlobCollection
+    );
     d2ClientJmxManager.registerXdsClientJmx(xdsClient.getXdsClientJmx());
 
     XdsToD2PropertiesAdaptor adaptor = new XdsToD2PropertiesAdaptor(xdsClient, config.dualReadStateManager,
@@ -71,9 +75,9 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
 
     if (config.warmUp)
     {
-      balancer = new WarmUpLoadBalancer(balancer, xdsLoadBalancer, config.startUpExecutorService, config.indisFsBasePath,
-          config.d2ServicePath, config.indisDownstreamServicesFetcher, config.warmUpTimeoutSeconds,
-          config.warmUpConcurrentRequests, config.dualReadStateManager);
+      balancer = new WarmUpLoadBalancer(balancer, xdsLoadBalancer, config.indisStartUpExecutorService, config.indisFsBasePath,
+          config.d2ServicePath, config.indisDownstreamServicesFetcher, config.indisWarmUpTimeoutSeconds,
+          config.indisWarmUpConcurrentRequests, config.dualReadStateManager, true);
     }
 
     return balancer;

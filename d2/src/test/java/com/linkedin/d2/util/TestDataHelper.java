@@ -2,23 +2,42 @@ package com.linkedin.d2.util;
 
 import com.google.common.collect.ImmutableMap;
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.balancer.properties.ServiceProperties;
+import com.linkedin.d2.balancer.properties.ServiceStoreProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.discovery.event.D2ServiceDiscoveryEventHelper;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
+import com.linkedin.util.clock.Clock;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import org.testng.Assert;
 
 import static org.testng.Assert.*;
 
 
 public class TestDataHelper {
+  public static final String SERVICE_NAME = "testService";
+  public static final String PATH = "/testService";
+  public static final List<String> STRATEGY_LIST_1 = Collections.singletonList("relative");
+  public static final List<String> STRATEGY_LIST_2 = Collections.singletonList("degrader");
   public static final String CLUSTER_NAME = "TestCluster";
+  public static final ServiceProperties SERVICE_PROPERTIES_1;
+  public static final ServiceProperties SERVICE_PROPERTIES_2;
+  public static final ServiceProperties SERVICE_PROPERTIES_3;
+  public static final ServiceStoreProperties SERVICE_STORE_PROPERTIES_1;
+  public static final ServiceStoreProperties SERVICE_STORE_PROPERTIES_2;
+  public static final ServiceStoreProperties SERVICE_STORE_PROPERTIES_3;
   public static final String HOST_1 = "google.com";
   public static final String HOST_2 = "linkedin.com";
   public static final String HOST_3 = "youtube.com";
@@ -53,6 +72,16 @@ public class TestDataHelper {
     1, new PartitionData(3));
 
   static {
+    SERVICE_PROPERTIES_1 = new ServiceProperties(SERVICE_NAME, CLUSTER_NAME, PATH, STRATEGY_LIST_1);
+    SERVICE_STORE_PROPERTIES_1 = new ServiceStoreProperties(SERVICE_PROPERTIES_1, null, null);
+
+    SERVICE_PROPERTIES_2 = new ServiceProperties(SERVICE_NAME, CLUSTER_NAME, PATH, STRATEGY_LIST_2);
+    SERVICE_STORE_PROPERTIES_2 = new ServiceStoreProperties(SERVICE_PROPERTIES_2, null, null);
+
+    SERVICE_PROPERTIES_3 = new ServiceProperties(SERVICE_NAME, CLUSTER_NAME, PATH, STRATEGY_LIST_1,
+        Collections.singletonMap(PropertyKeys.RELATIVE_LATENCY_HIGH_THRESHOLD_FACTOR, 8.0));
+    SERVICE_STORE_PROPERTIES_3 = new ServiceStoreProperties(SERVICE_PROPERTIES_3, null, null);
+
     PROPERTIES_1 = new UriProperties(CLUSTER_NAME, Collections.singletonMap(URI_1, MAP_1));
     PROPERTIES_2 = new UriProperties(CLUSTER_NAME, Collections.singletonMap(URI_2, MAP_2));
     PROPERTIES_3 = new UriProperties(CLUSTER_NAME, Collections.singletonMap(URI_3, MAP_3));
@@ -215,5 +244,30 @@ public class TestDataHelper {
       assertTrue(_receiptMarkUpClusters.isEmpty());
       assertTrue(_receiptMarkDownClusters.isEmpty());
     }
+  }
+
+  // A time supplier that proceed with speedMillis but could freeze on special calls specified in freezedCalls.
+  // This is for convenience when the code being tested has calls where the time shouldn't move forward (no
+  // time-consuming work is done before this call).
+  public static Supplier<Long> getTimeSupplier(long speedMillis, int... freezedCalls)
+  {
+    return new Supplier<Long>() {
+      private AtomicLong _time = new AtomicLong(0);
+      private Set<Integer> _freezedCalls = Arrays.stream(freezedCalls).boxed().collect(Collectors.toSet());
+      private AtomicInteger _callCount = new AtomicInteger(0);
+
+      @Override
+      public Long get() {
+        return _freezedCalls.contains(_callCount.getAndIncrement())
+            ? _time.get() // freeze on special calls
+            : _time.addAndGet(speedMillis);
+      }
+    };
+  }
+
+  public static Clock getClock()
+  {
+    Supplier<Long> timeSupplier = TestDataHelper.getTimeSupplier(100);
+    return () -> timeSupplier.get();
   }
 }

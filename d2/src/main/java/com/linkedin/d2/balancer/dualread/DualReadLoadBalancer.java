@@ -35,7 +35,10 @@ import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
+import com.linkedin.util.RateLimitedLogger;
+import com.linkedin.util.clock.SystemClock;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
 import javax.annotation.Nonnull;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -58,6 +61,8 @@ import org.slf4j.LoggerFactory;
 public class DualReadLoadBalancer implements LoadBalancerWithFacilities
 {
   private static final Logger LOG = LoggerFactory.getLogger(DualReadLoadBalancer.class);
+  private final RateLimitedLogger _rateLimitedLogger;
+  private static final long ERROR_REPORT_PERIOD = 10 * 1000; // Limit error report logging to every 10 seconds
   private final LoadBalancerWithFacilities _oldLb;
   private final LoadBalancerWithFacilities _newLb;
   private final DualReadStateManager _dualReadStateManager;
@@ -74,6 +79,7 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   public DualReadLoadBalancer(LoadBalancerWithFacilities oldLb, LoadBalancerWithFacilities newLb,
       @Nonnull DualReadStateManager dualReadStateManager, ExecutorService newLbExecutor)
   {
+    _rateLimitedLogger = new RateLimitedLogger(LOG, ERROR_REPORT_PERIOD, SystemClock.instance());
     _oldLb = oldLb;
     _newLb = newLb;
     _dualReadStateManager = dualReadStateManager;
@@ -95,28 +101,58 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   public void start(Callback<None> callback)
   {
     // Prefetch the global dual read mode
-    _dualReadStateManager.checkAndSwitchMode(null);
+    DualReadModeProvider.DualReadMode mode = _dualReadStateManager.getGlobalDualReadMode();
 
-    _newLb.start(new Callback<None>()
+    // if in new-lb-only mode, new lb needs to start successfully to call the callback. Otherwise, the old lb does.
+    // Use a separate executor service to start the new lb, so both lbs can start concurrently.
+    try
     {
+      _newLbExecutor.execute(() -> _newLb.start(getStartUpCallback(true,
+              mode == DualReadModeProvider.DualReadMode.NEW_LB_ONLY ? callback : null)
+      ));
+    }
+    catch (RejectedExecutionException e)
+    {
+      _rateLimitedLogger.debug("newLb executor rejected new task for start. "
+          + "It is shut down or its queue size has reached max limit");
+    }
+
+    _oldLb.start(getStartUpCallback(false,
+        mode == DualReadModeProvider.DualReadMode.NEW_LB_ONLY ? null : callback
+    ));
+  }
+
+  private Callback<None> getStartUpCallback(boolean isForNewLb, Callback<None> callback)
+  {
+    return new Callback<None>() {
       @Override
-      public void onError(Throwable e)
-      {
-        LOG.warn("Failed to start new load balancer. Fall back to read from old balancer only", e);
-        _isNewLbReady = false;
+      public void onError(Throwable e) {
+        LOG.warn("Failed to start {} load balancer.", isForNewLb ? "new" : "old", e);
+        if (isForNewLb)
+        {
+          _isNewLbReady = false;
+        }
+
+        if (callback != null)
+        {
+          callback.onError(e);
+        }
       }
 
       @Override
-      public void onSuccess(None result)
-      {
-        LOG.info("New load balancer successfully started");
-        _isNewLbReady = true;
-      }
-    });
+      public void onSuccess(None result) {
+        LOG.info("{} load balancer successfully started", isForNewLb ? "New" : "Old");
+        if (isForNewLb)
+        {
+          _isNewLbReady = true;
+        }
 
-    // Call back will succeed as long as the old balancer is successfully started. New load balancer failure
-    // won't block application start up.
-    _oldLb.start(callback);
+        if (callback != null)
+        {
+          callback.onSuccess(None.none());
+        }
+      }
+    };
   }
 
   @Override
@@ -129,36 +165,48 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         _newLb.getClient(request, requestContext, clientCallback);
         break;
       case DUAL_READ:
-        _newLbExecutor.execute(
-            () -> _newLb.getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
+        try
+        {
+          _newLbExecutor.execute(() -> _newLb.getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
+          {
+            @Override
+            public void onError(Throwable e)
             {
-              @Override
-              public void onError(Throwable e)
-              {
-                LOG.error("Dual read failure. Unable to read service properties from: {}", serviceName, e);
-              }
+              _rateLimitedLogger.warn("Safe to ignore - dual read error. This is a side-way call to INDIS, "
+                  + "NOT being used for app's traffic. Unable to read from INDIS for service properties: {}",
+                  serviceName, e);
+            }
 
-              @Override
-              public void onSuccess(ServiceProperties result)
+            @Override
+            public void onSuccess(ServiceProperties result)
+            {
+              String clusterName = result.getClusterName();
+              _dualReadStateManager.updateCluster(clusterName, DualReadModeProvider.DualReadMode.DUAL_READ);
+              _newLb.getLoadBalancedClusterAndUriProperties(clusterName, new Callback<Pair<ClusterProperties, UriProperties>>()
               {
-                String clusterName = result.getClusterName();
-                _dualReadStateManager.updateCluster(clusterName, DualReadModeProvider.DualReadMode.DUAL_READ);
-                _newLb.getLoadBalancedClusterAndUriProperties(clusterName, new Callback<Pair<ClusterProperties, UriProperties>>()
-                    {
-                      @Override
-                      public void onError(Throwable e)
-                      {
-                        LOG.error("Dual read failure. Unable to read cluster properties from: {}", clusterName, e);
-                      }
+                @Override
+                public void onError(Throwable e)
+                {
+                  _rateLimitedLogger.warn("Safe to ignore - dual read error. This is a side-way call to INDIS, "
+                      + "NOT being used for app's traffic. Unable to read from INDIS for cluster and uri properties: "
+                      + "{}", clusterName, e);
+                }
 
-                      @Override
-                      public void onSuccess(Pair<ClusterProperties, UriProperties> result)
-                      {
-                        LOG.debug("Dual read is successful. Get cluster and uri properties: {}", result);
-                      }
-                    });
-              }
-            }));
+                @Override
+                public void onSuccess(Pair<ClusterProperties, UriProperties> result)
+                {
+                  LOG.debug("Dual read is successful. Get cluster and uri properties: {}", result);
+                }
+              });
+            }
+          }));
+        }
+        catch (RejectedExecutionException e)
+        {
+          _rateLimitedLogger.debug("newLb executor rejected new task for getClient. "
+              + "It is shut down or its queue size has reached max limit");
+        }
+
         _oldLb.getClient(request, requestContext, clientCallback);
         break;
       case OLD_LB_ONLY:
@@ -176,7 +224,15 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         _newLb.getLoadBalancedServiceProperties(serviceName, clientCallback);
         break;
       case DUAL_READ:
-        _newLbExecutor.execute(() -> _newLb.getLoadBalancedServiceProperties(serviceName, Callbacks.empty()));
+        try
+        {
+          _newLbExecutor.execute(() -> _newLb.getLoadBalancedServiceProperties(serviceName, Callbacks.empty()));
+        }
+        catch (RejectedExecutionException e)
+        {
+          _rateLimitedLogger.debug("newLb executor rejected new task for getLoadBalancedServiceProperties. "
+              + "It is shut down or its queue size has reached max limit");
+        }
         _oldLb.getLoadBalancedServiceProperties(serviceName, clientCallback);
         break;
       case OLD_LB_ONLY:
@@ -195,7 +251,15 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
         _newLb.getLoadBalancedClusterAndUriProperties(clusterName, callback);
         break;
       case DUAL_READ:
-        _newLbExecutor.execute(() -> _newLb.getLoadBalancedClusterAndUriProperties(clusterName, Callbacks.empty()));
+        try
+        {
+          _newLbExecutor.execute(() -> _newLb.getLoadBalancedClusterAndUriProperties(clusterName, Callbacks.empty()));
+        }
+        catch (RejectedExecutionException e)
+        {
+          _rateLimitedLogger.debug("newLb executor rejected new task for getLoadBalancedClusterAndUriProperties. "
+              + "It is shut down or its queue size has reached max limit");
+        }
         _oldLb.getLoadBalancedClusterAndUriProperties(clusterName, callback);
         break;
       case OLD_LB_ONLY:
@@ -306,11 +370,8 @@ public class DualReadLoadBalancer implements LoadBalancerWithFacilities
   @Override
   public void shutdown(PropertyEventThread.PropertyEventShutdownCallback callback)
   {
-    _newLb.shutdown(() ->
-    {
-      LOG.info("New load balancer successfully shut down");
-    });
-
+    _newLbExecutor.shutdown();
+    _newLb.shutdown(() -> LOG.info("New load balancer successfully shut down"));
     _oldLb.shutdown(callback);
   }
 }

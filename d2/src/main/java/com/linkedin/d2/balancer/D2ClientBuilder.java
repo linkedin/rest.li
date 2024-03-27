@@ -104,6 +104,13 @@ public class D2ClientBuilder
       executorsToShutDown.add(_config.startUpExecutorService);
     }
 
+    if (_config.indisStartUpExecutorService == null)
+    {
+      _config.indisStartUpExecutorService =
+          Executors.newScheduledThreadPool(0, new NamedThreadFactory("INDIS D2 StartupOnlyExecutor"));
+      executorsToShutDown.add(_config.indisStartUpExecutorService);
+    }
+
     if (_config._executorService == null)
     {
       LOG.warn("No executor service passed as argument. Pass it for " +
@@ -171,7 +178,9 @@ public class D2ClientBuilder
                   _config.retryAggregatedIntervalNum,
                   _config.warmUp,
                   _config.warmUpTimeoutSeconds,
+                  _config.indisWarmUpTimeoutSeconds,
                   _config.warmUpConcurrentRequests,
+                  _config.indisWarmUpConcurrentRequests,
                   _config.downstreamServicesFetcher,
                   _config.indisDownstreamServicesFetcher,
                   _config.backupRequestsEnabled,
@@ -189,6 +198,7 @@ public class D2ClientBuilder
                   _config.sslSessionValidatorFactory,
                   _config.zkConnectionToUseForLB,
                   _config.startUpExecutorService,
+                  _config.indisStartUpExecutorService,
                   _config.jmxManager,
                   _config.d2JmxManagerPrefix,
                   _config.zookeeperReadWindowMs,
@@ -202,7 +212,10 @@ public class D2ClientBuilder
                   _config.dualReadStateManager,
                   _config.xdsExecutorService,
                   _config.xdsStreamReadyTimeout,
-                  _config.dualReadNewLbExecutor
+                  _config.dualReadNewLbExecutor,
+                  _config.xdsChannelLoadBalancingPolicy,
+                  _config.xdsChannelLoadBalancingPolicyConfig,
+                  _config.subscribeToUriGlobCollection
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -518,18 +531,45 @@ public class D2ClientBuilder
     return this;
   }
 
-  public D2ClientBuilder setWarmUpTimeoutSeconds(int warmUpTimeoutSeconds){
+  public D2ClientBuilder setWarmUpTimeoutSeconds(int warmUpTimeoutSeconds)
+  {
     _config.warmUpTimeoutSeconds = warmUpTimeoutSeconds;
     return this;
   }
 
-  public D2ClientBuilder setZookeeperReadWindowMs(int zookeeperReadWindowMs){
+  public D2ClientBuilder setIndisWarmUpTimeoutSeconds(int indisWarmUpTimeoutSeconds)
+  {
+    _config.indisWarmUpTimeoutSeconds = indisWarmUpTimeoutSeconds;
+    return this;
+  }
+
+  public D2ClientBuilder setZookeeperReadWindowMs(int zookeeperReadWindowMs)
+  {
     _config.zookeeperReadWindowMs = zookeeperReadWindowMs;
     return this;
   }
 
-  public D2ClientBuilder setWarmUpConcurrentRequests(int warmUpConcurrentRequests){
+  public D2ClientBuilder setWarmUpConcurrentRequests(int warmUpConcurrentRequests)
+  {
     _config.warmUpConcurrentRequests = warmUpConcurrentRequests;
+    return this;
+  }
+
+  public D2ClientBuilder setIndisWarmUpConcurrentRequests(int indisWarmUpConcurrentRequests)
+  {
+    _config.indisWarmUpConcurrentRequests = indisWarmUpConcurrentRequests;
+    return this;
+  }
+
+  public D2ClientBuilder setStartUpExecutorService(ScheduledExecutorService executorService)
+  {
+    _config.startUpExecutorService = executorService;
+    return this;
+  }
+
+  public D2ClientBuilder setIndisStartUpExecutorService(ScheduledExecutorService executorService)
+  {
+    _config.indisStartUpExecutorService = executorService;
     return this;
   }
 
@@ -659,6 +699,21 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setXdsStreamReadyTimeout(long xdsStreamReadyTimeout) {
     _config.xdsStreamReadyTimeout = xdsStreamReadyTimeout;
+    return this;
+  }
+
+  public D2ClientBuilder setXdsChannelLoadBalancingPolicy(String xdsChannelLoadBalancingPolicy) {
+    _config.xdsChannelLoadBalancingPolicy = xdsChannelLoadBalancingPolicy;
+    return this;
+  }
+
+  public D2ClientBuilder xdsChannelLoadBalancingPolicyConfig(Map<String, ?> xdsChannelLoadBalancingPolicyConfig) {
+    _config.xdsChannelLoadBalancingPolicyConfig = xdsChannelLoadBalancingPolicyConfig;
+    return this;
+  }
+
+  public D2ClientBuilder setSubscribeToUriGlobCollection(boolean subscribeToUriGlobCollection) {
+    _config.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
     return this;
   }
 

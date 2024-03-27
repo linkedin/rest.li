@@ -52,6 +52,18 @@ public interface RelativeLoadBalancerStrategyJmxMBean
 
   /**
    *
+   * @return the number of total hosts in all partitions regardless of their status
+   */
+  int getTotalHostsInAllPartitionsCount();
+
+  /**
+   *
+   * @return the number of total hosts regardless of their status
+   */
+  int getTotalHostsCount();
+
+  /**
+   *
    * @return the number of unhealthy hosts
    */
   int getUnhealthyHostsCount();

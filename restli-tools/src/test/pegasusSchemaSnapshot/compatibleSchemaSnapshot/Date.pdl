@@ -1,0 +1,5 @@
+record Date {
+  day: int
+  month: int
+  year: int
+}

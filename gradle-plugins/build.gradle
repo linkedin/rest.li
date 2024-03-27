@@ -7,8 +7,13 @@ configurations {
 }
 
 dependencies {
+  implementation localGroovy()
+  implementation gradleApi()
+
   testImplementation externalDependency.testng
   testImplementation externalDependency.junit
+
+  integTestImplementation gradleTestKit()
 
   dataTemplateForTesting project(':data')
   pegasusPluginForTesting project(':data')
@@ -17,29 +22,13 @@ dependencies {
   pegasusPluginForTesting project(':restli-tools')
 }
 
+gradlePlugin {
+  testSourceSets sourceSets.integTest
+}
+
 // This is done so that the plugin can know which version of restli should be used when creating the pegasus configuration.
 processResources {
   filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: ['version': project.version as String])
-}
-
-task resourcesDirWithoutPegasusVersionProperties(type: Sync) {
-  dependsOn processResources
-  description 'Creates a backup of the build/gradle-plugins/resources/main/ folder, ' +
-          'but excluding pegasus-version.properties. ' +
-          'This allows testing the version of pegasus jars in the current build.'
-
-  from(sourceSets.main.output.resourcesDir) {
-    exclude 'pegasus-version.properties'
-  }
-  into "$buildDir/$name"
-}
-
-tasks.pluginUnderTestMetadata {
-  dependsOn tasks.resourcesDirWithoutPegasusVersionProperties
-
-  // allows us to test plugin application without the unpublished version set in pegasus-version.properties
-  // also we add the localLibsForTesting to avoid leaking dependencies in published metadata
-  pluginClasspath.setFrom(files(sourceSets.main.java.outputDir, sourceSets.main.groovy.outputDir, tasks.resourcesDirWithoutPegasusVersionProperties))
 }
 
 integTest {

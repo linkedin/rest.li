@@ -28,13 +28,13 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.EpollDomainSocketChannel;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import java.net.SocketAddress;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+import org.apache.commons.lang.StringUtils;
 
 
 /**
@@ -116,8 +116,8 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
     _maxContentLength = maxContentLength;
     _tcpNoDelay = tcpNoDelay;
 
-    Bootstrap bootstrap = !org.apache.commons.lang.StringUtils.isEmpty(udsAddress) ?
-        new Bootstrap().channel(EpollDomainSocketChannel.class): new Bootstrap().channel(NioSocketChannel.class);
+    Bootstrap bootstrap = !StringUtils.isEmpty(udsAddress) ?
+        new Bootstrap().channel(getDomainSocketClass()) : new Bootstrap().channel(NioSocketChannel.class);
 
     _bootstrap = bootstrap
         .group(eventLoopGroup)

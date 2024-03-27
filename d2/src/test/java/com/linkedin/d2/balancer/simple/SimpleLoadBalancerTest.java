@@ -16,15 +16,14 @@
 
 package com.linkedin.d2.balancer.simple;
 
-
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.KeyMapper;
-import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.LoadBalancerState;
+import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.LoadBalancerTestState;
 import com.linkedin.d2.balancer.PartitionedLoadBalancerTestState;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
@@ -112,17 +111,17 @@ import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor.*;
+import static org.mockito.Mockito.*;
+import static org.testng.Assert.*;
+
 
 public class SimpleLoadBalancerTest
 {
@@ -130,6 +129,18 @@ public class SimpleLoadBalancerTest
   private static final String CLUSTER1_NAME = "cluster-1";
   private static final String DARK_CLUSTER1_NAME = CLUSTER1_NAME + "-dark";
   private static final String NONEXISTENT_CLUSTER = "nonexistent_cluster";
+  private static final String SERVICE_NAME = "foo";
+  private static final ServiceProperties SERVICE_PROPERTIES =
+      new ServiceProperties(SERVICE_NAME, CLUSTER1_NAME, "/" + SERVICE_NAME, Arrays.asList("degrader"),
+          Collections.emptyMap(), null, null, Collections.emptyList(), null);
+
+  private static final ClusterProperties CLUSTER_PROPERTIES =
+      new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(), Collections.emptySet(),
+          NullPartitionProperties.getInstance(), Collections.emptyList(), new HashMap<>(), false);
+
+  private static final UriProperties URI_PROPERTIES = new UriProperties(CLUSTER1_NAME,
+      Collections.singletonMap(URI.create("http://test.qa.com:1234"),
+          Collections.singletonMap(0, new PartitionData(1d))));
 
   private List<File> _dirsToDelete;
 
@@ -425,6 +436,171 @@ public class SimpleLoadBalancerTest
                                                              new HashMap<>(), false));
     Assert.assertEquals(testClusterListener.getClusterAddedCount(CLUSTER1_NAME), 1, "expected unchanged add count of 1 because unregistered ");
     Assert.assertEquals(testClusterListener.getClusterRemovedCount(CLUSTER1_NAME), 0, "expected unchanged remove count of 0 because unregistered");
+  }
+
+  @Test
+  public void testListenToServiceAndClusterTimeout() throws ExecutionException, InterruptedException
+  {
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+    SimpleLoadBalancerState state =
+        spy(new SimpleLoadBalancerState(new SynchronousExecutorService(), uriRegistry, clusterRegistry, serviceRegistry,
+                                        new HashMap<>(), new HashMap<>()));
+    doAnswer(invocation ->
+             {
+               Thread.sleep(10);
+               return null;
+             }).when(state).listenToService(any(), any());
+    SimpleLoadBalancer loadBalancer = spy(new SimpleLoadBalancer(state, 1, TimeUnit.MILLISECONDS, _d2Executor));
+    // case1: listenToService timeout, and simpleLoadBalancer not hit the cache value
+    FutureCallback<ServiceProperties> callback = mock(FutureCallback.class);
+    loadBalancer.listenToServiceAndCluster(SERVICE_NAME, callback);
+    try
+    {
+      callback.get();
+    }
+    catch (Exception e)
+    {
+      Assert.assertTrue(e.getCause() instanceof ServiceUnavailableException);
+    }
+    // Make sure the onError is called with ServiceUnavailableException only once.
+    verify(loadBalancer).handleTimeoutFromGetServiceProperties(eq(SERVICE_NAME), eq(callback));
+    verify(callback).onError(any(ServiceUnavailableException.class));
+
+    // case2: listenToService timeout, and simpleLoadBalancer hit the cache value from state
+    LoadBalancerStateItem<ServiceProperties> serviceItem = new LoadBalancerStateItem<>(SERVICE_PROPERTIES, 1, 1);
+    when(state.getServiceProperties(SERVICE_NAME)).thenReturn(serviceItem);
+    callback = mock(FutureCallback.class);
+    loadBalancer.listenToServiceAndCluster(SERVICE_NAME, callback);
+    // Make sure the onSuccess is called with SERVICE_PROPERTIES only once.
+    callback.get();
+    verify(callback).onSuccess(eq(SERVICE_PROPERTIES));
+
+    // case3: listenToService without timeout
+    serviceRegistry.put(SERVICE_NAME, SERVICE_PROPERTIES);
+    state =
+        spy(new SimpleLoadBalancerState(new SynchronousExecutorService(), uriRegistry, clusterRegistry, serviceRegistry,
+                                        new HashMap<>(), new HashMap<>()));
+    loadBalancer = spy(new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor));
+    callback = mock(FutureCallback.class);
+    loadBalancer.listenToServiceAndCluster(SERVICE_NAME, callback);
+    callback.get();
+    // Make sure there is no timeout.
+    verify(loadBalancer, never()).handleTimeoutFromGetServiceProperties(any(), any());
+    verify(callback).onSuccess(eq(SERVICE_PROPERTIES));
+  }
+
+  @Test
+  public void testGetLoadBalancedClusterAndUriProperties() throws InterruptedException, ExecutionException
+  {
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+    SimpleLoadBalancerState state =
+        spy(new SimpleLoadBalancerState(new SynchronousExecutorService(), uriRegistry, clusterRegistry, serviceRegistry,
+                                        new HashMap<>(), new HashMap<>()));
+
+    doAnswer(invocation ->
+             {
+               Thread.sleep(10);
+               return null;
+             }).when(state).listenToCluster(any(), any());
+
+    SimpleLoadBalancer loadBalancer = spy(new SimpleLoadBalancer(state, 1, TimeUnit.MILLISECONDS, _d2Executor));
+    FutureCallback<Pair<ClusterProperties, UriProperties>> callback = mock(FutureCallback.class);
+    // case1: listenToCluster timeout, and simpleLoadBalancer not hit the cache value
+    loadBalancer.getLoadBalancedClusterAndUriProperties(CLUSTER1_NAME, callback);
+    try
+    {
+      callback.get();
+    }
+    catch (ExecutionException e)
+    {
+      Assert.assertTrue(e.getCause() instanceof ServiceUnavailableException);
+    }
+    verify(loadBalancer).handleTimeoutFromGetClusterAndUriProperties(eq(CLUSTER1_NAME), eq(callback));
+    verify(callback).onError(any(ServiceUnavailableException.class));
+
+    // case2: listenToCluster timeout, and simpleLoadBalancer hit the cache value from state
+    LoadBalancerStateItem<ClusterProperties> clusterItem = new LoadBalancerStateItem<>(CLUSTER_PROPERTIES, 1, 1);
+    LoadBalancerStateItem<UriProperties> uriItem = new LoadBalancerStateItem<>(URI_PROPERTIES, 1, 1);
+    when(state.getClusterProperties(CLUSTER1_NAME)).thenReturn(clusterItem);
+    when(state.getUriProperties(CLUSTER1_NAME)).thenReturn(uriItem);
+    callback = mock(FutureCallback.class);
+    loadBalancer.getLoadBalancedClusterAndUriProperties(CLUSTER1_NAME, callback);
+    callback.get();
+    verify(callback).onSuccess(eq(Pair.of(CLUSTER_PROPERTIES, URI_PROPERTIES)));
+
+
+    // case3: getLoadBalancedClusterAndUriProperties without timeout
+    state =
+        spy(new SimpleLoadBalancerState(new SynchronousExecutorService(), uriRegistry, clusterRegistry, serviceRegistry,
+                                        new HashMap<>(), new HashMap<>()));
+    loadBalancer = spy(new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor));
+    clusterRegistry.put(CLUSTER1_NAME, CLUSTER_PROPERTIES);
+    uriRegistry.put(CLUSTER1_NAME, URI_PROPERTIES);
+    callback = mock(FutureCallback.class);
+    loadBalancer.getLoadBalancedClusterAndUriProperties(CLUSTER1_NAME, callback);
+    callback.get();
+    verify(loadBalancer, never()).handleTimeoutFromGetClusterAndUriProperties(any(), any());
+    verify(callback).onSuccess(eq(Pair.of(CLUSTER_PROPERTIES, URI_PROPERTIES)));
+  }
+
+  @Test
+  public void testGetClusterCountTimeout() throws Exception
+  {
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+    int partitionId = 0;
+
+    SimpleLoadBalancerState state =
+        spy(new SimpleLoadBalancerState(new SynchronousExecutorService(), uriRegistry, clusterRegistry, serviceRegistry,
+                                        new HashMap<>(), new HashMap<>()));
+
+    doAnswer(invocation ->
+             {
+               Thread.sleep(10);
+               return null;
+             }).when(state).listenToCluster(any(), any());
+    SimpleLoadBalancer loadBalancer = spy(new SimpleLoadBalancer(state, 1, TimeUnit.MILLISECONDS, _d2Executor));
+    LoadBalancerStateItem<ClusterProperties> clusterItem = new LoadBalancerStateItem<>(CLUSTER_PROPERTIES, 1, 1);
+    LoadBalancerStateItem<UriProperties> uriItem = new LoadBalancerStateItem<>(URI_PROPERTIES, 1, 1);
+    when(state.getClusterProperties(CLUSTER1_NAME)).thenReturn(clusterItem);
+    when(state.getUriProperties(CLUSTER1_NAME)).thenReturn(uriItem);
+    assertEquals(loadBalancer.getClusterCount(CLUSTER1_NAME, PropertyKeys.HTTP_SCHEME, partitionId), 1);
+    verify(loadBalancer).getClusterCountFromCache(CLUSTER1_NAME, PropertyKeys.HTTP_SCHEME, partitionId);
+  }
+
+  @Test
+  public void testGetDarkClusterConfigMapTimeout() throws Exception
+  {
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+    SimpleLoadBalancerState state =
+        spy(new SimpleLoadBalancerState(new SynchronousExecutorService(), uriRegistry, clusterRegistry, serviceRegistry,
+                                        new HashMap<>(), new HashMap<>()));
+    doAnswer(invocation ->
+             {
+               Thread.sleep(10);
+               return null;
+             }).when(state).listenToCluster(any(), any());
+    SimpleLoadBalancer loadBalancer = spy(new SimpleLoadBalancer(state, 1, TimeUnit.MILLISECONDS, _d2Executor));
+    DarkClusterConfigMap darkClusterConfigMap = new DarkClusterConfigMap();
+    DarkClusterConfig darkClusterConfig = new DarkClusterConfig().setMultiplier(1.0f)
+        .setDispatcherOutboundTargetRate(1)
+        .setDispatcherMaxRequestsToBuffer(1)
+        .setDispatcherBufferedRequestExpiryInSeconds(1);
+    darkClusterConfigMap.put(DARK_CLUSTER1_NAME, darkClusterConfig);
+    when(state.getClusterProperties(CLUSTER1_NAME)).thenReturn(new LoadBalancerStateItem<>(
+        new ClusterProperties(CLUSTER1_NAME, Collections.emptyList(), Collections.emptyMap(), Collections.emptySet(),
+                              NullPartitionProperties.getInstance(), Collections.emptyList(),
+                              DarkClustersConverter.toProperties(darkClusterConfigMap), false), 1, 1));
+    DarkClusterConfigMap result = loadBalancer.getDarkClusterConfigMap(CLUSTER1_NAME);
+    verify(loadBalancer).getDarkClusterConfigMapFromCache(CLUSTER1_NAME);
+    assertEquals(result, darkClusterConfigMap);
   }
 
   @Test(groups = { "small", "back-end" })

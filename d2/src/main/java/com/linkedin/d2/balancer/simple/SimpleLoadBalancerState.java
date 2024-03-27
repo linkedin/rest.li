@@ -694,6 +694,11 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     return count;
   }
 
+  public Set<String> getClusters()
+  {
+    return _uriProperties.keySet();
+  }
+
   public Set<String> getServicesForCluster(String clusterName)
   {
     Set<String> services = _servicesPerCluster.get(clusterName);

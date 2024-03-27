@@ -19,7 +19,6 @@ package com.linkedin.d2.xds;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
@@ -31,6 +30,7 @@ import com.linkedin.d2.balancer.properties.UriPropertiesMerger;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
+import com.linkedin.d2.discovery.stores.zk.SymlinkUtil;
 import indis.XdsD2;
 import io.grpc.Status;
 import java.nio.charset.StandardCharsets;
@@ -39,36 +39,41 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
 public class XdsToD2PropertiesAdaptor
 {
-  private static final Logger _log = LoggerFactory.getLogger(XdsToD2PropertiesAdaptor.class);
+  private static final Logger LOG = LoggerFactory.getLogger(XdsToD2PropertiesAdaptor.class);
   private static final String D2_CLUSTER_NODE_PREFIX = "/d2/clusters/";
   private static final String D2_SERVICE_NODE_PREFIX = "/d2/services/";
   private static final String D2_URI_NODE_PREFIX = "/d2/uris/";
-  private static final char SYMLINK_NODE_IDENTIFIER = '$';
   private static final char PATH_SEPARATOR = '/';
   private static final String NON_EXISTENT_CLUSTER = "NonExistentCluster";
 
   private final XdsClient _xdsClient;
-  private final List<XdsConnectionListener> _xdsConnectionListeners;
+  private final List<XdsConnectionListener> _xdsConnectionListeners = Collections.synchronizedList(new ArrayList<>());
 
-  private final ServicePropertiesJsonSerializer _servicePropertiesJsonSerializer;
-  private final ClusterPropertiesJsonSerializer _clusterPropertiesJsonSerializer;
-  private final UriPropertiesJsonSerializer _uriPropertiesJsonSerializer;
-  private final UriPropertiesMerger _uriPropertiesMerger;
+  private final ServicePropertiesJsonSerializer _servicePropertiesJsonSerializer = new ServicePropertiesJsonSerializer();
+  private final ClusterPropertiesJsonSerializer _clusterPropertiesJsonSerializer = new ClusterPropertiesJsonSerializer();
+  private final UriPropertiesJsonSerializer _uriPropertiesJsonSerializer = new UriPropertiesJsonSerializer();
+  private final UriPropertiesMerger _uriPropertiesMerger = new UriPropertiesMerger();
   private final DualReadStateManager _dualReadStateManager;
-  private final ConcurrentMap<String, XdsClient.NodeResourceWatcher> _watchedClusterResources;
-  private final ConcurrentMap<String, XdsClient.SymlinkNodeResourceWatcher> _watchedSymlinkResources;
-  private final ConcurrentMap<String, XdsClient.NodeResourceWatcher> _watchedServiceResources;
-  private final ConcurrentMap<String, XdsClient.D2URIMapResourceWatcher> _watchedUriResources;
+  private final ConcurrentMap<String, XdsClient.NodeResourceWatcher> _watchedClusterResources =
+      new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, XdsClient.NodeResourceWatcher> _watchedSymlinkResources =
+      new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, XdsClient.NodeResourceWatcher> _watchedServiceResources =
+      new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, XdsClient.ResourceWatcher> _watchedUriResources =
+      new ConcurrentHashMap<>();
   // Mapping between a symlink name, like "$FooClusterMaster" and the actual node name it's pointing to, like
   // "FooCluster-prod-ltx1".
   // (Note that this name does NOT include the full path so that it works for both cluster symlink
@@ -81,7 +86,8 @@ public class XdsToD2PropertiesAdaptor
   private final Object _symlinkAndActualNodeLock = new Object();
   private final ServiceDiscoveryEventEmitter _eventEmitter;
 
-  private Boolean _isAvailable;
+  // set to null so that the first notification on connection establishment success/failure is always sent
+  private Boolean _isAvailable = null;
   private PropertyEventBus<UriProperties> _uriEventBus;
   private PropertyEventBus<ServiceProperties> _serviceEventBus;
   private PropertyEventBus<ClusterProperties> _clusterEventBus;
@@ -91,17 +97,6 @@ public class XdsToD2PropertiesAdaptor
   {
     _xdsClient = xdsClient;
     _dualReadStateManager = dualReadStateManager;
-    _xdsConnectionListeners = Collections.synchronizedList(new ArrayList<>());
-    _servicePropertiesJsonSerializer = new ServicePropertiesJsonSerializer();
-    _clusterPropertiesJsonSerializer = new ClusterPropertiesJsonSerializer();
-    _uriPropertiesJsonSerializer = new UriPropertiesJsonSerializer();
-    _uriPropertiesMerger = new UriPropertiesMerger();
-    // set to null so that the first notification on connection establishment success/failure is always sent
-    _isAvailable = null;
-    _watchedClusterResources = new ConcurrentHashMap<>();
-    _watchedSymlinkResources = new ConcurrentHashMap<>();
-    _watchedServiceResources = new ConcurrentHashMap<>();
-    _watchedUriResources = new ConcurrentHashMap<>();
     _eventEmitter = eventEmitter;
   }
 
@@ -143,7 +138,7 @@ public class XdsToD2PropertiesAdaptor
   {
     // if cluster name is a symlink, watch for D2SymlinkNode instead
     String resourceName = D2_CLUSTER_NODE_PREFIX + clusterName;
-    if (isSymlinkNode(clusterName))
+    if (SymlinkUtil.isSymlinkNodeOrPath(clusterName))
     {
       listenToSymlink(clusterName, resourceName);
     }
@@ -152,7 +147,7 @@ public class XdsToD2PropertiesAdaptor
       _watchedClusterResources.computeIfAbsent(clusterName, k ->
       {
         XdsClient.NodeResourceWatcher watcher = getClusterResourceWatcher(clusterName);
-        _xdsClient.watchXdsResource(resourceName, XdsClient.ResourceType.NODE, watcher);
+        _xdsClient.watchXdsResource(resourceName, watcher);
         return watcher;
       });
     }
@@ -162,7 +157,7 @@ public class XdsToD2PropertiesAdaptor
   {
     // if cluster name is a symlink, watch for D2SymlinkNode instead
     String resourceName = D2_URI_NODE_PREFIX + clusterName;
-    if (isSymlinkNode(clusterName))
+    if (SymlinkUtil.isSymlinkNodeOrPath(clusterName))
     {
       listenToSymlink(clusterName, resourceName);
     }
@@ -171,7 +166,7 @@ public class XdsToD2PropertiesAdaptor
       _watchedUriResources.computeIfAbsent(clusterName, k ->
       {
         XdsClient.D2URIMapResourceWatcher watcher = getUriResourceWatcher(clusterName);
-        _xdsClient.watchXdsResource(resourceName, XdsClient.ResourceType.D2_URI_MAP, watcher);
+        _xdsClient.watchXdsResource(resourceName, watcher);
         return watcher;
       });
     }
@@ -182,14 +177,9 @@ public class XdsToD2PropertiesAdaptor
     _watchedServiceResources.computeIfAbsent(serviceName, k ->
     {
       XdsClient.NodeResourceWatcher watcher = getServiceResourceWatcher(serviceName);
-      _xdsClient.watchXdsResource(D2_SERVICE_NODE_PREFIX + serviceName, XdsClient.ResourceType.NODE, watcher);
+      _xdsClient.watchXdsResource(D2_SERVICE_NODE_PREFIX + serviceName, watcher);
       return watcher;
     });
-  }
-
-  private static boolean isSymlinkNode(String nodeNameOrPath)
-  {
-    return nodeNameOrPath != null && nodeNameOrPath.indexOf(SYMLINK_NODE_IDENTIFIER) >= 0;
   }
 
   private void listenToSymlink(String name, String fullResourceName)
@@ -199,8 +189,8 @@ public class XdsToD2PropertiesAdaptor
     _watchedSymlinkResources.computeIfAbsent(fullResourceName, k ->
     {
       // use symlink name "$FooClusterMaster" to create the watcher
-      XdsClient.SymlinkNodeResourceWatcher watcher = getSymlinkResourceWatcher(name);
-      _xdsClient.watchXdsResource(k, XdsClient.ResourceType.NODE, watcher);
+      XdsClient.NodeResourceWatcher watcher = getSymlinkResourceWatcher(fullResourceName, name);
+      _xdsClient.watchXdsResource(k, watcher);
       return watcher;
     });
   }
@@ -223,9 +213,13 @@ public class XdsToD2PropertiesAdaptor
               _dualReadStateManager.reportData(serviceName, serviceProperties, true);
             }
           }
-          catch (PropertySerializationException e)
+          catch (Exception e)
           {
-            _log.error("Failed to parse D2 service properties from xDS update. Service name: " + serviceName, e);
+            // still notify event bus to avoid timeout in case some subscribers are waiting for the data
+            LOG.warn(
+                "Failed to parse D2 service properties from xDS update. Service name: {}.  Publishing null to event bus",
+                serviceName);
+            _serviceEventBus.publishInitialize(serviceName, null);
           }
         }
       }
@@ -256,31 +250,42 @@ public class XdsToD2PropertiesAdaptor
           try
           {
             ClusterProperties clusterProperties = toClusterProperties(update.getNodeData());
-            // For symlink clusters, ClusterLoadBalancerSubscriber subscribed to the symlinks, instead of the actual node, in event bus,
-            // so we need to publish under the symlink names. Also, rarely and possibly, the original cluster could have subscribers
-            // too when calls are made directly to the original cluster, so we publish for it too.
+            // For symlink clusters, ClusterLoadBalancerSubscriber subscribed to the symlinks ($FooClusterMaster) instead of
+            // the original cluster (FooCluster-prod-ltx1) in event bus, so we need to publish under the symlink names.
+            // Also, rarely but possibly, calls can be made directly to the colo-suffixed service (FooService-prod-ltx1) under
+            // the original cluster (FooCluster-prod-ltx1) via curli, hard-coded custom code, etc, so there could be direct
+            // subscribers to the original cluster, thus we need to publish under the original cluster too.
+            //
             // For other clusters, publish under its original name. Note that these clusters could be either:
             // 1) regular clusters requested normally.
             // 2) clusters that were pointed by a symlink previously, but no longer the case after the symlink points to other clusters.
             // For case #2: the symlinkAndActualNode map will no longer has an entry for this cluster (removed in
             // D2SymlinkNodeResourceWatcher::onChanged), thus the updates will be published under the original cluster name
-            // (like "FooCluster-prod-ltx1"), which has no symlink subscribers anyway, so no harm to publish.
-            _clusterEventBus.publishInitialize(clusterName, clusterProperties);
+            // (like "FooCluster-prod-ltx1") in case there are direct subscribers.
             String symlinkName = getSymlink(clusterName);
             if (symlinkName != null)
             {
-              _clusterEventBus.publishInitialize(symlinkName, clusterProperties);
+              publishClusterData(symlinkName, clusterProperties);
             }
-
-            if (_dualReadStateManager != null)
-            {
-              _dualReadStateManager.reportData(clusterName, clusterProperties, true);
-            }
+            publishClusterData(clusterName, clusterProperties);
           }
-          catch (PropertySerializationException e)
+          catch (Exception e)
           {
-            _log.error("Failed to parse D2 cluster properties from xDS update. Cluster name: " + clusterName, e);
+            // still notify event bus to avoid timeout in case some subscribers are waiting for the data
+            LOG.warn(
+                "Failed to parse D2 cluster properties from xDS update. Cluster name: {}, Publishing null to event bus",
+                clusterName);
+            _clusterEventBus.publishInitialize(clusterName, null);
           }
+        }
+      }
+
+      private void publishClusterData(String clusterName, ClusterProperties properties)
+      {
+        _clusterEventBus.publishInitialize(clusterName, properties);
+        if (_dualReadStateManager != null)
+        {
+          _dualReadStateManager.reportData(clusterName, properties, true);
         }
       }
 
@@ -303,24 +308,34 @@ public class XdsToD2PropertiesAdaptor
     return new UriPropertiesResourceWatcher(clusterName);
   }
 
-  XdsClient.SymlinkNodeResourceWatcher getSymlinkResourceWatcher(String symlinkName)
+  XdsClient.NodeResourceWatcher getSymlinkResourceWatcher(String resourceName, String symlinkName)
   {
-    return new XdsClient.SymlinkNodeResourceWatcher()
+    return new XdsClient.NodeResourceWatcher()
     {
       @Override
-      public void onChanged(String resourceName, XdsClient.NodeUpdate update)
+      public void onChanged(XdsClient.NodeUpdate update)
       {
         // Update maps between symlink name and actual node name
-        String actualResourceName = update.getNodeData().getData().toString(StandardCharsets.UTF_8);
-        String actualNodeName = getNodeName(actualResourceName);
-        updateSymlinkAndActualNodeMap(symlinkName, actualNodeName);
-        // listen to the actual nodes
-        // Note: since cluster symlink and uri parent symlink always point to the same actual node name, and it's a
-        // redundancy and a burden for the symlink-update tool to maintain two symlinks for the same actual node name,
-        // we optimize here to use the cluster symlink to listen to the actual nodes for both cluster
-        // and uri parent.
-        listenToCluster(actualNodeName);
-        listenToUris(actualNodeName);
+        try
+        {
+          String actualResourceName = update.getNodeData().getData().toString(StandardCharsets.UTF_8);
+          String actualNodeName = getNodeName(actualResourceName);
+          updateSymlinkAndActualNodeMap(symlinkName, actualNodeName);
+          // listen to the actual nodes
+          // Note: since cluster symlink and uri parent symlink always point to the same actual node name, and it's a
+          // redundancy and a burden for the symlink-update tool to maintain two symlinks for the same actual node name,
+          // we optimize here to use the cluster symlink to listen to the actual nodes for both cluster
+          // and uri parent.
+          listenToCluster(actualNodeName);
+          listenToUris(actualNodeName);
+        }
+        catch (Exception e)
+        {
+          if (resourceName.startsWith(D2_CLUSTER_NODE_PREFIX))
+          {
+            LOG.error("Failed to parse cluster symlink data from xDS update. Symlink name: {}", symlinkName, e);
+          }
+        }
       }
 
       @Override
@@ -343,8 +358,18 @@ public class XdsToD2PropertiesAdaptor
     }
   }
 
-  private String getSymlink(String actualNodeName) {
-    synchronized (_symlinkAndActualNodeLock) {
+  private String removeSymlink(String symlinkName)
+  {
+    synchronized (_symlinkAndActualNodeLock)
+    {
+      return _symlinkAndActualNode.remove(symlinkName);
+    }
+  }
+
+  private String getSymlink(String actualNodeName)
+  {
+    synchronized (_symlinkAndActualNodeLock)
+    {
       return _symlinkAndActualNode.inverse().get(actualNodeName);
     }
   }
@@ -389,28 +414,27 @@ public class XdsToD2PropertiesAdaptor
         clusterProperties.getStat().getMzxid());
   }
 
-  private Map<String, UriProperties> toUriProperties(Map<String, XdsD2.D2URI> uriDataMap)
-      throws PropertySerializationException
-  {
-    Map<String, UriProperties> parsedMap = new HashMap<>();
-
-    for (Map.Entry<String, XdsD2.D2URI> entry : uriDataMap.entrySet())
-    {
-      XdsD2.D2URI d2URI = entry.getValue();
-      UriProperties uriProperties = _uriPropertiesJsonSerializer.fromProto(d2URI);
-      parsedMap.put(entry.getKey(), uriProperties);
-    }
-
-    return parsedMap;
-  }
-
-  private class UriPropertiesResourceWatcher implements XdsClient.D2URIMapResourceWatcher
+  private class UriPropertiesResourceWatcher extends XdsClient.D2URIMapResourceWatcher
   {
     final String _clusterName;
     final AtomicBoolean _isInit;
     final long _initFetchStart;
 
-    Map<String, UriProperties> _currentData = new HashMap<>();
+    Map<String, XdsAndD2Uris> _currentData = new HashMap<>();
+
+    private class XdsAndD2Uris
+    {
+      final String _uriName;
+      final XdsD2.D2URI _xdsUri;
+      final UriProperties _d2Uri;
+
+      XdsAndD2Uris(String uriName, XdsD2.D2URI xdsUri, UriProperties d2Uri)
+      {
+        _uriName = uriName;
+        _xdsUri = xdsUri;
+        _d2Uri = d2Uri;
+      }
+    }
 
     public UriPropertiesResourceWatcher(String clusterName)
     {
@@ -419,16 +443,6 @@ public class XdsToD2PropertiesAdaptor
       _initFetchStart = System.nanoTime();
     }
 
-    // For symlink clusters, UriLoadBalancerSubscriber subscribed to the symlinks, instead of the actual node, in event bus,
-    // so we need to publish under the symlink names. Also, rarely but possibly, the original cluster could have subscribers
-    // too when calls are made directly to the original cluster, so we publish for it too.
-    // For other clusters, publish under its original name. Note that these clusters could be either:
-    // 1) regular clusters requested normally.
-    // 2) clusters that were pointed by a symlink previously, but no longer the case after the symlink points to other clusters.
-    // For case #2: the actualResourceToSymlink map will no longer has an entry for this cluster (removed in
-    // D2SymlinkNodeResourceWatcher::onChanged), thus the updates will be published under the original cluster name
-    // (like "FooCluster-prod-ltx1"), which has no subscribers anyway, so no harm to publish. Yet, we still emit the tracking
-    // events about receiving uri updates of this cluster for measuring update propagation latencies.
     @Override
     public void onChanged(XdsClient.D2URIMapUpdate update)
     {
@@ -437,35 +451,92 @@ public class XdsToD2PropertiesAdaptor
       {
         emitSDStatusInitialRequestEvent(_clusterName, true);
       }
+      Map<String, XdsAndD2Uris> updates;
+      try
+      {
+        updates = update.getURIMap().entrySet().stream().collect(Collectors.toMap(
+            // for ZK data, the uri name has a unique number suffix (e.g: ltx1-app2253-0000000554),
+            // but Kafka data uri name is just the uri string,
+            // appending the version number will differentiate announcements made
+            // for the same uri (in case that an uri was de-announced then re-announced quickly).
+            e -> e.getKey() + e.getValue().getVersion(), e ->
+            {
+              UriProperties d2Uri = toUriProperties(e.getKey(), e.getValue());
+              return d2Uri == null ? null : new XdsAndD2Uris(e.getKey(), e.getValue(), d2Uri);
+            }));
+        updates.values().removeIf(Objects::isNull);
+      }
+      catch (Exception e)
+      {
+        LOG.warn("Failed to parse D2 uri properties from xDS update. Cluster name: {}.  Publishing null to event bus",
+            _clusterName);
+        _uriEventBus.publishInitialize(_clusterName, null);
+        return;
+      }
+
+      if (!isInit)
+      {
+        emitSDStatusUpdateReceiptEvents(updates);
+      }
+      _currentData = updates;
+
+      // For symlink clusters, UriLoadBalancerSubscriber subscribed to the symlinks ($FooClusterMaster) instead of
+      // the original cluster (FooCluster-prod-ltx1) in event bus, so we need to publish under the symlink names.
+      // Also, rarely but possibly, calls can be made directly to the colo-suffixed service (FooService-prod-ltx1) under
+      // the original cluster (FooCluster-prod-ltx1) via curli, hard-coded custom code, etc, so there could be direct
+      // subscribers to the original cluster, thus we need to publish under the original cluster too.
+      //
+      // For other clusters, publish under its original name. Note that these clusters could be either:
+      // 1) regular clusters requested normally.
+      // 2) clusters that were pointed by a symlink previously, but no longer the case after the symlink points to other clusters.
+      // For case #2: the symlinkAndActualNode map will no longer has an entry for this cluster (removed in
+      // D2SymlinkNodeResourceWatcher::onChanged), thus the updates will be published under the original cluster name
+      // (like "FooCluster-prod-ltx1") in case there are direct subscribers.
+      String symlinkName = getSymlink(_clusterName);
+      if (symlinkName != null)
+      {
+        mergeAndPublishUris(symlinkName); // under symlink name, merge data and publish it
+      }
+      mergeAndPublishUris(_clusterName); // under original cluster name, merge data and publish it
+    }
+
+    private UriProperties toUriProperties(String uriName, XdsD2.D2URI xdsUri)
+    {
+      UriProperties uriProperties = null;
+      try {
+        uriProperties = _uriPropertiesJsonSerializer.fromProto(xdsUri);
+        if (uriProperties.getVersion() < 0)
+        {
+          LOG.warn("xDS data: {} for uri: {} in cluster: {} has invalid version: {}",
+              xdsUri, uriName, _clusterName, uriProperties.getVersion());
+        }
+      }
+      catch (PropertySerializationException e)
+      {
+        LOG.error(String.format("Failed to parse D2 uri properties for uri: %s in cluster: %s from xDS data: %s",
+            uriName, _clusterName, xdsUri), e);
+      }
+
+      return uriProperties;
+    }
+
+    private void mergeAndPublishUris(String clusterName)
+    {
+      UriProperties mergedUriProperties = _uriPropertiesMerger.merge(clusterName,
+          _currentData.values().stream().map(xdsAndD2Uris -> xdsAndD2Uris._d2Uri).collect(Collectors.toList()));
+      if (mergedUriProperties.getVersion() == -1)
+      {
+        LOG.warn("xDS UriProperties has invalid version -1. Raw uris: {}", _currentData.values());
+      }
 
       if (_uriEventBus != null)
       {
-        try
-        {
-          Map<String, UriProperties> updates = toUriProperties(update.getURIMap());
-          if (!isInit)
-          {
-            emitSDStatusUpdateReceiptEvents(updates);
-          }
-          _currentData = updates;
-          UriProperties mergedUriProperties = _uriPropertiesMerger.merge(_clusterName, _currentData.values());
+        _uriEventBus.publishInitialize(clusterName, mergedUriProperties);
+      }
 
-          _uriEventBus.publishInitialize(_clusterName, mergedUriProperties);
-          String symlinkName = getSymlink(_clusterName);
-          if (symlinkName != null)
-          {
-            _uriEventBus.publishInitialize(symlinkName, mergedUriProperties);
-          }
-
-          if (_dualReadStateManager != null)
-          {
-            _dualReadStateManager.reportData(_clusterName, mergedUriProperties, true);
-          }
-        }
-        catch (PropertySerializationException e)
-        {
-          _log.error("Failed to parse D2 uri properties from xDS update. Cluster name: " + _clusterName, e);
-        }
+      if (_dualReadStateManager != null)
+      {
+        _dualReadStateManager.reportData(clusterName, mergedUriProperties, true);
       }
     }
 
@@ -489,7 +560,7 @@ public class XdsToD2PropertiesAdaptor
     {
       if (_eventEmitter == null)
       {
-        _log.info("Service discovery event emitter in XdsToD2PropertiesAdaptor is null. Skipping emitting events.");
+        LOG.info("Service discovery event emitter in XdsToD2PropertiesAdaptor is null. Skipping emitting events.");
         return;
       }
 
@@ -497,7 +568,7 @@ public class XdsToD2PropertiesAdaptor
       long initialFetchDurationMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - _initFetchStart);
       if (initialFetchDurationMillis < 0)
       {
-        _log.warn("Failed to log ServiceDiscoveryStatusInitialRequest event, initialFetchStartAt time is greater than current time.");
+        LOG.warn("Failed to log ServiceDiscoveryStatusInitialRequest event, initialFetchStartAt time is greater than current time.");
         return;
       }
       // emit service discovery status initial request event for success
@@ -505,30 +576,32 @@ public class XdsToD2PropertiesAdaptor
 
     }
 
-    private void emitSDStatusUpdateReceiptEvents(Map<String, UriProperties> updates)
+    private void emitSDStatusUpdateReceiptEvents(Map<String, XdsAndD2Uris> updates)
     {
       if (_eventEmitter == null)
       {
-        _log.info("Service discovery event emitter in XdsToD2PropertiesAdaptor is null. Skipping emitting events.");
+        LOG.info("Service discovery event emitter in XdsToD2PropertiesAdaptor is null. Skipping emitting events.");
         return;
       }
 
       long timestamp = System.currentTimeMillis();
 
-      MapDifference<String, UriProperties> mapDifference = Maps.difference(_currentData, updates);
-      Map<String, UriProperties> markedDownUris = mapDifference.entriesOnlyOnLeft();
-      Map<String, UriProperties> markedUpUris = mapDifference.entriesOnlyOnRight();
+      MapDifference<String, XdsAndD2Uris> mapDifference = Maps.difference(_currentData, updates);
+      Map<String, XdsAndD2Uris> markedDownUris = mapDifference.entriesOnlyOnLeft();
+      Map<String, XdsAndD2Uris> markedUpUris = mapDifference.entriesOnlyOnRight();
 
       emitSDStatusUpdateReceiptEvents(markedUpUris, true, timestamp);
       emitSDStatusUpdateReceiptEvents(markedDownUris, false, timestamp);
     }
 
-    private void emitSDStatusUpdateReceiptEvents(Map<String, UriProperties> updates, boolean isMarkUp, long timestamp)
+    private void emitSDStatusUpdateReceiptEvents(Map<String, XdsAndD2Uris> updates, boolean isMarkUp, long timestamp)
     {
-      updates.forEach((nodeName, data) ->
+      updates.values().forEach(xdsAndD2Uris ->
       {
-        String nodePath = D2_URI_NODE_PREFIX + _clusterName + "/" + nodeName;
-        data.Uris().forEach(uri ->
+        UriProperties d2Uri = xdsAndD2Uris._d2Uri;
+        XdsD2.D2URI xdsUri = xdsAndD2Uris._xdsUri;
+        String nodePath = D2_URI_NODE_PREFIX + _clusterName + "/" + xdsAndD2Uris._uriName;
+        d2Uri.Uris().forEach(uri ->
             _eventEmitter.emitSDStatusUpdateReceiptEvent(
                 _clusterName,
                 uri.getHost(),
@@ -538,9 +611,9 @@ public class XdsToD2PropertiesAdaptor
                 true,
                 _xdsClient.getXdsServerAuthority(),
                 nodePath,
-                data.toString(),
-                0,
-                nodePath,
+                d2Uri.toString(),
+                (int) xdsUri.getVersion(),
+                xdsUri.getTracingId(),
                 timestamp)
         );
       });

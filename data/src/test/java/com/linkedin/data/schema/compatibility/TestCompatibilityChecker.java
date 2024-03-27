@@ -491,7 +491,6 @@ public class TestCompatibilityChecker
         "[ { \"type\" : \"enum\", \"name\" : \"a.b.Enum\", \"symbols\" : [ \"B\", \"D\", \"E\" ] } ]",
         _dataAndSchema,
         true,
-        "ERROR :: BREAKS_OLD_READER :: /union/a.b.Enum/symbols :: new enum added symbols E",
         "ERROR :: BREAKS_NEW_READER :: /union/a.b.Enum/symbols :: new enum removed symbols A, C"
       },
       {
@@ -499,7 +498,6 @@ public class TestCompatibilityChecker
         "[ \"string\", { \"type\" : \"enum\", \"name\" : \"a.b.Enum\", \"symbols\" : [ \"B\", \"D\", \"E\" ] }, \"int\" ]",
         _dataAndSchema,
         true,
-        "ERROR :: BREAKS_OLD_READER :: /union/a.b.Enum/symbols :: new enum added symbols E",
         "ERROR :: BREAKS_NEW_READER :: /union/a.b.Enum/symbols :: new enum removed symbols A, C"
       },
       {
@@ -787,7 +785,6 @@ public class TestCompatibilityChecker
         "{ \"type\" : \"enum\", \"name\" : \"a.b.Enum\", \"symbols\" : [ \"B\", \"D\", \"E\" ] }",
         _dataAndSchema,
         true,
-        "ERROR :: BREAKS_OLD_READER :: /a.b.Enum/symbols :: new enum added symbols E",
         "ERROR :: BREAKS_NEW_READER :: /a.b.Enum/symbols :: new enum removed symbols A, C"
       },
       {

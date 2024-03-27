@@ -23,9 +23,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class UriPropertiesMerger implements ZooKeeperPropertyMerger<UriProperties>
 {
+  private static final Logger LOG = LoggerFactory.getLogger(UriPropertiesMerger.class);
+
   @Override
   public UriProperties merge(String propertyName, Collection<UriProperties> propertiesToMerge)
   {

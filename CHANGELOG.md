@@ -14,8 +14,98 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.48.7] - 2023-12-13
+## [29.51.14] - 2024-03-27
 - Support translating default values for optional non-record/union fields to Avro (when TRANSLATE_DEFAULT is enabled). 
+
+## [29.51.13] - 2024-03-26
+Upgrade the io.envoyproxy.controlplane module to 0.1.35
+
+## [29.51.12] - 2024-03-22
+- Address the multiple onError calls in dual read and enhance unit test rigorously
+
+## [29.51.11] - 2024-03-20
+- Glob collections support
+
+## [29.51.10] - 2024-03-20
+- Fix null guard log issue
+
+## [29.51.9] - 2024-03-19
+- Fix StateUpdater memory leak issue
+
+## [29.51.8] - 2024-03-13
+- Null data guard for D2 cache and fix timeout issue for INDIS response
+
+## [29.51.7] - 2024-03-13
+- clarify dual read error messages
+
+## [29.51.6] - 2024-03-04
+- shut down dualread executor properly and guard for rejected execution exceptions
+
+## [29.51.5] - 2024-02-29
+- increase time between rate limited logging to 10 minutes
+
+## [29.51.4] - 2024-02-29
+- fix newLb executor in dual-read mode shutdown issue
+
+## [29.51.3] - 2024-02-23
+- fix excessive logs in uri data/version mismatch and dual read failure
+
+## [29.51.2] - 2024-02-15
+- use tracingId in xDS flow for SD tracking events
+
+## [29.51.1] - 2024-02-13
+- Default back to pick_first policy
+
+## [29.51.0] - 2024-02-06
+- Minor version bump due to dropping support to Gradle versions below 6.9.4.
+- Make rest.li codebase use Gradle 6.9.4 to build itself
+- Make PegasusPlugin compatible with all Gradle version from 6.9.4 to 8.5
+
+## [29.50.1] - 2024-01-31
+- Fix r2-netty illegal state exception due to premature channel recycling.
+
+## [29.50.0] - 2024-01-31
+- Minor version bump due to internal LinkedIn tooling requirement. No functional changes.
+
+## [29.49.9] - 2024-01-26
+- Introduce new config to randomly pick the xDS server host
+
+## [29.49.8] - 2024-01-19
+- add WIRE_COMPATIBLE compatility checker mode.
+
+## [29.49.7] - 2024-01-18
+adjust dual read monitoring data match logic and log rate limiter
+
+## [29.49.6] - 2024-01-12
+- fix dualread monitoring log
+
+## [29.49.5] - 2024-01-11
+- Added KQueue support for domain sockets.
+
+## [29.49.4] - 2024-01-04
+- Make warm-up to respect dual read mode, and separate warmup configs for indis.
+
+## [29.49.3] - 2024-01-03
+- Fix rate limiter for dual-read mode switch
+
+## [29.49.2] - 2024-01-02
+- add back publish original cluster for symlink cluster
+
+## [29.49.1] - 2023-12-21
+- Use a separate indis warmup executor service
+
+## [29.49.0] - 2023-12-21
+- Bump minor version due to internal LinkedIn tooling requirement. No functional changes.
+
+## [29.48.9] - 2023-12-20
+- No-op proxy detector for xDS gRPC channel builder.
+- Warning for unsupported `zero-allocation-hashing` library versions.
+
+## [29.48.8] - 2023-12-19
+- add warn logs about invalid property versions
+
+## [29.48.7] - 2023-12-13
+- fix publishing uri and cluster properties for symlink clusters
 
 ## [29.48.6] - 2023-12-12
 - Rename next to nextPageToken in standardized models for cursor based pagination
@@ -5584,7 +5674,39 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
+<<<<<<< HEAD
 [Unreleased]: https://github.com/linkedin/rest.li/compare/v29.48.7...master
+=======
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.51.13...master
+[29.51.13]: https://github.com/linkedin/rest.li/compare/v29.51.12...v29.51.13
+[29.51.12]: https://github.com/linkedin/rest.li/compare/v29.51.11...v29.51.12
+[29.51.11]: https://github.com/linkedin/rest.li/compare/v29.51.10...v29.51.11
+[29.51.10]: https://github.com/linkedin/rest.li/compare/v29.51.9...v29.51.10
+[29.51.9]: https://github.com/linkedin/rest.li/compare/v29.51.8...v29.51.9
+[29.51.8]: https://github.com/linkedin/rest.li/compare/v29.51.7...v29.51.8
+[29.51.7]: https://github.com/linkedin/rest.li/compare/v29.51.6...v29.51.7
+[29.51.6]: https://github.com/linkedin/rest.li/compare/v29.51.5...v29.51.6
+[29.51.5]: https://github.com/linkedin/rest.li/compare/v29.51.4...v29.51.5
+[29.51.4]: https://github.com/linkedin/rest.li/compare/v29.51.3...v29.51.4
+[29.51.3]: https://github.com/linkedin/rest.li/compare/v29.51.2...v29.51.3
+[29.51.2]: https://github.com/linkedin/rest.li/compare/v29.51.1...v29.51.2
+[29.51.1]: https://github.com/linkedin/rest.li/compare/v29.51.0...v29.51.1
+[29.51.0]: https://github.com/linkedin/rest.li/compare/v29.50.1...v29.51.0
+[29.50.1]: https://github.com/linkedin/rest.li/compare/v29.50.0...v29.50.1
+[29.50.0]: https://github.com/linkedin/rest.li/compare/v29.49.9...v29.50.0
+[29.49.9]: https://github.com/linkedin/rest.li/compare/v29.49.8...v29.49.9
+[29.49.8]: https://github.com/linkedin/rest.li/compare/v29.49.7...v29.49.8
+[29.49.7]: https://github.com/linkedin/rest.li/compare/v29.49.6...v29.49.7
+[29.49.6]: https://github.com/linkedin/rest.li/compare/v29.49.5...v29.49.6
+[29.49.5]: https://github.com/linkedin/rest.li/compare/v29.49.4...v29.49.5
+[29.49.4]: https://github.com/linkedin/rest.li/compare/v29.49.3...v29.49.4
+[29.49.3]: https://github.com/linkedin/rest.li/compare/v29.49.2...v29.49.3
+[29.49.2]: https://github.com/linkedin/rest.li/compare/v29.49.1...v29.49.2
+[29.49.1]: https://github.com/linkedin/rest.li/compare/v29.49.0...v29.49.1
+[29.49.0]: https://github.com/linkedin/rest.li/compare/v29.48.9...v29.49.0
+[29.48.9]: https://github.com/linkedin/rest.li/compare/v29.48.8...v29.48.9
+[29.48.8]: https://github.com/linkedin/rest.li/compare/v29.48.7...v29.48.8
+>>>>>>> linkedin/master
 [29.48.7]: https://github.com/linkedin/rest.li/compare/v29.48.6...v29.48.7
 [29.48.6]: https://github.com/linkedin/rest.li/compare/v29.48.5...v29.48.6
 [29.48.5]: https://github.com/linkedin/rest.li/compare/v29.48.4...v29.48.5

@@ -126,8 +126,15 @@ public abstract class AbstractLoadBalancerSubscriber<T> implements
   public void onAdd(final String propertyName, final T propertyValue)
   {
     trace(_log, _name, ".onAdd: ", propertyName, ": ", propertyValue);
-
-    handlePut(propertyName, propertyValue);
+    if (propertyValue != null)
+    {
+      // null value guard to avoid overwriting the property with null
+      handlePut(propertyName, propertyValue);
+    }
+    else
+    {
+      _log.info("Got the null value for property : {}", propertyName);
+    }
 
     // if bad properties are received, then onInitialize()::handlePut might throw an exception and
     // the queue might not be closed. If the queue is not closed, then even if the underlying

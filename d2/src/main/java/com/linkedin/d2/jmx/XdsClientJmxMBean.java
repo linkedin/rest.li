@@ -31,4 +31,7 @@ public interface XdsClientJmxMBean {
   // note: users need to pay attention to disconnected rather than connected state, so setting the metric this way
   // to stress the disconnected state.
   int isDisconnected();
+
+  // when the resource is not found.
+  int getResourceNotFoundCount();
 }

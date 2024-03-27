@@ -54,6 +54,8 @@ public class QuarantineManager {
   private static final long MIN_QUARANTINE_LATENCY_MS = 300;
   private static final long MAX_QUARANTINE_LATENCY_MS = 1000;
 
+  private static final long ERROR_REPORT_PERIOD = 120 * 1000; // Limit error report logging to every 2 min
+
   private final String _serviceName;
   private final String _servicePath;
   private final HealthCheckOperations _healthCheckOperations;
@@ -83,7 +85,7 @@ public class QuarantineManager {
     _clock = clock;
     _updateIntervalMs = updateIntervalMs;
     _relativeLatencyLowThresholdFactor = relativeLatencyLowThresholdFactor;
-    _rateLimitedLogger = new RateLimitedLogger(LOG, RelativeLoadBalancerStrategyFactory.DEFAULT_UPDATE_INTERVAL_MS, clock);
+    _rateLimitedLogger = new RateLimitedLogger(LOG, ERROR_REPORT_PERIOD, clock);
 
     _quarantineEnabled = new AtomicBoolean(false);
     _quarantineRetries = new AtomicInteger(0);

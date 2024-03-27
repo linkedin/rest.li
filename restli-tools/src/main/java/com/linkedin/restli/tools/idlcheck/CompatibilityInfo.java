@@ -28,7 +28,13 @@ public class CompatibilityInfo
   public enum Level
   {
     INCOMPATIBLE,
-    COMPATIBLE
+    COMPATIBLE,
+
+    /**
+     * Old readers can deserialize changes serialized by new writers, but may not be able to handle them correctly.
+     * Currently only used for adding new enum values.
+     **/
+    WIRE_COMPATIBLE
   }
 
   public enum Type
@@ -48,6 +54,7 @@ public class CompatibilityInfo
     TYPE_UNKNOWN(Level.INCOMPATIBLE, "Type cannot be resolved: %s"),
     VALUE_NOT_EQUAL(Level.INCOMPATIBLE, "Current value \"%2$s\" does not match the previous value \"%1$s\""),
     VALUE_WRONG_OPTIONALITY(Level.INCOMPATIBLE, "\"%s\" may not be removed because it exists in the previous version"),
+    ENUM_VALUE_ADDED(Level.WIRE_COMPATIBLE, "%s, new enum value may break old readers"),
     TYPE_BREAKS_OLD_READER(Level.INCOMPATIBLE, "%s, breaks old readers"),
     TYPE_BREAKS_NEW_READER(Level.INCOMPATIBLE, "%s, breaks new readers"),
     TYPE_BREAKS_NEW_AND_OLD_READERS(Level.INCOMPATIBLE, "%s, breaks new and old readers"),

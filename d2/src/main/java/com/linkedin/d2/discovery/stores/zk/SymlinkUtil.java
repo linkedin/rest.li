@@ -64,4 +64,9 @@ public class SymlinkUtil
   {
     return (firstSymlinkIndex(path) < 0) ? false : true;
   }
+
+  public static boolean isSymlinkNodeOrPath(String nodeNameOrPath)
+  {
+    return nodeNameOrPath != null && nodeNameOrPath.indexOf(SYMLINK_PREFIX) >= 0;
+  }
 }

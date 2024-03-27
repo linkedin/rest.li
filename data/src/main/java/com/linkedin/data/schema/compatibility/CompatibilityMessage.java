@@ -73,7 +73,11 @@ public class CompatibilityMessage extends Message
     /**
      * Enum symbol order changed, which is a compatible change.
      */
-    ENUM_SYMBOLS_ORDER_CHANGE(false);
+    ENUM_SYMBOLS_ORDER_CHANGE(false),
+    /**
+     * New enum value added, which is wire compatible change. However, old readers may not be able to handle it.
+     */
+    ENUM_VALUE_ADDED(false);
 
     private final boolean _error;
 
