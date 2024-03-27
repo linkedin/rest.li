@@ -16,6 +16,8 @@
 
 package com.linkedin.data.avro;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.CharStreams;
 import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
 import com.linkedin.avroutil1.compatibility.SchemaParseConfiguration;
 import com.linkedin.data.Data;
@@ -31,6 +33,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -855,8 +859,7 @@ public class TestSchemaTranslator
 
 
   @DataProvider
-  public Object[][] toAvroSchemaData()
-  {
+  public Object[][] toAvroSchemaData() throws IOException {
     final String emptyFooSchema = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ ] }";
     final String emptyFooValue = "{}";
 
@@ -896,20 +899,9 @@ public class TestSchemaTranslator
               null
           },
           {
-              "{\n" + "  \"type\": \"record\",\n" + "  \"name\": \"Outer\",\n" + "  \"namespace\": \"foo\",\n"
-                  + "  \"fields\": [\n" + "    {\n" + "      \"name\": \"f1\",\n" + "      \"type\": {\n"
-                  + "        \"type\": \"record\",\n" + "        \"name\": \"Inner\",\n"
-                  + "        \"namespace\": \"bar\",\n" + "        \"fields\": [\n" + "          {\n"
-                  + "            \"name\": \"innerArray\",\n" + "            \"type\": {\n"
-                  + "              \"type\": \"array\",\n" + "              \"items\": \"string\"\n" + "            },\n"
-                  + "            \"default\": [],\n" + "            \"optional\": true\n" + "          },\n"
-                  + "          {\n" + "            \"name\": \"innerMap\",\n" + "            \"type\": {\n"
-                  + "              \"type\": \"map\",\n" + "              \"values\": \"string\"\n" + "            },\n"
-                  + "            \"default\": {},\n" + "            \"optional\": true\n" + "          }\n"
-                  + "        ]\n" + "      },\n" + "      \"default\": {},\n" + "      \"optional\": true\n" + "    }\n"
-                  + "  ]\n" + "}",
+            getTestResourceAsString("avro/com/linkedin/pegasus/test/NonNullDefaultsTest.avsc"),
               translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"Outer\", \"namespace\" : \"foo\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"Inner\", \"namespace\" : \"bar\", \"fields\" : [ { \"name\" : \"innerArray\", \"type\" : [ { \"type\" : \"array\", \"items\" : \"string\" }, \"null\" ], \"default\" : [  ] }, { \"name\" : \"innerMap\", \"type\" : [ { \"type\" : \"map\", \"values\" : \"string\" }, \"null\" ], \"default\" : {  } } ] }, \"null\" ], \"default\" : { \"innerArray\" : [  ], \"innerMap\" : {  } } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"Outer\", \"namespace\" : \"foo\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"Inner\", \"namespace\" : \"bar\", \"fields\" : [ { \"name\" : \"innerArray\", \"type\" : [ { \"type\" : \"array\", \"items\" : \"string\" }, \"null\" ], \"default\" : [  ] }, { \"name\" : \"innerMap\", \"type\" : [ { \"type\" : \"map\", \"values\" : \"string\" }, \"null\" ], \"default\" : {  } }, { \"name\" : \"innerInt\", \"type\" : \"int\", \"default\" : 0 }, { \"name\" : \"innerString\", \"type\" : [ \"string\", \"null\" ], \"default\" : \"defaultValue\" } ] }, \"null\" ], \"default\" : { \"innerInt\" : 0, \"innerArray\" : [  ], \"innerMap\" : {  }, \"innerString\" : \"defaultValue\" } } ] }",
               null,
               null,
               null
@@ -3451,5 +3443,17 @@ public class TestSchemaTranslator
       sb.append(line + "\n");
     }
     return sb.toString();
+  }
+
+  private InputStream getTestResource(String resourceName) {
+    return getClass().getClassLoader().getResourceAsStream(resourceName);
+  }
+
+  private String getTestResourceAsString(String resourceName) throws IOException {
+    InputStream is = getTestResource(resourceName);
+    if (is == null) {
+      throw new IllegalArgumentException("not found: " + resourceName);
+    }
+    return CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8));
   }
 }
