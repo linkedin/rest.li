@@ -16,6 +16,8 @@
 
 package com.linkedin.data.avro;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.CharStreams;
 import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
 import com.linkedin.avroutil1.compatibility.SchemaParseConfiguration;
 import com.linkedin.data.Data;
@@ -31,6 +33,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -855,8 +859,7 @@ public class TestSchemaTranslator
 
 
   @DataProvider
-  public Object[][] toAvroSchemaData()
-  {
+  public Object[][] toAvroSchemaData() throws IOException {
     final String emptyFooSchema = "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ ] }";
     final String emptyFooValue = "{}";
 
@@ -891,6 +894,14 @@ public class TestSchemaTranslator
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END } ], \"version\" : 1 }",
               allModes,
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"version\" : 1 }",
+              null,
+              null,
+              null
+          },
+          {
+            getTestResourceAsString("avro/com/linkedin/pegasus/test/NonNullDefaultsTest.avsc"),
+              translateDefault,
+              "{ \"type\" : \"record\", \"name\" : \"Outer\", \"namespace\" : \"foo\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"Inner\", \"namespace\" : \"bar\", \"fields\" : [ { \"name\" : \"innerArray\", \"type\" : [ { \"type\" : \"array\", \"items\" : \"string\" }, \"null\" ], \"default\" : [  ] }, { \"name\" : \"innerMap\", \"type\" : [ { \"type\" : \"map\", \"values\" : \"string\" }, \"null\" ], \"default\" : {  } }, { \"name\" : \"innerInt\", \"type\" : \"int\", \"default\" : 0 }, { \"name\" : \"innerString\", \"type\" : [ \"string\", \"null\" ], \"default\" : \"defaultValue\" } ] }, \"null\" ], \"default\" : { \"innerInt\" : 0, \"innerArray\" : [  ], \"innerMap\" : {  }, \"innerString\" : \"defaultValue\" } } ] }",
               null,
               null,
               null
@@ -2647,36 +2658,6 @@ public class TestSchemaTranslator
             },
             {
                 // inconsistent default,
-                // a referenced record has an optional field "frank" with default,
-                // but field of referenced record type has default value which does not provide value for "frank"
-                "{ " +
-                    "  \"type\" : \"record\", " +
-                    "  \"name\" : \"Bar\", " +
-                    "  \"fields\" : [ " +
-                    "    { " +
-                    "      \"name\" : \"barbara\", " +
-                    "      \"type\" : { " +
-                    "        \"type\" : \"record\", " +
-                    "        \"name\" : \"Foo\", " +
-                    "        \"fields\" : [ " +
-                    "          { " +
-                    "            \"name\" : \"frank\", " +
-                    "            \"type\" : \"string\", " +
-                    "            \"default\" : \"abc\", " +
-                    "            \"optional\" : true" +
-                    "          } " +
-                    "        ] " +
-                    "      }, " +
-                    "      \"default\" : { } " +
-                    "    } " +
-                    "  ]" +
-                    "}",
-                translateDefault,
-                IllegalArgumentException.class,
-                "cannot translate absent optional field (to have null value) because this field is optional and has a default value"
-            },
-            {
-                // inconsistent default,
                 // a referenced record has an optional field "bar1" without default which translates with union with null as 1st member
                 // but field of referenced record type has default value and it provides string value for "bar1"
                 "{\n" +
@@ -3462,5 +3443,17 @@ public class TestSchemaTranslator
       sb.append(line + "\n");
     }
     return sb.toString();
+  }
+
+  private InputStream getTestResource(String resourceName) {
+    return getClass().getClassLoader().getResourceAsStream(resourceName);
+  }
+
+  private String getTestResourceAsString(String resourceName) throws IOException {
+    InputStream is = getTestResource(resourceName);
+    if (is == null) {
+      throw new IllegalArgumentException("not found: " + resourceName);
+    }
+    return CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8));
   }
 }

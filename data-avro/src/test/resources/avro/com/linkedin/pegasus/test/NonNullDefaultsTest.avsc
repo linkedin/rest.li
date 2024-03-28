@@ -1,0 +1,48 @@
+{
+  "type": "record",
+  "name": "Outer",
+  "namespace": "foo",
+  "fields": [
+    {
+      "name": "f1",
+      "type": {
+        "type": "record",
+        "name": "Inner",
+        "namespace": "bar",
+        "fields": [
+          {
+            "name": "innerArray",
+            "type": {
+              "type": "array",
+              "items": "string"
+            },
+            "default": [],
+            "optional": true
+          },
+          {
+            "name": "innerMap",
+            "type": {
+              "type": "map",
+              "values": "string"
+            },
+            "default": {},
+            "optional": true
+          },
+          {
+            "name": "innerInt",
+            "type": "int",
+            "default": 0
+          },
+          {
+            "name": "innerString",
+            "type": "string",
+            "default": "defaultValue",
+            "optional": true
+          }
+        ]
+      },
+      "default": {},
+      "optional": true
+    }
+  ]
+}

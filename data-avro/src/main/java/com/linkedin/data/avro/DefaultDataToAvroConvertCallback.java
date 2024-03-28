@@ -137,9 +137,19 @@ class DefaultDataToAvroConvertCallback extends AbstractDefaultDataTranslator imp
           if (_options.getOptionalDefaultMode() != OptionalDefaultMode.TRANSLATE_TO_NULL &&
               field.getDefault() != null)
           {
-            throw new IllegalArgumentException(
-                message(path,
-                    "cannot translate absent optional field (to have null value) because this field is optional and has a default value"));
+            DataSchema.Type fieldDefaultValueType = field.getType().getType();
+            // punt on other default values for now (too complex to handle)
+            // NOTE: union case was handled above already.
+            if (fieldDefaultValueType == DataSchema.Type.RECORD || fieldDefaultValueType == DataSchema.Type.TYPEREF)
+            {
+              throw new IllegalArgumentException(message(path,
+                  "cannot translate absent optional field (to have null value) because this field is optional and has a default value"));
+            }
+            else
+            // use default value provided by user for primitive, map, and array types.
+            {
+              return translateField(path, field.getDefault(), field);
+            }
           }
           fieldValue = Data.NULL;
           fieldDataSchema = DataSchemaConstants.NULL_DATA_SCHEMA;
