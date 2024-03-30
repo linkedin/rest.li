@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.51.15] - 2024-03-30
+- fix applying client side service config override in INDIS flow
+
 ## [29.51.14] - 2024-03-27
 - Support translating default values for optional non-record/union fields to Avro (when TRANSLATE_DEFAULT is enabled). 
 
@@ -5674,7 +5677,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.51.14...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.51.15...master
+[29.51.15]: https://github.com/linkedin/rest.li/compare/v29.51.14...v29.51.15
 [29.51.14]: https://github.com/linkedin/rest.li/compare/v29.51.13...v29.51.14
 [29.51.13]: https://github.com/linkedin/rest.li/compare/v29.51.12...v29.51.13
 [29.51.12]: https://github.com/linkedin/rest.li/compare/v29.51.11...v29.51.12
