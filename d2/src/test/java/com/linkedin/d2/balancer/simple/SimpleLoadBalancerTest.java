@@ -189,13 +189,12 @@ public class SimpleLoadBalancerTest
     Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
         new HashMap<>();
     Map<String, TransportClientFactory> clientFactories = new HashMap<>();
-    LoadBalancerState loadBalancerState = null;
 
     loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
     clientFactories.put(PropertyKeys.HTTP_SCHEME, new DoNothingClientFactory());
     clientFactories.put(PropertyKeys.HTTPS_SCHEME, new DoNothingClientFactory());
 
-    loadBalancerState =
+    LoadBalancerState loadBalancerState =
         new SimpleLoadBalancerState(new SynchronousExecutorService(), uriRegistry, clusterRegistry, serviceRegistry,
             clientFactories, loadBalancerStrategyFactories);
     SimpleLoadBalancer loadBalancer =
