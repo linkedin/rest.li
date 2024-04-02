@@ -70,6 +70,10 @@ public class ServicePropertiesJsonSerializer implements
 
   public ServicePropertiesJsonSerializer(Map<String, Map<String, Object>> clientServicesConfig)
   {
+    if (clientServicesConfig == null)
+    {
+      clientServicesConfig = Collections.emptyMap();
+    }
     _clientServicesConfig = validateClientServicesConfig(clientServicesConfig);
   }
 

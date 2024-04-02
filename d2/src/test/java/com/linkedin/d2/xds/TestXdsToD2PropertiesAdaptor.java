@@ -37,11 +37,15 @@ import com.linkedin.d2.xds.XdsClient.NodeResourceWatcher;
 import indis.XdsD2;
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import static com.linkedin.d2.balancer.properties.PropertyKeys.*;
 import static org.mockito.Mockito.*;
 
 
@@ -70,12 +74,39 @@ public class TestXdsToD2PropertiesAdaptor {
   private static final XdsClient.NodeUpdate EMPTY_NODE_DATA = new XdsClient.NodeUpdate(null);
   private static final XdsClient.D2URIMapUpdate EMPTY_DATA_URI_MAP = new XdsClient.D2URIMapUpdate(null);
 
-  @Test
-  public void testListenToService()
+  /* Provide {
+   * @clientOverride transport port client properties set on client override
+   * @original original transport client properties fetched from SD backend
+   * @expected overridden transport client properties after applying client override
+   * }
+   */
+  @DataProvider
+  public Object[][] provideTransportClientProperties()
+  {
+
+    Map<String, Object> original = new HashMap<>();
+    original.put(HTTP_REQUEST_TIMEOUT, "1000");
+    original.put(ALLOWED_CLIENT_OVERRIDE_KEYS,
+        Collections.singletonList(HTTP_REQUEST_TIMEOUT));
+
+    Map<String, Object> overridden = new HashMap<>();
+    overridden.put(HTTP_REQUEST_TIMEOUT, "20000");
+    overridden.put(ALLOWED_CLIENT_OVERRIDE_KEYS,
+        Collections.singletonList(HTTP_REQUEST_TIMEOUT));
+
+    return new Object[][]{
+        {Collections.emptyMap(), original, original},
+        {Collections.singletonMap(HTTP_REQUEST_TIMEOUT, "20000"), original, overridden}
+    };
+  }
+  @Test(dataProvider = "provideTransportClientProperties")
+  public void testListenToService(Map<String, Object> clientOverride, Map<String, Object> original,
+      Map<String, Object> overridden)
   {
     XdsToD2PropertiesAdaptorFixture fixture = new XdsToD2PropertiesAdaptorFixture();
     String serviceName = "FooService";
-    fixture.getSpiedAdaptor().listenToService(serviceName);
+    fixture.getSpiedAdaptor(Collections.singletonMap(serviceName, clientOverride))
+        .listenToService(serviceName);
 
     verify(fixture._xdsClient).watchXdsResource(eq("/d2/services/" + serviceName), anyNodeWatcher());
 
@@ -88,7 +119,10 @@ public class TestXdsToD2PropertiesAdaptor {
                         serviceName,
                         PRIMARY_CLUSTER_NAME,
                         "",
-                        Collections.singletonList("relative")
+                        Collections.singletonList("relative"),
+                        Collections.emptyMap(),
+                        original,
+                        Collections.emptyMap(), Collections.emptyList(), Collections.emptySet()
                     )
                 )
             )
@@ -98,7 +132,10 @@ public class TestXdsToD2PropertiesAdaptor {
     );
     verify(fixture._serviceEventBus).publishInitialize(serviceName,
         new ServiceStoreProperties(serviceName, PRIMARY_CLUSTER_NAME, "",
-            Collections.singletonList("relative"))
+            Collections.singletonList("relative"),
+            Collections.emptyMap(),
+            overridden,
+            Collections.<String, String>emptyMap(), Collections.emptyList(), Collections.emptySet())
     );
   }
 
@@ -375,7 +412,13 @@ public class TestXdsToD2PropertiesAdaptor {
 
     XdsToD2PropertiesAdaptor getSpiedAdaptor()
     {
-      _adaptor = spy(new XdsToD2PropertiesAdaptor(_xdsClient, null, _eventEmitter));
+      return getSpiedAdaptor(Collections.emptyMap());
+    }
+
+    XdsToD2PropertiesAdaptor getSpiedAdaptor(Map<String, Map<String, Object>> clientServicesConfig)
+    {
+      _adaptor = spy(new XdsToD2PropertiesAdaptor(_xdsClient, null,
+          _eventEmitter, clientServicesConfig));
       _adaptor.setClusterEventBus(_clusterEventBus);
       _adaptor.setServiceEventBus(_serviceEventBus);
       _adaptor.setUriEventBus(_uriEventBus);

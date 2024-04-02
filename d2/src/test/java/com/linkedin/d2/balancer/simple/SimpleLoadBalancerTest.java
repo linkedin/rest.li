@@ -131,7 +131,7 @@ public class SimpleLoadBalancerTest
   private static final String NONEXISTENT_CLUSTER = "nonexistent_cluster";
   private static final String SERVICE_NAME = "foo";
   private static final ServiceProperties SERVICE_PROPERTIES =
-      new ServiceProperties(SERVICE_NAME, CLUSTER1_NAME, "/" + SERVICE_NAME, Arrays.asList("degrader"),
+      new ServiceProperties(SERVICE_NAME, CLUSTER1_NAME, "/" + SERVICE_NAME, Collections.singletonList("degrader"),
           Collections.emptyMap(), null, null, Collections.emptyList(), null);
 
   private static final ClusterProperties CLUSTER_PROPERTIES =
@@ -182,25 +182,21 @@ public class SimpleLoadBalancerTest
     }
   }
 
-  private SimpleLoadBalancer setupLoadBalancer(LoadBalancerState state, MockStore<ServiceProperties> serviceRegistry,
+  private SimpleLoadBalancer setupLoadBalancer(MockStore<ServiceProperties> serviceRegistry,
       MockStore<ClusterProperties> clusterRegistry, MockStore<UriProperties> uriRegistry)
       throws ExecutionException, InterruptedException
   {
     Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories =
         new HashMap<>();
     Map<String, TransportClientFactory> clientFactories = new HashMap<>();
-    LoadBalancerState loadBalancerState = state;
 
     loadBalancerStrategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
     clientFactories.put(PropertyKeys.HTTP_SCHEME, new DoNothingClientFactory());
     clientFactories.put(PropertyKeys.HTTPS_SCHEME, new DoNothingClientFactory());
 
-    if (loadBalancerState == null)
-    {
-      loadBalancerState =
-          new SimpleLoadBalancerState(new SynchronousExecutorService(), uriRegistry, clusterRegistry, serviceRegistry,
-              clientFactories, loadBalancerStrategyFactories);
-    }
+    LoadBalancerState loadBalancerState =
+        new SimpleLoadBalancerState(new SynchronousExecutorService(), uriRegistry, clusterRegistry, serviceRegistry,
+            clientFactories, loadBalancerStrategyFactories);
     SimpleLoadBalancer loadBalancer =
         new SimpleLoadBalancer(loadBalancerState, 5, TimeUnit.SECONDS, _d2Executor);
 
@@ -240,7 +236,7 @@ public class SimpleLoadBalancerTest
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
     MockStore<UriProperties> uriRegistry = new MockStore<>();
-    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(serviceRegistry, clusterRegistry, uriRegistry);
 
     populateUriRegistry(numHttp, numHttps, partitionIdForAdd, uriRegistry);
     clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME));
@@ -277,7 +273,7 @@ public class SimpleLoadBalancerTest
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
     MockStore<UriProperties> uriRegistry = new MockStore<>();
-    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(serviceRegistry, clusterRegistry, uriRegistry);
 
     DarkClusterConfig darkClusterConfig = new DarkClusterConfig()
         .setMultiplier(1.0f)
@@ -318,7 +314,7 @@ public class SimpleLoadBalancerTest
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
     MockStore<UriProperties> uriRegistry = new MockStore<>();
-    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(serviceRegistry, clusterRegistry, uriRegistry);
 
     DarkClusterConfig darkClusterConfig = new DarkClusterConfig()
         .setMultiplier(1.0f)
@@ -356,7 +352,7 @@ public class SimpleLoadBalancerTest
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
     MockStore<UriProperties> uriRegistry = new MockStore<>();
-    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(serviceRegistry, clusterRegistry, uriRegistry);
 
     loadBalancer.getDarkClusterConfigMap(NONEXISTENT_CLUSTER, new Callback<DarkClusterConfigMap>()
     {
@@ -385,7 +381,7 @@ public class SimpleLoadBalancerTest
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
     MockStore<UriProperties> uriRegistry = new MockStore<>();
-    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(serviceRegistry, clusterRegistry, uriRegistry);
     FutureCallback<None> balancerCallback = new FutureCallback<>();
     loadBalancer.start(balancerCallback);
     balancerCallback.get();
@@ -416,7 +412,7 @@ public class SimpleLoadBalancerTest
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
     MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
     MockStore<UriProperties> uriRegistry = new MockStore<>();
-    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(serviceRegistry, clusterRegistry, uriRegistry);
     FutureCallback<None> balancerCallback = new FutureCallback<>();
     loadBalancer.start(balancerCallback);
     balancerCallback.get();
@@ -439,6 +435,7 @@ public class SimpleLoadBalancerTest
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testListenToServiceAndClusterTimeout() throws ExecutionException, InterruptedException
   {
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
@@ -454,7 +451,7 @@ public class SimpleLoadBalancerTest
              }).when(state).listenToService(any(), any());
     SimpleLoadBalancer loadBalancer = spy(new SimpleLoadBalancer(state, 1, TimeUnit.MILLISECONDS, _d2Executor));
     // case1: listenToService timeout, and simpleLoadBalancer not hit the cache value
-    FutureCallback<ServiceProperties> callback = mock(FutureCallback.class);
+    FutureCallback<ServiceProperties> callback = spy(new FutureCallback<>());
     loadBalancer.listenToServiceAndCluster(SERVICE_NAME, callback);
     try
     {
@@ -471,7 +468,7 @@ public class SimpleLoadBalancerTest
     // case2: listenToService timeout, and simpleLoadBalancer hit the cache value from state
     LoadBalancerStateItem<ServiceProperties> serviceItem = new LoadBalancerStateItem<>(SERVICE_PROPERTIES, 1, 1);
     when(state.getServiceProperties(SERVICE_NAME)).thenReturn(serviceItem);
-    callback = mock(FutureCallback.class);
+    callback = spy(new FutureCallback<>());
     loadBalancer.listenToServiceAndCluster(SERVICE_NAME, callback);
     // Make sure the onSuccess is called with SERVICE_PROPERTIES only once.
     callback.get();
@@ -483,7 +480,7 @@ public class SimpleLoadBalancerTest
         spy(new SimpleLoadBalancerState(new SynchronousExecutorService(), uriRegistry, clusterRegistry, serviceRegistry,
                                         new HashMap<>(), new HashMap<>()));
     loadBalancer = spy(new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor));
-    callback = mock(FutureCallback.class);
+    callback = spy(new FutureCallback<>());
     loadBalancer.listenToServiceAndCluster(SERVICE_NAME, callback);
     callback.get();
     // Make sure there is no timeout.
@@ -492,6 +489,7 @@ public class SimpleLoadBalancerTest
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void testGetLoadBalancedClusterAndUriProperties() throws InterruptedException, ExecutionException
   {
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
@@ -508,7 +506,7 @@ public class SimpleLoadBalancerTest
              }).when(state).listenToCluster(any(), any());
 
     SimpleLoadBalancer loadBalancer = spy(new SimpleLoadBalancer(state, 1, TimeUnit.MILLISECONDS, _d2Executor));
-    FutureCallback<Pair<ClusterProperties, UriProperties>> callback = mock(FutureCallback.class);
+    FutureCallback<Pair<ClusterProperties, UriProperties>> callback = spy(new FutureCallback<>());
     // case1: listenToCluster timeout, and simpleLoadBalancer not hit the cache value
     loadBalancer.getLoadBalancedClusterAndUriProperties(CLUSTER1_NAME, callback);
     try
@@ -527,7 +525,7 @@ public class SimpleLoadBalancerTest
     LoadBalancerStateItem<UriProperties> uriItem = new LoadBalancerStateItem<>(URI_PROPERTIES, 1, 1);
     when(state.getClusterProperties(CLUSTER1_NAME)).thenReturn(clusterItem);
     when(state.getUriProperties(CLUSTER1_NAME)).thenReturn(uriItem);
-    callback = mock(FutureCallback.class);
+    callback = spy(new FutureCallback<>());
     loadBalancer.getLoadBalancedClusterAndUriProperties(CLUSTER1_NAME, callback);
     callback.get();
     verify(callback).onSuccess(eq(Pair.of(CLUSTER_PROPERTIES, URI_PROPERTIES)));
@@ -540,7 +538,7 @@ public class SimpleLoadBalancerTest
     loadBalancer = spy(new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor));
     clusterRegistry.put(CLUSTER1_NAME, CLUSTER_PROPERTIES);
     uriRegistry.put(CLUSTER1_NAME, URI_PROPERTIES);
-    callback = mock(FutureCallback.class);
+    callback = spy(new FutureCallback<>());
     loadBalancer.getLoadBalancedClusterAndUriProperties(CLUSTER1_NAME, callback);
     callback.get();
     verify(loadBalancer, never()).handleTimeoutFromGetClusterAndUriProperties(any(), any());
@@ -659,8 +657,7 @@ public class SimpleLoadBalancerTest
 
       serviceRegistry.put("foo", new ServiceProperties("foo",
                                                         "cluster-1",
-                                                        "/foo",
-                                                        Arrays.asList("degrader"),
+                                                        "/foo", Collections.singletonList("degrader"),
                                                         Collections.<String,Object>emptyMap(),
                                                         null,
                                                         null,
@@ -733,7 +730,7 @@ public class SimpleLoadBalancerTest
     MockStore<UriProperties> uriRegistry = new MockStore<>();
     List<String> prioritizedSchemes = new ArrayList<>();
 
-    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(serviceRegistry, clusterRegistry, uriRegistry);
 
     //URI uri = URI.create("http://test.qd.com:5678");
     Map<Integer, PartitionData> partitionData = new HashMap<>(1);
@@ -753,8 +750,7 @@ public class SimpleLoadBalancerTest
 
     serviceRegistry.put("foo", new ServiceProperties("foo",
         CLUSTER1_NAME,
-        "/foo",
-        Arrays.asList("degrader"),
+        "/foo", Collections.singletonList("degrader"),
         Collections.<String,Object>emptyMap(),
         null,
         null,
@@ -825,7 +821,7 @@ public class SimpleLoadBalancerTest
     MockStore<UriProperties> uriRegistry = new MockStore<>();
     List<String> prioritizedSchemes = new ArrayList<>();
 
-    SimpleLoadBalancer loadBalancer = setupLoadBalancer(null, serviceRegistry, clusterRegistry, uriRegistry);
+    SimpleLoadBalancer loadBalancer = setupLoadBalancer(serviceRegistry, clusterRegistry, uriRegistry);
 
     URI uri1 = URI.create("http://test.qd.com:1234");
 
@@ -850,8 +846,7 @@ public class SimpleLoadBalancerTest
 
     serviceRegistry.put("foo", new ServiceProperties("foo",
         CLUSTER1_NAME,
-        "/foo",
-        Arrays.asList("degrader"),
+        "/foo", Collections.singletonList("degrader"),
         Collections.<String,Object>emptyMap(),
         null,
         null,
@@ -938,8 +933,7 @@ public class SimpleLoadBalancerTest
 
     serviceRegistry.put("foo", new ServiceProperties("foo",
         "cluster-1",
-        "/foo",
-        Arrays.asList("degrader"),
+        "/foo", Collections.singletonList("degrader"),
         Collections.<String,Object>emptyMap(),
         null,
         null,
@@ -959,7 +953,6 @@ public class SimpleLoadBalancerTest
 
   /**
    * This tests getClient(). When TargetHints and scheme does not match, throw ServiceUnavailableException
-   * @throws Exception
    */
   @Test (expectedExceptions = ServiceUnavailableException.class)
   @SuppressWarnings("deprecation")
@@ -998,8 +991,6 @@ public class SimpleLoadBalancerTest
     loadBalancer.start(balancerCallback);
     balancerCallback.get(5, TimeUnit.SECONDS);
 
-    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
-    partitionData.put(DEFAULT_PARTITION_ID, new PartitionData(1d));
     Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>(3);
 
     prioritizedSchemes.add(PropertyKeys.HTTPS_SCHEME);
@@ -1008,8 +999,7 @@ public class SimpleLoadBalancerTest
 
     serviceRegistry.put("foo", new ServiceProperties("foo",
         "cluster-1",
-        "/foo",
-        Arrays.asList("degrader"),
+        "/foo", Collections.singletonList("degrader"),
         Collections.<String,Object>emptyMap(),
         null,
         null,
@@ -1030,7 +1020,6 @@ public class SimpleLoadBalancerTest
 
   /**
    * Tests getClient() when with host override list specified in the request context.
-   * @throws Exception
    */
   @Test
   public void testGetClientHostOverrideList() throws Exception
@@ -1080,8 +1069,7 @@ public class SimpleLoadBalancerTest
 
     serviceRegistry.put(service1, new ServiceProperties(service1,
         cluster1,
-        "/service1Path",
-        Arrays.asList("degrader"),
+        "/service1Path", Collections.singletonList("degrader"),
         Collections.<String,Object>emptyMap(),
         null,
         null,
@@ -1090,7 +1078,6 @@ public class SimpleLoadBalancerTest
     uriRegistry.put(cluster1, new UriProperties(cluster1, uriData));
 
     URI override = URI.create("http://override/path");
-    URI expected = URI.create("http://override/path/service1Path");
     URIRequest uriRequest = new URIRequest("d2://service1");
 
     HostOverrideList clusterOverrides = new HostOverrideList();
@@ -1200,22 +1187,22 @@ public class SimpleLoadBalancerTest
     Assert.assertNull(result.getPartitionInfoMap().get(0));
     // results for partition 1 should contain server1, server2 and server3
     KeysAndHosts<Integer> keysAndHosts1 = result.getPartitionInfoMap().get(1);
-    Assert.assertTrue(keysAndHosts1.getKeys().size() == 1);
-    Assert.assertTrue(keysAndHosts1.getKeys().iterator().next() == 1);
+    assertEquals(keysAndHosts1.getKeys().size(), 1);
+    assertEquals((int) keysAndHosts1.getKeys().iterator().next(), 1);
     List<URI> ordering1 = keysAndHosts1.getHosts();
     // results for partition 2 should be the same as partition1.
     KeysAndHosts<Integer> keysAndHosts2 = result.getPartitionInfoMap().get(2);
-    Assert.assertTrue(keysAndHosts2.getKeys().size() == 1);
-    Assert.assertTrue(keysAndHosts2.getKeys().iterator().next() == 2);
+    assertEquals(keysAndHosts2.getKeys().size(), 1);
+    assertEquals((int) keysAndHosts2.getKeys().iterator().next(), 2);
     List<URI> ordering2 = keysAndHosts2.getHosts();
     //for partition 3
     KeysAndHosts<Integer> keysAndHosts3 = result.getPartitionInfoMap().get(3);
-    Assert.assertTrue(keysAndHosts3.getKeys().size() == 1);
-    Assert.assertTrue(keysAndHosts3.getKeys().iterator().next() == 3);
+    assertEquals(keysAndHosts3.getKeys().size(), 1);
+    assertEquals((int) keysAndHosts3.getKeys().iterator().next(), 3);
     List<URI> ordering3 = keysAndHosts3.getHosts();
 
     // Just compare the size and contents of the list, not the ordering.
-    Assert.assertTrue(ordering1.size() == 3);
+    assertEquals(ordering1.size(), 3);
     List<URI> allServers = new ArrayList<>();
     allServers.add(server1);
     allServers.add(server2);
@@ -1388,7 +1375,7 @@ public class SimpleLoadBalancerTest
     allServers.add(server2);
     allServers.add(server3);
 
-    Assert.assertTrue(ordering1.size() == 3);
+    assertEquals(ordering1.size(), 3);
     Assert.assertTrue(ordering1.containsAll(allServers));
 
     // partition 2 should be the same as partition 1
@@ -1446,12 +1433,6 @@ public class SimpleLoadBalancerTest
       URI uri2 = URI.create("http://test.qa2.com:2345");
       URI uri3 = URI.create("http://test.qa3.com:6789");
 
-      Map<URI, Double> uris = new HashMap<>();
-
-      uris.put(uri1, 1d);
-      uris.put(uri2, 1d);
-      uris.put(uri3, 1d);
-
       Map<URI,Map<Integer, PartitionData>> partitionDesc =
           new HashMap<>();
 
@@ -1498,8 +1479,7 @@ public class SimpleLoadBalancerTest
 
       serviceRegistry.put("foo", new ServiceProperties("foo",
                                                         "cluster-1",
-                                                        "/foo",
-                                                        Arrays.asList("degrader"),
+                                                        "/foo", Collections.singletonList("degrader"),
                                                         Collections.singletonMap(PropertyKeys.HTTP_LB_CONSISTENT_HASH_ALGORITHM, "pointBased"),
                                                         null,
                                                         null,
@@ -1564,12 +1544,12 @@ public class SimpleLoadBalancerTest
               }
               else if (partitionMethod == 1)
               {
-                assertTrue(ii % 2 == 0);
+                assertEquals(ii % 2, 0);
               }
               else
               {
                 str[0] = ii + "";
-                assertTrue(hashFunction.hash(str) % 2 == 0);
+                assertEquals(hashFunction.hash(str) % 2, 0);
               }
             }
             // check if only key belonging to partition 1 gets uri3
@@ -1581,12 +1561,12 @@ public class SimpleLoadBalancerTest
               }
               else if (partitionMethod == 1)
               {
-                assertTrue(ii % 2 == 1);
+                assertEquals(ii % 2, 1);
               }
               else
               {
                 str[0] = ii + "";
-                assertTrue(hashFunction.hash(str) % 2 == 1);
+                assertEquals(hashFunction.hash(str) % 2, 1);
               }
             }
           }
@@ -1657,7 +1637,8 @@ public class SimpleLoadBalancerTest
         assertTrue(client.getDecoratedClient() instanceof RewriteClient);
         RewriteClient rewriteClient = (RewriteClient) client.getDecoratedClient();
         assertTrue(rewriteClient.getDecoratedClient() instanceof TrackerClient);
-        assertTrue(((TrackerClient) rewriteClient.getDecoratedClient()).getPartitionWeight(DEFAULT_PARTITION_ID) == 1.0d);
+        assertEquals(((TrackerClient) rewriteClient.getDecoratedClient()).getPartitionWeight(DEFAULT_PARTITION_ID),
+            1.0d);
       }
 
       final CountDownLatch latch = new CountDownLatch(1);
@@ -1698,7 +1679,7 @@ public class SimpleLoadBalancerTest
       balancer.getClient(uriRequest, new RequestContext());
       fail("should have received a service unavailable exception, case 1");
     }
-    catch (ServiceUnavailableException e)
+    catch (ServiceUnavailableException ignored)
     {
     }
 
@@ -1709,7 +1690,7 @@ public class SimpleLoadBalancerTest
       balancer.getClient(uriRequest, new RequestContext());
       fail("should have received a service unavailable exception, case 2");
     }
-    catch (ServiceUnavailableException e)
+    catch (ServiceUnavailableException ignored)
     {
     }
 
@@ -1720,7 +1701,7 @@ public class SimpleLoadBalancerTest
       balancer.getClient(uriRequest, new RequestContext());
       fail("should have received a service unavailable exception, case 3");
     }
-    catch (ServiceUnavailableException e)
+    catch (ServiceUnavailableException ignored)
     {
     }
 
@@ -1731,7 +1712,7 @@ public class SimpleLoadBalancerTest
       balancer.getClient(uriRequest, new RequestContext());
       fail("should have received a service unavailable exception, case 4");
     }
-    catch (ServiceUnavailableException e)
+    catch (ServiceUnavailableException ignored)
     {
     }
 
@@ -1742,7 +1723,7 @@ public class SimpleLoadBalancerTest
       balancer.getClient(uriRequest, new RequestContext());
       fail("should have received a service unavailable exception, case 5");
     }
-    catch (ServiceUnavailableException e)
+    catch (ServiceUnavailableException ignored)
     {
     }
 
@@ -1753,7 +1734,7 @@ public class SimpleLoadBalancerTest
       balancer.getClient(uriRequest, new RequestContext());
       fail("should have received a service unavailable exception, case 6");
     }
-    catch (ServiceUnavailableException e)
+    catch (ServiceUnavailableException ignored)
     {
     }
 
@@ -1764,7 +1745,7 @@ public class SimpleLoadBalancerTest
       balancer.getClient(uriRequest, new RequestContext());
       fail("should have received a service unavailable exception, case 7");
     }
-    catch (ServiceUnavailableException e)
+    catch (ServiceUnavailableException ignored)
     {
     }
 
@@ -1775,7 +1756,7 @@ public class SimpleLoadBalancerTest
       balancer.getClient(uriRequest, new RequestContext());
       fail("should have received a service unavailable exception, case 8");
     }
-    catch (ServiceUnavailableException e)
+    catch (ServiceUnavailableException ignored)
     {
     }
 
@@ -1784,11 +1765,9 @@ public class SimpleLoadBalancerTest
     try
     {
       balancer.getClient(uriRequest, new RequestContext());
-      fail("should have received a service unavailable exception, case 9" +
-        "" +
-        "");
+      fail("should have received a service unavailable exception, case 9");
     }
-    catch (ServiceUnavailableException e)
+    catch (ServiceUnavailableException ignored)
     {
     }
 
@@ -1799,7 +1778,7 @@ public class SimpleLoadBalancerTest
       balancer.getClient(uriRequest, new RequestContext());
       fail("should have received a service unavailable exception, case 10");
     }
-    catch (ServiceUnavailableException e)
+    catch (ServiceUnavailableException ignored)
     {
     }
 
@@ -1977,9 +1956,8 @@ public class SimpleLoadBalancerTest
   {
     private final AtomicLong _count = new AtomicLong();
 
-    @SuppressWarnings("unchecked")
     @Override
-    public TransportClient getClient(Map<String, ? extends Object> properties)
+    public TransportClient getClient(Map<String, ?> properties)
     {
       _count.incrementAndGet();
       if (properties.containsKey("foobar"))
@@ -2098,7 +2076,7 @@ public class SimpleLoadBalancerTest
     public int getPartitionId(String key)
         throws PartitionAccessException
     {
-      Integer i = Integer.parseInt(key);
+      int i = Integer.parseInt(key);
       if (i == 1)
       {
         return 1;
@@ -2182,8 +2160,7 @@ public class SimpleLoadBalancerTest
 
       serviceRegistry.put("foo", new ServiceProperties("foo",
               "cluster-1",
-              "/foo",
-              Arrays.asList("degrader"),
+              "/foo", Collections.singletonList("degrader"),
               Collections.<String,Object>emptyMap(),
               null,
               null,

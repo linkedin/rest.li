@@ -61,7 +61,7 @@ public class XdsToD2PropertiesAdaptor
   private final XdsClient _xdsClient;
   private final List<XdsConnectionListener> _xdsConnectionListeners = Collections.synchronizedList(new ArrayList<>());
 
-  private final ServicePropertiesJsonSerializer _servicePropertiesJsonSerializer = new ServicePropertiesJsonSerializer();
+  private final ServicePropertiesJsonSerializer _servicePropertiesJsonSerializer;
   private final ClusterPropertiesJsonSerializer _clusterPropertiesJsonSerializer = new ClusterPropertiesJsonSerializer();
   private final UriPropertiesJsonSerializer _uriPropertiesJsonSerializer = new UriPropertiesJsonSerializer();
   private final UriPropertiesMerger _uriPropertiesMerger = new UriPropertiesMerger();
@@ -95,9 +95,16 @@ public class XdsToD2PropertiesAdaptor
   public XdsToD2PropertiesAdaptor(XdsClient xdsClient, DualReadStateManager dualReadStateManager,
       ServiceDiscoveryEventEmitter eventEmitter)
   {
+    this(xdsClient, dualReadStateManager, eventEmitter, Collections.emptyMap());
+  }
+
+  public XdsToD2PropertiesAdaptor(XdsClient xdsClient, DualReadStateManager dualReadStateManager,
+      ServiceDiscoveryEventEmitter eventEmitter, Map<String, Map<String, Object>> clientServicesConfig)
+  {
     _xdsClient = xdsClient;
     _dualReadStateManager = dualReadStateManager;
     _eventEmitter = eventEmitter;
+    _servicePropertiesJsonSerializer = new ServicePropertiesJsonSerializer(clientServicesConfig);
   }
 
   public void start()
