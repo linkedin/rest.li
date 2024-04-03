@@ -61,6 +61,7 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
+import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
@@ -1185,6 +1186,14 @@ public class PegasusPlugin implements Plugin<Project>
         : project.getConfigurations().getByName("dataModel");
   }
 
+  private static Dependency getDataModelDependency(Project project, String dependencyPath, SourceSet sourceSet)
+  {
+    Map<String, String> declaration = new HashMap<>();
+    declaration.put("path", dependencyPath);
+    declaration.put("configuration", isTestSourceSet(sourceSet) ? "testDataModel" : "dataModel");
+    return project.getDependencies().project(declaration);
+  }
+
   private static boolean isTaskSuccessful(Task task)
   {
     return task.getState().getExecuted()
@@ -1264,8 +1273,15 @@ public class PegasusPlugin implements Plugin<Project>
           .plus(project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME))
           .plus(sourceSet.getRuntimeClasspath());
       String destinationDirPrefix = getGeneratedDirPath(project, sourceSet, REST_GEN_TYPE) + File.separatorChar;
-      FileCollection restModelResolverPath = apiProject.files(getDataSchemaPath(project, sourceSet))
-          .plus(getDataModelConfig(apiProject, sourceSet));
+      Project finalApiProject = apiProject;
+
+      Configuration restModelResolverConf = project.getConfigurations().create(sourceSet.getTaskName(null, "restModelResolverPath"), c -> {
+          c.setVisible(false);
+          c.setCanBeConsumed(false);
+          c.setCanBeResolved(true);
+          c.getDependencies().add(project.getDependencies().create(finalApiProject.files(getDataSchemaPath(project, sourceSet))));
+          c.getDependencies().add(getDataModelDependency(project, finalApiProject.getPath(), sourceSet));
+      });
       Set<File> watchedRestModelInputDirs = buildWatchedRestModelInputDirs(project, sourceSet);
       Set<File> restModelInputDirs = difference(sourceSet.getAllSource().getSrcDirs(),
           sourceSet.getResources().getSrcDirs());
@@ -1289,7 +1305,7 @@ public class PegasusPlugin implements Plugin<Project>
                 .getExtensions().getExtraProperties().get("pegasus");
             task.setIdlOptions(pegasusOptions.get(sourceSet.getName()).idlOptions);
 
-            task.setResolverPath(restModelResolverPath);
+            task.setResolverPath(restModelResolverConf);
             if (isPropertyTrue(project, ENABLE_ARG_FILE))
             {
               task.setEnableArgFile(true);
@@ -1347,7 +1363,7 @@ public class PegasusPlugin implements Plugin<Project>
             task.dependsOn(generateRestModelTask);
             task.setCurrentIdlFiles(SharedFileUtils.getIdlFiles(project, destinationDirPrefix));
             task.setPreviousIdlDirectory(apiIdlDir);
-            task.setResolverPath(restModelResolverPath);
+            task.setResolverPath(restModelResolverConf);
             task.setCodegenClasspath(project.getConfigurations().getByName(PEGASUS_PLUGIN_CONFIGURATION));
             task.setIdlCompatLevel(PropertyUtil.findCompatLevel(project, FileCompatibilityType.IDL));
             if (isPropertyTrue(project, ENABLE_ARG_FILE))
