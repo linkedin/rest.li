@@ -22,8 +22,11 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.rpc.Code;
+import com.linkedin.d2.jmx.IndisObserverMetricsProvider;
+import com.linkedin.d2.jmx.NoOpIndisObserverMetricsProvider;
 import com.linkedin.d2.jmx.XdsClientJmx;
 import com.linkedin.d2.xds.GlobCollectionUtils.D2UriIdentifier;
+import com.linkedin.util.clock.SystemClock;
 import indis.XdsD2;
 import io.envoyproxy.envoy.service.discovery.v3.AggregatedDiscoveryServiceGrpc;
 import io.envoyproxy.envoy.service.discovery.v3.DeltaDiscoveryRequest;
@@ -80,6 +83,7 @@ public class XdsClientImpl extends XdsClient
   private final long _readyTimeoutMillis;
 
   private final XdsClientJmx _xdsClientJmx;
+  private final IndisObserverMetricsProvider _observerMetricsProvider;
 
   @Deprecated
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService)
@@ -97,6 +101,13 @@ public class XdsClientImpl extends XdsClient
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService,
       long readyTimeoutMillis, boolean subscribeToUriGlobCollection)
   {
+    this(node, managedChannel, executorService, readyTimeoutMillis, subscribeToUriGlobCollection,
+        new NoOpIndisObserverMetricsProvider());
+  }
+
+  public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService,
+      long readyTimeoutMillis, boolean subscribeToUriGlobCollection, IndisObserverMetricsProvider observerMetricsProvider)
+  {
     _readyTimeoutMillis = readyTimeoutMillis;
     _node = node;
     _managedChannel = managedChannel;
@@ -106,7 +117,12 @@ public class XdsClientImpl extends XdsClient
     {
       _log.info("Glob collection support enabled");
     }
-    _xdsClientJmx = new XdsClientJmx();
+
+    if (observerMetricsProvider == null) {
+      observerMetricsProvider = new NoOpIndisObserverMetricsProvider();
+    }
+    _xdsClientJmx = new XdsClientJmx(observerMetricsProvider);
+    _observerMetricsProvider = observerMetricsProvider;
   }
 
   @Override
@@ -301,6 +317,7 @@ public class XdsClientImpl extends XdsClient
     Map<String, D2URIMapUpdate> updates = new HashMap<>();
     List<String> errors = new ArrayList<>();
 
+    long currentTimeMillis = SystemClock.instance().currentTimeMillis();
     for (Resource resource : data.getResourcesList())
     {
       String resourceName = resource.getName();
@@ -313,6 +330,7 @@ public class XdsClientImpl extends XdsClient
           _log.warn("Received a D2URIMap response with no data, resource is : {}", resourceName);
         }
         updates.put(resourceName, new D2URIMapUpdate(nodeData));
+        nodeData.forEach((uriName, uri) -> trackObserverLatency(uri, currentTimeMillis));
       }
       catch (InvalidProtocolBufferException e)
       {
@@ -339,6 +357,7 @@ public class XdsClientImpl extends XdsClient
 
     Set<String> removedClusters = new HashSet<>();
 
+    long currentTimeMillis = SystemClock.instance().currentTimeMillis();
     data.forEach((resourceName, resource) ->
     {
       D2UriIdentifier uriId = D2UriIdentifier.parse(resourceName);
@@ -395,6 +414,7 @@ public class XdsClientImpl extends XdsClient
         {
           XdsD2.D2URI uri = resource.getResource().unpack(XdsD2.D2URI.class);
           update.putUri(uriId.getUriName(), uri);
+          trackObserverLatency(uri, currentTimeMillis);
         }
         catch (InvalidProtocolBufferException e)
         {
@@ -407,6 +427,11 @@ public class XdsClientImpl extends XdsClient
 
     handleResourceUpdate(updates, ResourceType.D2_URI_MAP);
     handleResourceRemoval(removedClusters, ResourceType.D2_URI_MAP);
+  }
+
+  private void trackObserverLatency(XdsD2.D2URI uri, long currentTimeMillis) {
+    // track rough estimate of latency spent on the observer in millis = receipt time - resource modified time
+    _observerMetricsProvider.trackLatency(currentTimeMillis - uri.getModifiedTime().getSeconds() * 1000);
   }
 
   @VisibleForTesting

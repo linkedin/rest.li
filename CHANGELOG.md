@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.52.2] - 2024-04-09
+- add indis observer latency metric provider
+
 ## [29.52.1] - 2024-04-03
 - fix concurrent configuration resolution issue in the Gradle plugin in Gradle 8 and above
 
@@ -5680,7 +5683,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.52.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.52.2...master
+[29.52.2]: https://github.com/linkedin/rest.li/compare/v29.52.1...v29.52.2
 [29.52.1]: https://github.com/linkedin/rest.li/compare/v29.52.0...v29.52.1
 [29.52.0]: https://github.com/linkedin/rest.li/compare/v29.51.14...v29.52.0
 [29.51.14]: https://github.com/linkedin/rest.li/compare/v29.51.13...v29.51.14

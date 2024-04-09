@@ -618,7 +618,7 @@ public class XdsToD2PropertiesAdaptor
                 true,
                 _xdsClient.getXdsServerAuthority(),
                 nodePath,
-                d2Uri.toString(),
+                xdsUri.toString(),
                 (int) xdsUri.getVersion(),
                 xdsUri.getTracingId(),
                 timestamp)

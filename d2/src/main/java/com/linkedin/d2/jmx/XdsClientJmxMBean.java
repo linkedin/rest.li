@@ -34,4 +34,22 @@ public interface XdsClientJmxMBean {
 
   // when the resource is not found.
   int getResourceNotFoundCount();
+
+  /**
+   * Get 50 Percentile of observer latency, which is from when the resource is updated on the observer to when the
+   * client receives it.
+   */
+  long getObserverLatency50Pct();
+
+  /**
+   * Get 90 Percentile of observer latency, which is from when the resource is updated on the observer to when the
+   * client receives it.
+   */
+  long getObserverLatency99Pct();
+
+  /**
+   * Get Avg of observer latency, which is from when the resource is updated on the observer to when the
+   * client receives it.
+   */
+  double getObserverLatencyAverage();
 }

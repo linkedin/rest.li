@@ -251,7 +251,7 @@ public class TestXdsToD2PropertiesAdaptor {
         eq(true),
         eq(XDS_SERVER),
         eq(URI_NODE_PREFIX + PRIMARY_CLUSTER_NAME + "/" + URI_NAME),
-        eq(uriProps.toString()),
+        eq(protoUri.toString()),
         eq((int) VERSION),
         eq(TRACING_ID),
         anyLong()

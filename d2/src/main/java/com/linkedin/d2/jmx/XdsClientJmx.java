@@ -28,6 +28,11 @@ public class XdsClientJmx implements XdsClientJmxMBean {
 
   private final AtomicBoolean _isConnected = new AtomicBoolean();
   private final AtomicInteger _resourceNotFoundCount = new AtomicInteger();
+  private final IndisObserverMetricsProvider _observerMetricsProvider;
+
+  public XdsClientJmx(IndisObserverMetricsProvider observerMetricsProvider) {
+    _observerMetricsProvider = observerMetricsProvider;
+  }
 
   @Override
   public int getConnectionLostCount()
@@ -51,6 +56,21 @@ public class XdsClientJmx implements XdsClientJmxMBean {
   public int getResourceNotFoundCount()
   {
     return _resourceNotFoundCount.get();
+  }
+
+  @Override
+  public long getObserverLatency50Pct() {
+    return _observerMetricsProvider.getLatency50Pct();
+  }
+
+  @Override
+  public long getObserverLatency99Pct() {
+    return _observerMetricsProvider.getLatency99Pct();
+  }
+
+  @Override
+  public double getObserverLatencyAverage() {
+    return _observerMetricsProvider.getLatencyAverage();
   }
 
   @Override
