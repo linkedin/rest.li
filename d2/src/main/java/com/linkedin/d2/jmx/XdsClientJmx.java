@@ -28,10 +28,10 @@ public class XdsClientJmx implements XdsClientJmxMBean {
 
   private final AtomicBoolean _isConnected = new AtomicBoolean();
   private final AtomicInteger _resourceNotFoundCount = new AtomicInteger();
-  private final IndisObserverMetricsProvider _observerMetricsProvider;
+  private final XdsServerMetricsProvider _xdsServerMetricsProvider;
 
-  public XdsClientJmx(IndisObserverMetricsProvider observerMetricsProvider) {
-    _observerMetricsProvider = observerMetricsProvider;
+  public XdsClientJmx(XdsServerMetricsProvider xdsServerMetricsProvider) {
+    _xdsServerMetricsProvider = xdsServerMetricsProvider;
   }
 
   @Override
@@ -60,17 +60,17 @@ public class XdsClientJmx implements XdsClientJmxMBean {
 
   @Override
   public long getObserverLatency50Pct() {
-    return _observerMetricsProvider.getLatency50Pct();
+    return _xdsServerMetricsProvider.getLatency50Pct();
   }
 
   @Override
   public long getObserverLatency99Pct() {
-    return _observerMetricsProvider.getLatency99Pct();
+    return _xdsServerMetricsProvider.getLatency99Pct();
   }
 
   @Override
   public double getObserverLatencyAverage() {
-    return _observerMetricsProvider.getLatencyAverage();
+    return _xdsServerMetricsProvider.getLatencyAverage();
   }
 
   @Override

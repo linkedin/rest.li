@@ -22,8 +22,8 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.rpc.Code;
-import com.linkedin.d2.jmx.IndisObserverMetricsProvider;
-import com.linkedin.d2.jmx.NoOpIndisObserverMetricsProvider;
+import com.linkedin.d2.jmx.XdsServerMetricsProvider;
+import com.linkedin.d2.jmx.NoOpXdsServerMetricsProvider;
 import com.linkedin.d2.jmx.XdsClientJmx;
 import com.linkedin.d2.xds.GlobCollectionUtils.D2UriIdentifier;
 import com.linkedin.util.clock.SystemClock;
@@ -83,7 +83,7 @@ public class XdsClientImpl extends XdsClient
   private final long _readyTimeoutMillis;
 
   private final XdsClientJmx _xdsClientJmx;
-  private final IndisObserverMetricsProvider _observerMetricsProvider;
+  private final XdsServerMetricsProvider _observerMetricsProvider;
 
   @Deprecated
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService)
@@ -102,11 +102,11 @@ public class XdsClientImpl extends XdsClient
       long readyTimeoutMillis, boolean subscribeToUriGlobCollection)
   {
     this(node, managedChannel, executorService, readyTimeoutMillis, subscribeToUriGlobCollection,
-        new NoOpIndisObserverMetricsProvider());
+        new NoOpXdsServerMetricsProvider());
   }
 
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService,
-      long readyTimeoutMillis, boolean subscribeToUriGlobCollection, IndisObserverMetricsProvider observerMetricsProvider)
+      long readyTimeoutMillis, boolean subscribeToUriGlobCollection, XdsServerMetricsProvider observerMetricsProvider)
   {
     _readyTimeoutMillis = readyTimeoutMillis;
     _node = node;
@@ -119,7 +119,7 @@ public class XdsClientImpl extends XdsClient
     }
 
     if (observerMetricsProvider == null) {
-      observerMetricsProvider = new NoOpIndisObserverMetricsProvider();
+      observerMetricsProvider = new NoOpXdsServerMetricsProvider();
     }
     _xdsClientJmx = new XdsClientJmx(observerMetricsProvider);
     _observerMetricsProvider = observerMetricsProvider;

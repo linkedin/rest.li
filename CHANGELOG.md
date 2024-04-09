@@ -15,7 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.52.2] - 2024-04-09
-- add indis observer latency metric provider
+- add xDS server latency metric provider
 
 ## [29.52.1] - 2024-04-03
 - fix concurrent configuration resolution issue in the Gradle plugin in Gradle 8 and above

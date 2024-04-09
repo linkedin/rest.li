@@ -48,7 +48,7 @@ import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
-import com.linkedin.d2.jmx.IndisObserverMetricsProvider;
+import com.linkedin.d2.jmx.XdsServerMetricsProvider;
 import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.d2.jmx.NoOpJmxManager;
 import com.linkedin.r2.transport.common.TransportClientFactory;
@@ -217,7 +217,7 @@ public class D2ClientBuilder
                   _config.xdsChannelLoadBalancingPolicy,
                   _config.xdsChannelLoadBalancingPolicyConfig,
                   _config.subscribeToUriGlobCollection,
-                  _config.indisObserverMetricsProvider
+                  _config._xdsServerMetricsProvider
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -719,8 +719,8 @@ public class D2ClientBuilder
     return this;
   }
 
-  public D2ClientBuilder setIndisObserverMetricsProvider(IndisObserverMetricsProvider indisObserverMetricsProvider) {
-    _config.indisObserverMetricsProvider = indisObserverMetricsProvider;
+  public D2ClientBuilder setXdsServerMetricsProvider(XdsServerMetricsProvider xdsServerMetricsProvider) {
+    _config._xdsServerMetricsProvider = xdsServerMetricsProvider;
     return this;
   }
 

@@ -2,9 +2,9 @@ package com.linkedin.d2.jmx;
 
 
 /**
- * NoOp implementation of {@link IndisObserverMetricsProvider}
+ * NoOp implementation of {@link XdsServerMetricsProvider}
  */
-public class NoOpIndisObserverMetricsProvider implements IndisObserverMetricsProvider {
+public class NoOpXdsServerMetricsProvider implements XdsServerMetricsProvider {
   @Override
   public long getLatency50Pct() {
     return 0;
