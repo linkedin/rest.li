@@ -83,7 +83,7 @@ public class XdsClientImpl extends XdsClient
   private final long _readyTimeoutMillis;
 
   private final XdsClientJmx _xdsClientJmx;
-  private final XdsServerMetricsProvider _observerMetricsProvider;
+  private final XdsServerMetricsProvider _serverMetricsProvider;
 
   @Deprecated
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService)
@@ -106,7 +106,7 @@ public class XdsClientImpl extends XdsClient
   }
 
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService,
-      long readyTimeoutMillis, boolean subscribeToUriGlobCollection, XdsServerMetricsProvider observerMetricsProvider)
+      long readyTimeoutMillis, boolean subscribeToUriGlobCollection, XdsServerMetricsProvider serverMetricsProvider)
   {
     _readyTimeoutMillis = readyTimeoutMillis;
     _node = node;
@@ -118,11 +118,11 @@ public class XdsClientImpl extends XdsClient
       _log.info("Glob collection support enabled");
     }
 
-    if (observerMetricsProvider == null) {
-      observerMetricsProvider = new NoOpXdsServerMetricsProvider();
+    if (serverMetricsProvider == null) {
+      serverMetricsProvider = new NoOpXdsServerMetricsProvider();
     }
-    _xdsClientJmx = new XdsClientJmx(observerMetricsProvider);
-    _observerMetricsProvider = observerMetricsProvider;
+    _xdsClientJmx = new XdsClientJmx(serverMetricsProvider);
+    _serverMetricsProvider = serverMetricsProvider;
   }
 
   @Override
@@ -286,6 +286,7 @@ public class XdsClientImpl extends XdsClient
     Map<String, NodeUpdate> updates = new HashMap<>();
     List<String> errors = new ArrayList<>();
 
+    long currentTimeMillis = SystemClock.instance().currentTimeMillis();
     for (Resource resource : data.getResourcesList())
     {
       String resourceName = resource.getName();
@@ -297,6 +298,10 @@ public class XdsClientImpl extends XdsClient
           _log.warn("Received a Node response with no data, resource is : {}", resourceName);
         }
         updates.put(resourceName, new NodeUpdate(d2Node));
+        if (d2Node != null)
+        {
+          trackServerLatency(d2Node.getStat().getMtime(), currentTimeMillis);
+        }
       }
       catch (InvalidProtocolBufferException e)
       {
@@ -330,7 +335,9 @@ public class XdsClientImpl extends XdsClient
           _log.warn("Received a D2URIMap response with no data, resource is : {}", resourceName);
         }
         updates.put(resourceName, new D2URIMapUpdate(nodeData));
-        nodeData.forEach((uriName, uri) -> trackObserverLatency(uri, currentTimeMillis));
+        nodeData.forEach((uriName, uri) ->
+            trackServerLatency(uri.getModifiedTime().getSeconds() * 1000, currentTimeMillis)
+        );
       }
       catch (InvalidProtocolBufferException e)
       {
@@ -414,7 +421,7 @@ public class XdsClientImpl extends XdsClient
         {
           XdsD2.D2URI uri = resource.getResource().unpack(XdsD2.D2URI.class);
           update.putUri(uriId.getUriName(), uri);
-          trackObserverLatency(uri, currentTimeMillis);
+          trackServerLatency(uri.getModifiedTime().getSeconds() * 1000, currentTimeMillis);
         }
         catch (InvalidProtocolBufferException e)
         {
@@ -429,9 +436,9 @@ public class XdsClientImpl extends XdsClient
     handleResourceRemoval(removedClusters, ResourceType.D2_URI_MAP);
   }
 
-  private void trackObserverLatency(XdsD2.D2URI uri, long currentTimeMillis) {
-    // track rough estimate of latency spent on the observer in millis = receipt time - resource modified time
-    _observerMetricsProvider.trackLatency(currentTimeMillis - uri.getModifiedTime().getSeconds() * 1000);
+  private void trackServerLatency(long modifiedTimeMillis, long currentTimeMillis) {
+    // track rough estimate of latency spent on the xds server in millis = receipt time - resource modified time
+    _serverMetricsProvider.trackLatency(currentTimeMillis - modifiedTimeMillis);
   }
 
   @VisibleForTesting
