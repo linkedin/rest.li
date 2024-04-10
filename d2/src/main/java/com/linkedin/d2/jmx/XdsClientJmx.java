@@ -59,17 +59,17 @@ public class XdsClientJmx implements XdsClientJmxMBean {
   }
 
   @Override
-  public long getObserverLatency50Pct() {
+  public long getXdsServerLatency50Pct() {
     return _xdsServerMetricsProvider.getLatency50Pct();
   }
 
   @Override
-  public long getObserverLatency99Pct() {
+  public long getXdsServerLatency99Pct() {
     return _xdsServerMetricsProvider.getLatency99Pct();
   }
 
   @Override
-  public double getObserverLatencyAverage() {
+  public double getXdsServerLatencyAverage() {
     return _xdsServerMetricsProvider.getLatencyAverage();
   }
 

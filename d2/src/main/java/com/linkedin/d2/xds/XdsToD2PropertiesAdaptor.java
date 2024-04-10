@@ -462,11 +462,7 @@ public class XdsToD2PropertiesAdaptor
       try
       {
         updates = update.getURIMap().entrySet().stream().collect(Collectors.toMap(
-            // for ZK data, the uri name has a unique number suffix (e.g: ltx1-app2253-0000000554),
-            // but Kafka data uri name is just the uri string,
-            // appending the version number will differentiate announcements made
-            // for the same uri (in case that an uri was de-announced then re-announced quickly).
-            e -> e.getKey() + e.getValue().getVersion(), e ->
+            Map.Entry::getKey, e ->
             {
               UriProperties d2Uri = toUriProperties(e.getKey(), e.getValue());
               return d2Uri == null ? null : new XdsAndD2Uris(e.getKey(), e.getValue(), d2Uri);
@@ -596,8 +592,14 @@ public class XdsToD2PropertiesAdaptor
       MapDifference<String, XdsAndD2Uris> mapDifference = Maps.difference(_currentData, updates);
       Map<String, XdsAndD2Uris> markedDownUris = mapDifference.entriesOnlyOnLeft();
       Map<String, XdsAndD2Uris> markedUpUris = mapDifference.entriesOnlyOnRight();
+      Map<String, XdsAndD2Uris> updatedUris  = mapDifference.entriesDiffering().entrySet()
+          .stream().collect(Collectors.toMap(
+              Map.Entry::getKey,
+              e -> e.getValue().rightValue() // new data in updated uris
+          ));
+      updatedUris.putAll(markedUpUris);
 
-      emitSDStatusUpdateReceiptEvents(markedUpUris, true, timestamp);
+      emitSDStatusUpdateReceiptEvents(updatedUris, true, timestamp);
       emitSDStatusUpdateReceiptEvents(markedDownUris, false, timestamp);
     }
 
