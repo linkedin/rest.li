@@ -20,7 +20,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-public class XdsClientJmx implements XdsClientJmxMBean {
+public class XdsClientJmx implements XdsClientJmxMBean
+{
 
   private final AtomicInteger _connectionLostCount = new AtomicInteger();
   private final AtomicInteger _connectionClosedCount = new AtomicInteger();
@@ -30,7 +31,8 @@ public class XdsClientJmx implements XdsClientJmxMBean {
   private final AtomicInteger _resourceNotFoundCount = new AtomicInteger();
   private final XdsServerMetricsProvider _xdsServerMetricsProvider;
 
-  public XdsClientJmx(XdsServerMetricsProvider xdsServerMetricsProvider) {
+  public XdsClientJmx(XdsServerMetricsProvider xdsServerMetricsProvider)
+  {
     _xdsServerMetricsProvider = xdsServerMetricsProvider;
   }
 
@@ -59,17 +61,20 @@ public class XdsClientJmx implements XdsClientJmxMBean {
   }
 
   @Override
-  public long getXdsServerLatency50Pct() {
+  public long getXdsServerLatency50Pct()
+  {
     return _xdsServerMetricsProvider.getLatency50Pct();
   }
 
   @Override
-  public long getXdsServerLatency99Pct() {
+  public long getXdsServerLatency99Pct()
+  {
     return _xdsServerMetricsProvider.getLatency99Pct();
   }
 
   @Override
-  public double getXdsServerLatencyAverage() {
+  public double getXdsServerLatencyAverage()
+  {
     return _xdsServerMetricsProvider.getLatencyAverage();
   }
 

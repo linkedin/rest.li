@@ -103,6 +103,7 @@ public class XdsClientImpl extends XdsClient
     this(node, managedChannel, executorService, readyTimeoutMillis, false);
   }
 
+  @Deprecated
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService,
       long readyTimeoutMillis, boolean subscribeToUriGlobCollection)
   {
@@ -575,6 +576,11 @@ public class XdsClientImpl extends XdsClient
     // track rough estimate of latency spent on the xds server in millis = resource receipt time - resource modified time
     private void trackServerLatency(ResourceUpdate resourceUpdate, XdsServerMetricsProvider metricsProvider)
     {
+      if (_data == null)
+      {
+        return;
+      }
+
       long now = SystemClock.instance().currentTimeMillis();
       if (resourceUpdate instanceof NodeUpdate)
       {
@@ -587,10 +593,6 @@ public class XdsClientImpl extends XdsClient
       }
       else if (resourceUpdate instanceof D2URIMapUpdate)
       {
-        if (_data == null)
-        {
-          return;
-        }
         // only track server latency for the updated/new uris in the update
         Map<String, XdsD2.D2URI> currentUriMap = ((D2URIMapUpdate) _data).getURIMap();
         MapDifference<String, XdsD2.D2URI> rawDiff = Maps.difference(((D2URIMapUpdate) resourceUpdate).getURIMap(),
