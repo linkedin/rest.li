@@ -123,11 +123,8 @@ public class XdsClientImpl extends XdsClient
       _log.info("Glob collection support enabled");
     }
 
-    if (serverMetricsProvider == null) {
-      serverMetricsProvider = new NoOpXdsServerMetricsProvider();
-    }
     _xdsClientJmx = new XdsClientJmx(serverMetricsProvider);
-    _serverMetricsProvider = serverMetricsProvider;
+    _serverMetricsProvider = serverMetricsProvider == null ? new NoOpXdsServerMetricsProvider() : serverMetricsProvider;
   }
 
   @Override
@@ -555,10 +552,7 @@ public class XdsClientImpl extends XdsClient
       // null value guard to avoid overwriting the property with null
       if (data != null && data.isValid())
       {
-        if (_data != null && _data.isValid()) // not initial update and there has been valid update before
-        {
-          trackServerLatency(data, metricsProvider); // data updated, track xds server latency
-        }
+        trackServerLatency(data, metricsProvider); // data updated, track xds server latency
         _data = data;
       }
       if (_data == null)
@@ -575,7 +569,7 @@ public class XdsClientImpl extends XdsClient
     // track rough estimate of latency spent on the xds server in millis = resource receipt time - resource modified time
     private void trackServerLatency(ResourceUpdate resourceUpdate, XdsServerMetricsProvider metricsProvider)
     {
-      if (_data == null)
+      if (!shouldTrackServerLatency())
       {
         return;
       }
@@ -604,6 +598,11 @@ public class XdsClientImpl extends XdsClient
         trackServerLatencyForUris(updatedUris, metricsProvider, now);
         trackServerLatencyForUris(rawDiff.entriesOnlyOnLeft(), metricsProvider, now); // newly added uris
       }
+    }
+
+    private boolean shouldTrackServerLatency()
+    {
+      return _data != null && _data.isValid(); // not initial update and there has been valid update before
     }
 
     private void trackServerLatencyForUris(Map<String, XdsD2.D2URI> uriMap, XdsServerMetricsProvider metricsProvider,
