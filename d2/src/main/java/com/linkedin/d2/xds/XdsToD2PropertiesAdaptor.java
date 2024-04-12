@@ -39,7 +39,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -463,21 +462,28 @@ public class XdsToD2PropertiesAdaptor
       {
         updates = update.getURIMap().entrySet().stream().collect(Collectors.toMap(
             Map.Entry::getKey, e ->
-            {
-              UriProperties d2Uri = toUriProperties(e.getKey(), e.getValue());
-              return d2Uri == null ? null : new XdsAndD2Uris(e.getKey(), e.getValue(), d2Uri);
-            }));
-        updates.values().removeIf(Objects::isNull);
+                new XdsAndD2Uris(e.getKey(), e.getValue(), toUriProperties(e.getKey(), e.getValue())))
+        );
+        updates.values().removeIf(u ->
+        {
+          if (u._d2Uri == null)
+          {
+            LOG.warn("Failed to parse D2 uri properties for uri: {} in cluster: {} from xDS D2URI: {}."
+                    + " Removing it from the update.",
+                u._uriName, _clusterName, u._xdsUri);
+          }
+          return u._d2Uri == null;
+        });
       }
       catch (Exception e)
       {
-        LOG.warn("Failed to parse D2 uri properties from xDS update. Cluster name: {}.  Publishing null to event bus",
+        LOG.warn("Failed to parse D2 uri properties from xDS update. Cluster name: {}. Publishing null to event bus",
             _clusterName);
         _uriEventBus.publishInitialize(_clusterName, null);
         return;
       }
 
-      if (!isInit)
+      if (!isInit && !_currentData.isEmpty())
       {
         emitSDStatusUpdateReceiptEvents(updates);
       }
@@ -592,13 +598,13 @@ public class XdsToD2PropertiesAdaptor
       MapDifference<String, XdsAndD2Uris> mapDifference = Maps.difference(_currentData, updates);
       Map<String, XdsAndD2Uris> markedDownUris = mapDifference.entriesOnlyOnLeft();
       Map<String, XdsAndD2Uris> markedUpUris = mapDifference.entriesOnlyOnRight();
-      Map<String, XdsAndD2Uris> updatedUris  = mapDifference.entriesDiffering().entrySet()
-          .stream().collect(Collectors.toMap(
+      Map<String, XdsAndD2Uris> updatedUris  = mapDifference.entriesDiffering().entrySet().stream()
+          .collect(Collectors.toMap(
               Map.Entry::getKey,
               e -> e.getValue().rightValue() // new data in updated uris
           ));
-      updatedUris.putAll(markedUpUris);
 
+      emitSDStatusUpdateReceiptEvents(markedUpUris, true, timestamp);
       emitSDStatusUpdateReceiptEvents(updatedUris, true, timestamp);
       emitSDStatusUpdateReceiptEvents(markedDownUris, false, timestamp);
     }

@@ -31,9 +31,16 @@ public class XdsClientJmx implements XdsClientJmxMBean
   private final AtomicInteger _resourceNotFoundCount = new AtomicInteger();
   private final XdsServerMetricsProvider _xdsServerMetricsProvider;
 
+  @Deprecated
+  public XdsClientJmx()
+  {
+    this(new NoOpXdsServerMetricsProvider());
+  }
+
   public XdsClientJmx(XdsServerMetricsProvider xdsServerMetricsProvider)
   {
-    _xdsServerMetricsProvider = xdsServerMetricsProvider;
+    _xdsServerMetricsProvider = xdsServerMetricsProvider == null ?
+        new NoOpXdsServerMetricsProvider() : xdsServerMetricsProvider;
   }
 
   @Override
@@ -61,6 +68,17 @@ public class XdsClientJmx implements XdsClientJmxMBean
   }
 
   @Override
+  public long getXdsServerLatencyMin() {
+    return _xdsServerMetricsProvider.getLatencyMin();
+  }
+
+  @Override
+  public double getXdsServerLatencyAverage()
+  {
+    return _xdsServerMetricsProvider.getLatencyAverage();
+  }
+
+  @Override
   public long getXdsServerLatency50Pct()
   {
     return _xdsServerMetricsProvider.getLatency50Pct();
@@ -73,9 +91,13 @@ public class XdsClientJmx implements XdsClientJmxMBean
   }
 
   @Override
-  public double getXdsServerLatencyAverage()
-  {
-    return _xdsServerMetricsProvider.getLatencyAverage();
+  public long getXdsServerLatency99_9Pct() {
+    return _xdsServerMetricsProvider.getLatency99_9Pct();
+  }
+
+  @Override
+  public long getXdsServerLatencyMax() {
+    return _xdsServerMetricsProvider.getLatencyMax();
   }
 
   @Override

@@ -20,7 +20,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.MapDifference;
-import com.google.common.collect.MapDifference.ValueDifference;
 import com.google.common.collect.Maps;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.rpc.Code;
@@ -556,7 +555,7 @@ public class XdsClientImpl extends XdsClient
       // null value guard to avoid overwriting the property with null
       if (data != null && data.isValid())
       {
-        if (_data != null) // not initial update
+        if (_data != null && _data.isValid()) // not initial update and there has been valid update before
         {
           trackServerLatency(data, metricsProvider); // data updated, track xds server latency
         }
@@ -597,16 +596,20 @@ public class XdsClientImpl extends XdsClient
         Map<String, XdsD2.D2URI> currentUriMap = ((D2URIMapUpdate) _data).getURIMap();
         MapDifference<String, XdsD2.D2URI> rawDiff = Maps.difference(((D2URIMapUpdate) resourceUpdate).getURIMap(),
             currentUriMap == null ? Collections.emptyMap() : currentUriMap);
-        List<XdsD2.D2URI> updatedUris = rawDiff.entriesDiffering().values().stream()
-            .map(ValueDifference::leftValue) // new data of updated uris
-            .collect(Collectors.toList());
-        updatedUris.addAll(rawDiff.entriesOnlyOnLeft().values()); // newly added uris
-
-        for (XdsD2.D2URI uri : updatedUris)
-        {
-          metricsProvider.trackLatency(now - uri.getModifiedTime().getSeconds() * 1000);
-        }
+        Map<String, XdsD2.D2URI> updatedUris = rawDiff.entriesDiffering().entrySet().stream()
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                e -> e.getValue().leftValue()) // new data of updated uris
+            );
+        trackServerLatencyForUris(updatedUris, metricsProvider, now);
+        trackServerLatencyForUris(rawDiff.entriesOnlyOnLeft(), metricsProvider, now); // newly added uris
       }
+    }
+
+    private void trackServerLatencyForUris(Map<String, XdsD2.D2URI> uriMap, XdsServerMetricsProvider metricsProvider,
+        long now)
+    {
+      uriMap.forEach((k, v) -> metricsProvider.trackLatency(now - v.getModifiedTime().getSeconds() * 1000));
     }
 
     public ResourceType getType()

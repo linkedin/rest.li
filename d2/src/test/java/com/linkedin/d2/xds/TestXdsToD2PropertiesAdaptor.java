@@ -282,7 +282,8 @@ public class TestXdsToD2PropertiesAdaptor {
     watcher.onChanged(new XdsClient.D2URIMapUpdate(Collections.singletonMap(URI_NAME, protoUri)));
 
     verify(fixture._uriEventBus).publishInitialize(PRIMARY_CLUSTER_NAME, uriProps);
-    verify(fixture._eventEmitter).emitSDStatusUpdateReceiptEvent(
+    // no status update receipt event emitted when data was empty before the update
+    verify(fixture._eventEmitter, never()).emitSDStatusUpdateReceiptEvent(
         eq(PRIMARY_CLUSTER_NAME),
         eq(LOCAL_HOST),
         eq(PORT),
