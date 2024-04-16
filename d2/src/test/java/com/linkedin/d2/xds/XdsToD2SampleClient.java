@@ -5,6 +5,7 @@ import com.linkedin.d2.balancer.dualread.DualReadModeProvider;
 import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.jmx.D2ClientJmxManager;
 import com.linkedin.d2.jmx.JmxManager;
+import com.linkedin.d2.jmx.NoOpXdsServerMetricsProvider;
 import com.linkedin.d2.xds.util.SslContextUtil;
 import com.linkedin.util.clock.SystemClock;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
@@ -89,7 +90,8 @@ public class XdsToD2SampleClient
 
     XdsChannelFactory xdsChannelFactory = new XdsChannelFactory(sslContext, xdsServer);
     XdsClient xdsClient = new XdsClientImpl(node, xdsChannelFactory.createChannel(),
-        Executors.newSingleThreadScheduledExecutor(), XdsClientImpl.DEFAULT_READY_TIMEOUT_MILLIS, false);
+        Executors.newSingleThreadScheduledExecutor(), XdsClientImpl.DEFAULT_READY_TIMEOUT_MILLIS, false,
+        new NoOpXdsServerMetricsProvider());
 
     DualReadStateManager dualReadStateManager = new DualReadStateManager(
         () -> DualReadModeProvider.DualReadMode.DUAL_READ,

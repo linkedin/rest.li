@@ -34,4 +34,40 @@ public interface XdsClientJmxMBean {
 
   // when the resource is not found.
   int getResourceNotFoundCount();
+
+  /**
+   * Get minimum of Xds server latency, which is from when the resource is updated on the Xds server to when the
+   * client receives it.
+   */
+  long getXdsServerLatencyMin();
+
+  /**
+   * Get Avg of Xds server latency, which is from when the resource is updated on the Xds server to when the
+   * client receives it.
+   */
+  double getXdsServerLatencyAverage();
+
+  /**
+   * Get 50 Percentile of Xds server latency, which is from when the resource is updated on the Xds server to when the
+   * client receives it.
+   */
+  long getXdsServerLatency50Pct();
+
+  /**
+   * Get 90 Percentile of Xds server latency, which is from when the resource is updated on the Xds server to when the
+   * client receives it.
+   */
+  long getXdsServerLatency99Pct();
+
+  /**
+   * Get 99.9 Percentile of Xds server latency, which is from when the resource is updated on the Xds server to when the
+   * client receives it.
+   */
+  long getXdsServerLatency99_9Pct();
+
+  /**
+   * Get maximum of Xds server latency, which is from when the resource is updated on the Xds server to when the
+   * client receives it.
+   */
+  long getXdsServerLatencyMax();
 }

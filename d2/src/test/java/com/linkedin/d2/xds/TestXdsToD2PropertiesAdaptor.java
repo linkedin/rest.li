@@ -32,6 +32,7 @@ import com.linkedin.d2.balancer.properties.UriPropertiesJsonSerializer;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
+import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter.StatusUpdateActionType;
 import com.linkedin.d2.xds.XdsClient.D2URIMapResourceWatcher;
 import com.linkedin.d2.xds.XdsClient.NodeResourceWatcher;
 import indis.XdsD2;
@@ -61,15 +62,21 @@ public class TestXdsToD2PropertiesAdaptor {
   private static final String URI_SYMLINK_RESOURCE_NAME = URI_NODE_PREFIX + SYMLINK_NAME;
   private static final String PRIMARY_URI_RESOURCE_NAME = URI_NODE_PREFIX + PRIMARY_CLUSTER_NAME;
   private static final long VERSION = 123;
+  private static final long VERSION_2 = 124;
   private static final String LOCAL_HOST = "localhost";
   private static final int PORT = 8443;
   private static final URI LOCAL_HOST_URI = URI.create("https://" + LOCAL_HOST + ":" + PORT);
   private static final String TRACING_ID = "5678";
   private static final String XDS_SERVER = "dummy-observer-host";
-  private static final String URI_NAME = "ltx1-dummyhost456";
+  private static final String URI_NAME = "https://ltx1-dummyhost1:8443";
+  private static final String URI_NAME_2 = "https://ltx1-dummyhost2:8443";
+  private static final String URI_NAME_3 = "https://ltx1-dummyhost3:8443";
+  private static final String HOST_1 = "ltx1-dummyhost1";
+  private static final String HOST_2 = "ltx1-dummyhost2";
+  private static final String HOST_3 = "ltx1-dummyhost3";
 
   private static final String SERVICE_NAME = "FooService";
-  private final UriPropertiesJsonSerializer uriSerializer = new UriPropertiesJsonSerializer();
+  private final UriPropertiesJsonSerializer _uriSerializer = new UriPropertiesJsonSerializer();
 
   private static final XdsClient.NodeUpdate EMPTY_NODE_DATA = new XdsClient.NodeUpdate(null);
   private static final XdsClient.D2URIMapUpdate EMPTY_DATA_URI_MAP = new XdsClient.D2URIMapUpdate(null);
@@ -200,7 +207,39 @@ public class TestXdsToD2PropertiesAdaptor {
     fixture.getSpiedAdaptor().listenToUris(PRIMARY_CLUSTER_NAME);
 
     verify(fixture._xdsClient).watchXdsResource(eq(PRIMARY_URI_RESOURCE_NAME), anyMapWatcher());
-    verifyUriUpdate(fixture, PRIMARY_CLUSTER_NAME, null);
+    XdsD2.D2URI protoUri = getD2URI(PRIMARY_CLUSTER_NAME, URI_NAME, VERSION);
+    Map<String, XdsD2.D2URI> uriMap = new HashMap<>(Collections.singletonMap(URI_NAME, protoUri));
+    fixture._uriMapWatcher.onChanged(new XdsClient.D2URIMapUpdate(uriMap));
+    verify(fixture._uriEventBus).publishInitialize(PRIMARY_CLUSTER_NAME, _uriSerializer.fromProto(protoUri));
+    verify(fixture._eventEmitter).emitSDStatusInitialRequestEvent(
+        eq(PRIMARY_CLUSTER_NAME), eq(true), anyLong(), eq(true));
+    // no status update receipt event emitted for initial update
+    verify(fixture._eventEmitter, never()).emitSDStatusUpdateReceiptEvent(
+        any(), any(), anyInt(), any(), anyBoolean(), any(), any(), any(), any(), any(), anyLong());
+
+    // add uri 2
+    uriMap.put(URI_NAME_2, getD2URI(PRIMARY_CLUSTER_NAME, URI_NAME_2, VERSION));
+    fixture._uriMapWatcher.onChanged(new XdsClient.D2URIMapUpdate(uriMap));
+    verify(fixture._eventEmitter).emitSDStatusInitialRequestEvent(
+        eq(PRIMARY_CLUSTER_NAME), eq(true), anyLong(), eq(true)); // no more initial request event emitted
+    verify(fixture._eventEmitter).emitSDStatusUpdateReceiptEvent( // status update receipt event emitted for added uri
+        any(), eq(HOST_2), anyInt(), eq(ServiceDiscoveryEventEmitter.StatusUpdateActionType.MARK_READY), anyBoolean(),
+        any(), any(), any(), eq((int) VERSION), any(), anyLong());
+
+    // update uri 1, remove uri2, add uri3
+    uriMap.clear();
+    uriMap.put(URI_NAME, getD2URI(PRIMARY_CLUSTER_NAME, URI_NAME, VERSION_2));
+    uriMap.put(URI_NAME_3, getD2URI(PRIMARY_CLUSTER_NAME, URI_NAME_3, VERSION));
+    fixture._uriMapWatcher.onChanged(new XdsClient.D2URIMapUpdate(uriMap));
+    verify(fixture._eventEmitter).emitSDStatusUpdateReceiptEvent(
+        any(), eq(HOST_1), anyInt(), eq(ServiceDiscoveryEventEmitter.StatusUpdateActionType.MARK_READY), anyBoolean(),
+        any(), any(), any(), eq((int) VERSION_2), any(), anyLong());
+    verify(fixture._eventEmitter).emitSDStatusUpdateReceiptEvent(
+        any(), eq(HOST_2), anyInt(), eq(StatusUpdateActionType.MARK_DOWN), anyBoolean(),
+        any(), any(), any(), eq((int) VERSION), any(), anyLong());
+    verify(fixture._eventEmitter).emitSDStatusUpdateReceiptEvent(
+        any(), eq(HOST_3), anyInt(), eq(ServiceDiscoveryEventEmitter.StatusUpdateActionType.MARK_READY), anyBoolean(),
+        any(), any(), any(), eq((int) VERSION), any(), anyLong());
   }
 
   @Test
@@ -237,13 +276,14 @@ public class TestXdsToD2PropertiesAdaptor {
     // if the old primary cluster gets an update, it will be published under its original cluster name
     // since the symlink points to the new primary cluster now.
 
-    XdsD2.D2URI protoUri = getD2URI(PRIMARY_CLUSTER_NAME);
+    XdsD2.D2URI protoUri = getD2URI(PRIMARY_CLUSTER_NAME, LOCAL_HOST_URI.toString(), VERSION);
     UriProperties uriProps = new UriPropertiesJsonSerializer().fromProto(protoUri);
 
     watcher.onChanged(new XdsClient.D2URIMapUpdate(Collections.singletonMap(URI_NAME, protoUri)));
 
     verify(fixture._uriEventBus).publishInitialize(PRIMARY_CLUSTER_NAME, uriProps);
-    verify(fixture._eventEmitter).emitSDStatusUpdateReceiptEvent(
+    // no status update receipt event emitted when data was empty before the update
+    verify(fixture._eventEmitter, never()).emitSDStatusUpdateReceiptEvent(
         eq(PRIMARY_CLUSTER_NAME),
         eq(LOCAL_HOST),
         eq(PORT),
@@ -251,7 +291,7 @@ public class TestXdsToD2PropertiesAdaptor {
         eq(true),
         eq(XDS_SERVER),
         eq(URI_NODE_PREFIX + PRIMARY_CLUSTER_NAME + "/" + URI_NAME),
-        eq(uriProps.toString()),
+        eq(protoUri.toString()),
         eq((int) VERSION),
         eq(TRACING_ID),
         anyLong()
@@ -261,7 +301,8 @@ public class TestXdsToD2PropertiesAdaptor {
   @Test
   public void testURIPropertiesDeserialization() throws PropertySerializationException
   {
-    UriProperties properties = new UriPropertiesJsonSerializer().fromProto(getD2URI(PRIMARY_CLUSTER_NAME));
+    UriProperties properties = new UriPropertiesJsonSerializer().fromProto(
+        getD2URI(PRIMARY_CLUSTER_NAME, LOCAL_HOST_URI.toString(), VERSION));
     Assert.assertEquals(properties.getClusterName(), PRIMARY_CLUSTER_NAME);
     Assert.assertEquals(properties.getVersion(), VERSION);
     Assert.assertEquals(properties.getUriSpecificProperties(),
@@ -298,11 +339,11 @@ public class TestXdsToD2PropertiesAdaptor {
     verify(fixture._uriEventBus).publishInitialize(PRIMARY_CLUSTER_NAME, null);
   }
 
-  private XdsD2.D2URI getD2URI(String clusterName)
+  private XdsD2.D2URI getD2URI(String clusterName, String uri, long version)
   {
     return XdsD2.D2URI.newBuilder()
-        .setVersion(VERSION)
-        .setUri(LOCAL_HOST_URI.toString())
+        .setVersion(version)
+        .setUri(uri)
         .setClusterName(clusterName)
         .setUriSpecificProperties(Struct.newBuilder()
             .putFields("foo", Value.newBuilder().setStringValue("bar").build())
@@ -353,13 +394,13 @@ public class TestXdsToD2PropertiesAdaptor {
       throws PropertySerializationException
   {
     D2URIMapResourceWatcher watcher = fixture._uriMapWatcher;
-    XdsD2.D2URI protoUri = getD2URI(clusterName);
+    XdsD2.D2URI protoUri = getD2URI(clusterName, LOCAL_HOST_URI.toString(), VERSION);
     watcher.onChanged(new XdsClient.D2URIMapUpdate(Collections.singletonMap(URI_NAME, protoUri)));
-    verify(fixture._uriEventBus).publishInitialize(clusterName, uriSerializer.fromProto(protoUri));
+    verify(fixture._uriEventBus).publishInitialize(clusterName, _uriSerializer.fromProto(protoUri));
     if (symlinkName != null)
     {
       verify(fixture._uriEventBus).publishInitialize(symlinkName,
-          uriSerializer.fromProto(getD2URI(symlinkName)));
+          _uriSerializer.fromProto(getD2URI(symlinkName, LOCAL_HOST_URI.toString(), VERSION)));
     }
   }
 

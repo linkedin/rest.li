@@ -20,7 +20,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-public class XdsClientJmx implements XdsClientJmxMBean {
+public class XdsClientJmx implements XdsClientJmxMBean
+{
 
   private final AtomicInteger _connectionLostCount = new AtomicInteger();
   private final AtomicInteger _connectionClosedCount = new AtomicInteger();
@@ -28,6 +29,19 @@ public class XdsClientJmx implements XdsClientJmxMBean {
 
   private final AtomicBoolean _isConnected = new AtomicBoolean();
   private final AtomicInteger _resourceNotFoundCount = new AtomicInteger();
+  private final XdsServerMetricsProvider _xdsServerMetricsProvider;
+
+  @Deprecated
+  public XdsClientJmx()
+  {
+    this(new NoOpXdsServerMetricsProvider());
+  }
+
+  public XdsClientJmx(XdsServerMetricsProvider xdsServerMetricsProvider)
+  {
+    _xdsServerMetricsProvider = xdsServerMetricsProvider == null ?
+        new NoOpXdsServerMetricsProvider() : xdsServerMetricsProvider;
+  }
 
   @Override
   public int getConnectionLostCount()
@@ -51,6 +65,39 @@ public class XdsClientJmx implements XdsClientJmxMBean {
   public int getResourceNotFoundCount()
   {
     return _resourceNotFoundCount.get();
+  }
+
+  @Override
+  public long getXdsServerLatencyMin() {
+    return _xdsServerMetricsProvider.getLatencyMin();
+  }
+
+  @Override
+  public double getXdsServerLatencyAverage()
+  {
+    return _xdsServerMetricsProvider.getLatencyAverage();
+  }
+
+  @Override
+  public long getXdsServerLatency50Pct()
+  {
+    return _xdsServerMetricsProvider.getLatency50Pct();
+  }
+
+  @Override
+  public long getXdsServerLatency99Pct()
+  {
+    return _xdsServerMetricsProvider.getLatency99Pct();
+  }
+
+  @Override
+  public long getXdsServerLatency99_9Pct() {
+    return _xdsServerMetricsProvider.getLatency99_9Pct();
+  }
+
+  @Override
+  public long getXdsServerLatencyMax() {
+    return _xdsServerMetricsProvider.getLatencyMax();
   }
 
   @Override

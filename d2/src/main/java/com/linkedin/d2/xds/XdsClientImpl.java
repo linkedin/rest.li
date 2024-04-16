@@ -19,11 +19,15 @@ package com.linkedin.d2.xds;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.rpc.Code;
+import com.linkedin.d2.jmx.XdsServerMetricsProvider;
+import com.linkedin.d2.jmx.NoOpXdsServerMetricsProvider;
 import com.linkedin.d2.jmx.XdsClientJmx;
 import com.linkedin.d2.xds.GlobCollectionUtils.D2UriIdentifier;
+import com.linkedin.util.clock.SystemClock;
 import indis.XdsD2;
 import io.envoyproxy.envoy.service.discovery.v3.AggregatedDiscoveryServiceGrpc;
 import io.envoyproxy.envoy.service.discovery.v3.DeltaDiscoveryRequest;
@@ -58,6 +62,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+/**
+ * Implementation of {@link XdsClient} interface.
+ */
 public class XdsClientImpl extends XdsClient
 {
   private static final Logger _log = LoggerFactory.getLogger(XdsClientImpl.class);
@@ -80,6 +87,7 @@ public class XdsClientImpl extends XdsClient
   private final long _readyTimeoutMillis;
 
   private final XdsClientJmx _xdsClientJmx;
+  private final XdsServerMetricsProvider _serverMetricsProvider;
 
   @Deprecated
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService)
@@ -94,8 +102,16 @@ public class XdsClientImpl extends XdsClient
     this(node, managedChannel, executorService, readyTimeoutMillis, false);
   }
 
+  @Deprecated
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService,
       long readyTimeoutMillis, boolean subscribeToUriGlobCollection)
+  {
+    this(node, managedChannel, executorService, readyTimeoutMillis, subscribeToUriGlobCollection,
+        new NoOpXdsServerMetricsProvider());
+  }
+
+  public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService,
+      long readyTimeoutMillis, boolean subscribeToUriGlobCollection, XdsServerMetricsProvider serverMetricsProvider)
   {
     _readyTimeoutMillis = readyTimeoutMillis;
     _node = node;
@@ -106,7 +122,9 @@ public class XdsClientImpl extends XdsClient
     {
       _log.info("Glob collection support enabled");
     }
-    _xdsClientJmx = new XdsClientJmx();
+
+    _xdsClientJmx = new XdsClientJmx(serverMetricsProvider);
+    _serverMetricsProvider = serverMetricsProvider == null ? new NoOpXdsServerMetricsProvider() : serverMetricsProvider;
   }
 
   @Override
@@ -431,7 +449,7 @@ public class XdsClientImpl extends XdsClient
       ResourceSubscriber subscriber = subscribers.get(entry.getKey());
       if (subscriber != null)
       {
-        subscriber.onData(entry.getValue());
+        subscriber.onData(entry.getValue(), _serverMetricsProvider);
       }
     }
   }
@@ -524,16 +542,17 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    private void onData(ResourceUpdate data)
+    private void onData(ResourceUpdate data, XdsServerMetricsProvider metricsProvider)
     {
       if (Objects.equals(_data, data))
       {
         _log.debug("Received resource update data equal to the current data. Will not perform the update.");
         return;
       }
+      // null value guard to avoid overwriting the property with null
       if (data != null && data.isValid())
       {
-        // null value guard to avoid overwriting the property with null
+        trackServerLatency(data, metricsProvider); // data updated, track xds server latency
         _data = data;
       }
       if (_data == null)
@@ -545,6 +564,51 @@ public class XdsClientImpl extends XdsClient
       {
         watcher.onChanged(_data);
       }
+    }
+
+    // track rough estimate of latency spent on the xds server in millis = resource receipt time - resource modified time
+    private void trackServerLatency(ResourceUpdate resourceUpdate, XdsServerMetricsProvider metricsProvider)
+    {
+      if (!shouldTrackServerLatency())
+      {
+        return;
+      }
+
+      long now = SystemClock.instance().currentTimeMillis();
+      if (resourceUpdate instanceof NodeUpdate)
+      {
+        XdsD2.Node nodeData = ((NodeUpdate) resourceUpdate).getNodeData();
+        if (nodeData == null)
+        {
+          return;
+        }
+        metricsProvider.trackLatency(now - nodeData.getStat().getMtime());
+      }
+      else if (resourceUpdate instanceof D2URIMapUpdate)
+      {
+        // only track server latency for the updated/new uris in the update
+        Map<String, XdsD2.D2URI> currentUriMap = ((D2URIMapUpdate) _data).getURIMap();
+        MapDifference<String, XdsD2.D2URI> rawDiff = Maps.difference(((D2URIMapUpdate) resourceUpdate).getURIMap(),
+            currentUriMap == null ? Collections.emptyMap() : currentUriMap);
+        Map<String, XdsD2.D2URI> updatedUris = rawDiff.entriesDiffering().entrySet().stream()
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                e -> e.getValue().leftValue()) // new data of updated uris
+            );
+        trackServerLatencyForUris(updatedUris, metricsProvider, now);
+        trackServerLatencyForUris(rawDiff.entriesOnlyOnLeft(), metricsProvider, now); // newly added uris
+      }
+    }
+
+    private boolean shouldTrackServerLatency()
+    {
+      return _data != null && _data.isValid(); // not initial update and there has been valid update before
+    }
+
+    private void trackServerLatencyForUris(Map<String, XdsD2.D2URI> uriMap, XdsServerMetricsProvider metricsProvider,
+        long now)
+    {
+      uriMap.forEach((k, v) -> metricsProvider.trackLatency(now - v.getModifiedTime().getSeconds() * 1000));
     }
 
     public ResourceType getType()

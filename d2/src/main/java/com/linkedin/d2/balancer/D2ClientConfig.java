@@ -37,7 +37,9 @@ import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
+import com.linkedin.d2.jmx.XdsServerMetricsProvider;
 import com.linkedin.d2.jmx.JmxManager;
+import com.linkedin.d2.jmx.NoOpXdsServerMetricsProvider;
 import com.linkedin.d2.jmx.NoOpJmxManager;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
@@ -135,6 +137,7 @@ public class D2ClientConfig
   public String xdsChannelLoadBalancingPolicy = null;
   public Map<String, ?> xdsChannelLoadBalancingPolicyConfig = null;
   public boolean subscribeToUriGlobCollection = false;
+  public XdsServerMetricsProvider _xdsServerMetricsProvider = new NoOpXdsServerMetricsProvider();
 
   public D2ClientConfig()
   {
@@ -210,7 +213,8 @@ public class D2ClientConfig
                  ExecutorService dualReadNewLbExecutor,
                  String xdsChannelLoadBalancingPolicy,
                  Map<String, ?> xdsChannelLoadBalancingPolicyConfig,
-                 boolean subscribeToUriGlobCollection
+                 boolean subscribeToUriGlobCollection,
+                 XdsServerMetricsProvider xdsServerMetricsProvider
       )
   {
     this.zkHosts = zkHosts;
@@ -284,5 +288,6 @@ public class D2ClientConfig
     this.xdsChannelLoadBalancingPolicy = xdsChannelLoadBalancingPolicy;
     this.xdsChannelLoadBalancingPolicyConfig = xdsChannelLoadBalancingPolicyConfig;
     this.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
+    this._xdsServerMetricsProvider = xdsServerMetricsProvider;
   }
 }

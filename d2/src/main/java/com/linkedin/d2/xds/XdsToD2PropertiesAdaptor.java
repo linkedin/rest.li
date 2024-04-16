@@ -39,7 +39,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -462,26 +461,29 @@ public class XdsToD2PropertiesAdaptor
       try
       {
         updates = update.getURIMap().entrySet().stream().collect(Collectors.toMap(
-            // for ZK data, the uri name has a unique number suffix (e.g: ltx1-app2253-0000000554),
-            // but Kafka data uri name is just the uri string,
-            // appending the version number will differentiate announcements made
-            // for the same uri (in case that an uri was de-announced then re-announced quickly).
-            e -> e.getKey() + e.getValue().getVersion(), e ->
-            {
-              UriProperties d2Uri = toUriProperties(e.getKey(), e.getValue());
-              return d2Uri == null ? null : new XdsAndD2Uris(e.getKey(), e.getValue(), d2Uri);
-            }));
-        updates.values().removeIf(Objects::isNull);
+            Map.Entry::getKey, e ->
+                new XdsAndD2Uris(e.getKey(), e.getValue(), toUriProperties(e.getKey(), e.getValue())))
+        );
+        updates.values().removeIf(u ->
+        {
+          if (u._d2Uri == null)
+          {
+            LOG.warn("Failed to parse D2 uri properties for uri: {} in cluster: {} from xDS D2URI: {}."
+                    + " Removing it from the update.",
+                u._uriName, _clusterName, u._xdsUri);
+          }
+          return u._d2Uri == null;
+        });
       }
       catch (Exception e)
       {
-        LOG.warn("Failed to parse D2 uri properties from xDS update. Cluster name: {}.  Publishing null to event bus",
+        LOG.warn("Failed to parse D2 uri properties from xDS update. Cluster name: {}. Publishing null to event bus",
             _clusterName);
         _uriEventBus.publishInitialize(_clusterName, null);
         return;
       }
 
-      if (!isInit)
+      if (!isInit && !_currentData.isEmpty())
       {
         emitSDStatusUpdateReceiptEvents(updates);
       }
@@ -596,8 +598,14 @@ public class XdsToD2PropertiesAdaptor
       MapDifference<String, XdsAndD2Uris> mapDifference = Maps.difference(_currentData, updates);
       Map<String, XdsAndD2Uris> markedDownUris = mapDifference.entriesOnlyOnLeft();
       Map<String, XdsAndD2Uris> markedUpUris = mapDifference.entriesOnlyOnRight();
+      Map<String, XdsAndD2Uris> updatedUris  = mapDifference.entriesDiffering().entrySet().stream()
+          .collect(Collectors.toMap(
+              Map.Entry::getKey,
+              e -> e.getValue().rightValue() // new data in updated uris
+          ));
 
       emitSDStatusUpdateReceiptEvents(markedUpUris, true, timestamp);
+      emitSDStatusUpdateReceiptEvents(updatedUris, true, timestamp);
       emitSDStatusUpdateReceiptEvents(markedDownUris, false, timestamp);
     }
 
@@ -618,7 +626,7 @@ public class XdsToD2PropertiesAdaptor
                 true,
                 _xdsClient.getXdsServerAuthority(),
                 nodePath,
-                d2Uri.toString(),
+                xdsUri.toString(),
                 (int) xdsUri.getVersion(),
                 xdsUri.getTracingId(),
                 timestamp)
