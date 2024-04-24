@@ -231,7 +231,8 @@ public class TestXdsToD2PropertiesAdaptor {
     uriMap.put(URI_NAME, getD2URI(PRIMARY_CLUSTER_NAME, URI_NAME, VERSION_2));
     uriMap.put(URI_NAME_3, getD2URI(PRIMARY_CLUSTER_NAME, URI_NAME_3, VERSION));
     fixture._uriMapWatcher.onChanged(new XdsClient.D2URIMapUpdate(uriMap));
-    verify(fixture._eventEmitter).emitSDStatusUpdateReceiptEvent(
+    // events should be emitted only for remove/add, but not update
+    verify(fixture._eventEmitter, never()).emitSDStatusUpdateReceiptEvent(
         any(), eq(HOST_1), anyInt(), eq(ServiceDiscoveryEventEmitter.StatusUpdateActionType.MARK_READY), anyBoolean(),
         any(), any(), any(), eq((int) VERSION_2), any(), anyLong());
     verify(fixture._eventEmitter).emitSDStatusUpdateReceiptEvent(

@@ -598,14 +598,8 @@ public class XdsToD2PropertiesAdaptor
       MapDifference<String, XdsAndD2Uris> mapDifference = Maps.difference(_currentData, updates);
       Map<String, XdsAndD2Uris> markedDownUris = mapDifference.entriesOnlyOnLeft();
       Map<String, XdsAndD2Uris> markedUpUris = mapDifference.entriesOnlyOnRight();
-      Map<String, XdsAndD2Uris> updatedUris  = mapDifference.entriesDiffering().entrySet().stream()
-          .collect(Collectors.toMap(
-              Map.Entry::getKey,
-              e -> e.getValue().rightValue() // new data in updated uris
-          ));
 
       emitSDStatusUpdateReceiptEvents(markedUpUris, true, timestamp);
-      emitSDStatusUpdateReceiptEvents(updatedUris, true, timestamp);
       emitSDStatusUpdateReceiptEvents(markedDownUris, false, timestamp);
     }
 
