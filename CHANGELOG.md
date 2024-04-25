@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.53.1] - 2024-04-24
+- Remove emitting SD event for receiving URI data update
+
 ## [29.53.0] - 2024-04-09
 - add xDS server latency metric provider
 
@@ -5683,7 +5686,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.53.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.53.1...master
+[29.53.1]: https://github.com/linkedin/rest.li/compare/v29.53.0...v29.53.1
 [29.53.0]: https://github.com/linkedin/rest.li/compare/v29.52.1...v29.53.0
 [29.52.1]: https://github.com/linkedin/rest.li/compare/v29.52.0...v29.52.1
 [29.52.0]: https://github.com/linkedin/rest.li/compare/v29.51.14...v29.52.0
