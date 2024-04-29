@@ -60,7 +60,7 @@ public class DualReadStateManager
 
   private final DualReadLoadBalancerJmx _dualReadLoadBalancerJmx;
 
-  private final DualReadLoadBalancerMonitor.UriPropertiesDualReadMonitor _uriPropertiesDualReadMonitor;
+  private final UriPropertiesDualReadMonitor _uriPropertiesDualReadMonitor;
   private final DualReadLoadBalancerMonitor.ServicePropertiesDualReadMonitor _servicePropertiesDualReadMonitor;
   private final DualReadLoadBalancerMonitor.ClusterPropertiesDualReadMonitor _clusterPropertiesDualReadMonitor;
 
@@ -69,8 +69,7 @@ public class DualReadStateManager
   {
     _dualReadLoadBalancerJmx = new DualReadLoadBalancerJmx();
     Clock clock = SystemClock.instance();
-    _uriPropertiesDualReadMonitor = new DualReadLoadBalancerMonitor.UriPropertiesDualReadMonitor(
-        _dualReadLoadBalancerJmx, clock);
+    _uriPropertiesDualReadMonitor = new UriPropertiesDualReadMonitor(_dualReadLoadBalancerJmx);
     _servicePropertiesDualReadMonitor = new DualReadLoadBalancerMonitor.ServicePropertiesDualReadMonitor(
         _dualReadLoadBalancerJmx, clock);
     _clusterPropertiesDualReadMonitor = new DualReadLoadBalancerMonitor.ClusterPropertiesDualReadMonitor(
@@ -174,8 +173,7 @@ public class DualReadStateManager
   {
     if (_clusterDualReadModes.getOrDefault(propertyName, _dualReadMode) == DualReadModeProvider.DualReadMode.DUAL_READ)
     {
-      String version = property.getVersion() + "|" + property.Uris().size();
-      _uriPropertiesDualReadMonitor.reportData(propertyName, property, version, fromNewLb);
+      _uriPropertiesDualReadMonitor.reportData(propertyName, property, fromNewLb);
     }
   }
 

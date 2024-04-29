@@ -22,7 +22,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalCause;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
-import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.util.RateLimitedLogger;
 import com.linkedin.util.clock.Clock;
 import java.time.Instant;
@@ -72,7 +71,6 @@ public abstract class DualReadLoadBalancerMonitor<T>
     Cache<String, CacheEntry<T>> cacheToAdd = fromNewLb ? _newLbPropertyCache : _oldLbPropertyCache;
     CacheEntry<T> existingEntry = cacheToAdd.getIfPresent(propertyName);
     String propertyClassName = property.getClass().getSimpleName();
-    boolean isUriProp = property instanceof UriProperties;
 
     if (existingEntry != null && existingEntry._data.equals(property))
     {
@@ -92,19 +90,10 @@ public abstract class DualReadLoadBalancerMonitor<T>
         // different.
         if (!isReadFromFS(existingEntry._version, propertyVersion))
         {
-          String msg = String.format("Received same data of different versions in %s LB for %s: %s."
-                      + " Old version: %s, New version: %s, Data: %s",
-                  fromNewLb ? "New" : "Old", propertyClassName, propertyName, existingEntry._version,
-                  propertyVersion, property);
-
-          if (isUriProp)
-          {
-            LOG.debug(msg);
-          }
-          else
-          {
-            warnByPropType(isUriProp, msg);
-          }
+          LOG.warn("Received same data of different versions in {} LB for {} {}"
+                  + " Old version: {} New version: {} Data: {}",
+              fromNewLb ? "New" : "Old", propertyClassName, propertyName, existingEntry._version,
+              propertyVersion, property);
         }
         // still need to put in the cache, don't skip
       }
@@ -136,23 +125,14 @@ public abstract class DualReadLoadBalancerMonitor<T>
     { // data is not the same but version is the same, a mismatch!
       incrementPropertiesErrorCount();
       incrementEntryOutOfSyncCount(); // increment the out-of-sync count for the entry received later
-      warnByPropType(isUriProp,
-          String.format("Received mismatched %s for %s. %s", propertyClassName, propertyName, entriesLogMsg));
+      LOG.warn("Received mismatched {} for {}. {}", propertyClassName, propertyName, entriesLogMsg);
       cacheToCompare.invalidate(propertyName);
     }
     else {
       if (isDataEqual)
       {
-        String msg = String.format("Received same data of %s for %s but with different versions: %s",
+        LOG.warn("Received same data of {} for {} but with different versions: {}",
             propertyClassName, propertyName, entriesLogMsg);
-        if (isUriProp)
-        {
-          LOG.debug(msg);
-        }
-        else
-        {
-          warnByPropType(isUriProp, msg);
-        }
       }
       cacheToAdd.put(propertyName, newEntry);
       incrementEntryOutOfSyncCount();
@@ -207,18 +187,6 @@ public abstract class DualReadLoadBalancerMonitor<T>
   {
     // uri prop version from FS is "-1|x", where x is the number of uris, so we use startsWith here
     return v1.startsWith(VERSION_FROM_FS) || v2.startsWith(VERSION_FROM_FS);
-  }
-
-  private void warnByPropType(boolean isUriProp, String msg)
-  {
-    if (isUriProp)
-    {
-      _rateLimitedLogger.warn(msg);
-    }
-    else
-    {
-      LOG.warn(msg);
-    }
   }
 
   @VisibleForTesting
@@ -317,39 +285,6 @@ public abstract class DualReadLoadBalancerMonitor<T>
     void onEvict()
     {
       _dualReadLoadBalancerJmx.incrementServicePropertiesEvictCount();
-    }
-  }
-
-  public static final class UriPropertiesDualReadMonitor extends DualReadLoadBalancerMonitor<UriProperties>
-  {
-    private final DualReadLoadBalancerJmx _dualReadLoadBalancerJmx;
-
-    public UriPropertiesDualReadMonitor(DualReadLoadBalancerJmx dualReadLoadBalancerJmx, Clock clock)
-    {
-      super(clock);
-      _dualReadLoadBalancerJmx = dualReadLoadBalancerJmx;
-    }
-
-    @Override
-    void incrementEntryOutOfSyncCount() {
-      _dualReadLoadBalancerJmx.incrementUriPropertiesOutOfSyncCount();
-    }
-
-    @Override
-    void decrementEntryOutOfSyncCount() {
-      _dualReadLoadBalancerJmx.decrementUriPropertiesOutOfSyncCount();
-    }
-
-    @Override
-    void incrementPropertiesErrorCount()
-    {
-      _dualReadLoadBalancerJmx.incrementUriPropertiesErrorCount();
-    }
-
-    @Override
-    void onEvict()
-    {
-      _dualReadLoadBalancerJmx.incrementUriPropertiesEvictCount();
     }
   }
 }

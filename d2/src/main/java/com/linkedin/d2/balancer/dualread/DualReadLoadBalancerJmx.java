@@ -17,21 +17,21 @@
 package com.linkedin.d2.balancer.dualread;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 public class DualReadLoadBalancerJmx implements DualReadLoadBalancerJmxMBean
 {
   private final AtomicInteger _servicePropertiesErrorCount = new AtomicInteger();
   private final AtomicInteger _clusterPropertiesErrorCount = new AtomicInteger();
-  private final AtomicInteger _uriPropertiesErrorCount = new AtomicInteger();
 
   private final AtomicInteger _servicePropertiesEvictCount = new AtomicInteger();
   private final AtomicInteger _clusterPropertiesEvictCount = new AtomicInteger();
-  private final AtomicInteger _uriPropertiesEvictCount = new AtomicInteger();
 
   private final AtomicInteger _servicePropertiesOutOfSyncCount = new AtomicInteger();
   private final AtomicInteger _clusterPropertiesOutOfSyncCount = new AtomicInteger();
-  private final AtomicInteger _uriPropertiesOutOfSyncCount = new AtomicInteger();
+
+  private final AtomicReference<Double> _uriPropertiesSimilarity = new AtomicReference<>(0d);
 
 
   @Override
@@ -46,10 +46,11 @@ public class DualReadLoadBalancerJmx implements DualReadLoadBalancerJmxMBean
     return _clusterPropertiesErrorCount.get();
   }
 
+  @Deprecated
   @Override
   public int getUriPropertiesErrorCount()
   {
-    return _uriPropertiesErrorCount.get();
+    return 0;
   }
 
   @Override
@@ -64,25 +65,36 @@ public class DualReadLoadBalancerJmx implements DualReadLoadBalancerJmxMBean
     return _clusterPropertiesEvictCount.get();
   }
 
+  @Deprecated
   @Override
   public int getUriPropertiesEvictCount()
   {
-    return _uriPropertiesEvictCount.get();
+    return 0;
   }
 
   @Override
-  public int getServicePropertiesOutOfSyncCount() {
+  public int getServicePropertiesOutOfSyncCount()
+  {
     return _servicePropertiesOutOfSyncCount.get();
   }
 
   @Override
-  public int getClusterPropertiesOutOfSyncCount() {
+  public int getClusterPropertiesOutOfSyncCount()
+  {
     return _clusterPropertiesOutOfSyncCount.get();
   }
 
+  @Deprecated
   @Override
-  public int getUriPropertiesOutOfSyncCount() {
-    return _uriPropertiesOutOfSyncCount.get();
+  public int getUriPropertiesOutOfSyncCount()
+  {
+    return 0;
+  }
+
+  @Override
+  public double getUriPropertiesSimilarity()
+  {
+    return _uriPropertiesSimilarity.get();
   }
 
   public void incrementServicePropertiesErrorCount()
@@ -95,11 +107,6 @@ public class DualReadLoadBalancerJmx implements DualReadLoadBalancerJmxMBean
     _clusterPropertiesErrorCount.incrementAndGet();
   }
 
-  public void incrementUriPropertiesErrorCount()
-  {
-    _uriPropertiesErrorCount.incrementAndGet();
-  }
-
   public void incrementServicePropertiesEvictCount()
   {
     _servicePropertiesEvictCount.incrementAndGet();
@@ -108,11 +115,6 @@ public class DualReadLoadBalancerJmx implements DualReadLoadBalancerJmxMBean
   public void incrementClusterPropertiesEvictCount()
   {
     _clusterPropertiesEvictCount.incrementAndGet();
-  }
-
-  public void incrementUriPropertiesEvictCount()
-  {
-    _uriPropertiesEvictCount.incrementAndGet();
   }
 
   public void incrementServicePropertiesOutOfSyncCount()
@@ -125,11 +127,6 @@ public class DualReadLoadBalancerJmx implements DualReadLoadBalancerJmxMBean
     _clusterPropertiesOutOfSyncCount.incrementAndGet();
   }
 
-  public void incrementUriPropertiesOutOfSyncCount()
-  {
-    _uriPropertiesOutOfSyncCount.incrementAndGet();
-  }
-
   public void decrementServicePropertiesOutOfSyncCount()
   {
     _servicePropertiesOutOfSyncCount.decrementAndGet();
@@ -140,8 +137,8 @@ public class DualReadLoadBalancerJmx implements DualReadLoadBalancerJmxMBean
     _clusterPropertiesOutOfSyncCount.decrementAndGet();
   }
 
-  public void decrementUriPropertiesOutOfSyncCount()
+  public void setUriPropertiesSimilarity(double similarity)
   {
-    _uriPropertiesOutOfSyncCount.decrementAndGet();
+    _uriPropertiesSimilarity.set(similarity);
   }
 }

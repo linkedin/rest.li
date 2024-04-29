@@ -23,6 +23,7 @@ public interface DualReadLoadBalancerJmxMBean
 
   int getClusterPropertiesErrorCount();
 
+  @Deprecated
   int getUriPropertiesErrorCount();
 
   // Evict count is incremented when cache grows to the max size and entries get evicted.
@@ -30,6 +31,7 @@ public interface DualReadLoadBalancerJmxMBean
 
   int getClusterPropertiesEvictCount();
 
+  @Deprecated
   int getUriPropertiesEvictCount();
 
   // Entries become out of sync when:
@@ -41,5 +43,8 @@ public interface DualReadLoadBalancerJmxMBean
 
   int getClusterPropertiesOutOfSyncCount();
 
+  @Deprecated
   int getUriPropertiesOutOfSyncCount();
+
+  double getUriPropertiesSimilarity();
 }
