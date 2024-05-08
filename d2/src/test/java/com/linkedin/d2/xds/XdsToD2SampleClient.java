@@ -95,7 +95,7 @@ public class XdsToD2SampleClient
 
     DualReadStateManager dualReadStateManager = new DualReadStateManager(
         () -> DualReadModeProvider.DualReadMode.DUAL_READ,
-        Executors.newSingleThreadScheduledExecutor());
+        Executors.newSingleThreadScheduledExecutor(), true);
 
     XdsToD2PropertiesAdaptor adaptor = new XdsToD2PropertiesAdaptor(xdsClient, dualReadStateManager, null);
     adaptor.listenToService(serviceName);

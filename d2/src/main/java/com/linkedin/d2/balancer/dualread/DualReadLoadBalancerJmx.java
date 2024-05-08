@@ -16,8 +16,11 @@
 
 package com.linkedin.d2.balancer.dualread;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nullable;
 
 
 public class DualReadLoadBalancerJmx implements DualReadLoadBalancerJmxMBean
@@ -32,6 +35,8 @@ public class DualReadLoadBalancerJmx implements DualReadLoadBalancerJmxMBean
   private final AtomicInteger _clusterPropertiesOutOfSyncCount = new AtomicInteger();
 
   private final AtomicReference<Double> _uriPropertiesSimilarity = new AtomicReference<>(0d);
+
+  private final Map<String, UriPropertiesDualReadMonitor.ClusterMatchRecord> _clusters = new HashMap<>();
 
 
   @Override
@@ -97,6 +102,11 @@ public class DualReadLoadBalancerJmx implements DualReadLoadBalancerJmxMBean
     return _uriPropertiesSimilarity.get();
   }
 
+  @Override
+  public @Nullable UriPropertiesDualReadMonitor.ClusterMatchRecord getClusterMatchRecord(String clusterName) {
+    return _clusters.get(clusterName);
+  }
+
   public void incrementServicePropertiesErrorCount()
   {
     _servicePropertiesErrorCount.incrementAndGet();
@@ -140,5 +150,11 @@ public class DualReadLoadBalancerJmx implements DualReadLoadBalancerJmxMBean
   public void setUriPropertiesSimilarity(double similarity)
   {
     _uriPropertiesSimilarity.set(similarity);
+  }
+
+  public void setClusterMatchRecord(String clusterName,
+      UriPropertiesDualReadMonitor.ClusterMatchRecord clusterMatchRecord)
+  {
+    _clusters.put(clusterName, clusterMatchRecord);
   }
 }

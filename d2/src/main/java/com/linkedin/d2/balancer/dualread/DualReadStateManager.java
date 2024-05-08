@@ -60,15 +60,23 @@ public class DualReadStateManager
 
   private final DualReadLoadBalancerJmx _dualReadLoadBalancerJmx;
 
-  private final UriPropertiesDualReadMonitor _uriPropertiesDualReadMonitor;
   private final DualReadLoadBalancerMonitor.ServicePropertiesDualReadMonitor _servicePropertiesDualReadMonitor;
   private final DualReadLoadBalancerMonitor.ClusterPropertiesDualReadMonitor _clusterPropertiesDualReadMonitor;
+  private final UriPropertiesDualReadMonitor _uriPropertiesDualReadMonitor;
+  private final boolean _monitorUriProperties;
 
-
+  @Deprecated
   public DualReadStateManager(DualReadModeProvider dualReadModeProvider, ScheduledExecutorService executorService)
+  {
+    this(dualReadModeProvider, executorService, false);
+  }
+
+  public DualReadStateManager(DualReadModeProvider dualReadModeProvider, ScheduledExecutorService executorService,
+      boolean monitorUriProperties)
   {
     _dualReadLoadBalancerJmx = new DualReadLoadBalancerJmx();
     Clock clock = SystemClock.instance();
+    _monitorUriProperties = monitorUriProperties;
     _uriPropertiesDualReadMonitor = new UriPropertiesDualReadMonitor(_dualReadLoadBalancerJmx);
     _servicePropertiesDualReadMonitor = new DualReadLoadBalancerMonitor.ServicePropertiesDualReadMonitor(
         _dualReadLoadBalancerJmx, clock);
@@ -171,7 +179,8 @@ public class DualReadStateManager
 
   private void reportUriPropertiesData(String propertyName, UriProperties property, boolean fromNewLb)
   {
-    if (_clusterDualReadModes.getOrDefault(propertyName, _dualReadMode) == DualReadModeProvider.DualReadMode.DUAL_READ)
+    if (_monitorUriProperties &&
+        _clusterDualReadModes.getOrDefault(propertyName, _dualReadMode) == DualReadModeProvider.DualReadMode.DUAL_READ)
     {
       _uriPropertiesDualReadMonitor.reportData(propertyName, property, fromNewLb);
     }

@@ -46,5 +46,10 @@ public interface DualReadLoadBalancerJmxMBean
   @Deprecated
   int getUriPropertiesOutOfSyncCount();
 
+  // Similarity is calculated as the ratio of the number of URIs that are common between the two LBs to the total
+  // number of URIs in both LBs.
   double getUriPropertiesSimilarity();
+
+  // Returns the ClusterMatchRecord for the given clusterName.
+  UriPropertiesDualReadMonitor.ClusterMatchRecord getClusterMatchRecord(String clusterName);
 }

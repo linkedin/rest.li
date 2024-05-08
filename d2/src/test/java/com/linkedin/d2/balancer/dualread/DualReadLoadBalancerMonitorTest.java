@@ -3,12 +3,10 @@ package com.linkedin.d2.balancer.dualread;
 import com.google.common.cache.Cache;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.ServiceStoreProperties;
-import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.util.TestDataHelper;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static com.linkedin.d2.util.TestDataHelper.*;
@@ -26,18 +24,12 @@ public class DualReadLoadBalancerMonitorTest {
     {
       MockitoAnnotations.initMocks(this);
       doNothing().when(_mockJmx).incrementServicePropertiesOutOfSyncCount();
-      doNothing().when(_mockJmx).decrementUriPropertiesOutOfSyncCount();
       doNothing().when(_mockJmx).incrementServicePropertiesErrorCount();
     }
 
     DualReadLoadBalancerMonitor.ServicePropertiesDualReadMonitor getServiceMonitor()
     {
       return new DualReadLoadBalancerMonitor.ServicePropertiesDualReadMonitor(_mockJmx, TestDataHelper.getClock());
-    }
-
-    DualReadLoadBalancerMonitor.UriPropertiesDualReadMonitor getUriMonitor()
-    {
-      return new DualReadLoadBalancerMonitor.UriPropertiesDualReadMonitor(_mockJmx, TestDataHelper.getClock());
     }
   }
 
@@ -105,26 +97,6 @@ public class DualReadLoadBalancerMonitorTest {
     verifyNoMoreInteractions(fixture._mockJmx);
   }
 
-  @Test // since uri version read from FS is "-1|x", test for this case specifically
-  public void testUriDataMatch()
-  {
-    DualReadLoadBalancerMonitorTestFixure fixture = new DualReadLoadBalancerMonitorTestFixure();
-    DualReadLoadBalancerMonitor.UriPropertiesDualReadMonitor monitor = fixture.getUriMonitor();
-
-    // put in one new lb entry and one old lb entry, with different data and version
-    putInUri(monitor, CLUSTER_NAME, PROPERTIES_1, "1|2", true, 1);
-    putInUri(monitor, CLUSTER_NAME, PROPERTIES_2, "-1|2", false, 1);
-    verify(fixture._mockJmx, times(2)).incrementUriPropertiesOutOfSyncCount();
-    verifyNoMoreInteractions(fixture._mockJmx);
-
-    // data match, version differs with version read FS
-    monitor.reportData(CLUSTER_NAME, PROPERTIES_2, "2|2", true);
-    Assert.assertEquals(monitor.getOldLbCache().size(), 0);
-    verifyUriOnCache(monitor.getNewLbCache(), CLUSTER_NAME, PROPERTIES_1, "1|2");
-    verify(fixture._mockJmx).decrementUriPropertiesOutOfSyncCount();
-    verifyNoMoreInteractions(fixture._mockJmx);
-  }
-
   @Test
   public void testMismatch()
   {
@@ -164,67 +136,5 @@ public class DualReadLoadBalancerMonitorTest {
     Assert.assertNotNull(entry);
     Assert.assertEquals(entry._data, prop);
     Assert.assertEquals(entry._version, v);
-  }
-
-  private void putInUri(DualReadLoadBalancerMonitor.UriPropertiesDualReadMonitor monitor,
-      String name, UriProperties prop, String version, boolean isFromNewLb, int expectedSizeAfter)
-  {
-    monitor.reportData(name, prop, version, isFromNewLb);
-    Cache<String, DualReadLoadBalancerMonitor.CacheEntry<UriProperties>> cache =
-        isFromNewLb ? monitor.getNewLbCache() : monitor.getOldLbCache();
-    Assert.assertEquals(cache.size(), expectedSizeAfter);
-    verifyUriOnCache(cache, name, prop, version);
-  }
-
-  private void verifyUriOnCache(Cache<String, DualReadLoadBalancerMonitor.CacheEntry<UriProperties>> cache,
-      String name, UriProperties prop, String v)
-  {
-    DualReadLoadBalancerMonitor.CacheEntry<UriProperties> entry = cache.getIfPresent(name);
-    Assert.assertNotNull(entry);
-    Assert.assertEquals(entry._data, prop);
-    Assert.assertEquals(entry._version, v);
-  }
-
-  @DataProvider
-  public Object[][] getEntriesMessageDataProvider()
-  {
-    return new Object[][] {
-        {
-          true, new DualReadLoadBalancerMonitor.CacheEntry<>("", "", PROPERTIES_1),
-            new DualReadLoadBalancerMonitor.CacheEntry<>("", "", PROPERTIES_2),
-            "\nOld LB: CacheEntry{_version=, _timeStamp='', _data=UriProperties [_clusterName=TestCluster,"
-                + " _urisBySchemeAndPartition={http={0=[http://google.com:1], 1=[http://google.com:1]}},"
-                + " _partitions={http://google.com:1={0=[ weight =1.0 ], 1=[ weight =2.0 ]}},"
-                + " _uriSpecificProperties={}]}\n"
-                + "New LB: CacheEntry{_version=, _timeStamp='', "
-                + "_data=UriProperties [_clusterName=TestCluster, "
-                + "_urisBySchemeAndPartition={http={1=[http://linkedin.com:2]}}, "
-                + "_partitions={http://linkedin.com:2={1=[ weight =0.5 ]}}, _uriSpecificProperties={}]}"
-        },
-        {
-          false, new DualReadLoadBalancerMonitor.CacheEntry<>("", "", PROPERTIES_1),
-            new DualReadLoadBalancerMonitor.CacheEntry<>("", "", PROPERTIES_2),
-            "\nOld LB: CacheEntry{_version=, _timeStamp='', _data=UriProperties [_clusterName=TestCluster,"
-                + " _urisBySchemeAndPartition={http={1=[http://linkedin.com:2]}}, "
-                + "_partitions={http://linkedin.com:2={1=[ weight =0.5 ]}}, _uriSpecificProperties={}]}\n"
-                + "New LB: CacheEntry{_version=, _timeStamp='', _data=UriProperties [_clusterName=TestCluster,"
-                + " _urisBySchemeAndPartition={http={0=[http://google.com:1], 1=[http://google.com:1]}},"
-                + " _partitions={http://google.com:1={0=[ weight =1.0 ], 1=[ weight =2.0 ]}},"
-                + " _uriSpecificProperties={}]}"
-        }
-    };
-  }
-  @Test(dataProvider = "getEntriesMessageDataProvider")
-  public void testGetEntriesMessage(Boolean isFromNewLb,
-      DualReadLoadBalancerMonitor.CacheEntry<UriProperties> oldE,
-      DualReadLoadBalancerMonitor.CacheEntry<UriProperties> newE,
-      String expected)
-  {
-    DualReadLoadBalancerMonitor.UriPropertiesDualReadMonitor monitor =
-        new DualReadLoadBalancerMonitorTestFixure().getUriMonitor();
-
-    Assert.assertEquals(monitor.getEntriesMessage(isFromNewLb, oldE, newE),
-        expected,
-        "entry message is not the same");
   }
 }
