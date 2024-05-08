@@ -1,12 +1,15 @@
 package com.linkedin.d2.balancer.dualread;
 
 import com.linkedin.d2.balancer.properties.UriProperties;
+import com.linkedin.util.RateLimitedLogger;
+import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -16,9 +19,12 @@ public class UriPropertiesDualReadMonitor
 {
   private static final Logger LOG = LoggerFactory.getLogger(UriPropertiesDualReadMonitor.class);
 
-  private final Map<String, Cluster> _clusters = new HashMap<>();
-  private double _totalUris = 0;
-  private double _matchedUris = 0;
+  private final Map<String, ClusterMatchRecord> _clusters = new HashMap<>();
+  // Limit error report logging to every 10 minutes
+  private final RateLimitedLogger RATE_LIMITED_LOGGER =
+      new RateLimitedLogger(LOG, TimeUnit.MINUTES.toMillis(10), SystemClock.instance());
+  private int _totalUris = 0;
+  private int _matchedUris = 0;
   private final DualReadLoadBalancerJmx _dualReadLoadBalancerJmx;
 
   public UriPropertiesDualReadMonitor(DualReadLoadBalancerJmx dualReadLoadBalancerJmx)
@@ -28,7 +34,7 @@ public class UriPropertiesDualReadMonitor
 
   public void reportData(String clusterName, UriProperties property, boolean fromNewLb)
   {
-    Cluster cluster = _clusters.computeIfAbsent(clusterName, k -> new Cluster());
+    ClusterMatchRecord cluster = _clusters.computeIfAbsent(clusterName, k -> new ClusterMatchRecord());
 
     if (fromNewLb)
     {
@@ -55,6 +61,7 @@ public class UriPropertiesDualReadMonitor
     {
       cluster._uris = (cluster._oldLb == null) ? cluster._oldLb.Uris().size() : cluster._newLb.Uris().size();
       _totalUris += cluster._uris;
+      LOG.debug("Added new URI properties for {} for {} LB.", clusterName, fromNewLb ? "New" : "Old");
       return;
     }
 
@@ -74,21 +81,29 @@ public class UriPropertiesDualReadMonitor
       }
     }
 
+    if (cluster._matched != cluster._uris)
+    {
+      RATE_LIMITED_LOGGER.info("Mismatched cluster properties for {} (match score {}):\nOld LB: {}\nNew LB: {}",
+          clusterName, cluster._matched / cluster._uris, cluster._oldLb, cluster._newLb);
+    }
+
     cluster._uris += newLbUris.size();
 
     _totalUris += cluster._uris;
     _matchedUris += cluster._matched;
-    _dualReadLoadBalancerJmx.setUriPropertiesSimilarity(_matchedUris / _totalUris);
+    _dualReadLoadBalancerJmx.setUriPropertiesSimilarity((double) _matchedUris / (double) _totalUris);
+    LOG.debug("Updated URI properties for cluster {}:\nOld LB: {}\nNew LB: {}",
+        clusterName, cluster._oldLb, cluster._newLb);
   }
 
-  private static class Cluster
+  private static class ClusterMatchRecord
   {
     @Nullable
     private UriProperties _oldLb;
     @Nullable
     private UriProperties _newLb;
-    private double _uris;
-    private double _matched;
+    private int _uris;
+    private int _matched;
   }
 
   private static boolean compareURI(URI uri, UriProperties oldLb, UriProperties newLb)

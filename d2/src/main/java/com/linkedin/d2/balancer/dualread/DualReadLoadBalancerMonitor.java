@@ -22,7 +22,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalCause;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
-import com.linkedin.util.RateLimitedLogger;
 import com.linkedin.util.clock.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -41,26 +40,27 @@ import org.slf4j.LoggerFactory;
  *
  * When a new service discovery data is reported, it will check if the cache of the other data source
  * has data for the same property name. If there is, it will compare whether the two data are equal.
+ *
+ * Note that there are only two implementations of this class, one for {@link ServiceProperties} and one for
+ * {@link ClusterProperties}, and not one for {@link com.linkedin.d2.balancer.properties.UriProperties}. This is because
+ * the URI properties need to be compared holistically at the cluster level.
  */
 public abstract class DualReadLoadBalancerMonitor<T>
 {
   private static final Logger LOG = LoggerFactory.getLogger(DualReadLoadBalancerMonitor.class);
   public final static String DEFAULT_DATE_FORMAT = "YYYY/MM/dd HH:mm:ss.SSS";
   public final static String VERSION_FROM_FS = "-1";
-  private static final long ERROR_REPORT_PERIOD = 600 * 1000; // Limit error report logging to every 10 minutes
   private static final int MAX_CACHE_SIZE = 10000;
   private final Cache<String, CacheEntry<T>> _oldLbPropertyCache;
   private final Cache<String, CacheEntry<T>> _newLbPropertyCache;
-  private final RateLimitedLogger _rateLimitedLogger;
   private final Clock _clock;
   private final DateTimeFormatter _format;
 
 
-  public DualReadLoadBalancerMonitor(Clock clock)
+  private DualReadLoadBalancerMonitor(Clock clock)
   {
     _oldLbPropertyCache = buildCache();
     _newLbPropertyCache = buildCache();
-    _rateLimitedLogger = new RateLimitedLogger(LOG, ERROR_REPORT_PERIOD, clock);
     _clock = clock;
     _format = DateTimeFormatter.ofPattern(DEFAULT_DATE_FORMAT);
   }
