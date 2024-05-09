@@ -5,11 +5,11 @@ import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.util.RateLimitedLogger;
 import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import javax.annotation.Nullable;
@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 public class UriPropertiesDualReadMonitor {
   private static final Logger LOG = LoggerFactory.getLogger(UriPropertiesDualReadMonitor.class);
 
-  private final Map<String, ClusterMatchRecord> _clusters = new HashMap<>();
+  private final ConcurrentHashMap<String, ClusterMatchRecord> _clusters = new ConcurrentHashMap<>();
   // Limit error report logging to every 10 minutes
   private final RateLimitedLogger RATE_LIMITED_LOGGER =
       new RateLimitedLogger(LOG, TimeUnit.MINUTES.toMillis(10), SystemClock.instance());
@@ -33,7 +33,13 @@ public class UriPropertiesDualReadMonitor {
   }
 
   public void reportData(String clusterName, UriProperties property, boolean fromNewLb) {
-    ClusterMatchRecord cluster = _clusters.computeIfAbsent(clusterName, k -> new ClusterMatchRecord());
+    ClusterMatchRecord cluster = _clusters.compute(clusterName, (k, v) -> {
+      if (v == null) {
+        return new ClusterMatchRecord();
+      } else {
+        return v.clone();
+      }
+    });
 
     if (fromNewLb) {
       cluster._newLb = property;
@@ -128,7 +134,7 @@ public class UriPropertiesDualReadMonitor {
     return _matchedUris;
   }
 
-  public static class ClusterMatchRecord {
+  public static class ClusterMatchRecord implements Cloneable {
     @Nullable
     @VisibleForTesting
     UriProperties _oldLb;
@@ -143,6 +149,15 @@ public class UriPropertiesDualReadMonitor {
     @VisibleForTesting
     int _matched;
 
+    public ClusterMatchRecord clone() {
+      try {
+        return (ClusterMatchRecord) super.clone();
+      } catch (CloneNotSupportedException e) {
+        LOG.debug("Failed to clone: {}", this, e);
+        return new ClusterMatchRecord();
+      }
+    }
+
     @Override
     public String toString() {
       return "ClusterMatchRecord{ " +
@@ -154,12 +169,15 @@ public class UriPropertiesDualReadMonitor {
 
     @Override
     public boolean equals(Object obj) {
-      if (this == obj)
+      if (this == obj) {
         return true;
-      if (obj == null)
+      }
+      if (obj == null) {
         return false;
-      if (getClass() != obj.getClass())
+      }
+      if (getClass() != obj.getClass()) {
         return false;
+      }
 
       ClusterMatchRecord o = (ClusterMatchRecord) obj;
 
