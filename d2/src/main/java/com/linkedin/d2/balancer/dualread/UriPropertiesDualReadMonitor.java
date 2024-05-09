@@ -21,7 +21,6 @@ public class UriPropertiesDualReadMonitor {
   private static final Logger LOG = LoggerFactory.getLogger(UriPropertiesDualReadMonitor.class);
 
   private final ConcurrentHashMap<String, ClusterMatchRecord> _clusters = new ConcurrentHashMap<>();
-  private final ConcurrentHashMap<String, Object> _clusterLocks = new ConcurrentHashMap<>();
   // Limit error report logging to every 10 minutes
   private final RateLimitedLogger RATE_LIMITED_LOGGER =
       new RateLimitedLogger(LOG, TimeUnit.MINUTES.toMillis(10), SystemClock.instance());
@@ -34,14 +33,12 @@ public class UriPropertiesDualReadMonitor {
   }
 
   public void reportData(String clusterName, UriProperties property, boolean fromNewLb) {
-    Object lock = _clusterLocks.computeIfAbsent(clusterName, k -> new Object());
+    ClusterMatchRecord cluster = _clusters.computeIfAbsent(clusterName, k -> new ClusterMatchRecord());
 
     // Both zk and indis threads can race to report their data to the same cluster and perform operations on the total
     // uris and matched uris counts at the same time, which can lead to incorrect results and unexpected behaviors.
     // We need to lock per cluster when editing its ClusterMatchRecord, and release the lock after all operations done.
-    synchronized (lock) {
-      ClusterMatchRecord cluster = _clusters.computeIfAbsent(clusterName, k -> new ClusterMatchRecord());
-
+    synchronized (cluster) {
       if (fromNewLb) {
         cluster._newLb = property;
       } else {
@@ -101,8 +98,8 @@ public class UriPropertiesDualReadMonitor {
   }
 
   private void updateJmxMetrics(String clusterName, ClusterMatchRecord cluster) {
-    // set a clone of cluster match record to jmx to avoid jmx reading the record in the middle of an update
-    _dualReadLoadBalancerJmx.setClusterMatchRecord(clusterName, cluster == null ? null : cluster.clone());
+    // set a copy of cluster match record to jmx to avoid jmx reading the record in the middle of an update
+    _dualReadLoadBalancerJmx.setClusterMatchRecord(clusterName, cluster == null ? null : cluster.copy());
     _dualReadLoadBalancerJmx.setUriPropertiesSimilarity((double) _matchedUris / (double) _totalUris);
   }
 
@@ -137,7 +134,7 @@ public class UriPropertiesDualReadMonitor {
     return _matchedUris;
   }
 
-  public static class ClusterMatchRecord implements Cloneable {
+  public static class ClusterMatchRecord {
     @Nullable
     @VisibleForTesting
     UriProperties _oldLb;
@@ -152,19 +149,22 @@ public class UriPropertiesDualReadMonitor {
     @VisibleForTesting
     int _matched;
 
+    public ClusterMatchRecord() {
+    }
 
+    public ClusterMatchRecord(@Nullable UriProperties oldLb, @Nullable UriProperties newLb, int uris, int matched) {
+      _oldLb = oldLb;
+      _newLb = newLb;
+      _uris = uris;
+      _matched = matched;
+    }
 
-    public ClusterMatchRecord clone() {
-      try {
-        return (ClusterMatchRecord) super.clone();
-      } catch (CloneNotSupportedException e) {
-        LOG.debug("Failed to clone: {}", this, e);
-        return new ClusterMatchRecord();
-      }
+    public synchronized ClusterMatchRecord copy() {
+      return new ClusterMatchRecord(_oldLb, _newLb, _uris, _matched);
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
       return "ClusterMatchRecord{ " +
           "\nTotal Uris: " + _uris + ", Matched: " + _matched +
           "\nOld LB: " + _oldLb +
@@ -173,7 +173,7 @@ public class UriPropertiesDualReadMonitor {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public synchronized boolean equals(Object obj) {
       if (this == obj) {
         return true;
       }
@@ -193,7 +193,7 @@ public class UriPropertiesDualReadMonitor {
     }
 
     @Override
-    public int hashCode() {
+    public synchronized int hashCode() {
       return Objects.hash(_oldLb, _newLb, _uris, _matched);
     }
   }

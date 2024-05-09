@@ -3,12 +3,22 @@ package com.linkedin.d2.balancer.dualread;
 import com.google.common.collect.ImmutableMap;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.UriProperties;
+import com.linkedin.r2.util.NamedThreadFactory;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
+import org.junit.Assert;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static com.linkedin.d2.balancer.dualread.UriPropertiesDualReadMonitor.*;
@@ -112,6 +122,75 @@ public class UriPropertiesDualReadMonitorTest {
     monitor.reportData(CLUSTER_2, null, true);
     monitor.reportData(CLUSTER_2, null, false);
     verifyJmxMetricParams(fixture, CLUSTER_2, null, 1.0);
+  }
+
+  @DataProvider
+  public Object[][] reportDataInMultiThreadsDataProvider() {
+    // simulate different orders that the data is reported between the old and new Lbs.
+    return new Object[][] {
+        {
+            Arrays.asList(
+                new ImmutablePair<>(URI_PROPERTIES_1, false),
+                new ImmutablePair<>(URI_PROPERTIES_1, true),
+                new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, false),
+                new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, true)
+            )
+        },
+        {
+          Arrays.asList(
+            new ImmutablePair<>(URI_PROPERTIES_1, false),
+            new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, false),
+            new ImmutablePair<>(URI_PROPERTIES_1, true),
+            new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, true)
+            )
+        },
+        {
+            Arrays.asList(
+                new ImmutablePair<>(URI_PROPERTIES_1, false),
+                new ImmutablePair<>(URI_PROPERTIES_1, true),
+                new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, true),
+            new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, false)
+            )
+        },
+        {
+            Arrays.asList(
+                new ImmutablePair<>(URI_PROPERTIES_1, false),
+                new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, false),
+                new ImmutablePair<>(URI_PROPERTIES_1, true),
+                new ImmutablePair<>(URI_PROPERTIES_1, false),
+                new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, true),
+                new ImmutablePair<>(URI_PROPERTIES_1, true)
+            )
+        }
+    };
+  }
+  @SuppressWarnings("ResultOfMethodCallIgnored")
+  @Test(dataProvider = "reportDataInMultiThreadsDataProvider")
+  public void testReportDataInMultiThreads(List<Pair<UriProperties, Boolean>> properties) {
+    UriPropertiesDualReadMonitorTestFixture fixture = new UriPropertiesDualReadMonitorTestFixture();
+    UriPropertiesDualReadMonitor monitor = fixture.getMonitor();
+
+    ExecutorService executor = Executors.newFixedThreadPool(2,
+        new NamedThreadFactory("UriPropertiesDualReadMonitorTest"));
+    properties.forEach(p -> executor.execute(() -> reportAndVerifyState(monitor, p.getLeft(), p.getRight())));
+    try {
+      executor.shutdown();
+      executor.awaitTermination(500, TimeUnit.MILLISECONDS);
+      // similarity eventually converge to 1
+      assertEquals((double) monitor.getMatchedUris() / (double) monitor.getTotalUris(), 1.0);
+    } catch (InterruptedException e) {
+      Assert.fail("Tasks were interrupted");
+    }
+  }
+
+  private void reportAndVerifyState(UriPropertiesDualReadMonitor monitor, UriProperties prop, boolean fromNewLb) {
+    monitor.reportData(CLUSTER_1, prop, fromNewLb);
+    // if reportData on the same cluster are NOT synchronized, the total uris and matched uris counts could become < 0.
+    // e.g: when total uris = 1, matched uris = 1, if reporting URI_PROPERTIES_URI_1_AND_2 for new and old Lbs are
+    // executed concurrently, total uris will decrement by 1 twice and become -1.
+    // We verify that doesn't happen no matter what order the data is reported between the old and new Lbs.
+    assertTrue(monitor.getTotalUris() >= 0);
+    assertTrue(monitor.getMatchedUris() >= 0);
   }
 
   private ClusterMatchRecord createMatchRecord(UriProperties oldLb, UriProperties newLb, int uris, int matched) {
