@@ -21,6 +21,7 @@ public class UriPropertiesDualReadMonitor {
   private static final Logger LOG = LoggerFactory.getLogger(UriPropertiesDualReadMonitor.class);
 
   private final ConcurrentHashMap<String, ClusterMatchRecord> _clusters = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, Object> _clusterLocks = new ConcurrentHashMap<>();
   // Limit error report logging to every 10 minutes
   private final RateLimitedLogger RATE_LIMITED_LOGGER =
       new RateLimitedLogger(LOG, TimeUnit.MINUTES.toMillis(10), SystemClock.instance());
@@ -33,73 +34,75 @@ public class UriPropertiesDualReadMonitor {
   }
 
   public void reportData(String clusterName, UriProperties property, boolean fromNewLb) {
-    ClusterMatchRecord cluster = _clusters.compute(clusterName, (k, v) -> {
-      if (v == null) {
-        return new ClusterMatchRecord();
+    Object lock = _clusterLocks.computeIfAbsent(clusterName, k -> new Object());
+
+    // Both zk and indis threads can race to report their data to the same cluster and perform operations on the total
+    // uris and matched uris counts at the same time, which can lead to incorrect results and unexpected behaviors.
+    // We need to lock per cluster when editing its ClusterMatchRecord, and release the lock after all operations done.
+    synchronized (lock) {
+      ClusterMatchRecord cluster = _clusters.computeIfAbsent(clusterName, k -> new ClusterMatchRecord());
+
+      if (fromNewLb) {
+        cluster._newLb = property;
       } else {
-        return v.clone();
+        cluster._oldLb = property;
       }
-    });
 
-    if (fromNewLb) {
-      cluster._newLb = property;
-    } else {
-      cluster._oldLb = property;
-    }
+      _totalUris -= cluster._uris;
+      _matchedUris -= cluster._matched;
 
-    _totalUris -= cluster._uris;
-    _matchedUris -= cluster._matched;
+      LOG.debug("Updated URI properties for cluster {}:\nOld LB: {}\nNew LB: {}",
+          clusterName, cluster._oldLb, cluster._newLb);
 
-    LOG.debug("Updated URI properties for cluster {}:\nOld LB: {}\nNew LB: {}",
-        clusterName, cluster._oldLb, cluster._newLb);
+      if (cluster._oldLb == null && cluster._newLb == null) {
+        _clusters.remove(clusterName);
+        updateJmxMetrics(clusterName, null);
+        return;
+      }
 
-    if (cluster._oldLb == null && cluster._newLb == null) {
-      _clusters.remove(clusterName);
-      updateJmxMetrics(clusterName, null);
-      return;
-    }
+      cluster._matched = 0;
 
-    cluster._matched = 0;
+      if (cluster._oldLb == null || cluster._newLb == null) {
+        LOG.debug("Added new URI properties for {} for {} LB.", clusterName, fromNewLb ? "New" : "Old");
 
-    if (cluster._oldLb == null || cluster._newLb == null) {
-      LOG.debug("Added new URI properties for {} for {} LB.", clusterName, fromNewLb ? "New" : "Old");
+        cluster._uris = (cluster._oldLb == null) ? cluster._newLb.Uris().size() : cluster._oldLb.Uris().size();
+        _totalUris += cluster._uris;
 
-      cluster._uris = (cluster._oldLb == null) ? cluster._newLb.Uris().size() : cluster._oldLb.Uris().size();
+        updateJmxMetrics(clusterName, cluster);
+        return;
+      }
+
+      cluster._uris = cluster._oldLb.Uris().size();
+      Set<URI> newLbUris = new HashSet<>(cluster._newLb.Uris());
+
+      for (URI uri : cluster._oldLb.Uris()) {
+        if (!newLbUris.remove(uri)) {
+          continue;
+        }
+
+        if (compareURI(uri, cluster._oldLb, cluster._newLb)) {
+          cluster._matched++;
+        }
+      }
+      // add the remaining unmatched URIs in newLbUris to the uri count
+      cluster._uris += newLbUris.size();
+
+      if (cluster._matched != cluster._uris) {
+        RATE_LIMITED_LOGGER.info("Mismatched cluster properties for {} (match score: {}, total uris: {}):"
+                + "\nOld LB: {}\nNew LB: {}",
+            clusterName, cluster._matched / cluster._uris, cluster._uris, cluster._oldLb, cluster._newLb);
+      }
+
       _totalUris += cluster._uris;
+      _matchedUris += cluster._matched;
 
       updateJmxMetrics(clusterName, cluster);
-      return;
     }
-
-    cluster._uris = cluster._oldLb.Uris().size();
-    Set<URI> newLbUris = new HashSet<>(cluster._newLb.Uris());
-
-    for (URI uri : cluster._oldLb.Uris()) {
-      if (!newLbUris.remove(uri)) {
-        continue;
-      }
-
-      if (compareURI(uri, cluster._oldLb, cluster._newLb)) {
-        cluster._matched++;
-      }
-    }
-    // add the remaining unmatched URIs in newLbUris to the uri count
-    cluster._uris += newLbUris.size();
-
-    if (cluster._matched != cluster._uris) {
-      RATE_LIMITED_LOGGER.info("Mismatched cluster properties for {} (match score: {}, total uris: {}):"
-              + "\nOld LB: {}\nNew LB: {}",
-          clusterName, cluster._matched / cluster._uris, cluster._uris, cluster._oldLb, cluster._newLb);
-    }
-
-    _totalUris += cluster._uris;
-    _matchedUris += cluster._matched;
-
-    updateJmxMetrics(clusterName, cluster);
   }
 
   private void updateJmxMetrics(String clusterName, ClusterMatchRecord cluster) {
-    _dualReadLoadBalancerJmx.setClusterMatchRecord(clusterName, cluster);
+    // set a clone of cluster match record to jmx to avoid jmx reading the record in the middle of an update
+    _dualReadLoadBalancerJmx.setClusterMatchRecord(clusterName, cluster == null ? null : cluster.clone());
     _dualReadLoadBalancerJmx.setUriPropertiesSimilarity((double) _matchedUris / (double) _totalUris);
   }
 
@@ -148,6 +151,8 @@ public class UriPropertiesDualReadMonitor {
 
     @VisibleForTesting
     int _matched;
+
+
 
     public ClusterMatchRecord clone() {
       try {
