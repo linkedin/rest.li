@@ -131,6 +131,7 @@ public class UriPropertiesDualReadMonitorTest {
     // simulate different orders that the data is reported between the old and new Lbs.
     return new Object[][]{
         {
+            // typical case where each lb gets an update alternative
             new ConcurrentLinkedDeque<>(Arrays.asList(
                 new ImmutablePair<>(URI_PROPERTIES_1, false),
                 new ImmutablePair<>(URI_PROPERTIES_1, true),
@@ -139,6 +140,7 @@ public class UriPropertiesDualReadMonitorTest {
             ))
         },
         {
+            // old lb gets all updates first
             new ConcurrentLinkedDeque<>(Arrays.asList(
                 new ImmutablePair<>(URI_PROPERTIES_1, false),
                 new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, false),
@@ -147,6 +149,7 @@ public class UriPropertiesDualReadMonitorTest {
             ))
         },
         {
+           // old lb gets the last update finally
             new ConcurrentLinkedDeque<>(Arrays.asList(
                 new ImmutablePair<>(URI_PROPERTIES_1, false),
                 new ImmutablePair<>(URI_PROPERTIES_1, true),
@@ -154,6 +157,7 @@ public class UriPropertiesDualReadMonitorTest {
                 new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, false)
             ))
         },
+        // more cases with 3 updates for each lb
         {
             new ConcurrentLinkedDeque<>(Arrays.asList(
                 new ImmutablePair<>(URI_PROPERTIES_1, false),
@@ -161,6 +165,26 @@ public class UriPropertiesDualReadMonitorTest {
                 new ImmutablePair<>(URI_PROPERTIES_1, true),
                 new ImmutablePair<>(URI_PROPERTIES_1, false),
                 new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, true),
+                new ImmutablePair<>(URI_PROPERTIES_1, true)
+            ))
+        },
+        {
+            new ConcurrentLinkedDeque<>(Arrays.asList(
+                new ImmutablePair<>(URI_PROPERTIES_1, false),
+                new ImmutablePair<>(URI_PROPERTIES_1, true),
+                new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, false),
+                new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, true),
+                new ImmutablePair<>(URI_PROPERTIES_1, true),
+                new ImmutablePair<>(URI_PROPERTIES_1, false)
+            ))
+        },
+        {
+            new ConcurrentLinkedDeque<>(Arrays.asList(
+                new ImmutablePair<>(URI_PROPERTIES_1, false),
+                new ImmutablePair<>(URI_PROPERTIES_1, true),
+                new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, true),
+                new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, false),
+                new ImmutablePair<>(URI_PROPERTIES_1, false),
                 new ImmutablePair<>(URI_PROPERTIES_1, true)
             ))
         }
