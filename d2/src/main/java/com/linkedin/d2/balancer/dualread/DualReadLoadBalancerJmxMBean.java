@@ -23,6 +23,7 @@ public interface DualReadLoadBalancerJmxMBean
 
   int getClusterPropertiesErrorCount();
 
+  @Deprecated
   int getUriPropertiesErrorCount();
 
   // Evict count is incremented when cache grows to the max size and entries get evicted.
@@ -30,6 +31,7 @@ public interface DualReadLoadBalancerJmxMBean
 
   int getClusterPropertiesEvictCount();
 
+  @Deprecated
   int getUriPropertiesEvictCount();
 
   // Entries become out of sync when:
@@ -41,5 +43,13 @@ public interface DualReadLoadBalancerJmxMBean
 
   int getClusterPropertiesOutOfSyncCount();
 
+  @Deprecated
   int getUriPropertiesOutOfSyncCount();
+
+  // Similarity is calculated as the ratio of the number of URIs that are common between the two LBs to the total
+  // number of URIs in both LBs.
+  double getUriPropertiesSimilarity();
+
+  // Returns the ClusterMatchRecord for the given clusterName.
+  UriPropertiesDualReadMonitor.ClusterMatchRecord getClusterMatchRecord(String clusterName);
 }

@@ -22,8 +22,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalCause;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
-import com.linkedin.d2.balancer.properties.UriProperties;
-import com.linkedin.util.RateLimitedLogger;
 import com.linkedin.util.clock.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -42,26 +40,27 @@ import org.slf4j.LoggerFactory;
  *
  * When a new service discovery data is reported, it will check if the cache of the other data source
  * has data for the same property name. If there is, it will compare whether the two data are equal.
+ *
+ * Note that there are only two implementations of this class, one for {@link ServiceProperties} and one for
+ * {@link ClusterProperties}, and not one for {@link com.linkedin.d2.balancer.properties.UriProperties}. This is because
+ * the URI properties need to be compared holistically at the cluster level.
  */
 public abstract class DualReadLoadBalancerMonitor<T>
 {
   private static final Logger LOG = LoggerFactory.getLogger(DualReadLoadBalancerMonitor.class);
   public final static String DEFAULT_DATE_FORMAT = "YYYY/MM/dd HH:mm:ss.SSS";
   public final static String VERSION_FROM_FS = "-1";
-  private static final long ERROR_REPORT_PERIOD = 600 * 1000; // Limit error report logging to every 10 minutes
   private static final int MAX_CACHE_SIZE = 10000;
   private final Cache<String, CacheEntry<T>> _oldLbPropertyCache;
   private final Cache<String, CacheEntry<T>> _newLbPropertyCache;
-  private final RateLimitedLogger _rateLimitedLogger;
   private final Clock _clock;
   private final DateTimeFormatter _format;
 
 
-  public DualReadLoadBalancerMonitor(Clock clock)
+  private DualReadLoadBalancerMonitor(Clock clock)
   {
     _oldLbPropertyCache = buildCache();
     _newLbPropertyCache = buildCache();
-    _rateLimitedLogger = new RateLimitedLogger(LOG, ERROR_REPORT_PERIOD, clock);
     _clock = clock;
     _format = DateTimeFormatter.ofPattern(DEFAULT_DATE_FORMAT);
   }
@@ -72,7 +71,6 @@ public abstract class DualReadLoadBalancerMonitor<T>
     Cache<String, CacheEntry<T>> cacheToAdd = fromNewLb ? _newLbPropertyCache : _oldLbPropertyCache;
     CacheEntry<T> existingEntry = cacheToAdd.getIfPresent(propertyName);
     String propertyClassName = property.getClass().getSimpleName();
-    boolean isUriProp = property instanceof UriProperties;
 
     if (existingEntry != null && existingEntry._data.equals(property))
     {
@@ -92,19 +90,10 @@ public abstract class DualReadLoadBalancerMonitor<T>
         // different.
         if (!isReadFromFS(existingEntry._version, propertyVersion))
         {
-          String msg = String.format("Received same data of different versions in %s LB for %s: %s."
-                      + " Old version: %s, New version: %s, Data: %s",
-                  fromNewLb ? "New" : "Old", propertyClassName, propertyName, existingEntry._version,
-                  propertyVersion, property);
-
-          if (isUriProp)
-          {
-            LOG.debug(msg);
-          }
-          else
-          {
-            warnByPropType(isUriProp, msg);
-          }
+          LOG.warn("Received same data of different versions in {} LB for {} {}"
+                  + " Old version: {} New version: {} Data: {}",
+              fromNewLb ? "New" : "Old", propertyClassName, propertyName, existingEntry._version,
+              propertyVersion, property);
         }
         // still need to put in the cache, don't skip
       }
@@ -136,23 +125,14 @@ public abstract class DualReadLoadBalancerMonitor<T>
     { // data is not the same but version is the same, a mismatch!
       incrementPropertiesErrorCount();
       incrementEntryOutOfSyncCount(); // increment the out-of-sync count for the entry received later
-      warnByPropType(isUriProp,
-          String.format("Received mismatched %s for %s. %s", propertyClassName, propertyName, entriesLogMsg));
+      LOG.warn("Received mismatched {} for {}. {}", propertyClassName, propertyName, entriesLogMsg);
       cacheToCompare.invalidate(propertyName);
     }
     else {
       if (isDataEqual)
       {
-        String msg = String.format("Received same data of %s for %s but with different versions: %s",
+        LOG.warn("Received same data of {} for {} but with different versions: {}",
             propertyClassName, propertyName, entriesLogMsg);
-        if (isUriProp)
-        {
-          LOG.debug(msg);
-        }
-        else
-        {
-          warnByPropType(isUriProp, msg);
-        }
       }
       cacheToAdd.put(propertyName, newEntry);
       incrementEntryOutOfSyncCount();
@@ -207,18 +187,6 @@ public abstract class DualReadLoadBalancerMonitor<T>
   {
     // uri prop version from FS is "-1|x", where x is the number of uris, so we use startsWith here
     return v1.startsWith(VERSION_FROM_FS) || v2.startsWith(VERSION_FROM_FS);
-  }
-
-  private void warnByPropType(boolean isUriProp, String msg)
-  {
-    if (isUriProp)
-    {
-      _rateLimitedLogger.warn(msg);
-    }
-    else
-    {
-      LOG.warn(msg);
-    }
   }
 
   @VisibleForTesting
@@ -317,39 +285,6 @@ public abstract class DualReadLoadBalancerMonitor<T>
     void onEvict()
     {
       _dualReadLoadBalancerJmx.incrementServicePropertiesEvictCount();
-    }
-  }
-
-  public static final class UriPropertiesDualReadMonitor extends DualReadLoadBalancerMonitor<UriProperties>
-  {
-    private final DualReadLoadBalancerJmx _dualReadLoadBalancerJmx;
-
-    public UriPropertiesDualReadMonitor(DualReadLoadBalancerJmx dualReadLoadBalancerJmx, Clock clock)
-    {
-      super(clock);
-      _dualReadLoadBalancerJmx = dualReadLoadBalancerJmx;
-    }
-
-    @Override
-    void incrementEntryOutOfSyncCount() {
-      _dualReadLoadBalancerJmx.incrementUriPropertiesOutOfSyncCount();
-    }
-
-    @Override
-    void decrementEntryOutOfSyncCount() {
-      _dualReadLoadBalancerJmx.decrementUriPropertiesOutOfSyncCount();
-    }
-
-    @Override
-    void incrementPropertiesErrorCount()
-    {
-      _dualReadLoadBalancerJmx.incrementUriPropertiesErrorCount();
-    }
-
-    @Override
-    void onEvict()
-    {
-      _dualReadLoadBalancerJmx.incrementUriPropertiesEvictCount();
     }
   }
 }

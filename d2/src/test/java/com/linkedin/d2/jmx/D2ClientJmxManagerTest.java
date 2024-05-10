@@ -143,7 +143,7 @@ public class D2ClientJmxManagerTest {
           _servicePropertiesArgumentCaptor.capture());
       Mockito.doNothing().when(_simpleLoadBalancerState).register(_simpleLoadBalancerStateListenerCaptor.capture());
 
-      _dualReadStateManager = spy(new DualReadStateManager(_dualReadModeProvider, _executorService));
+      _dualReadStateManager = spy(new DualReadStateManager(_dualReadModeProvider, _executorService, true));
 
       doCallRealMethod().when(_dualReadStateManager).addGlobalWatcher(any());
       doCallRealMethod().when(_dualReadStateManager).addServiceWatcher(any(), any());
