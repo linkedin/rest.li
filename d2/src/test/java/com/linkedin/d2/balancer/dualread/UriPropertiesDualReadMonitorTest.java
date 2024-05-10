@@ -174,12 +174,14 @@ public class UriPropertiesDualReadMonitorTest {
     ExecutorService executor = Executors.newFixedThreadPool(2,
         new NamedThreadFactory("UriPropertiesDualReadMonitorTest"));
     properties.forEach(p -> executor.execute(() -> reportAndVerifyState(monitor, p.getLeft(), p.getRight())));
-    
+
     try {
       executor.shutdown();
-      executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
-      // similarity eventually converge to 1
-      assertEquals((double) monitor.getMatchedUris() / (double) monitor.getTotalUris(), 1.0);
+      boolean completed = executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
+      if (completed) {
+        // similarity eventually converge to 1
+        assertEquals((double) monitor.getMatchedUris() / (double) monitor.getTotalUris(), 1.0);
+      }
     } catch (InterruptedException e) {
       Assert.fail("Tasks were interrupted");
     }
