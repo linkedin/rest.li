@@ -137,6 +137,11 @@ public class UriPropertiesDualReadMonitor {
     return _matchedUris;
   }
 
+  @VisibleForTesting
+  ClusterMatchRecord getMatchRecord(String cluster) {
+    return _clusters.get(cluster);
+  }
+
   public static class ClusterMatchRecord {
     @Nullable
     @VisibleForTesting
