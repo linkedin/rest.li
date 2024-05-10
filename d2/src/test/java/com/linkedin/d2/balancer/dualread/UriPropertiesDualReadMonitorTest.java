@@ -232,8 +232,8 @@ public class UriPropertiesDualReadMonitorTest {
     // if reportData on the same cluster are NOT synchronized, the total uris and matched uris counts could become < 0
     // or > 2.
     // e.g: when total uris = 1, matched uris = 1, if reporting URI_PROPERTIES_URI_1_AND_2 for new and old Lbs are
-    // executed concurrently, total uris will decrement by 1 twice and become -1, and matched uris will increment by 2
-    // twice and become 4.
+    // executed concurrently, both counts will decrement by 1 twice and become -1 first, and total uris will increment
+    // by 2 twice and become 4.
     // We verify that doesn't happen no matter what order the data is reported between the old and new Lbs.
     assertTrue(monitor.getTotalUris() >= 0 && monitor.getTotalUris() <= 2);
     assertTrue(monitor.getMatchedUris() >= 0 && monitor.getMatchedUris() <= 2);
