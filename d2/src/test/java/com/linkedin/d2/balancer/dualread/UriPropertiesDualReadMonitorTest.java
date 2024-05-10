@@ -6,10 +6,12 @@ import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.r2.util.NamedThreadFactory;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
@@ -129,69 +131,85 @@ public class UriPropertiesDualReadMonitorTest {
     // simulate different orders that the data is reported between the old and new Lbs.
     return new Object[][]{
         {
-            Arrays.asList(
+            new ConcurrentLinkedDeque<>(Arrays.asList(
                 new ImmutablePair<>(URI_PROPERTIES_1, false),
                 new ImmutablePair<>(URI_PROPERTIES_1, true),
                 new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, false),
                 new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, true)
-            )
+            ))
         },
         {
-            Arrays.asList(
+            new ConcurrentLinkedDeque<>(Arrays.asList(
                 new ImmutablePair<>(URI_PROPERTIES_1, false),
                 new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, false),
                 new ImmutablePair<>(URI_PROPERTIES_1, true),
                 new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, true)
-            )
+            ))
         },
         {
-            Arrays.asList(
+            new ConcurrentLinkedDeque<>(Arrays.asList(
                 new ImmutablePair<>(URI_PROPERTIES_1, false),
                 new ImmutablePair<>(URI_PROPERTIES_1, true),
                 new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, true),
                 new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, false)
-            )
+            ))
         },
         {
-            Arrays.asList(
+            new ConcurrentLinkedDeque<>(Arrays.asList(
                 new ImmutablePair<>(URI_PROPERTIES_1, false),
                 new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, false),
                 new ImmutablePair<>(URI_PROPERTIES_1, true),
                 new ImmutablePair<>(URI_PROPERTIES_1, false),
                 new ImmutablePair<>(URI_PROPERTIES_URI_1_AND_2, true),
                 new ImmutablePair<>(URI_PROPERTIES_1, true)
-            )
+            ))
         }
     };
   }
 
-  @SuppressWarnings("ResultOfMethodCallIgnored")
   @Test(dataProvider = "reportDataInMultiThreadsDataProvider", invocationCount = 10)
-  public void testReportDataInMultiThreads(List<Pair<UriProperties, Boolean>> properties) {
+  public void testReportDataInMultiThreads(Queue<Pair<UriProperties, Boolean>> properties) {
     UriPropertiesDualReadMonitorTestFixture fixture = new UriPropertiesDualReadMonitorTestFixture();
     UriPropertiesDualReadMonitor monitor = fixture.getMonitor();
 
-    ExecutorService executor = Executors.newFixedThreadPool(2,
+    ScheduledExecutorService executor = Executors.newScheduledThreadPool(2,
         new NamedThreadFactory("UriPropertiesDualReadMonitorTest"));
-    properties.forEach(p -> executor.execute(() -> reportAndVerifyState(monitor, p.getLeft(), p.getRight())));
-
-    try {
-      executor.shutdown();
-      boolean completed = executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
-      if (completed) {
-        // similarity eventually converge to 1
-        assertEquals((double) monitor.getMatchedUris() / (double) monitor.getTotalUris(), 1.0);
+    executor.schedule(() -> {
+      try {
+        executor.shutdown();
+        if (executor.awaitTermination(100, TimeUnit.MILLISECONDS)) {
+          // similarity eventually converge to 1
+          assertEquals((double) monitor.getMatchedUris() / (double) monitor.getTotalUris(), 1.0);
+        }
+      } catch (InterruptedException e) {
+        Assert.fail("Tasks were interrupted");
       }
-    } catch (InterruptedException e) {
-      Assert.fail("Tasks were interrupted");
+    }, 5000, TimeUnit.MILLISECONDS);
+
+    executor.execute(() -> runNext(executor, properties, monitor));
+    executor.execute(() -> runNext(executor, properties, monitor));
+  }
+
+  // ensure properties for the same lb are reported in order
+  private void runNext(ExecutorService executor, Queue<Pair<UriProperties, Boolean>> properties,
+      UriPropertiesDualReadMonitor monitor) {
+    Pair<UriProperties, Boolean> p = properties.poll();
+
+    if (p != null && !executor.isShutdown()) {
+      executor.execute(() -> {
+        reportAndVerifyState(monitor, p.getLeft(), p.getRight());
+        runNext(executor, properties, monitor);
+      });
     }
   }
 
   private void reportAndVerifyState(UriPropertiesDualReadMonitor monitor, UriProperties prop, boolean fromNewLb) {
     monitor.reportData(CLUSTER_1, prop, fromNewLb);
-    // if reportData on the same cluster are NOT synchronized, the total uris and matched uris counts could become < 0.
+    // if reportData on the same cluster are NOT synchronized, the total uris and matched uris counts could become < 0
+    // or > 2.
     // e.g: when total uris = 1, matched uris = 1, if reporting URI_PROPERTIES_URI_1_AND_2 for new and old Lbs are
-    // executed concurrently, total uris will decrement by 1 twice and become -1.
+    // executed concurrently, total uris will decrement by 1 twice and become -1, and matched uris will increment by 2
+    // twice and become 4.
     // We verify that doesn't happen no matter what order the data is reported between the old and new Lbs.
     assertTrue(monitor.getTotalUris() >= 0 && monitor.getTotalUris() <= 2);
     assertTrue(monitor.getMatchedUris() >= 0 && monitor.getMatchedUris() <= 2);
