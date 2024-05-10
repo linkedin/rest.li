@@ -85,12 +85,10 @@ public class UriPropertiesDualReadMonitor {
       cluster._uris += newLbUris.size();
 
       if (cluster._matched != cluster._uris) {
-        String msg = String.format("Mismatched cluster properties for %s (match score: %f, total uris: %d):"
-                + "\nOld LB: %s\nNew LB: %s",
+        infoOrDebugIfLimited(
+            "Mismatched cluster properties for {} (match score: {}, total uris: {}):\nOld LB: {}\nNew LB: {}",
             clusterName, (double) cluster._matched / (double) cluster._uris, cluster._uris, cluster._oldLb,
             cluster._newLb);
-        RATE_LIMITED_LOGGER.info(msg);
-        LOG.debug(msg);
       }
 
       _totalUris += cluster._uris;
@@ -127,6 +125,14 @@ public class UriPropertiesDualReadMonitor {
     return false;
   }
 
+  private void infoOrDebugIfLimited(String msg, Object... args) {
+    if (RATE_LIMITED_LOGGER.logAllowed()) {
+      LOG.info(msg, args);
+    } else {
+      LOG.debug(msg, args);
+    }
+  }
+
   @VisibleForTesting
   int getTotalUris() {
     return _totalUris;
@@ -157,10 +163,11 @@ public class UriPropertiesDualReadMonitor {
     @VisibleForTesting
     int _matched;
 
-    public ClusterMatchRecord() {
+    private ClusterMatchRecord() {
     }
 
-    public ClusterMatchRecord(@Nullable UriProperties oldLb, @Nullable UriProperties newLb, int uris, int matched) {
+    @VisibleForTesting
+    ClusterMatchRecord(@Nullable UriProperties oldLb, @Nullable UriProperties newLb, int uris, int matched) {
       _oldLb = oldLb;
       _newLb = newLb;
       _uris = uris;

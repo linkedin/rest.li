@@ -12,7 +12,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import org.junit.Assert;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -69,25 +68,25 @@ public class UriPropertiesDualReadMonitorTest {
     // new lb has uri 1
     monitor.reportData(CLUSTER_1, URI_PROPERTIES_1, true);
     verifyJmxMetricParams(fixture, CLUSTER_1,
-        createMatchRecord(null, URI_PROPERTIES_1, 1, 0),
+        new ClusterMatchRecord(null, URI_PROPERTIES_1, 1, 0),
         0.0);
 
     // old lb has uri 2
     monitor.reportData(CLUSTER_1, URI_PROPERTIES_2, false);
     verifyJmxMetricParams(fixture, CLUSTER_1,
-        createMatchRecord(URI_PROPERTIES_2, URI_PROPERTIES_1, 2, 0),
+        new ClusterMatchRecord(URI_PROPERTIES_2, URI_PROPERTIES_1, 2, 0),
         0.0);
 
     // old lb updated with both uri 1 and 2
     monitor.reportData(CLUSTER_1, URI_PROPERTIES_URI_1_AND_2, false);
     verifyJmxMetricParams(fixture, CLUSTER_1,
-        createMatchRecord(URI_PROPERTIES_URI_1_AND_2, URI_PROPERTIES_1, 2, 1),
+        new ClusterMatchRecord(URI_PROPERTIES_URI_1_AND_2, URI_PROPERTIES_1, 2, 1),
         0.5);
 
     // new lb updated with both uri 1 and 2
     monitor.reportData(CLUSTER_1, URI_PROPERTIES_URI_1_AND_2, true);
     verifyJmxMetricParams(fixture, CLUSTER_1,
-        createMatchRecord(URI_PROPERTIES_URI_1_AND_2, URI_PROPERTIES_URI_1_AND_2, 2, 2),
+        new ClusterMatchRecord(URI_PROPERTIES_URI_1_AND_2, URI_PROPERTIES_URI_1_AND_2, 2, 2),
         1.0);
 
     // add data for cluster 2, old lb with uri 3 and 4
@@ -95,7 +94,7 @@ public class UriPropertiesDualReadMonitorTest {
     assertEquals(monitor.getTotalUris(), 4);
     assertEquals(monitor.getMatchedUris(), 2);
     verifyJmxMetricParams(fixture, CLUSTER_2,
-        createMatchRecord(URI_PROPERTIES_URI_3_AND_4, null, 2, 0),
+        new ClusterMatchRecord(URI_PROPERTIES_URI_3_AND_4, null, 2, 0),
         0.5);
 
     // new lb updated with uri 3 with different uri specific properties and uri 4 with different weight
@@ -103,7 +102,7 @@ public class UriPropertiesDualReadMonitorTest {
     assertEquals(monitor.getTotalUris(), 4);
     assertEquals(monitor.getMatchedUris(), 2);
     verifyJmxMetricParams(fixture, CLUSTER_2,
-        createMatchRecord(URI_PROPERTIES_URI_3_AND_4, URI_PROPERTIES_URI_3_DIFF_SPECIFIC_PROPERTIES_AND_4_DIFF_WEIGHT,
+        new ClusterMatchRecord(URI_PROPERTIES_URI_3_AND_4, URI_PROPERTIES_URI_3_DIFF_SPECIFIC_PROPERTIES_AND_4_DIFF_WEIGHT,
             2, 0),
         0.5);
 
@@ -112,7 +111,7 @@ public class UriPropertiesDualReadMonitorTest {
     assertEquals(monitor.getTotalUris(), 4);
     assertEquals(monitor.getMatchedUris(), 3);
     verifyJmxMetricParams(fixture, CLUSTER_2,
-        createMatchRecord(URI_PROPERTIES_URI_3_ANOTHER_DIFF_SPECIFIC_PROPERTIES_AND_4_DIFF_WEIGHT,
+        new ClusterMatchRecord(URI_PROPERTIES_URI_3_ANOTHER_DIFF_SPECIFIC_PROPERTIES_AND_4_DIFF_WEIGHT,
             URI_PROPERTIES_URI_3_DIFF_SPECIFIC_PROPERTIES_AND_4_DIFF_WEIGHT,
             2, 1),
         0.75);
@@ -125,47 +124,46 @@ public class UriPropertiesDualReadMonitorTest {
 
   @DataProvider
   public Object[][] reportDataInMultiThreadsDataProvider() {
+    Queue<UriProperties> twoUpdates = new ConcurrentLinkedDeque<>(Arrays.asList(
+        URI_PROPERTIES_1,
+        URI_PROPERTIES_URI_1_AND_2));
+
+    Queue<UriProperties> threeUpdates = new ConcurrentLinkedDeque<>(Arrays.asList(
+        URI_PROPERTIES_1,
+        URI_PROPERTIES_URI_1_AND_2,
+        URI_PROPERTIES_1));
+
+    Queue<UriProperties> fiveUpdates = new ConcurrentLinkedDeque<>(Arrays.asList(
+        URI_PROPERTIES_1,
+        URI_PROPERTIES_URI_1_AND_2,
+        URI_PROPERTIES_2,
+        URI_PROPERTIES_URI_1_AND_2,
+        URI_PROPERTIES_1));
+
+    /*
+     * Params:
+     * oldLbProps - uri properties to be reported by old lb
+     * newLbProps - uri properties to be reported by new lb
+     */
     return new Object[][]{
-        // 2 updates
         {
-            new ConcurrentLinkedDeque<>(Arrays.asList(
-                URI_PROPERTIES_1,
-                URI_PROPERTIES_URI_1_AND_2)),
-            new ConcurrentLinkedDeque<>(Arrays.asList(
-                URI_PROPERTIES_1,
-                URI_PROPERTIES_URI_1_AND_2))
+            twoUpdates,
+            new ConcurrentLinkedDeque<>(twoUpdates)
         },
-        // 3 updates
         {
-            new ConcurrentLinkedDeque<>(Arrays.asList(
-                URI_PROPERTIES_1,
-                URI_PROPERTIES_URI_1_AND_2,
-                URI_PROPERTIES_1)),
-            new ConcurrentLinkedDeque<>(Arrays.asList(
-                URI_PROPERTIES_1,
-                URI_PROPERTIES_URI_1_AND_2,
-                URI_PROPERTIES_1))
+            threeUpdates,
+            new ConcurrentLinkedDeque<>(threeUpdates)
         },
-        // 5 updates
         {
-            new ConcurrentLinkedDeque<>(Arrays.asList(
-                URI_PROPERTIES_1,
-                URI_PROPERTIES_URI_1_AND_2,
-                URI_PROPERTIES_2,
-                URI_PROPERTIES_URI_1_AND_2,
-                URI_PROPERTIES_1)),
-            new ConcurrentLinkedDeque<>(Arrays.asList(
-                URI_PROPERTIES_1,
-                URI_PROPERTIES_URI_1_AND_2,
-                URI_PROPERTIES_2,
-                URI_PROPERTIES_URI_1_AND_2,
-                URI_PROPERTIES_1))
+            fiveUpdates,
+            new ConcurrentLinkedDeque<>(fiveUpdates)
         }
     };
   }
 
   @Test(dataProvider = "reportDataInMultiThreadsDataProvider", invocationCount = 20)
-  public void testReportDataInMultiThreads(Queue<UriProperties> oldLbProps, Queue<UriProperties> newLbProps) {
+  public void testReportDataInMultiThreads(Queue<UriProperties> oldLbProps, Queue<UriProperties> newLbProps)
+      throws InterruptedException {
     UriPropertiesDualReadMonitorTestFixture fixture = new UriPropertiesDualReadMonitorTestFixture();
     UriPropertiesDualReadMonitor monitor = fixture.getMonitor();
 
@@ -176,17 +174,13 @@ public class UriPropertiesDualReadMonitorTest {
     executor.execute(() -> runNext(fixture, oldLbProps, false));
     executor.execute(() -> runNext(fixture, newLbProps, true));
 
-    try {
-      boolean completed = done.await(1000, TimeUnit.MILLISECONDS);
-      if (completed) {
-        // similarity eventually converge to 1
-        assertEquals((double) monitor.getMatchedUris() / (double) monitor.getTotalUris(), 1.0,
-            "Similarity score not 1. Match record: " + monitor.getMatchRecord(CLUSTER_1));
-      }
-      executor.shutdownNow();
-    } catch (InterruptedException e) {
-      Assert.fail("Tasks were interrupted");
+    boolean completed = done.await(1000, TimeUnit.MILLISECONDS);
+    if (completed) {
+      // similarity eventually converge to 1
+      assertEquals((double) monitor.getMatchedUris() / (double) monitor.getTotalUris(), 1.0,
+          "Similarity score not 1. Match record: " + monitor.getMatchRecord(CLUSTER_1));
     }
+    executor.shutdownNow();
   }
 
   // ensure properties for the same lb are reported in order
@@ -218,15 +212,6 @@ public class UriPropertiesDualReadMonitorTest {
     assertTrue(matchedUris >= 0 && matchedUris <= 2);
     assertTrue(similarity >= 0.0 && similarity <= 1.0, "Similarity score should be >= 0 and <= 1."
         + " Match record: " + monitor.getMatchRecord(CLUSTER_1));
-  }
-
-  private ClusterMatchRecord createMatchRecord(UriProperties oldLb, UriProperties newLb, int uris, int matched) {
-    ClusterMatchRecord cluster = new ClusterMatchRecord();
-    cluster._oldLb = oldLb;
-    cluster._newLb = newLb;
-    cluster._uris = uris;
-    cluster._matched = matched;
-    return cluster;
   }
 
   private void verifyJmxMetricParams(UriPropertiesDualReadMonitorTestFixture fixture, String clusterName,

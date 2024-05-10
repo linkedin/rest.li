@@ -551,7 +551,7 @@ public class RateLimitedLogger implements Logger
     }
   }
 
-  private boolean logAllowed()
+  public boolean logAllowed()
   {
     final long now = _clock.currentTimeMillis();
     final long lastLog = _lastLog.get();
