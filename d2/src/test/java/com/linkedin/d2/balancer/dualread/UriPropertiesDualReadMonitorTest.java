@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -196,33 +197,36 @@ public class UriPropertiesDualReadMonitorTest {
     UriPropertiesDualReadMonitorTestFixture fixture = new UriPropertiesDualReadMonitorTestFixture();
     UriPropertiesDualReadMonitor monitor = fixture.getMonitor();
 
-    ScheduledExecutorService executor = Executors.newScheduledThreadPool(2,
+    int threads = 2;
+    ScheduledExecutorService executor = Executors.newScheduledThreadPool(threads,
         new NamedThreadFactory("UriPropertiesDualReadMonitorTest"));
-    executor.schedule(() -> {
-      try {
-        executor.shutdown();
-        if (executor.awaitTermination(100, TimeUnit.MILLISECONDS)) {
-          // similarity eventually converge to 1
-          assertEquals((double) monitor.getMatchedUris() / (double) monitor.getTotalUris(), 1.0);
-        }
-      } catch (InterruptedException e) {
-        Assert.fail("Tasks were interrupted");
-      }
-    }, 5000, TimeUnit.MILLISECONDS);
+    executor.schedule(executor::shutdown, 5000, TimeUnit.MILLISECONDS);
 
-    executor.execute(() -> runNext(executor, properties, monitor));
-    executor.execute(() -> runNext(executor, properties, monitor));
+    CountDownLatch done = new CountDownLatch(properties.size());
+    for (int i = 0; i < threads; i++) {
+      executor.execute(() -> runNext(executor, properties, monitor, done));
+    }
+
+    try {
+      done.await();
+      // similarity eventually converge to 1
+      assertEquals((double) monitor.getMatchedUris() / (double) monitor.getTotalUris(), 1.0);
+      executor.shutdownNow();
+    } catch (InterruptedException e) {
+      Assert.fail("Tasks were interrupted");
+    }
   }
 
   // ensure properties for the same lb are reported in order
   private void runNext(ExecutorService executor, Queue<Pair<UriProperties, Boolean>> properties,
-      UriPropertiesDualReadMonitor monitor) {
+      UriPropertiesDualReadMonitor monitor, CountDownLatch done) {
     Pair<UriProperties, Boolean> p = properties.poll();
 
     if (p != null && !executor.isShutdown()) {
       executor.execute(() -> {
         reportAndVerifyState(monitor, p.getLeft(), p.getRight());
-        runNext(executor, properties, monitor);
+        runNext(executor, properties, monitor, done);
+        done.countDown();
       });
     }
   }

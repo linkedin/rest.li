@@ -85,9 +85,12 @@ public class UriPropertiesDualReadMonitor {
       cluster._uris += newLbUris.size();
 
       if (cluster._matched != cluster._uris) {
-        RATE_LIMITED_LOGGER.info("Mismatched cluster properties for {} (match score: {}, total uris: {}):"
-                + "\nOld LB: {}\nNew LB: {}",
-            clusterName, cluster._matched / cluster._uris, cluster._uris, cluster._oldLb, cluster._newLb);
+        String msg = String.format("Mismatched cluster properties for %s (match score: %f, total uris: %d):"
+                + "\nOld LB: %s\nNew LB: %s",
+            clusterName, (double) cluster._matched / (double) cluster._uris, cluster._uris, cluster._oldLb,
+            cluster._newLb);
+        RATE_LIMITED_LOGGER.info(msg);
+        LOG.debug(msg);
       }
 
       _totalUris += cluster._uris;
