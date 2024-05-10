@@ -86,9 +86,12 @@ public class UriPropertiesDualReadMonitor {
 
       if (cluster._matched != cluster._uris) {
         infoOrDebugIfLimited(
-            "Mismatched cluster properties for {} (match score: {}, total uris: {}):\nOld LB: {}\nNew LB: {}",
+            "Mismatched uri properties for cluster {} (match score: {}, total uris: {}):\nOld LB: {}\nNew LB: {}",
             clusterName, (double) cluster._matched / (double) cluster._uris, cluster._uris, cluster._oldLb,
             cluster._newLb);
+      } else {
+        LOG.debug("Matched uri properties for cluster {} (matched {} out of {} URIs)", clusterName,
+            cluster._matched, cluster._uris);
       }
 
       _totalUris += cluster._uris;
