@@ -11,7 +11,6 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -161,7 +160,7 @@ public class UriPropertiesDualReadMonitorTest {
     };
   }
 
-  @Test(dataProvider = "reportDataInMultiThreadsDataProvider", invocationCount = 20)
+  @Test(dataProvider = "reportDataInMultiThreadsDataProvider", invocationCount = 100, timeOut = 5_000)
   public void testReportDataInMultiThreads(Queue<UriProperties> oldLbProps, Queue<UriProperties> newLbProps)
       throws InterruptedException {
     UriPropertiesDualReadMonitorTestFixture fixture = new UriPropertiesDualReadMonitorTestFixture();
@@ -174,12 +173,10 @@ public class UriPropertiesDualReadMonitorTest {
     executor.execute(() -> runNext(fixture, oldLbProps, false));
     executor.execute(() -> runNext(fixture, newLbProps, true));
 
-    boolean completed = done.await(1000, TimeUnit.MILLISECONDS);
-    if (completed) {
-      // similarity eventually converge to 1
-      assertEquals((double) monitor.getMatchedUris() / (double) monitor.getTotalUris(), 1.0,
-          "Similarity score not 1. Match record: " + monitor.getMatchRecord(CLUSTER_1));
-    }
+    done.await();
+    // similarity eventually converge to 1
+    assertEquals((double) monitor.getMatchedUris() / (double) monitor.getTotalUris(), 1.0,
+        "Similarity score not 1. Match record: " + monitor.getMatchRecord(CLUSTER_1));
     executor.shutdownNow();
   }
 
