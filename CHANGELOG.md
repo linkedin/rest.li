@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.55.0] - 2024-05-14
 - Handle HTTP/2 stream errors in tracker client and LB state updator.
 
 ## [29.55.0] - 2024-05-23
