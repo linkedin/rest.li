@@ -42,6 +42,7 @@ import com.linkedin.util.degrader.CallTracker;
 import com.linkedin.util.degrader.CallTrackerImpl;
 import com.linkedin.util.degrader.ErrorType;
 
+import io.netty.handler.codec.http2.Http2Exception;
 import java.net.ConnectException;
 import java.net.URI;
 import java.nio.channels.ClosedChannelException;
@@ -310,6 +311,9 @@ public class TrackerClientImpl implements TrackerClient
       else if (originalThrowable instanceof TimeoutException)
       {
         callCompletion.endCallWithError(ErrorType.TIMEOUT_EXCEPTION);
+      }
+      else if (originalThrowable instanceof Http2Exception.StreamException) {
+        callCompletion.endCallWithError(ErrorType.STREAM_ERROR);
       }
       else
       {

@@ -35,5 +35,10 @@ public enum ErrorType
   /**
    * represents a server side error condition
    */
-  SERVER_ERROR
+  SERVER_ERROR,
+
+  /**
+   * represents an http2 stream error
+   */
+  STREAM_ERROR
 }
