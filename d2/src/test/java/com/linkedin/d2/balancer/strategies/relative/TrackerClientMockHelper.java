@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.mockito.Mockito;
 
 import static org.mockito.Matchers.anyInt;
@@ -77,6 +78,18 @@ public class TrackerClientMockHelper
     return mockTrackerClients(numTrackerClients, callCountList, outstandingCallCountList, latencyList, outstandingLatencyList, errorCountList, false, doNotLoadBalance);
   }
 
+  public static List<TrackerClient> mockTrackerClients(int numTrackerClients, List<Integer> callCountList,
+      List<Integer> outstandingCallCountList, List<Long> latencyList, List<Long> outstandingLatencyList,
+      List<Integer> errorCountList, boolean doNotSlowStart, List<Boolean> doNotLoadBalance) {
+    List<Map<ErrorType, Integer>> errorTypeCountsList = errorCountList.stream().map(count -> {
+      Map<ErrorType, Integer> errorTypeCounts = new HashMap<>();
+      errorTypeCounts.put(ErrorType.SERVER_ERROR, count);
+      return errorTypeCounts;
+    }).collect(Collectors.toList());
+    return mockTrackerClients(numTrackerClients, callCountList, outstandingCallCountList, latencyList,
+        outstandingLatencyList, errorCountList, doNotSlowStart, doNotLoadBalance, errorTypeCountsList);
+  }
+
   /**
    * Mock a list of {@link TrackerClient} for testing
    *
@@ -86,11 +99,13 @@ public class TrackerClientMockHelper
    * @param latencyList The latency of each host
    * @param outstandingLatencyList The outstanding latency of each host
    * @param errorCountList The error count of each host
+   * @param errorTypeCounts The error count by type of each host
    * @return A list of mocked {@link TrackerClient}
    */
   public static List<TrackerClient> mockTrackerClients(int numTrackerClients, List<Integer> callCountList,
       List<Integer> outstandingCallCountList, List<Long> latencyList, List<Long> outstandingLatencyList,
-      List<Integer> errorCountList, boolean doNotSlowStart, List<Boolean> doNotLoadBalance)
+      List<Integer> errorCountList, boolean doNotSlowStart, List<Boolean> doNotLoadBalance,
+      List<Map<ErrorType, Integer>> errorTypeCounts)
   {
     List<TrackerClient> trackerClients = new ArrayList<>();
     for (int index = 0; index < numTrackerClients; index ++)
@@ -99,8 +114,6 @@ public class TrackerClientMockHelper
       TrackerClient trackerClient = Mockito.mock(TrackerClient.class);
       CallTracker callTracker = Mockito.mock(CallTracker.class);
       LongStats longStats = new LongStats(callCountList.get(index), latencyList.get(index), 0, 0, 0, 0, 0, 0, 0);
-      Map<ErrorType, Integer> errorTypeCounts = new HashMap<>();
-      errorTypeCounts.put(ErrorType.SERVER_ERROR, errorCountList.get(index));
 
       CallTrackerImpl.CallTrackerStats callStats = new CallTrackerImpl.CallTrackerStats(
           RelativeLoadBalancerStrategyFactory.DEFAULT_UPDATE_INTERVAL_MS,
@@ -115,8 +128,8 @@ public class TrackerClientMockHelper
           RelativeLoadBalancerStrategyFactory.DEFAULT_UPDATE_INTERVAL_MS - outstandingLatencyList.get(index),
       outstandingCallCountList.get(index),
       longStats,
-      errorTypeCounts,
-      errorTypeCounts);
+      errorTypeCounts.get(index),
+      errorTypeCounts.get(index));
 
       Mockito.when(trackerClient.getCallTracker()).thenReturn(callTracker);
       Mockito.when(callTracker.getCallStats()).thenReturn(callStats);

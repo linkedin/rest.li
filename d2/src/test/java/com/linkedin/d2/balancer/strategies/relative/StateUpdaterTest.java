@@ -20,9 +20,11 @@ import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.test.util.retry.ThreeRetries;
+import com.linkedin.util.degrader.ErrorType;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -42,10 +44,7 @@ import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 
 /**
@@ -522,6 +521,34 @@ public class StateUpdaterTest
             {TrackerClientMockHelper.mockTrackerClients(numTrackerClients,Arrays.asList(100, 200, 200), Arrays.asList(0, 0, 0),
                 defaultLatencyList, defaultOutstandingLatencyList, Arrays.asList(21, 10, 15)), defaultHighLatencyFactor, 0.3, false}
         };
+  }
+
+  @Test
+  public void testStreamError()
+  {
+    Map<ErrorType, Integer> errorTypeCounts = new HashMap<>();
+    errorTypeCounts.put(ErrorType.STREAM_ERROR, 11);
+    List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
+        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 11),
+        false, Arrays.asList(false, false), Arrays.asList(Collections.emptyMap(), errorTypeCounts));
+
+    PartitionState state = new PartitionStateTestDataBuilder()
+        .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
+        .setTrackerClientStateMap(trackerClients,
+            Arrays.asList(StateUpdater.MAX_HEALTH_SCORE, StateUpdater.MAX_HEALTH_SCORE),
+            Arrays.asList(TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY),
+            Arrays.asList(30, 30))
+        .build();
+
+    ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
+    partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
+    setup(new D2RelativeStrategyProperties().setHighErrorRate(0.5), partitionLoadBalancerStateMap);
+
+    _stateUpdater.updateState();
+
+    assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
+    assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(1).getUri()).intValue(),
+        (int) (HEALTHY_POINTS - RelativeLoadBalancerStrategyFactory.DEFAULT_DOWN_STEP * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT));
   }
 
   @Test
