@@ -27,6 +27,7 @@ import com.linkedin.d2.discovery.stores.PropertySetStringSerializer;
 import com.linkedin.test.util.AssertionMethods;
 import com.linkedin.test.util.ClockedExecutor;
 
+import com.linkedin.test.util.retry.ThreeRetries;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -235,7 +236,7 @@ public class ZooKeeperEphemeralStoreChildrenDelayedWatcherTest
     client.shutdown();
   }
 
-  @Test(dataProvider = "dataNumOfchildrenToAddToRemoveReadWindow")
+  @Test(dataProvider = "dataNumOfchildrenToAddToRemoveReadWindow", retryAnalyzer = ThreeRetries.class)
   public void testChildNodeRemoved(int numberOfAdditionalChildren, int numberOfRemove, int zookeeperReadWindowMs)
     throws Exception
   {

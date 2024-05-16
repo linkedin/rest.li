@@ -80,7 +80,9 @@ public class XdsFsTogglingLoadBalancerFactory
   private final DeterministicSubsettingMetadataProvider _deterministicSubsettingMetadataProvider;
   private final CanaryDistributionProvider _canaryDistributionProvider;
   private final FailoutConfigProviderFactory _failoutConfigProviderFactory;
+  private final boolean _loadBalanceStreamException;
 
+  @Deprecated
   public XdsFsTogglingLoadBalancerFactory(long timeout, TimeUnit timeoutUnit, String fsBasePath,
       Map<String, TransportClientFactory> clientFactories,
       Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
@@ -89,6 +91,22 @@ public class XdsFsTogglingLoadBalancerFactory
       SslSessionValidatorFactory sslSessionValidatorFactory, D2ClientJmxManager d2ClientJmxManager,
       DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
       FailoutConfigProviderFactory failoutConfigProviderFactory, CanaryDistributionProvider canaryDistributionProvider)
+  {
+    this(timeout, timeoutUnit, fsBasePath, clientFactories, loadBalancerStrategyFactories, d2ServicePath, sslContext,
+        sslParameters, isSSLEnabled, clientServicesConfig, partitionAccessorRegistry, sslSessionValidatorFactory,
+        d2ClientJmxManager, deterministicSubsettingMetadataProvider, failoutConfigProviderFactory,
+        canaryDistributionProvider, false);
+  }
+
+  public XdsFsTogglingLoadBalancerFactory(long timeout, TimeUnit timeoutUnit, String fsBasePath,
+      Map<String, TransportClientFactory> clientFactories,
+      Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+      String d2ServicePath, SSLContext sslContext, SSLParameters sslParameters, boolean isSSLEnabled,
+      Map<String, Map<String, Object>> clientServicesConfig, PartitionAccessorRegistry partitionAccessorRegistry,
+      SslSessionValidatorFactory sslSessionValidatorFactory, D2ClientJmxManager d2ClientJmxManager,
+      DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
+      FailoutConfigProviderFactory failoutConfigProviderFactory, CanaryDistributionProvider canaryDistributionProvider,
+      boolean loadBalanceStreamException)
   {
     _lbTimeout = timeout;
     _lbTimeoutUnit = timeoutUnit;
@@ -106,6 +124,7 @@ public class XdsFsTogglingLoadBalancerFactory
     _deterministicSubsettingMetadataProvider = deterministicSubsettingMetadataProvider;
     _failoutConfigProviderFactory = failoutConfigProviderFactory;
     _canaryDistributionProvider = canaryDistributionProvider;
+    _loadBalanceStreamException = loadBalanceStreamException;
   }
 
   public TogglingLoadBalancer create(ScheduledExecutorService executorService, XdsToD2PropertiesAdaptor xdsAdaptor)
@@ -146,7 +165,8 @@ public class XdsFsTogglingLoadBalancerFactory
     SimpleLoadBalancerState state =
         new SimpleLoadBalancerState(executorService, uriBus, clusterBus, serviceBus, _clientFactories,
             _loadBalancerStrategyFactories, _sslContext, _sslParameters, _isSSLEnabled, _partitionAccessorRegistry,
-            _sslSessionValidatorFactory, _deterministicSubsettingMetadataProvider, _canaryDistributionProvider);
+            _sslSessionValidatorFactory, _deterministicSubsettingMetadataProvider, _canaryDistributionProvider,
+            _loadBalanceStreamException);
     _d2ClientJmxManager.setSimpleLoadBalancerState(state);
 
     SimpleLoadBalancer balancer =

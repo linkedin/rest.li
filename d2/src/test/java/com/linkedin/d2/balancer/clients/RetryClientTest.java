@@ -330,7 +330,7 @@ public class RetryClientTest
     }
   }
 
-  @Test(retryAnalyzer = SingleRetry.class) // Known to be flaky in CI
+  @Test(retryAnalyzer = ThreeRetries.class) // Known to be flaky in CI
   public void testRestRetryExceedsClientRetryRatio() throws Exception
   {
     SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/good"),

@@ -217,7 +217,8 @@ public class D2ClientBuilder
                   _config.xdsChannelLoadBalancingPolicy,
                   _config.xdsChannelLoadBalancingPolicyConfig,
                   _config.subscribeToUriGlobCollection,
-                  _config._xdsServerMetricsProvider
+                  _config._xdsServerMetricsProvider,
+                  _config.loadBalanceStreamException
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -724,6 +725,11 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setLoadBalanceStreamException(boolean loadBalanceStreamException) {
+    _config.loadBalanceStreamException = loadBalanceStreamException;
+    return this;
+  }
+
   private Map<String, TransportClientFactory> createDefaultTransportClientFactories()
   {
     final Map<String, TransportClientFactory> clientFactories = new HashMap<>();
@@ -758,7 +764,7 @@ public class D2ClientBuilder
     {
       final RelativeLoadBalancerStrategyFactory relativeLoadBalancerStrategyFactory = new RelativeLoadBalancerStrategyFactory(
           _config._executorService, _config.healthCheckOperations, Collections.emptyList(), _config.eventEmitter,
-          SystemClock.instance());
+          SystemClock.instance(), _config.loadBalanceStreamException);
       loadBalancerStrategyFactories.putIfAbsent(RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME,
           relativeLoadBalancerStrategyFactory);
     }

@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.strategies.relative;
 
+import com.google.common.collect.ImmutableMap;
 import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.r2.util.NamedThreadFactory;
@@ -524,34 +525,6 @@ public class StateUpdaterTest
   }
 
   @Test
-  public void testStreamError()
-  {
-    Map<ErrorType, Integer> errorTypeCounts = new HashMap<>();
-    errorTypeCounts.put(ErrorType.STREAM_ERROR, 11);
-    List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
-        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 11),
-        false, Arrays.asList(false, false), Arrays.asList(Collections.emptyMap(), errorTypeCounts));
-
-    PartitionState state = new PartitionStateTestDataBuilder()
-        .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
-        .setTrackerClientStateMap(trackerClients,
-            Arrays.asList(StateUpdater.MAX_HEALTH_SCORE, StateUpdater.MAX_HEALTH_SCORE),
-            Arrays.asList(TrackerClientState.HealthState.HEALTHY, TrackerClientState.HealthState.HEALTHY),
-            Arrays.asList(30, 30))
-        .build();
-
-    ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
-    partitionLoadBalancerStateMap.put(DEFAULT_PARTITION_ID, state);
-    setup(new D2RelativeStrategyProperties().setHighErrorRate(0.5), partitionLoadBalancerStateMap);
-
-    _stateUpdater.updateState();
-
-    assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
-    assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(1).getUri()).intValue(),
-        (int) (HEALTHY_POINTS - RelativeLoadBalancerStrategyFactory.DEFAULT_DOWN_STEP * RelativeLoadBalancerStrategyFactory.DEFAULT_POINTS_PER_WEIGHT));
-  }
-
-  @Test
   public void testCallCountBelowMinCallCount()
   {
     int minCallCount = 10;
@@ -675,6 +648,33 @@ public class StateUpdaterTest
     assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
     assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
     executorService.shutdown();
+  }
+
+  @DataProvider
+  public Object[][] loadBalanceStreamExceptionDataProvider()
+  {
+    return new Object[][] {
+        { false },
+        { true }
+    };
+  }
+
+  @Test(dataProvider = "loadBalanceStreamExceptionDataProvider")
+  public void testGetErrorRateWithStreamError(Boolean loadBalanceStreamException)
+  {
+    Map<ErrorType, Integer> errorTypeCounts = ImmutableMap.of(
+        ErrorType.CONNECT_EXCEPTION, 1,
+        ErrorType.CLOSED_CHANNEL_EXCEPTION, 1,
+        ErrorType.SERVER_ERROR, 1,
+        ErrorType.TIMEOUT_EXCEPTION, 1,
+        ErrorType.STREAM_ERROR, 10
+    );
+
+    StateUpdater stateUpdater = new StateUpdater(new D2RelativeStrategyProperties().setUpdateIntervalMs(5000),
+        _quarantineManager, _executorService, new ConcurrentHashMap<>(), Collections.emptyList(), SERVICE_NAME,
+        loadBalanceStreamException);
+
+    assertEquals( stateUpdater.getErrorRate(errorTypeCounts, 20), loadBalanceStreamException ? 0.7 : 0.2);
   }
 
   private void runIndividualConcurrentTask(ExecutorService executorService, Runnable runnable, CountDownLatch countDownLatch)

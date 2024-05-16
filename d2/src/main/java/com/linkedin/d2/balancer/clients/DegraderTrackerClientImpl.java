@@ -39,6 +39,7 @@ public class DegraderTrackerClientImpl extends TrackerClientImpl implements Degr
 
   private final Map<Integer, PartitionState> _partitionStates;
 
+  @Deprecated
   public DegraderTrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient)
   {
     this(uri, partitionDataMap, wrappedClient, SystemClock.instance(), null,
@@ -62,6 +63,13 @@ public class DegraderTrackerClientImpl extends TrackerClientImpl implements Degr
                                Clock clock, DegraderImpl.Config config, long interval, Pattern errorStatusPattern,
                                boolean doNotSlowStart)
   {
+    this(uri, partitionDataMap, wrappedClient, clock, config, interval, errorStatusPattern, doNotSlowStart, false);
+  }
+
+  public DegraderTrackerClientImpl(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient wrappedClient,
+      Clock clock, DegraderImpl.Config config, long interval, Pattern errorStatusPattern,
+      boolean doNotSlowStart, boolean loadBalanceStreamException)
+  {
     super(uri, partitionDataMap, wrappedClient, clock, interval,
         (status) -> errorStatusPattern.matcher(Integer.toString(status)).matches(), true, doNotSlowStart, false);
 
@@ -79,6 +87,7 @@ public class DegraderTrackerClientImpl extends TrackerClientImpl implements Degr
     {
       config.setInitialDropRate(DegraderImpl.DEFAULT_DO_NOT_SLOW_START_INITIAL_DROP_RATE);
     }
+    config.setLoadBalanceStreamException(loadBalanceStreamException);
 
     /* TrackerClient contains state for each partition, but they actually share the same DegraderImpl
      *

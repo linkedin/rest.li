@@ -98,7 +98,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                                    config.failoutConfigProviderFactory,
                                                    config.canaryDistributionProvider,
                                                    config.serviceDiscoveryEventEmitter,
-                                                   config.dualReadStateManager
+                                                   config.dualReadStateManager,
+                                                   config.loadBalanceStreamException
     );
   }
 }
