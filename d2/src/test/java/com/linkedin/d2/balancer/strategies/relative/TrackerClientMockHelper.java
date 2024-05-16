@@ -80,7 +80,8 @@ public class TrackerClientMockHelper
 
   public static List<TrackerClient> mockTrackerClients(int numTrackerClients, List<Integer> callCountList,
       List<Integer> outstandingCallCountList, List<Long> latencyList, List<Long> outstandingLatencyList,
-      List<Integer> errorCountList, boolean doNotSlowStart, List<Boolean> doNotLoadBalance) {
+      List<Integer> errorCountList, boolean doNotSlowStart, List<Boolean> doNotLoadBalance)
+  {
     List<Map<ErrorType, Integer>> errorTypeCountsList = errorCountList.stream().map(count -> {
       Map<ErrorType, Integer> errorTypeCounts = new HashMap<>();
       errorTypeCounts.put(ErrorType.SERVER_ERROR, count);

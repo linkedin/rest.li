@@ -312,7 +312,8 @@ public class TrackerClientImpl implements TrackerClient
       {
         callCompletion.endCallWithError(ErrorType.TIMEOUT_EXCEPTION);
       }
-      else if (originalThrowable instanceof Http2Exception.StreamException) {
+      else if (originalThrowable instanceof Http2Exception.StreamException)
+      {
         callCompletion.endCallWithError(ErrorType.STREAM_ERROR);
       }
       else
