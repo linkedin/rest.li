@@ -5,6 +5,7 @@ dependencies {
   compile externalDependency.servletApi
   compile externalDependency.mail
   compile externalDependency.javaxActivation
+  compile externalDependency.netty
   testCompile project(':r2-testutils')
   testCompile project(':test-util')
   testCompile externalDependency.testng

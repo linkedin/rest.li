@@ -33,6 +33,7 @@ import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
 
+import io.netty.handler.codec.http2.Http2Exception;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
@@ -43,7 +44,7 @@ import java.util.Map;
  */
 public class HttpBridge
 {
-  private static final String NETTY_MAX_ACTIVE_STREAM_ERROR_MESSAGE =
+  public static final String NETTY_MAX_ACTIVE_STREAM_ERROR_MESSAGE =
       "Maximum active streams violated for this endpoint";
 
   /**
@@ -65,6 +66,10 @@ public class HttpBridge
       {
         if (response.hasError())
         {
+          Throwable responseError = response.getError();
+          // If the error is due to the netty max active stream error, wrap it with RetriableRequestException instead
+          RemoteInvocationException exception =
+              wrapResponseError("Failed to get response from server for URI " + uri, responseError);
           response =
               TransportResponseImpl.error(new RemoteInvocationException("Failed to get response from server for URI "
                       + uri,
@@ -136,6 +141,8 @@ public class HttpBridge
 
   /**
    * Wrap application callback for incoming StreamResponse with a "generic" HTTP callback.
+   * If callback returns the error which is in Netty Http2Exception.StreamException type,
+   * populate RetriableRequestException instead of RemoteInvocationException.
    *
    * @param callback the callback to receive the incoming RestResponse
    * @param request the request, used only to provide useful context in case an error
@@ -157,9 +164,8 @@ public class HttpBridge
           // If the error is due to the netty max active stream error, return a RetriableRequestException
           if (shouldReturnRetriableRequestException(responseError))
           {
-            StreamException streamException = (StreamException) responseError;
             response = TransportResponseImpl.error(
-                new RetriableRequestException("Failed to get response from server for URI " + uri, streamException),
+                new RetriableRequestException("Failed to get response from server for URI " + uri, responseError),
                 response.getWireAttributes());
           }
           else
@@ -223,10 +229,33 @@ public class HttpBridge
     };
   }
 
+  /**
+   * Check if the error is due to the netty max active stream error.
+   * @param responseError Throwable error to check
+   * @return True if the error is due to the netty max active stream error, false otherwise
+   */
   private static boolean shouldReturnRetriableRequestException(Throwable responseError)
   {
-    return responseError instanceof StreamException && responseError.getMessage()
-        .contains(NETTY_MAX_ACTIVE_STREAM_ERROR_MESSAGE);
+    return responseError instanceof Http2Exception.StreamException
+        && responseError.getMessage().contains(NETTY_MAX_ACTIVE_STREAM_ERROR_MESSAGE);
+  }
+
+  /**
+   * Wrap the response error with the appropriate exception type.
+   * If the error is due to the netty max active stream, wrap it with RetriableRequestException.
+   * @param errorMessage Error message to wrap
+   * @param responseError Throwable error to wrap
+   * @return RemoteInvocationException or RetriableRequestException
+   */
+  private static RemoteInvocationException wrapResponseError(String errorMessage, Throwable responseError) {
+    if (shouldReturnRetriableRequestException(responseError))
+    {
+      return new RetriableRequestException(errorMessage, responseError);
+    }
+    else
+    {
+      return new RemoteInvocationException(errorMessage, responseError);
+    }
   }
 
   /**
