@@ -66,10 +66,6 @@ public class HttpBridge
       {
         if (response.hasError())
         {
-          Throwable responseError = response.getError();
-          // If the error is due to the netty max active stream error, wrap it with RetriableRequestException instead
-          RemoteInvocationException exception =
-              wrapResponseError("Failed to get response from server for URI " + uri, responseError);
           response =
               TransportResponseImpl.error(new RemoteInvocationException("Failed to get response from server for URI "
                       + uri,
@@ -161,19 +157,11 @@ public class HttpBridge
         if (response.hasError())
         {
           Throwable responseError = response.getError();
-          // If the error is due to the netty max active stream error, return a RetriableRequestException
-          if (shouldReturnRetriableRequestException(responseError))
-          {
-            response = TransportResponseImpl.error(
-                new RetriableRequestException("Failed to get response from server for URI " + uri, responseError),
-                response.getWireAttributes());
-          }
-          else
-          {
-            response = TransportResponseImpl.error(
-                new RemoteInvocationException("Failed to get response from server for URI " + uri, responseError),
-                response.getWireAttributes());
-          }
+          // If the error is due to the netty max active stream error, wrap it with RetriableRequestException instead
+          RemoteInvocationException exception =
+              wrapResponseError("Failed to get response from server for URI " + uri, responseError);
+          response =
+              TransportResponseImpl.error(exception, response.getWireAttributes());
         }
         else if (!RestStatus.isOK(response.getResponse().getStatus()))
         {
