@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.55.0] - 2024-05-23
+- Allow HttpBridge to return RetriableRequestException for the Netty max active stream error 
+
 ## [29.54.0] - 2024-05-08
 - Dual read monitors cluster uris similarity
 
@@ -5689,7 +5692,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.54.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.55.0...master
+[29.55.0]: https://github.com/linkedin/rest.li/compare/v29.54.0...v29.55.0
 [29.54.0]: https://github.com/linkedin/rest.li/compare/v29.53.1...v29.54.0
 [29.53.1]: https://github.com/linkedin/rest.li/compare/v29.53.0...v29.53.1
 [29.53.0]: https://github.com/linkedin/rest.li/compare/v29.52.1...v29.53.0
