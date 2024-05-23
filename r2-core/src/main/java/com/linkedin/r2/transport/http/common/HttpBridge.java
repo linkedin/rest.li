@@ -19,6 +19,7 @@ package com.linkedin.r2.transport.http.common;
 
 
 import com.linkedin.r2.RemoteInvocationException;
+import com.linkedin.r2.RetriableRequestException;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.rest.RestException;
 import com.linkedin.r2.message.rest.RestRequest;
@@ -42,6 +43,9 @@ import java.util.Map;
  */
 public class HttpBridge
 {
+  private static final String NETTY_MAX_ACTIVE_STREAM_ERROR_MESSAGE =
+      "Maximum active streams violated for this endpoint";
+
   /**
    * Wrap application callback for incoming RestResponse with a "generic" HTTP callback.
    *
@@ -149,11 +153,21 @@ public class HttpBridge
       {
         if (response.hasError())
         {
-          response =
-              TransportResponseImpl.error(new RemoteInvocationException("Failed to get response from server for URI "
-                                                                            + uri,
-                                                                        response.getError()),
-                                          response.getWireAttributes());
+          Throwable responseError = response.getError();
+          // If the error is due to the netty max active stream error, return a RetriableRequestException
+          if (shouldReturnRetriableRequestException(responseError))
+          {
+            StreamException streamException = (StreamException) responseError;
+            response = TransportResponseImpl.error(
+                new RetriableRequestException("Failed to get response from server for URI " + uri, streamException),
+                response.getWireAttributes());
+          }
+          else
+          {
+            response = TransportResponseImpl.error(
+                new RemoteInvocationException("Failed to get response from server for URI " + uri, responseError),
+                response.getWireAttributes());
+          }
         }
         else if (!RestStatus.isOK(response.getResponse().getStatus()))
         {
@@ -207,6 +221,12 @@ public class HttpBridge
         callback.onResponse(response);
       }
     };
+  }
+
+  private static boolean shouldReturnRetriableRequestException(Throwable responseError)
+  {
+    return responseError instanceof StreamException && responseError.getMessage()
+        .contains(NETTY_MAX_ACTIVE_STREAM_ERROR_MESSAGE);
   }
 
   /**
