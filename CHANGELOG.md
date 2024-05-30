@@ -14,7 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.55.0] - 2024-05-14
+## [29.56.0] - 2024-05-30
 - degrade hosts for HTTP/2 stream errors in Degrader and Relative LB.
 
 ## [29.55.0] - 2024-05-23
@@ -5695,7 +5695,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.55.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.56.0...master
+[29.56.0]: https://github.com/linkedin/rest.li/compare/v29.55.0...v29.56.0
 [29.55.0]: https://github.com/linkedin/rest.li/compare/v29.54.0...v29.55.0
 [29.54.0]: https://github.com/linkedin/rest.li/compare/v29.53.1...v29.54.0
 [29.53.1]: https://github.com/linkedin/rest.li/compare/v29.53.0...v29.53.1
