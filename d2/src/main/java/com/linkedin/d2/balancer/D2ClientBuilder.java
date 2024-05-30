@@ -762,6 +762,7 @@ public class D2ClientBuilder
 
     if (_config.enableRelativeLoadBalancer)
     {
+      // TODO: create StateUpdater.LoadBalanceConfig and pass it to the RelativeLoadBalancerStrategyFactory
       final RelativeLoadBalancerStrategyFactory relativeLoadBalancerStrategyFactory = new RelativeLoadBalancerStrategyFactory(
           _config._executorService, _config.healthCheckOperations, Collections.emptyList(), _config.eventEmitter,
           SystemClock.instance(), _config.loadBalanceStreamException);

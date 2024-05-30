@@ -974,6 +974,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       return null;
     }
 
+    //TODO: create TrackerClient.LoadBalanceConfig and pass it into createTrackerClient method
     return serviceProperties == null ? null : TrackerClientFactory.createTrackerClient(uri, uriProperties,
         serviceProperties, loadBalancerStrategy.getName(), transportClient, _loadBalanceStreamException);
   }
