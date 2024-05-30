@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.55.0] - 2024-05-14
+- degrade hosts for HTTP/2 stream errors in Degrader and Relative LB.
+
 ## [29.55.0] - 2024-05-23
 - Allow HttpBridge to return RetriableRequestException for the Netty max active stream error 
 

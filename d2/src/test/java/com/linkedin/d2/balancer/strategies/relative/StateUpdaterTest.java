@@ -16,13 +16,16 @@
 
 package com.linkedin.d2.balancer.strategies.relative;
 
+import com.google.common.collect.ImmutableMap;
 import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.test.util.retry.ThreeRetries;
+import com.linkedin.util.degrader.ErrorType;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -42,10 +45,7 @@ import org.testng.annotations.Test;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyLong;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 
 /**
@@ -648,6 +648,33 @@ public class StateUpdaterTest
     assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
     assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
     executorService.shutdown();
+  }
+
+  @DataProvider
+  public Object[][] loadBalanceStreamExceptionDataProvider()
+  {
+    return new Object[][] {
+        { false },
+        { true }
+    };
+  }
+
+  @Test(dataProvider = "loadBalanceStreamExceptionDataProvider")
+  public void testGetErrorRateWithStreamError(Boolean loadBalanceStreamException)
+  {
+    Map<ErrorType, Integer> errorTypeCounts = ImmutableMap.of(
+        ErrorType.CONNECT_EXCEPTION, 1,
+        ErrorType.CLOSED_CHANNEL_EXCEPTION, 1,
+        ErrorType.SERVER_ERROR, 1,
+        ErrorType.TIMEOUT_EXCEPTION, 1,
+        ErrorType.STREAM_ERROR, 10
+    );
+
+    StateUpdater stateUpdater = new StateUpdater(new D2RelativeStrategyProperties().setUpdateIntervalMs(5000),
+        _quarantineManager, _executorService, new ConcurrentHashMap<>(), Collections.emptyList(), SERVICE_NAME,
+        loadBalanceStreamException);
+
+    assertEquals( stateUpdater.getErrorRate(errorTypeCounts, 20), loadBalanceStreamException ? 0.7 : 0.2);
   }
 
   private void runIndividualConcurrentTask(ExecutorService executorService, Runnable runnable, CountDownLatch countDownLatch)

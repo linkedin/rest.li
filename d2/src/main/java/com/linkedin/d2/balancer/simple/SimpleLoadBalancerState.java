@@ -146,6 +146,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final SslSessionValidatorFactory _sslSessionValidatorFactory;
   private final SubsettingState _subsettingState;
   private final CanaryDistributionProvider _canaryDistributionProvider;
+  private final boolean _loadBalanceStreamException;
 
   /*
    * Concurrency considerations:
@@ -315,6 +316,26 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
                                  DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
                                  CanaryDistributionProvider canaryDistributionProvider)
   {
+    this(executorService, uriBus, clusterBus, serviceBus, clientFactories, loadBalancerStrategyFactories, sslContext,
+        sslParameters, isSSLEnabled, partitionAccessorRegistry, sessionValidatorFactory,
+        deterministicSubsettingMetadataProvider, canaryDistributionProvider, false);
+  }
+
+  public SimpleLoadBalancerState(ScheduledExecutorService executorService,
+      PropertyEventBus<UriProperties> uriBus,
+      PropertyEventBus<ClusterProperties> clusterBus,
+      PropertyEventBus<ServiceProperties> serviceBus,
+      Map<String, TransportClientFactory> clientFactories,
+      Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+      SSLContext sslContext,
+      SSLParameters sslParameters,
+      boolean isSSLEnabled,
+      PartitionAccessorRegistry partitionAccessorRegistry,
+      SslSessionValidatorFactory sessionValidatorFactory,
+      DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
+      CanaryDistributionProvider canaryDistributionProvider,
+      boolean loadBalanceStreamException)
+  {
     _executor = executorService;
     _uriProperties = new ConcurrentHashMap<>();
     _clusterInfo = new ConcurrentHashMap<>();
@@ -349,6 +370,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       _subsettingState = null;
     }
     _canaryDistributionProvider = canaryDistributionProvider;
+    _loadBalanceStreamException = loadBalanceStreamException;
   }
 
   public void register(final SimpleLoadBalancerStateListener listener)
@@ -952,11 +974,9 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       return null;
     }
 
-    return serviceProperties == null ? null : TrackerClientFactory.createTrackerClient(uri,
-                                                                                       uriProperties,
-                                                                                       serviceProperties,
-                                                                                       loadBalancerStrategy.getName(),
-                                                                                       transportClient);
+    //TODO: create TrackerClient.LoadBalanceConfig and pass it into createTrackerClient method
+    return serviceProperties == null ? null : TrackerClientFactory.createTrackerClient(uri, uriProperties,
+        serviceProperties, loadBalancerStrategy.getName(), transportClient, _loadBalanceStreamException);
   }
 
   /**

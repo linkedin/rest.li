@@ -97,6 +97,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   private final FailoutConfigProviderFactory _failoutConfigProviderFactory;
   private final ServiceDiscoveryEventEmitter _serviceDiscoveryEventEmitter;
   private final DualReadStateManager _dualReadStateManager;
+  private final boolean _loadBalanceStreamException;
 
   private static final Logger _log = LoggerFactory.getLogger(ZKFSTogglingLoadBalancerFactoryImpl.class);
 
@@ -363,6 +364,38 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
       ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter,
       DualReadStateManager dualReadStateManager)
   {
+    this(factory, timeout, timeoutUnit, baseZKPath, fsBasePath, clientFactories, loadBalancerStrategyFactories, d2ServicePath,
+         sslContext, sslParameters, isSSLEnabled, clientServicesConfig, useNewEphemeralStoreWatcher, partitionAccessorRegistry,
+         enableSaveUriDataOnDisk, sslSessionValidatorFactory, d2ClientJmxManager, zookeeperReadWindowMs,
+         deterministicSubsettingMetadataProvider, failoutConfigProviderFactory, canaryDistributionProvider,
+         serviceDiscoveryEventEmitter, dualReadStateManager, false);
+  }
+
+  public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
+      long timeout,
+      TimeUnit timeoutUnit,
+      String baseZKPath,
+      String fsBasePath,
+      Map<String, TransportClientFactory> clientFactories,
+      Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+      String d2ServicePath,
+      SSLContext sslContext,
+      SSLParameters sslParameters,
+      boolean isSSLEnabled,
+      Map<String, Map<String, Object>> clientServicesConfig,
+      boolean useNewEphemeralStoreWatcher,
+      PartitionAccessorRegistry partitionAccessorRegistry,
+      boolean enableSaveUriDataOnDisk,
+      SslSessionValidatorFactory sslSessionValidatorFactory,
+      D2ClientJmxManager d2ClientJmxManager,
+      int zookeeperReadWindowMs,
+      DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
+      FailoutConfigProviderFactory failoutConfigProviderFactory,
+      CanaryDistributionProvider canaryDistributionProvider,
+      ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter,
+      DualReadStateManager dualReadStateManager,
+      boolean loadBalanceStreamException)
+  {
     _factory = factory;
     _lbTimeout = timeout;
     _lbTimeoutUnit = timeoutUnit;
@@ -386,6 +419,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     _canaryDistributionProvider = canaryDistributionProvider;
     _serviceDiscoveryEventEmitter = serviceDiscoveryEventEmitter;
     _dualReadStateManager = dualReadStateManager;
+    _loadBalanceStreamException = loadBalanceStreamException;
   }
 
   @Override
@@ -445,9 +479,9 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     TogglingPublisher<UriProperties> uriToggle = _factory.createUriToggle(zkUriRegistry, fsUriStore, uriBus);
 
     SimpleLoadBalancerState state = new SimpleLoadBalancerState(
-            executorService, uriBus, clusterBus, serviceBus, _clientFactories, _loadBalancerStrategyFactories,
-            _sslContext, _sslParameters, _isSSLEnabled, _partitionAccessorRegistry,
-            _sslSessionValidatorFactory, _deterministicSubsettingMetadataProvider, _canaryDistributionProvider);
+        executorService, uriBus, clusterBus, serviceBus, _clientFactories, _loadBalancerStrategyFactories, _sslContext,
+        _sslParameters, _isSSLEnabled, _partitionAccessorRegistry, _sslSessionValidatorFactory,
+        _deterministicSubsettingMetadataProvider, _canaryDistributionProvider, _loadBalanceStreamException);
     _d2ClientJmxManager.setSimpleLoadBalancerState(state);
 
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, _lbTimeout, _lbTimeoutUnit, executorService, _failoutConfigProviderFactory);

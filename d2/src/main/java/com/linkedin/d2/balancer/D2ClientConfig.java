@@ -138,6 +138,7 @@ public class D2ClientConfig
   public Map<String, ?> xdsChannelLoadBalancingPolicyConfig = null;
   public boolean subscribeToUriGlobCollection = false;
   public XdsServerMetricsProvider _xdsServerMetricsProvider = new NoOpXdsServerMetricsProvider();
+  public boolean loadBalanceStreamException = false;
 
   public D2ClientConfig()
   {
@@ -214,7 +215,8 @@ public class D2ClientConfig
                  String xdsChannelLoadBalancingPolicy,
                  Map<String, ?> xdsChannelLoadBalancingPolicyConfig,
                  boolean subscribeToUriGlobCollection,
-                 XdsServerMetricsProvider xdsServerMetricsProvider
+                 XdsServerMetricsProvider xdsServerMetricsProvider,
+                 boolean loadBalanceStreamException
       )
   {
     this.zkHosts = zkHosts;
@@ -289,5 +291,6 @@ public class D2ClientConfig
     this.xdsChannelLoadBalancingPolicyConfig = xdsChannelLoadBalancingPolicyConfig;
     this.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
     this._xdsServerMetricsProvider = xdsServerMetricsProvider;
+    this.loadBalanceStreamException = loadBalanceStreamException;
   }
 }

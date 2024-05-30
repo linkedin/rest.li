@@ -513,15 +513,22 @@ public class DegraderImpl implements Degrader
    * so we don't want to punish the server for exceptions that the server is not responsible for e.g.
    * bad user input, frameTooLongException, etc.
    */
-  private double getErrorRateToDegrade()
+  double getErrorRateToDegrade()
   {
     Map<ErrorType, Integer> errorTypeCounts = _callTrackerStats.getErrorTypeCounts();
     Integer connectExceptionCount = errorTypeCounts.getOrDefault(ErrorType.CONNECT_EXCEPTION, 0);
     Integer closedChannelExceptionCount = errorTypeCounts.getOrDefault(ErrorType.CLOSED_CHANNEL_EXCEPTION, 0);
     Integer serverErrorCount = errorTypeCounts.getOrDefault(ErrorType.SERVER_ERROR, 0);
     Integer timeoutExceptionCount = errorTypeCounts.getOrDefault(ErrorType.TIMEOUT_EXCEPTION, 0);
-    return safeDivide(connectExceptionCount + closedChannelExceptionCount + serverErrorCount + timeoutExceptionCount,
-        _callTrackerStats.getCallCount());
+    Integer streamErrorCount = errorTypeCounts.getOrDefault(ErrorType.STREAM_ERROR, 0);
+
+    double validExceptionCount = connectExceptionCount + closedChannelExceptionCount + serverErrorCount
+        + timeoutExceptionCount;
+    if (_config.getLoadBalanceStreamException())
+    {
+      validExceptionCount += streamErrorCount;
+    }
+    return safeDivide(validExceptionCount, _callTrackerStats.getCallCount());
   }
 
   private double safeDivide(double numerator, double denominator)
@@ -699,6 +706,7 @@ public class DegraderImpl implements Degrader
     protected Logger _logger = DEFAULT_LOGGER;
     protected double _logThreshold = DEFAULT_LOG_THRESHOLD;
     protected double _preemptiveRequestTimeoutRate = DEFAULT_PREEMPTIVE_REQUEST_TIMEOUT_RATE;
+    protected boolean _loadBalanceStreamException = false;
 
     public ImmutableConfig()
     {
@@ -729,7 +737,7 @@ public class DegraderImpl implements Degrader
       _slowStartThreshold = config._slowStartThreshold;
       _logger = config._logger;
       _preemptiveRequestTimeoutRate = config._preemptiveRequestTimeoutRate;
-
+      _loadBalanceStreamException = config._loadBalanceStreamException;
     }
 
     public String getName()
@@ -850,6 +858,11 @@ public class DegraderImpl implements Degrader
     public double getPreemptiveRequestTimeoutRate()
     {
       return _preemptiveRequestTimeoutRate;
+    }
+
+    public boolean getLoadBalanceStreamException()
+    {
+      return _loadBalanceStreamException;
     }
   }
 
@@ -983,6 +996,11 @@ public class DegraderImpl implements Degrader
     public void setPreemptiveRequestTimeoutRate(double preemptiveRequestTimeoutRate)
     {
       _preemptiveRequestTimeoutRate = preemptiveRequestTimeoutRate;
+    }
+
+    public void setLoadBalanceStreamException(boolean loadBalanceStreamException)
+    {
+      _loadBalanceStreamException = loadBalanceStreamException;
     }
   }
 }

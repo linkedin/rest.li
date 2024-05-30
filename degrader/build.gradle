@@ -1,4 +1,7 @@
 dependencies {
   compile project(':pegasus-common')
   testCompile externalDependency.testng
+
+  testImplementation externalDependency.mockito
+  testImplementation externalDependency.guava
 }

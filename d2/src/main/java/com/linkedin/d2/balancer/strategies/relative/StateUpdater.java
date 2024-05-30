@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.strategies.relative;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.PartitionStateUpdateListener;
@@ -65,14 +66,27 @@ public class StateUpdater
   private final ScheduledFuture<?> scheduledFuture;
   private ConcurrentMap<Integer, PartitionState> _partitionLoadBalancerStateMap;
   private int _firstPartitionId = -1;
+  private final boolean _loadBalanceStreamException;
 
+  @Deprecated
   StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
                        QuarantineManager quarantineManager,
                        ScheduledExecutorService executorService,
                        List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories,
                        String serviceName)
   {
-    this(relativeStrategyProperties, quarantineManager, executorService, new ConcurrentHashMap<>(), listenerFactories, serviceName);
+    this(relativeStrategyProperties, quarantineManager, executorService, new ConcurrentHashMap<>(), listenerFactories,
+        serviceName, false);
+  }
+
+  StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
+      QuarantineManager quarantineManager,
+      ScheduledExecutorService executorService,
+      List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories,
+      String serviceName, boolean loadBalanceStreamException)
+  {
+    this(relativeStrategyProperties, quarantineManager, executorService, new ConcurrentHashMap<>(), listenerFactories,
+        serviceName, loadBalanceStreamException);
   }
 
   StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
@@ -81,6 +95,17 @@ public class StateUpdater
       ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap,
       List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories,
       String serviceName)
+  {
+    this(relativeStrategyProperties, quarantineManager, executorService, partitionLoadBalancerStateMap,
+        listenerFactories, serviceName, false);
+  }
+
+  StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
+      QuarantineManager quarantineManager,
+      ScheduledExecutorService executorService,
+      ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap,
+      List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories,
+      String serviceName, boolean loadBalanceStreamException)
   {
     _relativeStrategyProperties = relativeStrategyProperties;
     _quarantineManager = quarantineManager;
@@ -91,8 +116,9 @@ public class StateUpdater
     _serviceName = serviceName;
 
     scheduledFuture = executorService.scheduleWithFixedDelay(this::updateState, EXECUTOR_INITIAL_DELAY,
-                                                             _relativeStrategyProperties.getUpdateIntervalMs(),
-                                                             TimeUnit.MILLISECONDS);
+        _relativeStrategyProperties.getUpdateIntervalMs(),
+        TimeUnit.MILLISECONDS);
+    _loadBalanceStreamException = loadBalanceStreamException;
   }
 
   /**
@@ -434,15 +460,22 @@ public class StateUpdater
     state.getListeners().forEach(listener -> listener.onUpdate(state));
   }
 
-  private static double getErrorRate(Map<ErrorType, Integer> errorTypeCounts, int callCount)
+  @VisibleForTesting
+  double getErrorRate(Map<ErrorType, Integer> errorTypeCounts, int callCount)
   {
     Integer connectExceptionCount = errorTypeCounts.getOrDefault(ErrorType.CONNECT_EXCEPTION, 0);
     Integer closedChannelExceptionCount = errorTypeCounts.getOrDefault(ErrorType.CLOSED_CHANNEL_EXCEPTION, 0);
     Integer serverErrorCount = errorTypeCounts.getOrDefault(ErrorType.SERVER_ERROR, 0);
     Integer timeoutExceptionCount = errorTypeCounts.getOrDefault(ErrorType.TIMEOUT_EXCEPTION, 0);
-    return callCount == 0
-        ? 0
-        : (double) (connectExceptionCount + closedChannelExceptionCount + serverErrorCount + timeoutExceptionCount) / callCount;
+    Integer streamErrorCount = errorTypeCounts.getOrDefault(ErrorType.STREAM_ERROR, 0);
+
+    double validExceptionCount = connectExceptionCount + closedChannelExceptionCount + serverErrorCount
+        + timeoutExceptionCount;
+    if (_loadBalanceStreamException)
+    {
+      validExceptionCount += streamErrorCount;
+    }
+    return callCount == 0 ? 0 : validExceptionCount / callCount;
   }
 
   private void initializePartition(Set<TrackerClient> trackerClients, int partitionId, long clusterGenerationId)

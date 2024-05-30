@@ -76,15 +76,24 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
   private final List<PartitionStateUpdateListener.Factory<PartitionState>> _stateListenerFactories;
   private final EventEmitter _eventEmitter;
   private final Clock _clock;
+  private final boolean _loadBalanceStreamException;
 
   public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
       List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter, Clock clock)
+  {
+    this(executorService, healthCheckOperations, stateListenerFactories, eventEmitter, clock, false);
+  }
+
+  public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
+      List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter, Clock clock,
+      boolean loadBalanceStreamException)
   {
     _executorService = executorService;
     _healthCheckOperations = healthCheckOperations;
     _stateListenerFactories = stateListenerFactories;
     _eventEmitter = (eventEmitter == null) ? new NoopEventEmitter() : eventEmitter;
     _clock = clock;
+    _loadBalanceStreamException = loadBalanceStreamException;
   }
 
 
@@ -112,7 +121,8 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
     {
       listenerFactories.addAll(_stateListenerFactories);
     }
-    return new StateUpdater(relativeStrategyProperties, quarantineManager, _executorService, listenerFactories, serviceName);
+    return new StateUpdater(relativeStrategyProperties, quarantineManager, _executorService, listenerFactories,
+        serviceName, _loadBalanceStreamException);
   }
 
   private ClientSelector getClientSelector(D2RelativeStrategyProperties relativeStrategyProperties)
