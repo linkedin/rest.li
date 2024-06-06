@@ -59,6 +59,17 @@ class UriLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<UriProper
     {
       String clusterName = uriProperties.getClusterName();
 
+      Optional<UriProperties> currentUriProperties = Optional.ofNullable(
+          _simpleLoadBalancerState.getUriProperties(clusterName)).map(LoadBalancerStateItem::getProperty);
+      if (currentUriProperties.isPresent() && currentUriProperties.get().equals(uriProperties))
+      {
+        _log.debug("For cluster: {}, received duplicate uri properties: {}", clusterName, uriProperties);
+        return;
+      }
+
+      _log.debug("For cluster: {}, received new uri properties: {}\nOld properties: {}", clusterName, uriProperties,
+          currentUriProperties);
+
       Set<String> serviceNames = _simpleLoadBalancerState.getServicesPerCluster().get(clusterName);
       //updates all the services that these uris provide
       if (serviceNames != null)
