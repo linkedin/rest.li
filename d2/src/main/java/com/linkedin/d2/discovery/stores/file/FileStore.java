@@ -212,7 +212,7 @@ public class FileStore<T> implements PropertyStore<T>, PropertyEventSubscriber<T
     {
       if (discoveryProperties == null)
       {
-        warn(_log, "received a null property for resource ", listenTo, " received a null property");
+        _log.warn("Received and ignored a null property for resource: {}", listenTo);
       }
       else
       {

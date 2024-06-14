@@ -22,12 +22,15 @@ import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
+import com.linkedin.util.RateLimitedLogger;
+import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +43,8 @@ import static com.linkedin.d2.discovery.util.LogUtil.*;
 class UriLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<UriProperties>
 {
   private static final Logger _log = LoggerFactory.getLogger(UriLoadBalancerSubscriber.class);
+  private static final RateLimitedLogger RATE_LIMITED_LOGGER =
+      new RateLimitedLogger(_log, TimeUnit.MINUTES.toMillis(10), SystemClock.instance());
 
   private SimpleLoadBalancerState _simpleLoadBalancerState;
 
@@ -164,7 +169,7 @@ class UriLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<UriProper
       // uri properties was null, we'll just log the event and continues.
       // The reasoning is we might receive a null event when there's a problem writing/reading
       // cache file, or we just started listening to a cluster without any uris yet.
-      warn(_log, "received a null uri properties for cluster: ", cluster);
+      RATE_LIMITED_LOGGER.warn("Received a null uri properties for cluster: {}", cluster);
     }
   }
 
@@ -172,7 +177,7 @@ class UriLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<UriProper
   protected void handleRemove(final String cluster)
   {
     _simpleLoadBalancerState.getUriProperties().remove(cluster);
-    warn(_log, "received a uri properties event remove() for cluster: ", cluster);
+    warn(RATE_LIMITED_LOGGER, "received a uri properties event remove() for cluster: ", cluster);
     _simpleLoadBalancerState.removeTrackerClients(cluster);
   }
 }
