@@ -77,6 +77,7 @@ class ClusterLoadBalancerSubscriber extends
     }
     else
     {
+      _log.warn("Received a null cluster properties for {}", listenTo);
       // still insert the ClusterInfoItem when discoveryProperties is null, but don't create accessor
       _simpleLoadBalancerState.getClusterInfo().put(listenTo,
         new ClusterInfoItem(_simpleLoadBalancerState, null, null, null));

@@ -122,7 +122,7 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
       // we'll just ignore the event and move on.
       // we could receive a null if the file store properties cannot read/write a file.
       // in this case it's better to leave the state intact and not do anything
-      _log.warn("We receive a null service properties for {}. ", listenTo);
+      _log.warn("Received a null service properties for {}", listenTo);
     }
   }
 

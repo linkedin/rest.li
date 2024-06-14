@@ -164,7 +164,7 @@ class UriLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<UriProper
       // uri properties was null, we'll just log the event and continues.
       // The reasoning is we might receive a null event when there's a problem writing/reading
       // cache file, or we just started listening to a cluster without any uris yet.
-      warn(_log, "received a null uri properties for cluster: ", cluster);
+      _log.warn("Received a null uri properties for cluster: {}", cluster);
     }
   }
 
