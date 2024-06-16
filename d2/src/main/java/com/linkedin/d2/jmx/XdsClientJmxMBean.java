@@ -35,6 +35,9 @@ public interface XdsClientJmxMBean {
   // when the resource is not found.
   int getResourceNotFoundCount();
 
+  // when the resource is invalid.
+  int getResourceInvalidCount();
+
   /**
    * Get minimum of Xds server latency, which is from when the resource is updated on the Xds server to when the
    * client receives it.

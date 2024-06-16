@@ -29,6 +29,7 @@ public class XdsClientJmx implements XdsClientJmxMBean
 
   private final AtomicBoolean _isConnected = new AtomicBoolean();
   private final AtomicInteger _resourceNotFoundCount = new AtomicInteger();
+  private final AtomicInteger _resourceInvalidCount = new AtomicInteger();
   private final XdsServerMetricsProvider _xdsServerMetricsProvider;
 
   @Deprecated
@@ -65,6 +66,12 @@ public class XdsClientJmx implements XdsClientJmxMBean
   public int getResourceNotFoundCount()
   {
     return _resourceNotFoundCount.get();
+  }
+
+  @Override
+  public int getResourceInvalidCount()
+  {
+    return _resourceInvalidCount.get();
   }
 
   @Override
@@ -129,5 +136,10 @@ public class XdsClientJmx implements XdsClientJmxMBean
   public void incrementResourceNotFoundCount()
   {
     _resourceNotFoundCount.incrementAndGet();
+  }
+
+  public void incrementResourceInvalidCount()
+  {
+    _resourceInvalidCount.incrementAndGet();
   }
 }

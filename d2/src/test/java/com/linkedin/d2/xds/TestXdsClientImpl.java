@@ -447,8 +447,8 @@ public class TestXdsClientImpl
     XdsClientImpl _xdsClientImpl;
     @Mock
     XdsClientJmx _xdsClientJmx;
-    ResourceSubscriber _nodeSubscriber = spy(new ResourceSubscriber(NODE, SERVICE_RESOURCE_NAME));
-    ResourceSubscriber _clusterSubscriber = spy(new ResourceSubscriber(D2_URI_MAP, CLUSTER_RESOURCE_NAME));
+    ResourceSubscriber _nodeSubscriber;
+    ResourceSubscriber _clusterSubscriber;
     Map<ResourceType, Map<String, ResourceSubscriber>> _subscribers = new HashMap<>();
     @Mock
     XdsClient.ResourceWatcher _resourceWatcher;
@@ -463,6 +463,8 @@ public class TestXdsClientImpl
     XdsClientImplFixture(boolean useGlobCollections)
     {
       MockitoAnnotations.initMocks(this);
+      _nodeSubscriber = spy(new ResourceSubscriber(NODE, SERVICE_RESOURCE_NAME, _xdsClientJmx));
+      _clusterSubscriber = spy(new ResourceSubscriber(D2_URI_MAP, CLUSTER_RESOURCE_NAME, _xdsClientJmx));
 
       doNothing().when(_resourceWatcher).onChanged(any());
       for (ResourceSubscriber subscriber : Lists.newArrayList(_nodeSubscriber, _clusterSubscriber))
