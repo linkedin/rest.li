@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.57.0] - 2024-06-16
+- Add xds client metric for receiving invalid resource
+
 ## [29.56.1] - 2024-06-06
 - prevent duplicate uri property update
 
@@ -5698,7 +5701,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.56.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.57.0...master
+[29.57.0]: https://github.com/linkedin/rest.li/compare/v29.56.1...v29.57.0
 [29.56.1]: https://github.com/linkedin/rest.li/compare/v29.56.0...v29.56.1
 [29.56.0]: https://github.com/linkedin/rest.li/compare/v29.55.0...v29.56.0
 [29.55.0]: https://github.com/linkedin/rest.li/compare/v29.54.0...v29.55.0

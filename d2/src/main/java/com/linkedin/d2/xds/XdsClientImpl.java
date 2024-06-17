@@ -27,6 +27,7 @@ import com.linkedin.d2.jmx.XdsServerMetricsProvider;
 import com.linkedin.d2.jmx.NoOpXdsServerMetricsProvider;
 import com.linkedin.d2.jmx.XdsClientJmx;
 import com.linkedin.d2.xds.GlobCollectionUtils.D2UriIdentifier;
+import com.linkedin.util.RateLimitedLogger;
 import com.linkedin.util.clock.SystemClock;
 import indis.XdsD2;
 import io.envoyproxy.envoy.service.discovery.v3.AggregatedDiscoveryServiceGrpc;
@@ -68,6 +69,8 @@ import org.slf4j.LoggerFactory;
 public class XdsClientImpl extends XdsClient
 {
   private static final Logger _log = LoggerFactory.getLogger(XdsClientImpl.class);
+  private static final RateLimitedLogger RATE_LIMITED_LOGGER =
+      new RateLimitedLogger(_log, TimeUnit.MINUTES.toMillis(10), SystemClock.instance());
   public static final long DEFAULT_READY_TIMEOUT_MILLIS = 2000L;
 
   private final Map<ResourceType, Map<String, ResourceSubscriber>> _resourceSubscribers = Maps.immutableEnumMap(
@@ -136,7 +139,7 @@ public class XdsClientImpl extends XdsClient
       ResourceSubscriber subscriber = resourceSubscriberMap.get(resourceName);
       if (subscriber == null)
       {
-        subscriber = new ResourceSubscriber(watcher.getType(), resourceName);
+        subscriber = new ResourceSubscriber(watcher.getType(), resourceName, _xdsClientJmx);
         resourceSubscriberMap.put(resourceName, subscriber);
         ResourceType type;
         String adjustedResourceName;
@@ -506,6 +509,7 @@ public class XdsClientImpl extends XdsClient
     private final ResourceType _type;
     private final String _resource;
     private final Set<ResourceWatcher> _watchers = new HashSet<>();
+    private final XdsClientJmx _xdsClientJmx;
     @Nullable
     private ResourceUpdate _data;
 
@@ -522,10 +526,11 @@ public class XdsClientImpl extends XdsClient
       _data = data;
     }
 
-    ResourceSubscriber(ResourceType type, String resource)
+    ResourceSubscriber(ResourceType type, String resource, XdsClientJmx xdsClientJmx)
     {
       _type = type;
       _resource = resource;
+      _xdsClientJmx = xdsClientJmx;
     }
 
     void addWatcher(ResourceWatcher watcher)
@@ -555,6 +560,19 @@ public class XdsClientImpl extends XdsClient
         trackServerLatency(data, metricsProvider); // data updated, track xds server latency
         _data = data;
       }
+      else
+      {
+        if (_type == ResourceType.D2_URI_MAP || _type == ResourceType.D2_URI)
+        {
+          RATE_LIMITED_LOGGER.warn("Received invalid data for {} {}, data: {}", _type, _resource, data);
+        }
+        else
+        {
+          _log.warn("Received invalid data for {} {}, data: {}", _type, _resource, data);
+        }
+        _xdsClientJmx.incrementResourceInvalidCount();
+      }
+
       if (_data == null)
       {
         _log.info("Initializing {} {} to empty data.", _type, _resource);
