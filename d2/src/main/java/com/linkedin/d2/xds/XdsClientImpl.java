@@ -214,7 +214,7 @@ public class XdsClientImpl extends XdsClient
       // to one of the sub-channels (unless an error or complete callback is called).
     }, _readyTimeoutMillis, TimeUnit.MILLISECONDS);
     _adsStream.start();
-    _log.info("ADS stream started, connected to server: {}", _managedChannel.authority());
+    _log.info("Staring ADS stream, connecting to server: {}", _managedChannel.authority());
   }
 
   @Override
@@ -267,10 +267,15 @@ public class XdsClientImpl extends XdsClient
         boolean cancelledTimeout = _readyTimeoutFuture.cancel(false);
         _log.info("ADS stream ready, cancelled timeout task: {}", cancelledTimeout);
         _readyTimeoutFuture = null; // set it to null to avoid repeat notifications to subscribers.
-        _xdsClientJmx.incrementReconnectionCount();
+        if (_retryRpcStreamFuture != null)
+        {
+          _log.info("ADS stream reconnected after {} milliseconds",
+              _retryRpcStreamFuture.getDelay(TimeUnit.MILLISECONDS));
+          _retryRpcStreamFuture = null;
+          _xdsClientJmx.incrementReconnectionCount();
+        }
         notifyStreamReconnect();
       }
-      _xdsClientJmx.setIsConnected(true);
     }
   }
 
@@ -493,6 +498,7 @@ public class XdsClientImpl extends XdsClient
         subscriber.onError(error);
       }
     }
+    _xdsClientJmx.setIsConnected(false);
   }
 
   private void notifyStreamReconnect()
@@ -504,6 +510,7 @@ public class XdsClientImpl extends XdsClient
         subscriber.onReconnect();
       }
     }
+    _xdsClientJmx.setIsConnected(true);
   }
 
   @VisibleForTesting
@@ -899,7 +906,7 @@ public class XdsClientImpl extends XdsClient
 
                 if (!_responseReceived && responseData.getControlPlaneIdentifier() != null)
                 {
-                  _log.info("Successfully established stream with ADS server: {}",
+                  _log.info("Successfully received response from ADS server: {}",
                       responseData.getControlPlaneIdentifier());
                 }
                 _responseReceived = true;
@@ -1008,6 +1015,13 @@ public class XdsClientImpl extends XdsClient
       {
         _adsStream = null;
       }
+
+      if (_readyTimeoutFuture != null)
+      {
+        _readyTimeoutFuture.cancel(true);
+        _readyTimeoutFuture = null;
+      }
+
       if (_retryRpcStreamFuture != null)
       {
         _retryRpcStreamFuture.cancel(true);

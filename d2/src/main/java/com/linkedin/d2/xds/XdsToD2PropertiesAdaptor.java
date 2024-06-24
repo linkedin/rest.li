@@ -228,6 +228,12 @@ public class XdsToD2PropertiesAdaptor
             _serviceEventBus.publishInitialize(serviceName, null);
           }
         }
+        else
+        {
+          // Received xds resource update while service event bus is not set. Notify that the xds source becomes
+          // available instead.
+          onReconnect();
+        }
       }
 
       @Override
@@ -283,6 +289,12 @@ public class XdsToD2PropertiesAdaptor
                 clusterName);
             _clusterEventBus.publishInitialize(clusterName, null);
           }
+        }
+        else
+        {
+          // Received xds resource update while service event bus is not set. Notify that the xds source becomes
+          // available instead.
+          onReconnect();
         }
       }
 
@@ -541,6 +553,12 @@ public class XdsToD2PropertiesAdaptor
       if (_uriEventBus != null)
       {
         _uriEventBus.publishInitialize(clusterName, mergedUriProperties);
+      }
+      else
+      {
+        // Received xds resource update while service event bus is not set. Notify that the xds source becomes
+        // available instead.
+        onReconnect();
       }
 
       if (_dualReadStateManager != null)
