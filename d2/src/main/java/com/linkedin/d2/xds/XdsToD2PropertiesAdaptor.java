@@ -292,7 +292,7 @@ public class XdsToD2PropertiesAdaptor
         }
         else
         {
-          // Received xds resource update while service event bus is not set. Notify that the xds source becomes
+          // Received xds resource update while cluster event bus is not set. Notify that the xds source becomes
           // available instead.
           onReconnect();
         }
@@ -556,7 +556,7 @@ public class XdsToD2PropertiesAdaptor
       }
       else
       {
-        // Received xds resource update while service event bus is not set. Notify that the xds source becomes
+        // Received xds resource update while uri event bus is not set. Notify that the xds source becomes
         // available instead.
         onReconnect();
       }
