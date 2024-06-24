@@ -257,26 +257,25 @@ public class XdsClientImpl extends XdsClient
       _log.warn("Unexpected state, ready called on null or backed off ADS stream!");
       return;
     }
-    // confirm ready state to neglect spurious callbacks; we'll get another callback whenever it is ready again.
-    if (_adsStream.isReady())
+    // Confirm ready state to neglect spurious callbacks; we'll get another callback whenever it is ready again.
+    // Also confirm ready timeout future is not null to avoid notifying multiple times.
+    if (!_adsStream.isReady() || _readyTimeoutFuture == null)
     {
-      // if the ready timeout future is non-null, a reconnect notification hasn't been sent yet.
-      if (_readyTimeoutFuture != null)
-      {
-        // timeout task will be cancelled only if it hasn't already executed.
-        boolean cancelledTimeout = _readyTimeoutFuture.cancel(false);
-        _log.info("ADS stream ready, cancelled timeout task: {}", cancelledTimeout);
-        _readyTimeoutFuture = null; // set it to null to avoid repeat notifications to subscribers.
-        if (_retryRpcStreamFuture != null)
-        {
-          _log.info("ADS stream reconnected after {} milliseconds",
-              _retryRpcStreamFuture.getDelay(TimeUnit.MILLISECONDS));
-          _retryRpcStreamFuture = null;
-          _xdsClientJmx.incrementReconnectionCount();
-        }
-        notifyStreamReconnect();
-      }
+      return;
     }
+
+    // timeout task will be cancelled only if it hasn't already executed.
+    boolean cancelledTimeout = _readyTimeoutFuture.cancel(false);
+    _log.info("ADS stream ready, cancelled timeout task: {}", cancelledTimeout);
+    _readyTimeoutFuture = null; // set it to null to avoid repeat notifications to subscribers.
+    if (_retryRpcStreamFuture != null)
+    {
+      _log.info("ADS stream reconnected after {} milliseconds",
+          _retryRpcStreamFuture.getDelay(TimeUnit.MILLISECONDS));
+      _retryRpcStreamFuture = null;
+      _xdsClientJmx.incrementReconnectionCount();
+    }
+    notifyStreamReconnect();
   }
 
   @VisibleForTesting
