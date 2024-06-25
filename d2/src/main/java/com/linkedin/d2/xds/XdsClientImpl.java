@@ -214,7 +214,7 @@ public class XdsClientImpl extends XdsClient
       // to one of the sub-channels (unless an error or complete callback is called).
     }, _readyTimeoutMillis, TimeUnit.MILLISECONDS);
     _adsStream.start();
-    _log.info("ADS stream started, connected to server: {}", _managedChannel.authority());
+    _log.info("Starting ADS stream, connecting to server: {}", _managedChannel.authority());
   }
 
   @Override
@@ -257,21 +257,23 @@ public class XdsClientImpl extends XdsClient
       _log.warn("Unexpected state, ready called on null or backed off ADS stream!");
       return;
     }
-    // confirm ready state to neglect spurious callbacks; we'll get another callback whenever it is ready again.
-    if (_adsStream.isReady())
+    // Confirm ready state to neglect spurious callbacks; we'll get another callback whenever it is ready again.
+    // Also confirm ready timeout future is not null to avoid notifying multiple times.
+    if (!_adsStream.isReady() || _readyTimeoutFuture == null)
     {
-      // if the ready timeout future is non-null, a reconnect notification hasn't been sent yet.
-      if (_readyTimeoutFuture != null)
-      {
-        // timeout task will be cancelled only if it hasn't already executed.
-        boolean cancelledTimeout = _readyTimeoutFuture.cancel(false);
-        _log.info("ADS stream ready, cancelled timeout task: {}", cancelledTimeout);
-        _readyTimeoutFuture = null; // set it to null to avoid repeat notifications to subscribers.
-        _xdsClientJmx.incrementReconnectionCount();
-        notifyStreamReconnect();
-      }
-      _xdsClientJmx.setIsConnected(true);
+      return;
     }
+
+    // timeout task will be cancelled only if it hasn't already executed.
+    boolean cancelledTimeout = _readyTimeoutFuture.cancel(false);
+    _log.info("ADS stream ready, cancelled timeout task: {}", cancelledTimeout);
+    _readyTimeoutFuture = null; // set it to null to avoid repeat notifications to subscribers.
+    if (_retryRpcStreamFuture != null)
+    {
+      _retryRpcStreamFuture = null;
+      _xdsClientJmx.incrementReconnectionCount();
+    }
+    notifyStreamReconnect();
   }
 
   @VisibleForTesting
@@ -493,6 +495,7 @@ public class XdsClientImpl extends XdsClient
         subscriber.onError(error);
       }
     }
+    _xdsClientJmx.setIsConnected(false);
   }
 
   private void notifyStreamReconnect()
@@ -504,6 +507,7 @@ public class XdsClientImpl extends XdsClient
         subscriber.onReconnect();
       }
     }
+    _xdsClientJmx.setIsConnected(true);
   }
 
   @VisibleForTesting
@@ -899,7 +903,7 @@ public class XdsClientImpl extends XdsClient
 
                 if (!_responseReceived && responseData.getControlPlaneIdentifier() != null)
                 {
-                  _log.info("Successfully established stream with ADS server: {}",
+                  _log.info("Successfully received response from ADS server: {}",
                       responseData.getControlPlaneIdentifier());
                 }
                 _responseReceived = true;
@@ -1008,6 +1012,13 @@ public class XdsClientImpl extends XdsClient
       {
         _adsStream = null;
       }
+
+      if (_readyTimeoutFuture != null)
+      {
+        _readyTimeoutFuture.cancel(true);
+        _readyTimeoutFuture = null;
+      }
+
       if (_retryRpcStreamFuture != null)
       {
         _retryRpcStreamFuture.cancel(true);
