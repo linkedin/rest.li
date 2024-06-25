@@ -14,7 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.57.1-rc.1] - 2024-06-17
+## [29.57.1] - 2024-06-17
 - Update grpc version to 1.59.1 and protobuf to 3.24.0
 
 ## [29.57.0] - 2024-06-16
@@ -5704,8 +5704,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.57.1-rc.1...master
-[29.57.1-rc.1]: https://github.com/linkedin/rest.li/compare/v29.57.0...v29.57.1-rc.1
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.57.1...master
+[29.57.1]: https://github.com/linkedin/rest.li/compare/v29.57.0...v29.57.1
 [29.57.0]: https://github.com/linkedin/rest.li/compare/v29.56.1...v29.57.0
 [29.56.1]: https://github.com/linkedin/rest.li/compare/v29.56.0...v29.56.1
 [29.56.0]: https://github.com/linkedin/rest.li/compare/v29.55.0...v29.56.0
