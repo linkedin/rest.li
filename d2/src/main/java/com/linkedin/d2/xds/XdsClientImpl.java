@@ -214,7 +214,7 @@ public class XdsClientImpl extends XdsClient
       // to one of the sub-channels (unless an error or complete callback is called).
     }, _readyTimeoutMillis, TimeUnit.MILLISECONDS);
     _adsStream.start();
-    _log.info("Staring ADS stream, connecting to server: {}", _managedChannel.authority());
+    _log.info("Starting ADS stream, connecting to server: {}", _managedChannel.authority());
   }
 
   @Override
@@ -270,8 +270,6 @@ public class XdsClientImpl extends XdsClient
     _readyTimeoutFuture = null; // set it to null to avoid repeat notifications to subscribers.
     if (_retryRpcStreamFuture != null)
     {
-      _log.info("ADS stream reconnected after {} milliseconds",
-          _retryRpcStreamFuture.getDelay(TimeUnit.MILLISECONDS));
       _retryRpcStreamFuture = null;
       _xdsClientJmx.incrementReconnectionCount();
     }
