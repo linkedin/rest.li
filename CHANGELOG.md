@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Change commons-httpclient dependency with httpcomponents.client5:httpclient5 to fix security vulnerability
 
 ## [29.57.0] - 2024-06-16
 - Add xds client metric for receiving invalid resource
