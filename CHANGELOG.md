@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.57.2] - 2024-06-17
+- Update grpc version to 1.59.1 and protobuf to 3.24.0
+
 ## [29.57.1] - 2024-06-24
 - Cancel xds stream ready timeout when the stream is closed. Correct xds connection status metric.
 
@@ -5704,7 +5707,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.57.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.57.2...master
+[29.57.2]: https://github.com/linkedin/rest.li/compare/v29.57.1...v29.57.2
 [29.57.1]: https://github.com/linkedin/rest.li/compare/v29.57.0...v29.57.1
 [29.57.0]: https://github.com/linkedin/rest.li/compare/v29.56.1...v29.57.0
 [29.56.1]: https://github.com/linkedin/rest.li/compare/v29.56.0...v29.56.1
