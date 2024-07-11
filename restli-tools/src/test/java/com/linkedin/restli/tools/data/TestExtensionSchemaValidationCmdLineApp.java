@@ -17,7 +17,7 @@ package com.linkedin.restli.tools.data;
 
 import java.io.File;
 
-import org.testng.Assert;
+import org.testng.asserts.SoftAssert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -89,12 +89,17 @@ public class TestExtensionSchemaValidationCmdLineApp
       try
       {
         ExtensionSchemaValidationCmdLineApp.parseAndValidateExtensionSchemas(resolverPath, new File(inputPath));
-        Assert.assertTrue(isValid);
+        SoftAssert softAssert = new SoftAssert();
+        softAssert.assertTrue(isValid);
+        softAssert.assertEquals(null, errorMessage);
+        softAssert.assertAll();
       }
       catch (Exception e)
       {
-        Assert.assertTrue(!isValid);
-        Assert.assertEquals(e.getMessage(), errorMessage);
+        SoftAssert softAssert = new SoftAssert();
+        softAssert.assertTrue(!isValid);
+        softAssert.assertEquals(e.getMessage(), errorMessage);
+        softAssert.assertAll();
       }
   }
 }
