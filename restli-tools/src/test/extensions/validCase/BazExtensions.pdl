@@ -1,0 +1,10 @@
+/**
+ * Valid extension schema:
+ * The co-existence of @extension and @grpcExtension is allowed
+ */
+record BazExtensions includes Baz {
+  @extension.using = "finder: test"
+  @grpcExtension.rpc = "get"
+  @grpcExtension.versionSuffix = "V2"
+  testField: array[DummyKeyWithGrpc]
+}
