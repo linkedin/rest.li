@@ -97,7 +97,7 @@ public class TestExtensionSchemaValidationCmdLineApp
       catch (Exception e)
       {
         SoftAssert softAssert = new SoftAssert();
-        softAssert.assertTrue(!isValid);
+        softAssert.assertFalse(isValid);
         softAssert.assertEquals(errorMessage, e.getMessage());
         softAssert.assertAll();
       }
