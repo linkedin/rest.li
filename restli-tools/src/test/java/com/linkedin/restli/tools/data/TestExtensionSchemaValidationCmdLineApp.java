@@ -91,7 +91,7 @@ public class TestExtensionSchemaValidationCmdLineApp
         ExtensionSchemaValidationCmdLineApp.parseAndValidateExtensionSchemas(resolverPath, new File(inputPath));
         SoftAssert softAssert = new SoftAssert();
         softAssert.assertTrue(isValid);
-        softAssert.assertEquals(null, errorMessage);
+        softAssert.assertEquals(errorMessage, null);
         softAssert.assertAll();
       }
       catch (Exception e)
