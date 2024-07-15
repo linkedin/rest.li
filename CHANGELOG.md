@@ -15,6 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.58.0] - 2024-07-11
+- Allow both @extension and @grpcExtension extensions in schema validation
 
 ## [29.57.2] - 2024-06-17
 - Update grpc version to 1.59.1 and protobuf to 3.24.0
