@@ -40,6 +40,7 @@ import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.process.ExecResult;
 
 import static com.linkedin.pegasus.gradle.SharedFileUtils.*;
 
@@ -154,7 +155,7 @@ public class ValidateExtensionSchemaTask extends DefaultTask
 
     ByteArrayOutputStream validationOutput = new ByteArrayOutputStream();
 
-    getProject().javaexec(javaExecSpec -> {
+    ExecResult result = getProject().javaexec(javaExecSpec -> {
       String resolverPathArg = resolverPathStr;
       if (isEnableArgFile())
       {
