@@ -169,14 +169,14 @@ public class ValidateExtensionSchemaTask extends DefaultTask
       javaExecSpec.setStandardOutput(validationOutput);
       javaExecSpec.setErrorOutput(validationOutput);
 
-      // Handle failure after exec to output errors to build log
+      // Handle failure after exec to output error to build log
       javaExecSpec.setIgnoreExitValue(true);
     });
 
     String validationOutputString = validationOutput.toString(StandardCharsets.UTF_8.name());
     IOUtil.writeText(getOutputFile(), validationOutputString);
     if (result.getExitValue() != 0) {
-      throw new GradleException("Error occurred validating schema extensions:\n" + validationOutputString);
+      throw new GradleException("Error occurred during schema extension validation:\n" + validationOutputString);
     }
   }
 }
