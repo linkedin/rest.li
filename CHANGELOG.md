@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.57.3] - 2024-07-18
+- Respect glob collection subscriptions on reconnect
+
 ## [29.57.2] - 2024-06-17
 - Update grpc version to 1.59.1 and protobuf to 3.24.0
 
@@ -5707,7 +5710,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.57.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.57.3...master
+[29.57.3]: https://github.com/linkedin/rest.li/compare/v29.57.2...v29.57.3
 [29.57.2]: https://github.com/linkedin/rest.li/compare/v29.57.1...v29.57.2
 [29.57.1]: https://github.com/linkedin/rest.li/compare/v29.57.0...v29.57.1
 [29.57.0]: https://github.com/linkedin/rest.li/compare/v29.56.1...v29.57.0

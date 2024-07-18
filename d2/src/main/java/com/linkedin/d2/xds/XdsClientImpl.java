@@ -692,11 +692,18 @@ public class XdsClientImpl extends XdsClient
     public void run() {
       startRpcStreamLocal();
       for (ResourceType type : ResourceType.values()) {
-        Map<String, ResourceSubscriber> subscriberMap = getResourceSubscriberMap(type);
-        Collection<String> resources = subscriberMap.isEmpty() ? null : subscriberMap.keySet();
-        if (resources != null) {
-          _adsStream.sendDiscoveryRequest(type, resources);
+        Collection<String> resources = getResourceSubscriberMap(type).keySet();
+        if (resources.isEmpty())
+        {
+          continue;
         }
+        if (_subscribeToUriGlobCollection && type == ResourceType.D2_URI_MAP)
+        {
+          resources = resources.stream()
+              .map(GlobCollectionUtils::globCollectionUrlForClusterResource)
+              .collect(Collectors.toSet());
+        }
+        _adsStream.sendDiscoveryRequest(type, resources);
       }
     }
   }
