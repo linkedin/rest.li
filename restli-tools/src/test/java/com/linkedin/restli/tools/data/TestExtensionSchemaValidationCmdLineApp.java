@@ -86,20 +86,19 @@ public class TestExtensionSchemaValidationCmdLineApp
   {
       String resolverPath = testPegasusDir;
       String inputPath = testExtensionDir + File.separator + inputDir;
+
+      SoftAssert softAssert = new SoftAssert();
       try
       {
         ExtensionSchemaValidationCmdLineApp.parseAndValidateExtensionSchemas(resolverPath, new File(inputPath));
-        SoftAssert softAssert = new SoftAssert();
         softAssert.assertTrue(isValid);
         softAssert.assertEquals(null, errorMessage);
-        softAssert.assertAll();
       }
       catch (Exception e)
       {
-        SoftAssert softAssert = new SoftAssert();
         softAssert.assertTrue(!isValid);
         softAssert.assertEquals(e.getMessage(), errorMessage);
-        softAssert.assertAll();
       }
+      softAssert.assertAll();
   }
 }
