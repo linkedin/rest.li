@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.58.1] - 2024-07-19
+- Increase verbosity of testExtensionSchemaValidation tests
+
 ## [29.58.0] - 2024-07-11
 - Allow both @extension and @grpcExtension extensions in schema validation
 
@@ -5710,7 +5713,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.58.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.58.1...master
+[29.58.1]: https://github.com/linkedin/rest.li/compare/v29.58.0...v29.58.1
 [29.58.0]: https://github.com/linkedin/rest.li/compare/v29.57.2...v29.58.0
 [29.57.2]: https://github.com/linkedin/rest.li/compare/v29.57.1...v29.57.2
 [29.57.1]: https://github.com/linkedin/rest.li/compare/v29.57.0...v29.57.1
