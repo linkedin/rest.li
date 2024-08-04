@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Change commons-httpclient dependency with httpcomponents.client5:httpclient5 to fix security vulnerability
 
 ## [29.58.1] - 2024-07-19
 - Increase verbosity of testExtensionSchemaValidation tests
