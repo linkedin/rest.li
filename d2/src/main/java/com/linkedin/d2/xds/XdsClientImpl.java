@@ -173,7 +173,14 @@ public class XdsClientImpl extends XdsClient
   {
     _executorService.execute(() -> {
       if (!isInBackoff()) {
-        startRpcStreamLocal();
+        try
+        {
+          startRpcStreamLocal();
+        }
+        catch (Throwable t)
+        {
+          _log.error("Unexpected exception while starting RPC stream", t);
+        }
       }
     });
   }
