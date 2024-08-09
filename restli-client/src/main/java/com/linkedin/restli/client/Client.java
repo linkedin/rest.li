@@ -17,10 +17,12 @@
 package com.linkedin.restli.client;
 
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.CompletableFutureCallbackAdapter;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.client.multiplexer.MultiplexedRequest;
 import com.linkedin.restli.client.multiplexer.MultiplexedResponse;
+import java.util.concurrent.CompletableFuture;
 
 
 /**
@@ -93,6 +95,36 @@ public interface Client
       ErrorHandlingBehavior errorHandlingBehavior);
 
   /**
+   * Sends a type-bound REST request, returning a {@link CompletableFuture}
+   *
+   * @param request to send
+   * @param requestContext context for the request
+   * @return {@link CompletableFuture} wrapping the response
+   */
+  default <T> CompletableFuture<Response<T>> sendRequestAsync(Request<T> request, RequestContext requestContext)
+  {
+    CompletableFuture<Response<T>> future = new CompletableFuture<>();
+    sendRequest(request, requestContext, new CompletableFutureCallbackAdapter<>(future));
+    return future;
+  }
+
+  /**
+   * Sends a type-bound REST request using a callback, returning a {@link CompletableFuture}
+   *
+   * @param requestBuilder to invoke {@link RequestBuilder#build()} on to obtain the request
+   *                       to send.
+   * @param requestContext context for the request
+   * @return {@link CompletableFuture} wrapping the response
+   */
+  default <T> CompletableFuture<Response<T>> sendRequestAsync(RequestBuilder<? extends Request<T>> requestBuilder,
+      RequestContext requestContext)
+  {
+    CompletableFuture<Response<T>> future = new CompletableFuture<>();
+    sendRequest(requestBuilder, requestContext, new CompletableFutureCallbackAdapter<>(future));
+    return future;
+  }
+
+  /**
    * Sends a type-bound REST request using a callback.
    *
    * @param request to send
@@ -152,6 +184,33 @@ public interface Client
    */
   <T> ResponseFuture<T> sendRequest(RequestBuilder<? extends Request<T>> requestBuilder,
       ErrorHandlingBehavior errorHandlingBehavior);
+
+  /**
+   * Sends a type-bound REST request, returning a {@link CompletableFuture}
+   *
+   * @param request to send
+   * @return {@link CompletableFuture} wrapping the response
+   */
+  default <T> CompletableFuture<Response<T>> sendRequestAsync(Request<T> request)
+  {
+    CompletableFuture<Response<T>> future = new CompletableFuture<>();
+    sendRequest(request, new CompletableFutureCallbackAdapter<>(future));
+    return future;
+  }
+
+  /**
+   * Sends a type-bound REST request using a callback, returning a {@link CompletableFuture}
+   *
+   * @param requestBuilder to invoke {@link RequestBuilder#build()} on to obtain the request
+   *                       to send.
+   * @return {@link CompletableFuture} wrapping the response
+   */
+  default <T> CompletableFuture<Response<T>> sendRequestAsync(RequestBuilder<? extends Request<T>> requestBuilder)
+  {
+    CompletableFuture<Response<T>> future = new CompletableFuture<>();
+    sendRequest(requestBuilder, new CompletableFutureCallbackAdapter<>(future));
+    return future;
+  }
 
   /**
    * Sends a type-bound REST request using a callback.
