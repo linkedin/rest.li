@@ -58,6 +58,7 @@ import org.slf4j.LoggerFactory;
  * In DUAL_READ mode, it reads from both the old and the new load balancer, but relies on the data from old
  * load balancer only.
  */
+@Deprecated
 public class DualReadLoadBalancer implements LoadBalancerWithFacilities
 {
   private static final Logger LOG = LoggerFactory.getLogger(DualReadLoadBalancer.class);
