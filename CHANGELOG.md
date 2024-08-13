@@ -15,7 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.58.4] - 2024-08-12
-- Fix warmup unit test flaky unit test
+- Fix warmup loadbalancer shutdown logic
 
 ## [29.58.3] - 2024-08-12
 - Disable the warmUp flaky unit test
