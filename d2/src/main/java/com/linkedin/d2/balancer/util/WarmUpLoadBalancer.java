@@ -404,27 +404,18 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
     _outstandingRequests.forEach(future -> future.cancel(true));
     _outstandingRequests.clear();
 
-    // Shut down the executor service and wait for it to terminate
-    _executorService.shutdown();
+    _executorService.shutdownNow();
     try
     {
-      // Wait for termination with a timeout
+      // Wait again to ensure termination
       if (!_executorService.awaitTermination(_warmUpTimeoutMillis, TimeUnit.MILLISECONDS))
       {
-        // Force shutdown if termination takes too long
-        _executorService.shutdownNow();
-        // Wait again to ensure termination
-        if (!_executorService.awaitTermination(_warmUpTimeoutMillis, TimeUnit.MILLISECONDS))
-        {
-          // Log a warning if the executor service did not terminate
-          LOG.warn("Executor service did not terminate in a timely manner.");
-        }
+        LOG.warn("Executor service did not terminate in a timely manner.");
       }
+
     }
     catch (InterruptedException e)
     {
-      // If interrupted, force shutdown and restore interrupt status
-      _executorService.shutdownNow();
       Thread.currentThread().interrupt();
       LOG.error("Interrupted while waiting for executor service to terminate.", e);
     }
