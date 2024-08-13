@@ -397,18 +397,47 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
   @Override
   public void shutdown(PropertyEventThread.PropertyEventShutdownCallback shutdown)
   {
-    // avoid cleaning when you risk to have partial results since some of the services have not loaded yet
+    // Indicate that shutdown has started
+    _shuttingDown = true;
+
+    // Cancel all outstanding requests
+    _outstandingRequests.forEach(future -> future.cancel(true));
+    _outstandingRequests.clear();
+
+    // Shut down the executor service and wait for it to terminate
+    _executorService.shutdown();
+    try
+    {
+      // Wait for termination with a timeout
+      if (!_executorService.awaitTermination(_warmUpTimeoutMillis, TimeUnit.MILLISECONDS))
+      {
+        // Force shutdown if termination takes too long
+        _executorService.shutdownNow();
+        // Wait again to ensure termination
+        if (!_executorService.awaitTermination(_warmUpTimeoutMillis, TimeUnit.MILLISECONDS))
+        {
+          // Log a warning if the executor service did not terminate
+          LOG.warn("Executor service did not terminate in a timely manner.");
+        }
+      }
+    }
+    catch (InterruptedException e)
+    {
+      // If interrupted, force shutdown and restore interrupt status
+      _executorService.shutdownNow();
+      Thread.currentThread().interrupt();
+      LOG.error("Interrupted while waiting for executor service to terminate.", e);
+    }
+
+    // Proceed with cleanup only if all outstanding requests are completed
     if (completedOutStandingRequests())
     {
-      // cleanup from unused services
       FileSystemDirectory fsDirectory = new FileSystemDirectory(_d2FsDirPath, _d2ServicePath);
       fsDirectory.removeAllServicesWithExcluded(_usedServices);
       fsDirectory.removeAllClustersWithExcluded(getUsedClusters());
     }
 
-    _shuttingDown = true;
-    _outstandingRequests.forEach(future -> future.cancel(true));
-    _outstandingRequests.clear();
+    // Finalize shutdown of the load balancer
     _loadBalancer.shutdown(shutdown);
   }
 

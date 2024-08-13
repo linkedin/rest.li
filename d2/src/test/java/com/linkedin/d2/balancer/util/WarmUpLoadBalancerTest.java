@@ -128,7 +128,7 @@ public class WarmUpLoadBalancerTest
     Assert.assertEquals(VALID_FILES.size(), requestCount.get());
   }
 
-  @Ignore("ingore this flaky test")
+  @Test(timeOut = 10000)
   public void testDeletingFilesAfterShutdown() throws InterruptedException, ExecutionException, TimeoutException
   {
     createDefaultServicesIniFiles();
