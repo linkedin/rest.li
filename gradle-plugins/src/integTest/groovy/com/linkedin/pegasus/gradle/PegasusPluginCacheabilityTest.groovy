@@ -33,7 +33,7 @@ class PegasusPluginCacheabilityTest extends Specification {
     |}
     |
     |repositories { 
-    |  jcenter()
+    |  mavenCentral()
     |}
     |
     |dependencies {
