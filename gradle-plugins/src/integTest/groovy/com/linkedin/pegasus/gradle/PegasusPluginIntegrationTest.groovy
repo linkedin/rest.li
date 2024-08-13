@@ -126,7 +126,7 @@ class PegasusPluginIntegrationTest extends Specification {
     |}
     |
     |repositories {
-    |  jcenter()
+    |  mavenCentral()
     |}
     |
     |dependencies {

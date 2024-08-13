@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.58.3] - 2024-08-12
+- Disable the warmUp flaky unit test
+
 ## [29.58.2] - 2024-08-06
 - Add try/catch logic for INDIS xds stream initialization
 
@@ -5716,7 +5719,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.58.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.58.3...master
+[29.58.3]: https://github.com/linkedin/rest.li/compare/v29.58.2...v29.58.3
 [29.58.2]: https://github.com/linkedin/rest.li/compare/v29.58.1...v29.58.2
 [29.58.1]: https://github.com/linkedin/rest.li/compare/v29.58.0...v29.58.1
 [29.58.0]: https://github.com/linkedin/rest.li/compare/v29.57.2...v29.58.0
