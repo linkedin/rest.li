@@ -150,12 +150,9 @@ public class XdsToD2PropertiesAdaptor
     }
     else
     {
-      _watchedClusterResources.computeIfAbsent(clusterName, k ->
-      {
-        XdsClient.NodeResourceWatcher watcher = getClusterResourceWatcher(clusterName);
-        _xdsClient.watchXdsResource(resourceName, watcher);
-        return watcher;
-      });
+      XdsClient.ResourceWatcher watcher =
+          _watchedClusterResources.computeIfAbsent(clusterName, this::getClusterResourceWatcher);
+      _xdsClient.watchXdsResource(resourceName, watcher);
     }
   }
 
@@ -169,36 +166,27 @@ public class XdsToD2PropertiesAdaptor
     }
     else
     {
-      _watchedUriResources.computeIfAbsent(clusterName, k ->
-      {
-        XdsClient.D2URIMapResourceWatcher watcher = getUriResourceWatcher(clusterName);
-        _xdsClient.watchXdsResource(resourceName, watcher);
-        return watcher;
-      });
+      XdsClient.ResourceWatcher watcher =
+          _watchedUriResources.computeIfAbsent(clusterName, this::getUriResourceWatcher);
+      _xdsClient.watchXdsResource(resourceName, watcher);
     }
   }
 
   public void listenToService(String serviceName)
   {
-    _watchedServiceResources.computeIfAbsent(serviceName, k ->
-    {
-      XdsClient.NodeResourceWatcher watcher = getServiceResourceWatcher(serviceName);
-      _xdsClient.watchXdsResource(D2_SERVICE_NODE_PREFIX + serviceName, watcher);
-      return watcher;
-    });
+    XdsClient.ResourceWatcher watcher =
+        _watchedServiceResources.computeIfAbsent(serviceName, this::getServiceResourceWatcher);
+    _xdsClient.watchXdsResource(D2_SERVICE_NODE_PREFIX + serviceName, watcher);
   }
 
   private void listenToSymlink(String name, String fullResourceName)
   {
     // use full resource name ("/d2/clusters/$FooClusterMater", "/d2/uris/$FooClusterMaster") as the key
     // instead of just the symlink name ("$FooClusterMaster") to differentiate clusters and uris symlink resources.
-    _watchedSymlinkResources.computeIfAbsent(fullResourceName, k ->
-    {
-      // use symlink name "$FooClusterMaster" to create the watcher
-      XdsClient.NodeResourceWatcher watcher = getSymlinkResourceWatcher(fullResourceName, name);
-      _xdsClient.watchXdsResource(k, watcher);
-      return watcher;
-    });
+    XdsClient.ResourceWatcher watcher =
+        _watchedSymlinkResources.computeIfAbsent(fullResourceName, k -> getSymlinkResourceWatcher(k, name));
+    // use symlink name "$FooClusterMaster" to create the watcher
+    _xdsClient.watchXdsResource(fullResourceName, watcher);
   }
 
   XdsClient.NodeResourceWatcher getServiceResourceWatcher(String serviceName)

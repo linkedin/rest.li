@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -440,6 +441,23 @@ public class TestXdsClientImpl
     D2URIMapUpdate actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
     // removed resource will not overwrite the original valid data
     Assert.assertEquals(actualData.getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA1.getURIMap());
+  }
+
+  @Test
+  public void testResourceSubscriberAddWatcher()
+  {
+    ResourceSubscriber subscriber = new ResourceSubscriber(NODE, "foo", null);
+    XdsClient.ResourceWatcher watcher = Mockito.mock(XdsClient.ResourceWatcher.class);
+    subscriber.addWatcher(watcher);
+    verify(watcher, times(0)).onChanged(any());
+
+    D2URIMapUpdate update = new D2URIMapUpdate(Collections.emptyMap());
+    subscriber.setData(update);
+    for (int i = 0; i < 10; i++)
+    {
+      subscriber.addWatcher(watcher);
+    }
+    verify(watcher, times(10)).onChanged(eq(update));
   }
 
   private static class XdsClientImplFixture

@@ -554,11 +554,6 @@ public class XdsClientImpl extends XdsClient
 
     void addWatcher(ResourceWatcher watcher)
     {
-      if (_watchers.contains(watcher))
-      {
-        _log.warn("Watcher {} already registered", watcher);
-        return;
-      }
       _watchers.add(watcher);
       if (_data != null)
       {
