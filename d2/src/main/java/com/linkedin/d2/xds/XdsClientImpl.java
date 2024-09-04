@@ -558,6 +558,7 @@ public class XdsClientImpl extends XdsClient
       if (_data != null)
       {
         watcher.onChanged(_data);
+        _log.debug("Notifying watcher of current data for resource {} of type {}: {}", _resource, _type, _data);
       }
     }
 

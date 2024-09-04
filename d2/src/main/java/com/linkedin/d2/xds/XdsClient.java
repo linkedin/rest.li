@@ -255,6 +255,12 @@ public abstract class XdsClient
     }
   }
 
+  /**
+   * Subscribes the given {@link ResourceWatcher} to the resource of the given name. The watcher will be notified when
+   * the resource is received from the backend. Repeated calls to this function with the same resource name and watcher
+   * will always notify the given watcher of the current data if it is already present, even if the given watcher was
+   * already subscribed to said resource. However, the subscription will only be added once.
+   */
   abstract void watchXdsResource(String resourceName, ResourceWatcher watcher);
 
   abstract void startRpcStream();
