@@ -14,7 +14,11 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.58.5] - 2024-09-04
+- Respect glob collection subscriptions on reconnect
+
 ## [29.58.4] - 2024-09-03
+- Respect `startPublishing` call by always re-notifying watcher in XdsClientImpl
 
 ## [29.58.3] - 2024-08-12
 - Disable the warmUp flaky unit test
@@ -5721,7 +5725,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.58.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.58.5...master
+[29.58.5]: https://github.com/linkedin/rest.li/compare/v29.58.4...v29.58.5
 [29.58.4]: https://github.com/linkedin/rest.li/compare/v29.58.3...v29.58.4
 [29.58.3]: https://github.com/linkedin/rest.li/compare/v29.58.2...v29.58.3
 [29.58.2]: https://github.com/linkedin/rest.li/compare/v29.58.1...v29.58.2

@@ -695,11 +695,19 @@ public class XdsClientImpl extends XdsClient
     public void run() {
       startRpcStreamLocal();
       for (ResourceType type : ResourceType.values()) {
-        Map<String, ResourceSubscriber> subscriberMap = getResourceSubscriberMap(type);
-        Collection<String> resources = subscriberMap.isEmpty() ? null : subscriberMap.keySet();
-        if (resources != null) {
-          _adsStream.sendDiscoveryRequest(type, resources);
+        Collection<String> resources = getResourceSubscriberMap(type).keySet();
+        if (resources.isEmpty())
+        {
+          continue;
         }
+        if (_subscribeToUriGlobCollection && type == ResourceType.D2_URI_MAP)
+        {
+          resources = resources.stream()
+              .map(GlobCollectionUtils::globCollectionUrlForClusterResource)
+              .collect(Collectors.toSet());
+          type = ResourceType.D2_URI;
+        }
+        _adsStream.sendDiscoveryRequest(type, resources);
       }
     }
   }
@@ -936,8 +944,8 @@ public class XdsClientImpl extends XdsClient
     private void sendDiscoveryRequest(ResourceType type, Collection<String> resources)
     {
       _log.info("Sending {} request for resources: {}", type, resources);
-      DiscoveryRequestData request = new DiscoveryRequestData(_node, type, resources);
-      _requestWriter.onNext(request.toEnvoyProto());
+      DeltaDiscoveryRequest request = new DiscoveryRequestData(_node, type, resources).toEnvoyProto();
+      _requestWriter.onNext(request);
       _log.debug("Sent DiscoveryRequest\n{}", request);
     }
 
