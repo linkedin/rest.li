@@ -705,6 +705,7 @@ public class XdsClientImpl extends XdsClient
           resources = resources.stream()
               .map(GlobCollectionUtils::globCollectionUrlForClusterResource)
               .collect(Collectors.toSet());
+          type = ResourceType.D2_URI;
         }
         _adsStream.sendDiscoveryRequest(type, resources);
       }
@@ -943,8 +944,8 @@ public class XdsClientImpl extends XdsClient
     private void sendDiscoveryRequest(ResourceType type, Collection<String> resources)
     {
       _log.info("Sending {} request for resources: {}", type, resources);
-      DiscoveryRequestData request = new DiscoveryRequestData(_node, type, resources);
-      _requestWriter.onNext(request.toEnvoyProto());
+      DeltaDiscoveryRequest request = new DiscoveryRequestData(_node, type, resources).toEnvoyProto();
+      _requestWriter.onNext(request);
       _log.debug("Sent DiscoveryRequest\n{}", request);
     }
 
