@@ -40,6 +40,7 @@ import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.SkipWhenEmpty;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.process.ExecResult;
 
 import static com.linkedin.pegasus.gradle.SharedFileUtils.*;
 
@@ -154,7 +155,7 @@ public class ValidateExtensionSchemaTask extends DefaultTask
 
     ByteArrayOutputStream validationOutput = new ByteArrayOutputStream();
 
-    getProject().javaexec(javaExecSpec -> {
+    ExecResult result = getProject().javaexec(javaExecSpec -> {
       String resolverPathArg = resolverPathStr;
       if (isEnableArgFile())
       {
@@ -167,8 +168,15 @@ public class ValidateExtensionSchemaTask extends DefaultTask
       javaExecSpec.args(_inputDir.getAbsolutePath());
       javaExecSpec.setStandardOutput(validationOutput);
       javaExecSpec.setErrorOutput(validationOutput);
+
+      // Handle failure after exec to output error to build log
+      javaExecSpec.setIgnoreExitValue(true);
     });
 
-    IOUtil.writeText(getOutputFile(), validationOutput.toString(StandardCharsets.UTF_8.name()));
+    String validationOutputString = validationOutput.toString(StandardCharsets.UTF_8.name());
+    IOUtil.writeText(getOutputFile(), validationOutputString);
+    if (result.getExitValue() != 0) {
+      throw new GradleException("Error occurred during schema extension validation:\n" + validationOutputString);
+    }
   }
 }

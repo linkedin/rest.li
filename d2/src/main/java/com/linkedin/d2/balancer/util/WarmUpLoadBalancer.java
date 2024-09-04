@@ -398,7 +398,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
   public void shutdown(PropertyEventThread.PropertyEventShutdownCallback shutdown)
   {
     // avoid cleaning when you risk to have partial results since some of the services have not loaded yet
-    if (_outstandingRequests.size() == 0)
+    if (completedOutStandingRequests())
     {
       // cleanup from unused services
       FileSystemDirectory fsDirectory = new FileSystemDirectory(_d2FsDirPath, _d2ServicePath);
@@ -410,6 +410,11 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
     _outstandingRequests.forEach(future -> future.cancel(true));
     _outstandingRequests.clear();
     _loadBalancer.shutdown(shutdown);
+  }
+
+  boolean completedOutStandingRequests()
+  {
+    return _outstandingRequests.isEmpty();
   }
 
   private Set<String> getUsedClusters()

@@ -173,7 +173,14 @@ public class XdsClientImpl extends XdsClient
   {
     _executorService.execute(() -> {
       if (!isInBackoff()) {
-        startRpcStreamLocal();
+        try
+        {
+          startRpcStreamLocal();
+        }
+        catch (Throwable t)
+        {
+          _log.error("Unexpected exception while starting RPC stream", t);
+        }
       }
     });
   }
@@ -547,15 +554,11 @@ public class XdsClientImpl extends XdsClient
 
     void addWatcher(ResourceWatcher watcher)
     {
-      if (_watchers.contains(watcher))
-      {
-        _log.warn("Watcher {} already registered", watcher);
-        return;
-      }
       _watchers.add(watcher);
       if (_data != null)
       {
         watcher.onChanged(_data);
+        _log.debug("Notifying watcher of current data for resource {} of type {}: {}", _resource, _type, _data);
       }
     }
 

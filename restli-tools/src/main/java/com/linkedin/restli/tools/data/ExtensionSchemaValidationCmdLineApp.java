@@ -63,8 +63,8 @@ import static com.linkedin.data.schema.annotation.GrpcExtensionAnnotationHandler
  * 1. The extension schema is a valid schema.
  * 2. The extension schema name has to follow the naming convention: <baseSchemaName> + "Extensions"
  * 3. The extension schema can only include the base schema.
- * 4. The extension schema's field annotation keys must be in the "extension" or "grpcExtension" namespaces (but not both).
- * 5. The extension schema's field annotations must conform to {@link ExtensionSchemaAnnotation} or {@link GrpcExtensionAnnotation}.
+ * 4. The extension schema's field annotation keys must be in the "extension" and/or "grpcExtension" namespaces
+ * 5. The extension schema's field annotations must conform to {@link ExtensionSchemaAnnotation} and/or {@link GrpcExtensionAnnotation}.
  * 6. The extension schema's fields can only be Typeref or array of Typeref.
  * 7. The extension schema's field schema's annotation keys must be in the "resourceKey" and/or "grpcService" namespaces.
  * 8. The extension schema's field annotation versionSuffix value has to match the versionSuffix value in "resourceKey"/"grpcService" annotation on the field schema.
@@ -232,7 +232,7 @@ public class ExtensionSchemaValidationCmdLineApp
       {
         validateRestLiExtensionField(field);
       }
-      else if (properties.containsKey(GRPC_EXTENSION_ANNOTATION_NAMESPACE))
+      if (properties.containsKey(GRPC_EXTENSION_ANNOTATION_NAMESPACE))
       {
         validateGrpcExtensionField(field);
       }
@@ -242,12 +242,6 @@ public class ExtensionSchemaValidationCmdLineApp
   private static void validateRestLiExtensionField(RecordDataSchema.Field field)
       throws InvalidExtensionSchemaException {
     Map<String, Object> properties = field.getProperties();
-    // Validate that it doesn't also contain gRPC downstream info
-    if (properties.containsKey(GRPC_EXTENSION_ANNOTATION_NAMESPACE))
-    {
-      throw new InvalidExtensionSchemaException("The extension schema field '"
-          + field.getName() + "' cannot be annotated with both 'extension' and 'grpcExtension'");
-    }
 
     // Validate the actual content/structure of the annotation value
     validateFieldAnnotation(properties.get(EXTENSION_ANNOTATION_NAMESPACE), new ExtensionSchemaAnnotation().schema());
@@ -262,12 +256,6 @@ public class ExtensionSchemaValidationCmdLineApp
   private static void validateGrpcExtensionField(RecordDataSchema.Field field)
       throws InvalidExtensionSchemaException {
     Map<String, Object> properties = field.getProperties();
-    // Validate that it doesn't also contain Rest.li downstream info
-    if (properties.containsKey(EXTENSION_ANNOTATION_NAMESPACE))
-    {
-      throw new InvalidExtensionSchemaException("The extension schema field '"
-          + field.getName() + "' cannot be annotated with both 'extension' and 'grpcExtension'");
-    }
 
     // Validate the actual content/structure of the annotation value
     validateFieldAnnotation(properties.get(GRPC_EXTENSION_ANNOTATION_NAMESPACE), new GrpcExtensionAnnotation().schema());

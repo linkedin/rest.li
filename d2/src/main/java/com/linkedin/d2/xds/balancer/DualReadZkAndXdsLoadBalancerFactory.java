@@ -28,6 +28,7 @@ import javax.annotation.Nonnull;
  * discovery data sources: direct ZooKeeper data and xDS data. The {@link DualReadModeProvider} will
  * determine dynamically at run-time which read mode to use.
  */
+@Deprecated
 public class DualReadZkAndXdsLoadBalancerFactory implements LoadBalancerWithFacilitiesFactory
 {
   private final LoadBalancerWithFacilitiesFactory _zkLbFactory;
