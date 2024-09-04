@@ -14,8 +14,19 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.57.3] - 2024-07-18
-- Respect glob collection subscriptions on reconnect
+## [29.58.4] - 2024-09-03
+
+## [29.58.3] - 2024-08-12
+- Disable the warmUp flaky unit test
+
+## [29.58.2] - 2024-08-06
+- Add try/catch logic for INDIS xds stream initialization
+
+## [29.58.1] - 2024-07-19
+- Increase verbosity of testExtensionSchemaValidation tests
+
+## [29.58.0] - 2024-07-11
+- Allow both @extension and @grpcExtension extensions in schema validation
 
 ## [29.57.2] - 2024-06-17
 - Update grpc version to 1.59.1 and protobuf to 3.24.0
@@ -5710,8 +5721,12 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.57.3...master
-[29.57.3]: https://github.com/linkedin/rest.li/compare/v29.57.2...v29.57.3
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.58.4...master
+[29.58.4]: https://github.com/linkedin/rest.li/compare/v29.58.3...v29.58.4
+[29.58.3]: https://github.com/linkedin/rest.li/compare/v29.58.2...v29.58.3
+[29.58.2]: https://github.com/linkedin/rest.li/compare/v29.58.1...v29.58.2
+[29.58.1]: https://github.com/linkedin/rest.li/compare/v29.58.0...v29.58.1
+[29.58.0]: https://github.com/linkedin/rest.li/compare/v29.57.2...v29.58.0
 [29.57.2]: https://github.com/linkedin/rest.li/compare/v29.57.1...v29.57.2
 [29.57.1]: https://github.com/linkedin/rest.li/compare/v29.57.0...v29.57.1
 [29.57.0]: https://github.com/linkedin/rest.li/compare/v29.56.1...v29.57.0
