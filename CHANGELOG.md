@@ -14,6 +14,8 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.58.6] - 2024-09-08
+
 ## [29.58.5] - 2024-09-04
 - Respect glob collection subscriptions on reconnect
 
@@ -5725,7 +5727,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.58.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.58.6...master
+[29.58.6]: https://github.com/linkedin/rest.li/compare/v29.58.5...v29.58.6
 [29.58.5]: https://github.com/linkedin/rest.li/compare/v29.58.4...v29.58.5
 [29.58.4]: https://github.com/linkedin/rest.li/compare/v29.58.3...v29.58.4
 [29.58.3]: https://github.com/linkedin/rest.li/compare/v29.58.2...v29.58.3

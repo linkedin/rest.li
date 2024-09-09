@@ -29,6 +29,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.restli.common.CollectionMetadata;
 import com.linkedin.restli.common.CollectionResponse;
+import com.linkedin.restli.common.HttpStatus;
 import com.linkedin.restli.common.LinkArray;
 import com.linkedin.restli.common.ResourceMethod;
 import com.linkedin.restli.internal.server.RoutingResult;
@@ -224,6 +225,36 @@ public class TestCollectionResponseBuilder
     Assert.assertEquals(actualResults.getPaging(), expectedPaging);
 
     EasyMock.verify(mockContext);
+  }
+
+  @DataProvider(name = "testNullPaging")
+  public Object[][] testNullPaging()
+  {
+    return BUILDERS.values().stream().map(builder -> new Object[]{builder}).toArray(Object[][]::new);
+  }
+
+  @Test(dataProvider = "testNullPaging")
+  public <D extends RestLiResponseData<? extends CollectionResponseEnvelope>>
+    void testNullPaging(CollectionResponseBuilder<D> responseBuilder)
+  {
+    Map<String, String> headers = ResponseBuilderUtil.getHeaders();
+
+    ServerResourceContext mockContext = EasyMock.createMock(ServerResourceContext.class);
+    ResourceMethodDescriptor mockDescriptor = EasyMock.createMock(ResourceMethodDescriptor.class);
+    RoutingResult routingResult = new RoutingResult(mockContext, mockDescriptor);
+
+    Foo metadata = new Foo().setStringField("metadata").setIntField(7);
+    final List<Foo> generatedList = generateTestList();
+
+    RestLiResponse response = responseBuilder.buildResponse(routingResult,
+        responseBuilder.buildResponseData(HttpStatus.S_200_OK, generatedList, null, metadata, headers,
+            Collections.emptyList()));
+
+    Assert.assertTrue(response.getEntity() instanceof CollectionResponse);
+    CollectionResponse<?> collectionResponse = (CollectionResponse<?>) response.getEntity();
+    Assert.assertEquals(collectionResponse.getElements(), generatedList);
+    Assert.assertEquals(collectionResponse.getMetadataRaw(), metadata.data());
+    Assert.assertFalse(collectionResponse.hasPaging());
   }
 
   @DataProvider(name = "exceptionTestData")
