@@ -15,6 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.58.6] - 2024-09-08
+- Allow for null paging inside Collection response envelopes
 
 ## [29.58.5] - 2024-09-04
 - Respect glob collection subscriptions on reconnect
