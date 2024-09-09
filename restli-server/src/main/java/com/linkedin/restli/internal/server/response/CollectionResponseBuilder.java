@@ -51,7 +51,23 @@ public abstract class CollectionResponseBuilder<D extends RestLiResponseData<? e
     CollectionResponseEnvelope response = responseData.getResponseEnvelope();
     RestLiResponse.Builder builder = new RestLiResponse.Builder();
     CollectionResponse<AnyRecord> collectionResponse = new CollectionResponse<>(AnyRecord.class);
-    collectionResponse.setPaging(response.getCollectionResponsePaging());
+
+    // Technically, there is no way to set paging to null in application code since CollectionResult doesn't allow
+    // it. However, it is possible to use a custom rest.li filter to strip out paging from the ResponseEnvelope in
+    // case use cases don't want index based paging. This null check detects and elegantly handles such cases.
+    //
+    // An alternative would be to support null indexed based paging natively inside CollectionResult and all its
+    // upstream objects. However, doing so needs several changes inside framework code, and is potentially fragile.
+    // Hence, we prefer a point fix here.
+    if (response.getCollectionResponsePaging() != null)
+    {
+      collectionResponse.setPaging(response.getCollectionResponsePaging());
+    }
+    else
+    {
+      collectionResponse.removePaging();
+    }
+
     DataList elementsMap = (DataList) collectionResponse.data().get(CollectionResponse.ELEMENTS);
     for (RecordTemplate entry : response.getCollectionResponse())
     {
