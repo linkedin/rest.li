@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.58.7] - 2024-09-13
+Add WildcardResourceSubscriber for restli-resource-explorer subscribe to all resources
+
 ## [29.58.6] - 2024-09-08
 - Allow for null paging inside Collection response envelopes
 
@@ -5728,7 +5731,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.58.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.58.7...master
+[29.58.7]: https://github.com/linkedin/rest.li/compare/v29.58.6...v29.58.7
 [29.58.6]: https://github.com/linkedin/rest.li/compare/v29.58.5...v29.58.6
 [29.58.5]: https://github.com/linkedin/rest.li/compare/v29.58.4...v29.58.5
 [29.58.4]: https://github.com/linkedin/rest.li/compare/v29.58.3...v29.58.4
