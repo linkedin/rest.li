@@ -448,76 +448,31 @@ public class TestXdsClientImpl
   public void testWildCardResourceSubscription()
   {
     XdsClientImplFixture fixture = new XdsClientImplFixture();
-    XdsClient.WildcardResourceWatcher nodeWildCardWatcher = new XdsClient.WildcardNodeResourceWatcher()
-    {
-      @Override public void onError(Status error)
-      {
 
-      }
-      @Override public void onReconnect()
-      {
-
-      }
-
-      @Override
-      public void onChanged(String resourceName, XdsClient.NodeUpdate nodeUpdate)
-      {
-
-      }
-
-      @Override public void onRemoval(String resourceName)
-      {
-
-      }
-    };
-
-
-    XdsClient.WildcardResourceWatcher uriMapWildCardWatcher = new XdsClient.WildcardD2URIMapResourceWatcher()
-    {
-      @Override public void onError(Status error)
-      {
-
-      }
-
-      @Override public void onReconnect()
-      {
-
-      }
-
-      @Override
-      public void onChanged(String resourceName, D2URIMapUpdate d2URIMapUpdate)
-      {
-      }
-
-      @Override public void onRemoval(String resourceName)
-      {
-
-      }
-
-    };
-
+    XdsClient.WildcardNodeResourceWatcher nodeWildCardWatcher = Mockito.mock(XdsClient.WildcardNodeResourceWatcher.class);
+    XdsClient.WildcardD2URIMapResourceWatcher uriMapWildCardWatcher = Mockito.mock(XdsClient.WildcardD2URIMapResourceWatcher.class);
     fixture._xdsClientImpl.getWildcardResourceSubscriber(NODE).addWatcher(nodeWildCardWatcher);
     fixture._xdsClientImpl.getWildcardResourceSubscriber(D2_URI_MAP).addWatcher(uriMapWildCardWatcher);
 
     // NODE resource added
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA1);
     fixture.verifyAckSent(1);
-    nodeWildCardWatcher.onChanged(SERVICE_RESOURCE_NAME , eq(NODE_UPDATE1));
+    nodeWildCardWatcher.onChanged(eq(SERVICE_RESOURCE_NAME) , eq(NODE_UPDATE1));
 
     // NODE resource removed
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA_WITH_REMOVAL);
     fixture.verifyAckSent(2);
-    nodeWildCardWatcher.onRemoval(SERVICE_RESOURCE_NAME);
+    nodeWildCardWatcher.onRemoval(eq(SERVICE_RESOURCE_NAME));
 
     // URI_MAP resource added
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA1);
     fixture.verifyAckSent(3);
-    uriMapWildCardWatcher.onChanged(CLUSTER_RESOURCE_NAME, eq(D2_URI_MAP_UPDATE_WITH_DATA1));
+    uriMapWildCardWatcher.onChanged(eq(CLUSTER_RESOURCE_NAME), eq(D2_URI_MAP_UPDATE_WITH_DATA1));
 
     // URI_MAP resource removed
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA_WITH_REMOVAL);
     fixture.verifyAckSent(4);
-    uriMapWildCardWatcher.onRemoval(CLUSTER_RESOURCE_NAME);
+    uriMapWildCardWatcher.onRemoval(eq(CLUSTER_RESOURCE_NAME));
   }
 
   @Test
