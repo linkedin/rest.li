@@ -828,7 +828,6 @@ public class XdsClientImpl extends XdsClient
     @VisibleForTesting
     void onRemoval(String resourceName)
     {
-      _log.info("{} resource deleted: {}", _type, resourceName);
       _data.remove(resourceName);
       for (WildcardResourceWatcher watcher : _watchers)
       {

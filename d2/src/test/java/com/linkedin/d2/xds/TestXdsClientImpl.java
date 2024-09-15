@@ -499,13 +499,25 @@ public class TestXdsClientImpl
     fixture._xdsClientImpl.getWildcardResourceSubscriber(NODE).addWatcher(nodeWildCardWatcher);
     fixture._xdsClientImpl.getWildcardResourceSubscriber(D2_URI_MAP).addWatcher(uriMapWildCardWatcher);
 
+    // NODE resource added
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA1);
     fixture.verifyAckSent(1);
     nodeWildCardWatcher.onChanged(SERVICE_RESOURCE_NAME , eq(NODE_UPDATE1));
 
-    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA1);
+    // NODE resource removed
+    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA_WITH_REMOVAL);
     fixture.verifyAckSent(2);
+    nodeWildCardWatcher.onRemoval(SERVICE_RESOURCE_NAME);
+
+    // URI_MAP resource added
+    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA1);
+    fixture.verifyAckSent(3);
     uriMapWildCardWatcher.onChanged(CLUSTER_RESOURCE_NAME, eq(D2_URI_MAP_UPDATE_WITH_DATA1));
+
+    // URI_MAP resource removed
+    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA_WITH_REMOVAL);
+    fixture.verifyAckSent(4);
+    uriMapWildCardWatcher.onRemoval(CLUSTER_RESOURCE_NAME);
   }
 
   @Test
