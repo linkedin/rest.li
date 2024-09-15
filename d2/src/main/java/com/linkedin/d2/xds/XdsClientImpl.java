@@ -175,7 +175,7 @@ public class XdsClientImpl extends XdsClient
     _executorService.execute(() ->
     {
       _log.info("Subscribing to wildcard for resource type: {}", watcher.getType());
-      WildcardResourceSubscriber subscriber = _wildcardSubscribers.get(watcher.getType());
+      WildcardResourceSubscriber subscriber = getWildcardResourceSubscriber(watcher.getType());
       if (subscriber == null)
       {
         subscriber = new WildcardResourceSubscriber(watcher.getType());
@@ -568,6 +568,12 @@ public class XdsClientImpl extends XdsClient
     return _resourceSubscribers.get(type);
   }
 
+  @VisibleForTesting
+  WildcardResourceSubscriber getWildcardResourceSubscriber(ResourceType type)
+  {
+    return _wildcardSubscribers.get(type);
+  }
+
   static class ResourceSubscriber
   {
     private final ResourceType _type;
@@ -840,7 +846,7 @@ public class XdsClientImpl extends XdsClient
       for (ResourceType type : ResourceType.values())
       {
         Set<String> resources = new HashSet<>(getResourceSubscriberMap(type).keySet());
-        if (resources.isEmpty() && !_wildcardSubscribers.containsKey(type))
+        if (resources.isEmpty() && getWildcardResourceSubscriber(type) == null)
         {
           continue;
         }
@@ -856,7 +862,7 @@ public class XdsClientImpl extends XdsClient
         {
           rewrittenType = type;
         }
-        if (_wildcardSubscribers.containsKey(type))
+        if (getWildcardResourceSubscriber(type) != null)
         {
           resources.add("*");
         }

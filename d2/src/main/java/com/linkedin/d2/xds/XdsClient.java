@@ -103,7 +103,7 @@ public abstract class XdsClient
      * Defining a private constructor means only classes that are defined in this file can extend this class (see
      * {@link ResourceWatcher}).
      */
-    private WildcardResourceWatcher(ResourceType type)
+    WildcardResourceWatcher(ResourceType type)
     {
       _type = type;
     }

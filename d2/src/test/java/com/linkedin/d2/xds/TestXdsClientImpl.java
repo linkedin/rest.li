@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import io.grpc.Status;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -444,6 +445,70 @@ public class TestXdsClientImpl
   }
 
   @Test
+  public void testWildCardResourceSubscription()
+  {
+    XdsClientImplFixture fixture = new XdsClientImplFixture();
+    XdsClient.WildcardResourceWatcher nodeWildCardWatcher = new XdsClient.WildcardNodeResourceWatcher()
+    {
+      @Override public void onError(Status error)
+      {
+
+      }
+      @Override public void onReconnect()
+      {
+
+      }
+
+      @Override
+      public void onChanged(String resourceName, XdsClient.NodeUpdate nodeUpdate)
+      {
+
+      }
+
+      @Override public void onRemoval(String resourceName)
+      {
+
+      }
+    };
+
+
+    XdsClient.WildcardResourceWatcher uriMapWildCardWatcher = new XdsClient.WildcardD2URIMapResourceWatcher()
+    {
+      @Override public void onError(Status error)
+      {
+
+      }
+
+      @Override public void onReconnect()
+      {
+
+      }
+
+      @Override
+      public void onChanged(String resourceName, D2URIMapUpdate d2URIMapUpdate)
+      {
+      }
+
+      @Override public void onRemoval(String resourceName)
+      {
+
+      }
+
+    };
+
+    fixture._xdsClientImpl.getWildcardResourceSubscriber(NODE).addWatcher(nodeWildCardWatcher);
+    fixture._xdsClientImpl.getWildcardResourceSubscriber(D2_URI_MAP).addWatcher(uriMapWildCardWatcher);
+
+    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA1);
+    fixture.verifyAckSent(1);
+    nodeWildCardWatcher.onChanged(SERVICE_RESOURCE_NAME , eq(NODE_UPDATE1));
+
+    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA1);
+    fixture.verifyAckSent(2);
+    uriMapWildCardWatcher.onChanged(CLUSTER_RESOURCE_NAME, eq(D2_URI_MAP_UPDATE_WITH_DATA1));
+  }
+
+  @Test
   public void testResourceSubscriberAddWatcher()
   {
     ResourceSubscriber subscriber = new ResourceSubscriber(NODE, "foo", null);
@@ -467,7 +532,11 @@ public class TestXdsClientImpl
     XdsClientJmx _xdsClientJmx;
     ResourceSubscriber _nodeSubscriber;
     ResourceSubscriber _clusterSubscriber;
+    XdsClientImpl.WildcardResourceSubscriber _nodeWildcardSubscriber;
+    XdsClientImpl.WildcardResourceSubscriber _uriMapWildcardSubscriber;
     Map<ResourceType, Map<String, ResourceSubscriber>> _subscribers = new HashMap<>();
+    Map<ResourceType, XdsClientImpl.WildcardResourceSubscriber> _wildcardSubscribers = new HashMap<>();
+
     @Mock
     XdsClient.ResourceWatcher _resourceWatcher;
     @Mock
@@ -483,6 +552,10 @@ public class TestXdsClientImpl
       MockitoAnnotations.initMocks(this);
       _nodeSubscriber = spy(new ResourceSubscriber(NODE, SERVICE_RESOURCE_NAME, _xdsClientJmx));
       _clusterSubscriber = spy(new ResourceSubscriber(D2_URI_MAP, CLUSTER_RESOURCE_NAME, _xdsClientJmx));
+      _nodeWildcardSubscriber = new XdsClientImpl.WildcardResourceSubscriber(NODE);
+      _uriMapWildcardSubscriber = new XdsClientImpl.WildcardResourceSubscriber(D2_URI_MAP);
+
+
 
       doNothing().when(_resourceWatcher).onChanged(any());
       for (ResourceSubscriber subscriber : Lists.newArrayList(_nodeSubscriber, _clusterSubscriber))
@@ -490,7 +563,8 @@ public class TestXdsClientImpl
         subscriber.addWatcher(_resourceWatcher);
         _subscribers.put(subscriber.getType(), Collections.singletonMap(subscriber.getResource(), subscriber));
       }
-
+      _wildcardSubscribers.put(NODE, _nodeWildcardSubscriber);
+      _wildcardSubscribers.put(D2_URI_MAP, _uriMapWildcardSubscriber);
       doNothing().when(_serverMetricsProvider).trackLatency(anyLong());
       _xdsClientImpl = spy(new XdsClientImpl(null, null, null, 0,
           useGlobCollections, _serverMetricsProvider));
@@ -498,6 +572,10 @@ public class TestXdsClientImpl
       when(_xdsClientImpl.getXdsClientJmx()).thenReturn(_xdsClientJmx);
       when(_xdsClientImpl.getResourceSubscriberMap(any()))
           .thenAnswer(a -> _subscribers.get((ResourceType) a.getArguments()[0]));
+      doNothing().when(_xdsClientImpl).watchAllXdsResources(any());
+      when(_xdsClientImpl.getWildcardResourceSubscriber(any()))
+          .thenAnswer(a -> _wildcardSubscribers.get((ResourceType) a.getArguments()[0]));
+
     }
 
     void verifyAckSent(int count)
