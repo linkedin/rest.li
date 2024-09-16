@@ -77,7 +77,7 @@ public class XdsClientImpl extends XdsClient
       Arrays.stream(ResourceType.values())
           .filter(e -> e.typeUrl() != null)
           .collect(Collectors.toMap(Function.identity(), e -> new HashMap<>())));
-  private final Map<ResourceType, WildcardResourceSubscriber> _wildcardSubscribers = new HashMap<>();
+  private final Map<ResourceType, WildcardResourceSubscriber> _wildcardSubscribers = Maps.newEnumMap(ResourceType.class);
   private final Node _node;
   private final ManagedChannel _managedChannel;
   private final ScheduledExecutorService _executorService;
@@ -861,6 +861,7 @@ public class XdsClientImpl extends XdsClient
         {
           rewrittenType = type;
         }
+        // If there is a wildcard subscriber, we should always send a wildcard request to the server.
         if (getWildcardResourceSubscriber(type) != null)
         {
           resources.add("*");

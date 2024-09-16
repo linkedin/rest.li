@@ -15,7 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.58.7] - 2024-09-13
-Add WildcardResourceSubscriber for restli-resource-explorer subscribe to all resources
+- Add WildcardResourceSubscriber which could subscribe to all resources, like NODE and URIMap resources.
 
 ## [29.58.6] - 2024-09-08
 - Allow for null paging inside Collection response envelopes
