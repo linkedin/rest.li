@@ -168,8 +168,7 @@ public abstract class XdsClient
     /**
      * Called when a {@link D2URIMapUpdate} resource is added or updated.
      * @param resourceName the resource name of the {@link D2URIMapUpdate} map resource that was added or updated.
-     *                     like the
-     *                     /d2/uris/clusterName
+     *                     like the /d2/uris/clusterName
      * @param update       the new data for the {@link D2URIMapUpdate} resource
      */
     public abstract void onChanged(String resourceName, D2URIMapUpdate update);
