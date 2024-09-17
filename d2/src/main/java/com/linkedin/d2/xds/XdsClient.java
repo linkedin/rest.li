@@ -355,11 +355,23 @@ public abstract class XdsClient
    */
   public abstract void watchAllXdsResources(WildcardResourceWatcher watcher);
 
+  /**
+   * Initiates the RPC stream to the xDS server.
+   */
   public abstract void startRpcStream();
 
+  /**
+   * Shuts down the xDS client.
+   */
   public abstract void shutdown();
 
+  /**
+   * Returns the authority of the xDS server.
+   */
   public abstract String getXdsServerAuthority();
 
+  /**
+   * Returns the JMX bean for the xDS client.
+   */
   public abstract XdsClientJmx getXdsClientJmx();
 }
