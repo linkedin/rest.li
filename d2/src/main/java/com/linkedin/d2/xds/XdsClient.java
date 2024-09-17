@@ -123,8 +123,17 @@ public abstract class XdsClient
      */
     public abstract void onReconnect();
 
+    /**
+     * Called when a resource is added or updated.
+     * @param resourceName the name of the resource that was added or updated.
+     * @param update       the new data {@link ResourceUpdate} for the resource.
+     */
     abstract void onChanged(String resourceName, ResourceUpdate update);
 
+    /**
+     * Called when a resource is removed.
+     * @param resourceName the name of the resource that was removed.
+     */
     public abstract void onRemoval(String resourceName);
   }
 
@@ -135,6 +144,11 @@ public abstract class XdsClient
       super(ResourceType.NODE);
     }
 
+    /**
+     * Called when a node resource is added or updated.
+     * @param resourceName the resource name of the {@link NodeUpdate} that was added or updated.
+     * @param update       the new data for the {@link NodeUpdate}, including D2 cluster and service information.
+     */
     public abstract void onChanged(String resourceName, NodeUpdate update);
 
     @Override
@@ -151,6 +165,13 @@ public abstract class XdsClient
       super(ResourceType.D2_URI_MAP);
     }
 
+    /**
+     * Called when a {@link D2URIMapUpdate} resource is added or updated.
+     * @param resourceName the resource name of the {@link D2URIMapUpdate} map resource that was added or updated.
+     *                     like the
+     *                     /d2/uris/clusterName
+     * @param update       the new data for the {@link D2URIMapUpdate} resource
+     */
     public abstract void onChanged(String resourceName, D2URIMapUpdate update);
 
     @Override
