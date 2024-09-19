@@ -266,7 +266,7 @@ public class ProtobufDataDecoder<T extends DataComplex> extends AbstractDataDeco
       }
       if ((_stringValue = _symbolTable.getSymbolName(_intValue)) == null)
       {
-        throw new DataDecodingException("Error decoding string reference");
+        throw new DataDecodingException("Error decoding string reference. Symbol ID: " + _intValue);
       }
       return STRING;
     }

@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.58.8] - 2024-09-19
+- Add symbol ID in the exception message when protobuf fails to resolve string references.
+
 ## [29.58.7] - 2024-09-13
 - Add WildcardResourceSubscriber which could subscribe to all resources, like NODE and URIMap resources.
 
@@ -5731,7 +5734,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.58.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.58.8...master
+[29.58.8]: https://github.com/linkedin/rest.li/compare/v29.58.7...v29.58.8
 [29.58.7]: https://github.com/linkedin/rest.li/compare/v29.58.6...v29.58.7
 [29.58.6]: https://github.com/linkedin/rest.li/compare/v29.58.5...v29.58.6
 [29.58.5]: https://github.com/linkedin/rest.li/compare/v29.58.4...v29.58.5
