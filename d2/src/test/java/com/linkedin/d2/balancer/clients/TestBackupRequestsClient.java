@@ -61,7 +61,6 @@ import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponseImpl;
-import com.linkedin.test.util.retry.SingleRetry;
 import com.linkedin.test.util.retry.ThreeRetries;
 import com.linkedin.util.clock.SystemClock;
 import java.io.IOException;
@@ -234,7 +233,7 @@ public class TestBackupRequestsClient
   /**
    * Backup Request should still work when a hint is given together with the flag indicating that the hint is only a preference, not requirement.
    */
-  @Test(invocationCount = 3, dataProvider = "isD2Async", retryAnalyzer = ThreeRetries.class) // Appears to be flaky in CI
+  @Test(dataProvider = "isD2Async", timeOut = 10_000L, retryAnalyzer = ThreeRetries.class) // Appears to be flaky in CI
   public void testRequestWithHint(boolean isD2Async) throws Exception
   {
     int responseDelayNano = 100000000; //1s till response comes back
@@ -257,7 +256,7 @@ public class TestBackupRequestsClient
     RequestContext context1 = context.clone();
     Future<RestResponse> response1 = client.restRequest(restRequest, context1);
     assertEquals(response1.get().getStatus(), 200);
-    assertEquals(hostsReceivingRequest.size(), 2);
+    waitUntilTrue(() -> hostsReceivingRequest.size() == 2);
     assertEquals(new HashSet<>(hostsReceivingRequest).size(), 2);
     hostsReceivingRequest.clear();
 
@@ -267,7 +266,7 @@ public class TestBackupRequestsClient
     KeyMapper.TargetHostHints.setRequestContextTargetHost(context2, hint);
     Future<RestResponse> response2 = client.restRequest(restRequest, context2);
     assertEquals(response2.get().getStatus(), 200);
-    assertEquals(hostsReceivingRequest.size(), 1);
+    waitUntilTrue(() -> hostsReceivingRequest.size() == 1);
     assertEquals(hostsReceivingRequest.poll(), hint);
     hostsReceivingRequest.clear();
 
@@ -277,7 +276,7 @@ public class TestBackupRequestsClient
     KeyMapper.TargetHostHints.setRequestContextOtherHostAcceptable(context3, true);
     Future<RestResponse> response3 = client.restRequest(restRequest, context3);
     assertEquals(response3.get().getStatus(), 200);
-    assertEquals(hostsReceivingRequest.size(), 2);
+    waitUntilTrue(() -> hostsReceivingRequest.size() == 2);
     // The first request should be made to the hinted host while the second should go to the other.
     assertEquals(hostsReceivingRequest.toArray(), new URI[]{new URI("http://test1.com:123"), new URI("http://test2.com:123")});
     assertEquals(new HashSet<>(hostsReceivingRequest).size(), 2);
@@ -780,6 +779,22 @@ public class TestBackupRequestsClient
         return Optional.of(new TrackingBackupRequestsStrategy(alwaysBackup));
       }
     };
+  }
+
+  private static void waitUntilTrue(Supplier<Boolean> check)
+  {
+    while (!check.get())
+    {
+      try
+      {
+        Thread.sleep(10);
+      }
+      catch (InterruptedException e)
+      {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   class TestLoadBalancer implements LoadBalancer
