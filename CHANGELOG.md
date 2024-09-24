@@ -14,7 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.58.9] - 2024-09-20
+## [29.58.9] - 2024-09-24
 - Fix invalid handling of glob collections for wildcard subscribers
 
 ## [29.58.8] - 2024-09-23
