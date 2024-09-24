@@ -14,7 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.58.9] - 2024-09-19
+## [29.58.9] - 2024-09-24
 - Add symbol ID in the exception message when protobuf fails to resolve string references.
 
 ## [29.58.8] - 2024-09-23
