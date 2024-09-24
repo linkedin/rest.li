@@ -95,91 +95,6 @@ public abstract class XdsClient
     }
   }
 
-  public static abstract class WildcardResourceWatcher
-  {
-    private final ResourceType _type;
-
-    /**
-     * Defining a private constructor means only classes that are defined in this file can extend this class (see
-     * {@link ResourceWatcher}).
-     */
-    WildcardResourceWatcher(ResourceType type)
-    {
-      _type = type;
-    }
-
-    final ResourceType getType()
-    {
-      return _type;
-    }
-
-    /**
-     * Called when the resource discovery RPC encounters some transient error.
-     */
-    public abstract void onError(Status error);
-
-    /**
-     * Called when the resource discovery RPC reestablishes connection.
-     */
-    public abstract void onReconnect();
-
-    /**
-     * Called when a resource is added or updated.
-     * @param resourceName the name of the resource that was added or updated.
-     * @param update       the new data {@link ResourceUpdate} for the resource.
-     */
-    abstract void onChanged(String resourceName, ResourceUpdate update);
-
-    /**
-     * Called when a resource is removed.
-     * @param resourceName the name of the resource that was removed.
-     */
-    public abstract void onRemoval(String resourceName);
-  }
-
-  public static abstract class WildcardNodeResourceWatcher extends WildcardResourceWatcher
-  {
-    public WildcardNodeResourceWatcher()
-    {
-      super(ResourceType.NODE);
-    }
-
-    /**
-     * Called when a node resource is added or updated.
-     * @param resourceName the resource name of the {@link NodeUpdate} that was added or updated.
-     * @param update       the new data for the {@link NodeUpdate}, including D2 cluster and service information.
-     */
-    public abstract void onChanged(String resourceName, NodeUpdate update);
-
-    @Override
-    final void onChanged(String resourceName, ResourceUpdate update)
-    {
-      onChanged(resourceName, (NodeUpdate) update);
-    }
-  }
-
-  public static abstract class WildcardD2URIMapResourceWatcher extends WildcardResourceWatcher
-  {
-    public WildcardD2URIMapResourceWatcher()
-    {
-      super(ResourceType.D2_URI_MAP);
-    }
-
-    /**
-     * Called when a {@link D2URIMapUpdate} resource is added or updated.
-     * @param resourceName the resource name of the {@link D2URIMapUpdate} map resource that was added or updated.
-     *                     like the /d2/uris/clusterName
-     * @param update       the new data for the {@link D2URIMapUpdate} resource
-     */
-    public abstract void onChanged(String resourceName, D2URIMapUpdate update);
-
-    @Override
-    final void onChanged(String resourceName, ResourceUpdate update)
-    {
-      onChanged(resourceName, (D2URIMapUpdate) update);
-    }
-  }
-
   public interface ResourceUpdate
   {
     boolean isValid();
@@ -194,7 +109,7 @@ public abstract class XdsClient
       _nodeData = nodeData;
     }
 
-    public XdsD2.Node getNodeData()
+    XdsD2.Node getNodeData()
     {
       return _nodeData;
     }
@@ -346,32 +261,13 @@ public abstract class XdsClient
    * will always notify the given watcher of the current data if it is already present, even if the given watcher was
    * already subscribed to said resource. However, the subscription will only be added once.
    */
-  public abstract void watchXdsResource(String resourceName, ResourceWatcher watcher);
+  abstract void watchXdsResource(String resourceName, ResourceWatcher watcher);
 
-  /**
-   * Subscribes the given {@link WildcardResourceWatcher} to all the resources of the corresponding type. The watcher
-   * will be notified whenever a resource is added or removed. Repeated calls to this function with the same watcher
-   * will always notify the given watcher of the current data.
-   */
-  public abstract void watchAllXdsResources(WildcardResourceWatcher watcher);
+  abstract void startRpcStream();
 
-  /**
-   * Initiates the RPC stream to the xDS server.
-   */
-  public abstract void startRpcStream();
+  abstract void shutdown();
 
-  /**
-   * Shuts down the xDS client.
-   */
-  public abstract void shutdown();
+  abstract String getXdsServerAuthority();
 
-  /**
-   * Returns the authority of the xDS server.
-   */
-  public abstract String getXdsServerAuthority();
-
-  /**
-   * Returns the JMX bean for the xDS client.
-   */
-  public abstract XdsClientJmx getXdsClientJmx();
+  abstract public XdsClientJmx getXdsClientJmx();
 }
