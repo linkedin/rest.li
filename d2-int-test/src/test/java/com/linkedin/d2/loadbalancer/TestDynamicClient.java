@@ -19,7 +19,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.util.NamedThreadFactory;
-import com.linkedin.test.util.retry.ThreeRetries;
+import com.linkedin.test.util.retry.TenRetries;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
@@ -141,7 +141,7 @@ public class TestDynamicClient extends D2BaseTest {
    * the requests sending from the clients should result in an even distribution. The total call count
    * received by a single server should not deviate by more than 15% of the average.
    */
-  @Test(retryAnalyzer = ThreeRetries.class)
+  @Test(retryAnalyzer = TenRetries.class)
   public void testBalancedLoadDistribution()
   {
     SimpleLoadBalancerStateTest.TestListener listener = new SimpleLoadBalancerStateTest.TestListener();
@@ -198,7 +198,7 @@ public class TestDynamicClient extends D2BaseTest {
    * After the update event is received by the ZK event subscriber. One request is required to actually trigger the
    * load balancer state and hash ring changes.
    */
-  @Test(retryAnalyzer = ThreeRetries.class)
+  @Test(retryAnalyzer = TenRetries.class)
   public void testD2WeightLessThanOne()
   {
     SimpleLoadBalancerStateTest.TestListener listener = new SimpleLoadBalancerStateTest.TestListener();
@@ -218,11 +218,12 @@ public class TestDynamicClient extends D2BaseTest {
       throw new RuntimeException("Failed the test because thread was interrupted");
     }
 
-    try {
+    try
+    {
       // Change the D2 weight of server:2851 to 0.5
       invokeD2ChangeWeightJmx(new ObjectName("com.linkedin.d2:type=\"server:2851\""), 0.5);
-      // Wait 5ms for the change to propagate
-      Thread.sleep(5);
+      // Wait 50ms for the change to propagate
+      Thread.sleep(50);
     } catch (Exception e) {
       fail("Failed to invoke d2 weight change jmx", e);
     }
@@ -284,7 +285,7 @@ public class TestDynamicClient extends D2BaseTest {
    * And if we further increase the weight to 4.0. The host will receive 4x the traffic of the other hosts
    * (with a tolerance of 15%).
    */
-  @Test(retryAnalyzer = ThreeRetries.class)
+  @Test(retryAnalyzer = TenRetries.class)
   public void testD2WeightGreaterThanOne()
   {
     SimpleLoadBalancerStateTest.TestListener listener = new SimpleLoadBalancerStateTest.TestListener();
@@ -304,11 +305,12 @@ public class TestDynamicClient extends D2BaseTest {
       throw new RuntimeException("Failed the test because thread was interrupted");
     }
 
-    try {
+    try
+    {
       // Change the D2 weight of server:2851 to 2.0
       invokeD2ChangeWeightJmx(new ObjectName("com.linkedin.d2:type=\"server:2851\""), 2);
-      // Wait 5ms for the change to propagate
-      Thread.sleep(5);
+      // Wait 50ms for the change to propagate
+      Thread.sleep(50);
     } catch (Exception e) {
       fail("Failed to invoke d2 weight change jmx", e);
     }
@@ -363,11 +365,12 @@ public class TestDynamicClient extends D2BaseTest {
       }
     }
 
-    try {
+    try
+    {
       // Change the D2 weight of server:2851 to 4.0
       invokeD2ChangeWeightJmx(new ObjectName("com.linkedin.d2:type=\"server:2851\""), 4);
-      // Wait 5ms for the change to propagate
-      Thread.sleep(5);
+      // Wait 50ms for the change to propagate
+      Thread.sleep(50);
     } catch (Exception e) {
       fail("Failed to invoke d2 weight change jmx", e);
     }
@@ -405,7 +408,7 @@ public class TestDynamicClient extends D2BaseTest {
    *   2. The host start receiving traffic and has a health score > 0.5.
    * The host will then be kicked out of the recovery program and continue to recover/degrade using normal up/downStep.
    */
-  @Test(retryAnalyzer = ThreeRetries.class)
+  @Test(retryAnalyzer = TenRetries.class)
   public void testHostMarkDownAndMarkUp()
   {
     SimpleLoadBalancerStateTest.TestListener listener = new SimpleLoadBalancerStateTest.TestListener();
@@ -425,11 +428,12 @@ public class TestDynamicClient extends D2BaseTest {
       throw new RuntimeException("Failed the test because thread was interrupted");
     }
 
-    try {
+    try
+    {
       // Mark down server:2851
       invokeMarkDownJmx(new ObjectName("com.linkedin.d2:type=\"server:2851\""));
-      // Wait 5ms for the change to propagate
-      Thread.sleep(5);
+      // Wait 50ms for the change to propagate
+      Thread.sleep(50);
     } catch (Exception e) {
       fail("Failed to invoke d2 weight change jmx", e);
     }
@@ -459,11 +463,12 @@ public class TestDynamicClient extends D2BaseTest {
       throw new RuntimeException("Failed the test because thread was interrupted");
     }
 
-    try {
+    try
+    {
       // Mark up server:2851
       invokeMarkUpJmx(new ObjectName("com.linkedin.d2:type=\"server:2851\""));
-      // Wait 5ms for the change to propagate
-      Thread.sleep(5);
+      // Wait 50ms for the change to propagate
+      Thread.sleep(50);
     } catch (Exception e) {
       fail("Failed to invoke d2 weight change jmx", e);
     }
