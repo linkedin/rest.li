@@ -77,7 +77,6 @@ public class XdsClientImpl extends XdsClient
       Arrays.stream(ResourceType.values())
           .filter(e -> e.typeUrl() != null)
           .collect(Collectors.toMap(Function.identity(), e -> new HashMap<>())));
-  private final Map<ResourceType, WildcardResourceSubscriber> _wildcardSubscribers = Maps.newEnumMap(ResourceType.class);
   private final Node _node;
   private final ManagedChannel _managedChannel;
   private final ScheduledExecutorService _executorService;
@@ -132,7 +131,7 @@ public class XdsClientImpl extends XdsClient
   }
 
   @Override
-  public void watchXdsResource(String resourceName, ResourceWatcher watcher)
+  void watchXdsResource(String resourceName, ResourceWatcher watcher)
   {
     _executorService.execute(() ->
     {
@@ -165,32 +164,6 @@ public class XdsClientImpl extends XdsClient
           _adsStream.sendDiscoveryRequest(type, Collections.singletonList(adjustedResourceName));
         }
       }
-      subscriber.addWatcher(watcher);
-    });
-  }
-
-  @Override
-  public void watchAllXdsResources(WildcardResourceWatcher watcher)
-  {
-    _executorService.execute(() ->
-    {
-      _log.info("Subscribing to wildcard for resource type: {}", watcher.getType());
-      WildcardResourceSubscriber subscriber = getWildcardResourceSubscriber(watcher.getType());
-      if (subscriber == null)
-      {
-        subscriber = new WildcardResourceSubscriber(watcher.getType());
-        _wildcardSubscribers.put(watcher.getType(), subscriber);
-
-        if (_adsStream == null && !isInBackoff())
-        {
-          startRpcStreamLocal();
-        }
-        if (_adsStream != null)
-        {
-          _adsStream.sendDiscoveryRequest(watcher.getType(), Collections.singletonList("*"));
-        }
-      }
-
       subscriber.addWatcher(watcher);
     });
   }
@@ -252,7 +225,7 @@ public class XdsClientImpl extends XdsClient
   }
 
   @Override
-  public void shutdown()
+  void shutdown()
   {
     _executorService.execute(() ->
     {
@@ -265,7 +238,7 @@ public class XdsClientImpl extends XdsClient
   }
 
   @Override
-  public String getXdsServerAuthority()
+  String getXdsServerAuthority()
   {
     return _managedChannel.authority();
   }
@@ -498,11 +471,6 @@ public class XdsClientImpl extends XdsClient
       {
         subscriber.onData(entry.getValue(), _serverMetricsProvider);
       }
-      WildcardResourceSubscriber wildcardSubscriber = _wildcardSubscribers.get(type);
-      if (wildcardSubscriber != null)
-      {
-        wildcardSubscriber.onData(entry.getKey(), entry.getValue());
-      }
     }
   }
 
@@ -522,11 +490,6 @@ public class XdsClientImpl extends XdsClient
         subscriber.onRemoval();
       }
     }
-    WildcardResourceSubscriber wildcardSubscriber = _wildcardSubscribers.get(type);
-    if (wildcardSubscriber != null)
-    {
-      removedResources.forEach(wildcardSubscriber::onRemoval);
-    }
   }
 
 
@@ -538,10 +501,6 @@ public class XdsClientImpl extends XdsClient
       {
         subscriber.onError(error);
       }
-    }
-    for (WildcardResourceSubscriber wildcardResourceSubscriber : _wildcardSubscribers.values())
-    {
-      wildcardResourceSubscriber.onError(error);
     }
     _xdsClientJmx.setIsConnected(false);
   }
@@ -555,10 +514,6 @@ public class XdsClientImpl extends XdsClient
         subscriber.onReconnect();
       }
     }
-    for (WildcardResourceSubscriber wildcardResourceSubscriber : _wildcardSubscribers.values())
-    {
-      wildcardResourceSubscriber.onReconnect();
-    }
     _xdsClientJmx.setIsConnected(true);
   }
 
@@ -566,12 +521,6 @@ public class XdsClientImpl extends XdsClient
   Map<String, ResourceSubscriber> getResourceSubscriberMap(ResourceType type)
   {
     return _resourceSubscribers.get(type);
-  }
-
-  @VisibleForTesting
-  WildcardResourceSubscriber getWildcardResourceSubscriber(ResourceType type)
-  {
-    return _wildcardSubscribers.get(type);
   }
 
   static class ResourceSubscriber
@@ -741,132 +690,24 @@ public class XdsClientImpl extends XdsClient
     }
   }
 
-  static class WildcardResourceSubscriber
-  {
-    private final ResourceType _type;
-    private final Set<WildcardResourceWatcher> _watchers = new HashSet<>();
-    private Map<String, ResourceUpdate> _data = new HashMap<>();
-
-    @VisibleForTesting
-    public Map<String, ResourceUpdate> getData()
-    {
-      return _data;
-    }
-
-    @VisibleForTesting
-    public void setData(@Nullable Map<String, ResourceUpdate> data)
-    {
-      _data = data;
-    }
-
-    WildcardResourceSubscriber(ResourceType type)
-    {
-      _type = type;
-    }
-
-    void addWatcher(WildcardResourceWatcher watcher)
-    {
-      _watchers.add(watcher);
-      for (Map.Entry<String, ResourceUpdate> entry : _data.entrySet())
-      {
-        watcher.onChanged(entry.getKey(), entry.getValue());
-        _log.debug("Notifying watcher of current data for resource {} of type {}: {}",
-            entry.getKey(), _type, entry.getValue());
-      }
-    }
-
-    private void onData(String resourceName, ResourceUpdate data)
-    {
-      if (Objects.equals(_data.get(resourceName), data))
-      {
-        _log.debug("Received resource update data equal to the current data. Will not perform the update.");
-        return;
-      }
-      // null value guard to avoid overwriting the property with null
-      if (data != null && data.isValid())
-      {
-        _data.put(resourceName, data);
-        for (WildcardResourceWatcher watcher : _watchers)
-        {
-          watcher.onChanged(resourceName, data);
-        }
-      }
-      else
-      {
-        if (_type == ResourceType.D2_URI_MAP || _type == ResourceType.D2_URI)
-        {
-          RATE_LIMITED_LOGGER.warn("Received invalid data for {} {}, data: {}", _type, resourceName, data);
-        }
-        else
-        {
-          _log.warn("Received invalid data for {} {}, data: {}", _type, resourceName, data);
-        }
-      }
-    }
-
-    public ResourceType getType()
-    {
-      return _type;
-    }
-
-    private void onError(Status error)
-    {
-      for (WildcardResourceWatcher watcher : _watchers)
-      {
-        watcher.onError(error);
-      }
-    }
-
-    private void onReconnect()
-    {
-      for (WildcardResourceWatcher watcher : _watchers)
-      {
-        watcher.onReconnect();
-      }
-    }
-
-    @VisibleForTesting
-    void onRemoval(String resourceName)
-    {
-      _data.remove(resourceName);
-      for (WildcardResourceWatcher watcher : _watchers)
-      {
-        watcher.onRemoval(resourceName);
-      }
-    }
-  }
-
-  final class RpcRetryTask implements Runnable
-  {
+  final class RpcRetryTask implements Runnable {
     @Override
-    public void run()
-    {
+    public void run() {
       startRpcStreamLocal();
-      for (ResourceType type : ResourceType.values())
-      {
-        Set<String> resources = new HashSet<>(getResourceSubscriberMap(type).keySet());
-        if (resources.isEmpty() && getWildcardResourceSubscriber(type) == null)
+      for (ResourceType type : ResourceType.values()) {
+        Collection<String> resources = getResourceSubscriberMap(type).keySet();
+        if (resources.isEmpty())
         {
           continue;
         }
-        ResourceType rewrittenType;
         if (_subscribeToUriGlobCollection && type == ResourceType.D2_URI_MAP)
         {
           resources = resources.stream()
               .map(GlobCollectionUtils::globCollectionUrlForClusterResource)
-              .collect(Collectors.toCollection(HashSet::new));
-          rewrittenType = ResourceType.D2_URI;
+              .collect(Collectors.toSet());
+          type = ResourceType.D2_URI;
         }
-        else
-        {
-          rewrittenType = type;
-        }
-        // If there is a wildcard subscriber, we should always send a wildcard request to the server.
-        if (getWildcardResourceSubscriber(type) != null)
-        {
-          resources.add("*");
-        }
-        _adsStream.sendDiscoveryRequest(rewrittenType, resources);
+        _adsStream.sendDiscoveryRequest(type, resources);
       }
     }
   }
