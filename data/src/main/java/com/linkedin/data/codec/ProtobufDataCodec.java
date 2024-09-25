@@ -258,9 +258,10 @@ public class ProtobufDataCodec implements DataCodec
   protected final String readStringReference(ProtoReader reader) throws IOException
   {
     String value;
-    if ((value = _options.getSymbolTable().getSymbolName(reader.readInt32())) == null)
+    int symbolId = reader.readInt32();
+    if ((value = _options.getSymbolTable().getSymbolName(symbolId)) == null)
     {
-      throw new DataDecodingException("Error decoding string reference");
+      throw new DataDecodingException("Error decoding string reference. Symbol ID: " + symbolId);
     }
     return value;
   }
