@@ -631,6 +631,16 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     return (_uriSpecificProperties == null) ? Collections.<String, Object>emptyMap() : _uriSpecificProperties;
   }
 
+  public boolean isDarkWarmupEnabled()
+  {
+    return _isDarkWarmupEnabled;
+  }
+
+  public String getDarkWarmupClusterName()
+  {
+    return _warmupClusterName;
+  }
+
   /**
    * This is not the cleanest way of setting weight or partition data. However,
    * this simplifies object create by presenting only one method and by forcing
