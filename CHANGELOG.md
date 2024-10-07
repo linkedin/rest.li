@@ -14,6 +14,8 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.58.12] - 2024-10-07
+- Add support for announcing/deannoucing service only to INDIS
 ## [29.58.11] - 2024-10-03
 - Add getters in ZookeeperAnnouncer
 
@@ -5743,7 +5745,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.58.11...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.58.12...master
+[29.58.12]: https://github.com/linkedin/rest.li/compare/v29.58.11...v29.58.12
 [29.58.11]: https://github.com/linkedin/rest.li/compare/v29.58.10...v29.58.11
 [29.58.10]: https://github.com/linkedin/rest.li/compare/v29.58.9...v29.58.10
 [29.58.9]: https://github.com/linkedin/rest.li/compare/v29.58.8...v29.58.9

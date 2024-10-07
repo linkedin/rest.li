@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
  * @version $Revision: $
  */
 
-public class ZooKeeperConnectionManager
+public class ZooKeeperConnectionManager extends ConnectionManager
 {
   private static final Logger LOG = LoggerFactory.getLogger(ZooKeeperConnectionManager.class);
 
@@ -79,6 +79,10 @@ public class ZooKeeperConnectionManager
                                     ZKStoreFactory<UriProperties,ZooKeeperEphemeralStore<UriProperties>> factory,
                                     ZooKeeperAnnouncer... servers)
   {
+    super(servers,
+          zkConnection.getZKConnection().getConnectString(),
+          zkConnection.getZKConnection().getTimeout(),
+          zkBasePath);
     _zkBasePath = zkBasePath;
     _zkConnection = zkConnection;
     _factory = factory;
@@ -94,6 +98,10 @@ public class ZooKeeperConnectionManager
                                     ZKStoreFactory<UriProperties,ZooKeeperEphemeralStore<UriProperties>> factory,
                                     ZooKeeperAnnouncer... servers)
   {
+    super(servers,
+          zkConnectString,
+          zkSessionTimeout,
+          zkBasePath);
     _zkConnectString = zkConnectString;
     _zkSessionTimeout = zkSessionTimeout;
     _zkBasePath = zkBasePath;
@@ -132,6 +140,7 @@ public class ZooKeeperConnectionManager
     this(zkConnectString, zkSessionTimeout, zkBasePath, factory, servers);
   }
 
+  @Override
   public void start(Callback<None> callback)
   {
     _managerStarted = true;
@@ -154,6 +163,7 @@ public class ZooKeeperConnectionManager
     }
   }
 
+  @Override
   public void shutdown(final Callback<None> callback)
   {
     _managerStarted = false;
@@ -179,69 +189,6 @@ public class ZooKeeperConnectionManager
       zkCloseCallback.onSuccess(None.none());
     }
   }
-
-  public void markDownAllServers(final Callback<None> callback)
-  {
-    Callback<None> markDownCallback;
-    if (callback != null)
-    {
-      markDownCallback = callback;
-    }
-    else
-    {
-      markDownCallback = new Callback<None>()
-      {
-        @Override
-        public void onError(Throwable e)
-        {
-          LOG.error("failed to mark down servers", e);
-        }
-
-        @Override
-        public void onSuccess(None result)
-        {
-          LOG.info("mark down all servers successful");
-        }
-      };
-    }
-    Callback<None> multiCallback = Callbacks.countDown(markDownCallback, _servers.length);
-    for (ZooKeeperAnnouncer server : _servers)
-    {
-      server.markDown(multiCallback);
-    }
-  }
-
-  public void markUpAllServers(final Callback<None> callback)
-  {
-    Callback<None> markUpCallback;
-    if (callback != null)
-    {
-      markUpCallback = callback;
-    }
-    else
-    {
-      markUpCallback = new Callback<None>()
-      {
-        @Override
-        public void onError(Throwable e)
-        {
-          LOG.error("failed to mark up servers", e);
-        }
-
-        @Override
-        public void onSuccess(None result)
-        {
-          LOG.info("mark up all servers successful");
-        }
-      };
-    }
-    Callback<None> multiCallback = Callbacks.countDown(markUpCallback, _servers.length);
-    for (ZooKeeperAnnouncer server : _servers)
-    {
-      server.markUp(multiCallback);
-    }
-  }
-
   private class Listener implements ZKPersistentConnection.EventListener
   {
     @Override
@@ -353,28 +300,9 @@ public class ZooKeeperConnectionManager
     Z createStore(ZKConnection connection, String path);
   }
 
-  public ZooKeeperAnnouncer[] getAnnouncers()
-  {
-    return _servers;
-  }
-
+  @Override
   public boolean isSessionEstablished()
   {
     return _sessionEstablished;
-  }
-
-  public String getZooKeeperConnectString()
-  {
-    return _zkConnectString;
-  }
-
-  public int getZooKeeperSessionTimeout()
-  {
-    return _zkSessionTimeout;
-  }
-
-  public String getZooKeeperBasePath()
-  {
-    return _zkBasePath;
   }
 }
