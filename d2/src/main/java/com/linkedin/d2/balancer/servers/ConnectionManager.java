@@ -9,23 +9,19 @@ import org.slf4j.LoggerFactory;
 public abstract class ConnectionManager
 {
   private final ZooKeeperAnnouncer[] _servers;
-  private final String _zkConnectString;
-  private final int _zkSessionTimeout;
-  private final String _zkBasePath;
 
   private static final Logger LOG = LoggerFactory.getLogger(ConnectionManager.class);
 
-  protected ConnectionManager(ZooKeeperAnnouncer[] servers, String zkConnectString, int zkSessionTimeout, String zkBasePath)
+  protected ConnectionManager(ZooKeeperAnnouncer[] servers)
   {
     _servers = servers;
-    _zkConnectString = zkConnectString;
-    _zkSessionTimeout = zkSessionTimeout;
-    _zkBasePath = zkBasePath;
   }
 
   abstract public void start(Callback<None> callback);
 
   abstract public void shutdown(final Callback<None> callback);
+
+  abstract public String getAnnouncementTargetIdentifier();
 
   public void markDownAllServers(final Callback<None> callback)
   {
@@ -93,22 +89,5 @@ public abstract class ConnectionManager
   public ZooKeeperAnnouncer[] getAnnouncers()
   {
     return _servers;
-  }
-
-  abstract public boolean isSessionEstablished();
-
-  public String getZooKeeperConnectString()
-  {
-    return _zkConnectString;
-  }
-
-  public int getZooKeeperSessionTimeout()
-  {
-    return _zkSessionTimeout;
-  }
-
-  public String getZooKeeperBasePath()
-  {
-    return _zkBasePath;
   }
 }

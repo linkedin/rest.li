@@ -79,10 +79,7 @@ public class ZooKeeperConnectionManager extends ConnectionManager
                                     ZKStoreFactory<UriProperties,ZooKeeperEphemeralStore<UriProperties>> factory,
                                     ZooKeeperAnnouncer... servers)
   {
-    super(servers,
-          zkConnection.getZKConnection().getConnectString(),
-          zkConnection.getZKConnection().getTimeout(),
-          zkBasePath);
+    super(servers);
     _zkBasePath = zkBasePath;
     _zkConnection = zkConnection;
     _factory = factory;
@@ -98,10 +95,7 @@ public class ZooKeeperConnectionManager extends ConnectionManager
                                     ZKStoreFactory<UriProperties,ZooKeeperEphemeralStore<UriProperties>> factory,
                                     ZooKeeperAnnouncer... servers)
   {
-    super(servers,
-          zkConnectString,
-          zkSessionTimeout,
-          zkBasePath);
+    super(servers);
     _zkConnectString = zkConnectString;
     _zkSessionTimeout = zkSessionTimeout;
     _zkBasePath = zkBasePath;
@@ -189,6 +183,7 @@ public class ZooKeeperConnectionManager extends ConnectionManager
       zkCloseCallback.onSuccess(None.none());
     }
   }
+
   private class Listener implements ZKPersistentConnection.EventListener
   {
     @Override
@@ -301,8 +296,28 @@ public class ZooKeeperConnectionManager extends ConnectionManager
   }
 
   @Override
+  public String getAnnouncementTargetIdentifier()
+  {
+    return getZooKeeperConnectString();
+  }
+
   public boolean isSessionEstablished()
   {
     return _sessionEstablished;
+  }
+
+  public String getZooKeeperConnectString()
+  {
+    return _zkConnectString;
+  }
+
+  public int getZooKeeperSessionTimeout()
+  {
+    return _zkSessionTimeout;
+  }
+
+  public String getZooKeeperBasePath()
+  {
+    return _zkBasePath;
   }
 }
