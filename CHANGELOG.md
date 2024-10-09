@@ -16,6 +16,7 @@ and what APIs have changed, if applicable.
 
 ## [29.58.12] - 2024-10-07
 - Add support for announcing/deannoucing service only to INDIS
+
 ## [29.58.11] - 2024-10-03
 - Add getters in ZookeeperAnnouncer
 
