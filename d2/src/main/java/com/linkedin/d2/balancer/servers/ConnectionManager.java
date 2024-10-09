@@ -9,7 +9,8 @@ import org.slf4j.LoggerFactory;
 /**
  * ConnectionManager is an abstract class responsible for managing connections to external systems.
  * It can be extended to handle specific service registries (e.g., Zookeeper).
- * For example, see {@link com.linkedin.d2.balancer.servers.ZooKeeperConnectionManager} for managing Zookeeper connections during D2 server announcements.
+ * For example, see {@link com.linkedin.d2.balancer.servers.ZooKeeperConnectionManager} for managing Zookeeper
+ * connections during D2 server announcements.
  * This class provides basic functionalities such as start, shutdown, markDownAllServers, and markUpAllServers which
  * is called during D2 server announcements/de-announcement.
  */
