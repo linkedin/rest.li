@@ -481,7 +481,10 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
       @Override
       public void onSuccess(None result)
       {
-        emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, false, true, _markDownStartAtRef.get());
+        if (_server instanceof ZooKeeperServer)
+        {
+          emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, false, true, _markDownStartAtRef.get());
+        }
         _log.info("markDown for uri = {} succeeded.", _uri);
         // Note that the pending callbacks we see at this point are
         // from the requests that are filed before us because zookeeper
@@ -724,7 +727,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
 
   @Override
   public void emitSDStatusActiveUpdateIntentAndWriteEvents(String cluster, boolean isMarkUp, boolean succeeded, long startAt) {
-    if (_server instanceof ZooKeeperServer)
+    if (!(_server instanceof ZooKeeperServer))
     {
       return;
     }
