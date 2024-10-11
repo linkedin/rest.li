@@ -724,6 +724,10 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
 
   @Override
   public void emitSDStatusActiveUpdateIntentAndWriteEvents(String cluster, boolean isMarkUp, boolean succeeded, long startAt) {
+    if (_server instanceof ZooKeeperServer)
+    {
+      return;
+    }
     if (_eventEmitter == null) {
       _log.info("Service discovery event emitter in ZookeeperAnnouncer is null. Skipping emitting events.");
       return;
