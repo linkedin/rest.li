@@ -176,7 +176,8 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     _executorService = executorService;
     _eventEmitter = eventEmitter;
 
-    if(server instanceof ZooKeeperServer){
+    if (server instanceof ZooKeeperServer)
+    {
       ((ZooKeeperServer) server).setServiceDiscoveryEventHelper(this);
     }
   }
