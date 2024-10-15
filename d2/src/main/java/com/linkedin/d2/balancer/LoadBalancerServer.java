@@ -69,4 +69,6 @@ public interface LoadBalancerServer
   void start(Callback<None> callback);
 
   void shutdown(Callback<None> callback);
+
+  String getConnectString();
 }
