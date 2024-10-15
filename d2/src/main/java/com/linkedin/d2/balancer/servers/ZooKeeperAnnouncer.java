@@ -724,6 +724,9 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
 
   @Override
   public void emitSDStatusActiveUpdateIntentAndWriteEvents(String cluster, boolean isMarkUp, boolean succeeded, long startAt) {
+    // since SD event is sent in IndisAnnouncer for INDIS-write-only, inside ZookeeperAnnouncer, any calls to
+    // "emitSDStatusActiveUpdateIntentAndWriteEvents" should only happen when _server is an instance of
+    // ZooKeeperServer (which means it only emits the event when it's doing zk-only or dual write).
     if (!(_server instanceof ZooKeeperServer))
     {
       return;
