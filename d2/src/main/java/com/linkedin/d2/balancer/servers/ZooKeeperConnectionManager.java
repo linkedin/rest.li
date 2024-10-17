@@ -188,6 +188,7 @@ public class ZooKeeperConnectionManager extends ConnectionManager
    * deprecated, use {@link  ConnectionManager#markDownAllServers(Callback)} instead.
    */
   @Deprecated
+  @Override
   public void markDownAllServers(final Callback<None> callback)
   {
     Callback<None> markDownCallback;
@@ -220,8 +221,10 @@ public class ZooKeeperConnectionManager extends ConnectionManager
   }
 
   /**
-   * deprecated, use {@link  ConnectionManager#markUpAllServers(Callback)} instead.
+   * @deprecated, use {@link  ConnectionManager#markUpAllServers(Callback)} instead.
    */
+  @Deprecated
+  @Override
   public void markUpAllServers(final Callback<None> callback)
   {
     Callback<None> markUpCallback;
