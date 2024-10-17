@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 
@@ -183,15 +184,19 @@ public abstract class XdsClient
   public interface ResourceUpdate
   {
     boolean isValid();
+    @Nonnull
+    Map<String, String> getVersions();
   }
 
   public static final class NodeUpdate implements ResourceUpdate
   {
     XdsD2.Node _nodeData;
+    Map<String, String> _versions;
 
-    NodeUpdate(XdsD2.Node nodeData)
+    NodeUpdate(XdsD2.Node nodeData, @Nonnull Map<String, String> versions)
     {
       _nodeData = nodeData;
+      _versions = versions;
     }
 
     public XdsD2.Node getNodeData()
@@ -211,13 +216,13 @@ public abstract class XdsClient
         return false;
       }
       NodeUpdate that = (NodeUpdate) object;
-      return Objects.equals(_nodeData, that._nodeData);
+      return Objects.equals(_versions, that._versions) && Objects.equals(_nodeData, that._nodeData);
     }
 
     @Override
     public int hashCode()
     {
-      return Objects.hash(_nodeData);
+      return Objects.hash(_versions, _nodeData);
     }
 
     @Override
@@ -226,20 +231,28 @@ public abstract class XdsClient
       return _nodeData != null && !_nodeData.getData().isEmpty();
     }
 
+    @Nonnull
+    @Override
+    public Map<String, String> getVersions() {
+      return _versions;
+    }
+
     @Override
     public String toString()
     {
-      return MoreObjects.toStringHelper(this).add("_nodeData", _nodeData).toString();
+      return MoreObjects.toStringHelper(this).add("_versions", _versions).add("_nodeData", _nodeData).toString();
     }
   }
 
   public static final class D2URIMapUpdate implements ResourceUpdate
   {
     Map<String, XdsD2.D2URI> _uriMap;
+    Map<String, String> _versions;
 
-    D2URIMapUpdate(Map<String, XdsD2.D2URI> uriMap)
+    D2URIMapUpdate(Map<String, XdsD2.D2URI> uriMap, @Nonnull Map<String, String> versions)
     {
       _uriMap = uriMap;
+      _versions = versions;
     }
 
     public Map<String, XdsD2.D2URI> getURIMap()
@@ -247,13 +260,14 @@ public abstract class XdsClient
       return _uriMap;
     }
 
-    D2URIMapUpdate putUri(String name, XdsD2.D2URI uri)
+    D2URIMapUpdate putUri(String name, XdsD2.D2URI uri, String version)
     {
       if (_uriMap == null)
       {
         _uriMap = new HashMap<>();
       }
       _uriMap.put(name, uri);
+      _versions.put(name, version);
       return this;
     }
 
@@ -263,6 +277,7 @@ public abstract class XdsClient
       {
         _uriMap.remove(name);
       }
+      _versions.remove(name);
       return this;
     }
 
@@ -278,13 +293,13 @@ public abstract class XdsClient
         return false;
       }
       D2URIMapUpdate that = (D2URIMapUpdate) object;
-      return Objects.equals(_uriMap, that._uriMap);
+      return Objects.equals(_versions, that._versions) && Objects.equals(_uriMap, that._uriMap);
     }
 
     @Override
     public int hashCode()
     {
-      return Objects.hash(_uriMap);
+      return Objects.hash(_versions, _uriMap);
     }
 
     @Override
@@ -293,15 +308,21 @@ public abstract class XdsClient
       return _uriMap != null;
     }
 
+    @Nonnull
+    @Override
+    public Map<String, String> getVersions() {
+      return _versions;
+    }
+
     @Override
     public String toString()
     {
-      return MoreObjects.toStringHelper(this).add("_uriMap", _uriMap).toString();
+      return MoreObjects.toStringHelper(this).add("_versions", _versions).add("_uriMap", _uriMap).toString();
     }
   }
 
-  public static final NodeUpdate EMPTY_NODE_UPDATE = new NodeUpdate(null);
-  public static final D2URIMapUpdate EMPTY_D2_URI_MAP_UPDATE = new D2URIMapUpdate(null);
+  public static final NodeUpdate EMPTY_NODE_UPDATE = new NodeUpdate(null, new HashMap<>());
+  public static final D2URIMapUpdate EMPTY_D2_URI_MAP_UPDATE = new D2URIMapUpdate(null, new HashMap<>());
 
   enum ResourceType
   {
