@@ -185,7 +185,7 @@ public class ZooKeeperConnectionManager extends ConnectionManager
   }
 
   /**
-   * deprecated, use {@link  ConnectionManager#markDownAllServers(Callback)} instead.
+   * @deprecated, use {@link  ConnectionManager#markDownAllServers(Callback)} instead.
    */
   @Deprecated
   @Override
