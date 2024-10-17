@@ -141,9 +141,27 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   // Field to store the dark warm-up time duration in seconds, defaults to zero
   private int _warmupDuration;
 
+  /**
+   * @deprecated Use the constructor {@link #ZooKeeperAnnouncer(LoadBalancerServer)} instead.
+   */
+  @Deprecated
+  public ZooKeeperAnnouncer(ZooKeeperServer server)
+  {
+    this(server, true);
+  }
+
   public ZooKeeperAnnouncer(LoadBalancerServer server)
   {
     this(server, true);
+  }
+
+  /**
+   * @deprecated Use the constructor {@link #ZooKeeperAnnouncer(LoadBalancerServer, boolean)} instead.
+   */
+  @Deprecated
+  public ZooKeeperAnnouncer(ZooKeeperServer server, boolean initialIsUp)
+  {
+    this(server, initialIsUp, DEFAULT_DARK_WARMUP_ENABLED, DEFAULT_DARK_WARMUP_CLUSTER_NAME, DEFAULT_DARK_WARMUP_DURATION, (ScheduledExecutorService) null);
   }
 
   public ZooKeeperAnnouncer(LoadBalancerServer server, boolean initialIsUp)
@@ -151,11 +169,48 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     this(server, initialIsUp, DEFAULT_DARK_WARMUP_ENABLED, DEFAULT_DARK_WARMUP_CLUSTER_NAME, DEFAULT_DARK_WARMUP_DURATION, (ScheduledExecutorService) null);
   }
 
+  /**
+   * @deprecated Use the constructor {@link #ZooKeeperAnnouncer(LoadBalancerServer, boolean, boolean, String, int, ScheduledExecutorService)} instead.
+   */
+  @Deprecated
+  public ZooKeeperAnnouncer(ZooKeeperServer server, boolean initialIsUp,
+                            boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration,
+                            ScheduledExecutorService executorService)
+  {
+    this(server, initialIsUp, isDarkWarmupEnabled, warmupClusterName, warmupDuration, executorService,
+         new LogOnlyServiceDiscoveryEventEmitter()); // default to use log-only event emitter
+  }
+
   public ZooKeeperAnnouncer(LoadBalancerServer server, boolean initialIsUp,
       boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService)
   {
     this(server, initialIsUp, isDarkWarmupEnabled, warmupClusterName, warmupDuration, executorService,
         new LogOnlyServiceDiscoveryEventEmitter()); // default to use log-only event emitter
+  }
+
+  /**
+   * @deprecated Use the constructor {@link #ZooKeeperAnnouncer(LoadBalancerServer, boolean, boolean, String, int, ScheduledExecutorService, ServiceDiscoveryEventEmitter)} instead.
+   */
+  @Deprecated
+  public ZooKeeperAnnouncer(ZooKeeperServer server, boolean initialIsUp,
+                            boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService, ServiceDiscoveryEventEmitter eventEmitter)
+  {
+    _server = server;
+    // initialIsUp is used for delay mark up. If it's false, there won't be markup when the announcer is started.
+    _isUp = initialIsUp;
+    _isWarmingUp = false;
+    _isRetryWarmup = false;
+    _pendingMarkDown = new ArrayDeque<>();
+    _pendingMarkUp = new ArrayDeque<>();
+    _pendingWarmupMarkDown = new ArrayDeque<>();
+
+    _isDarkWarmupEnabled = isDarkWarmupEnabled;
+    _warmupClusterName = warmupClusterName;
+    _warmupDuration = warmupDuration;
+    _executorService = executorService;
+    _eventEmitter = eventEmitter;
+
+    server.setServiceDiscoveryEventHelper(this);
   }
 
   public ZooKeeperAnnouncer(LoadBalancerServer server, boolean initialIsUp,
