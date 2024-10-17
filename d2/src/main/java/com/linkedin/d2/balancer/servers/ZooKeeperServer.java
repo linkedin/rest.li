@@ -57,6 +57,11 @@ public class
   }
 
   public String getConnectString() {
+    if (_store == null)
+    {
+      _log.warn("ZooKeeperServer not started yet, connect string is not available.");
+      return "";
+    }
     return _store.getConnectString();
   }
 
