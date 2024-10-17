@@ -19,6 +19,7 @@ package com.linkedin.d2.xds;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -97,6 +98,7 @@ public class XdsClientImpl extends XdsClient
 
   private final XdsClientJmx _xdsClientJmx;
   private final XdsServerMetricsProvider _serverMetricsProvider;
+  private final Map<String, String> _resourceVersions = new HashMap<>();
 
   @Deprecated
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService)
@@ -167,7 +169,7 @@ public class XdsClientImpl extends XdsClient
         }
         if (_adsStream != null)
         {
-          _adsStream.sendDiscoveryRequest(type, Collections.singletonList(adjustedResourceName));
+          _adsStream.sendDiscoveryRequest(type, Collections.singletonList(adjustedResourceName), null);
         }
       }
       subscriber.addWatcher(watcher);
@@ -198,7 +200,7 @@ public class XdsClientImpl extends XdsClient
         }
         if (_adsStream != null)
         {
-          _adsStream.sendDiscoveryRequest(adjustedType, Collections.singletonList("*"));
+          _adsStream.sendDiscoveryRequest(adjustedType, Collections.singletonList("*"), null);
         }
       }
 
@@ -356,7 +358,7 @@ public class XdsClientImpl extends XdsClient
         {
           _log.warn("Received a Node response with no data, resource is : {}", resourceName);
         }
-        updates.put(resourceName, new NodeUpdate(d2Node));
+        updates.put(resourceName, new NodeUpdate(d2Node, ImmutableMap.of(resourceName, resource.getVersion())));
       }
       catch (InvalidProtocolBufferException e)
       {
@@ -388,7 +390,7 @@ public class XdsClientImpl extends XdsClient
         {
           _log.warn("Received a D2URIMap response with no data, resource is : {}", resourceName);
         }
-        updates.put(resourceName, new D2URIMapUpdate(nodeData));
+        updates.put(resourceName, new D2URIMapUpdate(nodeData, ImmutableMap.of(resourceName, resource.getVersion())));
       }
       catch (InvalidProtocolBufferException e)
       {
@@ -453,11 +455,11 @@ public class XdsClientImpl extends XdsClient
         }
         if (currentData == null || !currentData.isValid())
         {
-          return new D2URIMapUpdate(null);
+          return new D2URIMapUpdate(null, new HashMap<>());
         }
         else
         {
-          return new D2URIMapUpdate(new HashMap<>(currentData.getURIMap()));
+          return new D2URIMapUpdate(new HashMap<>(currentData.getURIMap()), currentData.getVersions());
         }
       });
 
@@ -481,7 +483,7 @@ public class XdsClientImpl extends XdsClient
         try
         {
           XdsD2.D2URI uri = resource.getResource().unpack(XdsD2.D2URI.class);
-          update.putUri(uriId.getUriName(), uri);
+          update.putUri(uriId.getUriName(), uri, resource.getVersion());
         }
         catch (InvalidProtocolBufferException e)
         {
@@ -866,7 +868,14 @@ public class XdsClientImpl extends XdsClient
       startRpcStreamLocal();
       for (ResourceType type : _resourceSubscribers.keySet())
       {
-        Set<String> resources = new HashSet<>(getResourceSubscriberMap(type).keySet());
+        Map<String, String> resourceVersions = new HashMap<>();
+        Set<String> resources = new HashSet<>();
+        for (Map.Entry<String, ResourceSubscriber> entry : getResourceSubscriberMap(type).entrySet()) {
+          resources.add(entry.getKey());
+          if (entry.getValue() != null && entry.getValue().getData() != null) {
+            resourceVersions.putAll(entry.getValue().getData().getVersions());
+          }
+        }
         if (resources.isEmpty() && getWildcardResourceSubscriber(type) == null)
         {
           continue;
@@ -888,7 +897,7 @@ public class XdsClientImpl extends XdsClient
         {
           resources.add("*");
         }
-        _adsStream.sendDiscoveryRequest(rewrittenType, resources);
+        _adsStream.sendDiscoveryRequest(rewrittenType, resources, resourceVersions);
       }
     }
   }
@@ -898,12 +907,16 @@ public class XdsClientImpl extends XdsClient
     private final Node _node;
     private final ResourceType _resourceType;
     private final Collection<String> _resourceNames;
+    @Nullable
+    private final Map<String, String> _resourceVersions;
 
-    DiscoveryRequestData(Node node, ResourceType resourceType, Collection<String> resourceNames)
+    DiscoveryRequestData(Node node, ResourceType resourceType, Collection<String> resourceNames,
+        @Nullable Map<String, String> resourceVersions)
     {
       _node = node;
       _resourceType = resourceType;
       _resourceNames = resourceNames;
+      _resourceVersions = resourceVersions;
     }
 
     DeltaDiscoveryRequest toEnvoyProto()
@@ -912,7 +925,9 @@ public class XdsClientImpl extends XdsClient
           .setNode(_node.toEnvoyProtoNode())
           .addAllResourceNamesSubscribe(_resourceNames)
           .setTypeUrl(_resourceType.typeUrl());
-
+      if (_resourceVersions != null) {
+        builder.putAllInitialResourceVersions(_resourceVersions);
+      }
       return builder.build();
     }
 
@@ -1122,10 +1137,11 @@ public class XdsClientImpl extends XdsClient
     /**
      * Sends a client-initiated discovery request.
      */
-    private void sendDiscoveryRequest(ResourceType type, Collection<String> resources)
+    private void sendDiscoveryRequest(ResourceType type, Collection<String> resources,
+        @Nullable Map<String, String> resourceVersions)
     {
       _log.info("Sending {} request for resources: {}", type, resources);
-      DeltaDiscoveryRequest request = new DiscoveryRequestData(_node, type, resources).toEnvoyProto();
+      DeltaDiscoveryRequest request = new DiscoveryRequestData(_node, type, resources, resourceVersions).toEnvoyProto();
       _requestWriter.onNext(request);
       _log.debug("Sent DiscoveryRequest\n{}", request);
     }

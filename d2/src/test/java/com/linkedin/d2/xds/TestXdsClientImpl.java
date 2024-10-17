@@ -48,8 +48,8 @@ public class TestXdsClientImpl
   private static final Any PACKED_NODE_WITH_DATA = Any.pack(NODE_WITH_DATA);
   private static final Any PACKED_NODE_WITH_DATA2 = Any.pack(NODE_WITH_DATA2);
   private static final Any PACKED_NODE_WITH_EMPTY_DATA = Any.pack(NODE_WITH_EMPTY_DATA);
-  private static final XdsClient.NodeUpdate NODE_UPDATE1 = new XdsClient.NodeUpdate(NODE_WITH_DATA);
-  private static final XdsClient.NodeUpdate NODE_UPDATE2 = new XdsClient.NodeUpdate(NODE_WITH_DATA2);
+  private static final XdsClient.NodeUpdate NODE_UPDATE1 = new XdsClient.NodeUpdate(NODE_WITH_DATA, new HashMap<>());
+  private static final XdsClient.NodeUpdate NODE_UPDATE2 = new XdsClient.NodeUpdate(NODE_WITH_DATA2, new HashMap<>());
   private static final List<Resource> NODE_RESOURCES_WITH_DATA1 = Collections.singletonList(
       Resource.newBuilder().setVersion(VERSION1).setName(SERVICE_RESOURCE_NAME).setResource(PACKED_NODE_WITH_DATA).build());
   private static final List<Resource> NODE_RESOURCES_WITH_DATA2 = Collections.singletonList(
@@ -72,9 +72,9 @@ public class TestXdsClientImpl
       .putUris(URI1, D2URI_1_1) // updated uri1
       .putUris(URI2, D2URI_2).build(); // added ur2
   private static final D2URIMapUpdate D2_URI_MAP_UPDATE_WITH_DATA1 =
-      new D2URIMapUpdate(D2_URI_MAP_WITH_DATA1.getUrisMap());
+      new D2URIMapUpdate(D2_URI_MAP_WITH_DATA1.getUrisMap(), new HashMap<>());
   private static final D2URIMapUpdate D2_URI_MAP_UPDATE_WITH_DATA2 =
-      new D2URIMapUpdate(D2_URI_MAP_WITH_DATA2.getUrisMap());
+      new D2URIMapUpdate(D2_URI_MAP_WITH_DATA2.getUrisMap(), new HashMap<>());
   private static final Any PACKED_D2_URI_MAP_WITH_DATA1 = Any.pack(D2_URI_MAP_WITH_DATA1);
   private static final Any PACKED_D2_URI_MAP_WITH_DATA2 = Any.pack(D2_URI_MAP_WITH_DATA2);
   private static final Any PACKED_D2_URI_MAP_WITH_EMPTY_DATA = Any.pack(D2_URI_MAP_WITH_EMPTY_DATA);
@@ -170,8 +170,8 @@ public class TestXdsClientImpl
     Assert.assertEquals(Objects.requireNonNull(actualData).getNodeData(), NODE_UPDATE1.getNodeData());
 
     // subscriber original data is invalid, xds server latency won't be tracked
-    fixture._nodeSubscriber.setData(new XdsClient.NodeUpdate(null));
-    fixture._nodeWildcardSubscriber.setData(SERVICE_RESOURCE_NAME, new XdsClient.NodeUpdate(null));
+    fixture._nodeSubscriber.setData(new XdsClient.NodeUpdate(null, new HashMap<>()));
+    fixture._nodeWildcardSubscriber.setData(SERVICE_RESOURCE_NAME, new XdsClient.NodeUpdate(null, new HashMap<>()));
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA1);
     fixture.verifyAckSent(2);
     verify(fixture._resourceWatcher, times(2)).onChanged(eq(NODE_UPDATE1));
@@ -264,8 +264,8 @@ public class TestXdsClientImpl
     Assert.assertEquals(Objects.requireNonNull(actualData).getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA1.getURIMap());
 
     // subscriber original data is invalid, xds server latency won't be tracked
-    fixture._clusterSubscriber.setData(new XdsClient.D2URIMapUpdate(null));
-    fixture._uriMapWildcardSubscriber.setData(CLUSTER_RESOURCE_NAME, new XdsClient.D2URIMapUpdate(null));
+    fixture._clusterSubscriber.setData(new XdsClient.D2URIMapUpdate(null, new HashMap<>()));
+    fixture._uriMapWildcardSubscriber.setData(CLUSTER_RESOURCE_NAME, new XdsClient.D2URIMapUpdate(null, new HashMap<>()));
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA1);
     verify(fixture._resourceWatcher, times(2)).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA1));
     verify(fixture._wildcardResourceWatcher, times(2)).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(D2_URI_MAP_UPDATE_WITH_DATA1));
@@ -312,7 +312,7 @@ public class TestXdsClientImpl
     D2URIMapUpdate expectedUpdate =
         invalidData
             ? (D2URIMapUpdate) D2_URI_MAP.emptyData()
-            : new D2URIMapUpdate(Collections.emptyMap());
+            : new D2URIMapUpdate(Collections.emptyMap(), new HashMap<>());
     verify(fixture._resourceWatcher).onChanged(eq(expectedUpdate));
     if (!invalidData)
     {
@@ -392,8 +392,8 @@ public class TestXdsClientImpl
     Assert.assertEquals(Objects.requireNonNull(actualData).getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA1.getURIMap());
 
     // subscriber original data is invalid, xds server latency won't be tracked
-    fixture._clusterSubscriber.setData(new D2URIMapUpdate(null));
-    fixture._uriMapWildcardSubscriber.setData(CLUSTER_RESOURCE_NAME, new D2URIMapUpdate(null));
+    fixture._clusterSubscriber.setData(new D2URIMapUpdate(null, new HashMap<>()));
+    fixture._uriMapWildcardSubscriber.setData(CLUSTER_RESOURCE_NAME, new D2URIMapUpdate(null, new HashMap<>()));
     fixture._xdsClientImpl.handleResponse(createUri1);
     fixture.verifyAckSent(2);
     verify(fixture._resourceWatcher, times(2)).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA1));
@@ -410,7 +410,7 @@ public class TestXdsClientImpl
     fixture._xdsClientImpl.handleResponse(createUri2Delete1);
     actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
     // subscriber data should be updated to D2_URI_MAP_UPDATE_WITH_DATA2
-    D2URIMapUpdate expectedUpdate = new D2URIMapUpdate(Collections.singletonMap(URI2, D2URI_2));
+    D2URIMapUpdate expectedUpdate = new D2URIMapUpdate(Collections.singletonMap(URI2, D2URI_2), new HashMap<>());
     verify(fixture._resourceWatcher).onChanged(eq(expectedUpdate));
     verify(fixture._wildcardResourceWatcher).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(expectedUpdate));
     // track latency only for updated/new uri (not for deletion)
@@ -426,7 +426,7 @@ public class TestXdsClientImpl
     fixture._xdsClientImpl.handleResponse(deleteUri2);
     actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
     // subscriber data should be updated to empty map
-    expectedUpdate = new D2URIMapUpdate(Collections.emptyMap());
+    expectedUpdate = new D2URIMapUpdate(Collections.emptyMap(), new HashMap<>());
     verify(fixture._resourceWatcher).onChanged(eq(expectedUpdate));
     verify(fixture._wildcardResourceWatcher).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(expectedUpdate));
     verifyNoMoreInteractions(fixture._serverMetricsProvider);
@@ -543,7 +543,7 @@ public class TestXdsClientImpl
     subscriber.addWatcher(watcher);
     verify(watcher, times(0)).onChanged(any());
 
-    D2URIMapUpdate update = new D2URIMapUpdate(Collections.emptyMap());
+    D2URIMapUpdate update = new D2URIMapUpdate(Collections.emptyMap(), new HashMap<>());
     subscriber.setData(update);
     for (int i = 0; i < 10; i++)
     {
