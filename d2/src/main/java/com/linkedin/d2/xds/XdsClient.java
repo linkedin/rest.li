@@ -321,8 +321,6 @@ public abstract class XdsClient
     }
   }
 
-  // same as the default proto value for a string field
-  static final String UNKNOWN_RESOURCE_VERSION = "";
   public static final NodeUpdate EMPTY_NODE_UPDATE = new NodeUpdate(null, new HashMap<>());
   public static final D2URIMapUpdate EMPTY_D2_URI_MAP_UPDATE = new D2URIMapUpdate(null, new HashMap<>());
 
