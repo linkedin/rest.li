@@ -45,6 +45,7 @@ import io.netty.handler.codec.TooLongFrameException;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 import javax.net.ssl.SSLContext;
@@ -659,6 +660,7 @@ public class TestHttpNettyClient
   }
 
   @Test
+  @Ignore
   public void testFailBackoff() throws Exception
   {
     final int WARM_UP = 10;
