@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.59.1] - 2024-10-18
+Revert 29.59.0 change.
+
 ## [29.59.0] - 2024-10-07
 - Add support for announcing/deannoucing service only to INDIS
 
@@ -5746,8 +5749,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.59.0...master
-[29.59.0]: https://github.com/linkedin/rest.li/compare/v29.58.11...v29.59.0
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.59.1...master
+[29.59.1]: https://github.com/linkedin/rest.li/compare/v29.58.11...v29.59.1
 [29.58.11]: https://github.com/linkedin/rest.li/compare/v29.58.10...v29.58.11
 [29.58.10]: https://github.com/linkedin/rest.li/compare/v29.58.9...v29.58.10
 [29.58.9]: https://github.com/linkedin/rest.li/compare/v29.58.8...v29.58.9
