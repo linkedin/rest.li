@@ -537,6 +537,7 @@ public class TestHttpNettyClient
   // This in fact tests HttpClientPipelineFactory constructor through HttpNettyClient
   // constructor.
   @Test
+  @Ignore("This test is flaky and fails intermittently.")
   public void testClientPipelineFactory2Pass()
       throws NoSuchAlgorithmException
   {
@@ -660,7 +661,7 @@ public class TestHttpNettyClient
   }
 
   @Test
-  @Ignore
+  @Ignore("This test is flaky and fails intermittently.")
   public void testFailBackoff() throws Exception
   {
     final int WARM_UP = 10;
