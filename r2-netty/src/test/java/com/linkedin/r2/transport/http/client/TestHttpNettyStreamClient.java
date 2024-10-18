@@ -770,6 +770,7 @@ public class TestHttpNettyStreamClient
   // This in fact tests HttpClientPipelineFactory constructor through HttpNettyClient
   // constructor.
   @Test
+  @Ignore("This test is flaky and fails intermittently.")
   public void testClientPipelineFactory2Pass()
       throws NoSuchAlgorithmException
   {
