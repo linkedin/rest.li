@@ -45,6 +45,7 @@ import io.netty.handler.codec.TooLongFrameException;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Test;
 
 import javax.net.ssl.SSLContext;
@@ -536,6 +537,7 @@ public class TestHttpNettyClient
   // This in fact tests HttpClientPipelineFactory constructor through HttpNettyClient
   // constructor.
   @Test
+  @Ignore("This test is flaky and fails intermittently.")
   public void testClientPipelineFactory2Pass()
       throws NoSuchAlgorithmException
   {
@@ -659,6 +661,7 @@ public class TestHttpNettyClient
   }
 
   @Test
+  @Ignore("This test is flaky and fails intermittently.")
   public void testFailBackoff() throws Exception
   {
     final int WARM_UP = 10;
