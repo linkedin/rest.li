@@ -334,6 +334,17 @@ public class TestLoadBalancerPerformanceSimulation {
         };
   }
 
+  @Test
+  public void testLowQpsWithHealthyHosts()
+  {
+    LoadBalancerStrategyTestRunner testRunner = buildRelativeRunnerWithLatencyAndLowQps();
+    testRunner.runWait();
+    for (URI uri : testRunner.getPointHistory().keySet())
+    {
+      System.out.println(testRunner.getPointHistory().get(uri));
+    }
+  }
+
   private LoadBalancerStrategyTestRunner buildDefaultRunnerWithConstantBadHost(int numHosts, long badHostLatency,
       double relativeLatencyHighThresholdFactor)
   {
@@ -470,6 +481,37 @@ public class TestLoadBalancerPerformanceSimulation {
     return new LoadBalancerStrategyTestRunnerBuilder(loadBalancerStrategyType.RELATIVE, DEFAULT_SERVICE_NAME, numHosts)
         .setConstantRequestCount(numRequestsPerInterval)
         .setNumIntervals(200)
+        .setDynamicLatency(latencyCorrelationList)
+        .setRelativeLoadBalancerStrategies(relativeStrategyProperties)
+        .build();
+  }
+
+  private LoadBalancerStrategyTestRunner buildRelativeRunnerWithLatencyAndLowQps()
+  {
+    // On average, each interval one host will get around 2 calls;
+    int numHosts = 480;
+    int numRequestsPerInterval = 1000;
+
+    List<LatencyCorrelation> latencyCorrelationList = new ArrayList<>();
+    long writeLatency = 25L;
+    long readLatency = 8L;
+    double readCallPercentage = 0.7;
+
+    for (int i = 0; i < numHosts; i ++)
+    {
+      latencyCorrelationList.add((requestsPerInterval, intervalIndex) ->
+      {
+        double randomDouble = Math.random();
+        return randomDouble < readCallPercentage ? readLatency : writeLatency;
+      });
+    }
+
+    D2RelativeStrategyProperties relativeStrategyProperties = new D2RelativeStrategyProperties()
+        .setEnableFastRecovery(true);
+
+    return new LoadBalancerStrategyTestRunnerBuilder(loadBalancerStrategyType.RELATIVE, DEFAULT_SERVICE_NAME, numHosts)
+        .setConstantRequestCount(numRequestsPerInterval)
+        .setNumIntervals(20)
         .setDynamicLatency(latencyCorrelationList)
         .setRelativeLoadBalancerStrategies(relativeStrategyProperties)
         .build();
