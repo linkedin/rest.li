@@ -16,6 +16,7 @@
 
 package com.linkedin.darkcluster.impl;
 
+import com.linkedin.d2.balancer.servers.ZooKeeperAnnouncer;
 import com.linkedin.darkcluster.api.DarkGateKeeper;
 import com.linkedin.darkcluster.api.DarkRequestHeaderGenerator;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -61,6 +62,8 @@ public class DarkClusterManagerImpl implements DarkClusterManager
   private final DarkGateKeeper _darkGateKeeper;
   private final List<DarkRequestHeaderGenerator> _darkRequestHeaderGenerators;
   private Map<String, AtomicReference<URIRewriter>> _uriRewriterMap;
+  private final List<ZooKeeperAnnouncer> _announcers;
+  private volatile boolean _isDarkWarmupComplete = false;
 
   public DarkClusterManagerImpl(@Nonnull String sourceClusterName, @Nonnull Facilities facilities,
                                 @Nonnull DarkClusterStrategyFactory strategyFactory, String whiteListRegEx,
@@ -89,6 +92,20 @@ public class DarkClusterManagerImpl implements DarkClusterManager
       DarkGateKeeper darkGateKeeper,
       List<DarkRequestHeaderGenerator> darkRequestHeaderGenerators)
   {
+    this(sourceClusterName, facilities, strategyFactory, whiteListRegEx, blackListRegEx, notifier, darkGateKeeper,
+        darkRequestHeaderGenerators, Collections.emptyList());
+  }
+
+  public DarkClusterManagerImpl(@Nonnull String sourceClusterName,
+      @Nonnull Facilities facilities,
+      @Nonnull DarkClusterStrategyFactory strategyFactory,
+      String whiteListRegEx,
+      String blackListRegEx,
+      @Nonnull Notifier notifier,
+      DarkGateKeeper darkGateKeeper,
+      List<DarkRequestHeaderGenerator> darkRequestHeaderGenerators,
+      @Nonnull List<ZooKeeperAnnouncer> announcers)
+  {
     _whiteListRegEx = whiteListRegEx == null ? null : Pattern.compile(whiteListRegEx);
     _blackListRegEx = blackListRegEx == null ? null : Pattern.compile(blackListRegEx);
     _notifier = notifier;
@@ -99,11 +116,17 @@ public class DarkClusterManagerImpl implements DarkClusterManager
     // if null, initialize this to a noop which returns true always
     _darkGateKeeper = darkGateKeeper == null ? DarkGateKeeper.NO_OP_DARK_GATE_KEEPER : darkGateKeeper;
     _darkRequestHeaderGenerators = darkRequestHeaderGenerators == null ? Collections.emptyList() : darkRequestHeaderGenerators;
+    _announcers = announcers;
   }
 
   @Override
   public boolean handleDarkRequest(RestRequest originalRequest, RequestContext originalRequestContext)
   {
+    for (ZooKeeperAnnouncer announcer : _announcers) {
+      if (announcer.isWarmingUp()) {
+          return false;
+      }
+    }
     String uri = originalRequest.getURI().toString();
     boolean darkRequestSent = false;
     try
