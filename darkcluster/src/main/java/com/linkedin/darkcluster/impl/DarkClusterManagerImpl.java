@@ -63,7 +63,6 @@ public class DarkClusterManagerImpl implements DarkClusterManager
   private final List<DarkRequestHeaderGenerator> _darkRequestHeaderGenerators;
   private Map<String, AtomicReference<URIRewriter>> _uriRewriterMap;
   private final List<ZooKeeperAnnouncer> _announcers;
-  private volatile boolean _isDarkWarmupComplete = false;
 
   public DarkClusterManagerImpl(@Nonnull String sourceClusterName, @Nonnull Facilities facilities,
                                 @Nonnull DarkClusterStrategyFactory strategyFactory, String whiteListRegEx,
