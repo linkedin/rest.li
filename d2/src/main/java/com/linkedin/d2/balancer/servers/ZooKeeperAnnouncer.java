@@ -20,6 +20,7 @@
 
 package com.linkedin.d2.balancer.servers;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayDeque;
 import java.util.Collections;
@@ -93,6 +94,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   private final AtomicLong _markDownStartAtRef = new AtomicLong(Long.MAX_VALUE);
 
   private volatile Map<Integer, PartitionData> _partitionDataMap;
+  private final Integer _maxWeight; // max weight for the weight in PartitionData, if null, no max weight is set.
   private volatile Map<String, Object> _uriSpecificProperties;
 
   private ServiceDiscoveryEventEmitter _eventEmitter;
@@ -123,13 +125,13 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   private volatile boolean _markUpFailed;
 
   // ScheduledExecutorService to schedule the end of dark warm-up, defaults to null
-  private ScheduledExecutorService _executorService;
+  private final ScheduledExecutorService _executorService;
 
   // Boolean flag to indicate if dark warm-up is enabled, defaults to false
-  private boolean _isDarkWarmupEnabled;
+  private final boolean _isDarkWarmupEnabled;
 
   // String to store the name of the dark warm-up cluster, defaults to null
-  private String _warmupClusterName;
+  private final String _warmupClusterName;
   // Similar as _znodePath and _znodeData above but for the warm up cluster.
   private final AtomicReference<String> _warmupClusterZnodePathRef = new AtomicReference<>();
   private final AtomicReference<String> _warmupClusterZnodeDataRef = new AtomicReference<>();
@@ -139,7 +141,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   private final AtomicLong _warmupClusterMarkDownStartAtRef = new AtomicLong(Long.MAX_VALUE);
 
   // Field to store the dark warm-up time duration in seconds, defaults to zero
-  private int _warmupDuration;
+  private final int _warmupDuration;
 
   /**
    * @deprecated Use the constructor {@link #ZooKeeperAnnouncer(LoadBalancerServer)} instead.
@@ -195,26 +197,18 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   public ZooKeeperAnnouncer(ZooKeeperServer server, boolean initialIsUp,
                             boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService, ServiceDiscoveryEventEmitter eventEmitter)
   {
-    _server = server;
-    // initialIsUp is used for delay mark up. If it's false, there won't be markup when the announcer is started.
-    _isUp = initialIsUp;
-    _isWarmingUp = false;
-    _isRetryWarmup = false;
-    _pendingMarkDown = new ArrayDeque<>();
-    _pendingMarkUp = new ArrayDeque<>();
-    _pendingWarmupMarkDown = new ArrayDeque<>();
-
-    _isDarkWarmupEnabled = isDarkWarmupEnabled;
-    _warmupClusterName = warmupClusterName;
-    _warmupDuration = warmupDuration;
-    _executorService = executorService;
-    _eventEmitter = eventEmitter;
-
-    server.setServiceDiscoveryEventHelper(this);
+    this(server, initialIsUp, isDarkWarmupEnabled, warmupClusterName, warmupDuration, executorService, eventEmitter, null);
   }
 
   public ZooKeeperAnnouncer(LoadBalancerServer server, boolean initialIsUp,
       boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService, ServiceDiscoveryEventEmitter eventEmitter)
+  {
+    this(server, initialIsUp, isDarkWarmupEnabled, warmupClusterName, warmupDuration, executorService, eventEmitter, null);
+  }
+
+  public ZooKeeperAnnouncer(LoadBalancerServer server, boolean initialIsUp,
+      boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService,
+      ServiceDiscoveryEventEmitter eventEmitter, Integer maxWeight)
   {
     _server = server;
     // initialIsUp is used for delay mark up. If it's false, there won't be markup when the announcer is started.
@@ -230,6 +224,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     _warmupDuration = warmupDuration;
     _executorService = executorService;
     _eventEmitter = eventEmitter;
+    _maxWeight = maxWeight;
 
     if (server instanceof ZooKeeperServer)
     {
@@ -750,11 +745,12 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
 
     Map<Integer, PartitionData> partitionDataMap = new HashMap<>(1);
     partitionDataMap.put(partitionId, new PartitionData(weight));
-    _partitionDataMap = Collections.unmodifiableMap(partitionDataMap);
+    setPartitionData(partitionDataMap);
   }
 
   public void setPartitionData(Map<Integer, PartitionData> partitionData)
   {
+    validatePartitionData(partitionData);
     _partitionDataMap = Collections.unmodifiableMap(new HashMap<>(partitionData));
   }
 
@@ -832,5 +828,24 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
    */
   public boolean isWarmingUp() {
     return _isWarmingUp;
+
+  private void validatePartitionData(Map<Integer, PartitionData> partitionData) {
+    for (Map.Entry<Integer, PartitionData> entry : partitionData.entrySet()) {
+      double weight = entry.getValue().getWeight();
+      // check max weight
+      if (_maxWeight != null && weight > _maxWeight) {
+        _log.warn("", new IllegalArgumentException(String.format("[ACTION NEEDED] Weight %f in Partition %d is greater"
+            + " than the max weight allowed: %d. Please correct the weight. It will be force-capped to the max weight "
+            + "in the future.", weight, entry.getKey(), _maxWeight)));
+        // TODO: throw exception or cap weight to max weight
+      }
+
+      // check decimal places
+      if (BigDecimal.valueOf(weight).scale() > 2) {
+        _log.warn("", new IllegalArgumentException(String.format("Weight %f in Partition %d has more than 2 decimal "
+            + "places. It will be rounded to 2 decimal places in the future.", weight, entry.getKey())));
+        // TODO: round weight to 2 decimal places.
+      }
+    }
   }
 }
