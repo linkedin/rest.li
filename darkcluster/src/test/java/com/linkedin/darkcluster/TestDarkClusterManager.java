@@ -1,5 +1,6 @@
 package com.linkedin.darkcluster;
 
+import com.linkedin.d2.balancer.servers.ZooKeeperAnnouncer;
 import com.linkedin.darkcluster.api.DarkGateKeeper;
 import com.linkedin.darkcluster.api.DarkRequestHeaderGenerator;
 import java.net.URI;
@@ -19,6 +20,7 @@ import static com.linkedin.darkcluster.DarkClusterTestUtil.createRelativeTraffic
 import static com.linkedin.darkcluster.TestDarkClusterStrategyFactory.DARK_CLUSTER_NAME;
 import static com.linkedin.darkcluster.TestDarkClusterStrategyFactory.DARK_CLUSTER_NAME2;
 import static com.linkedin.darkcluster.TestDarkClusterStrategyFactory.SOURCE_CLUSTER_NAME;
+import static org.mockito.Mockito.*;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -151,10 +153,10 @@ public class TestDarkClusterManager
     DarkClusterConfig darkClusterConfig = createRelativeTrafficMultiplierConfig(1.0f);
     clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig);
 
-    DarkClusterStrategyFactory mockStrategyFactory = Mockito.mock(DarkClusterStrategyFactory.class);
-    DarkClusterStrategy mockDarkStrategy = Mockito.mock(DarkClusterStrategy.class);
+    DarkClusterStrategyFactory mockStrategyFactory = mock(DarkClusterStrategyFactory.class);
+    DarkClusterStrategy mockDarkStrategy = mock(DarkClusterStrategy.class);
 
-    DarkRequestHeaderGenerator darkRequestHeaderGenerator = Mockito.mock(DarkRequestHeaderGenerator.class);
+    DarkRequestHeaderGenerator darkRequestHeaderGenerator = mock(DarkRequestHeaderGenerator.class);
     Mockito.when(mockStrategyFactory.get(DARK_CLUSTER_NAME)).thenReturn(mockDarkStrategy);
     Mockito.when(darkRequestHeaderGenerator.get(DARK_CLUSTER_NAME))
         .thenReturn(Optional.of(new DarkRequestHeaderGenerator.HeaderNameValuePair("header", "value")));
@@ -177,6 +179,45 @@ public class TestDarkClusterManager
         Collections.singletonList(darkRequestHeaderGenerator));
     boolean status = darkClusterManager.handleDarkRequest(restRequest, requestContext);
     Assert.assertTrue(status);
+  }
+
+  @Test
+  public void testDarkWarmup()
+  {
+    MockClusterInfoProvider clusterInfoProvider = new MockClusterInfoProvider();
+    Facilities facilities = new MockFacilities(clusterInfoProvider);
+    MockStrategyFactory strategyFactory = new MockStrategyFactory();
+    DarkClusterManager darkClusterManager = new DarkClusterManagerImpl(SOURCE_CLUSTER_NAME,
+        facilities,
+        strategyFactory,
+        null,
+        null,
+        new DoNothingNotifier(),
+        null);
+    ZooKeeperAnnouncer mockZkAnnouncer = mock(ZooKeeperAnnouncer.class);
+    when(mockZkAnnouncer.isWarmingUp()).thenReturn(true);
+    DarkClusterManager darkClusterManager2 = new DarkClusterManagerImpl(SOURCE_CLUSTER_NAME,
+        facilities,
+        strategyFactory,
+        null,
+        null,
+        new DoNothingNotifier(),
+        null,
+        null,
+        Collections.singletonList(mockZkAnnouncer));
+
+
+    strategyFactory.start();
+
+    // This configuration will choose the RelativeTrafficMultiplierDarkClusterStrategy
+    DarkClusterConfig darkClusterConfig = createRelativeTrafficMultiplierConfig(1.0f);
+    clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, darkClusterConfig);
+
+    RestRequest restRequest = new RestRequestBuilder(URI.create("/test")).setMethod(METHOD_SAFE).build();
+    Assert.assertTrue(darkClusterManager.handleDarkRequest(restRequest, new RequestContext()));
+    Assert.assertFalse(darkClusterManager2.handleDarkRequest(restRequest, new RequestContext()));
+    when(mockZkAnnouncer.isWarmingUp()).thenReturn(false);
+    Assert.assertTrue(darkClusterManager2.handleDarkRequest(restRequest, new RequestContext()));
   }
 
   private static class MockStrategyFactory implements DarkClusterStrategyFactory

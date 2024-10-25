@@ -105,7 +105,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
 
   // Field to indicate if warm up was started. If it is true, it will try to end the warm up
   // by marking down on ZK if the connection goes down
-  private boolean _isWarmingUp;
+  private volatile boolean _isWarmingUp;
 
   // Field to indicate whether the mark up operation is being retried after a connection loss
   private boolean _isRetryWarmup;
@@ -825,5 +825,12 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
       _log.warn("Node path and data can't be found with unknown cluster: " + cluster + ". Ignored.");
     }
     return new ImmutablePair<>(nodePath, nodeData);
+  }
+
+  /**
+   * Indicates whether the announcement is currently made to the dark warmup cluster.
+   */
+  public boolean isWarmingUp() {
+    return _isWarmingUp;
   }
 }
