@@ -848,6 +848,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
    */
   public boolean isWarmingUp() {
     return _isWarmingUp;
+  }
 
   private Map<Integer, PartitionData> validatePartitionData(Map<Integer, PartitionData> partitionData) {
     if (_maxWeight == null || _actOnWeightBreach == ActOnWeightBreach.IGNORE) {
