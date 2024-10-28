@@ -230,7 +230,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
 
   public ZooKeeperAnnouncer(LoadBalancerServer server, boolean initialIsUp,
       boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService,
-      ServiceDiscoveryEventEmitter eventEmitter, BigDecimal maxWeight, ActOnWeightBreach actOnWeightBreach)
+      ServiceDiscoveryEventEmitter eventEmitter, String maxWeight, ActOnWeightBreach actOnWeightBreach)
   {
     _server = server;
     // initialIsUp is used for delay mark up. If it's false, there won't be markup when the announcer is started.
@@ -246,8 +246,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     _warmupDuration = warmupDuration;
     _executorService = executorService;
     _eventEmitter = eventEmitter;
-    _maxWeight = maxWeight;
-    
+    _maxWeight = maxWeight == null ? null : new BigDecimal(maxWeight);
     if (actOnWeightBreach != null)
     {
       _actOnWeightBreach = actOnWeightBreach;
