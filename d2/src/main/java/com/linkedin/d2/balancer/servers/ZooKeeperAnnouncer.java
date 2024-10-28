@@ -102,6 +102,9 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
    * For example, 100.00 means the max weight allowed is 100 and the max number of decimal places is 2.
    */
   private final BigDecimal _maxWeight;
+  /**
+   * The action to take when d2 weight breaches validation rules.
+   */
   private ActOnWeightBreach _actOnWeightBreach = ActOnWeightBreach.IGNORE;
   private volatile Map<String, Object> _uriSpecificProperties;
 
@@ -151,15 +154,14 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   // Field to store the dark warm-up time duration in seconds, defaults to zero
   private final int _warmupDuration;
 
-  /**
-   * The action to take when d2 weight breaches validation rules.
-   */
   public enum ActOnWeightBreach {
     // Ignore and no op.
     IGNORE,
-    //
+    // only log warnings
     WARN,
+    // throw exceptions
     THROW,
+    // rectify the invalid weight (e.g: cap to the max, round to the nearest valid decimal places)
     RECTIFY
   }
 
@@ -245,7 +247,11 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     _executorService = executorService;
     _eventEmitter = eventEmitter;
     _maxWeight = maxWeight;
-    _actOnWeightBreach = actOnWeightBreach;
+    
+    if (actOnWeightBreach != null)
+    {
+      _actOnWeightBreach = actOnWeightBreach;
+    }
 
     if (server instanceof ZooKeeperServer)
     {
