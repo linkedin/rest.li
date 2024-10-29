@@ -246,6 +246,8 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     _warmupDuration = warmupDuration;
     _executorService = executorService;
     _eventEmitter = eventEmitter;
+
+    // take in max weight as a string to be precise at decimal places when creating a BigDecimal.
     _maxWeight = maxWeight == null ? null : new BigDecimal(maxWeight);
     if (actOnWeightBreach != null)
     {
@@ -873,6 +875,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
             throw getMaxWeightBreachException(weight, entry.getKey());
           case RECTIFY:
             entry.setValue(new PartitionData(_maxWeight.intValue()));
+            weight = _maxWeight;
             _log.warn("Capped weight {} in Partition {} to the max weight allowed: {}.", weight.doubleValue(),
                 entry.getKey(), _maxWeight.intValue());
             break;
