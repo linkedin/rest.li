@@ -183,4 +183,27 @@ public class ZooKeeperAnnouncerJmx implements ZooKeeperAnnouncerJmxMXBean
   public boolean isMarkUpFailed() {
     return _announcer.isMarkUpFailed();
   }
+
+  @Override
+  public boolean isMarkedUp()
+  {
+    return _announcer.isMarkedUp();
+  }
+
+  @Override
+  public boolean isDarkWarmupMarkedUp() {
+    return _announcer.isDarkWarmupMarkedUp();
+  }
+
+  @Override
+  public int getMaxWeightBreachedCount()
+  {
+    return _announcer.getMaxWeightBreachedCount();
+  }
+
+  @Override
+  public int getWeightDecimalPlacesBreachedCount()
+  {
+    return _announcer.getWeightDecimalPlacesBreachedCount();
+  }
 }

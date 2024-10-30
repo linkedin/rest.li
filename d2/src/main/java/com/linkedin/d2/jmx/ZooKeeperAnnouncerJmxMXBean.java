@@ -72,4 +72,25 @@ public interface ZooKeeperAnnouncerJmxMXBean
   void setPartitionData(Map<Integer, PartitionData> partitionData);
 
   boolean isMarkUpFailed();
+
+  /**
+   * @return true if the announcer is marked up.
+   */
+  boolean isMarkedUp();
+
+  /**
+   * @return true if the announcer marked up the dark warmup cluster.
+   */
+  boolean isDarkWarmupMarkedUp();
+
+  /**
+   * @return the times that the max weight has been breached.
+   */
+  int getMaxWeightBreachedCount();
+
+  /**
+   *
+   * @return the times that the max number of decimal places on weight have been breached.
+   */
+  int getWeightDecimalPlacesBreachedCount();
 }

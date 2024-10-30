@@ -46,6 +46,8 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.util.ArgumentUtil;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -106,6 +108,10 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
    * The action to take when d2 weight breaches validation rules.
    */
   private ActOnWeightBreach _actOnWeightBreach = ActOnWeightBreach.IGNORE;
+
+  private final AtomicInteger _maxWeightBreachedCount = new AtomicInteger(0);
+  private final AtomicInteger _weightDecimalPlacesBreachedCount = new AtomicInteger(0);
+
   private volatile Map<String, Object> _uriSpecificProperties;
 
   private ServiceDiscoveryEventEmitter _eventEmitter;
@@ -115,6 +121,10 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
    * it will try to bring up the server again on ZK if the connection goes down, or a new store is set
    */
   private boolean _isUp;
+  /**
+   * Whether the current announcement status is up. It's up only if the announcement completed successfully.
+   */
+  private final AtomicBoolean _isMarkedUp = new AtomicBoolean(false);
 
   // Field to indicate if warm up was started. If it is true, it will try to end the warm up
   // by marking down on ZK if the connection goes down
@@ -140,6 +150,10 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
 
   // Boolean flag to indicate if dark warm-up is enabled, defaults to false
   private final boolean _isDarkWarmupEnabled;
+  /**
+   * Whether the dark warmup cluster announcement status is up. It's up only if the announcement completed successfully.
+   */
+  private final AtomicBoolean _isDarkWarmupMarkedUp = new AtomicBoolean(false);
 
   // String to store the name of the dark warm-up cluster, defaults to null
   private final String _warmupClusterName;
@@ -377,6 +391,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
       @Override
       public void onSuccess(None result)
       {
+        _isMarkedUp.set(true);
         emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, true, true, _markUpStartAtRef.get());
         _markUpFailed = false;
         _log.info("markUp for uri = {} on cluster {} succeeded.", _uri, _cluster);
@@ -436,6 +451,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
       @Override
       public void onSuccess(None result)
       {
+        _isDarkWarmupMarkedUp.set(false);
         emitSDStatusActiveUpdateIntentAndWriteEvents(_warmupClusterName, false, true, _warmupClusterMarkDownStartAtRef.get());
         // Mark _isWarmingUp to false to indicate warm up has completed
         _isWarmingUp = false;
@@ -486,6 +502,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
       @Override
       public void onSuccess(None result)
       {
+        _isDarkWarmupMarkedUp.set(true);
         emitSDStatusActiveUpdateIntentAndWriteEvents(_warmupClusterName, true, true, _warmupClusterMarkUpStartAtRef.get());
         _log.info("markUp for uri {} on warm-up cluster {} succeeded", _uri, _warmupClusterName);
         // Mark _isWarmingUp to true to indicate warm up is in progress
@@ -560,6 +577,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
       @Override
       public void onSuccess(None result)
       {
+        _isMarkedUp.set(false);
         emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, false, true, _markDownStartAtRef.get());
         _log.info("markDown for uri = {} succeeded.", _uri);
         // Note that the pending callbacks we see at this point are
@@ -797,6 +815,26 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     return _markUpFailed;
   }
 
+  public boolean isMarkedUp()
+  {
+    return _isMarkedUp.get();
+  }
+
+  public boolean isDarkWarmupMarkedUp()
+  {
+    return _isDarkWarmupMarkedUp.get();
+  }
+
+  public int getMaxWeightBreachedCount()
+  {
+    return _maxWeightBreachedCount.get();
+  }
+
+  public int getWeightDecimalPlacesBreachedCount()
+  {
+    return _weightDecimalPlacesBreachedCount.get();
+  }
+
   public void setEventEmitter(ServiceDiscoveryEventEmitter emitter) {
     _eventEmitter = emitter;
   }
@@ -858,7 +896,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   }
 
   private Map<Integer, PartitionData> validatePartitionData(Map<Integer, PartitionData> partitionData) {
-    if (_maxWeight == null || _actOnWeightBreach == ActOnWeightBreach.IGNORE) {
+    if (_maxWeight == null) {
       return partitionData;
     }
 
@@ -867,6 +905,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
       BigDecimal weight = BigDecimal.valueOf(entry.getValue().getWeight());
       // check max weight
       if (weight.compareTo(_maxWeight) > 0) {
+        _maxWeightBreachedCount.incrementAndGet();
         switch (_actOnWeightBreach) {
           case WARN:
             _log.warn("", getMaxWeightBreachException(weight, entry.getKey()));
@@ -879,6 +918,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
             _log.warn("Capped weight {} in Partition {} to the max weight allowed: {}.", weight.doubleValue(),
                 entry.getKey(), _maxWeight.intValue());
             break;
+          case IGNORE:
           default:
             break;
         }
@@ -886,6 +926,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
 
       // check decimal places
       if (weight.scale() > _maxWeight.scale()) {
+        _weightDecimalPlacesBreachedCount.incrementAndGet();
         switch (_actOnWeightBreach) {
           case WARN: // both WARN and THROW only log the warning. Don't throw exception for decimal places.
           case THROW:
@@ -899,6 +940,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
             _log.warn("Rounded weight {} in Partition {} to {} decimal places: {}.", weight.doubleValue(),
                 entry.getKey(), _maxWeight.scale(), newWeight);
             break;
+          case IGNORE:
           default:
             break;
         }
