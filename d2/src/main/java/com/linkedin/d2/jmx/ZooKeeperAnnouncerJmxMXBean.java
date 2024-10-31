@@ -74,14 +74,16 @@ public interface ZooKeeperAnnouncerJmxMXBean
   boolean isMarkUpFailed();
 
   /**
-   * @return true if the announcer is marked up.
+   * @return true if the announcer has completed sending a markup intent. NOTE THAT a mark-up intent sent does NOT mean the
+   * announcement status on service discovery registry is up. Service discovery registry may further process the host
+   * and determine its status. Check on service discovery registry for the final status.
    */
-  boolean isMarkedUp();
+  boolean isMarkUpIntentSent();
 
   /**
-   * @return true if the announcer marked up the dark warmup cluster.
+   * @return true if the announcer has completed sending a dark warmup cluster markup intent.
    */
-  boolean isDarkWarmupMarkedUp();
+  boolean isDarkWarmupMarkUpIntentSent();
 
   /**
    * @return the times that the max weight has been breached.
@@ -90,7 +92,7 @@ public interface ZooKeeperAnnouncerJmxMXBean
 
   /**
    *
-   * @return the times that the max number of decimal places on weight have been breached.
+   * @return the times that the max number of decimal places on weight has been breached.
    */
   int getWeightDecimalPlacesBreachedCount();
 }

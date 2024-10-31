@@ -185,14 +185,14 @@ public class ZooKeeperAnnouncerJmx implements ZooKeeperAnnouncerJmxMXBean
   }
 
   @Override
-  public boolean isMarkedUp()
+  public boolean isMarkUpIntentSent()
   {
-    return _announcer.isMarkedUp();
+    return _announcer.isMarkUpIntentSent();
   }
 
   @Override
-  public boolean isDarkWarmupMarkedUp() {
-    return _announcer.isDarkWarmupMarkedUp();
+  public boolean isDarkWarmupMarkUpIntentSent() {
+    return _announcer.isDarkWarmupMarkUpIntentSent();
   }
 
   @Override

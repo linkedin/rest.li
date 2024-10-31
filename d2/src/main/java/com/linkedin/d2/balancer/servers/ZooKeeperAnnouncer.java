@@ -158,7 +158,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   /**
    * Whether the announcer has completed sending a dark warmup cluster markup intent.
    */
-  private final AtomicBoolean _isDarkWarmupMarkedUp = new AtomicBoolean(false);
+  private final AtomicBoolean _isDarkWarmupMarkUpIntentSent = new AtomicBoolean(false);
 
   // String to store the name of the dark warm-up cluster, defaults to null
   private final String _warmupClusterName;
@@ -455,7 +455,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
       @Override
       public void onSuccess(None result)
       {
-        _isDarkWarmupMarkedUp.set(false);
+        _isDarkWarmupMarkUpIntentSent.set(false);
         emitSDStatusActiveUpdateIntentAndWriteEvents(_warmupClusterName, false, true, _warmupClusterMarkDownStartAtRef.get());
         // Mark _isWarmingUp to false to indicate warm up has completed
         _isWarmingUp = false;
@@ -506,7 +506,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
       @Override
       public void onSuccess(None result)
       {
-        _isDarkWarmupMarkedUp.set(true);
+        _isDarkWarmupMarkUpIntentSent.set(true);
         emitSDStatusActiveUpdateIntentAndWriteEvents(_warmupClusterName, true, true, _warmupClusterMarkUpStartAtRef.get());
         _log.info("markUp for uri {} on warm-up cluster {} succeeded", _uri, _warmupClusterName);
         // Mark _isWarmingUp to true to indicate warm up is in progress
@@ -819,14 +819,14 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     return _markUpFailed;
   }
 
-  public boolean isMarkedUp()
+  public boolean isMarkUpIntentSent()
   {
     return _isMarkUpIntentSent.get();
   }
 
-  public boolean isDarkWarmupMarkedUp()
+  public boolean isDarkWarmupMarkUpIntentSent()
   {
-    return _isDarkWarmupMarkedUp.get();
+    return _isDarkWarmupMarkUpIntentSent.get();
   }
 
   public int getMaxWeightBreachedCount()
