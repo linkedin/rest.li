@@ -67,6 +67,11 @@ public class TestZooKeeperAnnouncer
           null, null, MAX_WEIGHT_BREACH_PARTITION_DATA, MAX_WEIGHT_BREACH_PARTITION_DATA, null, 0, 0
         },
         {
+          // negative weight throws
+          null, null, Collections.singletonMap(0, new PartitionData(-1.0)), null,
+            new IllegalArgumentException("Weight -1.0 in Partition 0 is negative. Please correct it."), 0, 0
+        },
+        {
           // no action default to IGNORE, which won't correct the value BUT will increment the counts
           "10.0", null, MAX_WEIGHT_BREACH_PARTITION_DATA, MAX_WEIGHT_BREACH_PARTITION_DATA, null, 1, 0
         },
@@ -98,7 +103,7 @@ public class TestZooKeeperAnnouncer
             1, 0
         },
         {
-          // throw action doesn not throw for decimal places breach
+          // throw action does not throw for decimal places breach
           "10.0", ZooKeeperAnnouncer.ActionOnWeightBreach.THROW, DECIMAL_PLACES_BREACH_PARTITION_DATA,
             DECIMAL_PLACES_BREACH_PARTITION_DATA, null, 0, 1
         }
