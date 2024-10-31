@@ -20,6 +20,7 @@
 
 package com.linkedin.d2.balancer.servers;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
@@ -102,12 +103,14 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
    * 1. The maximum d2 weight allowed.
    * 2. The maximum number of decimal places allowed. Use 0s on decimal places to indicate it.
    * For example, 100.00 means the max weight allowed is 100 and the max number of decimal places is 2.
+   * CAUTION: BigDecimal yields accurate scale when constructed with a string of the number, instead of a double/float.
+   * E.g: new BigDecimal("100.00") instead of new BigDecimal(100.00).
    */
   private final BigDecimal _maxWeight;
   /**
    * The action to take when d2 weight breaches validation rules.
    */
-  private ActOnWeightBreach _actOnWeightBreach = ActOnWeightBreach.IGNORE;
+  private ActionOnWeightBreach _actionOnWeightBreach = ActionOnWeightBreach.IGNORE;
 
   private final AtomicInteger _maxWeightBreachedCount = new AtomicInteger(0);
   private final AtomicInteger _weightDecimalPlacesBreachedCount = new AtomicInteger(0);
@@ -122,9 +125,11 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
    */
   private boolean _isUp;
   /**
-   * Whether the current announcement status is up. It's up only if the announcement completed successfully.
+   * Whether the announcer has completed sending a markup intent. NOTE THAT a mark-up intent sent does NOT mean the
+   * announcement status on service discovery registry is up. Service discovery registry may further process the host
+   * and determine its status. Check on service discovery registry for the final status.
    */
-  private final AtomicBoolean _isMarkedUp = new AtomicBoolean(false);
+  private final AtomicBoolean _isMarkUpIntentSent = new AtomicBoolean(false);
 
   // Field to indicate if warm up was started. If it is true, it will try to end the warm up
   // by marking down on ZK if the connection goes down
@@ -151,7 +156,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   // Boolean flag to indicate if dark warm-up is enabled, defaults to false
   private final boolean _isDarkWarmupEnabled;
   /**
-   * Whether the dark warmup cluster announcement status is up. It's up only if the announcement completed successfully.
+   * Whether the announcer has completed sending a dark warmup cluster markup intent.
    */
   private final AtomicBoolean _isDarkWarmupMarkedUp = new AtomicBoolean(false);
 
@@ -168,7 +173,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   // Field to store the dark warm-up time duration in seconds, defaults to zero
   private final int _warmupDuration;
 
-  public enum ActOnWeightBreach {
+  public enum ActionOnWeightBreach {
     // Ignore and no op.
     IGNORE,
     // only log warnings
@@ -233,18 +238,18 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   public ZooKeeperAnnouncer(ZooKeeperServer server, boolean initialIsUp,
                             boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService, ServiceDiscoveryEventEmitter eventEmitter)
   {
-    this(server, initialIsUp, isDarkWarmupEnabled, warmupClusterName, warmupDuration, executorService, eventEmitter, null, ActOnWeightBreach.IGNORE);
+    this(server, initialIsUp, isDarkWarmupEnabled, warmupClusterName, warmupDuration, executorService, eventEmitter, null, ActionOnWeightBreach.IGNORE);
   }
 
   public ZooKeeperAnnouncer(LoadBalancerServer server, boolean initialIsUp,
       boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService, ServiceDiscoveryEventEmitter eventEmitter)
   {
-    this(server, initialIsUp, isDarkWarmupEnabled, warmupClusterName, warmupDuration, executorService, eventEmitter, null, ActOnWeightBreach.IGNORE);
+    this(server, initialIsUp, isDarkWarmupEnabled, warmupClusterName, warmupDuration, executorService, eventEmitter, null, ActionOnWeightBreach.IGNORE);
   }
 
   public ZooKeeperAnnouncer(LoadBalancerServer server, boolean initialIsUp,
       boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService,
-      ServiceDiscoveryEventEmitter eventEmitter, String maxWeight, ActOnWeightBreach actOnWeightBreach)
+      ServiceDiscoveryEventEmitter eventEmitter, BigDecimal maxWeight, ActionOnWeightBreach actionOnWeightBreach)
   {
     _server = server;
     // initialIsUp is used for delay mark up. If it's false, there won't be markup when the announcer is started.
@@ -261,11 +266,10 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     _executorService = executorService;
     _eventEmitter = eventEmitter;
 
-    // take in max weight as a string to be precise at decimal places when creating a BigDecimal.
-    _maxWeight = maxWeight == null ? null : new BigDecimal(maxWeight);
-    if (actOnWeightBreach != null)
+    _maxWeight = maxWeight;
+    if (actionOnWeightBreach != null)
     {
-      _actOnWeightBreach = actOnWeightBreach;
+      _actionOnWeightBreach = actionOnWeightBreach;
     }
 
     if (server instanceof ZooKeeperServer)
@@ -391,7 +395,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
       @Override
       public void onSuccess(None result)
       {
-        _isMarkedUp.set(true);
+        _isMarkUpIntentSent.set(true);
         emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, true, true, _markUpStartAtRef.get());
         _markUpFailed = false;
         _log.info("markUp for uri = {} on cluster {} succeeded.", _uri, _cluster);
@@ -577,7 +581,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
       @Override
       public void onSuccess(None result)
       {
-        _isMarkedUp.set(false);
+        _isMarkUpIntentSent.set(false);
         emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, false, true, _markDownStartAtRef.get());
         _log.info("markDown for uri = {} succeeded.", _uri);
         // Note that the pending callbacks we see at this point are
@@ -817,7 +821,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
 
   public boolean isMarkedUp()
   {
-    return _isMarkedUp.get();
+    return _isMarkUpIntentSent.get();
   }
 
   public boolean isDarkWarmupMarkedUp()
@@ -895,18 +899,25 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     return _isWarmingUp;
   }
 
-  private Map<Integer, PartitionData> validatePartitionData(Map<Integer, PartitionData> partitionData) {
-    if (_maxWeight == null) {
-      return partitionData;
-    }
-
+  @VisibleForTesting
+  Map<Integer, PartitionData> validatePartitionData(Map<Integer, PartitionData> partitionData) {
     Map<Integer, PartitionData> res = new HashMap<>(partitionData); // modifiable copy in case the input is unmodifiable
     for (Map.Entry<Integer, PartitionData> entry : res.entrySet()) {
       BigDecimal weight = BigDecimal.valueOf(entry.getValue().getWeight());
+      // check negative weight
+      if (weight.compareTo(BigDecimal.ZERO) < 0) {
+        throw new IllegalArgumentException(String.format("Weight %s in Partition %d is negative. Please correct it.",
+            weight, entry.getKey()));
+      }
+
+      if (_maxWeight == null) {
+        break;
+      }
+
       // check max weight
       if (weight.compareTo(_maxWeight) > 0) {
         _maxWeightBreachedCount.incrementAndGet();
-        switch (_actOnWeightBreach) {
+        switch (_actionOnWeightBreach) {
           case WARN:
             _log.warn("", getMaxWeightBreachException(weight, entry.getKey()));
             break;
@@ -915,8 +926,8 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
           case RECTIFY:
             entry.setValue(new PartitionData(_maxWeight.intValue()));
             weight = _maxWeight;
-            _log.warn("Capped weight {} in Partition {} to the max weight allowed: {}.", weight.doubleValue(),
-                entry.getKey(), _maxWeight.intValue());
+            _log.warn("Capped weight {} in Partition {} to the max weight allowed: {}.", weight, entry.getKey(),
+                _maxWeight);
             break;
           case IGNORE:
           default:
@@ -927,18 +938,17 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
       // check decimal places
       if (weight.scale() > _maxWeight.scale()) {
         _weightDecimalPlacesBreachedCount.incrementAndGet();
-        switch (_actOnWeightBreach) {
+        switch (_actionOnWeightBreach) {
           case WARN: // both WARN and THROW only log the warning. Don't throw exception for decimal places.
           case THROW:
-            _log.warn("", new IllegalArgumentException(String.format("Weight %f in Partition %d has more than %d"
-                + " decimal places. It will be rounded in the future.", weight.doubleValue(), entry.getKey(),
-                _maxWeight.scale())));
+            _log.warn("", new IllegalArgumentException(String.format("Weight %s in Partition %d has more than %d"
+                + " decimal places. It will be rounded in the future.", weight, entry.getKey(), _maxWeight.scale())));
             break;
           case RECTIFY:
             double newWeight = weight.setScale(_maxWeight.scale(), RoundingMode.HALF_UP).doubleValue();
             entry.setValue(new PartitionData(newWeight));
-            _log.warn("Rounded weight {} in Partition {} to {} decimal places: {}.", weight.doubleValue(),
-                entry.getKey(), _maxWeight.scale(), newWeight);
+            _log.warn("Rounded weight {} in Partition {} to {} decimal places: {}.", weight, entry.getKey(),
+                _maxWeight.scale(), newWeight);
             break;
           case IGNORE:
           default:
@@ -950,8 +960,8 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   }
 
   private IllegalArgumentException getMaxWeightBreachException(BigDecimal weight, int partition) {
-    return new IllegalArgumentException(String.format("[ACTION NEEDED] Weight %f in Partition %d is greater"
-        + " than the max weight allowed: %d. Please correct the weight. It will be force-capped to the max weight "
-        + "in the future.", weight.doubleValue(), partition, _maxWeight.intValue()));
+    return new IllegalArgumentException(String.format("[ACTION NEEDED] Weight %s in Partition %d is greater"
+        + " than the max weight allowed: %s. Please correct the weight. It will be force-capped to the max weight "
+        + "in the future.", weight, partition, _maxWeight));
   }
 }
