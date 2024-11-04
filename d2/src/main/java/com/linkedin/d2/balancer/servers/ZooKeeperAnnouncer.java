@@ -110,7 +110,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   /**
    * The action to take when d2 weight breaches validation rules.
    */
-  private ActionOnWeightBreach _actionOnWeightBreach = ActionOnWeightBreach.IGNORE;
+  private final ActionOnWeightBreach _actionOnWeightBreach;
 
   private final AtomicInteger _maxWeightBreachedCount = new AtomicInteger(0);
   private final AtomicInteger _weightDecimalPlacesBreachedCount = new AtomicInteger(0);
@@ -267,10 +267,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     _eventEmitter = eventEmitter;
 
     _maxWeight = maxWeight;
-    if (actionOnWeightBreach != null)
-    {
-      _actionOnWeightBreach = actionOnWeightBreach;
-    }
+    _actionOnWeightBreach = actionOnWeightBreach != null ? actionOnWeightBreach : ActionOnWeightBreach.IGNORE;
 
     if (server instanceof ZooKeeperServer)
     {
