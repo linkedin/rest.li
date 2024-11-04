@@ -37,6 +37,8 @@ public class TestZooKeeperAnnouncer
       Collections.singletonMap(0, new PartitionData(5.345));
   private static final Map<Integer, PartitionData> MAX_WEIGHT_AND_DECIMAL_PLACES_BREACH_PARTITION_DATA =
       Collections.singletonMap(0, new PartitionData(10.89));
+  private static final Map<Integer, PartitionData> VALID_PARTITION_DATA =
+      Collections.singletonMap(0, new PartitionData(2.3));
 
   @BeforeMethod
   public void setUp()
@@ -70,6 +72,10 @@ public class TestZooKeeperAnnouncer
           // negative weight throws
           null, null, Collections.singletonMap(0, new PartitionData(-1.0)), null,
             new IllegalArgumentException("Weight -1.0 in Partition 0 is negative. Please correct it."), 0, 0
+        },
+        {
+          // valid weight
+          "3.0", null, VALID_PARTITION_DATA, VALID_PARTITION_DATA, null, 0, 0
         },
         {
           // no action default to IGNORE, which won't correct the value BUT will increment the counts
