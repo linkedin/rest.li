@@ -669,6 +669,12 @@ public final class ByteString
       return new ByteIterator(this);
     }
 
+    private void fillFromAnother(ByteIterator other) {
+      _currentByteArray = other._currentByteArray;
+      _currentByteIndex = other._currentByteIndex;
+      _finished = other._finished;
+    }
+
     private void next()
     {
       //Shift the internal pointer to the next byte.
@@ -737,9 +743,6 @@ public final class ByteString
     //This is a reference on where to resume in case we get a mismatch.
     ByteIterator resumeByteIterator = byteIterator.copy();
 
-    //We skip the first since byteIterator will begin there.
-    resumeByteIterator.next();
-
     for (int i = 0; i < targetBytes.length;)
     {
       //If we have exhausted everything in the ByteString, then we return -1.
@@ -754,11 +757,8 @@ public final class ByteString
         //There was a mismatch so we reset i and prepare to start over.
         i = 0;
         //Update byteIterator to point to the next byte where our comparison will begin.
-        byteIterator = resumeByteIterator;
-        //Keep track of where to resume in the future.
-        resumeByteIterator = resumeByteIterator.copy();
-        //Skip the next since byteIterator will begin there.
         resumeByteIterator.next();
+        byteIterator.fillFromAnother(resumeByteIterator);
         continue;
       }
 
