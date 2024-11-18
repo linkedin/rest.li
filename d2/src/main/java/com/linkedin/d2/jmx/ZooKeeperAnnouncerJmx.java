@@ -206,4 +206,9 @@ public class ZooKeeperAnnouncerJmx implements ZooKeeperAnnouncerJmxMXBean
   {
     return _announcer.getWeightDecimalPlacesBreachedCount();
   }
+
+  @Override
+  public int getServerAnnounceMode() {
+    return _announcer.getServerAnnounceMode().ordinal();
+  }
 }

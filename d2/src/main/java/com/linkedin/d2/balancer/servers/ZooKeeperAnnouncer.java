@@ -66,7 +66,7 @@ import org.slf4j.LoggerFactory;
  * @author Francesco Capponi (fcapponi@linkedin.com)
  */
 
-public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
+public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, AnnouncerStatusDelegate
 {
   public static final boolean DEFAULT_DARK_WARMUP_ENABLED = false;
   public static final int DEFAULT_DARK_WARMUP_DURATION = 0;
@@ -705,6 +705,13 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     };
   }
 
+  @Override
+  public String getWarmupCluster()
+  {
+    return _warmupClusterName;
+  }
+
+  @Override
   public String getCluster()
   {
     return _cluster;
@@ -718,6 +725,12 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   public String getUri()
   {
     return _uri.toString();
+  }
+
+  @Override
+  public URI getURI()
+  {
+    return _uri;
   }
 
   public void setUri(String uri)
@@ -816,11 +829,13 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     return _markUpFailed;
   }
 
+  @Override
   public boolean isMarkUpIntentSent()
   {
     return _isMarkUpIntentSent.get();
   }
 
+  @Override
   public boolean isDarkWarmupMarkUpIntentSent()
   {
     return _isDarkWarmupMarkUpIntentSent.get();
@@ -834,6 +849,11 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   public int getWeightDecimalPlacesBreachedCount()
   {
     return _weightDecimalPlacesBreachedCount.get();
+  }
+
+  public LoadBalancerServer.AnnounceMode getServerAnnounceMode()
+  {
+    return _server.getAnnounceMode();
   }
 
   public void setEventEmitter(ServiceDiscoveryEventEmitter emitter) {

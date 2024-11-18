@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.63.0] - 2024-11-06
+- Add announcer status delegate interface
+
 ## [29.62.1] - 2024-11-05
 - Enhancements in ByteString and its ByteIterator to reduce object allocation
 
@@ -5758,7 +5761,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.62.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.63.0...master
+[29.63.0]: https://github.com/linkedin/rest.li/compare/v29.62.1...v29.63.0
 [29.62.1]: https://github.com/linkedin/rest.li/compare/v29.62.0...v29.62.1
 [29.62.0]: https://github.com/linkedin/rest.li/compare/v29.61.0...v29.62.0
 [29.61.0]: https://github.com/linkedin/rest.li/compare/v29.60.0...v29.61.0

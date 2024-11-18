@@ -20,6 +20,7 @@
 
 package com.linkedin.d2.jmx;
 
+import com.linkedin.d2.balancer.LoadBalancerServer;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 
@@ -95,4 +96,9 @@ public interface ZooKeeperAnnouncerJmxMXBean
    * @return the times that the max number of decimal places on weight has been breached.
    */
   int getWeightDecimalPlacesBreachedCount();
+
+  /**
+   * @return the server announce mode corresponding to {@link LoadBalancerServer#getAnnounceMode()}
+   */
+  int getServerAnnounceMode();
 }
