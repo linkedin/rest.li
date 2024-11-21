@@ -74,11 +74,15 @@ public interface LoadBalancerServer
 
   /**
    * Get announce mode of the server. Some server may have different announce mode, e.g. dual write mode, force announce
-   * mode. NOTE the order of the enum shows the migration progress. The ordinal is used in JMX --- each number higher
-   * means one more step completed in the migration --- which can ease devs to know the status.
+   * mode.
    */
   AnnounceMode getAnnounceMode();
 
+  /**
+   * NOTE the order in this enum shows the migration progress from an old service registry to a new one.
+   * The ordinal is used in JMX --- each number higher means one more step completed in the migration --- which can
+   * ease devs to know the status.
+   */
   enum AnnounceMode
   {
     STATIC_OLD_SR_ONLY,                // statically only announce to old service registry
