@@ -61,6 +61,11 @@ public class
   }
 
   @Override
+  public AnnounceMode getAnnounceMode() {
+    return AnnounceMode.STATIC_OLD_SR_ONLY;
+  }
+
+  @Override
   public void start(Callback<None> callback)
   {
     _store.start(callback);
@@ -189,7 +194,7 @@ public class
         }
         else
         {
-          warn(_log, _store, " marked down for cluster ", clusterName, "with uri: ", uri);
+          warn(_log, _store, " marked down for cluster ", clusterName, " with uri: ", uri);
           Map<URI, Map<Integer, PartitionData>> partitionData = new HashMap<>(2);
           partitionData.put(uri, Collections.emptyMap());
           _store.removePartial(clusterName, new UriProperties(clusterName, partitionData), callback);
@@ -367,7 +372,7 @@ public class
     return new UriProperties(clusterName, partitionDesc, uriToUriSpecificProperties);
   }
 
-  private void storeGet(final String clusterName, final Callback<UriProperties> callback)
+  protected void storeGet(final String clusterName, final Callback<UriProperties> callback)
   {
     if (_store == null)
     {

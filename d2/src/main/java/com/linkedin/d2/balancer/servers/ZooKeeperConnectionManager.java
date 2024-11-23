@@ -21,6 +21,8 @@
 package com.linkedin.d2.balancer.servers;
 
 import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -73,6 +75,9 @@ public class ZooKeeperConnectionManager extends ConnectionManager
   private volatile boolean _sessionEstablished = false;
 
   private volatile ZooKeeperEphemeralStore<UriProperties> _store;
+
+  // Additional watchers that want to watch the connection status
+  private final Set<ZooKeeperConnectionWatcher> _zooKeeperConnectionWatchers = ConcurrentHashMap.newKeySet();
 
   public ZooKeeperConnectionManager(ZKPersistentConnection zkConnection,
                                     String zkBasePath,
@@ -292,6 +297,8 @@ public class ZooKeeperConnectionManager extends ConnectionManager
             {
               server.retry(Callbacks.empty());
             }
+
+            _zooKeeperConnectionWatchers.forEach(ZooKeeperConnectionWatcher::onConnected);
           }
           break;
         }
@@ -300,6 +307,11 @@ public class ZooKeeperConnectionManager extends ConnectionManager
           break;
       }
     }
+  }
+
+  public interface ZooKeeperConnectionWatcher
+  {
+    void onConnected();
   }
 
   /**
@@ -400,5 +412,10 @@ public class ZooKeeperConnectionManager extends ConnectionManager
   public String getZooKeeperBasePath()
   {
     return _zkBasePath;
+  }
+
+  public void addConnectionWatcher(ZooKeeperConnectionWatcher watcher)
+  {
+    _zooKeeperConnectionWatchers.add(watcher);
   }
 }

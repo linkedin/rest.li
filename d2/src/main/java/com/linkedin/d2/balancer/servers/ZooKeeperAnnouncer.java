@@ -66,7 +66,7 @@ import org.slf4j.LoggerFactory;
  * @author Francesco Capponi (fcapponi@linkedin.com)
  */
 
-public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
+public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, AnnouncerStatusDelegate
 {
   public static final boolean DEFAULT_DARK_WARMUP_ENABLED = false;
   public static final int DEFAULT_DARK_WARMUP_DURATION = 0;
@@ -705,6 +705,13 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     };
   }
 
+  @Override
+  public String getWarmupCluster()
+  {
+    return _warmupClusterName;
+  }
+
+  @Override
   public String getCluster()
   {
     return _cluster;
@@ -718,6 +725,12 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
   public String getUri()
   {
     return _uri.toString();
+  }
+
+  @Override
+  public URI getURI()
+  {
+    return _uri;
   }
 
   public void setUri(String uri)
@@ -816,11 +829,13 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     return _markUpFailed;
   }
 
+  @Override
   public boolean isMarkUpIntentSent()
   {
     return _isMarkUpIntentSent.get();
   }
 
+  @Override
   public boolean isDarkWarmupMarkUpIntentSent()
   {
     return _isDarkWarmupMarkUpIntentSent.get();
@@ -836,16 +851,22 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper
     return _weightDecimalPlacesBreachedCount.get();
   }
 
+  public LoadBalancerServer.AnnounceMode getServerAnnounceMode()
+  {
+    return _server.getAnnounceMode();
+  }
+
   public void setEventEmitter(ServiceDiscoveryEventEmitter emitter) {
     _eventEmitter = emitter;
   }
 
   @Override
   public void emitSDStatusActiveUpdateIntentAndWriteEvents(String cluster, boolean isMarkUp, boolean succeeded, long startAt) {
-    // since SD event is sent in IndisAnnouncer for INDIS-write-only, inside ZookeeperAnnouncer, any calls to
-    // "emitSDStatusActiveUpdateIntentAndWriteEvents" should only happen when _server is an instance of
-    // ZooKeeperServer (which means it only emits the event when it's doing zk-only or dual write).
-    if (!(_server instanceof ZooKeeperServer))
+    // In this class, SD event should be sent only when the announcing mode is to old service registry or dual write,
+    // so we can directly return when _server is NOT an instance of ZooKeeperServer or the announcement mode is dynamic
+    // new SR only.
+    if (!(_server instanceof ZooKeeperServer)
+        || _server.getAnnounceMode() == LoadBalancerServer.AnnounceMode.DYNAMIC_NEW_SR_ONLY)
     {
       return;
     }
