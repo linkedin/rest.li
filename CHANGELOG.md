@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Remove method defaults from `ResourceDefinition`.
 
 ## [29.63.0] - 2024-11-06
 - Add announcer status delegate interface
