@@ -79,8 +79,8 @@ public class TestXdsToD2PropertiesAdaptor {
   private static final String SERVICE_NAME = "FooService";
   private final UriPropertiesJsonSerializer _uriSerializer = new UriPropertiesJsonSerializer();
 
-  private static final XdsClient.NodeUpdate EMPTY_NODE_DATA = new XdsClient.NodeUpdate(null);
-  private static final XdsClient.D2URIMapUpdate EMPTY_DATA_URI_MAP = new XdsClient.D2URIMapUpdate(null);
+  private static final XdsClient.NodeUpdate EMPTY_NODE_DATA = new XdsClient.NodeUpdate(null, new HashMap<>());
+  private static final XdsClient.D2URIMapUpdate EMPTY_DATA_URI_MAP = new XdsClient.D2URIMapUpdate(null, new HashMap<>());
 
   /* Provide {
    * @clientOverride transport port client properties set on client override
@@ -139,7 +139,7 @@ public class TestXdsToD2PropertiesAdaptor {
             )
         )
         .setStat(XdsD2.Stat.newBuilder().setMzxid(1L).build())
-        .build())
+        .build(), new HashMap<>())
     );
     verify(fixture._serviceEventBus).publishInitialize(serviceName,
         new ServiceStoreProperties(serviceName, PRIMARY_CLUSTER_NAME, "",
@@ -228,7 +228,7 @@ public class TestXdsToD2PropertiesAdaptor {
     verify(fixture._xdsClient, times(10)).watchXdsResource(eq(PRIMARY_URI_RESOURCE_NAME), anyMapWatcher());
     XdsD2.D2URI protoUri = getD2URI(PRIMARY_CLUSTER_NAME, URI_NAME, VERSION);
     Map<String, XdsD2.D2URI> uriMap = new HashMap<>(Collections.singletonMap(URI_NAME, protoUri));
-    fixture._uriMapWatcher.onChanged(new XdsClient.D2URIMapUpdate(uriMap));
+    fixture._uriMapWatcher.onChanged(new XdsClient.D2URIMapUpdate(uriMap, new HashMap<>()));
     verify(fixture._uriEventBus).publishInitialize(PRIMARY_CLUSTER_NAME, _uriSerializer.fromProto(protoUri));
     verify(fixture._eventEmitter).emitSDStatusInitialRequestEvent(
         eq(PRIMARY_CLUSTER_NAME), eq(true), anyLong(), eq(true));
@@ -238,7 +238,7 @@ public class TestXdsToD2PropertiesAdaptor {
 
     // add uri 2
     uriMap.put(URI_NAME_2, getD2URI(PRIMARY_CLUSTER_NAME, URI_NAME_2, VERSION));
-    fixture._uriMapWatcher.onChanged(new XdsClient.D2URIMapUpdate(uriMap));
+    fixture._uriMapWatcher.onChanged(new XdsClient.D2URIMapUpdate(uriMap, new HashMap<>()));
     verify(fixture._eventEmitter).emitSDStatusInitialRequestEvent(
         eq(PRIMARY_CLUSTER_NAME), eq(true), anyLong(), eq(true)); // no more initial request event emitted
     verify(fixture._eventEmitter).emitSDStatusUpdateReceiptEvent( // status update receipt event emitted for added uri
@@ -249,7 +249,7 @@ public class TestXdsToD2PropertiesAdaptor {
     uriMap.clear();
     uriMap.put(URI_NAME, getD2URI(PRIMARY_CLUSTER_NAME, URI_NAME, VERSION_2));
     uriMap.put(URI_NAME_3, getD2URI(PRIMARY_CLUSTER_NAME, URI_NAME_3, VERSION));
-    fixture._uriMapWatcher.onChanged(new XdsClient.D2URIMapUpdate(uriMap));
+    fixture._uriMapWatcher.onChanged(new XdsClient.D2URIMapUpdate(uriMap, new HashMap<>()));
     // events should be emitted only for remove/add, but not update
     verify(fixture._eventEmitter, never()).emitSDStatusUpdateReceiptEvent(
         any(), eq(HOST_1), anyInt(), eq(ServiceDiscoveryEventEmitter.StatusUpdateActionType.MARK_READY), anyBoolean(),
@@ -286,7 +286,7 @@ public class TestXdsToD2PropertiesAdaptor {
 
     // update uri data
     D2URIMapResourceWatcher watcher = fixture._uriMapWatcher;
-    watcher.onChanged(new XdsClient.D2URIMapUpdate(Collections.emptyMap()));
+    watcher.onChanged(new XdsClient.D2URIMapUpdate(Collections.emptyMap(), new HashMap<>()));
 
     // verify uri data is merged and published under symlink name and the actual cluster name
     verify(fixture._uriEventBus).publishInitialize(SYMLINK_NAME, getDefaultUriProperties(SYMLINK_NAME));
@@ -308,7 +308,7 @@ public class TestXdsToD2PropertiesAdaptor {
     XdsD2.D2URI protoUri = getD2URI(PRIMARY_CLUSTER_NAME, LOCAL_HOST_URI.toString(), VERSION);
     UriProperties uriProps = new UriPropertiesJsonSerializer().fromProto(protoUri);
 
-    watcher.onChanged(new XdsClient.D2URIMapUpdate(Collections.singletonMap(URI_NAME, protoUri)));
+    watcher.onChanged(new XdsClient.D2URIMapUpdate(Collections.singletonMap(URI_NAME, protoUri), new HashMap<>()));
 
     verify(fixture._uriEventBus).publishInitialize(PRIMARY_CLUSTER_NAME, uriProps);
     // no status update receipt event emitted when data was empty before the update
@@ -388,8 +388,7 @@ public class TestXdsToD2PropertiesAdaptor {
     return new XdsClient.NodeUpdate(
         XdsD2.Node.newBuilder()
             .setData(ByteString.copyFromUtf8(primaryClusterResourceName))
-            .build()
-    );
+            .build(), new HashMap<>());
   }
 
   private static XdsClient.NodeUpdate getClusterNodeUpdate(String clusterName)
@@ -403,8 +402,7 @@ public class TestXdsToD2PropertiesAdaptor {
             )
         )
         .setStat(XdsD2.Stat.newBuilder().setMzxid(1L).build())
-        .build()
-    );
+        .build(), new HashMap<>());
   }
 
   private void verifyClusterNodeUpdate(XdsToD2PropertiesAdaptorFixture fixture, String clusterName, String symlinkName,
@@ -424,7 +422,7 @@ public class TestXdsToD2PropertiesAdaptor {
   {
     D2URIMapResourceWatcher watcher = fixture._uriMapWatcher;
     XdsD2.D2URI protoUri = getD2URI(clusterName, LOCAL_HOST_URI.toString(), VERSION);
-    watcher.onChanged(new XdsClient.D2URIMapUpdate(Collections.singletonMap(URI_NAME, protoUri)));
+    watcher.onChanged(new XdsClient.D2URIMapUpdate(Collections.singletonMap(URI_NAME, protoUri), new HashMap<>()));
     verify(fixture._uriEventBus).publishInitialize(clusterName, _uriSerializer.fromProto(protoUri));
     if (symlinkName != null)
     {
