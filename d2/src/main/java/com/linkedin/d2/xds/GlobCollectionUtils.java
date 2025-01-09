@@ -1,5 +1,7 @@
 package com.linkedin.d2.xds;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import javax.annotation.Nullable;
 
 public class GlobCollectionUtils
@@ -80,5 +82,20 @@ public class GlobCollectionUtils
     return D2_URI_NODE_GLOB_COLLECTION_PREFIX +
         clusterPath.substring(clusterPath.lastIndexOf('/') + 1) +
         GLOB_COLLECTION_SUFFIX;
+  }
+
+  public static String globCollectionUrn(String clusterName, String uri)
+  {
+    try
+    {
+      return D2_URI_NODE_GLOB_COLLECTION_PREFIX + clusterName + "/" + URLEncoder.encode(uri, "UTF-8");
+    }
+    catch (UnsupportedEncodingException e)
+    {
+      // Note that this is impossible. It is only thrown if the charset isn't recognized, and UTF-8 is known to be
+      // supported.
+      throw new RuntimeException(e);
+    }
+
   }
 }

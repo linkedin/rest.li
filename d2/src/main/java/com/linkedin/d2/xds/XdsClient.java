@@ -95,6 +95,23 @@ public abstract class XdsClient
     }
   }
 
+  public static abstract class D2UriResourceWatcher
+  {
+    public abstract void onChanged(XdsD2.D2URI d2Uri);
+
+    public abstract void onDelete();
+
+    /**
+     * Called when the resource discovery RPC encounters some transient error.
+     */
+    public abstract void onError(Status error);
+
+    /**
+     * Called when the resource discovery RPC reestablishes connection.
+     */
+    public abstract void onReconnect();
+  }
+
   public static abstract class WildcardResourceWatcher
   {
     private final ResourceType _type;
@@ -354,6 +371,13 @@ public abstract class XdsClient
    * will always notify the given watcher of the current data.
    */
   public abstract void watchAllXdsResources(WildcardResourceWatcher watcher);
+
+  /**
+   * Subscribes the given {@link D2UriResourceWatcher} to a specific URI in a specific cluster. The watcher will be
+   * notified whenever the URI is added or removed. Repeated calls to this function with the same watcher will always
+   * notify the given watcher of the current data.
+   */
+  public abstract void watchD2Uri(String cluster, String uri, D2UriResourceWatcher watcher);
 
   /**
    * Initiates the RPC stream to the xDS server.
