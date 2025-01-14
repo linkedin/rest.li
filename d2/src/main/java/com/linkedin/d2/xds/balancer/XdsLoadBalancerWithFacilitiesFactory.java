@@ -65,6 +65,8 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
     XdsToD2PropertiesAdaptor adaptor = new XdsToD2PropertiesAdaptor(xdsClient, config.dualReadStateManager,
         config.serviceDiscoveryEventEmitter, config.clientServicesConfig);
 
+    XdsDirectory directory = new XdsDirectory(xdsClient);
+
     XdsLoadBalancer xdsLoadBalancer = new XdsLoadBalancer(
         adaptor,
         executorService,
@@ -72,7 +74,8 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
             config.clientFactories, config.loadBalancerStrategyFactories, config.d2ServicePath, config.sslContext,
             config.sslParameters, config.isSSLEnabled, config.clientServicesConfig, config.partitionAccessorRegistry,
             config.sslSessionValidatorFactory, d2ClientJmxManager, config.deterministicSubsettingMetadataProvider,
-            config.failoutConfigProviderFactory, config.canaryDistributionProvider, config.loadBalanceStreamException)
+            config.failoutConfigProviderFactory, config.canaryDistributionProvider, config.loadBalanceStreamException),
+        directory
     );
 
     LoadBalancerWithFacilities balancer = xdsLoadBalancer;

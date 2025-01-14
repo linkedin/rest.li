@@ -180,6 +180,27 @@ public abstract class XdsClient
     }
   }
 
+  public static abstract class WildcardD2ClusterOrServiceNameResourceWatcher extends WildcardResourceWatcher
+  {
+    public WildcardD2ClusterOrServiceNameResourceWatcher()
+    {
+      super(ResourceType.D2_CLUSTER_OR_SERVICE_NAME);
+    }
+
+    /**
+     * Called when a D2ClusterOrServiceName resource is added or updated.
+     * @param resourceName the resource name of the D2ClusterOrServiceName that was added or updated.
+     * @param update       the new data for the D2ClusterOrServiceName resource
+     */
+    public abstract void onChanged(String resourceName, D2ClusterOrServiceNameUpdate update);
+
+    @Override
+    final void onChanged(String resourceName, ResourceUpdate update)
+    {
+      onChanged(resourceName, update);
+    }
+  }
+
   public interface ResourceUpdate
   {
     boolean isValid();
@@ -230,6 +251,54 @@ public abstract class XdsClient
     public String toString()
     {
       return MoreObjects.toStringHelper(this).add("_nodeData", _nodeData).toString();
+    }
+  }
+
+  public static final class D2ClusterOrServiceNameUpdate implements ResourceUpdate
+  {
+    XdsD2.D2ClusterOrServiceName _nameData;
+
+    D2ClusterOrServiceNameUpdate(XdsD2.D2ClusterOrServiceName nameData)
+    {
+      _nameData = nameData;
+    }
+
+    public XdsD2.D2ClusterOrServiceName getNameData()
+    {
+      return _nameData;
+    }
+
+    @Override
+    public boolean equals(Object object)
+    {
+      if (this == object)
+      {
+        return true;
+      }
+      if (object == null || getClass() != object.getClass())
+      {
+        return false;
+      }
+      D2ClusterOrServiceNameUpdate that = (D2ClusterOrServiceNameUpdate) object;
+      return Objects.equals(_nameData, that._nameData);
+    }
+
+    @Override
+    public int hashCode()
+    {
+      return Objects.hash(_nameData);
+    }
+
+    @Override
+    public boolean isValid()
+    {
+      return _nameData != null && (!_nameData.getClusterName().isEmpty() || !_nameData.getServiceName().isEmpty());
+    }
+
+    @Override
+    public String toString()
+    {
+      return MoreObjects.toStringHelper(this).add("_nameData", _nameData).toString();
     }
   }
 
@@ -302,12 +371,16 @@ public abstract class XdsClient
 
   public static final NodeUpdate EMPTY_NODE_UPDATE = new NodeUpdate(null);
   public static final D2URIMapUpdate EMPTY_D2_URI_MAP_UPDATE = new D2URIMapUpdate(null);
+  public static final D2ClusterOrServiceNameUpdate EMPTY_D2_CLUSTER_OR_SERVICE_NAME_UPDATE =
+      new D2ClusterOrServiceNameUpdate(null);
 
   enum ResourceType
   {
     NODE("type.googleapis.com/indis.Node", EMPTY_NODE_UPDATE),
     D2_URI_MAP("type.googleapis.com/indis.D2URIMap", EMPTY_D2_URI_MAP_UPDATE),
-    D2_URI("type.googleapis.com/indis.D2URI", EMPTY_D2_URI_MAP_UPDATE);
+    D2_URI("type.googleapis.com/indis.D2URI", EMPTY_D2_URI_MAP_UPDATE),
+    D2_CLUSTER_OR_SERVICE_NAME("type.googleapis.com/indis.D2ClusterOrServiceName",
+        EMPTY_D2_CLUSTER_OR_SERVICE_NAME_UPDATE);
 
     private static final Map<String, ResourceType> TYPE_URL_TO_ENUM = Arrays.stream(values())
         .filter(e -> e.typeUrl() != null)

@@ -797,32 +797,38 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    private void onData(String resourceName, ResourceUpdate data)
+    private void onData(String resourceName, ResourceUpdate update)
     {
-      if (Objects.equals(_data.get(resourceName), data))
+      if (Objects.equals(_data.get(resourceName), update))
       {
         _log.debug("Received resource update data equal to the current data. Will not perform the update.");
         return;
       }
       // null value guard to avoid overwriting the property with null
-      if (data != null && data.isValid())
+      if (update != null && update.isValid())
       {
-        _data.put(resourceName, data);
-        for (WildcardResourceWatcher watcher : _watchers)
-        {
-          watcher.onChanged(resourceName, data);
-        }
+        _data.put(resourceName, update);
       }
       else
       {
         if (_type == ResourceType.D2_URI_MAP || _type == ResourceType.D2_URI)
         {
-          RATE_LIMITED_LOGGER.warn("Received invalid data for {} {}, data: {}", _type, resourceName, data);
+          RATE_LIMITED_LOGGER.warn("Received invalid data for {} {}, data: {}", _type, resourceName, update);
         }
         else
         {
-          _log.warn("Received invalid data for {} {}, data: {}", _type, resourceName, data);
+          _log.warn("Received invalid data for {} {}, data: {}", _type, resourceName, update);
         }
+      }
+
+      if (_data.get(resourceName) == null)
+      {
+        _log.info("Initializing {} {} to empty data.", _type, resourceName);
+        _data.put(resourceName, _type.emptyData());
+      }
+      for (WildcardResourceWatcher watcher : _watchers)
+      {
+        watcher.onChanged(resourceName, update);
       }
     }
 
@@ -867,11 +873,12 @@ public class XdsClientImpl extends XdsClient
       for (ResourceType type : _resourceSubscribers.keySet())
       {
         Set<String> resources = new HashSet<>(getResourceSubscriberMap(type).keySet());
-        if (resources.isEmpty() && getWildcardResourceSubscriber(type) == null)
+        if (resources.isEmpty())
         {
           continue;
         }
-        ResourceType rewrittenType;
+
+        ResourceType rewrittenType = type;
         if (_subscribeToUriGlobCollection && type == ResourceType.D2_URI_MAP)
         {
           resources = resources.stream()
@@ -879,16 +886,12 @@ public class XdsClientImpl extends XdsClient
               .collect(Collectors.toCollection(HashSet::new));
           rewrittenType = ResourceType.D2_URI;
         }
-        else
-        {
-          rewrittenType = type;
-        }
-        // If there is a wildcard subscriber, we should always send a wildcard request to the server.
-        if (getWildcardResourceSubscriber(type) != null)
-        {
-          resources.add("*");
-        }
         _adsStream.sendDiscoveryRequest(rewrittenType, resources);
+      }
+
+      for (ResourceType type: _wildcardSubscribers.keySet())
+      {
+        _adsStream.sendDiscoveryRequest(type, Collections.singletonList("*"));
       }
     }
   }
