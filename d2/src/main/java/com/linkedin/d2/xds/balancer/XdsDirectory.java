@@ -3,6 +3,7 @@ package com.linkedin.d2.xds.balancer;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.d2.balancer.Directory;
 import com.linkedin.d2.xds.XdsClient;
+import indis.XdsD2;
 import io.grpc.Status;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,8 +71,8 @@ public class XdsDirectory implements Directory
         { // invalid data, ignore
           return;
         }
-        D2ClusterOrServiceName nameData = update.getNameData();
-        if (nameData.getClusterName() != null)
+        XdsD2.D2ClusterOrServiceName nameData = update.getNameData();
+        if (!nameData.getClusterName().isEmpty())
         {
           _clusterNames.put(resourceName, nameData.getClusterName());
         } else

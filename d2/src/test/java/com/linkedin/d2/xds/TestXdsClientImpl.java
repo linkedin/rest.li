@@ -195,6 +195,8 @@ public class TestXdsClientImpl
     XdsClientImplFixture fixture = new XdsClientImplFixture();
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_WITH_EMPTY_NODE_RESPONSE);
     fixture.verifyAckSent(1);
+    verify(fixture._clusterSubscriber, times(0)).onData(any(), any());
+    verify(fixture._uriMapWildcardSubscriber, times(0)).onData(any(), any());
   }
 
   @DataProvider(name = "badNodeUpdateTestCases")
@@ -290,6 +292,8 @@ public class TestXdsClientImpl
     // Sanity check that the code handles empty responses
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_WITH_EMPTY_URI_MAP_RESPONSE);
     fixture.verifyAckSent(1);
+    verify(fixture._clusterSubscriber, times(0)).onData(any(), any());
+    verify(fixture._uriMapWildcardSubscriber, times(0)).onData(any(), any());
   }
 
   @DataProvider(name = "badD2URIMapUpdateTestCases")
@@ -606,7 +610,6 @@ public class TestXdsClientImpl
       doNothing().when(_xdsClientImpl).watchAllXdsResources(any());
       when(_xdsClientImpl.getWildcardResourceSubscriber(any()))
           .thenAnswer(a -> _wildcardSubscribers.get((ResourceType) a.getArguments()[0]));
-
     }
 
     void verifyAckSent(int count)

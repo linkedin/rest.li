@@ -55,6 +55,13 @@ message Node {
   bytes data = 2 ;
 }
 
+message D2ClusterOrServiceName {
+  oneof type {
+    string cluster_name = 1;
+    string service_name = 2;
+  }
+}
+
 // D2URI is a proto representation of com.linkedin.d2.balancer.properties.UriProperties. Note that a D2 UriProperties is
 // is designed to hold all the announcements of a cluster, which is why it's represented as a map of URI to data. The
 // UriProperties class is reused wholesale for serialization to write the data to ZK, which is why all fields are
