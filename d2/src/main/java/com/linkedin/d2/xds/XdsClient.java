@@ -135,6 +135,15 @@ public abstract class XdsClient
      * @param resourceName the name of the resource that was removed.
      */
     public abstract void onRemoval(String resourceName);
+
+    /**
+     * Just a signal to notify that all resources (including both changed and removed ones) have been processed.
+     * Default implementation does nothing.
+     */
+    public void onAllResourcesProcessed()
+    {
+      // do nothing
+    }
   }
 
   public static abstract class WildcardNodeResourceWatcher extends WildcardResourceWatcher

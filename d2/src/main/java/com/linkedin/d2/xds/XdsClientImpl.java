@@ -374,8 +374,7 @@ public class XdsClientImpl extends XdsClient
       }
     }
     sendAckOrNack(data.getResourceType(), data.getNonce(), errors);
-    handleResourceUpdate(updates, data.getResourceType());
-    handleResourceRemoval(data.getRemovedResources(), data.getResourceType());
+    processResourceChanges(data.getResourceType(), updates, data.getRemovedResources());
   }
 
   private void handleD2ClusterOrServiceNameResponse(DiscoveryResponseData data)
@@ -404,8 +403,7 @@ public class XdsClientImpl extends XdsClient
       }
     }
     sendAckOrNack(data.getResourceType(), data.getNonce(), errors);
-    handleResourceUpdate(updates, data.getResourceType());
-    handleResourceRemoval(data.getRemovedResources(), data.getResourceType());
+    processResourceChanges(data.getResourceType(), updates, data.getRemovedResources());
   }
 
   private void handleD2URIMapResponse(DiscoveryResponseData data)
@@ -436,8 +434,7 @@ public class XdsClientImpl extends XdsClient
       }
     }
     sendAckOrNack(data.getResourceType(), data.getNonce(), errors);
-    handleResourceUpdate(updates, data.getResourceType());
-    handleResourceRemoval(data.getRemovedResources(), data.getResourceType());
+    processResourceChanges(data.getResourceType(), updates, data.getRemovedResources());
   }
 
   /**
@@ -527,9 +524,7 @@ public class XdsClientImpl extends XdsClient
       }
     });
     sendAckOrNack(data.getResourceType(), data.getNonce(), errors);
-
-    handleResourceUpdate(updates, ResourceType.D2_URI_MAP);
-    handleResourceRemoval(removedClusters, ResourceType.D2_URI_MAP);
+    processResourceChanges(ResourceType.D2_URI_MAP, updates, removedClusters);
   }
 
   @VisibleForTesting
@@ -546,9 +541,24 @@ public class XdsClientImpl extends XdsClient
     }
   }
 
+  private void processResourceChanges(ResourceType type, Map<String, ? extends ResourceUpdate> updates,
+      Collection<String> removedResources)
+  {
+    handleResourceUpdate(updates, type);
+    handleResourceRemoval(removedResources, type);
+    WildcardResourceSubscriber wildcardResourceSubscriber = getWildcardResourceSubscriber(type);
+    if (wildcardResourceSubscriber != null)
+    {
+      // lastly notify wildcard subscriber of the end of the changes
+      wildcardResourceSubscriber.onAllResourcesProcessed();
+    }
+  }
+
   private void handleResourceUpdate(Map<String, ? extends ResourceUpdate> updates, ResourceType type)
   {
     Map<String, ResourceSubscriber> subscribers = getResourceSubscriberMap(type);
+    WildcardResourceSubscriber wildcardSubscriber = getWildcardResourceSubscriber(type);
+
     for (Map.Entry<String, ? extends ResourceUpdate> entry : updates.entrySet())
     {
       ResourceSubscriber subscriber = subscribers.get(entry.getKey());
@@ -556,7 +566,6 @@ public class XdsClientImpl extends XdsClient
       {
         subscriber.onData(entry.getValue(), _serverMetricsProvider);
       }
-      WildcardResourceSubscriber wildcardSubscriber = getWildcardResourceSubscriber(type);
       if (wildcardSubscriber != null)
       {
         wildcardSubscriber.onData(entry.getKey(), entry.getValue());
@@ -570,6 +579,8 @@ public class XdsClientImpl extends XdsClient
     {
       return;
     }
+
+    WildcardResourceSubscriber wildcardSubscriber = getWildcardResourceSubscriber(type);
     for (String resourceName : removedResources)
     {
       _xdsClientJmx.incrementResourceNotFoundCount();
@@ -579,14 +590,12 @@ public class XdsClientImpl extends XdsClient
       {
         subscriber.onRemoval();
       }
-    }
-    WildcardResourceSubscriber wildcardSubscriber = getWildcardResourceSubscriber(type);
-    if (wildcardSubscriber != null)
-    {
-      removedResources.forEach(wildcardSubscriber::onRemoval);
+      if (wildcardSubscriber != null)
+      {
+        removedResources.forEach(wildcardSubscriber::onRemoval);
+      }
     }
   }
-
 
   private void notifyStreamError(Status error)
   {
@@ -921,6 +930,14 @@ public class XdsClientImpl extends XdsClient
       for (WildcardResourceWatcher watcher : _watchers)
       {
         watcher.onRemoval(resourceName);
+      }
+    }
+
+    private void onAllResourcesProcessed()
+    {
+      for (WildcardResourceWatcher watcher : _watchers)
+      {
+        watcher.onAllResourcesProcessed();
       }
     }
   }
