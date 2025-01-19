@@ -89,9 +89,11 @@ public class XdsClientImpl extends XdsClient
   private final boolean _subscribeToUriGlobCollection;
   private final BackoffPolicy.Provider _backoffPolicyProvider = new ExponentialBackoffPolicy.Provider();
   private BackoffPolicy _retryBackoffPolicy;
-  private AdsStream _adsStream;
+  @VisibleForTesting
+  AdsStream _adsStream;
   private boolean _shutdown;
-  private ScheduledFuture<?> _retryRpcStreamFuture;
+  @VisibleForTesting
+  ScheduledFuture<?> _retryRpcStreamFuture;
   private ScheduledFuture<?> _readyTimeoutFuture;
   private final long _readyTimeoutMillis;
 
@@ -561,11 +563,15 @@ public class XdsClientImpl extends XdsClient
 
     for (Map.Entry<String, ? extends ResourceUpdate> entry : updates.entrySet())
     {
-      ResourceSubscriber subscriber = subscribers.get(entry.getKey());
-      if (subscriber != null)
+      if (subscribers != null)
       {
-        subscriber.onData(entry.getValue(), _serverMetricsProvider);
+        ResourceSubscriber subscriber = subscribers.get(entry.getKey());
+        if (subscriber != null)
+        {
+          subscriber.onData(entry.getValue(), _serverMetricsProvider);
+        }
       }
+
       if (wildcardSubscriber != null)
       {
         wildcardSubscriber.onData(entry.getKey(), entry.getValue());
@@ -580,19 +586,25 @@ public class XdsClientImpl extends XdsClient
       return;
     }
 
+    Map<String, ResourceSubscriber> subscribers = getResourceSubscriberMap(type);
     WildcardResourceSubscriber wildcardSubscriber = getWildcardResourceSubscriber(type);
     for (String resourceName : removedResources)
     {
       _xdsClientJmx.incrementResourceNotFoundCount();
       _log.warn("Received response that {} {} was removed", type, resourceName);
-      ResourceSubscriber subscriber = getResourceSubscriberMap(type).get(resourceName);
-      if (subscriber != null)
+
+      if (subscribers != null)
       {
-        subscriber.onRemoval();
+        ResourceSubscriber subscriber = subscribers.get(resourceName);
+        if (subscriber != null)
+        {
+          subscriber.onRemoval();
+        }
       }
+
       if (wildcardSubscriber != null)
       {
-        removedResources.forEach(wildcardSubscriber::onRemoval);
+        wildcardSubscriber.onRemoval(resourceName);
       }
     }
   }
@@ -632,7 +644,7 @@ public class XdsClientImpl extends XdsClient
   @VisibleForTesting
   Map<String, ResourceSubscriber> getResourceSubscriberMap(ResourceType type)
   {
-    return _resourceSubscribers.get(type);
+    return getResourceSubscribers().get(type);
   }
 
   @VisibleForTesting
@@ -644,7 +656,7 @@ public class XdsClientImpl extends XdsClient
   @VisibleForTesting
   WildcardResourceSubscriber getWildcardResourceSubscriber(ResourceType type)
   {
-    return _wildcardSubscribers.get(type);
+    return getWildcardResourceSubscribers().get(type);
   }
 
   @VisibleForTesting
@@ -861,28 +873,28 @@ public class XdsClientImpl extends XdsClient
     }
 
     @VisibleForTesting
-    void onData(String resourceName, ResourceUpdate update)
+    void onData(String resourceName, ResourceUpdate data)
     {
-      if (Objects.equals(_data.get(resourceName), update))
+      if (Objects.equals(_data.get(resourceName), data))
       {
         _log.debug("Received resource update data equal to the current data. Will not perform the update.");
         return;
       }
       // null value guard to avoid overwriting the property with null
-      if (update != null && update.isValid())
+      if (data != null && data.isValid())
       {
-        _data.put(resourceName, update);
+        _data.put(resourceName, data);
       }
       else
       {
         // invalid data is received, log a warning and check if existing data is present.
         if (_type == ResourceType.D2_URI_MAP || _type == ResourceType.D2_URI)
         {
-          RATE_LIMITED_LOGGER.warn("Received invalid data for {} {}, data: {}", _type, resourceName, update);
+          RATE_LIMITED_LOGGER.warn("Received invalid data for {} {}, data: {}", _type, resourceName, data);
         }
         else
         {
-          _log.warn("Received invalid data for {} {}, data: {}", _type, resourceName, update);
+          _log.warn("Received invalid data for {} {}, data: {}", _type, resourceName, data);
         }
         // if no data has ever been set, init it to an empty data in case watchers are waiting for it
         if (_data.get(resourceName) == null)
@@ -898,7 +910,7 @@ public class XdsClientImpl extends XdsClient
 
       for (WildcardResourceWatcher watcher : _watchers)
       {
-        watcher.onChanged(resourceName, update);
+        watcher.onChanged(resourceName, _data.get(resourceName));
       }
     }
 
@@ -940,6 +952,22 @@ public class XdsClientImpl extends XdsClient
         watcher.onAllResourcesProcessed();
       }
     }
+  }
+
+  /**
+   * This is a test-only method to simulate the retry task being executed. It should only be called from tests.
+   * @param testStream test ads stream
+   */
+  @VisibleForTesting
+  void testRetryTask(AdsStream testStream)
+  {
+    if (_adsStream != null && _adsStream != testStream)
+    {
+      _log.warn("Non-testing ADS stream exists, ignoring test call");
+      return;
+    }
+    _adsStream = testStream;
+    _retryRpcStreamFuture = _executorService.schedule(new RpcRetryTask(), 0, TimeUnit.NANOSECONDS);
   }
 
   final class RpcRetryTask implements Runnable
@@ -1132,7 +1160,8 @@ public class XdsClientImpl extends XdsClient
     }
   }
 
-  private final class AdsStream
+  @VisibleForTesting
+  class AdsStream
   {
     private final AggregatedDiscoveryServiceGrpc.AggregatedDiscoveryServiceStub _stub;
 
@@ -1208,7 +1237,8 @@ public class XdsClientImpl extends XdsClient
     /**
      * Sends a client-initiated discovery request.
      */
-    private void sendDiscoveryRequest(ResourceType type, Collection<String> resources)
+    @VisibleForTesting
+    void sendDiscoveryRequest(ResourceType type, Collection<String> resources)
     {
       _log.info("Sending {} request for resources: {}", type, resources);
       DeltaDiscoveryRequest request = new DiscoveryRequestData(_node, type, resources).toEnvoyProto();
