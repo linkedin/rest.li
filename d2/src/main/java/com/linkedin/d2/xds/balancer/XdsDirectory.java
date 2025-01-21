@@ -1,17 +1,19 @@
 package com.linkedin.d2.xds.balancer;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.d2.balancer.Directory;
 import com.linkedin.d2.xds.XdsClient;
 import indis.XdsD2;
 import io.grpc.Status;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.linkedin.d2.xds.XdsClient.*;
 
@@ -19,20 +21,24 @@ import static com.linkedin.d2.xds.XdsClient.*;
 public class XdsDirectory implements Directory
 {
   private final XdsClient _xdsClient;
-  private final ConcurrentMap<String, String> _serviceNames = new ConcurrentHashMap<>();
-  private final ConcurrentMap<String, String> _clusterNames = new ConcurrentHashMap<>();
-  private final AtomicReference<WildcardD2ClusterOrServiceNameResourceWatcher> _watcher = new AtomicReference<>();
+  @VisibleForTesting
+  final ConcurrentMap<String, String> _serviceNames = new ConcurrentHashMap<>();
+  @VisibleForTesting
+  final ConcurrentMap<String, String> _clusterNames = new ConcurrentHashMap<>();
+  @VisibleForTesting
+  final AtomicReference<WildcardD2ClusterOrServiceNameResourceWatcher> _watcher = new AtomicReference<>();
   /**
    * A flag that shows whether the service/cluster names data is being updated. Requests to the data should wait until
    * the update is done.
    */
-  private final AtomicBoolean _isUpdating = new AtomicBoolean(true);
+  @VisibleForTesting
+  final AtomicBoolean _isUpdating = new AtomicBoolean(true);
   /**
-   * This lock will be released when the service and cluster names data have been updated and is ready to serve.
-   * If the data is being updated, requests to access the data will wait indefinitely. Callers could set a shorter
+   * The write lock will be released when the service and cluster names data have been updated and is ready to serve.
+   * If the data is being updated, requests to read the data will wait indefinitely. Callers could set a shorter
    * timeout on the callback passed in to getServiceNames or getClusterNames, as needed.
    */
-  private final Object _dataReadyLock = new Object();
+  private final ReadWriteLock _dataReadyLock = new ReentrantReadWriteLock();
 
   public XdsDirectory(XdsClient xdsClient)
   {
@@ -40,6 +46,8 @@ public class XdsDirectory implements Directory
   }
 
   public void start() {
+    _isUpdating.set(true);
+    _dataReadyLock.writeLock().lock(); // initially locked to block reads before the first update completes
     addNameWatcher();
   }
 
@@ -78,12 +86,16 @@ public class XdsDirectory implements Directory
       @Override
       public void onChanged(String resourceName, XdsClient.D2ClusterOrServiceNameUpdate update)
       {
-        _isUpdating.compareAndSet(false, true);
-        if (update == EMPTY_D2_CLUSTER_OR_SERVICE_NAME_UPDATE)
-        { // invalid data, ignore
+        if (_isUpdating.compareAndSet(false, true))
+        {
+          _dataReadyLock.writeLock().lock();
+        }
+        if (EMPTY_D2_CLUSTER_OR_SERVICE_NAME_UPDATE.equals(update))
+        { // invalid data, ignore. Logged in xds client.
           return;
         }
         XdsD2.D2ClusterOrServiceName nameData = update.getNameData();
+        // the data is guaranteed valid by the xds client. It has a non-empty name in either clusterName or serviceName.
         if (!nameData.getClusterName().isEmpty())
         {
           _clusterNames.put(resourceName, nameData.getClusterName());
@@ -96,7 +108,10 @@ public class XdsDirectory implements Directory
       @Override
       public void onRemoval(String resourceName)
       {
-        _isUpdating.compareAndSet(false, true);
+        if (_isUpdating.compareAndSet(false, true))
+        {
+          _dataReadyLock.writeLock().lock();
+        }
         // Don't need to differentiate between cluster and service names, will have no op on the map that doesn't
         // have the key. And the resource won't be both a cluster and a service name, since the two have different d2
         // path (/d2/clusters vs /d2/services).
@@ -107,11 +122,8 @@ public class XdsDirectory implements Directory
       @Override
       public void onAllResourcesProcessed()
       {
-        synchronized (_dataReadyLock)
-        {
-          _isUpdating.compareAndSet(true, false);
-          _dataReadyLock.notifyAll();
-        }
+        _isUpdating.compareAndSet(true, false);
+        _dataReadyLock.writeLock().unlock();
       }
 
       @Override
@@ -128,23 +140,18 @@ public class XdsDirectory implements Directory
     };
   }
 
-  private void waitAndRespond(boolean isForService, Callback<List<String>> callback) {
-    // Changes in the corresponding map will be reflected in the returned collection
-    Collection<String> names = isForService ? _serviceNames.values() : _clusterNames.values();
-
-    synchronized (_dataReadyLock)
+  private void waitAndRespond(boolean isForService, Callback<List<String>> callback)
+  {
+    List<String> names;
+    try
     {
-      while (_isUpdating.get())
-      {
-        try
-        {
-          _dataReadyLock.wait();
-        } catch (InterruptedException e)
-        {
-          // do nothing
-        }
-      }
-      callback.onSuccess(new ArrayList<>(names));
+      _dataReadyLock.readLock().lock();
+      names = new ArrayList<>(isForService ? _serviceNames.values() : _clusterNames.values());
     }
+    finally
+    {
+      _dataReadyLock.readLock().unlock();
+    }
+    callback.onSuccess(names);
   }
 }

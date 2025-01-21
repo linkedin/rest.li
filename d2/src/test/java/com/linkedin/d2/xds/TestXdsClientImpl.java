@@ -44,12 +44,12 @@ public class TestXdsClientImpl
 {
   private static final byte[] DATA = "data".getBytes();
   private static final byte[] DATA2 = "data2".getBytes();
-  private static final String SERVICE_NAME = "FooService";
-  private static final String SERVICE_NAME_2 = "BarService";
-  private static final String SERVICE_RESOURCE_NAME = "/d2/services/" + SERVICE_NAME;
-  private static final String SERVICE_RESOURCE_NAME_2 = "/d2/services/" + SERVICE_NAME_2;
-  private static final String CLUSTER_NAME = "FooClusterMaster-prod-ltx1";
-  private static final String CLUSTER_RESOURCE_NAME = "/d2/uris/" + CLUSTER_NAME;
+  public static final String SERVICE_NAME = "FooService";
+  public static final String SERVICE_NAME_2 = "BarService";
+  public static final String SERVICE_RESOURCE_NAME = "/d2/services/" + SERVICE_NAME;
+  public static final String SERVICE_RESOURCE_NAME_2 = "/d2/services/" + SERVICE_NAME_2;
+  public static final String CLUSTER_NAME = "FooClusterMaster-prod-ltx1";
+  public static final String CLUSTER_RESOURCE_NAME = "/d2/uris/" + CLUSTER_NAME;
   private static final String URI1 = "TestURI1";
   private static final String URI2 = "TestURI2";
   private static final String VERSION1 = "1";
@@ -81,11 +81,11 @@ public class TestXdsClientImpl
   private static final Any PACKED_SERVICE_NAME_DATA = Any.pack(SERVICE_NAME_DATA);
   private static final Any PACKED_SERVICE_NAME_DATA_2 = Any.pack(SERVICE_NAME_DATA_2);
   private static final Any PACKED_NAME_DATA_WITH_NULL = Any.pack(NAME_DATA_WITH_NULL);
-  private static final XdsClient.D2ClusterOrServiceNameUpdate CLUSTER_NAME_DATA_UPDATE =
+  public static final XdsClient.D2ClusterOrServiceNameUpdate CLUSTER_NAME_DATA_UPDATE =
       new XdsClient.D2ClusterOrServiceNameUpdate(CLUSTER_NAME_DATA);
-  private static final XdsClient.D2ClusterOrServiceNameUpdate SERVICE_NAME_DATA_UPDATE =
+  public static final XdsClient.D2ClusterOrServiceNameUpdate SERVICE_NAME_DATA_UPDATE =
       new XdsClient.D2ClusterOrServiceNameUpdate(SERVICE_NAME_DATA);
-  private static final XdsClient.D2ClusterOrServiceNameUpdate SERVICE_NAME_DATA_UPDATE_2 =
+  public static final XdsClient.D2ClusterOrServiceNameUpdate SERVICE_NAME_DATA_UPDATE_2 =
       new XdsClient.D2ClusterOrServiceNameUpdate(SERVICE_NAME_DATA_2);
   private static final List<Resource> SERVICE_NAME_DATA_RESOURCES = Arrays.asList(
       Resource.newBuilder().setVersion(VERSION1).setName(SERVICE_RESOURCE_NAME)
@@ -706,7 +706,8 @@ public class TestXdsClientImpl
   }
   @Test(dataProvider = "provideUseGlobCollection", timeOut = 2000)
   // Retry task should re-subscribe the resources registered in each subscriber type.
-  public void testRetry(boolean useGlobCollection) throws ExecutionException, InterruptedException {
+  public void testRetry(boolean useGlobCollection) throws ExecutionException, InterruptedException
+  {
     XdsClientImplFixture fixture = new XdsClientImplFixture(useGlobCollection);
     fixture.watchAllResourceAndWatcherTypes();
     fixture._xdsClientImpl.testRetryTask(fixture._adsStream);
@@ -715,7 +716,8 @@ public class TestXdsClientImpl
     // get all the resource types and names sent in the discovery requests and verify them
     List<ResourceType> types = fixture._resourceTypesArgumentCaptor.getAllValues();
     List<String> nameLists = fixture._resourceNamesArgumentCaptor.getAllValues().stream()
-        .map(names -> {
+        .map(names ->
+        {
           if (names.size() != 1)
           {
             Assert.fail("Resource names should be a singleton list");
@@ -741,7 +743,7 @@ public class TestXdsClientImpl
     ));
   }
 
-  private static class XdsClientImplFixture
+  private static final class XdsClientImplFixture
   {
     XdsClientImpl _xdsClientImpl;
     @Mock

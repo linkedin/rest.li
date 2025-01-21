@@ -383,7 +383,7 @@ public class XdsClientImpl extends XdsClient
   {
     Map<String, D2ClusterOrServiceNameUpdate> updates = new HashMap<>();
     List<String> errors = new ArrayList<>();
-    String errMsg = "Failed to unpack D2ClusterOrServiceName response";
+    String errMsg;
 
     for (Resource resource : data.getResourcesList())
     {
@@ -396,7 +396,7 @@ public class XdsClientImpl extends XdsClient
       }
       catch (InvalidProtocolBufferException e)
       {
-
+        errMsg = String.format("Failed to unpack D2ClusterOrServiceName response for resource: %s.", resourceName);
         _log.warn(errMsg, e);
         errors.add(errMsg);
         // Assume that the resource doesn't exist if it cannot be deserialized instead of simply ignoring it. This way
@@ -641,7 +641,6 @@ public class XdsClientImpl extends XdsClient
     _xdsClientJmx.setIsConnected(true);
   }
 
-  @VisibleForTesting
   Map<String, ResourceSubscriber> getResourceSubscriberMap(ResourceType type)
   {
     return getResourceSubscribers().get(type);
@@ -653,7 +652,6 @@ public class XdsClientImpl extends XdsClient
     return _resourceSubscribers;
   }
 
-  @VisibleForTesting
   WildcardResourceSubscriber getWildcardResourceSubscriber(ResourceType type)
   {
     return getWildcardResourceSubscribers().get(type);

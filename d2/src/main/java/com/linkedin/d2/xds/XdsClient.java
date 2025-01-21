@@ -206,7 +206,7 @@ public abstract class XdsClient
     @Override
     final void onChanged(String resourceName, ResourceUpdate update)
     {
-      onChanged(resourceName, update);
+      onChanged(resourceName, (D2ClusterOrServiceNameUpdate) update);
     }
   }
 
