@@ -1,6 +1,7 @@
 package com.linkedin.d2.xds;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.linkedin.d2.jmx.XdsClientJmx;
@@ -23,7 +24,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -115,7 +118,7 @@ public class TestXdsClientImpl
       new D2URIMapUpdate(D2_URI_MAP_WITH_DATA1.getUrisMap());
   private static final D2URIMapUpdate D2_URI_MAP_UPDATE_WITH_DATA2 =
       new D2URIMapUpdate(D2_URI_MAP_WITH_DATA2.getUrisMap());
-  private static final D2URIMapUpdate D_2_URI_MAP_UPDATE_WITH_EMPTY_MAP = new D2URIMapUpdate(Collections.emptyMap());
+  private static final D2URIMapUpdate D2_URI_MAP_UPDATE_WITH_EMPTY_MAP = new D2URIMapUpdate(Collections.emptyMap());
   private static final Any PACKED_D2_URI_MAP_WITH_DATA1 = Any.pack(D2_URI_MAP_WITH_DATA1);
   private static final Any PACKED_D2_URI_MAP_WITH_DATA2 = Any.pack(D2_URI_MAP_WITH_DATA2);
   private static final Any PACKED_D2_URI_MAP_WITH_EMPTY_DATA = Any.pack(D2_URI_MAP_WITH_EMPTY_DATA);
@@ -445,12 +448,13 @@ public class TestXdsClientImpl
     // new data with an empty uri map will update the original data, watchers will be notified, but xds server latency
     // won't be tracked.
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_EMPTY);
-    verify(fixture._resourceWatcher, times(toWatchIndividual ? 1 : 0)).onChanged(eq(D_2_URI_MAP_UPDATE_WITH_EMPTY_MAP));
+    verify(fixture._resourceWatcher, times(toWatchIndividual ? 1 : 0)).onChanged(eq(D2_URI_MAP_UPDATE_WITH_EMPTY_MAP));
     verify(fixture._wildcardResourceWatcher, times(toWatchWildcard ? 1 : 0))
-        .onChanged(eq(CLUSTER_RESOURCE_NAME), eq(D_2_URI_MAP_UPDATE_WITH_EMPTY_MAP));
+        .onChanged(eq(CLUSTER_RESOURCE_NAME), eq(D2_URI_MAP_UPDATE_WITH_EMPTY_MAP));
     verifyNoMoreInteractions(fixture._serverMetricsProvider); // won't track latency for removed uris
-    Assert.assertEquals(fixture._clusterSubscriber.getData(), D_2_URI_MAP_UPDATE_WITH_EMPTY_MAP);
-    Assert.assertEquals(fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME), D_2_URI_MAP_UPDATE_WITH_EMPTY_MAP);
+    Assert.assertEquals(fixture._clusterSubscriber.getData(), D2_URI_MAP_UPDATE_WITH_EMPTY_MAP);
+    Assert.assertEquals(fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME),
+        D2_URI_MAP_UPDATE_WITH_EMPTY_MAP);
     fixture.verifyAckSent(3);
   }
 
@@ -755,8 +759,10 @@ public class TestXdsClientImpl
     XdsClientImpl.WildcardResourceSubscriber _nodeWildcardSubscriber;
     XdsClientImpl.WildcardResourceSubscriber _uriMapWildcardSubscriber;
     XdsClientImpl.WildcardResourceSubscriber _nameWildcardSubscriber;
-    Map<ResourceType, Map<String, ResourceSubscriber>> _subscribers = new HashMap<>();
-    Map<ResourceType, XdsClientImpl.WildcardResourceSubscriber> _wildcardSubscribers = new HashMap<>();
+    Map<ResourceType, Map<String, ResourceSubscriber>> _subscribers = Maps.immutableEnumMap(
+        Stream.of(ResourceType.values())
+            .collect(Collectors.toMap(Function.identity(), e -> new HashMap<>())));
+    Map<ResourceType, XdsClientImpl.WildcardResourceSubscriber> _wildcardSubscribers = Maps.newEnumMap(ResourceType.class);
 
     @Mock
     XdsClient.ResourceWatcher _resourceWatcher;
@@ -790,7 +796,7 @@ public class TestXdsClientImpl
 
       for (ResourceSubscriber subscriber : Lists.newArrayList(_nodeSubscriber, _clusterSubscriber))
       {
-        _subscribers.put(subscriber.getType(), Collections.singletonMap(subscriber.getResource(), subscriber));
+        _subscribers.get(subscriber.getType()).put(subscriber.getResource(), subscriber);
       }
       for (WildcardResourceSubscriber subscriber : Lists.newArrayList(_nodeWildcardSubscriber,
           _uriMapWildcardSubscriber, _nameWildcardSubscriber))

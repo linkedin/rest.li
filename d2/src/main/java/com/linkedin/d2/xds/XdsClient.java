@@ -17,6 +17,7 @@
 package com.linkedin.d2.xds;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Strings;
 import com.linkedin.d2.jmx.XdsClientJmx;
 import indis.XdsD2;
 import io.grpc.Status;
@@ -301,7 +302,8 @@ public abstract class XdsClient
     @Override
     public boolean isValid()
     {
-      return _nameData != null && (!_nameData.getClusterName().isEmpty() || !_nameData.getServiceName().isEmpty());
+      return _nameData != null
+          && (!Strings.isNullOrEmpty(_nameData.getClusterName()) || !Strings.isNullOrEmpty(_nameData.getServiceName()));
     }
 
     @Override
