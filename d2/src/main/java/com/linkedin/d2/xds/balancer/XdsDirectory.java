@@ -1,6 +1,7 @@
 package com.linkedin.d2.xds.balancer;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.d2.balancer.Directory;
 import com.linkedin.d2.xds.XdsClient;
@@ -96,7 +97,7 @@ public class XdsDirectory implements Directory
         }
         XdsD2.D2ClusterOrServiceName nameData = update.getNameData();
         // the data is guaranteed valid by the xds client. It has a non-empty name in either clusterName or serviceName.
-        if (!nameData.getClusterName().isEmpty())
+        if (!Strings.isNullOrEmpty(nameData.getClusterName()))
         {
           _clusterNames.put(resourceName, nameData.getClusterName());
         } else
