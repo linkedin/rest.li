@@ -15,12 +15,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.linkedin.d2.xds.XdsClient.*;
 
 
 public class XdsDirectory implements Directory
 {
+  private static final Logger LOG = LoggerFactory.getLogger(XdsDirectory.class);
   private final XdsClient _xdsClient;
   @VisibleForTesting
   final ConcurrentMap<String, String> _serviceNames = new ConcurrentHashMap<>();
@@ -47,6 +50,7 @@ public class XdsDirectory implements Directory
   }
 
   public void start() {
+    LOG.debug("Starting. Setting isUpdating to true and locking the write lock");
     _isUpdating.set(true);
     _dataReadyLock.writeLock().lock(); // initially locked to block reads before the first update completes
     addNameWatcher();
@@ -89,6 +93,7 @@ public class XdsDirectory implements Directory
       {
         if (_isUpdating.compareAndSet(false, true))
         {
+          LOG.debug("onChanged locking write lock");
           _dataReadyLock.writeLock().lock();
         }
         if (EMPTY_D2_CLUSTER_OR_SERVICE_NAME_UPDATE.equals(update))
@@ -111,6 +116,7 @@ public class XdsDirectory implements Directory
       {
         if (_isUpdating.compareAndSet(false, true))
         {
+          LOG.debug("onRemoval locking write lock");
           _dataReadyLock.writeLock().lock();
         }
         // Don't need to differentiate between cluster and service names, will have no op on the map that doesn't
@@ -123,8 +129,11 @@ public class XdsDirectory implements Directory
       @Override
       public void onAllResourcesProcessed()
       {
-        _isUpdating.compareAndSet(true, false);
-        _dataReadyLock.writeLock().unlock();
+        if (_isUpdating.compareAndSet(true, false))
+        {
+          LOG.debug("onAllResourcesProcessed unlocking write lock");
+          _dataReadyLock.writeLock().unlock();
+        }
       }
 
       @Override
@@ -146,11 +155,13 @@ public class XdsDirectory implements Directory
     List<String> names;
     try
     {
+      LOG.debug("Locking read lock. Blocking request");
       _dataReadyLock.readLock().lock();
       names = new ArrayList<>(isForService ? _serviceNames.values() : _clusterNames.values());
     }
     finally
     {
+      LOG.debug("Unlocking read lock. Request unblocked");
       _dataReadyLock.readLock().unlock();
     }
     callback.onSuccess(names);

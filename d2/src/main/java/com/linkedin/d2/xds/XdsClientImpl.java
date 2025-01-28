@@ -40,7 +40,9 @@ import io.grpc.internal.ExponentialBackoffPolicy;
 import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
 import io.grpc.stub.StreamObserver;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -58,6 +60,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -346,6 +349,7 @@ public class XdsClientImpl extends XdsClient
       default:
         throw new AssertionError("Missing case in enum switch: " + resourceType);
     }
+    notifyOnLastChunk(response);
   }
 
   private void handleD2NodeResponse(DiscoveryResponseData data)
@@ -549,12 +553,6 @@ public class XdsClientImpl extends XdsClient
   {
     handleResourceUpdate(updates, type);
     handleResourceRemoval(removedResources, type);
-    WildcardResourceSubscriber wildcardResourceSubscriber = getWildcardResourceSubscriber(type);
-    if (wildcardResourceSubscriber != null)
-    {
-      // lastly notify wildcard subscriber of the end of the changes
-      wildcardResourceSubscriber.onAllResourcesProcessed();
-    }
   }
 
   private void handleResourceUpdate(Map<String, ? extends ResourceUpdate> updates, ResourceType type)
@@ -600,6 +598,34 @@ public class XdsClientImpl extends XdsClient
       if (wildcardSubscriber != null)
       {
         wildcardSubscriber.onRemoval(resourceName);
+      }
+    }
+  }
+
+  // If the nonce indicates that this is the last chunk of the response, notify the wildcard subscriber.
+  private void notifyOnLastChunk(DiscoveryResponseData response)
+  {
+    ResourceType type = response.getResourceType();
+    WildcardResourceSubscriber wildcardResourceSubscriber = getWildcardResourceSubscriber(type);
+    if (wildcardResourceSubscriber != null)
+    {
+      int remainingChunks;
+      try
+      {
+        byte[] bytes = Hex.decodeHex(response.getNonce().toCharArray());
+        ByteBuffer bb = ByteBuffer.wrap(Arrays.copyOfRange(bytes, 8, 12));
+        remainingChunks = bb.getInt();
+      }
+      catch (Exception e)
+      {
+        _log.warn("Failed to decode nonce: {}", response.getNonce(), e);
+        remainingChunks = -1;
+      }
+
+      if (remainingChunks == 0)
+      {
+        _log.info("Notifying wildcard subscriber of type {} for the end of response chunks.", type);
+        wildcardResourceSubscriber.onAllResourcesProcessed();
       }
     }
   }
