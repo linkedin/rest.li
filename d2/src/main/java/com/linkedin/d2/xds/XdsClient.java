@@ -138,7 +138,8 @@ public abstract class XdsClient
     public abstract void onRemoval(String resourceName);
 
     /**
-     * Just a signal to notify that all resources (including both changed and removed ones) have been processed.
+     * Just a signal to notify that all resources (including both changed and removed ones) in all response chunks (if
+     * any) have been processed.
      * Default implementation does nothing.
      */
     public void onAllResourcesProcessed()
