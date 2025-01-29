@@ -72,7 +72,7 @@ public class XdsClientImpl extends XdsClient
 {
   private static final Logger _log = LoggerFactory.getLogger(XdsClientImpl.class);
   private static final RateLimitedLogger RATE_LIMITED_LOGGER =
-      new RateLimitedLogger(_log, TimeUnit.SECONDS.toMillis(10), SystemClock.instance());
+      new RateLimitedLogger(_log, TimeUnit.MINUTES.toMillis(1), SystemClock.instance());
   public static final long DEFAULT_READY_TIMEOUT_MILLIS = 2000L;
 
   /**
