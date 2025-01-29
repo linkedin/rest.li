@@ -4,11 +4,13 @@ import com.google.common.collect.ImmutableMap;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.d2.xds.XdsClient;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
@@ -21,9 +23,11 @@ import static org.mockito.Mockito.*;
 public class TestXdsDirectory
 {
   /**
-   * Simulate getting cluster and service names with multiple threads.
+   * Simulate getting cluster and service names with multiple threads. Threads should be blocked until
+   * onAllResourcesProcessed is called. They should be re-blocked if new update comes in, and unblocked again when
+   * onAllResourcesProcessed is called.
    */
-  @Test(timeOut = 2000)
+  @Test(timeOut = 3000)
   public void testGetClusterAndServiceNames() throws InterruptedException {
     int numCallers = 20;
     int halfCallers = numCallers / 2;
@@ -69,15 +73,24 @@ public class TestXdsDirectory
         .filter(result -> Objects.equals(result, Collections.singletonList(SERVICE_NAME))).count();
     Assert.assertEquals(serviceMatchCount, halfCallers);
 
-    // adding new resource will trigger updating again
+    // adding new resource will trigger updating again, caller threads should be re-blocked, and new data shouldn't be
+    // added to the results
     watcher.onChanged(SERVICE_RESOURCE_NAME_2, SERVICE_NAME_DATA_UPDATE_2);
+    executor = Executors.newFixedThreadPool(1);
+    runCallers(fixture, executor, 1);
     Assert.assertTrue(directory._isUpdating.get());
     Assert.assertEquals(directory._serviceNames,
         ImmutableMap.of(SERVICE_RESOURCE_NAME, SERVICE_NAME, SERVICE_RESOURCE_NAME_2, SERVICE_NAME_2));
+    Assert.assertTrue(fixture._results.stream().noneMatch(result ->
+        matchSortedLists(result, Arrays.asList(SERVICE_NAME, SERVICE_NAME_2))));
 
-    // finish updating again
+    // finish updating again, new data should be added to the results
     watcher.onAllResourcesProcessed();
     Assert.assertFalse(directory._isUpdating.get());
+    executor.shutdown();
+    Assert.assertTrue(executor.awaitTermination(1000, java.util.concurrent.TimeUnit.MILLISECONDS));
+    Assert.assertEquals(1, fixture._results.stream()
+        .filter(result -> matchSortedLists(result, Arrays.asList(SERVICE_NAME, SERVICE_NAME_2))).count());
   }
 
   private void runCallers(XdsDirectoryFixture fixture, ExecutorService executor, int num)
@@ -86,6 +99,16 @@ public class TestXdsDirectory
     {
       executor.execute(fixture.createCaller(i % 2 == 0));
     }
+  }
+
+  private boolean matchSortedLists(List<String> one, List<String> other)
+  {
+    if (one.size() != other.size())
+    {
+      return false;
+    }
+    return Objects.equals(one.stream().sorted().collect(Collectors.toList()),
+        other.stream().sorted().collect(Collectors.toList()));
   }
 
   private static final class XdsDirectoryFixture

@@ -602,7 +602,11 @@ public class XdsClientImpl extends XdsClient
     }
   }
 
-  // If the nonce indicates that this is the last chunk of the response, notify the wildcard subscriber.
+  // Notify the wildcard subscriber for having processed all resources if either of these conditions met:
+  // 1) the nonce indicates that this is the last chunk of the response.
+  // 2) failed to parse a malformed or absent nonce.
+  // Details of the nonce format can be found here:
+  // https://github.com/linkedin/diderot/blob/b7418ea227eec45056a9de4deee2eb50387f63e8/ads/ads.go#L276
   private void notifyOnLastChunk(DiscoveryResponseData response)
   {
     ResourceType type = response.getResourceType();
@@ -616,7 +620,7 @@ public class XdsClientImpl extends XdsClient
     try
     {
       byte[] bytes = Hex.decodeHex(response.getNonce().toCharArray());
-      ByteBuffer bb = ByteBuffer.wrap(Arrays.copyOfRange(bytes, 8, 12));
+      ByteBuffer bb = ByteBuffer.wrap(bytes, 8, 4);
       remainingChunks = bb.getInt();
     }
     catch (Exception e)
@@ -625,9 +629,9 @@ public class XdsClientImpl extends XdsClient
       remainingChunks = -1;
     }
 
-    if (remainingChunks == 0)
+    if (remainingChunks <= 0)
     {
-      _log.info("Notifying wildcard subscriber of type {} for the end of response chunks.", type);
+      _log.debug("Notifying wildcard subscriber of type {} for the end of response chunks.", type);
       wildcardResourceSubscriber.onAllResourcesProcessed();
     }
   }

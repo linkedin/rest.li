@@ -37,8 +37,8 @@ public class XdsDirectory implements Directory
   final AtomicBoolean _isUpdating = new AtomicBoolean(true);
   /**
    * This lock will be released when the service and cluster names data have been updated and is ready to serve.
-   * If the data is being updated, requests to read the data will wait indefinitely. Callers could set a shorter
-   * timeout on the callback passed in to getServiceNames or getClusterNames, as needed.
+   * If the data is being updated, requests to read the data will wait indefinitely. Callers should set a timeout when
+   * getting the result of the callback passed to getServiceNames or getClusterNames, as needed.
    */
   private final Object _dataReadyLock = new Object();
 
@@ -144,6 +144,10 @@ public class XdsDirectory implements Directory
   {
     synchronized (_dataReadyLock)
     {
+      // Wait indefinitely if the data is being updated. Note that notifyAll randomly wake up threads that are waiting
+      // on this dataReadyLock. Sometimes the thread is woken up, but the _isUpdating is not false yet, so the thread
+      // need to go back to waiting.
+      // A timeout should be set by the caller when getting the result of the callback.
       while (_isUpdating.get())
       {
         try
