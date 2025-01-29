@@ -33,7 +33,8 @@ public class XdsDirectory implements Directory
    * A flag that shows whether the service/cluster names data is being updated. Requests to the data should wait until
    * the update is done.
    */
-  private final AtomicBoolean _isUpdating = new AtomicBoolean(true);
+  @VisibleForTesting
+  final AtomicBoolean _isUpdating = new AtomicBoolean(true);
   /**
    * This lock will be released when the service and cluster names data have been updated and is ready to serve.
    * If the data is being updated, requests to read the data will wait indefinitely. Callers could set a shorter
