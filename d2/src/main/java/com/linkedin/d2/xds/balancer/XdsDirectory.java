@@ -13,8 +13,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,14 +33,13 @@ public class XdsDirectory implements Directory
    * A flag that shows whether the service/cluster names data is being updated. Requests to the data should wait until
    * the update is done.
    */
-  @VisibleForTesting
-  final AtomicBoolean _isUpdating = new AtomicBoolean(true);
+  private final AtomicBoolean _isUpdating = new AtomicBoolean(true);
   /**
-   * The write lock will be released when the service and cluster names data have been updated and is ready to serve.
+   * This lock will be released when the service and cluster names data have been updated and is ready to serve.
    * If the data is being updated, requests to read the data will wait indefinitely. Callers could set a shorter
    * timeout on the callback passed in to getServiceNames or getClusterNames, as needed.
    */
-  private final ReadWriteLock _dataReadyLock = new ReentrantReadWriteLock();
+  private final Object _dataReadyLock = new Object();
 
   public XdsDirectory(XdsClient xdsClient)
   {
@@ -50,9 +47,8 @@ public class XdsDirectory implements Directory
   }
 
   public void start() {
-    LOG.debug("Starting. Setting isUpdating to true and locking the write lock");
-    _isUpdating.set(true);
-    _dataReadyLock.writeLock().lock(); // initially locked to block reads before the first update completes
+    LOG.debug("Starting. Setting isUpdating to true");
+    _isUpdating.set(true); // initially set to true to block reads before the first update completes
     addNameWatcher();
   }
 
@@ -91,11 +87,7 @@ public class XdsDirectory implements Directory
       @Override
       public void onChanged(String resourceName, XdsClient.D2ClusterOrServiceNameUpdate update)
       {
-        if (_isUpdating.compareAndSet(false, true))
-        {
-          LOG.debug("onChanged locking write lock");
-          _dataReadyLock.writeLock().lock();
-        }
+        _isUpdating.compareAndSet(false, true);
         if (EMPTY_D2_CLUSTER_OR_SERVICE_NAME_UPDATE.equals(update))
         { // invalid data, ignore. Logged in xds client.
           return;
@@ -114,11 +106,7 @@ public class XdsDirectory implements Directory
       @Override
       public void onRemoval(String resourceName)
       {
-        if (_isUpdating.compareAndSet(false, true))
-        {
-          LOG.debug("onRemoval locking write lock");
-          _dataReadyLock.writeLock().lock();
-        }
+        _isUpdating.compareAndSet(false, true);
         // Don't need to differentiate between cluster and service names, will have no op on the map that doesn't
         // have the key. And the resource won't be both a cluster and a service name, since the two have different d2
         // path (/d2/clusters vs /d2/services).
@@ -129,10 +117,11 @@ public class XdsDirectory implements Directory
       @Override
       public void onAllResourcesProcessed()
       {
-        if (_isUpdating.compareAndSet(true, false))
+        synchronized (_dataReadyLock)
         {
-          LOG.debug("onAllResourcesProcessed unlocking write lock");
-          _dataReadyLock.writeLock().unlock();
+          _isUpdating.compareAndSet(true, false);
+          _dataReadyLock.notifyAll();
+          LOG.debug("notified all threads waiting on lock");
         }
       }
 
@@ -152,18 +141,21 @@ public class XdsDirectory implements Directory
 
   private void waitAndRespond(boolean isForService, Callback<List<String>> callback)
   {
-    List<String> names;
-    try
+    synchronized (_dataReadyLock)
     {
-      LOG.debug("Locking read lock. Blocking request");
-      _dataReadyLock.readLock().lock();
-      names = new ArrayList<>(isForService ? _serviceNames.values() : _clusterNames.values());
+      while (_isUpdating.get())
+      {
+        try
+        {
+          LOG.debug("waiting on lock for data to be ready");
+          _dataReadyLock.wait();
+        } catch (Exception e)
+        {
+          // do nothing
+        }
+      }
     }
-    finally
-    {
-      LOG.debug("Unlocking read lock. Request unblocked");
-      _dataReadyLock.readLock().unlock();
-    }
-    callback.onSuccess(names);
+    LOG.debug("data is ready, responding to request");
+    callback.onSuccess(new ArrayList<>(isForService ? _serviceNames.values() : _clusterNames.values()));
   }
 }
