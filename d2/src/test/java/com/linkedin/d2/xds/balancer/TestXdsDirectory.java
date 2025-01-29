@@ -25,7 +25,8 @@ public class TestXdsDirectory
   /**
    * Simulate getting cluster and service names with multiple threads. Threads should be blocked until
    * onAllResourcesProcessed is called. They should be re-blocked if new update comes in, and unblocked again when
-   * onAllResourcesProcessed is called.
+   * onAllResourcesProcessed is called. New threads coming in while the data is not being updated should get the data
+   * immediately.
    */
   @Test(timeOut = 3000)
   public void testGetClusterAndServiceNames() throws InterruptedException {
@@ -72,6 +73,10 @@ public class TestXdsDirectory
     long serviceMatchCount = fixture._results.stream()
         .filter(result -> Objects.equals(result, Collections.singletonList(SERVICE_NAME))).count();
     Assert.assertEquals(serviceMatchCount, halfCallers);
+
+    // new caller coming in while the data is not being updated should get the data immediately
+    fixture.createCaller(true).run();
+    Assert.assertEquals(fixture._results.size(), numCallers + 1);
 
     // adding new resource will trigger updating again, caller threads should be re-blocked, and new data shouldn't be
     // added to the results

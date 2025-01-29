@@ -37,10 +37,12 @@ public class XdsDirectory implements Directory
   final AtomicBoolean _isUpdating = new AtomicBoolean(true);
   /**
    * This lock will be released when the service and cluster names data have been updated and is ready to serve.
-   * If the data is being updated, requests to read the data will wait indefinitely. Callers should set a timeout when
-   * getting the result of the callback passed to getServiceNames or getClusterNames, as needed.
+   * If the data is being updated, requests to read the data will wait until timeout and return the current data.
+   * Callers can also set a shorter timeout when getting the result of the callback passed to getServiceNames or
+   * getClusterNames, as needed.
    */
   private final Object _dataReadyLock = new Object();
+  private static final Long DEFAULT_TIMEOUT = 20000L;
 
   public XdsDirectory(XdsClient xdsClient)
   {
@@ -118,9 +120,9 @@ public class XdsDirectory implements Directory
       @Override
       public void onAllResourcesProcessed()
       {
+        _isUpdating.compareAndSet(true, false);
         synchronized (_dataReadyLock)
         {
-          _isUpdating.compareAndSet(true, false);
           _dataReadyLock.notifyAll();
           LOG.debug("notified all threads waiting on lock");
         }
@@ -142,25 +144,27 @@ public class XdsDirectory implements Directory
 
   private void waitAndRespond(boolean isForService, Callback<List<String>> callback)
   {
-    synchronized (_dataReadyLock)
+    // Wait until timeout if the data is being updated. Note that a shorter timeout can be set by the caller when
+    // getting the result of the callback.
+    while (_isUpdating.get())
     {
-      // Wait indefinitely if the data is being updated. Note that notifyAll randomly wake up threads that are waiting
-      // on this dataReadyLock. Sometimes the thread is woken up, but the _isUpdating is not false yet, so the thread
-      // need to go back to waiting.
-      // A timeout should be set by the caller when getting the result of the callback.
-      while (_isUpdating.get())
+      synchronized (_dataReadyLock)
       {
         try
         {
           LOG.debug("waiting on lock for data to be ready");
-          _dataReadyLock.wait();
+          _dataReadyLock.wait(DEFAULT_TIMEOUT);
+          LOG.debug("timeout passed, responding to request");
+          callback.onSuccess(new ArrayList<>(isForService ? _serviceNames.values() : _clusterNames.values()));
+          return;
         } catch (Exception e)
         {
-          // do nothing
+          // Do nothing. notifyAll randomly wake up threads that are waiting on the lock. Sometimes the thread is woken
+          // up, but _isUpdating is still true, so the thread need to go back to waiting.
         }
       }
     }
-    LOG.debug("data is ready, responding to request");
+    LOG.debug("Data is ready, responding to request");
     callback.onSuccess(new ArrayList<>(isForService ? _serviceNames.values() : _clusterNames.values()));
   }
 }
