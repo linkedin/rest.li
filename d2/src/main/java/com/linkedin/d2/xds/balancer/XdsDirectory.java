@@ -42,7 +42,7 @@ public class XdsDirectory implements Directory
    * getClusterNames, as needed.
    */
   private final Object _dataReadyLock = new Object();
-  private static final Long DEFAULT_TIMEOUT = 20000L;
+  private static final Long DEFAULT_TIMEOUT = 10000L;
 
   public XdsDirectory(XdsClient xdsClient)
   {
@@ -144,27 +144,26 @@ public class XdsDirectory implements Directory
 
   private void waitAndRespond(boolean isForService, Callback<List<String>> callback)
   {
-    // Wait until timeout if the data is being updated. Note that a shorter timeout can be set by the caller when
-    // getting the result of the callback.
-    while (_isUpdating.get())
+    if (_isUpdating.get())
     {
+      // If the data is being updated, wait until timeout. Note that a shorter timeout can be set by the caller when
+      // getting the result of the callback.
       synchronized (_dataReadyLock)
       {
         try
         {
-          LOG.debug("waiting on lock for data to be ready");
+          LOG.debug("Waiting on lock for data to be ready");
           _dataReadyLock.wait(DEFAULT_TIMEOUT);
-          LOG.debug("timeout passed, responding to request");
-          callback.onSuccess(new ArrayList<>(isForService ? _serviceNames.values() : _clusterNames.values()));
-          return;
-        } catch (Exception e)
+        }
+        catch (InterruptedException e)
         {
-          // Do nothing. notifyAll randomly wake up threads that are waiting on the lock. Sometimes the thread is woken
-          // up, but _isUpdating is still true, so the thread need to go back to waiting.
+          callback.onError(e);
+          Thread.currentThread().interrupt();
+          throw new RuntimeException(e);
         }
       }
     }
-    LOG.debug("Data is ready, responding to request");
+    LOG.debug("Data is ready or timed out on waiting for update, responding to request");
     callback.onSuccess(new ArrayList<>(isForService ? _serviceNames.values() : _clusterNames.values()));
   }
 }
