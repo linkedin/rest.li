@@ -607,26 +607,28 @@ public class XdsClientImpl extends XdsClient
   {
     ResourceType type = response.getResourceType();
     WildcardResourceSubscriber wildcardResourceSubscriber = getWildcardResourceSubscriber(type);
-    if (wildcardResourceSubscriber != null)
+    if (wildcardResourceSubscriber == null)
     {
-      int remainingChunks;
-      try
-      {
-        byte[] bytes = Hex.decodeHex(response.getNonce().toCharArray());
-        ByteBuffer bb = ByteBuffer.wrap(Arrays.copyOfRange(bytes, 8, 12));
-        remainingChunks = bb.getInt();
-      }
-      catch (Exception e)
-      {
-        _log.warn("Failed to decode nonce: {}", response.getNonce(), e);
-        remainingChunks = -1;
-      }
+      return;
+    }
 
-      if (remainingChunks == 0)
-      {
-        _log.info("Notifying wildcard subscriber of type {} for the end of response chunks.", type);
-        wildcardResourceSubscriber.onAllResourcesProcessed();
-      }
+    int remainingChunks;
+    try
+    {
+      byte[] bytes = Hex.decodeHex(response.getNonce().toCharArray());
+      ByteBuffer bb = ByteBuffer.wrap(Arrays.copyOfRange(bytes, 8, 12));
+      remainingChunks = bb.getInt();
+    }
+    catch (Exception e)
+    {
+      _log.warn("Failed to decode nonce: {}", response.getNonce(), e);
+      remainingChunks = -1;
+    }
+
+    if (remainingChunks == 0)
+    {
+      _log.info("Notifying wildcard subscriber of type {} for the end of response chunks.", type);
+      wildcardResourceSubscriber.onAllResourcesProcessed();
     }
   }
 
