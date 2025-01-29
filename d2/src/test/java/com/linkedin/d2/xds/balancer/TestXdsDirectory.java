@@ -17,16 +17,17 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static com.linkedin.d2.xds.TestXdsClientImpl.*;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 
 public class TestXdsDirectory
 {
   /**
-   * Simulate getting cluster and service names with multiple threads. Threads should be blocked until
-   * onAllResourcesProcessed is called. They should be re-blocked if new update comes in, and unblocked again when
-   * onAllResourcesProcessed is called. New threads coming in while the data is not being updated should get the data
-   * immediately.
+   * Simulate getting cluster and service names with multiple caller threads. Caller threads should be blocked until
+   * onAllResourcesProcessed is called by a different thread. Caller threads should be re-blocked if new update comes
+   * in, and unblocked again when onAllResourcesProcessed is called again.
+   * New caller threads coming in while the data is not being updated should get the data immediately.
    */
   @Test(timeOut = 3000)
   public void testGetClusterAndServiceNames() throws InterruptedException {
@@ -59,8 +60,9 @@ public class TestXdsDirectory
     Assert.assertTrue(directory._isUpdating.get());
     Assert.assertTrue(fixture._results.isEmpty());
 
-    // finish updating and unblock all callers
-    watcher.onAllResourcesProcessed();
+    // finish updating by another thread to verify the lock can be released by a different thread. All callers should
+    // be unblocked.
+    fixture.notifyComplete();
     executor.shutdown();
     Assert.assertTrue(executor.awaitTermination(1000, java.util.concurrent.TimeUnit.MILLISECONDS));
 
@@ -90,7 +92,7 @@ public class TestXdsDirectory
         matchSortedLists(result, Arrays.asList(SERVICE_NAME, SERVICE_NAME_2))));
 
     // finish updating again, new data should be added to the results
-    watcher.onAllResourcesProcessed();
+    fixture.notifyComplete();
     Assert.assertFalse(directory._isUpdating.get());
     executor.shutdown();
     Assert.assertTrue(executor.awaitTermination(1000, java.util.concurrent.TimeUnit.MILLISECONDS));
@@ -170,6 +172,21 @@ public class TestXdsDirectory
         {
           _xdsDirectory.getClusterNames(_callback);
         }
+      }
+    }
+
+    void notifyComplete()
+    {
+      Thread t = new Thread(() -> _xdsDirectory._watcher.get().onAllResourcesProcessed());
+
+      t.start();
+
+      try
+      {
+        t.join();
+      }
+      catch (InterruptedException e) {
+        fail("Interrupted while waiting for onAllResourcesProcessed to be called");
       }
     }
   }
