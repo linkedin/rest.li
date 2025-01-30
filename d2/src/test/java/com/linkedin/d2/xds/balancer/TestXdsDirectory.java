@@ -3,11 +3,11 @@ package com.linkedin.d2.xds.balancer;
 import com.google.common.collect.ImmutableMap;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.d2.xds.XdsClient;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -29,7 +29,7 @@ public class TestXdsDirectory
    * in, and unblocked again when onAllResourcesProcessed is called again.
    * New caller threads coming in while the data is not being updated should get the data immediately.
    */
-  @Test(timeOut = 3000)
+  @Test(timeOut = 3000, invocationCount = 10)
   public void testGetClusterAndServiceNames() throws InterruptedException {
     int numCallers = 20;
     int halfCallers = numCallers / 2;
@@ -37,85 +37,52 @@ public class TestXdsDirectory
     XdsDirectory directory = fixture._xdsDirectory;
     Assert.assertNull(directory._watcher.get());
     directory.start();
-    ExecutorService executor = Executors.newFixedThreadPool(numCallers);
-    runCallers(fixture, executor, halfCallers);
+    List<String> expectedClusterNames = Collections.singletonList(CLUSTER_NAME);
+    List<String> expectedServiceNames = Collections.singletonList(SERVICE_NAME);
+    fixture.runCallers(halfCallers, expectedClusterNames, expectedServiceNames);
     XdsClient.WildcardD2ClusterOrServiceNameResourceWatcher watcher = Objects.requireNonNull(directory._watcher.get());
 
     // verified names are not updated, results are empty, which means all threads are waiting.
     Assert.assertTrue(directory._isUpdating.get());
-    Assert.assertTrue(fixture._results.isEmpty());
     Assert.assertTrue(directory._serviceNames.isEmpty());
     Assert.assertTrue(directory._clusterNames.isEmpty());
 
     // update cluster and service names and mimic adding callers in the middle of updating
     watcher.onChanged(SERVICE_RESOURCE_NAME, SERVICE_NAME_DATA_UPDATE);
     watcher.onChanged(SERVICE_RESOURCE_NAME_2, SERVICE_NAME_DATA_UPDATE_2);
-    runCallers(fixture, executor, halfCallers);
+    fixture.runCallers(halfCallers, expectedClusterNames, expectedServiceNames);
     watcher.onChanged(CLUSTER_RESOURCE_NAME, CLUSTER_NAME_DATA_UPDATE);
     watcher.onRemoval(SERVICE_RESOURCE_NAME_2);
 
-    // verify service names and cluster names are updated, but updating flag is true, and threads are still waiting
+    // verify service names and cluster names are updated, but updating flag is true, and all threads are still waiting
     Assert.assertEquals(directory._clusterNames, Collections.singletonMap(CLUSTER_RESOURCE_NAME, CLUSTER_NAME));
     Assert.assertEquals(directory._serviceNames, Collections.singletonMap(SERVICE_RESOURCE_NAME, SERVICE_NAME));
     Assert.assertTrue(directory._isUpdating.get());
-    Assert.assertTrue(fixture._results.isEmpty());
+    Assert.assertEquals(fixture._latch.getCount(), numCallers);
 
     // finish updating by another thread to verify the lock can be released by a different thread. All callers should
-    // be unblocked.
+    // be unblocked and the isUpdating flag is false.
     fixture.notifyComplete();
-    executor.shutdown();
-    Assert.assertTrue(executor.awaitTermination(1000, java.util.concurrent.TimeUnit.MILLISECONDS));
-
-    // verify updating flag is false, and all threads are unblocked and added their results
     Assert.assertFalse(directory._isUpdating.get());
-    Assert.assertEquals(fixture._results.size(), numCallers);
-    long clusterMatchCount = fixture._results.stream()
-        .filter(result -> Objects.equals(result, Collections.singletonList(CLUSTER_NAME))).count();
-    Assert.assertEquals(clusterMatchCount, halfCallers);
-    long serviceMatchCount = fixture._results.stream()
-        .filter(result -> Objects.equals(result, Collections.singletonList(SERVICE_NAME))).count();
-    Assert.assertEquals(serviceMatchCount, halfCallers);
+    fixture.waitCallers();
 
     // new caller coming in while the data is not being updated should get the data immediately
-    fixture.createCaller(true).run();
-    Assert.assertEquals(fixture._results.size(), numCallers + 1);
+    fixture.runCallers(1, null, expectedServiceNames);
+    fixture.waitCallers();
 
     // adding new resource will trigger updating again, caller threads should be re-blocked, and new data shouldn't be
     // added to the results
     watcher.onChanged(SERVICE_RESOURCE_NAME_2, SERVICE_NAME_DATA_UPDATE_2);
-    executor = Executors.newFixedThreadPool(1);
-    runCallers(fixture, executor, 1);
+    fixture.runCallers(1, null, Arrays.asList(SERVICE_NAME, SERVICE_NAME_2));
     Assert.assertTrue(directory._isUpdating.get());
     Assert.assertEquals(directory._serviceNames,
         ImmutableMap.of(SERVICE_RESOURCE_NAME, SERVICE_NAME, SERVICE_RESOURCE_NAME_2, SERVICE_NAME_2));
-    Assert.assertTrue(fixture._results.stream().noneMatch(result ->
-        matchSortedLists(result, Arrays.asList(SERVICE_NAME, SERVICE_NAME_2))));
+    Assert.assertEquals(fixture._latch.getCount(), 1);
 
     // finish updating again, new data should be added to the results
     fixture.notifyComplete();
     Assert.assertFalse(directory._isUpdating.get());
-    executor.shutdown();
-    Assert.assertTrue(executor.awaitTermination(1000, java.util.concurrent.TimeUnit.MILLISECONDS));
-    Assert.assertEquals(1, fixture._results.stream()
-        .filter(result -> matchSortedLists(result, Arrays.asList(SERVICE_NAME, SERVICE_NAME_2))).count());
-  }
-
-  private void runCallers(XdsDirectoryFixture fixture, ExecutorService executor, int num)
-  {
-    for (int i = 0; i < num; i++)
-    {
-      executor.execute(fixture.createCaller(i % 2 == 0));
-    }
-  }
-
-  private boolean matchSortedLists(List<String> one, List<String> other)
-  {
-    if (one.size() != other.size())
-    {
-      return false;
-    }
-    return Objects.equals(one.stream().sorted().collect(Collectors.toList()),
-        other.stream().sorted().collect(Collectors.toList()));
+    fixture.waitCallers();
   }
 
   private static final class XdsDirectoryFixture
@@ -123,7 +90,8 @@ public class TestXdsDirectory
     XdsDirectory _xdsDirectory;
     @Mock
     XdsClient _xdsClient;
-    List<List<String>> _results = new ArrayList<>();;
+    CountDownLatch _latch;
+    ExecutorService _executor;
 
     public XdsDirectoryFixture()
     {
@@ -132,9 +100,62 @@ public class TestXdsDirectory
       _xdsDirectory = new XdsDirectory(_xdsClient);
     }
 
-    CallerThread createCaller(boolean isForServiceNames)
+    void runCallers(int num, List<String> expectedClusterResult, List<String> expectedServiceResult)
     {
-      return new CallerThread(isForServiceNames);
+      if (_executor == null || _executor.isShutdown() || _executor.isTerminated())
+      {
+        _executor = Executors.newFixedThreadPool(num);
+        _latch = new CountDownLatch(num);
+      }
+      else
+      {
+        _latch = new CountDownLatch((int) (_latch.getCount() + num));
+      }
+
+      for (int i = 0; i < num; i++)
+      {
+        boolean isForServiceName = i % 2 == 0;
+        _executor.execute(createCaller(isForServiceName,
+            isForServiceName ? expectedServiceResult : expectedClusterResult));
+      }
+    }
+
+    void waitCallers() throws InterruptedException {
+      _executor.shutdown();
+      if (!_latch.await(1000, java.util.concurrent.TimeUnit.MILLISECONDS))
+      {
+        Assert.fail("Timeout waiting for all callers to finish");
+      }
+    }
+
+    CallerThread createCaller(boolean isForServiceNames, List<String> expectedResult)
+    {
+      return new CallerThread(isForServiceNames, expectedResult);
+    }
+
+    void notifyComplete()
+    {
+      Thread t = new Thread(() -> _xdsDirectory._watcher.get().onAllResourcesProcessed());
+
+      t.start();
+
+      try
+      {
+        t.join();
+      }
+      catch (InterruptedException e) {
+        fail("Interrupted while waiting for onAllResourcesProcessed to be called");
+      }
+    }
+
+    static boolean matchSortedLists(List<String> one, List<String> other)
+    {
+      if (one.size() != other.size())
+      {
+        return false;
+      }
+      return Objects.equals(one.stream().sorted().collect(Collectors.toList()),
+          other.stream().sorted().collect(Collectors.toList()));
     }
 
     final class CallerThread implements Runnable
@@ -142,7 +163,7 @@ public class TestXdsDirectory
       private final Callback<List<String>> _callback;
       private final boolean _isForServiceNames;
 
-      public CallerThread(boolean isForServiceNames)
+      public CallerThread(boolean isForServiceNames, List<String> expectedResult)
       {
         _callback = new Callback<List<String>>()
         {
@@ -155,7 +176,8 @@ public class TestXdsDirectory
           @Override
           public void onSuccess(List<String> result)
           {
-            _results.add(result);
+            assertTrue(matchSortedLists(result, expectedResult));
+            _latch.countDown();
           }
         };
         _isForServiceNames = isForServiceNames;
@@ -172,21 +194,6 @@ public class TestXdsDirectory
         {
           _xdsDirectory.getClusterNames(_callback);
         }
-      }
-    }
-
-    void notifyComplete()
-    {
-      Thread t = new Thread(() -> _xdsDirectory._watcher.get().onAllResourcesProcessed());
-
-      t.start();
-
-      try
-      {
-        t.join();
-      }
-      catch (InterruptedException e) {
-        fail("Interrupted while waiting for onAllResourcesProcessed to be called");
       }
     }
   }
