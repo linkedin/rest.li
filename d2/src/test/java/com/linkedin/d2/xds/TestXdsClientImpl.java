@@ -1,17 +1,19 @@
 package com.linkedin.d2.xds;
 
-import com.google.common.collect.Lists;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.linkedin.d2.jmx.XdsClientJmx;
 import com.linkedin.d2.jmx.XdsServerMetricsProvider;
 import com.linkedin.d2.xds.XdsClient.D2URIMapUpdate;
 import com.linkedin.d2.xds.XdsClient.ResourceType;
+import com.linkedin.d2.xds.XdsClient.ResourceWatcher;
+import com.linkedin.d2.xds.XdsClient.WildcardResourceWatcher;
 import com.linkedin.d2.xds.XdsClientImpl.DiscoveryResponseData;
 import com.linkedin.d2.xds.XdsClientImpl.ResourceSubscriber;
 import com.linkedin.d2.xds.XdsClientImpl.WildcardResourceSubscriber;
 import indis.XdsD2;
 import io.envoyproxy.envoy.service.discovery.v3.Resource;
+import io.grpc.Status;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -37,8 +39,8 @@ public class TestXdsClientImpl
   private static final String SERVICE_RESOURCE_NAME = "/d2/services/FooService";
   private static final String CLUSTER_NAME = "FooClusterMaster-prod-ltx1";
   private static final String CLUSTER_RESOURCE_NAME = "/d2/uris/" + CLUSTER_NAME;
-  private static final String URI1 = "TestURI1";
-  private static final String URI2 = "TestURI2";
+  private static final String URI1 = "https://linkedin.com/foo";
+  private static final String URI2 = "https://linkedin.com:8080/bar";
   private static final String VERSION1 = "1";
   private static final String VERSION2 = "2";
   private static final String NONCE = "nonce";
@@ -148,392 +150,430 @@ public class TestXdsClientImpl
       new DiscoveryResponseData(D2_URI_MAP, Collections.emptyList(), Collections.singletonList(CLUSTER_RESOURCE_NAME), NONCE, null);
 
   private static final String CLUSTER_GLOB_COLLECTION = "xdstp:///indis.D2URI/" + CLUSTER_NAME + "/*";
-  private static final String URI_URN1 = "xdstp:///indis.D2URI/" + CLUSTER_NAME + "/" + URI1;
-  private static final String URI_URN2 = "xdstp:///indis.D2URI/" + CLUSTER_NAME + "/" + URI2;
+  private static final String URI_URN1 = GlobCollectionUtils.globCollectionUrn(CLUSTER_NAME, URI1);
+  private static final String URI_URN2 = GlobCollectionUtils.globCollectionUrn(CLUSTER_NAME, URI2);
 
   @Test
   public void testHandleD2NodeResponseWithData()
   {
     XdsClientImplFixture fixture = new XdsClientImplFixture();
-    // subscriber original data is null
-    fixture._nodeSubscriber.setData(null);
+    ResourceWatcher watcher = newWatcher(NODE);
+    ResourceSubscriber subscriber = fixture.watchXdsResource(SERVICE_RESOURCE_NAME, watcher);
+    WildcardResourceWatcher wildcardWatcher = newWildcardWatcher(NODE);
+    WildcardResourceSubscriber wildcardSubscriber = fixture.watchAllXdsResources(wildcardWatcher);
+
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA1);
     fixture.verifyAckSent(1);
-    verify(fixture._resourceWatcher).onChanged(eq(NODE_UPDATE1));
-    verify(fixture._wildcardResourceWatcher).onChanged(eq(SERVICE_RESOURCE_NAME), eq(NODE_UPDATE1));
+    verify(watcher).onChanged(eq(NODE_UPDATE1));
+    verify(wildcardWatcher).onChanged(eq(SERVICE_RESOURCE_NAME), eq(NODE_UPDATE1));
     verifyZeroInteractions(fixture._serverMetricsProvider); // initial update should not track latency
-    XdsClient.NodeUpdate actualData = (XdsClient.NodeUpdate) fixture._nodeSubscriber.getData();
+    XdsClient.NodeUpdate actualData = (XdsClient.NodeUpdate) subscriber.getData();
     // subscriber data should be updated to NODE_UPDATE1
     Assert.assertEquals(Objects.requireNonNull(actualData).getNodeData(), NODE_UPDATE1.getNodeData());
-    actualData = (XdsClient.NodeUpdate) fixture._nodeWildcardSubscriber.getData(SERVICE_RESOURCE_NAME);
+    actualData = (XdsClient.NodeUpdate) wildcardSubscriber.getData(SERVICE_RESOURCE_NAME);
     // subscriber data should be updated to NODE_UPDATE1
     Assert.assertEquals(Objects.requireNonNull(actualData).getNodeData(), NODE_UPDATE1.getNodeData());
 
     // subscriber original data is invalid, xds server latency won't be tracked
-    fixture._nodeSubscriber.setData(new XdsClient.NodeUpdate(null));
-    fixture._nodeWildcardSubscriber.setData(SERVICE_RESOURCE_NAME, new XdsClient.NodeUpdate(null));
+    subscriber.setData(new XdsClient.NodeUpdate(null));
+    wildcardSubscriber.setData(SERVICE_RESOURCE_NAME, new XdsClient.NodeUpdate(null));
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA1);
     fixture.verifyAckSent(2);
-    verify(fixture._resourceWatcher, times(2)).onChanged(eq(NODE_UPDATE1));
-    verify(fixture._wildcardResourceWatcher, times(2)).onChanged(eq(SERVICE_RESOURCE_NAME), eq(NODE_UPDATE1));
+    verify(watcher, times(2)).onChanged(eq(NODE_UPDATE1));
+    verify(wildcardWatcher, times(2)).onChanged(eq(SERVICE_RESOURCE_NAME), eq(NODE_UPDATE1));
     verifyZeroInteractions(fixture._serverMetricsProvider);
 
     // subscriber data should be updated to NODE_UPDATE2
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA2);
-    actualData = (XdsClient.NodeUpdate) fixture._nodeSubscriber.getData();
-    verify(fixture._resourceWatcher).onChanged(eq(NODE_UPDATE2));
-    verify(fixture._wildcardResourceWatcher).onChanged(eq(SERVICE_RESOURCE_NAME), eq(NODE_UPDATE2));
+    actualData = (XdsClient.NodeUpdate) subscriber.getData();
+    verify(watcher).onChanged(eq(NODE_UPDATE2));
+    verify(wildcardWatcher).onChanged(eq(SERVICE_RESOURCE_NAME), eq(NODE_UPDATE2));
     verify(fixture._serverMetricsProvider).trackLatency(anyLong());
     Assert.assertEquals(actualData.getNodeData(), NODE_UPDATE2.getNodeData());
-    actualData = (XdsClient.NodeUpdate) fixture._nodeWildcardSubscriber.getData(SERVICE_RESOURCE_NAME);
+    actualData = (XdsClient.NodeUpdate) wildcardSubscriber.getData(SERVICE_RESOURCE_NAME);
     Assert.assertEquals(actualData.getNodeData(), NODE_UPDATE2.getNodeData());
   }
 
-  @Test
-  public void testHandleD2NodeUpdateWithEmptyResponse()
-  {
-    XdsClientImplFixture fixture = new XdsClientImplFixture();
-    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_WITH_EMPTY_NODE_RESPONSE);
-    fixture.verifyAckSent(1);
-  }
-
-  @DataProvider(name = "badNodeUpdateTestCases")
-  public Object[][] provideBadNodeDataTestCases()
-  {
-    return new Object[][]{
-        {DISCOVERY_RESPONSE_NODE_RESOURCE_IS_NULL, true},
-        {DISCOVERY_RESPONSE_NODE_NULL_DATA_IN_RESOURCE_FILED, false},
-    };
-  }
-
-  @Test(dataProvider = "badNodeUpdateTestCases")
-  public void testHandleD2NodeUpdateWithBadData(DiscoveryResponseData badData, boolean nackExpected)
-  {
-    XdsClientImplFixture fixture = new XdsClientImplFixture();
-    fixture._nodeSubscriber.setData(null);
-    fixture._xdsClientImpl.handleResponse(badData);
-    fixture.verifyAckOrNack(nackExpected, 1);
-    verify(fixture._resourceWatcher).onChanged(eq(NODE.emptyData()));
-    // The wildcard subscriber doesn't care about bad data, it doesn't need to notify the watcher
-    verify(fixture._wildcardResourceWatcher, times(0)).onChanged(any(), any());
-    XdsClient.NodeUpdate actualData = (XdsClient.NodeUpdate) fixture._nodeSubscriber.getData();
-    Assert.assertNull(Objects.requireNonNull(actualData).getNodeData());
-
-    fixture._nodeSubscriber.setData(NODE_UPDATE1);
-    fixture._xdsClientImpl.handleResponse(badData);
-    fixture.verifyAckOrNack(nackExpected, 2);
-    verify(fixture._resourceWatcher).onChanged(eq(NODE_UPDATE1));
-    verify(fixture._wildcardResourceWatcher, times(0)).onChanged(any(), any());
-    actualData = (XdsClient.NodeUpdate) fixture._nodeSubscriber.getData();
-    // bad data will not overwrite the original valid data
-    Assert.assertEquals(actualData.getNodeData(), NODE_UPDATE1.getNodeData());
-  }
-
-  @Test
-  public void testHandleD2NodeResponseWithRemoval()
-  {
-    XdsClientImplFixture fixture = new XdsClientImplFixture();
-    fixture._nodeSubscriber.setData(NODE_UPDATE1);
-    fixture._nodeWildcardSubscriber.setData(SERVICE_RESOURCE_NAME, NODE_UPDATE1);
-    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA_WITH_REMOVAL);
-    fixture.verifyAckSent(1);
-    verify(fixture._resourceWatcher).onChanged(eq(NODE_UPDATE1));
-    verify(fixture._wildcardResourceWatcher).onRemoval(eq(SERVICE_RESOURCE_NAME));
-    verify(fixture._nodeSubscriber).onRemoval();
-    verify(fixture._nodeWildcardSubscriber).onRemoval(eq(SERVICE_RESOURCE_NAME));
-    XdsClient.NodeUpdate actualData = (XdsClient.NodeUpdate) fixture._nodeSubscriber.getData();
-    //  removed resource will not overwrite the original valid data
-    Assert.assertEquals(Objects.requireNonNull(actualData).getNodeData(), NODE_UPDATE1.getNodeData());
-  }
-
-  @Test
-  public void testHandleD2URIMapResponseWithData()
-  {
-    XdsClientImplFixture fixture = new XdsClientImplFixture();
-    // subscriber original data is null
-    fixture._clusterSubscriber.setData(null);
-    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA1);
-    fixture.verifyAckSent(1);
-    verify(fixture._resourceWatcher).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA1));
-    verify(fixture._wildcardResourceWatcher).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(D2_URI_MAP_UPDATE_WITH_DATA1));
-    verifyZeroInteractions(fixture._serverMetricsProvider);
-    D2URIMapUpdate actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
-    // subscriber data should be updated to D2_URI_MAP_UPDATE_WITH_DATA1
-    Assert.assertEquals(Objects.requireNonNull(actualData).getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA1.getURIMap());
-    actualData = (D2URIMapUpdate) fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME);
-    Assert.assertEquals(Objects.requireNonNull(actualData).getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA1.getURIMap());
-
-    // subscriber original data is invalid, xds server latency won't be tracked
-    fixture._clusterSubscriber.setData(new XdsClient.D2URIMapUpdate(null));
-    fixture._uriMapWildcardSubscriber.setData(CLUSTER_RESOURCE_NAME, new XdsClient.D2URIMapUpdate(null));
-    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA1);
-    verify(fixture._resourceWatcher, times(2)).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA1));
-    verify(fixture._wildcardResourceWatcher, times(2)).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(D2_URI_MAP_UPDATE_WITH_DATA1));
-    verifyZeroInteractions(fixture._serverMetricsProvider);
-    fixture.verifyAckSent(2);
-
-    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA2); // updated uri1, added uri2
-    actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
-    // subscriber data should be updated to D2_URI_MAP_UPDATE_WITH_DATA2
-    verify(fixture._resourceWatcher).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA2));
-    verify(fixture._serverMetricsProvider, times(2)).trackLatency(anyLong());
-    Assert.assertEquals(actualData.getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA2.getURIMap());
-    actualData = (D2URIMapUpdate) fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME);
-    Assert.assertEquals(actualData.getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA2.getURIMap());
-    fixture.verifyAckSent(3);
-  }
-
-  @Test
-  public void testHandleD2URIMapUpdateWithEmptyResponse()
-  {
-    XdsClientImplFixture fixture = new XdsClientImplFixture();
-    // Sanity check that the code handles empty responses
-    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_WITH_EMPTY_URI_MAP_RESPONSE);
-    fixture.verifyAckSent(1);
-  }
-
-  @DataProvider(name = "badD2URIMapUpdateTestCases")
-  public Object[][] provideBadD2URIMapDataTestCases()
-  {
-    return new Object[][]{
-        {DISCOVERY_RESPONSE_URI_MAP_RESOURCE_IS_NULL, true},
-        {DISCOVERY_RESPONSE_URI_MAP_EMPTY_MAP, false},
-    };
-  }
-
-  @Test(dataProvider = "badD2URIMapUpdateTestCases")
-  public void testHandleD2URIMapUpdateWithBadData(DiscoveryResponseData badData, boolean invalidData)
-  {
-    XdsClientImplFixture fixture = new XdsClientImplFixture();
-    fixture._clusterSubscriber.setData(null);
-    fixture._xdsClientImpl.handleResponse(badData);
-    fixture.verifyAckOrNack(invalidData, 1);
-    // If the map is empty, we expect an empty map, but if it's invalid we expect a null
-    D2URIMapUpdate expectedUpdate =
-        invalidData
-            ? (D2URIMapUpdate) D2_URI_MAP.emptyData()
-            : new D2URIMapUpdate(Collections.emptyMap());
-    verify(fixture._resourceWatcher).onChanged(eq(expectedUpdate));
-    if (!invalidData)
-    {
-      verify(fixture._wildcardResourceWatcher).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(expectedUpdate));
-    }
-    verify(fixture._clusterSubscriber).setData(eq(null));
-    verify(fixture._uriMapWildcardSubscriber, times(0)).setData(any(), any());
-    verifyZeroInteractions(fixture._serverMetricsProvider);
-    D2URIMapUpdate actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
-    Assert.assertEquals(actualData, expectedUpdate);
-
-    fixture._clusterSubscriber.setData(D2_URI_MAP_UPDATE_WITH_DATA1);
-    fixture._uriMapWildcardSubscriber.setData(CLUSTER_RESOURCE_NAME, D2_URI_MAP_UPDATE_WITH_DATA1);
-    fixture._xdsClientImpl.handleResponse(badData);
-    fixture.verifyAckOrNack(invalidData, 2);
-    actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
-    Objects.requireNonNull(actualData);
-    if (invalidData)
-    {
-      verify(fixture._resourceWatcher).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA1));
-      verify(fixture._wildcardResourceWatcher, times(0)).onChanged(any(), any());
-      // bad data will not overwrite the original valid data
-      Assert.assertEquals(actualData.getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA1.getURIMap());
-    }
-    else
-    {
-      verify(fixture._resourceWatcher, times(2)).onChanged(eq(expectedUpdate));
-      verify(fixture._wildcardResourceWatcher, times(2)).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(expectedUpdate));
-      // But an empty cluster should clear the data
-      Assert.assertEquals(actualData.getURIMap(), Collections.emptyMap());
-      actualData = (D2URIMapUpdate) fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME);
-      Assert.assertEquals(actualData.getURIMap(), Collections.emptyMap());
-    }
-    verifyZeroInteractions(fixture._serverMetricsProvider);
-  }
-
-  @Test
-  public void testHandleD2URIMapResponseWithRemoval()
-  {
-    XdsClientImplFixture fixture = new XdsClientImplFixture();
-    fixture._clusterSubscriber.setData(D2_URI_MAP_UPDATE_WITH_DATA1);
-    fixture._uriMapWildcardSubscriber.setData(CLUSTER_RESOURCE_NAME, D2_URI_MAP_UPDATE_WITH_DATA1);
-    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA_WITH_REMOVAL);
-    fixture.verifyAckSent(1);
-    verify(fixture._resourceWatcher).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA1));
-    verify(fixture._wildcardResourceWatcher).onRemoval(eq(CLUSTER_RESOURCE_NAME));
-    verify(fixture._clusterSubscriber).onRemoval();
-    verify(fixture._uriMapWildcardSubscriber).onRemoval(eq(CLUSTER_RESOURCE_NAME));
-    verifyZeroInteractions(fixture._serverMetricsProvider);
-    D2URIMapUpdate actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
-    // removed resource will not overwrite the original valid data
-    Assert.assertEquals(Objects.requireNonNull(actualData).getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA1.getURIMap());
-  }
-
-  @Test
-  public void testHandleD2URICollectionResponseWithData()
-  {
-    DiscoveryResponseData createUri1 = new DiscoveryResponseData(D2_URI, Collections.singletonList(
-        Resource.newBuilder()
-            .setVersion(VERSION1)
-            .setName(URI_URN1)
-            .setResource(Any.pack(D2URI_1))
-            .build()
-    ), null, NONCE, null);
-    XdsClientImplFixture fixture = new XdsClientImplFixture();
-    // subscriber original data is null
-    fixture._clusterSubscriber.setData(null);
-    fixture._xdsClientImpl.handleResponse(createUri1);
-    fixture.verifyAckSent(1);
-    verify(fixture._resourceWatcher).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA1));
-    verify(fixture._wildcardResourceWatcher).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(D2_URI_MAP_UPDATE_WITH_DATA1));
-    verifyZeroInteractions(fixture._serverMetricsProvider);
-    D2URIMapUpdate actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
-    // subscriber data should be updated to D2_URI_MAP_UPDATE_WITH_DATA1
-    Assert.assertEquals(Objects.requireNonNull(actualData).getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA1.getURIMap());
-    actualData = (D2URIMapUpdate) fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME);
-    Assert.assertEquals(Objects.requireNonNull(actualData).getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA1.getURIMap());
-
-    // subscriber original data is invalid, xds server latency won't be tracked
-    fixture._clusterSubscriber.setData(new D2URIMapUpdate(null));
-    fixture._uriMapWildcardSubscriber.setData(CLUSTER_RESOURCE_NAME, new D2URIMapUpdate(null));
-    fixture._xdsClientImpl.handleResponse(createUri1);
-    fixture.verifyAckSent(2);
-    verify(fixture._resourceWatcher, times(2)).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA1));
-    verify(fixture._wildcardResourceWatcher, times(2)).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(D2_URI_MAP_UPDATE_WITH_DATA1));
-    verifyZeroInteractions(fixture._serverMetricsProvider);
-
-    DiscoveryResponseData createUri2Delete1 = new DiscoveryResponseData(D2_URI, Collections.singletonList(
-        Resource.newBuilder()
-            .setVersion(VERSION1)
-            .setName(URI_URN2)
-            .setResource(Any.pack(D2URI_2))
-            .build()
-    ), Collections.singletonList(URI_URN1), NONCE, null);
-    fixture._xdsClientImpl.handleResponse(createUri2Delete1);
-    actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
-    // subscriber data should be updated to D2_URI_MAP_UPDATE_WITH_DATA2
-    D2URIMapUpdate expectedUpdate = new D2URIMapUpdate(Collections.singletonMap(URI2, D2URI_2));
-    verify(fixture._resourceWatcher).onChanged(eq(expectedUpdate));
-    verify(fixture._wildcardResourceWatcher).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(expectedUpdate));
-    // track latency only for updated/new uri (not for deletion)
-    verify(fixture._serverMetricsProvider).trackLatency(anyLong());
-    Assert.assertEquals(actualData.getURIMap(), expectedUpdate.getURIMap());
-    actualData = (D2URIMapUpdate) fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME);
-    Assert.assertEquals(actualData.getURIMap(), expectedUpdate.getURIMap());
-    fixture.verifyAckSent(3);
-
-    // Finally sanity check that the client correctly handles the deletion of the final URI in the collection
-    DiscoveryResponseData deleteUri2 =
-        new DiscoveryResponseData(D2_URI, null, Collections.singletonList(URI_URN2), NONCE, null);
-    fixture._xdsClientImpl.handleResponse(deleteUri2);
-    actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
-    // subscriber data should be updated to empty map
-    expectedUpdate = new D2URIMapUpdate(Collections.emptyMap());
-    verify(fixture._resourceWatcher).onChanged(eq(expectedUpdate));
-    verify(fixture._wildcardResourceWatcher).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(expectedUpdate));
-    verifyNoMoreInteractions(fixture._serverMetricsProvider);
-    Assert.assertEquals(actualData.getURIMap(), expectedUpdate.getURIMap());
-    actualData = (D2URIMapUpdate) fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME);
-    Assert.assertEquals(actualData.getURIMap(), expectedUpdate.getURIMap());
-    fixture.verifyAckSent(4);
-  }
-
-  @Test
-  public void testHandleD2URICollectionUpdateWithEmptyResponse()
-  {
-    XdsClientImplFixture fixture = new XdsClientImplFixture();
-    // Sanity check that the code handles empty responses
-    fixture._xdsClientImpl.handleResponse(new DiscoveryResponseData(D2_URI, null, null, NONCE, null));
-    fixture.verifyAckSent(1);
-  }
-
-  @Test
-  public void testHandleD2URICollectionUpdateWithBadData()
-  {
-    DiscoveryResponseData badData = new DiscoveryResponseData(
-        D2_URI,
-        Collections.singletonList(Resource.newBuilder().setVersion(VERSION1).setName(URI_URN1)
-            // resource field not set
-            .build()),
-        null,
-        NONCE,
-        null);
-
-    XdsClientImplFixture fixture = new XdsClientImplFixture();
-    fixture._clusterSubscriber.setData(null);
-    fixture._xdsClientImpl.handleResponse(badData);
-    fixture.verifyNackSent(1);
-    verify(fixture._resourceWatcher).onChanged(eq(D2_URI_MAP.emptyData()));
-    // The wildcard subscriber doesn't care about bad data, and simply treats it as the resource not existing
-    verify(fixture._wildcardResourceWatcher, times(0)).onChanged(any(), any());
-    verifyZeroInteractions(fixture._serverMetricsProvider);
-    D2URIMapUpdate actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
-    Assert.assertNull(Objects.requireNonNull(actualData).getURIMap());
-    actualData = (D2URIMapUpdate) fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME);
-    Assert.assertNull(actualData);
-
-    fixture._clusterSubscriber.setData(D2_URI_MAP_UPDATE_WITH_DATA1);
-    fixture._uriMapWildcardSubscriber.setData(CLUSTER_RESOURCE_NAME, D2_URI_MAP_UPDATE_WITH_DATA1);
-    fixture._xdsClientImpl.handleResponse(badData);
-    fixture.verifyNackSent(2);
-    // Due to the way glob collection updates are handled, bad data is dropped rather than showing any visible side
-    // effects other than NACKing the response.
-    verify(fixture._resourceWatcher, times(0)).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA1));
-    verify(fixture._wildcardResourceWatcher, times(0)).onChanged(any(), any());
-    verifyZeroInteractions(fixture._serverMetricsProvider);
-  }
-
-  @Test
-  public void testHandleD2URICollectionResponseWithRemoval()
-  {
-    DiscoveryResponseData removeClusterResponse =
-        new DiscoveryResponseData(D2_URI, null, Collections.singletonList(CLUSTER_GLOB_COLLECTION), NONCE, null);
-
-    XdsClientImplFixture fixture = new XdsClientImplFixture();
-    fixture._clusterSubscriber.setData(D2_URI_MAP_UPDATE_WITH_DATA1);
-    fixture._uriMapWildcardSubscriber.setData(CLUSTER_RESOURCE_NAME, D2_URI_MAP_UPDATE_WITH_DATA1);
-    fixture._xdsClientImpl.handleResponse(removeClusterResponse);
-    fixture.verifyAckSent(1);
-    verify(fixture._resourceWatcher).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA1));
-    verify(fixture._wildcardResourceWatcher).onRemoval(eq(CLUSTER_RESOURCE_NAME));
-    verify(fixture._clusterSubscriber).onRemoval();
-    verify(fixture._uriMapWildcardSubscriber).onRemoval(eq(CLUSTER_RESOURCE_NAME));
-    verifyZeroInteractions(fixture._serverMetricsProvider);
-    D2URIMapUpdate actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
-    // removed resource will not overwrite the original valid data
-    Assert.assertEquals(actualData.getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA1.getURIMap());
-    actualData = (D2URIMapUpdate) fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME);
-    Assert.assertNull(actualData);
-  }
-
-  @Test
-  public void testWildCardResourceSubscription()
-  {
-    XdsClientImplFixture fixture = new XdsClientImplFixture();
-
-    XdsClient.WildcardNodeResourceWatcher nodeWildCardWatcher = Mockito.mock(XdsClient.WildcardNodeResourceWatcher.class);
-    XdsClient.WildcardD2URIMapResourceWatcher uriMapWildCardWatcher = Mockito.mock(XdsClient.WildcardD2URIMapResourceWatcher.class);
-    fixture._xdsClientImpl.getWildcardResourceSubscriber(NODE).addWatcher(nodeWildCardWatcher);
-    fixture._xdsClientImpl.getWildcardResourceSubscriber(D2_URI_MAP).addWatcher(uriMapWildCardWatcher);
-
-    // NODE resource added
-    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA1);
-    fixture.verifyAckSent(1);
-    nodeWildCardWatcher.onChanged(eq(SERVICE_RESOURCE_NAME) , eq(NODE_UPDATE1));
-
-    // NODE resource removed
-    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA_WITH_REMOVAL);
-    fixture.verifyAckSent(2);
-    nodeWildCardWatcher.onRemoval(eq(SERVICE_RESOURCE_NAME));
-
-    // URI_MAP resource added
-    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA1);
-    fixture.verifyAckSent(3);
-    uriMapWildCardWatcher.onChanged(eq(CLUSTER_RESOURCE_NAME), eq(D2_URI_MAP_UPDATE_WITH_DATA1));
-
-    // URI_MAP resource removed
-    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA_WITH_REMOVAL);
-    fixture.verifyAckSent(4);
-    uriMapWildCardWatcher.onRemoval(eq(CLUSTER_RESOURCE_NAME));
-  }
+//  @Test
+//  public void testHandleD2NodeUpdateWithEmptyResponse()
+//  {
+//    XdsClientImplFixture fixture = new XdsClientImplFixture();
+//    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_WITH_EMPTY_NODE_RESPONSE);
+//    fixture.verifyAckSent(1);
+//  }
+//
+//  @DataProvider(name = "badNodeUpdateTestCases")
+//  public Object[][] provideBadNodeDataTestCases()
+//  {
+//    return new Object[][]{
+//        {DISCOVERY_RESPONSE_NODE_RESOURCE_IS_NULL, true},
+//        {DISCOVERY_RESPONSE_NODE_NULL_DATA_IN_RESOURCE_FILED, false},
+//    };
+//  }
+//
+//  @Test(dataProvider = "badNodeUpdateTestCases")
+//  public void testHandleD2NodeUpdateWithBadData(DiscoveryResponseData badData, boolean nackExpected)
+//  {
+//    XdsClientImplFixture fixture = new XdsClientImplFixture();
+//    fixture._nodeSubscriber.setData(null);
+//    fixture._xdsClientImpl.handleResponse(badData);
+//    fixture.verifyAckOrNack(nackExpected, 1);
+//    verify(fixture._resourceWatcher).onChanged(eq(NODE.emptyData()));
+//    // The wildcard subscriber doesn't care about bad data, it doesn't need to notify the watcher
+//    verify(fixture._wildcardResourceWatcher, times(0)).onChanged(any(), any());
+//    XdsClient.NodeUpdate actualData = (XdsClient.NodeUpdate) fixture._nodeSubscriber.getData();
+//    Assert.assertNull(Objects.requireNonNull(actualData).getNodeData());
+//
+//    fixture._nodeSubscriber.setData(NODE_UPDATE1);
+//    fixture._xdsClientImpl.handleResponse(badData);
+//    fixture.verifyAckOrNack(nackExpected, 2);
+//    verify(fixture._resourceWatcher).onChanged(eq(NODE_UPDATE1));
+//    verify(fixture._wildcardResourceWatcher, times(0)).onChanged(any(), any());
+//    actualData = (XdsClient.NodeUpdate) fixture._nodeSubscriber.getData();
+//    // bad data will not overwrite the original valid data
+//    Assert.assertEquals(actualData.getNodeData(), NODE_UPDATE1.getNodeData());
+//  }
+//
+//  @Test
+//  public void testHandleD2NodeResponseWithRemoval()
+//  {
+//    XdsClientImplFixture fixture = new XdsClientImplFixture();
+//    fixture._nodeSubscriber.setData(NODE_UPDATE1);
+//    fixture._nodeWildcardSubscriber.setData(SERVICE_RESOURCE_NAME, NODE_UPDATE1);
+//    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA_WITH_REMOVAL);
+//    fixture.verifyAckSent(1);
+//    verify(fixture._resourceWatcher).onChanged(eq(NODE_UPDATE1));
+//    verify(fixture._wildcardResourceWatcher).onRemoval(eq(SERVICE_RESOURCE_NAME));
+//    verify(fixture._nodeSubscriber).onRemoval();
+//    verify(fixture._nodeWildcardSubscriber).onRemoval(eq(SERVICE_RESOURCE_NAME));
+//    XdsClient.NodeUpdate actualData = (XdsClient.NodeUpdate) fixture._nodeSubscriber.getData();
+//    //  removed resource will not overwrite the original valid data
+//    Assert.assertEquals(Objects.requireNonNull(actualData).getNodeData(), NODE_UPDATE1.getNodeData());
+//  }
+//
+//  @Test
+//  public void testHandleD2URIMapResponseWithData()
+//  {
+//    XdsClientImplFixture fixture = new XdsClientImplFixture();
+//    // subscriber original data is null
+//    fixture._clusterSubscriber.setData(null);
+//    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA1);
+//    fixture.verifyAckSent(1);
+//    verify(fixture._resourceWatcher).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA1));
+//    verify(fixture._wildcardResourceWatcher).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(D2_URI_MAP_UPDATE_WITH_DATA1));
+//    verifyZeroInteractions(fixture._serverMetricsProvider);
+//    D2URIMapUpdate actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
+//    // subscriber data should be updated to D2_URI_MAP_UPDATE_WITH_DATA1
+//    Assert.assertEquals(Objects.requireNonNull(actualData).getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA1.getURIMap());
+//    actualData = (D2URIMapUpdate) fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME);
+//    Assert.assertEquals(Objects.requireNonNull(actualData).getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA1.getURIMap());
+//
+//    // subscriber original data is invalid, xds server latency won't be tracked
+//    fixture._clusterSubscriber.setData(new XdsClient.D2URIMapUpdate(null));
+//    fixture._uriMapWildcardSubscriber.setData(CLUSTER_RESOURCE_NAME, new XdsClient.D2URIMapUpdate(null));
+//    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA1);
+//    verify(fixture._resourceWatcher, times(2)).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA1));
+//    verify(fixture._wildcardResourceWatcher, times(2)).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(D2_URI_MAP_UPDATE_WITH_DATA1));
+//    verifyZeroInteractions(fixture._serverMetricsProvider);
+//    fixture.verifyAckSent(2);
+//
+//    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA2); // updated uri1, added uri2
+//    actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
+//    // subscriber data should be updated to D2_URI_MAP_UPDATE_WITH_DATA2
+//    verify(fixture._resourceWatcher).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA2));
+//    verify(fixture._serverMetricsProvider, times(2)).trackLatency(anyLong());
+//    Assert.assertEquals(actualData.getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA2.getURIMap());
+//    actualData = (D2URIMapUpdate) fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME);
+//    Assert.assertEquals(actualData.getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA2.getURIMap());
+//    fixture.verifyAckSent(3);
+//  }
+//
+//  @Test
+//  public void testHandleD2URIMapUpdateWithEmptyResponse()
+//  {
+//    XdsClientImplFixture fixture = new XdsClientImplFixture();
+//    // Sanity check that the code handles empty responses
+//    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_WITH_EMPTY_URI_MAP_RESPONSE);
+//    fixture.verifyAckSent(1);
+//  }
+//
+//  @DataProvider(name = "badD2URIMapUpdateTestCases")
+//  public Object[][] provideBadD2URIMapDataTestCases()
+//  {
+//    return new Object[][]{
+//        {DISCOVERY_RESPONSE_URI_MAP_RESOURCE_IS_NULL, true},
+//        {DISCOVERY_RESPONSE_URI_MAP_EMPTY_MAP, false},
+//    };
+//  }
+//
+//  @Test(dataProvider = "badD2URIMapUpdateTestCases")
+//  public void testHandleD2URIMapUpdateWithBadData(DiscoveryResponseData badData, boolean invalidData)
+//  {
+//    XdsClientImplFixture fixture = new XdsClientImplFixture();
+//    fixture._clusterSubscriber.setData(null);
+//    fixture._xdsClientImpl.handleResponse(badData);
+//    fixture.verifyAckOrNack(invalidData, 1);
+//    // If the map is empty, we expect an empty map, but if it's invalid we expect a null
+//    D2URIMapUpdate expectedUpdate =
+//        invalidData
+//            ? (D2URIMapUpdate) D2_URI_MAP.emptyData()
+//            : new D2URIMapUpdate(Collections.emptyMap());
+//    verify(fixture._resourceWatcher).onChanged(eq(expectedUpdate));
+//    if (!invalidData)
+//    {
+//      verify(fixture._wildcardResourceWatcher).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(expectedUpdate));
+//    }
+//    verify(fixture._clusterSubscriber).setData(eq(null));
+//    verify(fixture._uriMapWildcardSubscriber, times(0)).setData(any(), any());
+//    verifyZeroInteractions(fixture._serverMetricsProvider);
+//    D2URIMapUpdate actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
+//    Assert.assertEquals(actualData, expectedUpdate);
+//
+//    fixture._clusterSubscriber.setData(D2_URI_MAP_UPDATE_WITH_DATA1);
+//    fixture._uriMapWildcardSubscriber.setData(CLUSTER_RESOURCE_NAME, D2_URI_MAP_UPDATE_WITH_DATA1);
+//    fixture._xdsClientImpl.handleResponse(badData);
+//    fixture.verifyAckOrNack(invalidData, 2);
+//    actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
+//    Objects.requireNonNull(actualData);
+//    if (invalidData)
+//    {
+//      verify(fixture._resourceWatcher).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA1));
+//      verify(fixture._wildcardResourceWatcher, times(0)).onChanged(any(), any());
+//      // bad data will not overwrite the original valid data
+//      Assert.assertEquals(actualData.getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA1.getURIMap());
+//    }
+//    else
+//    {
+//      verify(fixture._resourceWatcher, times(2)).onChanged(eq(expectedUpdate));
+//      verify(fixture._wildcardResourceWatcher, times(2)).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(expectedUpdate));
+//      // But an empty cluster should clear the data
+//      Assert.assertEquals(actualData.getURIMap(), Collections.emptyMap());
+//      actualData = (D2URIMapUpdate) fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME);
+//      Assert.assertEquals(actualData.getURIMap(), Collections.emptyMap());
+//    }
+//    verifyZeroInteractions(fixture._serverMetricsProvider);
+//  }
+//
+//  @Test
+//  public void testHandleD2URIMapResponseWithRemoval()
+//  {
+//    XdsClientImplFixture fixture = new XdsClientImplFixture();
+//    fixture._clusterSubscriber.setData(D2_URI_MAP_UPDATE_WITH_DATA1);
+//    fixture._uriMapWildcardSubscriber.setData(CLUSTER_RESOURCE_NAME, D2_URI_MAP_UPDATE_WITH_DATA1);
+//    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA_WITH_REMOVAL);
+//    fixture.verifyAckSent(1);
+//    verify(fixture._resourceWatcher).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA1));
+//    verify(fixture._wildcardResourceWatcher).onRemoval(eq(CLUSTER_RESOURCE_NAME));
+//    verify(fixture._clusterSubscriber).onRemoval();
+//    verify(fixture._uriMapWildcardSubscriber).onRemoval(eq(CLUSTER_RESOURCE_NAME));
+//    verifyZeroInteractions(fixture._serverMetricsProvider);
+//    D2URIMapUpdate actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
+//    // removed resource will not overwrite the original valid data
+//    Assert.assertEquals(Objects.requireNonNull(actualData).getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA1.getURIMap());
+//  }
+//
+//  @Test
+//  public void testHandleD2URICollectionResponseWithData()
+//  {
+//    DiscoveryResponseData createUri1 = new DiscoveryResponseData(D2_URI, Collections.singletonList(
+//        Resource.newBuilder()
+//            .setVersion(VERSION1)
+//            .setName(URI_URN1)
+//            .setResource(Any.pack(D2URI_1))
+//            .build()
+//    ), null, NONCE, null);
+//    XdsClientImplFixture fixture = new XdsClientImplFixture();
+//    // subscriber original data is null
+//    fixture._clusterSubscriber.setData(null);
+//    fixture._xdsClientImpl.handleResponse(createUri1);
+//    fixture.verifyAckSent(1);
+//    verify(fixture._resourceWatcher).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA1));
+//    verify(fixture._wildcardResourceWatcher).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(D2_URI_MAP_UPDATE_WITH_DATA1));
+//    verifyZeroInteractions(fixture._serverMetricsProvider);
+//    D2URIMapUpdate actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
+//    // subscriber data should be updated to D2_URI_MAP_UPDATE_WITH_DATA1
+//    Assert.assertEquals(Objects.requireNonNull(actualData).getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA1.getURIMap());
+//    actualData = (D2URIMapUpdate) fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME);
+//    Assert.assertEquals(Objects.requireNonNull(actualData).getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA1.getURIMap());
+//
+//    // subscriber original data is invalid, xds server latency won't be tracked
+//    fixture._clusterSubscriber.setData(new D2URIMapUpdate(null));
+//    fixture._uriMapWildcardSubscriber.setData(CLUSTER_RESOURCE_NAME, new D2URIMapUpdate(null));
+//    fixture._xdsClientImpl.handleResponse(createUri1);
+//    fixture.verifyAckSent(2);
+//    verify(fixture._resourceWatcher, times(2)).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA1));
+//    verify(fixture._wildcardResourceWatcher, times(2)).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(D2_URI_MAP_UPDATE_WITH_DATA1));
+//    verifyZeroInteractions(fixture._serverMetricsProvider);
+//
+//    DiscoveryResponseData createUri2Delete1 = new DiscoveryResponseData(D2_URI, Collections.singletonList(
+//        Resource.newBuilder()
+//            .setVersion(VERSION1)
+//            .setName(URI_URN2)
+//            .setResource(Any.pack(D2URI_2))
+//            .build()
+//    ), Collections.singletonList(URI_URN1), NONCE, null);
+//    fixture._xdsClientImpl.handleResponse(createUri2Delete1);
+//    actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
+//    // subscriber data should be updated to D2_URI_MAP_UPDATE_WITH_DATA2
+//    D2URIMapUpdate expectedUpdate = new D2URIMapUpdate(Collections.singletonMap(URI2, D2URI_2));
+//    verify(fixture._resourceWatcher).onChanged(eq(expectedUpdate));
+//    verify(fixture._wildcardResourceWatcher).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(expectedUpdate));
+//    // track latency only for updated/new uri (not for deletion)
+//    verify(fixture._serverMetricsProvider).trackLatency(anyLong());
+//    Assert.assertEquals(actualData.getURIMap(), expectedUpdate.getURIMap());
+//    actualData = (D2URIMapUpdate) fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME);
+//    Assert.assertEquals(actualData.getURIMap(), expectedUpdate.getURIMap());
+//    fixture.verifyAckSent(3);
+//
+//    // Finally sanity check that the client correctly handles the deletion of the final URI in the collection
+//    DiscoveryResponseData deleteUri2 =
+//        new DiscoveryResponseData(D2_URI, null, Collections.singletonList(URI_URN2), NONCE, null);
+//    fixture._xdsClientImpl.handleResponse(deleteUri2);
+//    actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
+//    // subscriber data should be updated to empty map
+//    expectedUpdate = new D2URIMapUpdate(Collections.emptyMap());
+//    verify(fixture._resourceWatcher).onChanged(eq(expectedUpdate));
+//    verify(fixture._wildcardResourceWatcher).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(expectedUpdate));
+//    verifyNoMoreInteractions(fixture._serverMetricsProvider);
+//    Assert.assertEquals(actualData.getURIMap(), expectedUpdate.getURIMap());
+//    actualData = (D2URIMapUpdate) fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME);
+//    Assert.assertEquals(actualData.getURIMap(), expectedUpdate.getURIMap());
+//    fixture.verifyAckSent(4);
+//  }
+//
+//  @Test
+//  public void testHandleD2URICollectionUpdateWithEmptyResponse()
+//  {
+//    XdsClientImplFixture fixture = new XdsClientImplFixture();
+//    // Sanity check that the code handles empty responses
+//    fixture._xdsClientImpl.handleResponse(new DiscoveryResponseData(D2_URI, null, null, NONCE, null));
+//    fixture.verifyAckSent(1);
+//  }
+//
+//  @Test
+//  public void testHandleD2URICollectionUpdateWithBadData()
+//  {
+//    DiscoveryResponseData badData = new DiscoveryResponseData(
+//        D2_URI,
+//        Collections.singletonList(Resource.newBuilder().setVersion(VERSION1).setName(URI_URN1)
+//            // resource field not set
+//            .build()),
+//        null,
+//        NONCE,
+//        null);
+//
+//    XdsClientImplFixture fixture = new XdsClientImplFixture();
+//    fixture._clusterSubscriber.setData(null);
+//    fixture._xdsClientImpl.handleResponse(badData);
+//    fixture.verifyNackSent(1);
+//    verify(fixture._resourceWatcher).onChanged(eq(D2_URI_MAP.emptyData()));
+//    // The wildcard subscriber doesn't care about bad data, and simply treats it as the resource not existing
+//    verify(fixture._wildcardResourceWatcher, times(0)).onChanged(any(), any());
+//    verifyZeroInteractions(fixture._serverMetricsProvider);
+//    D2URIMapUpdate actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
+//    Assert.assertNull(Objects.requireNonNull(actualData).getURIMap());
+//    actualData = (D2URIMapUpdate) fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME);
+//    Assert.assertNull(actualData);
+//
+//    fixture._clusterSubscriber.setData(D2_URI_MAP_UPDATE_WITH_DATA1);
+//    fixture._uriMapWildcardSubscriber.setData(CLUSTER_RESOURCE_NAME, D2_URI_MAP_UPDATE_WITH_DATA1);
+//    fixture._xdsClientImpl.handleResponse(badData);
+//    fixture.verifyNackSent(2);
+//    // Due to the way glob collection updates are handled, bad data is dropped rather than showing any visible side
+//    // effects other than NACKing the response.
+//    verify(fixture._resourceWatcher, times(0)).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA1));
+//    verify(fixture._wildcardResourceWatcher, times(0)).onChanged(any(), any());
+//    verifyZeroInteractions(fixture._serverMetricsProvider);
+//  }
+//
+//  @Test
+//  public void testHandleD2URICollectionResponseWithRemoval()
+//  {
+//    DiscoveryResponseData removeClusterResponse =
+//        new DiscoveryResponseData(D2_URI, null, Collections.singletonList(CLUSTER_GLOB_COLLECTION), NONCE, null);
+//
+//    XdsClientImplFixture fixture = new XdsClientImplFixture();
+//    fixture._clusterSubscriber.setData(D2_URI_MAP_UPDATE_WITH_DATA1);
+//    fixture._uriMapWildcardSubscriber.setData(CLUSTER_RESOURCE_NAME, D2_URI_MAP_UPDATE_WITH_DATA1);
+//    fixture._xdsClientImpl.handleResponse(removeClusterResponse);
+//    fixture.verifyAckSent(1);
+//    verify(fixture._resourceWatcher).onChanged(eq(D2_URI_MAP_UPDATE_WITH_DATA1));
+//    verify(fixture._wildcardResourceWatcher).onRemoval(eq(CLUSTER_RESOURCE_NAME));
+//    verify(fixture._clusterSubscriber).onRemoval();
+//    verify(fixture._uriMapWildcardSubscriber).onRemoval(eq(CLUSTER_RESOURCE_NAME));
+//    verifyZeroInteractions(fixture._serverMetricsProvider);
+//    D2URIMapUpdate actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
+//    // removed resource will not overwrite the original valid data
+//    Assert.assertEquals(actualData.getURIMap(), D2_URI_MAP_UPDATE_WITH_DATA1.getURIMap());
+//    actualData = (D2URIMapUpdate) fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME);
+//    Assert.assertNull(actualData);
+//  }
+//
+//  @Test
+//  public void testWildCardResourceSubscription()
+//  {
+//    XdsClientImplFixture fixture = new XdsClientImplFixture();
+//
+//    XdsClient.WildcardNodeResourceWatcher nodeWildCardWatcher = Mockito.mock(XdsClient.WildcardNodeResourceWatcher.class);
+//    XdsClient.WildcardD2URIMapResourceWatcher uriMapWildCardWatcher = Mockito.mock(XdsClient.WildcardD2URIMapResourceWatcher.class);
+//    fixture._xdsClientImpl.getWildcardResourceSubscriber(NODE).addWatcher(nodeWildCardWatcher);
+//    fixture._xdsClientImpl.getWildcardResourceSubscriber(D2_URI_MAP).addWatcher(uriMapWildCardWatcher);
+//
+//    // NODE resource added
+//    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA1);
+//    fixture.verifyAckSent(1);
+//    verify(nodeWildCardWatcher).onChanged(eq(SERVICE_RESOURCE_NAME), eq(NODE_UPDATE1));
+//
+//    // NODE resource removed
+//    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA_WITH_REMOVAL);
+//    fixture.verifyAckSent(2);
+//    verify(nodeWildCardWatcher).onRemoval(eq(SERVICE_RESOURCE_NAME));
+//
+//    // URI_MAP resource added
+//    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA1);
+//    fixture.verifyAckSent(3);
+//    verify(uriMapWildCardWatcher).onChanged(eq(CLUSTER_RESOURCE_NAME), eq(D2_URI_MAP_UPDATE_WITH_DATA1));
+//
+//    // URI_MAP resource removed
+//    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA_WITH_REMOVAL);
+//    fixture.verifyAckSent(4);
+//    verify(uriMapWildCardWatcher).onRemoval(eq(CLUSTER_RESOURCE_NAME));
+//  }
+//
+//  @Test
+//  public void testWatchD2Uri()
+//  {
+//    XdsClientImplFixture fixture = new XdsClientImplFixture();
+//
+//    // URI added
+//    fixture._xdsClientImpl.handleResponse(new DiscoveryResponseData(
+//        D2_URI,
+//        Collections.singletonList(Resource.newBuilder()
+//            .setVersion("123")
+//            .setName(URI_URN1)
+//            .setResource(Any.pack(D2URI_1))
+//            .build()),
+//        null,
+//        NONCE,
+//        null
+//    ));
+//
+//    fixture.verifyAckSent(1);
+//    verify(fixture._resourceWatcher).onChanged(eq(new XdsClient.D2URIUpdate(D2URI_1)));
+//
+//    // URI deleted
+//    fixture._xdsClientImpl.handleResponse(new DiscoveryResponseData(
+//        D2_URI,
+//        null,
+//        Collections.singletonList(URI_URN1),
+//        NONCE,
+//        null
+//    ));
+//
+//    fixture.verifyAckSent(2);
+//    verify(fixture._resourceWatcher).onChanged(eq(new XdsClient.D2URIUpdate(null)));
+//  }
+//
 
   @Test
   public void testResourceSubscriberAddWatcher()
@@ -554,20 +594,13 @@ public class TestXdsClientImpl
 
   private static class XdsClientImplFixture
   {
+    boolean _useGlobCollections;
     XdsClientImpl _xdsClientImpl;
     @Mock
     XdsClientJmx _xdsClientJmx;
-    ResourceSubscriber _nodeSubscriber;
-    ResourceSubscriber _clusterSubscriber;
-    XdsClientImpl.WildcardResourceSubscriber _nodeWildcardSubscriber;
-    XdsClientImpl.WildcardResourceSubscriber _uriMapWildcardSubscriber;
     Map<ResourceType, Map<String, ResourceSubscriber>> _subscribers = new HashMap<>();
     Map<ResourceType, XdsClientImpl.WildcardResourceSubscriber> _wildcardSubscribers = new HashMap<>();
 
-    @Mock
-    XdsClient.ResourceWatcher _resourceWatcher;
-    @Mock
-    XdsClient.WildcardResourceWatcher _wildcardResourceWatcher;
     @Mock
     XdsServerMetricsProvider _serverMetricsProvider;
 
@@ -578,27 +611,11 @@ public class TestXdsClientImpl
 
     XdsClientImplFixture(boolean useGlobCollections)
     {
+      _useGlobCollections = useGlobCollections;
       MockitoAnnotations.initMocks(this);
-      _nodeSubscriber = spy(new ResourceSubscriber(NODE, SERVICE_RESOURCE_NAME, _xdsClientJmx));
-      _clusterSubscriber = spy(new ResourceSubscriber(D2_URI_MAP, CLUSTER_RESOURCE_NAME, _xdsClientJmx));
-      _nodeWildcardSubscriber = spy(new XdsClientImpl.WildcardResourceSubscriber(NODE));
-      _uriMapWildcardSubscriber = spy(new XdsClientImpl.WildcardResourceSubscriber(D2_URI_MAP));
 
-
-      doNothing().when(_resourceWatcher).onChanged(any());
-      for (ResourceSubscriber subscriber : Lists.newArrayList(_nodeSubscriber, _clusterSubscriber))
-      {
-        subscriber.addWatcher(_resourceWatcher);
-        _subscribers.put(subscriber.getType(), Collections.singletonMap(subscriber.getResource(), subscriber));
-      }
-      for (WildcardResourceSubscriber subscriber : Lists.newArrayList(_nodeWildcardSubscriber, _uriMapWildcardSubscriber))
-      {
-        subscriber.addWatcher(_wildcardResourceWatcher);
-        _wildcardSubscribers.put(subscriber.getType(), subscriber);
-      }
       doNothing().when(_serverMetricsProvider).trackLatency(anyLong());
-      _xdsClientImpl = spy(new XdsClientImpl(null, null, null, 0,
-          useGlobCollections, _serverMetricsProvider));
+      _xdsClientImpl = spy(new XdsClientImpl(null, null, null, 0, _useGlobCollections, _serverMetricsProvider));
       doNothing().when(_xdsClientImpl).sendAckOrNack(any(), any(), any());
       when(_xdsClientImpl.getXdsClientJmx()).thenReturn(_xdsClientJmx);
       when(_xdsClientImpl.getResourceSubscriberMap(any()))
@@ -606,7 +623,25 @@ public class TestXdsClientImpl
       doNothing().when(_xdsClientImpl).watchAllXdsResources(any());
       when(_xdsClientImpl.getWildcardResourceSubscriber(any()))
           .thenAnswer(a -> _wildcardSubscribers.get((ResourceType) a.getArguments()[0]));
+    }
 
+
+    ResourceSubscriber watchXdsResource(String resourceName, XdsClient.ResourceWatcher watcher)
+    {
+      ResourceSubscriber subscriber = _subscribers
+          .computeIfAbsent(watcher.getType(), t -> new HashMap<>())
+          .computeIfAbsent(resourceName,
+              name -> spy(new ResourceSubscriber(watcher.getType(), resourceName, _xdsClientJmx)));
+      subscriber.addWatcher(watcher);
+      return subscriber;
+    }
+
+    WildcardResourceSubscriber watchAllXdsResources(XdsClient.WildcardResourceWatcher watcher)
+    {
+      WildcardResourceSubscriber subscriber = _wildcardSubscribers
+          .computeIfAbsent(watcher.getType(), t -> spy(new WildcardResourceSubscriber(t)));
+      subscriber.addWatcher(watcher);
+      return subscriber;
     }
 
     void verifyAckSent(int count)
@@ -629,6 +664,34 @@ public class TestXdsClientImpl
       {
         verifyAckSent(count);
       }
+    }
+  }
+
+  private static ResourceWatcher newWatcher(ResourceType type)
+  {
+    switch (type)
+    {
+      case NODE:
+        return mock(XdsClient.NodeResourceWatcher.class);
+      case D2_URI_MAP:
+        return mock(XdsClient.D2URIMapResourceWatcher.class);
+      case D2_URI:
+        return mock(XdsClient.D2UriResourceWatcher.class);
+      default:
+        throw new IllegalArgumentException(type.typeUrl());
+    }
+  }
+
+  private static WildcardResourceWatcher newWildcardWatcher(ResourceType type)
+  {
+    switch (type)
+    {
+      case NODE:
+        return mock(XdsClient.WildcardNodeResourceWatcher.class);
+      case D2_URI_MAP:
+        return mock(XdsClient.WildcardD2URIMapResourceWatcher.class);
+      default:
+        throw new IllegalArgumentException(type.typeUrl());
     }
   }
 }

@@ -80,10 +80,9 @@ public class XdsClientImpl extends XdsClient
    * updates to subscribers.
    */
   private final Map<ResourceType, Map<String, ResourceSubscriber>> _resourceSubscribers = Maps.immutableEnumMap(
-      Stream.of(ResourceType.NODE, ResourceType.D2_URI_MAP)
+      Stream.of(ResourceType.values())
           .collect(Collectors.toMap(Function.identity(), e -> new HashMap<>())));
   private final Map<ResourceType, WildcardResourceSubscriber> _wildcardSubscribers = Maps.newEnumMap(ResourceType.class);
-  private final Map<String, D2UriSubscriber> _d2UriSubscribers = new HashMap<>();
   private final Node _node;
   private final ManagedChannel _managedChannel;
   private final ScheduledExecutorService _executorService;
@@ -200,34 +199,6 @@ public class XdsClientImpl extends XdsClient
         if (_adsStream != null)
         {
           _adsStream.sendDiscoveryRequest(adjustedType, Collections.singletonList("*"));
-        }
-      }
-
-      subscriber.addWatcher(watcher);
-    });
-  }
-
-  @Override
-  public void watchD2Uri(String cluster, String uri, D2UriResourceWatcher watcher)
-  {
-    _executorService.execute(() ->
-    {
-      String urn = GlobCollectionUtils.globCollectionUrn(cluster, uri);
-      D2UriSubscriber subscriber = getD2UriSubscribers().get(urn);
-      if (subscriber == null)
-      {
-        subscriber = new D2UriSubscriber(urn);
-        getD2UriSubscribers().put(urn, subscriber);
-
-        _log.info("Subscribing to D2URI: {}", urn);
-
-        if (_adsStream == null && !isInBackoff())
-        {
-          startRpcStreamLocal();
-        }
-        if (_adsStream != null)
-        {
-          _adsStream.sendDiscoveryRequest(ResourceType.D2_URI, Collections.singletonList(urn));
         }
       }
 
@@ -457,11 +428,11 @@ public class XdsClientImpl extends XdsClient
         return;
       }
 
-      ResourceSubscriber subscriber =
+      ResourceSubscriber clusterSubscriber =
           getResourceSubscriberMap(ResourceType.D2_URI_MAP).get(uriId.getClusterResourceName());
+      ResourceSubscriber uriSubscriber = getResourceSubscriberMap(ResourceType.D2_URI).get(resourceName);
       WildcardResourceSubscriber wildcardSubscriber = getWildcardResourceSubscriber(ResourceType.D2_URI_MAP);
-      D2UriSubscriber d2UriSubscriber = getD2UriSubscribers().get(resourceName);
-      if (subscriber == null && wildcardSubscriber == null && d2UriSubscriber == null)
+      if (clusterSubscriber == null && wildcardSubscriber == null && uriSubscriber == null)
       {
         String msg = String.format("Ignoring D2URI resource update for untracked cluster: %s", resourceName);
         _log.warn(msg);
@@ -469,7 +440,8 @@ public class XdsClientImpl extends XdsClient
         return;
       }
 
-      XdsD2.D2URI uri;
+      // uri will be null if the data was invalid, or if the resource is being deleted.
+      XdsD2.D2URI uri = null;
       if (resource != null)
       {
         try
@@ -480,21 +452,16 @@ public class XdsClientImpl extends XdsClient
         {
           _log.warn("Failed to unpack D2URI", e);
           errors.add("Failed to unpack D2URI");
-          return;
         }
       }
-      else
+
+
+      if (uriSubscriber != null)
       {
-        uri = null;
+        uriSubscriber.onData(new D2URIUpdate(uri), _serverMetricsProvider);
       }
 
-
-      if (d2UriSubscriber != null)
-      {
-        d2UriSubscriber.onData(uri, _serverMetricsProvider);
-      }
-
-      if (subscriber == null && wildcardSubscriber == null)
+      if (clusterSubscriber == null && wildcardSubscriber == null)
       {
         return;
       }
@@ -505,9 +472,9 @@ public class XdsClientImpl extends XdsClient
         D2URIMapUpdate currentData;
         // Use the existing data from whichever subscriber is present. If both are present, they will point to the same
         // D2URIMapUpdate.
-        if (subscriber != null)
+        if (clusterSubscriber != null)
         {
-          currentData = (D2URIMapUpdate) subscriber._data;
+          currentData = (D2URIMapUpdate) clusterSubscriber._data;
         }
         else
         {
@@ -523,8 +490,8 @@ public class XdsClientImpl extends XdsClient
         }
       });
 
-      // If the uri is null, it's being deleted
-      if (uri == null)
+      // If the resource is null, it's being deleted
+      if (resource == null)
       {
         // This is the special case where the entire collection is being deleted. This either means the client
         // subscribed to a cluster that does not exist, or all hosts stopped announcing to the cluster.
@@ -538,7 +505,9 @@ public class XdsClientImpl extends XdsClient
           update.removeUri(uriId.getUriName());
         }
       }
-      else
+      // Only put valid URIs in the map. Because the D2URIMapUpdate is still created by this loop, the subscriber will
+      // receive an update, unblocking any waiting futures, so there is no need to insert null/invalid URIs in the map.
+      else if (uri != null)
       {
         update.putUri(uriId.getUriName(), uri);
       }
@@ -618,10 +587,6 @@ public class XdsClientImpl extends XdsClient
     {
       wildcardResourceSubscriber.onError(error);
     }
-    for (D2UriSubscriber uriSubscriber : _d2UriSubscribers.values())
-    {
-      uriSubscriber.onError(error);
-    }
     _xdsClientJmx.setIsConnected(false);
   }
 
@@ -638,10 +603,6 @@ public class XdsClientImpl extends XdsClient
     {
       wildcardResourceSubscriber.onReconnect();
     }
-    for (D2UriSubscriber uriSubscriber : _d2UriSubscribers.values())
-    {
-      uriSubscriber.onReconnect();
-    }
     _xdsClientJmx.setIsConnected(true);
   }
 
@@ -655,12 +616,6 @@ public class XdsClientImpl extends XdsClient
   WildcardResourceSubscriber getWildcardResourceSubscriber(ResourceType type)
   {
     return _wildcardSubscribers.get(type);
-  }
-
-  @VisibleForTesting
-  Map<String, D2UriSubscriber> getD2UriSubscribers()
-  {
-    return _d2UriSubscribers;
   }
 
   static class ResourceSubscriber
@@ -770,6 +725,14 @@ public class XdsClientImpl extends XdsClient
             );
         trackServerLatencyForUris(updatedUris, metricsProvider, now);
         trackServerLatencyForUris(rawDiff.entriesOnlyOnLeft(), metricsProvider, now); // newly added uris
+      }
+      else if (resourceUpdate instanceof D2URIUpdate)
+      {
+        XdsD2.D2URI uri = ((D2URIUpdate) resourceUpdate).getD2Uri();
+        if (uri != null)
+        {
+          metricsProvider.trackLatency(now - uri.getModifiedTime().getSeconds() * 1000);
+        }
       }
     }
 
@@ -925,75 +888,6 @@ public class XdsClientImpl extends XdsClient
     }
   }
 
-  static class D2UriSubscriber
-  {
-    private final Set<D2UriResourceWatcher> _watchers = new HashSet<>();
-    private XdsD2.D2URI _d2Uri;
-    private final String _name;
-
-    D2UriSubscriber(String name)
-    {
-      _name = name;
-    }
-
-
-    @VisibleForTesting
-    public XdsD2.D2URI getData()
-    {
-      return _d2Uri;
-    }
-
-    @VisibleForTesting
-    public void setData(XdsD2.D2URI d2Uri)
-    {
-      _d2Uri = d2Uri;
-    }
-
-    void addWatcher(D2UriResourceWatcher watcher)
-    {
-      _watchers.add(watcher);
-      watcher.onChanged(_d2Uri);
-      _log.debug("Notifying watcher of current data for D2URI {}: {}", _name, _d2Uri);
-    }
-
-    private void onData(XdsD2.D2URI d2Uri, XdsServerMetricsProvider metricsProvider)
-    {
-      if (Objects.equals(_d2Uri, d2Uri))
-      {
-        _log.debug("Received resource update data equal to the current data for {}. Will not perform the update.",
-            _name);
-        return;
-      }
-      if (d2Uri == null)
-      {
-        for (D2UriResourceWatcher watcher : _watchers)
-        {
-          watcher.onDelete();
-        }
-      }
-      else
-      {
-        metricsProvider.trackLatency(System.currentTimeMillis() - d2Uri.getModifiedTime().getSeconds() * 1000);
-      }
-    }
-
-    private void onError(Status error)
-    {
-      for (D2UriResourceWatcher watcher : _watchers)
-      {
-        watcher.onError(error);
-      }
-    }
-
-    private void onReconnect()
-    {
-      for (D2UriResourceWatcher watcher : _watchers)
-      {
-        watcher.onReconnect();
-      }
-    }
-  }
-
   final class RpcRetryTask implements Runnable
   {
     @Override
@@ -1025,10 +919,6 @@ public class XdsClientImpl extends XdsClient
           resources.add("*");
         }
         _adsStream.sendDiscoveryRequest(rewrittenType, resources);
-      }
-      if (!_d2UriSubscribers.isEmpty())
-      {
-        _adsStream.sendDiscoveryRequest(ResourceType.D2_URI, _d2UriSubscribers.keySet());
       }
     }
   }

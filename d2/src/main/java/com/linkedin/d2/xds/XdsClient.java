@@ -95,21 +95,20 @@ public abstract class XdsClient
     }
   }
 
-  public static abstract class D2UriResourceWatcher
+  public static abstract class D2UriResourceWatcher extends ResourceWatcher
   {
-    public abstract void onChanged(XdsD2.D2URI d2Uri);
+    public D2UriResourceWatcher()
+    {
+      super(ResourceType.D2_URI);
+    }
 
-    public abstract void onDelete();
+    public abstract void onChanged(D2URIUpdate update);
 
-    /**
-     * Called when the resource discovery RPC encounters some transient error.
-     */
-    public abstract void onError(Status error);
-
-    /**
-     * Called when the resource discovery RPC reestablishes connection.
-     */
-    public abstract void onReconnect();
+    @Override
+    final void onChanged(ResourceUpdate update)
+    {
+      onChanged((D2URIUpdate) update);
+    }
   }
 
   public static abstract class WildcardResourceWatcher
@@ -317,6 +316,55 @@ public abstract class XdsClient
     }
   }
 
+  public static final class D2URIUpdate implements ResourceUpdate
+  {
+    private final XdsD2.D2URI _d2Uri;
+
+    D2URIUpdate(XdsD2.D2URI d2Uri)
+    {
+      _d2Uri = d2Uri;
+    }
+
+    public XdsD2.D2URI getD2Uri()
+    {
+      return _d2Uri;
+    }
+
+    @Override
+    public boolean isValid()
+    {
+      return _d2Uri != null;
+    }
+
+
+    @Override
+    public boolean equals(Object o)
+    {
+      if (this == o)
+      {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass())
+      {
+        return false;
+      }
+      D2URIUpdate that = (D2URIUpdate) o;
+      return Objects.equals(_d2Uri, that._d2Uri);
+    }
+
+    @Override
+    public int hashCode()
+    {
+      return Objects.hash(_d2Uri);
+    }
+
+    @Override
+    public String toString()
+    {
+      return MoreObjects.toStringHelper(this).add("_d2Uri", _d2Uri).toString();
+    }
+  }
+
   public static final NodeUpdate EMPTY_NODE_UPDATE = new NodeUpdate(null);
   public static final D2URIMapUpdate EMPTY_D2_URI_MAP_UPDATE = new D2URIMapUpdate(null);
 
@@ -371,13 +419,6 @@ public abstract class XdsClient
    * will always notify the given watcher of the current data.
    */
   public abstract void watchAllXdsResources(WildcardResourceWatcher watcher);
-
-  /**
-   * Subscribes the given {@link D2UriResourceWatcher} to a specific URI in a specific cluster. The watcher will be
-   * notified whenever the URI is added or removed. Repeated calls to this function with the same watcher will always
-   * notify the given watcher of the current data.
-   */
-  public abstract void watchD2Uri(String cluster, String uri, D2UriResourceWatcher watcher);
 
   /**
    * Initiates the RPC stream to the xDS server.
