@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.63.1] - 2025-01-14
+- Add XdsDirectory to get d2 service and cluster names from INDIS
+
 ## [29.63.0] - 2024-11-06
 - Add announcer status delegate interface
 
@@ -5761,7 +5764,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.63.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.63.1...master
+[29.63.1]: https://github.com/linkedin/rest.li/compare/v29.63.0...v29.63.1
 [29.63.0]: https://github.com/linkedin/rest.li/compare/v29.62.1...v29.63.0
 [29.62.1]: https://github.com/linkedin/rest.li/compare/v29.62.0...v29.62.1
 [29.62.0]: https://github.com/linkedin/rest.li/compare/v29.61.0...v29.62.0
