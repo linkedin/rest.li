@@ -26,6 +26,7 @@ import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
+import com.linkedin.d2.balancer.util.DirectoryProvider;
 import com.linkedin.d2.balancer.util.TogglingLoadBalancer;
 import com.linkedin.d2.balancer.util.hashing.ConsistentHashKeyMapper;
 import com.linkedin.d2.balancer.util.hashing.HashRingProvider;
@@ -51,21 +52,30 @@ import org.slf4j.LoggerFactory;
  * When xDS connection is temporarily unavailable, it switches back to discover from backup file store.
  * It reconnects and rebuilds state when the connection is back alive.
  */
-public class XdsLoadBalancer implements LoadBalancerWithFacilities, WarmUpService
+public class XdsLoadBalancer implements LoadBalancerWithFacilities, WarmUpService, DirectoryProvider
 {
   private static final Logger _log = LoggerFactory.getLogger(XdsLoadBalancer.class);
 
   private final TogglingLoadBalancer _loadBalancer;
   private final XdsToD2PropertiesAdaptor _xdsAdaptor;
   private final ScheduledExecutorService _executorService;
+  private final XdsDirectory _directory;
 
+  @Deprecated
   public XdsLoadBalancer(XdsToD2PropertiesAdaptor xdsAdaptor, ScheduledExecutorService executorService,
       XdsFsTogglingLoadBalancerFactory factory)
+  {
+    this(xdsAdaptor, executorService, factory, null);
+  }
+
+  public XdsLoadBalancer(XdsToD2PropertiesAdaptor xdsAdaptor, ScheduledExecutorService executorService,
+      XdsFsTogglingLoadBalancerFactory factory, XdsDirectory directory)
   {
     _xdsAdaptor = xdsAdaptor;
     _loadBalancer = factory.create(executorService, xdsAdaptor);
     _executorService = executorService;
     registerXdsFSToggle();
+    _directory = directory;
   }
 
   private void registerXdsFSToggle()
@@ -121,8 +131,7 @@ public class XdsLoadBalancer implements LoadBalancerWithFacilities, WarmUpServic
   @Override
   public Directory getDirectory()
   {
-    // TODO: get a list of all ZK services and clusters names
-    throw new UnsupportedOperationException();
+    return _directory;
   }
 
   @Override
@@ -172,6 +181,7 @@ public class XdsLoadBalancer implements LoadBalancerWithFacilities, WarmUpServic
   public void start(Callback<None> callback)
   {
     _xdsAdaptor.start();
+    _directory.start();
     callback.onSuccess(None.none());
   }
 
