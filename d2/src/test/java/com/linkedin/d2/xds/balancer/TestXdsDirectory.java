@@ -11,6 +11,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.Assert;
@@ -35,12 +37,11 @@ public class TestXdsDirectory
     int halfCallers = numCallers / 2;
     XdsDirectoryFixture fixture = new XdsDirectoryFixture();
     XdsDirectory directory = fixture._xdsDirectory;
-    Assert.assertNull(directory._watcher.get());
     directory.start();
     List<String> expectedClusterNames = Collections.singletonList(CLUSTER_NAME);
     List<String> expectedServiceNames = Collections.singletonList(SERVICE_NAME);
     fixture.runCallers(halfCallers, expectedClusterNames, expectedServiceNames);
-    XdsClient.WildcardD2ClusterOrServiceNameResourceWatcher watcher = Objects.requireNonNull(directory._watcher.get());
+    XdsClient.WildcardD2ClusterOrServiceNameResourceWatcher watcher = fixture.waitWatcher();
 
     // verified names are not updated, results are empty, which means all threads are waiting.
     Assert.assertTrue(directory._isUpdating.get());
@@ -58,7 +59,7 @@ public class TestXdsDirectory
     Assert.assertEquals(directory._clusterNames, Collections.singletonMap(CLUSTER_RESOURCE_NAME, CLUSTER_NAME));
     Assert.assertEquals(directory._serviceNames, Collections.singletonMap(SERVICE_RESOURCE_NAME, SERVICE_NAME));
     Assert.assertTrue(directory._isUpdating.get());
-    Assert.assertEquals(fixture._latch.getCount(), numCallers);
+    Assert.assertEquals(fixture._callerLatch.getCount(), numCallers);
 
     // finish updating by another thread to verify the lock can be released by a different thread. All callers should
     // be unblocked and the isUpdating flag is false.
@@ -77,7 +78,7 @@ public class TestXdsDirectory
     Assert.assertTrue(directory._isUpdating.get());
     Assert.assertEquals(directory._serviceNames,
         ImmutableMap.of(SERVICE_RESOURCE_NAME, SERVICE_NAME, SERVICE_RESOURCE_NAME_2, SERVICE_NAME_2));
-    Assert.assertEquals(fixture._latch.getCount(), 1);
+    Assert.assertEquals(fixture._callerLatch.getCount(), 1);
 
     // finish updating again, new data should be added to the results
     fixture.notifyComplete();
@@ -90,14 +91,32 @@ public class TestXdsDirectory
     XdsDirectory _xdsDirectory;
     @Mock
     XdsClient _xdsClient;
-    CountDownLatch _latch;
+    CountDownLatch _callerLatch;
     ExecutorService _executor;
+
+    CountDownLatch _watcherLatch = new CountDownLatch(1);
+    @Captor
+    ArgumentCaptor<XdsClient.WildcardD2ClusterOrServiceNameResourceWatcher> _watcherCaptor =
+        ArgumentCaptor.forClass(XdsClient.WildcardD2ClusterOrServiceNameResourceWatcher.class);
+
 
     public XdsDirectoryFixture()
     {
       MockitoAnnotations.initMocks(this);
-      doNothing().when(_xdsClient).watchAllXdsResources(any());
+      doAnswer((invocation) -> {
+        _watcherLatch.countDown();
+        return null;
+      }).when(_xdsClient).watchAllXdsResources(_watcherCaptor.capture());
       _xdsDirectory = new XdsDirectory(_xdsClient);
+    }
+
+    XdsClient.WildcardD2ClusterOrServiceNameResourceWatcher waitWatcher() throws InterruptedException
+    {
+      if (!_watcherLatch.await(1000, java.util.concurrent.TimeUnit.MILLISECONDS))
+      {
+        Assert.fail("Timeout waiting for watcher to be added");
+      }
+      return _watcherCaptor.getValue();
     }
 
     void runCallers(int num, List<String> expectedClusterResult, List<String> expectedServiceResult)
@@ -105,11 +124,11 @@ public class TestXdsDirectory
       if (_executor == null || _executor.isShutdown() || _executor.isTerminated())
       {
         _executor = Executors.newFixedThreadPool(num);
-        _latch = new CountDownLatch(num);
+        _callerLatch = new CountDownLatch(num);
       }
       else
       {
-        _latch = new CountDownLatch((int) (_latch.getCount() + num));
+        _callerLatch = new CountDownLatch((int) (_callerLatch.getCount() + num));
       }
 
       for (int i = 0; i < num; i++)
@@ -122,7 +141,7 @@ public class TestXdsDirectory
 
     void waitCallers() throws InterruptedException {
       _executor.shutdown();
-      if (!_latch.await(1000, java.util.concurrent.TimeUnit.MILLISECONDS))
+      if (!_callerLatch.await(1000, java.util.concurrent.TimeUnit.MILLISECONDS))
       {
         Assert.fail("Timeout waiting for all callers to finish");
       }
@@ -135,7 +154,7 @@ public class TestXdsDirectory
 
     void notifyComplete()
     {
-      Thread t = new Thread(() -> _xdsDirectory._watcher.get().onAllResourcesProcessed());
+      Thread t = new Thread(() -> _watcherCaptor.getValue().onAllResourcesProcessed());
 
       t.start();
 
@@ -177,7 +196,7 @@ public class TestXdsDirectory
           public void onSuccess(List<String> result)
           {
             assertTrue(matchSortedLists(result, expectedResult));
-            _latch.countDown();
+            _callerLatch.countDown();
           }
         };
         _isForServiceNames = isForServiceNames;

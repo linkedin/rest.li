@@ -27,8 +27,7 @@ public class XdsDirectory implements Directory
   final ConcurrentMap<String, String> _serviceNames = new ConcurrentHashMap<>();
   @VisibleForTesting
   final ConcurrentMap<String, String> _clusterNames = new ConcurrentHashMap<>();
-  @VisibleForTesting
-  final AtomicReference<WildcardD2ClusterOrServiceNameResourceWatcher> _watcher = new AtomicReference<>();
+  private final AtomicReference<WildcardD2ClusterOrServiceNameResourceWatcher> _watcher = new AtomicReference<>();
   /**
    * A flag that shows whether the service/cluster names data is being updated. Requests to the data should wait until
    * the update is done.
@@ -51,8 +50,7 @@ public class XdsDirectory implements Directory
 
   public void start() {
     LOG.debug("Starting. Setting isUpdating to true");
-    _isUpdating.set(true); // initially set to true to block reads before the first update completes
-    addNameWatcher();
+    _isUpdating.set(true); // initially set to true to block reads before the first (lazy) update completes
   }
 
   @Override
