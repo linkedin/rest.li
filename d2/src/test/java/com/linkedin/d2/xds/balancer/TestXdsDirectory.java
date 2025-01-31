@@ -37,7 +37,6 @@ public class TestXdsDirectory
     int halfCallers = numCallers / 2;
     XdsDirectoryFixture fixture = new XdsDirectoryFixture();
     XdsDirectory directory = fixture._xdsDirectory;
-    Assert.assertNull(directory._watcher.get());
     directory.start();
     List<String> expectedClusterNames = Collections.singletonList(CLUSTER_NAME);
     List<String> expectedServiceNames = Collections.singletonList(SERVICE_NAME);
@@ -111,7 +110,8 @@ public class TestXdsDirectory
       _xdsDirectory = new XdsDirectory(_xdsClient);
     }
 
-    XdsClient.WildcardD2ClusterOrServiceNameResourceWatcher waitWatcher() throws InterruptedException {
+    XdsClient.WildcardD2ClusterOrServiceNameResourceWatcher waitWatcher() throws InterruptedException
+    {
       if (!_watcherLatch.await(1000, java.util.concurrent.TimeUnit.MILLISECONDS))
       {
         Assert.fail("Timeout waiting for watcher to be added");
@@ -154,7 +154,7 @@ public class TestXdsDirectory
 
     void notifyComplete()
     {
-      Thread t = new Thread(() -> _xdsDirectory._watcher.get().onAllResourcesProcessed());
+      Thread t = new Thread(() -> _watcherCaptor.getValue().onAllResourcesProcessed());
 
       t.start();
 
