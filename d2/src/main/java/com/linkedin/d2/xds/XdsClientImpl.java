@@ -492,15 +492,23 @@ public class XdsClientImpl extends XdsClient
         }
       }
 
-
       if (uriSubscriber != null)
       {
-        uriSubscriber.onData(new D2URIUpdate(uri), _serverMetricsProvider);
+        // Special case for the D2URI subscriber: the URI could not be deserialized. If a previous version of the data
+        // is present, do nothing and drop the update on the floor. If no previous version is present however, notify
+        // the subscriber that the URI is deleted/doesn't exist. This behavior is slightly different from the other
+        // types, which do not support deletions.
+        if (uri != null // The URI is being updated
+            || resource == null  // The URI is being deleted
+            || uriSubscriber.getData() == null // The URI was corrupted and there was no previous version of this URI
+        )
+        {
+          uriSubscriber.onData(new D2URIUpdate(uri), _serverMetricsProvider);
+        }
       }
 
       if (clusterSubscriber == null && wildcardSubscriber == null)
       {
-        // Nothing left to do
         return;
       }
 

@@ -15,12 +15,10 @@ import com.linkedin.d2.xds.XdsClientImpl.WildcardResourceSubscriber;
 import com.linkedin.r2.util.NamedThreadFactory;
 import indis.XdsD2;
 import io.envoyproxy.envoy.service.discovery.v3.Resource;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -755,6 +753,23 @@ public class TestXdsClientImpl
     XdsClientImplFixture fixture = new XdsClientImplFixture();
     fixture.watchUriResource();
 
+    DiscoveryResponseData badD2URIUpdate = new DiscoveryResponseData(
+        D2_URI,
+        Collections.singletonList(Resource.newBuilder()
+            .setVersion("bad")
+            .setName(URI_URN1)
+            // This has no resource data
+            .build()),
+        null,
+        NONCE,
+        null
+    );
+
+    fixture._xdsClientImpl.handleResponse(badD2URIUpdate);
+    fixture.verifyNackSent(1);
+    // If there was no previous data, but an invalid D2URI was received, the watcher should be notified of a deletion.
+    verify(fixture._resourceWatcher, times(1)).onChanged(eq(new XdsClient.D2URIUpdate(null)));
+
     // URI added
     fixture._xdsClientImpl.handleResponse(new DiscoveryResponseData(
         D2_URI,
@@ -769,7 +784,13 @@ public class TestXdsClientImpl
     ));
 
     fixture.verifyAckSent(1);
-    verify(fixture._resourceWatcher).onChanged(eq(new XdsClient.D2URIUpdate(D2URI_1)));
+    verify(fixture._resourceWatcher, times(1)).onChanged(eq(new XdsClient.D2URIUpdate(D2URI_1)));
+
+    // Send the bad data again, here there should be no interactions with the watcher.
+    fixture._xdsClientImpl.handleResponse(badD2URIUpdate);
+    fixture.verifyNackSent(2);
+    // times(2) is used here since the mock was interacted with exactly twice.
+    verify(fixture._resourceWatcher, times(2)).onChanged(any());
 
     // URI deleted
     fixture._xdsClientImpl.handleResponse(new DiscoveryResponseData(
@@ -781,7 +802,8 @@ public class TestXdsClientImpl
     ));
 
     fixture.verifyAckSent(2);
-    verify(fixture._resourceWatcher).onChanged(eq(new XdsClient.D2URIUpdate(null)));
+    // times(2) is used here since there was a previous interaction where the D2URIUpdate was null.
+    verify(fixture._resourceWatcher, times(2)).onChanged(eq(new XdsClient.D2URIUpdate(null)));
   }
 
   private static final class XdsClientImplFixture

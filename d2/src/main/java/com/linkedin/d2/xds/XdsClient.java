@@ -406,6 +406,10 @@ public abstract class XdsClient
       _d2Uri = d2Uri;
     }
 
+    /**
+     * Returns the {@link XdsD2.D2URI} that was received, or {@code null} if the URI was deleted.
+     */
+    @Nullable
     public XdsD2.D2URI getD2Uri()
     {
       return _d2Uri;
