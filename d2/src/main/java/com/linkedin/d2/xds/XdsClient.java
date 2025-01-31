@@ -414,7 +414,8 @@ public abstract class XdsClient
     @Override
     public boolean isValid()
     {
-      return _d2Uri != null;
+      // For this update type, the subscriber needs to be notified of deletions, so all D2URIUpdates are valid.
+      return true;
     }
 
 

@@ -500,6 +500,7 @@ public class XdsClientImpl extends XdsClient
 
       if (clusterSubscriber == null && wildcardSubscriber == null)
       {
+        // Nothing left to do
         return;
       }
 

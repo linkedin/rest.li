@@ -1,5 +1,6 @@
 package com.linkedin.d2.xds;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.protobuf.Any;
@@ -19,13 +20,16 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.mockito.ArgumentCaptor;
@@ -730,21 +734,17 @@ public class TestXdsClientImpl
           }
           return names.iterator().next();
         }).collect(Collectors.toList());
-    Assert.assertEquals(types.size(), 5);
-    Assert.assertEquals(nameLists.size(), 5);
 
-    List<Pair<ResourceType, String>> args = new ArrayList<>();
-    for (int i = 0; i < 5; i++)
-    {
-      args.add(Pair.of(types.get(i), nameLists.get(i)));
-    }
-    args = args.stream().sorted().collect(Collectors.toList());
+    Set<Pair<ResourceType, String>> args = IntStream.range(0, types.size())
+        .mapToObj(i -> Pair.of(types.get(i), nameLists.get(i)))
+        .collect(Collectors.toSet());
 
-    Assert.assertEquals(args, Arrays.asList(
+    Assert.assertEquals(args, ImmutableSet.of(
         Pair.of(NODE, "*"),
         Pair.of(NODE, SERVICE_RESOURCE_NAME),
         Pair.of(useGlobCollection ? D2_URI : D2_URI_MAP, "*"),
         Pair.of(useGlobCollection ? D2_URI : D2_URI_MAP, useGlobCollection ? CLUSTER_GLOB_COLLECTION : CLUSTER_RESOURCE_NAME),
+        Pair.of(D2_URI, URI_URN1),
         Pair.of(D2_CLUSTER_OR_SERVICE_NAME, "*")
     ));
   }
@@ -753,6 +753,7 @@ public class TestXdsClientImpl
   public void testWatchD2Uri()
   {
     XdsClientImplFixture fixture = new XdsClientImplFixture();
+    fixture.watchUriResource();
 
     // URI added
     fixture._xdsClientImpl.handleResponse(new DiscoveryResponseData(
@@ -792,6 +793,7 @@ public class TestXdsClientImpl
     XdsClientJmx _xdsClientJmx;
     ResourceSubscriber _nodeSubscriber;
     ResourceSubscriber _clusterSubscriber;
+    ResourceSubscriber _d2UriSubscriber;
     XdsClientImpl.WildcardResourceSubscriber _nodeWildcardSubscriber;
     XdsClientImpl.WildcardResourceSubscriber _uriMapWildcardSubscriber;
     XdsClientImpl.WildcardResourceSubscriber _nameWildcardSubscriber;
@@ -822,6 +824,7 @@ public class TestXdsClientImpl
       MockitoAnnotations.initMocks(this);
       _nodeSubscriber = spy(new ResourceSubscriber(NODE, SERVICE_RESOURCE_NAME, _xdsClientJmx));
       _clusterSubscriber = spy(new ResourceSubscriber(D2_URI_MAP, CLUSTER_RESOURCE_NAME, _xdsClientJmx));
+      _d2UriSubscriber = spy(new ResourceSubscriber(D2_URI, URI_URN1, _xdsClientJmx));
       _nodeWildcardSubscriber = spy(new XdsClientImpl.WildcardResourceSubscriber(NODE));
       _uriMapWildcardSubscriber = spy(new XdsClientImpl.WildcardResourceSubscriber(D2_URI_MAP));
       _nameWildcardSubscriber = spy(new XdsClientImpl.WildcardResourceSubscriber(D2_CLUSTER_OR_SERVICE_NAME));
@@ -830,7 +833,7 @@ public class TestXdsClientImpl
       doNothing().when(_wildcardResourceWatcher).onChanged(any(), any());
       doNothing().when(_serverMetricsProvider).trackLatency(anyLong());
 
-      for (ResourceSubscriber subscriber : Lists.newArrayList(_nodeSubscriber, _clusterSubscriber))
+      for (ResourceSubscriber subscriber : Lists.newArrayList(_nodeSubscriber, _clusterSubscriber, _d2UriSubscriber))
       {
         _subscribers.get(subscriber.getType()).put(subscriber.getResource(), subscriber);
       }
@@ -856,7 +859,7 @@ public class TestXdsClientImpl
 
     void watchAllResourceAndWatcherTypes()
     {
-      for (ResourceSubscriber subscriber : Lists.newArrayList(_nodeSubscriber, _clusterSubscriber))
+      for (ResourceSubscriber subscriber : Lists.newArrayList(_nodeSubscriber, _clusterSubscriber, _d2UriSubscriber))
       {
         subscriber.addWatcher(_resourceWatcher);
       }
@@ -880,6 +883,11 @@ public class TestXdsClientImpl
     void watchUriMapResource()
     {
       _clusterSubscriber.addWatcher(_resourceWatcher);
+    }
+
+    void watchUriResource()
+    {
+      _d2UriSubscriber.addWatcher(_resourceWatcher);
     }
 
     void watchUriMapResourceViaWildcard()
