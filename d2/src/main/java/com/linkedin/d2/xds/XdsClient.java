@@ -96,6 +96,22 @@ public abstract class XdsClient
     }
   }
 
+  public static abstract class D2UriResourceWatcher extends ResourceWatcher
+  {
+    public D2UriResourceWatcher()
+    {
+      super(ResourceType.D2_URI);
+    }
+
+    public abstract void onChanged(D2URIUpdate update);
+
+    @Override
+    final void onChanged(ResourceUpdate update)
+    {
+      onChanged((D2URIUpdate) update);
+    }
+  }
+
   public static abstract class WildcardResourceWatcher
   {
     private final ResourceType _type;
@@ -378,6 +394,60 @@ public abstract class XdsClient
     public String toString()
     {
       return MoreObjects.toStringHelper(this).add("_uriMap", _uriMap).toString();
+    }
+  }
+
+  public static final class D2URIUpdate implements ResourceUpdate
+  {
+    private final XdsD2.D2URI _d2Uri;
+
+    D2URIUpdate(XdsD2.D2URI d2Uri)
+    {
+      _d2Uri = d2Uri;
+    }
+
+    /**
+     * Returns the {@link XdsD2.D2URI} that was received, or {@code null} if the URI was deleted.
+     */
+    @Nullable
+    public XdsD2.D2URI getD2Uri()
+    {
+      return _d2Uri;
+    }
+
+    @Override
+    public boolean isValid()
+    {
+      // For this update type, the subscriber needs to be notified of deletions, so all D2URIUpdates are valid.
+      return true;
+    }
+
+
+    @Override
+    public boolean equals(Object o)
+    {
+      if (this == o)
+      {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass())
+      {
+        return false;
+      }
+      D2URIUpdate that = (D2URIUpdate) o;
+      return Objects.equals(_d2Uri, that._d2Uri);
+    }
+
+    @Override
+    public int hashCode()
+    {
+      return Objects.hash(_d2Uri);
+    }
+
+    @Override
+    public String toString()
+    {
+      return MoreObjects.toStringHelper(this).add("_d2Uri", _d2Uri).toString();
     }
   }
 

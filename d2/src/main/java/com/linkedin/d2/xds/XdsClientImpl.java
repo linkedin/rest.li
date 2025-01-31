@@ -464,14 +464,51 @@ public class XdsClientImpl extends XdsClient
         return;
       }
 
-      ResourceSubscriber subscriber =
+      ResourceSubscriber clusterSubscriber =
           getResourceSubscriberMap(ResourceType.D2_URI_MAP).get(uriId.getClusterResourceName());
+      ResourceSubscriber uriSubscriber = getResourceSubscriberMap(ResourceType.D2_URI).get(resourceName);
       WildcardResourceSubscriber wildcardSubscriber = getWildcardResourceSubscriber(ResourceType.D2_URI_MAP);
-      if (subscriber == null && wildcardSubscriber == null)
+      if (clusterSubscriber == null && wildcardSubscriber == null && uriSubscriber == null)
       {
         String msg = String.format("Ignoring D2URI resource update for untracked cluster: %s", resourceName);
         _log.warn(msg);
         errors.add(msg);
+        return;
+      }
+
+      // uri will be null if the data was invalid, or if the resource is being deleted.
+      XdsD2.D2URI uri = null;
+      if (resource != null)
+      {
+        try
+        {
+          uri = resource.getResource().unpack(XdsD2.D2URI.class);
+        }
+        catch (Exception e)
+        {
+          String errMsg = String.format("Failed to unpack D2URI for resource: %s", resourceName);
+          _log.warn(errMsg, e);
+          errors.add(errMsg);
+        }
+      }
+
+      if (uriSubscriber != null)
+      {
+        // Special case for the D2URI subscriber: the URI could not be deserialized. If a previous version of the data
+        // is present, do nothing and drop the update on the floor. If no previous version is present however, notify
+        // the subscriber that the URI is deleted/doesn't exist. This behavior is slightly different from the other
+        // types, which do not support deletions.
+        if (uri != null // The URI is being updated
+            || resource == null  // The URI is being deleted
+            || uriSubscriber.getData() == null // The URI was corrupted and there was no previous version of this URI
+        )
+        {
+          uriSubscriber.onData(new D2URIUpdate(uri), _serverMetricsProvider);
+        }
+      }
+
+      if (clusterSubscriber == null && wildcardSubscriber == null)
+      {
         return;
       }
 
@@ -481,9 +518,9 @@ public class XdsClientImpl extends XdsClient
         D2URIMapUpdate currentData;
         // Use the existing data from whichever subscriber is present. If both are present, they will point to the same
         // D2URIMapUpdate.
-        if (subscriber != null)
+        if (clusterSubscriber != null)
         {
-          currentData = (D2URIMapUpdate) subscriber._data;
+          currentData = (D2URIMapUpdate) clusterSubscriber._data;
         }
         else
         {
@@ -514,19 +551,11 @@ public class XdsClientImpl extends XdsClient
           update.removeUri(uriId.getUriName());
         }
       }
-      else
+      // Only put valid URIs in the map. Because the D2URIMapUpdate is still created by this loop, the subscriber will
+      // receive an update, unblocking any waiting futures, so there is no need to insert null/invalid URIs in the map.
+      else if (uri != null)
       {
-        try
-        {
-          XdsD2.D2URI uri = resource.getResource().unpack(XdsD2.D2URI.class);
-          update.putUri(uriId.getUriName(), uri);
-        }
-        catch (Exception e)
-        {
-          String errMsg = String.format("Failed to unpack D2URI for resource: %s", resourceName);
-          _log.warn(errMsg, e);
-          errors.add(errMsg);
-        }
+        update.putUri(uriId.getUriName(), uri);
       }
     });
     sendAckOrNack(data.getResourceType(), data.getNonce(), errors);
@@ -803,6 +832,14 @@ public class XdsClientImpl extends XdsClient
             );
         trackServerLatencyForUris(updatedUris, metricsProvider, now);
         trackServerLatencyForUris(rawDiff.entriesOnlyOnLeft(), metricsProvider, now); // newly added uris
+      }
+      else if (resourceUpdate instanceof D2URIUpdate)
+      {
+        XdsD2.D2URI uri = ((D2URIUpdate) resourceUpdate).getD2Uri();
+        if (uri != null)
+        {
+          metricsProvider.trackLatency(now - uri.getModifiedTime().getSeconds() * 1000);
+        }
       }
     }
 
