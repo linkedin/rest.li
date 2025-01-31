@@ -17,6 +17,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static com.linkedin.d2.xds.TestXdsClientImpl.*;
+import static java.lang.Thread.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -40,6 +41,7 @@ public class TestXdsDirectory
     List<String> expectedClusterNames = Collections.singletonList(CLUSTER_NAME);
     List<String> expectedServiceNames = Collections.singletonList(SERVICE_NAME);
     fixture.runCallers(halfCallers, expectedClusterNames, expectedServiceNames);
+    sleep(50); // sleep just a bit so the caller threads can add watcher
     XdsClient.WildcardD2ClusterOrServiceNameResourceWatcher watcher = Objects.requireNonNull(directory._watcher.get());
 
     // verified names are not updated, results are empty, which means all threads are waiting.

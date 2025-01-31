@@ -51,8 +51,7 @@ public class XdsDirectory implements Directory
 
   public void start() {
     LOG.debug("Starting. Setting isUpdating to true");
-    _isUpdating.set(true); // initially set to true to block reads before the first update completes
-    addNameWatcher();
+    _isUpdating.set(true); // initially set to true to block reads before the first (lazy) update completes
   }
 
   @Override
