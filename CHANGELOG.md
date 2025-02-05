@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.64.0] - 2025-01-31
+- Allow subscribing to a single D2URI
+
 ## [29.63.2] - 2025-01-31
 - Make XdsDirectory lazy to subscribe the names
 
@@ -5767,7 +5770,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.63.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.64.0...master
+[29.64.0]: https://github.com/linkedin/rest.li/compare/v29.63.2...v29.64.0
 [29.63.2]: https://github.com/linkedin/rest.li/compare/v29.63.1...v29.63.2
 [29.63.1]: https://github.com/linkedin/rest.li/compare/v29.63.0...v29.63.1
 [29.63.0]: https://github.com/linkedin/rest.li/compare/v29.62.1...v29.63.0

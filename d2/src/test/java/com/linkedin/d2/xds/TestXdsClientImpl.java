@@ -1,5 +1,6 @@
 package com.linkedin.d2.xds;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.protobuf.Any;
@@ -14,7 +15,6 @@ import com.linkedin.d2.xds.XdsClientImpl.WildcardResourceSubscriber;
 import com.linkedin.r2.util.NamedThreadFactory;
 import indis.XdsD2;
 import io.envoyproxy.envoy.service.discovery.v3.Resource;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,10 +22,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.mockito.ArgumentCaptor;
@@ -99,7 +101,7 @@ public class TestXdsClientImpl
   private static final List<Resource> NULL_NAME_RESOURCES = Arrays.asList(
       Resource.newBuilder().setVersion(VERSION1).setName(CLUSTER_RESOURCE_NAME).build(),
       Resource.newBuilder().setVersion(VERSION1).setName(SERVICE_RESOURCE_NAME).setResource(PACKED_NAME_DATA_WITH_NULL).build()
-      );
+  );
 
   private static final XdsD2.D2URI D2URI_1 =
       XdsD2.D2URI.newBuilder().setVersion(Long.parseLong(VERSION1)).setClusterName(CLUSTER_NAME).setUri(URI1).build();
@@ -198,8 +200,8 @@ public class TestXdsClientImpl
       new DiscoveryResponseData(D2_URI_MAP, Collections.emptyList(), Collections.singletonList(CLUSTER_RESOURCE_NAME), NONCE, null);
 
   private static final String CLUSTER_GLOB_COLLECTION = "xdstp:///indis.D2URI/" + CLUSTER_NAME + "/*";
-  private static final String URI_URN1 = "xdstp:///indis.D2URI/" + CLUSTER_NAME + "/" + URI1;
-  private static final String URI_URN2 = "xdstp:///indis.D2URI/" + CLUSTER_NAME + "/" + URI2;
+  private static final String URI_URN1 = GlobCollectionUtils.globCollectionUrn(CLUSTER_NAME, URI1);
+  private static final String URI_URN2 = GlobCollectionUtils.globCollectionUrn(CLUSTER_NAME, URI2);
 
   @DataProvider(name = "providerWatcherFlags")
   public Object[][] watcherFlags()
@@ -215,6 +217,7 @@ public class TestXdsClientImpl
             {true, true}
         };
   }
+
   @Test(dataProvider = "providerWatcherFlags")
   public void testHandleD2NodeResponseWithData(boolean toWatchIndividual, boolean toWatchWildcard)
   {
@@ -291,7 +294,7 @@ public class TestXdsClientImpl
 
   @Test(dataProvider = "badNodeUpdateTestCases")
   public void testHandleD2NodeUpdateWithBadData(DiscoveryResponseData badData, boolean nackExpected,
-      boolean toWatchIndividual, boolean toWatchWildcard )
+      boolean toWatchIndividual, boolean toWatchWildcard)
   {
     XdsClientImplFixture fixture = new XdsClientImplFixture();
     if (toWatchIndividual)
@@ -708,6 +711,7 @@ public class TestXdsClientImpl
         {false}
     };
   }
+
   @Test(dataProvider = "provideUseGlobCollection", timeOut = 2000)
   // Retry task should re-subscribe the resources registered in each subscriber type.
   public void testRetry(boolean useGlobCollection) throws ExecutionException, InterruptedException
@@ -728,23 +732,78 @@ public class TestXdsClientImpl
           }
           return names.iterator().next();
         }).collect(Collectors.toList());
-    Assert.assertEquals(types.size(), 5);
-    Assert.assertEquals(nameLists.size(), 5);
 
-    List<Pair<ResourceType, String>> args = new ArrayList<>();
-    for (int i = 0; i < 5; i++)
-    {
-      args.add(Pair.of(types.get(i), nameLists.get(i)));
-    }
-    args = args.stream().sorted().collect(Collectors.toList());
+    Set<Pair<ResourceType, String>> args = IntStream.range(0, types.size())
+        .mapToObj(i -> Pair.of(types.get(i), nameLists.get(i)))
+        .collect(Collectors.toSet());
 
-    Assert.assertEquals(args, Arrays.asList(
+    Assert.assertEquals(args, ImmutableSet.of(
         Pair.of(NODE, "*"),
         Pair.of(NODE, SERVICE_RESOURCE_NAME),
         Pair.of(useGlobCollection ? D2_URI : D2_URI_MAP, "*"),
         Pair.of(useGlobCollection ? D2_URI : D2_URI_MAP, useGlobCollection ? CLUSTER_GLOB_COLLECTION : CLUSTER_RESOURCE_NAME),
+        Pair.of(D2_URI, URI_URN1),
         Pair.of(D2_CLUSTER_OR_SERVICE_NAME, "*")
     ));
+  }
+
+  @Test
+  public void testWatchD2Uri()
+  {
+    XdsClientImplFixture fixture = new XdsClientImplFixture();
+    fixture.watchUriResource();
+
+    DiscoveryResponseData badD2URIUpdate = new DiscoveryResponseData(
+        D2_URI,
+        Collections.singletonList(Resource.newBuilder()
+            .setVersion("bad")
+            .setName(URI_URN1)
+            // This has no resource data
+            .build()),
+        null,
+        NONCE,
+        null
+    );
+
+    fixture._xdsClientImpl.handleResponse(badD2URIUpdate);
+    fixture.verifyNackSent(1);
+    // If there was no previous data, but an invalid D2URI was received, the watcher should be notified of a deletion.
+    verify(fixture._resourceWatcher, times(1)).onChanged(eq(new XdsClient.D2URIUpdate(null)));
+
+    // URI added
+    fixture._xdsClientImpl.handleResponse(new DiscoveryResponseData(
+        D2_URI,
+        Collections.singletonList(Resource.newBuilder()
+            .setVersion("123")
+            .setName(URI_URN1)
+            .setResource(Any.pack(D2URI_1))
+            .build()),
+        null,
+        NONCE,
+        null
+    ));
+
+    fixture.verifyAckSent(1);
+    verify(fixture._resourceWatcher, times(1)).onChanged(eq(new XdsClient.D2URIUpdate(D2URI_1)));
+
+    // Send the bad data again, here there should be no interactions with the watcher.
+    fixture._xdsClientImpl.handleResponse(badD2URIUpdate);
+    fixture.verifyNackSent(2);
+    // times(2) is used here since the mock was interacted with exactly twice.
+    verify(fixture._resourceWatcher, times(2)).onChanged(any());
+
+    // URI deleted
+    fixture._xdsClientImpl.handleResponse(new DiscoveryResponseData(
+        D2_URI,
+        null,
+        Collections.singletonList(URI_URN1),
+        NONCE,
+        null
+    ));
+
+    fixture.verifyAckSent(2);
+    // times(2) is used here since there was a previous interaction where the D2URIUpdate was null.
+    verify(fixture._resourceWatcher, times(2)).onChanged(eq(new XdsClient.D2URIUpdate(null)));
   }
 
   private static final class XdsClientImplFixture
@@ -756,6 +815,7 @@ public class TestXdsClientImpl
     XdsClientJmx _xdsClientJmx;
     ResourceSubscriber _nodeSubscriber;
     ResourceSubscriber _clusterSubscriber;
+    ResourceSubscriber _d2UriSubscriber;
     XdsClientImpl.WildcardResourceSubscriber _nodeWildcardSubscriber;
     XdsClientImpl.WildcardResourceSubscriber _uriMapWildcardSubscriber;
     XdsClientImpl.WildcardResourceSubscriber _nameWildcardSubscriber;
@@ -786,6 +846,7 @@ public class TestXdsClientImpl
       MockitoAnnotations.initMocks(this);
       _nodeSubscriber = spy(new ResourceSubscriber(NODE, SERVICE_RESOURCE_NAME, _xdsClientJmx));
       _clusterSubscriber = spy(new ResourceSubscriber(D2_URI_MAP, CLUSTER_RESOURCE_NAME, _xdsClientJmx));
+      _d2UriSubscriber = spy(new ResourceSubscriber(D2_URI, URI_URN1, _xdsClientJmx));
       _nodeWildcardSubscriber = spy(new XdsClientImpl.WildcardResourceSubscriber(NODE));
       _uriMapWildcardSubscriber = spy(new XdsClientImpl.WildcardResourceSubscriber(D2_URI_MAP));
       _nameWildcardSubscriber = spy(new XdsClientImpl.WildcardResourceSubscriber(D2_CLUSTER_OR_SERVICE_NAME));
@@ -794,7 +855,7 @@ public class TestXdsClientImpl
       doNothing().when(_wildcardResourceWatcher).onChanged(any(), any());
       doNothing().when(_serverMetricsProvider).trackLatency(anyLong());
 
-      for (ResourceSubscriber subscriber : Lists.newArrayList(_nodeSubscriber, _clusterSubscriber))
+      for (ResourceSubscriber subscriber : Lists.newArrayList(_nodeSubscriber, _clusterSubscriber, _d2UriSubscriber))
       {
         _subscribers.get(subscriber.getType()).put(subscriber.getResource(), subscriber);
       }
@@ -820,7 +881,7 @@ public class TestXdsClientImpl
 
     void watchAllResourceAndWatcherTypes()
     {
-      for (ResourceSubscriber subscriber : Lists.newArrayList(_nodeSubscriber, _clusterSubscriber))
+      for (ResourceSubscriber subscriber : Lists.newArrayList(_nodeSubscriber, _clusterSubscriber, _d2UriSubscriber))
       {
         subscriber.addWatcher(_resourceWatcher);
       }
@@ -844,6 +905,11 @@ public class TestXdsClientImpl
     void watchUriMapResource()
     {
       _clusterSubscriber.addWatcher(_resourceWatcher);
+    }
+
+    void watchUriResource()
+    {
+      _d2UriSubscriber.addWatcher(_resourceWatcher);
     }
 
     void watchUriMapResourceViaWildcard()

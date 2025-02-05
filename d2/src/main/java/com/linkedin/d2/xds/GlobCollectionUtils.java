@@ -1,12 +1,20 @@
 package com.linkedin.d2.xds;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GlobCollectionUtils
 {
   private static final String D2_URIS_PREFIX = "/d2/uris/";
   private static final String D2_URI_NODE_GLOB_COLLECTION_PREFIX = "xdstp:///indis.D2URI/";
   private static final String GLOB_COLLECTION_SUFFIX = "/*";
+  private static final String UTF_8 = StandardCharsets.UTF_8.name();
+  private static final Logger LOG = LoggerFactory.getLogger(GlobCollectionUtils.class);
 
   private GlobCollectionUtils()
   {
@@ -63,7 +71,25 @@ public class GlobCollectionUtils
 
       String clusterName = resourceName.substring(D2_URI_NODE_GLOB_COLLECTION_PREFIX.length(), lastIndex);
 
-      return new D2UriIdentifier(D2_URIS_PREFIX + clusterName, resourceName.substring(lastIndex + 1));
+      String uri;
+      try
+      {
+        uri = URLDecoder.decode(resourceName.substring(lastIndex + 1), UTF_8);
+      }
+      catch (UnsupportedEncodingException e)
+      {
+        // Note that this is impossible. It is only thrown if the charset isn't recognized, and UTF-8 is known to be
+        // supported.
+
+        throw new RuntimeException(e);
+      }
+      catch (Exception e)
+      {
+        LOG.warn("Ignoring D2URI URN with invalid URL encoding {}", resourceName, e);
+        return null;
+      }
+
+      return new D2UriIdentifier(D2_URIS_PREFIX + clusterName, uri);
     }
   }
 
@@ -80,5 +106,20 @@ public class GlobCollectionUtils
     return D2_URI_NODE_GLOB_COLLECTION_PREFIX +
         clusterPath.substring(clusterPath.lastIndexOf('/') + 1) +
         GLOB_COLLECTION_SUFFIX;
+  }
+
+  public static String globCollectionUrn(String clusterName, String uri)
+  {
+    try
+    {
+      return D2_URI_NODE_GLOB_COLLECTION_PREFIX + clusterName + "/" + URLEncoder.encode(uri, UTF_8);
+    }
+    catch (UnsupportedEncodingException e)
+    {
+      // Note that this is impossible. It is only thrown if the charset isn't recognized, and UTF-8 is known to be
+      // supported.
+      throw new RuntimeException(e);
+    }
+
   }
 }
