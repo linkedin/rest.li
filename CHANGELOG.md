@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Change commons-httpclient dependency with httpcomponents.client5:httpclient5 to fix security vulnerability
 
 ## [29.64.0] - 2025-01-31
 - Allow subscribing to a single D2URI
