@@ -36,6 +36,7 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -49,11 +50,16 @@ public class TestLoadBalancer implements LoadBalancerWithFacilities, WarmUpServi
   private final AtomicInteger _completedRequestCount = new AtomicInteger();
   private int _warmUpDelayMs = 0;
   private int _serviceDataDelayMs = 0;
+  private boolean _shouldThrowOnGetClient = false;
 
   private final int DELAY_STANDARD_DEVIATION = 5; //ms
   private final ScheduledExecutorService _executorService = Executors.newSingleThreadScheduledExecutor();
 
   public TestLoadBalancer() {}
+
+  public TestLoadBalancer(boolean shouldThrowOnGetClient) {
+    _shouldThrowOnGetClient = shouldThrowOnGetClient;
+  }
 
   public TestLoadBalancer(int warmUpDelayMs)
   {
@@ -69,7 +75,12 @@ public class TestLoadBalancer implements LoadBalancerWithFacilities, WarmUpServi
   @Override
   public void getClient(Request request, RequestContext requestContext, Callback<TransportClient> clientCallback)
   {
-    clientCallback.onSuccess(new TestClient());
+    if (_shouldThrowOnGetClient)
+    {
+      clientCallback.onError(new TimeoutException());
+    } else {
+      clientCallback.onSuccess(new TestClient());
+    }
   }
 
   @Override
