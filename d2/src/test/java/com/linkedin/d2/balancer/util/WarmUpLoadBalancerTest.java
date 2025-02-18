@@ -500,15 +500,6 @@ public class WarmUpLoadBalancerTest
     Assert.assertEquals(completedWarmUpCount.get(), 0);
   }
 
-  /**
-   * Even if getClient fails, we should still note the services we tried to warm up
-   */
-  @Test
-  public void TestGetClientException()
-  {
-
-  }
-
   // ############################# Util Section #############################
 
   private void rmrf(File f) throws IOException
