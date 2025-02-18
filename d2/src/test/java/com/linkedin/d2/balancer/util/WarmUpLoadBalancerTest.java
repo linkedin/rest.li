@@ -165,16 +165,24 @@ public class WarmUpLoadBalancerTest
     }
   }
 
+  @DataProvider(name = "shouldThrowOnGetClientDataProvider")
+  public Object[][] shouldThrowOnGetClientDataProvider()
+  {
+    return new Object[][]
+        {{true}, {false}};
+  }
+
   /**
    * Since the list might from the fetcher might not be complete (update service, old data, etc.., and the user might
    * require additional services at runtime, we have to check that those services are not cleared from the cache
-   * otherwise it would incur in a penalty at the next deployment
+   * otherwise it would incur in a penalty at the next deployment.
+   * Note that regardless of whether getClient returns successfully or not (if it times out, for example),
+   * we should still record the service/s we tried to warm up.
    */
-  @Test(timeOut = 10000, retryAnalyzer = ThreeRetries.class)
-  public void testNotDeletingFilesGetClient() throws InterruptedException, ExecutionException, TimeoutException, ServiceUnavailableException
-  {
+  @Test(dataProvider = "shouldThrowOnGetClientDataProvider", timeOut = 10000, retryAnalyzer = ThreeRetries.class)
+  public void testNotDeletingFilesGetClient(boolean shouldThrowOnGetClient) throws InterruptedException, ExecutionException, TimeoutException {
     createDefaultServicesIniFiles();
-    TestLoadBalancer balancer = new TestLoadBalancer();
+    TestLoadBalancer balancer = new TestLoadBalancer(shouldThrowOnGetClient);
 
     List<String> allServicesBeforeShutdown = getAllDownstreamServices();
     DownstreamServicesFetcher returnNoDownstreams = callback -> callback.onSuccess(Collections.emptyList());
@@ -190,7 +198,11 @@ public class WarmUpLoadBalancerTest
     warmUpLoadBalancer.start(callback);
     callback.get(5000, TimeUnit.MILLISECONDS);
 
-    warmUpLoadBalancer.getClient(new URIRequest("d2://" + pickOneService), new RequestContext());
+    try {
+      warmUpLoadBalancer.getClient(new URIRequest("d2://" + pickOneService), new RequestContext());
+    } catch (Exception e) {
+      Assert.assertTrue(shouldThrowOnGetClient);
+    }
 
     FutureCallback<None> shutdownCallback = new FutureCallback<>();
     warmUpLoadBalancer.shutdown(() -> shutdownCallback.onSuccess(None.none()));
@@ -198,6 +210,7 @@ public class WarmUpLoadBalancerTest
 
     List<String> allServicesAfterShutdown = getAllDownstreamServices();
 
+    // regardless of whether getClient returned successfully or threw an Exception, we should still record the service we tried to warm up
     Assert.assertEquals(1, allServicesAfterShutdown.size(), "After shutdown there should be just one service, the one that we 'get the client' on");
   }
 

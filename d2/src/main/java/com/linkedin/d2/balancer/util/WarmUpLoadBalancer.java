@@ -441,10 +441,10 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
   @Override
   public TransportClient getClient(Request request, RequestContext requestContext) throws ServiceUnavailableException
   {
-    TransportClient client = _loadBalancer.getClient(request, requestContext);
-
+    // Add serviceName to _usedServices *before* making the call to _loadBalancer.getClient. Even if
+    // the call fails, we still *intend* to use serviceName, so it should be in _usedServices.
     String serviceName = LoadBalancerUtil.getServiceNameFromUri(request.getURI());
     _usedServices.add(serviceName);
-    return client;
+    return _loadBalancer.getClient(request, requestContext);
   }
 }
