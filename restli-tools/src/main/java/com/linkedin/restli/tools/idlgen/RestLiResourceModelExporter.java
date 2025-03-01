@@ -325,7 +325,9 @@ public class RestLiResourceModelExporter
     log.debug("Writing file '" + fileName + '\'');
     final File file = new File(outdirFile, fileName);
 
-    _codec.writeResourceSchema(rootResourceNode, new FileOutputStream(file));
+    try (FileOutputStream stream = new FileOutputStream(file)) {
+      _codec.writeResourceSchema(rootResourceNode, stream);
+    }
     return file;
   }
 }
