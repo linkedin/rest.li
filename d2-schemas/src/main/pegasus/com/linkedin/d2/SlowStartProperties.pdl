@@ -1,0 +1,26 @@
+namespace com.linkedin.d2
+
+/**
+ * D2 Slow Start related configuration.
+ */
+record SlowStartProperties {
+  /**
+   * Whether the feature is disabled
+   */
+  disabled: boolean = false
+
+  /**
+   * The duration within which the weight and traffic would be fully ramped
+   */
+  windowDurationSeconds: int
+
+  /**
+   * Non-linearly affects the ramp speed, generally should be within [1,10]
+   */
+  aggression: double
+
+  /**
+   * The percentage of weight to start from, (0,1)
+   */
+  minWeightPercent: double
+}

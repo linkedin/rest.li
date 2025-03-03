@@ -39,4 +39,9 @@ record D2Cluster includes D2ChangeTimeStamps {
    * Holds the configuration for this cluster's dark canary clusters, if any. The map is keyed by the dark canary name.
    */
   darkClusters: map[string, DarkClusterConfig] = { }
+
+  /**
+   * D2 slow start properties for gRPC clusters.
+   */
+  slowStartProperties: optional SlowStartProperties
 }
