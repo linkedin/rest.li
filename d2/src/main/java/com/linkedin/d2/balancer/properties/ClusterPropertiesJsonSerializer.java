@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.balancer.properties;
 
+import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import com.linkedin.d2.balancer.properties.util.PropertyUtil;
 import com.linkedin.d2.balancer.util.JacksonUtil;
@@ -85,7 +86,7 @@ public class ClusterPropertiesJsonSerializer implements
     clusterProperties.setVersion(version);
     return clusterProperties;
   }
-  
+
   public ClusterProperties fromBytes(ByteString bytes, long version) throws PropertySerializationException
   {
     try
@@ -226,12 +227,24 @@ public class ClusterPropertiesJsonSerializer implements
 
     @SuppressWarnings("unchecked")
     Map<String, Object> darkClusterProperty = (Map<String, Object>) map.get(PropertyKeys.DARK_CLUSTER_MAP);
+    Map<String, Object> slowStartPropertiesMap = mapGet(map, PropertyKeys.SLOW_START_PROPERTIES);
+    SlowStartProperties slowStartProperties = null;
+    if (slowStartPropertiesMap != null) {
+      Boolean disabled = Preconditions.checkNotNull(mapGet(slowStartPropertiesMap, PropertyKeys.SLOW_START_DISABLED));
+      Integer windowDurationSeconds = Preconditions.checkNotNull(mapGet(slowStartPropertiesMap,
+          PropertyKeys.SLOW_START_WINDOW_DURATION));
+      Double aggression = Preconditions.checkNotNull(mapGet(slowStartPropertiesMap,
+          PropertyKeys.SLOW_START_AGGRESSION));
+      Double minWeightPercent = Preconditions.checkNotNull(mapGet(slowStartPropertiesMap,
+          PropertyKeys.SLOW_START_MIN_WEIGHT_PERCENT));
+      slowStartProperties = new SlowStartProperties(disabled, windowDurationSeconds, aggression, minWeightPercent);
+    }
 
     boolean delegated = false;
     if (map.containsKey(PropertyKeys.DELEGATED)) {
       delegated = mapGet(map, PropertyKeys.DELEGATED);
     }
     return new ClusterProperties(clusterName, prioritizedSchemes, properties, banned, partitionProperties, validationList,
-        darkClusterProperty, delegated);
+        darkClusterProperty, delegated, ClusterProperties.DEFAULT_VERSION, slowStartProperties);
   }
 }

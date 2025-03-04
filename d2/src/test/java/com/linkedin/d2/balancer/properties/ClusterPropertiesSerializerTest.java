@@ -183,6 +183,17 @@ public class ClusterPropertiesSerializerTest
     assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)), new ClusterStoreProperties(property, null, null));
   }
 
+  @Test
+  public void testSlowStartProperties() throws PropertySerializationException {
+    ClusterPropertiesJsonSerializer jsonSerializer = new ClusterPropertiesJsonSerializer();
+    SlowStartProperties slowStartProperties = new SlowStartProperties(false, 30, 1.0, 0.5);
+    ClusterProperties property = new ClusterProperties("test", new ArrayList<>(), new HashMap<>(), new HashSet<>(),
+        NullPartitionProperties.getInstance(), Arrays.asList("principal1", "principal2"), null, false,
+        ClusterProperties.DEFAULT_VERSION, slowStartProperties);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)),
+        new ClusterStoreProperties(property, null, null));
+  }
+
   @DataProvider(name = "distributionStrategies")
   public Object[][] getDistributionStrategies() {
     Map<String, Object> percentageProperties = new HashMap<>();
