@@ -4,10 +4,20 @@ import com.google.common.base.MoreObjects;
 import java.util.Objects;
 
 
+/**
+ * Slow start configuration properties for gRPC P2C load balancer.
+ */
 public class SlowStartProperties {
+  // Whether the feature is disabled
   private final boolean _disabled;
+
+  // The duration within which the weight and traffic would be fully ramped
   private final int _windowDurationSeconds;
+
+  // Non-linearly affects the ramp speed, larger values lead to quicker ramping. Generally should be within [1,10].
   private final double _aggression;
+
+  // The percentage of weight to start from, (0,1)
   private final double _minWeightPercent;
 
   public SlowStartProperties(boolean disabled, int windowDurationSeconds, double aggression, double minWeightPercent) {

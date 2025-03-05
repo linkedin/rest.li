@@ -15,7 +15,7 @@ record SlowStartProperties {
   windowDurationSeconds: int
 
   /**
-   * Non-linearly affects the ramp speed, generally should be within [1,10]
+   * Non-linearly affects the ramp speed, larger values lead to quicker ramping. Generally should be within [1,10]
    */
   aggression: double
 
