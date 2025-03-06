@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Deprecate ZK-related methods in D2ClientBuilder and D2ClientConfig
 
 ## [29.64.1] - 2025-02-15
 - Fix warmUp -- record service as used regardless of whether getClient succeeds
