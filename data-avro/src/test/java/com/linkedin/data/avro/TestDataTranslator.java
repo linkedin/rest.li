@@ -17,6 +17,7 @@
 package com.linkedin.data.avro;
 
 import com.google.common.collect.ImmutableMap;
+import com.linkedin.data.ByteString;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
@@ -54,6 +55,7 @@ import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericArray;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.specific.SpecificRecord;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -2291,5 +2293,90 @@ public class TestDataTranslator
     Assert.assertTrue(mapOfMapOfArrayOfMapArrayUnion.get(0) instanceof Map);
     Assert.assertEquals(((Map<?, ?>) mapOfMapOfArrayOfMapArrayUnion.get(0)).get("recordMap"), mapOfArrayOfMapArrayUnion);
   }
-}
+
+  @Test
+  public void testUnionWithoutFieldDescriptor() throws IOException {
+    String protoToAvroSchema = "{\n"
+        + " \"type\" : \"record\",\n"
+        + " \"name\" : \"Foo\",\n"
+        + " \"fields\" : [ {\n"
+        + "   \"name\" : \"oneofField\",\n"
+        + "   \"type\" : [ \"null\", {\n"
+        + "     \"type\" : \"record\",\n"
+        + "     \"name\" : \"OneofFieldWrapper\",\n"
+        + "     \"fields\" : [ {\n"
+        + "       \"name\" : \"oneofIntField\",\n"
+        + "       \"type\" : [ \"null\", {\n"
+        + "         \"type\" : \"int\",\n"
+        + "         \"li.data.proto.numberFieldType\" : \"int32\"\n"
+        + "       } ],\n"
+        + "       \"default\" : null,\n"
+        + "       \"li.data.proto.fieldNumber\" : 1\n"
+        + "     }, {\n"
+        + "       \"name\" : \"oneofStringField\",\n"
+        + "       \"type\" : [ \"null\", \"string\" ],\n"
+        + "       \"default\" : null,\n"
+        + "       \"li.data.proto.fieldNumber\" : 2\n"
+        + "     } ],\n"
+        + "     \"li.data.proto.oneOfFieldWrapperType\" : true\n"
+        + "   } ],\n"
+        + "   \"default\" : null\n"
+        + " } ],\n"
+        + " \"li.data.proto.fullyQualifiedName\" : \"proto.com.linkedin.alcantara.test.DTTest\"\n"
+        + "}\n";
+
+    String protoToPdlToAvroSchema = "{\"type\":\"record\","
+        + "\"name\":\"Foo\","
+        + "\"fields\":[{\"name\":\"oneofField\","
+        + "\"type\":[\"null\",{"
+        + "\"type\":\"record\","
+        + "\"name\":\"FooOneofField\","
+        + "\"fields\":[{"
+        + "\"name\":\"oneofIntField\","
+        + "\"type\":[\"null\",\"int\"],"
+        + "\"default\":null},{"
+        + "\"name\":\"oneofStringField\","
+        + "\"type\":[\"null\",\"string\"],"
+        + "\"default\":null},{"
+        + "\"name\":\"fieldDiscriminator\","
+        + "\"type\":{"
+        + "\"type\":\"enum\","
+        + "\"name\":\"FooOneofFieldDiscriminator\","
+        + "\"symbols\":[\"oneofIntField\",\"oneofStringField\"]}"
+        +" }]}],"
+        + "\"default\":null}]}";
+    Schema protoToAvro = Schema.parse(protoToAvroSchema);
+    Schema protoToPdlToAvro = Schema.parse(protoToPdlToAvroSchema);
+    GenericRecord avroRecord = AvroUtil.genericRecordFromJson("{\n"
+        + "  \"oneofField\" : {\n"
+        + "    \"OneofFieldWrapper\" : {\n"
+        + "      \"oneofIntField\" : {\n"
+        + "        \"int\" : 1\n"
+        + "      },\n"
+        + "      \"oneofStringField\" : null\n"
+        + "    }\n"
+        + "  }\n"
+        + "}", protoToAvro);
+    GenericRecord avroRecordFromPdl = AvroUtil.genericRecordFromJson("{\n"
+        + "  \"oneofField\" : {\n"
+        + "    \"FooOneofField\" : {\n"
+        + "      \"oneofIntField\" : {\n"
+        + "        \"int\" : 1\n"
+        + "      },\n"
+        + "      \"oneofStringField\" : null,\n"
+        + "      \"fieldDiscriminator\" : \"oneofIntField\"\n"
+        + "    }\n"
+        + "  }\n"
+        + "}", protoToPdlToAvro);
+    RecordDataSchema recordDataSchema = (RecordDataSchema) TestUtil.dataSchemaFromString(protoToPdlToAvroSchema);
+    DataMap expectedMap = DataTranslator.genericRecordToDataMap(avroRecordFromPdl, recordDataSchema, protoToPdlToAvro);
+    DataMap translatedMap = DataTranslator.genericRecordToDataMap(avroRecord, recordDataSchema, protoToPdlToAvro);
+
+    Assert.assertEquals(translatedMap, expectedMap);
+
+    System.out.println(translatedMap.equals(expectedMap));
+    }
+  }
+
+
 
