@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.65.0] - 2025-03-06
 - Deprecate ZK-related methods in D2ClientBuilder and D2ClientConfig
 
 ## [29.64.1] - 2025-02-15
@@ -5774,7 +5776,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.64.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.65.0...master
+[29.65.0]: https://github.com/linkedin/rest.li/compare/v29.64.1...v29.65.0
 [29.64.1]: https://github.com/linkedin/rest.li/compare/v29.64.0...v29.64.1
 [29.64.0]: https://github.com/linkedin/rest.li/compare/v29.63.2...v29.64.0
 [29.63.2]: https://github.com/linkedin/rest.li/compare/v29.63.1...v29.63.2
