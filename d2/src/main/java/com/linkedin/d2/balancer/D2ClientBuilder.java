@@ -51,6 +51,7 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.d2.jmx.XdsServerMetricsProvider;
 import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.d2.jmx.NoOpJmxManager;
+import com.linkedin.d2.xds.balancer.XdsLoadBalancerWithFacilitiesFactory;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
@@ -225,6 +226,16 @@ public class D2ClientBuilder
       new ZKFSLoadBalancerWithFacilitiesFactory() :
       _config.lbWithFacilitiesFactory;
 
+    // Warn for non-INDIS load balancer factory usage
+    if (!(loadBalancerFactory instanceof XdsLoadBalancerWithFacilitiesFactory))
+    {
+      LOG.warn(String.format("ACTION REQUIRED: Zookeeper-based D2 Client is deprecated (except locally-deployed ZK) "
+          + "and must be migrated to INDIS. See instructions at " +
+          "https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps" +
+          "\nFailing to do so will block other apps from stopping ZK announcements and will be escalated for site-up stability. " +
+          "Use XdsLoadBalancerWithFacilitiesFactory instead of %s", loadBalancerFactory.getClass().getSimpleName()));
+    }
+
     LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
 
     D2Client d2Client = new DynamicClient(loadBalancer, loadBalancer, _restOverStream);
@@ -291,6 +302,11 @@ public class D2ClientBuilder
     return d2Client;
   }
 
+  /**
+   * @deprecated ZK-based D2 is deprecated. Please onboard to INDIS. Use setXdsServer instead. See instructions at
+   * https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps
+   */
+  @Deprecated
   public D2ClientBuilder setZkHosts(String zkHosts)
   {
     _config.zkHosts = zkHosts;
@@ -309,13 +325,22 @@ public class D2ClientBuilder
     return this;
   }
 
-
+  /**
+   * @deprecated ZK-based D2 is deprecated. Please onboard to INDIS. Use setXdsServer instead. See instructions at
+   * https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps
+   */
+  @Deprecated
   public D2ClientBuilder setZkSessionTimeout(long zkSessionTimeout, TimeUnit unit)
   {
     _config.zkSessionTimeoutInMs = unit.toMillis(zkSessionTimeout);
     return this;
   }
 
+  /**
+   * @deprecated ZK-based D2 is deprecated. Please onboard to INDIS. See instructions at
+   * https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps
+   */
+  @Deprecated
   public D2ClientBuilder setZkStartupTimeout(long zkStartupTimeout, TimeUnit unit)
   {
     _config.zkStartupTimeoutInMs = unit.toMillis(zkStartupTimeout);
@@ -353,6 +378,11 @@ public class D2ClientBuilder
     return this;
   }
 
+  /**
+   * @deprecated ZK-based D2 is deprecated. Please onboard to INDIS. See instructions at
+   * https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps
+   */
+  @Deprecated
   public D2ClientBuilder setComponentFactory(ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory componentFactory)
   {
     _config.componentFactory = componentFactory;
@@ -389,6 +419,11 @@ public class D2ClientBuilder
     return this;
   }
 
+  /**
+   * @deprecated ZK-based D2 is deprecated. Please onboard to INDIS. INDIS always support symlink. See instructions at
+   * https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps
+   */
+  @Deprecated
   public D2ClientBuilder setIsSymlinkAware(boolean isSymlinkAware)
   {
     _config.isSymlinkAware = isSymlinkAware;
@@ -401,6 +436,10 @@ public class D2ClientBuilder
     return this;
   }
 
+  /**
+   * Legacy feature that has been deprecated for years. Do not use.
+   */
+  @Deprecated
   public D2ClientBuilder setD2ServicePath(String d2ServicePath)
   {
     _config.d2ServicePath = d2ServicePath;
@@ -523,6 +562,11 @@ public class D2ClientBuilder
     return this;
   }
 
+  /**
+   * @deprecated ZK-based D2 is deprecated. Please onboard to INDIS. See instructions at
+   * https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps
+   */
+  @Deprecated
   public D2ClientBuilder setUseNewEphemeralStoreWatcher(boolean useNewEphemeralStoreWatcher)
   {
     _config.useNewEphemeralStoreWatcher = useNewEphemeralStoreWatcher;
@@ -534,6 +578,10 @@ public class D2ClientBuilder
     return this;
   }
 
+  /**
+   * @deprecated ZK-based D2 is deprecated. Please onboard to INDIS. See instructions at
+   * https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps
+   */
   public D2ClientBuilder setWarmUpTimeoutSeconds(int warmUpTimeoutSeconds)
   {
     _config.warmUpTimeoutSeconds = warmUpTimeoutSeconds;
@@ -546,12 +594,22 @@ public class D2ClientBuilder
     return this;
   }
 
+  /**
+   * @deprecated ZK-based D2 is deprecated. Please onboard to INDIS. See instructions at
+   * https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps
+   */
+  @Deprecated
   public D2ClientBuilder setZookeeperReadWindowMs(int zookeeperReadWindowMs)
   {
     _config.zookeeperReadWindowMs = zookeeperReadWindowMs;
     return this;
   }
 
+  /**
+   * @deprecated ZK-based D2 is deprecated. Please onboard to INDIS. See instructions at
+   * https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps
+   */
+  @Deprecated
   public D2ClientBuilder setWarmUpConcurrentRequests(int warmUpConcurrentRequests)
   {
     _config.warmUpConcurrentRequests = warmUpConcurrentRequests;
@@ -576,6 +634,11 @@ public class D2ClientBuilder
     return this;
   }
 
+  /**
+   * @deprecated ZK-based D2 is deprecated. Please onboard to INDIS. See instructions at
+   * https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps
+   */
+  @Deprecated
   public D2ClientBuilder setDownstreamServicesFetcher(DownstreamServicesFetcher downstreamServicesFetcher)
   {
     _config.downstreamServicesFetcher = downstreamServicesFetcher;
@@ -599,6 +662,11 @@ public class D2ClientBuilder
     return this;
   }
 
+  /**
+   * @deprecated ZK-based D2 is deprecated. Please onboard to INDIS. See instructions at
+   * https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps
+   */
+  @Deprecated
   public D2ClientBuilder setZooKeeperDecorator(Function<ZooKeeper, ZooKeeper> zooKeeperDecorator){
     _config.zooKeeperDecorator = zooKeeperDecorator;
     return this;
@@ -617,6 +685,11 @@ public class D2ClientBuilder
     return this;
   }
 
+  /**
+   * @deprecated ZK-based D2 is deprecated. Please onboard to INDIS. See instructions at
+   * https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps
+   */
+  @Deprecated
   public D2ClientBuilder setZKConnectionForloadBalancer(ZKPersistentConnection connection)
   {
     _config.zkConnectionToUseForLB = connection;
