@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.Callbacks;
 import com.linkedin.common.callback.FutureCallback;
+import com.linkedin.common.callback.SuccessCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.DarkClusterConfigMap;
 import com.linkedin.d2.balancer.KeyMapper;
@@ -45,6 +46,7 @@ import com.linkedin.d2.balancer.subsetting.SubsettingState;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.d2.balancer.util.CustomAffinityRoutingURIProvider;
+import com.linkedin.d2.balancer.util.D2ExecutorThreadFactory;
 import com.linkedin.d2.balancer.util.HostOverrideList;
 import com.linkedin.d2.balancer.util.HostToKeyMapper;
 import com.linkedin.d2.balancer.util.KeysAndHosts;
@@ -231,7 +233,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     // get the service for this uri
     String extractedServiceName = LoadBalancerUtil.getServiceNameFromUri(uri);
 
-    listenToServiceAndCluster(extractedServiceName, Callbacks.handle(service -> {
+    SuccessCallback<ServiceProperties> servicePropertiesSuccessCallback = service -> {
       String serviceName = service.getServiceName();
       String clusterName = service.getClusterName();
       try
@@ -268,8 +270,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
           if (enableCustomAffinityRouting)
           {
             trackerClient = customAffinityRoutingURIProvider.getTargetHostURI(clusterName)
-                  .map(targetHost -> _state.getClient(serviceName, targetHost))
-                  .orElse(null);
+                .map(targetHost -> _state.getClient(serviceName, targetHost))
+                .orElse(null);
           }
 
           if (trackerClient == null)
@@ -289,8 +291,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
           String clusterAndServiceUriString = trackerClient.getUri() + service.getPath();
           _serviceAvailableStats.inc();
           clientCallback.onSuccess(new RewriteLoadBalancerClient(serviceName,
-            URI.create(clusterAndServiceUriString),
-            trackerClient));
+              URI.create(clusterAndServiceUriString),
+              trackerClient));
         }
         else
         {
@@ -309,8 +311,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
           if (transportClient == null)
           {
             throw new ServiceUnavailableException(serviceName, String.format(
-                    "PEGA_1001. Cannot find transportClient for service %s and scheme %s with URI specified in"
-                        + "TargetHints/HostOverrideList %s", serviceName, target.getScheme(), target));
+                "PEGA_1001. Cannot find transportClient for service %s and scheme %s with URI specified in"
+                    + "TargetHints/HostOverrideList %s", serviceName, target.getScheme(), target));
           }
 
           clientCallback.onSuccess(new RewriteLoadBalancerClient(serviceName, target, transportClient));
@@ -319,6 +321,19 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
       catch (ServiceUnavailableException e)
       {
         clientCallback.onError(e);
+      }
+    };
+    listenToServiceAndCluster(extractedServiceName, Callbacks.handle(service -> {
+      if (D2ExecutorThreadFactory.isFromExecutor()) {
+        /*
+         * When D2 gets service and cluster data from the backend, it's thread will try to complete all the queued
+         * callbacks, including those of the R2 calls. However, this isn't ideal and can also result in deadlocks.
+         * At this layer, tracing and invocation context are handled as part of the request context, so fork join pool
+         * can be safely used.
+         */
+        ForkJoinPool.commonPool().execute(() -> servicePropertiesSuccessCallback.onSuccess(service));
+      } else {
+        servicePropertiesSuccessCallback.onSuccess(service);
       }
     }, clientCallback));
   }
