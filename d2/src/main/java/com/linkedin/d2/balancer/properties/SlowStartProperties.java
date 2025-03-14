@@ -6,6 +6,8 @@ import java.util.Objects;
 
 /**
  * Slow start configuration properties for gRPC P2C load balancer.
+ * See <a href="https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/slow_start">
+ *   Envoy slow start documentation</a> for more info.
  */
 public class SlowStartProperties {
   // Whether the feature is disabled

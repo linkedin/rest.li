@@ -2,6 +2,7 @@ namespace com.linkedin.d2
 
 /**
  * D2 Slow Start related configuration.
+ * See https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/load_balancing/slow_start for more info.
  */
 record SlowStartProperties {
   /**

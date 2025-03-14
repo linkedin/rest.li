@@ -41,7 +41,7 @@ record D2Cluster includes D2ChangeTimeStamps {
   darkClusters: map[string, DarkClusterConfig] = { }
 
   /**
-   * D2 slow start properties for gRPC clusters.
+   * D2 slow start properties. Currently used by clients of gRPC clusters.
    */
   slowStartProperties: optional SlowStartProperties
 }
