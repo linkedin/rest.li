@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.65.1] - 2025-03-13
+- Use concurrent set for used service bookkeeping
+
 ## [29.65.0] - 2025-03-06
 - Deprecate ZK-related methods in D2ClientBuilder and D2ClientConfig
 
@@ -5776,7 +5779,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.65.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.65.1...master
+[29.65.1]: https://github.com/linkedin/rest.li/compare/v29.65.0...v29.65.1
 [29.65.0]: https://github.com/linkedin/rest.li/compare/v29.64.1...v29.65.0
 [29.64.1]: https://github.com/linkedin/rest.li/compare/v29.64.0...v29.64.1
 [29.64.0]: https://github.com/linkedin/rest.li/compare/v29.63.2...v29.64.0
