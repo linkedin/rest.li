@@ -54,29 +54,66 @@ import javax.net.ssl.SSLParameters;
 
 public class D2ClientConfig
 {
+  /**
+   * @deprecated ZK-based D2 is deprecated. Please onboard to INDIS. Use xdsServer instead. See instructions at
+   * https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps
+   */
+  @Deprecated
   String zkHosts = null;
   public String xdsServer = null;
   public String hostName = null;
+  /**
+   * @deprecated ZK-based D2 is deprecated. Please onboard to INDIS. See instructions at
+   * https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps
+   */
+  @Deprecated
   long zkSessionTimeoutInMs = 3600000L;
+  @Deprecated
   long zkStartupTimeoutInMs = 10000L;
+  @Deprecated
+  ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory componentFactory = null;
+  @Deprecated
+  boolean useNewEphemeralStoreWatcher = true;
+  @Deprecated
+  public int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
+  @Deprecated
+  public int warmUpConcurrentRequests = WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS;
+  @Deprecated
+  public DownstreamServicesFetcher downstreamServicesFetcher = null;
+  @Deprecated
+  Function<ZooKeeper, ZooKeeper> zooKeeperDecorator = null;
+  @Deprecated
+  int zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
+  @Deprecated
+  ZKPersistentConnection zkConnectionToUseForLB = null;
+
   public long lbWaitTimeout = 5000L;
   public TimeUnit lbWaitUnit = TimeUnit.MILLISECONDS;
   String flagFile = "/no/flag/file/set";
   String basePath = "/d2";
   public String fsBasePath = "/tmp/d2";
   public String indisFsBasePath = "/tmp/d2/indis";
-  ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory componentFactory = null;
+
   public Map<String, TransportClientFactory> clientFactories = null;
   LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory = null;
+  /**
+   * Legacy feature that has been deprecated for years. Do not use.
+   */
+  @Deprecated
   public String d2ServicePath = null;
   public SSLContext sslContext = null;
   public SslContext grpcSslContext = null;
   public SSLParameters sslParameters = null;
   public boolean isSSLEnabled = false;
   boolean shutdownAsynchronously = false;
+  /**
+   * @deprecated ZK-based D2 is deprecated. Please onboard to INDIS. INDIS always support symlink. See instructions at
+   * https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps
+   */
+  @Deprecated
   boolean isSymlinkAware = true;
   public Map<String, Map<String, Object>> clientServicesConfig = Collections.<String, Map<String, Object>>emptyMap();
-  boolean useNewEphemeralStoreWatcher = true;
+
   HealthCheckOperations healthCheckOperations = null;
   boolean enableSaveUriDataOnDisk = false;
   /**
@@ -97,12 +134,8 @@ public class D2ClientConfig
   long retryUpdateIntervalMs = RetryClient.DEFAULT_UPDATE_INTERVAL_MS;
   int retryAggregatedIntervalNum = RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM;
   public boolean warmUp = true;
-  public int warmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
   public int indisWarmUpTimeoutSeconds = WarmUpLoadBalancer.DEFAULT_SEND_REQUESTS_TIMEOUT_SECONDS;
-  int zookeeperReadWindowMs = ZooKeeperStore.DEFAULT_READ_WINDOW_MS;
-  public int warmUpConcurrentRequests = WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS;
   public int indisWarmUpConcurrentRequests = WarmUpLoadBalancer.DEFAULT_CONCURRENT_REQUESTS;
-  public DownstreamServicesFetcher downstreamServicesFetcher = null;
   public DownstreamServicesFetcher indisDownstreamServicesFetcher = null;
   boolean backupRequestsEnabled = true;
   BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer = null;
@@ -112,11 +145,9 @@ public class D2ClientConfig
   boolean enableBackupRequestsClientAsync = false;
   EventEmitter eventEmitter = null;
   public PartitionAccessorRegistry partitionAccessorRegistry = null;
-  Function<ZooKeeper, ZooKeeper> zooKeeperDecorator = null;
   public Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories = Collections.emptyMap();
   boolean requestTimeoutHandlerEnabled = false;
   public SslSessionValidatorFactory sslSessionValidatorFactory = null;
-  ZKPersistentConnection zkConnectionToUseForLB = null;
   public ScheduledExecutorService startUpExecutorService = null;
   public ScheduledExecutorService indisStartUpExecutorService = null;
   public JmxManager jmxManager = new NoOpJmxManager();
