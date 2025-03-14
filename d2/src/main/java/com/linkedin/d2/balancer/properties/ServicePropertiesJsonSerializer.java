@@ -60,7 +60,7 @@ public class ServicePropertiesJsonSerializer implements
    * (e.g. http.loadBalancer.hashMethod, degrader.maxDropRate) allow the inner map to be flat.
    */
 
-  private final Map<String, Map<String, Object>> _clientServicesConfig;
+  protected final Map<String, Map<String, Object>> _clientServicesConfig;
 
 
   public ServicePropertiesJsonSerializer()

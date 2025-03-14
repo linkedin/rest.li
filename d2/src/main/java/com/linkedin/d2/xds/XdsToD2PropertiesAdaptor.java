@@ -100,10 +100,15 @@ public class XdsToD2PropertiesAdaptor
   public XdsToD2PropertiesAdaptor(XdsClient xdsClient, DualReadStateManager dualReadStateManager,
       ServiceDiscoveryEventEmitter eventEmitter, Map<String, Map<String, Object>> clientServicesConfig)
   {
+    this(xdsClient, dualReadStateManager, eventEmitter, new ServicePropertiesJsonSerializer(clientServicesConfig));
+  }
+
+  public XdsToD2PropertiesAdaptor(XdsClient xdsClient, DualReadStateManager dualReadStateManager,
+      ServiceDiscoveryEventEmitter eventEmitter, ServicePropertiesJsonSerializer servicePropertiesJsonSerializer) {
     _xdsClient = xdsClient;
     _dualReadStateManager = dualReadStateManager;
     _eventEmitter = eventEmitter;
-    _servicePropertiesJsonSerializer = new ServicePropertiesJsonSerializer(clientServicesConfig);
+    _servicePropertiesJsonSerializer = servicePropertiesJsonSerializer;
   }
 
   public void start()
