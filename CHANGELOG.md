@@ -14,8 +14,15 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.65.1] - 2025-03-11
+## [29.65.3] - 2025-03-14
 - Add d2 slow start configuration support
+
+## [29.65.2] - 2025-03-14
+- Add option to pass ServicePropertiesJsonSerializer to XdsToD2PropertiesAdapter
+- Change ServicePropertiesJsonSerializer attribute _clientServicesConfig from private to protected
+
+## [29.65.1] - 2025-03-13
+- Use concurrent set for used service bookkeeping
 
 ## [29.65.0] - 2025-03-06
 - Deprecate ZK-related methods in D2ClientBuilder and D2ClientConfig
@@ -5779,7 +5786,9 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.65.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.65.3...master
+[29.65.3]: https://github.com/linkedin/rest.li/compare/v29.65.2...v29.65.3
+[29.65.2]: https://github.com/linkedin/rest.li/compare/v29.65.1...v29.65.2
 [29.65.1]: https://github.com/linkedin/rest.li/compare/v29.65.0...v29.65.1
 [29.65.0]: https://github.com/linkedin/rest.li/compare/v29.64.1...v29.65.0
 [29.64.1]: https://github.com/linkedin/rest.li/compare/v29.64.0...v29.64.1
