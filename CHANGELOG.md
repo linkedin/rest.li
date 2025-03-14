@@ -14,6 +14,10 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.65.2] - 2025-03-14
+- Add option to pass ServicePropertiesJsonSerializer to XdsToD2PropertiesAdapter
+- Change ServicePropertiesJsonSerializer attribute _clientServicesConfig from private to protected
+
 ## [29.65.1] - 2025-03-13
 - Use concurrent set for used service bookkeeping
 
@@ -5779,7 +5783,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.65.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.65.2...master
+[29.65.2]: https://github.com/linkedin/rest.li/compare/v29.65.1...v29.65.2
 [29.65.1]: https://github.com/linkedin/rest.li/compare/v29.65.0...v29.65.1
 [29.65.0]: https://github.com/linkedin/rest.li/compare/v29.64.1...v29.65.0
 [29.64.1]: https://github.com/linkedin/rest.li/compare/v29.64.0...v29.64.1
