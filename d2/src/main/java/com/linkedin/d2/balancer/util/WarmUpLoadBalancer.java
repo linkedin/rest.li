@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -120,7 +121,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
     _warmUpTimeoutMillis = warmUpTimeoutMillis;
     _concurrentRequests = concurrentRequests;
     _outstandingRequests = new ConcurrentLinkedDeque<>();
-    _usedServices = new HashSet<>();
+    _usedServices = ConcurrentHashMap.newKeySet();
     _dualReadStateManager = dualReadStateManager;
     _isIndis = isIndis;
     _printName = String.format("%s WarmUp", _isIndis ? "xDS" : "ZK");
