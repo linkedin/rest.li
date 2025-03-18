@@ -26,7 +26,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import javax.annotation.Nullable;
+
 
 /**
  * ClusterProperties are the properties that define a cluster and its behaviors.
@@ -48,6 +51,7 @@ public class ClusterProperties
   public static final float DARK_CLUSTER_DEFAULT_TARGET_RATE = 0.0f;
   public static final int DARK_CLUSTER_DEFAULT_MAX_REQUESTS_TO_BUFFER = 1;
   public static final int DARK_CLUSTER_DEFAULT_BUFFERED_REQUEST_EXPIRY_IN_SECONDS = 1;
+  public static final int DEFAULT_VERSION = -1;
 
   private final String                _clusterName;
   private final Map<String, String>   _properties;
@@ -60,6 +64,7 @@ public class ClusterProperties
   private final Map<String, Object> _darkClusters;
   private final boolean              _delegated;
   private long               _version;
+  private final SlowStartProperties _slowStartProperties;
 
   public ClusterProperties(String clusterName)
   {
@@ -153,7 +158,7 @@ public class ClusterProperties
                            boolean delegated)
   {
     this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings,
-        darkClusters, delegated, -1);
+        darkClusters, delegated, DEFAULT_VERSION);
   }
 
   public ClusterProperties(String clusterName,
@@ -166,6 +171,20 @@ public class ClusterProperties
       boolean delegated,
       long version)
   {
+    this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings,
+        darkClusters, delegated, version, null);
+  }
+
+  public ClusterProperties(String clusterName,
+      List<String> prioritizedSchemes,
+      Map<String, String> properties,
+      Set<URI> bannedUris,
+      PartitionProperties partitionProperties,
+      List<String> sslSessionValidationStrings,
+      Map<String, Object> darkClusters,
+      boolean delegated,
+      long version,
+      @Nullable SlowStartProperties slowStartProperties) {
     _clusterName = clusterName;
     _prioritizedSchemes =
         (prioritizedSchemes != null) ? Collections.unmodifiableList(prioritizedSchemes)
@@ -178,12 +197,15 @@ public class ClusterProperties
     _darkClusters = darkClusters == null ? new HashMap<>() : darkClusters;
     _delegated = delegated;
     _version = version;
+    _slowStartProperties = slowStartProperties;
   }
+
 
   public ClusterProperties(ClusterProperties other)
   {
     this(other._clusterName, other._prioritizedSchemes, other._properties, other._bannedUris, other._partitionProperties,
-        other._sslSessionValidationStrings, other._darkClusters, other._delegated);
+        other._sslSessionValidationStrings, other._darkClusters, other._delegated, other._version,
+        other._slowStartProperties);
   }
 
   public boolean isBanned(URI uri)
@@ -247,13 +269,20 @@ public class ClusterProperties
     return _delegated;
   }
 
+  @Nullable
+  public SlowStartProperties getSlowStartProperties()
+  {
+    return _slowStartProperties;
+  }
+
   @Override
   public String toString()
   {
     return "ClusterProperties [_clusterName=" + _clusterName + ", _prioritizedSchemes="
         + _prioritizedSchemes + ", _properties=" + _properties + ", _bannedUris=" + _bannedUris
         + ", _partitionProperties=" + _partitionProperties + ", _sslSessionValidationStrings=" + _sslSessionValidationStrings
-        + ", _darkClusterConfigMap=" + _darkClusters + ", _delegated=" + _delegated + "]";
+        + ", _darkClusterConfigMap=" + _darkClusters + ", _delegated=" + _delegated + ", _slowStartProperties="
+        + _slowStartProperties + "]";
   }
 
   @Override
@@ -271,6 +300,7 @@ public class ClusterProperties
     result = prime * result + ((_sslSessionValidationStrings == null) ? 0 : _sslSessionValidationStrings.hashCode());
     result = prime * result + ((_darkClusters == null) ? 0 : _darkClusters.hashCode());
     result = prime * result + ((_delegated) ? 1 : 0);
+    result = prime * result + ((_slowStartProperties == null) ? 0 : _slowStartProperties.hashCode());
     return result;
   }
 
@@ -315,6 +345,10 @@ public class ClusterProperties
       return false;
     }
     if (_delegated != other._delegated)
+    {
+      return false;
+    }
+    if (!Objects.equals(_slowStartProperties, other._slowStartProperties))
     {
       return false;
     }

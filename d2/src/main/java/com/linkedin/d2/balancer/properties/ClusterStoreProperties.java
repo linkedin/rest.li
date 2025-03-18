@@ -118,20 +118,6 @@ public class ClusterStoreProperties extends ClusterProperties
     _failoutProperties = null;
   }
 
-  public ClusterStoreProperties(ClusterProperties stableConfigs,
-      ClusterProperties canaryConfigs,
-      CanaryDistributionStrategy distributionStrategy,
-      FailoutProperties failoutProperties)
-  {
-    super(stableConfigs.getClusterName(), stableConfigs.getPrioritizedSchemes(),
-        stableConfigs.getProperties(), stableConfigs.getBannedUris(), stableConfigs.getPartitionProperties(),
-        stableConfigs.getSslSessionValidationStrings(), stableConfigs.getDarkClusters(),
-        stableConfigs.isDelegated());
-    _canaryConfigs = canaryConfigs;
-    _canaryDistributionStrategy = distributionStrategy;
-    _failoutProperties = failoutProperties;
-  }
-
   public ClusterStoreProperties(String clusterName,
       List<String> prioritizedSchemes,
       Map<String, String> properties,
@@ -154,13 +140,21 @@ public class ClusterStoreProperties extends ClusterProperties
       ClusterProperties canaryConfigs,
       CanaryDistributionStrategy distributionStrategy)
   {
+    this(stableConfigs, canaryConfigs, distributionStrategy, null);
+  }
+
+  public ClusterStoreProperties(ClusterProperties stableConfigs,
+      ClusterProperties canaryConfigs,
+      CanaryDistributionStrategy distributionStrategy,
+      FailoutProperties failoutProperties)
+  {
     super(stableConfigs.getClusterName(), stableConfigs.getPrioritizedSchemes(),
         stableConfigs.getProperties(), stableConfigs.getBannedUris(), stableConfigs.getPartitionProperties(),
         stableConfigs.getSslSessionValidationStrings(), stableConfigs.getDarkClusters(),
-        stableConfigs.isDelegated());
+        stableConfigs.isDelegated(), stableConfigs.getVersion(), stableConfigs.getSlowStartProperties());
     _canaryConfigs = canaryConfigs;
     _canaryDistributionStrategy = distributionStrategy;
-    _failoutProperties = null;
+    _failoutProperties = failoutProperties;
   }
 
   public ClusterProperties getCanaryConfigs()

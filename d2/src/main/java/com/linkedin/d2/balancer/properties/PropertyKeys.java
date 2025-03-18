@@ -143,6 +143,11 @@ public class PropertyKeys
   //used by cluster properties
   public static final String CLUSTER_NAME = "clusterName";
   public static final String PARTITION_PROPERTIES = "partitionProperties";
+  public static final String SLOW_START_PROPERTIES = "slowStartProperties";
+  public static final String SLOW_START_DISABLED = "disabled";
+  public static final String SLOW_START_AGGRESSION = "aggression";
+  public static final String SLOW_START_WINDOW_DURATION = "windowDurationSeconds";
+  public static final String SLOW_START_MIN_WEIGHT_PERCENT = "minWeightPercent";
   public static final String PARTITION_TYPE = "partitionType";
   public static final String KEY_RANGE_START = "keyRangeStart";
   public static final String PARTITION_SIZE = "partitionSize";
