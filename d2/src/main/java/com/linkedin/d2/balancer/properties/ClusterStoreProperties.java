@@ -43,19 +43,16 @@ public class ClusterStoreProperties extends ClusterProperties
   protected final CanaryDistributionStrategy _canaryDistributionStrategy;
   protected final FailoutProperties _failoutProperties;
 
-  @Deprecated
   public ClusterStoreProperties(String clusterName)
   {
     this(clusterName, Collections.<String>emptyList());
   }
 
-  @Deprecated
   public ClusterStoreProperties(String clusterName, List<String> prioritizedSchemes)
   {
     this(clusterName, prioritizedSchemes, Collections.<String,String>emptyMap());
   }
 
-  @Deprecated
   public ClusterStoreProperties(String clusterName,
       List<String> prioritizedSchemes,
       Map<String, String> properties)
@@ -63,7 +60,6 @@ public class ClusterStoreProperties extends ClusterProperties
     this(clusterName, prioritizedSchemes, properties, new HashSet<>());
   }
 
-  @Deprecated
   public ClusterStoreProperties(String clusterName,
       List<String> prioritizedSchemes,
       Map<String, String> properties,
@@ -72,7 +68,6 @@ public class ClusterStoreProperties extends ClusterProperties
     this(clusterName, prioritizedSchemes, properties, bannedUris, NullPartitionProperties.getInstance());
   }
 
-  @Deprecated
   public ClusterStoreProperties(String clusterName,
       List<String> prioritizedSchemes,
       Map<String, String> properties,
@@ -82,7 +77,6 @@ public class ClusterStoreProperties extends ClusterProperties
     this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, Collections.emptyList());
   }
 
-  @Deprecated
   public ClusterStoreProperties(String clusterName,
       List<String> prioritizedSchemes,
       Map<String, String> properties,
@@ -94,7 +88,6 @@ public class ClusterStoreProperties extends ClusterProperties
         (Map<String, Object>) null, false);
   }
 
-  @Deprecated
   public ClusterStoreProperties(String clusterName,
       List<String> prioritizedSchemes,
       Map<String, String> properties,
@@ -108,7 +101,6 @@ public class ClusterStoreProperties extends ClusterProperties
         null, null, null);
   }
 
-  @Deprecated
   public ClusterStoreProperties(String clusterName,
       List<String> prioritizedSchemes,
       Map<String, String> properties,
@@ -126,7 +118,6 @@ public class ClusterStoreProperties extends ClusterProperties
     _failoutProperties = null;
   }
 
-  @Deprecated
   public ClusterStoreProperties(String clusterName,
       List<String> prioritizedSchemes,
       Map<String, String> properties,
@@ -145,7 +136,6 @@ public class ClusterStoreProperties extends ClusterProperties
     _failoutProperties = failoutProperties;
   }
 
-  @Deprecated
   public ClusterStoreProperties(ClusterProperties stableConfigs,
       ClusterProperties canaryConfigs,
       CanaryDistributionStrategy distributionStrategy)

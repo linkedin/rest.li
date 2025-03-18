@@ -148,7 +148,6 @@ public class ClusterProperties
     this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings, (Map<String, Object>)null, false);
   }
 
-  @Deprecated
   public ClusterProperties(String clusterName,
                            List<String> prioritizedSchemes,
                            Map<String, String> properties,
@@ -159,10 +158,9 @@ public class ClusterProperties
                            boolean delegated)
   {
     this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings,
-        darkClusters, delegated, -1);
+        darkClusters, delegated, DEFAULT_VERSION);
   }
 
-  @Deprecated
   public ClusterProperties(String clusterName,
       List<String> prioritizedSchemes,
       Map<String, String> properties,
@@ -174,7 +172,7 @@ public class ClusterProperties
       long version)
   {
     this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings,
-        darkClusters, delegated, DEFAULT_VERSION, null);
+        darkClusters, delegated, version, null);
   }
 
   public ClusterProperties(String clusterName,
