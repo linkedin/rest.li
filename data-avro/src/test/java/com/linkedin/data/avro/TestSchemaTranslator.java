@@ -25,9 +25,11 @@ import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.JsonBuilder;
+import com.linkedin.data.schema.NamedDataSchema;
 import com.linkedin.data.schema.PegasusSchemaParser;
 import com.linkedin.data.schema.SchemaParser;
 import com.linkedin.data.schema.SchemaToJsonEncoder;
+import com.linkedin.data.schema.TyperefDataSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import java.io.BufferedReader;
 import java.io.File;
@@ -39,14 +41,24 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import org.apache.avro.Schema;
+import org.apache.avro.data.Json;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
+import org.codehaus.jackson.JsonNode;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.skyscreamer.jsonassert.Customization;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
+import org.skyscreamer.jsonassert.JSONParser;
+import org.skyscreamer.jsonassert.comparator.CustomComparator;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import static com.linkedin.data.avro.SchemaTranslator.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
@@ -95,6 +107,7 @@ public class TestSchemaTranslator
                 "{" +
                     "  \"type\": \"record\"," +
                     "  \"name\": \"test\"," +
+                    "  \"translated.from\" : \"test\"," +
                     "  \"fields\": [" +
                     "    {" +
                     "      \"name\": \"unionWithAliasField\"," +
@@ -154,6 +167,7 @@ public class TestSchemaTranslator
                 "{" +
                     "  \"type\": \"record\"," +
                     "  \"name\": \"test\"," +
+                    "  \"translated.from\" : \"test\"," +
                     "  \"fields\": [" +
                     "    {" +
                     "      \"name\": \"unionTyperef\"," +
@@ -218,6 +232,7 @@ public class TestSchemaTranslator
                 "{" +
                     "  \"type\": \"record\"," +
                     "  \"name\": \"test\"," +
+                    "  \"translated.from\" : \"test\"," +
                     "  \"fields\": [" +
                     "    {" +
                     "      \"name\": \"unionTyperef\"," +
@@ -281,6 +296,7 @@ public class TestSchemaTranslator
                 "{" +
                     "  \"type\": \"record\"," +
                     "  \"name\": \"test\"," +
+                    "  \"translated.from\" : \"test\"," +
                     "  \"fields\": [" +
                     "    {" +
                     "      \"name\": \"unionTyperef\"," +
@@ -340,6 +356,7 @@ public class TestSchemaTranslator
                 "{" +
                     "    \"type\": \"record\"," +
                     "    \"name\": \"test\"," +
+                    "    \"translated.from\" : \"test\"," +
                     "    \"fields\": [" +
                     "        {" +
                     "            \"name\": \"unionTyperef\"," +
@@ -367,6 +384,7 @@ public class TestSchemaTranslator
                 "{" +
                     "    \"type\": \"record\"," +
                     "    \"name\": \"test\"," +
+                    "    \"translated.from\" : \"test\"," +
                     "    \"fields\": [" +
                     "        {" +
                     "            \"name\": \"unionTyperef\"," +
@@ -428,6 +446,7 @@ public class TestSchemaTranslator
                 "{" +
                     "    \"type\": \"record\"," +
                     "    \"name\": \"test\"," +
+                    "    \"translated.from\" : \"test\"," +
                     "    \"fields\": [" +
                     "        {" +
                     "            \"name\": \"unionTyperef\"," +
@@ -488,6 +507,7 @@ public class TestSchemaTranslator
                 "{" +
                     "    \"type\": \"record\"," +
                     "    \"name\": \"test\"," +
+                    "    \"translated.from\" : \"test\"," +
                     "    \"fields\": [" +
                     "        {" +
                     "            \"name\": \"unionTyperef\"," +
@@ -544,6 +564,7 @@ public class TestSchemaTranslator
                 "{" +
                     "    \"type\": \"record\"," +
                     "    \"name\": \"test\"," +
+                    "    \"translated.from\" : \"test\"," +
                     "    \"fields\": [" +
                     "        {" +
                     "            \"name\": \"unionTyperef\"," +
@@ -614,7 +635,7 @@ public class TestSchemaTranslator
                "             \"ref\"  : \"string\", " +
                "             \"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"STRING\"}] } }] }",
 
-               "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefField\", \"type\" : \"string\", \"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"STRING\" } ] } ] }"
+               "{ \"type\" : \"record\", \"translated.from\" : \"com.x.y.z.Foo\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefField\", \"type\" : \"string\", \"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"STRING\" } ] } ] }"
            },
            {
                // Test Annotations propagation for TypeRef, reserved word, such as "validate", "java", should not be propagated
@@ -648,6 +669,7 @@ public class TestSchemaTranslator
 
                "{ \"type\" : \"record\", " +
                "\"name\" : \"Foo\", " +
+               "\"translated.from\" : \"com.x.y.z.Foo\", " +
                "\"namespace\" : \"com.x.y.z\", " +
                "\"fields\" : [ " +
                "{ \"name\" : \"typedefField\", " +
@@ -672,6 +694,7 @@ public class TestSchemaTranslator
 
                "{ \"type\" : \"record\", " +
                "\"name\" : \"Foo\", " +
+               "\"translated.from\" : \"com.x.y.z.Foo\", " +
                "\"namespace\" : \"com.x.y.z\", " +
                "\"fields\" : [ { " +
                "\"name\" : \"typedefField\", " +
@@ -700,7 +723,7 @@ public class TestSchemaTranslator
                "                                         \"ref\"  : \"int\", " +
                "\"compliance\" : [{\"dataType\":\"MEMBER_NAME\", \"format\": \"INTEGER\"}] } } }] }",
 
-               "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefField\", \"type\" : \"int\", \"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"INTEGER\" } ] } ] }",
+               "{ \"type\" : \"record\", \"translated.from\" : \"com.x.y.z.Foo\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefField\", \"type\" : \"int\", \"compliance\" : [ { \"dataType\" : \"MEMBER_NAME\", \"format\" : \"INTEGER\" } ] } ] }",
            },
            {
                // Test Annotations for TypeRef : three layer typerefs
@@ -720,6 +743,7 @@ public class TestSchemaTranslator
 
                "{ \"type\" : \"record\", " +
                "\"name\" : \"Foo\", " +
+               "\"translated.from\" : \"com.x.y.z.Foo\","+
                "\"namespace\" : \"com.x.y.z\", " +
                "\"fields\" : [ " + "{ " +
                "\"name\" : \"typedefField\", " +
@@ -748,7 +772,7 @@ public class TestSchemaTranslator
                "  ]\n" +
                "}",
 
-               "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefMapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, \"compliance\" : { \"keysymbol\" : [ { \"dataType\" : \"MEMBER_NAME\" } ], \"/*\" : [ { \"dataType\" : \"MEMBER_ID\" } ] } } ] }",
+               "{ \"type\" : \"record\", \"name\" : \"Foo\", \"translated.from\" : \"com.x.y.z.Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefMapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, \"compliance\" : { \"keysymbol\" : [ { \"dataType\" : \"MEMBER_NAME\" } ], \"/*\" : [ { \"dataType\" : \"MEMBER_ID\" } ] } } ] }",
            },
            {
                // Test Annotations for TypeRef : one layer typeref, with field level has same property as Typeref and merged
@@ -771,7 +795,7 @@ public class TestSchemaTranslator
                "  ]\n" +
                "}",
 
-               "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefMapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, \"compliance\" : { \"keysymbol\" : [ { \"dataType\" : \"MEMBER_NAME\" } ], \"/*\" : [ { \"dataType\" : \"MEMBER_ID\" } ] } } ] }",
+               "{ \"type\" : \"record\", \"name\" : \"Foo\", \"translated.from\" : \"com.x.y.z.Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefMapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, \"compliance\" : { \"keysymbol\" : [ { \"dataType\" : \"MEMBER_NAME\" } ], \"/*\" : [ { \"dataType\" : \"MEMBER_ID\" } ] } } ] }",
            },
            {
                // Test Annotations for TypeRef : one layer typeref, with field level has same property's override and not merged
@@ -796,6 +820,7 @@ public class TestSchemaTranslator
 
                "{ \"type\" : \"record\", " +
                "\"name\" : \"Foo\", " +
+               "\"translated.from\" : \"com.x.y.z.Foo\", " +
                "\"namespace\" : \"com.x.y.z\", " +
                "\"fields\" : [ { \"name\" : \"typedefMapField\", " +
                "\"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, " +
@@ -822,7 +847,7 @@ public class TestSchemaTranslator
                "  ]\n" +
                "}",
 
-               "{ \"type\" : \"record\", \"name\" : \"Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefMapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, \"otherannotation\" : \"None\", \"compliance\" : { \"/*\" : [ { \"dataType\" : \"MEMBER_ID\" } ] } } ] }",
+               "{ \"type\" : \"record\", \"name\" : \"Foo\", \"translated.from\":\"com.x.y.z.Foo\", \"namespace\" : \"com.x.y.z\", \"fields\" : [ { \"name\" : \"typedefMapField\", \"type\" : { \"type\" : \"map\", \"values\" : \"string\" }, \"otherannotation\" : \"None\", \"compliance\" : { \"/*\" : [ { \"dataType\" : \"MEMBER_ID\" } ] } } ] }",
            }
 
        };
@@ -893,7 +918,7 @@ public class TestSchemaTranslator
               // custom properties :
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END } ], \"version\" : 1 }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"version\" : 1 }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ], \"version\" : 1 }",
               null,
               null,
               null
@@ -910,7 +935,7 @@ public class TestSchemaTranslator
               // required, optional not specified
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }",
               null,
               null,
               null
@@ -919,7 +944,7 @@ public class TestSchemaTranslator
               // required and has default
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42 } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\", \"default\" : 42 } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\", \"default\" : 42 } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -928,7 +953,7 @@ public class TestSchemaTranslator
               // required, optional is false
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"optional\" : false } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }",
               null,
               null,
               null
@@ -937,7 +962,7 @@ public class TestSchemaTranslator
               // required, optional is false and has default
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"default\" : 42, \"optional\" : false } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\", \"default\" : 42 } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\", \"default\" : 42 } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -946,7 +971,7 @@ public class TestSchemaTranslator
               // optional is true
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"optional\" : true } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -955,7 +980,7 @@ public class TestSchemaTranslator
               // optional and has default
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"optional\" : true, \"default\" : 42 } ] }",
               translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ], \"default\" : 42 } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ], \"default\" : 42 } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -964,7 +989,7 @@ public class TestSchemaTranslator
               // optional and has default
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START \"int\" ##T_END, \"optional\" : true, \"default\" : 42 } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -973,7 +998,7 @@ public class TestSchemaTranslator
               // optional and has default, enum type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END, \"optional\" : true, \"default\" : \"APPLE\" } ] }",
               translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] }, \"null\" ], \"default\" : \"APPLE\" } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] }, \"null\" ], \"default\" : \"APPLE\" } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -982,7 +1007,7 @@ public class TestSchemaTranslator
               // optional and has default, enum type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END, \"optional\" : true, \"default\" : \"APPLE\" } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"enum\", \"name\" : \"fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -991,7 +1016,7 @@ public class TestSchemaTranslator
               // optional and has default with namespaced type
               "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"record\", \"name\" : \"b.c.bar\", \"fields\" : [ ] } ##T_END, \"default\" : {  }, \"optional\" : true } ] }",
               translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"a.b\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"bar\", \"namespace\" : \"b.c\", \"fields\" : [  ] }, \"null\" ], \"default\" : {  } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"a.b.foo\", \"namespace\" : \"a.b\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"bar\", \"namespace\" : \"b.c\", \"fields\" : [  ] }, \"null\" ], \"default\" : {  } } ] }",
               "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ ] }",
               emptyFooValue,
               null
@@ -1000,7 +1025,7 @@ public class TestSchemaTranslator
               // optional and has default with namespaced type
               "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"record\", \"name\" : \"b.c.bar\", \"fields\" : [ ] } ##T_END, \"default\" : {  }, \"optional\" : true } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"a.b\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"bar\", \"namespace\" : \"b.c\", \"fields\" : [  ] } ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"a.b.foo\", \"namespace\" : \"a.b\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"bar\", \"namespace\" : \"b.c\", \"fields\" : [  ] } ], \"default\" : null } ] }",
               "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ ] }",
               emptyFooValue,
               null
@@ -1009,7 +1034,7 @@ public class TestSchemaTranslator
               // optional and has default value with multi-level nesting
               "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"record\", \"name\" : \"b.c.bar\", \"fields\" : [ { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"c.d.baz\", \"fields\" : [ ] } } ] }, \"default\" : { \"baz\" : { } }, \"optional\" : true } ] }",
               translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"a.b\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"bar\", \"namespace\" : \"b.c\", \"fields\" : [ { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"baz\", \"namespace\" : \"c.d\", \"fields\" : [  ] } } ] }, \"null\" ], \"default\" : { \"baz\" : {  } } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"a.b.foo\", \"namespace\" : \"a.b\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"bar\", \"namespace\" : \"b.c\", \"fields\" : [ { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"baz\", \"namespace\" : \"c.d\", \"fields\" : [  ] } } ] }, \"null\" ], \"default\" : { \"baz\" : {  } } } ] }",
               "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ ] }",
               emptyFooValue,
               null
@@ -1018,7 +1043,7 @@ public class TestSchemaTranslator
               // optional and has default value with multi-level nesting
               "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"record\", \"name\" : \"b.c.bar\", \"fields\" : [ { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"c.d.baz\", \"fields\" : [ ] } } ] }, \"default\" : { \"baz\" : { } }, \"optional\" : true } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"namespace\" : \"a.b\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"bar\", \"namespace\" : \"b.c\", \"fields\" : [ { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"baz\", \"namespace\" : \"c.d\", \"fields\" : [  ] } } ] } ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"a.b.foo\", \"namespace\" : \"a.b\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"bar\", \"namespace\" : \"b.c\", \"fields\" : [ { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"baz\", \"namespace\" : \"c.d\", \"fields\" : [  ] } } ] } ], \"default\" : null } ] }",
               "{ \"type\" : \"record\", \"name\" : \"a.b.foo\", \"fields\" : [ ] }",
               emptyFooValue,
               null
@@ -1027,7 +1052,7 @@ public class TestSchemaTranslator
               // optional and has default but with circular references with inconsistent defaults, inconsistent because optional field has default, and also missing (which requires default to be null)
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"foo\", \"default\" : {  }, \"optional\" : true } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"foo\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"foo\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1036,7 +1061,7 @@ public class TestSchemaTranslator
               // optional and has default but with circular references with inconsistent defaults, inconsistent because optional field has default, and also missing (which requires default to be null)
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"foo\", \"default\" : { \"bar\" : {  } }, \"optional\" : true } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"foo\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"foo\" ], \"default\" : null } ] }",
               null,
               null,
               null
@@ -1045,7 +1070,7 @@ public class TestSchemaTranslator
               // required union without null
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\" ] } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\" ] } ] }",
               null,
               null,
               null
@@ -1054,7 +1079,7 @@ public class TestSchemaTranslator
               // required union with null
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"null\", \"string\" ] ##T_END } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\" ] } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\",  \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\" ] } ] }",
               null,
               null,
               null
@@ -1063,7 +1088,7 @@ public class TestSchemaTranslator
               // optional union without null
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END, \"optional\" : true } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\",  \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1072,7 +1097,7 @@ public class TestSchemaTranslator
               // optional union with null
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"null\", \"int\", \"string\" ] ##T_END, \"optional\" : true } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\",  \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1081,7 +1106,7 @@ public class TestSchemaTranslator
               // optional union without null and default is 1st member type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END, \"default\" : { \"int\" : 42 }, \"optional\" : true } ] }",
               translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\", \"null\" ], \"default\" : 42 } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\",  \"translated.from\" : \"foo\",\"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\", \"null\" ], \"default\" : 42 } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1090,7 +1115,7 @@ public class TestSchemaTranslator
               // optional union without null and default is 1st member type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END, \"default\" : { \"int\" : 42 }, \"optional\" : true } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\",  \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1099,7 +1124,7 @@ public class TestSchemaTranslator
               // optional union without null and default is 2nd member type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"string\" ] ##T_END, \"default\" : { \"string\" : \"abc\" }, \"optional\" : true } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1108,7 +1133,7 @@ public class TestSchemaTranslator
               // optional union with null and non-null default, default is 1st member type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"null\", \"string\" ] ##T_END, \"default\" : { \"int\" : 42 }, \"optional\" : true } ] }",
               translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\", \"string\" ], \"default\" : 42 } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\", \"string\" ], \"default\" : 42 } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1117,7 +1142,7 @@ public class TestSchemaTranslator
               // optional union with null and non-null default, default is 1st member type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"null\", \"string\" ] ##T_END, \"default\" : { \"int\" : 42 }, \"optional\" : true } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1126,7 +1151,7 @@ public class TestSchemaTranslator
               // optional union with null and non-null default, default is 2nd member type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"null\", \"string\" ] ##T_END, \"default\" : null, \"optional\" : true } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1135,7 +1160,7 @@ public class TestSchemaTranslator
               // optional union with null and non-null default, default is 3rd member type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"int\", \"null\", \"string\" ] ##T_END, \"default\" : { \"string\" : \"abc\" }, \"optional\" : true } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1144,7 +1169,7 @@ public class TestSchemaTranslator
               // optional union with null and null default, default is 1st member type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"null\", \"int\", \"string\" ] ##T_END, \"default\" : null, \"optional\" : true } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1153,7 +1178,7 @@ public class TestSchemaTranslator
               // optional union but with circular references with inconsistent defaults, inconsistent because optional field has default, and also missing (which requires default to be null)
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"foo\", \"string\" ] ##T_END, \"default\" : { \"foo\" : { } }, \"optional\" : true } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"foo\", \"string\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"foo\", \"string\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1162,7 +1187,7 @@ public class TestSchemaTranslator
               // optional union but with circular references with but with consistent defaults (the only default that works is null for circularly referenced unions)
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START [ \"null\", \"foo\" ] ##T_END, \"default\" : null, \"optional\" : true } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"foo\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"foo\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1171,7 +1196,7 @@ public class TestSchemaTranslator
               // typeref of fixed
               "##T_START { \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] } ##T_END",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"translated.from\" : \"Foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : \"int\" } ] }",
               null,
               null,
               null
@@ -1180,7 +1205,7 @@ public class TestSchemaTranslator
               // typeref of enum
               "##T_START { \"type\" : \"enum\", \"name\" : \"Fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] } ##T_END",
               allModes,
-              "{ \"type\" : \"enum\", \"name\" : \"Fruits\", \"symbols\" : [ \"APPLE\", \"ORANGE\" ] }",
+              "{ \"type\" : \"enum\", \"name\" : \"Fruits\", \"translated.from\" : \"Fruits\",  \"symbols\" : [ \"APPLE\", \"ORANGE\" ] }",
               null,
               null,
               null
@@ -1189,7 +1214,7 @@ public class TestSchemaTranslator
               // typeref of fixed
               "##T_START { \"type\" : \"fixed\", \"name\" : \"Md5\", \"size\" : 16 } ##T_END",
               allModes,
-              "{ \"type\" : \"fixed\", \"name\" : \"Md5\", \"size\" : 16 }",
+              "{ \"type\" : \"fixed\", \"name\" : \"Md5\", \"translated.from\" : \"Md5\", \"size\" : 16 }",
               null,
               null,
               null
@@ -1252,7 +1277,7 @@ public class TestSchemaTranslator
               // record field with union with typeref, without null in record field
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ] } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", \"int\" ] } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", \"int\" ] } ] }",
               null,
               null,
               null
@@ -1261,7 +1286,7 @@ public class TestSchemaTranslator
               // record field with union with typeref, without null and default is 1st member type and not typeref-ed
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"default\" : { \"string\" : \"abc\" } } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", \"int\" ], \"default\" : \"abc\" } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", \"int\" ], \"default\" : \"abc\" } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1270,7 +1295,7 @@ public class TestSchemaTranslator
               // record field with union with typeref, without null and default is 1st member type and typeref-ed
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"string\" ], \"default\" : { \"int\" : 42 } } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\" ], \"default\" : 42 } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"string\" ], \"default\" : 42 } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1279,7 +1304,7 @@ public class TestSchemaTranslator
               // record field with union with typeref, without null and optional
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"optional\" : true } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\", \"int\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\", \"int\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1288,7 +1313,7 @@ public class TestSchemaTranslator
               // record field with union with typeref, without null and optional, default is 1st member and not typeref-ed
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : { \"string\" : \"abc\" } } ] }",
               translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", \"int\", \"null\" ], \"default\" : \"abc\" } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", \"int\", \"null\" ], \"default\" : \"abc\" } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1297,7 +1322,7 @@ public class TestSchemaTranslator
               // record field with union with typeref, without null and optional, default is 1st member and not typeref-ed
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : { \"string\" : \"abc\" } } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\", \"int\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\", \"int\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1306,7 +1331,7 @@ public class TestSchemaTranslator
               // record field with union with typeref, without null and optional, default is 1st member and typeref-ed
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"string\" ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1315,7 +1340,7 @@ public class TestSchemaTranslator
               // record field with union with typeref, without null and optional, default is 2nd member and not typeref-ed
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"string\" ], \"optional\" : true, \"default\" : { \"string\" : \"abc\" } } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\", \"string\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1324,7 +1349,7 @@ public class TestSchemaTranslator
               // record field with union with typeref, without null and optional, default is 2nd member and typeref-ed
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"string\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\", \"int\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"string\", \"int\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1333,7 +1358,7 @@ public class TestSchemaTranslator
               // record field with union with typeref, with null 1st member
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ] } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ] } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ] } ] }",
               null,
               null,
               null
@@ -1342,7 +1367,7 @@ public class TestSchemaTranslator
               // record field with union with typeref, with null 1st member, default is 1st member and null
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ], \"default\" : null } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
               null,
               null,
               null
@@ -1351,7 +1376,7 @@ public class TestSchemaTranslator
               // record field with union with typeref with null 1st member, and optional
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ], \"optional\" : true } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1360,7 +1385,7 @@ public class TestSchemaTranslator
               // record field with union with typeref with null 1st member, and optional, default is 1st member and null
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : null } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1369,7 +1394,7 @@ public class TestSchemaTranslator
               // record field with union with typeref with null 1st member, and optional, default is last member and typeref-ed
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", ##T_START \"int\" ##T_END ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1378,7 +1403,7 @@ public class TestSchemaTranslator
               // record field with union with typeref, with null last member
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ] } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ] } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ] } ] }",
               null,
               null,
               null
@@ -1387,7 +1412,7 @@ public class TestSchemaTranslator
               // record field with union with typeref, with null last member, default is 1st member and typeref-ed
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"default\" : { \"int\" : 42 } } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ], \"default\" : 42 } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ], \"default\" : 42 } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1396,7 +1421,7 @@ public class TestSchemaTranslator
               // record field with union with typeref, with null last member, and optional
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"optional\" : true } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1405,7 +1430,7 @@ public class TestSchemaTranslator
               // record field with union with typeref, with null last member, and optional, default is 1st member and typeref-ed
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
               translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ], \"default\" : 42 } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"int\", \"null\" ], \"default\" : 42 } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1414,7 +1439,7 @@ public class TestSchemaTranslator
               // record field with union with typeref, with null last member, and optional, default is 1st member and typeref-ed
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"optional\" : true, \"default\" : { \"int\" : 42 } } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1423,7 +1448,7 @@ public class TestSchemaTranslator
               // record field with union with typeref, with null last member, and optional, default is last member and null
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ ##T_START \"int\" ##T_END, \"null\" ], \"optional\" : true, \"default\" : null } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1432,7 +1457,7 @@ public class TestSchemaTranslator
               // array of union with no default
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : ##T_START [ \"int\", \"string\" ] ##T_END } } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } } ] }",
               null,
               null,
               null
@@ -1441,7 +1466,7 @@ public class TestSchemaTranslator
               // array of union with default, default value uses only 1st member type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ##T_END, \"default\" : [ { \"int\" : 42 }, { \"int\" : 13 } ] } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] }, \"default\" : [ 42, 13 ] } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] }, \"default\" : [ 42, 13 ] } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1450,7 +1475,7 @@ public class TestSchemaTranslator
               // array of union with default, default value uses only 1st null member type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : ##T_START [ \"null\", \"string\" ] ##T_END }, \"default\" : [ null, null ] } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"null\", \"string\" ] }, \"default\" : [ null, null ] } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : [ \"null\", \"string\" ] }, \"default\" : [ null, null ] } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1459,7 +1484,7 @@ public class TestSchemaTranslator
               // optional array of union with no default
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : ##T_START [ \"int\", \"string\" ] ##T_END }, \"optional\" : true } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1468,7 +1493,7 @@ public class TestSchemaTranslator
               // optional array of union with default, default value uses only 1st member type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ##T_END, \"optional\" : true, \"default\" : [ { \"int\" : 42 }, { \"int\" : 13 } ] } ] }",
               translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] }, \"null\" ], \"default\" : [ 42, 13 ] } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] }, \"null\" ], \"default\" : [ 42, 13 ] } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1477,7 +1502,7 @@ public class TestSchemaTranslator
               // optional array of union with default, default value uses only 1st member type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ##T_END, \"optional\" : true, \"default\" : [ { \"int\" : 42 }, { \"int\" : 13 } ] } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1486,7 +1511,7 @@ public class TestSchemaTranslator
               // optional array of union with default, default value uses 2nd member type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"array\", \"items\" : ##T_START [ \"int\", \"string\" ] ##T_END }, \"optional\" : true, \"default\" : [ { \"int\" : 42 }, { \"string\" : \"abc\" } ] } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1495,7 +1520,7 @@ public class TestSchemaTranslator
               // map of union with no default
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : ##T_START [ \"int\", \"string\" ] ##T_END } } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } } ] }",
               null,
               null,
               null
@@ -1504,7 +1529,7 @@ public class TestSchemaTranslator
               // map of union with default, default value uses only 1st member type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ##T_END, \"default\" : { \"m1\" : { \"int\" : 42 } } } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] }, \"default\" : { \"m1\" : 42 } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] }, \"default\" : { \"m1\" : 42 } } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1513,7 +1538,7 @@ public class TestSchemaTranslator
               // map of union with default, default value uses only 1st null member type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : ##T_START [ \"null\", \"string\" ] ##T_END }, \"default\" : { \"m1\" : null } } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"null\", \"string\" ] }, \"default\" : { \"m1\" : null } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : [ \"null\", \"string\" ] }, \"default\" : { \"m1\" : null } } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1522,7 +1547,7 @@ public class TestSchemaTranslator
               // optional map of union with no default
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : ##T_START [ \"int\", \"string\" ] ##T_END }, \"optional\" : true } ] }",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1531,7 +1556,7 @@ public class TestSchemaTranslator
               // optional map of union with default, default value uses only 1st member type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ##T_END, \"optional\" : true, \"default\" : { \"m1\" : { \"int\" : 42 } } } ] }",
               translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] }, \"null\" ], \"default\" : { \"m1\" : 42 } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] }, \"null\" ], \"default\" : { \"m1\" : 42 } } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1540,7 +1565,7 @@ public class TestSchemaTranslator
               // optional map of union with default, default value uses only 1st member type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : ##T_START { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ##T_END, \"optional\" : true, \"default\" : { \"m1\" : { \"int\" : 42 } } } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1549,7 +1574,7 @@ public class TestSchemaTranslator
               // optional map of union with default, default value uses 2nd member type
               "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"map\", \"values\" : ##T_START [ \"int\", \"string\" ] ##T_END }, \"optional\" : true, \"default\" : { \"m1\" : { \"string\" : \"abc\" } } } ] }",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"bar\", \"type\" : [ \"null\", { \"type\" : \"map\", \"values\" : [ \"int\", \"string\" ] } ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               null
@@ -1577,7 +1602,7 @@ public class TestSchemaTranslator
                   "  ] " +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"f1\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"bar\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : \"int\" } ] } }, \"default\" : [  ] } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\",  \"fields\" : [ { \"name\" : \"f1\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"bar\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : \"int\" } ] } }, \"default\" : [  ] } ] }",
               null,
               null,
               null
@@ -1604,7 +1629,7 @@ public class TestSchemaTranslator
                   "  ] " +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : \"int\" }, { \"name\" : \"f1\", \"type\" : \"double\" } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : \"int\" }, { \"name\" : \"f1\", \"type\" : \"double\" } ] }",
               null,
               null,
               null
@@ -1635,7 +1660,7 @@ public class TestSchemaTranslator
                   "  ] " +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : [ \"null\", \"int\" ], \"default\" : null }, { \"name\" : \"f1\", \"type\" : { \"type\" : \"record\", \"name\" : \"f1\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] } }, { \"name\" : \"f2\", \"type\" : { \"type\" : \"record\", \"name\" : \"f2\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : [ \"null\", \"int\" ], \"default\" : null }, { \"name\" : \"f1\", \"type\" : { \"type\" : \"record\", \"name\" : \"f1\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] } }, { \"name\" : \"f2\", \"type\" : { \"type\" : \"record\", \"name\" : \"f2\", \"fields\" : [ { \"name\" : \"b1\", \"type\" : [ \"null\", \"int\" ], \"default\" : null } ] } } ] }",
               null,
               null,
               null
@@ -1667,7 +1692,7 @@ public class TestSchemaTranslator
                   "  ]" +
                   "}",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"Bar\", \"fields\" : [ { \"name\" : \"barbara\", \"type\" : { \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"frank\", \"type\" : [ \"null\", \"string\" ], \"default\" : null } ] }, \"default\" : { \"frank\" : null } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"Bar\", \"translated.from\" : \"Bar\", \"fields\" : [ { \"name\" : \"barbara\", \"type\" : { \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"frank\", \"type\" : [ \"null\", \"string\" ], \"default\" : null } ] }, \"default\" : { \"frank\" : null } } ] }",
               null,
               null,
               null
@@ -1698,7 +1723,7 @@ public class TestSchemaTranslator
                   "  ]\n" +
                   "}\n",
               translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"foo1\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"bar\", \"fields\" : [ { \"name\" : \"bar1\", \"type\" : [ \"string\", \"null\" ], \"default\" : \"abc\" } ] }, \"null\" ], \"default\" : { \"bar1\" : \"xyz\" } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"foo1\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"bar\", \"fields\" : [ { \"name\" : \"bar1\", \"type\" : [ \"string\", \"null\" ], \"default\" : \"abc\" } ] }, \"null\" ], \"default\" : { \"bar1\" : \"xyz\" } } ] }",
               emptyFooSchema,
               "{}",
               "{\"foo1\": {\"bar1\": \"xyz\"}}"
@@ -1719,7 +1744,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] }",
               null,
               null,
               null
@@ -1741,7 +1766,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] }",
               null,
               null,
               null
@@ -1763,7 +1788,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               "{\"result\": null}"
@@ -1786,7 +1811,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               "{\"result\": null}"
@@ -1808,7 +1833,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"string\", \"null\" ], \"doc\" : \"Success message\", \"default\" : \"Union with aliases.\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"default\" : { \"fieldDiscriminator\" : \"success\", \"success\" : \"Union with aliases.\", \"failure\" : null } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"string\", \"null\" ], \"doc\" : \"Success message\", \"default\" : \"Union with aliases.\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"default\" : { \"fieldDiscriminator\" : \"success\", \"success\" : \"Union with aliases.\", \"failure\" : null } } ] }",
               emptyFooSchema,
               emptyFooValue,
               "{\"result\": {\"success\": \"Union with aliases.\", \"failure\": null, \"fieldDiscriminator\": ##Q_STARTsuccess##Q_END}}"
@@ -1831,7 +1856,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"string\", \"null\" ], \"doc\" : \"Success message\", \"default\" : \"Union with aliases.\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"null\" ], \"default\" : { \"fieldDiscriminator\" : \"success\", \"success\" : \"Union with aliases.\", \"failure\" : null } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"string\", \"null\" ], \"doc\" : \"Success message\", \"default\" : \"Union with aliases.\" }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"null\" ], \"default\" : { \"fieldDiscriminator\" : \"success\", \"success\" : \"Union with aliases.\", \"failure\" : null } } ] }",
               emptyFooSchema,
               emptyFooValue,
               "{\"result\": {\"success\": \"Union with aliases.\", \"failure\": null, \"fieldDiscriminator\": ##Q_STARTsuccess##Q_END}}"
@@ -1854,7 +1879,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               "{\"result\": null}"
@@ -1878,7 +1903,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               translateDefault,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"null\" ], \"default\" : { \"fieldDiscriminator\" : \"null\", \"success\" : null, \"failure\" : null } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] }, \"null\" ], \"default\" : { \"fieldDiscriminator\" : \"null\", \"success\" : null, \"failure\" : null } } ] }",
               emptyFooSchema,
               emptyFooValue,
               "{\"result\": {\"success\": null, \"failure\": null, \"fieldDiscriminator\": ##Q_STARTnull##Q_END}}"
@@ -1902,7 +1927,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               translateToNull,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"null\", \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } ], \"default\" : null } ] }",
               emptyFooSchema,
               emptyFooValue,
               "{\"result\": null}"
@@ -1943,7 +1968,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"record\", \"name\" : \"Bar\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"BarResult\", \"fields\" : [ { \"name\" : \"resultUrn\", \"type\" : [ \"null\", \"string\" ], \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"BarResultDiscriminator\", \"symbols\" : [ \"resultUrn\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] } }, { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"Baz\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"BazResult\", \"fields\" : [ { \"name\" : \"resultUrn\", \"type\" : [ \"null\", \"string\" ], \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"BazResultDiscriminator\", \"symbols\" : [ \"resultUrn\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"bar\", \"type\" : { \"type\" : \"record\", \"name\" : \"Bar\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"BarResult\", \"fields\" : [ { \"name\" : \"resultUrn\", \"type\" : [ \"null\", \"string\" ], \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"BarResultDiscriminator\", \"symbols\" : [ \"resultUrn\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] } }, { \"name\" : \"baz\", \"type\" : { \"type\" : \"record\", \"name\" : \"Baz\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"BazResult\", \"fields\" : [ { \"name\" : \"resultUrn\", \"type\" : [ \"null\", \"string\" ], \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"BazResultDiscriminator\", \"symbols\" : [ \"resultUrn\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] } } ] }",
               null,
               null,
               null
@@ -1978,7 +2003,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"message\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"MessageRecord\", \"fields\" : [ { \"name\" : \"message\", \"type\" : { \"type\" : \"record\", \"name\" : \"MessageRecordMessage\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"MessageRecordMessageDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] } ], \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"message\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"result\", \"type\" : { \"type\" : \"record\", \"name\" : \"fooResult\", \"fields\" : [ { \"name\" : \"message\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"MessageRecord\", \"fields\" : [ { \"name\" : \"message\", \"type\" : { \"type\" : \"record\", \"name\" : \"MessageRecordMessage\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"MessageRecordMessageDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] } ], \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultDiscriminator\", \"symbols\" : [ \"message\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ] }",
               null,
               null,
               null
@@ -2002,7 +2027,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } ] }",
               null,
               null,
               null
@@ -2027,7 +2052,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } ] }",
               null,
               null,
               null
@@ -2052,7 +2077,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ], \"default\" : null } ] }",
               null,
               null,
               null
@@ -2078,7 +2103,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ], \"default\" : null } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : [ \"null\", { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } ], \"default\" : null } ] }",
               null,
               null,
               null
@@ -2109,7 +2134,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }",
               null,
               null,
               null
@@ -2140,7 +2165,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }",
               null,
               null,
               null
@@ -2171,7 +2196,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }",
               null,
               null,
               null
@@ -2202,7 +2227,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"array\", \"items\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } } } ] }",
               null,
               null,
               null
@@ -2226,7 +2251,7 @@ public class TestSchemaTranslator
                   "]" +
                   "}",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"foo\", \"translated.from\" : \"foo\", \"fields\" : [ { \"name\" : \"results\", \"type\" : { \"type\" : \"map\", \"values\" : { \"type\" : \"record\", \"name\" : \"fooResults\", \"fields\" : [ { \"name\" : \"success\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Success message\", \"default\" : null }, { \"name\" : \"failure\", \"type\" : [ \"null\", \"string\" ], \"doc\" : \"Failure message\", \"default\" : null }, { \"name\" : \"fieldDiscriminator\", \"type\" : { \"type\" : \"enum\", \"name\" : \"fooResultsDiscriminator\", \"symbols\" : [ \"success\", \"failure\" ] }, \"doc\" : \"Contains the name of the field that has its value set.\" } ] } } } ] }",
               null,
               null,
               null
@@ -2244,7 +2269,7 @@ public class TestSchemaTranslator
               "   } ] " +
               " } ",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"field1\", \"type\" : \"int\", \"a_customAnnotation\" : \"f1\", \"b_customAnnotation\" : \"f1\", \"c_customAnnotation\" : \"f1\" } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"translated.from\" : \"Foo\", \"fields\" : [ { \"name\" : \"field1\", \"type\" : \"int\", \"a_customAnnotation\" : \"f1\", \"b_customAnnotation\" : \"f1\", \"c_customAnnotation\" : \"f1\" } ] }",
               null,
               null,
               null
@@ -2266,7 +2291,7 @@ public class TestSchemaTranslator
               "   } ] " +
               " } ",
               allModes,
-              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"fields\" : [ { \"name\" : \"field1\", \"type\" : \"int\", \"a_customAnnotation\" : \"f1\", \"b_customAnnotation\" : \"f1\", \"c_customAnnotation\" : { \"a_nested\" : \"a\", \"b_nested\" : \"a\", \"c_nested\" : \"a\" } } ] }",
+              "{ \"type\" : \"record\", \"name\" : \"Foo\", \"translated.from\" : \"Foo\", \"fields\" : [ { \"name\" : \"field1\", \"type\" : \"int\", \"a_customAnnotation\" : \"f1\", \"b_customAnnotation\" : \"f1\", \"c_customAnnotation\" : { \"a_nested\" : \"a\", \"b_nested\" : \"a\", \"c_nested\" : \"a\" } } ] }",
               null,
               null,
               null
@@ -2282,8 +2307,7 @@ public class TestSchemaTranslator
       String expected,
       String writerSchemaText,
       String avroValueJson,
-      String expectedGenericRecordJson) throws IOException
-  {
+      String expectedGenericRecordJson) throws IOException, JSONException {
     // test generating Avro schema from Pegasus schema
     if (schemaText.contains("##T_START"))
     {
@@ -2311,8 +2335,7 @@ public class TestSchemaTranslator
       String expected,
       String writerSchemaText,
       String avroValueJson,
-      String expectedGenericRecordJson) throws IOException
-  {
+      String expectedGenericRecordJson) throws IOException, JSONException {
     for (EmbedSchemaMode embedSchemaMode : EmbedSchemaMode.values())
     {
       for (OptionalDefaultMode optionalDefaultMode : optionalDefaultModes)
@@ -2333,6 +2356,7 @@ public class TestSchemaTranslator
           DataMap resultAvroDataMap = TestUtil.dataMapFromString(avroTextFromSchema);
           Object dataProperty = resultAvroDataMap.remove(SchemaTranslator.DATA_PROPERTY);
           assertEquals(resultAvroDataMap, expectedAvroDataMap);
+
 
           // look for embedded schema
           assertNotNull(dataProperty);
@@ -2361,11 +2385,29 @@ public class TestSchemaTranslator
             DataMap resultAvroDataMap = TestUtil.dataMapFromString(avroTextFromSchema);
             assertFalse(resultAvroDataMap.containsKey(SchemaTranslator.DATA_PROPERTY));
           }
-          assertEquals(avroTextFromSchema, expected);
+          JSONAssert.assertEquals(expected, avroTextFromSchema, true);
         }
 
         String postTranslateSchemaText = schema.toString();
-        assertEquals(postTranslateSchemaText, preTranslateSchemaText);
+
+        // Ignore TRANSLATED_FROM_SOURCE_OPTION in root as preTranslateSchemaText does not contain the option
+        JSONAssert.assertEquals(preTranslateSchemaText, postTranslateSchemaText,
+            new CustomComparator(JSONCompareMode.LENIENT,
+                new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
+        // But postTranslateSchemaText contains the option for NamedDataSchema types.
+        if (TestUtil.dataSchemaFromString(preTranslateSchemaText) instanceof TyperefDataSchema) {
+          // Test for ref type
+          if (TestUtil.dataSchemaFromString(
+              (((JSONObject) JSONParser.parseJSON(postTranslateSchemaText)).get(
+                  "ref")).toString()) instanceof NamedDataSchema) {
+            assertNotNull(((JSONObject) ((JSONObject) JSONParser.parseJSON(postTranslateSchemaText)).get("ref")).get(
+                TRANSLATED_FROM_SOURCE_OPTION));
+          }
+        } else if (TestUtil.dataSchemaFromString(preTranslateSchemaText) instanceof NamedDataSchema) {
+          // Test for Record/Fixed/Enum
+          assertNotNull(
+              ((JSONObject) JSONParser.parseJSON(postTranslateSchemaText)).get(TRANSLATED_FROM_SOURCE_OPTION));
+        }
 
         // make sure Avro accepts it
         Schema avroSchema = AvroCompatibilityHelper.parse(avroTextFromSchema);
@@ -2456,8 +2498,8 @@ public class TestSchemaTranslator
 
   @Test(dataProvider = "pegasusDefaultToAvroOptionalSchemaTranslationProvider",
         description = "Test schemaTranslator for default fields to optional fields translation, in different schema translation modes")
-  public void testPegasusDefaultToAvroOptionalSchemaTranslation(String... testSchemaTextAndExpected) throws IOException
-  {
+  public void testPegasusDefaultToAvroOptionalSchemaTranslation(String... testSchemaTextAndExpected)
+      throws IOException, JSONException {
 
     String schemaText = null;
     String expectedAvroSchema = null;
@@ -2485,9 +2527,14 @@ public class TestSchemaTranslator
           schema,
           new DataToAvroSchemaTranslationOptions(PegasusToAvroDefaultFieldTranslationMode.DO_NOT_TRANSLATE)
       );
-      resultAvroDataMap = TestUtil.dataMapFromString(avroTextFromSchema);
-      expectedAvroDataMap = TestUtil.dataMapFromString(expectedAvroSchema);
-      assertEquals(resultAvroDataMap, expectedAvroDataMap);
+//      resultAvroDataMap = TestUtil.dataMapFromString(avroTextFromSchema);
+//      expectedAvroDataMap = TestUtil.dataMapFromString(expectedAvroSchema);
+//      assertEquals(resultAvroDataMap, expectedAvroDataMap);
+
+      // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+      JSONAssert.assertEquals(expectedAvroSchema, avroTextFromSchema,
+          new CustomComparator(JSONCompareMode.LENIENT,
+              new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
 
       // Test avro Schema
       Schema avroSchema = AvroCompatibilityHelper.parse(avroTextFromSchema);
@@ -2787,13 +2834,15 @@ public class TestSchemaTranslator
   }
 
   @Test(dataProvider = "embeddingSchemaWithDataPropertyData")
-  public void testEmbeddingSchemaWithDataProperty(String schemaText, String expected) throws IOException
-  {
+  public void testEmbeddingSchemaWithDataProperty(String schemaText, String expected) throws IOException,
+                                                                                             JSONException {
     DataToAvroSchemaTranslationOptions options = new DataToAvroSchemaTranslationOptions(JsonBuilder.Pretty.SPACES, EmbedSchemaMode.ROOT_ONLY);
     String avroSchemaJson = SchemaTranslator.dataToAvroSchemaJson(TestUtil.dataSchemaFromString(schemaText), options);
-    DataMap avroSchemaDataMap = TestUtil.dataMapFromString(avroSchemaJson);
-    DataMap expectedDataMap = TestUtil.dataMapFromString(expected);
-    assertEquals(avroSchemaDataMap, expectedDataMap);
+
+    // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+    JSONAssert.assertEquals(expected, avroSchemaJson.toString(),
+        new CustomComparator(JSONCompareMode.LENIENT,
+            new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
   }
 
   @DataProvider
@@ -2868,11 +2917,16 @@ public class TestSchemaTranslator
   }
 
   @Test(dataProvider = "schemaWithNamespaceOverride")
-  public void testSchemaWithNamespaceOverride(String schemaText, String expected) throws IOException
-  {
+  public void testSchemaWithNamespaceOverride(String schemaText, String expected) throws IOException, JSONException {
     DataToAvroSchemaTranslationOptions options = new DataToAvroSchemaTranslationOptions(JsonBuilder.Pretty.SPACES).setOverrideNamespace(true);
     String avroSchemaJson = SchemaTranslator.dataToAvroSchemaJson(TestUtil.dataSchemaFromString(schemaText), options);
-    assertEquals(avroSchemaJson, expected);
+
+    // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+    JSONAssert.assertEquals(expected, avroSchemaJson,
+        new CustomComparator(JSONCompareMode.LENIENT,
+            new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
+
+//    assertEquals(avroSchemaJson, expected);
   }
 
   @DataProvider
@@ -3071,7 +3125,13 @@ public class TestSchemaTranslator
     {
       DataSchema schema = SchemaTranslator.avroToDataSchema(avroText, option);
       String schemaTextFromAvro = SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.SPACES);
-      assertEquals(TestUtil.dataMapFromString(schemaTextFromAvro), TestUtil.dataMapFromString(schemaText));
+
+//      assertEquals(TestUtil.dataMapFromString(schemaTextFromAvro), TestUtil.dataMapFromString(schemaText));
+
+      // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+      JSONAssert.assertEquals(schemaTextFromAvro, schema.toString(),
+          new CustomComparator(JSONCompareMode.LENIENT,
+              new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
 
       Schema avroSchema = AvroCompatibilityHelper.parse(avroText,
           new SchemaParseConfiguration(false,
@@ -3081,9 +3141,21 @@ public class TestSchemaTranslator
       String preTranslateAvroSchema = avroSchema.toString();
       schema = SchemaTranslator.avroToDataSchema(avroSchema, option);
       schemaTextFromAvro = SchemaToJsonEncoder.schemaToJson(schema, JsonBuilder.Pretty.SPACES);
-      assertEquals(TestUtil.dataMapFromString(schemaTextFromAvro), TestUtil.dataMapFromString(schemaText));
+//      assertEquals(TestUtil.dataMapFromString(schemaTextFromAvro), TestUtil.dataMapFromString(schemaText));
+
+      // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+      JSONAssert.assertEquals(schemaText.toString(), schemaTextFromAvro,
+          new CustomComparator(JSONCompareMode.LENIENT,
+              new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
+
       String postTranslateAvroSchema = avroSchema.toString();
+
       assertEquals(preTranslateAvroSchema, postTranslateAvroSchema);
+
+      // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+      JSONAssert.assertEquals(schemaText.toString(), schemaTextFromAvro,
+          new CustomComparator(JSONCompareMode.LENIENT,
+              new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
     }
   }
 
@@ -3136,11 +3208,14 @@ public class TestSchemaTranslator
 
   @Test(dataProvider = "avroToDataSchemaTranslationModeData")
   public void testAvroToDataSchemaTranslationMode(AvroToDataSchemaTranslationMode translationMode, String avroSchemaText, String expected)
-      throws IOException
-  {
+      throws JSONException {
     AvroToDataSchemaTranslationOptions options = new AvroToDataSchemaTranslationOptions(translationMode);
     DataSchema translatedDataSchema = SchemaTranslator.avroToDataSchema(avroSchemaText, options);
-    assertEquals(TestUtil.dataMapFromString(translatedDataSchema.toString()), TestUtil.dataMapFromString(expected));
+
+    // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+    JSONAssert.assertEquals(expected, translatedDataSchema.toString(),
+        new CustomComparator(JSONCompareMode.LENIENT,
+            new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
   }
 
   @DataProvider
@@ -3256,8 +3331,7 @@ public class TestSchemaTranslator
   }
 
   @Test
-  public void testAvroUnionModeChaining() throws IOException
-  {
+  public void testAvroUnionModeChaining() throws IOException, JSONException {
     String expectedSchema = "{ " +
         "  \"type\" : \"record\", " +
         "  \"name\" : \"A\", " +
@@ -3305,9 +3379,11 @@ public class TestSchemaTranslator
     AvroToDataSchemaTranslationOptions options =
         new AvroToDataSchemaTranslationOptions(AvroToDataSchemaTranslationMode.TRANSLATE).setFileResolutionPaths(avroRootDir);
     DataSchema pdscSchema = SchemaTranslator.avroToDataSchema(schema, options);
-    DataMap actual = TestUtil.dataMapFromString(pdscSchema.toString());
-    DataMap expected = TestUtil.dataMapFromString(expectedSchema);
-    assertEquals(actual, expected);
+
+    // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+    JSONAssert.assertEquals(expectedSchema, pdscSchema.toString(),
+        new CustomComparator(JSONCompareMode.LENIENT,
+            new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
   }
 
   @Test

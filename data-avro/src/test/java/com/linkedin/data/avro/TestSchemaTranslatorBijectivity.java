@@ -16,6 +16,8 @@
 
 package com.linkedin.data.avro;
 
+import com.linkedin.avroutil1.compatibility.ConfigurableSchemaComparator;
+import com.linkedin.avroutil1.compatibility.SchemaComparisonConfiguration;
 import com.linkedin.data.schema.AbstractSchemaParser;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.DataSchemaResolver;
@@ -28,7 +30,10 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import org.apache.avro.Schema;
+import org.json.JSONObject;
+import org.skyscreamer.jsonassert.JSONParser;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -52,7 +57,12 @@ public class TestSchemaTranslatorBijectivity {
     DataSchema pdscSchema = SchemaTranslator.avroToDataSchema(initialAvroSchema, avroToDataSchemaTranslationOptions);
     Schema resultingAvroSchema = SchemaTranslator.dataToAvroSchema(pdscSchema, dataToAvroSchemaTranslationOptions);
 
-    Assert.assertTrue(AvroSchemaEquals.equals(resultingAvroSchema, initialAvroSchema, true, true, true),
+    Assert.assertNotNull(resultingAvroSchema.getProp(SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION));
+    Assert.assertFalse(resultingAvroSchema.getProp(SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION).isEmpty());
+
+    Assert.assertTrue(ConfigurableSchemaComparator.equals(resultingAvroSchema, initialAvroSchema,
+            SchemaComparisonConfiguration.STRICT.jsonPropNamesToIgnore(
+                Collections.singleton(SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION))),
         initialAvroSchema + " ---------- " + resultingAvroSchema.toString());
   }
 
