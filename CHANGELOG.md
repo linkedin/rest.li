@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Remove method defaults from `ResourceDefinition`.
 
 ## [29.65.4] - 2025-03-17
 - Add d2 slow start configuration support
