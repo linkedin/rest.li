@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.65.5] - 2025-03-24
+- Use dedicated executor service for d2 callbacks
+
 ## [29.65.4] - 2025-03-17
 - Add d2 slow start configuration support
 
@@ -5789,7 +5792,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.65.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.65.5...master
+[29.65.5]: https://github.com/linkedin/rest.li/compare/v29.65.4...v29.65.5
 [29.65.4]: https://github.com/linkedin/rest.li/compare/v29.65.3...v29.65.4
 [29.65.3]: https://github.com/linkedin/rest.li/compare/v29.65.2...v29.65.3
 [29.65.2]: https://github.com/linkedin/rest.li/compare/v29.65.1...v29.65.2

@@ -151,7 +151,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     {
       _failoutConfigProvider = null;
     }
-    _d2CallbackExecutorService = Executors.newFixedThreadPool(1, new NamedThreadFactory("D2 Callback Executor"));
+    _d2CallbackExecutorService = Executors.newCachedThreadPool(new NamedThreadFactory("D2 Callback Executor"));
   }
 
   public Stats getServiceNotFoundStats()
