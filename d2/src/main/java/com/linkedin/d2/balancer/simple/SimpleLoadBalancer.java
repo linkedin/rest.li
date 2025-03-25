@@ -66,6 +66,7 @@ import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.http.client.TimeoutCallback;
+import com.linkedin.r2.util.NamedThreadFactory;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -106,6 +107,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   private final ScheduledExecutorService _executor;
   private final Random            _random = new Random();
   private final FailoutConfigProvider _failoutConfigProvider;
+  private final ExecutorService _d2CallbackExecutorService;
 
   public SimpleLoadBalancer(LoadBalancerState state, ScheduledExecutorService executorService)
   {
@@ -149,6 +151,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     {
       _failoutConfigProvider = null;
     }
+    _d2CallbackExecutorService = Executors.newFixedThreadPool(1, new NamedThreadFactory("D2 Callback Executor"));
   }
 
   public Stats getServiceNotFoundStats()
@@ -328,10 +331,10 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         /*
          * When D2 gets service and cluster data from the backend, it's thread will try to complete all the queued
          * callbacks, including those of the R2 calls. However, this isn't ideal and can also result in deadlocks.
-         * At this layer, tracing and invocation context are handled as part of the request context, so fork join pool
-         * can be safely used.
+         * At this layer, tracing and invocation context are handled as part of the request context, so executors that
+         * don't propagate IC can also be safely used.
          */
-        ForkJoinPool.commonPool().execute(() -> servicePropertiesSuccessCallback.onSuccess(service));
+        _d2CallbackExecutorService.execute(() -> servicePropertiesSuccessCallback.onSuccess(service));
       } else {
         servicePropertiesSuccessCallback.onSuccess(service);
       }
