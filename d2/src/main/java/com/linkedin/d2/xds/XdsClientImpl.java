@@ -1358,7 +1358,7 @@ public class XdsClientImpl extends XdsClient
       {
         return;
       }
-      _log.error("ADS stream closed with status {}: {}", error.getCode(), error.getDescription(), error.getCause());
+      _log.warn("ADS stream closed with status {}: {}", error.getCode(), error.getDescription(), error.getCause());
       _closed = true;
       notifyStreamError(error);
       cleanUp();

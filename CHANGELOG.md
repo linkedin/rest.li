@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.65.6] - 2025-03-26
+- Change log level of ads stream closure from err to warn
+
 ## [29.65.5] - 2025-03-24
 - Use dedicated executor service for d2 callbacks
 
@@ -5792,7 +5795,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.65.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.65.6...master
+[29.65.6]: https://github.com/linkedin/rest.li/compare/v29.65.5...v29.65.6
 [29.65.5]: https://github.com/linkedin/rest.li/compare/v29.65.4...v29.65.5
 [29.65.4]: https://github.com/linkedin/rest.li/compare/v29.65.3...v29.65.4
 [29.65.3]: https://github.com/linkedin/rest.li/compare/v29.65.2...v29.65.3
