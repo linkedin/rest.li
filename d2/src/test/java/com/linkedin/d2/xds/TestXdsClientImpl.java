@@ -674,7 +674,7 @@ public class TestXdsClientImpl
   @Test
   public void testResourceSubscriberAddWatcher()
   {
-    ResourceSubscriber subscriber = new ResourceSubscriber(NODE, "foo", null);
+    ResourceSubscriber subscriber = new ResourceSubscriber(NODE, "foo", new XdsClientMetricsAdapter(null));
     XdsClient.ResourceWatcher watcher = Mockito.mock(XdsClient.ResourceWatcher.class);
     subscriber.addWatcher(watcher);
     verify(watcher, times(0)).onChanged(any());

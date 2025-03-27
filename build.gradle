@@ -476,3 +476,8 @@ project.gradle.buildFinished { BuildResult result ->
   }
 }
 
+//allprojects {
+//  repositories {
+//    maven { url = System.getProperty("user.home") + "/local-repo" }
+//  }
+//}
