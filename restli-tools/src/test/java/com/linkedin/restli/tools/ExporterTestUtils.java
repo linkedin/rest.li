@@ -22,6 +22,7 @@ import com.linkedin.restli.tools.idlgen.RestLiResourceModelExporter;
 import com.linkedin.restli.tools.snapshot.gen.RestLiSnapshotExporter;
 import java.io.BufferedReader;
 import java.io.File;
+import java.nio.file.Files;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -95,20 +96,9 @@ public class ExporterTestUtils
 
   public static File createTmpDir() throws IOException
   {
-    File temp = File.createTempFile("temp", Long.toString(System.nanoTime()));
-    if(! temp.delete())
-    {
-      throw new IOException("Could not delete temp file: " + temp.getAbsolutePath());
-    }
-
-    temp = new File(temp.getAbsolutePath() + ".d");
-
-    if(! temp.mkdir())
-    {
-      throw new IOException("Could not create temp directory: " + temp.getAbsolutePath());
-    }
-
-    return temp;
+    final File temp;
+    temp = Files.createTempDirectory("temp" + Long.toString(System.nanoTime())).toFile();
+    return (temp);
   }
 
   public static void rmdir(File dir)
