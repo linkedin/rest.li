@@ -10,6 +10,7 @@ dependencies {
   compile externalDependency.avro
   compile externalDependency.avroUtil
   testCompile externalDependency.testng
+  testCompile externalDependency.skyScreamer
   testCompile project(path: ':data', configuration: 'testArtifacts')
 }
 
