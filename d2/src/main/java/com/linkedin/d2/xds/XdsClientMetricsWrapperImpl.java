@@ -3,6 +3,10 @@ package com.linkedin.d2.xds;
 import com.linkedin.d2.jmx.XdsClientJmx;
 
 
+/**
+ * XdsClientMetricsWrapperImpl is a wrapper implementation of XdsClientMetrics
+ * It calls the configured XdsClientJmx to record metrics
+ */
 public final class XdsClientMetricsWrapperImpl implements XdsClientMetrics {
 
   private final XdsClientJmx _xdsClientJmx;
