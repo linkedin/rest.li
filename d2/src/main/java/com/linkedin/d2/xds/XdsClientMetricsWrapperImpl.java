@@ -3,11 +3,11 @@ package com.linkedin.d2.xds;
 import com.linkedin.d2.jmx.XdsClientJmx;
 
 
-public final class XdsClientMetricsAdapter implements XdsClientMetrics {
+public final class XdsClientMetricsWrapperImpl implements XdsClientMetrics {
 
   private final XdsClientJmx _xdsClientJmx;
 
-  public XdsClientMetricsAdapter(XdsClientJmx xdsClientJmx) {
+  public XdsClientMetricsWrapperImpl(XdsClientJmx xdsClientJmx) {
     _xdsClientJmx = xdsClientJmx;
   }
 
@@ -33,5 +33,8 @@ public final class XdsClientMetricsAdapter implements XdsClientMetrics {
 
   public void incrementResourceInvalidCount() {
     _xdsClientJmx.incrementResourceInvalidCount();
+  }
+
+  public void recordSubscribedResourceCount(long resourceCount, String type) {
   }
 }

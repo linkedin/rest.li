@@ -13,4 +13,6 @@ public interface XdsClientMetrics {
   void incrementResourceNotFoundCount(String resourceName, String type);
 
   void incrementResourceInvalidCount();
+
+  void recordSubscribedResourceCount(long resourceCount, String type);
 }

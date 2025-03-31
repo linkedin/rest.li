@@ -141,7 +141,7 @@ public class XdsClientImpl extends XdsClient
 
     _xdsClientJmx = new XdsClientJmx(serverMetricsProvider);
     _serverMetricsProvider = serverMetricsProvider == null ? new NoOpXdsServerMetricsProvider() : serverMetricsProvider;
-    _xdsClientMetrics = xdsClientMetrics == null ? new XdsClientMetricsAdapter(_xdsClientJmx) : xdsClientMetrics;
+    _xdsClientMetrics = xdsClientMetrics == null ? new XdsClientMetricsWrapperImpl(_xdsClientJmx) : xdsClientMetrics;
   }
 
   @Override
@@ -169,6 +169,7 @@ public class XdsClientImpl extends XdsClient
           adjustedResourceName = resourceName;
         }
         _log.info("Subscribing to {} resource: {}", adjustedType, adjustedResourceName);
+        _xdsClientMetrics.recordSubscribedResourceCount(resourceSubscriberMap.size(), adjustedType.toString());
 
         if (_adsStream == null && !isInBackoff())
         {
@@ -749,7 +750,7 @@ public class XdsClientImpl extends XdsClient
 
     ResourceSubscriber(ResourceType type, String resource, XdsClientJmx xdsClientJmx)
     {
-      this(type, resource, new XdsClientMetricsAdapter(xdsClientJmx));
+      this(type, resource, new XdsClientMetricsWrapperImpl(xdsClientJmx));
     }
 
     ResourceSubscriber(ResourceType type, String resource, XdsClientMetrics XdsClientMetrics)
