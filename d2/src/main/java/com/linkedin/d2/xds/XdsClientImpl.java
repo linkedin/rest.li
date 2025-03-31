@@ -97,6 +97,7 @@ public class XdsClientImpl extends XdsClient
   private final long _readyTimeoutMillis;
 
   private final XdsClientJmx _xdsClientJmx;
+  private final XdsClientMetrics _xdsClientMetrics;
   private final XdsServerMetricsProvider _serverMetricsProvider;
 
   @Deprecated
@@ -123,6 +124,11 @@ public class XdsClientImpl extends XdsClient
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService,
       long readyTimeoutMillis, boolean subscribeToUriGlobCollection, XdsServerMetricsProvider serverMetricsProvider)
   {
+    this(node, managedChannel, executorService, readyTimeoutMillis, subscribeToUriGlobCollection, serverMetricsProvider, null);
+  }
+
+  public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService,
+      long readyTimeoutMillis, boolean subscribeToUriGlobCollection, XdsServerMetricsProvider serverMetricsProvider, XdsClientMetrics xdsClientMetrics) {
     _readyTimeoutMillis = readyTimeoutMillis;
     _node = node;
     _managedChannel = managedChannel;
@@ -135,6 +141,7 @@ public class XdsClientImpl extends XdsClient
 
     _xdsClientJmx = new XdsClientJmx(serverMetricsProvider);
     _serverMetricsProvider = serverMetricsProvider == null ? new NoOpXdsServerMetricsProvider() : serverMetricsProvider;
+    _xdsClientMetrics = xdsClientMetrics == null ? new XdsClientMetricsWrapperImpl(_xdsClientJmx) : xdsClientMetrics;
   }
 
   @Override
@@ -147,7 +154,7 @@ public class XdsClientImpl extends XdsClient
       ResourceSubscriber subscriber = resourceSubscriberMap.get(resourceName);
       if (subscriber == null)
       {
-        subscriber = new ResourceSubscriber(originalType, resourceName, _xdsClientJmx);
+        subscriber = new ResourceSubscriber(originalType, resourceName, _xdsClientMetrics);
         resourceSubscriberMap.put(resourceName, subscriber);
         ResourceType adjustedType;
         String adjustedResourceName;
@@ -162,6 +169,7 @@ public class XdsClientImpl extends XdsClient
           adjustedResourceName = resourceName;
         }
         _log.info("Subscribing to {} resource: {}", adjustedType, adjustedResourceName);
+        _xdsClientMetrics.recordSubscribedResourceCount(resourceSubscriberMap.size(), adjustedType.toString());
 
         if (_adsStream == null && !isInBackoff())
         {
@@ -322,7 +330,7 @@ public class XdsClientImpl extends XdsClient
     if (_retryRpcStreamFuture != null)
     {
       _retryRpcStreamFuture = null;
-      _xdsClientJmx.incrementReconnectionCount();
+      _xdsClientMetrics.incrementReconnectionCount();
     }
     notifyStreamReconnect();
   }
@@ -614,7 +622,7 @@ public class XdsClientImpl extends XdsClient
     WildcardResourceSubscriber wildcardSubscriber = getWildcardResourceSubscriber(type);
     for (String resourceName : removedResources)
     {
-      _xdsClientJmx.incrementResourceNotFoundCount();
+      _xdsClientMetrics.incrementResourceNotFoundCount(resourceName, type.toString());
       _log.warn("Received response that {} {} was removed", type, resourceName);
 
       ResourceSubscriber subscriber = subscribers.get(resourceName);
@@ -677,7 +685,7 @@ public class XdsClientImpl extends XdsClient
     {
       wildcardResourceSubscriber.onError(error);
     }
-    _xdsClientJmx.setIsConnected(false);
+    _xdsClientMetrics.setIsConnected(false);
   }
 
   private void notifyStreamReconnect()
@@ -693,7 +701,7 @@ public class XdsClientImpl extends XdsClient
     {
       wildcardResourceSubscriber.onReconnect();
     }
-    _xdsClientJmx.setIsConnected(true);
+    _xdsClientMetrics.setIsConnected(true);
   }
 
   Map<String, ResourceSubscriber> getResourceSubscriberMap(ResourceType type)
@@ -723,7 +731,7 @@ public class XdsClientImpl extends XdsClient
     private final ResourceType _type;
     private final String _resource;
     private final Set<ResourceWatcher> _watchers = new HashSet<>();
-    private final XdsClientJmx _xdsClientJmx;
+    private final XdsClientMetrics _XdsClientMetrics;
     @Nullable
     private ResourceUpdate _data;
 
@@ -742,9 +750,14 @@ public class XdsClientImpl extends XdsClient
 
     ResourceSubscriber(ResourceType type, String resource, XdsClientJmx xdsClientJmx)
     {
+      this(type, resource, new XdsClientMetricsWrapperImpl(xdsClientJmx));
+    }
+
+    ResourceSubscriber(ResourceType type, String resource, XdsClientMetrics XdsClientMetrics)
+    {
       _type = type;
       _resource = resource;
-      _xdsClientJmx = xdsClientJmx;
+      _XdsClientMetrics = XdsClientMetrics;
     }
 
     void addWatcher(ResourceWatcher watcher)
@@ -781,7 +794,7 @@ public class XdsClientImpl extends XdsClient
         {
           _log.warn("Received invalid data for {} {}, data: {}", _type, _resource, data);
         }
-        _xdsClientJmx.incrementResourceInvalidCount();
+        _XdsClientMetrics.incrementResourceInvalidCount();
 
         if (_data == null)
         {
@@ -1339,15 +1352,15 @@ public class XdsClientImpl extends XdsClient
 
     private void handleRpcError(Throwable t)
     {
-      _xdsClientJmx.incrementConnectionLostCount();
-      _xdsClientJmx.setIsConnected(false);
+      _xdsClientMetrics.incrementConnectionLostCount();
+      _xdsClientMetrics.setIsConnected(false);
       handleRpcStreamClosed(Status.fromThrowable(t));
     }
 
     private void handleRpcCompleted()
     {
-      _xdsClientJmx.incrementConnectionClosedCount();
-      _xdsClientJmx.setIsConnected(false);
+      _xdsClientMetrics.incrementConnectionClosedCount();
+      _xdsClientMetrics.setIsConnected(false);
       handleRpcStreamClosed(Status.UNAVAILABLE.withDescription("ADS stream closed by server"));
     }
 
