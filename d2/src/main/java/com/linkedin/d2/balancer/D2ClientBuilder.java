@@ -886,17 +886,33 @@ public class D2ClientBuilder
         @Override
         public void onError(Throwable e)
         {
-          _executors.forEach(ExecutorService::shutdown);
+          shutdownExecutorServices();
           callback.onError(e);
         }
 
         @Override
         public void onSuccess(None result)
         {
-          _executors.forEach(ExecutorService::shutdown);
+          shutdownExecutorServices();
           callback.onSuccess(result);
         }
       });
+    }
+
+    private void shutdownExecutorServices()
+    {
+      for (ExecutorService executor : _executors)
+      {
+        if (executor.isShutdown())
+        {
+          LOG.warn("Executor is already shut down");
+        }
+        else
+        {
+          LOG.info("Shutting down executor");
+          executor.shutdown();
+        }
+      }
     }
   }
 }
