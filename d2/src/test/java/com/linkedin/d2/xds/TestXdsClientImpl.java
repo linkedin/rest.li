@@ -867,13 +867,14 @@ public class TestXdsClientImpl
 
       _xdsClientImpl = spy(new XdsClientImpl(null, null,
           Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("test executor")),
-          0, useGlobCollections, _serverMetricsProvider));
+          0, useGlobCollections, _serverMetricsProvider, false));
       _xdsClientImpl._adsStream = _adsStream;
 
       doNothing().when(_xdsClientImpl).startRpcStreamLocal();
       doNothing().when(_xdsClientImpl).sendAckOrNack(any(), any(), any());
-      doNothing().when(_adsStream).sendDiscoveryRequest(_resourceTypesArgumentCaptor.capture(), _resourceNamesArgumentCaptor.capture());
-
+      doNothing().when(_adsStream).sendDiscoveryRequestWithIRV(_resourceTypesArgumentCaptor.capture(),
+                                                               _resourceNamesArgumentCaptor.capture(),
+                                                               any());
       when(_xdsClientImpl.getXdsClientJmx()).thenReturn(_xdsClientJmx);
       when(_xdsClientImpl.getResourceSubscribers()).thenReturn(_subscribers);
       when(_xdsClientImpl.getWildcardResourceSubscribers()).thenReturn(_wildcardSubscribers);

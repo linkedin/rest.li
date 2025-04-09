@@ -219,7 +219,8 @@ public class D2ClientBuilder
                   _config.xdsChannelLoadBalancingPolicyConfig,
                   _config.subscribeToUriGlobCollection,
                   _config._xdsServerMetricsProvider,
-                  _config.loadBalanceStreamException
+                  _config.loadBalanceStreamException,
+                  _config.xdsInitialResourceVersionEnabled
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?

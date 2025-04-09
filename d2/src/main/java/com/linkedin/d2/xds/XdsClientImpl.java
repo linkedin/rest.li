@@ -82,6 +82,8 @@ public class XdsClientImpl extends XdsClient
       Stream.of(ResourceType.values())
           .collect(Collectors.toMap(Function.identity(), e -> new HashMap<>())));
   private final Map<ResourceType, WildcardResourceSubscriber> _wildcardSubscribers = Maps.newEnumMap(ResourceType.class);
+  private final Map<ResourceType, Map<String, String>> _resourceVersions = Maps.newEnumMap(Stream.of(ResourceType.values()).collect(
+      Collectors.toMap(Function.identity(), e -> new HashMap<>())));
   private final Node _node;
   private final ManagedChannel _managedChannel;
   private final ScheduledExecutorService _executorService;
@@ -98,6 +100,7 @@ public class XdsClientImpl extends XdsClient
 
   private final XdsClientJmx _xdsClientJmx;
   private final XdsServerMetricsProvider _serverMetricsProvider;
+  private final boolean _xdsInitialResourceVersionEnabled;
 
   @Deprecated
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService)
@@ -117,11 +120,18 @@ public class XdsClientImpl extends XdsClient
       long readyTimeoutMillis, boolean subscribeToUriGlobCollection)
   {
     this(node, managedChannel, executorService, readyTimeoutMillis, subscribeToUriGlobCollection,
-        new NoOpXdsServerMetricsProvider());
+        new NoOpXdsServerMetricsProvider(), false);
+  }
+
+  @Deprecated
+  public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService,
+      long readyTimeoutMillis, boolean subscribeToUriGlobCollection, XdsServerMetricsProvider serverMetricsProvider){
+    this(node, managedChannel, executorService, readyTimeoutMillis, subscribeToUriGlobCollection, serverMetricsProvider, false);
   }
 
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService,
-      long readyTimeoutMillis, boolean subscribeToUriGlobCollection, XdsServerMetricsProvider serverMetricsProvider)
+      long readyTimeoutMillis, boolean subscribeToUriGlobCollection, XdsServerMetricsProvider serverMetricsProvider,
+      boolean irvSupport)
   {
     _readyTimeoutMillis = readyTimeoutMillis;
     _node = node;
@@ -135,6 +145,11 @@ public class XdsClientImpl extends XdsClient
 
     _xdsClientJmx = new XdsClientJmx(serverMetricsProvider);
     _serverMetricsProvider = serverMetricsProvider == null ? new NoOpXdsServerMetricsProvider() : serverMetricsProvider;
+    _xdsInitialResourceVersionEnabled = irvSupport;
+    if (_xdsInitialResourceVersionEnabled)
+    {
+      _log.info("XDS initial resource version support enabled");
+    }
   }
 
   @Override
@@ -331,6 +346,12 @@ public class XdsClientImpl extends XdsClient
   void handleResponse(DiscoveryResponseData response)
   {
     ResourceType resourceType = response.getResourceType();
+    // Setting up received resource version, which will be used to set IRV for re-connect scenarios.
+    Map<String, String> resourceVersions = _resourceVersions.get(resourceType);
+    for (Resource res: response.getResourcesList()){
+      resourceVersions.put(res.getName(), res.getVersion());
+    }
+
     switch (resourceType)
     {
       case NODE:
@@ -912,6 +933,10 @@ public class XdsClientImpl extends XdsClient
       return _data.get(resourceName);
     }
 
+    public Set<String> getResourceKeys(){
+      return _data.keySet();
+    }
+
     @VisibleForTesting
     public void setData(String resourceName, ResourceUpdate data)
     {
@@ -1038,6 +1063,10 @@ public class XdsClientImpl extends XdsClient
     return _subscribeToUriGlobCollection && type == ResourceType.D2_URI_MAP;
   }
 
+  private boolean isIRVEnabled(){
+    return _xdsInitialResourceVersionEnabled;
+  }
+
   final class RpcRetryTask implements Runnable
   {
     @Override
@@ -1046,7 +1075,21 @@ public class XdsClientImpl extends XdsClient
       startRpcStreamLocal();
       for (ResourceType originalType : getResourceSubscribers().keySet())
       {
-        Set<String> resources = new HashSet<>(getResourceSubscriberMap(originalType).keySet());
+        Map<String, ResourceSubscriber> subscribers = getResourceSubscriberMap(originalType);
+
+        Map<String, String> irv = new HashMap<>();
+        if (isIRVEnabled()) {
+          for (String resourceName : subscribers.keySet()) {
+            Map<String, String> resourceVersionsMap = _resourceVersions.get(originalType);
+            if (resourceVersionsMap.containsKey(resourceName)) {
+              irv.put(resourceName, resourceVersionsMap.get(resourceName));
+            } else {
+              _log.error("IRV: could not find version for resource: {}", resourceName);
+            }
+          }
+        }
+
+        Set<String> resources = new HashSet<>(subscribers.keySet());
         if (resources.isEmpty())
         {
           continue;
@@ -1064,13 +1107,28 @@ public class XdsClientImpl extends XdsClient
         {
           adjustedType = originalType;
         }
-        _adsStream.sendDiscoveryRequest(adjustedType, resources);
+        _adsStream.sendDiscoveryRequestWithIRV(adjustedType, resources, irv);
       }
 
-      for (ResourceType originalType: getWildcardResourceSubscribers().keySet())
-      {
+      Map<ResourceType, WildcardResourceSubscriber> wildCardSubscribers = getWildcardResourceSubscribers();
+      for(Map.Entry<ResourceType, WildcardResourceSubscriber> entry: wildCardSubscribers.entrySet()){
+        ResourceType originalType = entry.getKey();
         ResourceType adjustedType = shouldSubscribeUriGlobCollection(originalType) ? ResourceType.D2_URI : originalType;
-        _adsStream.sendDiscoveryRequest(adjustedType, Collections.singletonList("*"));
+
+        Map<String, String> irv = new HashMap<>();
+        Map<String, String> resourceVersionsMap = _resourceVersions.get(originalType);
+        if (isIRVEnabled()) {
+          Set<String> resourceNames = entry.getValue().getResourceKeys();
+          for (String resourceName: resourceNames) {
+            if(resourceVersionsMap.containsKey(resourceName)){
+              irv.put(resourceName, resourceVersionsMap.get(resourceName));
+            }
+            else{
+              _log.error("IRV: could not find version for resource: {}", resourceName);
+            }
+          }
+        }
+        _adsStream.sendDiscoveryRequestWithIRV(adjustedType, Collections.singletonList("*"), irv);
       }
     }
   }
@@ -1081,11 +1139,21 @@ public class XdsClientImpl extends XdsClient
     private final ResourceType _resourceType;
     private final Collection<String> _resourceNames;
 
+    private Map<String, String> _initialResourceVersions = new HashMap<>();
+
     DiscoveryRequestData(Node node, ResourceType resourceType, Collection<String> resourceNames)
     {
       _node = node;
       _resourceType = resourceType;
       _resourceNames = resourceNames;
+    }
+
+    DiscoveryRequestData(Node node, ResourceType resourceType, Collection<String> resourceNames, Map<String, String> irv)
+    {
+      _node = node;
+      _resourceType = resourceType;
+      _resourceNames = resourceNames;
+      _initialResourceVersions = irv;
     }
 
     DeltaDiscoveryRequest toEnvoyProto()
@@ -1095,6 +1163,10 @@ public class XdsClientImpl extends XdsClient
           .addAllResourceNamesSubscribe(_resourceNames)
           .setTypeUrl(_resourceType.typeUrl());
 
+      // initial resource versions are only set when client is re-connected to the server.
+      if (_initialResourceVersions != null && !_initialResourceVersions.isEmpty()) {
+        builder.putAllInitialResourceVersions(_initialResourceVersions);
+      }
       return builder.build();
     }
 
@@ -1102,7 +1174,7 @@ public class XdsClientImpl extends XdsClient
     public String toString()
     {
       return "DiscoveryRequestData{" + "_node=" + _node + ", _resourceType=" + _resourceType + ", _resourceNames="
-          + _resourceNames + '}';
+          + _resourceNames + ", _initialResourceVersions=" + _initialResourceVersions.entrySet() + '}';
     }
   }
 
@@ -1313,6 +1385,15 @@ public class XdsClientImpl extends XdsClient
     {
       _log.info("Sending {} request for resources: {}", type, resources);
       DeltaDiscoveryRequest request = new DiscoveryRequestData(_node, type, resources).toEnvoyProto();
+      _requestWriter.onNext(request);
+      _log.debug("Sent DiscoveryRequest\n{}", request);
+    }
+
+    void sendDiscoveryRequestWithIRV(ResourceType type, Collection<String> resources, Map<String, String> resourceVersions)
+    {
+      _log.info("Sending {} request with IRV for resources: {}, resourceVersions: {}",
+                type, resources, resourceVersions.entrySet());
+      DeltaDiscoveryRequest request = new DiscoveryRequestData(_node, type, resources, resourceVersions).toEnvoyProto();
       _requestWriter.onNext(request);
       _log.debug("Sent DiscoveryRequest\n{}", request);
     }
