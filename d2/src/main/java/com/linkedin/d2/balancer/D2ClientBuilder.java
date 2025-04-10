@@ -804,6 +804,11 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setXdsInitialResourceVersionEnabled(boolean xdsIRVEnabled) {
+    _config.xdsInitialResourceVersionEnabled = xdsIRVEnabled;
+    return this;
+  }
+
   private Map<String, TransportClientFactory> createDefaultTransportClientFactories()
   {
     final Map<String, TransportClientFactory> clientFactories = new HashMap<>();

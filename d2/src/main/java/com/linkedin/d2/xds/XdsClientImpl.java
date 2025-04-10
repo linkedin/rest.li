@@ -347,7 +347,7 @@ public class XdsClientImpl extends XdsClient
   {
     ResourceType resourceType = response.getResourceType();
     // Setting up received resource version, which will be used to set IRV for re-connect scenarios.
-    Map<String, String> resourceVersions = _resourceVersions.get(resourceType);
+    Map<String, String> resourceVersions = getResourceVersions().get(resourceType);
     for (Resource res: response.getResourcesList()){
       resourceVersions.put(res.getName(), res.getVersion());
     }
@@ -728,6 +728,13 @@ public class XdsClientImpl extends XdsClient
     return _resourceSubscribers;
   }
 
+
+  @VisibleForTesting
+  Map<ResourceType, Map<String, String>> getResourceVersions()
+  {
+    return _resourceVersions;
+  }
+
   WildcardResourceSubscriber getWildcardResourceSubscriber(ResourceType type)
   {
     return getWildcardResourceSubscribers().get(type);
@@ -1080,7 +1087,7 @@ public class XdsClientImpl extends XdsClient
         Map<String, String> irv = new HashMap<>();
         if (isIRVEnabled()) {
           for (String resourceName : subscribers.keySet()) {
-            Map<String, String> resourceVersionsMap = _resourceVersions.get(originalType);
+            Map<String, String> resourceVersionsMap = getResourceVersions().get(originalType);
             if (resourceVersionsMap.containsKey(resourceName)) {
               irv.put(resourceName, resourceVersionsMap.get(resourceName));
             } else {
@@ -1116,7 +1123,7 @@ public class XdsClientImpl extends XdsClient
         ResourceType adjustedType = shouldSubscribeUriGlobCollection(originalType) ? ResourceType.D2_URI : originalType;
 
         Map<String, String> irv = new HashMap<>();
-        Map<String, String> resourceVersionsMap = _resourceVersions.get(originalType);
+        Map<String, String> resourceVersionsMap = getResourceVersions().get(originalType);
         if (isIRVEnabled()) {
           Set<String> resourceNames = entry.getValue().getResourceKeys();
           for (String resourceName: resourceNames) {
