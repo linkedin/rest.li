@@ -133,7 +133,7 @@ public class TestQueryTunnel
     Assert.assertEquals(encoded.getMethod(), "POST");
     Assert.assertEquals(encoded.getURI().toString(), "http://localhost:7279");
     Assert.assertTrue(encoded.getEntity().length() > 0);
-    Assert.assertTrue(encoded.getHeader("Content-Type").startsWith("multipart/mixed"));
+    Assert.assertTrue(encoded.getHeader("Content-Type").startsWith("multipart/mixed; boundary="));
     Assert.assertEquals(encoded.getHeader("Content-Length"), Integer.toString(encoded.getEntity().length()));
 
     // Decode, and we should get the original request back
@@ -161,7 +161,7 @@ public class TestQueryTunnel
     Assert.assertEquals(encoded.getMethod(), "POST");
     Assert.assertEquals(encoded.getURI().toString(), "http://localhost:7279");
     Assert.assertTrue(encoded.getEntity().length() > 0);
-    Assert.assertTrue(encoded.getHeader("Content-Type").startsWith("multipart/mixed"));
+    Assert.assertTrue(encoded.getHeader("Content-Type").startsWith("multipart/mixed; boundary="));
     Assert.assertEquals(encoded.getHeader("Content-Length"), Integer.toString(encoded.getEntity().length()));
 
     // Decode, and we should get the original request back
@@ -282,7 +282,7 @@ public class TestQueryTunnel
     Assert.assertEquals(encoded.getMethod(), "POST");
     Assert.assertEquals(encoded.getURI().toString(), "http://localhost:7279");
     Assert.assertTrue(encoded.getEntity().length() > 0);
-    Assert.assertTrue(encoded.getHeader("Content-Type").startsWith("multipart/mixed"));
+    Assert.assertTrue(encoded.getHeader("Content-Type").startsWith("multipart/mixed; boundary="));
     Assert.assertEquals(encoded.getHeader("Content-Length"), Integer.toString(encoded.getEntity().length()));
 
     // Decode and make sure we have the original request back
@@ -291,7 +291,7 @@ public class TestQueryTunnel
     Assert.assertEquals(decoded.getURI().toString(), "http://localhost:7279?args=xyz");
     Assert.assertEquals(decoded.getMethod(), "PUT");
     Assert.assertEquals(decoded.getEntity(), request.getEntity());
-    Assert.assertTrue(encoded.getHeader("Content-Type").startsWith("multipart/mixed"));
+    Assert.assertTrue(encoded.getHeader("Content-Type").startsWith("multipart/mixed; boundary="));
     Assert.assertTrue((Boolean) requestContext.getLocalAttr(R2Constants.IS_QUERY_TUNNELED));
     Assert.assertEquals(decoded.getHeader("Content-Length"), Integer.toString(request.getEntity().length()));
   }
