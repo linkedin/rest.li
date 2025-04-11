@@ -182,7 +182,8 @@ public class QueryTunnelUtil
       // If we have a body, we must preserve it, so use multipart/mixed encoding
 
       MimeMultipart multi = createMultiPartEntity(entity, request.getHeader(HEADER_CONTENT_TYPE), uri.getRawQuery());
-      requestBuilder.setHeader(HEADER_CONTENT_TYPE, multi.getContentType());
+      // The javax.mail code inserts a newline, return, and tab which aren't allowed in HTTP headers so strip them out
+      requestBuilder.setHeader(HEADER_CONTENT_TYPE, multi.getContentType().replaceAll("\\s{2,}", " "));
       ByteArrayOutputStream os = new ByteArrayOutputStream();
       multi.writeTo(os);
       requestBuilder.setEntity(ByteString.copy(os.toByteArray()));
