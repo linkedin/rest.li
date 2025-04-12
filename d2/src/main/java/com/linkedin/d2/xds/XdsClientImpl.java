@@ -346,10 +346,14 @@ public class XdsClientImpl extends XdsClient
   void handleResponse(DiscoveryResponseData response)
   {
     ResourceType resourceType = response.getResourceType();
-    // Setting up received resource version, which will be used to set IRV for re-connect scenarios.
+    // capturing the received resource versions, which will be used to set IRV for re-connect scenarios.
     Map<String, String> resourceVersions = getResourceVersions().get(resourceType);
     for (Resource res: response.getResourcesList()){
       resourceVersions.put(res.getName(), res.getVersion());
+    }
+
+    for (String removedResource: response.getRemovedResources()){
+      resourceVersions.remove(removedResource);
     }
 
     switch (resourceType)
@@ -1074,69 +1078,75 @@ public class XdsClientImpl extends XdsClient
     return _xdsInitialResourceVersionEnabled;
   }
 
-  final class RpcRetryTask implements Runnable
-  {
+  final class RpcRetryTask implements Runnable {
     @Override
-    public void run()
-    {
+    public void run() {
       startRpcStreamLocal();
-      for (ResourceType originalType : getResourceSubscribers().keySet())
-      {
+      for (ResourceType originalType : getResourceSubscribers().keySet()) {
         Map<String, ResourceSubscriber> subscribers = getResourceSubscriberMap(originalType);
-
-        Map<String, String> irv = new HashMap<>();
-        if (isIRVEnabled()) {
-          for (String resourceName : subscribers.keySet()) {
-            Map<String, String> resourceVersionsMap = getResourceVersions().get(originalType);
-            if (resourceVersionsMap.containsKey(resourceName)) {
-              irv.put(resourceName, resourceVersionsMap.get(resourceName));
-            } else {
-              _log.error("IRV: could not find version for resource: {}", resourceName);
-            }
-          }
-        }
-
+        Map<String, String> irv;
         Set<String> resources = new HashSet<>(subscribers.keySet());
-        if (resources.isEmpty())
-        {
+        if (resources.isEmpty()) {
           continue;
         }
 
         ResourceType adjustedType;
-        if (shouldSubscribeUriGlobCollection(originalType))
-        {
+        if (shouldSubscribeUriGlobCollection(originalType)) {
+          adjustedType = ResourceType.D2_URI;
+          irv = createIRVMapForGlobCollectionResource(resources, adjustedType);
           resources = resources.stream()
               .map(GlobCollectionUtils::globCollectionUrlForClusterResource)
               .collect(Collectors.toCollection(HashSet::new));
-          adjustedType = ResourceType.D2_URI;
-        }
-        else
-        {
+        } else {
           adjustedType = originalType;
+          irv = createIRVMap(resources, adjustedType);
         }
         _adsStream.sendDiscoveryRequestWithIRV(adjustedType, resources, irv);
       }
 
       Map<ResourceType, WildcardResourceSubscriber> wildCardSubscribers = getWildcardResourceSubscribers();
-      for(Map.Entry<ResourceType, WildcardResourceSubscriber> entry: wildCardSubscribers.entrySet()){
+      for (Map.Entry<ResourceType, WildcardResourceSubscriber> entry : wildCardSubscribers.entrySet()) {
         ResourceType originalType = entry.getKey();
         ResourceType adjustedType = shouldSubscribeUriGlobCollection(originalType) ? ResourceType.D2_URI : originalType;
 
-        Map<String, String> irv = new HashMap<>();
-        Map<String, String> resourceVersionsMap = getResourceVersions().get(originalType);
-        if (isIRVEnabled()) {
-          Set<String> resourceNames = entry.getValue().getResourceKeys();
-          for (String resourceName: resourceNames) {
-            if(resourceVersionsMap.containsKey(resourceName)){
-              irv.put(resourceName, resourceVersionsMap.get(resourceName));
-            }
-            else{
-              _log.error("IRV: could not find version for resource: {}", resourceName);
+        Set<String> resourceNames = entry.getValue().getResourceKeys();
+        Map<String, String> irv = createIRVMap(resourceNames, originalType);
+        _adsStream.sendDiscoveryRequestWithIRV(adjustedType, Collections.singletonList("*"), irv);
+      }
+    }
+
+    private Map<String, String> createIRVMapForGlobCollectionResource(Set<String> resources, ResourceType type) {
+      Map<String, String> irv = new HashMap<>();
+      if (isIRVEnabled()) {
+        Map<String, String> resourceVersionsMap = getResourceVersions().get(type);
+        HashSet<String> globCollectionResources = resources.stream()
+            .map(GlobCollectionUtils::globCollectionBaseUrlForClusterResource)
+            .collect(Collectors.toCollection(HashSet::new));
+        for (String globCollectionResourceName : globCollectionResources) {
+          for (Map.Entry<String, String> entry : resourceVersionsMap.entrySet()) {
+            if (entry.getKey().startsWith(globCollectionResourceName)) {
+              irv.put(entry.getKey(), entry.getValue());
             }
           }
         }
-        _adsStream.sendDiscoveryRequestWithIRV(adjustedType, Collections.singletonList("*"), irv);
       }
+      return irv;
+    }
+
+    private Map<String, String> createIRVMap(Set<String> resources, ResourceType type) {
+      Map<String, String> irv = new HashMap<>();
+
+      if (isIRVEnabled()) {
+        Map<String, String> resourceVersionsMap = getResourceVersions().get(type);
+        for (String resourceName : resources) {
+          if (resourceVersionsMap.containsKey(resourceName)) {
+            irv.put(resourceName, resourceVersionsMap.get(resourceName));
+          } else {
+            _log.error("IRV: could not find version for resource: {}", resourceName);
+          }
+        }
+      }
+      return irv;
     }
   }
 

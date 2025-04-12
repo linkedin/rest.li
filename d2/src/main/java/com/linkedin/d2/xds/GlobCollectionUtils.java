@@ -108,6 +108,12 @@ public class GlobCollectionUtils
         GLOB_COLLECTION_SUFFIX;
   }
 
+  public static String globCollectionBaseUrlForClusterResource(String clusterPath)
+  {
+    return D2_URI_NODE_GLOB_COLLECTION_PREFIX +
+        clusterPath.substring(clusterPath.lastIndexOf('/') + 1);
+  }
+
   public static String globCollectionUrn(String clusterName, String uri)
   {
     try
