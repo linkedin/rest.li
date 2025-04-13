@@ -55,6 +55,7 @@ public class TestXdsClientImpl
   public static final String SERVICE_RESOURCE_NAME_2 = "/d2/services/" + SERVICE_NAME_2;
   public static final String CLUSTER_NAME = "FooClusterMaster-prod-ltx1";
   public static final String CLUSTER_RESOURCE_NAME = "/d2/uris/" + CLUSTER_NAME;
+  public static final String CLUSTER_RESOURCE_NAME_IRV = "/d2/uris/foo";
   private static final String URI1 = "TestURI1";
   private static final String URI2 = "TestURI2";
   private static final String VERSION1 = "1";
@@ -707,16 +708,16 @@ public class TestXdsClientImpl
     //   useGlobCollection --- whether to use glob collection
     // }
     return new Object[][]{
-        {true},
-        {false}
+        {true, true},
+        {false, false}
     };
   }
 
   @Test(dataProvider = "provideUseGlobCollection", timeOut = 2000)
   // Retry task should re-subscribe the resources registered in each subscriber type.
-  public void testRetry(boolean useGlobCollection) throws ExecutionException, InterruptedException
+  public void testRetry(boolean useGlobCollection, boolean useIRV) throws ExecutionException, InterruptedException
   {
-    XdsClientImplFixture fixture = new XdsClientImplFixture(useGlobCollection);
+    XdsClientImplFixture fixture = new XdsClientImplFixture(useGlobCollection, useIRV);
     fixture.watchAllResourceAndWatcherTypes();
     fixture._xdsClientImpl.testRetryTask(fixture._adsStream);
     fixture._xdsClientImpl._retryRpcStreamFuture.get();
@@ -733,6 +734,17 @@ public class TestXdsClientImpl
           return names.iterator().next();
         }).collect(Collectors.toList());
 
+    List<Map<String, String>> resourceVersions = fixture._resourceVersionsArgumentCaptor.getAllValues();
+    if (useIRV){
+      Map<String, String> expectedVersions = getResourceVersionsMap();
+      Map<String, String> actualResourceVersions = new HashMap<>();
+      resourceVersions.forEach(actualResourceVersions::putAll);
+      Assert.assertEquals(actualResourceVersions, expectedVersions);
+    }
+    else {
+      resourceVersions.forEach(x -> Assert.assertEquals(x.size(), 0));
+    }
+
     Set<Pair<ResourceType, String>> args = IntStream.range(0, types.size())
         .mapToObj(i -> Pair.of(types.get(i), nameLists.get(i)))
         .collect(Collectors.toSet());
@@ -745,6 +757,22 @@ public class TestXdsClientImpl
         Pair.of(D2_URI, URI_URN1),
         Pair.of(D2_CLUSTER_OR_SERVICE_NAME, "*")
     ));
+  }
+
+  private static Map<String, String> getResourceVersionsMap() {
+    Map<String, String> subscriptionResVersion = new HashMap<>();
+    subscriptionResVersion.put(SERVICE_RESOURCE_NAME, "v1");
+    subscriptionResVersion.put(GlobCollectionUtils.globCollectionBaseUrlForClusterResource(CLUSTER_RESOURCE_NAME), "v1");
+    subscriptionResVersion.put(URI_URN1, "v1");
+
+    Map<String, String> expectedVersions = new HashMap<>(subscriptionResVersion);
+
+    Map<String, String> wildcardSubResourceVersion = new HashMap<>();
+    wildcardSubResourceVersion.put("fooNode", "v1");
+    wildcardSubResourceVersion.put(URI1, "v1");
+    wildcardSubResourceVersion.put(CLUSTER_RESOURCE_NAME_IRV, "v1");
+    expectedVersions.putAll(wildcardSubResourceVersion);
+    return expectedVersions;
   }
 
   @Test
@@ -824,6 +852,9 @@ public class TestXdsClientImpl
             .collect(Collectors.toMap(Function.identity(), e -> new HashMap<>())));
     Map<ResourceType, XdsClientImpl.WildcardResourceSubscriber> _wildcardSubscribers = Maps.newEnumMap(ResourceType.class);
 
+    private final Map<ResourceType, Map<String, String>> _resourceVersions = Maps.newEnumMap(Stream.of(ResourceType.values()).collect(
+        Collectors.toMap(Function.identity(), e -> new HashMap<>())));
+
     @Mock
     XdsClient.ResourceWatcher _resourceWatcher;
     @Mock
@@ -836,47 +867,70 @@ public class TestXdsClientImpl
     @Captor
     ArgumentCaptor<Collection<String>> _resourceNamesArgumentCaptor;
 
+    @Captor
+    ArgumentCaptor<Map<String, String>> _resourceVersionsArgumentCaptor;
     XdsClientImplFixture()
     {
-      this(false);
+      this(false, false);
     }
 
-    XdsClientImplFixture(boolean useGlobCollections)
+    XdsClientImplFixture(boolean useGlobCollections, boolean useIRV)
     {
       MockitoAnnotations.initMocks(this);
       _nodeSubscriber = spy(new ResourceSubscriber(NODE, SERVICE_RESOURCE_NAME, _xdsClientJmx));
       _clusterSubscriber = spy(new ResourceSubscriber(D2_URI_MAP, CLUSTER_RESOURCE_NAME, _xdsClientJmx));
       _d2UriSubscriber = spy(new ResourceSubscriber(D2_URI, URI_URN1, _xdsClientJmx));
-      _nodeWildcardSubscriber = spy(new XdsClientImpl.WildcardResourceSubscriber(NODE));
-      _uriMapWildcardSubscriber = spy(new XdsClientImpl.WildcardResourceSubscriber(D2_URI_MAP));
-      _nameWildcardSubscriber = spy(new XdsClientImpl.WildcardResourceSubscriber(D2_CLUSTER_OR_SERVICE_NAME));
-
+      _nodeWildcardSubscriber = spy(new WildcardResourceSubscriber(NODE));
+      _nodeWildcardSubscriber.setData("fooNode", NODE_UPDATE1);
+      _uriMapWildcardSubscriber = spy(new WildcardResourceSubscriber(D2_URI_MAP));
+      _uriMapWildcardSubscriber.setData(URI1, D2_URI_MAP_UPDATE_WITH_DATA1);
+      _nameWildcardSubscriber = spy(new WildcardResourceSubscriber(D2_CLUSTER_OR_SERVICE_NAME));
+      _nameWildcardSubscriber.setData(CLUSTER_RESOURCE_NAME_IRV, CLUSTER_NAME_DATA_UPDATE);
       doNothing().when(_resourceWatcher).onChanged(any());
       doNothing().when(_wildcardResourceWatcher).onChanged(any(), any());
       doNothing().when(_serverMetricsProvider).trackLatency(anyLong());
 
       for (ResourceSubscriber subscriber : Lists.newArrayList(_nodeSubscriber, _clusterSubscriber, _d2UriSubscriber))
       {
+        ResourceType adjustedType = subscriber.getType();
         _subscribers.get(subscriber.getType()).put(subscriber.getResource(), subscriber);
+        if (adjustedType == D2_URI_MAP && useGlobCollections){
+           adjustedType = D2_URI;
+          _resourceVersions.get(adjustedType).put(
+              GlobCollectionUtils.globCollectionBaseUrlForClusterResource(subscriber.getResource()), "v1");
+        }
+        else {
+          _resourceVersions.get(adjustedType).put(subscriber.getResource(), "v1");
+        }
+
       }
+
       for (WildcardResourceSubscriber subscriber : Lists.newArrayList(_nodeWildcardSubscriber,
           _uriMapWildcardSubscriber, _nameWildcardSubscriber))
       {
-        _wildcardSubscribers.put(subscriber.getType(), subscriber);
+        ResourceType adjustedType = subscriber.getType();
+        _wildcardSubscribers.put(adjustedType, subscriber);
+        if (adjustedType == D2_URI_MAP && useGlobCollections){
+          adjustedType = D2_URI;
+        }
+        ResourceType finalAdjustedType = adjustedType;
+        subscriber.getResourceKeys().forEach(x-> _resourceVersions.get(finalAdjustedType).put(x, "v1"));
       }
 
       _xdsClientImpl = spy(new XdsClientImpl(null, null,
           Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("test executor")),
-          0, useGlobCollections, _serverMetricsProvider, false));
+          0, useGlobCollections, _serverMetricsProvider, useIRV));
       _xdsClientImpl._adsStream = _adsStream;
 
       doNothing().when(_xdsClientImpl).startRpcStreamLocal();
       doNothing().when(_xdsClientImpl).sendAckOrNack(any(), any(), any());
       doNothing().when(_adsStream).sendDiscoveryRequestWithIRV(_resourceTypesArgumentCaptor.capture(),
                                                                _resourceNamesArgumentCaptor.capture(),
-                                                               any());
+                                                               _resourceVersionsArgumentCaptor.capture());
+
       when(_xdsClientImpl.getXdsClientJmx()).thenReturn(_xdsClientJmx);
       when(_xdsClientImpl.getResourceSubscribers()).thenReturn(_subscribers);
+      when(_xdsClientImpl.getResourceVersions()).thenReturn(_resourceVersions);
       when(_xdsClientImpl.getWildcardResourceSubscribers()).thenReturn(_wildcardSubscribers);
     }
 

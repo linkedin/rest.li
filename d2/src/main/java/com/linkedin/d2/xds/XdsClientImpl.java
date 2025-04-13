@@ -124,13 +124,27 @@ public class XdsClientImpl extends XdsClient
   }
 
   @Deprecated
-  public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService,
-      long readyTimeoutMillis, boolean subscribeToUriGlobCollection, XdsServerMetricsProvider serverMetricsProvider){
-    this(node, managedChannel, executorService, readyTimeoutMillis, subscribeToUriGlobCollection, serverMetricsProvider, false);
+  public XdsClientImpl(Node node,
+      ManagedChannel managedChannel,
+      ScheduledExecutorService executorService,
+      long readyTimeoutMillis,
+      boolean subscribeToUriGlobCollection,
+      XdsServerMetricsProvider serverMetricsProvider){
+    this(node,
+         managedChannel,
+         executorService,
+         readyTimeoutMillis,
+         subscribeToUriGlobCollection,
+         serverMetricsProvider,
+         false);
   }
 
-  public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService,
-      long readyTimeoutMillis, boolean subscribeToUriGlobCollection, XdsServerMetricsProvider serverMetricsProvider,
+  public XdsClientImpl(Node node,
+      ManagedChannel managedChannel,
+      ScheduledExecutorService executorService,
+      long readyTimeoutMillis,
+      boolean subscribeToUriGlobCollection,
+      XdsServerMetricsProvider serverMetricsProvider,
       boolean irvSupport)
   {
     _readyTimeoutMillis = readyTimeoutMillis;
@@ -1074,10 +1088,6 @@ public class XdsClientImpl extends XdsClient
     return _subscribeToUriGlobCollection && type == ResourceType.D2_URI_MAP;
   }
 
-  private boolean isIRVEnabled(){
-    return _xdsInitialResourceVersionEnabled;
-  }
-
   final class RpcRetryTask implements Runnable {
     @Override
     public void run() {
@@ -1093,13 +1103,13 @@ public class XdsClientImpl extends XdsClient
         ResourceType adjustedType;
         if (shouldSubscribeUriGlobCollection(originalType)) {
           adjustedType = ResourceType.D2_URI;
-          irv = createIRVMapForGlobCollectionResource(resources, adjustedType);
+          irv = createIRVsForGlobCollection(resources, adjustedType);
           resources = resources.stream()
               .map(GlobCollectionUtils::globCollectionUrlForClusterResource)
               .collect(Collectors.toCollection(HashSet::new));
         } else {
           adjustedType = originalType;
-          irv = createIRVMap(resources, adjustedType);
+          irv = createIRVs(resources, adjustedType);
         }
         _adsStream.sendDiscoveryRequestWithIRV(adjustedType, resources, irv);
       }
@@ -1109,22 +1119,18 @@ public class XdsClientImpl extends XdsClient
         ResourceType originalType = entry.getKey();
         ResourceType adjustedType = shouldSubscribeUriGlobCollection(originalType) ? ResourceType.D2_URI : originalType;
 
-        Set<String> resourceNames = entry.getValue().getResourceKeys();
-        Map<String, String> irv = createIRVMap(resourceNames, originalType);
+        Map<String, String> irv = createIRVs(entry.getValue().getResourceKeys(), adjustedType);
         _adsStream.sendDiscoveryRequestWithIRV(adjustedType, Collections.singletonList("*"), irv);
       }
     }
 
-    private Map<String, String> createIRVMapForGlobCollectionResource(Set<String> resources, ResourceType type) {
+    private Map<String, String> createIRVsForGlobCollection(Set<String> resources, ResourceType type) {
       Map<String, String> irv = new HashMap<>();
       if (isIRVEnabled()) {
         Map<String, String> resourceVersionsMap = getResourceVersions().get(type);
-        HashSet<String> globCollectionResources = resources.stream()
-            .map(GlobCollectionUtils::globCollectionBaseUrlForClusterResource)
-            .collect(Collectors.toCollection(HashSet::new));
-        for (String globCollectionResourceName : globCollectionResources) {
+        for (String res : resources) {
           for (Map.Entry<String, String> entry : resourceVersionsMap.entrySet()) {
-            if (entry.getKey().startsWith(globCollectionResourceName)) {
+            if (entry.getKey().startsWith(GlobCollectionUtils.globCollectionBaseUrlForClusterResource(res))) {
               irv.put(entry.getKey(), entry.getValue());
             }
           }
@@ -1133,7 +1139,7 @@ public class XdsClientImpl extends XdsClient
       return irv;
     }
 
-    private Map<String, String> createIRVMap(Set<String> resources, ResourceType type) {
+    private Map<String, String> createIRVs(Set<String> resources, ResourceType type) {
       Map<String, String> irv = new HashMap<>();
 
       if (isIRVEnabled()) {
@@ -1147,6 +1153,10 @@ public class XdsClientImpl extends XdsClient
         }
       }
       return irv;
+    }
+
+    private boolean isIRVEnabled(){
+      return _xdsInitialResourceVersionEnabled;
     }
   }
 
