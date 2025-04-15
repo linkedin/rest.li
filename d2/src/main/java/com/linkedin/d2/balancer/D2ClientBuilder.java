@@ -220,7 +220,7 @@ public class D2ClientBuilder
                   _config.subscribeToUriGlobCollection,
                   _config._xdsServerMetricsProvider,
                   _config.loadBalanceStreamException,
-                  _config.xdsInitialResourceVersionEnabled
+                  _config.xdsInitialResourceVersionsEnabled
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -804,8 +804,8 @@ public class D2ClientBuilder
     return this;
   }
 
-  public D2ClientBuilder setXdsInitialResourceVersionEnabled(boolean xdsIRVEnabled) {
-    _config.xdsInitialResourceVersionEnabled = xdsIRVEnabled;
+  public D2ClientBuilder setXdsInitialResourceVersionsEnabled(boolean xdsIRVEnabled) {
+    _config.xdsInitialResourceVersionsEnabled = xdsIRVEnabled;
     return this;
   }
 

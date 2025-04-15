@@ -171,7 +171,7 @@ public class D2ClientConfig
   public XdsServerMetricsProvider _xdsServerMetricsProvider = new NoOpXdsServerMetricsProvider();
   public boolean loadBalanceStreamException = false;
 
-  public boolean xdsInitialResourceVersionEnabled = false;
+  public boolean xdsInitialResourceVersionsEnabled = false;
 
   public D2ClientConfig()
   {
@@ -250,7 +250,7 @@ public class D2ClientConfig
                  boolean subscribeToUriGlobCollection,
                  XdsServerMetricsProvider xdsServerMetricsProvider,
                  boolean loadBalanceStreamException,
-                 boolean xdsInitialResourceVersionEnabled
+                 boolean xdsInitialResourceVersionsEnabled
       )
   {
     this.zkHosts = zkHosts;
@@ -326,6 +326,6 @@ public class D2ClientConfig
     this.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
     this._xdsServerMetricsProvider = xdsServerMetricsProvider;
     this.loadBalanceStreamException = loadBalanceStreamException;
-    this.xdsInitialResourceVersionEnabled = xdsInitialResourceVersionEnabled;
+    this.xdsInitialResourceVersionsEnabled = xdsInitialResourceVersionsEnabled;
   }
 }
