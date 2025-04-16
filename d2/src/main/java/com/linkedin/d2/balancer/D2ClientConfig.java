@@ -170,7 +170,6 @@ public class D2ClientConfig
   public boolean subscribeToUriGlobCollection = false;
   public XdsServerMetricsProvider _xdsServerMetricsProvider = new NoOpXdsServerMetricsProvider();
   public boolean loadBalanceStreamException = false;
-
   public boolean xdsInitialResourceVersionsEnabled = false;
 
   public D2ClientConfig()

@@ -754,7 +754,6 @@ public class XdsClientImpl extends XdsClient
     return _resourceSubscribers;
   }
 
-
   @VisibleForTesting
   Map<ResourceType, Map<String, String>> getResourceVersions()
   {
@@ -966,11 +965,6 @@ public class XdsClientImpl extends XdsClient
       return _data.get(resourceName);
     }
 
-    public Set<String> getResourceKeys()
-    {
-      return _data.keySet();
-    }
-
     @VisibleForTesting
     public void setData(String resourceName, ResourceUpdate data)
     {
@@ -1105,48 +1099,55 @@ public class XdsClientImpl extends XdsClient
       startRpcStreamLocal();
 
       Map<ResourceType, WildcardResourceSubscriber> wildCardSubscribers = getWildcardResourceSubscribers();
-
-      HashSet<ResourceType> wildcardSubPresentForType = new HashSet<>();
+      Set<ResourceType> wildcardSubPresentForType = new HashSet<>();
       Map<String, String> irv = new HashMap<>();
       for (ResourceType originalType:ResourceType.values())
       {
         boolean isGlobCollection = shouldSubscribeUriGlobCollection(originalType);
         ResourceType adjustedType = isGlobCollection ? ResourceType.D2_URI : originalType;
 
-        if (isWildcardSubscriptionExist(wildCardSubscribers, originalType)){
-          wildcardSubPresentForType.add(adjustedType);
-          if (isIRVEnabled()) {
-            irv.putAll(getResourceVersions().get(adjustedType));
+        if (isWildcardSubscriptionExist(wildCardSubscribers, originalType))
+        {
+          wildcardSubPresentForType.add(originalType);
+          if (isIRVEnabled())
+          {
+              irv.putAll(getResourceVersions().get(adjustedType));
           }
         }
 
         Map<String, ResourceSubscriber> subscribers = getResourceSubscriberMap(originalType);
         Set<String> resources = new HashSet<>(subscribers.keySet());
-        if (resources.isEmpty()) {
-          if (wildcardSubPresentForType.contains(adjustedType)) {
-            _adsStream.sendDiscoveryRequestWithIRV(adjustedType, Collections.singletonList("*"), irv);
+
+        if (resources.isEmpty())
+        {
+          if (wildcardSubPresentForType.contains(originalType))
+          {
+            _adsStream.sendDiscoveryRequestWithIRV(originalType, Collections.singletonList("*"), irv);
           }
           continue;
         }
 
-        if (isGlobCollection)
+        if (shouldSubscribeUriGlobCollection(originalType))
         {
-          if(!wildcardSubPresentForType.contains(adjustedType))
+          adjustedType = ResourceType.D2_URI;
+          if(!wildcardSubPresentForType.contains(originalType))
           {
             irv = createIRVsForGlobCollection(resources, adjustedType);
           }
           resources = resources.stream().map(GlobCollectionUtils::globCollectionUrlForClusterResource)
               .collect(Collectors.toCollection(HashSet::new));
+
         }
         else
         {
-          if(!wildcardSubPresentForType.contains(adjustedType))
+          adjustedType = originalType;
+          if(!wildcardSubPresentForType.contains(originalType))
           {
-            irv = createIRVs(resources, adjustedType);
+            irv = createIRVs(resources, originalType);
           }
         }
 
-        if (wildcardSubPresentForType.contains(adjustedType))
+        if (wildcardSubPresentForType.contains(originalType))
         {
           resources.add("*");
         }
@@ -1155,10 +1156,9 @@ public class XdsClientImpl extends XdsClient
     }
 
     private boolean isWildcardSubscriptionExist(Map<ResourceType, WildcardResourceSubscriber> wildCardSubscribers,
-        ResourceType originalType){
-      return (wildCardSubscribers.get(originalType) != null && !wildCardSubscribers.get(originalType)
-          .getResourceKeys()
-          .isEmpty());
+        ResourceType originalType)
+    {
+      return wildCardSubscribers.get(originalType) != null;
     }
 
     private Map<String, String> createIRVsForGlobCollection(Set<String> resources, ResourceType type)
@@ -1213,7 +1213,6 @@ public class XdsClientImpl extends XdsClient
     private final Node _node;
     private final ResourceType _resourceType;
     private final Collection<String> _resourceNames;
-
     private Map<String, String> _initialResourceVersions = new HashMap<>();
 
     DiscoveryRequestData(Node node, ResourceType resourceType, Collection<String> resourceNames)
@@ -1239,7 +1238,8 @@ public class XdsClientImpl extends XdsClient
           .setTypeUrl(_resourceType.typeUrl());
 
       // initial resource versions are only set when client is re-connected to the server.
-      if (_initialResourceVersions != null && !_initialResourceVersions.isEmpty()) {
+      if (_initialResourceVersions != null && !_initialResourceVersions.isEmpty())
+      {
         builder.putAllInitialResourceVersions(_initialResourceVersions);
       }
       return builder.build();
@@ -1464,7 +1464,9 @@ public class XdsClientImpl extends XdsClient
       _log.debug("Sent DiscoveryRequest\n{}", request);
     }
 
-    void sendDiscoveryRequestWithIRV(ResourceType type, Collection<String> resources, Map<String, String> resourceVersions)
+    void sendDiscoveryRequestWithIRV(ResourceType type,
+        Collection<String> resources,
+        Map<String, String> resourceVersions)
     {
       _log.info("Sending {} request with IRV for resources: {}, resourceVersions: {}",
                 type, resources, resourceVersions.entrySet());

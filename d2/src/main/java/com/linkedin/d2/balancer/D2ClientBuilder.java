@@ -804,7 +804,8 @@ public class D2ClientBuilder
     return this;
   }
 
-  public D2ClientBuilder setXdsInitialResourceVersionsEnabled(boolean xdsIRVEnabled) {
+  public D2ClientBuilder setXdsInitialResourceVersionsEnabled(boolean xdsIRVEnabled)
+  {
     _config.xdsInitialResourceVersionsEnabled = xdsIRVEnabled;
     return this;
   }
