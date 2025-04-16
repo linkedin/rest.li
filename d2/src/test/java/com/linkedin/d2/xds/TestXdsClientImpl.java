@@ -1,5 +1,6 @@
 package com.linkedin.d2.xds;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -15,6 +16,7 @@ import com.linkedin.d2.xds.XdsClientImpl.WildcardResourceSubscriber;
 import com.linkedin.r2.util.NamedThreadFactory;
 import indis.XdsD2;
 import io.envoyproxy.envoy.service.discovery.v3.Resource;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -725,7 +727,8 @@ public class TestXdsClientImpl
     List<Collection<String>> nameLists = fixture._resourceNamesArgumentCaptor.getAllValues();
 
     Map<ResourceType, Set<String>> resourceNames = new HashMap<>();
-    for (int i = 0; i < types.size(); i++) {
+    for (int i = 0; i < types.size(); i++)
+    {
       resourceNames.computeIfAbsent(types.get(i), k -> new HashSet<>()).addAll(nameLists.get(i));
     }
 
@@ -739,6 +742,31 @@ public class TestXdsClientImpl
     {
       Assert.assertEquals(resourceNames.get(D2_URI), ImmutableSet.of(URI_URN1));
       Assert.assertEquals(resourceNames.get(D2_URI_MAP), ImmutableSet.of(CLUSTER_RESOURCE_NAME, "*"));
+    }
+
+    List<Map<String, String>> resourceVersions = fixture._resourceVersionsArgumentCaptor.getAllValues();
+    if (useIRV)
+    {
+      Assert.assertEquals(resourceVersions, useGlobCollection ?
+          Arrays.asList(ImmutableMap.of(SERVICE_RESOURCE_NAME, VERSION1),
+              ImmutableMap.of(
+                  CLUSTER_RESOURCE_NAME, VERSION1,
+                  URI_URN1, VERSION1
+              ),
+              ImmutableMap.of(
+                  CLUSTER_RESOURCE_NAME, VERSION1,
+                  URI_URN1, VERSION1
+              ),
+              ImmutableMap.of(CLUSTER_NAME, VERSION1)) :
+          Arrays.asList(
+              ImmutableMap.of(SERVICE_RESOURCE_NAME, VERSION1),
+              ImmutableMap.of(CLUSTER_RESOURCE_NAME, VERSION1),
+              ImmutableMap.of(URI_URN1, VERSION1),
+              ImmutableMap.of(CLUSTER_NAME, VERSION1)));
+    }
+    else
+    {
+      resourceVersions.forEach(x -> Assert.assertEquals(x.size(), 0));
     }
   }
 
@@ -819,8 +847,8 @@ public class TestXdsClientImpl
             .collect(Collectors.toMap(Function.identity(), e -> new HashMap<>())));
     Map<ResourceType, XdsClientImpl.WildcardResourceSubscriber> _wildcardSubscribers = Maps.newEnumMap(ResourceType.class);
 
-    private final Map<ResourceType, Map<String, String>> _resourceVersions = Maps.newEnumMap(Stream.of(ResourceType.values()).collect(
-        Collectors.toMap(Function.identity(), e -> new HashMap<>())));
+    private Map<ResourceType, Map<String, String>> _resourceVersions = Maps.newEnumMap(
+        Stream.of(ResourceType.values()).collect(Collectors.toMap(Function.identity(), e -> new HashMap<>())));
 
     @Mock
     XdsClient.ResourceWatcher _resourceWatcher;
@@ -836,6 +864,7 @@ public class TestXdsClientImpl
 
     @Captor
     ArgumentCaptor<Map<String, String>> _resourceVersionsArgumentCaptor;
+
     XdsClientImplFixture()
     {
       this(false, false);
@@ -848,7 +877,6 @@ public class TestXdsClientImpl
       _clusterSubscriber = spy(new ResourceSubscriber(D2_URI_MAP, CLUSTER_RESOURCE_NAME, _xdsClientJmx));
       _d2UriSubscriber = spy(new ResourceSubscriber(D2_URI, URI_URN1, _xdsClientJmx));
       _nodeWildcardSubscriber = spy(new XdsClientImpl.WildcardResourceSubscriber(NODE));
-      //_nodeWildcardSubscriber.setData("fooNode", NODE_UPDATE1);
       _uriMapWildcardSubscriber = spy(new XdsClientImpl.WildcardResourceSubscriber(D2_URI_MAP));
       _nameWildcardSubscriber = spy(new XdsClientImpl.WildcardResourceSubscriber(D2_CLUSTER_OR_SERVICE_NAME));
 
@@ -861,27 +889,47 @@ public class TestXdsClientImpl
         _subscribers.get(subscriber.getType()).put(subscriber.getResource(), subscriber);
       }
       for (WildcardResourceSubscriber subscriber : Lists.newArrayList(_nodeWildcardSubscriber,
-                                                                      _uriMapWildcardSubscriber, _nameWildcardSubscriber))
+          _uriMapWildcardSubscriber, _nameWildcardSubscriber))
       {
         _wildcardSubscribers.put(subscriber.getType(), subscriber);
       }
+      if (useIRV)
+      {
+        setResourceVersions(useGlobCollections);
+      }
 
       _xdsClientImpl = spy(new XdsClientImpl(null, null,
-                                             Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("test executor")),
-                                             0, useGlobCollections, _serverMetricsProvider, useIRV));
+          Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("test executor")),
+          0, useGlobCollections, _serverMetricsProvider, useIRV));
       _xdsClientImpl._adsStream = _adsStream;
 
       doNothing().when(_xdsClientImpl).startRpcStreamLocal();
       doNothing().when(_xdsClientImpl).sendAckOrNack(any(), any(), any());
 
       doNothing().when(_adsStream).sendDiscoveryRequestWithIRV(_resourceTypesArgumentCaptor.capture(),
-                                                               _resourceNamesArgumentCaptor.capture(),
-                                                               _resourceVersionsArgumentCaptor.capture());
+          _resourceNamesArgumentCaptor.capture(),
+          _resourceVersionsArgumentCaptor.capture());
 
       when(_xdsClientImpl.getXdsClientJmx()).thenReturn(_xdsClientJmx);
       when(_xdsClientImpl.getResourceSubscribers()).thenReturn(_subscribers);
       when(_xdsClientImpl.getResourceVersions()).thenReturn(_resourceVersions);
       when(_xdsClientImpl.getWildcardResourceSubscribers()).thenReturn(_wildcardSubscribers);
+    }
+
+    private void setResourceVersions(boolean useGlobCollections)
+    {
+      _resourceVersions.computeIfAbsent(NODE, k -> new HashMap<>()).put(SERVICE_RESOURCE_NAME, VERSION1);
+      _resourceVersions.computeIfAbsent(D2_CLUSTER_OR_SERVICE_NAME, k -> new HashMap<>()).put(CLUSTER_NAME, VERSION1);
+      if (useGlobCollections)
+      {
+        _resourceVersions.computeIfAbsent(D2_URI, k -> new HashMap<>()).put(CLUSTER_RESOURCE_NAME, VERSION1);
+        _resourceVersions.computeIfAbsent(D2_URI, k -> new HashMap<>()).put(URI_URN1, VERSION1);
+      }
+      else
+      {
+        _resourceVersions.computeIfAbsent(D2_URI_MAP, k -> new HashMap<>()).put(CLUSTER_RESOURCE_NAME, VERSION1);
+        _resourceVersions.computeIfAbsent(D2_URI, k -> new HashMap<>()).put(URI_URN1, VERSION1);
+      }
     }
 
     void watchAllResourceAndWatcherTypes()
