@@ -709,6 +709,8 @@ public class TestXdsClientImpl
     // }
     return new Object[][]{
         {true, true},
+        {true, false},
+        {false, true},
         {false, false}
     };
   }
@@ -906,7 +908,7 @@ public class TestXdsClientImpl
       doNothing().when(_xdsClientImpl).startRpcStreamLocal();
       doNothing().when(_xdsClientImpl).sendAckOrNack(any(), any(), any());
 
-      doNothing().when(_adsStream).sendDiscoveryRequestWithIRV(_resourceTypesArgumentCaptor.capture(),
+      doNothing().when(_adsStream).sendDiscoveryRequest(_resourceTypesArgumentCaptor.capture(),
           _resourceNamesArgumentCaptor.capture(),
           _resourceVersionsArgumentCaptor.capture());
 

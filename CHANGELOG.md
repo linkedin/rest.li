@@ -13,8 +13,6 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
-## [29.65.7] - 2025-04-08
-- Add initial_resource_version support in XDSClient
 
 ## [29.66.0] - 2025-04-21
 - Add options for connection jitter

@@ -85,6 +85,7 @@ public class XdsClientImpl extends XdsClient
   /**
    * The resource version maps the resource type to the resource name and its version.
    * Note that all the subscribed resources & it's version would be present in this map.
+   * Resource type in this map is adjust type for glob collection.
    */
   private final Map<ResourceType, Map<String, String>> _resourceVersions = Maps.newEnumMap(
       Stream.of(ResourceType.values()).collect(Collectors.toMap(Function.identity(), e -> new HashMap<>())));
@@ -203,7 +204,7 @@ public class XdsClientImpl extends XdsClient
         }
         if (_adsStream != null)
         {
-          _adsStream.sendDiscoveryRequest(adjustedType, Collections.singletonList(adjustedResourceName));
+          _adsStream.sendDiscoveryRequest(adjustedType, Collections.singletonList(adjustedResourceName), Collections.emptyMap());
         }
       }
       subscriber.addWatcher(watcher);
@@ -231,7 +232,7 @@ public class XdsClientImpl extends XdsClient
         }
         if (_adsStream != null)
         {
-          _adsStream.sendDiscoveryRequest(adjustedType, Collections.singletonList("*"));
+          _adsStream.sendDiscoveryRequest(adjustedType, Collections.singletonList("*"), Collections.emptyMap());
         }
       }
 
@@ -387,10 +388,13 @@ public class XdsClientImpl extends XdsClient
     notifyOnLastChunk(response);
   }
 
+  /**
+   * Updates the resource versions map with the latest version of the resources received in the response.
+   * This is used to send the initial_resource_version to the server when the client re-connect.
+   */
   private void updateResourceVersions(DiscoveryResponseData response)
   {
     ResourceType resourceType = response.getResourceType();
-    // capturing the received resource versions, which will be used to set IRV for re-connect scenarios.
     Map<String, String> resourceVersions = getResourceVersions().get(resourceType);
     for (Resource res : response.getResourcesList())
     {
@@ -1129,7 +1133,7 @@ public class XdsClientImpl extends XdsClient
         }
 
         Map<String, String> irv = isIRVEnabled() ? getResourceVersions().get(adjustedType) : Collections.emptyMap();
-        _adsStream.sendDiscoveryRequestWithIRV(adjustedType, resources, irv);
+        _adsStream.sendDiscoveryRequest(adjustedType, resources, irv);
       }
     }
 
@@ -1144,14 +1148,7 @@ public class XdsClientImpl extends XdsClient
     private final Node _node;
     private final ResourceType _resourceType;
     private final Collection<String> _resourceNames;
-    private Map<String, String> _initialResourceVersions = new HashMap<>();
-
-    DiscoveryRequestData(Node node, ResourceType resourceType, Collection<String> resourceNames)
-    {
-      _node = node;
-      _resourceType = resourceType;
-      _resourceNames = resourceNames;
-    }
+    private Map<String, String> _initialResourceVersions;
 
     DiscoveryRequestData(Node node, ResourceType resourceType, Collection<String> resourceNames, Map<String, String> irv)
     {
@@ -1169,8 +1166,9 @@ public class XdsClientImpl extends XdsClient
           .setTypeUrl(_resourceType.typeUrl());
 
       // initial resource versions are only set when client is re-connected to the server.
-      if (!_initialResourceVersions.isEmpty())
+      if (_initialResourceVersions != null && !_initialResourceVersions.isEmpty())
       {
+        _log.debug("setting up IRV version in request, initialResourceVersions: {}", _initialResourceVersions);
         builder.putAllInitialResourceVersions(_initialResourceVersions);
       }
       return builder.build();
@@ -1387,19 +1385,9 @@ public class XdsClientImpl extends XdsClient
      * Sends a client-initiated discovery request.
      */
     @VisibleForTesting
-    void sendDiscoveryRequest(ResourceType type, Collection<String> resources)
+    void sendDiscoveryRequest(ResourceType type, Collection<String> resources, Map<String, String> resourceVersions)
     {
-      _log.info("Sending {} request for resources: {}", type, resources);
-      DeltaDiscoveryRequest request = new DiscoveryRequestData(_node, type, resources).toEnvoyProto();
-      _requestWriter.onNext(request);
-      _log.debug("Sent DiscoveryRequest\n{}", request);
-    }
-
-    void sendDiscoveryRequestWithIRV(ResourceType type,
-        Collection<String> resources,
-        Map<String, String> resourceVersions)
-    {
-      _log.info("Sending {} request with IRV for resources: {}, resourceVersions size: {}",
+      _log.info("Sending {} request for resources: {}, resourceVersions size: {}",
           type, resources, resourceVersions.size());
       DeltaDiscoveryRequest request = new DiscoveryRequestData(_node, type, resources, resourceVersions).toEnvoyProto();
       _requestWriter.onNext(request);
