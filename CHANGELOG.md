@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add options for connection jitter
 
 ## [29.65.7] - 2025-04-11
 - Fix invalid Content-Type for multipart/mixed query tunneled requests
