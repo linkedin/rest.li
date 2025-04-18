@@ -194,6 +194,17 @@ public class ClusterPropertiesSerializerTest
         new ClusterStoreProperties(property, null, null));
   }
 
+  @Test
+  public void testConnectionOptions() throws PropertySerializationException {
+    ClusterPropertiesJsonSerializer jsonSerializer = new ClusterPropertiesJsonSerializer();
+    ConnectionOptions connectionOptions = new ConnectionOptions(10, 0.5f);
+    ClusterProperties property = new ClusterProperties("test", new ArrayList<>(), new HashMap<>(), new HashSet<>(),
+        NullPartitionProperties.getInstance(), Arrays.asList("principal1", "principal2"), null, false,
+        ClusterProperties.DEFAULT_VERSION, null, connectionOptions);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)),
+        new ClusterStoreProperties(property, null, null));
+  }
+
   @DataProvider(name = "distributionStrategies")
   public Object[][] getDistributionStrategies() {
     Map<String, Object> percentageProperties = new HashMap<>();

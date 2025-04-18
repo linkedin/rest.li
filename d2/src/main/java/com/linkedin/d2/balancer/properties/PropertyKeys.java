@@ -144,6 +144,9 @@ public class PropertyKeys
   public static final String CLUSTER_NAME = "clusterName";
   public static final String PARTITION_PROPERTIES = "partitionProperties";
   public static final String SLOW_START_PROPERTIES = "slowStartProperties";
+  public static final String CONNECTION_OPTIONS = "connectionOptions";
+  public static final String CONNECTION_JITTER_SECONDS = "connectionJitterSeconds";
+  public static final String MAX_DELAYED_CONNECTION_RATIO = "maxDelayedConnectionRatio";
   public static final String SLOW_START_DISABLED = "disabled";
   public static final String SLOW_START_AGGRESSION = "aggression";
   public static final String SLOW_START_WINDOW_DURATION = "windowDurationSeconds";

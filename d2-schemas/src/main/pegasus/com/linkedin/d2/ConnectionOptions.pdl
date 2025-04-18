@@ -1,0 +1,24 @@
+namespace com.linkedin.d2
+
+/**
+ * Options for configuring the connection pool. Only used by gRPC clients.
+ */
+record ConnectionOptions {
+  /**
+   * Amount of jitter to apply when establishing a new connection. When a new host is added to the pool, the client will
+   * wait a random amount of time between 0 and this value before attempting to connect to the host. This is done to
+   * prevent a thundering herd problem when a large number of clients are trying to connect to the same host at the
+   * same time. A value of 0 disables connection jitter.
+   */
+  connectionJitterSeconds: int
+
+  /**
+   * Controls the maximum number of connections that can be delayed by connection jitter before the client will start
+   * immediately establishing connections. This value represents a ratio between the number of delayed connections and
+   * the total number of connections. For example, if this value is set to 0.2, the client will start immediately
+   * establishing connections when 20% of the connections are delayed by connection jitter. Connections are established
+   * by random selection from the delayed connections. Value must be between 0 and 1.0. Only applies if
+   * connectionJitterSeconds is enabled.
+   */
+  maxDelayedConnectionRatio: float
+}

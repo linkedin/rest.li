@@ -23,6 +23,7 @@ import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import com.linkedin.d2.discovery.PropertySerializer;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.linkedin.d2.balancer.properties.util.PropertyUtil.mapGet;
+import static com.linkedin.d2.balancer.properties.util.PropertyUtil.*;
 
 
 /**
@@ -240,11 +241,26 @@ public class ClusterPropertiesJsonSerializer implements
       slowStartProperties = new SlowStartProperties(disabled, windowDurationSeconds, aggression, minWeightPercent);
     }
 
+    ConnectionOptions connectionOptions = getConnectionOptions(map);
+
     boolean delegated = false;
     if (map.containsKey(PropertyKeys.DELEGATED)) {
       delegated = mapGet(map, PropertyKeys.DELEGATED);
     }
     return new ClusterProperties(clusterName, prioritizedSchemes, properties, banned, partitionProperties, validationList,
-        darkClusterProperty, delegated, ClusterProperties.DEFAULT_VERSION, slowStartProperties);
+        darkClusterProperty, delegated, ClusterProperties.DEFAULT_VERSION, slowStartProperties, connectionOptions);
+  }
+
+  private ConnectionOptions getConnectionOptions(Map<String, Object> map)
+  {
+    Map<String, Object> connectionOptionsMap = mapGet(map, PropertyKeys.CONNECTION_OPTIONS);
+    if (connectionOptionsMap == null) {
+      return null;
+    }
+    int connectionJitterSeconds = PropertyUtil.checkAndGetValue(connectionOptionsMap, PropertyKeys.CONNECTION_JITTER_SECONDS,
+        Number.class, PropertyKeys.CONNECTION_OPTIONS).intValue();
+    float maxDelayedConnectionRatio = PropertyUtil.checkAndGetValue(connectionOptionsMap, PropertyKeys.MAX_DELAYED_CONNECTION_RATIO,
+        Number.class, PropertyKeys.CONNECTION_OPTIONS).floatValue();
+    return new ConnectionOptions(connectionJitterSeconds, maxDelayedConnectionRatio);
   }
 }

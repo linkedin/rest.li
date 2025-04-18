@@ -44,4 +44,9 @@ record D2Cluster includes D2ChangeTimeStamps {
    * D2 slow start properties. Currently used by clients of gRPC clusters.
    */
   slowStartProperties: optional SlowStartProperties
+
+  /**
+   * Options for configuring the connection pool. Only used by gRPC clients.
+   */
+  connectionOptions: optional ConnectionOptions
 }
