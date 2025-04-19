@@ -60,19 +60,6 @@ import org.apache.avro.util.Utf8;
 public class DataTranslator implements DataTranslatorContext
 {
   protected DataTranslationOptions _dataTranslationOptions;
-
-  public static void backFillMissingDeafultInDataMap(DataMap map, RecordDataSchema dataSchema) {
-    for (RecordDataSchema.Field field: dataSchema.getFields()) {
-      DataSchema fieldType = field.getType();
-      if ( fieldType.getDereferencedType() != DataSchema.Type.ARRAY && fieldType.getDereferencedType() != DataSchema.Type.MAP) {
-        continue;
-      }
-      if (field.getDefault() != null && (!map.containsKey(field.getName()) || map.get(field.getName()) == null)) {
-        map.put(field.getName(), field.getDefault());
-      }
-    }
-  }
-
   /**
    * Convert the given {@link DataMap} conforming to the provided {@link RecordDataSchema} to a {@link GenericRecord}.
    *
@@ -86,7 +73,6 @@ public class DataTranslator implements DataTranslatorContext
    */
   public static GenericRecord dataMapToGenericRecord(DataMap map, RecordDataSchema dataSchema) throws DataTranslationException
   {
-    backFillMissingDeafultInDataMap(map, dataSchema);
     Schema avroSchema = SchemaTranslator.dataToAvroSchema(dataSchema);
     return dataMapToGenericRecord(map, dataSchema, avroSchema, null);
   }
@@ -107,7 +93,6 @@ public class DataTranslator implements DataTranslatorContext
                                                      DataMapToAvroRecordTranslationOptions options)
       throws DataTranslationException
   {
-    backFillMissingDeafultInDataMap(map, dataSchema);
     Schema avroSchema = SchemaTranslator.dataToAvroSchema(dataSchema);
     return dataMapToGenericRecord(map, dataSchema, avroSchema, options);
   }
@@ -116,7 +101,6 @@ public class DataTranslator implements DataTranslatorContext
                                                      DataMapToAvroRecordTranslationOptions options)
       throws DataTranslationException
   {
-    backFillMissingDeafultInDataMap(map, dataSchema);
     DataMapToGenericRecordTranslator translator = new DataMapToGenericRecordTranslator(options);
     try
     {
@@ -131,7 +115,6 @@ public class DataTranslator implements DataTranslatorContext
 
   public static <T extends SpecificRecordBase> T dataMapToSpecificRecord(DataMap map, RecordDataSchema dataSchema,
       Schema avroSchema) throws DataTranslationException {
-    backFillMissingDeafultInDataMap(map, dataSchema);
     DataMapToSpecificRecordTranslator translator = new DataMapToSpecificRecordTranslator();
     try {
       T avroRecord = translator.translate(map, dataSchema, avroSchema);
@@ -161,7 +144,6 @@ public class DataTranslator implements DataTranslatorContext
    */
   public static GenericRecord dataMapToGenericRecord(DataMap map, RecordDataSchema dataSchema, Schema avroSchema) throws DataTranslationException
   {
-    backFillMissingDeafultInDataMap(map, dataSchema);
     return dataMapToGenericRecord(map, dataSchema, avroSchema, null);
   }
 

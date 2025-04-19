@@ -2299,42 +2299,6 @@ public class TestDataTranslator
   }
 
   @Test
-  public void testDataMapBackfill() throws IOException {
-    final String SCHEMA =
-        "{" +
-            "   \"type\":\"record\"," +
-            "   \"name\":\"Foo\"," +
-            "   \"fields\":[" +
-            "      {" +
-            "         \"name\":\"arrayField\"," +
-            "         \"type\":{" +
-            "            \"type\":\"array\"," +
-            "            \"items\":\"string\"" +
-            "         }," +
-            "         \"default\":[ ]" +
-            "      }" +
-            "   ]" +
-            "}";
-    RecordDataSchema recordDataSchema =
-        (RecordDataSchema) TestUtil.dataSchemaFromString(SCHEMA);
-    DataMap map = new DataMap();
-    GenericRecord record = DataTranslator.dataMapToGenericRecord(map, recordDataSchema);
-    Assert.assertEquals(record.get("arrayField"), map.get("arrayField"));
-  }
-
-  static RecordDataSchema getPegasusSchema(Class<? extends RecordTemplate> pegasusSchemaClass) {
-    try {
-      return pegasusSchemaClass.newInstance().schema();
-    } catch (InstantiationException e) {
-      throw new IllegalStateException(
-          "Failed to instantiate pegasus schema object for class: " + pegasusSchemaClass.getName());
-    } catch (IllegalAccessException e) {
-      throw new IllegalStateException("Failed to get pegasus schema for class: " + pegasusSchemaClass.getName());
-    }
-  }
-
-
-  @Test
   public void testEmoji() throws IOException {
     String schemaText = "{\n" +
         "  \"type\" : \"record\",\n" +
