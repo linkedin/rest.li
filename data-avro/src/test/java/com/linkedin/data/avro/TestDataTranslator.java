@@ -40,6 +40,7 @@ import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
+import com.linkedin.data.template.RecordTemplate;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -2319,6 +2320,50 @@ public class TestDataTranslator
     DataMap map = new DataMap();
     GenericRecord record = DataTranslator.dataMapToGenericRecord(map, recordDataSchema);
     Assert.assertEquals(record.get("arrayField"), map.get("arrayField"));
+  }
+
+  static RecordDataSchema getPegasusSchema(Class<? extends RecordTemplate> pegasusSchemaClass) {
+    try {
+      return pegasusSchemaClass.newInstance().schema();
+    } catch (InstantiationException e) {
+      throw new IllegalStateException(
+          "Failed to instantiate pegasus schema object for class: " + pegasusSchemaClass.getName());
+    } catch (IllegalAccessException e) {
+      throw new IllegalStateException("Failed to get pegasus schema for class: " + pegasusSchemaClass.getName());
+    }
+  }
+
+
+  @Test
+  public void testEmoji() throws IOException {
+    String schemaText = "{\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"fields\" : [\n" +
+        "    { \"name\" : \"a\", \"type\" : { \"type\" : \"record\", \"name\" : \"FooFoo\", \"fields\" : [ { \"name\" : \"b\", \"type\" : \"string\" } ] }, \"optional\": true }\n" +
+        "  ]\n" +
+        "}\n";
+
+    RecordDataSchema recordDataSchema = (RecordDataSchema) TestUtil.dataSchemaFromString(schemaText);
+    String avroSchemaText = "{\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"fields\" : [\n" +
+        "    { \"name\" : \"a\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"FooFoo\", \"fields\" : [ { \"name\" : \"b\", \"type\" : \"string\" } ] } ] }\n" +
+        "  ]\n" +
+        "}\n";
+
+    Schema avroSchema = Schema.parse(avroSchemaText);
+
+    GenericRecord avroRecord = AvroUtil.genericRecordFromJson(TestAvroUtil.namespaceProcessor("{ \"a\" : { \"FooFoo\": { \"b\" : \"❤\" } } }"), avroSchema);
+    System.out.println(avroRecord);
+    DataMap pegasusDataMap = DataTranslator.genericRecordToDataMap(avroRecord, recordDataSchema, avroSchema);
+    System.out.println(pegasusDataMap);
+    DataMap innerMap = new DataMap();
+    innerMap.put("b", "❤");
+    DataMap expectedMap = new DataMap();
+    expectedMap.put("a", innerMap);
+    assertEquals(pegasusDataMap, expectedMap);
   }
 }
 
