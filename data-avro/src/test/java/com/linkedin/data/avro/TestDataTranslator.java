@@ -2320,9 +2320,9 @@ public class TestDataTranslator
     Schema avroSchema = Schema.parse(avroSchemaText);
 
     GenericRecord avroRecord = AvroUtil.genericRecordFromJson(TestAvroUtil.namespaceProcessor("{ \"a\" : { \"FooFoo\": { \"b\" : \"❤\" } } }"), avroSchema);
-    System.out.println(avroRecord);
+    System.out.println("Original avro record = "+avroRecord);
     DataMap pegasusDataMap = DataTranslator.genericRecordToDataMap(avroRecord, recordDataSchema, avroSchema);
-    System.out.println(pegasusDataMap);
+    System.out.println("Avro record to data map = "+pegasusDataMap);
     DataMap innerMap = new DataMap();
     innerMap.put("b", "❤");
     DataMap expectedMap = new DataMap();
