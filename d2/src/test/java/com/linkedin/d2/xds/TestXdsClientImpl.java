@@ -773,6 +773,16 @@ public class TestXdsClientImpl
   }
 
   @Test
+  public void testUpdateResourceVersions()
+  {
+    XdsClientImplFixture fixture = new XdsClientImplFixture();
+    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA1);
+
+    Assert.assertTrue(fixture._resourceVersions.get(NODE).containsKey(SERVICE_RESOURCE_NAME)
+        && fixture._resourceVersions.get(NODE).get(SERVICE_RESOURCE_NAME).equals(VERSION1));
+  }
+
+  @Test
   public void testWatchD2Uri()
   {
     XdsClientImplFixture fixture = new XdsClientImplFixture();

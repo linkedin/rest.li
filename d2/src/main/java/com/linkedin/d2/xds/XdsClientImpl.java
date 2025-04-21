@@ -1132,14 +1132,9 @@ public class XdsClientImpl extends XdsClient
           continue;
         }
 
-        Map<String, String> irv = isIRVEnabled() ? getResourceVersions().get(adjustedType) : Collections.emptyMap();
+        Map<String, String> irv = _initialResourceVersionsEnabled ? getResourceVersions().get(adjustedType) : Collections.emptyMap();
         _adsStream.sendDiscoveryRequest(adjustedType, resources, irv);
       }
-    }
-
-    private boolean isIRVEnabled()
-    {
-      return _initialResourceVersionsEnabled;
     }
   }
 
