@@ -1132,7 +1132,8 @@ public class XdsClientImpl extends XdsClient
           continue;
         }
 
-        Map<String, String> irv = _initialResourceVersionsEnabled ? getResourceVersions().get(adjustedType) : Collections.emptyMap();
+        Map<String, String> irv = _initialResourceVersionsEnabled
+            ? getResourceVersions().get(adjustedType) : Collections.emptyMap();
         _adsStream.sendDiscoveryRequest(adjustedType, resources, irv);
       }
     }
@@ -1173,7 +1174,7 @@ public class XdsClientImpl extends XdsClient
     public String toString()
     {
       return "DiscoveryRequestData{" + "_node=" + _node + ", _resourceType=" + _resourceType + ", _resourceNames="
-          + _resourceNames + ", _initialResourceVersions=" + _initialResourceVersions.entrySet() + '}';
+          + _resourceNames + ", _initialResourceVersions=" + _initialResourceVersions + '}';
     }
   }
 
