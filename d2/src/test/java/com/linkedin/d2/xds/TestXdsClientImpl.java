@@ -780,6 +780,12 @@ public class TestXdsClientImpl
 
     Assert.assertTrue(fixture._resourceVersions.get(NODE).containsKey(SERVICE_RESOURCE_NAME)
         && fixture._resourceVersions.get(NODE).get(SERVICE_RESOURCE_NAME).equals(VERSION1));
+
+    // validate resource removal
+    DiscoveryResponseData removeServiceResponse =
+        new DiscoveryResponseData(NODE, null, Collections.singletonList(SERVICE_RESOURCE_NAME), NONCE, null);
+    fixture._xdsClientImpl.handleResponse(removeServiceResponse);
+    Assert.assertFalse(fixture._resourceVersions.get(NODE).containsKey(SERVICE_RESOURCE_NAME));
   }
 
   @Test
