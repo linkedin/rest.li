@@ -60,6 +60,7 @@ public class TestXdsClientImpl
   private static final String URI2 = "TestURI2";
   private static final String VERSION1 = "1";
   private static final String VERSION2 = "2";
+  private static final String VERSION3 = "3";
   private static final String NONCE = "nonce";
   private static final XdsD2.Node NODE_WITH_DATA = XdsD2.Node.newBuilder().setData(ByteString.copyFrom(DATA)).build();
   private static final XdsD2.Node NODE_WITH_DATA2 = XdsD2.Node.newBuilder().setData(ByteString.copyFrom(DATA2)).build();
@@ -775,13 +776,44 @@ public class TestXdsClientImpl
   @Test
   public void testUpdateResourceVersions()
   {
+    // validate resource version update
     XdsClientImplFixture fixture = new XdsClientImplFixture();
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA1);
-
     Assert.assertTrue(fixture._resourceVersions.get(NODE).containsKey(SERVICE_RESOURCE_NAME)
         && fixture._resourceVersions.get(NODE).get(SERVICE_RESOURCE_NAME).equals(VERSION1));
 
-    // validate resource removal
+    // validate, node with null resource fields in response, updates the resource version coming in response.
+    DiscoveryResponseData responseWithoutResource =
+        new DiscoveryResponseData(
+            NODE,
+            Collections.singletonList(Resource.newBuilder().setVersion(VERSION3).setName(SERVICE_RESOURCE_NAME)
+                // not set resource field
+                .build()),
+            null,
+            NONCE,
+            null);
+
+    fixture._xdsClientImpl.handleResponse(responseWithoutResource);
+    Assert.assertTrue(fixture._resourceVersions.get(NODE).containsKey(SERVICE_RESOURCE_NAME)
+        && fixture._resourceVersions.get(NODE).get(SERVICE_RESOURCE_NAME).equals(VERSION3));
+
+    // validate, node with empty resources in response, updates the resource version coming in response.
+    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_NULL_DATA_IN_RESOURCE_FIELD);
+    Assert.assertTrue(fixture._resourceVersions.get(NODE).containsKey(SERVICE_RESOURCE_NAME)
+        && fixture._resourceVersions.get(NODE).get(SERVICE_RESOURCE_NAME).equals(VERSION1));
+
+    // validate that empty node response, does not change the resource version
+    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_WITH_EMPTY_NODE_RESPONSE);
+    Assert.assertTrue(fixture._resourceVersions.get(NODE).containsKey(SERVICE_RESOURCE_NAME)
+        && fixture._resourceVersions.get(NODE).get(SERVICE_RESOURCE_NAME).equals(VERSION1));
+
+
+    // validate SERVICE_RESOURCE_NAME version updates in resource version map
+    fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA2);
+    Assert.assertTrue(fixture._resourceVersions.get(NODE).containsKey(SERVICE_RESOURCE_NAME)
+        && fixture._resourceVersions.get(NODE).get(SERVICE_RESOURCE_NAME).equals(VERSION2));
+
+    // validate that removed resources in response, removed the resource version from the map
     DiscoveryResponseData removeServiceResponse =
         new DiscoveryResponseData(NODE, null, Collections.singletonList(SERVICE_RESOURCE_NAME), NONCE, null);
     fixture._xdsClientImpl.handleResponse(removeServiceResponse);
@@ -938,15 +970,14 @@ public class TestXdsClientImpl
     {
       _resourceVersions.computeIfAbsent(NODE, k -> new HashMap<>()).put(SERVICE_RESOURCE_NAME, VERSION1);
       _resourceVersions.computeIfAbsent(D2_CLUSTER_OR_SERVICE_NAME, k -> new HashMap<>()).put(CLUSTER_NAME, VERSION1);
+      _resourceVersions.computeIfAbsent(D2_URI, k -> new HashMap<>()).put(URI_URN1, VERSION1);
       if (useGlobCollections)
       {
         _resourceVersions.computeIfAbsent(D2_URI, k -> new HashMap<>()).put(CLUSTER_RESOURCE_NAME, VERSION1);
-        _resourceVersions.computeIfAbsent(D2_URI, k -> new HashMap<>()).put(URI_URN1, VERSION1);
       }
       else
       {
         _resourceVersions.computeIfAbsent(D2_URI_MAP, k -> new HashMap<>()).put(CLUSTER_RESOURCE_NAME, VERSION1);
-        _resourceVersions.computeIfAbsent(D2_URI, k -> new HashMap<>()).put(URI_URN1, VERSION1);
       }
     }
 
