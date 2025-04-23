@@ -65,6 +65,7 @@ public class ClusterProperties
   private final boolean              _delegated;
   private long               _version;
   private final SlowStartProperties _slowStartProperties;
+  private final ConnectionOptions _connectionOptions;
 
   public ClusterProperties(String clusterName)
   {
@@ -185,6 +186,21 @@ public class ClusterProperties
       boolean delegated,
       long version,
       @Nullable SlowStartProperties slowStartProperties) {
+    this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings,
+        darkClusters, delegated, version, slowStartProperties, null);
+  }
+
+  public ClusterProperties(String clusterName,
+      List<String> prioritizedSchemes,
+      Map<String, String> properties,
+      Set<URI> bannedUris,
+      PartitionProperties partitionProperties,
+      List<String> sslSessionValidationStrings,
+      Map<String, Object> darkClusters,
+      boolean delegated,
+      long version,
+      @Nullable SlowStartProperties slowStartProperties,
+      @Nullable ConnectionOptions connectionOptions) {
     _clusterName = clusterName;
     _prioritizedSchemes =
         (prioritizedSchemes != null) ? Collections.unmodifiableList(prioritizedSchemes)
@@ -198,6 +214,7 @@ public class ClusterProperties
     _delegated = delegated;
     _version = version;
     _slowStartProperties = slowStartProperties;
+    _connectionOptions = connectionOptions;
   }
 
 
@@ -205,7 +222,7 @@ public class ClusterProperties
   {
     this(other._clusterName, other._prioritizedSchemes, other._properties, other._bannedUris, other._partitionProperties,
         other._sslSessionValidationStrings, other._darkClusters, other._delegated, other._version,
-        other._slowStartProperties);
+        other._slowStartProperties, other._connectionOptions);
   }
 
   public boolean isBanned(URI uri)
@@ -275,6 +292,12 @@ public class ClusterProperties
     return _slowStartProperties;
   }
 
+  @Nullable
+  public ConnectionOptions getConnectionOptions()
+  {
+    return _connectionOptions;
+  }
+
   @Override
   public String toString()
   {
@@ -282,7 +305,7 @@ public class ClusterProperties
         + _prioritizedSchemes + ", _properties=" + _properties + ", _bannedUris=" + _bannedUris
         + ", _partitionProperties=" + _partitionProperties + ", _sslSessionValidationStrings=" + _sslSessionValidationStrings
         + ", _darkClusterConfigMap=" + _darkClusters + ", _delegated=" + _delegated + ", _slowStartProperties="
-        + _slowStartProperties + "]";
+        + _slowStartProperties + ", _connectionOptions=" + _connectionOptions + "]";
   }
 
   @Override
@@ -301,6 +324,7 @@ public class ClusterProperties
     result = prime * result + ((_darkClusters == null) ? 0 : _darkClusters.hashCode());
     result = prime * result + ((_delegated) ? 1 : 0);
     result = prime * result + ((_slowStartProperties == null) ? 0 : _slowStartProperties.hashCode());
+    result = prime * result + ((_connectionOptions == null) ? 0 : _connectionOptions.hashCode());
     return result;
   }
 
@@ -349,6 +373,10 @@ public class ClusterProperties
       return false;
     }
     if (!Objects.equals(_slowStartProperties, other._slowStartProperties))
+    {
+      return false;
+    }
+    if (!Objects.equals(_connectionOptions, other._connectionOptions))
     {
       return false;
     }

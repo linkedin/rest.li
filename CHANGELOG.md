@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.66.0] - 2025-04-21
+- Add options for connection jitter
+
 ## [29.65.7] - 2025-04-11
 - Fix invalid Content-Type for multipart/mixed query tunneled requests
 
@@ -5798,7 +5801,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.65.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.66.0...master
+[29.66.0]: https://github.com/linkedin/rest.li/compare/v29.65.7...v29.66.0
 [29.65.7]: https://github.com/linkedin/rest.li/compare/v29.65.6...v29.65.7
 [29.65.6]: https://github.com/linkedin/rest.li/compare/v29.65.5...v29.65.6
 [29.65.5]: https://github.com/linkedin/rest.li/compare/v29.65.4...v29.65.5

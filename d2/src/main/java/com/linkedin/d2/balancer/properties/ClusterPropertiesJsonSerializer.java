@@ -18,7 +18,6 @@ package com.linkedin.d2.balancer.properties;
 
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
-import com.linkedin.d2.balancer.properties.util.PropertyUtil;
 import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.discovery.PropertyBuilder;
 import com.linkedin.d2.discovery.PropertySerializationException;
@@ -34,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.linkedin.d2.balancer.properties.util.PropertyUtil.mapGet;
+import static com.linkedin.d2.balancer.properties.util.PropertyUtil.*;
 
 
 /**
@@ -160,7 +159,7 @@ public class ClusterPropertiesJsonSerializer implements
     Set<URI> banned = (bannedList == null) ? Collections.emptySet()
         : bannedList.stream().map(URI::create).collect(Collectors.toSet());
 
-    String clusterName = PropertyUtil.checkAndGetValue(map, PropertyKeys.CLUSTER_NAME, String.class, "ClusterProperties");
+    String clusterName = checkAndGetValue(map, PropertyKeys.CLUSTER_NAME, String.class, "ClusterProperties");
     List<String> prioritizedSchemes = mapGet(map, PropertyKeys.PRIORITIZED_SCHEMES);
     Map<String, String> properties = mapGet(map, "properties");
     Map<String, Object> partitionPropertiesMap = mapGet(map, PropertyKeys.PARTITION_PROPERTIES);
@@ -170,19 +169,19 @@ public class ClusterPropertiesJsonSerializer implements
     if (partitionPropertiesMap != null)
     {
       PartitionProperties.PartitionType partitionType =
-          PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_TYPE, PartitionProperties.PartitionType.class, scope);
+          checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_TYPE, PartitionProperties.PartitionType.class, scope);
       switch (partitionType)
       {
         case RANGE:
         {
           long keyRangeStart =
-              PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.KEY_RANGE_START, Number.class, scope).longValue();
+              checkAndGetValue(partitionPropertiesMap, PropertyKeys.KEY_RANGE_START, Number.class, scope).longValue();
           long partitionSize =
-              PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_SIZE, Number.class, scope).longValue();
+              checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_SIZE, Number.class, scope).longValue();
           int partitionCount =
-              PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_COUNT, Number.class, scope).intValue();
+              checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_COUNT, Number.class, scope).intValue();
           String partitionKeyRegex =
-              PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_KEY_REGEX, String.class, scope);
+              checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_KEY_REGEX, String.class, scope);
           partitionProperties =
               new RangeBasedPartitionProperties(partitionKeyRegex, keyRangeStart, partitionSize, partitionCount);
 
@@ -191,11 +190,11 @@ public class ClusterPropertiesJsonSerializer implements
         case HASH:
         {
           int partitionCount =
-              PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_COUNT, Number.class, scope).intValue();
+              checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_COUNT, Number.class, scope).intValue();
           String partitionKeyRegex =
-              PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_KEY_REGEX, String.class, scope);
+              checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_KEY_REGEX, String.class, scope);
           HashBasedPartitionProperties.HashAlgorithm algorithm =
-              PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.HASH_ALGORITHM, HashBasedPartitionProperties.HashAlgorithm.class, scope);
+              checkAndGetValue(partitionPropertiesMap, PropertyKeys.HASH_ALGORITHM, HashBasedPartitionProperties.HashAlgorithm.class, scope);
           partitionProperties =
               new HashBasedPartitionProperties(partitionKeyRegex, partitionCount, algorithm);
           break;
@@ -203,12 +202,12 @@ public class ClusterPropertiesJsonSerializer implements
         case CUSTOM:
         {
           int partitionCount = partitionPropertiesMap.containsKey(PropertyKeys.PARTITION_COUNT)
-              ? PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_COUNT, Number.class, scope).intValue()
+              ? checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_COUNT, Number.class, scope).intValue()
               : 0;
 
           @SuppressWarnings("unchecked")
           List<String> partitionAccessorList =partitionPropertiesMap.containsKey(PropertyKeys.PARTITION_ACCESSOR_LIST)
-              ? PropertyUtil.checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_ACCESSOR_LIST, List.class, scope)
+              ? checkAndGetValue(partitionPropertiesMap, PropertyKeys.PARTITION_ACCESSOR_LIST, List.class, scope)
               : Collections.emptyList();
           partitionProperties = new CustomizedPartitionProperties(partitionCount, partitionAccessorList);
           break;
@@ -240,11 +239,26 @@ public class ClusterPropertiesJsonSerializer implements
       slowStartProperties = new SlowStartProperties(disabled, windowDurationSeconds, aggression, minWeightPercent);
     }
 
+    ConnectionOptions connectionOptions = getConnectionOptions(map);
+
     boolean delegated = false;
     if (map.containsKey(PropertyKeys.DELEGATED)) {
       delegated = mapGet(map, PropertyKeys.DELEGATED);
     }
     return new ClusterProperties(clusterName, prioritizedSchemes, properties, banned, partitionProperties, validationList,
-        darkClusterProperty, delegated, ClusterProperties.DEFAULT_VERSION, slowStartProperties);
+        darkClusterProperty, delegated, ClusterProperties.DEFAULT_VERSION, slowStartProperties, connectionOptions);
+  }
+
+  private ConnectionOptions getConnectionOptions(Map<String, Object> map)
+  {
+    Map<String, Object> connectionOptionsMap = mapGet(map, PropertyKeys.CONNECTION_OPTIONS);
+    if (connectionOptionsMap == null) {
+      return null;
+    }
+    int connectionJitterSeconds = checkAndGetValue(connectionOptionsMap, PropertyKeys.CONNECTION_JITTER_SECONDS,
+        Number.class, PropertyKeys.CONNECTION_OPTIONS).intValue();
+    float maxDelayedConnectionRatio = checkAndGetValue(connectionOptionsMap, PropertyKeys.MAX_DELAYED_CONNECTION_RATIO,
+        Number.class, PropertyKeys.CONNECTION_OPTIONS).floatValue();
+    return new ConnectionOptions(connectionJitterSeconds, maxDelayedConnectionRatio);
   }
 }
