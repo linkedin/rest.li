@@ -219,7 +219,8 @@ public class D2ClientBuilder
                   _config.xdsChannelLoadBalancingPolicyConfig,
                   _config.subscribeToUriGlobCollection,
                   _config._xdsServerMetricsProvider,
-                  _config.loadBalanceStreamException
+                  _config.loadBalanceStreamException,
+                  _config.xdsInitialResourceVersionsEnabled
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -800,6 +801,12 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setLoadBalanceStreamException(boolean loadBalanceStreamException) {
     _config.loadBalanceStreamException = loadBalanceStreamException;
+    return this;
+  }
+
+  public D2ClientBuilder setXdsInitialResourceVersionsEnabled(boolean xdsIRVEnabled)
+  {
+    _config.xdsInitialResourceVersionsEnabled = xdsIRVEnabled;
     return this;
   }
 

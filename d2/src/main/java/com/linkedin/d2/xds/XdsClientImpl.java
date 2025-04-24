@@ -82,6 +82,13 @@ public class XdsClientImpl extends XdsClient
       Stream.of(ResourceType.values())
           .collect(Collectors.toMap(Function.identity(), e -> new HashMap<>())));
   private final Map<ResourceType, WildcardResourceSubscriber> _wildcardSubscribers = Maps.newEnumMap(ResourceType.class);
+  /**
+   * The resource version maps the resource type to the resource name and its version.
+   * Note that all the subscribed resources & it's version would be present in this map.
+   * Resource type in this map is adjust type for glob collection.
+   */
+  private final Map<ResourceType, Map<String, String>> _resourceVersions = Maps.newEnumMap(
+      Stream.of(ResourceType.values()).collect(Collectors.toMap(Function.identity(), e -> new HashMap<>())));
   private final Node _node;
   private final ManagedChannel _managedChannel;
   private final ScheduledExecutorService _executorService;
@@ -98,6 +105,7 @@ public class XdsClientImpl extends XdsClient
 
   private final XdsClientJmx _xdsClientJmx;
   private final XdsServerMetricsProvider _serverMetricsProvider;
+  private final boolean _initialResourceVersionsEnabled;
 
   @Deprecated
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService)
@@ -117,11 +125,33 @@ public class XdsClientImpl extends XdsClient
       long readyTimeoutMillis, boolean subscribeToUriGlobCollection)
   {
     this(node, managedChannel, executorService, readyTimeoutMillis, subscribeToUriGlobCollection,
-        new NoOpXdsServerMetricsProvider());
+        new NoOpXdsServerMetricsProvider(), false);
   }
 
-  public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService,
-      long readyTimeoutMillis, boolean subscribeToUriGlobCollection, XdsServerMetricsProvider serverMetricsProvider)
+  @Deprecated
+  public XdsClientImpl(Node node,
+      ManagedChannel managedChannel,
+      ScheduledExecutorService executorService,
+      long readyTimeoutMillis,
+      boolean subscribeToUriGlobCollection,
+      XdsServerMetricsProvider serverMetricsProvider)
+  {
+    this(node,
+        managedChannel,
+        executorService,
+        readyTimeoutMillis,
+        subscribeToUriGlobCollection,
+        serverMetricsProvider,
+        false);
+  }
+
+  public XdsClientImpl(Node node,
+      ManagedChannel managedChannel,
+      ScheduledExecutorService executorService,
+      long readyTimeoutMillis,
+      boolean subscribeToUriGlobCollection,
+      XdsServerMetricsProvider serverMetricsProvider,
+      boolean irvSupport)
   {
     _readyTimeoutMillis = readyTimeoutMillis;
     _node = node;
@@ -135,6 +165,11 @@ public class XdsClientImpl extends XdsClient
 
     _xdsClientJmx = new XdsClientJmx(serverMetricsProvider);
     _serverMetricsProvider = serverMetricsProvider == null ? new NoOpXdsServerMetricsProvider() : serverMetricsProvider;
+    _initialResourceVersionsEnabled = irvSupport;
+    if (_initialResourceVersionsEnabled)
+    {
+      _log.info("XDS initial resource versions support enabled");
+    }
   }
 
   @Override
@@ -169,7 +204,7 @@ public class XdsClientImpl extends XdsClient
         }
         if (_adsStream != null)
         {
-          _adsStream.sendDiscoveryRequest(adjustedType, Collections.singletonList(adjustedResourceName));
+          _adsStream.sendDiscoveryRequest(adjustedType, Collections.singletonList(adjustedResourceName), Collections.emptyMap());
         }
       }
       subscriber.addWatcher(watcher);
@@ -197,7 +232,7 @@ public class XdsClientImpl extends XdsClient
         }
         if (_adsStream != null)
         {
-          _adsStream.sendDiscoveryRequest(adjustedType, Collections.singletonList("*"));
+          _adsStream.sendDiscoveryRequest(adjustedType, Collections.singletonList("*"), Collections.emptyMap());
         }
       }
 
@@ -290,6 +325,7 @@ public class XdsClientImpl extends XdsClient
   /**
    * The client may be in backoff if there are RPC stream failures, and if it's waiting to establish the stream again.
    * NOTE: Must be called from the executor.
+   *
    * @return {@code true} if the client is in backoff
    */
   private boolean isInBackoff()
@@ -330,6 +366,7 @@ public class XdsClientImpl extends XdsClient
   @VisibleForTesting
   void handleResponse(DiscoveryResponseData response)
   {
+    updateResourceVersions(response);
     ResourceType resourceType = response.getResourceType();
     switch (resourceType)
     {
@@ -349,6 +386,25 @@ public class XdsClientImpl extends XdsClient
         throw new AssertionError("Missing case in enum switch: " + resourceType);
     }
     notifyOnLastChunk(response);
+  }
+
+  /**
+   * Updates the resource versions map with the latest version of the resources received in the response.
+   * This is used to send the initial_resource_version to the server when the client re-connect.
+   */
+  private void updateResourceVersions(DiscoveryResponseData response)
+  {
+    ResourceType resourceType = response.getResourceType();
+    Map<String, String> resourceVersions = getResourceVersions().get(resourceType);
+    for (Resource res : response.getResourcesList())
+    {
+      resourceVersions.put(res.getName(), res.getVersion());
+    }
+
+    for (String removedResource : response.getRemovedResources())
+    {
+      resourceVersions.remove(removedResource);
+    }
   }
 
   private void handleD2NodeResponse(DiscoveryResponseData data)
@@ -707,6 +763,12 @@ public class XdsClientImpl extends XdsClient
     return _resourceSubscribers;
   }
 
+  @VisibleForTesting
+  Map<ResourceType, Map<String, String>> getResourceVersions()
+  {
+    return _resourceVersions;
+  }
+
   WildcardResourceSubscriber getWildcardResourceSubscriber(ResourceType type)
   {
     return getWildcardResourceSubscribers().get(type);
@@ -1019,6 +1081,7 @@ public class XdsClientImpl extends XdsClient
 
   /**
    * This is a test-only method to simulate the retry task being executed. It should only be called from tests.
+   *
    * @param testStream test ads stream
    */
   @VisibleForTesting
@@ -1034,7 +1097,8 @@ public class XdsClientImpl extends XdsClient
   }
 
   // Return true if the client should subscribe to URI glob collection for the given resource type.
-  private boolean shouldSubscribeUriGlobCollection(ResourceType type) {
+  private boolean shouldSubscribeUriGlobCollection(ResourceType type)
+  {
     return _subscribeToUriGlobCollection && type == ResourceType.D2_URI_MAP;
   }
 
@@ -1044,33 +1108,33 @@ public class XdsClientImpl extends XdsClient
     public void run()
     {
       startRpcStreamLocal();
-      for (ResourceType originalType : getResourceSubscribers().keySet())
+
+      for (ResourceType originalType : ResourceType.values())
       {
         Set<String> resources = new HashSet<>(getResourceSubscriberMap(originalType).keySet());
+        boolean isGlobCollection = shouldSubscribeUriGlobCollection(originalType);
+        ResourceType adjustedType = isGlobCollection ? ResourceType.D2_URI : originalType;
+
+        if (isGlobCollection)
+        {
+          resources = resources.stream()
+              .map(GlobCollectionUtils::globCollectionUrlForClusterResource)
+              .collect(Collectors.toCollection(HashSet::new));
+        }
+
+        if (getWildcardResourceSubscribers().containsKey(originalType))
+        {
+          resources.add("*");
+        }
+
         if (resources.isEmpty())
         {
           continue;
         }
 
-        ResourceType adjustedType;
-        if (shouldSubscribeUriGlobCollection(originalType))
-        {
-          resources = resources.stream()
-              .map(GlobCollectionUtils::globCollectionUrlForClusterResource)
-              .collect(Collectors.toCollection(HashSet::new));
-          adjustedType = ResourceType.D2_URI;
-        }
-        else
-        {
-          adjustedType = originalType;
-        }
-        _adsStream.sendDiscoveryRequest(adjustedType, resources);
-      }
-
-      for (ResourceType originalType: getWildcardResourceSubscribers().keySet())
-      {
-        ResourceType adjustedType = shouldSubscribeUriGlobCollection(originalType) ? ResourceType.D2_URI : originalType;
-        _adsStream.sendDiscoveryRequest(adjustedType, Collections.singletonList("*"));
+        Map<String, String> irv = _initialResourceVersionsEnabled
+            ? getResourceVersions().get(adjustedType) : Collections.emptyMap();
+        _adsStream.sendDiscoveryRequest(adjustedType, resources, irv);
       }
     }
   }
@@ -1080,12 +1144,14 @@ public class XdsClientImpl extends XdsClient
     private final Node _node;
     private final ResourceType _resourceType;
     private final Collection<String> _resourceNames;
+    private Map<String, String> _initialResourceVersions;
 
-    DiscoveryRequestData(Node node, ResourceType resourceType, Collection<String> resourceNames)
+    DiscoveryRequestData(Node node, ResourceType resourceType, Collection<String> resourceNames, Map<String, String> irv)
     {
       _node = node;
       _resourceType = resourceType;
       _resourceNames = resourceNames;
+      _initialResourceVersions = irv;
     }
 
     DeltaDiscoveryRequest toEnvoyProto()
@@ -1095,6 +1161,12 @@ public class XdsClientImpl extends XdsClient
           .addAllResourceNamesSubscribe(_resourceNames)
           .setTypeUrl(_resourceType.typeUrl());
 
+      // initial resource versions are only set when client is re-connected to the server.
+      if (_initialResourceVersions != null && !_initialResourceVersions.isEmpty())
+      {
+        _log.debug("setting up IRV version in request, initialResourceVersions: {}", _initialResourceVersions);
+        builder.putAllInitialResourceVersions(_initialResourceVersions);
+      }
       return builder.build();
     }
 
@@ -1102,7 +1174,7 @@ public class XdsClientImpl extends XdsClient
     public String toString()
     {
       return "DiscoveryRequestData{" + "_node=" + _node + ", _resourceType=" + _resourceType + ", _resourceNames="
-          + _resourceNames + '}';
+          + _resourceNames + ", _initialResourceVersions=" + _initialResourceVersions + '}';
     }
   }
 
@@ -1309,10 +1381,11 @@ public class XdsClientImpl extends XdsClient
      * Sends a client-initiated discovery request.
      */
     @VisibleForTesting
-    void sendDiscoveryRequest(ResourceType type, Collection<String> resources)
+    void sendDiscoveryRequest(ResourceType type, Collection<String> resources, Map<String, String> resourceVersions)
     {
-      _log.info("Sending {} request for resources: {}", type, resources);
-      DeltaDiscoveryRequest request = new DiscoveryRequestData(_node, type, resources).toEnvoyProto();
+      _log.info("Sending {} request for resources: {}, resourceVersions size: {}",
+          type, resources, resourceVersions.size());
+      DeltaDiscoveryRequest request = new DiscoveryRequestData(_node, type, resources, resourceVersions).toEnvoyProto();
       _requestWriter.onNext(request);
       _log.debug("Sent DiscoveryRequest\n{}", request);
     }

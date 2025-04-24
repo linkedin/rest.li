@@ -58,7 +58,8 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
         executorService,
         xdsStreamReadyTimeout,
         config.subscribeToUriGlobCollection,
-        config._xdsServerMetricsProvider
+        config._xdsServerMetricsProvider,
+        config.xdsInitialResourceVersionsEnabled
     );
     d2ClientJmxManager.registerXdsClientJmx(xdsClient.getXdsClientJmx());
 
