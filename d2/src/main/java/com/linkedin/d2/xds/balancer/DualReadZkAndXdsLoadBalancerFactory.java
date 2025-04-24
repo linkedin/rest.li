@@ -29,7 +29,7 @@ import javax.annotation.Nonnull;
  * determine dynamically at run-time which read mode to use.
  */
 @Deprecated
-public class DualReadZkAndXdsLoadBalancerFactory implements LoadBalancerWithFacilitiesFactory
+public class DualReadZkAndXdsLoadBalancerFactory extends LoadBalancerWithFacilitiesFactory
 {
   private final LoadBalancerWithFacilitiesFactory _zkLbFactory;
   private final LoadBalancerWithFacilitiesFactory _xdsLbFactory;
@@ -45,6 +45,8 @@ public class DualReadZkAndXdsLoadBalancerFactory implements LoadBalancerWithFaci
   @Override
   public LoadBalancerWithFacilities create(D2ClientConfig config)
   {
+    _zkLbFactory.setIsLiRawD2Client(isLiRawD2Client);
+    _xdsLbFactory.setIsLiRawD2Client(isLiRawD2Client);
     return new DualReadLoadBalancer(_zkLbFactory.create(config), _xdsLbFactory.create(config), _dualReadStateManager, config.dualReadNewLbExecutor);
   }
 }

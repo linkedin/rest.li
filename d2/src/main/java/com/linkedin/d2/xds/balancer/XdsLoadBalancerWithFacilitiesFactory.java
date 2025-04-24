@@ -36,7 +36,7 @@ import org.apache.commons.lang3.ObjectUtils;
  * Implementation of {@link LoadBalancerWithFacilitiesFactory} interface, which creates
  * an instance of {@link XdsLoadBalancer}.
  */
-public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFacilitiesFactory
+public class XdsLoadBalancerWithFacilitiesFactory extends LoadBalancerWithFacilitiesFactory
 {
   @Override
   public LoadBalancerWithFacilities create(D2ClientConfig config)

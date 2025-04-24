@@ -51,7 +51,6 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.d2.jmx.XdsServerMetricsProvider;
 import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.d2.jmx.NoOpJmxManager;
-import com.linkedin.d2.xds.balancer.XdsLoadBalancerWithFacilitiesFactory;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
@@ -64,6 +63,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -220,21 +220,20 @@ public class D2ClientBuilder
                   _config.subscribeToUriGlobCollection,
                   _config._xdsServerMetricsProvider,
                   _config.loadBalanceStreamException,
-                  _config.xdsInitialResourceVersionsEnabled
+                  _config.xdsInitialResourceVersionsEnabled,
+                  _config.detectLiRawD2Client
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
       _config.lbWithFacilitiesFactory;
 
-    // Warn for non-INDIS load balancer factory usage
-    if (!(loadBalancerFactory instanceof XdsLoadBalancerWithFacilitiesFactory))
+    if (_config.detectLiRawD2Client && isLiRawD2Client())
     {
-      LOG.warn(String.format("ACTION REQUIRED: Zookeeper-based D2 Client is deprecated (except locally-deployed ZK) "
-          + "and must be migrated to INDIS. See instructions at " +
-          "https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps" +
-          "\nFailing to do so will block other apps from stopping ZK announcements and will be escalated for site-up stability. " +
-          "Use XdsLoadBalancerWithFacilitiesFactory instead of %s", loadBalancerFactory.getClass().getSimpleName()));
+      LOG.warn("ATTENTION: Using hard-coded D2ClientBuilder to create a raw LI D2 client. Always consider using the "
+          + "D2DefaultClientFactory in container. Raw D2 client will not have future features and migrations done "
+          + "automatically, requiring lots of manual toil from your team.");
+      loadBalancerFactory.setIsLiRawD2Client(true);
     }
 
     LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
@@ -301,6 +300,12 @@ public class D2ClientBuilder
       d2Client = new ExecutorShutdownAwareD2Client(d2Client, executorsToShutDown);
     }
     return d2Client;
+  }
+
+  boolean isLiRawD2Client()
+  {
+    return Objects.equals(_config.hostName, D2ClientConfig.HOST_NAME_DEFAULT)
+        || Objects.equals(_config.d2JmxManagerPrefix, D2ClientConfig.D2_JMX_MANAGER_PREFIX_DEFAULT);
   }
 
   /**

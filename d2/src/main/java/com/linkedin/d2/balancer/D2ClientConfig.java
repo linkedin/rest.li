@@ -61,7 +61,8 @@ public class D2ClientConfig
   @Deprecated
   String zkHosts = null;
   public String xdsServer = null;
-  public String hostName = null;
+  public String hostName = HOST_NAME_DEFAULT;
+  public static final String HOST_NAME_DEFAULT = null;
   /**
    * @deprecated ZK-based D2 is deprecated. Please onboard to INDIS. See instructions at
    * https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps
@@ -151,7 +152,8 @@ public class D2ClientConfig
   public ScheduledExecutorService startUpExecutorService = null;
   public ScheduledExecutorService indisStartUpExecutorService = null;
   public JmxManager jmxManager = new NoOpJmxManager();
-  public String d2JmxManagerPrefix = "UnknownPrefix";
+  public String d2JmxManagerPrefix = D2_JMX_MANAGER_PREFIX_DEFAULT;
+  public static final String D2_JMX_MANAGER_PREFIX_DEFAULT = "UnknownPrefix";
   boolean enableRelativeLoadBalancer = false;
   public DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider = null;
   public CanaryDistributionProvider canaryDistributionProvider = null;
@@ -171,6 +173,13 @@ public class D2ClientConfig
   public XdsServerMetricsProvider _xdsServerMetricsProvider = new NoOpXdsServerMetricsProvider();
   public boolean loadBalanceStreamException = false;
   public boolean xdsInitialResourceVersionsEnabled = false;
+
+  /**
+   * When this is true, D2 client builder will detect if it's used to build a raw D2 client (as opposed to using standard
+   * D2 client factory in LI container library) and set the isLiRawD2Client flag accordingly in the load balancer factory.
+   * Open Source Users can set this to false to disable this behavior.
+   */
+  public boolean detectLiRawD2Client = true;
 
   public D2ClientConfig()
   {
@@ -249,8 +258,8 @@ public class D2ClientConfig
                  boolean subscribeToUriGlobCollection,
                  XdsServerMetricsProvider xdsServerMetricsProvider,
                  boolean loadBalanceStreamException,
-                 boolean xdsInitialResourceVersionsEnabled
-      )
+                 boolean xdsInitialResourceVersionsEnabled,
+                 boolean detectLiRawD2Client)
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -326,5 +335,6 @@ public class D2ClientConfig
     this._xdsServerMetricsProvider = xdsServerMetricsProvider;
     this.loadBalanceStreamException = loadBalanceStreamException;
     this.xdsInitialResourceVersionsEnabled = xdsInitialResourceVersionsEnabled;
+    this.detectLiRawD2Client = detectLiRawD2Client;
   }
 }
