@@ -302,6 +302,12 @@ public class D2ClientBuilder
     return d2Client;
   }
 
+  /**
+   * Check if the d2 client builder is to build a LI raw D2 client. When LI container D2ClientFactory is used, it sets
+   * hostName and d2JmxManagerPrefix with LI-specific values (app name, machine name, etc) at runtime. All LI raw D2
+   * client usages are known not setting these values according to code search.
+   * @return true if this is a LI raw D2 client, false otherwise.
+   */
   boolean isLiRawD2Client()
   {
     return Objects.equals(_config.hostName, D2ClientConfig.HOST_NAME_DEFAULT)
