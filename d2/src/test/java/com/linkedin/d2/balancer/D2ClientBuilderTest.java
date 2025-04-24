@@ -22,6 +22,9 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import static org.mockito.Mockito.*;
+
+
 public class D2ClientBuilderTest
 {
 
@@ -40,10 +43,12 @@ public class D2ClientBuilderTest
   {
     D2ClientBuilder d2ClientBuilder = new D2ClientBuilder();
     d2ClientBuilder.setD2ServicePath(d2ServicePath);
-
-    d2ClientBuilder.setLoadBalancerWithFacilitiesFactory(config -> {
+    LoadBalancerWithFacilitiesFactory factory = mock(LoadBalancerWithFacilitiesFactory.class);
+    doAnswer(invocation -> {
+      D2ClientConfig config = (D2ClientConfig) invocation.getArguments()[0];
       Assert.assertEquals(config.d2ServicePath, expectedD2ServicePath);
       return Mockito.mock(LoadBalancerWithFacilities.class);
-    });
+    }).when(factory).create(any(D2ClientConfig.class));
+    d2ClientBuilder.setLoadBalancerWithFacilitiesFactory(factory);
   }
 }
