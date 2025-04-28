@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.67.1] - 2025-04-28
+- Add feature to check remove/update uris for glob collection uris.
+
 ## [29.67.0] - 2025-04-23
 - Add initial_resource_version support in XDSClient
 
@@ -5804,7 +5807,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.67.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.67.1...master
+[29.67.1]: https://github.com/linkedin/rest.li/compare/v29.67.0...v29.67.1
 [29.67.0]: https://github.com/linkedin/rest.li/compare/v29.66.0...v29.67.0
 [29.66.0]: https://github.com/linkedin/rest.li/compare/v29.65.7...v29.66.0
 [29.65.7]: https://github.com/linkedin/rest.li/compare/v29.65.6...v29.65.7
