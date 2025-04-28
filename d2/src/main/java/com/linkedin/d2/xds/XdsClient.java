@@ -335,19 +335,19 @@ public abstract class XdsClient
   public static final class D2URIMapUpdate implements ResourceUpdate
   {
     Map<String, XdsD2.D2URI> _uriMap;
-    private boolean _globCollectionEnabled;
+    private final boolean _globCollectionEnabled;
     private final Set<String> _updatedUrisName = new HashSet<>();
     private final Set<String> _removedUrisName = new HashSet<>();
 
 
     D2URIMapUpdate(Map<String, XdsD2.D2URI> uriMap)
     {
-      _uriMap = uriMap;
+      this(uriMap, false);
     }
 
     D2URIMapUpdate(Map<String, XdsD2.D2URI> uriMap, boolean globCollectionEnabled)
     {
-      this(uriMap);
+      _uriMap = uriMap;
       _globCollectionEnabled = globCollectionEnabled;
     }
 
