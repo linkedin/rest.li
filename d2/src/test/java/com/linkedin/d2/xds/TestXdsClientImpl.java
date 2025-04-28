@@ -702,7 +702,6 @@ public class TestXdsClientImpl
     D2URIMapUpdate actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
     Assert.assertEquals(actualData, D2_URI_MAP_GLOB_COLLECTION_UPDATE_WITH_DATA1);
     Assert.assertNull(fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME));
-    // Verify that the updated and removed URIs are not affected by the removal
     Assert.assertTrue(actualData.isGlobCollectionEnabled());
     Assert.assertTrue(actualData.getUpdatedUrisName().isEmpty());
     Assert.assertTrue(actualData.getRemovedUrisName().isEmpty());

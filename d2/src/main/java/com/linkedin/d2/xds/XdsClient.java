@@ -335,9 +335,9 @@ public abstract class XdsClient
   public static final class D2URIMapUpdate implements ResourceUpdate
   {
     Map<String, XdsD2.D2URI> _uriMap;
+    private boolean _globCollectionEnabled;
     private final Set<String> _updatedUrisName = new HashSet<>();
     private final Set<String> _removedUrisName = new HashSet<>();
-    private boolean _globCollectionEnabled;
 
 
     D2URIMapUpdate(Map<String, XdsD2.D2URI> uriMap)
@@ -354,6 +354,16 @@ public abstract class XdsClient
     public Map<String, XdsD2.D2URI> getURIMap()
     {
       return _uriMap;
+    }
+
+    /**
+     * Returns whether the glob collection is enabled.
+     *
+     * @return {@code true} if glob collection is enabled, {@code false} otherwise
+     */
+    public boolean isGlobCollectionEnabled()
+    {
+      return _globCollectionEnabled;
     }
 
     /**
@@ -377,13 +387,9 @@ public abstract class XdsClient
      *
      * @return a set of removed URI names
      */
-    public Set<String> getRemovedUrisName() {
-      return _removedUrisName;
-    }
-
-    public boolean isGlobCollectionEnabled()
+    public Set<String> getRemovedUrisName()
     {
-      return _globCollectionEnabled;
+      return _removedUrisName;
     }
 
     D2URIMapUpdate putUri(String name, XdsD2.D2URI uri)
