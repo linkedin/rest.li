@@ -23,8 +23,10 @@ import indis.XdsD2;
 import io.grpc.Status;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -333,15 +335,55 @@ public abstract class XdsClient
   public static final class D2URIMapUpdate implements ResourceUpdate
   {
     Map<String, XdsD2.D2URI> _uriMap;
+    private final Set<String> _updatedUrisName = new HashSet<>();
+    private final Set<String> _removedUrisName = new HashSet<>();
+    private boolean _globCollectionEnabled;
+
 
     D2URIMapUpdate(Map<String, XdsD2.D2URI> uriMap)
     {
       _uriMap = uriMap;
     }
 
+    D2URIMapUpdate(Map<String, XdsD2.D2URI> uriMap, boolean globCollectionEnabled)
+    {
+      this(uriMap);
+      _globCollectionEnabled = globCollectionEnabled;
+    }
+
     public Map<String, XdsD2.D2URI> getURIMap()
     {
       return _uriMap;
+    }
+
+    /**
+     * Returns the names of the updated URIs.
+     * The updated URIs are valid only if {@link #isGlobCollectionEnabled} is {@code true}.
+     * Otherwise, when {@link #isGlobCollectionEnabled} is {@code false}, the updated URIs are not tracked and should be ignored.
+     *
+     * @return a set of updated URI names
+     */
+    public Set<String> getUpdatedUrisName()
+    {
+
+      return _updatedUrisName;
+    }
+
+
+    /**
+     * Returns the names of the removed URIs.
+     * The removed URIs are valid only if {@link #isGlobCollectionEnabled} is {@code true}.
+     * Otherwise, when {@link #isGlobCollectionEnabled} is {@code false}, the removed URIs are not tracked and should be ignored.
+     *
+     * @return a set of removed URI names
+     */
+    public Set<String> getRemovedUrisName() {
+      return _removedUrisName;
+    }
+
+    public boolean isGlobCollectionEnabled()
+    {
+      return _globCollectionEnabled;
     }
 
     D2URIMapUpdate putUri(String name, XdsD2.D2URI uri)
@@ -351,6 +393,8 @@ public abstract class XdsClient
         _uriMap = new HashMap<>();
       }
       _uriMap.put(name, uri);
+      _updatedUrisName.add(name);
+      _removedUrisName.remove(name);
       return this;
     }
 
@@ -360,6 +404,8 @@ public abstract class XdsClient
       {
         _uriMap.remove(name);
       }
+      _removedUrisName.add(name);
+      _updatedUrisName.remove(name);
       return this;
     }
 

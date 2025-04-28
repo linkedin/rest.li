@@ -584,11 +584,11 @@ public class XdsClientImpl extends XdsClient
         }
         if (currentData == null || !currentData.isValid())
         {
-          return new D2URIMapUpdate(null);
+          return new D2URIMapUpdate(null, true);
         }
         else
         {
-          return new D2URIMapUpdate(new HashMap<>(currentData.getURIMap()));
+          return new D2URIMapUpdate(new HashMap<>(currentData.getURIMap()), true);
         }
       });
 
