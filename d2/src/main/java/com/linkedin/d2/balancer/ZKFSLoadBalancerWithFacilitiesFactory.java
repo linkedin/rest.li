@@ -26,11 +26,12 @@ import org.slf4j.LoggerFactory;
 
 
 /**
+ * @deprecated Use {@link com.linkedin.d2.xds.balancer.XdsLoadBalancerWithFacilitiesFactory} instead.
  * Implementation of {@link LoadBalancerWithFacilitiesFactory} interface, which creates
  * instance of {@link ZKFSLoadBalancer}.
  */
 @Deprecated
-public class ZKFSLoadBalancerWithFacilitiesFactory extends LoadBalancerWithFacilitiesFactory
+public class ZKFSLoadBalancerWithFacilitiesFactory extends AbstractLoadBalancerWithFacilitiesFactory
 {
   private static final Logger LOG = LoggerFactory.getLogger(ZKFSLoadBalancerWithFacilitiesFactory.class);
 

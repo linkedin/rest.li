@@ -46,11 +46,12 @@ import org.slf4j.LoggerFactory;
 
 
 /**
+ * @deprecated Use {@link com.linkedin.d2.xds.balancer.XdsLoadBalancerWithFacilitiesFactory} instead.
  * Implementation of {@link LoadBalancerWithFacilitiesFactory} interface, which creates an instance of
  * {@link LastSeenLoadBalancerWithFacilities}
  */
 @Deprecated
-public class LastSeenBalancerWithFacilitiesFactory extends LoadBalancerWithFacilitiesFactory
+public class LastSeenBalancerWithFacilitiesFactory extends AbstractLoadBalancerWithFacilitiesFactory
 {
   public static final int MATURITY_LEVEL = 1;
   private static final Logger LOG = LoggerFactory.getLogger(LastSeenBalancerWithFacilitiesFactory.class);

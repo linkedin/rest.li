@@ -43,7 +43,7 @@ public class D2ClientBuilderTest
   {
     D2ClientBuilder d2ClientBuilder = new D2ClientBuilder();
     d2ClientBuilder.setD2ServicePath(d2ServicePath);
-    LoadBalancerWithFacilitiesFactory factory = mock(LoadBalancerWithFacilitiesFactory.class);
+    LoadBalancerWithFacilitiesFactory factory = mock(AbstractLoadBalancerWithFacilitiesFactory.class);
     doAnswer(invocation -> {
       D2ClientConfig config = (D2ClientConfig) invocation.getArguments()[0];
       Assert.assertEquals(config.d2ServicePath, expectedD2ServicePath);

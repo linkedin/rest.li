@@ -13,9 +13,9 @@
 
 package com.linkedin.d2.xds.balancer;
 
+import com.linkedin.d2.balancer.AbstractLoadBalancerWithFacilitiesFactory;
 import com.linkedin.d2.balancer.D2ClientConfig;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
-import com.linkedin.d2.balancer.LoadBalancerWithFacilitiesFactory;
 import com.linkedin.d2.balancer.ZKFSLoadBalancerWithFacilitiesFactory;
 import com.linkedin.d2.balancer.dualread.DualReadLoadBalancer;
 import com.linkedin.d2.balancer.dualread.DualReadModeProvider;
@@ -24,15 +24,16 @@ import javax.annotation.Nonnull;
 
 
 /**
+ * @deprecated Use {@link com.linkedin.d2.xds.balancer.XdsLoadBalancerWithFacilitiesFactory} instead.
  * This factory creates a {@link DualReadLoadBalancer} that performs dual read from two service
  * discovery data sources: direct ZooKeeper data and xDS data. The {@link DualReadModeProvider} will
  * determine dynamically at run-time which read mode to use.
  */
 @Deprecated
-public class DualReadZkAndXdsLoadBalancerFactory extends LoadBalancerWithFacilitiesFactory
+public class DualReadZkAndXdsLoadBalancerFactory extends AbstractLoadBalancerWithFacilitiesFactory
 {
-  private final LoadBalancerWithFacilitiesFactory _zkLbFactory;
-  private final LoadBalancerWithFacilitiesFactory _xdsLbFactory;
+  private final ZKFSLoadBalancerWithFacilitiesFactory _zkLbFactory;
+  private final XdsLoadBalancerWithFacilitiesFactory _xdsLbFactory;
   private final DualReadStateManager _dualReadStateManager;
 
   public DualReadZkAndXdsLoadBalancerFactory(@Nonnull DualReadStateManager dualReadStateManager)
