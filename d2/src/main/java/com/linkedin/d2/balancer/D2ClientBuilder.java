@@ -221,14 +221,14 @@ public class D2ClientBuilder
                   _config._xdsServerMetricsProvider,
                   _config.loadBalanceStreamException,
                   _config.xdsInitialResourceVersionsEnabled,
-                  _config.detectLiRawD2Client
+                  _config.disableDetectLiRawD2Client
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
       _config.lbWithFacilitiesFactory;
 
-    if (_config.detectLiRawD2Client && isLiRawD2Client())
+    if (!_config.disableDetectLiRawD2Client && isLiRawD2Client())
     {
       LOG.warn("ATTENTION: Using hard-coded D2ClientBuilder to create a raw LI D2 client. Always consider using the "
           + "D2DefaultClientFactory in container. Raw D2 client will not have future features and migrations done "

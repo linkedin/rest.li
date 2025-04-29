@@ -46,8 +46,8 @@ public class DualReadZkAndXdsLoadBalancerFactory extends AbstractLoadBalancerWit
   @Override
   public LoadBalancerWithFacilities create(D2ClientConfig config)
   {
-    _zkLbFactory.setIsLiRawD2Client(isLiRawD2Client);
-    _xdsLbFactory.setIsLiRawD2Client(isLiRawD2Client);
+    _zkLbFactory.setIsLiRawD2Client(_isLiRawD2Client);
+    _xdsLbFactory.setIsLiRawD2Client(_isLiRawD2Client);
     return new DualReadLoadBalancer(_zkLbFactory.create(config), _xdsLbFactory.create(config), _dualReadStateManager, config.dualReadNewLbExecutor);
   }
 }

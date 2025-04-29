@@ -18,12 +18,12 @@ public abstract class AbstractLoadBalancerWithFacilitiesFactory implements LoadB
 
   // As standard LinkedIn code set LI-specific properties in d2 clients, this is true when LI code uses raw d2 client
   // builder to create a d2 client.
-  protected boolean isLiRawD2Client = false;
+  protected boolean _isLiRawD2Client = false;
 
   @Override
   public void setIsLiRawD2Client(boolean isRawD2Client)
   {
-    isLiRawD2Client = isRawD2Client;
+    _isLiRawD2Client = isRawD2Client;
   }
 
   public void logLoadBalancerTypeWarning(@Nonnull Logger LOG)

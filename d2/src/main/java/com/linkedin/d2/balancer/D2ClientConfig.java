@@ -175,11 +175,11 @@ public class D2ClientConfig
   public boolean xdsInitialResourceVersionsEnabled = false;
 
   /**
-   * When this is true, D2 client builder will detect if it's used to build a raw D2 client (as opposed to using standard
+   * D2 client builder by default will detect if it's used to build a raw D2 client (as opposed to using standard
    * D2 client factory in LI container library) and set the isLiRawD2Client flag accordingly in the load balancer factory.
-   * Open Source Users can set this to false to disable this behavior.
+   * Open Source Users can disable this behavior.
    */
-  public boolean detectLiRawD2Client = true;
+  public boolean disableDetectLiRawD2Client = false;
 
   public D2ClientConfig()
   {
@@ -259,7 +259,7 @@ public class D2ClientConfig
                  XdsServerMetricsProvider xdsServerMetricsProvider,
                  boolean loadBalanceStreamException,
                  boolean xdsInitialResourceVersionsEnabled,
-                 boolean detectLiRawD2Client)
+                 boolean disableDetectLiRawD2Client)
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -335,6 +335,6 @@ public class D2ClientConfig
     this._xdsServerMetricsProvider = xdsServerMetricsProvider;
     this.loadBalanceStreamException = loadBalanceStreamException;
     this.xdsInitialResourceVersionsEnabled = xdsInitialResourceVersionsEnabled;
-    this.detectLiRawD2Client = detectLiRawD2Client;
+    this.disableDetectLiRawD2Client = disableDetectLiRawD2Client;
   }
 }

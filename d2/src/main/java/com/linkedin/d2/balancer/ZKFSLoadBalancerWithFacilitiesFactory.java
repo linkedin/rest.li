@@ -42,7 +42,7 @@ public class ZKFSLoadBalancerWithFacilitiesFactory extends AbstractLoadBalancerW
     //TODO: In FY26Q2, Throw exception to hard fail raw d2 client using non INDIS load balancer type, unless talking
     // to a local or EI ZK (for some tests).
     logLoadBalancerTypeWarning(LOG);
-    if (isLiRawD2Client)
+    if (_isLiRawD2Client)
     {
       //TODO: Set flag in ZooKeeperEphemeralStore to create a permanent znode about the app.
       logAppProps(LOG);
