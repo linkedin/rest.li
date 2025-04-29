@@ -308,7 +308,7 @@ public class D2ClientBuilder
    * client usages are known not setting these values according to code search.
    * @return true if this is a LI raw D2 client, false otherwise.
    */
-  boolean isLiRawD2Client()
+  private boolean isLiRawD2Client()
   {
     return Objects.equals(_config.hostName, D2ClientConfig.HOST_NAME_DEFAULT)
         || Objects.equals(_config.d2JmxManagerPrefix, D2ClientConfig.D2_JMX_MANAGER_PREFIX_DEFAULT);
