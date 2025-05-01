@@ -67,7 +67,7 @@ public class D2Utils
   }
 
   /**
-   * System properties could include properties set by LinkedIn, Java, Zookeepr, and more. It will be logged or saved
+   * System properties could include properties set by LinkedIn, Java, Zookeeper, and more. It will be logged or saved
    * on a znode to reveal identities of apps that are using hard-coded D2ClientBuilder.
    * @return A string of system properties.
    */

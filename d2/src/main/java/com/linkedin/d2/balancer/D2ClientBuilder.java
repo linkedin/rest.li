@@ -92,6 +92,14 @@ public class D2ClientBuilder
    */
   public D2Client build()
   {
+    if (!_config.disableDetectLiRawD2Client && isLiRawD2Client())
+    {
+      LOG.warn("ATTENTION: Using hard-coded D2ClientBuilder to create a raw LI D2 client. Always consider using the "
+          + "D2DefaultClientFactory in container. Raw D2 client will not have future features and migrations done "
+          + "automatically, requiring lots of manual toil from your team.");
+      _config.isLiRawD2Client = true;
+    }
+
     final Map<String, TransportClientFactory> transportClientFactories = (_config.clientFactories == null) ?
         createDefaultTransportClientFactories() :  // if user didn't provide transportClientFactories we'll use default ones
         _config.clientFactories;
@@ -221,20 +229,13 @@ public class D2ClientBuilder
                   _config._xdsServerMetricsProvider,
                   _config.loadBalanceStreamException,
                   _config.xdsInitialResourceVersionsEnabled,
-                  _config.disableDetectLiRawD2Client
+                  _config.disableDetectLiRawD2Client,
+                  _config.isLiRawD2Client
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
       _config.lbWithFacilitiesFactory;
-
-    if (!_config.disableDetectLiRawD2Client && isLiRawD2Client())
-    {
-      LOG.warn("ATTENTION: Using hard-coded D2ClientBuilder to create a raw LI D2 client. Always consider using the "
-          + "D2DefaultClientFactory in container. Raw D2 client will not have future features and migrations done "
-          + "automatically, requiring lots of manual toil from your team.");
-      loadBalancerFactory.setIsLiRawD2Client(true);
-    }
 
     LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
 

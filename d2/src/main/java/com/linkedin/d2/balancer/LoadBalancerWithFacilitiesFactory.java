@@ -16,12 +16,21 @@
 
 package com.linkedin.d2.balancer;
 
+import com.linkedin.d2.discovery.util.D2Utils;
+import javax.annotation.Nonnull;
+import org.slf4j.Logger;
+
 
 /**
  * Factory for creating instance of {@link LoadBalancerWithFacilities}
  */
 public interface LoadBalancerWithFacilitiesFactory
 {
+  String LOAD_BALANCER_TYPE_WARNING = "[ACTION REQUIRED] Zookeeper-based D2 Client "
+      + "is deprecated (unless talking to a locally-deployed ZK, or for testing EI ZK) and must be migrated to INDIS. "
+      + "See instructions at go/onboardindis.\n"
+      + "Failing to do so will block other apps from stopping ZK announcements and will be escalated for site-up "
+      + "stability. Non-INDIS D2 Client will CRASH in OCTOBER 2025.";
 
   /**
    * Creates instance of {@link LoadBalancerWithFacilities}
@@ -30,9 +39,13 @@ public interface LoadBalancerWithFacilitiesFactory
    */
   LoadBalancerWithFacilities create(D2ClientConfig config);
 
-  /**
-   * Set whether the client is a raw d2 client or not.
-   * @param isRawD2Client true if the client is a raw d2 client, false otherwise.
-   */
-  void setIsLiRawD2Client(boolean isRawD2Client);
+  default void logLoadBalancerTypeWarning(@Nonnull Logger LOG)
+  {
+    LOG.warn(LOAD_BALANCER_TYPE_WARNING);
+  }
+
+  default void logAppProps(@Nonnull Logger LOG)
+  {
+    LOG.info("LI properties:\n {}", D2Utils.getSystemProperties());
+  }
 }

@@ -13,9 +13,9 @@
 
 package com.linkedin.d2.xds.balancer;
 
-import com.linkedin.d2.balancer.AbstractLoadBalancerWithFacilitiesFactory;
 import com.linkedin.d2.balancer.D2ClientConfig;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
+import com.linkedin.d2.balancer.LoadBalancerWithFacilitiesFactory;
 import com.linkedin.d2.balancer.ZKFSLoadBalancerWithFacilitiesFactory;
 import com.linkedin.d2.balancer.dualread.DualReadLoadBalancer;
 import com.linkedin.d2.balancer.dualread.DualReadModeProvider;
@@ -30,7 +30,7 @@ import javax.annotation.Nonnull;
  * determine dynamically at run-time which read mode to use.
  */
 @Deprecated
-public class DualReadZkAndXdsLoadBalancerFactory extends AbstractLoadBalancerWithFacilitiesFactory
+public class DualReadZkAndXdsLoadBalancerFactory implements LoadBalancerWithFacilitiesFactory
 {
   private final ZKFSLoadBalancerWithFacilitiesFactory _zkLbFactory;
   private final XdsLoadBalancerWithFacilitiesFactory _xdsLbFactory;
@@ -46,8 +46,6 @@ public class DualReadZkAndXdsLoadBalancerFactory extends AbstractLoadBalancerWit
   @Override
   public LoadBalancerWithFacilities create(D2ClientConfig config)
   {
-    _zkLbFactory.setIsLiRawD2Client(_isLiRawD2Client);
-    _xdsLbFactory.setIsLiRawD2Client(_isLiRawD2Client);
     return new DualReadLoadBalancer(_zkLbFactory.create(config), _xdsLbFactory.create(config), _dualReadStateManager, config.dualReadNewLbExecutor);
   }
 }

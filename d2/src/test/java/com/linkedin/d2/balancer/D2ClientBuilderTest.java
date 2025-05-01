@@ -43,12 +43,10 @@ public class D2ClientBuilderTest
   {
     D2ClientBuilder d2ClientBuilder = new D2ClientBuilder();
     d2ClientBuilder.setD2ServicePath(d2ServicePath);
-    LoadBalancerWithFacilitiesFactory factory = mock(AbstractLoadBalancerWithFacilitiesFactory.class);
-    doAnswer(invocation -> {
-      D2ClientConfig config = (D2ClientConfig) invocation.getArguments()[0];
+
+    d2ClientBuilder.setLoadBalancerWithFacilitiesFactory(config -> {
       Assert.assertEquals(config.d2ServicePath, expectedD2ServicePath);
       return Mockito.mock(LoadBalancerWithFacilities.class);
-    }).when(factory).create(any(D2ClientConfig.class));
-    d2ClientBuilder.setLoadBalancerWithFacilitiesFactory(factory);
+    });
   }
 }

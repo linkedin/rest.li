@@ -16,7 +16,6 @@
 
 package com.linkedin.d2.xds.balancer;
 
-import com.linkedin.d2.balancer.AbstractLoadBalancerWithFacilitiesFactory;
 import com.linkedin.d2.balancer.D2ClientConfig;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilitiesFactory;
@@ -37,7 +36,7 @@ import org.apache.commons.lang3.ObjectUtils;
  * Implementation of {@link LoadBalancerWithFacilitiesFactory} interface, which creates
  * an instance of {@link XdsLoadBalancer}.
  */
-public class XdsLoadBalancerWithFacilitiesFactory extends AbstractLoadBalancerWithFacilitiesFactory
+public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFacilitiesFactory
 {
   @Override
   public LoadBalancerWithFacilities create(D2ClientConfig config)

@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * instance of {@link ZKFSLoadBalancer}.
  */
 @Deprecated
-public class ZKFSLoadBalancerWithFacilitiesFactory extends AbstractLoadBalancerWithFacilitiesFactory
+public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFacilitiesFactory
 {
   private static final Logger LOG = LoggerFactory.getLogger(ZKFSLoadBalancerWithFacilitiesFactory.class);
 
@@ -42,7 +42,7 @@ public class ZKFSLoadBalancerWithFacilitiesFactory extends AbstractLoadBalancerW
     //TODO: In FY26Q2, Throw exception to hard fail raw d2 client using non INDIS load balancer type, unless talking
     // to a local or EI ZK (for some tests).
     logLoadBalancerTypeWarning(LOG);
-    if (_isLiRawD2Client)
+    if (config.isLiRawD2Client)
     {
       //TODO: Set flag in ZooKeeperEphemeralStore to create a permanent znode about the app.
       logAppProps(LOG);
