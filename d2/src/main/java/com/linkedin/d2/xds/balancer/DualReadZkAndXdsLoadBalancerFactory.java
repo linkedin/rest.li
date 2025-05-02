@@ -32,8 +32,8 @@ import javax.annotation.Nonnull;
 @Deprecated
 public class DualReadZkAndXdsLoadBalancerFactory implements LoadBalancerWithFacilitiesFactory
 {
-  private final ZKFSLoadBalancerWithFacilitiesFactory _zkLbFactory;
-  private final XdsLoadBalancerWithFacilitiesFactory _xdsLbFactory;
+  private final LoadBalancerWithFacilitiesFactory _zkLbFactory;
+  private final LoadBalancerWithFacilitiesFactory _xdsLbFactory;
   private final DualReadStateManager _dualReadStateManager;
 
   public DualReadZkAndXdsLoadBalancerFactory(@Nonnull DualReadStateManager dualReadStateManager)

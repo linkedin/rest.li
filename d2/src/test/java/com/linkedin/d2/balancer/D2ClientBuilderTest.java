@@ -22,8 +22,6 @@ import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.mockito.Mockito.*;
-
 
 public class D2ClientBuilderTest
 {
