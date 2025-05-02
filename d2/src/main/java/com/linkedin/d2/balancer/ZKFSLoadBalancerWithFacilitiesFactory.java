@@ -26,9 +26,11 @@ import org.slf4j.LoggerFactory;
 
 
 /**
+ * @deprecated Use {@link com.linkedin.d2.xds.balancer.XdsLoadBalancerWithFacilitiesFactory} instead.
  * Implementation of {@link LoadBalancerWithFacilitiesFactory} interface, which creates
  * instance of {@link ZKFSLoadBalancer}.
  */
+@Deprecated
 public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFacilitiesFactory
 {
   private static final Logger LOG = LoggerFactory.getLogger(ZKFSLoadBalancerWithFacilitiesFactory.class);
@@ -37,6 +39,14 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
   public LoadBalancerWithFacilities create(D2ClientConfig config)
   {
     LOG.info("Creating D2 LoadBalancer based on ZKFSLoadBalancerWithFacilitiesFactory");
+    //TODO: In FY26Q2, Throw exception to hard fail raw d2 client using non INDIS load balancer type, unless talking
+    // to a local or EI ZK (for some tests).
+    logLoadBalancerTypeWarning(LOG);
+    if (config.isLiRawD2Client)
+    {
+      //TODO: Set flag in ZooKeeperEphemeralStore to create a permanent znode about the app.
+      logAppProps(LOG);
+    }
 
     ZKFSLoadBalancer zkfsLoadBalancer = new ZKFSLoadBalancer(config.zkHosts,
       (int) config.zkSessionTimeoutInMs,

@@ -51,7 +51,6 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.d2.jmx.XdsServerMetricsProvider;
 import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.d2.jmx.NoOpJmxManager;
-import com.linkedin.d2.xds.balancer.XdsLoadBalancerWithFacilitiesFactory;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
@@ -64,6 +63,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -92,6 +92,14 @@ public class D2ClientBuilder
    */
   public D2Client build()
   {
+    if (!_config.disableDetectLiRawD2Client && isLiRawD2Client())
+    {
+      LOG.warn("ATTENTION: Using hard-coded D2ClientBuilder to create a raw LI D2 client. Always consider using the "
+          + "D2DefaultClientFactory in container. Raw D2 client will not have future features and migrations done "
+          + "automatically, requiring lots of manual toil from your team.");
+      _config.isLiRawD2Client = true;
+    }
+
     final Map<String, TransportClientFactory> transportClientFactories = (_config.clientFactories == null) ?
         createDefaultTransportClientFactories() :  // if user didn't provide transportClientFactories we'll use default ones
         _config.clientFactories;
@@ -220,22 +228,14 @@ public class D2ClientBuilder
                   _config.subscribeToUriGlobCollection,
                   _config._xdsServerMetricsProvider,
                   _config.loadBalanceStreamException,
-                  _config.xdsInitialResourceVersionsEnabled
+                  _config.xdsInitialResourceVersionsEnabled,
+                  _config.disableDetectLiRawD2Client,
+                  _config.isLiRawD2Client
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() :
       _config.lbWithFacilitiesFactory;
-
-    // Warn for non-INDIS load balancer factory usage
-    if (!(loadBalancerFactory instanceof XdsLoadBalancerWithFacilitiesFactory))
-    {
-      LOG.warn(String.format("ACTION REQUIRED: Zookeeper-based D2 Client is deprecated (except locally-deployed ZK) "
-          + "and must be migrated to INDIS. See instructions at " +
-          "https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps" +
-          "\nFailing to do so will block other apps from stopping ZK announcements and will be escalated for site-up stability. " +
-          "Use XdsLoadBalancerWithFacilitiesFactory instead of %s", loadBalancerFactory.getClass().getSimpleName()));
-    }
 
     LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
 
@@ -301,6 +301,18 @@ public class D2ClientBuilder
       d2Client = new ExecutorShutdownAwareD2Client(d2Client, executorsToShutDown);
     }
     return d2Client;
+  }
+
+  /**
+   * Check if the d2 client builder is to build a LI raw D2 client. When LI container D2ClientFactory is used, it sets
+   * hostName and d2JmxManagerPrefix with LI-specific values (app name, machine name, etc) at runtime. All LI raw D2
+   * client usages are known not setting these values according to code search.
+   * @return true if this is a LI raw D2 client, false otherwise.
+   */
+  private boolean isLiRawD2Client()
+  {
+    return Objects.equals(_config.hostName, D2ClientConfig.HOST_NAME_DEFAULT)
+        || Objects.equals(_config.d2JmxManagerPrefix, D2ClientConfig.D2_JMX_MANAGER_PREFIX_DEFAULT);
   }
 
   /**

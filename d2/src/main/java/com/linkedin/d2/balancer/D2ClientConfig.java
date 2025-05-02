@@ -54,6 +54,11 @@ import javax.net.ssl.SSLParameters;
 
 public class D2ClientConfig
 {
+  // default values for some configs, to be shared with other classes
+  public static final String D2_JMX_MANAGER_PREFIX_DEFAULT = "UnknownPrefix";
+  public static final int DEFAULT_RETRY_LIMIT = 3;
+  public static final String HOST_NAME_DEFAULT = null;
+
   /**
    * @deprecated ZK-based D2 is deprecated. Please onboard to INDIS. Use xdsServer instead. See instructions at
    * https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps
@@ -61,7 +66,7 @@ public class D2ClientConfig
   @Deprecated
   String zkHosts = null;
   public String xdsServer = null;
-  public String hostName = null;
+  public String hostName = HOST_NAME_DEFAULT;
   /**
    * @deprecated ZK-based D2 is deprecated. Please onboard to INDIS. See instructions at
    * https://iwww.corp.linkedin.com/wiki/cf/display/ENGS/INDIS+Rollout+Issue+Guidelines+for+Java+Apps
@@ -151,11 +156,10 @@ public class D2ClientConfig
   public ScheduledExecutorService startUpExecutorService = null;
   public ScheduledExecutorService indisStartUpExecutorService = null;
   public JmxManager jmxManager = new NoOpJmxManager();
-  public String d2JmxManagerPrefix = "UnknownPrefix";
+  public String d2JmxManagerPrefix = D2_JMX_MANAGER_PREFIX_DEFAULT;
   boolean enableRelativeLoadBalancer = false;
   public DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider = null;
   public CanaryDistributionProvider canaryDistributionProvider = null;
-  public static final int DEFAULT_RETRY_LIMIT = 3;
   boolean enableClusterFailout = false;
   public FailoutConfigProviderFactory failoutConfigProviderFactory;
   FailoutRedirectStrategy failoutRedirectStrategy;
@@ -171,6 +175,18 @@ public class D2ClientConfig
   public XdsServerMetricsProvider _xdsServerMetricsProvider = new NoOpXdsServerMetricsProvider();
   public boolean loadBalanceStreamException = false;
   public boolean xdsInitialResourceVersionsEnabled = false;
+
+  /**
+   * D2 client builder by default will detect if it's used to build a raw D2 client (as opposed to used by standard
+   * D2 client factory in LI container library) and set the isLiRawD2Client flag below.
+   * Open Source Users can disable this behavior.
+   */
+  public boolean disableDetectLiRawD2Client = false;
+  /**
+   * Whether this client is a raw d2 client. It's true when raw d2 client builder is used to create a d2 client (as
+   * apposed to created by standard LinkedIn d2 client factory in container library).
+   */
+  public boolean isLiRawD2Client = false;
 
   public D2ClientConfig()
   {
@@ -249,8 +265,9 @@ public class D2ClientConfig
                  boolean subscribeToUriGlobCollection,
                  XdsServerMetricsProvider xdsServerMetricsProvider,
                  boolean loadBalanceStreamException,
-                 boolean xdsInitialResourceVersionsEnabled
-      )
+                 boolean xdsInitialResourceVersionsEnabled,
+                 boolean disableDetectLiRawD2Client,
+                 boolean isLiRawD2Client)
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -326,5 +343,7 @@ public class D2ClientConfig
     this._xdsServerMetricsProvider = xdsServerMetricsProvider;
     this.loadBalanceStreamException = loadBalanceStreamException;
     this.xdsInitialResourceVersionsEnabled = xdsInitialResourceVersionsEnabled;
+    this.disableDetectLiRawD2Client = disableDetectLiRawD2Client;
+    this.isLiRawD2Client = isLiRawD2Client;
   }
 }

@@ -7,6 +7,9 @@ package com.linkedin.d2.discovery.util;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.stores.zk.SymlinkUtil;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
 
@@ -17,6 +20,13 @@ import javax.annotation.Nonnull;
 
 public class D2Utils
 {
+  // A set of system properties to be excluded as they are lengthy, not needed, etc.
+  private static final Set<String> SYSTEM_PROPS_TO_EXCLUDE = Stream.of(
+      "jdk.debug",
+      "line.separator",
+      "java.class.path",
+      "java.vm.inputarguments"
+  ).collect(Collectors.toSet());
   /**
    * addSuffixToBaseName will mutate a base name with a suffix in a known fashion.
    *
@@ -54,5 +64,21 @@ public class D2Utils
   public static String getServicePathAsChildOfCluster(String clusterName, String serviceName, @Nonnull String basePath)
   {
     return ZKFSUtil.clusterPath(basePath) + "/" + clusterName + "/" + serviceName;
+  }
+
+  /**
+   * System properties could include properties set by LinkedIn, Java, Zookeeper, and more. It will be logged or saved
+   * on a znode to reveal identities of apps that are using hard-coded D2ClientBuilder.
+   * @return A string of system properties.
+   */
+  public static String getSystemProperties()
+  {
+    StringBuilder properties = new StringBuilder();
+    System.getProperties().forEach((k, v) -> {
+      if (!SYSTEM_PROPS_TO_EXCLUDE.contains(k.toString())) {
+        properties.append(k).append(" = ").append(v).append("\n");
+      }
+    });
+    return properties.toString();
   }
 }

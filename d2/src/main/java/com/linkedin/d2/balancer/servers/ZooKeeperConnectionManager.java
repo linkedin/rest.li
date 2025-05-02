@@ -14,9 +14,6 @@
    limitations under the License.
 */
 
-/**
- * $Id: $
- */
 
 package com.linkedin.d2.balancer.servers;
 
@@ -189,78 +186,6 @@ public class ZooKeeperConnectionManager extends ConnectionManager
     }
   }
 
-  /**
-   * @deprecated, use {@link  ConnectionManager#markDownAllServers(Callback)} instead.
-   */
-  @Deprecated
-  @Override
-  public void markDownAllServers(final Callback<None> callback)
-  {
-    Callback<None> markDownCallback;
-    if (callback != null)
-    {
-      markDownCallback = callback;
-    }
-    else
-    {
-      markDownCallback = new Callback<None>()
-      {
-        @Override
-        public void onError(Throwable e)
-        {
-          LOG.error("failed to mark down servers", e);
-        }
-
-        @Override
-        public void onSuccess(None result)
-        {
-          LOG.info("mark down all servers successful");
-        }
-      };
-    }
-    Callback<None> multiCallback = Callbacks.countDown(markDownCallback, _servers.length);
-    for (ZooKeeperAnnouncer server : _servers)
-    {
-      server.markDown(multiCallback);
-    }
-  }
-
-  /**
-   * @deprecated, use {@link  ConnectionManager#markUpAllServers(Callback)} instead.
-   */
-  @Deprecated
-  @Override
-  public void markUpAllServers(final Callback<None> callback)
-  {
-    Callback<None> markUpCallback;
-    if (callback != null)
-    {
-      markUpCallback = callback;
-    }
-    else
-    {
-      markUpCallback = new Callback<None>()
-      {
-        @Override
-        public void onError(Throwable e)
-        {
-          LOG.error("failed to mark up servers", e);
-        }
-
-        @Override
-        public void onSuccess(None result)
-        {
-          LOG.info("mark up all servers successful");
-        }
-      };
-    }
-    Callback<None> multiCallback = Callbacks.countDown(markUpCallback, _servers.length);
-    for (ZooKeeperAnnouncer server : _servers)
-    {
-      server.markUp(multiCallback);
-    }
-  }
-
   private class Listener implements ZKPersistentConnection.EventListener
   {
     @Override
@@ -377,15 +302,6 @@ public class ZooKeeperConnectionManager extends ConnectionManager
   public interface ZKStoreFactory<P, Z extends ZooKeeperStore<P>>
   {
     Z createStore(ZKConnection connection, String path);
-  }
-
-  /**
-   * @deprecated Use {@link #ConnectionManager#getAnnouncers()} instead.
-   */
-  @Deprecated
-  public ZooKeeperAnnouncer[] getAnnouncers()
-  {
-    return _servers;
   }
 
   @Override

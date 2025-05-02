@@ -46,9 +46,11 @@ import org.slf4j.LoggerFactory;
 
 
 /**
+ * @deprecated Use {@link com.linkedin.d2.xds.balancer.XdsLoadBalancerWithFacilitiesFactory} instead.
  * Implementation of {@link LoadBalancerWithFacilitiesFactory} interface, which creates an instance of
  * {@link LastSeenLoadBalancerWithFacilities}
  */
+@Deprecated
 public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFacilitiesFactory
 {
   public static final int MATURITY_LEVEL = 1;
@@ -58,6 +60,14 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
   public LoadBalancerWithFacilities create(D2ClientConfig config)
   {
     LOG.info("Creating D2 LoadBalancer based on LastSeenLoadBalancerWithFacilities");
+    //TODO: In FY26Q2, Throw exception to hard fail raw d2 client using non INDIS load balancer type, unless talking
+    // to a local or EI ZK (for some tests).
+    logLoadBalancerTypeWarning(LOG);
+    if (config.isLiRawD2Client)
+    {
+      //TODO: Set flag in ZooKeeperEphemeralStore to create a permanent znode about the app.
+      logAppProps(LOG);
+    }
 
     D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(config.d2JmxManagerPrefix, config.jmxManager,
         D2ClientJmxManager.DiscoverySourceType.ZK, config.dualReadStateManager);

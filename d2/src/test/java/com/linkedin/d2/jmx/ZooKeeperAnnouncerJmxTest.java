@@ -16,6 +16,7 @@
 
 package com.linkedin.d2.jmx;
 
+import com.linkedin.d2.balancer.LoadBalancerServer;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +47,7 @@ public class ZooKeeperAnnouncerJmxTest
   protected void setUp() throws Exception
   {
     MockitoAnnotations.initMocks(this);
-    _zooKeeperAnnouncerJmx = new ZooKeeperAnnouncerJmx(new ZooKeeperAnnouncer(_zooKeeperServer));
+    _zooKeeperAnnouncerJmx = new ZooKeeperAnnouncerJmx(new ZooKeeperAnnouncer((LoadBalancerServer) _zooKeeperServer));
   }
 
   @Test

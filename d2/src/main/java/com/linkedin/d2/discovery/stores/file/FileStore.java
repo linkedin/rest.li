@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import javax.annotation.Nullable;
@@ -40,7 +39,6 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.linkedin.d2.discovery.util.LogUtil.error;
 import static com.linkedin.d2.discovery.util.LogUtil.info;
 import static com.linkedin.d2.discovery.util.LogUtil.warn;
 
@@ -86,7 +84,7 @@ public class FileStore<T> implements PropertyStore<T>, PropertyEventSubscriber<T
     {
       if (!file.mkdirs())
       {
-        error(_log, "unable to create file path: " + _fsPath);
+        warn(_log, "unable to create file path: " + _fsPath);
       }
     }
   }
@@ -158,11 +156,11 @@ public class FileStore<T> implements PropertyStore<T>, PropertyEventSubscriber<T
         }
         catch (IOException e)
         {
-          _log.error("Error reading file: " + file.getAbsolutePath(), e);
+          _log.warn("Error reading file: " + file.getAbsolutePath(), e);
         }
         catch (PropertySerializationException e)
         {
-          _log.error("Error deserializing property " + listenTo + " for file " + file.getAbsolutePath(), e);
+          _log.warn("Error deserializing property " + listenTo + " for file " + file.getAbsolutePath(), e);
         }
       }
 
@@ -230,11 +228,11 @@ public class FileStore<T> implements PropertyStore<T>, PropertyEventSubscriber<T
         }
         catch (FileNotFoundException e)
         {
-          error(_log, "unable to find file on put: ", file);
+          warn(_log, "unable to find file on put: ", file);
         }
         catch (IOException e)
         {
-          error(_log, "unable to read file on put: ", file);
+          warn(_log, "unable to read file on put: ", file);
         }
       }
     }

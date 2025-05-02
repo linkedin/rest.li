@@ -24,6 +24,7 @@ import javax.annotation.Nonnull;
 
 
 /**
+ * @deprecated Use {@link com.linkedin.d2.xds.balancer.XdsLoadBalancerWithFacilitiesFactory} instead.
  * This factory creates a {@link DualReadLoadBalancer} that performs dual read from two service
  * discovery data sources: direct ZooKeeper data and xDS data. The {@link DualReadModeProvider} will
  * determine dynamically at run-time which read mode to use.

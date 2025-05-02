@@ -1,5 +1,6 @@
 package com.linkedin.d2.balancer.servers;
 
+import com.linkedin.d2.balancer.LoadBalancerServer;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import com.linkedin.d2.util.TestDataHelper;
 import com.linkedin.test.util.retry.ThreeRetries;
@@ -184,7 +185,7 @@ public class ZookeeperConnectionManagerTest
   public void testDelayMarkUp()
     throws Exception
   {
-    ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer(new ZooKeeperServer(), false);
+    ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer((LoadBalancerServer) new ZooKeeperServer(), false);
     announcer.setCluster(_cluster);
     announcer.setUri(_uri);
     Map<Integer, PartitionData> partitionWeight = new HashMap<>();
@@ -950,7 +951,7 @@ public class ZookeeperConnectionManagerTest
 
   private static ZooKeeperAnnouncer getZookeeperAnnouncer(String cluster, String uri, Map<Integer, PartitionData> partitionWeight)
   {
-    ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer(new ZooKeeperServer());
+    ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer((LoadBalancerServer) new ZooKeeperServer());
     announcer.setCluster(cluster);
     announcer.setUri(uri);
     announcer.setPartitionData(partitionWeight);
@@ -958,7 +959,7 @@ public class ZookeeperConnectionManagerTest
   }
 
   private static ZooKeeperAnnouncer getZooKeeperWarmupAnnouncer(String cluster, String uri, double weight, boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService warmupExecutor) {
-    ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer(new ZooKeeperServer(), true, isDarkWarmupEnabled, warmupClusterName, warmupDuration, warmupExecutor);
+    ZooKeeperAnnouncer announcer = new ZooKeeperAnnouncer((LoadBalancerServer) new ZooKeeperServer(), true, isDarkWarmupEnabled, warmupClusterName, warmupDuration, warmupExecutor);
     Map<Integer, PartitionData> partitionWeight = new HashMap<>();
     partitionWeight.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(weight));
     announcer.setCluster(cluster);

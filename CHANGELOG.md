@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.68.0] - 2025-04-29
+- Detect LI raw d2 client builder usage
+
 ## [29.67.1] - 2025-04-28
 - Add feature to check remove/update uris for glob collection uris.
 
@@ -5807,7 +5810,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.67.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.68.0...master
+[29.68.0]: https://github.com/linkedin/rest.li/compare/v29.67.1...v29.68.0
 [29.67.1]: https://github.com/linkedin/rest.li/compare/v29.67.0...v29.67.1
 [29.67.0]: https://github.com/linkedin/rest.li/compare/v29.66.0...v29.67.0
 [29.66.0]: https://github.com/linkedin/rest.li/compare/v29.65.7...v29.66.0

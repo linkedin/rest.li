@@ -2,6 +2,7 @@ package com.linkedin.d2.balancer.servers;
 
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.LoadBalancerServer;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 
@@ -45,7 +46,7 @@ public class TestZooKeeperAnnouncer
   {
     MockitoAnnotations.initMocks(this);
 
-    _announcer = new ZooKeeperAnnouncer(_server);
+    _announcer = new ZooKeeperAnnouncer((LoadBalancerServer) _server);
   }
 
   @Test

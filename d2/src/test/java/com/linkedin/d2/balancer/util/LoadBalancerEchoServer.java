@@ -20,6 +20,7 @@ package com.linkedin.d2.balancer.util;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.LoadBalancerServer;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.UriProperties;
@@ -246,7 +247,7 @@ public class LoadBalancerEchoServer
     wait.await();
 
     _zooKeeperServer = new ZooKeeperServer(zk);
-    _announcer = new ZooKeeperAnnouncer(_zooKeeperServer);
+    _announcer = new ZooKeeperAnnouncer((LoadBalancerServer) _zooKeeperServer);
     _announcer.setCluster(cluster);
     _announcer.setUri(_uri.toString());
 
