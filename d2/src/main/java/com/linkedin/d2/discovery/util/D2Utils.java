@@ -81,4 +81,9 @@ public class D2Utils
     });
     return properties.toString();
   }
+
+  public static String getUserDir(){
+    // TODO: check if ZK path can have / in it.
+    return System.getProperties().getProperty("user.dir");
+  }
 }
