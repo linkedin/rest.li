@@ -23,6 +23,7 @@ import com.linkedin.data.schema.DataSchema.Type;
 import com.linkedin.data.schema.MaskMap;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.jersey.api.uri.UriBuilder;
+import com.linkedin.restli.client.ProjectionDataMapSerializer;
 import com.linkedin.restli.client.test.TestRecord;
 import com.linkedin.restli.common.RestConstants;
 import com.linkedin.restli.internal.common.AllProtocolVersions;
@@ -134,6 +135,113 @@ public class TestQueryParamsUtil
     Assert.assertNull(dataMap.getDataMap(RestConstants.FIELDS_PARAM));
     Assert.assertNull(dataMap.getDataMap(RestConstants.PAGING_FIELDS_PARAM));
     Assert.assertNull(dataMap.getDataMap(RestConstants.METADATA_FIELDS_PARAM));
+  }
+
+  @Test
+  public void testSerializeWithCustomProjectionSerializer() {
+    DataMap dataMap = new DataMap();
+    dataMap.put("foo", "bar");
+    DataMap serializedMap = new DataMap();
+    serializedMap.put("serialized", dataMap);
+    
+    Set<PathSpec> specSet = new HashSet<>();
+    specSet.add(new PathSpec("foo"));
+    DataMap serializedSet = new DataMap();
+    serializedSet.put("serialized", specSet.toString());
+
+    Map<String, Object> queryParams = new HashMap<>();
+    queryParams.put(RestConstants.FIELDS_PARAM, "foo");
+    queryParams.put(RestConstants.PAGING_FIELDS_PARAM, dataMap);
+    queryParams.put(RestConstants.METADATA_FIELDS_PARAM, specSet);
+
+    ProjectionDataMapSerializer serializer = new ProjectionDataMapSerializer() {
+      @Override
+      public Object serialize(String paramName, String projection) {
+        return projection + " serialized";
+      }
+
+      @Override
+      public Object serialize(String paramName, DataMap projection) {
+        DataMap serializedMap = new DataMap();
+        serializedMap.put("serialized", projection);
+        return serializedMap;
+      }
+
+      @Override
+      public Object serialize(String paramName, Set<PathSpec> projection) {
+        DataMap serializedMap = new DataMap();
+        serializedMap.put("serialized", projection.toString());
+        return serializedMap;
+      }
+
+      @Override
+      public DataMap toDataMap(String paramName, Set<PathSpec> pathSpecs) {
+        throw new RuntimeException("Should not be called");
+      }
+    };
+    DataMap output = QueryParamsUtil.convertToDataMap(queryParams, Collections.emptyMap(), AllProtocolVersions.LATEST_PROTOCOL_VERSION, serializer);
+    Assert.assertEquals(output.get(RestConstants.FIELDS_PARAM), "foo serialized");
+    Assert.assertEquals(output.get(RestConstants.PAGING_FIELDS_PARAM), serializedMap);
+    Assert.assertEquals(output.get(RestConstants.METADATA_FIELDS_PARAM), serializedSet);
+  }
+
+  @Test
+  public void testSerializeWithProjectionSerializerReturningNull() {
+    Map<String, Object> queryParams = new HashMap<>();
+    queryParams.put(RestConstants.FIELDS_PARAM, "foo");
+    queryParams.put(RestConstants.PAGING_FIELDS_PARAM, new DataMap());
+    queryParams.put(RestConstants.METADATA_FIELDS_PARAM, new HashSet<PathSpec>());
+    ProjectionDataMapSerializer serializer = new ProjectionDataMapSerializer() {
+      @Override
+      public Object serialize(String paramName, String projection) {
+        return null;
+      }
+      @Override
+      public Object serialize(String paramName, DataMap projection) {
+        return null;
+      }
+      @Override
+      public Object serialize(String paramName, Set<PathSpec> projection) {
+        return null;
+      }
+      @Override
+      public DataMap toDataMap(String paramName, Set<PathSpec> pathSpecs) {
+        throw new RuntimeException("Should not be called");
+      }
+    };
+    DataMap dataMap = QueryParamsUtil.convertToDataMap(queryParams, Collections.emptyMap(), AllProtocolVersions.LATEST_PROTOCOL_VERSION, serializer);
+    Assert.assertNull(dataMap.get(RestConstants.FIELDS_PARAM));
+    Assert.assertNull(dataMap.get(RestConstants.PAGING_FIELDS_PARAM));
+    Assert.assertNull(dataMap.get(RestConstants.METADATA_FIELDS_PARAM));
+  }
+
+  @Test(expectedExceptions = IllegalArgumentException.class,
+      expectedExceptionsMessageRegExp = "Serialized projection parameter .* must be a String or DataMap")
+  public void testSerializeWithProjectionSerializerThrowingException() {
+    Map<String, Object> queryParams = new HashMap<>();
+    queryParams.put(RestConstants.FIELDS_PARAM, "foo");
+    queryParams.put(RestConstants.PAGING_FIELDS_PARAM, new DataMap());
+    queryParams.put(RestConstants.METADATA_FIELDS_PARAM, new HashSet<PathSpec>());
+    ProjectionDataMapSerializer serializer = new ProjectionDataMapSerializer() {
+      @Override
+      public Object serialize(String paramName, String projection) {
+        return 1L;
+      }
+      @Override
+      public Object serialize(String paramName, DataMap projection) {
+        return 2L;
+      }
+      @Override
+      public Object serialize(String paramName, Set<PathSpec> projection) {
+        return 3L;
+      }
+      @Override
+      public DataMap toDataMap(String paramName, Set<PathSpec> pathSpecs) {
+        throw new RuntimeException("Should not be called");
+      }
+    };
+
+    QueryParamsUtil.convertToDataMap(queryParams, Collections.emptyMap(), AllProtocolVersions.LATEST_PROTOCOL_VERSION, serializer);
   }
 
   @Test

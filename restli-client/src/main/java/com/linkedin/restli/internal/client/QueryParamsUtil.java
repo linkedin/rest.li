@@ -74,19 +74,32 @@ public class QueryParamsUtil
 
       if (RestConstants.PROJECTION_PARAMETERS.contains(key))
       {
-        // Short-circuit already serialized projection params or projection params already represented as simplified mask tree.
-        if (value instanceof String || value instanceof DataMap)
+        Object serializedValue;
+        if (value instanceof String)
         {
-          result.put(key, value);
-          continue;
+          serializedValue = projectionDataMapSerializer.serialize(key, (String) value);
         }
-
-        @SuppressWarnings("unchecked")
-        Set<PathSpec> pathSpecs = (Set<PathSpec>)value;
-        DataMap serializedDataMap = projectionDataMapSerializer.toDataMap(key, pathSpecs);
-        if (serializedDataMap != null)
+        else if (value instanceof DataMap)
         {
-          result.put(key, serializedDataMap);
+          serializedValue = projectionDataMapSerializer.serialize(key, (DataMap) value);
+        }
+        else if (value instanceof Set)
+        {
+          serializedValue = projectionDataMapSerializer.serialize(key, (Set<PathSpec>) value);
+        }
+        else
+        {
+          serializedValue = value;
+        }
+        
+        if (serializedValue != null)
+        {
+          if (!(serializedValue instanceof String || serializedValue instanceof DataMap))
+          {
+            throw new IllegalArgumentException("Serialized projection parameter " + key + " must be a String or DataMap");
+          }
+
+          result.put(key, serializedValue);
         }
       }
       else
