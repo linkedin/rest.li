@@ -102,6 +102,8 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   private final ZookeeperEphemeralPrefixGenerator _prefixGenerator;
   private ServiceDiscoveryEventEmitter _eventEmitter;
   private DualReadStateManager _dualReadStateManager;
+  private boolean _isRawD2Client = false;
+
   // callback when announcements happened (for the regular and warmup clusters in ZookeeperAnnouncer only) to notify the new znode path and data.
   private final AtomicReference<ZookeeperNodePathAndDataCallback> _znodePathAndDataCallbackRef;
 
@@ -399,7 +401,11 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 
   private void getMergedChildren(String path, List<String> children, ZKStoreWatcher watcher, final Callback<T> callback)
   {
-    setRawClientTrackingNode();
+    if (_isRawD2Client)
+    {
+      setRawClientTrackingNode();
+    }
+
     final String propertyName = getPropertyForPath(path);
     if (children.size() > 0)
     {
@@ -430,7 +436,11 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
    */
   private void getChildrenData(String path, Collection<String> children, Callback<Map<String, T>> callback)
   {
-    setRawClientTrackingNode();
+    if (_isRawD2Client)
+    {
+      setRawClientTrackingNode();
+    }
+
     if (children.size() > 0)
     {
       LOG.debug("getChildrenData: collecting {}", children);
@@ -446,6 +456,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 
   private void setRawClientTrackingNode()
   {
+
     String rawD2ClientPath = "/d2/rawD2ClientBuilders/" + D2Utils.getNodeName();
     try
     {
@@ -582,6 +593,11 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   public void setDualReadStateManager(DualReadStateManager dualReadStateManager)
   {
     _dualReadStateManager = dualReadStateManager;
+  }
+
+  public void setRawD2Client(boolean isRawD2Client)
+  {
+    _isRawD2Client = isRawD2Client;
   }
 
   public void setZnodePathAndDataCallback(ZookeeperNodePathAndDataCallback callback) {

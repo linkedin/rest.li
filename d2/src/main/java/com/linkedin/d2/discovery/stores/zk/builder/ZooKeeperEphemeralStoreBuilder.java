@@ -56,6 +56,7 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
   private ServiceDiscoveryEventEmitter _eventEmitter = null;
   private DualReadStateManager _dualReadStateManager = null;
   private List<Consumer<ZooKeeperEphemeralStore<T>>> _onBuildListeners = new ArrayList<>();
+  private boolean _isRawD2Client = false;
 
   @Override
   public void setZkConnection(ZKConnection client)
@@ -99,6 +100,12 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
   public ZooKeeperEphemeralStoreBuilder<T> setBackupStoreFilePath(@Nullable String fsd2DirPathForBackup)
   {
     _fsD2DirPathForBackup = fsd2DirPathForBackup;
+    return this;
+  }
+
+  public ZooKeeperEphemeralStoreBuilder<T> setRawD2Client(boolean isRawD2Client)
+  {
+    _isRawD2Client = isRawD2Client;
     return this;
   }
 
@@ -156,6 +163,7 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
                                     backupStoreFilePath, _executorService, _zookeeperReadWindowMs, _zookeeperChildFilter, _zookeeperEphemeralPrefixGenerator);
     zooKeeperEphemeralStore.setServiceDiscoveryEventEmitter(_eventEmitter);
     zooKeeperEphemeralStore.setDualReadStateManager(_dualReadStateManager);
+    zooKeeperEphemeralStore.setRawD2Client(_isRawD2Client);
 
     for (Consumer<ZooKeeperEphemeralStore<T>> onBuildListener : _onBuildListeners)
     {

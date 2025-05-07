@@ -60,15 +60,6 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
   public LoadBalancerWithFacilities create(D2ClientConfig config)
   {
     LOG.info("Creating D2 LoadBalancer based on LastSeenLoadBalancerWithFacilities");
-    //TODO: In FY26Q2, Throw exception to hard fail raw d2 client using non INDIS load balancer type, unless talking
-    // to a local or EI ZK (for some tests).
-    logLoadBalancerTypeWarning(LOG);
-    if (config.isLiRawD2Client)
-    {
-      //TODO: Set flag in ZooKeeperEphemeralStore to create a permanent znode about the app.
-      logAppProps(LOG);
-    }
-
     D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(config.d2JmxManagerPrefix, config.jmxManager,
         D2ClientJmxManager.DiscoverySourceType.ZK, config.dualReadStateManager);
 
@@ -77,9 +68,20 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     zkConnectionBuilder.setShutdownAsynchronously(config.shutdownAsynchronously)
       .setIsSymlinkAware(config.isSymlinkAware).setTimeout((int) config.zkSessionTimeoutInMs);
 
+    //TODO: In FY26Q2, Throw exception to hard fail raw d2 client using non INDIS load balancer type, unless talking
+    // to a local or EI ZK (for some tests).
+    logLoadBalancerTypeWarning(LOG);
+    if (config.isLiRawD2Client)
+    {
+      //TODO: Set flag in ZooKeeperEphemeralStore to create a permanent znode about the app.
+      logAppProps(LOG);
+      zkConnectionBuilder.setIsRawD2Client(true);
+    }
+
     ZKPersistentConnection zkPersistentConnection;
     if (config.zkConnectionToUseForLB != null)
     {
+      // TODO: check if we need to setup here ?
       LOG.info("LastSeenLoadBalancer using shared connection to zookeeper");
       zkPersistentConnection = config.zkConnectionToUseForLB;
     } else {
@@ -154,6 +156,11 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     if (config.enableSaveUriDataOnDisk)
     {
       zkUrisStoreBuilder.setBackupStoreFilePath(config.fsBasePath);
+    }
+
+    if (config.isLiRawD2Client)
+    {
+      zkUrisStoreBuilder.setRawD2Client(true);
     }
 
     return new LastSeenZKStore<>(fileStore,
