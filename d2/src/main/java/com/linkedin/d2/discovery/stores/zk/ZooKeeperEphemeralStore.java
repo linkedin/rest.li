@@ -446,7 +446,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 
   private void setRawClientTrackingNode()
   {
-    String rawD2ClientPath = "/d2/RawClientBuilder" + D2Utils.getUserDir();
+    String rawD2ClientPath = "/d2/rawD2ClientBuilders/" + D2Utils.getNodeName();
     try
     {
       if (_zk.exists(rawD2ClientPath, false) != null)
