@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.69.0] - 2025-05-07
+- Creating ZK node for Raw D2 Client usages tracking
+
 ## [29.68.1] - 2025-05-06
 - Enhanced ProjectionDataMapSerializer interface to expose serialization functionality for String & DataMap projections
 
@@ -5813,7 +5816,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.68.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.69.0...master
+[29.69.0]: https://github.com/linkedin/rest.li/compare/v29.68.0...v29.69.0
 [29.68.1]: https://github.com/linkedin/rest.li/compare/v29.68.0...v29.68.1
 [29.68.0]: https://github.com/linkedin/rest.li/compare/v29.67.1...v29.68.0
 [29.67.1]: https://github.com/linkedin/rest.li/compare/v29.67.0...v29.67.1

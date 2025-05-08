@@ -29,6 +29,7 @@ import com.linkedin.d2.discovery.event.D2ServiceDiscoveryEventHelper;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import com.linkedin.d2.discovery.stores.file.FileStore;
+import com.linkedin.d2.discovery.util.D2Utils;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,6 +37,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -100,6 +102,8 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   private final ZookeeperEphemeralPrefixGenerator _prefixGenerator;
   private ServiceDiscoveryEventEmitter _eventEmitter;
   private DualReadStateManager _dualReadStateManager;
+  private boolean _isRawD2Client = false;
+
   // callback when announcements happened (for the regular and warmup clusters in ZookeeperAnnouncer only) to notify the new znode path and data.
   private final AtomicReference<ZookeeperNodePathAndDataCallback> _znodePathAndDataCallbackRef;
 
@@ -397,6 +401,11 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 
   private void getMergedChildren(String path, List<String> children, ZKStoreWatcher watcher, final Callback<T> callback)
   {
+    if (_isRawD2Client)
+    {
+      setRawClientTrackingNode();
+    }
+
     final String propertyName = getPropertyForPath(path);
     if (children.size() > 0)
     {
@@ -427,6 +436,11 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
    */
   private void getChildrenData(String path, Collection<String> children, Callback<Map<String, T>> callback)
   {
+    if (_isRawD2Client)
+    {
+      setRawClientTrackingNode();
+    }
+
     if (children.size() > 0)
     {
       LOG.debug("getChildrenData: collecting {}", children);
@@ -437,6 +451,67 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     {
       LOG.debug("getChildrenData: no children");
       callback.onSuccess(Collections.emptyMap());
+    }
+  }
+
+  private void setRawClientTrackingNode()
+  {
+
+    String rawD2ClientPath = "/d2/rawD2ClientBuilders/" + D2Utils.getNodeName();
+    try
+    {
+      if (_zk.exists(rawD2ClientPath, false) != null)
+      {
+        LOG.debug("RawClientTracking node already exist, path: {}", rawD2ClientPath);
+        return;
+      }
+
+      final AsyncCallback.StringCallback dataCallback = new AsyncCallback.StringCallback()
+      {
+        @Override
+        public void processResult(int rc, String path, Object ctx, String name)
+        {
+          KeeperException.Code code = KeeperException.Code.get(rc);
+          if (Objects.requireNonNull(code) == KeeperException.Code.OK)
+          {
+            LOG.info("setting up node for RawClientTracking at path {}, name: {}", path, name);
+          }
+          else
+          {
+            LOG.error("failed to set up node for RawClientTracking at path {} with error code: {}", path, code);
+          }
+        }
+      };
+
+      PropertySerializer<String> stringPropertySerializer = new PropertySerializer<String>()
+      {
+        @Override
+        public byte[] toBytes(String property)
+        {
+          return property.getBytes();
+        }
+
+        @Override
+        public String fromBytes(byte[] bytes)
+        {
+          if (bytes == null)
+          {
+            return "";
+          }
+          return new String(bytes);
+        }
+      };
+
+      _zk.create(rawD2ClientPath,
+          stringPropertySerializer.toBytes(D2Utils.getSystemProperties()),
+          ZooDefs.Ids.OPEN_ACL_UNSAFE,
+          CreateMode.PERSISTENT,
+          dataCallback,
+          null);
+    }
+    catch (KeeperException | InterruptedException e)
+    {
+      LOG.error("failed to set up node for RawClientTracking, exception: {}", e.getMessage());
     }
   }
 
@@ -518,6 +593,11 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   public void setDualReadStateManager(DualReadStateManager dualReadStateManager)
   {
     _dualReadStateManager = dualReadStateManager;
+  }
+
+  public void setRawD2Client(boolean isRawD2Client)
+  {
+    _isRawD2Client = isRawD2Client;
   }
 
   public void setZnodePathAndDataCallback(ZookeeperNodePathAndDataCallback callback) {
