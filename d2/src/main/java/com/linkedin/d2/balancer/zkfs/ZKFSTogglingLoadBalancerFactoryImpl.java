@@ -98,6 +98,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   private final ServiceDiscoveryEventEmitter _serviceDiscoveryEventEmitter;
   private final DualReadStateManager _dualReadStateManager;
   private final boolean _loadBalanceStreamException;
+  private final boolean _isRawD2Client;
 
   private static final Logger _log = LoggerFactory.getLogger(ZKFSTogglingLoadBalancerFactoryImpl.class);
 
@@ -368,7 +369,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
          sslContext, sslParameters, isSSLEnabled, clientServicesConfig, useNewEphemeralStoreWatcher, partitionAccessorRegistry,
          enableSaveUriDataOnDisk, sslSessionValidatorFactory, d2ClientJmxManager, zookeeperReadWindowMs,
          deterministicSubsettingMetadataProvider, failoutConfigProviderFactory, canaryDistributionProvider,
-         serviceDiscoveryEventEmitter, dualReadStateManager, false);
+         serviceDiscoveryEventEmitter, dualReadStateManager, false, false);
   }
 
   public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
@@ -394,7 +395,8 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
       CanaryDistributionProvider canaryDistributionProvider,
       ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter,
       DualReadStateManager dualReadStateManager,
-      boolean loadBalanceStreamException)
+      boolean loadBalanceStreamException,
+      boolean isRawD2Client)
   {
     _factory = factory;
     _lbTimeout = timeout;
@@ -420,6 +422,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     _serviceDiscoveryEventEmitter = serviceDiscoveryEventEmitter;
     _dualReadStateManager = dualReadStateManager;
     _loadBalanceStreamException = loadBalanceStreamException;
+    _isRawD2Client = isRawD2Client;
   }
 
   @Override
@@ -449,6 +452,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
       new UriPropertiesMerger(), _useNewEphemeralStoreWatcher, backupStoreFilePath, executorService, _zookeeperReadWindowMs);
     zkUriRegistry.setServiceDiscoveryEventEmitter(_serviceDiscoveryEventEmitter);
     zkUriRegistry.setDualReadStateManager(_dualReadStateManager);
+    zkUriRegistry.setRawD2Client(_isRawD2Client);
     _d2ClientJmxManager.setZkUriRegistry(zkUriRegistry);
 
     FileStore<ClusterProperties> fsClusterStore = createFileStore(FileSystemDirectory.getClusterDirectory(_fsd2DirPath), new ClusterPropertiesJsonSerializer());

@@ -75,7 +75,7 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     {
       //TODO: Set flag in ZooKeeperEphemeralStore to create a permanent znode about the app.
       logAppProps(LOG);
-      zkConnectionBuilder.setIsRawD2Client(true);
+      //zkConnectionBuilder.setIsRawD2Client(true);
     }
 
     ZKPersistentConnection zkPersistentConnection;
