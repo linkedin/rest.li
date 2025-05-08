@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Remove method defaults from `ResourceDefinition`.
 
 ## [29.68.1] - 2025-05-06
 - Enhanced ProjectionDataMapSerializer interface to expose serialization functionality for String & DataMap projections
