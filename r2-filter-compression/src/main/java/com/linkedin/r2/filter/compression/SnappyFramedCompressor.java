@@ -3,8 +3,8 @@ package com.linkedin.r2.filter.compression;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import org.iq80.snappy.SnappyFramedInputStream;
-import org.iq80.snappy.SnappyFramedOutputStream;
+import io.airlift.compress.snappy.SnappyFramedInputStream;
+import io.airlift.compress.snappy.SnappyFramedOutputStream;
 
 
 /**
