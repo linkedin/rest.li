@@ -177,6 +177,22 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
         executorService, zookeeperReadWindowMs, null, null);
   }
 
+  public ZooKeeperEphemeralStore(ZKConnection client,
+      PropertySerializer<T> serializer,
+      ZooKeeperPropertyMerger<T> merger,
+      String path,
+      boolean watchChildNodes,
+      boolean useNewWatcher,
+      String ephemeralNodesFilePath,
+      ScheduledExecutorService executorService,
+      int zookeeperReadWindowMs,
+      ZookeeperChildFilter zookeeperChildFilter,
+      ZookeeperEphemeralPrefixGenerator prefixGenerator)
+  {
+    this(client, serializer, merger, path, watchChildNodes, useNewWatcher, ephemeralNodesFilePath,
+        executorService, zookeeperReadWindowMs, zookeeperChildFilter, prefixGenerator, false);
+  }
+
   /**
    * @param watchChildNodes        if true, a watcher for each children node will be set (this have a large cost)
    * @param ephemeralNodesFilePath if a FS path is specified, children nodes are considered unmodifiable,
@@ -192,7 +208,8 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
                                  ScheduledExecutorService executorService,
                                  int zookeeperReadWindowMs,
                                  ZookeeperChildFilter zookeeperChildFilter,
-                                 ZookeeperEphemeralPrefixGenerator prefixGenerator)
+                                 ZookeeperEphemeralPrefixGenerator prefixGenerator,
+                                 boolean isRawD2Client)
   {
     super(client, serializer, path);
 
@@ -224,6 +241,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     _znodePathAndDataCallbackRef = new AtomicReference<>();
     _eventEmitter = null;
     _dualReadStateManager = null;
+    _isRawD2Client = isRawD2Client;
   }
 
   @Override
@@ -457,12 +475,12 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   private void setRawClientTrackingNode()
   {
 
-    String rawD2ClientPath = "/d2/rawD2ClientBuilders/" + D2Utils.getNodeName();
+    String rawD2ClientPath = D2Utils.RAW_D2_CLIENT_PATH + D2Utils.getAppIdentityName();
     try
     {
       if (_zk.exists(rawD2ClientPath, false) != null)
       {
-        LOG.debug("RawClientTracking node already exist, path: {}", rawD2ClientPath);
+        LOG.debug("rawClientTracking node already exist at path: {}", rawD2ClientPath);
         return;
       }
 
@@ -474,11 +492,11 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
           KeeperException.Code code = KeeperException.Code.get(rc);
           if (Objects.requireNonNull(code) == KeeperException.Code.OK)
           {
-            LOG.info("setting up node for RawClientTracking at path {}, name: {}", path, name);
+            LOG.info("setting up node for rawClientTracking with name: {}", name);
           }
           else
           {
-            LOG.error("failed to set up node for RawClientTracking at path {} with error code: {}", path, code);
+            LOG.warn("failed to set up node for rawClientTracking at path {} with error code: {}", path, code);
           }
         }
       };
@@ -511,7 +529,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     }
     catch (KeeperException | InterruptedException e)
     {
-      LOG.error("failed to set up node for RawClientTracking, exception: {}", e.getMessage());
+      LOG.warn("failed to set up node for rawClientTracking at path {}, exception: {}", rawD2ClientPath, e.getMessage());
     }
   }
 
@@ -593,11 +611,6 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   public void setDualReadStateManager(DualReadStateManager dualReadStateManager)
   {
     _dualReadStateManager = dualReadStateManager;
-  }
-
-  public void setRawD2Client(boolean isRawD2Client)
-  {
-    _isRawD2Client = isRawD2Client;
   }
 
   public void setZnodePathAndDataCallback(ZookeeperNodePathAndDataCallback callback) {

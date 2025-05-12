@@ -160,10 +160,10 @@ public class ZooKeeperEphemeralStoreBuilder<T> implements ZooKeeperStoreBuilder<
 
     ZooKeeperEphemeralStore<T> zooKeeperEphemeralStore =
       new ZooKeeperEphemeralStore<>(_client, _serializer, _merger, _path, _watchChildNodes, _useNewWatcher,
-                                    backupStoreFilePath, _executorService, _zookeeperReadWindowMs, _zookeeperChildFilter, _zookeeperEphemeralPrefixGenerator);
+                                    backupStoreFilePath, _executorService, _zookeeperReadWindowMs, _zookeeperChildFilter,
+                                    _zookeeperEphemeralPrefixGenerator, _isRawD2Client);
     zooKeeperEphemeralStore.setServiceDiscoveryEventEmitter(_eventEmitter);
     zooKeeperEphemeralStore.setDualReadStateManager(_dualReadStateManager);
-    zooKeeperEphemeralStore.setRawD2Client(_isRawD2Client);
 
     for (Consumer<ZooKeeperEphemeralStore<T>> onBuildListener : _onBuildListeners)
     {

@@ -23,6 +23,8 @@ import org.slf4j.LoggerFactory;
 public class D2Utils
 {
   private static final Logger LOG = LoggerFactory.getLogger(D2Utils.class);
+
+  public static final String RAW_D2_CLIENT_PATH = "/d2/rawD2ClientBuilders/";
   // A set of system properties to be excluded as they are lengthy, not needed, etc.
   private static final Set<String> SYSTEM_PROPS_TO_EXCLUDE = Stream.of(
       "jdk.debug",
@@ -85,15 +87,12 @@ public class D2Utils
     return properties.toString();
   }
 
-  // ZK don't allow / in the node name, we are replacing / with -,
+  // ZK don't allow / in the node name, we are replacing / with -, This name would be unique for each app.
   // for example: export-content-lid-apps-indis-canary-install nodeName is being used.
-  public static String getNodeName(){
+  public static String getAppIdentityName()
+  {
     String userDir = System.getProperties().getProperty("user.dir");
     LOG.info("User dir for raw D2 Client usages: {}", userDir);
-    String nodeName = userDir.replace("/", "-");
-    if (nodeName.startsWith("-")){
-      return nodeName.substring(1);
-    }
-    return nodeName;
+    return userDir.replace("/", "-").substring(1);
   }
 }

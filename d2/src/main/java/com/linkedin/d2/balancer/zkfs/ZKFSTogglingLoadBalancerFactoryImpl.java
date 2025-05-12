@@ -449,10 +449,10 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
 
     ZooKeeperEphemeralStore<UriProperties> zkUriRegistry =  createEphemeralStore(
       zkConnection, ZKFSUtil.uriPath(_baseZKPath), new UriPropertiesJsonSerializer(),
-      new UriPropertiesMerger(), _useNewEphemeralStoreWatcher, backupStoreFilePath, executorService, _zookeeperReadWindowMs);
+      new UriPropertiesMerger(), _useNewEphemeralStoreWatcher, backupStoreFilePath, executorService, _zookeeperReadWindowMs, _isRawD2Client);
     zkUriRegistry.setServiceDiscoveryEventEmitter(_serviceDiscoveryEventEmitter);
     zkUriRegistry.setDualReadStateManager(_dualReadStateManager);
-    zkUriRegistry.setRawD2Client(_isRawD2Client);
+    //zkUriRegistry.setRawD2Client(_isRawD2Client);
     _d2ClientJmxManager.setZkUriRegistry(zkUriRegistry);
 
     FileStore<ClusterProperties> fsClusterStore = createFileStore(FileSystemDirectory.getClusterDirectory(_fsd2DirPath), new ClusterPropertiesJsonSerializer());
@@ -524,10 +524,12 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
                                                                 ZooKeeperPropertyMerger<T> merger,
                                                                 boolean useNewWatcher, String backupStoreFilePath,
                                                                 ScheduledExecutorService executorService,
-                                                                int readWindow)
+                                                                int readWindow,
+                                                                boolean isRawD2Client)
   {
     return new ZooKeeperEphemeralStore<>(zkConnection, serializer, merger, nodePath,
-      false, useNewWatcher, backupStoreFilePath, executorService, readWindow);
+      false, useNewWatcher, backupStoreFilePath, executorService, readWindow,
+        null, null, isRawD2Client);
   }
 
   protected <T> FileStore<T> createFileStore(String path, PropertySerializer<T> serializer)
