@@ -452,7 +452,6 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
       new UriPropertiesMerger(), _useNewEphemeralStoreWatcher, backupStoreFilePath, executorService, _zookeeperReadWindowMs, _isRawD2Client);
     zkUriRegistry.setServiceDiscoveryEventEmitter(_serviceDiscoveryEventEmitter);
     zkUriRegistry.setDualReadStateManager(_dualReadStateManager);
-    //zkUriRegistry.setRawD2Client(_isRawD2Client);
     _d2ClientJmxManager.setZkUriRegistry(zkUriRegistry);
 
     FileStore<ClusterProperties> fsClusterStore = createFileStore(FileSystemDirectory.getClusterDirectory(_fsd2DirPath), new ClusterPropertiesJsonSerializer());

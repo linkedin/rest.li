@@ -98,11 +98,12 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   private final boolean _useNewWatcher;
   private final ScheduledExecutorService _executorService;
   private final int _zookeeperReadWindowMs;
+  private final boolean _isRawD2Client;
   private final ZookeeperChildFilter _zookeeperChildFilter;
   private final ZookeeperEphemeralPrefixGenerator _prefixGenerator;
   private ServiceDiscoveryEventEmitter _eventEmitter;
   private DualReadStateManager _dualReadStateManager;
-  private boolean _isRawD2Client = false;
+
 
   // callback when announcements happened (for the regular and warmup clusters in ZookeeperAnnouncer only) to notify the new znode path and data.
   private final AtomicReference<ZookeeperNodePathAndDataCallback> _znodePathAndDataCallbackRef;
