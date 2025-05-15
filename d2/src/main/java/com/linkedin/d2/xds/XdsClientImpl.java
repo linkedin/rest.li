@@ -175,6 +175,10 @@ public class XdsClientImpl extends XdsClient
   @Override
   public void watchXdsResource(String resourceName, ResourceWatcher watcher)
   {
+    if (_shutdown) {
+      _log.warn("Attempting to start watching resource {} after shutdown, will do nothing", resourceName);
+      return;
+    }
     _executorService.execute(() ->
     {
       ResourceType originalType = watcher.getType();
@@ -214,6 +218,10 @@ public class XdsClientImpl extends XdsClient
   @Override
   public void watchAllXdsResources(WildcardResourceWatcher watcher)
   {
+    if (_shutdown) {
+      _log.warn("Attempting to start watching all resources after shutdown, will do nothing");
+      return;
+    }
     _executorService.execute(() ->
     {
       ResourceType originalType = watcher.getType();
@@ -243,6 +251,10 @@ public class XdsClientImpl extends XdsClient
   @Override
   public void startRpcStream()
   {
+    if (_shutdown) {
+      _log.warn("Attempting to start RPC stream after shutdown, will do nothing");
+      return;
+    }
     _executorService.execute(() ->
     {
       if (!isInBackoff())
@@ -1335,6 +1347,10 @@ public class XdsClientImpl extends XdsClient
             @Override
             public void onNext(DeltaDiscoveryResponse response)
             {
+              if (_shutdown) {
+                _log.warn("XdsClient was shutdown, not processing more DeltaDiscoveryResponses");
+                return;
+              }
               _executorService.execute(() ->
               {
                 if (_closed)
@@ -1365,12 +1381,20 @@ public class XdsClientImpl extends XdsClient
             @Override
             public void onError(Throwable t)
             {
+              if (_shutdown) {
+                _log.warn("XdsClient was shutdown, can't execute error callback");
+                return;
+              }
               _executorService.execute(() -> handleRpcError(t));
             }
 
             @Override
             public void onCompleted()
             {
+              if (_shutdown) {
+                _log.warn("XdsClient was shutdown, can't execute onCompleted callback");
+                return;
+              }
               _executorService.execute(() -> handleRpcCompleted());
             }
           };
@@ -1447,6 +1471,10 @@ public class XdsClientImpl extends XdsClient
         delayNanos = _retryBackoffPolicy.nextBackoffNanos();
       }
       _log.info("Retry ADS stream in {} ns", delayNanos);
+      if (_shutdown) {
+        _log.warn("Already shut down, will not retry ADS stream");
+        return;
+      }
       _retryRpcStreamFuture = _executorService.schedule(new RpcRetryTask(), delayNanos, TimeUnit.NANOSECONDS);
     }
 
