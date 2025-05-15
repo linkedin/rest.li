@@ -179,7 +179,7 @@ public class XdsClientImpl extends XdsClient
       _log.warn("Attempting to start watching resource {} after shutdown, will do nothing", resourceName);
       return;
     }
-    _executorService.execute(() ->
+    checkShutdownAndExecute(() ->
     {
       ResourceType originalType = watcher.getType();
       Map<String, ResourceSubscriber> resourceSubscriberMap = getResourceSubscriberMap(originalType);
@@ -218,11 +218,7 @@ public class XdsClientImpl extends XdsClient
   @Override
   public void watchAllXdsResources(WildcardResourceWatcher watcher)
   {
-    if (_shutdown) {
-      _log.warn("Attempting to start watching all resources after shutdown, will do nothing");
-      return;
-    }
-    _executorService.execute(() ->
+    checkShutdownAndExecute(() ->
     {
       ResourceType originalType = watcher.getType();
       WildcardResourceSubscriber subscriber = getWildcardResourceSubscriber(originalType);
@@ -251,11 +247,7 @@ public class XdsClientImpl extends XdsClient
   @Override
   public void startRpcStream()
   {
-    if (_shutdown) {
-      _log.warn("Attempting to start RPC stream after shutdown, will do nothing");
-      return;
-    }
-    _executorService.execute(() ->
+    checkShutdownAndExecute(() ->
     {
       if (!isInBackoff())
       {
@@ -326,6 +318,17 @@ public class XdsClientImpl extends XdsClient
         _adsStream.close(Status.CANCELLED.withDescription("shutdown").asException());
       }
     });
+  }
+
+  private void checkShutdownAndExecute(Runnable runnable)
+  {
+    if (_shutdown)
+    {
+      _log.warn("Attempting to execute after shutdown, will do nothing");
+      return;
+    }
+
+    _executorService.execute(runnable);
   }
 
   @Override
@@ -1341,17 +1344,13 @@ public class XdsClientImpl extends XdsClient
             @Override
             public void beforeStart(ClientCallStreamObserver<DeltaDiscoveryRequest> requestStream)
             {
-              requestStream.setOnReadyHandler(() -> _executorService.execute(XdsClientImpl.this::readyHandler));
+              requestStream.setOnReadyHandler(() -> checkShutdownAndExecute((XdsClientImpl.this::readyHandler)));
             }
 
             @Override
             public void onNext(DeltaDiscoveryResponse response)
             {
-              if (_shutdown) {
-                _log.warn("XdsClient was shutdown, not processing more DeltaDiscoveryResponses");
-                return;
-              }
-              _executorService.execute(() ->
+              checkShutdownAndExecute(() ->
               {
                 if (_closed)
                 {
@@ -1381,21 +1380,13 @@ public class XdsClientImpl extends XdsClient
             @Override
             public void onError(Throwable t)
             {
-              if (_shutdown) {
-                _log.warn("XdsClient was shutdown, can't execute error callback");
-                return;
-              }
-              _executorService.execute(() -> handleRpcError(t));
+              checkShutdownAndExecute((() -> handleRpcError(t));
             }
 
             @Override
             public void onCompleted()
             {
-              if (_shutdown) {
-                _log.warn("XdsClient was shutdown, can't execute onCompleted callback");
-                return;
-              }
-              _executorService.execute(() -> handleRpcCompleted());
+              checkShutdownAndExecute(() -> handleRpcCompleted());
             }
           };
       _requestWriter = _stub.withWaitForReady().deltaAggregatedResources(responseReader);
