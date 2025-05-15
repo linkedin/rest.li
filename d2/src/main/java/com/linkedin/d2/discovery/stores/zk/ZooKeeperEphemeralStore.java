@@ -103,8 +103,6 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   private final ZookeeperEphemeralPrefixGenerator _prefixGenerator;
   private ServiceDiscoveryEventEmitter _eventEmitter;
   private DualReadStateManager _dualReadStateManager;
-
-
   // callback when announcements happened (for the regular and warmup clusters in ZookeeperAnnouncer only) to notify the new znode path and data.
   private final AtomicReference<ZookeeperNodePathAndDataCallback> _znodePathAndDataCallbackRef;
 
@@ -475,13 +473,20 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 
   private void setRawClientTrackingNode()
   {
-
-    String rawD2ClientPath = D2Utils.RAW_D2_CLIENT_PATH + D2Utils.getAppIdentityName();
+    String rawD2ClientTrackingPath = D2Utils.getRawClientTrackingPath();
     try
     {
-      if (_zk.exists(rawD2ClientPath, false) != null)
+      if (_zk.exists(rawD2ClientTrackingPath, false) != null)
       {
-        LOG.debug("rawClientTracking node already exist at path: {}", rawD2ClientPath);
+        LOG.debug("rawClientTracking node already exist at path: {}", rawD2ClientTrackingPath);
+        return;
+      }
+
+      List<String> childNodes = _zk.getChildren(D2Utils.getRawClientTrackingBasePath(), false);
+      // If tracking node count exceeds the max limit, we won't create further Znode.
+      if (childNodes.size() > D2Utils.RAW_D2_CLIENT_MAX_TRACKING_NODE)
+      {
+        LOG.error("The number of rawD2ClientBuilders exceeds the limit: {}, skipping further node creation for RawClientTracking", childNodes.size());
         return;
       }
 
@@ -521,7 +526,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
         }
       };
 
-      _zk.create(rawD2ClientPath,
+      _zk.create(rawD2ClientTrackingPath,
           stringPropertySerializer.toBytes(D2Utils.getSystemProperties()),
           ZooDefs.Ids.OPEN_ACL_UNSAFE,
           CreateMode.PERSISTENT,
@@ -530,7 +535,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     }
     catch (KeeperException | InterruptedException e)
     {
-      LOG.warn("failed to set up node for rawClientTracking at path {}, exception: {}", rawD2ClientPath, e.getMessage());
+      LOG.warn("failed to set up node for rawClientTracking at path {}, exception: {}", rawD2ClientTrackingPath, e.getMessage());
     }
   }
 

@@ -44,7 +44,6 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     logLoadBalancerTypeWarning(LOG);
     if (config.isLiRawD2Client)
     {
-      //TODO: Set flag in ZooKeeperEphemeralStore to create a permanent znode about the app.
       logAppProps(LOG);
     }
 

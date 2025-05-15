@@ -23,8 +23,11 @@ import org.slf4j.LoggerFactory;
 public class D2Utils
 {
   private static final Logger LOG = LoggerFactory.getLogger(D2Utils.class);
+  private static final String RAW_D2_CLIENT_BASE_PATH = "/d2/rawD2ClientBuilders";
 
-  public static final String RAW_D2_CLIENT_PATH = "/d2/rawD2ClientBuilders/";
+  // Keeping the max threshold to 10K, this would ensure that we accidentally won't create more than max ZK tracking nodes.
+  public static final int RAW_D2_CLIENT_MAX_TRACKING_NODE = 10000;
+
   // A set of system properties to be excluded as they are lengthy, not needed, etc.
   private static final Set<String> SYSTEM_PROPS_TO_EXCLUDE = Stream.of(
       "jdk.debug",
@@ -94,5 +97,15 @@ public class D2Utils
     String userDir = System.getProperties().getProperty("user.dir");
     LOG.info("User dir for raw D2 Client usages: {}", userDir);
     return userDir.replace("/", "-").substring(1);
+  }
+
+  public static String getRawClientTrackingPath()
+  {
+    return RAW_D2_CLIENT_BASE_PATH + "/" + getAppIdentityName();
+  }
+
+  public static String getRawClientTrackingBasePath()
+  {
+    return RAW_D2_CLIENT_BASE_PATH;
   }
 }
