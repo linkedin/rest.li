@@ -322,9 +322,9 @@ public class XdsClientImpl extends XdsClient
 
   private void checkShutdownAndExecute(Runnable runnable)
   {
-    if (_shutdown)
+    if (_executorService.isShutdown())
     {
-      _log.warn("Attempting to execute after shutdown, will do nothing");
+      _log.warn("Attempting to execute a task after _executorService was shutdown, will do nothing");
       return;
     }
 
@@ -1380,7 +1380,7 @@ public class XdsClientImpl extends XdsClient
             @Override
             public void onError(Throwable t)
             {
-              checkShutdownAndExecute((() -> handleRpcError(t));
+              checkShutdownAndExecute((() -> handleRpcError(t)));
             }
 
             @Override
