@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -97,7 +98,7 @@ public class XdsClientImpl extends XdsClient
   private BackoffPolicy _retryBackoffPolicy;
   @VisibleForTesting
   AdsStream _adsStream;
-  private boolean _shutdown;
+  private boolean _isXdsStreamShutdown;
   @VisibleForTesting
   ScheduledFuture<?> _retryRpcStreamFuture;
   private ScheduledFuture<?> _readyTimeoutFuture;
@@ -175,10 +176,6 @@ public class XdsClientImpl extends XdsClient
   @Override
   public void watchXdsResource(String resourceName, ResourceWatcher watcher)
   {
-    if (_shutdown) {
-      _log.warn("Attempting to start watching resource {} after shutdown, will do nothing", resourceName);
-      return;
-    }
     checkShutdownAndExecute(() ->
     {
       ResourceType originalType = watcher.getType();
@@ -273,7 +270,7 @@ public class XdsClientImpl extends XdsClient
   @VisibleForTesting
   void startRpcStreamLocal()
   {
-    if (_shutdown)
+    if (_isXdsStreamShutdown)
     {
       _log.warn("RPC stream cannot be started after shutdown!");
       return;
@@ -288,7 +285,7 @@ public class XdsClientImpl extends XdsClient
         AggregatedDiscoveryServiceGrpc.newStub(_managedChannel);
     AdsStream stream = new AdsStream(stub);
     _adsStream = stream;
-    _readyTimeoutFuture = _executorService.schedule(() ->
+    _readyTimeoutFuture = checkShutdownAndSchedule(() ->
     {
       // There is a race condition where the task can be executed right as it's being cancelled. This checks whether
       // the current state is still pointing to the right stream, and whether it is ready before notifying of an error.
@@ -309,15 +306,27 @@ public class XdsClientImpl extends XdsClient
   @Override
   public void shutdown()
   {
-    _executorService.execute(() ->
+    // create a new executor instead of using the _executorService because this shutdown should run
+    // regardless of whether _executorService is available.
+    Executors.newSingleThreadExecutor().execute(() ->
     {
-      _shutdown = true;
+      _isXdsStreamShutdown = true;
       _log.info("Shutting down");
       if (_adsStream != null)
       {
         _adsStream.close(Status.CANCELLED.withDescription("shutdown").asException());
       }
     });
+  }
+
+  private ScheduledFuture<?> checkShutdownAndSchedule(Runnable runnable, long delay, TimeUnit unit) {
+    if (_executorService.isShutdown())
+    {
+      _log.warn("Attempting to schedule a task after _executorService was shutdown, will do nothing");
+      return null;
+    }
+
+    return _executorService.schedule(runnable, delay, unit);
   }
 
   private void checkShutdownAndExecute(Runnable runnable)
@@ -1108,7 +1117,7 @@ public class XdsClientImpl extends XdsClient
       return;
     }
     _adsStream = testStream;
-    _retryRpcStreamFuture = _executorService.schedule(new RpcRetryTask(), 0, TimeUnit.NANOSECONDS);
+    _retryRpcStreamFuture = checkShutdownAndSchedule(new RpcRetryTask(), 0, TimeUnit.NANOSECONDS);
   }
 
   // Return true if the client should subscribe to URI glob collection for the given resource type.
@@ -1462,11 +1471,7 @@ public class XdsClientImpl extends XdsClient
         delayNanos = _retryBackoffPolicy.nextBackoffNanos();
       }
       _log.info("Retry ADS stream in {} ns", delayNanos);
-      if (_shutdown) {
-        _log.warn("Already shut down, will not retry ADS stream");
-        return;
-      }
-      _retryRpcStreamFuture = _executorService.schedule(new RpcRetryTask(), delayNanos, TimeUnit.NANOSECONDS);
+      _retryRpcStreamFuture = checkShutdownAndSchedule(new RpcRetryTask(), delayNanos, TimeUnit.NANOSECONDS);
     }
 
     private void close(Exception error)
