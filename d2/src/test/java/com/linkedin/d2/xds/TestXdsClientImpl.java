@@ -334,8 +334,8 @@ public class TestXdsClientImpl
     XdsClientImplFixture fixture = new XdsClientImplFixture();
     fixture._executorService.shutdown();
 
-    // once the _executorService is shutdown, all of these calls should be no-ops
-    // due to the checks in checkShutdownAndExecute and checkShutdownAndSchedule
+    // once the _executorService is shutdown, all of these calls should be no-ops and not throw
+    // RejectedExecutionExceptions due to the checks in checkShutdownAndExecute and checkShutdownAndSchedule
     fixture._xdsClientImpl.startRpcStream();
     fixture._xdsClientImpl.watchXdsResource(CLUSTER_RESOURCE_NAME, fixture._resourceWatcher);
     fixture._xdsClientImpl.watchAllXdsResources(fixture._wildcardResourceWatcher);
