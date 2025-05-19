@@ -29,6 +29,7 @@ import com.linkedin.d2.discovery.event.D2ServiceDiscoveryEventHelper;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import com.linkedin.d2.discovery.stores.PropertyStoreException;
 import com.linkedin.d2.discovery.stores.file.FileStore;
+import com.linkedin.d2.discovery.util.D2Utils;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,6 +37,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -96,6 +98,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   private final boolean _useNewWatcher;
   private final ScheduledExecutorService _executorService;
   private final int _zookeeperReadWindowMs;
+  private final boolean _isRawD2Client;
   private final ZookeeperChildFilter _zookeeperChildFilter;
   private final ZookeeperEphemeralPrefixGenerator _prefixGenerator;
   private ServiceDiscoveryEventEmitter _eventEmitter;
@@ -173,6 +176,22 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
         executorService, zookeeperReadWindowMs, null, null);
   }
 
+  public ZooKeeperEphemeralStore(ZKConnection client,
+      PropertySerializer<T> serializer,
+      ZooKeeperPropertyMerger<T> merger,
+      String path,
+      boolean watchChildNodes,
+      boolean useNewWatcher,
+      String ephemeralNodesFilePath,
+      ScheduledExecutorService executorService,
+      int zookeeperReadWindowMs,
+      ZookeeperChildFilter zookeeperChildFilter,
+      ZookeeperEphemeralPrefixGenerator prefixGenerator)
+  {
+    this(client, serializer, merger, path, watchChildNodes, useNewWatcher, ephemeralNodesFilePath,
+        executorService, zookeeperReadWindowMs, zookeeperChildFilter, prefixGenerator, false);
+  }
+
   /**
    * @param watchChildNodes        if true, a watcher for each children node will be set (this have a large cost)
    * @param ephemeralNodesFilePath if a FS path is specified, children nodes are considered unmodifiable,
@@ -188,7 +207,8 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
                                  ScheduledExecutorService executorService,
                                  int zookeeperReadWindowMs,
                                  ZookeeperChildFilter zookeeperChildFilter,
-                                 ZookeeperEphemeralPrefixGenerator prefixGenerator)
+                                 ZookeeperEphemeralPrefixGenerator prefixGenerator,
+                                 boolean isRawD2Client)
   {
     super(client, serializer, path);
 
@@ -220,6 +240,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     _znodePathAndDataCallbackRef = new AtomicReference<>();
     _eventEmitter = null;
     _dualReadStateManager = null;
+    _isRawD2Client = isRawD2Client;
   }
 
   @Override
@@ -397,6 +418,11 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 
   private void getMergedChildren(String path, List<String> children, ZKStoreWatcher watcher, final Callback<T> callback)
   {
+    if (_isRawD2Client)
+    {
+      setRawClientTrackingNode();
+    }
+
     final String propertyName = getPropertyForPath(path);
     if (children.size() > 0)
     {
@@ -427,6 +453,11 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
    */
   private void getChildrenData(String path, Collection<String> children, Callback<Map<String, T>> callback)
   {
+    if (_isRawD2Client)
+    {
+      setRawClientTrackingNode();
+    }
+
     if (children.size() > 0)
     {
       LOG.debug("getChildrenData: collecting {}", children);
@@ -437,6 +468,76 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     {
       LOG.debug("getChildrenData: no children");
       callback.onSuccess(Collections.emptyMap());
+    }
+  }
+
+  private void setRawClientTrackingNode()
+  {
+    String rawD2ClientTrackingPath = D2Utils.getRawClientTrackingPath();
+    try
+    {
+      if (_zk.exists(rawD2ClientTrackingPath, false) != null)
+      {
+        LOG.debug("rawClientTracking node already exist at path: {}", rawD2ClientTrackingPath);
+        return;
+      }
+
+      List<String> childNodes = _zk.getChildren(D2Utils.getRawClientTrackingBasePath(), false);
+      // If tracking node count exceeds the max limit, we won't create further Znode.
+      if (childNodes.size() > D2Utils.RAW_D2_CLIENT_MAX_TRACKING_NODE)
+      {
+        LOG.warn("The number of znodes under {} exceeds the limit: {}," +
+                " skipping further node creation for RawClientTracking", D2Utils.getRawClientTrackingBasePath(),
+            childNodes.size());
+        return;
+      }
+
+      final AsyncCallback.StringCallback dataCallback = new AsyncCallback.StringCallback()
+      {
+        @Override
+        public void processResult(int rc, String path, Object ctx, String name)
+        {
+          KeeperException.Code code = KeeperException.Code.get(rc);
+          if (Objects.requireNonNull(code) == KeeperException.Code.OK)
+          {
+            LOG.info("setting up node for rawClientTracking with name: {}", name);
+          }
+          else
+          {
+            LOG.warn("failed to set up node for rawClientTracking at path {} with error code: {}", path, code);
+          }
+        }
+      };
+
+      PropertySerializer<String> stringPropertySerializer = new PropertySerializer<String>()
+      {
+        @Override
+        public byte[] toBytes(String property)
+        {
+          return property.getBytes();
+        }
+
+        @Override
+        public String fromBytes(byte[] bytes)
+        {
+          if (bytes == null)
+          {
+            return "";
+          }
+          return new String(bytes);
+        }
+      };
+
+      _zk.create(rawD2ClientTrackingPath,
+          stringPropertySerializer.toBytes(D2Utils.getSystemProperties()),
+          ZooDefs.Ids.OPEN_ACL_UNSAFE,
+          CreateMode.PERSISTENT,
+          dataCallback,
+          null);
+    }
+    catch (KeeperException | InterruptedException e)
+    {
+      LOG.warn("failed to set up node for rawClientTracking at path {}, exception: {}", rawD2ClientTrackingPath, e.getMessage());
     }
   }
 
