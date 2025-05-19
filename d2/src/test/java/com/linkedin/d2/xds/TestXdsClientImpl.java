@@ -16,7 +16,6 @@ import com.linkedin.d2.xds.XdsClientImpl.WildcardResourceSubscriber;
 import com.linkedin.r2.util.NamedThreadFactory;
 import indis.XdsD2;
 import io.envoyproxy.envoy.service.discovery.v3.Resource;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,6 +27,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -327,6 +327,24 @@ public class TestXdsClientImpl
     Assert.assertEquals(fixture._nodeSubscriber.getData(), NODE_UPDATE1);
     verify(fixture._resourceWatcher, times(0)).onChanged(eq(NODE_UPDATE1));
     verify(fixture._wildcardResourceWatcher, times(0)).onChanged(any(), eq(NODE_UPDATE1));
+  }
+
+  @Test
+  public void testExecutorServiceNotUsedAfterShutdown() {
+    XdsClientImplFixture fixture = new XdsClientImplFixture();
+    fixture._executorService.shutdown();
+
+    // once the _executorService is shutdown, all of these calls should be no-ops
+    // due to the checks in checkShutdownAndExecute and checkShutdownAndSchedule
+    fixture._xdsClientImpl.startRpcStream();
+    fixture._xdsClientImpl.watchXdsResource(CLUSTER_RESOURCE_NAME, fixture._resourceWatcher);
+    fixture._xdsClientImpl.watchAllXdsResources(fixture._wildcardResourceWatcher);
+
+    fixture._xdsClientImpl.testRetryTask(fixture._adsStream);
+    fixture._xdsClientImpl.startRpcStreamLocal();
+
+    verify(fixture._executorService, never()).execute(any());
+    verify(fixture._executorService, never()).schedule((Runnable) any(), anyLong(), any());
   }
 
   // Removed resource will not overwrite the original valid data for individual subscriber, but will be removed
@@ -949,6 +967,8 @@ public class TestXdsClientImpl
     @Captor
     ArgumentCaptor<Map<String, String>> _resourceVersionsArgumentCaptor;
 
+    ScheduledExecutorService _executorService;
+
     XdsClientImplFixture()
     {
       this(false, false);
@@ -982,8 +1002,10 @@ public class TestXdsClientImpl
         setResourceVersions(useGlobCollections);
       }
 
+      _executorService = spy(Executors.newScheduledThreadPool(1));
+
       _xdsClientImpl = spy(new XdsClientImpl(null, null,
-          Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("test executor")),
+          _executorService,
           0, useGlobCollections, _serverMetricsProvider, useIRV));
       _xdsClientImpl._adsStream = _adsStream;
 
