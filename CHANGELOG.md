@@ -14,6 +14,8 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.69.2] - 2025-05-20
+
 ## [29.69.1] - 2025-05-19
 - Don't execute or schedule new tasks in XdsClientImpl's ScheduledExecutorService once the XdsClient has been shut down
 
@@ -5819,7 +5821,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.69.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.69.2...master
+[29.69.2]: https://github.com/linkedin/rest.li/compare/v29.69.1...v29.69.2
 [29.69.1]: https://github.com/linkedin/rest.li/compare/v29.69.0...v29.69.1
 [29.69.0]: https://github.com/linkedin/rest.li/compare/v29.68.0...v29.69.0
 [29.68.1]: https://github.com/linkedin/rest.li/compare/v29.68.0...v29.68.1
