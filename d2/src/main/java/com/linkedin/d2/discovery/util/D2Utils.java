@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -20,6 +22,12 @@ import javax.annotation.Nonnull;
 
 public class D2Utils
 {
+  private static final Logger LOG = LoggerFactory.getLogger(D2Utils.class);
+  private static final String RAW_D2_CLIENT_BASE_PATH = "/d2/rawD2ClientBuilders";
+
+  // Keeping the max threshold to 10K, this would ensure that we accidentally won't create more than max ZK tracking nodes.
+  public static final int RAW_D2_CLIENT_MAX_TRACKING_NODE = 10000;
+
   // A set of system properties to be excluded as they are lengthy, not needed, etc.
   private static final Set<String> SYSTEM_PROPS_TO_EXCLUDE = Stream.of(
       "jdk.debug",
@@ -80,5 +88,24 @@ public class D2Utils
       }
     });
     return properties.toString();
+  }
+
+  // ZK don't allow / in the node name, we are replacing / with -, This name would be unique for each app.
+  // for example: export-content-lid-apps-indis-canary-install nodeName is being used.
+  public static String getAppIdentityName()
+  {
+    String userDir = System.getProperties().getProperty("user.dir");
+    LOG.info("User dir for raw D2 Client usages: {}", userDir);
+    return userDir.replace("/", "-").substring(1);
+  }
+
+  public static String getRawClientTrackingPath()
+  {
+    return RAW_D2_CLIENT_BASE_PATH + "/" + getAppIdentityName();
+  }
+
+  public static String getRawClientTrackingBasePath()
+  {
+    return RAW_D2_CLIENT_BASE_PATH;
   }
 }

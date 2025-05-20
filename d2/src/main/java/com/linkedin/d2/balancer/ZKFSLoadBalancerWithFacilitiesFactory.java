@@ -44,7 +44,6 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     logLoadBalancerTypeWarning(LOG);
     if (config.isLiRawD2Client)
     {
-      //TODO: Set flag in ZooKeeperEphemeralStore to create a permanent znode about the app.
       logAppProps(LOG);
     }
 
@@ -109,7 +108,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                                    config.canaryDistributionProvider,
                                                    config.serviceDiscoveryEventEmitter,
                                                    config.dualReadStateManager,
-                                                   config.loadBalanceStreamException
+                                                   config.loadBalanceStreamException,
+                                                   config.isLiRawD2Client
     );
   }
 }

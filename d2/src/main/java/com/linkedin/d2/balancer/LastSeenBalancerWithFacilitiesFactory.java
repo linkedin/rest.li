@@ -65,7 +65,6 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     logLoadBalancerTypeWarning(LOG);
     if (config.isLiRawD2Client)
     {
-      //TODO: Set flag in ZooKeeperEphemeralStore to create a permanent znode about the app.
       logAppProps(LOG);
     }
 
@@ -154,6 +153,11 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     if (config.enableSaveUriDataOnDisk)
     {
       zkUrisStoreBuilder.setBackupStoreFilePath(config.fsBasePath);
+    }
+
+    if (config.isLiRawD2Client)
+    {
+      zkUrisStoreBuilder.setRawD2Client(true);
     }
 
     return new LastSeenZKStore<>(fileStore,
