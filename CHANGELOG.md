@@ -15,7 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.69.2] - 2025-05-20
-
+- Skipping ZK node creation for Raw D2 Client for post commit
 ## [29.69.1] - 2025-05-19
 - Don't execute or schedule new tasks in XdsClientImpl's ScheduledExecutorService once the XdsClient has been shut down
 
