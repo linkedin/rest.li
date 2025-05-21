@@ -305,8 +305,7 @@ public class XdsClientImpl extends XdsClient
   @Override
   public void shutdown()
   {
-    // create a new executor instead of using the _executorService because this shutdown should run
-    // regardless of whether _executorService is available.
+    // _executorService will be shutdown by the caller, so we don't need to do it here.
     _executorService.execute(() ->
     {
       _isXdsStreamShutdown = true;
