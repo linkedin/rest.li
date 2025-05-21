@@ -476,6 +476,12 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     String rawD2ClientTrackingPath = D2Utils.getRawClientTrackingPath();
     try
     {
+      if (rawD2ClientTrackingPath.contains("post-commit"))
+      {
+        LOG.debug("rawD2ClientTrackingPath: {} contains post-commit, skipping node creation for RawClientTracking",
+            rawD2ClientTrackingPath);
+        return;
+      }
       if (_zk.exists(rawD2ClientTrackingPath, false) != null)
       {
         LOG.debug("rawClientTracking node already exist at path: {}", rawD2ClientTrackingPath);
