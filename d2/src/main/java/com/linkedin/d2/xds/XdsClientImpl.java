@@ -50,7 +50,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -306,9 +305,8 @@ public class XdsClientImpl extends XdsClient
   @Override
   public void shutdown()
   {
-    // create a new executor instead of using the _executorService because this shutdown should run
-    // regardless of whether _executorService is available.
-    Executors.newSingleThreadExecutor().execute(() ->
+    // _executorService will be shutdown by the caller, so we don't need to do it here.
+    _executorService.execute(() ->
     {
       _isXdsStreamShutdown = true;
       _log.info("Shutting down");
