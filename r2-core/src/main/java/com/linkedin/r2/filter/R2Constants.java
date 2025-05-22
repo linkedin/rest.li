@@ -73,6 +73,7 @@ public class R2Constants
   public static final String PROJECTION_INFO = "PROJECTION_INFO";
   public static final String RESTLI_INFO = "RESTLI_INFO";
   public static final String RESTLI_TRACE_INFO = "RESTLI_TRACE_INFO";
+  public static final String RESTLI_RESOURCE = "RESTLI_RESOURCE";
 
   /**
    * Client uses this key to designate a request as belonging to a group of requests that will be monitored in a
