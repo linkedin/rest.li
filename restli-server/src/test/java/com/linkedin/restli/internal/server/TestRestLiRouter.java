@@ -17,6 +17,7 @@
 package com.linkedin.restli.internal.server;
 
 import com.linkedin.data.DataMap;
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.HttpStatus;
@@ -128,6 +129,20 @@ public class TestRestLiRouter
     Assert.assertEquals(e.getStatus(), HttpStatus.S_404_NOT_FOUND.getCode());
   }
 
+  @Test
+  public void testSubResourceExtraction() throws URISyntaxException {
+    final TestSetup setup = new TestSetup();
+    setup.mockContextForRootResourceGetRequest(setup._rootPath + "/12345" + setup._subdomainPath + "/54321");
+    final RestLiRouter router = setup._router;
+    final ServerResourceContext context = setup._context;
+
+    final ResourceMethodDescriptor method = router.process(context);
+
+    // Verify the extracted resource path
+    String extractedPath = (String) context.getRawRequestContext().getLocalAttr(R2Constants.RESTLI_RESOURCE);
+    Assert.assertEquals(extractedPath, setup._rootPath.substring(1) + setup._subdomainPath);
+  }
+
   // ----------------------------------------------------------------------
   // helper members
   // ----------------------------------------------------------------------
@@ -156,11 +171,22 @@ public class TestRestLiRouter
     {
       return new EmptyRecord();
     }
+
+    @RestLiCollection(name = "subdomain", keyName = "subdomainId")
+    private static class SubdomainResource extends CollectionResourceTemplate<Long, EmptyRecord>
+    {
+      @RestMethod.Get
+      public EmptyRecord get(@PathKeyParam("subdomainId") Long id)
+      {
+        return new EmptyRecord();
+      }
+    }
   }
 
   private static final class TestSetup
   {
     private final String _childPath;
+    private final String _subdomainPath;
     private final RestLiConfig _config;
     private final ServerResourceContext _context;
     private final Class<?> _keyClass;
@@ -180,6 +206,7 @@ public class TestRestLiRouter
       _resourceName = "root";
       _childPath = "/child";
       _rootPath = "/root";
+      _subdomainPath = "/subdomain";
       _parameters = new DataMap();
       _context = mock(ServerResourceContext.class);
       _pathKeys = mock(MutablePathKeys.class);
@@ -195,6 +222,9 @@ public class TestRestLiRouter
       doReturn(_pathKeys).when(_context).getPathKeys();
       doReturn(RESTLI_PROTOCOL_2_0_0.getProtocolVersion()).when(_context).getRestliProtocolVersion();
       doReturn(_requestContext).when(_context).getRawRequestContext();
+      _rootModel.addSubResource(
+          _subdomainPath.substring(1), RestLiAnnotationReader.processResource(RootResource.SubdomainResource.class)
+      );
       _pathToModelMap.put(_rootPath, _rootModel);
     }
 

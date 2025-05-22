@@ -54,6 +54,8 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -148,6 +150,13 @@ public class RestLiRouter
   {
     ResourceModel currentResource = resource;
 
+    // save the top-most resource
+    StringBuilder resourceStringBuilder = new StringBuilder(
+        StringUtils.isNotEmpty(currentResource.getName())
+            ? currentResource.getName()
+            : ""
+    );
+
     // iterate through all path segments, simultaneously descending the resource hierarchy
     // and parsing path keys where applicable;
     // the goal of this loop is to locate the leaf resource, which will be set in
@@ -162,6 +171,11 @@ public class RestLiRouter
       {
         currentResource = currentResource.getSubResource(parseSubresourceName(currentPathSegment));
         currentLevel = currentResource == null ? ResourceLevel.ANY : currentResource.getResourceLevel();
+
+        // append the subResource
+        if (currentResource != null && StringUtils.isNotEmpty(currentResource.getName())) {
+          resourceStringBuilder.append("/").append(currentResource.getName());
+        }
       }
       else
       {
@@ -213,6 +227,9 @@ public class RestLiRouter
         throw new RoutingException(HttpStatus.S_404_NOT_FOUND.getCode());
       }
     }
+
+    // save the resource string to the request context
+    context.getRawRequestContext().putLocalAttr(R2Constants.RESTLI_RESOURCE, resourceStringBuilder.toString());
 
     parseBatchKeysParameter(currentResource, context); //now we know the key type, look for batch parameter
 
