@@ -98,13 +98,16 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
   private final boolean _useNewWatcher;
   private final ScheduledExecutorService _executorService;
   private final int _zookeeperReadWindowMs;
-  private final boolean _isRawD2Client;
   private final ZookeeperChildFilter _zookeeperChildFilter;
   private final ZookeeperEphemeralPrefixGenerator _prefixGenerator;
+
   private ServiceDiscoveryEventEmitter _eventEmitter;
   private DualReadStateManager _dualReadStateManager;
   // callback when announcements happened (for the regular and warmup clusters in ZookeeperAnnouncer only) to notify the new znode path and data.
   private final AtomicReference<ZookeeperNodePathAndDataCallback> _znodePathAndDataCallbackRef;
+
+  private final boolean _isRawD2Client; // true when the d2 client is using raw d2 client builder
+  private final boolean _isAppToExclude; // apps to be excluded from the raw d2 client tracking node creation
 
   public ZooKeeperEphemeralStore(ZKConnection client,
                                  PropertySerializer<T> serializer,
@@ -241,6 +244,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     _eventEmitter = null;
     _dualReadStateManager = null;
     _isRawD2Client = isRawD2Client;
+    _isAppToExclude = D2Utils.isAppToExclude();
   }
 
   @Override
@@ -476,12 +480,9 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
     String rawD2ClientTrackingPath = D2Utils.getRawClientTrackingPath();
     try
     {
-      // This is needed to avoid creating Zookeeper node for post-commit
-      // e.g  export-content-data-multiproduct-post-commit-mpdep-i001-workspace-credential
-      if (rawD2ClientTrackingPath.contains("-post-commit-"))
+      if (_isAppToExclude)
       {
-        LOG.debug("rawD2ClientTrackingPath: {} contains post-commit, skipping node creation for RawClientTracking",
-            rawD2ClientTrackingPath);
+        LOG.debug("Skipping node creation for RawClientTracking for path: {}", rawD2ClientTrackingPath);
         return;
       }
       if (_zk.exists(rawD2ClientTrackingPath, false) != null)
