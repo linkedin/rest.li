@@ -314,6 +314,11 @@ public class XdsClientImpl extends XdsClient
       {
         _adsStream.close(Status.CANCELLED.withDescription("shutdown").asException());
       }
+
+      if(!_managedChannel.isShutdown())
+      {
+        _managedChannel.shutdown();
+      }
     });
   }
 

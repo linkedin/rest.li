@@ -189,8 +189,8 @@ public class XdsLoadBalancer implements LoadBalancerWithFacilities, WarmUpServic
   public void shutdown(PropertyEventThread.PropertyEventShutdownCallback shutdown)
   {
     _xdsAdaptor.shutdown();
+    _loadBalancer.shutdown(shutdown);
     _executorService.shutdown();
-    shutdown.done();
   }
 
   @Override
