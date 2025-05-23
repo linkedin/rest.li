@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.69.5] - 2025-05-22
+- Detect more dev/testing app paths for raw d2 cient builder
+
 ## [29.69.4] - 2025-05-21
 - Fix the XdsLoadBalancer shutdown issue
 
@@ -5828,7 +5831,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.69.4...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.69.5...master
+[29.69.5]: https://github.com/linkedin/rest.li/compare/v29.69.4...v29.69.5
 [29.69.4]: https://github.com/linkedin/rest.li/compare/v29.69.3...v29.69.4
 [29.69.3]: https://github.com/linkedin/rest.li/compare/v29.69.2...v29.69.3
 [29.69.2]: https://github.com/linkedin/rest.li/compare/v29.69.1...v29.69.2
