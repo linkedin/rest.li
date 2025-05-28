@@ -267,7 +267,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
           // Use client provided by CustomURIAffinityRoutingProvider when it's enabled
           CustomAffinityRoutingURIProvider customAffinityRoutingURIProvider =
-              (CustomAffinityRoutingURIProvider) requestContext.getLocalAttr(CustomAffinityRoutingURIProvider.CUSTOM_AFFINITY_ROUTING_URI_PROVIDER);
+              new SafeCustomAffinityRoutingURIProviderDecorator((CustomAffinityRoutingURIProvider)
+                  requestContext.getLocalAttr(CustomAffinityRoutingURIProvider.CUSTOM_AFFINITY_ROUTING_URI_PROVIDER));
 
           boolean enableCustomAffinityRouting = isCustomAffinityRoutingEnabled(requestContext, customAffinityRoutingURIProvider);
           if (enableCustomAffinityRouting)
