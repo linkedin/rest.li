@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.69.7] - 2025-05-27
+- Handle exceptions thrown from CustomAffinityRoutingURIProvider
+
 ## [29.69.6] - 2025-05-27
 - Addressing duplicate ZK node creation for RawD2Client tracking
 
@@ -5834,7 +5837,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.69.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.69.7...master
+[29.69.7]: https://github.com/linkedin/rest.li/compare/v29.69.6...v29.69.7
 [29.69.6]: https://github.com/linkedin/rest.li/compare/v29.69.5...v29.69.6
 [29.69.5]: https://github.com/linkedin/rest.li/compare/v29.69.4...v29.69.5
 [29.69.4]: https://github.com/linkedin/rest.li/compare/v29.69.3...v29.69.4

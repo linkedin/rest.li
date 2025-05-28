@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  * It provides a fallback mechanism to ensure that if the delegate is null or throws an exception,
  * the application can continue to function without disruption.
  */
-class SafeCustomAffinityRoutingURIProviderDecorator implements CustomAffinityRoutingURIProvider {
+final class SafeCustomAffinityRoutingURIProviderDecorator implements CustomAffinityRoutingURIProvider {
   private static final RateLimitedLogger RATE_LIMITED_LOGGER =
       new RateLimitedLogger(LoggerFactory.getLogger(SafeCustomAffinityRoutingURIProviderDecorator.class),
           1000, // 1-second rate limit
