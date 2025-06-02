@@ -491,13 +491,14 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
         return;
       }
 
-      List<String> childNodes = _zk.getChildren(D2Utils.getRawClientTrackingBasePath(), false);
+      Stat nodeStat = _zk.exists(D2Utils.getRawClientTrackingBasePath(), false);
+      int childCount = nodeStat.getNumChildren();
       // If tracking node count exceeds the max limit, we won't create further Znode.
-      if (childNodes.size() > D2Utils.RAW_D2_CLIENT_MAX_TRACKING_NODE)
+      if (childCount > D2Utils.RAW_D2_CLIENT_MAX_TRACKING_NODE)
       {
         LOG.warn("The number of znodes under {} exceeds the limit: {}," +
                 " skipping further node creation for RawClientTracking", D2Utils.getRawClientTrackingBasePath(),
-            childNodes.size());
+            childCount);
         return;
       }
 

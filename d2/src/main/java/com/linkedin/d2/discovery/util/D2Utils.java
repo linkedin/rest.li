@@ -36,7 +36,7 @@ public class D2Utils
   ).collect(Collectors.toSet());
 
   // Keeping the max threshold to 10K, this would ensure that we accidentally won't create more than max ZK tracking nodes.
-  public static final int RAW_D2_CLIENT_MAX_TRACKING_NODE = 10000;
+  public static final int RAW_D2_CLIENT_MAX_TRACKING_NODE = 1000;
 
   // A set of system properties to be excluded as they are lengthy, not needed, etc.
   private static final Set<String> SYSTEM_PROPS_TO_EXCLUDE = Stream.of(
