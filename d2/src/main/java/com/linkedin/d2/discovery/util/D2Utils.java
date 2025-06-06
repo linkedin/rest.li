@@ -7,6 +7,7 @@ package com.linkedin.d2.discovery.util;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.stores.zk.SymlinkUtil;
+import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -24,9 +25,18 @@ public class D2Utils
 {
   private static final Logger LOG = LoggerFactory.getLogger(D2Utils.class);
   private static final String RAW_D2_CLIENT_BASE_PATH = "/d2/rawD2ClientBuilders";
+  private static final String USR_DIR_SYS_PROPERTY = "user.dir";
+  private static final String SPARK_APP_NAME = "spark.app.name";
+  private static final String APP_NAME = "com.linkedin.app.name";
+  // This is needed to avoid creating Zookeeper node for testing and dev environments
+  private static final Set<String> USR_DIRS_TO_EXCLUDE = Stream.of(
+      "/dev-",
+      "/dev/",
+      "/multiproduct-post-commit-mpdep/" // post-commit runs
+  ).collect(Collectors.toSet());
 
   // Keeping the max threshold to 10K, this would ensure that we accidentally won't create more than max ZK tracking nodes.
-  public static final int RAW_D2_CLIENT_MAX_TRACKING_NODE = 10000;
+  public static final int RAW_D2_CLIENT_MAX_TRACKING_NODE = 1000;
 
   // A set of system properties to be excluded as they are lengthy, not needed, etc.
   private static final Set<String> SYSTEM_PROPS_TO_EXCLUDE = Stream.of(
@@ -90,11 +100,30 @@ public class D2Utils
     return properties.toString();
   }
 
+  public static Boolean isAppToExclude()
+  {
+    String userDir = System.getProperties().getProperty(USR_DIR_SYS_PROPERTY);
+    return userDir != null && USR_DIRS_TO_EXCLUDE.stream().anyMatch(userDir::contains);
+  }
+
   // ZK don't allow / in the node name, we are replacing / with -, This name would be unique for each app.
   // for example: export-content-lid-apps-indis-canary-install nodeName is being used.
   public static String getAppIdentityName()
   {
-    String userDir = System.getProperties().getProperty("user.dir");
+    Properties properties = System.getProperties();
+    if (properties.getProperty(SPARK_APP_NAME) != null)
+    {
+      return properties.getProperty(SPARK_APP_NAME);
+    }
+
+    // for samza jobs using the app name
+    if (properties.getProperty(APP_NAME) != null)
+    {
+      return properties.getProperty(APP_NAME);
+    }
+
+    // if APP_NAME is not present then using userDir as node identifier.
+    String userDir = properties.getProperty(USR_DIR_SYS_PROPERTY);
     LOG.info("User dir for raw D2 Client usages: {}", userDir);
     return userDir.replace("/", "-").substring(1);
   }
