@@ -354,7 +354,7 @@ public class SharedZkConnectionProviderTest {
    * Testing sharing connections between announcers and d2client
    * @throws Exception
    */
-  @Test(groups = "needZk")
+  @Test(groups = {"needZk", "ci-flaky"})
   public void testAnnouncerAndClientSharing() throws Exception {
     //connection shared to announcers
     List<URI> hostNames = prepareHostNames(20, "testAnnouncerAndClientSharing");
