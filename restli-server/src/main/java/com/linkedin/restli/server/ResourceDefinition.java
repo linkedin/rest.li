@@ -54,20 +54,17 @@ public interface ResourceDefinition
 
   /**
    * Gets the base uri template.
+   *
    * @return the base uri template.
    */
-  default String getBaseUriTemplate() {
-    throw new UnsupportedOperationException();
-  }
+  String getBaseUriTemplate();
 
   /**
    * Gets the rest.li resource java class.
    *
    * @return java class for this rest.li resource.
    */
-  default Class<?> getResourceClass() {
-    throw new UnsupportedOperationException();
-  }
+  Class<?> getResourceClass();
 
   /**
    * Returns whether the resource is a root resource or not.
