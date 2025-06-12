@@ -17,6 +17,8 @@
 package com.linkedin.data.avro;
 
 import com.google.common.collect.ImmutableMap;
+import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
+import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
@@ -28,6 +30,7 @@ import com.linkedin.data.avro.testevents.MapOfMapOfArrayOfMapArrayUnion;
 import com.linkedin.data.avro.testevents.RecordArray;
 import com.linkedin.data.avro.testevents.RecordMap;
 import com.linkedin.data.avro.testevents.StringRecord;
+import com.linkedin.data.avro.testevents.TestArray;
 import com.linkedin.data.avro.testevents.TestEventRecordOfRecord;
 import com.linkedin.data.avro.testevents.TestEventWithUnionAndEnum;
 import com.linkedin.data.avro.util.AvroUtil;
@@ -1165,7 +1168,9 @@ public class TestDataTranslator
         String expectedBeforeNamespaceProcessor  = row[col][i];
         String expected = TestAvroUtil.namespaceProcessor(expectedBeforeNamespaceProcessor);
         if (debug && expected != expectedBeforeNamespaceProcessor) out.println(" Expected:" + expected);
-
+        if (!result.contains(expected)) {
+          System.out.println("RESULT: "+result+"\n"+"EXPECTED: "+expected);
+        }
         assertTrue(result.contains(expected));
       }
 
@@ -2290,6 +2295,30 @@ public class TestDataTranslator
 
     Assert.assertTrue(mapOfMapOfArrayOfMapArrayUnion.get(0) instanceof Map);
     Assert.assertEquals(((Map<?, ?>) mapOfMapOfArrayOfMapArrayUnion.get(0)).get("recordMap"), mapOfArrayOfMapArrayUnion);
+  }
+
+  @Test
+  public void testDataMapBackfill() throws IOException {
+    final String SCHEMA =
+        "{" +
+            "   \"type\":\"record\"," +
+            "   \"name\":\"Foo\"," +
+            "   \"fields\":[" +
+            "      {" +
+            "         \"name\":\"arrayField\"," +
+            "         \"type\":{" +
+            "            \"type\":\"array\"," +
+            "            \"items\":\"string\"" +
+            "         }," +
+            "         \"default\":[ ]" +
+            "      }" +
+            "   ]" +
+            "}";
+    RecordDataSchema recordDataSchema =
+        (RecordDataSchema) TestUtil.dataSchemaFromString(SCHEMA);
+    DataMap map = new DataMap();
+    GenericRecord record = DataTranslator.dataMapToGenericRecord(map, recordDataSchema);
+    Assert.assertEquals(record.get("arrayField"), map.get("arrayField"));
   }
 }
 
