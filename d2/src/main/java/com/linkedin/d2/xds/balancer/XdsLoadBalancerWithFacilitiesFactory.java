@@ -54,7 +54,8 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
         XdsClientImpl.DEFAULT_READY_TIMEOUT_MILLIS);
     XdsClient xdsClient = new XdsClientImpl(
         new Node(config.hostName),
-        new XdsChannelFactory(config.grpcSslContext, config.xdsServer).createChannel(),
+        new XdsChannelFactory(config.grpcSslContext, config.xdsServer,
+            config.xdsChannelLoadBalancingPolicy, config.xdsChannelLoadBalancingPolicyConfig).createChannel(),
         executorService,
         xdsStreamReadyTimeout,
         config.subscribeToUriGlobCollection,
