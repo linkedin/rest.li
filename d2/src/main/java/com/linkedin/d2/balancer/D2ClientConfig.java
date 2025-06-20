@@ -175,6 +175,7 @@ public class D2ClientConfig
   public XdsServerMetricsProvider _xdsServerMetricsProvider = new NoOpXdsServerMetricsProvider();
   public boolean loadBalanceStreamException = false;
   public boolean xdsInitialResourceVersionsEnabled = false;
+  public Integer xdsStreamMaxRetryBackoffSeconds = null;
 
   /**
    * D2 client builder by default will detect if it's used to build a raw D2 client (as opposed to used by standard
@@ -267,7 +268,8 @@ public class D2ClientConfig
                  boolean loadBalanceStreamException,
                  boolean xdsInitialResourceVersionsEnabled,
                  boolean disableDetectLiRawD2Client,
-                 boolean isLiRawD2Client)
+                 boolean isLiRawD2Client,
+                 Integer xdsStreamMaxRetryBackoffSeconds)
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -345,5 +347,6 @@ public class D2ClientConfig
     this.xdsInitialResourceVersionsEnabled = xdsInitialResourceVersionsEnabled;
     this.disableDetectLiRawD2Client = disableDetectLiRawD2Client;
     this.isLiRawD2Client = isLiRawD2Client;
+    this.xdsStreamMaxRetryBackoffSeconds = xdsStreamMaxRetryBackoffSeconds;
   }
 }
