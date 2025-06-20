@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.69.8] - 2025-06-19
+- Pass in xds channel load balancing policy configs
+
 ## [29.69.7] - 2025-05-30
 - Changing child count logic for RawD2Client tracking node
 
@@ -5837,7 +5840,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.69.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.69.8...master
+[29.69.8]: https://github.com/linkedin/rest.li/compare/v29.69.7...v29.69.8
 [29.69.7]: https://github.com/linkedin/rest.li/compare/v29.69.6...v29.69.7
 [29.69.6]: https://github.com/linkedin/rest.li/compare/v29.69.5...v29.69.6
 [29.69.5]: https://github.com/linkedin/rest.li/compare/v29.69.4...v29.69.5
