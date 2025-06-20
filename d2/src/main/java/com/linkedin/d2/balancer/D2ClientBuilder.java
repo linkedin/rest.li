@@ -230,7 +230,8 @@ public class D2ClientBuilder
                   _config.loadBalanceStreamException,
                   _config.xdsInitialResourceVersionsEnabled,
                   _config.disableDetectLiRawD2Client,
-                  _config.isLiRawD2Client
+                  _config.isLiRawD2Client,
+                  _config.xdsStreamRetryMaxBackoffSeconds
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -819,6 +820,12 @@ public class D2ClientBuilder
   public D2ClientBuilder setXdsInitialResourceVersionsEnabled(boolean xdsIRVEnabled)
   {
     _config.xdsInitialResourceVersionsEnabled = xdsIRVEnabled;
+    return this;
+  }
+
+  public D2ClientBuilder setXdsStreamRetryMaxBackoffSeconds(int xdsStreamRetryMaxBackoffSeconds)
+  {
+    _config.xdsStreamRetryMaxBackoffSeconds = xdsStreamRetryMaxBackoffSeconds;
     return this;
   }
 

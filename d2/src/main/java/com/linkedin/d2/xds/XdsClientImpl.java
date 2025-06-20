@@ -95,6 +95,7 @@ public class XdsClientImpl extends XdsClient
   private final boolean _subscribeToUriGlobCollection;
   private final BackoffPolicy.Provider _backoffPolicyProvider = new ExponentialBackoffPolicy.Provider();
   private BackoffPolicy _retryBackoffPolicy;
+  private Long _retryMaxBackoffNanos = 30 * TimeUnit.SECONDS.toNanos(1); // default value for retry max backoff nanos
   @VisibleForTesting
   AdsStream _adsStream;
   private boolean _isXdsStreamShutdown;
@@ -153,6 +154,24 @@ public class XdsClientImpl extends XdsClient
       XdsServerMetricsProvider serverMetricsProvider,
       boolean irvSupport)
   {
+    this(node,
+        managedChannel,
+        executorService,
+        readyTimeoutMillis,
+        subscribeToUriGlobCollection,
+        serverMetricsProvider,
+        irvSupport, null);
+  }
+
+  public XdsClientImpl(Node node,
+      ManagedChannel managedChannel,
+      ScheduledExecutorService executorService,
+      long readyTimeoutMillis,
+      boolean subscribeToUriGlobCollection,
+      XdsServerMetricsProvider serverMetricsProvider,
+      boolean irvSupport,
+      Integer retryMaxBackoffSeconds)
+  {
     _readyTimeoutMillis = readyTimeoutMillis;
     _node = node;
     _managedChannel = managedChannel;
@@ -170,6 +189,12 @@ public class XdsClientImpl extends XdsClient
     {
       _log.info("XDS initial resource versions support enabled");
     }
+
+    if (retryMaxBackoffSeconds != null && retryMaxBackoffSeconds > 0)
+    {
+      _retryMaxBackoffNanos = retryMaxBackoffSeconds * TimeUnit.SECONDS.toNanos(1);
+    }
+    _log.info("Max retry backoff seconds: {}", _retryMaxBackoffNanos);
   }
 
   @Override
@@ -1471,7 +1496,7 @@ public class XdsClientImpl extends XdsClient
       long delayNanos = 0;
       if (!_responseReceived)
       {
-        delayNanos = _retryBackoffPolicy.nextBackoffNanos();
+        delayNanos = Math.min(_retryBackoffPolicy.nextBackoffNanos(), _retryMaxBackoffNanos);
       }
       _log.info("Retry ADS stream in {} ns", delayNanos);
       _retryRpcStreamFuture = checkShutdownAndSchedule(new RpcRetryTask(), delayNanos, TimeUnit.NANOSECONDS);
