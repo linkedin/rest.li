@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.70.0] - 2025-07-15
+- Configure xds stream retry max backoff time 
+
 ## [29.69.10] - 2025-07-08
 - Skipping RawD2Client trackig node creation for local execution
 
@@ -5846,7 +5849,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.69.10...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.70.0...master
+[29.70.0]: https://github.com/linkedin/rest.li/compare/v29.69.10...v29.70.0
 [29.69.10]: https://github.com/linkedin/rest.li/compare/v29.69.9...v29.69.10
 [29.69.9]: https://github.com/linkedin/rest.li/compare/v29.69.8...v29.69.9
 [29.69.8]: https://github.com/linkedin/rest.li/compare/v29.69.7...v29.69.8
