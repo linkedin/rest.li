@@ -83,8 +83,9 @@ public class XdsChannelFactory
    *                                   provided to {@link ManagedChannelBuilder#defaultServiceConfig(Map)}})
    *                                   after being wrapped in a "loadBalancingConfig" JSON context that corresponds
    *                                   to the load balancing policy name provided by {@code defaultLoadBalancingPolicy}.
-   * @param keepAliveTimeMins          The time to keep the xDS channel alive in minutes without read activity, will reconnect
-   *                                   if the time passed. If {@code null} or less than 0, defaults to {@link #DEFAULT_KEEPALIVE_TIME_MINS}.
+   * @param keepAliveTimeMins          Time in minutes to keep the xDS channel alive without read activity, will send a
+   *                                   keepalive ping to the server, if the time passed. If {@code null} or less than 0,
+   *                                   defaults to {@link #DEFAULT_KEEPALIVE_TIME_MINS}.
    *
    * @see <a href="https://daniel.haxx.se/blog/2012/01/03/getaddrinfo-with-round-robin-dns-and-happy-eyeballs/"/>
    * Details on IPv6 routing.
