@@ -231,7 +231,8 @@ public class D2ClientBuilder
                   _config.xdsInitialResourceVersionsEnabled,
                   _config.disableDetectLiRawD2Client,
                   _config.isLiRawD2Client,
-                  _config.xdsStreamMaxRetryBackoffSeconds
+                  _config.xdsStreamMaxRetryBackoffSeconds,
+                  _config.xdsChannelKeepAliveTimeMins
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?

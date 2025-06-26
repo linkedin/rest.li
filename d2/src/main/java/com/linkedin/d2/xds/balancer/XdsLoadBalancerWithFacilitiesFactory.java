@@ -55,7 +55,8 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
     XdsClient xdsClient = new XdsClientImpl(
         new Node(config.hostName),
         new XdsChannelFactory(config.grpcSslContext, config.xdsServer,
-            config.xdsChannelLoadBalancingPolicy, config.xdsChannelLoadBalancingPolicyConfig).createChannel(),
+            config.xdsChannelLoadBalancingPolicy, config.xdsChannelLoadBalancingPolicyConfig,
+            config.xdsChannelKeepAliveTimeMins).createChannel(),
         executorService,
         xdsStreamReadyTimeout,
         config.subscribeToUriGlobCollection,
