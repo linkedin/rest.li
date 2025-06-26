@@ -17,6 +17,7 @@
 package com.linkedin.d2.xds;
 
 import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
@@ -32,6 +33,8 @@ import static java.util.Collections.singletonMap;
 
 public class XdsChannelFactory
 {
+  private static final long DEFAULT_KEEPALIVE_TIME_MINS = 5L; // Default keep alive time for the xDS channel in minutes.
+
   private static final Logger _log = LoggerFactory.getLogger(XdsChannelFactory.class);
 
   private final SslContext _sslContext;
@@ -40,6 +43,7 @@ public class XdsChannelFactory
   private final String _defaultLoadBalancingPolicy;
   @Nullable
   private final Map<String, ?> _loadBalancingPolicyConfig;
+  private final Long _keepAliveTimeMins;
 
   /**
    * Invokes alternative constructor with {@code defaultLoadBalancingPolicy} and {@code loadBalancingPolicyConfig} as
@@ -58,6 +62,15 @@ public class XdsChannelFactory
     this(sslContext, xdsServerUri, defaultLoadBalancingPolicy, null);
   }
 
+  public XdsChannelFactory(
+      @Nullable SslContext sslContext,
+      String xdsServerUri,
+      @Nullable String defaultLoadBalancingPolicy,
+      @Nullable Map<String, ?> loadBalancingPolicyConfig)
+  {
+    this(sslContext, xdsServerUri, defaultLoadBalancingPolicy, loadBalancingPolicyConfig, null);
+  }
+
   /**
    * @param sslContext                 The sslContext to use. If {@code null}, SSL will not be used when connecting to
    *                                   the xDS server.
@@ -65,11 +78,14 @@ public class XdsChannelFactory
    *                                   underlying A/AAAA records.
    * @param defaultLoadBalancingPolicy If provided, changes the default load balancing policy on the builder to the
    *                                   given policy (see
-   *                                   {@link io.grpc.ManagedChannelBuilder#defaultLoadBalancingPolicy(String)}).
+   *                                   {@link ManagedChannelBuilder#defaultLoadBalancingPolicy(String)}).
    * @param loadBalancingPolicyConfig  Can only be provided if {@code defaultLoadBalancingPolicy} is provided. Will be
-   *                                   provided to {@link io.grpc.ManagedChannelBuilder#defaultServiceConfig(Map)}})
+   *                                   provided to {@link ManagedChannelBuilder#defaultServiceConfig(Map)}})
    *                                   after being wrapped in a "loadBalancingConfig" JSON context that corresponds
    *                                   to the load balancing policy name provided by {@code defaultLoadBalancingPolicy}.
+   * @param keepAliveTimeMins          The time to keep the xDS channel alive in minutes without read activity, will reconnect
+   *                                   if the time passed. If {@code null} or less than 0, defaults to {@link #DEFAULT_KEEPALIVE_TIME_MINS}.
+   *
    * @see <a href="https://daniel.haxx.se/blog/2012/01/03/getaddrinfo-with-round-robin-dns-and-happy-eyeballs/"/>
    * Details on IPv6 routing.
    */
@@ -77,7 +93,8 @@ public class XdsChannelFactory
       @Nullable SslContext sslContext,
       String xdsServerUri,
       @Nullable String defaultLoadBalancingPolicy,
-      @Nullable Map<String, ?> loadBalancingPolicyConfig)
+      @Nullable Map<String, ?> loadBalancingPolicyConfig,
+      @Nullable Long keepAliveTimeMins)
   {
     _sslContext = sslContext;
     _xdsServerUri = xdsServerUri;
@@ -87,6 +104,11 @@ public class XdsChannelFactory
     }
     _defaultLoadBalancingPolicy = defaultLoadBalancingPolicy;
     _loadBalancingPolicyConfig = loadBalancingPolicyConfig;
+    _keepAliveTimeMins = (keepAliveTimeMins != null && keepAliveTimeMins > 0) ? keepAliveTimeMins : DEFAULT_KEEPALIVE_TIME_MINS;
+    _log.info("Creating xDS channel with server URI: {}, SSL enabled: {}, load balancing policy: {}, "
+            + "load balancing policy config: {}, keep alive time: {} mins",
+        _xdsServerUri, (_sslContext != null), _defaultLoadBalancingPolicy,
+        _loadBalancingPolicyConfig != null ? _loadBalancingPolicyConfig.toString() : null, _keepAliveTimeMins);
   }
 
   public ManagedChannel createChannel()
@@ -123,7 +145,7 @@ public class XdsChannelFactory
     }
 
 
-    return builder.keepAliveTime(5, TimeUnit.MINUTES)
+    return builder.keepAliveTime(_keepAliveTimeMins, TimeUnit.MINUTES) // Keep alive time for the xDS channel.
         // No proxy wanted here; the default proxy detector can mistakenly detect forwarded ports as proxies.
         .proxyDetector(GrpcUtil.NOOP_PROXY_DETECTOR)
         .build();

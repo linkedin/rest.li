@@ -171,6 +171,8 @@ public class D2ClientConfig
   public ExecutorService dualReadNewLbExecutor = null;
   public String xdsChannelLoadBalancingPolicy = null;
   public Map<String, ?> xdsChannelLoadBalancingPolicyConfig = null;
+  public Long xdsChannelKeepAliveTimeMins = null;
+
   public boolean subscribeToUriGlobCollection = false;
   public XdsServerMetricsProvider _xdsServerMetricsProvider = new NoOpXdsServerMetricsProvider();
   public boolean loadBalanceStreamException = false;
@@ -269,7 +271,8 @@ public class D2ClientConfig
                  boolean xdsInitialResourceVersionsEnabled,
                  boolean disableDetectLiRawD2Client,
                  boolean isLiRawD2Client,
-                 Integer xdsStreamMaxRetryBackoffSeconds)
+                 Integer xdsStreamMaxRetryBackoffSeconds,
+                 Long xdsChannelKeepAliveTimeMins)
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -341,6 +344,7 @@ public class D2ClientConfig
     this.dualReadNewLbExecutor = dualReadNewLbExecutor;
     this.xdsChannelLoadBalancingPolicy = xdsChannelLoadBalancingPolicy;
     this.xdsChannelLoadBalancingPolicyConfig = xdsChannelLoadBalancingPolicyConfig;
+    this.xdsChannelKeepAliveTimeMins = xdsChannelKeepAliveTimeMins;
     this.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
     this._xdsServerMetricsProvider = xdsServerMetricsProvider;
     this.loadBalanceStreamException = loadBalanceStreamException;
