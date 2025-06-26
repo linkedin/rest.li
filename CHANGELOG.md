@@ -15,7 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.70.0] - 2025-06-20
-- Configure xds stream retry max backoff time 
+- Configure xds stream max retry backoff time and xds channel keep alive time 
 
 ## [29.69.8] - 2025-06-19
 - Pass in xds channel load balancing policy configs
