@@ -171,10 +171,13 @@ public class D2ClientConfig
   public ExecutorService dualReadNewLbExecutor = null;
   public String xdsChannelLoadBalancingPolicy = null;
   public Map<String, ?> xdsChannelLoadBalancingPolicyConfig = null;
+  public Long xdsChannelKeepAliveTimeMins = null;
+
   public boolean subscribeToUriGlobCollection = false;
   public XdsServerMetricsProvider _xdsServerMetricsProvider = new NoOpXdsServerMetricsProvider();
   public boolean loadBalanceStreamException = false;
   public boolean xdsInitialResourceVersionsEnabled = false;
+  public Integer xdsStreamMaxRetryBackoffSeconds = null;
 
   /**
    * D2 client builder by default will detect if it's used to build a raw D2 client (as opposed to used by standard
@@ -267,7 +270,9 @@ public class D2ClientConfig
                  boolean loadBalanceStreamException,
                  boolean xdsInitialResourceVersionsEnabled,
                  boolean disableDetectLiRawD2Client,
-                 boolean isLiRawD2Client)
+                 boolean isLiRawD2Client,
+                 Integer xdsStreamMaxRetryBackoffSeconds,
+                 Long xdsChannelKeepAliveTimeMins)
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -339,11 +344,13 @@ public class D2ClientConfig
     this.dualReadNewLbExecutor = dualReadNewLbExecutor;
     this.xdsChannelLoadBalancingPolicy = xdsChannelLoadBalancingPolicy;
     this.xdsChannelLoadBalancingPolicyConfig = xdsChannelLoadBalancingPolicyConfig;
+    this.xdsChannelKeepAliveTimeMins = xdsChannelKeepAliveTimeMins;
     this.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
     this._xdsServerMetricsProvider = xdsServerMetricsProvider;
     this.loadBalanceStreamException = loadBalanceStreamException;
     this.xdsInitialResourceVersionsEnabled = xdsInitialResourceVersionsEnabled;
     this.disableDetectLiRawD2Client = disableDetectLiRawD2Client;
     this.isLiRawD2Client = isLiRawD2Client;
+    this.xdsStreamMaxRetryBackoffSeconds = xdsStreamMaxRetryBackoffSeconds;
   }
 }
