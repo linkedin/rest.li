@@ -61,7 +61,7 @@ then
 fi
 
 # Parse gc log
-command="$srcDir/sh/parse_gclog.sh  $currentNodeWorkspaceDir/build/r2-perf-test/logs/$targetServerHost/gc/gc.log  $buildDir/logs/$targetServerHost/parsed_gc.csv"
+command="$srcDir/sh/parse_gclog.py  $currentNodeWorkspaceDir/build/r2-perf-test/logs/$targetServerHost/gc/gc.log  $buildDir/logs/$targetServerHost/parsed_gc.csv"
 echo "Executing $command"
 $command
 
@@ -79,11 +79,11 @@ $command
 
 # Generate Perf Test Results and GC diffs (current vs previous run)
 
-command="$srcDir/sh/stats_diff.sh $perfLoadGeneratorHudsonJobURL/perftest.json $publishDir/perftest.json $publishDir/perftest.diff Perf_Test_Results_DIFF_(current_vs_previos_run) Previous_R2 Current_R2"
+command="$srcDir/sh/stats_diff.py $perfLoadGeneratorHudsonJobURL/perftest.json $publishDir/perftest.json $publishDir/perftest.diff Perf_Test_Results_DIFF_(current_vs_previos_run) Previous_R2 Current_R2"
 echo "Executing $command"
 $command
 
-command="$srcDir/sh/stats_diff.sh $perfLoadGeneratorHudsonJobURL/gcstats.json $publishDir/gcstats.json $publishDir/gcstats.diff GC_Stats_DIFF_(current_vs_previos_run) Previous_GC Current_GC"
+command="$srcDir/sh/stats_diff.py $perfLoadGeneratorHudsonJobURL/gcstats.json $publishDir/gcstats.json $publishDir/gcstats.diff GC_Stats_DIFF_(current_vs_previos_run) Previous_GC Current_GC"
 echo "Executing $command"
 $command
 
