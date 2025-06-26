@@ -803,6 +803,11 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setXdsChannelKeepAliveTimeMins(Long keepAliveTimeMins) {
+    _config.xdsChannelKeepAliveTimeMins = keepAliveTimeMins;
+    return this;
+  }
+
   public D2ClientBuilder setSubscribeToUriGlobCollection(boolean subscribeToUriGlobCollection) {
     _config.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
     return this;
