@@ -133,6 +133,21 @@ message D2URI {
   // comes from the announcing server (which sets a UUID for each announcement) and for Zookeeper,
   // this will be the full path to the d2URI. eg: /d2/uris/FooCluster/lor1-app000-xxxxx
   string tracing_id = 7;
+
+  // fields 8-12 are added to support decoupling Service Discovery from the DNS stack -- if provided, the IPv4 or
+  // IPv6 address can be substituted for the hostname in the D2 URI, allowing other applications to connect to this app
+  // without needing to resolve the hostname via DNS.
+
+  // the hostname of this application
+  string hostname = 8;
+  // ipv4 address of the host where this application is running (4 bytes)
+  bytes ipv4_address = 9;
+  // ipv6 address of the host where this application is running (16 bytes)
+  bytes ipv6_address = 10;
+  // whether the ipv4 address is in the app certificate's SAN (needed for other apps to do TLS when connecting with it)
+  bool is_ipv4_in_san = 11;
+  // whether the ipv6 address is in the app certificate's SAN (needed for other apps to do TLS when connecting with it)
+  bool is_ipv6_in_san = 12;
 }
 
 message D2URIMap {
