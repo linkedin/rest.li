@@ -492,6 +492,14 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
       }
 
       Stat nodeStat = _zk.exists(D2Utils.getRawClientTrackingBasePath(), false);
+
+      // For local execution RawClientTrackingBasePath is not present, so skipping node creation.
+      if (nodeStat == null)
+      {
+        LOG.warn("RawClientTrackingBasePath: {} is not present", D2Utils.getRawClientTrackingBasePath());
+        return;
+      }
+
       int childCount = nodeStat.getNumChildren();
       // If tracking node count exceeds the max limit, we won't create further Znode.
       if (childCount > D2Utils.RAW_D2_CLIENT_MAX_TRACKING_NODE)
