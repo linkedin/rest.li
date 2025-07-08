@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.69.9] - 2025-07-07
+- Handle exceptions thrown from CustomAffinityRoutingURIProvider
+
 ## [29.69.8] - 2025-06-19
 - Pass in xds channel load balancing policy configs
 
@@ -5840,7 +5843,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.69.8...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.69.9...master
+[29.69.9]: https://github.com/linkedin/rest.li/compare/v29.69.8...v29.69.9
 [29.69.8]: https://github.com/linkedin/rest.li/compare/v29.69.7...v29.69.8
 [29.69.7]: https://github.com/linkedin/rest.li/compare/v29.69.6...v29.69.7
 [29.69.6]: https://github.com/linkedin/rest.li/compare/v29.69.5...v29.69.6
