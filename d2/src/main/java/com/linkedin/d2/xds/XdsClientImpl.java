@@ -73,7 +73,7 @@ public class XdsClientImpl extends XdsClient
   private static final RateLimitedLogger RATE_LIMITED_LOGGER =
       new RateLimitedLogger(_log, TimeUnit.MINUTES.toMillis(1), SystemClock.instance());
   public static final long DEFAULT_READY_TIMEOUT_MILLIS = 2000L;
-  public static final long DEFAULT_MAX_RETRY_BACKOFF_SECS = 30L; // default value for max retry backoff seconds
+  public static final Integer DEFAULT_MAX_RETRY_BACKOFF_SECS = 30; // default value for max retry backoff seconds
 
   /**
    * The resource subscribers maps the resource type to its subscribers. Note that the {@link ResourceType#D2_URI}
@@ -193,7 +193,7 @@ public class XdsClientImpl extends XdsClient
     }
 
     _retryBackoffPolicy = _backoffPolicyProvider.get();
-    long backoffSecs = (maxRetryBackoffSeconds != null && maxRetryBackoffSeconds > 0)
+    Integer backoffSecs = (maxRetryBackoffSeconds != null && maxRetryBackoffSeconds > 0)
         ? maxRetryBackoffSeconds : DEFAULT_MAX_RETRY_BACKOFF_SECS;
     _log.info("Max retry backoff seconds: {}", backoffSecs);
     _maxRetryBackoffNanos = backoffSecs * TimeUnit.SECONDS.toNanos(1);
