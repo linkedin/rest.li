@@ -230,7 +230,9 @@ public class D2ClientBuilder
                   _config.loadBalanceStreamException,
                   _config.xdsInitialResourceVersionsEnabled,
                   _config.disableDetectLiRawD2Client,
-                  _config.isLiRawD2Client
+                  _config.isLiRawD2Client,
+                  _config.xdsStreamMaxRetryBackoffSeconds,
+                  _config.xdsChannelKeepAliveTimeMins
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -801,6 +803,11 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setXdsChannelKeepAliveTimeMins(Long keepAliveTimeMins) {
+    _config.xdsChannelKeepAliveTimeMins = keepAliveTimeMins;
+    return this;
+  }
+
   public D2ClientBuilder setSubscribeToUriGlobCollection(boolean subscribeToUriGlobCollection) {
     _config.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
     return this;
@@ -819,6 +826,12 @@ public class D2ClientBuilder
   public D2ClientBuilder setXdsInitialResourceVersionsEnabled(boolean xdsIRVEnabled)
   {
     _config.xdsInitialResourceVersionsEnabled = xdsIRVEnabled;
+    return this;
+  }
+
+  public D2ClientBuilder setXdsStreamMaxRetryBackoffSeconds(int xdsStreamMaxRetryBackoffSeconds)
+  {
+    _config.xdsStreamMaxRetryBackoffSeconds = xdsStreamMaxRetryBackoffSeconds;
     return this;
   }
 

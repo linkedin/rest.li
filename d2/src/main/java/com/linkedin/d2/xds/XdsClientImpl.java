@@ -73,6 +73,7 @@ public class XdsClientImpl extends XdsClient
   private static final RateLimitedLogger RATE_LIMITED_LOGGER =
       new RateLimitedLogger(_log, TimeUnit.MINUTES.toMillis(1), SystemClock.instance());
   public static final long DEFAULT_READY_TIMEOUT_MILLIS = 2000L;
+  public static final Integer DEFAULT_MAX_RETRY_BACKOFF_SECS = 30; // default value for max retry backoff seconds
 
   /**
    * The resource subscribers maps the resource type to its subscribers. Note that the {@link ResourceType#D2_URI}
@@ -95,6 +96,7 @@ public class XdsClientImpl extends XdsClient
   private final boolean _subscribeToUriGlobCollection;
   private final BackoffPolicy.Provider _backoffPolicyProvider = new ExponentialBackoffPolicy.Provider();
   private BackoffPolicy _retryBackoffPolicy;
+  private final Long _maxRetryBackoffNanos;
   @VisibleForTesting
   AdsStream _adsStream;
   private boolean _isXdsStreamShutdown;
@@ -145,6 +147,7 @@ public class XdsClientImpl extends XdsClient
         false);
   }
 
+  @Deprecated
   public XdsClientImpl(Node node,
       ManagedChannel managedChannel,
       ScheduledExecutorService executorService,
@@ -152,6 +155,24 @@ public class XdsClientImpl extends XdsClient
       boolean subscribeToUriGlobCollection,
       XdsServerMetricsProvider serverMetricsProvider,
       boolean irvSupport)
+  {
+    this(node,
+        managedChannel,
+        executorService,
+        readyTimeoutMillis,
+        subscribeToUriGlobCollection,
+        serverMetricsProvider,
+        irvSupport, null);
+  }
+
+  public XdsClientImpl(Node node,
+      ManagedChannel managedChannel,
+      ScheduledExecutorService executorService,
+      long readyTimeoutMillis,
+      boolean subscribeToUriGlobCollection,
+      XdsServerMetricsProvider serverMetricsProvider,
+      boolean irvSupport,
+      Integer maxRetryBackoffSeconds)
   {
     _readyTimeoutMillis = readyTimeoutMillis;
     _node = node;
@@ -170,6 +191,12 @@ public class XdsClientImpl extends XdsClient
     {
       _log.info("XDS initial resource versions support enabled");
     }
+
+    _retryBackoffPolicy = _backoffPolicyProvider.get();
+    Integer backoffSecs = (maxRetryBackoffSeconds != null && maxRetryBackoffSeconds > 0)
+        ? maxRetryBackoffSeconds : DEFAULT_MAX_RETRY_BACKOFF_SECS;
+    _log.info("Max retry backoff seconds: {}", backoffSecs);
+    _maxRetryBackoffNanos = backoffSecs * TimeUnit.SECONDS.toNanos(1);
   }
 
   @Override
@@ -292,7 +319,8 @@ public class XdsClientImpl extends XdsClient
       {
         return;
       }
-      _log.warn("ADS stream not ready within {} milliseconds", _readyTimeoutMillis);
+      _log.warn("ADS stream not ready within {} milliseconds. Underlying grpc channel will keep retrying to connect to "
+          + "xds servers.", _readyTimeoutMillis);
       // notify subscribers about the error and wait for the stream to be ready by keeping it open.
       notifyStreamError(Status.DEADLINE_EXCEEDED);
       // note: no need to start a retry task explicitly since xds stream internally will keep on retrying to connect
@@ -1471,7 +1499,7 @@ public class XdsClientImpl extends XdsClient
       long delayNanos = 0;
       if (!_responseReceived)
       {
-        delayNanos = _retryBackoffPolicy.nextBackoffNanos();
+        delayNanos = Math.min(_retryBackoffPolicy.nextBackoffNanos(), _maxRetryBackoffNanos);
       }
       _log.info("Retry ADS stream in {} ns", delayNanos);
       _retryRpcStreamFuture = checkShutdownAndSchedule(new RpcRetryTask(), delayNanos, TimeUnit.NANOSECONDS);
