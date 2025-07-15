@@ -319,7 +319,8 @@ public class XdsClientImpl extends XdsClient
       {
         return;
       }
-      _log.warn("ADS stream not ready within {} milliseconds", _readyTimeoutMillis);
+      _log.warn("ADS stream not ready within {} milliseconds. Underlying grpc channel will keep retrying to connect to "
+          + "xds servers.", _readyTimeoutMillis);
       // notify subscribers about the error and wait for the stream to be ready by keeping it open.
       notifyStreamError(Status.DEADLINE_EXCEEDED);
       // note: no need to start a retry task explicitly since xds stream internally will keep on retrying to connect
