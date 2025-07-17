@@ -395,7 +395,8 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
         _isMarkUpIntentSent.set(true);
         emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, true, true, _markUpStartAtRef.get());
         _markUpFailed = false;
-        _log.info("markUp for uri = {} on cluster {} succeeded.", _uri, _cluster);
+        _log.info("markUp succeeded for uri = {}, cluster = {}, partitionData = {}, uriSpecificProperties = {}.",
+            _uri, _cluster, _partitionDataMap, _uriSpecificProperties);
         // Note that the pending callbacks we see at this point are
         // from the requests that are filed before us because zookeeper
         // guarantees the ordering of callback being invoked.
