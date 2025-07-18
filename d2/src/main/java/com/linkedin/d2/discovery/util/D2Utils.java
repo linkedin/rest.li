@@ -28,6 +28,7 @@ public class D2Utils
   private static final String USR_DIR_SYS_PROPERTY = "user.dir";
   private static final String SPARK_APP_NAME = "spark.app.name";
   private static final String APP_NAME = "com.linkedin.app.name";
+  private static final String SAMZA_CONTAINER_NAME = "samza.container.name";
   // This is needed to avoid creating Zookeeper node for testing and dev environments
   private static final Set<String> USR_DIRS_TO_EXCLUDE = Stream.of(
       "/dev-",
@@ -120,6 +121,12 @@ public class D2Utils
     if (properties.getProperty(APP_NAME) != null)
     {
       return properties.getProperty(APP_NAME);
+    }
+
+    // for samza jobs using the container name
+    if (properties.getProperty(SAMZA_CONTAINER_NAME) != null)
+    {
+      return properties.getProperty(SAMZA_CONTAINER_NAME);
     }
 
     // if APP_NAME is not present then using userDir as node identifier.
