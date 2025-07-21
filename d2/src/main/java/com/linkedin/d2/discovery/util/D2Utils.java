@@ -7,6 +7,8 @@ package com.linkedin.d2.discovery.util;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.stores.zk.SymlinkUtil;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -29,6 +31,7 @@ public class D2Utils
   private static final String SPARK_APP_NAME = "spark.app.name";
   private static final String APP_NAME = "com.linkedin.app.name";
   private static final String SAMZA_CONTAINER_NAME = "samza.container.name";
+  private static final String USER_DIR_EXPORT_CONTENT_PREFIX = "/export/content/lid/apps/";
   // This is needed to avoid creating Zookeeper node for testing and dev environments
   private static final Set<String> USR_DIRS_TO_EXCLUDE = Stream.of(
       "/dev-",
@@ -129,10 +132,37 @@ public class D2Utils
       return properties.getProperty(SAMZA_CONTAINER_NAME);
     }
 
-    // if APP_NAME is not present then using userDir as node identifier.
+    // Process user.dir property to identify the app
     String userDir = properties.getProperty(USR_DIR_SYS_PROPERTY);
-    LOG.info("User dir for raw D2 Client usages: {}", userDir);
-    return userDir.replace("/", "-").substring(1);
+    if (userDir.startsWith(USER_DIR_EXPORT_CONTENT_PREFIX))
+    {
+      // sample: /export/content/lid/apps/seas-cloud-searcher/11ed246acf2e0be26bd44b29fb620df45ca14481
+      int slashAfterAppName = userDir.indexOf('/', USER_DIR_EXPORT_CONTENT_PREFIX.length());
+      if (slashAfterAppName > 0)
+      {
+        // if there is a slash after the app name, we will use the part before the slash as the identifier
+        // e.g. /export/content/lid/apps/seas-cloud-searcher/11ed246acf2e0be26bd44b29fb620df45ca14481 becomes
+        // /export/content/lid/apps/seas-cloud-searcher
+        userDir = userDir.substring(0, slashAfterAppName);
+      }
+      userDir = userDir.replace("/", "-");
+    }
+    else {
+      // sample usr.dir:
+      // /grid/g/tmp/yarn/usercache/seascloud/appcache/application_1747631859816_3737754/container_e42_1747631859816_3737754_01_000011
+      List<String> parts = Arrays.stream(userDir.split("/"))
+          .collect(Collectors.toList());
+      if (parts.size() > 2)
+      {
+        // remove the last and second last parts, which are usually random strings
+        parts.remove(parts.size() - 1);
+        parts.remove(parts.size() - 1);
+      }
+      userDir = String.join("-", parts.toArray(new String[0]));
+    }
+
+    LOG.info("user.dir for raw D2 Client usages: {}", userDir);
+    return userDir.substring(1); // remove the leading slash
   }
 
   public static String getRawClientTrackingPath()

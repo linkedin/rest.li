@@ -15,7 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.70.1] - 2025-07-17
-- log full announcement data at markup
+- log full announcement data at markup. Use samza container name and process user dir for tracking raw d2 client.
 
 ## [29.70.0] - 2025-07-15
 - Configure xds stream max retry backoff time and xds channel keep alive time 
