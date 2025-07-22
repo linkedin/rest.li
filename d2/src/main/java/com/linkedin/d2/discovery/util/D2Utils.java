@@ -134,6 +134,7 @@ public class D2Utils
 
     // Process user.dir property to identify the app
     String userDir = properties.getProperty(USR_DIR_SYS_PROPERTY);
+    String originalUserDir = userDir;
     if (userDir.startsWith(USER_DIR_EXPORT_CONTENT_PREFIX))
     {
       // sample: /export/content/lid/apps/seas-cloud-searcher/11ed246acf2e0be26bd44b29fb620df45ca14481
@@ -160,8 +161,11 @@ public class D2Utils
       }
       userDir = String.join("-", parts.toArray(new String[0]));
     }
-
-    LOG.info("user.dir for raw D2 Client usages: {}", userDir);
+    if (!userDir.equals(originalUserDir))
+    {
+      LOG.info("Transformed user.dir from {} to {}", originalUserDir, userDir);
+    }
+    LOG.info("Use user.dir for raw D2 Client usages: {}", userDir);
     return userDir.substring(1); // remove the leading slash
   }
 
