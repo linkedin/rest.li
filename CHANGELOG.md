@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.70.1] - 2025-07-17
+- log full announcement data at markup. Use samza container name and process user dir for tracking raw d2 client.
+
 ## [29.70.0] - 2025-07-15
 - Configure xds stream max retry backoff time and xds channel keep alive time 
 
@@ -5849,7 +5852,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.70.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.70.1...master
+[29.70.1]: https://github.com/linkedin/rest.li/compare/v29.70.0...v29.70.1
 [29.70.0]: https://github.com/linkedin/rest.li/compare/v29.69.10...v29.70.0
 [29.69.10]: https://github.com/linkedin/rest.li/compare/v29.69.9...v29.69.10
 [29.69.9]: https://github.com/linkedin/rest.li/compare/v29.69.8...v29.69.9

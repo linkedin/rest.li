@@ -368,7 +368,8 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
         emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, true, false, _markUpStartAtRef.get());
         if (e instanceof KeeperException.ConnectionLossException || e instanceof KeeperException.SessionExpiredException)
         {
-          _log.warn("failed to mark up uri {} for cluster {} due to {}.", _uri, _cluster, e.getClass().getSimpleName());
+          _log.warn("failed to mark up uri = {}, cluster = {}, partitionData = {}, uriSpecificProperties = {} due to {}.",
+              _uri, _cluster, _partitionDataMap, _uriSpecificProperties, e.getClass().getSimpleName());
           // Setting to null because if that connection dies, when don't want to continue making operations before
           // the connection is up again.
           // When the connection will be up again, the ZKAnnouncer will be restarted and it will read the _isUp
@@ -395,7 +396,8 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
         _isMarkUpIntentSent.set(true);
         emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, true, true, _markUpStartAtRef.get());
         _markUpFailed = false;
-        _log.info("markUp for uri = {} on cluster {} succeeded.", _uri, _cluster);
+        _log.info("markUp for uri = {}, cluster = {}, partitionData = {}, uriSpecificProperties = {} succeeded.",
+            _uri, _cluster, _partitionDataMap, _uriSpecificProperties);
         // Note that the pending callbacks we see at this point are
         // from the requests that are filed before us because zookeeper
         // guarantees the ordering of callback being invoked.
@@ -479,7 +481,8 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
         emitSDStatusActiveUpdateIntentAndWriteEvents(_warmupClusterName, true, false, _warmupClusterMarkUpStartAtRef.get());
         if (e instanceof KeeperException.ConnectionLossException || e instanceof KeeperException.SessionExpiredException)
         {
-          _log.warn("failed to mark up uri {} for warm-up cluster {} due to {}.", _uri, _cluster, e.getClass().getSimpleName());
+          _log.warn("failed to mark up uri = {}, warm-up cluster = {}, partitionData = {}, uriSpecificProperties = {} "
+              + "due to {}.", _uri, _warmupClusterName, _partitionDataMap, _uriSpecificProperties, e.getClass().getSimpleName());
           // Setting to null because if that connection dies, we don't want to continue making operations before
           // the connection is up again.
           // When the connection will be up again, the ZKAnnouncer will be restarted and it will read the _isUp
@@ -505,7 +508,8 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
       {
         _isDarkWarmupMarkUpIntentSent.set(true);
         emitSDStatusActiveUpdateIntentAndWriteEvents(_warmupClusterName, true, true, _warmupClusterMarkUpStartAtRef.get());
-        _log.info("markUp for uri {} on warm-up cluster {} succeeded", _uri, _warmupClusterName);
+        _log.info("markUp for uri = {}, warm-up cluster = {}, partitionData = {}, uriSpecificProperties = {} succeeded.",
+            _uri, _warmupClusterName, _partitionDataMap, _uriSpecificProperties);
         // Mark _isWarmingUp to true to indicate warm up is in progress
         _isWarmingUp = true;
         // Add mark down as pending, so that in case of ZK connection loss, on retry there is a mark down attempted
