@@ -5,5 +5,6 @@ dependencies {
   compile externalDependency.commonsCompress
   compile externalDependency.commonsIo
   compile externalDependency.snappy
+  compile externalDependency.xerialSnappy
   testCompile externalDependency.testng
 }
