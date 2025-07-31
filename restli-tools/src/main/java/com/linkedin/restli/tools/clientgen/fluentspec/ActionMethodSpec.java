@@ -24,7 +24,7 @@ import com.linkedin.restli.restspec.ParameterSchemaArray;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import org.apache.commons.lang.ClassUtils;
+import org.apache.commons.lang3.ClassUtils;
 
 
 public class ActionMethodSpec extends MethodSpec

@@ -20,7 +20,7 @@ import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.r2.sample.Bootstrap;
 import com.linkedin.r2.sample.echo.EchoService;
 import com.linkedin.r2.sample.echo.rest.RestEchoClient;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.testng.Assert;
 import org.testng.annotations.Factory;
 import org.testng.annotations.Test;
