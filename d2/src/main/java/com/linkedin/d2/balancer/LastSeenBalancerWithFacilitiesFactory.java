@@ -60,8 +60,6 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
   public LoadBalancerWithFacilities create(D2ClientConfig config)
   {
     LOG.info("Creating D2 LoadBalancer based on LastSeenLoadBalancerWithFacilities");
-    //TODO: In FY26Q2, Throw exception to hard fail raw d2 client using non INDIS load balancer type, unless talking
-    // to a local or EI ZK (for some tests).
     logLoadBalancerTypeWarning(LOG);
     if (config.isLiRawD2Client)
     {
