@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.70.2] - 2025-08-01
+- Add error log for raw D2 client call stack
+
 ## [29.70.1] - 2025-07-17
 - log full announcement data at markup. Use samza container name and process user dir for tracking raw d2 client.
 
@@ -5852,7 +5855,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.70.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.70.2...master
+[29.70.2]: https://github.com/linkedin/rest.li/compare/v29.70.1...v29.70.2
 [29.70.1]: https://github.com/linkedin/rest.li/compare/v29.70.0...v29.70.1
 [29.70.0]: https://github.com/linkedin/rest.li/compare/v29.69.10...v29.70.0
 [29.69.10]: https://github.com/linkedin/rest.li/compare/v29.69.9...v29.69.10
