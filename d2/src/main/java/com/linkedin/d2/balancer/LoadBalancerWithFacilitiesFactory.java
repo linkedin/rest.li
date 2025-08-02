@@ -30,7 +30,7 @@ public interface LoadBalancerWithFacilitiesFactory
       + "is deprecated (unless talking to a locally-deployed ZK, or for testing EI ZK) and must be migrated to INDIS. "
       + "See instructions at go/onboardindis.\n"
       + "Failing to do so will block other apps from stopping ZK announcements and will be escalated for site-up "
-      + "stability. Non-INDIS D2 Client will CRASH in OCTOBER 2025.";
+      + "stability.";
 
   /**
    * Creates instance of {@link LoadBalancerWithFacilities}
@@ -41,7 +41,7 @@ public interface LoadBalancerWithFacilitiesFactory
 
   default void logLoadBalancerTypeWarning(@Nonnull Logger LOG)
   {
-    LOG.warn(LOAD_BALANCER_TYPE_WARNING);
+    LOG.error(LOAD_BALANCER_TYPE_WARNING);
   }
 
   default void logAppProps(@Nonnull Logger LOG)
