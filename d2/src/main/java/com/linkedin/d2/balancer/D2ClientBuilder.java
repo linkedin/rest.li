@@ -51,6 +51,7 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.d2.jmx.XdsServerMetricsProvider;
 import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.d2.jmx.NoOpJmxManager;
+import com.linkedin.d2.xds.balancer.XdsLoadBalancerWithFacilitiesFactory;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
@@ -58,6 +59,7 @@ import com.linkedin.util.ArgumentUtil;
 import com.linkedin.util.clock.SystemClock;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -69,6 +71,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import org.slf4j.Logger;
@@ -98,6 +101,18 @@ public class D2ClientBuilder
           + "D2DefaultClientFactory in container. Raw D2 client will not have future features and migrations done "
           + "automatically, requiring lots of manual toil from your team.");
       _config.isLiRawD2Client = true;
+
+      // log error for not using INDIS in raw d2 client
+      if (!(_config.lbWithFacilitiesFactory instanceof XdsLoadBalancerWithFacilitiesFactory))
+      {
+        String stackTrace = Arrays.stream(Thread.currentThread().getStackTrace())
+            .map(StackTraceElement::toString)
+            .collect(Collectors.joining("\n"));
+        //TODO: In FY26Q2, Throw exception to hard fail non INDIS raw d2 client
+        LOG.error("[ACTION REQUIRED] Using Zookeeper-reading raw D2 Client. WILL CRASH in OCTOBER 2025. "
+            + "See instructions at go/onboardindis.\n"
+            + "Using in stack: {}", stackTrace);
+      }
     }
 
     final Map<String, TransportClientFactory> transportClientFactories = (_config.clientFactories == null) ?
