@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.71.0] - 2025-08-04
+- Add isIndisOnly to LoadBalancerWithFacilitiesFactory
+
 ## [29.70.2] - 2025-08-01
 - Add error log for raw D2 client call stack
 
@@ -5855,7 +5858,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.70.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.71.0...master
+[29.71.0]: https://github.com/linkedin/rest.li/compare/v29.70.2...v29.71.0
 [29.70.2]: https://github.com/linkedin/rest.li/compare/v29.70.1...v29.70.2
 [29.70.1]: https://github.com/linkedin/rest.li/compare/v29.70.0...v29.70.1
 [29.70.0]: https://github.com/linkedin/rest.li/compare/v29.69.10...v29.70.0
