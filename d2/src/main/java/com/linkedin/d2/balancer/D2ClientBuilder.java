@@ -95,7 +95,8 @@ public class D2ClientBuilder
    */
   public D2Client build()
   {
-    if (!_config.disableDetectLiRawD2Client && isLiRawD2Client()) {
+    if (!_config.disableDetectLiRawD2Client && isLiRawD2Client())
+    {
       LOG.warn("ATTENTION: Using hard-coded D2ClientBuilder to create a raw LI D2 client. Always consider using the "
           + "D2DefaultClientFactory in container. Raw D2 client will not have future features and migrations done "
           + "automatically, requiring lots of manual toil from your team.");
