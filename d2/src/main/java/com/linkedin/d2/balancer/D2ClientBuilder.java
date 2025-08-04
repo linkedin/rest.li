@@ -95,6 +95,13 @@ public class D2ClientBuilder
    */
   public D2Client build()
   {
+    if (!_config.disableDetectLiRawD2Client && isLiRawD2Client()) {
+      LOG.warn("ATTENTION: Using hard-coded D2ClientBuilder to create a raw LI D2 client. Always consider using the "
+          + "D2DefaultClientFactory in container. Raw D2 client will not have future features and migrations done "
+          + "automatically, requiring lots of manual toil from your team.");
+      _config.isLiRawD2Client = true;
+    }
+
     final Map<String, TransportClientFactory> transportClientFactories = (_config.clientFactories == null) ?
         createDefaultTransportClientFactories() :  // if user didn't provide transportClientFactories we'll use default ones
         _config.clientFactories;
@@ -234,24 +241,16 @@ public class D2ClientBuilder
       new ZKFSLoadBalancerWithFacilitiesFactory() :
       _config.lbWithFacilitiesFactory;
 
-    if (!_config.disableDetectLiRawD2Client && isLiRawD2Client())
+    // log error for not using INDIS in raw d2 client
+    if (_config.isLiRawD2Client && !loadBalancerFactory.isIndisOnly())
     {
-      LOG.warn("ATTENTION: Using hard-coded D2ClientBuilder to create a raw LI D2 client. Always consider using the "
-          + "D2DefaultClientFactory in container. Raw D2 client will not have future features and migrations done "
-          + "automatically, requiring lots of manual toil from your team.");
-      _config.isLiRawD2Client = true;
-
-      // log error for not using INDIS in raw d2 client
-      if (!loadBalancerFactory.isIndisOnly())
-      {
-        String stackTrace = Arrays.stream(Thread.currentThread().getStackTrace())
-            .map(StackTraceElement::toString)
-            .collect(Collectors.joining("\n"));
-        //TODO: In FY26Q2, Throw exception to hard fail non INDIS raw d2 client
-        LOG.error("[ACTION REQUIRED] Using Zookeeper-reading raw D2 Client. WILL CRASH in OCTOBER 2025. "
-            + "See instructions at go/onboardindis.\n"
-            + "Using in stack: {}", stackTrace);
-      }
+      String stackTrace = Arrays.stream(Thread.currentThread().getStackTrace())
+          .map(StackTraceElement::toString)
+          .collect(Collectors.joining("\n"));
+      //TODO: In FY26Q2, Throw exception to hard fail non INDIS raw d2 client
+      LOG.error("[ACTION REQUIRED] Using Zookeeper-reading raw D2 Client. WILL CRASH in OCTOBER 2025. "
+          + "See instructions at go/onboardindis.\n"
+          + "Using in stack: {}", stackTrace);
     }
 
     LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
