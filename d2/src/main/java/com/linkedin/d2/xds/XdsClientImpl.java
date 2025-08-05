@@ -50,9 +50,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -88,8 +91,8 @@ public class XdsClientImpl extends XdsClient
    * Note that all the subscribed resources & it's version would be present in this map.
    * Resource type in this map is adjust type for glob collection.
    */
-  private final Map<ResourceType, Map<String, String>> _resourceVersions = Maps.newEnumMap(
-      Stream.of(ResourceType.values()).collect(Collectors.toMap(Function.identity(), e -> new HashMap<>())));
+  private final ConcurrentMap<ResourceType, ConcurrentMap<String, String>> _resourceVersions = new ConcurrentHashMap<>();
+
   private final Node _node;
   private final ManagedChannel _managedChannel;
   private final ScheduledExecutorService _executorService;
@@ -107,7 +110,7 @@ public class XdsClientImpl extends XdsClient
 
   private final XdsClientJmx _xdsClientJmx;
   private final XdsServerMetricsProvider _serverMetricsProvider;
-  private final boolean _initialResourceVersionsEnabled;
+  private final AtomicBoolean _initialResourceVersionsEnabled;
 
   @Deprecated
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService)
@@ -186,10 +189,13 @@ public class XdsClientImpl extends XdsClient
 
     _xdsClientJmx = new XdsClientJmx(serverMetricsProvider);
     _serverMetricsProvider = serverMetricsProvider == null ? new NoOpXdsServerMetricsProvider() : serverMetricsProvider;
-    _initialResourceVersionsEnabled = irvSupport;
-    if (_initialResourceVersionsEnabled)
+    _initialResourceVersionsEnabled = new AtomicBoolean(irvSupport);
+    if (_initialResourceVersionsEnabled.get())
     {
       _log.info("XDS initial resource versions support enabled");
+      for (ResourceType type : ResourceType.values()) {
+        _resourceVersions.put(type, new ConcurrentHashMap<>());
+      }
     }
 
     _retryBackoffPolicy = _backoffPolicyProvider.get();
@@ -819,7 +825,7 @@ public class XdsClientImpl extends XdsClient
   }
 
   @VisibleForTesting
-  Map<ResourceType, Map<String, String>> getResourceVersions()
+  ConcurrentMap<ResourceType, ConcurrentMap<String, String>> getResourceVersions()
   {
     return _resourceVersions;
   }
@@ -1163,7 +1169,7 @@ public class XdsClientImpl extends XdsClient
     public void run()
     {
       startRpcStreamLocal();
-
+      _log.info("starting RpcRetryTask with IRV status: {}", _initialResourceVersionsEnabled.get());
       for (ResourceType originalType : ResourceType.values())
       {
         Set<String> resources = new HashSet<>(getResourceSubscriberMap(originalType).keySet());
@@ -1187,7 +1193,7 @@ public class XdsClientImpl extends XdsClient
           continue;
         }
 
-        Map<String, String> irv = _initialResourceVersionsEnabled
+        Map<String, String> irv = _initialResourceVersionsEnabled.get()
             ? getResourceVersions().get(adjustedType) : Collections.emptyMap();
         _adsStream.sendDiscoveryRequest(adjustedType, resources, irv);
       }

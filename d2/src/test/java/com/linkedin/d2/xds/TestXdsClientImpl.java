@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -949,8 +951,7 @@ public class TestXdsClientImpl
             .collect(Collectors.toMap(Function.identity(), e -> new HashMap<>())));
     Map<ResourceType, XdsClientImpl.WildcardResourceSubscriber> _wildcardSubscribers = Maps.newEnumMap(ResourceType.class);
 
-    private Map<ResourceType, Map<String, String>> _resourceVersions = Maps.newEnumMap(
-        Stream.of(ResourceType.values()).collect(Collectors.toMap(Function.identity(), e -> new HashMap<>())));
+    private ConcurrentMap<ResourceType, ConcurrentMap<String, String>> _resourceVersions = new ConcurrentHashMap<>();
 
     @Mock
     XdsClient.ResourceWatcher _resourceWatcher;
@@ -983,6 +984,10 @@ public class TestXdsClientImpl
       _nodeWildcardSubscriber = spy(new XdsClientImpl.WildcardResourceSubscriber(NODE));
       _uriMapWildcardSubscriber = spy(new XdsClientImpl.WildcardResourceSubscriber(D2_URI_MAP));
       _nameWildcardSubscriber = spy(new XdsClientImpl.WildcardResourceSubscriber(D2_CLUSTER_OR_SERVICE_NAME));
+
+      for (ResourceType type : ResourceType.values()) {
+        _resourceVersions.put(type, new ConcurrentHashMap<>());
+      }
 
       doNothing().when(_resourceWatcher).onChanged(any());
       doNothing().when(_wildcardResourceWatcher).onChanged(any(), any());
@@ -1024,16 +1029,16 @@ public class TestXdsClientImpl
 
     private void setResourceVersions(boolean useGlobCollections)
     {
-      _resourceVersions.computeIfAbsent(NODE, k -> new HashMap<>()).put(SERVICE_RESOURCE_NAME, VERSION1);
-      _resourceVersions.computeIfAbsent(D2_CLUSTER_OR_SERVICE_NAME, k -> new HashMap<>()).put(CLUSTER_NAME, VERSION1);
-      _resourceVersions.computeIfAbsent(D2_URI, k -> new HashMap<>()).put(URI_URN1, VERSION1);
+      _resourceVersions.computeIfAbsent(NODE, k -> new ConcurrentHashMap<>()).put(SERVICE_RESOURCE_NAME, VERSION1);
+      _resourceVersions.computeIfAbsent(D2_CLUSTER_OR_SERVICE_NAME, k -> new ConcurrentHashMap<>()).put(CLUSTER_NAME, VERSION1);
+      _resourceVersions.computeIfAbsent(D2_URI, k -> new ConcurrentHashMap<>()).put(URI_URN1, VERSION1);
       if (useGlobCollections)
       {
-        _resourceVersions.computeIfAbsent(D2_URI, k -> new HashMap<>()).put(CLUSTER_RESOURCE_NAME, VERSION1);
+        _resourceVersions.computeIfAbsent(D2_URI, k -> new ConcurrentHashMap<>()).put(CLUSTER_RESOURCE_NAME, VERSION1);
       }
       else
       {
-        _resourceVersions.computeIfAbsent(D2_URI_MAP, k -> new HashMap<>()).put(CLUSTER_RESOURCE_NAME, VERSION1);
+        _resourceVersions.computeIfAbsent(D2_URI_MAP, k -> new ConcurrentHashMap<>()).put(CLUSTER_RESOURCE_NAME, VERSION1);
       }
     }
 
