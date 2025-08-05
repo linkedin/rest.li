@@ -27,6 +27,15 @@ public interface XdsClientJmxMBean {
   // when the connection is reconnected
   int getReconnectionCount();
 
+  // the number of requests sent
+  long getRequestSentCount();
+
+  // the number of IRV sent
+  long getIrvSentCount();
+
+  // the number of responses received
+  long getResponseReceivedCount();
+
   // whether client is disconnected from xDS server: 1 means disconnected; 0 means connected.
   // note: users need to pay attention to disconnected rather than connected state, so setting the metric this way
   // to stress the disconnected state.

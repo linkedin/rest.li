@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add xds client metrics to count requests, IRV, and responses
 
 ## [29.71.0] - 2025-08-04
 - Add isIndisOnly to LoadBalancerWithFacilitiesFactory

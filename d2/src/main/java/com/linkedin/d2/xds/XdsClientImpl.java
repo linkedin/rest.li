@@ -535,7 +535,7 @@ public class XdsClientImpl extends XdsClient
         Map<String, XdsD2.D2URI> nodeData = uriMap.getUrisMap();
         if (nodeData.isEmpty())
         {
-          _log.warn("Received a D2URIMap response with no data, resource is : {}", resourceName);
+          RATE_LIMITED_LOGGER.warn("Received a D2URIMap response with no data, resource is : {}", resourceName);
         }
         updates.put(resourceName, new D2URIMapUpdate(nodeData));
       }
@@ -1162,6 +1162,7 @@ public class XdsClientImpl extends XdsClient
     @Override
     public void run()
     {
+      _xdsClientJmx.resetIrvSentCount();
       startRpcStreamLocal();
 
       for (ResourceType originalType : ResourceType.values())
@@ -1392,6 +1393,7 @@ public class XdsClientImpl extends XdsClient
             {
               checkShutdownAndExecute(() ->
               {
+                _xdsClientJmx.incrementResponseReceivedCount();
                 if (_closed)
                 {
                   return;
@@ -1440,6 +1442,8 @@ public class XdsClientImpl extends XdsClient
     {
       _log.info("Sending {} request for resources: {}, resourceVersions size: {}",
           type, resources, resourceVersions.size());
+      _xdsClientJmx.incrementRequestSentCount();
+      _xdsClientJmx.addToIrvSentCount(resourceVersions.size());
       DeltaDiscoveryRequest request = new DiscoveryRequestData(_node, type, resources, resourceVersions).toEnvoyProto();
       _requestWriter.onNext(request);
       _log.debug("Sent DiscoveryRequest\n{}", request);

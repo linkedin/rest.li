@@ -79,7 +79,9 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * Build a {@link D2Client} with basic ZooKeeper setup to connect D2 protocol.
+ * ATTENTION: Using this class MUST be reading from INDIS instead of Zookeeper. ZK read will crash in October 2025.
+ * See instructions at go/onboardindis.
+ * Build a {@link D2Client} with basic setup to connect D2 protocol.
  * The client could be further wrapped by other client classes.
  */
 @SuppressWarnings("deprecation")
