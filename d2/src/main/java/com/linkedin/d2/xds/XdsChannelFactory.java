@@ -16,11 +16,28 @@
 
 package com.linkedin.d2.xds;
 
+import com.google.common.collect.ImmutableList;
+import io.grpc.EquivalentAddressGroup;
+import io.grpc.LoadBalancerRegistry;
+import io.grpc.NameResolver;
+import io.grpc.NameResolver.ConfigOrError;
+import io.grpc.LoadBalancer;
+import io.grpc.LoadBalancerProvider;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
 import io.grpc.internal.GrpcUtil;
+import io.grpc.internal.JsonUtil;
+import io.grpc.internal.PickFirstLoadBalancerProvider;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
