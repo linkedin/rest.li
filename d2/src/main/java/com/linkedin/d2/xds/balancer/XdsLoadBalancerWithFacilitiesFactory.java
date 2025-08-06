@@ -39,6 +39,12 @@ import org.apache.commons.lang3.ObjectUtils;
 public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFacilitiesFactory
 {
   @Override
+  public boolean isIndisOnly()
+  {
+    return true;
+  }
+
+  @Override
   public LoadBalancerWithFacilities create(D2ClientConfig config)
   {
     D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(config.d2JmxManagerPrefix, config.jmxManager,
