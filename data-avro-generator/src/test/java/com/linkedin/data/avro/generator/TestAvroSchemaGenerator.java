@@ -34,14 +34,19 @@ import java.util.stream.Collectors;
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Parser;
 import org.apache.commons.compress.utils.IOUtils;
+import org.json.JSONException;
+import org.skyscreamer.jsonassert.Customization;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
+import org.skyscreamer.jsonassert.comparator.CustomComparator;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static com.linkedin.data.TestUtil.*;
+import static com.linkedin.data.avro.SchemaTranslator.*;
 import static com.linkedin.data.avro.generator.AvroSchemaGenerator.GENERATOR_AVRO_NAMESPACE_OVERRIDE;
-import static com.linkedin.data.avro.SchemaTranslator.AVRO_PREFIX;
 import static com.linkedin.data.schema.generator.AbstractGenerator.GENERATOR_RESOLVER_PATH;
 import static com.linkedin.util.FileUtil.buildSystemIndependentPath;
 import static org.testng.Assert.assertEquals;
@@ -175,8 +180,8 @@ public class TestAvroSchemaGenerator
   }
 
   @Test(dataProvider = "toAvroSchemaData")
-  public void testFileNameAsArgs(Map<String, String> testSchemas, Map<String, String> expectedAvroSchemas, List<String> paths, boolean override) throws IOException
-  {
+  public void testFileNameAsArgs(Map<String, String> testSchemas, Map<String, String> expectedAvroSchemas, List<String> paths, boolean override)
+      throws IOException, JSONException {
     Map<File, Map.Entry<String,String>>  files = TestUtil.createSchemaFiles(_testDir, testSchemas, _debug);
     // directory in path
     Collection<String> testPaths = computePathFromRelativePaths(_testDir, paths);
@@ -193,8 +198,8 @@ public class TestAvroSchemaGenerator
   }
 
   @Test(dataProvider = "toAvroSchemaData")
-  public void testFullNameAsArgsWithJarInPath(Map<String, String> testSchemas, Map<String, String> expectedAvroSchemas, List<String> paths, boolean override) throws IOException
-  {
+  public void testFullNameAsArgsWithJarInPath(Map<String, String> testSchemas, Map<String, String> expectedAvroSchemas, List<String> paths, boolean override)
+      throws IOException, JSONException {
     Map<File, Map.Entry<String,String>>  files = TestUtil.createSchemaFiles(_testDir, testSchemas, _debug);
     // jar files in path, create jar files
     Collection<String> testPaths = createJarsFromRelativePaths(_testDir, testSchemas, paths, _debug);
@@ -324,8 +329,8 @@ public class TestAvroSchemaGenerator
     return targetDir;
   }
 
-  private void run(String[] args, Map.Entry<File, Map.Entry<String, String>> entry, File targetDir, Map<String, String> expectedAvroSchemas) throws IOException
-  {
+  private void run(String[] args, Map.Entry<File, Map.Entry<String, String>> entry, File targetDir, Map<String, String> expectedAvroSchemas)
+      throws IOException, JSONException {
     Exception exc = null;
     try
     {
@@ -359,7 +364,11 @@ public class TestAvroSchemaGenerator
       assertFalse(avroSchema.isError());
       String avroSchemaText = avroSchema.toString();
       if (_debug) out.println(avroSchemaText);
-      assertEquals(avroSchemaText, expectedAvroSchemas.get(pdscFileName));
+
+      // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+      JSONAssert.assertEquals(expectedAvroSchemas.get(pdscFileName), avroSchemaText,
+          new CustomComparator(JSONCompareMode.LENIENT,
+              new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
     }
   }
 }
