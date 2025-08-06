@@ -33,6 +33,14 @@ public interface LoadBalancerWithFacilitiesFactory
       + "stability.";
 
   /**
+   * Returns true if the load balancer is backed only by INDIS (i.e. not ZK or dual read).
+   */
+  default boolean isIndisOnly()
+  {
+    return false;
+  }
+
+  /**
    * Creates instance of {@link LoadBalancerWithFacilities}
    * @param config configuration of d2 client
    * @return new instance of {@link LoadBalancerWithFacilities}
