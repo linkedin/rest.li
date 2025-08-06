@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.72.0] - 2025-08-06
 - Add xds client metrics to count requests, IRV, and responses
 
 ## [29.71.0] - 2025-08-04
@@ -5859,7 +5861,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.71.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.72.0...master
+[29.72.0]: https://github.com/linkedin/rest.li/compare/v29.71.0...v29.72.0
 [29.71.0]: https://github.com/linkedin/rest.li/compare/v29.70.2...v29.71.0
 [29.70.2]: https://github.com/linkedin/rest.li/compare/v29.70.1...v29.70.2
 [29.70.1]: https://github.com/linkedin/rest.li/compare/v29.70.0...v29.70.1
