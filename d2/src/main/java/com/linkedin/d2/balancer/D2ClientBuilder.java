@@ -250,6 +250,8 @@ public class D2ClientBuilder
           .map(StackTraceElement::toString)
           .collect(Collectors.joining("\n"));
       //TODO: After Oct 1st, throw exception to hard fail non INDIS raw d2 client
+      // throw new IllegalStateException("Creating Zookeeper-reading raw D2 Client in app-custom code is prohibited. "
+      //            + "See instructions at go/onboardindis to find the code owner and migrate to INDIS.\n"
       LOG.error("[ATTENTION!!! ACTION REQUIRED] Creating Zookeeper-reading raw D2 Client in app-custom code WILL CRASH"
           + " after OCTOBER 1st 2025. See instructions at go/onboardindis to find the code owner and migrate to INDIS.\n"
           + "Using in stack: {}", stackTrace);
