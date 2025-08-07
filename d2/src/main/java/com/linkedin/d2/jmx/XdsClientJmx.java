@@ -160,11 +160,6 @@ public class XdsClientJmx implements XdsClientJmxMBean
     _irvSentCount.addAndGet(delta);
   }
 
-  public void resetIrvSentCount()
-  {
-    _irvSentCount.set(0);
-  }
-
   public void incrementResponseReceivedCount()
   {
     _responseReceivedCount.incrementAndGet();
