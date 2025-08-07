@@ -12,7 +12,9 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 /**
@@ -82,17 +84,17 @@ public class IPv6AwarePickFirstLoadBalancer extends LoadBalancer
 
     List<EquivalentAddressGroup> shuffledEAGs = new ArrayList<>(addresses);
 
-    int ipv4Index = 0;
-    int ipv6Index = 0;
+    Iterator<EquivalentAddressGroup> ipv4Iterator = ipv4EAGs.iterator();
+    Iterator<EquivalentAddressGroup> ipv6Iterator = ipv6EAGs.iterator();
     for (int i = 0; i < shuffledEAGs.size(); i++)
     {
       if (hasIPv6Address(shuffledEAGs.get(i)))
       {
-        shuffledEAGs.set(i, ipv6EAGs.get(ipv6Index++));
+        shuffledEAGs.set(i, ipv6Iterator.next());
       }
       else
       {
-        shuffledEAGs.set(i, ipv4EAGs.get(ipv4Index++));
+        shuffledEAGs.set(i, ipv4Iterator.next());
       }
     }
 
@@ -147,6 +149,7 @@ public class IPv6AwarePickFirstLoadBalancer extends LoadBalancer
     @Override
     public int getPriority()
     {
+      // 5 is the same priority as PickFirstLoadBalancerProvider.
       return 5;
     }
 
