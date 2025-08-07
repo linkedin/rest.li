@@ -1,13 +1,11 @@
 package com.linkedin.d2.xds;
 
-import com.google.common.collect.ImmutableList;
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.LoadBalancer;
 import io.grpc.LoadBalancerProvider;
 import io.grpc.LoadBalancerRegistry;
 import io.grpc.NameResolver.ConfigOrError;
 import io.grpc.Status;
-import io.grpc.internal.JsonUtil;
 import io.grpc.internal.PickFirstLoadBalancerProvider;
 import java.net.Inet6Address;
 import java.net.InetSocketAddress;
@@ -16,26 +14,56 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
+/**
+ * This {@link LoadBalancer} is an extension of the "pick_first" strategy which shuffles the addresses in a way that
+ * remains aware of whether the client supports IPv6. Namely, {@link #acceptResolvedAddresses} will be invoked with a
+ * list of addresses whose order represents its preference for IPv4 vs IPv6. For example, the list may contain only
+ * IPv6 addresses, only IPv4 addresses, IPv6 addresses followed by IPv4 addresses, IPv4 addresses followed by IPv6
+ * addresses, and everything in between. This load balancer shuffles the given addresses in a way that respects the
+ * original interleaving of address types, such that the client's preference is respected, while still achieving the
+ * desired effect of random pick_first load balancing.
+ */
 public class IPv6AwarePickFirstLoadBalancer extends LoadBalancer
 {
-  public static final String POLICY_NAME = "ipv6_aware_random_pick_first";
-  public static final String IPV4_FIRST = "ipv4_first";
+  static
+  {
+    LoadBalancerRegistry.getDefaultRegistry().register(new Provider());
+  }
 
-  private final LoadBalancer _pickFirst;
+  public static final String POLICY_NAME = "ipv6_aware_random_pick_first";
+
+  private final LoadBalancer _delegate;
 
   IPv6AwarePickFirstLoadBalancer(Helper helper)
   {
-    _pickFirst = new PickFirstLoadBalancerProvider().newLoadBalancer(helper);
+    this(new PickFirstLoadBalancerProvider().newLoadBalancer(helper));
+  }
+
+  IPv6AwarePickFirstLoadBalancer(LoadBalancer delegate)
+  {
+    _delegate = delegate;
   }
 
   @Override
-  public boolean acceptResolvedAddresses(ResolvedAddresses addresses)
+  public boolean acceptResolvedAddresses(ResolvedAddresses resolvedAddresses)
+  {
+    return _delegate.acceptResolvedAddresses(resolvedAddresses.toBuilder()
+        .setAddresses(ipAwareShuffle(resolvedAddresses.getAddresses()))
+        .build());
+  }
+
+  /**
+   * Shuffles the given addresses such that the original interleaving of IPv4 and IPv6 addresses is respected. For
+   * example, the following input [IPv6a, IPv4a, IPv4b, IPv6b, IPv4c] could be shuffled into the following output
+   * [IPv6b, IPv4c, IPv4b, IPv6a, IPv4a]. The IPs were shuffled relative to other IPs of the same version, but the
+   * original interleaving is the same.
+   */
+  private static List<EquivalentAddressGroup> ipAwareShuffle(List<EquivalentAddressGroup> addresses)
   {
     List<EquivalentAddressGroup> ipv6EAGs = new ArrayList<>();
     List<EquivalentAddressGroup> ipv4EAGs = new ArrayList<>();
-    for (EquivalentAddressGroup eag : addresses.getAddresses())
+    for (EquivalentAddressGroup eag : addresses)
     {
       (hasIPv6Address(eag) ? ipv6EAGs : ipv4EAGs).add(eag);
     }
@@ -43,29 +71,29 @@ public class IPv6AwarePickFirstLoadBalancer extends LoadBalancer
     Collections.shuffle(ipv6EAGs);
     Collections.shuffle(ipv4EAGs);
 
-    List<EquivalentAddressGroup> shuffledEAGs = new ArrayList<>();
-    if (addresses.getLoadBalancingPolicyConfig() instanceof Config
-        && ((Config) addresses.getLoadBalancingPolicyConfig())._ipv4First)
+    List<EquivalentAddressGroup> shuffledEAGs = new ArrayList<>(addresses);
+
+    int ipv4Index = 0;
+    int ipv6Index = 0;
+    for (int i = 0; i < shuffledEAGs.size(); i++)
     {
-      shuffledEAGs.addAll(ipv4EAGs);
-      shuffledEAGs.addAll(ipv6EAGs);
-    }
-    else
-    {
-      shuffledEAGs.addAll(ipv6EAGs);
-      shuffledEAGs.addAll(ipv4EAGs);
+      if (hasIPv6Address(shuffledEAGs.get(i)))
+      {
+        shuffledEAGs.set(i, ipv6EAGs.get(ipv6Index++));
+      }
+      else
+      {
+        shuffledEAGs.set(i, ipv4EAGs.get(ipv4Index++));
+      }
     }
 
-    return _pickFirst.acceptResolvedAddresses(
-        ResolvedAddresses.newBuilder()
-            .setAddresses(shuffledEAGs)
-            .setAttributes(addresses.getAttributes())
-            .setLoadBalancingPolicyConfig(addresses.getLoadBalancingPolicyConfig())
-            .build()
-    );
+    return shuffledEAGs;
   }
 
-  private static boolean hasIPv6Address(EquivalentAddressGroup eag)
+  /**
+   * Checks whether the given {@link EquivalentAddressGroup} has any IPv6 addresses in it.
+   */
+  static boolean hasIPv6Address(EquivalentAddressGroup eag)
   {
     for (SocketAddress address : eag.getAddresses())
     {
@@ -84,38 +112,23 @@ public class IPv6AwarePickFirstLoadBalancer extends LoadBalancer
   @Override
   public void handleNameResolutionError(Status error)
   {
-    _pickFirst.handleNameResolutionError(error);
+    _delegate.handleNameResolutionError(error);
   }
 
   @Override
   public void shutdown()
   {
-    _pickFirst.shutdown();
+    _delegate.shutdown();
   }
 
   @Override
   public void requestConnection()
   {
-    _pickFirst.requestConnection();
+    _delegate.requestConnection();
   }
 
-  private static class Config
+  static final class Provider extends LoadBalancerProvider
   {
-    private final boolean _ipv4First;
-
-    private Config(@Nullable Boolean ipv4First)
-    {
-      _ipv4First = (ipv4First != null) ? ipv4First : false;
-    }
-  }
-
-  private static final class Provider extends LoadBalancerProvider
-  {
-    static
-    {
-      LoadBalancerRegistry.getDefaultRegistry().register(new Provider());
-    }
-
     @Override
     public boolean isAvailable()
     {
@@ -143,16 +156,7 @@ public class IPv6AwarePickFirstLoadBalancer extends LoadBalancer
     @Override
     public ConfigOrError parseLoadBalancingPolicyConfig(Map<String, ?> rawLoadBalancingPolicyConfig)
     {
-      try
-      {
-        return ConfigOrError.fromConfig(new Config(JsonUtil.getBoolean(rawLoadBalancingPolicyConfig, IPV4_FIRST)));
-      }
-      catch (RuntimeException e)
-      {
-        return ConfigOrError.fromError(
-            Status.UNAVAILABLE.withCause(e).withDescription(
-                "Failed parsing configuration for " + getPolicyName()));
-      }
+      return ConfigOrError.fromConfig(new Object());
     }
   }
 }
