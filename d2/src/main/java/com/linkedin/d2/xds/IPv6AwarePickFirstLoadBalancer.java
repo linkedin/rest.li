@@ -26,12 +26,21 @@ import java.util.Map;
  */
 public class IPv6AwarePickFirstLoadBalancer extends LoadBalancer
 {
+  // The initialization of this variable deliberately prevents the compiler from using this string as a compile-time
+  // constant. This way, referencing the policy by its name like the following code *always* executes this static
+  // block, registering the Provider:
+  //   LoadBalancerRegistry.getDefaultRegistry().getProvider(POLICY_NAME);
+  // Similarly, referencing the policy during a ManagedChannel builder will also implicitly register the policy:
+  //   builder.defaultLoadBalancingPolicy(POLICY_NAME);
+  // Otherwise, POLICY_NAME would get resolved at compile-time, the static block would not get executed and the policy
+  // would not be registered.
+  public static final String POLICY_NAME;
+
   static
   {
+    POLICY_NAME = "ipv6_aware_random_pick_first";
     LoadBalancerRegistry.getDefaultRegistry().register(new Provider());
   }
-
-  public static final String POLICY_NAME = "ipv6_aware_random_pick_first";
 
   private final LoadBalancer _delegate;
 
@@ -144,6 +153,7 @@ public class IPv6AwarePickFirstLoadBalancer extends LoadBalancer
     @Override
     public String getPolicyName()
     {
+
       return POLICY_NAME;
     }
 
