@@ -155,9 +155,9 @@ public class XdsClientJmx implements XdsClientJmxMBean
     _resquestSentCount.incrementAndGet();
   }
 
-  public void addToIrvSentCount(int addend)
+  public void addToIrvSentCount(int delta)
   {
-    _irvSentCount.addAndGet(addend);
+    _irvSentCount.addAndGet(delta);
   }
 
   public void resetIrvSentCount()

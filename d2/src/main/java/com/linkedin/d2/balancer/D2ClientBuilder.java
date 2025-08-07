@@ -51,13 +51,15 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.d2.jmx.XdsServerMetricsProvider;
 import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.d2.jmx.NoOpJmxManager;
-import com.linkedin.d2.xds.balancer.XdsLoadBalancerWithFacilitiesFactory;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.util.ArgumentUtil;
 import com.linkedin.util.clock.SystemClock;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -250,10 +252,21 @@ public class D2ClientBuilder
       String stackTrace = Arrays.stream(Thread.currentThread().getStackTrace())
           .map(StackTraceElement::toString)
           .collect(Collectors.joining("\n"));
-      //TODO: In FY26Q2, Throw exception to hard fail non INDIS raw d2 client
-      LOG.error("[ACTION REQUIRED] Using Zookeeper-reading raw D2 Client. WILL CRASH in OCTOBER 2025. "
-          + "See instructions at go/onboardindis.\n"
-          + "Using in stack: {}", stackTrace);
+      //After Oct 1st 9AM PST, throw exception to hard fail non INDIS raw d2 client
+      ZonedDateTime zdt = ZonedDateTime.of(2025, 10, 1, 9, 0, 0, 0,
+          ZoneId.of("America/Los_Angeles"));
+      if (Instant.now().isAfter(zdt.toInstant()))
+      {
+        throw new IllegalStateException("Creating Zookeeper-reading raw D2 Client in app-custom code is prohibited. "
+            + "See instructions at go/onboardindis to find the code owner and migrate to INDIS.\n"
+            + "Creating in stack: " + stackTrace);
+      }
+      else
+      {
+        LOG.error("[ACTION REQUIRED] Using Zookeeper-reading raw D2 Client in app-custom code. WILL CRASH after OCTOBER"
+            + " 1st 2025. See instructions at go/onboardindis to find the code owner and migrate to INDIS.\n"
+            + "Using in stack: {}", stackTrace);
+      }
     }
 
     LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);

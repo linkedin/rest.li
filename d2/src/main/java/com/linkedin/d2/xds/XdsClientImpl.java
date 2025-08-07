@@ -1162,7 +1162,6 @@ public class XdsClientImpl extends XdsClient
     @Override
     public void run()
     {
-      _xdsClientJmx.resetIrvSentCount();
       startRpcStreamLocal();
 
       for (ResourceType originalType : ResourceType.values())
