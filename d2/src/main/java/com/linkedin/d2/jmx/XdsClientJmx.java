@@ -18,6 +18,7 @@ package com.linkedin.d2.jmx;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 public class XdsClientJmx implements XdsClientJmxMBean
@@ -26,6 +27,9 @@ public class XdsClientJmx implements XdsClientJmxMBean
   private final AtomicInteger _connectionLostCount = new AtomicInteger();
   private final AtomicInteger _connectionClosedCount = new AtomicInteger();
   private final AtomicInteger _reconnectionCount = new AtomicInteger();
+  private final AtomicLong _resquestSentCount = new AtomicLong();
+  private final AtomicLong _irvSentCount = new AtomicLong();
+  private final AtomicLong _responseReceivedCount = new AtomicLong();
 
   private final AtomicBoolean _isConnected = new AtomicBoolean();
   private final AtomicInteger _resourceNotFoundCount = new AtomicInteger();
@@ -60,6 +64,24 @@ public class XdsClientJmx implements XdsClientJmxMBean
   public int getReconnectionCount()
   {
     return _reconnectionCount.get();
+  }
+
+  @Override
+  public long getRequestSentCount()
+  {
+    return _resquestSentCount.get();
+  }
+
+  @Override
+  public long getIrvSentCount()
+  {
+    return _irvSentCount.get();
+  }
+
+  @Override
+  public long getResponseReceivedCount()
+  {
+    return _responseReceivedCount.get();
   }
 
   @Override
@@ -126,6 +148,21 @@ public class XdsClientJmx implements XdsClientJmxMBean
   public void incrementReconnectionCount()
   {
     _reconnectionCount.incrementAndGet();
+  }
+
+  public void incrementRequestSentCount()
+  {
+    _resquestSentCount.incrementAndGet();
+  }
+
+  public void addToIrvSentCount(int delta)
+  {
+    _irvSentCount.addAndGet(delta);
+  }
+
+  public void incrementResponseReceivedCount()
+  {
+    _responseReceivedCount.incrementAndGet();
   }
 
   public void setIsConnected(boolean connected)
