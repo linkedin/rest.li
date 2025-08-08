@@ -51,7 +51,6 @@ import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.d2.jmx.XdsServerMetricsProvider;
 import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.d2.jmx.NoOpJmxManager;
-import com.linkedin.d2.xds.balancer.XdsLoadBalancerWithFacilitiesFactory;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
@@ -79,7 +78,9 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * Build a {@link D2Client} with basic ZooKeeper setup to connect D2 protocol.
+ * ATTENTION: Using this class MUST be reading from INDIS instead of Zookeeper. ZK read will crash in October 2025.
+ * See instructions at go/onboardindis.
+ * Build a {@link D2Client} with basic setup to connect D2 protocol.
  * The client could be further wrapped by other client classes.
  */
 @SuppressWarnings("deprecation")
@@ -248,9 +249,11 @@ public class D2ClientBuilder
       String stackTrace = Arrays.stream(Thread.currentThread().getStackTrace())
           .map(StackTraceElement::toString)
           .collect(Collectors.joining("\n"));
-      //TODO: In FY26Q2, Throw exception to hard fail non INDIS raw d2 client
-      LOG.error("[ACTION REQUIRED] Using Zookeeper-reading raw D2 Client. WILL CRASH in OCTOBER 2025. "
-          + "See instructions at go/onboardindis.\n"
+      //TODO: After Oct 1st, throw exception to hard fail non INDIS raw d2 client.
+      // throw new IllegalStateException("Creating Zookeeper-reading raw D2 Client in app-custom code is prohibited. "
+      //    + "See instructions at go/onboardindis to find the code owner and migrate to INDIS.\n");
+      LOG.error("[ATTENTION!!! ACTION REQUIRED] Creating Zookeeper-reading raw D2 Client in app-custom code WILL CRASH"
+          + " after OCTOBER 1st 2025. See instructions at go/onboardindis to find the code owner and migrate to INDIS.\n"
           + "Using in stack: {}", stackTrace);
     }
 
