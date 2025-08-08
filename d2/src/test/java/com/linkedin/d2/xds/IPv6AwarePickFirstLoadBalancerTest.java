@@ -11,8 +11,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static com.linkedin.d2.xds.IPv6AwarePickFirstLoadBalancer.*;
@@ -27,15 +30,31 @@ public class IPv6AwarePickFirstLoadBalancerTest
     assertNotNull(LoadBalancerRegistry.getDefaultRegistry().getProvider(POLICY_NAME));
   }
 
-  @Test(invocationCount = 10)
-  public void testShuffling()
+  @DataProvider
+  public Object[] addresses()
   {
-    List<EquivalentAddressGroup> addresses = new ArrayList<>();
-    for (int i = 0; i < 100; i++)
+    List<List<EquivalentAddressGroup>> addresses = new ArrayList<>();
+    for (int i = 0; i < 10; i++)
     {
-      addresses.add(newGroup(ThreadLocalRandom.current().nextBoolean()));
+      // Addresses in random interleaving.
+      addresses.add(IntStream.range(0, 100)
+          .mapToObj(j -> newGroup(ThreadLocalRandom.current().nextBoolean()))
+          .collect(Collectors.toList()));
     }
+    // First half of list is IPv6, back half is IPv4
+    addresses.add(IntStream.range(0, 100)
+        .mapToObj(j -> newGroup(j < 50))
+        .collect(Collectors.toList()));
+    // Inverse, first half is IPv4, back half is IPv6
+    addresses.add(IntStream.range(0, 100)
+        .mapToObj(j -> newGroup(j >= 50))
+        .collect(Collectors.toList()));
+    return addresses.toArray();
+  }
 
+  @Test(invocationCount = 10, dataProvider = "addresses")
+  public void testShuffling(List<EquivalentAddressGroup> addresses)
+  {
     LoadBalancer mock = Mockito.mock(LoadBalancer.class);
     IPv6AwarePickFirstLoadBalancer lb = new IPv6AwarePickFirstLoadBalancer(mock);
     lb.acceptResolvedAddresses(ResolvedAddresses.newBuilder().setAddresses(addresses).build());
