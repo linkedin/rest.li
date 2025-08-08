@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.72.1] - 2025-08-07
+- Introduce new IPv6 aware Pick First policy
+
 ## [29.72.0] - 2025-08-06
 - Add xds client metrics to count requests, IRV, and responses
 
@@ -5861,7 +5864,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.72.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.72.1...master
+[29.72.1]: https://github.com/linkedin/rest.li/compare/v29.72.0...v29.72.1
 [29.72.0]: https://github.com/linkedin/rest.li/compare/v29.71.0...v29.72.0
 [29.71.0]: https://github.com/linkedin/rest.li/compare/v29.70.2...v29.71.0
 [29.70.2]: https://github.com/linkedin/rest.li/compare/v29.70.1...v29.70.2

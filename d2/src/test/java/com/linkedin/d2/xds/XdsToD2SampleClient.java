@@ -61,34 +61,48 @@ public class XdsToD2SampleClient
     trustStorePasswordOption.setRequired(false);
     options.addOption(trustStorePasswordOption);
 
+    Option lbPolicyOption = new Option("lbPolicy", true, "The LB policy name to use");
+    lbPolicyOption.setRequired(false);
+    options.addOption(lbPolicyOption);
+
     CommandLineParser parser = new GnuParser();
     CommandLine cmd = parser.parse(options, args);
 
     Node node = Node.DEFAULT_NODE;
-    if (cmd.hasOption("hostName") && cmd.hasOption("nodeCluster"))
+    if (cmd.hasOption(hostNameOption.getOpt()) && cmd.hasOption(nodeClusterOption.getOpt()))
     {
-      node = new Node(cmd.getOptionValue("hostName"), cmd.getOptionValue("nodeCluster"), "gRPC", null);
+      node = new Node(
+          cmd.getOptionValue(hostNameOption.getOpt()),
+          cmd.getOptionValue(nodeClusterOption.getOpt()),
+          "gRPC",
+          null
+      );
     }
 
-    String xdsServer = cmd.getOptionValue("xds", "localhost:32123");
-    String serviceName = cmd.getOptionValue("service", "tokiBackendGrpc");
+    String xdsServer = cmd.getOptionValue(xdsServerOption.getOpt(), "localhost:32123");
+    String serviceName = cmd.getOptionValue(serviceNameOption.getOpt(), "tokiBackendGrpc");
 
-    String keyStoreFilePath = cmd.getOptionValue("keyStoreFilePath");
-    String keyStorePassword = cmd.getOptionValue("keyStorePassword");
-    String keyStoreType = cmd.getOptionValue("keyStoreType");
-    String trustStoreFilePath = cmd.getOptionValue("trustStoreFilePath");
-    String trustStorePassword = cmd.getOptionValue("trustStorePassword");
+    String keyStoreFilePath = cmd.getOptionValue(keyStoreFilePathOption.getOpt());
+    String keyStorePassword = cmd.getOptionValue(keyStorePasswordOption.getOpt());
+    String keyStoreType = cmd.getOptionValue(keyStoreTypeOption.getOpt());
+    String trustStoreFilePath = cmd.getOptionValue(trustStoreFilePathOption.getOpt());
+    String trustStorePassword = cmd.getOptionValue(trustStorePasswordOption.getOpt());
 
     SslContext sslContext = null;
 
     if (keyStoreFilePath != null && keyStorePassword != null && keyStoreType != null
-        && trustStoreFilePath != null && trustStorePassword != null) {
+        && trustStoreFilePath != null && trustStorePassword != null)
+    {
       sslContext = SslContextUtil.buildClientSslContext(
           new File(keyStoreFilePath), keyStorePassword, keyStoreType, new File(trustStoreFilePath), trustStorePassword
       );
     }
 
-    XdsChannelFactory xdsChannelFactory = new XdsChannelFactory(sslContext, xdsServer);
+    XdsChannelFactory xdsChannelFactory = new XdsChannelFactory(
+        sslContext,
+        xdsServer,
+        cmd.getOptionValue(lbPolicyOption.getOpt(), IPv6AwarePickFirstLoadBalancer.POLICY_NAME)
+    );
     XdsClient xdsClient = new XdsClientImpl(node, xdsChannelFactory.createChannel(),
         Executors.newSingleThreadScheduledExecutor(), XdsClientImpl.DEFAULT_READY_TIMEOUT_MILLIS, false,
         new NoOpXdsServerMetricsProvider(), false);
