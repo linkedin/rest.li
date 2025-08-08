@@ -11,6 +11,23 @@ record D2Uri {
   URI: string
 
   /**
+   * [optional] URI for this machine with the hostname replaced with an ipv4.
+   */
+  ipv4VariantURI: string
+
+  /**
+   * [optional] URI for this machine with the hostname replaced with an ipv4.
+   */
+  ipv6VariantURI: string
+
+  // TODO: add modified_time
+  hostname: string
+  ipv4Address: string
+  ipv6Address: string
+  isIpv4InSan: boolean
+  isIpv6InSan: boolean
+
+  /**
    * The cluster where this URI belongs.
    */
   clusterName: string
