@@ -4,7 +4,6 @@ dependencies {
   compile project(':data')
   compile project(':restli-common')
   compile externalDependency.testng
-  compile externalDependency.commonsLang
 
   testCompile project(path: ':restli-int-test-api', configuration: 'dataTemplate')
   testCompile project(path: ':restli-example-api', configuration: 'dataTemplate')

@@ -37,7 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
 
 /**
@@ -297,7 +297,7 @@ public class ParseqTraceDebugRequestHandler implements RestLiDebugRequestHandler
     String result = String.format(
         TRACE_RENDER_SCRIPT,
         TRACE_RENDER_FUNCTION,
-        StringEscapeUtils.escapeJavaScript(trace));
+        StringEscapeUtils.escapeEcmaScript(trace));
 
     return result;
   }
