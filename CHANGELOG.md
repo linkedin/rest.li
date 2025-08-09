@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.73.0] - 2025-08-08
+- Empty version bump
+
 ## [29.72.1] - 2025-08-07
 - Introduce new IPv6 aware Pick First policy
 
@@ -5864,7 +5867,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.72.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.73.0...master
+[29.73.0]: https://github.com/linkedin/rest.li/compare/v29.72.1...v29.73.0
 [29.72.1]: https://github.com/linkedin/rest.li/compare/v29.72.0...v29.72.1
 [29.72.0]: https://github.com/linkedin/rest.li/compare/v29.71.0...v29.72.0
 [29.71.0]: https://github.com/linkedin/rest.li/compare/v29.70.2...v29.71.0
