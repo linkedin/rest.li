@@ -5,7 +5,6 @@ dependencies {
   compile project(':r2-disruptor')
   compile project(':r2-filter-compression')
 
-  compile externalDependency.commonsLang
   compile externalDependency.netty
 
   testCompile project(path: ':r2-core', configuration: 'testArtifacts')

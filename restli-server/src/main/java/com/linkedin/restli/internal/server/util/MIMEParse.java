@@ -12,8 +12,8 @@ import java.util.Map;
 
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.math.NumberUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 
 /**
  * Released Under the MIT license
@@ -302,7 +302,7 @@ public final class MIMEParse
         .reduce((first, second) -> second)
         .orElseThrow(() -> new InvalidMimeTypeException(header));
 
-    return NumberUtils.compare(lastOne.quality, 0) != 0 ? lastOne.mimeType : "";
+    return Float.compare(lastOne.quality, 0f) != 0 ? lastOne.mimeType : "";
   }
 
   /**

@@ -22,7 +22,7 @@ import com.linkedin.pegasus.generator.spec.ClassTemplateSpec;
 import com.linkedin.restli.internal.tools.RestLiToolsUtils;
 import com.linkedin.restli.restspec.ParameterSchema;
 import com.linkedin.restli.restspec.RestSpecCodec;
-import org.apache.commons.lang.ClassUtils;
+import org.apache.commons.lang3.ClassUtils;
 
 
 public class ParameterSpec

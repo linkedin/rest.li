@@ -1,5 +1,4 @@
 dependencies {
     compile externalDependency.testng
-    compile externalDependency.commonsLang
     compile project(':pegasus-common')
 }

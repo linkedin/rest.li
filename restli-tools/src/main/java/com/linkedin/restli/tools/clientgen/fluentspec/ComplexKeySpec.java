@@ -18,7 +18,7 @@ package com.linkedin.restli.tools.clientgen.fluentspec;
 
 import com.linkedin.restli.common.ComplexResourceKey;
 import java.util.Map;
-import org.apache.commons.lang.ClassUtils;
+import org.apache.commons.lang3.ClassUtils;
 
 
 /**
