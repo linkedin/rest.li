@@ -11,7 +11,6 @@ dependencies {
   compile externalDependency.parseq
   compile externalDependency.parseq_restClient
   compile externalDependency.mail
-  compile externalDependency.commonsLang
   implementation externalDependency.caffeine
   testCompile project(path: ':restli-common', configuration: 'testArtifacts')
   testCompile project(path: ':restli-internal-testutils', configuration: 'testArtifacts')
