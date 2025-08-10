@@ -39,13 +39,13 @@ public class SnappyCompressor extends AbstractCompressor
   @Override
   protected InputStream createInflaterInputStream(InputStream compressedDataStream) throws IOException
   {
-    return new org.iq80.snappy.SnappyInputStream(compressedDataStream, true);
+    return new org.xerial.snappy.SnappyInputStream(compressedDataStream);
   }
 
   @SuppressWarnings("deprecation")
   @Override
   protected OutputStream createDeflaterOutputStream(OutputStream decompressedDataStream) throws IOException
   {
-    return new org.iq80.snappy.SnappyOutputStream(decompressedDataStream);
+    return new org.xerial.snappy.SnappyOutputStream(decompressedDataStream);
   }
 }
