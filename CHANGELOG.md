@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add new fields to D2Uri.pdl for debugging. These mirror fields in the D2URI proto in XdsD2.proto.
 
 ## [29.74.0] - 2025-08-12
 - Bump gRPC version to fix IPv6AwarePickFirstLoadBalancer
@@ -5870,8 +5871,13 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
+<<<<<<< HEAD
 [Unreleased]: https://github.com/linkedin/rest.li/compare/v29.74.0...master
 [29.74.0]: https://github.com/linkedin/rest.li/compare/v29.73.0...v29.74.0
+=======
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.73.1...master
+[29.73.1]: https://github.com/linkedin/rest.li/compare/v29.73.0...v29.73.1
+>>>>>>> 7c9c7adab (Update changelog)
 [29.73.0]: https://github.com/linkedin/rest.li/compare/v29.72.1...v29.73.0
 [29.72.1]: https://github.com/linkedin/rest.li/compare/v29.72.0...v29.72.1
 [29.72.0]: https://github.com/linkedin/rest.li/compare/v29.71.0...v29.72.0
