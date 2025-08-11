@@ -5,7 +5,6 @@ dependencies {
     testCompile project(path: ':r2-core', configuration: 'testArtifacts')
     testCompile externalDependency.testng
     testCompile externalDependency.junit
-    compile externalDependency.commonsLang
 }
 
 tasks.withType(Test) {

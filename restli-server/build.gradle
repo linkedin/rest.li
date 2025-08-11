@@ -12,7 +12,6 @@ dependencies {
   compile externalDependency.caffeine
   compile externalDependency.javaxInject
   compile externalDependency.mail
-  compile externalDependency.commonsLang
   compile externalDependency.commonsIo
   compile externalDependency.jacksonCore
   compile externalDependency.parseq

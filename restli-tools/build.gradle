@@ -49,7 +49,6 @@ dependencies {
   compile externalDependency.commonsIo
   compile externalDependency.codemodel
   compile externalDependency.commonsCli
-  compile externalDependency.commonsLang
   compile externalDependency.jacksonCore
   compile externalDependency.jacksonDataBind
   compile externalDependency.jdkTools
@@ -76,7 +75,6 @@ dependencies {
     java11Compile externalDependency.commonsIo
     java11Compile externalDependency.codemodel
     java11Compile externalDependency.commonsCli
-    java11Compile externalDependency.commonsLang
     java11Compile externalDependency.jacksonCore
     java11Compile externalDependency.jacksonDataBind
     java11Compile externalDependency.velocity

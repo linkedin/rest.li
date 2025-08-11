@@ -43,7 +43,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -238,7 +238,7 @@ public class TestGreetingsClientAcceptTypes extends RestLiIntegrationTest
     Object[][] result = new Object[oldBuildersDataProvider.length + newBuildersDataProvider.length][];
 
     int currResultIndex = 0;
-    for (Object[] arguments : (Object[][]) ArrayUtils.addAll(oldBuildersDataProvider, newBuildersDataProvider))
+    for (Object[] arguments : ArrayUtils.addAll(oldBuildersDataProvider, newBuildersDataProvider))
     {
       Object[] newArguments = arguments;
       newArguments[builderIndex] = new RootBuilderWrapper<Long, Greeting>(newArguments[builderIndex]);

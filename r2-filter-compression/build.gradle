@@ -4,6 +4,7 @@ dependencies {
   compile project(':pegasus-common')
   compile externalDependency.commonsCompress
   compile externalDependency.commonsIo
-  compile externalDependency.snappy
+  compile externalDependency.xerialSnappy
+  compile externalDependency.airCompressor
   testCompile externalDependency.testng
 }
