@@ -2,6 +2,7 @@ package com.linkedin.d2.xds;
 
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.LoadBalancer;
+import io.grpc.LoadBalancerProvider;
 import io.grpc.LoadBalancerRegistry;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -14,24 +15,15 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static com.linkedin.d2.xds.IPv6AwarePickFirstLoadBalancer.*;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
 
 public class IPv6AwarePickFirstLoadBalancerTest
 {
-  @Test
-  public void testRegistration()
-  {
-    assertNotNull(LoadBalancerRegistry.getDefaultRegistry().getProvider(POLICY_NAME));
-  }
-
-  @DataProvider
-  public Object[] addresses()
+  public List<List<EquivalentAddressGroup>> generateAddressGroups()
   {
     List<List<EquivalentAddressGroup>> addresses = new ArrayList<>();
     for (int i = 0; i < 10; i++)
@@ -49,26 +41,64 @@ public class IPv6AwarePickFirstLoadBalancerTest
     addresses.add(IntStream.range(0, 100)
         .mapToObj(j -> newGroup(j >= 50))
         .collect(Collectors.toList()));
-    return addresses.toArray();
+    return addresses;
   }
 
-  @Test(invocationCount = 10, dataProvider = "addresses")
-  public void testShuffling(List<EquivalentAddressGroup> addresses)
+  @Test
+  public void testShuffling()
   {
-    LoadBalancer mock = Mockito.mock(LoadBalancer.class);
-    IPv6AwarePickFirstLoadBalancer lb = new IPv6AwarePickFirstLoadBalancer(mock);
-    lb.acceptResolvedAddresses(ResolvedAddresses.newBuilder().setAddresses(addresses).build());
-
+    LoadBalancer mockedPickFirst = mock(LoadBalancer.class);
     ArgumentCaptor<ResolvedAddresses> addressesCaptor = ArgumentCaptor.forClass(ResolvedAddresses.class);
-    verify(mock).acceptResolvedAddresses(addressesCaptor.capture());
 
-    List<EquivalentAddressGroup> shuffledAddresses = addressesCaptor.getValue().getAddresses();
-    assertNotEquals(addresses, shuffledAddresses);
-    assertEquals(new HashSet<>(addresses), new HashSet<>(shuffledAddresses));
-
-    for (int i = 0; i < addresses.size(); i++)
+    LoadBalancerRegistry.getDefaultRegistry().register(new LoadBalancerProvider()
     {
-      assertEquals(hasIPv6Address(addresses.get(i)), hasIPv6Address(shuffledAddresses.get(i)));
+      @Override
+      public boolean isAvailable()
+      {
+        return true;
+      }
+
+      @Override
+      public int getPriority()
+      {
+        // Set the highest priority, so it overrides the built-in "pick_first" policy and return the mock.
+        return Integer.MAX_VALUE;
+      }
+
+      @Override
+      public String getPolicyName()
+      {
+        return "pick_first";
+      }
+
+      @Override
+      public LoadBalancer newLoadBalancer(Helper helper)
+      {
+        return mockedPickFirst;
+      }
+    });
+    LoadBalancer lb = LoadBalancerRegistry.getDefaultRegistry()
+        .getProvider(POLICY_NAME)
+        .newLoadBalancer(mock(Helper.class));
+    assertTrue(lb instanceof IPv6AwarePickFirstLoadBalancer);
+
+    for (List<EquivalentAddressGroup> addresses : generateAddressGroups())
+    {
+      reset(mockedPickFirst);
+
+      lb.acceptResolvedAddresses(ResolvedAddresses.newBuilder().setAddresses(addresses).build());
+
+      verify(mockedPickFirst).acceptResolvedAddresses(addressesCaptor.capture());
+
+
+      List<EquivalentAddressGroup> shuffledAddresses = addressesCaptor.getValue().getAddresses();
+      assertNotEquals(addresses, shuffledAddresses);
+      assertEquals(new HashSet<>(addresses), new HashSet<>(shuffledAddresses));
+
+      for (int i = 0; i < addresses.size(); i++)
+      {
+        assertEquals(hasIPv6Address(addresses.get(i)), hasIPv6Address(shuffledAddresses.get(i)));
+      }
     }
   }
 
