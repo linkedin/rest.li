@@ -14,8 +14,6 @@
    limitations under the License.
 */
 
-//import org.gradle.api.attributes.java.TargetJvmEnvironment;
-
 buildscript {
   repositories {
     mavenCentral()
@@ -437,22 +435,13 @@ subprojects {
     logger.lifecycle "Tests for subproject ${project.name} will be skipped."
   }
 
+  // The following prevent gradle from picking android-specific artifacts, which breaks compilation. This was introduced
+  // by more recent versions of guava which produces android and JVM variants of their jars.
   dependencies.constraints {
     add("compile", "com.google.guava:guava") {
       attributes {
         attribute(Attribute.of("org.gradle.jvm.environment", String),"standard-jvm")
-//        attribute(TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
-//                objects.named(TargetJvmEnvironment.STANDARD_JVM))
       }
-    }
-  }
-
-  configurations.configureEach {
-    resolutionStrategy.capabilitiesResolution.withCapability("com.google.guava:guava") {
-      select(candidates.single { it.variantName.contains("jreRuntimeElements") })
-    }
-    resolutionStrategy.capabilitiesResolution.withCapability("com.google.collections:google-collections") {
-      select(candidates.single { it.variantName.contains("jreRuntimeElements") })
     }
   }
 }
