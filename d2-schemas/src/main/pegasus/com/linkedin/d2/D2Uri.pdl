@@ -31,9 +31,9 @@ record D2Uri {
   ipv6VariantURI: optional string
 
   /**
-   * The time this URI was last modified in milliseconds since the epoch
+   * The time this URI was last modified, in RFC 3339 date string format
    */
-  modifiedTime: optional long
+  modifiedTime: optional string
 
   /**
    * The hostname of the machine making this announcement
