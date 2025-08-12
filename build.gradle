@@ -115,21 +115,21 @@ project.ext.externalDependency = [
   'springBeans': 'org.springframework:spring-beans:3.2.18.RELEASE',
 
   // for restli-guice-bridge ONLY, we should keep these dependencies isolated
-  'guice': 'com.google.inject:guice:3.0',
-  'guiceServlet': 'com.google.inject.extensions:guice-servlet:3.0',
+  'guice'                  : 'com.google.inject:guice:3.0',
+  'guiceServlet'           : 'com.google.inject.extensions:guice-servlet:3.0',
 
-  'jsr305': 'com.google.code.findbugs:jsr305:3.0.0',
-  "avroSpotBugsPlugin": "com.linkedin.avroutil1:spotbugs-plugin:0.2.56",
-  "classgraph": "io.github.classgraph:classgraph:4.8.149",
+  'jsr305'                 : 'com.google.code.findbugs:jsr305:3.0.0',
+  "avroSpotBugsPlugin"     : "com.linkedin.avroutil1:spotbugs-plugin:0.2.56",
+  "classgraph"             : "io.github.classgraph:classgraph:4.8.149",
 
   // for integrating with xDS service discovery
-  'grpcNettyShaded': 'io.grpc:grpc-netty-shaded:1.59.1',
-  'grpcProtobuf': 'io.grpc:grpc-protobuf:1.59.1',
-  'grpcStub': 'io.grpc:grpc-stub:1.59.1',
-  'protoc': 'com.google.protobuf:protoc:3.24.0',
-  'protobufJava': 'com.google.protobuf:protobuf-java:3.24.0',
-  'protobufJavaUtil': 'com.google.protobuf:protobuf-java-util:3.24.0',
-  'envoyApi': 'io.envoyproxy.controlplane:api:0.1.35',
+  'grpcNettyShaded'        : 'io.grpc:grpc-netty-shaded:1.68.3',
+  'grpcProtobuf'           : 'io.grpc:grpc-protobuf:1.68.3',
+  'grpcStub'               : 'io.grpc:grpc-stub:1.68.3',
+  'protoc'                 : 'com.google.protobuf:protoc:3.25.5',
+  'protobufJava'           : 'com.google.protobuf:protobuf-java:3.25.5',
+  'protobufJavaUtil'       : 'com.google.protobuf:protobuf-java-util:3.25.5',
+  'envoyApi'               : 'io.envoyproxy.controlplane:api:0.1.35',
 ];
 
 if (!project.ext.isDefaultEnvironment)
@@ -434,6 +434,16 @@ subprojects {
     }
     logger.lifecycle "Tests for subproject ${project.name} will be skipped."
   }
+
+  // The following prevent gradle from picking android-specific artifacts, which breaks compilation. This was introduced
+  // by more recent versions of guava which produces android and JVM variants of their jars.
+  dependencies.constraints {
+    add("compile", "com.google.guava:guava") {
+      attributes {
+        attribute(Attribute.of("org.gradle.jvm.environment", String),"standard-jvm")
+      }
+    }
+  }
 }
 
 final skippedTests = [:].withDefault {[]}
@@ -474,4 +484,3 @@ project.gradle.buildFinished { BuildResult result ->
     logger.warn msgBuilder.toString()
   }
 }
-
