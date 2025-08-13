@@ -19,4 +19,44 @@ record D2Uri {
    * partitionId key to weight
    */
   partitionDescription: map[string, double]
+
+  /**
+   * URI for this machine with the hostname replaced with an ipv4. Only set if an ipv4 is provided and isIpv4InSan is true.
+   */
+  ipv4VariantURI: optional string
+
+  /**
+   * URI for this machine with the hostname replaced with an ipv6. Only set if an ipv6 is provided and isIpv6InSan is true
+   */
+  ipv6VariantURI: optional string
+
+  /**
+   * The time this URI was last modified, in RFC 3339 date string format
+   */
+  modifiedTime: optional string
+
+  /**
+   * The hostname of the machine making this announcement
+   */
+  hostname: optional string
+
+  /**
+   * The ipv4 of the machine making this announcement
+   */
+  ipv4Address: optional string
+
+  /**
+   * The ipv6 of the machine making this announcement
+   */
+  ipv6Address: optional string
+
+  /**
+   * Whether the ipv4 provided is also in the app's TLS cert
+   */
+  isIpv4InSan: optional boolean
+
+  /**
+   * Whether the ipv6 provided is also in the app's TLS cert
+   */
+  isIpv6InSan: optional boolean
 }
