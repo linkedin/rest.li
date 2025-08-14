@@ -21,6 +21,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import com.google.protobuf.util.Timestamps;
 import com.google.rpc.Code;
 import com.linkedin.d2.jmx.NoOpXdsServerMetricsProvider;
 import com.linkedin.d2.jmx.XdsClientJmx;
@@ -709,7 +710,7 @@ public class XdsClientImpl extends XdsClient
 
       if (wildcardSubscriber != null)
       {
-        wildcardSubscriber.onData(entry.getKey(), entry.getValue());
+        wildcardSubscriber.onData(entry.getKey(), entry.getValue(), _serverMetricsProvider);
       }
     }
   }
@@ -843,6 +844,7 @@ public class XdsClientImpl extends XdsClient
     private final XdsClientJmx _xdsClientJmx;
     @Nullable
     private ResourceUpdate _data;
+    private long _subscribedAt = SystemClock.instance().currentTimeMillis();
 
     @VisibleForTesting
     @Nullable
@@ -885,7 +887,7 @@ public class XdsClientImpl extends XdsClient
       // null value guard to avoid overwriting the property with null
       if (data != null && data.isValid())
       {
-        trackServerLatency(data, metricsProvider); // data updated, track xds server latency
+        trackServerLatency(data, _data, metricsProvider, _subscribedAt); // data updated, track xds server latency
         _data = data;
       }
       else
@@ -918,59 +920,6 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    // track rough estimate of latency spent on the xds server in millis = resource receipt time - resource modified time
-    private void trackServerLatency(ResourceUpdate resourceUpdate, XdsServerMetricsProvider metricsProvider)
-    {
-      if (!shouldTrackServerLatency())
-      {
-        return;
-      }
-
-      long now = SystemClock.instance().currentTimeMillis();
-      if (resourceUpdate instanceof NodeUpdate)
-      {
-        XdsD2.Node nodeData = ((NodeUpdate) resourceUpdate).getNodeData();
-        if (nodeData == null)
-        {
-          return;
-        }
-        metricsProvider.trackLatency(now - nodeData.getStat().getMtime());
-      }
-      else if (resourceUpdate instanceof D2URIMapUpdate)
-      {
-        // only track server latency for the updated/new uris in the update
-        Map<String, XdsD2.D2URI> currentUriMap = ((D2URIMapUpdate) _data).getURIMap();
-        MapDifference<String, XdsD2.D2URI> rawDiff = Maps.difference(((D2URIMapUpdate) resourceUpdate).getURIMap(),
-            currentUriMap == null ? Collections.emptyMap() : currentUriMap);
-        Map<String, XdsD2.D2URI> updatedUris = rawDiff.entriesDiffering().entrySet().stream()
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                e -> e.getValue().leftValue()) // new data of updated uris
-            );
-        trackServerLatencyForUris(updatedUris, metricsProvider, now);
-        trackServerLatencyForUris(rawDiff.entriesOnlyOnLeft(), metricsProvider, now); // newly added uris
-      }
-      else if (resourceUpdate instanceof D2URIUpdate)
-      {
-        XdsD2.D2URI uri = ((D2URIUpdate) resourceUpdate).getD2Uri();
-        if (uri != null)
-        {
-          metricsProvider.trackLatency(now - uri.getModifiedTime().getSeconds() * 1000);
-        }
-      }
-    }
-
-    private boolean shouldTrackServerLatency()
-    {
-      return _data != null && _data.isValid(); // not initial update and there has been valid update before
-    }
-
-    private void trackServerLatencyForUris(Map<String, XdsD2.D2URI> uriMap, XdsServerMetricsProvider metricsProvider,
-        long now)
-    {
-      uriMap.forEach((k, v) -> metricsProvider.trackLatency(now - v.getModifiedTime().getSeconds() * 1000));
-    }
-
     public ResourceType getType()
     {
       return _type;
@@ -989,8 +938,10 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    private void onReconnect()
+    @VisibleForTesting
+    void onReconnect()
     {
+      resetSubscribedAt();
       for (ResourceWatcher watcher : _watchers)
       {
         watcher.onReconnect();
@@ -1015,6 +966,17 @@ public class XdsClientImpl extends XdsClient
         watcher.onChanged(_data);
       }
     }
+
+    void resetSubscribedAt()
+    {
+      _subscribedAt = SystemClock.instance().currentTimeMillis();
+    }
+
+    @VisibleForTesting
+    void setSubscribedAt(long subscribedAt)
+    {
+      _subscribedAt = subscribedAt;
+    }
   }
 
   static class WildcardResourceSubscriber
@@ -1022,6 +984,7 @@ public class XdsClientImpl extends XdsClient
     private final ResourceType _type;
     private final Set<WildcardResourceWatcher> _watchers = new HashSet<>();
     private final Map<String, ResourceUpdate> _data = new HashMap<>();
+    private long _subscribedAt = SystemClock.instance().currentTimeMillis();
 
     @VisibleForTesting
     public ResourceUpdate getData(String resourceName)
@@ -1052,7 +1015,7 @@ public class XdsClientImpl extends XdsClient
     }
 
     @VisibleForTesting
-    void onData(String resourceName, ResourceUpdate data)
+    void onData(String resourceName, ResourceUpdate data, XdsServerMetricsProvider metricsProvider)
     {
       if (Objects.equals(_data.get(resourceName), data))
       {
@@ -1062,6 +1025,7 @@ public class XdsClientImpl extends XdsClient
       // null value guard to avoid overwriting the property with null
       if (data != null && data.isValid())
       {
+        trackServerLatency(data, _data.get(resourceName), metricsProvider, _subscribedAt);
         _data.put(resourceName, data);
       }
       else
@@ -1107,8 +1071,10 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    private void onReconnect()
+    @VisibleForTesting
+    void onReconnect()
     {
+      resetSubscribedAt();
       for (WildcardResourceWatcher watcher : _watchers)
       {
         watcher.onReconnect();
@@ -1131,6 +1097,17 @@ public class XdsClientImpl extends XdsClient
       {
         watcher.onAllResourcesProcessed();
       }
+    }
+
+    void resetSubscribedAt()
+    {
+      _subscribedAt = SystemClock.instance().currentTimeMillis();
+    }
+
+    @VisibleForTesting
+    void setSubscribedAt(long subscribedAt)
+    {
+      _subscribedAt = subscribedAt;
     }
   }
 
@@ -1155,6 +1132,61 @@ public class XdsClientImpl extends XdsClient
   private boolean shouldSubscribeUriGlobCollection(ResourceType type)
   {
     return _subscribeToUriGlobCollection && type == ResourceType.D2_URI_MAP;
+  }
+
+  // track rough estimate of latency spent on the xds server in millis
+  // = resource receipt time - max(resource modified time, subscribed time)
+  private static void trackServerLatency(ResourceUpdate resourceUpdate, ResourceUpdate currentData,
+      XdsServerMetricsProvider metricsProvider, long subscribedAt)
+  {
+    long now = SystemClock.instance().currentTimeMillis();
+    if (resourceUpdate instanceof NodeUpdate)
+    {
+      XdsD2.Node nodeData = ((NodeUpdate) resourceUpdate).getNodeData();
+      if (nodeData == null)
+      {
+        return;
+      }
+      trackServerLatencyHelper(metricsProvider, now, nodeData.getStat().getMtime(), subscribedAt);
+    }
+    else if (resourceUpdate instanceof D2URIMapUpdate)
+    {
+      // only track server latency for the updated/new uris in the update
+      Map<String, XdsD2.D2URI> currentUriMap = currentData == null ? Collections.emptyMap()
+          : ((D2URIMapUpdate) currentData).getURIMap();
+      MapDifference<String, XdsD2.D2URI> rawDiff = Maps.difference(((D2URIMapUpdate) resourceUpdate).getURIMap(),
+          currentUriMap == null ? Collections.emptyMap() : currentUriMap);
+      Map<String, XdsD2.D2URI> updatedUris = rawDiff.entriesDiffering().entrySet().stream()
+          .collect(Collectors.toMap(
+              Map.Entry::getKey,
+              e -> e.getValue().leftValue()) // new data of updated uris
+          );
+      trackServerLatencyForUris(updatedUris, metricsProvider, now, subscribedAt);
+      trackServerLatencyForUris(rawDiff.entriesOnlyOnLeft(), metricsProvider, now, subscribedAt); // newly added uris
+    }
+    else if (resourceUpdate instanceof D2URIUpdate)
+    {
+      XdsD2.D2URI uri = ((D2URIUpdate) resourceUpdate).getD2Uri();
+      if (uri != null)
+      {
+        trackServerLatencyHelper(metricsProvider, now, Timestamps.toMillis(uri.getModifiedTime()), subscribedAt);
+      }
+    }
+  }
+
+  private static void trackServerLatencyForUris(Map<String, XdsD2.D2URI> uriMap,
+      XdsServerMetricsProvider metricsProvider,
+      long end, long subscribedAt)
+  {
+    uriMap.forEach((k, v) -> trackServerLatencyHelper(metricsProvider, end, Timestamps.toMillis(v.getModifiedTime()),
+        subscribedAt));
+  }
+
+  // If the resource was modified before the client subscribed, we use the subscribed time to track the actual client side latency
+  private static void trackServerLatencyHelper(XdsServerMetricsProvider metricsProvider,
+      long end, long modifiedAt, long subscribedAt)
+  {
+    metricsProvider.trackLatency(end - Math.max(modifiedAt, subscribedAt));
   }
 
   final class RpcRetryTask implements Runnable
