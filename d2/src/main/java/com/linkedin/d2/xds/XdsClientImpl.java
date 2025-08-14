@@ -941,7 +941,7 @@ public class XdsClientImpl extends XdsClient
     @VisibleForTesting
     void onReconnect()
     {
-      resetSubscribedAt();
+      resetSubscribedAt(); // Reconnected needs to reset the subscribe time to the current time for tracking purposes.
       for (ResourceWatcher watcher : _watchers)
       {
         watcher.onReconnect();
@@ -1074,7 +1074,7 @@ public class XdsClientImpl extends XdsClient
     @VisibleForTesting
     void onReconnect()
     {
-      resetSubscribedAt();
+      resetSubscribedAt(); // Reconnected needs to reset the subscribe time to the current time for tracking purposes.
       for (WildcardResourceWatcher watcher : _watchers)
       {
         watcher.onReconnect();

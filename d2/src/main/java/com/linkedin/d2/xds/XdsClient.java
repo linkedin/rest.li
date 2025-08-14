@@ -65,7 +65,7 @@ public abstract class XdsClient
      */
     public void onReconnect()
     {
-      resetWatchedAt();
+      resetWatchedAt(); // Reconnected needs to reset the watchedAt time to the current time for tracking purposes.
     }
 
     abstract void onChanged(ResourceUpdate update);
