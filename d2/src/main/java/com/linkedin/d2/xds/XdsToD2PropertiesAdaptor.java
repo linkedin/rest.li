@@ -19,6 +19,7 @@ package com.linkedin.d2.xds;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import com.google.protobuf.util.Timestamps;
 import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
@@ -238,6 +239,7 @@ public class XdsToD2PropertiesAdaptor
       @Override
       public void onReconnect()
       {
+        super.onReconnect();
         notifyAvailabilityChanges(true);
       }
     };
@@ -309,6 +311,7 @@ public class XdsToD2PropertiesAdaptor
       @Override
       public void onReconnect()
       {
+        super.onReconnect();
         notifyAvailabilityChanges(true);
       }
     };
@@ -358,6 +361,7 @@ public class XdsToD2PropertiesAdaptor
       @Override
       public void onReconnect()
       {
+        super.onReconnect();
         notifyAvailabilityChanges(true);
       }
     };
@@ -488,10 +492,7 @@ public class XdsToD2PropertiesAdaptor
         return;
       }
 
-      if (!isInit && !_currentData.isEmpty())
-      {
-        emitSDStatusUpdateReceiptEvents(updates);
-      }
+      emitSDStatusUpdateReceiptEvents(updates);
       _currentData = updates;
 
       // For symlink clusters, UriLoadBalancerSubscriber subscribed to the symlinks ($FooClusterMaster) instead of
@@ -573,6 +574,7 @@ public class XdsToD2PropertiesAdaptor
     @Override
     public void onReconnect()
     {
+      super.onReconnect();
       notifyAvailabilityChanges(true);
     }
 
@@ -620,6 +622,11 @@ public class XdsToD2PropertiesAdaptor
       {
         UriProperties d2Uri = xdsAndD2Uris._d2Uri;
         XdsD2.D2URI xdsUri = xdsAndD2Uris._xdsUri;
+        if (Timestamps.toMillis(xdsUri.getModifiedTime()) < _watchedAt)
+        {
+          return; // skip the uris that are modified before the start watching time
+        }
+
         String nodePath = D2_URI_NODE_PREFIX + _clusterName + "/" + xdsAndD2Uris._uriName;
         d2Uri.Uris().forEach(uri ->
             _eventEmitter.emitSDStatusUpdateReceiptEvent(

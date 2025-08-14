@@ -19,6 +19,7 @@ package com.linkedin.d2.xds;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.linkedin.d2.jmx.XdsClientJmx;
+import com.linkedin.util.clock.SystemClock;
 import indis.XdsD2;
 import io.grpc.Status;
 import java.util.Arrays;
@@ -37,6 +38,7 @@ public abstract class XdsClient
   public static abstract class ResourceWatcher
   {
     private final ResourceType _type;
+    protected long _watchedAt = SystemClock.instance().currentTimeMillis();
 
     /**
      * Defining a private constructor means only classes that are defined in this file can extend this class. This way,
@@ -61,9 +63,17 @@ public abstract class XdsClient
     /**
      * Called when the resource discovery RPC reestablishes connection.
      */
-    public abstract void onReconnect();
+    public void onReconnect()
+    {
+      resetWatchedAt();
+    }
 
     abstract void onChanged(ResourceUpdate update);
+
+    private void resetWatchedAt()
+    {
+      _watchedAt = SystemClock.instance().currentTimeMillis();
+    }
   }
 
   public static abstract class NodeResourceWatcher extends ResourceWatcher
@@ -117,6 +127,7 @@ public abstract class XdsClient
   public static abstract class WildcardResourceWatcher
   {
     private final ResourceType _type;
+    protected long _watchedAt = SystemClock.instance().currentTimeMillis();
 
     /**
      * Defining a private constructor means only classes that are defined in this file can extend this class (see
@@ -140,7 +151,10 @@ public abstract class XdsClient
     /**
      * Called when the resource discovery RPC reestablishes connection.
      */
-    public abstract void onReconnect();
+    public void onReconnect()
+    {
+      resetWatchedAt();
+    }
 
     /**
      * Called when a resource is added or updated.
@@ -163,6 +177,11 @@ public abstract class XdsClient
     public void onAllResourcesProcessed()
     {
       // do nothing
+    }
+
+    private void resetWatchedAt()
+    {
+      _watchedAt = SystemClock.instance().currentTimeMillis();
     }
   }
 
