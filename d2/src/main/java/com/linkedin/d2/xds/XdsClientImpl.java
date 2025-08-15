@@ -21,6 +21,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import com.google.protobuf.util.Timestamps;
 import com.google.rpc.Code;
 import com.linkedin.d2.jmx.NoOpXdsServerMetricsProvider;
 import com.linkedin.d2.jmx.XdsClientJmx;
@@ -614,7 +615,7 @@ public class XdsClientImpl extends XdsClient
             || uriSubscriber.getData() == null // The URI was corrupted and there was no previous version of this URI
         )
         {
-          uriSubscriber.onData(new D2URIUpdate(uri), _serverMetricsProvider);
+          uriSubscriber.onData(new D2URIUpdate(uri), _serverMetricsProvider, _initialResourceVersionsEnabled);
         }
       }
 
@@ -704,12 +705,12 @@ public class XdsClientImpl extends XdsClient
       ResourceSubscriber subscriber = subscribers.get(entry.getKey());
       if (subscriber != null)
       {
-        subscriber.onData(entry.getValue(), _serverMetricsProvider);
+        subscriber.onData(entry.getValue(), _serverMetricsProvider, _initialResourceVersionsEnabled);
       }
 
       if (wildcardSubscriber != null)
       {
-        wildcardSubscriber.onData(entry.getKey(), entry.getValue());
+        wildcardSubscriber.onData(entry.getKey(), entry.getValue(), _serverMetricsProvider, _initialResourceVersionsEnabled);
       }
     }
   }
@@ -843,6 +844,7 @@ public class XdsClientImpl extends XdsClient
     private final XdsClientJmx _xdsClientJmx;
     @Nullable
     private ResourceUpdate _data;
+    private long _subscribedAt = SystemClock.instance().currentTimeMillis();
 
     @VisibleForTesting
     @Nullable
@@ -875,7 +877,7 @@ public class XdsClientImpl extends XdsClient
     }
 
     @VisibleForTesting
-    void onData(ResourceUpdate data, XdsServerMetricsProvider metricsProvider)
+    void onData(ResourceUpdate data, XdsServerMetricsProvider metricsProvider, boolean isIrvEnabled)
     {
       if (Objects.equals(_data, data))
       {
@@ -885,7 +887,8 @@ public class XdsClientImpl extends XdsClient
       // null value guard to avoid overwriting the property with null
       if (data != null && data.isValid())
       {
-        trackServerLatency(data, metricsProvider); // data updated, track xds server latency
+        trackServerLatency(data, _data, metricsProvider, _subscribedAt, isIrvEnabled,
+            _data == null || !_data.isValid()); // data updated, track xds server latency
         _data = data;
       }
       else
@@ -918,59 +921,6 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    // track rough estimate of latency spent on the xds server in millis = resource receipt time - resource modified time
-    private void trackServerLatency(ResourceUpdate resourceUpdate, XdsServerMetricsProvider metricsProvider)
-    {
-      if (!shouldTrackServerLatency())
-      {
-        return;
-      }
-
-      long now = SystemClock.instance().currentTimeMillis();
-      if (resourceUpdate instanceof NodeUpdate)
-      {
-        XdsD2.Node nodeData = ((NodeUpdate) resourceUpdate).getNodeData();
-        if (nodeData == null)
-        {
-          return;
-        }
-        metricsProvider.trackLatency(now - nodeData.getStat().getMtime());
-      }
-      else if (resourceUpdate instanceof D2URIMapUpdate)
-      {
-        // only track server latency for the updated/new uris in the update
-        Map<String, XdsD2.D2URI> currentUriMap = ((D2URIMapUpdate) _data).getURIMap();
-        MapDifference<String, XdsD2.D2URI> rawDiff = Maps.difference(((D2URIMapUpdate) resourceUpdate).getURIMap(),
-            currentUriMap == null ? Collections.emptyMap() : currentUriMap);
-        Map<String, XdsD2.D2URI> updatedUris = rawDiff.entriesDiffering().entrySet().stream()
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                e -> e.getValue().leftValue()) // new data of updated uris
-            );
-        trackServerLatencyForUris(updatedUris, metricsProvider, now);
-        trackServerLatencyForUris(rawDiff.entriesOnlyOnLeft(), metricsProvider, now); // newly added uris
-      }
-      else if (resourceUpdate instanceof D2URIUpdate)
-      {
-        XdsD2.D2URI uri = ((D2URIUpdate) resourceUpdate).getD2Uri();
-        if (uri != null)
-        {
-          metricsProvider.trackLatency(now - uri.getModifiedTime().getSeconds() * 1000);
-        }
-      }
-    }
-
-    private boolean shouldTrackServerLatency()
-    {
-      return _data != null && _data.isValid(); // not initial update and there has been valid update before
-    }
-
-    private void trackServerLatencyForUris(Map<String, XdsD2.D2URI> uriMap, XdsServerMetricsProvider metricsProvider,
-        long now)
-    {
-      uriMap.forEach((k, v) -> metricsProvider.trackLatency(now - v.getModifiedTime().getSeconds() * 1000));
-    }
-
     public ResourceType getType()
     {
       return _type;
@@ -989,8 +939,10 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    private void onReconnect()
+    @VisibleForTesting
+    void onReconnect()
     {
+      resetSubscribedAt(); // Reconnected needs to reset the subscribe time to the current time for tracking purposes.
       for (ResourceWatcher watcher : _watchers)
       {
         watcher.onReconnect();
@@ -1015,6 +967,17 @@ public class XdsClientImpl extends XdsClient
         watcher.onChanged(_data);
       }
     }
+
+    void resetSubscribedAt()
+    {
+      _subscribedAt = SystemClock.instance().currentTimeMillis();
+    }
+
+    @VisibleForTesting
+    void setSubscribedAt(long subscribedAt)
+    {
+      _subscribedAt = subscribedAt;
+    }
   }
 
   static class WildcardResourceSubscriber
@@ -1022,6 +985,8 @@ public class XdsClientImpl extends XdsClient
     private final ResourceType _type;
     private final Set<WildcardResourceWatcher> _watchers = new HashSet<>();
     private final Map<String, ResourceUpdate> _data = new HashMap<>();
+    private long _subscribedAt = SystemClock.instance().currentTimeMillis();
+    private boolean _isFirstFetch = true;
 
     @VisibleForTesting
     public ResourceUpdate getData(String resourceName)
@@ -1052,7 +1017,7 @@ public class XdsClientImpl extends XdsClient
     }
 
     @VisibleForTesting
-    void onData(String resourceName, ResourceUpdate data)
+    void onData(String resourceName, ResourceUpdate data, XdsServerMetricsProvider metricsProvider, boolean isIrvEnabled)
     {
       if (Objects.equals(_data.get(resourceName), data))
       {
@@ -1062,6 +1027,8 @@ public class XdsClientImpl extends XdsClient
       // null value guard to avoid overwriting the property with null
       if (data != null && data.isValid())
       {
+
+        trackServerLatency(data, _data.get(resourceName), metricsProvider, _subscribedAt, isIrvEnabled, _isFirstFetch);
         _data.put(resourceName, data);
       }
       else
@@ -1107,8 +1074,10 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    private void onReconnect()
+    @VisibleForTesting
+    void onReconnect()
     {
+      resetSubscribedAt(); // Reconnected needs to reset the subscribe time to the current time for tracking purposes.
       for (WildcardResourceWatcher watcher : _watchers)
       {
         watcher.onReconnect();
@@ -1125,12 +1094,29 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    private void onAllResourcesProcessed()
+    @VisibleForTesting
+    void onAllResourcesProcessed()
     {
+      if (_isFirstFetch)
+      {
+        _isFirstFetch = false;
+      }
+
       for (WildcardResourceWatcher watcher : _watchers)
       {
         watcher.onAllResourcesProcessed();
       }
+    }
+
+    void resetSubscribedAt()
+    {
+      _subscribedAt = SystemClock.instance().currentTimeMillis();
+    }
+
+    @VisibleForTesting
+    void setSubscribedAt(long subscribedAt)
+    {
+      _subscribedAt = subscribedAt;
     }
   }
 
@@ -1155,6 +1141,90 @@ public class XdsClientImpl extends XdsClient
   private boolean shouldSubscribeUriGlobCollection(ResourceType type)
   {
     return _subscribeToUriGlobCollection && type == ResourceType.D2_URI_MAP;
+  }
+
+  private static void trackServerLatency(ResourceUpdate resourceUpdate, ResourceUpdate currentData,
+      XdsServerMetricsProvider metricsProvider, long subscribedAt, boolean isIrvEnabled, boolean isFirstFetch)
+  {
+    long now = SystemClock.instance().currentTimeMillis();
+    if (resourceUpdate instanceof NodeUpdate)
+    {
+      XdsD2.Node nodeData = ((NodeUpdate) resourceUpdate).getNodeData();
+      if (nodeData == null)
+      {
+        return;
+      }
+      trackServerLatencyHelper(metricsProvider, now, nodeData.getStat().getMtime(), subscribedAt,
+          isIrvEnabled, isFirstFetch);
+    }
+    else if (resourceUpdate instanceof D2URIMapUpdate)
+    {
+      D2URIMapUpdate update = (D2URIMapUpdate) resourceUpdate;
+      // only track server latency for the updated/new uris in the update
+      Map<String, XdsD2.D2URI> currentUriMap = currentData == null ? Collections.emptyMap()
+          : ((D2URIMapUpdate) currentData).getURIMap();
+      MapDifference<String, XdsD2.D2URI> rawDiff = Maps.difference(update.getURIMap(),
+          currentUriMap == null ? Collections.emptyMap() : currentUriMap);
+      Map<String, XdsD2.D2URI> updatedUris = rawDiff.entriesDiffering().entrySet().stream()
+          .collect(Collectors.toMap(
+              Map.Entry::getKey,
+              e -> e.getValue().leftValue()) // new data of updated uris
+          );
+      trackServerLatencyForUris(updatedUris, update, metricsProvider, now, subscribedAt, isIrvEnabled, isFirstFetch);
+      trackServerLatencyForUris(rawDiff.entriesOnlyOnLeft(), update, metricsProvider, now, subscribedAt,
+          isIrvEnabled, isFirstFetch); // newly added uris
+    }
+    else if (resourceUpdate instanceof D2URIUpdate)
+    {
+      D2URIUpdate update = (D2URIUpdate) resourceUpdate;
+      XdsD2.D2URI uri = update.getD2Uri();
+      if (uri != null)
+      {
+        update.setIsStaleModifiedTime(
+            trackServerLatencyHelper(metricsProvider, now, Timestamps.toMillis(uri.getModifiedTime()), subscribedAt,
+            isIrvEnabled, isFirstFetch)
+        );
+      }
+    }
+  }
+
+  private static void trackServerLatencyForUris(Map<String, XdsD2.D2URI> uriMap, D2URIMapUpdate update,
+      XdsServerMetricsProvider metricsProvider,
+      long end, long subscribedAt, boolean isIrvEnabled, boolean isFirstFetch)
+  {
+    uriMap.forEach((k, v) -> {
+          boolean isStaleModifiedTime = trackServerLatencyHelper(metricsProvider, end, Timestamps.toMillis(v.getModifiedTime()), subscribedAt,
+              isIrvEnabled, isFirstFetch);
+          update.setIsStaleModifiedTime(k, isStaleModifiedTime);
+        }
+      );
+  }
+
+  // -- When IRV is not enabled, the client will receive all its interested resources every time it (re-)connects,
+  // so the latency should be tracked based on the max of (resource modified time, subscribed time). Caveat in
+  // this is that if some resource is modified and the update is not received for network issues, then the
+  // client reconnects, the latency will be tracked based on the new subscribed time, and the real latency of
+  // that update is lost.
+  // -- When IRV is enabled, the caveat above will be fixed. Since the client will never receive resources that it already
+  // received with IRV, except the first fetch, so after skipping the first fetch we can track latency always based
+  // on the resource modified time.
+  private static boolean trackServerLatencyHelper(XdsServerMetricsProvider metricsProvider,
+      long end, long modifiedAt, long subscribedAt, boolean isIrvEnabled, boolean isFirstFetch)
+  {
+    long start;
+    boolean isStaleModifiedAt;
+    if (isIrvEnabled && !isFirstFetch)
+    {
+      start = modifiedAt;
+      isStaleModifiedAt = false;
+    }
+    else
+    {
+      start = Math.max(modifiedAt, subscribedAt);
+      isStaleModifiedAt = modifiedAt < subscribedAt;
+    }
+    metricsProvider.trackLatency(end - start);
+    return isStaleModifiedAt;
   }
 
   final class RpcRetryTask implements Runnable
