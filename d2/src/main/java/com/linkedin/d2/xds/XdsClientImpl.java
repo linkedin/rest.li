@@ -1159,37 +1159,45 @@ public class XdsClientImpl extends XdsClient
     }
     else if (resourceUpdate instanceof D2URIMapUpdate)
     {
+      D2URIMapUpdate update = (D2URIMapUpdate) resourceUpdate;
       // only track server latency for the updated/new uris in the update
       Map<String, XdsD2.D2URI> currentUriMap = currentData == null ? Collections.emptyMap()
           : ((D2URIMapUpdate) currentData).getURIMap();
-      MapDifference<String, XdsD2.D2URI> rawDiff = Maps.difference(((D2URIMapUpdate) resourceUpdate).getURIMap(),
+      MapDifference<String, XdsD2.D2URI> rawDiff = Maps.difference(update.getURIMap(),
           currentUriMap == null ? Collections.emptyMap() : currentUriMap);
       Map<String, XdsD2.D2URI> updatedUris = rawDiff.entriesDiffering().entrySet().stream()
           .collect(Collectors.toMap(
               Map.Entry::getKey,
               e -> e.getValue().leftValue()) // new data of updated uris
           );
-      trackServerLatencyForUris(updatedUris, metricsProvider, now, subscribedAt, isIrvEnabled, isFirstFetch);
-      trackServerLatencyForUris(rawDiff.entriesOnlyOnLeft(), metricsProvider, now, subscribedAt,
+      trackServerLatencyForUris(updatedUris, update, metricsProvider, now, subscribedAt, isIrvEnabled, isFirstFetch);
+      trackServerLatencyForUris(rawDiff.entriesOnlyOnLeft(), update, metricsProvider, now, subscribedAt,
           isIrvEnabled, isFirstFetch); // newly added uris
     }
     else if (resourceUpdate instanceof D2URIUpdate)
     {
-      XdsD2.D2URI uri = ((D2URIUpdate) resourceUpdate).getD2Uri();
+      D2URIUpdate update = (D2URIUpdate) resourceUpdate;
+      XdsD2.D2URI uri = update.getD2Uri();
       if (uri != null)
       {
-        trackServerLatencyHelper(metricsProvider, now, Timestamps.toMillis(uri.getModifiedTime()), subscribedAt,
-            isIrvEnabled, isFirstFetch);
+        update.setIsStaleModifiedTime(
+            trackServerLatencyHelper(metricsProvider, now, Timestamps.toMillis(uri.getModifiedTime()), subscribedAt,
+            isIrvEnabled, isFirstFetch)
+        );
       }
     }
   }
 
-  private static void trackServerLatencyForUris(Map<String, XdsD2.D2URI> uriMap,
+  private static void trackServerLatencyForUris(Map<String, XdsD2.D2URI> uriMap, D2URIMapUpdate update,
       XdsServerMetricsProvider metricsProvider,
       long end, long subscribedAt, boolean isIrvEnabled, boolean isFirstFetch)
   {
-    uriMap.forEach((k, v) -> trackServerLatencyHelper(metricsProvider, end, Timestamps.toMillis(v.getModifiedTime()),
-        subscribedAt, isIrvEnabled, isFirstFetch));
+    uriMap.forEach((k, v) -> {
+          boolean isStaleModifiedTime = trackServerLatencyHelper(metricsProvider, end, Timestamps.toMillis(v.getModifiedTime()), subscribedAt,
+              isIrvEnabled, isFirstFetch);
+          update.setIsStaleModifiedTime(k, isStaleModifiedTime);
+        }
+      );
   }
 
   // -- When IRV is not enabled, the client will receive all its interested resources every time it (re-)connects,
@@ -1200,11 +1208,23 @@ public class XdsClientImpl extends XdsClient
   // -- When IRV is enabled, the caveat above will be fixed. Since the client will never receive resources that it already
   // received with IRV, except the first fetch, so after skipping the first fetch we can track latency always based
   // on the resource modified time.
-  private static void trackServerLatencyHelper(XdsServerMetricsProvider metricsProvider,
+  private static boolean trackServerLatencyHelper(XdsServerMetricsProvider metricsProvider,
       long end, long modifiedAt, long subscribedAt, boolean isIrvEnabled, boolean isFirstFetch)
   {
-    long start = isIrvEnabled && !isFirstFetch ? modifiedAt : Math.max(modifiedAt, subscribedAt);
+    long start;
+    boolean isStaleModifiedAt;
+    if (isIrvEnabled && !isFirstFetch)
+    {
+      start = modifiedAt;
+      isStaleModifiedAt = false;
+    }
+    else
+    {
+      start = Math.max(modifiedAt, subscribedAt);
+      isStaleModifiedAt = modifiedAt < subscribedAt;
+    }
     metricsProvider.trackLatency(end - start);
+    return isStaleModifiedAt;
   }
 
   final class RpcRetryTask implements Runnable
