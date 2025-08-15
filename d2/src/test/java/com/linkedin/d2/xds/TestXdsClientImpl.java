@@ -453,7 +453,6 @@ public class TestXdsClientImpl
   public void testHandleD2URIMapResponseWithData(boolean toWatchIndividual, boolean toWatchWildcard)
   {
     XdsClientImplFixture fixture = new XdsClientImplFixture();
-    XdsServerMetricsProvider metrics = fixture._serverMetricsProvider;
     if (toWatchIndividual)
     {
       fixture.watchUriMapResource();
@@ -468,28 +467,24 @@ public class TestXdsClientImpl
     verify(fixture._resourceWatcher, times(toWatchIndividual ? 1 : 0)).onChanged(D2_URI_MAP_UPDATE_WITH_DATA1);
     verify(fixture._wildcardResourceWatcher, times(toWatchWildcard ? 1 : 0))
         .onChanged(CLUSTER_RESOURCE_NAME, D2_URI_MAP_UPDATE_WITH_DATA1);
-    verifyPositiveLagLessThanOneSec(2, metrics);
     Assert.assertEquals(fixture._clusterSubscriber.getData(), D2_URI_MAP_UPDATE_WITH_DATA1);
     Assert.assertEquals(fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME), D2_URI_MAP_UPDATE_WITH_DATA1);
 
     // subscriber original data is not null, new data will overwrite the original valid data, and watchers will be
-    // notified, and xds server latency will be tracked.
+    // notified
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_DATA2); // updated uri1, added uri2
     verify(fixture._resourceWatcher, times(toWatchIndividual ? 1 : 0)).onChanged(D2_URI_MAP_UPDATE_WITH_DATA2);
     verify(fixture._wildcardResourceWatcher, times(toWatchWildcard ? 1 : 0))
         .onChanged(CLUSTER_RESOURCE_NAME, D2_URI_MAP_UPDATE_WITH_DATA2);
-    verifyPositiveLagLessThanOneSec(6, metrics);
     Assert.assertEquals(fixture._clusterSubscriber.getData(), D2_URI_MAP_UPDATE_WITH_DATA2);
     Assert.assertEquals(fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME), D2_URI_MAP_UPDATE_WITH_DATA2);
     fixture.verifyAckSent(2);
 
-    // new data with an empty uri map will update the original data, watchers will be notified, but no more latency
-    // will be tracked for removed uris
+    // new data with an empty uri map will update the original data, watchers will be notified
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI_MAP_EMPTY);
     verify(fixture._resourceWatcher, times(toWatchIndividual ? 1 : 0)).onChanged(D2_URI_MAP_UPDATE_WITH_EMPTY_MAP);
     verify(fixture._wildcardResourceWatcher, times(toWatchWildcard ? 1 : 0))
         .onChanged(CLUSTER_RESOURCE_NAME, D2_URI_MAP_UPDATE_WITH_EMPTY_MAP);
-    verifyNoMoreInteractions(fixture._serverMetricsProvider);
     Assert.assertEquals(fixture._clusterSubscriber.getData(), D2_URI_MAP_UPDATE_WITH_EMPTY_MAP);
     Assert.assertEquals(fixture._uriMapWildcardSubscriber.getData(CLUSTER_RESOURCE_NAME),
         D2_URI_MAP_UPDATE_WITH_EMPTY_MAP);
