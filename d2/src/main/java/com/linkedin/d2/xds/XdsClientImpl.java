@@ -1143,8 +1143,6 @@ public class XdsClientImpl extends XdsClient
     return _subscribeToUriGlobCollection && type == ResourceType.D2_URI_MAP;
   }
 
-  // track rough estimate of latency spent on the xds server in millis
-  // = resource receipt time - max(resource modified time, subscribed time)
   private static void trackServerLatency(ResourceUpdate resourceUpdate, ResourceUpdate currentData,
       XdsServerMetricsProvider metricsProvider, long subscribedAt, boolean isIrvEnabled, boolean isFirstFetch)
   {
