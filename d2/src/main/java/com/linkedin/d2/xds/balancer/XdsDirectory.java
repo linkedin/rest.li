@@ -133,7 +133,8 @@ public class XdsDirectory implements Directory
       }
 
       @Override
-      public void onReconnect() {
+      public void onReconnect()
+      {
         // do nothing
       }
     };
