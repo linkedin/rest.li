@@ -66,7 +66,7 @@ public class TestXdsClientImpl
   private static final String VERSION2 = "2";
   private static final String VERSION3 = "3";
   private static final String NONCE = "nonce";
-  // set modified time to a time in the past, will verify the latency is calculated with subscribe time
+
   private static final long TEN_MINS = Time.minutes(10);
   private static final XdsD2.Node NODE_WITH_DATA = createNodeWithData(DATA,
       SystemClock.instance().currentTimeMillis() - TEN_MINS);
@@ -247,7 +247,8 @@ public class TestXdsClientImpl
   }
 
   @Test(dataProvider = "providerWatcherFlags")
-  public void testHandleD2NodeResponseWithData(boolean toWatchIndividual, boolean toWatchWildcard) {
+  public void testHandleD2NodeResponseWithData(boolean toWatchIndividual, boolean toWatchWildcard)
+  {
     // make sure the watchers are notified as expected regardless of watching only by its own type, or watching
     // with both via individual and wildcard watchers
     XdsClientImplFixture fixture = new XdsClientImplFixture();
@@ -567,7 +568,8 @@ public class TestXdsClientImpl
   }
 
   @Test
-  public void testHandleD2URICollectionResponseWithData() {
+  public void testHandleD2URICollectionResponseWithData()
+  {
     XdsClientImplFixture fixture = new XdsClientImplFixture();
     fixture.watchAllResourceAndWatcherTypes();
 
@@ -736,11 +738,12 @@ public class TestXdsClientImpl
     // {
     //   useGlobCollection --- whether to use glob collection
     // }
-    return new Object[][]{
-        {true, true},
-        {true, false},
-        {false, true},
-        {false, false}
+    return new Object[][]
+        {
+            {true, true},
+            {true, false},
+            {false, true},
+            {false, false}
     };
   }
 
@@ -970,7 +973,8 @@ public class TestXdsClientImpl
   }
 
   @Test(dataProvider = "provideIrvEnabled")
-  public void testTrackLatencyForD2URI(boolean isIrvEnabled) {
+  public void testTrackLatencyForD2URI(boolean isIrvEnabled)
+  {
     XdsClientImplFixture fixture = new XdsClientImplFixture(true, isIrvEnabled);
     XdsServerMetricsProvider metrics = fixture._serverMetricsProvider;
     fixture.watchAllResourceAndWatcherTypes();
@@ -984,9 +988,11 @@ public class TestXdsClientImpl
     // modified time only if irv is enabled. Also since there is no D2_URI individual resource subscriber on URI2
     // (only on URI1), only two D2_URI_MAP subscribers will track latency
     fixture._xdsClientImpl.handleResponse(RESPONSE_D2URI2_DELETE_URI1);
-    if (isIrvEnabled) {
+    if (isIrvEnabled)
+    {
       verifyLagGreaterThanTenMins(2, metrics);
-    } else {
+    } else
+    {
       verifyPositiveLagLessThanOneSec(5, metrics);
     }
 
@@ -1009,9 +1015,11 @@ public class TestXdsClientImpl
     // Now create URI1 again, with a modified time before the subscribe time. Verify the latency is calculated with
     // modified time only if irv is disabled
     fixture._xdsClientImpl.handleResponse(RESPONSE_D2URI1);
-    if (isIrvEnabled) {
+    if (isIrvEnabled)
+    {
       verifyLagGreaterThanTenMins(5, metrics);
-    } else {
+    } else
+    {
       verifyPositiveLagLessThanOneSec(10, metrics);
     }
   }
@@ -1035,7 +1043,8 @@ public class TestXdsClientImpl
             .setSeconds(modifiedTimeMillis / 1000)
             .setNanos((int) (modifiedTimeMillis % 1000 * 1_000_000))
             .build());
-    if (partitionDesc != null) {
+    if (partitionDesc != null)
+    {
       builder.putAllPartitionDesc(partitionDesc);
     }
     return builder.build();
