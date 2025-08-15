@@ -35,10 +35,9 @@ import javax.annotation.Nullable;
 
 public abstract class XdsClient
 {
-  public static abstract class ResourceWatcher
+  public abstract static class ResourceWatcher
   {
     private final ResourceType _type;
-    protected long _watchedAt = SystemClock.instance().currentTimeMillis();
 
     /**
      * Defining a private constructor means only classes that are defined in this file can extend this class. This way,
@@ -63,17 +62,9 @@ public abstract class XdsClient
     /**
      * Called when the resource discovery RPC reestablishes connection.
      */
-    public void onReconnect()
-    {
-      resetWatchedAt(); // Reconnected needs to reset the watchedAt time to the current time for tracking purposes.
-    }
+    public abstract void onReconnect();
 
     abstract void onChanged(ResourceUpdate update);
-
-    private void resetWatchedAt()
-    {
-      _watchedAt = SystemClock.instance().currentTimeMillis();
-    }
   }
 
   public static abstract class NodeResourceWatcher extends ResourceWatcher
@@ -127,7 +118,6 @@ public abstract class XdsClient
   public static abstract class WildcardResourceWatcher
   {
     private final ResourceType _type;
-    protected long _watchedAt = SystemClock.instance().currentTimeMillis();
 
     /**
      * Defining a private constructor means only classes that are defined in this file can extend this class (see
@@ -151,10 +141,7 @@ public abstract class XdsClient
     /**
      * Called when the resource discovery RPC reestablishes connection.
      */
-    public void onReconnect()
-    {
-      resetWatchedAt();
-    }
+    public abstract void onReconnect();
 
     /**
      * Called when a resource is added or updated.
@@ -177,11 +164,6 @@ public abstract class XdsClient
     public void onAllResourcesProcessed()
     {
       // do nothing
-    }
-
-    private void resetWatchedAt()
-    {
-      _watchedAt = SystemClock.instance().currentTimeMillis();
     }
   }
 
@@ -357,7 +339,7 @@ public abstract class XdsClient
     private final boolean _globCollectionEnabled;
     private final Set<String> _updatedUrisName = new HashSet<>();
     private final Set<String> _removedUrisName = new HashSet<>();
-
+    private Map<String, Boolean> _isStaleModifiedTimes = new HashMap<>();
 
     D2URIMapUpdate(Map<String, XdsD2.D2URI> uriMap)
     {
@@ -434,6 +416,16 @@ public abstract class XdsClient
       return this;
     }
 
+    public boolean isStaleModifiedTime(String name)
+    {
+      return _isStaleModifiedTimes.getOrDefault(name, false);
+    }
+
+    public void setIsStaleModifiedTime(String name, boolean isStaleModifiedTime)
+    {
+      _isStaleModifiedTimes.put(name, isStaleModifiedTime);
+    }
+
     @Override
     public boolean equals(Object object)
     {
@@ -471,6 +463,7 @@ public abstract class XdsClient
   public static final class D2URIUpdate implements ResourceUpdate
   {
     private final XdsD2.D2URI _d2Uri;
+    private boolean _isStaleModifiedTime = false;
 
     D2URIUpdate(XdsD2.D2URI d2Uri)
     {
@@ -493,6 +486,15 @@ public abstract class XdsClient
       return true;
     }
 
+    public boolean isStaleModifiedTime()
+    {
+      return _isStaleModifiedTime;
+    }
+
+    public void setIsStaleModifiedTime(boolean isStaleModifiedTime)
+    {
+      _isStaleModifiedTime = isStaleModifiedTime;
+    }
 
     @Override
     public boolean equals(Object o)
