@@ -21,26 +21,36 @@ import com.linkedin.restli.internal.server.model.ResourceModelEncoder.DocsProvid
 import com.linkedin.restli.server.annotations.ActionParam;
 import com.linkedin.restli.server.annotations.QueryParam;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Method;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import com.sun.javadoc.AnnotationDesc;
-import com.sun.javadoc.ClassDoc;
-import com.sun.javadoc.Doc;
-import com.sun.javadoc.MethodDoc;
-import com.sun.javadoc.ParamTag;
-import com.sun.javadoc.Parameter;
-import com.sun.javadoc.Tag;
+import com.sun.source.doctree.DocTree;
+import com.sun.source.doctree.ReturnTree;
 import org.apache.commons.io.output.NullWriter;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
 
 
 /**
@@ -76,6 +86,33 @@ public class DocletDocsProvider implements DocsProvider
     return Collections.singleton(".java");
   }
 
+  public static List<String> collectSourceFiles(List<String> sourcePaths, Collection<String> packageNames) throws IOException {
+    List<String> sourceFiles = new ArrayList<>();
+    for (String sourcePath : sourcePaths) {
+      Path basePath = Paths.get(sourcePath);
+      Files.walkFileTree(basePath, new SimpleFileVisitor<Path>() {
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+          if (file.toString().endsWith(".java")) {
+            if (packageNames == null || packageNames.isEmpty()) {
+              sourceFiles.add(file.toString());
+            } else {
+              String packageName = basePath.relativize(file.getParent()).toString().replace('/', '.');
+              for (String targetPackageName : packageNames) {
+                if (packageName.startsWith(targetPackageName)) {
+                  sourceFiles.add(file.toString());
+                  break;
+                }
+              }
+            }
+          }
+          return FileVisitResult.CONTINUE;
+        }
+      });
+    }
+    return sourceFiles;
+  }
+
   @Override
   public void registerSourceFiles(Collection<String> sourceFileNames)
   {
@@ -93,89 +130,86 @@ public class DocletDocsProvider implements DocsProvider
 
     final PrintWriter sysoutWriter = new PrintWriter(System.out, true);
     final PrintWriter nullWriter = new PrintWriter(new NullWriter());
-    final List<String> javadocArgs = new ArrayList<>(Arrays.asList("-classpath",
-        flatClasspath,
-        "-sourcepath",
-        StringUtils.join(_sourcePaths, ":")));
-    if (_resourcePackages != null)
+
+
+    List<String> analyzedSourceFiles;
+    try
     {
-      javadocArgs.add("-subpackages");
-      javadocArgs.add(StringUtils.join(_resourcePackages, ":"));
+      analyzedSourceFiles = new ArrayList<>(collectSourceFiles(Arrays.asList(_sourcePaths),
+                                                               _resourcePackages == null
+                                                               ? null : Arrays.asList(_resourcePackages)));
     }
-    else
+    catch (IOException e)
     {
-      javadocArgs.addAll(sourceFileNames);
+      throw new RuntimeException("Failed to collect source files", e);
+    }
+
+
+    if (_resourcePackages == null)
+    {
+      analyzedSourceFiles.addAll(sourceFileNames);
     }
 
     _doclet = RestLiDoclet.generateDoclet(_apiName,
                                           sysoutWriter,
                                           nullWriter,
                                           nullWriter,
-                                          javadocArgs.toArray(new String[0]));
+                                          flatClasspath,
+                                          analyzedSourceFiles
+                                         );
   }
 
   @Override
   public String getClassDoc(Class<?> resourceClass)
   {
-    final ClassDoc doc = _doclet.getClassDoc(resourceClass);
+    final TypeElement doc = _doclet.getClassDoc(resourceClass);
     if (doc == null)
     {
       return null;
     }
 
-    return buildDoc(doc.commentText());
+    return buildDoc(_doclet.getDocComment(doc));
   }
 
-  @Override
-  public String getClassDeprecatedTag(Class<?> resourceClass)
-  {
-    final ClassDoc doc = _doclet.getClassDoc(resourceClass);
-    if (doc == null)
-    {
+  public String getClassDeprecatedTag(Class<?> resourceClass) {
+    TypeElement typeElement = _doclet.getClassDoc(resourceClass);
+    if (typeElement == null) {
       return null;
     }
-
-    return formatDeprecatedTags(doc);
+    return formatDeprecatedTags(typeElement);
   }
 
-  private static String formatDeprecatedTags(Doc doc)
-  {
-    Tag[] deprecatedTags = doc.tags("deprecated");
-    if(deprecatedTags.length > 0)
-    {
+  private String formatDeprecatedTags(Element element) {
+    List<String> deprecatedTags = _doclet.getDeprecatedTags(element);
+    if (!deprecatedTags.isEmpty()) {
       StringBuilder deprecatedText = new StringBuilder();
-      for(int i = 0; i < deprecatedTags.length; i++)
-      {
-        deprecatedText.append(deprecatedTags[i].text());
-        if(i < deprecatedTags.length - 1)
-        {
+      for (int i = 0; i < deprecatedTags.size(); i++) {
+        deprecatedText.append(deprecatedTags.get(i));
+        if (i < deprecatedTags.size() - 1) {
           deprecatedText.append(" ");
         }
       }
       return deprecatedText.toString();
-    }
-    else
-    {
+    } else {
       return null;
     }
   }
-
   @Override
   public String getMethodDoc(Method method)
   {
-    final MethodDoc doc = _doclet.getMethodDoc(method);
+    final ExecutableElement doc = _doclet.getMethodDoc(method);
     if (doc == null)
     {
       return null;
     }
 
-    return buildDoc(doc.commentText());
+    return buildDoc(_doclet.getDocComment(doc));
   }
 
   @Override
   public String getMethodDeprecatedTag(Method method)
   {
-    final MethodDoc doc = _doclet.getMethodDoc(method);
+    final ExecutableElement doc = _doclet.getMethodDoc(method);
     if (doc == null)
     {
       return null;
@@ -184,32 +218,28 @@ public class DocletDocsProvider implements DocsProvider
     return formatDeprecatedTags(doc);
   }
 
+
   @Override
   public String getParamDoc(Method method, String name)
   {
-    final MethodDoc methodDoc = _doclet.getMethodDoc(method);
+    final ExecutableElement methodDoc = _doclet.getMethodDoc(method);
 
     if (methodDoc == null)
     {
       return null;
     }
 
-    for (Parameter parameter : methodDoc.parameters())
+    for (VariableElement parameter : methodDoc.getParameters())
     {
-      for (AnnotationDesc annotationDesc : parameter.annotations())
+      for (AnnotationMirror annotationMirror : parameter.getAnnotationMirrors())
       {
-        if (annotationDesc.isSynthesized())
+        if (isQueryParamAnnotation(annotationMirror) || isActionParamAnnotation(annotationMirror))
         {
-          continue;
-        }
-
-        if (isQueryParamAnnotation(annotationDesc) || isActionParamAnnotation(annotationDesc))
-        {
-          for (AnnotationDesc.ElementValuePair pair : annotationDesc.elementValues())
+          for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : annotationMirror.getElementValues().entrySet())
           {
-            if ("value".equals(pair.element().name()) && name.equals(pair.value().value()))
+            if ("value".equals(entry.getKey().getSimpleName().toString()) && name.equals(entry.getValue().getValue()))
             {
-              return getParamTagDoc(methodDoc, parameter.name());
+              return getParamTagDoc(methodDoc, parameter.getSimpleName().toString());
             }
           }
         }
@@ -218,35 +248,23 @@ public class DocletDocsProvider implements DocsProvider
 
     return null;
   }
-
-  private static String getParamTagDoc(MethodDoc methodDoc, String name)
-  {
-    for (ParamTag tag : methodDoc.paramTags())
-    {
-      if (name.equals(tag.parameterName()))
-      {
-        return buildDoc(tag.parameterComment());
-      }
-    }
-
-    return null;
+  private String getParamTagDoc(ExecutableElement methodElement, String name) {
+    Map<String, String> paramTags = _doclet.getParamTags(methodElement);
+    return paramTags.get(name);
   }
 
+
   @Override
-  public String getReturnDoc(Method method)
-  {
-    final MethodDoc methodDoc = _doclet.getMethodDoc(method);
-    if (methodDoc != null)
-    {
-      for (Tag tag : methodDoc.tags())
-      {
-        if(tag.name().toLowerCase().equals("@return"))
-        {
-          return buildDoc(tag.text());
+  public String getReturnDoc(Method method) {
+    ExecutableElement methodElement = _doclet.getMethodDoc(method);
+    if (methodElement != null) {
+      for (DocTree docTree : _doclet.getDocCommentTree(method).getFullBody()) {
+        if (docTree.getKind() == DocTree.Kind.RETURN) {
+          ReturnTree returnTree = (ReturnTree) docTree;
+          return buildDoc(returnTree.getDescription().toString());
         }
       }
     }
-
     return null;
   }
 
@@ -260,14 +278,12 @@ public class DocletDocsProvider implements DocsProvider
     return null;
   }
 
-
-  private static boolean isQueryParamAnnotation(AnnotationDesc annotationDesc)
+  private static boolean isQueryParamAnnotation(AnnotationMirror annotationMirror)
   {
-    return QueryParam.class.getCanonicalName().equals(annotationDesc.annotationType().qualifiedName());
+    return QueryParam.class.getCanonicalName().equals(annotationMirror.getAnnotationType().toString());
   }
 
-  private static boolean isActionParamAnnotation(AnnotationDesc annotationDesc)
+  private static boolean isActionParamAnnotation(AnnotationMirror annotationMirror)
   {
-    return ActionParam.class.getCanonicalName().equals(annotationDesc.annotationType().qualifiedName());
-  }
-}
+    return ActionParam.class.getCanonicalName().equals(annotationMirror.getAnnotationType().toString());
+  }}
