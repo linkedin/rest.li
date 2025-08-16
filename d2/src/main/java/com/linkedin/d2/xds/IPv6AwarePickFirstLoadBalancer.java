@@ -6,7 +6,6 @@ import io.grpc.LoadBalancerProvider;
 import io.grpc.LoadBalancerRegistry;
 import io.grpc.NameResolver.ConfigOrError;
 import io.grpc.Status;
-import io.grpc.internal.PickFirstLoadBalancerProvider;
 import java.net.Inet6Address;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -14,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 
 /**
@@ -48,16 +46,13 @@ public class IPv6AwarePickFirstLoadBalancer extends LoadBalancer
 
   IPv6AwarePickFirstLoadBalancer(Helper helper)
   {
-    this(new PickFirstLoadBalancerProvider().newLoadBalancer(helper));
-  }
-
-  IPv6AwarePickFirstLoadBalancer(LoadBalancer delegate)
-  {
-    _delegate = delegate;
+    _delegate = LoadBalancerRegistry.getDefaultRegistry()
+        .getProvider("pick_first")
+        .newLoadBalancer(helper);
   }
 
   @Override
-  public boolean acceptResolvedAddresses(ResolvedAddresses resolvedAddresses)
+  public Status acceptResolvedAddresses(ResolvedAddresses resolvedAddresses)
   {
     return _delegate.acceptResolvedAddresses(resolvedAddresses.toBuilder()
         .setAddresses(ipAwareShuffle(resolvedAddresses.getAddresses()))
@@ -156,7 +151,6 @@ public class IPv6AwarePickFirstLoadBalancer extends LoadBalancer
     @Override
     public String getPolicyName()
     {
-
       return POLICY_NAME;
     }
 
