@@ -4,8 +4,8 @@ package com.linkedin.restli.client;
 import java.util.Map;
 
 import com.linkedin.data.template.RecordTemplate;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 
 /**

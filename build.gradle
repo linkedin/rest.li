@@ -234,6 +234,9 @@ subprojects {
     // so they don't conflict with "velocity-engine-core" module used
     // for versions >=2.0
     all*.exclude group: 'org.apache.velocity', module: 'velocity'
+
+    //Excluding vulnerable package (commons-lang)(CVE-2025-48924)
+    all*.exclude group: 'commons-lang', module: 'commons-lang'
   }
 
   if (!(it.name in ['data-avro', 'restli-int-test'])) {

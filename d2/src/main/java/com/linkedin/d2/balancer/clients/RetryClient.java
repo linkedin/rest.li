@@ -56,7 +56,7 @@ import java.util.concurrent.Future;
 
 import java.util.concurrent.TimeUnit;
 import javax.annotation.concurrent.ThreadSafe;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.checkerframework.checker.lock.qual.GuardedBy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
