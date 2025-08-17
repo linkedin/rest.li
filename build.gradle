@@ -234,6 +234,13 @@ subprojects {
     // so they don't conflict with "velocity-engine-core" module used
     // for versions >=2.0
     all*.exclude group: 'org.apache.velocity', module: 'velocity'
+
+    configureEach {
+      // Force commons-lang3 to a fixed safe version
+      resolutionStrategy {
+        force 'org.apache.commons:commons-lang3:3.18.0'
+      }
+    }
   }
 
   if (!(it.name in ['data-avro', 'restli-int-test'])) {
