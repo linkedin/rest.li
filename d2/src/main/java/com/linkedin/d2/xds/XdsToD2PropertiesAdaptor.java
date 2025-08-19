@@ -19,6 +19,7 @@ package com.linkedin.d2.xds;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
+import com.google.protobuf.util.Timestamps;
 import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
@@ -488,10 +489,7 @@ public class XdsToD2PropertiesAdaptor
         return;
       }
 
-      if (!isInit && !_currentData.isEmpty())
-      {
-        emitSDStatusUpdateReceiptEvents(updates);
-      }
+      emitSDStatusUpdateReceiptEvents(updates, update);
       _currentData = updates;
 
       // For symlink clusters, UriLoadBalancerSubscriber subscribed to the symlinks ($FooClusterMaster) instead of
@@ -596,7 +594,7 @@ public class XdsToD2PropertiesAdaptor
 
     }
 
-    private void emitSDStatusUpdateReceiptEvents(Map<String, XdsAndD2Uris> updates)
+    private void emitSDStatusUpdateReceiptEvents(Map<String, XdsAndD2Uris> updates, XdsClient.D2URIMapUpdate xdsUpdate)
     {
       if (_eventEmitter == null)
       {
@@ -610,16 +608,22 @@ public class XdsToD2PropertiesAdaptor
       Map<String, XdsAndD2Uris> markedDownUris = mapDifference.entriesOnlyOnLeft();
       Map<String, XdsAndD2Uris> markedUpUris = mapDifference.entriesOnlyOnRight();
 
-      emitSDStatusUpdateReceiptEvents(markedUpUris, true, timestamp);
-      emitSDStatusUpdateReceiptEvents(markedDownUris, false, timestamp);
+      emitSDStatusUpdateReceiptEvents(markedUpUris, true, timestamp, xdsUpdate);
+      emitSDStatusUpdateReceiptEvents(markedDownUris, false, timestamp, xdsUpdate);
     }
 
-    private void emitSDStatusUpdateReceiptEvents(Map<String, XdsAndD2Uris> updates, boolean isMarkUp, long timestamp)
+    private void emitSDStatusUpdateReceiptEvents(Map<String, XdsAndD2Uris> updates, boolean isMarkUp, long timestamp,
+        XdsClient.D2URIMapUpdate xdsUpdate)
     {
-      updates.values().forEach(xdsAndD2Uris ->
+      updates.forEach((name, xdsAndD2Uris) ->
       {
         UriProperties d2Uri = xdsAndD2Uris._d2Uri;
         XdsD2.D2URI xdsUri = xdsAndD2Uris._xdsUri;
+        if (xdsUpdate.isStaleModifiedTime(name))
+        {
+          return; // skip the uris which has stale modified time. See XdsClientImpl::trackServerLatencyForUris.
+        }
+
         String nodePath = D2_URI_NODE_PREFIX + _clusterName + "/" + xdsAndD2Uris._uriName;
         d2Uri.Uris().forEach(uri ->
             _eventEmitter.emitSDStatusUpdateReceiptEvent(
