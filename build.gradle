@@ -237,6 +237,13 @@ subprojects {
 
     //Excluding vulnerable package (commons-lang)(CVE-2025-48924)
     all*.exclude group: 'commons-lang', module: 'commons-lang'
+    
+    configureEach {
+      // Force commons-lang3 to a fixed safe version
+      resolutionStrategy {
+        force 'org.apache.commons:commons-lang3:3.18.0'
+      }
+    }
   }
 
   if (!(it.name in ['data-avro', 'restli-int-test'])) {
