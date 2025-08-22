@@ -38,7 +38,7 @@ public class TestD2Utils {
                 "/grid/g/tmp/yarn/usercache/seascloud/appcache/application_1747631859816_3737754/container_e42_1747631859816_3737754_01_000011",
                 null, null, null, null, "grid-g-tmp-yarn-usercache-seascloud-appcache"},
 
-            // When env vars will be used when the corresponding sys prop is null
+            // Env vars will be used when the corresponding sys prop is null
             {null, null, null, "/opt/flink", null, null, "envSamzaApp", null, "envSamzaApp"},
             {null, null, "samzaApp", "/opt/flink", null, "envApp", null, null, "envApp"},
             {null, "app", "samzaApp", "/opt/flink", "envSparkApp", null, null, null, "envSparkApp"},
