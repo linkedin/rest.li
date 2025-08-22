@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.74.2] - 2025-08-22
+- Catch all exceptions in setting tracking node for raw d2 client. Fix get app identity name for short usr.dir path.
+
 ## [29.74.1] - 2025-08-13
 - Add new fields to D2Uri.pdl for debugging. These mirror fields in the D2URI proto in XdsD2.proto.
 
@@ -5873,7 +5876,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.74.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.74.2...master
+[29.74.2]: https://github.com/linkedin/rest.li/compare/v29.74.1...v29.74.2
 [29.74.1]: https://github.com/linkedin/rest.li/compare/v29.74.0...v29.74.1
 [29.74.0]: https://github.com/linkedin/rest.li/compare/v29.73.0...v29.74.0
 [29.73.0]: https://github.com/linkedin/rest.li/compare/v29.72.1...v29.73.0

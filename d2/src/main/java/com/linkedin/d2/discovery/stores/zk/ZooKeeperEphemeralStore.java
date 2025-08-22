@@ -477,9 +477,10 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
 
   private void setRawClientTrackingNode()
   {
-    String rawD2ClientTrackingPath = D2Utils.getRawClientTrackingPath();
+    String rawD2ClientTrackingPath = "";
     try
     {
+      rawD2ClientTrackingPath = D2Utils.getRawClientTrackingPath();
       if (_isAppToExclude)
       {
         LOG.debug("Skipping node creation for RawClientTracking for path: {}", rawD2ClientTrackingPath);
@@ -510,20 +511,15 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
         return;
       }
 
-      final AsyncCallback.StringCallback dataCallback = new AsyncCallback.StringCallback()
-      {
-        @Override
-        public void processResult(int rc, String path, Object ctx, String name)
+      final AsyncCallback.StringCallback dataCallback = (rc, path, ctx, name) -> {
+        KeeperException.Code code = KeeperException.Code.get(rc);
+        if (Objects.requireNonNull(code) == KeeperException.Code.OK)
         {
-          KeeperException.Code code = KeeperException.Code.get(rc);
-          if (Objects.requireNonNull(code) == KeeperException.Code.OK)
-          {
-            LOG.info("setting up node for rawClientTracking with name: {}", name);
-          }
-          else
-          {
-            LOG.warn("failed to set up node for rawClientTracking at path {} with error code: {}", path, code);
-          }
+          LOG.info("setting up node for rawClientTracking with name: {}", name);
+        }
+        else
+        {
+          LOG.warn("failed to set up node for rawClientTracking at path {} with error code: {}", path, code);
         }
       };
 
@@ -553,7 +549,7 @@ public class ZooKeeperEphemeralStore<T> extends ZooKeeperStore<T>
           dataCallback,
           null);
     }
-    catch (KeeperException | InterruptedException e)
+    catch (Exception e)
     {
       LOG.warn("failed to set up node for rawClientTracking at path {}, exception: {}", rawD2ClientTrackingPath, e.getMessage());
     }
