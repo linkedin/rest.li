@@ -9,6 +9,7 @@ import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.stores.zk.SymlinkUtil;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -112,32 +113,34 @@ public class D2Utils
 
   public static String getAppIdentityName()
   {
-    return getAppIdentityName(System.getProperties());
+    return getAppIdentityName(System.getProperties(), System.getenv());
   }
 
   // ZK don't allow / in the node name, we are replacing / with -, This name would be unique for each app.
   // for example: export-content-lid-apps-indis-canary-install nodeName is being used.
-  public static String getAppIdentityName(Properties sysProps)
+  public static String getAppIdentityName(Properties sysProps, Map<String, String> envVars)
   {
-    if (sysProps.getProperty(SPARK_APP_NAME) != null)
+    String sparkApp = getProp(SPARK_APP_NAME, sysProps, envVars);
+    if (sparkApp != null)
     {
-      return sysProps.getProperty(SPARK_APP_NAME);
+      return sparkApp;
     }
 
-    // for samza jobs using the app name
-    if (sysProps.getProperty(APP_NAME) != null)
+    String app = getProp(APP_NAME, sysProps, envVars);
+    if (app != null)
     {
-      return sysProps.getProperty(APP_NAME);
+      return app;
     }
 
     // for samza jobs using the container name
-    if (sysProps.getProperty(SAMZA_CONTAINER_NAME) != null)
+    String samzaContainerName = getProp(SAMZA_CONTAINER_NAME, sysProps, envVars);
+    if (samzaContainerName != null)
     {
-      return sysProps.getProperty(SAMZA_CONTAINER_NAME);
+      return samzaContainerName;
     }
 
     // Process user.dir property to identify the app
-    String userDir = sysProps.getProperty(USR_DIR_SYS_PROPERTY);
+    String userDir = getProp(USR_DIR_SYS_PROPERTY, sysProps, envVars);
     String originalUserDir = userDir;
     if (userDir.startsWith(USER_DIR_EXPORT_CONTENT_PREFIX))
     {
@@ -184,6 +187,16 @@ public class D2Utils
   public static String getRawClientTrackingBasePath()
   {
     return RAW_D2_CLIENT_BASE_PATH;
+  }
+
+  private static String getProp(String name, Properties sysProps, Map<String, String> envVars)
+  {
+    String value = sysProps.getProperty(name);
+    if (value == null)
+    {
+      value = envVars.get(name);
+    }
+    return value;
   }
 
   private D2Utils() {
