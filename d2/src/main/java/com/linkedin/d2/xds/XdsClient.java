@@ -339,7 +339,7 @@ public abstract class XdsClient
     private final boolean _globCollectionEnabled;
     private final Set<String> _updatedUrisName = new HashSet<>();
     private final Set<String> _removedUrisName = new HashSet<>();
-    private Map<String, Boolean> _isStaleModifiedTimes = new HashMap<>();
+    private final Map<String, Boolean> _isStaleModifiedTimes = new HashMap<>();
 
     D2URIMapUpdate(Map<String, XdsD2.D2URI> uriMap)
     {

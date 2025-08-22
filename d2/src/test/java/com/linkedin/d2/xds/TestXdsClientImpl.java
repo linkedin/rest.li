@@ -14,6 +14,7 @@ import com.linkedin.d2.xds.XdsClient.ResourceType;
 import com.linkedin.d2.xds.XdsClientImpl.DiscoveryResponseData;
 import com.linkedin.d2.xds.XdsClientImpl.ResourceSubscriber;
 import com.linkedin.d2.xds.XdsClientImpl.WildcardResourceSubscriber;
+import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.clock.Time;
 import indis.XdsD2;
@@ -1064,7 +1065,6 @@ public class TestXdsClientImpl
 
   private static final class PositiveLagLessThan extends ArgumentMatcher<Long>
   {
-    private static final long deviation = 50; // 50ms deviation to account for clock skew
     private final long _threshold;
 
     PositiveLagLessThan(long threshold)
@@ -1076,7 +1076,7 @@ public class TestXdsClientImpl
     @Override
     public boolean matches(Object arg)
     {
-      return arg != null && (Long) arg > (-1 * deviation) && (Long) arg < _threshold + deviation;
+      return arg != null && (Long) arg > 0 && (Long) arg < _threshold;
     }
   }
 
@@ -1107,6 +1107,8 @@ public class TestXdsClientImpl
     XdsClient.WildcardResourceWatcher _wildcardResourceWatcher;
     @Mock
     XdsServerMetricsProvider _serverMetricsProvider;
+    @Mock
+    Clock _clock;
 
     @Captor
     ArgumentCaptor<ResourceType> _resourceTypesArgumentCaptor;
@@ -1126,12 +1128,14 @@ public class TestXdsClientImpl
     XdsClientImplFixture(boolean useGlobCollections, boolean useIRV)
     {
       MockitoAnnotations.initMocks(this);
-      _nodeSubscriber = spy(new ResourceSubscriber(NODE, SERVICE_RESOURCE_NAME, _xdsClientJmx));
-      _clusterSubscriber = spy(new ResourceSubscriber(D2_URI_MAP, CLUSTER_RESOURCE_NAME, _xdsClientJmx));
-      _d2UriSubscriber = spy(new ResourceSubscriber(D2_URI, URI_URN1, _xdsClientJmx));
-      _nodeWildcardSubscriber = spy(new WildcardResourceSubscriber(NODE));
-      _uriMapWildcardSubscriber = spy(new WildcardResourceSubscriber(D2_URI_MAP));
-      _nameWildcardSubscriber = spy(new WildcardResourceSubscriber(D2_CLUSTER_OR_SERVICE_NAME));
+      // Make sure subscribedAt time is before current time, in other words the response handle time, in the tests
+      when(_clock.currentTimeMillis()).thenAnswer(invocation -> System.currentTimeMillis() - 200);
+      _nodeSubscriber = spy(new ResourceSubscriber(NODE, SERVICE_RESOURCE_NAME, _xdsClientJmx, _clock));
+      _clusterSubscriber = spy(new ResourceSubscriber(D2_URI_MAP, CLUSTER_RESOURCE_NAME, _xdsClientJmx, _clock));
+      _d2UriSubscriber = spy(new ResourceSubscriber(D2_URI, URI_URN1, _xdsClientJmx, _clock));
+      _nodeWildcardSubscriber = spy(new WildcardResourceSubscriber(NODE, _clock));
+      _uriMapWildcardSubscriber = spy(new WildcardResourceSubscriber(D2_URI_MAP, _clock));
+      _nameWildcardSubscriber = spy(new WildcardResourceSubscriber(D2_CLUSTER_OR_SERVICE_NAME, _clock));
 
       doNothing().when(_resourceWatcher).onChanged(any());
       doNothing().when(_wildcardResourceWatcher).onChanged(any(), any());

@@ -28,6 +28,7 @@ import com.linkedin.d2.jmx.XdsClientJmx;
 import com.linkedin.d2.jmx.XdsServerMetricsProvider;
 import com.linkedin.d2.xds.GlobCollectionUtils.D2UriIdentifier;
 import com.linkedin.util.RateLimitedLogger;
+import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.SystemClock;
 import indis.XdsD2;
 import io.envoyproxy.envoy.service.discovery.v3.AggregatedDiscoveryServiceGrpc;
@@ -844,7 +845,23 @@ public class XdsClientImpl extends XdsClient
     private final XdsClientJmx _xdsClientJmx;
     @Nullable
     private ResourceUpdate _data;
-    private long _subscribedAt = SystemClock.instance().currentTimeMillis();
+    private final Clock _clock;
+    private long _subscribedAt;
+
+    ResourceSubscriber(ResourceType type, String resource, XdsClientJmx xdsClientJmx)
+    {
+      this(type, resource, xdsClientJmx, SystemClock.instance());
+    }
+
+    @VisibleForTesting
+    ResourceSubscriber(ResourceType type, String resource, XdsClientJmx xdsClientJmx, Clock clock)
+    {
+      _type = type;
+      _resource = resource;
+      _xdsClientJmx = xdsClientJmx;
+      _clock = clock;
+      _subscribedAt = _clock.currentTimeMillis();
+    }
 
     @VisibleForTesting
     @Nullable
@@ -857,13 +874,6 @@ public class XdsClientImpl extends XdsClient
     public void setData(@Nullable ResourceUpdate data)
     {
       _data = data;
-    }
-
-    ResourceSubscriber(ResourceType type, String resource, XdsClientJmx xdsClientJmx)
-    {
-      _type = type;
-      _resource = resource;
-      _xdsClientJmx = xdsClientJmx;
     }
 
     void addWatcher(ResourceWatcher watcher)
@@ -968,7 +978,7 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    void resetSubscribedAt()
+    private void resetSubscribedAt()
     {
       _subscribedAt = SystemClock.instance().currentTimeMillis();
     }
@@ -985,8 +995,21 @@ public class XdsClientImpl extends XdsClient
     private final ResourceType _type;
     private final Set<WildcardResourceWatcher> _watchers = new HashSet<>();
     private final Map<String, ResourceUpdate> _data = new HashMap<>();
-    private long _subscribedAt = SystemClock.instance().currentTimeMillis();
+    private final Clock _clock;
+    private long _subscribedAt;
     private boolean _isFirstFetch = true;
+
+    WildcardResourceSubscriber(ResourceType type)
+    {
+      this(type, SystemClock.instance());
+    }
+
+    WildcardResourceSubscriber(ResourceType type, Clock clock)
+    {
+      _type = type;
+      _clock = clock;
+      _subscribedAt = _clock.currentTimeMillis();
+    }
 
     @VisibleForTesting
     public ResourceUpdate getData(String resourceName)
@@ -998,11 +1021,6 @@ public class XdsClientImpl extends XdsClient
     public void setData(String resourceName, ResourceUpdate data)
     {
       _data.put(resourceName, data);
-    }
-
-    WildcardResourceSubscriber(ResourceType type)
-    {
-      _type = type;
     }
 
     void addWatcher(WildcardResourceWatcher watcher)
@@ -1108,7 +1126,7 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    void resetSubscribedAt()
+    private void resetSubscribedAt()
     {
       _subscribedAt = SystemClock.instance().currentTimeMillis();
     }
