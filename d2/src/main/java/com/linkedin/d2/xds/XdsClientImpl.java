@@ -980,7 +980,7 @@ public class XdsClientImpl extends XdsClient
 
     private void resetSubscribedAt()
     {
-      _subscribedAt = SystemClock.instance().currentTimeMillis();
+      _subscribedAt = _clock.currentTimeMillis();
     }
 
     @VisibleForTesting
@@ -1128,7 +1128,7 @@ public class XdsClientImpl extends XdsClient
 
     private void resetSubscribedAt()
     {
-      _subscribedAt = SystemClock.instance().currentTimeMillis();
+      _subscribedAt = _clock.currentTimeMillis();
     }
 
     @VisibleForTesting

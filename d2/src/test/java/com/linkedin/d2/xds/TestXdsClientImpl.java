@@ -1129,7 +1129,7 @@ public class TestXdsClientImpl
     {
       MockitoAnnotations.initMocks(this);
       // Make sure subscribedAt time is before current time, in other words the response handle time, in the tests
-      when(_clock.currentTimeMillis()).thenAnswer(invocation -> System.currentTimeMillis() - 200);
+      when(_clock.currentTimeMillis()).thenAnswer(invocation -> System.currentTimeMillis() - 20);
       _nodeSubscriber = spy(new ResourceSubscriber(NODE, SERVICE_RESOURCE_NAME, _xdsClientJmx, _clock));
       _clusterSubscriber = spy(new ResourceSubscriber(D2_URI_MAP, CLUSTER_RESOURCE_NAME, _xdsClientJmx, _clock));
       _d2UriSubscriber = spy(new ResourceSubscriber(D2_URI, URI_URN1, _xdsClientJmx, _clock));
