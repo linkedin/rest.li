@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Remove method defaults from `ResourceDefinition`.
 
 ## [29.74.2] - 2025-08-22
 - Catch all exceptions in setting tracking node for raw d2 client. Fix get app identity name for short usr.dir path.
