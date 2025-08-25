@@ -17,6 +17,8 @@
 package com.linkedin.data.avro;
 
 import com.google.common.collect.ImmutableMap;
+import com.linkedin.avroutil1.compatibility.AvroCompatibilityHelper;
+import com.linkedin.data.Data;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
@@ -28,6 +30,7 @@ import com.linkedin.data.avro.testevents.MapOfMapOfArrayOfMapArrayUnion;
 import com.linkedin.data.avro.testevents.RecordArray;
 import com.linkedin.data.avro.testevents.RecordMap;
 import com.linkedin.data.avro.testevents.StringRecord;
+import com.linkedin.data.avro.testevents.TestArray;
 import com.linkedin.data.avro.testevents.TestEventRecordOfRecord;
 import com.linkedin.data.avro.testevents.TestEventWithUnionAndEnum;
 import com.linkedin.data.avro.util.AvroUtil;
@@ -37,6 +40,7 @@ import com.linkedin.data.schema.validation.RequiredMode;
 import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
 import com.linkedin.data.schema.validation.ValidationOptions;
 import com.linkedin.data.schema.validation.ValidationResult;
+import com.linkedin.data.template.RecordTemplate;
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -1165,7 +1169,9 @@ public class TestDataTranslator
         String expectedBeforeNamespaceProcessor  = row[col][i];
         String expected = TestAvroUtil.namespaceProcessor(expectedBeforeNamespaceProcessor);
         if (debug && expected != expectedBeforeNamespaceProcessor) out.println(" Expected:" + expected);
-
+        if (!result.contains(expected)) {
+          System.out.println("RESULT: "+result+"\n"+"EXPECTED: "+expected);
+        }
         assertTrue(result.contains(expected));
       }
 
@@ -2290,6 +2296,38 @@ public class TestDataTranslator
 
     Assert.assertTrue(mapOfMapOfArrayOfMapArrayUnion.get(0) instanceof Map);
     Assert.assertEquals(((Map<?, ?>) mapOfMapOfArrayOfMapArrayUnion.get(0)).get("recordMap"), mapOfArrayOfMapArrayUnion);
+  }
+
+  @Test
+  public void testEmoji() throws IOException {
+    String schemaText = "{\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"fields\" : [\n" +
+        "    { \"name\" : \"a\", \"type\" : { \"type\" : \"record\", \"name\" : \"FooFoo\", \"fields\" : [ { \"name\" : \"b\", \"type\" : \"string\" } ] }, \"optional\": true }\n" +
+        "  ]\n" +
+        "}\n";
+
+    RecordDataSchema recordDataSchema = (RecordDataSchema) TestUtil.dataSchemaFromString(schemaText);
+    String avroSchemaText = "{\n" +
+        "  \"type\" : \"record\",\n" +
+        "  \"name\" : \"Foo\",\n" +
+        "  \"fields\" : [\n" +
+        "    { \"name\" : \"a\", \"type\" : [ \"null\", { \"type\" : \"record\", \"name\" : \"FooFoo\", \"fields\" : [ { \"name\" : \"b\", \"type\" : \"string\" } ] } ] }\n" +
+        "  ]\n" +
+        "}\n";
+
+    Schema avroSchema = Schema.parse(avroSchemaText);
+
+    GenericRecord avroRecord = AvroUtil.genericRecordFromJson(TestAvroUtil.namespaceProcessor("{ \"a\" : { \"FooFoo\": { \"b\" : \"❤\" } } }"), avroSchema);
+    System.out.println("Original avro record = "+avroRecord);
+    DataMap pegasusDataMap = DataTranslator.genericRecordToDataMap(avroRecord, recordDataSchema, avroSchema);
+    System.out.println("Avro record to data map = "+pegasusDataMap);
+    DataMap innerMap = new DataMap();
+    innerMap.put("b", "❤");
+    DataMap expectedMap = new DataMap();
+    expectedMap.put("a", innerMap);
+    assertEquals(pegasusDataMap, expectedMap);
   }
 }
 
