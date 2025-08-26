@@ -2,6 +2,8 @@ namespace com.linkedin.d2
 
 /**
  * Options for configuring the outlier detection. Only used by gRPC clients.
+ * These are ported from the Envoy proto, please refer to the Envoy proto for more details:
+ * https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/outlier_detection.proto
  */
 record OutlierDetectionConfig {
   /** 
@@ -44,7 +46,7 @@ record OutlierDetectionConfig {
   /** The number of hosts in a cluster that must have enough request volume to
    * detect success rate outliers. If the number of hosts is less than this
    * setting, outlier detection via success rate statistics is not performed
-   * for any host in the cluster. Defaults to 5.
+   * for any host in the cluster. The default has been changed from 5 in Envoy to 3 in LinkedIn.
    */
   success_rate_minimum_hosts: int
 
@@ -52,7 +54,7 @@ record OutlierDetectionConfig {
    * interval (as defined by the interval duration above) to include this host
    * in success rate based outlier detection. If the volume is lower than this
    * setting, outlier detection via success rate statistics is not performed
-   * for that host. Defaults to 100.
+   * for that host. The default has been changed from 100 in Envoy to 10 in LinkedIn.
    */
   success_rate_request_volume: int
 
@@ -114,13 +116,13 @@ record OutlierDetectionConfig {
 
   /** The failure percentage to use when determining failure percentage-based outlier detection. If
    * the failure percentage of a given host is greater than or equal to this value, it will be
-   * ejected. Defaults to 85.
+   * ejected. The default has been changed from 85 in Envoy to 20 in LinkedIn.
    */
   failure_percentage_threshold: int
 
   /** The % chance that a host will be actually ejected when an outlier status is detected through
    * failure percentage statistics. This setting can be used to disable ejection or to ramp it up
-   * slowly. Defaults to 0.
+   * slowly. The default has been changed from 0 in Envoy to 100 in LinkedIn.
    *
    * [#next-major-version: setting this without setting failure_percentage_threshold should be
    * invalid in v4.]
@@ -135,14 +137,14 @@ record OutlierDetectionConfig {
 
   /** The minimum number of hosts in a cluster in order to perform failure percentage-based ejection.
    * If the total number of hosts in the cluster is less than this value, failure percentage-based
-   * ejection will not be performed. Defaults to 5.
+   * ejection will not be performed. The default has been changed from 5 in Envoy to 3 in LinkedIn.
    */
   failure_percentage_minimum_hosts: int
 
   /** The minimum number of total requests that must be collected in one interval (as defined by the
    * interval duration above) to perform failure percentage-based ejection for this host. If the
    * volume is lower than this setting, failure percentage-based ejection will not be performed for
-   * this host. Defaults to 50.
+   * this host. The default has been changed from 50 in Envoy to 10 in LinkedIn.
    */
   failure_percentage_request_volume: int
 
