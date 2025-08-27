@@ -10,6 +10,8 @@ record OutlierDetectionConfig {
    * The number of consecutive server-side error responses (for HTTP traffic,
    * 5xx responses; for TCP traffic, connection failures; for Redis, failure to
    * respond PONG; etc.) before a consecutive 5xx ejection occurs. Defaults to 5.
+   * For gRPC requests, Envoy translates the gRPC status into an HTTP status, as shown below:
+   * https://github.com/envoyproxy/envoy/blob/main/source/common/grpc/status.cc#L28
    */
   consecutive_5xx: int
 
