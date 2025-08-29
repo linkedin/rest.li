@@ -49,4 +49,9 @@ record D2Cluster includes D2ChangeTimeStamps {
    * Options for configuring the connection pool. Only used by gRPC clients.
    */
   connectionOptions: optional ConnectionOptions
+
+  /**
+  * Options for configuring the outlier detection. Only used by gRPC clients.
+  */
+  outlierDetection: optional OutlierDetectionConfig
 }
