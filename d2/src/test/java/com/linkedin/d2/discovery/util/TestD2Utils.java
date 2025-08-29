@@ -49,7 +49,6 @@ public class TestD2Utils {
   public void testGetAppIdentityName(String sparkAppNameInSys, String appNameInSys, String samzaContainerNameInSys,
       String usrDirInSys, String sparkAppNameInEnv, String appNameInEnv, String samzaContainerNameInEnv,
       String usrDirInEnv, String expectedAppIdentityName)
-
   {
     Properties props = mock(Properties.class);
     when(props.getProperty(D2Utils.SPARK_APP_NAME)).thenReturn(sparkAppNameInSys);
