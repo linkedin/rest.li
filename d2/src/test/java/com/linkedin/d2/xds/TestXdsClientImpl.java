@@ -229,6 +229,8 @@ public class TestXdsClientImpl
       new DiscoveryResponseData(NODE, Collections.emptyList(), Collections.singletonList(SERVICE_RESOURCE_NAME), NONCE, null);
   private static final DiscoveryResponseData DISCOVERY_RESPONSE_URI_MAP_DATA_WITH_REMOVAL =
       new DiscoveryResponseData(D2_URI_MAP, Collections.emptyList(), Collections.singletonList(CLUSTER_RESOURCE_NAME), NONCE, null);
+  private static final DiscoveryResponseData DISCOVERY_RESPONSE_URI1_DATA_WITH_REMOVAL =
+      new DiscoveryResponseData(D2_URI, Collections.emptyList(), Collections.singletonList(URI_URN1), NONCE, null);
 
   private static final String CLUSTER_GLOB_COLLECTION = "xdstp:///indis.D2URI/" + CLUSTER_NAME + "/*";
 
@@ -947,8 +949,7 @@ public class TestXdsClientImpl
     }
 
     // set subscribedAt to 10min ago
-    fixture._nodeSubscriber.setSubscribedAt(SystemClock.instance().currentTimeMillis() - TEN_MINS);
-    fixture._nodeWildcardSubscriber.setSubscribedAt(SystemClock.instance().currentTimeMillis() - TEN_MINS);
+    fixture.setAllSubscribersSubscribedAt(System.currentTimeMillis() - TEN_MINS);
     // set resource modified time to 200ms ago, verify the latency is calculated with modified time
     XdsD2.Node nodeChangedAfter = createNodeWithData(DATA,
         SystemClock.instance().currentTimeMillis() - Time.milliseconds(200));
@@ -998,8 +999,7 @@ public class TestXdsClientImpl
     }
 
     // set subscribedAt to 10min ago
-    fixture._clusterSubscriber.setSubscribedAt(SystemClock.instance().currentTimeMillis() - TEN_MINS);
-    fixture._uriMapWildcardSubscriber.setSubscribedAt(SystemClock.instance().currentTimeMillis() - TEN_MINS);
+    fixture.setAllSubscribersSubscribedAt(System.currentTimeMillis() - TEN_MINS);
     // set resource modified time to 200ms ago, verify the latency is calculated with modified time
     XdsD2.D2URI uriChangedAfter = createD2URIWithData(URI2, CLUSTER_NAME, VERSION2, Collections.singletonMap(0, 2.0),
         SystemClock.instance().currentTimeMillis() - Time.milliseconds(200));
@@ -1023,6 +1023,57 @@ public class TestXdsClientImpl
     {
       verifyPositiveLagLessThanOneSec(10, metrics);
     }
+  }
+
+  private enum ResponseAction
+  {
+    UPDATE,
+    REMOVAL
+  }
+  @DataProvider(name = "provideResponseAction")
+  public Object[][] provideResponseAction()
+  {
+    // Params:
+    //    responseAction --- whether the response is a data update or a removal
+    return new Object[][]
+        {
+            {ResponseAction.UPDATE},
+            {ResponseAction.REMOVAL}
+        };
+  }
+  @Test(dataProvider = "provideResponseAction")
+  private void testGetActiveInitialWaitTimeMillis(ResponseAction responseAction)
+  {
+    XdsClientImplFixture fixture = new XdsClientImplFixture();
+    fixture.watchAllResourceAndWatcherTypes();
+    fixture.setAllSubscribersSubscribedAt(System.currentTimeMillis() - TEN_MINS);
+
+    // active initial wait time contributed from 6 subscribers for:
+    // individual node, uri, uri map, and wildcard node, uri map, and d2 cluster/service name
+    long activeWaitTime = fixture._xdsClientImpl.getActiveInitialWaitTimeMillis();
+    Assert.assertTrue(activeWaitTime >= Time.minutes(60) && activeWaitTime < Time.minutes(70));
+
+    if (responseAction == ResponseAction.UPDATE)
+    {
+      fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA1);
+      fixture._xdsClientImpl.handleResponse(RESPONSE_D2URI1);
+      fixture._xdsClientImpl.handleResponse(RESPONSE_WITH_SERVICE_NAMES);
+    }
+    else if (responseAction == ResponseAction.REMOVAL)
+    {
+      fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA_WITH_REMOVAL);
+      fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI1_DATA_WITH_REMOVAL);
+      fixture._xdsClientImpl.handleResponse(RESPONSE_WITH_NAME_REMOVAL);
+    }
+    // All individual resource subscribers have received first response, so they won't contribute to active initial
+    // wait time anymore.
+    // End the first fetch for node and name subscriber, so it won't contribute to active initial wait time anymore.
+    fixture._nodeWildcardSubscriber.onAllResourcesProcessed();
+    fixture._nameWildcardSubscriber.onAllResourcesProcessed();
+
+    activeWaitTime = fixture._xdsClientImpl.getActiveInitialWaitTimeMillis();
+    // only wildcard uri map subscriber is still contributing to active initial wait time
+    Assert.assertTrue(activeWaitTime >= Time.minutes(10) && activeWaitTime < Time.minutes(20));
   }
 
   private static XdsD2.Node createNodeWithData(byte[] data, long mtimeMillis)
@@ -1200,6 +1251,19 @@ public class TestXdsClientImpl
           _uriMapWildcardSubscriber, _nameWildcardSubscriber))
       {
         subscriber.addWatcher(_wildcardResourceWatcher);
+      }
+    }
+
+    void setAllSubscribersSubscribedAt(long timeMillis)
+    {
+      for (ResourceSubscriber subscriber : Lists.newArrayList(_nodeSubscriber, _clusterSubscriber, _d2UriSubscriber))
+      {
+        subscriber.setSubscribedAt(timeMillis);
+      }
+      for (WildcardResourceSubscriber subscriber : Lists.newArrayList(_nodeWildcardSubscriber,
+          _uriMapWildcardSubscriber, _nameWildcardSubscriber))
+      {
+        subscriber.setSubscribedAt(timeMillis);
       }
     }
 

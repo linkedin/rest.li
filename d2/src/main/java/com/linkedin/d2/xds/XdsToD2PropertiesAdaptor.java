@@ -56,7 +56,7 @@ public class XdsToD2PropertiesAdaptor
   private static final String D2_SERVICE_NODE_PREFIX = "/d2/services/";
   private static final String D2_URI_NODE_PREFIX = "/d2/uris/";
   private static final char PATH_SEPARATOR = '/';
-  private static final String NON_EXISTENT_CLUSTER = "NonExistentCluster";
+  public static final String NON_EXISTENT_CLUSTER = "NonExistentCluster";
 
   private final XdsClient _xdsClient;
   private final List<XdsConnectionListener> _xdsConnectionListeners = Collections.synchronizedList(new ArrayList<>());
@@ -114,7 +114,7 @@ public class XdsToD2PropertiesAdaptor
 
   public void start()
   {
-    _xdsClient.startRpcStream();
+    _xdsClient.start();
     // Watch any resource to get notified of xds connection updates, including initial connection establishment.
     // TODO: Note, this is a workaround since the xDS client implementation currently integrates connection
     //   error/success notifications along with the resource updates. This can be improved in a future refactor.

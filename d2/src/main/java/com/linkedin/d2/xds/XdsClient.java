@@ -568,6 +568,8 @@ public abstract class XdsClient
     }
   }
 
+  public abstract void start();
+
   /**
    * Subscribes the given {@link ResourceWatcher} to the resource of the given name. The watcher will be notified when
    * the resource is received from the backend. Repeated calls to this function with the same resource name and watcher

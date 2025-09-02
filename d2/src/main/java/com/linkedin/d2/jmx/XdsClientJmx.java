@@ -16,9 +16,11 @@
 
 package com.linkedin.d2.jmx;
 
+import com.linkedin.d2.xds.XdsClientImpl;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.Nullable;
 
 
 public class XdsClientJmx implements XdsClientJmxMBean
@@ -35,6 +37,7 @@ public class XdsClientJmx implements XdsClientJmxMBean
   private final AtomicInteger _resourceNotFoundCount = new AtomicInteger();
   private final AtomicInteger _resourceInvalidCount = new AtomicInteger();
   private final XdsServerMetricsProvider _xdsServerMetricsProvider;
+  @Nullable private XdsClientImpl _xdsClient = null;
 
   @Deprecated
   public XdsClientJmx()
@@ -46,6 +49,11 @@ public class XdsClientJmx implements XdsClientJmxMBean
   {
     _xdsServerMetricsProvider = xdsServerMetricsProvider == null ?
         new NoOpXdsServerMetricsProvider() : xdsServerMetricsProvider;
+  }
+
+  public void setXdsClient(XdsClientImpl xdsClient)
+  {
+    _xdsClient = xdsClient;
   }
 
   @Override
@@ -133,6 +141,16 @@ public class XdsClientJmx implements XdsClientJmxMBean
   public int isDisconnected()
   {
     return _isConnected.get() ? 0 : 1;
+  }
+
+  @Override
+  public long getActiveInitialWaitTimeMillis()
+  {
+    if (_xdsClient != null)
+    {
+      return _xdsClient.getActiveInitialWaitTimeMillis();
+    }
+    return -1;
   }
 
   public void incrementConnectionLostCount()

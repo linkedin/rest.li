@@ -55,6 +55,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -64,6 +65,8 @@ import javax.annotation.Nullable;
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.linkedin.d2.xds.XdsToD2PropertiesAdaptor.*;
 
 
 /**
@@ -202,6 +205,13 @@ public class XdsClientImpl extends XdsClient
   }
 
   @Override
+  public void start()
+  {
+    _xdsClientJmx.setXdsClient(this);
+    startRpcStream();
+  }
+
+  @Override
   public void watchXdsResource(String resourceName, ResourceWatcher watcher)
   {
     checkShutdownAndExecute(() ->
@@ -292,6 +302,19 @@ public class XdsClientImpl extends XdsClient
   public XdsClientJmx getXdsClientJmx()
   {
     return _xdsClientJmx;
+  }
+
+  public long getActiveInitialWaitTimeMillis()
+  {
+    AtomicLong res = new AtomicLong(0);
+    long now = System.currentTimeMillis();
+    getResourceSubscribers().values().forEach(
+        map -> map.values().forEach(subscriber -> res.addAndGet(subscriber.getActiveInitialWaitTimeMillis(now)))
+    );
+    getWildcardResourceSubscribers().values().forEach(
+        subscriber -> res.addAndGet(subscriber.getActiveInitialWaitTimeMillis(now))
+    );
+    return res.get();
   }
 
   // Start RPC stream. Must be called from the executor, and only if we're not backed off.
@@ -847,6 +870,7 @@ public class XdsClientImpl extends XdsClient
     private ResourceUpdate _data;
     private final Clock _clock;
     private long _subscribedAt;
+    private boolean _isFirstFetch = true;
 
     ResourceSubscriber(ResourceType type, String resource, XdsClientJmx xdsClientJmx)
     {
@@ -894,11 +918,17 @@ public class XdsClientImpl extends XdsClient
         _log.debug("Received resource update data equal to the current data. Will not perform the update.");
         return;
       }
+
+      boolean curIsFirstFetch = _isFirstFetch;
+      if (_isFirstFetch)
+      {
+        _isFirstFetch = false;
+      }
+
       // null value guard to avoid overwriting the property with null
       if (data != null && data.isValid())
       {
-        trackServerLatency(data, _data, metricsProvider, _subscribedAt, isIrvEnabled,
-            _data == null || !_data.isValid()); // data updated, track xds server latency
+        trackServerLatency(data, _data, metricsProvider, _subscribedAt, isIrvEnabled, curIsFirstFetch); // data updated, track xds server latency
         _data = data;
       }
       else
@@ -967,6 +997,11 @@ public class XdsClientImpl extends XdsClient
     @VisibleForTesting
     void onRemoval()
     {
+      if (_isFirstFetch)
+      {
+        _isFirstFetch = false;
+      }
+
       if (_data == null)
       {
         _log.info("Initializing {} {} to empty data.", _type, _resource);
@@ -987,6 +1022,15 @@ public class XdsClientImpl extends XdsClient
     void setSubscribedAt(long subscribedAt)
     {
       _subscribedAt = subscribedAt;
+    }
+
+    long getActiveInitialWaitTimeMillis(long end)
+    {
+      if (!_isFirstFetch)
+      {
+        return 0;
+      }
+      return end - _subscribedAt;
     }
   }
 
@@ -1135,6 +1179,15 @@ public class XdsClientImpl extends XdsClient
     void setSubscribedAt(long subscribedAt)
     {
       _subscribedAt = subscribedAt;
+    }
+
+    long getActiveInitialWaitTimeMillis(long end)
+    {
+      if (!_isFirstFetch)
+      {
+        return 0;
+      }
+      return end - _subscribedAt;
     }
   }
 
