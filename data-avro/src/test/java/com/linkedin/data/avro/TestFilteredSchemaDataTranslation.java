@@ -17,6 +17,8 @@
 package com.linkedin.data.avro;
 
 
+import com.linkedin.avroutil1.compatibility.ConfigurableSchemaComparator;
+import com.linkedin.avroutil1.compatibility.SchemaComparisonConfiguration;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
 import com.linkedin.data.avro.util.AvroUtil;
@@ -30,8 +32,10 @@ import com.linkedin.data.schema.util.Filters;
 
 import java.io.IOException;
 
+import java.util.Collections;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
@@ -88,7 +92,13 @@ public class TestFilteredSchemaDataTranslation
       Schema filteredAvroSchema = SchemaTranslator.dataToAvroSchema(filteredSchema);
 
       Schema expectedAvroSchema = Schema.parse(avroSchemaText);
-      assertEquals(filteredAvroSchema, expectedAvroSchema);
+
+      Assert.assertNotNull(filteredAvroSchema.getProp(SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION));
+      Assert.assertFalse(filteredAvroSchema.getProp(SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION).isEmpty());
+
+      Assert.assertTrue(ConfigurableSchemaComparator.equals(filteredAvroSchema, expectedAvroSchema,
+          SchemaComparisonConfiguration.STRICT.jsonPropNamesToIgnore(
+              Collections.singleton(SchemaTranslator.TRANSLATED_FROM_SOURCE_OPTION))));
 
       while (i < row.length)
       {
@@ -127,6 +137,7 @@ public class TestFilteredSchemaDataTranslation
         "{ " +
         "  \"type\" : \"record\", " +
         "  \"name\" : \"Foo\", " +
+        "  \"translated.from\" : \"Foo\", " +
         "  \"fields\" : [ " +
         "    { \"name\" : \"a\", \"type\" : \"int\" }, " +
         "    { \"name\" : \"b\", \"type\" : \"int\", \"optional\" : true } " +

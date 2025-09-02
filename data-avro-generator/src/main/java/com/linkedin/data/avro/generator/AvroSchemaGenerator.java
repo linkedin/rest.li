@@ -44,10 +44,17 @@ import java.util.Map;
 import java.util.Set;
 
 import java.util.stream.Collectors;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.skyscreamer.jsonassert.Customization;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
+import org.skyscreamer.jsonassert.JSONParser;
+import org.skyscreamer.jsonassert.comparator.CustomComparator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.linkedin.data.avro.SchemaTranslator.AVRO_PREFIX;
+import static com.linkedin.data.avro.SchemaTranslator.*;
 
 
 /**
@@ -162,7 +169,11 @@ public class AvroSchemaGenerator extends AbstractGenerator
     {
       targetDirectoryPath += "/" + AVRO_PREFIX;
     }
-    generator.generate(targetDirectoryPath, sources);
+    try {
+      generator.generate(targetDirectoryPath, sources);
+    } catch (JSONException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**
@@ -180,8 +191,7 @@ public class AvroSchemaGenerator extends AbstractGenerator
    * @param targetDirectoryPath path to target root java source directory
    * @throws IOException if there are problems opening or deleting files.
    */
-  private void generate(String targetDirectoryPath, String[] sources) throws IOException
-  {
+  private void generate(String targetDirectoryPath, String[] sources) throws IOException, JSONException {
     initSchemaResolver();
 
     _fileToAvroSchemaMap.clear();
@@ -242,8 +252,7 @@ public class AvroSchemaGenerator extends AbstractGenerator
     }
   }
 
-  protected List<File> targetFiles(File targetDirectory)
-  {
+  protected List<File> targetFiles(File targetDirectory) throws JSONException {
     ArrayList<File> generatedFiles = new ArrayList<>();
 
     DataSchemaResolver resolver = getSchemaResolver();
@@ -267,7 +276,14 @@ public class AvroSchemaGenerator extends AbstractGenerator
           String avroSchemaText = SchemaTranslator.dataToAvroSchemaJson(recordDataSchema, _options);
           _fileToAvroSchemaMap.put(generatedFile, avroSchemaText);
           String postTranslateSchemaText = recordDataSchema.toString();
-          assert(preTranslateSchemaText.equals(postTranslateSchemaText));
+
+          // JSON compare except TRANSLATED_FROM_SOURCE_OPTION in root
+          JSONAssert.assertEquals(preTranslateSchemaText, postTranslateSchemaText,
+              new CustomComparator(JSONCompareMode.LENIENT,
+                  new Customization(TRANSLATED_FROM_SOURCE_OPTION, (o1, o2) -> true)));
+
+          assert (((JSONObject) JSONParser.parseJSON(postTranslateSchemaText)).get(TRANSLATED_FROM_SOURCE_OPTION)
+              != null);
         }
       }
     }
