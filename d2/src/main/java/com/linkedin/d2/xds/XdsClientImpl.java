@@ -278,7 +278,7 @@ public class XdsClientImpl extends XdsClient
   }
 
   @Override
-  public void startRpcStream()
+  void startRpcStream()
   {
     checkShutdownAndExecute(() ->
     {

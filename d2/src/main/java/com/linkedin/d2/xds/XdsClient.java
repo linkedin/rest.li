@@ -19,7 +19,6 @@ package com.linkedin.d2.xds;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.linkedin.d2.jmx.XdsClientJmx;
-import com.linkedin.util.clock.SystemClock;
 import indis.XdsD2;
 import io.grpc.Status;
 import java.util.Arrays;
@@ -586,9 +585,10 @@ public abstract class XdsClient
   public abstract void watchAllXdsResources(WildcardResourceWatcher watcher);
 
   /**
+   * NOTE: Should NOT be called directly; instead, call {@link #start()}.
    * Initiates the RPC stream to the xDS server.
    */
-  public abstract void startRpcStream();
+  abstract void startRpcStream();
 
   /**
    * Shuts down the xDS client.
