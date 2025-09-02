@@ -2335,6 +2335,12 @@ public class TestDataTranslator
     assertEquals(toDataMap.get("field1"), "value1");
     assertEquals(((DataMap)toDataMap.get("field2")).get("field1"), "value1.1");
     assertEquals(((DataMap)toDataMap.get("field2")).get("field2"), "value1.2");
+
+    // now go the other way
+    GenericRecord fromDataMap = DataTranslator.dataMapToGenericRecord(toDataMap, pegasusSchema, avroSchema);
+    assertEquals(fromDataMap.get("field1").toString(), "value1");
+    assertEquals(((GenericRecord)fromDataMap.get("field2")).get("field1").toString(), "value1.1");
+    assertEquals(((GenericRecord)fromDataMap.get("field2")).get("field2").toString(), "value1.2");
   }
 }
 
