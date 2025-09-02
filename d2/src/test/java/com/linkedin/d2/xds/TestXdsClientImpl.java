@@ -15,7 +15,6 @@ import com.linkedin.d2.xds.XdsClientImpl.DiscoveryResponseData;
 import com.linkedin.d2.xds.XdsClientImpl.ResourceSubscriber;
 import com.linkedin.d2.xds.XdsClientImpl.WildcardResourceSubscriber;
 import com.linkedin.util.clock.Clock;
-import com.linkedin.util.clock.SystemClock;
 import com.linkedin.util.clock.Time;
 import indis.XdsD2;
 import io.envoyproxy.envoy.service.discovery.v3.Resource;
@@ -70,9 +69,9 @@ public class TestXdsClientImpl
 
   private static final long TEN_MINS = Time.minutes(10);
   private static final XdsD2.Node NODE_WITH_DATA = createNodeWithData(DATA,
-      SystemClock.instance().currentTimeMillis() - TEN_MINS);
+      System.currentTimeMillis() - TEN_MINS);
   private static final XdsD2.Node NODE_WITH_DATA2 = createNodeWithData(DATA2,
-      SystemClock.instance().currentTimeMillis() - TEN_MINS);
+      System.currentTimeMillis() - TEN_MINS);
   private static final XdsD2.Node NODE_WITH_EMPTY_DATA = XdsD2.Node.newBuilder().build();
   private static final Any PACKED_NODE_WITH_DATA = Any.pack(NODE_WITH_DATA);
   private static final Any PACKED_NODE_WITH_DATA2 = Any.pack(NODE_WITH_DATA2);
@@ -115,12 +114,12 @@ public class TestXdsClientImpl
   );
 
   private static final XdsD2.D2URI D2URI_1 = createD2URIWithData(URI1, CLUSTER_NAME, VERSION1, null,
-      SystemClock.instance().currentTimeMillis() - TEN_MINS);
+      System.currentTimeMillis() - TEN_MINS);
   private static final XdsD2.D2URI D2URI_1_1 = createD2URIWithData(URI1, CLUSTER_NAME, VERSION2,
           Collections.singletonMap(0, 2.0),
-      SystemClock.instance().currentTimeMillis() - TEN_MINS);
+      System.currentTimeMillis() - TEN_MINS);
   private static final XdsD2.D2URI D2URI_2 = createD2URIWithData(URI2, CLUSTER_NAME, VERSION1, null,
-      SystemClock.instance().currentTimeMillis() - TEN_MINS);
+      System.currentTimeMillis() - TEN_MINS);
   private static final XdsD2.D2URIMap D2_URI_MAP_WITH_EMPTY_DATA = XdsD2.D2URIMap.newBuilder().build();
   private static final XdsD2.D2URIMap D2_URI_MAP_WITH_DATA1 = XdsD2.D2URIMap.newBuilder()
       .putUris(URI1, D2URI_1).build();
@@ -952,7 +951,7 @@ public class TestXdsClientImpl
     fixture.setAllSubscribersSubscribedAt(System.currentTimeMillis() - TEN_MINS);
     // set resource modified time to 200ms ago, verify the latency is calculated with modified time
     XdsD2.Node nodeChangedAfter = createNodeWithData(DATA,
-        SystemClock.instance().currentTimeMillis() - Time.milliseconds(200));
+        System.currentTimeMillis() - Time.milliseconds(200));
     List<Resource> resources = Collections.singletonList(
         Resource.newBuilder().setVersion("3").setName(SERVICE_RESOURCE_NAME).setResource(Any.pack(nodeChangedAfter))
             .build());
