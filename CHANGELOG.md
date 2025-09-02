@@ -14,7 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.74.3-rc.1] - 2025-09-02
+## [29.74.4-rc.1] - 2025-09-02
 - DataTranslator: fall back to matching simple 
 
 ## [29.74.3] - 2025-08-26
