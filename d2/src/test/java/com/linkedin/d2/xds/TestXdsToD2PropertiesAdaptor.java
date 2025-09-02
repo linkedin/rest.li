@@ -19,8 +19,8 @@ package com.linkedin.d2.xds;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Struct;
-import com.google.protobuf.Timestamp;
 import com.google.protobuf.Value;
+import com.google.protobuf.util.Timestamps;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.ClusterStoreProperties;
@@ -395,10 +395,7 @@ public class TestXdsToD2PropertiesAdaptor {
         .putPartitionDesc(0, 42)
         .putPartitionDesc(1, 27)
         .setTracingId(TRACING_ID)
-        .setModifiedTime(Timestamp.newBuilder()
-            .setSeconds(modifiedAt/1000)
-            .setNanos((int) ((modifiedAt % 1000) * 1_000_000))
-            .build())
+        .setModifiedTime(Timestamps.fromMillis(modifiedAt))
         .build();
   }
 

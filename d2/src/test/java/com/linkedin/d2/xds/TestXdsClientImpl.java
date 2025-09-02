@@ -6,7 +6,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.Timestamp;
+import com.google.protobuf.util.Timestamps;
 import com.linkedin.d2.jmx.XdsClientJmx;
 import com.linkedin.d2.jmx.XdsServerMetricsProvider;
 import com.linkedin.d2.xds.XdsClient.D2URIMapUpdate;
@@ -1002,7 +1002,7 @@ public class TestXdsClientImpl
     fixture.setAllSubscribersSubscribedAt(System.currentTimeMillis() - TEN_MINS);
     // set resource modified time to 200ms ago, verify the latency is calculated with modified time
     XdsD2.D2URI uriChangedAfter = createD2URIWithData(URI2, CLUSTER_NAME, VERSION2, Collections.singletonMap(0, 2.0),
-        SystemClock.instance().currentTimeMillis() - Time.milliseconds(200));
+        System.currentTimeMillis() - Time.milliseconds(200));
     List<Resource> resources = Collections.singletonList(
         Resource.newBuilder().setVersion(VERSION2).setName(URI_URN2).setResource(Any.pack(uriChangedAfter)).build());
     fixture._xdsClientImpl.handleResponse(new DiscoveryResponseData(D2_URI, resources, null, NONCE, null));
@@ -1074,6 +1074,16 @@ public class TestXdsClientImpl
     activeWaitTime = fixture._xdsClientImpl.getActiveInitialWaitTimeMillis();
     // only wildcard uri map subscriber is still contributing to active initial wait time
     Assert.assertTrue(activeWaitTime >= Time.minutes(10) && activeWaitTime < Time.minutes(20));
+
+    // when onReconnect is called on a subscriber, it will reset the flag for first fetch after reconnect, and will
+    // contribute to active initial wait time again.
+    fixture._d2UriSubscriber.onReconnect();
+    fixture._nodeWildcardSubscriber.onReconnect();
+    fixture.setAllSubscribersSubscribedAt(System.currentTimeMillis() - TEN_MINS);
+
+    // 3 subscribers are contributing to active initial wait time now
+    activeWaitTime = fixture._xdsClientImpl.getActiveInitialWaitTimeMillis();
+    Assert.assertTrue(activeWaitTime >= Time.minutes(30) && activeWaitTime < Time.minutes(40));
   }
 
   private static XdsD2.Node createNodeWithData(byte[] data, long mtimeMillis)
@@ -1091,10 +1101,7 @@ public class TestXdsClientImpl
         .setVersion(Long.parseLong(version))
         .setClusterName(clusterName)
         .setUri(uri)
-        .setModifiedTime(Timestamp.newBuilder()
-            .setSeconds(modifiedTimeMillis / 1000)
-            .setNanos((int) (modifiedTimeMillis % 1000 * 1_000_000))
-            .build());
+        .setModifiedTime(Timestamps.fromMillis(modifiedTimeMillis));
     if (partitionDesc != null)
     {
       builder.putAllPartitionDesc(partitionDesc);

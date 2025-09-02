@@ -66,8 +66,6 @@ import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.linkedin.d2.xds.XdsToD2PropertiesAdaptor.*;
-
 
 /**
  * Implementation of {@link XdsClient} interface.
@@ -870,7 +868,8 @@ public class XdsClientImpl extends XdsClient
     private ResourceUpdate _data;
     private final Clock _clock;
     private long _subscribedAt;
-    private boolean _isFirstFetch = true;
+    private boolean _isEverFirstFetch = true; // the very first fetch since the subscriber is created
+    private boolean _isFirstFetchAfterReconnect = true; // the first fetch after each reconnect
 
     ResourceSubscriber(ResourceType type, String resource, XdsClientJmx xdsClientJmx)
     {
@@ -919,16 +918,20 @@ public class XdsClientImpl extends XdsClient
         return;
       }
 
-      boolean curIsFirstFetch = _isFirstFetch;
-      if (_isFirstFetch)
+      boolean curIsEverFirstFetch = _isEverFirstFetch;
+      if (_isEverFirstFetch)
       {
-        _isFirstFetch = false;
+        _isEverFirstFetch = false;
+      }
+      if (_isFirstFetchAfterReconnect)
+      {
+        _isFirstFetchAfterReconnect = false;
       }
 
       // null value guard to avoid overwriting the property with null
       if (data != null && data.isValid())
       {
-        trackServerLatency(data, _data, metricsProvider, _subscribedAt, isIrvEnabled, curIsFirstFetch); // data updated, track xds server latency
+        trackServerLatency(data, _data, metricsProvider, _subscribedAt, isIrvEnabled, curIsEverFirstFetch); // data updated, track xds server latency
         _data = data;
       }
       else
@@ -982,7 +985,7 @@ public class XdsClientImpl extends XdsClient
     @VisibleForTesting
     void onReconnect()
     {
-      resetSubscribedAt(); // Reconnected needs to reset the subscribe time to the current time for tracking purposes.
+      reset(); // Reconnected needs to reset the subscribe time to the current time for tracking purposes.
       for (ResourceWatcher watcher : _watchers)
       {
         watcher.onReconnect();
@@ -997,9 +1000,13 @@ public class XdsClientImpl extends XdsClient
     @VisibleForTesting
     void onRemoval()
     {
-      if (_isFirstFetch)
+      if (_isEverFirstFetch)
       {
-        _isFirstFetch = false;
+        _isEverFirstFetch = false;
+      }
+      if (_isFirstFetchAfterReconnect)
+      {
+        _isFirstFetchAfterReconnect = false;
       }
 
       if (_data == null)
@@ -1013,9 +1020,10 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    private void resetSubscribedAt()
+    private void reset()
     {
       _subscribedAt = _clock.currentTimeMillis();
+      _isFirstFetchAfterReconnect = true;
     }
 
     @VisibleForTesting
@@ -1026,7 +1034,7 @@ public class XdsClientImpl extends XdsClient
 
     long getActiveInitialWaitTimeMillis(long end)
     {
-      if (!_isFirstFetch)
+      if (!_isFirstFetchAfterReconnect)
       {
         return 0;
       }
@@ -1041,7 +1049,8 @@ public class XdsClientImpl extends XdsClient
     private final Map<String, ResourceUpdate> _data = new HashMap<>();
     private final Clock _clock;
     private long _subscribedAt;
-    private boolean _isFirstFetch = true;
+    private boolean _isEverFirstFetch = true; // the very first fetch since the subscriber is created
+    private boolean _isFirstFetchAfterReconnect = true; // the first fetch after each reconnect
 
     WildcardResourceSubscriber(ResourceType type)
     {
@@ -1089,8 +1098,7 @@ public class XdsClientImpl extends XdsClient
       // null value guard to avoid overwriting the property with null
       if (data != null && data.isValid())
       {
-
-        trackServerLatency(data, _data.get(resourceName), metricsProvider, _subscribedAt, isIrvEnabled, _isFirstFetch);
+        trackServerLatency(data, _data.get(resourceName), metricsProvider, _subscribedAt, isIrvEnabled, _isEverFirstFetch);
         _data.put(resourceName, data);
       }
       else
@@ -1139,7 +1147,7 @@ public class XdsClientImpl extends XdsClient
     @VisibleForTesting
     void onReconnect()
     {
-      resetSubscribedAt(); // Reconnected needs to reset the subscribe time to the current time for tracking purposes.
+      reset(); // Reconnected needs to reset the subscribe time to the current time for tracking purposes.
       for (WildcardResourceWatcher watcher : _watchers)
       {
         watcher.onReconnect();
@@ -1159,9 +1167,13 @@ public class XdsClientImpl extends XdsClient
     @VisibleForTesting
     void onAllResourcesProcessed()
     {
-      if (_isFirstFetch)
+      if (_isEverFirstFetch)
       {
-        _isFirstFetch = false;
+        _isEverFirstFetch = false;
+      }
+      if (_isFirstFetchAfterReconnect)
+      {
+        _isFirstFetchAfterReconnect = false;
       }
 
       for (WildcardResourceWatcher watcher : _watchers)
@@ -1170,9 +1182,10 @@ public class XdsClientImpl extends XdsClient
       }
     }
 
-    private void resetSubscribedAt()
+    private void reset()
     {
       _subscribedAt = _clock.currentTimeMillis();
+      _isFirstFetchAfterReconnect = true;
     }
 
     @VisibleForTesting
@@ -1183,7 +1196,7 @@ public class XdsClientImpl extends XdsClient
 
     long getActiveInitialWaitTimeMillis(long end)
     {
-      if (!_isFirstFetch)
+      if (!_isFirstFetchAfterReconnect)
       {
         return 0;
       }
