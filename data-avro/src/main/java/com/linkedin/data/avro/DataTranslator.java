@@ -60,7 +60,6 @@ import org.apache.avro.util.Utf8;
 public class DataTranslator implements DataTranslatorContext
 {
   protected DataTranslationOptions _dataTranslationOptions;
-
   /**
    * Convert the given {@link DataMap} conforming to the provided {@link RecordDataSchema} to a {@link GenericRecord}.
    *
