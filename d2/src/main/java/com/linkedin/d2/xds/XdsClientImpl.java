@@ -923,7 +923,8 @@ public class XdsClientImpl extends XdsClient
         _log.error("[xds pre-check] Unexpected exception: {}", e.getMessage(), e);
         return false;
       }
-      _log.info("[xds pre-check] Managed channel is healthy and ready to use");
+      _log.info(
+          "[xds pre-check] All pre-checks for INDIS connection passed successfully, ready to start xDS RPC stream");
       return true;
     }
     catch (Throwable t)
