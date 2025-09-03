@@ -22,6 +22,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.google.rpc.Code;
+import com.linkedin.d2.discovery.util.D2Utils;
 import com.linkedin.d2.jmx.NoOpXdsServerMetricsProvider;
 import com.linkedin.d2.jmx.XdsClientJmx;
 import com.linkedin.d2.jmx.XdsServerMetricsProvider;
@@ -74,6 +75,7 @@ public class XdsClientImpl extends XdsClient
       new RateLimitedLogger(_log, TimeUnit.MINUTES.toMillis(1), SystemClock.instance());
   public static final long DEFAULT_READY_TIMEOUT_MILLIS = 2000L;
   public static final Integer DEFAULT_MAX_RETRY_BACKOFF_SECS = 30; // default value for max retry backoff seconds
+  private static final String MINIMUM_VALID_JAVA_VERSION = "1.8.0_282-msft";
 
   /**
    * The resource subscribers maps the resource type to its subscribers. Note that the {@link ResourceType#D2_URI}
@@ -307,6 +309,15 @@ public class XdsClientImpl extends XdsClient
       _log.warn("Tried to create duplicate RPC stream, ignoring!");
       return;
     }
+
+    if (!preCheckForIndisConnection())
+    {
+      _log.error("Cannot start RPC stream, the pre check failed. "
+                     + "This can happen if the Java version is not supported or the xDS server is not reachable.");
+
+    }
+
+
     AggregatedDiscoveryServiceGrpc.AggregatedDiscoveryServiceStub stub =
         AggregatedDiscoveryServiceGrpc.newStub(_managedChannel);
     AdsStream stream = new AdsStream(stub);
@@ -806,6 +817,122 @@ public class XdsClientImpl extends XdsClient
     }
     _xdsClientJmx.setIsConnected(true);
   }
+
+
+
+
+  private boolean preCheckForIndisConnection()
+  {
+    try
+    {
+      String javaVersion = System.getProperty("java.version");
+      _log.info("Current Java version: {}", javaVersion);
+      if (!D2Utils.isJavaVersionAtLeast(javaVersion, MINIMUM_VALID_JAVA_VERSION))
+      {
+        _log.error("The current Java version {} is too low, please upgrade to at least {}, " +
+                       "otherwise the service couldn't create grpc connection between service and INDIS," +
+                       "check go/onboardindis Guidelines #2 for more details",
+                   javaVersion,
+                   MINIMUM_VALID_JAVA_VERSION);
+        return false;
+      }
+      // Check if we can actually reach the server at the given authority to rule out NACL issue
+      String serverAuthority = getXdsServerAuthority();
+      if (_managedChannel == null)
+      {
+        _log.error("[xds pre-check] Managed channel is null, cannot establish XDS connection to INDIS server");
+        return false;
+      }
+      if (serverAuthority == null || serverAuthority.isEmpty())
+      {
+        _log.error("[xds pre-check] Cannot determine INDIS xDS server authority, connection check failed");
+        return false;
+      }
+      _log.info("[xds pre-check] INDIS xDS server authority: {}", serverAuthority);
+
+      try
+      {
+        String[] parts = serverAuthority.split(":");
+        if (parts.length != 2)
+        {
+          _log.error("[xds pre-check] Invalid server authority format: {}, expected format: host:port", serverAuthority);
+          return false;
+        }
+
+        String host = parts[0];
+        int port = Integer.parseInt(parts[1]);
+
+        _log.info("[xds pre-check] Testing socket connection to INDIS xDS server: {}:{}", host, port);
+        // Check if we can connect to the server using a socket
+        try (java.net.Socket socket = new java.net.Socket())
+        {
+          socket.connect(new java.net.InetSocketAddress(host, port), (int) _readyTimeoutMillis);
+          _log.info("[xds pre-check] Successfully pinged to INDIS xDS server at {}:{}", host, port);
+        }
+      }
+      catch (Exception e)
+      {
+        _log.error("[xds pre-check] Failed to connect to INDIS xDS server at authority {}: {}, " +
+                      "check go/onboardindis Guidelines #5 and #7 for more details",
+                  serverAuthority, e.getMessage(), e);
+        return false;
+      }
+
+      // Check there is no connection issue for managed channel
+      try
+      {
+        io.grpc.health.v1.HealthGrpc.newBlockingStub(_managedChannel)
+            .withDeadlineAfter(_readyTimeoutMillis, java.util.concurrent.TimeUnit.MILLISECONDS)
+            .check(io.grpc.health.v1.HealthCheckRequest.newBuilder().setService("").build());
+        _log.info("[xds pre-check] Health check for managed channel passed - channel is SERVING");
+      }
+      catch (Exception e)
+      {
+        Throwable c = e;
+        while (c.getCause() != null) c = c.getCause();
+        String errorMessage = c.getClass().getName() + " | " + c.getMessage();
+        _log.error("[xds pre-check] Health check failed for managed channel: {}， " +
+                      "check go/onboardindis Guidelines #2 and #9 for more details, " +
+                      "if there is any other sslContext issue, please check with #pki team", errorMessage);
+        return false;
+      }
+
+      // check there is no protobuf version mismatch or excluding the io.envoyproxy module in build.gradle issue
+      try
+      {
+        Class.forName("com.google.protobuf.Descriptors$FileDescriptor");
+        _log.info("[xds pre-check] Protobuf Descriptor classes are available");
+
+        Class.forName("io.envoyproxy.envoy.service.discovery.v3.AggregatedDiscoveryServiceGrpc");
+        _log.info("[xds pre-check] Envoy API classes are available");
+      }
+      catch (ClassNotFoundException e)
+      {
+        _log.error("[xds pre-check] Required classes not found: {},  check go/onboardindis Guidelines #3 and #4",
+                   e.getMessage());
+        return false;
+      }
+      catch (NoClassDefFoundError err)
+      {
+        _log.error("[xds pre-check] Class definition missing: {},  check go/onboardindis Guidelines #3 and #4",
+                   err.getMessage(), err);
+        return false;
+      }
+      catch (Exception e)
+      {
+        _log.error("[xds pre-check] Unexpected exception: {}", e.getMessage(), e);
+        return false;
+      }
+      _log.info("[xds pre-check] Managed channel is healthy and ready to use");
+      return true;
+    }
+    catch (Throwable t)
+    {
+      _log.error("[xds pre-check] Unexpected exception during pre-check: {}", t.getMessage(), t);
+      return false;
+    }
+  }
+
 
   Map<String, ResourceSubscriber> getResourceSubscriberMap(ResourceType type)
   {

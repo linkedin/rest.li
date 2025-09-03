@@ -199,6 +199,77 @@ public class D2Utils
     return value;
   }
 
+  /**
+   * Checks if the current Java version meets the minimum required version.
+   * Uses a simple approach similar to ComparableVersion but without external dependencies.
+   * 
+   * @param currentVersion the current Java version string (e.g., "1.8.0_172", "11.0.1")
+   * @param minVersion the minimum required version string (e.g., "1.8.0_282-msft")
+   * @return true if the current version meets or exceeds the minimum requirement, false otherwise
+   */
+  public static boolean isJavaVersionAtLeast(String currentVersion, String minVersion)
+  {
+    if (currentVersion == null || currentVersion.trim().isEmpty())
+    {
+      LOG.warn("Current Java version is null or empty");
+      return false;
+    }
+    
+    if (minVersion == null || minVersion.trim().isEmpty())
+    {
+      LOG.warn("Minimum Java version is null or empty");
+      return true; // If no minimum specified, assume current is acceptable
+    }
+    
+    try
+    {
+      // Simple approach: Java 9+ is always acceptable
+      if (isJava9OrHigher(currentVersion))
+      {
+        return true;
+      }
+      
+      // For Java 8, check build number
+      if (currentVersion.startsWith("1.8.0_") && minVersion.startsWith("1.8.0_"))
+      {
+        int currentBuild = extractBuildNumber(currentVersion);
+        int minBuild = extractBuildNumber(minVersion);
+        return currentBuild >= minBuild;
+      }
+      
+      // For other Java 8 formats or Java 7 and earlier
+      return false;
+    }
+    catch (NumberFormatException e)
+    {
+      LOG.warn("Failed to parse Java versions. Current: {}, Min: {}", currentVersion, minVersion, e);
+      return false;
+    }
+  }
+  
+  /**
+   * Checks if the Java version is 9 or higher.
+   */
+  private static boolean isJava9OrHigher(String version)
+  {
+    // Java 9+ versions start with "9.", "10.", "11.", etc.
+    return version.matches("^([9-9]|[1-9][0-9]+)\\..*");
+  }
+  
+  /**
+   * Extracts build number from Java 8 version string.
+   * Example: "1.8.0_282-msft" -> 282
+   */
+  private static int extractBuildNumber(String version)
+  {
+    String buildPart = version.substring("1.8.0_".length());
+    if (buildPart.contains("-"))
+    {
+      buildPart = buildPart.split("-")[0];
+    }
+    return Integer.parseInt(buildPart);
+  }
+
   private D2Utils() {
     // Utility class, no instantiation
   }
