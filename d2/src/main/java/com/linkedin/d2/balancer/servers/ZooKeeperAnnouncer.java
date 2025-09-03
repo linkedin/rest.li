@@ -43,6 +43,8 @@ import com.linkedin.d2.discovery.event.D2ServiceDiscoveryEventHelper;
 import com.linkedin.d2.discovery.event.LogOnlyServiceDiscoveryEventEmitter;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter.StatusUpdateActionType;
+import com.linkedin.d2.balancer.servers.ReadinessStatusManager.AnnouncerStatus;
+import com.linkedin.d2.balancer.servers.ReadinessStatusManager.AnnouncerStatus.AnnouncementStatus;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.util.ArgumentUtil;
 
@@ -57,6 +59,9 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.linkedin.d2.balancer.servers.ReadinessStatusManager.AnnouncerStatus.AnnouncementStatus.*;
+
 
 /**
  * ZooKeeperAnnouncer combines a ZooKeeperServer with a configured "desired state", and
@@ -184,6 +189,9 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
     RECTIFY
   }
 
+  private final AnnouncerStatus _status;
+  private final ReadinessStatusManager _readinessManager;
+
   /**
    * @deprecated Use the constructor {@link #ZooKeeperAnnouncer(LoadBalancerServer)} instead.
    */
@@ -241,6 +249,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
     this(server, initialIsUp, isDarkWarmupEnabled, warmupClusterName, warmupDuration, executorService, eventEmitter, null, ActionOnWeightBreach.IGNORE);
   }
 
+  @Deprecated
   public ZooKeeperAnnouncer(LoadBalancerServer server, boolean initialIsUp,
       boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService, ServiceDiscoveryEventEmitter eventEmitter)
   {
@@ -250,6 +259,18 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
   public ZooKeeperAnnouncer(LoadBalancerServer server, boolean initialIsUp,
       boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService,
       ServiceDiscoveryEventEmitter eventEmitter, BigDecimal maxWeight, ActionOnWeightBreach actionOnWeightBreach)
+  {
+    this(server, initialIsUp, isDarkWarmupEnabled, warmupClusterName, warmupDuration, executorService,
+        eventEmitter, maxWeight, actionOnWeightBreach, new AnnouncerStatus(
+            false, DE_ANNOUNCED),
+        new NoOpReadinessStatusManager()
+    );
+  }
+
+  public ZooKeeperAnnouncer(LoadBalancerServer server, boolean initialIsUp,
+      boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService,
+      ServiceDiscoveryEventEmitter eventEmitter, BigDecimal maxWeight, ActionOnWeightBreach actionOnWeightBreach,
+      AnnouncerStatus status, ReadinessStatusManager readinessManager)
   {
     _server = server;
     // initialIsUp is used for delay mark up. If it's false, there won't be markup when the announcer is started.
@@ -273,6 +294,9 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
     {
       ((ZooKeeperServer) server).setServiceDiscoveryEventHelper(this);
     }
+
+    _status = status;
+    _readinessManager = readinessManager;
   }
 
   /**
@@ -355,6 +379,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
   {
     _pendingMarkUp.add(callback);
     _isUp = true;
+    updateStatus(ANNOUNCING);
     runNowOrEnqueue(() -> doMarkUp(callback));
   }
 
@@ -393,6 +418,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
       @Override
       public void onSuccess(None result)
       {
+        updateStatus(ANNOUNCED);
         _isMarkUpIntentSent.set(true);
         emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, true, true, _markUpStartAtRef.get());
         _markUpFailed = false;
@@ -554,6 +580,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
   {
     _pendingMarkDown.add(callback);
     _isUp = false;
+    updateStatus(DE_ANNOUNCING);
     runNowOrEnqueue(() -> doMarkDown(callback));
   }
 
@@ -582,6 +609,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
       @Override
       public void onSuccess(None result)
       {
+        updateStatus(DE_ANNOUNCED);
         _isMarkUpIntentSent.set(false);
         emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, false, true, _markDownStartAtRef.get());
         _log.info("markDown for uri = {} succeeded.", _uri);
@@ -985,5 +1013,12 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
     return new IllegalArgumentException(String.format("[ACTION NEEDED] Weight %s in Partition %d is greater"
         + " than the max weight allowed: %s. Please correct the weight. It will be force-capped to the max weight "
         + "in the future.", weight, partition, _maxWeight));
+  }
+
+  private void updateStatus(AnnouncementStatus newStatus)
+  {
+    _status.setAnnouncementStatus(newStatus);
+    _log.info("Announcement status changed to {} for cluster {}, uri {}.", newStatus, _uri, _cluster);
+    _readinessManager.onAnnouncerStatusUpdated();
   }
 }
