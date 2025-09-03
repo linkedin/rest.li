@@ -18,7 +18,7 @@ and what APIs have changed, if applicable.
 - correct xds client latency metric, add active initial wait time metric, and SD update receipt event
 
 ## [29.74.4] - 2025-09-02
-- DataTranslator: fall back to matching simple \
+- DataTranslator: fall back to matching simple
 
 ## [29.74.3] - 2025-08-26
 - Add outlier detection config into D2Cluster

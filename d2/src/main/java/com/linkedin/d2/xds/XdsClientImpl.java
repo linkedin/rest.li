@@ -278,25 +278,6 @@ public class XdsClientImpl extends XdsClient
   }
 
   @Override
-  void startRpcStream()
-  {
-    checkShutdownAndExecute(() ->
-    {
-      if (!isInBackoff())
-      {
-        try
-        {
-          startRpcStreamLocal();
-        }
-        catch (Throwable t)
-        {
-          _log.error("Unexpected exception while starting RPC stream", t);
-        }
-      }
-    });
-  }
-
-  @Override
   public XdsClientJmx getXdsClientJmx()
   {
     return _xdsClientJmx;
@@ -313,6 +294,25 @@ public class XdsClientImpl extends XdsClient
         subscriber -> res.addAndGet(subscriber.getActiveInitialWaitTimeMillis(now))
     );
     return res.get();
+  }
+
+  @VisibleForTesting
+  void startRpcStream()
+  {
+    checkShutdownAndExecute(() ->
+    {
+      if (!isInBackoff())
+      {
+        try
+        {
+          startRpcStreamLocal();
+        }
+        catch (Throwable t)
+        {
+          _log.error("Unexpected exception while starting RPC stream", t);
+        }
+      }
+    });
   }
 
   // Start RPC stream. Must be called from the executor, and only if we're not backed off.
@@ -858,6 +858,13 @@ public class XdsClientImpl extends XdsClient
     return _wildcardSubscribers;
   }
 
+  private enum SubscriberFetchState
+  {
+    INIT_PENDING, // the very first fetch since the subscriber is created
+    PENDING_AFTER_RECONNECT, // the first fetch after each reconnect
+    FETCHED // received a response (either data or removal) after INIT_PENDING or PENDING_AFTER_RECONNECT
+  }
+
   static class ResourceSubscriber
   {
     private final ResourceType _type;
@@ -868,8 +875,7 @@ public class XdsClientImpl extends XdsClient
     private ResourceUpdate _data;
     private final Clock _clock;
     private long _subscribedAt;
-    private boolean _isEverFirstFetch = true; // the very first fetch since the subscriber is created
-    private boolean _isFirstFetchAfterReconnect = true; // the first fetch after each reconnect
+    private SubscriberFetchState _fetchState = SubscriberFetchState.INIT_PENDING;
 
     ResourceSubscriber(ResourceType type, String resource, XdsClientJmx xdsClientJmx)
     {
@@ -918,20 +924,13 @@ public class XdsClientImpl extends XdsClient
         return;
       }
 
-      boolean curIsEverFirstFetch = _isEverFirstFetch;
-      if (_isEverFirstFetch)
-      {
-        _isEverFirstFetch = false;
-      }
-      if (_isFirstFetchAfterReconnect)
-      {
-        _isFirstFetchAfterReconnect = false;
-      }
+      SubscriberFetchState curFetchState = _fetchState;
+      _fetchState = SubscriberFetchState.FETCHED;
 
       // null value guard to avoid overwriting the property with null
       if (data != null && data.isValid())
       {
-        trackServerLatency(data, _data, metricsProvider, _subscribedAt, isIrvEnabled, curIsEverFirstFetch); // data updated, track xds server latency
+        trackServerLatency(data, _data, metricsProvider, _subscribedAt, isIrvEnabled, curFetchState); // data updated, track xds server latency
         _data = data;
       }
       else
@@ -1000,14 +999,7 @@ public class XdsClientImpl extends XdsClient
     @VisibleForTesting
     void onRemoval()
     {
-      if (_isEverFirstFetch)
-      {
-        _isEverFirstFetch = false;
-      }
-      if (_isFirstFetchAfterReconnect)
-      {
-        _isFirstFetchAfterReconnect = false;
-      }
+      _fetchState = SubscriberFetchState.FETCHED;
 
       if (_data == null)
       {
@@ -1023,7 +1015,7 @@ public class XdsClientImpl extends XdsClient
     private void reset()
     {
       _subscribedAt = _clock.currentTimeMillis();
-      _isFirstFetchAfterReconnect = true;
+      _fetchState = SubscriberFetchState.PENDING_AFTER_RECONNECT;
     }
 
     @VisibleForTesting
@@ -1034,7 +1026,7 @@ public class XdsClientImpl extends XdsClient
 
     long getActiveInitialWaitTimeMillis(long end)
     {
-      if (!_isFirstFetchAfterReconnect)
+      if (_fetchState.equals(SubscriberFetchState.FETCHED))
       {
         return 0;
       }
@@ -1049,8 +1041,7 @@ public class XdsClientImpl extends XdsClient
     private final Map<String, ResourceUpdate> _data = new HashMap<>();
     private final Clock _clock;
     private long _subscribedAt;
-    private boolean _isEverFirstFetch = true; // the very first fetch since the subscriber is created
-    private boolean _isFirstFetchAfterReconnect = true; // the first fetch after each reconnect
+    private SubscriberFetchState _fetchState = SubscriberFetchState.INIT_PENDING;
 
     WildcardResourceSubscriber(ResourceType type)
     {
@@ -1098,7 +1089,7 @@ public class XdsClientImpl extends XdsClient
       // null value guard to avoid overwriting the property with null
       if (data != null && data.isValid())
       {
-        trackServerLatency(data, _data.get(resourceName), metricsProvider, _subscribedAt, isIrvEnabled, _isEverFirstFetch);
+        trackServerLatency(data, _data.get(resourceName), metricsProvider, _subscribedAt, isIrvEnabled, _fetchState);
         _data.put(resourceName, data);
       }
       else
@@ -1167,14 +1158,7 @@ public class XdsClientImpl extends XdsClient
     @VisibleForTesting
     void onAllResourcesProcessed()
     {
-      if (_isEverFirstFetch)
-      {
-        _isEverFirstFetch = false;
-      }
-      if (_isFirstFetchAfterReconnect)
-      {
-        _isFirstFetchAfterReconnect = false;
-      }
+      _fetchState = SubscriberFetchState.FETCHED;
 
       for (WildcardResourceWatcher watcher : _watchers)
       {
@@ -1185,7 +1169,7 @@ public class XdsClientImpl extends XdsClient
     private void reset()
     {
       _subscribedAt = _clock.currentTimeMillis();
-      _isFirstFetchAfterReconnect = true;
+      _fetchState = SubscriberFetchState.PENDING_AFTER_RECONNECT;
     }
 
     @VisibleForTesting
@@ -1196,7 +1180,7 @@ public class XdsClientImpl extends XdsClient
 
     long getActiveInitialWaitTimeMillis(long end)
     {
-      if (!_isFirstFetchAfterReconnect)
+      if (_fetchState.equals(SubscriberFetchState.FETCHED))
       {
         return 0;
       }
@@ -1228,7 +1212,7 @@ public class XdsClientImpl extends XdsClient
   }
 
   private static void trackServerLatency(ResourceUpdate resourceUpdate, ResourceUpdate currentData,
-      XdsServerMetricsProvider metricsProvider, long subscribedAt, boolean isIrvEnabled, boolean isFirstFetch)
+      XdsServerMetricsProvider metricsProvider, long subscribedAt, boolean isIrvEnabled, SubscriberFetchState fetchState)
   {
     long now = SystemClock.instance().currentTimeMillis();
     if (resourceUpdate instanceof NodeUpdate)
@@ -1239,7 +1223,7 @@ public class XdsClientImpl extends XdsClient
         return;
       }
       trackServerLatencyHelper(metricsProvider, now, nodeData.getStat().getMtime(), subscribedAt,
-          isIrvEnabled, isFirstFetch);
+          isIrvEnabled, fetchState);
     }
     else if (resourceUpdate instanceof D2URIMapUpdate)
     {
@@ -1254,9 +1238,9 @@ public class XdsClientImpl extends XdsClient
               Map.Entry::getKey,
               e -> e.getValue().leftValue()) // new data of updated uris
           );
-      trackServerLatencyForUris(updatedUris, update, metricsProvider, now, subscribedAt, isIrvEnabled, isFirstFetch);
+      trackServerLatencyForUris(updatedUris, update, metricsProvider, now, subscribedAt, isIrvEnabled, fetchState);
       trackServerLatencyForUris(rawDiff.entriesOnlyOnLeft(), update, metricsProvider, now, subscribedAt,
-          isIrvEnabled, isFirstFetch); // newly added uris
+          isIrvEnabled, fetchState); // newly added uris
     }
     else if (resourceUpdate instanceof D2URIUpdate)
     {
@@ -1266,19 +1250,19 @@ public class XdsClientImpl extends XdsClient
       {
         update.setIsStaleModifiedTime(
             trackServerLatencyHelper(metricsProvider, now, Timestamps.toMillis(uri.getModifiedTime()), subscribedAt,
-            isIrvEnabled, isFirstFetch)
+            isIrvEnabled, fetchState)
         );
       }
     }
   }
 
   private static void trackServerLatencyForUris(Map<String, XdsD2.D2URI> uriMap, D2URIMapUpdate update,
-      XdsServerMetricsProvider metricsProvider,
-      long end, long subscribedAt, boolean isIrvEnabled, boolean isFirstFetch)
+      XdsServerMetricsProvider metricsProvider, long end, long subscribedAt, boolean isIrvEnabled,
+      SubscriberFetchState fetchState)
   {
     uriMap.forEach((k, v) -> {
           boolean isStaleModifiedTime = trackServerLatencyHelper(metricsProvider, end, Timestamps.toMillis(v.getModifiedTime()), subscribedAt,
-              isIrvEnabled, isFirstFetch);
+              isIrvEnabled, fetchState);
           update.setIsStaleModifiedTime(k, isStaleModifiedTime);
         }
       );
@@ -1293,11 +1277,11 @@ public class XdsClientImpl extends XdsClient
   // received with IRV, except the first fetch, so after skipping the first fetch we can track latency always based
   // on the resource modified time.
   private static boolean trackServerLatencyHelper(XdsServerMetricsProvider metricsProvider,
-      long end, long modifiedAt, long subscribedAt, boolean isIrvEnabled, boolean isFirstFetch)
+      long end, long modifiedAt, long subscribedAt, boolean isIrvEnabled, SubscriberFetchState fetchState)
   {
     long start;
     boolean isStaleModifiedAt;
-    if (isIrvEnabled && !isFirstFetch)
+    if (isIrvEnabled && !fetchState.equals(SubscriberFetchState.INIT_PENDING))
     {
       start = modifiedAt;
       isStaleModifiedAt = false;

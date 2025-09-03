@@ -585,12 +585,6 @@ public abstract class XdsClient
   public abstract void watchAllXdsResources(WildcardResourceWatcher watcher);
 
   /**
-   * NOTE: Should NOT be called directly; instead, call {@link #start()}.
-   * Initiates the RPC stream to the xDS server.
-   */
-  abstract void startRpcStream();
-
-  /**
    * Shuts down the xDS client.
    */
   public abstract void shutdown();
