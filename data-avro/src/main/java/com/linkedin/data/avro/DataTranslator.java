@@ -456,7 +456,7 @@ public class DataTranslator implements DataTranslatorContext
           key = memberAvroSchema.getType().toString().toLowerCase();
       }
       DataSchema memberDataSchema = unionDataSchema.getTypeByMemberKey(key);
-      if (memberDataSchema == null)
+      if (memberDataSchema == null && isSimpleNullUnion(unionDataSchema))
       {
         for (UnionDataSchema.Member member : unionDataSchema.getMembers())
         {
@@ -464,6 +464,24 @@ public class DataTranslator implements DataTranslatorContext
           if (avroOverride != null)
           {
             if (avroOverride.getAvroSchemaFullName().equals(key))
+            {
+              memberDataSchema = member.getType();
+              break;
+            }
+          }
+        }
+      }
+      // if there was no match by this point, try to find the member by simple name.
+      if (memberDataSchema == null)
+      {
+        for (UnionDataSchema.Member member : unionDataSchema.getMembers())
+        {
+          AvroOverride avroOverride = getAvroOverride(member.getType());
+          if (avroOverride != null)
+          {
+            String avroSimpleName = getSimpleName(avroOverride.getAvroSchemaFullName());
+            String simpleKey = getSimpleName(key);
+            if (avroSimpleName.equals(simpleKey))
             {
               memberDataSchema = member.getType();
               break;
@@ -1090,9 +1108,40 @@ public class DataTranslator implements DataTranslatorContext
       if (name.equals(key))
         return new AbstractMap.SimpleEntry<>(name, member);
     }
+
+    // fallback check if key and name (simple names -- strip the namespaces) are equal
+    if (isSimpleNullUnion(members)) {
+      for (Schema member : members)
+      {
+        String name;
+        switch (member.getType())
+        {
+          case ENUM:
+          case FIXED:
+          case RECORD:
+            name = getUnionMemberKey(member);
+            break;
+          default:
+            name = member.getType().toString().toLowerCase();
+        }
+        // strip namespace (if it exists)
+        String simpleName = getSimpleName(name);
+        String simpleKey = getSimpleName(key);
+        if (simpleName.equals(simpleKey)) return new AbstractMap.SimpleEntry<>(name, member);
+      }
+    }
     appendMessage("cannot find %1$s in union %2$s", key, avroSchema);
     return null;
   }
+
+  private static String getSimpleName(String fullName) {
+    if (fullName == null || fullName.isEmpty()) {
+      return fullName; // or throw IllegalArgumentException depending on use case
+    }
+    int lastDot = fullName.lastIndexOf('.');
+    return (lastDot == -1) ? fullName : fullName.substring(lastDot + 1);
+  }
+
 
   /**
    * This method helps to find the right union member key for Avro Schema,
@@ -1133,5 +1182,16 @@ public class DataTranslator implements DataTranslatorContext
       sb.append(o);
     }
     return sb.toString();
+  }
+  private static boolean isSimpleNullUnion(UnionDataSchema unionDataSchema) {
+    return unionDataSchema.getMembers().size() == 2 && (
+        unionDataSchema.getMembers().get(0).getType().getType() == DataSchema.Type.NULL
+            || unionDataSchema.getMembers().get(1).getType().getType() == DataSchema.Type.NULL);
+  }
+
+  private static boolean isSimpleNullUnion(List<Schema> members) {
+    return members.size() == 2 && (
+        members.get(0).getType() == Schema.Type.NULL
+            || members.get(1).getType() == Schema.Type.NULL);
   }
 }
