@@ -1026,7 +1026,7 @@ public class XdsClientImpl extends XdsClient
 
     long getActiveInitialWaitTimeMillis(long end)
     {
-      if (_fetchState.equals(SubscriberFetchState.FETCHED))
+      if (SubscriberFetchState.FETCHED.equals(_fetchState))
       {
         return 0;
       }
@@ -1180,7 +1180,7 @@ public class XdsClientImpl extends XdsClient
 
     long getActiveInitialWaitTimeMillis(long end)
     {
-      if (_fetchState.equals(SubscriberFetchState.FETCHED))
+      if (SubscriberFetchState.FETCHED.equals(_fetchState))
       {
         return 0;
       }
@@ -1281,7 +1281,7 @@ public class XdsClientImpl extends XdsClient
   {
     long start;
     boolean isStaleModifiedAt;
-    if (isIrvEnabled && !fetchState.equals(SubscriberFetchState.INIT_PENDING))
+    if (isIrvEnabled && !SubscriberFetchState.INIT_PENDING.equals(fetchState))
     {
       start = modifiedAt;
       isStaleModifiedAt = false;
