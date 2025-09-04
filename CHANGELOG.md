@@ -14,11 +14,14 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.74.5] - 2025-09-03
+## [29.75.1] - 2025-09-04
 - mark fields as optional
 
+## [29.75.0] - 2025-09-03
+- correct xds client latency metric, add active initial wait time metric, and SD update receipt event
+
 ## [29.74.4] - 2025-09-02
-- DataTranslator: fall back to matching simple 
+- DataTranslator: fall back to matching simple
 
 ## [29.74.3] - 2025-08-26
 - Add outlier detection config into D2Cluster
@@ -5885,9 +5888,10 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.74.5...master
-[29.74.5]: https://github.com/linkedin/rest.li/compare/v29.74.4...v29.74.5
-[29.74.4]: https://github.com/linkedin/rest.li/compare/v29.74.3...v29.74.3-rc.1
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.75.1...master
+[29.75.1]: https://github.com/linkedin/rest.li/compare/v29.75.0...v29.75.1
+[29.75.0]: https://github.com/linkedin/rest.li/compare/v29.74.4...v29.75.0
+[29.74.4]: https://github.com/linkedin/rest.li/compare/v29.74.3...v29.74.4
 [29.74.3]: https://github.com/linkedin/rest.li/compare/v29.74.2...v29.74.3
 [29.74.2]: https://github.com/linkedin/rest.li/compare/v29.74.1...v29.74.2
 [29.74.1]: https://github.com/linkedin/rest.li/compare/v29.74.0...v29.74.1
