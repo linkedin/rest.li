@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.76.0] - 2025-09-05
+- Add D2 service MethodLevelProperties configuration support
+
 ## [29.75.2] - 2025-09-05
 - Rename the outlier detection field in the D2 cluster
 
@@ -5891,7 +5894,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.74.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.76.0...master
+[29.76.0]: https://github.com/linkedin/rest.li/compare/v29.74.3...v29.76.0
 [29.74.3]: https://github.com/linkedin/rest.li/compare/v29.74.2...v29.74.3
 [29.74.2]: https://github.com/linkedin/rest.li/compare/v29.74.1...v29.74.2
 [29.74.1]: https://github.com/linkedin/rest.li/compare/v29.74.0...v29.74.1
