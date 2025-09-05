@@ -142,7 +142,8 @@ public class ServiceStoreProperties extends ServiceProperties
         stableConfigs.getTransportClientProperties(), stableConfigs.getDegraderProperties(),
         stableConfigs.getPrioritizedSchemes(), stableConfigs.getBanned(), stableConfigs.getServiceMetadataProperties(),
         stableConfigs.getBackupRequests(), stableConfigs.getRelativeStrategyProperties(),
-        stableConfigs.isEnableClusterSubsetting(), stableConfigs.getMinClusterSubsetSize());
+        stableConfigs.isEnableClusterSubsetting(), stableConfigs.getMinClusterSubsetSize(), -1,
+        stableConfigs.getMethodLevelProperties());
     _canaryConfigs = canaryConfigs;
     _canaryDistributionStrategy = distributionStrategy;
   }
