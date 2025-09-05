@@ -52,7 +52,7 @@ public class XdsClientValidator
 
   /**
    * Performs all pre-checks required for INDIS connection.
-   * This includes Java version validation, class availability checks, and network connectivity tests.
+   * This includes Java version validation, class availability checks, network connectivity tests, etc.
    *
    * @param managedChannel     the gRPC managed channel
    * @param readyTimeoutMillis timeout for connection checks in milliseconds
@@ -83,7 +83,6 @@ public class XdsClientValidator
   }
 
   /**
-   * Performs the actual validation logic without action handling.
    * This method focuses purely on validation and returns error messages on failure.
    *
    * @param managedChannel     the gRPC managed channel
@@ -176,7 +175,7 @@ public class XdsClientValidator
           ", check go/onboardindis Guidelines #5 and #7 for more details: " + e.getMessage();
     }
 
-    // Check there is no connection issue for managed channel
+    // Check there is no connection issue for managed channel connection, which may be caused by TLS/SSLContext issue
     try
     {
       io.grpc.health.v1.HealthGrpc.newBlockingStub(managedChannel)
@@ -235,13 +234,13 @@ public class XdsClientValidator
       // Check if either version is clearly invalid (contains non-numeric characters after normalization)
       String normalizedCurrent = normalizeJavaVersion(currentVersion);
       String normalizedMin = normalizeJavaVersion(minVersion);
-      
+
       if (isInvalidVersionString(normalizedCurrent) || isInvalidVersionString(normalizedMin))
       {
         LOG.warn("Invalid Java version format: current='{}', required='{}'", currentVersion, minVersion);
         return false;
       }
-      
+
       return compareJavaVersions(currentVersion, minVersion) >= 0;
     }
     catch (Exception e)
@@ -253,7 +252,7 @@ public class XdsClientValidator
 
   /**
    * Checks if a normalized version string is invalid (contains non-numeric characters).
-   * 
+   *
    * @param normalizedVersion the normalized version string
    * @return true if the version string is invalid, false otherwise
    */
@@ -263,7 +262,7 @@ public class XdsClientValidator
     {
       return true;
     }
-    
+
     // Check if the normalized version contains only digits and dots
     return !normalizedVersion.matches("^[0-9.]+$");
   }

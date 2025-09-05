@@ -184,21 +184,7 @@ public class XdsClientImpl extends XdsClient
       Integer maxRetryBackoffSeconds)
   {
     this(node, managedChannel, executorService, readyTimeoutMillis, subscribeToUriGlobCollection,
-        serverMetricsProvider, irvSupport, maxRetryBackoffSeconds, DEFAULT_MINIMUM_JAVA_VERSION);
-  }
-
-  public XdsClientImpl(Node node,
-      ManagedChannel managedChannel,
-      ScheduledExecutorService executorService,
-      long readyTimeoutMillis,
-      boolean subscribeToUriGlobCollection,
-      XdsServerMetricsProvider serverMetricsProvider,
-      boolean irvSupport,
-      Integer maxRetryBackoffSeconds,
-      String minimumJavaVersion)
-  {
-    this(node, managedChannel, executorService, readyTimeoutMillis, subscribeToUriGlobCollection,
-        serverMetricsProvider, irvSupport, maxRetryBackoffSeconds, minimumJavaVersion, XdsClientValidator.ActionOnPrecheckFailure.WARN);
+        serverMetricsProvider, irvSupport, maxRetryBackoffSeconds, DEFAULT_MINIMUM_JAVA_VERSION, XdsClientValidator.ActionOnPrecheckFailure.WARN);
   }
 
   public XdsClientImpl(Node node,
