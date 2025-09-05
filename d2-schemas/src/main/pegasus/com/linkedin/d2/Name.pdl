@@ -1,7 +1,7 @@
 namespace com.linkedin.d2
 
 /**
- * D2 Service Name under Method Level properties
+ * Name configuration, used by D2 service method level properties
  */
 record Name {
   /**
