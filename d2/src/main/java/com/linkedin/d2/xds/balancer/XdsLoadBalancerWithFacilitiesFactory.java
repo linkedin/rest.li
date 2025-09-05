@@ -25,6 +25,7 @@ import com.linkedin.d2.xds.Node;
 import com.linkedin.d2.xds.XdsChannelFactory;
 import com.linkedin.d2.xds.XdsClient;
 import com.linkedin.d2.xds.XdsClientImpl;
+import com.linkedin.d2.xds.XdsClientValidator;
 import com.linkedin.d2.xds.XdsToD2PropertiesAdaptor;
 import com.linkedin.r2.util.NamedThreadFactory;
 import java.util.concurrent.Executors;
@@ -58,6 +59,10 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
         Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 xDS PropertyEventExecutor")));
     long xdsStreamReadyTimeout = ObjectUtils.defaultIfNull(config.xdsStreamReadyTimeout,
         XdsClientImpl.DEFAULT_READY_TIMEOUT_MILLIS);
+    String xdsMinimumJavaVersion = ObjectUtils.defaultIfNull(config.xdsMinimumJavaVersion,
+        XdsClientImpl.DEFAULT_MINIMUM_JAVA_VERSION);
+    XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure = ObjectUtils.defaultIfNull(config.actionOnPrecheckFailure,
+        XdsClientValidator.ActionOnPrecheckFailure.WARN);
     XdsClient xdsClient = new XdsClientImpl(
         new Node(config.hostName),
         new XdsChannelFactory(config.grpcSslContext, config.xdsServer,
@@ -68,7 +73,9 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
         config.subscribeToUriGlobCollection,
         config._xdsServerMetricsProvider,
         config.xdsInitialResourceVersionsEnabled,
-        config.xdsStreamMaxRetryBackoffSeconds
+        config.xdsStreamMaxRetryBackoffSeconds,
+        xdsMinimumJavaVersion,
+        actionOnPrecheckFailure
     );
     d2ClientJmxManager.registerXdsClientJmx(xdsClient.getXdsClientJmx());
 

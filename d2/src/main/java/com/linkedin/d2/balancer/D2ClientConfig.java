@@ -30,6 +30,7 @@ import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
+import com.linkedin.d2.xds.XdsClientValidator;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory;
 import com.linkedin.d2.discovery.event.LogOnlyServiceDiscoveryEventEmitter;
@@ -178,6 +179,8 @@ public class D2ClientConfig
   public boolean loadBalanceStreamException = false;
   public boolean xdsInitialResourceVersionsEnabled = false;
   public Integer xdsStreamMaxRetryBackoffSeconds = null;
+  public String xdsMinimumJavaVersion = null;
+  public XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure = XdsClientValidator.ActionOnPrecheckFailure.WARN;
 
   /**
    * D2 client builder by default will detect if it's used to build a raw D2 client (as opposed to used by standard
@@ -272,7 +275,9 @@ public class D2ClientConfig
                  boolean disableDetectLiRawD2Client,
                  boolean isLiRawD2Client,
                  Integer xdsStreamMaxRetryBackoffSeconds,
-                 Long xdsChannelKeepAliveTimeMins)
+                 Long xdsChannelKeepAliveTimeMins,
+                 String xdsMinimumJavaVersion,
+                 XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure)
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -352,5 +357,7 @@ public class D2ClientConfig
     this.disableDetectLiRawD2Client = disableDetectLiRawD2Client;
     this.isLiRawD2Client = isLiRawD2Client;
     this.xdsStreamMaxRetryBackoffSeconds = xdsStreamMaxRetryBackoffSeconds;
+    this.xdsMinimumJavaVersion = xdsMinimumJavaVersion;
+    this.actionOnPrecheckFailure = actionOnPrecheckFailure;
   }
 }
