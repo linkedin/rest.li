@@ -1,0 +1,28 @@
+namespace com.linkedin.d2
+
+/**
+ * D2 Service Method Level properties related configuration.
+ * This property is only used for gRPC method level configuration and
+ * with this service owners can set configurations with the following levels of granularity.
+ * - Exact method match (service + method)
+ * - Service match (service only)
+ */
+record MethodLevelProperties {
+  /**
+   * name is a list of NameProperties object, on which these method level properties will be configured.
+   * NameProperties consists of service (gRPC service name) and method (gRPC method name)
+   */
+  name: array[NameProperties]
+
+  /**
+   * Metadata properties about the service e.g. retry, hedging etc
+   * configuring any properties not supported by gRPC, will be ignored
+   */
+  serviceMetadataProperties: map[string, string]
+
+  /**
+   * The transport client properties for this service
+   * configuring any properties not supported by gRPC, will be ignored
+   */
+  transportClientProperties: D2TransportClientProperties
+}

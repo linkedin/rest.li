@@ -29,10 +29,13 @@ import com.linkedin.d2.balancer.util.JacksonUtil;
 import com.linkedin.d2.discovery.PropertySerializationException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -234,6 +237,78 @@ public class ServicePropertiesSerializerTest
     Assert.assertTrue(transportProperties != null && transportProperties.containsKey(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS));
   }
 
+  @Test
+  public void testServicePropertiesWithMethodLevelProperties() throws PropertySerializationException {
+    ServicePropertiesJsonSerializer serializer = new ServicePropertiesJsonSerializer();
+
+    MethodLevelProperties methodLevelProperties = createMethodLevelProperties(null);
+    ServiceProperties property =
+        new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/foo", Arrays.asList("rr"), new HashMap<>(), null,
+            null, Arrays.asList("HTTPS"), Collections.emptySet(), Collections.emptyMap(), Collections.emptyList(),
+            Collections.emptyMap(), false, -1, 0, Arrays.asList(methodLevelProperties));
+    assertEquals(serializer.fromBytes(serializer.toBytes(property)), new ServiceStoreProperties(property, null, null));
+  }
+
+  @Test
+  public void testServicePropertiesWithMethodLevelPropertiesAndClientTransportPropertiesOverrides() throws PropertySerializationException {
+    Map<String, Object> transportPropertiesClientSide = new HashMap<>();
+    transportPropertiesClientSide.put(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS, "http.requestTimeout, http.useResponseCompression, http.responseContentEncodings");
+    transportPropertiesClientSide.put(PropertyKeys.HTTP_REQUEST_TIMEOUT, "10000");
+    transportPropertiesClientSide.put(PropertyKeys.HTTP_USE_RESPONSE_COMPRESSION, true);
+    transportPropertiesClientSide.put(PropertyKeys.HTTP_MAX_RESPONSE_SIZE, "209715200");
+
+    ServicePropertiesJsonSerializer serializerWithClientProperties = new ServicePropertiesJsonSerializer(Collections.singletonMap(TEST_SERVICE_NAME, transportPropertiesClientSide));
+
+    Map<String, Object> transportPropertiesServerSide = new HashMap<>();
+    transportPropertiesServerSide.put(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS, "http.requestTimeout, http.useResponseCompression, http.responseContentEncodings");
+    transportPropertiesServerSide.put(PropertyKeys.HTTP_REQUEST_TIMEOUT, "5000");
+    transportPropertiesServerSide.put(PropertyKeys.HTTP_USE_RESPONSE_COMPRESSION, false);
+    transportPropertiesClientSide.put(PropertyKeys.HTTP_MAX_RESPONSE_SIZE, "209715");
+
+    MethodLevelProperties methodLevelProperties = createMethodLevelProperties(transportPropertiesServerSide);
+    ServiceProperties servicePropertiesServerSide =
+        new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/foo", Arrays.asList("rr"), new HashMap<>(), null,
+            null, Arrays.asList("HTTPS"), Collections.emptySet(), Collections.emptyMap(), Collections.emptyList(),
+            Collections.emptyMap(), false, -1, 0, Arrays.asList(methodLevelProperties));
+
+
+    ServiceProperties servicePropertiesWithClientCfg = serializerWithClientProperties.fromBytes(serializerWithClientProperties.toBytes(servicePropertiesServerSide));
+    for (MethodLevelProperties methodLevelProperty : servicePropertiesWithClientCfg.getMethodLevelProperties()) {
+      for (Map.Entry<String, Object> compiledProperty : methodLevelProperty.getTransportClientProperties().entrySet()) {
+        if (AllowedClientPropertyKeys.isAllowedConfigKey(compiledProperty.getKey())) {
+          Assert.assertEquals(compiledProperty.getValue(), transportPropertiesClientSide.get(compiledProperty.getKey()));
+        }
+        else {
+          Assert.assertEquals(compiledProperty.getValue(), transportPropertiesServerSide.get(compiledProperty.getKey()));
+        }
+      }
+    }
+
+    for (MethodLevelProperties methodLevelProperty : servicePropertiesWithClientCfg.getMethodLevelProperties()) {
+      Map<String, Object> transportProperties = methodLevelProperty.getTransportClientProperties();
+      Assert.assertTrue(transportProperties != null && transportProperties.containsKey(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS));
+    }
+  }
+
+  @Test
+  public void testServicePropertiesWithMethodLevelPropertiesWithNull() {
+    ServicePropertiesJsonSerializer serializer = new ServicePropertiesJsonSerializer();
+
+    List<NameProperties> namePropertiesList = new ArrayList<>();
+    namePropertiesList.add(new NameProperties(null, "testMethod"));
+    MethodLevelProperties methodLevelProperties = new MethodLevelProperties(namePropertiesList, Collections.emptyMap(), Collections.emptyMap());
+    boolean exceptionThrown = false;
+    try {
+      ServiceProperties property = new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/foo", Arrays.asList("rr"), new HashMap<>(), null,
+          null, Arrays.asList("HTTPS"), Collections.emptySet(), Collections.emptyMap(), Collections.emptyList(),
+          Collections.emptyMap(), false, -1, 0, Arrays.asList(methodLevelProperties));
+      serializer.fromBytes(serializer.toBytes(property));
+    } catch (Exception e) {
+      exceptionThrown = true;
+    }
+    Assert.assertTrue(exceptionThrown);
+  }
+
   @DataProvider(name = "testToBytesDataProvider")
   public Object[][] testToBytesDataProvider() {
     return new Object[][] {
@@ -307,5 +382,23 @@ public class ServicePropertiesSerializerTest
         .setInitialHealthScore(initialHealthScore)
         .setSlowStartThreshold(slowStartThreshold)
         .setErrorStatusFilter(errorStatusRange);
+  }
+
+  private MethodLevelProperties createMethodLevelProperties(@Nullable Map<String, Object> transportProperties) {
+    List<NameProperties> namePropertiesList = new ArrayList<>();
+    namePropertiesList.add(new NameProperties("testService", "testMethod"));
+    namePropertiesList.add(new NameProperties("testService2", null));
+
+    Map<String, Object> transportPropertiesClientSide = transportProperties;
+    if (transportPropertiesClientSide == null){
+      transportPropertiesClientSide = new HashMap<>();
+      transportPropertiesClientSide.put(PropertyKeys.ALLOWED_CLIENT_OVERRIDE_KEYS, "http.requestTimeout, http.useResponseCompression, http.responseContentEncodings");
+      transportPropertiesClientSide.put(PropertyKeys.HTTP_REQUEST_TIMEOUT, "5000");
+    }
+
+    Map<String, Object> serviceMetadataProperties = new HashMap<>();
+    serviceMetadataProperties.put("retry.maxAttempts", "3");
+
+    return new MethodLevelProperties(namePropertiesList, transportPropertiesClientSide, serviceMetadataProperties);
   }
 }

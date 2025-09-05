@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 
 /**
@@ -55,6 +56,7 @@ public class ServiceProperties
   private final boolean _enableClusterSubsetting;
   private final int _minClusterSubsetSize;
   private long _version;
+  private final List<MethodLevelProperties> _methodLevelProperties;
 
   public ServiceProperties(String serviceName,
                            String clusterName,
@@ -183,6 +185,29 @@ public class ServiceProperties
       int minClusterSubsetSize,
       long version)
   {
+    this(serviceName, clusterName, path, prioritizedStrategyList, loadBalancerStrategyProperties,
+        transportClientProperties, degraderProperties, prioritizedSchemes, banned,
+        serviceMetadataProperties, backupRequests, relativeStrategyProperties, enableClusterSubsetting,
+        minClusterSubsetSize, version, Collections.emptyList());
+  }
+
+  public ServiceProperties(String serviceName,
+      String clusterName,
+      String path,
+      List<String> prioritizedStrategyList,
+      Map<String,Object> loadBalancerStrategyProperties,
+      Map<String,Object> transportClientProperties,
+      Map<String,String> degraderProperties,
+      List<String> prioritizedSchemes,
+      Set<URI> banned,
+      Map<String,Object> serviceMetadataProperties,
+      List<Map<String,Object>> backupRequests,
+      Map<String, Object> relativeStrategyProperties,
+      boolean enableClusterSubsetting,
+      int minClusterSubsetSize,
+      long version,
+      @Nullable List<MethodLevelProperties> methodLevelProperties)
+  {
     ArgumentUtil.notNull(serviceName, PropertyKeys.SERVICE_NAME);
     ArgumentUtil.notNull(clusterName, PropertyKeys.CLUSTER_NAME);
     ArgumentUtil.notNull(path, PropertyKeys.PATH);
@@ -214,6 +239,8 @@ public class ServiceProperties
     _enableClusterSubsetting = enableClusterSubsetting;
     _minClusterSubsetSize = minClusterSubsetSize;
     _version = version;
+    _methodLevelProperties = (methodLevelProperties != null) ? Collections.unmodifiableList(methodLevelProperties) :
+        Collections.emptyList();
   }
 
   public ServiceProperties(ServiceProperties other)
@@ -320,6 +347,11 @@ public class ServiceProperties
     return _minClusterSubsetSize;
   }
 
+  public List<com.linkedin.d2.balancer.properties.MethodLevelProperties> getMethodLevelProperties()
+  {
+    return _methodLevelProperties;
+  }
+
   @Override
   public String toString()
   {
@@ -346,6 +378,8 @@ public class ServiceProperties
         + _enableClusterSubsetting
         + ", minimumClusterSubsetSize="
         + _minClusterSubsetSize
+        + ", methodLevelProperties="
+        + _methodLevelProperties
         + "]";
   }
 
@@ -368,6 +402,7 @@ public class ServiceProperties
     result = prime * result + _relativeStrategyProperties.hashCode();
     result = prime * result + Boolean.hashCode(_enableClusterSubsetting);
     result = prime * result + Integer.hashCode(_minClusterSubsetSize);
+    result = prime * result + _methodLevelProperties.hashCode();
     return result;
   }
 
@@ -408,6 +443,8 @@ public class ServiceProperties
     if (_enableClusterSubsetting != other._enableClusterSubsetting)
       return false;
     if (_minClusterSubsetSize != other._minClusterSubsetSize)
+      return false;
+    if (!_methodLevelProperties.equals(other._methodLevelProperties))
       return false;
     return true;
   }

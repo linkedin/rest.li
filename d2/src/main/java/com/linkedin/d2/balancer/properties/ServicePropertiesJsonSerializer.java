@@ -17,6 +17,7 @@
 package com.linkedin.d2.balancer.properties;
 
 
+import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import com.linkedin.d2.balancer.properties.util.PropertyUtil;
 import com.linkedin.d2.balancer.subsetting.SubsettingStrategy;
@@ -28,6 +29,7 @@ import com.linkedin.r2.util.ConfigValueExtractor;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -288,6 +290,8 @@ public class ServicePropertiesJsonSerializer implements
 
     List<Map<String, Object>> backupRequests = mapGetOrDefault(map, PropertyKeys.BACKUP_REQUESTS, Collections.emptyList());
 
+    List<MethodLevelProperties> methodLevelProperties = buildMethodLevelProperties((String) map.get(PropertyKeys.SERVICE_NAME), mapGetOrDefault(map, PropertyKeys.METHOD_LEVEL_PROPERTIES, Collections.emptyList()));
+
     return new ServiceProperties((String) map.get(PropertyKeys.SERVICE_NAME),
         (String) map.get(PropertyKeys.CLUSTER_NAME),
         (String) map.get(PropertyKeys.PATH),
@@ -301,6 +305,38 @@ public class ServicePropertiesJsonSerializer implements
         backupRequests,
         relativeStrategyProperties,
         enableClusterSubsetting,
-        minClusterSubsetSize);
+        minClusterSubsetSize,
+        -1,
+        methodLevelProperties);
+  }
+
+  /**
+   * build method level properties returns a list of MethodLevelProperties objects,
+   * this also performs the transport client properties overrides on the method level.
+   */
+  private List<MethodLevelProperties> buildMethodLevelProperties(String serviceName, List<Map<String, Object>> methodLevelPropertiesList) {
+    List<MethodLevelProperties> methodLevelProperties = new ArrayList<>();
+    for (Map<String, Object> methodLevelPropertiesMap : methodLevelPropertiesList) {
+      List<NameProperties> namePropertiesList = buildNameProperties(Preconditions.checkNotNull(mapGet(methodLevelPropertiesMap, PropertyKeys.METHOD_LEVEL_PROPERTIES_NAME)));
+      Map<String, Object> transportClientProperties = mapGetOrDefault(methodLevelPropertiesMap, PropertyKeys.TRANSPORT_CLIENT_PROPERTIES, Collections.emptyMap());
+      Map<String, Object> serviceMetadataProperties = mapGetOrDefault(methodLevelPropertiesMap, PropertyKeys.SERVICE_METADATA_PROPERTIES, Collections.emptyMap());
+      methodLevelProperties.add(new MethodLevelProperties(namePropertiesList,
+          getTransportClientPropertiesWithClientOverrides(serviceName, transportClientProperties),
+          serviceMetadataProperties));
+    }
+    return methodLevelProperties;
+  }
+
+  /**
+   * build name properties returns a List of NameProperties
+   */
+  private List<NameProperties> buildNameProperties(List<Map<String, Object>> namePropertiesList) {
+    List<NameProperties> nameProperties = new ArrayList<>();
+    for (Map<String, Object> namePropertiesMap : namePropertiesList) {
+      String service = Preconditions.checkNotNull(mapGet(namePropertiesMap, PropertyKeys.METHOD_LEVEL_PROPERTIES_NAME_SERVICE));
+      String method = mapGet(namePropertiesMap, PropertyKeys.METHOD_LEVEL_PROPERTIES_NAME_METHOD);
+      nameProperties.add(new NameProperties(service, method));
+    }
+    return nameProperties;
   }
 }
