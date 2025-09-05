@@ -317,10 +317,10 @@ public class ServicePropertiesJsonSerializer implements
   private List<MethodLevelProperties> buildMethodLevelProperties(String serviceName, List<Map<String, Object>> methodLevelPropertiesList) {
     List<MethodLevelProperties> methodLevelProperties = new ArrayList<>();
     for (Map<String, Object> methodLevelPropertiesMap : methodLevelPropertiesList) {
-      List<NameProperties> namePropertiesList = buildNameProperties(Preconditions.checkNotNull(mapGet(methodLevelPropertiesMap, PropertyKeys.METHOD_LEVEL_PROPERTIES_NAME)));
+      List<Name> nameList = buildNameProperties(Preconditions.checkNotNull(mapGet(methodLevelPropertiesMap, PropertyKeys.METHOD_LEVEL_PROPERTIES_NAME)));
       Map<String, Object> transportClientProperties = mapGetOrDefault(methodLevelPropertiesMap, PropertyKeys.TRANSPORT_CLIENT_PROPERTIES, Collections.emptyMap());
       Map<String, Object> serviceMetadataProperties = mapGetOrDefault(methodLevelPropertiesMap, PropertyKeys.SERVICE_METADATA_PROPERTIES, Collections.emptyMap());
-      methodLevelProperties.add(new MethodLevelProperties(namePropertiesList,
+      methodLevelProperties.add(new MethodLevelProperties(nameList,
           getTransportClientPropertiesWithClientOverrides(serviceName, transportClientProperties),
           serviceMetadataProperties));
     }
@@ -328,14 +328,14 @@ public class ServicePropertiesJsonSerializer implements
   }
 
   /**
-   * build name properties returns a List of NameProperties
+   * build name properties returns a List of Name objects
    */
-  private List<NameProperties> buildNameProperties(List<Map<String, Object>> namePropertiesList) {
-    List<NameProperties> nameProperties = new ArrayList<>();
-    for (Map<String, Object> namePropertiesMap : namePropertiesList) {
+  private List<Name> buildNameProperties(List<Map<String, Object>> nameList) {
+    List<Name> nameProperties = new ArrayList<>();
+    for (Map<String, Object> namePropertiesMap : nameList) {
       String service = Preconditions.checkNotNull(mapGet(namePropertiesMap, PropertyKeys.METHOD_LEVEL_PROPERTIES_NAME_SERVICE));
       String method = mapGet(namePropertiesMap, PropertyKeys.METHOD_LEVEL_PROPERTIES_NAME_METHOD);
-      nameProperties.add(new NameProperties(service, method));
+      nameProperties.add(new Name(service, method));
     }
     return nameProperties;
   }

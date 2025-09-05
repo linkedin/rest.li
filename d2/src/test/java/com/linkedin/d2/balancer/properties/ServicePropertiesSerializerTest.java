@@ -294,9 +294,9 @@ public class ServicePropertiesSerializerTest
   public void testServicePropertiesWithMethodLevelPropertiesWithNull() {
     ServicePropertiesJsonSerializer serializer = new ServicePropertiesJsonSerializer();
 
-    List<NameProperties> namePropertiesList = new ArrayList<>();
-    namePropertiesList.add(new NameProperties(null, "testMethod"));
-    MethodLevelProperties methodLevelProperties = new MethodLevelProperties(namePropertiesList, Collections.emptyMap(), Collections.emptyMap());
+    List<Name> nameList = new ArrayList<>();
+    nameList.add(new Name(null, "testMethod"));
+    MethodLevelProperties methodLevelProperties = new MethodLevelProperties(nameList, Collections.emptyMap(), Collections.emptyMap());
     boolean exceptionThrown = false;
     try {
       ServiceProperties property = new ServiceProperties(TEST_SERVICE_NAME, TEST_CLUSTER_NAME, "/foo", Arrays.asList("rr"), new HashMap<>(), null,
@@ -385,9 +385,9 @@ public class ServicePropertiesSerializerTest
   }
 
   private MethodLevelProperties createMethodLevelProperties(@Nullable Map<String, Object> transportProperties) {
-    List<NameProperties> namePropertiesList = new ArrayList<>();
-    namePropertiesList.add(new NameProperties("testService", "testMethod"));
-    namePropertiesList.add(new NameProperties("testService2", null));
+    List<Name> nameList = new ArrayList<>();
+    nameList.add(new Name("testService", "testMethod"));
+    nameList.add(new Name("testService2", null));
 
     Map<String, Object> transportPropertiesClientSide = transportProperties;
     if (transportPropertiesClientSide == null){
@@ -399,6 +399,6 @@ public class ServicePropertiesSerializerTest
     Map<String, Object> serviceMetadataProperties = new HashMap<>();
     serviceMetadataProperties.put("retry.maxAttempts", "3");
 
-    return new MethodLevelProperties(namePropertiesList, transportPropertiesClientSide, serviceMetadataProperties);
+    return new MethodLevelProperties(nameList, transportPropertiesClientSide, serviceMetadataProperties);
   }
 }

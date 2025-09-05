@@ -8,13 +8,13 @@ import javax.annotation.Nullable;
 /**
  * Name properties
  */
-public class NameProperties {
+public class Name {
   // gRPC service name
   private final String _service;
   // gRPC method name
   private final String _method;
 
-  public NameProperties(String service, @Nullable String method) {
+  public Name(String service, @Nullable String method) {
     _service = service;
     _method = method;
   }
@@ -48,7 +48,7 @@ public class NameProperties {
     if (obj == null || getClass() != obj.getClass()) {
       return false;
     }
-    NameProperties other = (NameProperties) obj;
+    Name other = (Name) obj;
     return Objects.equals(_service, other._service)
         && Objects.equals(_method, other._method);
   }

@@ -10,20 +10,20 @@ import java.util.Objects;
  * Method level properties is configuration for supporting service/method level overrides in gRPC.
  */
 public class MethodLevelProperties {
-  // name properties, to configure service and method names
-  private final List<NameProperties> _name;
+  // name list to configure service and method names
+  private final List<Name> _name;
   // transport client properties overrides per configured service and method names
   private final Map<String, Object> _transportClientProperties;
   // service metadata properties overrides per configured service and method names
   private final Map<String, Object> _serviceMetadataProperties;
 
-  public MethodLevelProperties(List<NameProperties> name, Map<String, Object> transportClientProperties, Map<String, Object> serviceMetadataProperties) {
+  public MethodLevelProperties(List<Name> name, Map<String, Object> transportClientProperties, Map<String, Object> serviceMetadataProperties) {
     _name = name;
     _transportClientProperties = transportClientProperties;
     _serviceMetadataProperties = serviceMetadataProperties;
   }
 
-  public List<NameProperties> getName() {
+  public List<Name> getName() {
     return _name;
   }
 

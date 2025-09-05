@@ -1,9 +1,9 @@
 namespace com.linkedin.d2
 
 /**
- * D2 Service Name properties under Method Level properties
+ * D2 Service Name under Method Level properties
  */
-record NameProperties {
+record Name {
   /**
    * service is gRPC service name
    */
