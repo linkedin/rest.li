@@ -82,4 +82,13 @@ public interface XdsClientJmxMBean {
    * client receives it.
    */
   long getXdsServerLatencyMax();
+
+  /**
+   * Active initial wait time is a sum from all resource subscribers in the xds client that are actively waiting for the
+   * initial resource data from an xDS server (including reconnected to a new xDS server). In normal state, this should
+   * be close to 0. In case of missing responses from xDS server or suffering a long delay, this metric will spike up.
+   * (Note: once initial data is received, subsequent updates don't count towards this metric, since the client can't
+   * know if an update happened at all).
+   */
+  long getActiveInitialWaitTimeMillis();
 }

@@ -17,6 +17,7 @@
 package com.linkedin.data.avro;
 
 import com.google.common.collect.ImmutableMap;
+import com.linkedin.avroutil1.compatibility.RandomRecordGenerator;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
@@ -2290,6 +2291,56 @@ public class TestDataTranslator
 
     Assert.assertTrue(mapOfMapOfArrayOfMapArrayUnion.get(0) instanceof Map);
     Assert.assertEquals(((Map<?, ?>) mapOfMapOfArrayOfMapArrayUnion.get(0)).get("recordMap"), mapOfArrayOfMapArrayUnion);
+  }
+
+  @Test
+  public void testWithProtoformedAvroAndDataSchema() throws IOException {
+    // the avro and data schema should have the same shape but different namespaces
+    String avroSchemaString = "{\n" + "  \"type\" : \"record\",\n" + "  \"name\" : \"NativeProtoMessage\",\n"
+        + "  \"namespace\" : \"avro.com.linkedin.avsc\",\n" + "  \"fields\" : [ {\n" + "    \"name\" : \"field1\",\n"
+        + "    \"type\" : [ \"null\", \"string\" ],\n" + "    \"default\" : null,\n"
+        + "    \"li.data.proto.fieldNumber\" : 1\n" + "  }, {\n" + "    \"name\" : \"field2\",\n"
+        + "    \"type\" : [ \"null\", {\n" + "      \"type\" : \"record\",\n"
+        + "      \"name\" : \"MessageUsedWithinField\",\n" + "      \"fields\" : [ {\n"
+        + "        \"name\" : \"field1\",\n" + "        \"type\" : [ \"null\", \"string\" ],\n"
+        + "        \"default\" : null,\n" + "        \"li.data.proto.fieldNumber\" : 1\n" + "      }, {\n"
+        + "        \"name\" : \"field2\",\n" + "        \"type\" : [ \"null\", \"string\" ],\n"
+        + "        \"default\" : null,\n" + "        \"li.data.proto.fieldNumber\" : 2\n" + "      } ],\n"
+        + "      \"li.data.proto.fullyQualifiedName\" : \"proto.com.linkedin.avsc.MessageUsedWithinField\"\n"
+        + "    } ],\n" + "    \"default\" : null,\n" + "    \"li.data.proto.fieldNumber\" : 2\n" + "  } ],\n"
+        + "  \"li.data.proto.fullyQualifiedName\" : \"proto.com.linkedin.avsc.NativeProtoMessage\"\n" + "}";
+
+    String dataSchemaString = "{\n" + "  \"type\" : \"record\",\n" + "  \"name\" : \"NativeProtoMessage\",\n"
+        + "  \"namespace\" : \"pegasus.com.linkedin.pdl\",\n" + "  \"fields\" : [ {\n" + "    \"name\" : \"field1\",\n"
+        + "    \"type\" : \"string\",\n" + "    \"optional\" : true\n" + "  }, {\n" + "    \"name\" : \"field2\",\n"
+        + "    \"type\" : {\n" + "  \"type\" : \"record\",\n" + "  \"name\" : \"MessageUsedWithinField\",\n"
+        + "  \"namespace\" : \"pegasus.com.linkedin.pdl\",\n" + "  \"fields\" : [ {\n" + "    \"name\" : \"field1\",\n"
+        + "    \"type\" : \"string\",\n" + "    \"optional\" : true\n" + "  }, {\n" + "    \"name\" : \"field2\",\n"
+        + "    \"type\" : \"string\",\n" + "    \"optional\" : true\n" + "  } ]\n" + "},\n" + "    \"optional\" : true\n"
+        + "  } ]\n" + "}";
+
+
+    RecordDataSchema pegasusSchema = (RecordDataSchema)TestUtil.dataSchemaFromString(dataSchemaString);
+    Schema avroSchema = Schema.parse(avroSchemaString);
+
+    // set array field after the fact to prevent the type from being set as GenericArray in dataMapToGenericRecord
+    GenericRecord newRecord = new GenericData.Record(avroSchema);
+    newRecord.put("field1", "value1");
+    GenericRecord newRecord2 = new GenericData.Record(avroSchema.getField("field2").schema().getTypes().get(1));
+    newRecord2.put("field1", "value1.1");
+    newRecord2.put("field2", "value1.2");
+    newRecord.put("field2", newRecord2);
+    DataMap toDataMap = DataTranslator.genericRecordToDataMap(newRecord, pegasusSchema, avroSchema);
+
+    assertEquals(toDataMap.get("field1"), "value1");
+    assertEquals(((DataMap)toDataMap.get("field2")).get("field1"), "value1.1");
+    assertEquals(((DataMap)toDataMap.get("field2")).get("field2"), "value1.2");
+
+    // now go the other way
+    GenericRecord fromDataMap = DataTranslator.dataMapToGenericRecord(toDataMap, pegasusSchema, avroSchema);
+    assertEquals(fromDataMap.get("field1").toString(), "value1");
+    assertEquals(((GenericRecord)fromDataMap.get("field2")).get("field1").toString(), "value1.1");
+    assertEquals(((GenericRecord)fromDataMap.get("field2")).get("field2").toString(), "value1.2");
   }
 }
 

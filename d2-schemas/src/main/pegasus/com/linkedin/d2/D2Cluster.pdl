@@ -53,5 +53,5 @@ record D2Cluster includes D2ChangeTimeStamps {
   /**
   * Options for configuring the outlier detection. Only used by gRPC clients.
   */
-  outlierDetection: optional OutlierDetectionConfig
+  outlierDetectionConfig: optional OutlierDetectionConfig
 }

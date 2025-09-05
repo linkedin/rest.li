@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
+import com.google.protobuf.util.Timestamps;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterPropertiesJsonSerializer;
 import com.linkedin.d2.balancer.properties.ClusterStoreProperties;
@@ -224,21 +225,26 @@ public class TestXdsToD2PropertiesAdaptor {
     {
       fixture.getSpiedAdaptor().listenToUris(PRIMARY_CLUSTER_NAME);
     }
-
     verify(fixture._xdsClient, times(10)).watchXdsResource(eq(PRIMARY_URI_RESOURCE_NAME), anyMapWatcher());
+
     XdsD2.D2URI protoUri = getD2URI(PRIMARY_CLUSTER_NAME, URI_NAME, VERSION);
     Map<String, XdsD2.D2URI> uriMap = new HashMap<>(Collections.singletonMap(URI_NAME, protoUri));
-    fixture._uriMapWatcher.onChanged(new XdsClient.D2URIMapUpdate(uriMap));
+    XdsClient.D2URIMapUpdate update = new XdsClient.D2URIMapUpdate(uriMap);
+    // update receipt event is not emitted when isStaleModifiedTime flag
+    update.setIsStaleModifiedTime(URI_NAME, true);
+    fixture._uriMapWatcher.onChanged(update);
+
     verify(fixture._uriEventBus).publishInitialize(PRIMARY_CLUSTER_NAME, _uriSerializer.fromProto(protoUri));
     verify(fixture._eventEmitter).emitSDStatusInitialRequestEvent(
         eq(PRIMARY_CLUSTER_NAME), eq(true), anyLong(), eq(true));
-    // no status update receipt event emitted for initial update
     verify(fixture._eventEmitter, never()).emitSDStatusUpdateReceiptEvent(
         any(), any(), anyInt(), any(), anyBoolean(), any(), any(), any(), any(), any(), anyLong());
 
     // add uri 2
     uriMap.put(URI_NAME_2, getD2URI(PRIMARY_CLUSTER_NAME, URI_NAME_2, VERSION));
-    fixture._uriMapWatcher.onChanged(new XdsClient.D2URIMapUpdate(uriMap));
+    update = new XdsClient.D2URIMapUpdate(uriMap);
+    update.setIsStaleModifiedTime(URI_NAME_2, false);
+    fixture._uriMapWatcher.onChanged(update);
     verify(fixture._eventEmitter).emitSDStatusInitialRequestEvent(
         eq(PRIMARY_CLUSTER_NAME), eq(true), anyLong(), eq(true)); // no more initial request event emitted
     verify(fixture._eventEmitter).emitSDStatusUpdateReceiptEvent( // status update receipt event emitted for added uri
@@ -249,7 +255,11 @@ public class TestXdsToD2PropertiesAdaptor {
     uriMap.clear();
     uriMap.put(URI_NAME, getD2URI(PRIMARY_CLUSTER_NAME, URI_NAME, VERSION_2));
     uriMap.put(URI_NAME_3, getD2URI(PRIMARY_CLUSTER_NAME, URI_NAME_3, VERSION));
-    fixture._uriMapWatcher.onChanged(new XdsClient.D2URIMapUpdate(uriMap));
+    update = new XdsClient.D2URIMapUpdate(uriMap);
+    update.setIsStaleModifiedTime(URI_NAME, false);
+    update.setIsStaleModifiedTime(URI_NAME_2, false);
+    update.setIsStaleModifiedTime(URI_NAME_3, false);
+    fixture._uriMapWatcher.onChanged(update);
     // events should be emitted only for remove/add, but not update
     verify(fixture._eventEmitter, never()).emitSDStatusUpdateReceiptEvent(
         any(), eq(HOST_1), anyInt(), eq(ServiceDiscoveryEventEmitter.StatusUpdateActionType.MARK_READY), anyBoolean(),
@@ -311,8 +321,8 @@ public class TestXdsToD2PropertiesAdaptor {
     watcher.onChanged(new XdsClient.D2URIMapUpdate(Collections.singletonMap(URI_NAME, protoUri)));
 
     verify(fixture._uriEventBus).publishInitialize(PRIMARY_CLUSTER_NAME, uriProps);
-    // no status update receipt event emitted when data was empty before the update
-    verify(fixture._eventEmitter, never()).emitSDStatusUpdateReceiptEvent(
+    // status update receipt event should be emitted as long as the uri is modified after the watch time
+    verify(fixture._eventEmitter).emitSDStatusUpdateReceiptEvent(
         eq(PRIMARY_CLUSTER_NAME),
         eq(LOCAL_HOST),
         eq(PORT),
@@ -368,7 +378,12 @@ public class TestXdsToD2PropertiesAdaptor {
     verify(fixture._uriEventBus).publishInitialize(PRIMARY_CLUSTER_NAME, null);
   }
 
-  private XdsD2.D2URI getD2URI(String clusterName, String uri, long version)
+  private static XdsD2.D2URI getD2URI(String clusterName, String uri, long version)
+  {
+    return getD2URI(clusterName, uri, version, System.currentTimeMillis());
+  }
+
+  private static XdsD2.D2URI getD2URI(String clusterName, String uri, long version, long modifiedAt)
   {
     return XdsD2.D2URI.newBuilder()
         .setVersion(version)
@@ -380,6 +395,7 @@ public class TestXdsToD2PropertiesAdaptor {
         .putPartitionDesc(0, 42)
         .putPartitionDesc(1, 27)
         .setTracingId(TRACING_ID)
+        .setModifiedTime(Timestamps.fromMillis(modifiedAt))
         .build();
   }
 

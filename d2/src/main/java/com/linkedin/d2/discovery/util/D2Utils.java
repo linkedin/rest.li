@@ -154,7 +154,7 @@ public class D2Utils
         userDir = userDir.substring(0, slashAfterAppName);
       }
       userDir = userDir.replace("/", "-");
-      userDir = userDir.substring(1);
+      userDir = userDir.substring(1); // remove the leading slash
     }
     else {
       // sample usr.dir:
@@ -176,7 +176,7 @@ public class D2Utils
       LOG.info("Transformed user.dir from {} to {}", originalUserDir, userDir);
     }
     LOG.info("Use user.dir for raw D2 Client usages: {}", userDir);
-    return userDir; // remove the leading slash
+    return userDir;
   }
 
   public static String getRawClientTrackingPath()
