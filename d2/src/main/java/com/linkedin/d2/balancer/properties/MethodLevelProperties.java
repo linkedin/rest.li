@@ -38,7 +38,7 @@ public class MethodLevelProperties {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("nameProperties", _name)
+        .add("name", _name)
         .add("transportClientProperties", _transportClientProperties )
         .add("serviceMetadataProperties", _serviceMetadataProperties)
         .toString();
