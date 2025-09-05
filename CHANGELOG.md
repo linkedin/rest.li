@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.75.2] - 2025-09-05
+- Rename the outlier detection field in the D2 cluster
+
 ## [29.75.1] - 2025-09-04
 - mark fields as optional
 
@@ -5888,7 +5891,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.75.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.75.2...master
+[29.75.2]: https://github.com/linkedin/rest.li/compare/v29.75.1...v29.75.2
 [29.75.1]: https://github.com/linkedin/rest.li/compare/v29.75.0...v29.75.1
 [29.75.0]: https://github.com/linkedin/rest.li/compare/v29.74.4...v29.75.0
 [29.74.4]: https://github.com/linkedin/rest.li/compare/v29.74.3...v29.74.4
