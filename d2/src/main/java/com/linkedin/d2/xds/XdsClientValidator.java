@@ -37,6 +37,10 @@ public class XdsClientValidator
 
   public static final String DEFAULT_MINIMUM_JAVA_VERSION = "1.8.0_282";
 
+  // Required class names for XDS functionality
+  private static final String PROTOBUF_FILE_DESCRIPTOR_CLASS = "com.google.protobuf.Descriptors$FileDescriptor";
+  private static final String ENVOY_AGGREGATED_DISCOVERY_SERVICE_CLASS = "io.envoyproxy.envoy.service.discovery.v3.AggregatedDiscoveryServiceGrpc";
+
   /**
    * Action to take when pre-check validation fails.
    */
@@ -90,10 +94,56 @@ public class XdsClientValidator
    * @param minimumJavaVersion the minimum required Java version
    * @return null if all pre-checks pass, error message if validation fails
    */
-  private static String processValidation(ManagedChannel managedChannel, long readyTimeoutMillis,
-                                          String minimumJavaVersion)
+  static String processValidation(ManagedChannel managedChannel, long readyTimeoutMillis,
+                                  String minimumJavaVersion)
   {
     // Check Java version
+    String javaVersionError = validateJavaVersion(minimumJavaVersion);
+    if (javaVersionError != null)
+    {
+      return javaVersionError;
+    }
+
+    // Check required classes
+    String classAvailabilityError =
+        validateRequiredClasses(PROTOBUF_FILE_DESCRIPTOR_CLASS, ENVOY_AGGREGATED_DISCOVERY_SERVICE_CLASS);
+    if (classAvailabilityError != null)
+    {
+      return classAvailabilityError;
+    }
+
+    // Check channel and authority
+    String authorityError = validateChannelAuthority(managedChannel);
+    if (authorityError != null)
+    {
+      return authorityError;
+    }
+
+    // Check socket connection
+    String socketError = validateSocketConnection(managedChannel.authority(), readyTimeoutMillis, new Socket());
+    if (socketError != null)
+    {
+      return socketError;
+    }
+
+    // Check health check
+    String healthCheckError = validateHealthCheck(managedChannel, readyTimeoutMillis);
+    if (healthCheckError != null)
+    {
+      return healthCheckError;
+    }
+
+    return null; // All validations passed
+  }
+
+  /**
+   * Validates Java version meets minimum requirements.
+   *
+   * @param minimumJavaVersion the minimum required Java version
+   * @return error message if validation fails, null if passes
+   */
+  static String validateJavaVersion(String minimumJavaVersion)
+  {
     String javaVersion = System.getProperty("java.version");
     String requiredVersion = minimumJavaVersion != null ? minimumJavaVersion : DEFAULT_MINIMUM_JAVA_VERSION;
     LOG.info("Current Java version: {}, minimum required: {}", javaVersion, requiredVersion);
@@ -103,15 +153,30 @@ public class XdsClientValidator
           "otherwise the service couldn't create grpc connection between service and INDIS, " +
           "check go/onboardindis Guidelines #2 for more details";
     }
+    return null;
+  }
 
-    // Check there is no protobuf version mismatch or excluding the io.envoyproxy module in build.gradle issue
+  /**
+   * Validates that the provided classes are available on the classpath.
+   *
+   * @param classNames fully-qualified class names to validate
+   * @return error message if validation fails, null if all classes are present
+   */
+  static String validateRequiredClasses(String... classNames)
+  {
     try
     {
-      Class.forName("com.google.protobuf.Descriptors$FileDescriptor");
-      LOG.info("[xds pre-check] Protobuf Descriptor classes are available");
+      if (classNames == null)
+      {
+        return null;
+      }
 
-      Class.forName("io.envoyproxy.envoy.service.discovery.v3.AggregatedDiscoveryServiceGrpc");
-      LOG.info("[xds pre-check] Envoy API classes are available");
+      for (String className : classNames)
+      {
+        Class.forName(className);
+        LOG.info("[xds pre-check] Required class available: {}", className);
+      }
+      return null;
     }
     catch (ClassNotFoundException | NoClassDefFoundError e)
     {
@@ -121,14 +186,21 @@ public class XdsClientValidator
     {
       return "[xds pre-check] Unexpected exception during class availability check: " + e.getMessage();
     }
+  }
 
-    // Check if we can actually reach the server at the given authority to rule out NACL issue
+  /**
+   * Validates channel and authority.
+   *
+   * @param managedChannel the gRPC managed channel
+   * @return error message if validation fails, null if passes
+   */
+  static String validateChannelAuthority(ManagedChannel managedChannel)
+  {
     if (managedChannel == null)
     {
       return "[xds pre-check] Managed channel is null, cannot establish XDS connection to INDIS server";
     }
 
-    // Extract server authority from managed channel
     String serverAuthority = managedChannel.authority();
     if (serverAuthority == null || serverAuthority.isEmpty())
     {
@@ -136,27 +208,30 @@ public class XdsClientValidator
           "failed";
     }
     LOG.info("[xds pre-check] INDIS xDS server authority: {}", serverAuthority);
+    return null;
+  }
 
+  /**
+   * Validates socket connection to server.
+   *
+   * @param serverAuthority    the server authority string
+   * @param readyTimeoutMillis timeout for connection checks in milliseconds
+   * @return error message if validation fails, null if passes
+   */
+  static String validateSocketConnection(String serverAuthority, long readyTimeoutMillis, Socket socket)
+  {
     try
     {
-      // Parse host and port using Guava's HostAndPort to handle IPv6 addresses like [::1]:32123
       HostAndPort hostAndPort = HostAndPort.fromString(serverAuthority);
       String host = hostAndPort.getHost();
-      int port = hostAndPort.getPortOrDefault(0);
-
-      if (port == 0)
-      {
-        return "[xds pre-check] No port specified in server authority: " + serverAuthority + ", expected format: " +
-            "host:port or [host]:port";
-      }
+      int port = hostAndPort.getPort();
 
       LOG.info("[xds pre-check] Testing socket connection to INDIS xDS server: {}:{}", host, port);
       // Check if we can connect to the server using a socket
-      try (Socket socket = new Socket())
-      {
-        socket.connect(new InetSocketAddress(host, port), (int) readyTimeoutMillis);
-        LOG.info("[xds pre-check] Successfully pinged to INDIS xDS server at {}:{}", host, port);
-      }
+      socket.connect(new InetSocketAddress(host, port), (int) readyTimeoutMillis);
+      LOG.info("[xds pre-check] Successfully pinged to INDIS xDS server at {}:{}", host, port);
+      return null;
+
     }
     catch (IllegalArgumentException e)
     {
@@ -165,31 +240,43 @@ public class XdsClientValidator
     }
     catch (SocketTimeoutException e)
     {
-      return "[xds pre-check] Connection timeout to INDIS xDS server at authority " + serverAuthority +
+      LOG.warn("[xds pre-check] Connection timeout to INDIS xDS server at authority " + serverAuthority +
           " within " + readyTimeoutMillis + "ms. This may be transient - if the issue persists, " +
-          "check go/onboardindis Guidelines #5 and #7 for more details";
+          "check go/onboardindis Guidelines #5 and #7 for more details" + e.getMessage());
+      return null;
     }
     catch (Exception e)
     {
       return "[xds pre-check] Failed to connect to INDIS xDS server at authority " + serverAuthority +
           ", check go/onboardindis Guidelines #5 and #7 for more details: " + e.getMessage();
     }
+  }
 
-    // Check there is no connection issue for managed channel connection, which may be caused by TLS/SSLContext issue
+  /**
+   * Validates health check for managed channel.
+   *
+   * @param managedChannel     the gRPC managed channel
+   * @param readyTimeoutMillis timeout for health checks in milliseconds
+   * @return error message if validation fails, null if passes
+   */
+  static String validateHealthCheck(ManagedChannel managedChannel, long readyTimeoutMillis)
+  {
     try
     {
       io.grpc.health.v1.HealthGrpc.newBlockingStub(managedChannel)
           .withDeadlineAfter(readyTimeoutMillis, java.util.concurrent.TimeUnit.MILLISECONDS)
           .check(io.grpc.health.v1.HealthCheckRequest.newBuilder().setService("").build());
       LOG.info("[xds pre-check] Health check for managed channel passed - channel is SERVING");
+      return null;
     }
     catch (StatusRuntimeException e)
     {
       if (e.getStatus().getCode() == io.grpc.Status.Code.DEADLINE_EXCEEDED)
       {
-        return "[xds pre-check] Health check timeout for managed channel within " + readyTimeoutMillis + "ms. " +
+        LOG.warn("[xds pre-check] Health check timeout for managed channel within " + readyTimeoutMillis + "ms. " +
             "This may be transient - if the issue persists, check go/onboardindis Guidelines #2 and #9 for more " +
-            "details";
+            "details" + e.getMessage());
+        return null;
       }
       else
       {
@@ -208,8 +295,6 @@ public class XdsClientValidator
           ", check go/onboardindis Guidelines #2 and #9 for more details, " +
           "if there is any other sslContext issue, please check with #pki team";
     }
-
-    return null; // All validations passed
   }
 
   /**
