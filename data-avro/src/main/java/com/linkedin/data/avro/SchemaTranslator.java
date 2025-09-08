@@ -46,8 +46,11 @@ import org.slf4j.LoggerFactory;
 
 
 /**
+ * @deprecated DO NOT USE SchemaTranslator AT RUNTIME. PLEASE FIND THE SCHEMA THAT IS CREATED AT BUILD TIME AND USE THAT
+ * SCHEMA AT RUNTIME. THIS CLASS IS INTENDED FOR BUILD TIME USE ONLY. For more info, see https://go/noRuntimeSchemaGen
  * Translates Avro {@link Schema} to and from Pegasus {@link DataSchema}.
  */
+@Deprecated
 public class SchemaTranslator
 {
   private static final Logger log = LoggerFactory.getLogger(SchemaTranslator.class);
@@ -112,7 +115,10 @@ public class SchemaTranslator
    * @param options specifies the {@link AvroToDataSchemaTranslationOptions}.
    * @return the translated {@link DataSchema}.
    * @throws IllegalArgumentException if the Avro {@link Schema} cannot be translated.
+   * @deprecated DO NOT USE SchemaTranslator AT RUNTIME. PLEASE FIND THE SCHEMA THAT IS CREATED AT BUILD TIME AND USE THAT
+   * SCHEMA AT RUNTIME. THIS CLASS IS INTENDED FOR BUILD TIME USE ONLY. For more info, see https://go/noRuntimeSchemaGen
    */
+  @Deprecated
   public static DataSchema avroToDataSchema(String avroSchemaInJson, AvroToDataSchemaTranslationOptions options)
     throws IllegalArgumentException
   {
@@ -195,7 +201,10 @@ public class SchemaTranslator
    * @param avroSchemaInJson provides the JSON representation of the Avro {@link Schema}.
    * @return the translated {@link DataSchema}.
    * @throws IllegalArgumentException if the Avro {@link Schema} cannot be translated.
+   * @deprecated DO NOT USE SchemaTranslator AT RUNTIME. PLEASE FIND THE SCHEMA THAT IS CREATED AT BUILD TIME AND USE THAT
+   * SCHEMA AT RUNTIME. THIS CLASS IS INTENDED FOR BUILD TIME USE ONLY. For more info, see https://go/noRuntimeSchemaGen
    */
+  @Deprecated
   public static DataSchema avroToDataSchema(String avroSchemaInJson) throws IllegalArgumentException
   {
     return avroToDataSchema(avroSchemaInJson, new AvroToDataSchemaTranslationOptions());
@@ -218,7 +227,10 @@ public class SchemaTranslator
    * @param options specifies the {@link AvroToDataSchemaTranslationOptions}.
    * @return the translated {@link DataSchema}.
    * @throws IllegalArgumentException if the Avro {@link Schema} cannot be translated.
+   * @deprecated DO NOT USE SchemaTranslator AT RUNTIME. PLEASE FIND THE SCHEMA THAT IS CREATED AT BUILD TIME AND USE THAT
+   * SCHEMA AT RUNTIME. THIS CLASS IS INTENDED FOR BUILD TIME USE ONLY. For more info, see https://go/noRuntimeSchemaGen
    */
+  @Deprecated
   public static DataSchema avroToDataSchema(Schema avroSchema, AvroToDataSchemaTranslationOptions options) throws IllegalArgumentException
   {
     String avroSchemaInJson = avroSchema.toString();
@@ -231,7 +243,10 @@ public class SchemaTranslator
    * @param avroSchema provides the Avro {@link Schema}.
    * @return the translated {@link DataSchema}.
    * @throws IllegalArgumentException if the Avro {@link Schema} cannot be translated.
+   * @deprecated DO NOT USE SchemaTranslator AT RUNTIME. PLEASE FIND THE SCHEMA THAT IS CREATED AT BUILD TIME AND USE THAT
+   * SCHEMA AT RUNTIME. THIS CLASS IS INTENDED FOR BUILD TIME USE ONLY. For more info, see https://go/noRuntimeSchemaGen
    */
+  @Deprecated
   public static DataSchema avroToDataSchema(Schema avroSchema) throws IllegalArgumentException
   {
     String avroSchemaInJson = avroSchema.toString();
@@ -245,7 +260,10 @@ public class SchemaTranslator
    *
    * @param dataSchema provides the {@link DataSchema}.
    * @return the Avro {@link Schema}.
+   * @deprecated DO NOT USE SchemaTranslator AT RUNTIME. PLEASE FIND THE SCHEMA THAT IS CREATED AT BUILD TIME AND USE THAT
+   * SCHEMA AT RUNTIME. THIS CLASS IS INTENDED FOR BUILD TIME USE ONLY. For more info, see https://go/noRuntimeSchemaGen
    */
+  @Deprecated
   public static Schema dataToAvroSchema(DataSchema dataSchema)
   {
     String jsonAvroSchema = dataToAvroSchemaJson(dataSchema, new DataToAvroSchemaTranslationOptions());
@@ -261,7 +279,10 @@ public class SchemaTranslator
    * @param dataSchema provides the {@link DataSchema}.
    * @param options provides the {@link DataToAvroSchemaTranslationOptions}.
    * @return the Avro {@link Schema}.
+   * @deprecated DO NOT USE SchemaTranslator AT RUNTIME. PLEASE FIND THE SCHEMA THAT IS CREATED AT BUILD TIME AND USE THAT
+   * SCHEMA AT RUNTIME. THIS CLASS IS INTENDED FOR BUILD TIME USE ONLY. For more info, see https://go/noRuntimeSchemaGen
    */
+  @Deprecated
   public static Schema dataToAvroSchema(DataSchema dataSchema, DataToAvroSchemaTranslationOptions options)
   {
     String jsonAvroSchema = dataToAvroSchemaJson(dataSchema, options);
@@ -276,7 +297,10 @@ public class SchemaTranslator
    *
    * @param dataSchema provides the {@link DataSchema}.
    * @return the JSON representation of the Avro {@link Schema}.
+   * @deprecated DO NOT USE SchemaTranslator AT RUNTIME. PLEASE FIND THE SCHEMA THAT IS CREATED AT BUILD TIME AND USE THAT
+   * SCHEMA AT RUNTIME. THIS CLASS IS INTENDED FOR BUILD TIME USE ONLY. For more info, see https://go/noRuntimeSchemaGen
    */
+  @Deprecated
   public static String dataToAvroSchemaJson(DataSchema dataSchema)
   {
     return dataToAvroSchemaJson(dataSchema, new DataToAvroSchemaTranslationOptions());
@@ -314,7 +338,10 @@ public class SchemaTranslator
    * @param options specifies the {@link DataToAvroSchemaTranslationOptions}.
    * @return the JSON representation of the Avro {@link Schema}.
    * @throws IllegalArgumentException if the {@link DataSchema} cannot be translated.
+   * @deprecated DO NOT USE SchemaTranslator AT RUNTIME. PLEASE FIND THE SCHEMA THAT IS CREATED AT BUILD TIME AND USE THAT
+   * SCHEMA AT RUNTIME. THIS CLASS IS INTENDED FOR BUILD TIME USE ONLY. For more info, see https://go/noRuntimeSchemaGen
    */
+  @Deprecated
   public static String dataToAvroSchemaJson(DataSchema dataSchema, DataToAvroSchemaTranslationOptions options) throws IllegalArgumentException
   {
     // Create a copy of the schema before the actual translation, since the translation process ends up modifying the

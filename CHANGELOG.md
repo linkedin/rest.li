@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- DataTranslator: support no fieldDiscriminator in Avro union aliases. Deprecate SchemaTranslator for runtime use. 
 
 ## [29.75.2] - 2025-09-05
 - Rename the outlier detection field in the D2 cluster
