@@ -503,12 +503,29 @@ public class DataTranslator implements DataTranslatorContext
 
       GenericRecord record = (GenericRecord) value;
       Object fieldDiscriminatorValue = record.get(DataSchemaConstants.DISCRIMINATOR_FIELD);
+      String fieldDiscriminator;
+
+      // if fieldDiscriminator is null, we have to find the populated field ourselves.
       if (fieldDiscriminatorValue == null)
       {
-        appendMessage("cannot find required field %1$s in record %2$s", DataSchemaConstants.DISCRIMINATOR_FIELD, record);
-        return BAD_RESULT;
+        Schema.Field setField = null;
+        // get the last set field in the record.
+        for (Schema.Field field : recordAvroSchema.getFields())
+        {
+          Object currField = record.get(field.name());
+          if (currField != null) {
+              setField = field;
+          }
+        }
+
+        if (setField == null) {
+            return Data.NULL;
+        }
+        fieldDiscriminator = setField.name();
+
+      } else {
+        fieldDiscriminator = fieldDiscriminatorValue.toString();
       }
-      String fieldDiscriminator = fieldDiscriminatorValue.toString();
 
       if (DataSchemaConstants.NULL_TYPE.equals(fieldDiscriminator))
       {
@@ -696,16 +713,13 @@ public class DataTranslator implements DataTranslatorContext
       }
 
       Schema.Field avroDiscriminatorField = recordAvroSchema.getField(DataSchemaConstants.DISCRIMINATOR_FIELD);
-      if (avroDiscriminatorField == null)
+      if (avroDiscriminatorField != null)
       {
-        appendMessage("cannot find field %1$s in record %2$s", DataSchemaConstants.DISCRIMINATOR_FIELD, recordAvroSchema);
-        return BAD_RESULT;
+        _path.add(DataSchemaConstants.DISCRIMINATOR_FIELD);
+        Object fieldDiscriminator = AvroCompatibilityHelper.newEnumSymbol(avroDiscriminatorField.schema(), memberKey);
+        avroRecord.put(DataSchemaConstants.DISCRIMINATOR_FIELD, fieldDiscriminator);
+        _path.removeLast();
       }
-
-      _path.add(DataSchemaConstants.DISCRIMINATOR_FIELD);
-      Object fieldDiscriminator = AvroCompatibilityHelper.newEnumSymbol(avroDiscriminatorField.schema(), memberKey);
-      avroRecord.put(DataSchemaConstants.DISCRIMINATOR_FIELD, fieldDiscriminator);
-      _path.removeLast();
 
       return avroRecord;
     }
@@ -1035,16 +1049,13 @@ public class DataTranslator implements DataTranslatorContext
       }
 
       Schema.Field avroDiscriminatorField = recordAvroSchema.getField(DataSchemaConstants.DISCRIMINATOR_FIELD);
-      if (avroDiscriminatorField == null)
+      if (avroDiscriminatorField != null)
       {
-        appendMessage("cannot find field %1$s in record %2$s", DataSchemaConstants.DISCRIMINATOR_FIELD, recordAvroSchema);
-        return BAD_RESULT;
+        _path.add(DataSchemaConstants.DISCRIMINATOR_FIELD);
+        Object fieldDiscriminator = AvroCompatibilityHelper.newEnumSymbol(avroDiscriminatorField.schema(), memberKey);
+        avroRecord.put(DataSchemaConstants.DISCRIMINATOR_FIELD, fieldDiscriminator);
+        _path.removeLast();
       }
-
-      _path.add(DataSchemaConstants.DISCRIMINATOR_FIELD);
-      Object fieldDiscriminator = AvroCompatibilityHelper.newEnumSymbol(avroDiscriminatorField.schema(), memberKey);
-      avroRecord.put(DataSchemaConstants.DISCRIMINATOR_FIELD, fieldDiscriminator);
-      _path.removeLast();
 
       return avroRecord;
     }

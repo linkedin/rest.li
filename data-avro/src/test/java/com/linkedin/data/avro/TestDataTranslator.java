@@ -17,7 +17,7 @@
 package com.linkedin.data.avro;
 
 import com.google.common.collect.ImmutableMap;
-import com.linkedin.avroutil1.compatibility.RandomRecordGenerator;
+import com.linkedin.avroutil1.compatibility.AvroCodecUtil;
 import com.linkedin.data.DataList;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.TestUtil;
@@ -33,11 +33,8 @@ import com.linkedin.data.avro.testevents.TestEventRecordOfRecord;
 import com.linkedin.data.avro.testevents.TestEventWithUnionAndEnum;
 import com.linkedin.data.avro.util.AvroUtil;
 import com.linkedin.data.schema.RecordDataSchema;
-import com.linkedin.data.schema.validation.CoercionMode;
-import com.linkedin.data.schema.validation.RequiredMode;
-import com.linkedin.data.schema.validation.ValidateDataAgainstSchema;
-import com.linkedin.data.schema.validation.ValidationOptions;
-import com.linkedin.data.schema.validation.ValidationResult;
+import com.linkedin.data.schema.validation.*;
+
 import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -2293,8 +2290,16 @@ public class TestDataTranslator
     Assert.assertEquals(((Map<?, ?>) mapOfMapOfArrayOfMapArrayUnion.get(0)).get("recordMap"), mapOfArrayOfMapArrayUnion);
   }
 
+    /**
+     * This test is to verify that we can translate a protoformed avro and data schema. The main behavior to check
+     * is that even if the namespaces differ between the two, we can still resolve simple unions to the corresponding
+     * correct type.
+     */
   @Test
   public void testWithProtoformedAvroAndDataSchema() throws IOException {
+      ValidationOptions validationOptions = new ValidationOptions();
+      validationOptions.setUnrecognizedFieldMode(UnrecognizedFieldMode.DISALLOW);
+
     // the avro and data schema should have the same shape but different namespaces
     String avroSchemaString = "{\n" + "  \"type\" : \"record\",\n" + "  \"name\" : \"NativeProtoMessage\",\n"
         + "  \"namespace\" : \"avro.com.linkedin.avsc\",\n" + "  \"fields\" : [ {\n" + "    \"name\" : \"field1\",\n"
@@ -2330,7 +2335,10 @@ public class TestDataTranslator
     newRecord2.put("field1", "value1.1");
     newRecord2.put("field2", "value1.2");
     newRecord.put("field2", newRecord2);
+    // ensure that we can serialize the record
+    AvroCodecUtil.serializeBinary(newRecord);
     DataMap toDataMap = DataTranslator.genericRecordToDataMap(newRecord, pegasusSchema, avroSchema);
+    ValidateDataAgainstSchema.validate(toDataMap, pegasusSchema, validationOptions);
 
     assertEquals(toDataMap.get("field1"), "value1");
     assertEquals(((DataMap)toDataMap.get("field2")).get("field1"), "value1.1");
@@ -2342,5 +2350,117 @@ public class TestDataTranslator
     assertEquals(((GenericRecord)fromDataMap.get("field2")).get("field1").toString(), "value1.1");
     assertEquals(((GenericRecord)fromDataMap.get("field2")).get("field2").toString(), "value1.2");
   }
+
+    /**
+     * This test is to verify that we can translate a protoformed avro and data schema with new union aliases. The
+     * main difference between the new Avro and the old expected Avro is that the new Avro will not have a field
+     * discriminator for union alias types.
+     */
+    @Test
+    public void testWithProtoformedAvroAndDataSchema_newUnionAliases() throws IOException {
+        ValidationOptions validationOptions = new ValidationOptions();
+        validationOptions.setUnrecognizedFieldMode(UnrecognizedFieldMode.DISALLOW);
+        String avroSchemaString = "{\n" +
+                "  \"type\" : \"record\",\n" +
+                "  \"name\" : \"ProtoNativeUnionAlias\",\n" +
+                "  \"namespace\" : \"avro.com.linkedin.avsc\",\n" +
+                "  \"fields\" : [ {\n" +
+                "    \"name\" : \"myOneof\",\n" +
+                "    \"type\" : [ \"null\", {\n" +
+                "      \"type\" : \"record\",\n" +
+                "      \"name\" : \"MyOneofWrapper\",\n" +
+                "      \"namespace\" : \"avro.com.linkedin.avsc.innerProtoNativeUnionAlias\",\n" +
+                "      \"fields\" : [ {\n" +
+                "        \"name\" : \"myString\",\n" +
+                "        \"type\" : [ \"null\", \"string\" ],\n" +
+                "        \"default\" : null,\n" +
+                "        \"li.data.proto.fieldNumber\" : 1\n" +
+                "      }, {\n" +
+                "        \"name\" : \"myInt\",\n" +
+                "        \"type\" : [ \"null\", {\n" +
+                "          \"type\" : \"int\",\n" +
+                "          \"li.data.proto.numberFieldType\" : \"int32\"\n" +
+                "        } ],\n" +
+                "        \"default\" : null,\n" +
+                "        \"li.data.proto.fieldNumber\" : 2\n" +
+                "      } ],\n" +
+                "      \"li.data.proto.oneOfFieldWrapperType\" : true\n" +
+                "    } ],\n" +
+                "    \"default\" : null\n" +
+                "  } ],\n" +
+                "  \"li.data.proto.fullyQualifiedName\" : \"proto.com.linkedin.avsc.ProtoNativeUnionAlias\"\n" +
+                "}";
+        String dataSchemaString = "{\n" +
+                "  \"type\" : \"record\",\n" +
+                "  \"name\" : \"ProtoNativeUnionAlias\",\n" +
+                "  \"namespace\" : \"pegasus.com.linkedin.pdl\",\n" +
+                "  \"fields\" : [ {\n" +
+                "    \"name\" : \"myOneof\",\n" +
+                "    \"type\" : [ {\n" +
+                "      \"alias\" : \"myString\",\n" +
+                "      \"type\" : \"string\"\n" +
+                "    }, {\n" +
+                "      \"alias\" : \"myInt\",\n" +
+                "      \"type\" : \"int\"\n" +
+                "    } ],\n" +
+                "    \"optional\" : true\n" +
+                "  } ]\n" +
+                "}";
+        Schema avroSchema = Schema.parse(avroSchemaString);
+        RecordDataSchema pegasusSchema = (RecordDataSchema)TestUtil.dataSchemaFromString(dataSchemaString);
+
+        // TEST1: the union alias is set
+        // avro -> pegasus
+        GenericRecord avroRecord = new GenericData.Record(avroSchema);
+        GenericRecord oneofWrapper = new GenericData.Record(avroSchema.getField("myOneof").schema().getTypes().get(1));
+        oneofWrapper.put("myInt", 1);
+        avroRecord.put("myOneof", oneofWrapper);
+        // make sure serialization works
+        AvroCodecUtil.serializeBinary(avroRecord);
+
+        DataMap dataMap = DataTranslator.genericRecordToDataMap(avroRecord, pegasusSchema, avroSchema);
+        //make sure the pegasus datamap is correct
+        ValidateDataAgainstSchema.validate(dataMap, pegasusSchema, validationOptions);
+
+        // pegasus -> avro
+        GenericRecord fromDataMap = DataTranslator.dataMapToGenericRecord(dataMap, pegasusSchema, avroSchema);
+        // make sure serialization works
+        AvroCodecUtil.serializeBinary(fromDataMap);
+
+        assertEquals(avroRecord, fromDataMap);
+
+        // TEST2: the union alias is not set
+        // avro -> pegasus
+        GenericRecord avroRecord2 = new GenericData.Record(avroSchema);
+        AvroCodecUtil.serializeBinary(avroRecord2);
+
+        DataMap dataMap2 = DataTranslator.genericRecordToDataMap(avroRecord2, pegasusSchema, avroSchema);
+        //make sure the pegasus datamap is correct
+        ValidateDataAgainstSchema.validate(dataMap2, pegasusSchema, validationOptions);
+
+        // pegasus -> avro
+        GenericRecord fromDataMap2 = DataTranslator.dataMapToGenericRecord(dataMap2, pegasusSchema, avroSchema);
+        // make sure serialization works
+        AvroCodecUtil.serializeBinary(fromDataMap2);
+
+        // make sure the avro records are equal
+        assertEquals(avroRecord2, fromDataMap2);
+
+
+        //TEST3: the avro union alias is unset but the inner record is created
+        GenericRecord avroRecord3 = new GenericData.Record(avroSchema);
+        GenericRecord oneofWrapper3 = new GenericData.Record(avroSchema.getField("myOneof").schema().getTypes().get(1));
+        avroRecord3.put("myOneof", oneofWrapper3);
+        AvroCodecUtil.serializeBinary(avroRecord3);
+
+        DataMap dataMap3 = DataTranslator.genericRecordToDataMap(avroRecord3, pegasusSchema, avroSchema);
+        //make sure the pegasus datamap is correct
+        ValidateDataAgainstSchema.validate(dataMap3, pegasusSchema, validationOptions);
+
+        // pegasus -> avro
+        GenericRecord fromDataMap3 = DataTranslator.dataMapToGenericRecord(dataMap3, pegasusSchema, avroSchema);
+        // make sure serialization works
+        AvroCodecUtil.serializeBinary(fromDataMap3);
+    }
 }
 
