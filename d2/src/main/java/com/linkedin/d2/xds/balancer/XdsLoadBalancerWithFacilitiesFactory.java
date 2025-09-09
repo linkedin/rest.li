@@ -59,10 +59,6 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
         Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("D2 xDS PropertyEventExecutor")));
     long xdsStreamReadyTimeout = ObjectUtils.defaultIfNull(config.xdsStreamReadyTimeout,
         XdsClientImpl.DEFAULT_READY_TIMEOUT_MILLIS);
-    String xdsMinimumJavaVersion = ObjectUtils.defaultIfNull(config.xdsMinimumJavaVersion,
-        XdsClientImpl.DEFAULT_MINIMUM_JAVA_VERSION);
-    XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure = ObjectUtils.defaultIfNull(config.actionOnPrecheckFailure,
-        XdsClientValidator.ActionOnPrecheckFailure.WARN);
     XdsClient xdsClient = new XdsClientImpl(
         new Node(config.hostName),
         new XdsChannelFactory(config.grpcSslContext, config.xdsServer,
@@ -74,8 +70,8 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
         config._xdsServerMetricsProvider,
         config.xdsInitialResourceVersionsEnabled,
         config.xdsStreamMaxRetryBackoffSeconds,
-        xdsMinimumJavaVersion,
-        actionOnPrecheckFailure
+        config.xdsMinimumJavaVersion,
+        config.actionOnPrecheckFailure
     );
     d2ClientJmxManager.registerXdsClientJmx(xdsClient.getXdsClientJmx());
 
