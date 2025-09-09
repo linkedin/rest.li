@@ -37,9 +37,9 @@ public class TestXdsClientValidator
     MockitoAnnotations.initMocks(this);
   }
 
-  // ---------------- Version comparison ----------------
-  @DataProvider(name = "versionComparisonTestData")
-  public Object[][] versionComparisonTestData()
+  // ---------------- Java version comparison ----------------
+  @DataProvider(name = "javaVersionComparisonTestData")
+  public Object[][] javaVersionComparisonTestData()
   {
     return new Object[][] {
         // Test case name, current version, minimum version, expected result
@@ -57,7 +57,7 @@ public class TestXdsClientValidator
     };
   }
 
-  @Test(dataProvider = "versionComparisonTestData")
+  @Test(dataProvider = "javaVersionComparisonTestData")
   public void testMeetsMinimumVersion(String testCaseName, String currentVersion, String minVersion, boolean expectedResult)
   {
     boolean result = XdsClientValidator.meetsMinimumVersion(currentVersion, minVersion);
