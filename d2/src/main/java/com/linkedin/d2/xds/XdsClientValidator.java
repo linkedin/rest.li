@@ -119,14 +119,14 @@ public class XdsClientValidator
       return authorityError;
     }
 
-    // Check socket connection
+    // Check socket connection to rule out NACL issue
     String socketError = validateSocketConnection(managedChannel.authority(), readyTimeoutMillis, new Socket());
     if (socketError != null)
     {
       return socketError;
     }
 
-    // Check health check
+    // Check io socket health check for channel to rule out cert/ssl issue
     String healthCheckError = validateHealthCheck(managedChannel, readyTimeoutMillis);
     if (healthCheckError != null)
     {
