@@ -25,6 +25,7 @@ import com.linkedin.d2.xds.Node;
 import com.linkedin.d2.xds.XdsChannelFactory;
 import com.linkedin.d2.xds.XdsClient;
 import com.linkedin.d2.xds.XdsClientImpl;
+import com.linkedin.d2.xds.XdsClientValidator;
 import com.linkedin.d2.xds.XdsToD2PropertiesAdaptor;
 import com.linkedin.r2.util.NamedThreadFactory;
 import java.util.concurrent.Executors;
@@ -68,7 +69,9 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
         config.subscribeToUriGlobCollection,
         config._xdsServerMetricsProvider,
         config.xdsInitialResourceVersionsEnabled,
-        config.xdsStreamMaxRetryBackoffSeconds
+        config.xdsStreamMaxRetryBackoffSeconds,
+        config.xdsMinimumJavaVersion,
+        config.actionOnPrecheckFailure
     );
     d2ClientJmxManager.registerXdsClientJmx(xdsClient.getXdsClientJmx());
 
