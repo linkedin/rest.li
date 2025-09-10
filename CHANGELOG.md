@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Check if debug logging is enabled before calling debug log message in TimingContextUtil to avoid unnecessary exception instantiation.
 
 ## [29.75.3] - 2025-09-08
 - DataTranslator: support no fieldDiscriminator in Avro union aliases. Deprecate SchemaTranslator for runtime use. 
