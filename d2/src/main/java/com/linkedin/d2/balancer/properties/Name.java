@@ -9,7 +9,7 @@ import javax.annotation.Nullable;
  * Name properties
  */
 public class Name {
-  // gRPC service name
+  // gRPC service name, example: com.linkedin.app.foo.protobuf.servicename
   private final String _service;
   // gRPC method name
   private final String _method;
