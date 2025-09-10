@@ -14,8 +14,11 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.76.0] - 2025-09-08
+## [29.76.0] - 2025-09-10
 - Add D2 service MethodLevelProperties configuration support
+
+## [29.75.3] - 2025-09-08
+- DataTranslator: support no fieldDiscriminator in Avro union aliases. Deprecate SchemaTranslator for runtime use. 
 
 ## [29.75.2] - 2025-09-05
 - Rename the outlier detection field in the D2 cluster
