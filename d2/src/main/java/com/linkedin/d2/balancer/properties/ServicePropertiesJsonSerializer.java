@@ -317,7 +317,7 @@ public class ServicePropertiesJsonSerializer implements
   private List<MethodLevelProperties> buildMethodLevelProperties(String serviceName, List<Map<String, Object>> methodLevelPropertiesList) {
     List<MethodLevelProperties> methodLevelProperties = new ArrayList<>();
     for (Map<String, Object> methodLevelPropertiesMap : methodLevelPropertiesList) {
-      List<Name> nameList = buildNameProperties(Preconditions.checkNotNull(mapGet(methodLevelPropertiesMap, PropertyKeys.METHOD_LEVEL_PROPERTIES_NAME)));
+      List<Name> nameList = buildNameProperties(Preconditions.checkNotNull(mapGet(methodLevelPropertiesMap, PropertyKeys.METHOD_LEVEL_PROPERTIES_NAMES)));
       Map<String, Object> transportClientProperties = mapGetOrDefault(methodLevelPropertiesMap, PropertyKeys.TRANSPORT_CLIENT_PROPERTIES, Collections.emptyMap());
       Map<String, Object> serviceMetadataProperties = mapGetOrDefault(methodLevelPropertiesMap, PropertyKeys.SERVICE_METADATA_PROPERTIES, Collections.emptyMap());
       methodLevelProperties.add(new MethodLevelProperties(nameList,

@@ -11,20 +11,20 @@ import java.util.Objects;
  */
 public class MethodLevelProperties {
   // name list to configure service and method names
-  private final List<Name> _name;
+  private final List<Name> _names;
   // transport client properties overrides per configured service and method names
   private final Map<String, Object> _transportClientProperties;
   // service metadata properties overrides per configured service and method names
   private final Map<String, Object> _serviceMetadataProperties;
 
-  public MethodLevelProperties(List<Name> name, Map<String, Object> transportClientProperties, Map<String, Object> serviceMetadataProperties) {
-    _name = name;
+  public MethodLevelProperties(List<Name> names, Map<String, Object> transportClientProperties, Map<String, Object> serviceMetadataProperties) {
+    _names = names;
     _transportClientProperties = transportClientProperties;
     _serviceMetadataProperties = serviceMetadataProperties;
   }
 
-  public List<Name> getName() {
-    return _name;
+  public List<Name> getNames() {
+    return _names;
   }
 
   public Map<String, Object> getTransportClientProperties() {
@@ -38,7 +38,7 @@ public class MethodLevelProperties {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("name", _name)
+        .add("names", _names)
         .add("transportClientProperties", _transportClientProperties )
         .add("serviceMetadataProperties", _serviceMetadataProperties)
         .toString();
@@ -46,7 +46,7 @@ public class MethodLevelProperties {
 
   @Override
   public int hashCode() {
-    return Objects.hash(_name, _transportClientProperties, _serviceMetadataProperties);
+    return Objects.hash(_names, _transportClientProperties, _serviceMetadataProperties);
   }
 
   @Override
@@ -58,7 +58,7 @@ public class MethodLevelProperties {
       return false;
     }
     MethodLevelProperties other = (MethodLevelProperties) obj;
-    return Objects.equals(_name, other._name)
+    return Objects.equals(_names, other._names)
         && Objects.equals(_transportClientProperties, other._transportClientProperties)
         && Objects.equals(_serviceMetadataProperties, other._serviceMetadataProperties);
   }

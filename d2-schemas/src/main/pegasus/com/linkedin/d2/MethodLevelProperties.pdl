@@ -9,10 +9,10 @@ namespace com.linkedin.d2
  */
 record MethodLevelProperties {
   /**
-   * name is a list of Name objects, on which these method level properties will be configured.
+   * names is a list of Name objects, on which these method level properties will be configured.
    * Name consists of service (gRPC service name) and method (gRPC method name)
    */
-  name: array[Name]
+  names: array[Name]
 
   /**
    * Metadata properties about the service e.g. retry, hedging etc

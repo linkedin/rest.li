@@ -256,7 +256,7 @@ public class PropertyKeys
 
   // used by MethodLevelProperties
   public static final String METHOD_LEVEL_PROPERTIES = "methodLevelProperties";
-  public static final String METHOD_LEVEL_PROPERTIES_NAME = "name";
+  public static final String METHOD_LEVEL_PROPERTIES_NAMES = "names";
   public static final String METHOD_LEVEL_PROPERTIES_NAME_SERVICE = "service";
   public static final String METHOD_LEVEL_PROPERTIES_NAME_METHOD = "method";
 
