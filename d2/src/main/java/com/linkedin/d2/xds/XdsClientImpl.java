@@ -772,16 +772,16 @@ public class XdsClientImpl extends XdsClient
   private void notifyOnLastChunk(DiscoveryResponseData response)
   {
     ResourceType type = response.getResourceType();
-    // For the D2URI with glob collection, we need to get D2URIMap WildcardSubscriber
-    ResourceType originalType =
-        (type == ResourceType.D2_URI && shouldSubscribeUriGlobCollection(ResourceType.D2_URI_MAP))
-            ? ResourceType.D2_URI_MAP
-            : type;
-    WildcardResourceSubscriber wildcardResourceSubscriber = getWildcardResourceSubscriber(originalType);
+    if (type == ResourceType.D2_URI)
+    {
+      type = ResourceType.D2_URI_MAP;
+    }
+    WildcardResourceSubscriber wildcardResourceSubscriber = getWildcardResourceSubscriber(type);
     if (wildcardResourceSubscriber == null)
     {
       return;
     }
+
     int remainingChunks;
     try
     {
