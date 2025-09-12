@@ -17,6 +17,7 @@
 /* $Id$ */
 package com.linkedin.common.callback;
 
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -25,7 +26,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Simple Future that does not support cancellation.
+ * Simple Future that bridges a Callback to a Future and now supports optional cancellation.
  *
  * @author Chris Pettitt
  * @version $Revision$
@@ -34,20 +35,24 @@ public class FutureCallback<T> implements Future<T>, Callback<T>
 {
   private final AtomicReference<Result<T>> _result = new AtomicReference<>();
   private final CountDownLatch _doneLatch = new CountDownLatch(1);
+  private volatile boolean cancelled = false;
 
   @Override
   public boolean cancel(boolean mayInterruptIfRunning)
   {
-    // cancellation is not supported
-    return false;
+    if (isDone()) {
+      return false;
+    } else {
+      cancelled = true;
+      _doneLatch.countDown();
+      return true;
+    }
   }
 
   @Override
   public boolean isCancelled()
   {
-
-    // cancellation is not supported
-    return false;
+    return cancelled;
   }
 
   @Override
@@ -60,12 +65,18 @@ public class FutureCallback<T> implements Future<T>, Callback<T>
   public T get() throws InterruptedException, ExecutionException
   {
     _doneLatch.await();
+    if (cancelled) {
+      throw new CancellationException("FutureCallback was cancelled.");
+    }
     return unwrapResult();
   }
 
   private T getRaw() throws Throwable
   {
     _doneLatch.await();
+    if (cancelled) {
+      throw new CancellationException("FutureCallback was cancelled.");
+    }
     return unwrapResultRaw();
   }
 
@@ -78,6 +89,9 @@ public class FutureCallback<T> implements Future<T>, Callback<T>
     {
       throw new TimeoutException();
     }
+    if (cancelled) {
+      throw new CancellationException("FutureCallback was cancelled.");
+    }
     return unwrapResult();
   }
 
@@ -86,6 +100,9 @@ public class FutureCallback<T> implements Future<T>, Callback<T>
     if (!_doneLatch.await(timeout, unit))
     {
       throw new TimeoutException();
+    }
+    if (cancelled) {
+      throw new CancellationException("FutureCallback was cancelled.");
     }
     return unwrapResultRaw();
   }
