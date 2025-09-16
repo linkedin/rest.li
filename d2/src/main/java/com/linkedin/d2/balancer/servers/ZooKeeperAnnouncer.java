@@ -892,6 +892,13 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
     _eventEmitter = emitter;
   }
 
+  public AnnouncementStatus getAnnouncementStatus()
+  {
+    return _status.getAnnouncementStatus();
+  }
+
+  // ##### End Properties Section #####
+
   @Override
   public void emitSDStatusActiveUpdateIntentAndWriteEvents(String cluster, boolean isMarkUp, boolean succeeded, long startAt) {
     // In this class, SD event should be sent only when the announcing mode is to old service registry or dual write,
@@ -1017,6 +1024,11 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
 
   private void updateStatus(AnnouncementStatus newStatus)
   {
+    if (_status.getAnnouncementStatus().equals(newStatus))
+    {
+      return;
+    }
+
     _status.setAnnouncementStatus(newStatus);
     _log.info("Announcement status changed to {} for cluster {}, uri {}.", newStatus, _uri, _cluster);
     _readinessManager.onAnnouncerStatusUpdated();
