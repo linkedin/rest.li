@@ -101,4 +101,10 @@ public interface ZooKeeperAnnouncerJmxMXBean
    * @return the server announce mode corresponding to {@link LoadBalancerServer#getAnnounceMode()}
    */
   int getServerAnnounceMode();
+
+  /**
+   * @return the announcement status corresponding to
+   * {@link com.linkedin.d2.balancer.servers.ReadinessStatusManager.AnnouncerStatus.AnnouncementStatus}
+   */
+  int getAnnouncementStatus();
 }

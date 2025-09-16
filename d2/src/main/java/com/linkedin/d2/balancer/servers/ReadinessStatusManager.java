@@ -102,12 +102,18 @@ public interface ReadinessStatusManager
           && this.announcementStatus == other.announcementStatus;
     }
 
+    public String toString()
+    {
+      return "AnnouncerStatus{isToBeAnnouncedFromStaticConfig=" + isToBeAnnouncedFromStaticConfig
+          + ", announcementStatus=" + announcementStatus + "}";
+    }
+
     public enum AnnouncementStatus
     {
-      ANNOUNCING, // an announcement is to be or is being sent
-      ANNOUNCED, // announcement sent successfully
+      DE_ANNOUNCED, // de-announcement sent successfully
       DE_ANNOUNCING, // a de-announcement is to be or is being sent
-      DE_ANNOUNCED // de-announcement sent successfully
+      ANNOUNCING, // an announcement is to be or is being sent
+      ANNOUNCED // announcement sent successfully
     }
   }
 }
