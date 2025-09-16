@@ -23,6 +23,7 @@ public class Name {
     return _service;
   }
 
+  @Nullable
   public String getMethod() {
     return _method;
   }
