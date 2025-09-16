@@ -1,5 +1,6 @@
 package com.linkedin.d2.balancer.servers;
 
+import java.util.Objects;
 import javax.annotation.Nonnull;
 
 
@@ -27,17 +28,6 @@ public interface ReadinessStatusManager
   enum ReadinessStatus
   {
     /**
-     * When the D2 clusters that are intended to be announced have sent announcements successfully.
-     * (And if any D2 cluster is intended to be de-announced, the corresponding de-announcement is also sent successfully)
-     */
-    SERVING,
-    /**
-     * When all D2 clusters are intended to be de-announced and the de-announcements are sent successfully, or never
-     * announced before.
-     * OR: if some D2 clusters have isRequiredToServe set to true, any of them is de-announced.
-     */
-    NOT_SERVING,
-    /**
      * There is a time gap between when a serving intent changes (either static config loaded at startup, or dynamic
      * markup/markdown API is called at runtime) and when the intent is fulfilled ---- (de-)announcement sent successfully.
      * During this gap, the intent is not fulfilled, and the readiness status is INCONSISTENT. Or, the (de-)announcements
@@ -45,7 +35,21 @@ public interface ReadinessStatusManager
      * This status can be deprecated in future when the readiness status is based on internal components' readiness
      * rather than D2 announcements' statuses.
      */
-    INCONSISTENT
+    INCONSISTENT,
+    /**
+     * When all D2 clusters are intended to be de-announced and the de-announcements are sent successfully, or never
+     * announced before.
+     * Note: if readinessStatusManager.requireStaticD2ServersAnnounced is set to true, and some D2 clusters have
+     * isToBeAnnouncedFromStaticConfig set to true, then any of them is de-announced will become NOT_SERVING.
+     */
+    NOT_SERVING,
+    /**
+     * When the D2 clusters that are intended to be announced have sent announcements successfully.
+     * (And if any D2 cluster is intended to be de-announced, the corresponding de-announcement is also sent successfully)
+     * Note: if readinessStatusManager.requireStaticD2ServersAnnounced is set to true, all D2 clusters that have
+     * isToBeAnnouncedFromStaticConfig set to true must be announced for the readiness status to be SERVING.
+     */
+    SERVING
   }
 
   class AnnouncerStatus
@@ -53,9 +57,9 @@ public interface ReadinessStatusManager
     // whether this announcer is to be announced and defined in static config
     private final boolean isToBeAnnouncedFromStaticConfig;
 
-    private AnnouncementStatus announcementStatus;
+    private volatile AnnouncementStatus announcementStatus;
 
-    public AnnouncerStatus(boolean isToBeAnnouncedFromStaticConfig, @Nonnull AnnouncementStatus announcementStatus)
+    public AnnouncerStatus(boolean isToBeAnnouncedFromStaticConfig, AnnouncementStatus announcementStatus)
     {
       this.isToBeAnnouncedFromStaticConfig = isToBeAnnouncedFromStaticConfig;
       this.announcementStatus = announcementStatus;
@@ -68,22 +72,22 @@ public interface ReadinessStatusManager
 
     public boolean isAnnounced()
     {
-      return announcementStatus == AnnouncementStatus.ANNOUNCED;
+      return AnnouncementStatus.ANNOUNCED.equals(announcementStatus);
     }
 
     public boolean isDeAnnounced()
     {
-      return announcementStatus == AnnouncementStatus.DE_ANNOUNCED;
+      return AnnouncementStatus.DE_ANNOUNCED.equals(announcementStatus);
     }
 
     public boolean isAnnouncing()
     {
-      return announcementStatus == AnnouncementStatus.ANNOUNCING;
+      return AnnouncementStatus.ANNOUNCING.equals(announcementStatus);
     }
 
     public boolean isDeAnnouncing()
     {
-      return announcementStatus == AnnouncementStatus.DE_ANNOUNCING;
+      return AnnouncementStatus.DE_ANNOUNCING.equals(announcementStatus);
     }
 
     public AnnouncementStatus getAnnouncementStatus()
@@ -91,7 +95,7 @@ public interface ReadinessStatusManager
       return announcementStatus;
     }
 
-    public synchronized void setAnnouncementStatus(@Nonnull AnnouncementStatus announcementStatus)
+    public void setAnnouncementStatus(AnnouncementStatus announcementStatus)
     {
       this.announcementStatus = announcementStatus;
     }
@@ -99,7 +103,7 @@ public interface ReadinessStatusManager
     public boolean isEqual(AnnouncerStatus other)
     {
       return other != null && this.isToBeAnnouncedFromStaticConfig == other.isToBeAnnouncedFromStaticConfig
-          && this.announcementStatus == other.announcementStatus;
+          && Objects.equals(this.announcementStatus, other.announcementStatus);
     }
 
     public String toString()

@@ -81,6 +81,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
   private static final Logger _log = LoggerFactory.getLogger(ZooKeeperAnnouncer.class);
   private volatile String _cluster;
   private volatile URI _uri;
+  private volatile String _announcementTargetId;
   /**
    * Ephemeral znode path and its data announced for the regular cluster and uri. It will be used as the tracingId in Service discovery status related tracking events.
    * It's updated ONLY at mark-ups: (including regular mark-up and changing uri data by marking down then marking up again)
@@ -393,8 +394,9 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
         emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, true, false, _markUpStartAtRef.get());
         if (e instanceof KeeperException.ConnectionLossException || e instanceof KeeperException.SessionExpiredException)
         {
-          _log.warn("failed to mark up uri = {}, cluster = {}, partitionData = {}, uriSpecificProperties = {} due to {}.",
-              _uri, _cluster, _partitionDataMap, _uriSpecificProperties, e.getClass().getSimpleName());
+          _log.warn("failed to mark up uri = {}, cluster = {}, partitionData = {}, uriSpecificProperties = {},"
+                  + " announcementTarget = {} due to {}.",
+              _uri, _cluster, _partitionDataMap, _uriSpecificProperties, _announcementTargetId, e.getClass().getSimpleName());
           // Setting to null because if that connection dies, when don't want to continue making operations before
           // the connection is up again.
           // When the connection will be up again, the ZKAnnouncer will be restarted and it will read the _isUp
@@ -422,8 +424,9 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
         _isMarkUpIntentSent.set(true);
         emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, true, true, _markUpStartAtRef.get());
         _markUpFailed = false;
-        _log.info("markUp for uri = {}, cluster = {}, partitionData = {}, uriSpecificProperties = {} succeeded.",
-            _uri, _cluster, _partitionDataMap, _uriSpecificProperties);
+        _log.info("markUp for uri = {}, cluster = {}, partitionData = {}, uriSpecificProperties = {},"
+                + " announcementTarget = {} succeeded.",
+            _uri, _cluster, _partitionDataMap, _uriSpecificProperties, _announcementTargetId);
         // Note that the pending callbacks we see at this point are
         // from the requests that are filed before us because zookeeper
         // guarantees the ordering of callback being invoked.
@@ -770,6 +773,12 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
     _uri = URI.create(uri);
   }
 
+  public void setAnnouncementTargetId(String announcementTargetId)
+  {
+    ArgumentUtil.notNull(announcementTargetId, "announcementTargetId");
+    _announcementTargetId = announcementTargetId;
+  }
+
   public void setUriSpecificProperties(Map<String, Object> uriSpecificProperties)
   {
     _uriSpecificProperties = Collections.unmodifiableMap(uriSpecificProperties);
@@ -1024,13 +1033,20 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
 
   private void updateStatus(AnnouncementStatus newStatus)
   {
-    if (_status.getAnnouncementStatus().equals(newStatus))
+    AnnouncementStatus oldStatus = _status.getAnnouncementStatus();
+    if (oldStatus.equals(newStatus))
     {
       return;
     }
 
     _status.setAnnouncementStatus(newStatus);
-    _log.info("Announcement status changed to {} for cluster {}, uri {}.", newStatus, _uri, _cluster);
+    _log.info("Announcement status changed from {} to {} for {}.", oldStatus, newStatus, getIdentifier());
     _readinessManager.onAnnouncerStatusUpdated();
+  }
+
+  // unique identifier for this announcer instance with: kafka/zk addr + cluster + uri, useful for logging
+  private String getIdentifier()
+  {
+    return String.format("{Announcing target: %s, cluster: %s, uri: %s}", _announcementTargetId, _cluster, _uri);
   }
 }
