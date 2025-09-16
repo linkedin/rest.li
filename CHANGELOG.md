@@ -14,8 +14,8 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.76.0] - 2025-09-10
-- Add D2 service MethodLevelProperties configuration support
+## [29.75.4] - 2025-09-10
+- Fix notifyOnLastChunk handling for D2URIMap WildcardResourceSubscriber 
 
 ## [29.75.3] - 2025-09-08
 - DataTranslator: support no fieldDiscriminator in Avro union aliases. Deprecate SchemaTranslator for runtime use. 
@@ -5897,8 +5897,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.76.0...master
-[29.76.0]: https://github.com/linkedin/rest.li/compare/v29.75.2...v29.76.0
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.75.3...master
+[29.75.3]: https://github.com/linkedin/rest.li/compare/v29.75.2...v29.75.3
 [29.75.2]: https://github.com/linkedin/rest.li/compare/v29.75.1...v29.75.2
 [29.75.1]: https://github.com/linkedin/rest.li/compare/v29.75.0...v29.75.1
 [29.75.0]: https://github.com/linkedin/rest.li/compare/v29.74.4...v29.75.0
