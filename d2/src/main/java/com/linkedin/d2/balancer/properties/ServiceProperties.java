@@ -347,7 +347,8 @@ public class ServiceProperties
     return _minClusterSubsetSize;
   }
 
-  public List<com.linkedin.d2.balancer.properties.MethodLevelProperties> getMethodLevelProperties()
+  @Nullable
+  public List<MethodLevelProperties> getMethodLevelProperties()
   {
     return _methodLevelProperties;
   }
