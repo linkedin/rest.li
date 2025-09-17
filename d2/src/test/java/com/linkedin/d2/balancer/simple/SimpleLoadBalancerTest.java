@@ -572,6 +572,63 @@ public class SimpleLoadBalancerTest
   }
 
   @Test
+  public void testGetClusterCountAcrossPartitions() throws Exception
+  {
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+
+    SimpleLoadBalancerState state =
+        new SimpleLoadBalancerState(new SynchronousExecutorService(), uriRegistry, clusterRegistry, serviceRegistry,
+                                    new HashMap<>(), new HashMap<>());
+    SimpleLoadBalancer loadBalancer = spy(new SimpleLoadBalancer(state, 5, TimeUnit.SECONDS, _d2Executor));
+
+    // two HTTPS URIs in different partitions and one HTTP URI; across-partitions HTTPS should be 2
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
+    Map<Integer, PartitionData> p0 = new HashMap<>();
+    p0.put(0, new PartitionData(1d));
+    Map<Integer, PartitionData> p1 = new HashMap<>();
+    p1.put(1, new PartitionData(1d));
+    uriData.put(URI.create("https://h1:1"), p0);
+    uriData.put(URI.create("https://h2:1"), p1);
+    uriData.put(URI.create("http://h3:1"), p0);
+
+    clusterRegistry.put(CLUSTER1_NAME, new ClusterProperties(CLUSTER1_NAME));
+    uriRegistry.put(CLUSTER1_NAME, new UriProperties(CLUSTER1_NAME, uriData));
+
+    assertEquals(loadBalancer.getClusterCountAcrossPartitions(CLUSTER1_NAME, PropertyKeys.HTTPS_SCHEME), 2);
+    assertEquals(loadBalancer.getClusterCountAcrossPartitions(CLUSTER1_NAME, PropertyKeys.HTTP_SCHEME), 1);
+  }
+
+  @Test
+  public void testGetClusterCountAcrossPartitionsTimeoutFallsBackToCache() throws Exception
+  {
+    MockStore<ServiceProperties> serviceRegistry = new MockStore<>();
+    MockStore<ClusterProperties> clusterRegistry = new MockStore<>();
+    MockStore<UriProperties> uriRegistry = new MockStore<>();
+
+    SimpleLoadBalancerState state =
+        spy(new SimpleLoadBalancerState(new SynchronousExecutorService(), uriRegistry, clusterRegistry, serviceRegistry,
+                                        new HashMap<>(), new HashMap<>()));
+    doAnswer(invocation -> { Thread.sleep(10); return null; }).when(state).listenToCluster(any(), any());
+    SimpleLoadBalancer loadBalancer = spy(new SimpleLoadBalancer(state, 1, TimeUnit.MILLISECONDS, _d2Executor));
+
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
+    Map<Integer, PartitionData> p0 = new HashMap<>();
+    p0.put(0, new PartitionData(1d));
+    Map<Integer, PartitionData> p1 = new HashMap<>();
+    p1.put(1, new PartitionData(1d));
+    uriData.put(URI.create("https://h1:1"), p0);
+    uriData.put(URI.create("https://h2:1"), p1);
+
+    when(state.getUriProperties(CLUSTER1_NAME)).thenReturn(new LoadBalancerStateItem<>(new UriProperties(CLUSTER1_NAME, uriData), 1, 1));
+
+    int result = loadBalancer.getClusterCountAcrossPartitions(CLUSTER1_NAME, PropertyKeys.HTTPS_SCHEME);
+    verify(loadBalancer).getClusterCountAcrossPartitionsFromCache(CLUSTER1_NAME, PropertyKeys.HTTPS_SCHEME);
+    assertEquals(result, 2);
+  }
+
+  @Test
   public void testGetDarkClusterConfigMapTimeout() throws Exception
   {
     MockStore<ServiceProperties> serviceRegistry = new MockStore<>();

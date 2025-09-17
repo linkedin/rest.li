@@ -128,8 +128,8 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
     {
       // Only support https for now. http support can be added later if truly needed, but would be non-ideal
       // because potentially both dark and source would have to be configured.
-      int numDarkClusterInstances = _clusterInfoProvider.getHttpsClusterCount(_darkClusterName);
-      int numSourceClusterInstances = _clusterInfoProvider.getHttpsClusterCount(_originalClusterName);
+      int numDarkClusterInstances = _clusterInfoProvider.getClusterCountAcrossPartitions(_darkClusterName);
+      int numSourceClusterInstances = _clusterInfoProvider.getClusterCountAcrossPartitions(_originalClusterName);
       if (numSourceClusterInstances != 0)
       {
         return (numDarkClusterInstances * _darkClusterPerHostQps) / numSourceClusterInstances;

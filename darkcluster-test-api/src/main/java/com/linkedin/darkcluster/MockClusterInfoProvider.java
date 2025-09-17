@@ -35,6 +35,7 @@ public class MockClusterInfoProvider implements ClusterInfoProvider
   Map<String, DarkClusterConfigMap> lookupMap = new HashMap<>();
   List<LoadBalancerClusterListener> clusterListeners = new ArrayList<>();
   Map<String, Integer> clusterHttpsCount = new HashMap<>();
+  Map<String, Integer> clusterHttpsCountAcrossPartitions = new HashMap<>();
 
   @Override
   public int getClusterCount(String clusterName, String scheme, int partitionId)
@@ -48,6 +49,13 @@ public class MockClusterInfoProvider implements ClusterInfoProvider
     throws ServiceUnavailableException
   {
     return clusterHttpsCount.getOrDefault(clusterName, 1);
+  }
+
+  @Override
+  public int getClusterCountAcrossPartitions(String clusterName)
+      throws ServiceUnavailableException
+  {
+    return clusterHttpsCountAcrossPartitions.getOrDefault(clusterName, getHttpsClusterCount(clusterName));
   }
 
   @Override
@@ -124,5 +132,10 @@ public class MockClusterInfoProvider implements ClusterInfoProvider
   {
     // overwrites if anything is already there for this clusterName
     clusterHttpsCount.put(clusterName, httpsCount);
+  }
+
+  void putHttpsClusterCountAcrossPartitions(String clusterName, Integer httpsCount)
+  {
+    clusterHttpsCountAcrossPartitions.put(clusterName, httpsCount);
   }
 }

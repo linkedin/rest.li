@@ -1295,6 +1295,58 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   @Override
+  public int getClusterCountAcrossPartitions(String clusterName, String scheme) throws ServiceUnavailableException
+  {
+    FutureCallback<Integer> clusterCountFutureCallback = new FutureCallback<>();
+
+    _state.listenToCluster(clusterName, (type, name) ->
+    {
+      if (_state.getUriProperties(clusterName) != null && _state.getUriProperties(clusterName).getProperty() != null)
+      {
+        Set<URI> allUris = _state.getUriProperties(clusterName).getProperty().Uris();
+        int count = (int) allUris.stream().filter(uri -> scheme.equalsIgnoreCase(uri.getScheme())).count();
+        clusterCountFutureCallback.onSuccess(count);
+      }
+      else
+      {
+        // there won't be a UriProperties if there are no Uris announced. Return zero in this case.
+        clusterCountFutureCallback.onSuccess(0);
+      }
+    });
+
+    try
+    {
+      return clusterCountFutureCallback.get(_timeout, _unit);
+    }
+    catch (ExecutionException | TimeoutException | IllegalStateException | InterruptedException e)
+    {
+      if (e instanceof TimeoutException || e.getCause() instanceof TimeoutException)
+      {
+        int clusterCount = getClusterCountAcrossPartitionsFromCache(clusterName, scheme);
+        if (clusterCount >= 0)
+        {
+          return clusterCount;
+        }
+      }
+      die("ClusterInfo",
+          "PEGA_1017, unable to retrieve cluster count across partitions for cluster: " + clusterName + ", scheme: " + scheme
+              + ", exception: " + e);
+      return -1;
+    }
+  }
+
+  @VisibleForTesting
+  int getClusterCountAcrossPartitionsFromCache(String clusterName, String scheme)
+  {
+    if (_state.getUriProperties(clusterName) != null && _state.getUriProperties(clusterName).getProperty() != null)
+    {
+      Set<URI> allUris = _state.getUriProperties(clusterName).getProperty().Uris();
+      return (int) allUris.stream().filter(uri -> scheme.equalsIgnoreCase(uri.getScheme())).count();
+    }
+    return -1;
+  }
+
+  @Override
   public DarkClusterConfigMap getDarkClusterConfigMap(String clusterName) throws ServiceUnavailableException
   {
     FutureCallback<DarkClusterConfigMap> darkClusterConfigMapFutureCallback = new FutureCallback<>();

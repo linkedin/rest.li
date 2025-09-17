@@ -109,8 +109,8 @@ public class IdenticalTrafficMultiplierDarkClusterStrategy implements DarkCluste
     {
       // Only support https for now. http support can be added later if truly needed, but would be non-ideal
       // because potentially both dark and source would have to be configured.
-      int numDarkClusterInstances = _clusterInfoProvider.getHttpsClusterCount(_darkClusterName);
-      int numSourceClusterInstances = _clusterInfoProvider.getHttpsClusterCount(_originalClusterName);
+      int numDarkClusterInstances = _clusterInfoProvider.getClusterCountAcrossPartitions(_darkClusterName);
+      int numSourceClusterInstances = _clusterInfoProvider.getClusterCountAcrossPartitions(_originalClusterName);
       float randomNumber;
       if (requestContext.getLocalAttr(RANDOM_NUMBER_KEY) == null)
       {
