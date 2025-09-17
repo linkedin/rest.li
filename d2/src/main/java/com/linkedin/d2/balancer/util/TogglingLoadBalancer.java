@@ -213,6 +213,11 @@ public class TogglingLoadBalancer implements LoadBalancer, HashRingProvider, Cli
   }
 
   @Override
+  public int getClusterCountAcrossPartitions(String clusterName, String scheme) throws ServiceUnavailableException {
+    return _clusterInfoProvider.getClusterCountAcrossPartitions(clusterName, scheme);
+  }
+
+  @Override
   public DarkClusterConfigMap getDarkClusterConfigMap(String clusterName)
     throws ServiceUnavailableException
   {
