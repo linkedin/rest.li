@@ -65,7 +65,8 @@ public class TestXdsClientImpl
   private static final String VERSION1 = "1";
   private static final String VERSION2 = "2";
   private static final String VERSION3 = "3";
-  private static final String NONCE = "nonce";
+  private static final String NONCE = "000000000000000000000000"; // this is used as LAST CHUNK NONCE
+  private static final String NON_LAST_NONCE = "000000000000000000000001";
 
   private static final long TEN_MINS = Time.minutes(10);
   private static final XdsD2.Node NODE_WITH_DATA = createNodeWithData(DATA,
@@ -164,6 +165,12 @@ public class TestXdsClientImpl
           .setResource(Any.pack(D2URI_1))
           .build()
   ), null, NONCE, null);
+  private static final DiscoveryResponseData RESPONSE_D2URI1_WITH_NON_LAST_NONCE = new DiscoveryResponseData(D2_URI, Collections.singletonList(
+      Resource.newBuilder()
+          .setVersion(VERSION1)
+          .setName(URI_URN1)
+          .setResource(Any.pack(D2URI_1))
+          .build()), null, NON_LAST_NONCE, null);
   private static final DiscoveryResponseData RESPONSE_D2URI2_DELETE_URI1 = new DiscoveryResponseData(D2_URI, Collections.singletonList(
       Resource.newBuilder()
           .setVersion(VERSION1)
@@ -230,6 +237,8 @@ public class TestXdsClientImpl
       new DiscoveryResponseData(D2_URI_MAP, Collections.emptyList(), Collections.singletonList(CLUSTER_RESOURCE_NAME), NONCE, null);
   private static final DiscoveryResponseData DISCOVERY_RESPONSE_URI1_DATA_WITH_REMOVAL =
       new DiscoveryResponseData(D2_URI, Collections.emptyList(), Collections.singletonList(URI_URN1), NONCE, null);
+  private static final DiscoveryResponseData DISCOVERY_RESPONSE_URI1_DATA_WITH_REMOVAL_NON_LAST_NONCE =
+      new DiscoveryResponseData(D2_URI, Collections.emptyList(), Collections.singletonList(URI_URN1), NON_LAST_NONCE, null);
 
   private static final String CLUSTER_GLOB_COLLECTION = "xdstp:///indis.D2URI/" + CLUSTER_NAME + "/*";
 
@@ -1055,20 +1064,18 @@ public class TestXdsClientImpl
     if (responseAction == ResponseAction.UPDATE)
     {
       fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA1);
-      fixture._xdsClientImpl.handleResponse(RESPONSE_D2URI1);
+      fixture._xdsClientImpl.handleResponse(RESPONSE_D2URI1_WITH_NON_LAST_NONCE);
       fixture._xdsClientImpl.handleResponse(RESPONSE_WITH_SERVICE_NAMES);
     }
     else if (responseAction == ResponseAction.REMOVAL)
     {
       fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA_WITH_REMOVAL);
-      fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI1_DATA_WITH_REMOVAL);
+      fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI1_DATA_WITH_REMOVAL_NON_LAST_NONCE);
       fixture._xdsClientImpl.handleResponse(RESPONSE_WITH_NAME_REMOVAL);
     }
     // All individual resource subscribers have received first response, so they won't contribute to active initial
     // wait time anymore.
     // End the first fetch for node and name subscriber, so it won't contribute to active initial wait time anymore.
-    fixture._nodeWildcardSubscriber.onAllResourcesProcessed();
-    fixture._nameWildcardSubscriber.onAllResourcesProcessed();
 
     activeWaitTime = fixture._xdsClientImpl.getActiveInitialWaitTimeMillis();
     // only wildcard uri map subscriber is still contributing to active initial wait time

@@ -807,6 +807,10 @@ public class XdsClientImpl extends XdsClient
   private void notifyOnLastChunk(DiscoveryResponseData response)
   {
     ResourceType type = response.getResourceType();
+    if (type == ResourceType.D2_URI)
+    {
+      type = ResourceType.D2_URI_MAP;
+    }
     WildcardResourceSubscriber wildcardResourceSubscriber = getWildcardResourceSubscriber(type);
     if (wildcardResourceSubscriber == null)
     {

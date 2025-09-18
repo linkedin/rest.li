@@ -254,6 +254,12 @@ public class PropertyKeys
   public static final String FAILOUT_REDIRECT_CONFIGS = "failoutRedirectConfigs";
   public static final String FAILOUT_BUCKET_CONFIGS = "failoutBucketConfigs";
 
+  // used by MethodLevelProperties
+  public static final String METHOD_LEVEL_PROPERTIES = "methodLevelProperties";
+  public static final String METHOD_LEVEL_PROPERTIES_NAMES = "names";
+  public static final String METHOD_LEVEL_PROPERTIES_NAME_SERVICE = "service";
+  public static final String METHOD_LEVEL_PROPERTIES_NAME_METHOD = "method";
+
   private static String getFieldName(PathSpec pathSpec)
   {
     if (pathSpec.getPathComponents().size() != 1)
