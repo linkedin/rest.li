@@ -26,6 +26,7 @@ import com.linkedin.d2.balancer.clients.FailoutClient;
 import com.linkedin.d2.balancer.clients.FailoutRedirectStrategy;
 import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.clients.RequestTimeoutClient;
+import javax.annotation.Nonnull;
 import com.linkedin.d2.balancer.clients.RetryClient;
 import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
 import com.linkedin.d2.balancer.dualread.DualReadStateManager;
@@ -856,13 +857,13 @@ public class D2ClientBuilder
     return this;
   }
 
-  public D2ClientBuilder setXdsMinimumJavaVersion(String xdsMinimumJavaVersion)
+  public D2ClientBuilder setXdsMinimumJavaVersion(@Nonnull String xdsMinimumJavaVersion)
   {
     _config.xdsMinimumJavaVersion = xdsMinimumJavaVersion;
     return this;
   }
 
-  public D2ClientBuilder setActionOnPrecheckFailure(XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure)
+  public D2ClientBuilder setActionOnPrecheckFailure(@Nonnull XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure)
   {
     _config.actionOnPrecheckFailure = actionOnPrecheckFailure;
     return this;
