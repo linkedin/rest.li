@@ -25,7 +25,6 @@ import com.linkedin.d2.xds.Node;
 import com.linkedin.d2.xds.XdsChannelFactory;
 import com.linkedin.d2.xds.XdsClient;
 import com.linkedin.d2.xds.XdsClientImpl;
-import com.linkedin.d2.xds.XdsClientValidator;
 import com.linkedin.d2.xds.XdsToD2PropertiesAdaptor;
 import com.linkedin.r2.util.NamedThreadFactory;
 import java.util.concurrent.Executors;
