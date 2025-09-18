@@ -39,6 +39,7 @@ dependencies {
   compile externalDependency.grpcNettyShaded
   compile externalDependency.grpcProtobuf
   compile externalDependency.grpcStub
+  compile externalDependency.grpcServices
   compile externalDependency.protobufJava
   compile externalDependency.protobufJavaUtil
   compile externalDependency.envoyApi
