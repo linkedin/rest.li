@@ -162,7 +162,8 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
                   new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
               return new RelativeTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName,
                                                                       darkClusterConfig.getMultiplier(), baseDarkClusterDispatcher,
-                                                                      _notifier, _facilities.getClusterInfoProvider(), _random);
+                                                                      _notifier, _facilities.getClusterInfoProvider(),
+                                                                      _facilities.getPartitionInfoProvider(), _random);
             }
             break;
           case IDENTICAL_TRAFFIC:
@@ -172,7 +173,8 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
                   new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
               return new IdenticalTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName,
                                                                        darkClusterConfig.getMultiplier(), baseDarkClusterDispatcher,
-                                                                       _notifier, _facilities.getClusterInfoProvider(), _random);
+                                                                       _notifier, _facilities.getClusterInfoProvider(),
+                                                                       _facilities.getPartitionInfoProvider(), _random);
             }
             break;
           case CONSTANT_QPS:
@@ -186,12 +188,10 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
             {
               BaseDarkClusterDispatcher baseDarkClusterDispatcher =
                   new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
-              ConstantQpsRateLimiter rateLimiter = _rateLimiterSupplier.get();
-              rateLimiter.setBufferCapacity(darkClusterConfig.getDispatcherMaxRequestsToBuffer());
-              rateLimiter.setBufferTtl(darkClusterConfig.getDispatcherBufferedRequestExpiryInSeconds(), ChronoUnit.SECONDS);
               return new ConstantQpsDarkClusterStrategy(_sourceClusterName, darkClusterName,
                   darkClusterConfig.getDispatcherOutboundTargetRate(), baseDarkClusterDispatcher,
-                  _notifier, _facilities.getClusterInfoProvider(), rateLimiter);
+                  _notifier, _facilities.getClusterInfoProvider(), _facilities.getPartitionInfoProvider(),
+                  _rateLimiterSupplier);
             }
             break;
           default:

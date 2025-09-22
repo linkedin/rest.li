@@ -43,30 +43,6 @@ public interface ClusterInfoProvider
    */
   int getClusterCount(String clusterName, String scheme, int partitionId) throws ServiceUnavailableException;
 
-  /**
-   * Obtain d2 cluster count across all partitions for HTTPS scheme.
-   * Default implementation delegates to the scheme-specific method using HTTPS.
-   *
-   * @return int
-   */
-  default int getClusterCountAcrossPartitions(String clusterName) throws ServiceUnavailableException
-  {
-    return getClusterCountAcrossPartitions(clusterName, PropertyKeys.HTTPS_SCHEME);
-  }
-
-  /**
-   * Obtain d2 cluster count across all partitions for the given scheme.
-   *
-   * Note: Default implementation preserves backwards compatibility by delegating
-   * to {@link #getClusterCount(String, String, int)} with the default partition id.
-   * Implementations that can compute counts across all partitions should override this.
-   *
-   * @return int
-   */
-  default int getClusterCountAcrossPartitions(String clusterName, String scheme) throws ServiceUnavailableException
-  {
-    throw new UnsupportedOperationException("getClusterCountAcrossPartitions(String, String) is not supported");
-  }
 
   /**
    * Helpful utility method for default behavior

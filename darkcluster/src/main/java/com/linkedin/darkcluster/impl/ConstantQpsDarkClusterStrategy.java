@@ -19,6 +19,9 @@ package com.linkedin.darkcluster.impl;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.ConstantQpsRateLimiter;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Supplier;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 
@@ -26,6 +29,12 @@ import com.linkedin.common.util.Notifier;
 import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.balancer.util.LoadBalancerUtil;
+import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
+import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.darkcluster.api.BaseDarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterStrategy;
 import com.linkedin.r2.message.RequestContext;
@@ -53,7 +62,11 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
   private final BaseDarkClusterDispatcher _baseDarkClusterDispatcher;
   private final Notifier _notifier;
   private final ClusterInfoProvider _clusterInfoProvider;
-  private final ConstantQpsRateLimiter _rateLimiter;
+  private final PartitionInfoProvider _partitionInfoProvider;
+  private final Supplier<ConstantQpsRateLimiter> _rateLimiterSupplier;
+  private final Map<Integer, ConstantQpsRateLimiter> _partitionLimiters;
+  
+
 
   private static final long ONE_SECOND_PERIOD = TimeUnit.SECONDS.toMillis(1);
   private static final int NUM_REQUESTS_TO_SEND_PER_RATE_LIMITER_CYCLE = 1;
@@ -68,17 +81,49 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
     _baseDarkClusterDispatcher = baseDarkClusterDispatcher;
     _notifier = notifier;
     _clusterInfoProvider = clusterInfoProvider;
-    _rateLimiter = rateLimiter;
+    _partitionInfoProvider = null;
+    _rateLimiterSupplier = null;
+    _partitionLimiters = new HashMap<>();
+    // Maintain legacy behavior of using a single limiter for default partition
+    _partitionLimiters.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, rateLimiter);
+  }
+
+  public ConstantQpsDarkClusterStrategy(@Nonnull String originalClusterName, @Nonnull String darkClusterName,
+      @Nonnull Float darkClusterPerHostQps, @Nonnull BaseDarkClusterDispatcher baseDarkClusterDispatcher,
+      @Nonnull Notifier notifier, @Nonnull ClusterInfoProvider clusterInfoProvider,
+      @Nonnull PartitionInfoProvider partitionInfoProvider,
+      @Nonnull Supplier<ConstantQpsRateLimiter> rateLimiterSupplier)
+  {
+    _originalClusterName = originalClusterName;
+    _darkClusterName = darkClusterName;
+    _darkClusterPerHostQps = darkClusterPerHostQps;
+    _baseDarkClusterDispatcher = baseDarkClusterDispatcher;
+    _notifier = notifier;
+    _clusterInfoProvider = clusterInfoProvider;
+    _partitionInfoProvider = partitionInfoProvider;
+    _rateLimiterSupplier = rateLimiterSupplier;
+    _partitionLimiters = new HashMap<>();
   }
 
   @Override
   public boolean handleRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
   {
-    float sendRate = getSendRate();
-    // set burst in such a way that requests are dispatched evenly across the ONE_SECOND_PERIOD
+    int partitionId = getPartitionId(darkRequest);
+    ConstantQpsRateLimiter limiter;
+    if (_rateLimiterSupplier == null || _partitionInfoProvider == null)
+    {
+      // Legacy single limiter path, still compute partition-specific rate
+      limiter = _legacySingleLimiter;
+    }
+    else
+    {
+      limiter = getOrCreateLimiter(partitionId);
+    }
+
+    float sendRate = getSendRateForPartition(partitionId);
     int burst = (int) Math.max(1, Math.ceil(sendRate / ONE_SECOND_PERIOD));
-    _rateLimiter.setRate(sendRate, ONE_SECOND_PERIOD, burst);
-    return addRequest(originalRequest, darkRequest, requestContext);
+    limiter.setRate(sendRate, ONE_SECOND_PERIOD, burst);
+    return addRequest(originalRequest, darkRequest, requestContext, limiter);
   }
 
   /**
@@ -122,26 +167,22 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
    *
    * @return requests per second this host should dispatch
    */
-  private float getSendRate()
+  private float getSendRateForPartition(int partitionId)
   {
     try
     {
-      // Only support https for now. http support can be added later if truly needed, but would be non-ideal
-      // because potentially both dark and source would have to be configured.
-      int numDarkClusterInstances = _clusterInfoProvider.getClusterCountAcrossPartitions(_darkClusterName);
-      int numSourceClusterInstances = _clusterInfoProvider.getClusterCountAcrossPartitions(_originalClusterName);
+      int numDarkClusterInstances = _clusterInfoProvider.getClusterCount(_darkClusterName, PropertyKeys.HTTPS_SCHEME, partitionId);
+      int numSourceClusterInstances = _clusterInfoProvider.getClusterCount(_originalClusterName, PropertyKeys.HTTPS_SCHEME, partitionId);
       if (numSourceClusterInstances != 0)
       {
         return (numDarkClusterInstances * _darkClusterPerHostQps) / numSourceClusterInstances;
       }
-
       return 0F;
     }
     catch (ServiceUnavailableException e)
     {
       _notifier.notify(() -> new RuntimeException(
-          "PEGA_0020 unable to compute strategy for source cluster: " + _originalClusterName + ", darkClusterName: " + _darkClusterName, e));
-      // safe thing is to return 0 so dark traffic isn't sent.
+          "PEGA_0020 unable to compute partition-aware strategy for source cluster: " + _originalClusterName + ", darkClusterName: " + _darkClusterName, e));
       return 0F;
     }
   }
@@ -153,9 +194,9 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
 
    * @return always returns true since callbacks can always be added to {@link ConstantQpsRateLimiter};
    */
-  private boolean addRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
+  private boolean addRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext, ConstantQpsRateLimiter limiter)
   {
-    _rateLimiter.submit(new Callback<None>()
+    limiter.submit(new Callback<None>()
     {
       @Override
       public void onError(Throwable e)
@@ -170,5 +211,29 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
       }
     });
     return true;
+  }
+
+  private int getPartitionId(RestRequest darkRequest)
+  {
+    if (_partitionInfoProvider == null)
+    {
+      return DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
+    }
+    
+    String serviceName = LoadBalancerUtil.getServiceNameFromUri(darkRequest.getURI());
+    PartitionAccessor accessor = _partitionInfoProvider.getPartitionAccessor(serviceName);
+    return accessor.getPartitionId(darkRequest.getURI());
+    
+  }
+
+  private ConstantQpsRateLimiter getOrCreateLimiter(int partitionId)
+  {
+    ConstantQpsRateLimiter limiter = _partitionLimiters.get(partitionId);
+    if (limiter == null)
+    {
+      limiter = _rateLimiterSupplier.get();
+      _partitionLimiters.put(partitionId, limiter);
+    }
+    return limiter;
   }
 }

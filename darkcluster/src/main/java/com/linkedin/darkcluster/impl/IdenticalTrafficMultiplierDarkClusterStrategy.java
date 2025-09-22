@@ -4,11 +4,17 @@ import com.linkedin.common.util.Notifier;
 import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.balancer.util.LoadBalancerUtil;
+import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
+import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.darkcluster.api.BaseDarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterStrategy;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import java.util.Random;
+import java.util.Map;
 
 
 /**
@@ -25,6 +31,7 @@ public class IdenticalTrafficMultiplierDarkClusterStrategy implements DarkCluste
   private final Notifier _notifier;
   private final Random _random;
   private final ClusterInfoProvider _clusterInfoProvider;
+  private final PartitionInfoProvider _partitionInfoProvider;
 
   private static final String RANDOM_NUMBER_KEY = "identicalTrafficMultiplier.randomNumber";
 
@@ -42,6 +49,26 @@ public class IdenticalTrafficMultiplierDarkClusterStrategy implements DarkCluste
     _notifier = notifier;
     _random = random;
     _clusterInfoProvider = clusterInfoProvider;
+    _partitionInfoProvider = null;
+  }
+
+  public IdenticalTrafficMultiplierDarkClusterStrategy(String sourceClusterName,
+      String darkClusterName,
+      Float multiplier,
+      BaseDarkClusterDispatcher baseDarkClusterDispatcher,
+      Notifier notifier,
+      ClusterInfoProvider clusterInfoProvider,
+      PartitionInfoProvider partitionInfoProvider,
+      Random random)
+  {
+    _originalClusterName = sourceClusterName;
+    _darkClusterName = darkClusterName;
+    _multiplier = multiplier;
+    _baseDarkClusterDispatcher = baseDarkClusterDispatcher;
+    _notifier = notifier;
+    _random = random;
+    _clusterInfoProvider = clusterInfoProvider;
+    _partitionInfoProvider = partitionInfoProvider;
   }
 
   @Override
@@ -107,10 +134,9 @@ public class IdenticalTrafficMultiplierDarkClusterStrategy implements DarkCluste
   {
     try
     {
-      // Only support https for now. http support can be added later if truly needed, but would be non-ideal
-      // because potentially both dark and source would have to be configured.
-      int numDarkClusterInstances = _clusterInfoProvider.getClusterCountAcrossPartitions(_darkClusterName);
-      int numSourceClusterInstances = _clusterInfoProvider.getClusterCountAcrossPartitions(_originalClusterName);
+      int partitionId = (_partitionInfoProvider != null) ? getPartitionId(darkRequest) : DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
+      int numDarkClusterInstances = _clusterInfoProvider.getClusterCount(_darkClusterName, PropertyKeys.HTTPS_SCHEME, partitionId);
+      int numSourceClusterInstances = _clusterInfoProvider.getClusterCount(_originalClusterName, PropertyKeys.HTTPS_SCHEME, partitionId);
       float randomNumber;
       if (requestContext.getLocalAttr(RANDOM_NUMBER_KEY) == null)
       {
