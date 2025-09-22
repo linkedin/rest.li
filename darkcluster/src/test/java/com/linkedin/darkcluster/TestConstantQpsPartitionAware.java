@@ -205,7 +205,12 @@ public class TestConstantQpsPartitionAware
     PartitionInfoProvider faultyProvider = new PartitionInfoProvider() {
       @Override
       public PartitionAccessor getPartitionAccessor(String serviceName) throws ServiceUnavailableException {
-        throw new ServiceUnavailableException("Test failure");
+        throw new ServiceUnavailableException(serviceName, "Test failure");
+      }
+      
+      @Override
+      public <K> com.linkedin.d2.balancer.util.HostToKeyMapper<K> getPartitionInformation(java.net.URI serviceUri, java.util.Collection<K> keys, int limitHostPerPartition, int hash) throws ServiceUnavailableException {
+        throw new UnsupportedOperationException("Not implemented for test");
       }
     };
     
