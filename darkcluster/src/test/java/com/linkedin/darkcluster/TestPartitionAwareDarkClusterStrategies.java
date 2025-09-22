@@ -157,7 +157,7 @@ public class TestPartitionAwareDarkClusterStrategies
     mockPartitionInfoProvider.setPartitionMapping("/partition0", 0);
     
     IdenticalTrafficMultiplierDarkClusterStrategy strategy = new IdenticalTrafficMultiplierDarkClusterStrategy(
-        SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 1.0f, baseDispatcher,
+        SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 2.0f, baseDispatcher,
         new DoNothingNotifier(), mockClusterInfoProvider, mockPartitionInfoProvider, new Random(42));
     
     RestRequest request = new RestRequestBuilder(URI.create("http://test.com/partition0")).build();
