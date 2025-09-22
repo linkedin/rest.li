@@ -84,7 +84,7 @@ public class TestConstantQpsPartitionAware
     AtomicInteger rateLimiterCount = new AtomicInteger(0);
     Supplier<ConstantQpsRateLimiter> rateLimiterSupplier = () -> {
       rateLimiterCount.incrementAndGet();
-      EvictingCircularBuffer buffer = new EvictingCircularBuffer(executor, executor, executor, 100);
+      EvictingCircularBuffer buffer = new EvictingCircularBuffer(100, Integer.MAX_VALUE, ChronoUnit.DAYS, executor);
       ConstantQpsRateLimiter limiter = new ConstantQpsRateLimiter(executor, executor, executor, buffer);
       limiter.setBufferCapacity(100);
       limiter.setBufferTtl(Integer.MAX_VALUE, ChronoUnit.DAYS);
@@ -128,7 +128,7 @@ public class TestConstantQpsPartitionAware
     mockClusterInfoProvider.putHttpsClusterCount(DARK_CLUSTER_NAME, 5);
     
     // Create a single rate limiter for legacy constructor
-    EvictingCircularBuffer buffer = new EvictingCircularBuffer(executor, executor, executor, 100);
+    EvictingCircularBuffer buffer = new EvictingCircularBuffer(100, Integer.MAX_VALUE, ChronoUnit.DAYS, executor);
     ConstantQpsRateLimiter rateLimiter = new ConstantQpsRateLimiter(executor, executor, executor, buffer);
     rateLimiter.setBufferCapacity(100);
     rateLimiter.setBufferTtl(Integer.MAX_VALUE, ChronoUnit.DAYS);
@@ -167,7 +167,7 @@ public class TestConstantQpsPartitionAware
     mockPartitionInfoProvider.setPartitionMapping("/partition1", 1);
     
     Supplier<ConstantQpsRateLimiter> rateLimiterSupplier = () -> {
-      EvictingCircularBuffer buffer = new EvictingCircularBuffer(executor, executor, executor, 100);
+      EvictingCircularBuffer buffer = new EvictingCircularBuffer(100, Integer.MAX_VALUE, ChronoUnit.DAYS, executor);
       ConstantQpsRateLimiter limiter = new ConstantQpsRateLimiter(executor, executor, executor, buffer);
       limiter.setBufferCapacity(100);
       limiter.setBufferTtl(Integer.MAX_VALUE, ChronoUnit.DAYS);
@@ -217,7 +217,7 @@ public class TestConstantQpsPartitionAware
     AtomicInteger rateLimiterCount = new AtomicInteger(0);
     Supplier<ConstantQpsRateLimiter> rateLimiterSupplier = () -> {
       rateLimiterCount.incrementAndGet();
-      EvictingCircularBuffer buffer = new EvictingCircularBuffer(executor, executor, executor, 100);
+      EvictingCircularBuffer buffer = new EvictingCircularBuffer(100, Integer.MAX_VALUE, ChronoUnit.DAYS, executor);
       ConstantQpsRateLimiter limiter = new ConstantQpsRateLimiter(executor, executor, executor, buffer);
       limiter.setBufferCapacity(100);
       limiter.setBufferTtl(Integer.MAX_VALUE, ChronoUnit.DAYS);
