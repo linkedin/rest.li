@@ -74,7 +74,7 @@ public class IdenticalTrafficMultiplierDarkClusterStrategy implements DarkCluste
   @Override
   public boolean handleRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
   {
-    int numRequestDuplicates = getNumDuplicateRequests(requestContext);
+    int numRequestDuplicates = getNumDuplicateRequests(darkRequest, requestContext);
     return _baseDarkClusterDispatcher.sendRequest(originalRequest, darkRequest, requestContext, numRequestDuplicates);
   }
 
@@ -130,11 +130,11 @@ public class IdenticalTrafficMultiplierDarkClusterStrategy implements DarkCluste
    * it was not sent to it.
    * This would also work regardless of the order in which the 3 dark clusters are called
    */
-  private int getNumDuplicateRequests(RequestContext requestContext)
+  private int getNumDuplicateRequests(RestRequest darkRequest, RequestContext requestContext)
   {
     try
     {
-      int partitionId = (_partitionInfoProvider != null) ? getPartitionId(darkRequest) : DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
+      int partitionId = getPartitionId(darkRequest);
       int numDarkClusterInstances = _clusterInfoProvider.getClusterCount(_darkClusterName, PropertyKeys.HTTPS_SCHEME, partitionId);
       int numSourceClusterInstances = _clusterInfoProvider.getClusterCount(_originalClusterName, PropertyKeys.HTTPS_SCHEME, partitionId);
       float randomNumber;
@@ -161,6 +161,25 @@ public class IdenticalTrafficMultiplierDarkClusterStrategy implements DarkCluste
           + _originalClusterName + ", darkClusterName: " + _darkClusterName, e));
       // safe thing is to return 0 so dark traffic isn't sent.
       return 0;
+    }
+  }
+
+  private int getPartitionId(RestRequest darkRequest)
+  {
+    if (_partitionInfoProvider == null)
+    {
+      return DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
+    }
+    
+    try
+    {
+      String serviceName = LoadBalancerUtil.getServiceNameFromUri(darkRequest.getURI());
+      PartitionAccessor accessor = _partitionInfoProvider.getPartitionAccessor(serviceName);
+      return accessor.getPartitionId(darkRequest.getURI());
+    }
+    catch (Throwable t)
+    {
+      return DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
     }
   }
 }

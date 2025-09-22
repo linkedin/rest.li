@@ -109,17 +109,8 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
   public boolean handleRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
   {
     int partitionId = getPartitionId(darkRequest);
-    ConstantQpsRateLimiter limiter;
-    if (_rateLimiterSupplier == null || _partitionInfoProvider == null)
-    {
-      // Legacy single limiter path, still compute partition-specific rate
-      limiter = _legacySingleLimiter;
-    }
-    else
-    {
-      limiter = getOrCreateLimiter(partitionId);
-    }
-
+    ConstantQpsRateLimiter limiter = getOrCreateLimiter(partitionId);
+      
     float sendRate = getSendRateForPartition(partitionId);
     int burst = (int) Math.max(1, Math.ceil(sendRate / ONE_SECOND_PERIOD));
     limiter.setRate(sendRate, ONE_SECOND_PERIOD, burst);
@@ -220,10 +211,17 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
       return DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
     }
     
-    String serviceName = LoadBalancerUtil.getServiceNameFromUri(darkRequest.getURI());
-    PartitionAccessor accessor = _partitionInfoProvider.getPartitionAccessor(serviceName);
-    return accessor.getPartitionId(darkRequest.getURI());
-    
+    try
+    {
+      String serviceName = LoadBalancerUtil.getServiceNameFromUri(darkRequest.getURI());
+      PartitionAccessor accessor = _partitionInfoProvider.getPartitionAccessor(serviceName);
+      return accessor.getPartitionId(darkRequest.getURI());
+    }
+    catch (Throwable t)
+    {
+      // Fallback to default partition on any error
+      return DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
+    }
   }
 
   private ConstantQpsRateLimiter getOrCreateLimiter(int partitionId)

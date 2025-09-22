@@ -35,14 +35,13 @@ public class MockClusterInfoProvider implements ClusterInfoProvider
   Map<String, DarkClusterConfigMap> lookupMap = new HashMap<>();
   List<LoadBalancerClusterListener> clusterListeners = new ArrayList<>();
   Map<String, Integer> clusterHttpsCount = new HashMap<>();
-  Map<String, Integer> clusterHttpsCountAcrossPartitions = new HashMap<>();
-  Map<String, Map<Integer, Integer>> clusterHttpsCountsByPartition = new HashMap<>();
 
   @Override
   public int getClusterCount(String clusterName, String scheme, int partitionId)
     throws ServiceUnavailableException
   {
-    return 0;
+    // For tests, use the HTTPS count regardless of scheme/partition for backward compatibility
+    return clusterHttpsCount.getOrDefault(clusterName, 1);
   }
 
   @Override
@@ -131,6 +130,7 @@ public class MockClusterInfoProvider implements ClusterInfoProvider
 
   void putHttpsClusterCountAcrossPartitions(String clusterName, Integer httpsCount)
   {
-    clusterHttpsCountAcrossPartitions.put(clusterName, httpsCount);
+    // For backward compatibility, just use the regular HTTPS count
+    clusterHttpsCount.put(clusterName, httpsCount);
   }
 }
