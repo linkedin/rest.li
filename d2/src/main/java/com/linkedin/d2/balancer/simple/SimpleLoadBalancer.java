@@ -1294,7 +1294,6 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     return -1;
   }
 
-
   @Override
   public DarkClusterConfigMap getDarkClusterConfigMap(String clusterName) throws ServiceUnavailableException
   {

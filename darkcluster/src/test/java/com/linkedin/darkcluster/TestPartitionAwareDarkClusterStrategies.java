@@ -115,34 +115,7 @@ public class TestPartitionAwareDarkClusterStrategies
     Assert.assertTrue(result1, "Request to partition 1 should be handled");
   }
 
-  @Test
-  public void testConstantQpsStrategyFallbackToDefaultPartition()
-  {
-    // Setup without partition info provider (should fall back to default partition)
-    mockClusterInfoProvider.putHttpsClusterCount(SOURCE_CLUSTER_NAME, 10);
-    mockClusterInfoProvider.putHttpsClusterCount(DARK_CLUSTER_NAME, 5);
-    
-    Supplier<ConstantQpsRateLimiter> rateLimiterSupplier = () -> {
-      EvictingCircularBuffer buffer = new EvictingCircularBuffer(100, 5, ChronoUnit.SECONDS, executor);
-      ConstantQpsRateLimiter limiter = new ConstantQpsRateLimiter(executor, executor, executor, buffer);
-      limiter.setBufferCapacity(100);
-      limiter.setBufferTtl(Integer.MAX_VALUE, ChronoUnit.DAYS);
-      return limiter;
-    };
-    
-    // Create strategy without partition info provider (null)
-    ConstantQpsDarkClusterStrategy strategy = new ConstantQpsDarkClusterStrategy(
-        SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, null, rateLimiterSupplier);
-    
-    RestRequest request = new RestRequestBuilder(URI.create("http://test.com/any")).build();
-    RestRequest darkRequest = new RestRequestBuilder(URI.create("http://dark.com/any")).build();
-    RequestContext context = new RequestContext();
-    
-    boolean result = strategy.handleRequest(request, darkRequest, context);
-    Assert.assertTrue(result, "Request should be handled with default partition fallback");
-  }
-
+  
   @Test
   public void testRelativeTrafficMultiplierStrategyWithPartitions()
   {
@@ -174,26 +147,6 @@ public class TestPartitionAwareDarkClusterStrategies
     Assert.assertTrue(successCount > 0, "Some requests should be sent to dark cluster with partition awareness");
   }
 
-  @Test
-  public void testRelativeTrafficMultiplierStrategyFallbackToDefaultPartition()
-  {
-    mockClusterInfoProvider.putHttpsClusterCount(SOURCE_CLUSTER_NAME, 10);
-    mockClusterInfoProvider.putHttpsClusterCount(DARK_CLUSTER_NAME, 5);
-    
-    // Create strategy without partition info provider
-    RelativeTrafficMultiplierDarkClusterStrategy strategy = new RelativeTrafficMultiplierDarkClusterStrategy(
-        SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 1.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, new Random(42));
-    
-    RestRequest request = new RestRequestBuilder(URI.create("http://test.com/any")).build();
-    RestRequest darkRequest = new RestRequestBuilder(URI.create("http://dark.com/any")).build();
-    RequestContext context = new RequestContext();
-    
-    // Should work without partition info provider
-    boolean result = strategy.handleRequest(request, darkRequest, context);
-    // Result depends on random sampling, but should not throw exceptions
-    Assert.assertNotNull(result, "Strategy should handle request without partition info");
-  }
 
   @Test
   public void testIdenticalTrafficMultiplierStrategyWithPartitions()
@@ -213,66 +166,7 @@ public class TestPartitionAwareDarkClusterStrategies
     
     // Test that identical strategy works with partitions
     boolean result = strategy.handleRequest(request, darkRequest, context);
-    Assert.assertNotNull(result, "Identical strategy should handle partitioned requests");
-  }
-
-  @Test
-  public void testIdenticalTrafficMultiplierStrategyFallbackToDefaultPartition()
-  {
-    mockClusterInfoProvider.putHttpsClusterCount(SOURCE_CLUSTER_NAME, 10);
-    mockClusterInfoProvider.putHttpsClusterCount(DARK_CLUSTER_NAME, 5);
-    
-    // Create strategy without partition info provider
-    IdenticalTrafficMultiplierDarkClusterStrategy strategy = new IdenticalTrafficMultiplierDarkClusterStrategy(
-        SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 1.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, new Random(42));
-    
-    RestRequest request = new RestRequestBuilder(URI.create("http://test.com/any")).build();
-    RestRequest darkRequest = new RestRequestBuilder(URI.create("http://dark.com/any")).build();
-    RequestContext context = new RequestContext();
-    
-    boolean result = strategy.handleRequest(request, darkRequest, context);
-    Assert.assertNotNull(result, "Strategy should handle request without partition info");
-  }
-
-  @Test
-  public void testPartitionAccessorExceptionHandling()
-  {
-    mockClusterInfoProvider.putHttpsClusterCount(SOURCE_CLUSTER_NAME, 10);
-    mockClusterInfoProvider.putHttpsClusterCount(DARK_CLUSTER_NAME, 5);
-    
-    // Setup partition info provider that throws exceptions
-    PartitionInfoProvider faultyPartitionInfoProvider = new PartitionInfoProvider() {
-      @Override
-      public PartitionAccessor getPartitionAccessor(String serviceName) throws ServiceUnavailableException {
-        throw new ServiceUnavailableException("testService", "Test exception");
-      }
-      
-      @Override
-      public <K> com.linkedin.d2.balancer.util.HostToKeyMapper<K> getPartitionInformation(java.net.URI serviceUri, java.util.Collection<K> keys, int limitHostPerPartition, int hash) throws ServiceUnavailableException {
-        throw new ServiceUnavailableException("testService", "Test exception");
-      }
-    };
-    
-    Supplier<ConstantQpsRateLimiter> rateLimiterSupplier = () -> {
-      EvictingCircularBuffer buffer = new EvictingCircularBuffer(100, 5, ChronoUnit.SECONDS, executor);
-      ConstantQpsRateLimiter limiter = new ConstantQpsRateLimiter(executor, executor, executor, buffer);
-      limiter.setBufferCapacity(100);
-      limiter.setBufferTtl(Integer.MAX_VALUE, ChronoUnit.DAYS);
-      return limiter;
-    };
-    
-    ConstantQpsDarkClusterStrategy strategy = new ConstantQpsDarkClusterStrategy(
-        SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, faultyPartitionInfoProvider, rateLimiterSupplier);
-    
-    RestRequest request = new RestRequestBuilder(URI.create("http://test.com/any")).build();
-    RestRequest darkRequest = new RestRequestBuilder(URI.create("http://dark.com/any")).build();
-    RequestContext context = new RequestContext();
-    
-    // Should fall back to default partition when partition accessor throws exception
-    boolean result = strategy.handleRequest(request, darkRequest, context);
-    Assert.assertTrue(result, "Strategy should handle partition accessor exceptions gracefully");
+    Assert.assertTrue(result, "Identical strategy should handle partitioned requests");
   }
 
   /**

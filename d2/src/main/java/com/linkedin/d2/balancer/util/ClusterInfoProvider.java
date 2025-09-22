@@ -43,7 +43,6 @@ public interface ClusterInfoProvider
    */
   int getClusterCount(String clusterName, String scheme, int partitionId) throws ServiceUnavailableException;
 
-
   /**
    * Helpful utility method for default behavior
    */

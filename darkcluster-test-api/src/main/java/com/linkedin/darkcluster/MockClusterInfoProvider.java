@@ -40,7 +40,6 @@ public class MockClusterInfoProvider implements ClusterInfoProvider
   public int getClusterCount(String clusterName, String scheme, int partitionId)
     throws ServiceUnavailableException
   {
-    // For tests, use the HTTPS count regardless of scheme/partition for backward compatibility
     return clusterHttpsCount.getOrDefault(clusterName, 1);
   }
 
@@ -125,12 +124,6 @@ public class MockClusterInfoProvider implements ClusterInfoProvider
   void putHttpsClusterCount(String clusterName, Integer httpsCount)
   {
     // overwrites if anything is already there for this clusterName
-    clusterHttpsCount.put(clusterName, httpsCount);
-  }
-
-  void putHttpsClusterCountAcrossPartitions(String clusterName, Integer httpsCount)
-  {
-    // For backward compatibility, just use the regular HTTPS count
     clusterHttpsCount.put(clusterName, httpsCount);
   }
 }
