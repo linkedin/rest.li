@@ -263,5 +263,11 @@ public class TestConstantQpsPartitionAware
         }
       };
     }
+    
+    @Override
+    public <K> com.linkedin.d2.balancer.util.HostToKeyMapper<K> getPartitionInformation(java.net.URI serviceUri, java.util.Collection<K> keys, int limitHostPerPartition, int hash) throws ServiceUnavailableException
+    {
+      throw new UnsupportedOperationException("Not implemented for test");
+    }
   }
 }
