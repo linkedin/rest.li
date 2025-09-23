@@ -19,6 +19,7 @@ package com.linkedin.darkcluster.impl;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.ConstantQpsRateLimiter;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -65,6 +66,8 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
   private final PartitionInfoProvider _partitionInfoProvider;
   private final Supplier<ConstantQpsRateLimiter> _rateLimiterSupplier;
   private final Map<Integer, ConstantQpsRateLimiter> _partitionLimiters;
+  private final Integer _bufferCapacity;
+  private final Integer _bufferTtlSeconds;
   
 
 
@@ -84,6 +87,8 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
     _partitionInfoProvider = null;
     _rateLimiterSupplier = null;
     _partitionLimiters = new HashMap<>();
+    _bufferCapacity = null;
+    _bufferTtlSeconds = null;
     // Maintain legacy behavior of using a single limiter for default partition
     _partitionLimiters.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, rateLimiter);
   }
@@ -92,7 +97,8 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
       @Nonnull Float darkClusterPerHostQps, @Nonnull BaseDarkClusterDispatcher baseDarkClusterDispatcher,
       @Nonnull Notifier notifier, @Nonnull ClusterInfoProvider clusterInfoProvider,
       @Nonnull PartitionInfoProvider partitionInfoProvider,
-      @Nonnull Supplier<ConstantQpsRateLimiter> rateLimiterSupplier)
+      @Nonnull Supplier<ConstantQpsRateLimiter> rateLimiterSupplier,
+      @Nonnull Integer bufferCapacity, @Nonnull Integer bufferTtlSeconds)
   {
     _originalClusterName = originalClusterName;
     _darkClusterName = darkClusterName;
@@ -103,6 +109,8 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
     _partitionInfoProvider = partitionInfoProvider;
     _rateLimiterSupplier = rateLimiterSupplier;
     _partitionLimiters = new HashMap<>();
+    _bufferCapacity = bufferCapacity;
+    _bufferTtlSeconds = bufferTtlSeconds;
   }
 
   @Override
@@ -226,12 +234,20 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
 
   private ConstantQpsRateLimiter getOrCreateLimiter(int partitionId)
   {
-    ConstantQpsRateLimiter limiter = _partitionLimiters.get(partitionId);
-    if (limiter == null)
-    {
-      limiter = _rateLimiterSupplier.get();
-      _partitionLimiters.put(partitionId, limiter);
-    }
-    return limiter;
+    return _partitionLimiters.computeIfAbsent(partitionId, k -> {
+      if (_rateLimiterSupplier != null) {
+        ConstantQpsRateLimiter limiter = _rateLimiterSupplier.get();
+        // Configure buffer settings if available
+        if (_bufferCapacity != null && _bufferTtlSeconds != null)
+        {
+          limiter.setBufferCapacity(_bufferCapacity);
+          limiter.setBufferTtl(_bufferTtlSeconds, ChronoUnit.SECONDS);
+        }
+        return limiter;
+      } else {
+        // Return the default partition rate limiter directly to avoid repeated computation
+        return _partitionLimiters.get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
+      }
+    });
   }
 }

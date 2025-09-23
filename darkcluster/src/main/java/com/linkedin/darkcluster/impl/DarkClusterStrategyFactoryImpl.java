@@ -191,7 +191,8 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
               return new ConstantQpsDarkClusterStrategy(_sourceClusterName, darkClusterName,
                   darkClusterConfig.getDispatcherOutboundTargetRate(), baseDarkClusterDispatcher,
                   _notifier, _facilities.getClusterInfoProvider(), _facilities.getPartitionInfoProvider(),
-                  _rateLimiterSupplier);
+                  _rateLimiterSupplier, darkClusterConfig.getDispatcherMaxRequestsToBuffer(),
+                  darkClusterConfig.getDispatcherBufferedRequestExpiryInSeconds());
             }
             break;
           default:
