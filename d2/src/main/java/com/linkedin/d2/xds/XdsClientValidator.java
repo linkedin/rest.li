@@ -327,7 +327,7 @@ public class XdsClientValidator
         return false;
       }
 
-      return compareJavaVersions(currentVersion, minVersion) >= 0;
+      return compareJavaVersions(normalizedCurrent, normalizedMin) >= 0;
     }
     catch (Exception e)
     {
@@ -364,8 +364,8 @@ public class XdsClientValidator
       return 0;
     }
 
-    int[] partsA = parseVersionParts(normalizeJavaVersion(a));
-    int[] partsB = parseVersionParts(normalizeJavaVersion(b));
+    int[] partsA = parseVersionParts(a);
+    int[] partsB = parseVersionParts(b);
 
     int maxLen = Math.max(partsA.length, partsB.length);
     for (int i = 0; i < maxLen; i++)
