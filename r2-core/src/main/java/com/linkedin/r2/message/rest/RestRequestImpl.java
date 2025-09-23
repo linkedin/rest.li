@@ -33,8 +33,20 @@ import java.util.Map;
   /* package private */ RestRequestImpl(ByteString entity, Map<String, String> headers,
                                         List<String> cookies, URI uri, String method)
   {
-    super(headers, cookies, uri, method);
+    this(entity, headers, cookies, uri, method, true);
+  }
+
+  private RestRequestImpl(ByteString entity, Map<String, String> headers,
+      List<String> cookies, URI uri, String method, boolean validateArgs)
+  {
+    super(headers, cookies, uri, method, validateArgs);
     _entity = entity;
+  }
+
+  @Override
+  public RestRequest copyWithURI(URI uri)
+  {
+    return new RestRequestImpl(_entity, getHeaders(), getCookies(), uri, getMethod(), false);
   }
 
   @Override
