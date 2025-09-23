@@ -93,7 +93,7 @@ public class TestConstantQpsPartitionAware
     
     ConstantQpsDarkClusterStrategy strategy = new ConstantQpsDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, mockPartitionInfoProvider, rateLimiterSupplier);
+        new DoNothingNotifier(), mockClusterInfoProvider, mockPartitionInfoProvider, rateLimiterSupplier, 100, Integer.MAX_VALUE);
     
     // Make requests to different partitions
     RestRequest request0 = new RestRequestBuilder(URI.create("http://test.com/partition0")).build();
@@ -176,7 +176,7 @@ public class TestConstantQpsPartitionAware
     
     ConstantQpsDarkClusterStrategy strategy = new ConstantQpsDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, mockPartitionInfoProvider, rateLimiterSupplier);
+        new DoNothingNotifier(), mockClusterInfoProvider, mockPartitionInfoProvider, rateLimiterSupplier, 100, Integer.MAX_VALUE);
     
     // Test requests to different partitions - should use different host counts for rate calculation
     RestRequest request0 = new RestRequestBuilder(URI.create("http://test.com/partition0")).build();
@@ -226,8 +226,8 @@ public class TestConstantQpsPartitionAware
     
     ConstantQpsDarkClusterStrategy strategy = new ConstantQpsDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, faultyProvider, rateLimiterSupplier);
-    
+        new DoNothingNotifier(), mockClusterInfoProvider, faultyProvider, rateLimiterSupplier, 100, Integer.MAX_VALUE);
+
     RestRequest request = new RestRequestBuilder(URI.create("http://test.com/any")).build();
     RestRequest darkRequest = new RestRequestBuilder(URI.create("http://dark.com/any")).build();
     RequestContext context = new RequestContext();
@@ -276,3 +276,4 @@ public class TestConstantQpsPartitionAware
     }
   }
 }
+
