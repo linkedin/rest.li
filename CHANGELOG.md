@@ -16,6 +16,7 @@ and what APIs have changed, if applicable.
 
 ## [29.77.0] - 2025-09-18
 - Add XdsClientValidator to pre check xDS client connection
+
 ## [29.76.0] - 2025-09-16
 - Add D2 service MethodLevelProperties configuration support
 
