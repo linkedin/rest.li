@@ -17,11 +17,10 @@
 package com.linkedin.d2.xds;
 
 import io.grpc.ManagedChannel;
-
 import java.net.InetSocketAddress;
+import javax.annotation.Nullable;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-
 import com.google.common.net.HostAndPort;
 import io.grpc.StatusRuntimeException;
 import org.slf4j.Logger;
@@ -64,8 +63,8 @@ public class XdsClientValidator
    * @param minimumJavaVersion the minimum required Java version
    * @param actionOnFailure    action to take when validation fails
    */
-  public static void preCheckForIndisConnection(ManagedChannel managedChannel, long readyTimeoutMillis,
-                                                String minimumJavaVersion, ActionOnPrecheckFailure actionOnFailure)
+  public static void preCheckForIndisConnection(@Nullable ManagedChannel managedChannel, long readyTimeoutMillis,
+      String minimumJavaVersion, ActionOnPrecheckFailure actionOnFailure)
   {
     try
     {
@@ -95,8 +94,9 @@ public class XdsClientValidator
    * @param minimumJavaVersion the minimum required Java version
    * @return null if all pre-checks pass, error message if validation fails
    */
-  static String processValidation(ManagedChannel managedChannel, long readyTimeoutMillis,
-                                  String minimumJavaVersion)
+  @Nullable
+  static String processValidation(@Nullable ManagedChannel managedChannel, long readyTimeoutMillis,
+      String minimumJavaVersion)
   {
     // Check Java version
     String javaVersionError = validateJavaVersion(minimumJavaVersion);
@@ -163,6 +163,7 @@ public class XdsClientValidator
    * @param classNames fully-qualified class names to validate
    * @return error message if validation fails, null if all classes are present
    */
+  @Nullable
   static String validateRequiredClasses(String... classNames)
   {
     try
@@ -195,7 +196,8 @@ public class XdsClientValidator
    * @param managedChannel the gRPC managed channel
    * @return error message if validation fails, null if passes
    */
-  static String validateChannelAuthority(ManagedChannel managedChannel)
+  @Nullable
+  static String validateChannelAuthority(@Nullable ManagedChannel managedChannel)
   {
     if (managedChannel == null)
     {
@@ -219,6 +221,7 @@ public class XdsClientValidator
    * @param readyTimeoutMillis timeout for connection checks in milliseconds
    * @return error message if validation fails, null if passes
    */
+  @Nullable
   static String validateSocketConnection(String serverAuthority, long readyTimeoutMillis, Socket socket)
   {
     try
@@ -260,6 +263,7 @@ public class XdsClientValidator
    * @param readyTimeoutMillis timeout for health checks in milliseconds
    * @return error message if validation fails, null if passes
    */
+  @Nullable
   static String validateHealthCheck(ManagedChannel managedChannel, long readyTimeoutMillis)
   {
     try

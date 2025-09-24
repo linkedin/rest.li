@@ -857,13 +857,13 @@ public class D2ClientBuilder
     return this;
   }
 
-  public D2ClientBuilder setXdsMinimumJavaVersion(@Nonnull String xdsMinimumJavaVersion)
+  public D2ClientBuilder setXdsMinimumJavaVersion(String xdsMinimumJavaVersion)
   {
     _config.xdsMinimumJavaVersion = xdsMinimumJavaVersion;
     return this;
   }
 
-  public D2ClientBuilder setActionOnPrecheckFailure(@Nonnull XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure)
+  public D2ClientBuilder setActionOnPrecheckFailure(XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure)
   {
     _config.actionOnPrecheckFailure = actionOnPrecheckFailure;
     return this;

@@ -104,7 +104,6 @@ public class XdsClientImpl extends XdsClient
   @VisibleForTesting
   AdsStream _adsStream;
   private boolean _isXdsStreamShutdown;
-  private final AtomicBoolean _preCheckCompleted = new AtomicBoolean(false);
   @VisibleForTesting
   ScheduledFuture<?> _retryRpcStreamFuture;
   private ScheduledFuture<?> _readyTimeoutFuture;
@@ -194,8 +193,8 @@ public class XdsClientImpl extends XdsClient
       XdsServerMetricsProvider serverMetricsProvider,
       boolean irvSupport,
       Integer maxRetryBackoffSeconds,
-      @Nonnull String minimumJavaVersion,
-      @Nonnull XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure)
+      String minimumJavaVersion,
+      XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure)
   {
     _readyTimeoutMillis = readyTimeoutMillis;
     _node = node;
@@ -232,13 +231,7 @@ public class XdsClientImpl extends XdsClient
   public void start()
   {
     _xdsClientJmx.setXdsClient(this);
-
-    // Run pre-check only once at startup
-    if (_preCheckCompleted.compareAndSet(false, true))
-    {
-      XdsClientValidator.preCheckForIndisConnection(_managedChannel, _readyTimeoutMillis, _minimumJavaVersion, _actionOnPrecheckFailure);
-    }
-
+    XdsClientValidator.preCheckForIndisConnection(_managedChannel, _readyTimeoutMillis, _minimumJavaVersion, _actionOnPrecheckFailure);
     startRpcStream();
   }
 
