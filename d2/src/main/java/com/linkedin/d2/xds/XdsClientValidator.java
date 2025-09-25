@@ -271,13 +271,13 @@ public class XdsClientValidator
       LOG.info("[xds pre-check] Health check for managed channel passed - channel is SERVING");
       return null;
     }
-    catch (StatusRuntimeException e)
+    catch (Exception e)
     {
-      if (e.getStatus().getCode() == io.grpc.Status.Code.DEADLINE_EXCEEDED)
+      if (e instanceof StatusRuntimeException && ((StatusRuntimeException) e).getStatus().getCode() == io.grpc.Status.Code.DEADLINE_EXCEEDED)
       {
         LOG.warn("[xds pre-check] Health check timeout for managed channel within " + readyTimeoutMillis + "ms. " +
-            "This may be transient - if the issue persists, check go/onboardindis Guidelines #2 and #9 for more " +
-            "details" + e.getMessage());
+                     "This may be transient - if the issue persists, check go/onboardindis Guidelines #2 and #9 for " +
+                     "more details" + e.getMessage());
         return null;
       }
       else
@@ -288,14 +288,6 @@ public class XdsClientValidator
             ", check go/onboardindis Guidelines #2 and #9 for more details, " +
             "if there is any other sslContext issue, please check with #pki team";
       }
-    }
-    catch (Exception e)
-    {
-      Throwable c = e;
-      while (c.getCause() != null) c = c.getCause();
-      return "[xds pre-check] Health check failed for managed channel: " + c.getClass().getName() + " | " + c.getMessage() +
-          ", check go/onboardindis Guidelines #2 and #9 for more details, " +
-          "if there is any other sslContext issue, please check with #pki team";
     }
   }
 
