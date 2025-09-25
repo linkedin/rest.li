@@ -35,7 +35,7 @@ public class XdsClientValidator
   private static final Logger LOG = LoggerFactory.getLogger(XdsClientValidator.class);
 
   public static final String DEFAULT_MINIMUM_JAVA_VERSION = "1.8.0_282";
-  public static final ActionOnPrecheckFailure DEFAULT_ACTION_ON_PRECHECK_FAILURE = ActionOnPrecheckFailure.WARN;
+  public static final ActionOnPrecheckFailure DEFAULT_ACTION_ON_PRECHECK_FAILURE = ActionOnPrecheckFailure.ERROR;
 
   // Required class names for XDS functionality
   private static final String PROTOBUF_FILE_DESCRIPTOR_CLASS = "com.google.protobuf.Descriptors$FileDescriptor";
@@ -46,9 +46,6 @@ public class XdsClientValidator
    */
   public enum ActionOnPrecheckFailure
   {
-    // Log warning and continue (default behavior for stability)
-    WARN,
-    // Log error and continue
     ERROR,
     // Throw exception and stop client creation
     THROW
@@ -477,9 +474,6 @@ public class XdsClientValidator
   {
     switch (actionOnFailure)
     {
-      case WARN:
-        LOG.warn(errorMessage);
-        break;
       case ERROR:
         LOG.error(errorMessage);
         break;

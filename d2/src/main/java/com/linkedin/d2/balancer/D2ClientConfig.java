@@ -183,7 +183,7 @@ public class D2ClientConfig
   public boolean xdsInitialResourceVersionsEnabled = false;
   public Integer xdsStreamMaxRetryBackoffSeconds = null;
   public String xdsMinimumJavaVersion = DEFAULT_MINIMUM_JAVA_VERSION;
-  public XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure = ActionOnPrecheckFailure.WARN;
+  public XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure = ActionOnPrecheckFailure.ERROR;
 
   /**
    * D2 client builder by default will detect if it's used to build a raw D2 client (as opposed to used by standard

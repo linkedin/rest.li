@@ -46,7 +46,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -56,6 +55,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -114,6 +114,7 @@ public class XdsClientImpl extends XdsClient
   private final boolean _initialResourceVersionsEnabled;
   private final String _minimumJavaVersion;
   private final XdsClientValidator.ActionOnPrecheckFailure _actionOnPrecheckFailure;
+  private final AtomicBoolean _started = new AtomicBoolean();
 
   @Deprecated
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService)
@@ -230,6 +231,11 @@ public class XdsClientImpl extends XdsClient
   @Override
   public void start()
   {
+    if (!_started.compareAndSet(false, true))
+    {
+      throw new IllegalStateException("Cannot start XdsClient more than once");
+    }
+
     _xdsClientJmx.setXdsClient(this);
     XdsClientValidator.preCheckForIndisConnection(_managedChannel, _readyTimeoutMillis, _minimumJavaVersion, _actionOnPrecheckFailure);
     startRpcStream();
