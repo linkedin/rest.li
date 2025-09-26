@@ -94,9 +94,12 @@ public class TestPartitionAwareDarkClusterStrategies
       return limiter;
     };
     
-    ConstantQpsDarkClusterStrategy strategy = new ConstantQpsDarkClusterStrategy(
+    ConstantQpsDarkClusterStrategy strategyP0 = new ConstantQpsDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, mockPartitionInfoProvider, rateLimiterSupplier, 100, 300);
+        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier, 100, 300);
+    ConstantQpsDarkClusterStrategy strategyP1 = new ConstantQpsDarkClusterStrategy(
+        SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
+        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier, 100, 300);
     
     // Test requests to different partitions
     RestRequest request0 = new RestRequestBuilder(URI.create("http://test.com/partition0")).build();
@@ -108,8 +111,8 @@ public class TestPartitionAwareDarkClusterStrategies
     RequestContext context1 = new RequestContext();
     
     // Both should succeed (strategy should handle different partitions)
-    boolean result0 = strategy.handleRequest(request0, darkRequest0, context0);
-    boolean result1 = strategy.handleRequest(request1, darkRequest1, context1);
+    boolean result0 = strategyP0.handleRequest(request0, darkRequest0, context0);
+    boolean result1 = strategyP1.handleRequest(request1, darkRequest1, context1);
     
     Assert.assertTrue(result0, "Request to partition 0 should be handled");
     Assert.assertTrue(result1, "Request to partition 1 should be handled");
@@ -128,7 +131,7 @@ public class TestPartitionAwareDarkClusterStrategies
     
     RelativeTrafficMultiplierDarkClusterStrategy strategy = new RelativeTrafficMultiplierDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 1.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, mockPartitionInfoProvider, new Random(42));
+        new DoNothingNotifier(), mockClusterInfoProvider, new Random(42));
     
     RestRequest request = new RestRequestBuilder(URI.create("http://test.com/partition0")).build();
     RestRequest darkRequest = new RestRequestBuilder(URI.create("http://dark.com/partition0")).build();
@@ -158,7 +161,7 @@ public class TestPartitionAwareDarkClusterStrategies
     
     IdenticalTrafficMultiplierDarkClusterStrategy strategy = new IdenticalTrafficMultiplierDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 2.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, mockPartitionInfoProvider, new Random(42));
+        new DoNothingNotifier(), mockClusterInfoProvider, new Random(42));
     
     RestRequest request = new RestRequestBuilder(URI.create("http://test.com/partition0")).build();
     RestRequest darkRequest = new RestRequestBuilder(URI.create("http://dark.com/partition0")).build();

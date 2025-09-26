@@ -91,9 +91,12 @@ public class TestConstantQpsPartitionAware
       return limiter;
     };
     
-    ConstantQpsDarkClusterStrategy strategy = new ConstantQpsDarkClusterStrategy(
+    ConstantQpsDarkClusterStrategy strategyP0 = new ConstantQpsDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, mockPartitionInfoProvider, rateLimiterSupplier, 100, Integer.MAX_VALUE);
+        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier, 100, Integer.MAX_VALUE);
+    ConstantQpsDarkClusterStrategy strategyP1 = new ConstantQpsDarkClusterStrategy(
+        SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
+        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier, 100, Integer.MAX_VALUE);
     
     // Make requests to different partitions
     RestRequest request0 = new RestRequestBuilder(URI.create("http://test.com/partition0")).build();
@@ -105,19 +108,19 @@ public class TestConstantQpsPartitionAware
     RequestContext context1 = new RequestContext();
     
     // First request to partition 0 should create a rate limiter
-    strategy.handleRequest(request0, darkRequest0, context0);
+    strategyP0.handleRequest(request0, darkRequest0, context0);
     Assert.assertEquals(rateLimiterCount.get(), 1, "First partition should create one rate limiter");
     
     // Second request to same partition should reuse the rate limiter
-    strategy.handleRequest(request0, darkRequest0, new RequestContext());
+    strategyP0.handleRequest(request0, darkRequest0, new RequestContext());
     Assert.assertEquals(rateLimiterCount.get(), 1, "Same partition should reuse rate limiter");
     
     // Request to different partition should create a new rate limiter
-    strategy.handleRequest(request1, darkRequest1, context1);
+    strategyP1.handleRequest(request1, darkRequest1, context1);
     Assert.assertEquals(rateLimiterCount.get(), 2, "Different partition should create new rate limiter");
     
     // Another request to partition 1 should reuse its rate limiter
-    strategy.handleRequest(request1, darkRequest1, new RequestContext());
+    strategyP1.handleRequest(request1, darkRequest1, new RequestContext());
     Assert.assertEquals(rateLimiterCount.get(), 2, "Same partition should reuse its rate limiter");
   }
 
@@ -133,10 +136,10 @@ public class TestConstantQpsPartitionAware
     rateLimiter.setBufferCapacity(100);
     rateLimiter.setBufferTtl(Integer.MAX_VALUE, ChronoUnit.DAYS);
     
-    // Use legacy constructor (no partition info provider, single rate limiter)
+    // Use constructor with supplier
     ConstantQpsDarkClusterStrategy strategy = new ConstantQpsDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiter);
+        new DoNothingNotifier(), mockClusterInfoProvider, () -> rateLimiter, 100, Integer.MAX_VALUE);
     
     RestRequest request = new RestRequestBuilder(URI.create("http://test.com/any")).build();
     RestRequest darkRequest = new RestRequestBuilder(URI.create("http://dark.com/any")).build();
@@ -166,7 +169,7 @@ public class TestConstantQpsPartitionAware
     mockPartitionInfoProvider.setPartitionMapping("/partition0", 0);
     mockPartitionInfoProvider.setPartitionMapping("/partition1", 1);
     
-    Supplier<ConstantQpsRateLimiter> rateLimiterSupplier = () -> {
+    Supplier<ConstantQpsRateLimiter> rateLimiterSupplier2 = () -> {
       EvictingCircularBuffer buffer = new EvictingCircularBuffer(100, Integer.MAX_VALUE, ChronoUnit.DAYS, executor);
       ConstantQpsRateLimiter limiter = new ConstantQpsRateLimiter(executor, executor, executor, buffer);
       limiter.setBufferCapacity(100);
@@ -174,9 +177,9 @@ public class TestConstantQpsPartitionAware
       return limiter;
     };
     
-    ConstantQpsDarkClusterStrategy strategy = new ConstantQpsDarkClusterStrategy(
+    ConstantQpsDarkClusterStrategy strategyP0b = new ConstantQpsDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, mockPartitionInfoProvider, rateLimiterSupplier, 100, Integer.MAX_VALUE);
+        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier2, 100, Integer.MAX_VALUE);
     
     // Test requests to different partitions - should use different host counts for rate calculation
     RestRequest request0 = new RestRequestBuilder(URI.create("http://test.com/partition0")).build();
@@ -188,8 +191,8 @@ public class TestConstantQpsPartitionAware
     RequestContext context1 = new RequestContext();
     
     // Both should succeed but with different rate calculations based on partition host counts
-    boolean result0 = strategy.handleRequest(request0, darkRequest0, context0);
-    boolean result1 = strategy.handleRequest(request1, darkRequest1, context1);
+    boolean result0 = strategyP0b.handleRequest(request0, darkRequest0, context0);
+    boolean result1 = strategyP0b.handleRequest(request1, darkRequest1, context1);
     
     Assert.assertTrue(result0, "Request to partition 0 should succeed");
     Assert.assertTrue(result1, "Request to partition 1 should succeed");
@@ -226,7 +229,7 @@ public class TestConstantQpsPartitionAware
     
     ConstantQpsDarkClusterStrategy strategy = new ConstantQpsDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, faultyProvider, rateLimiterSupplier, 100, Integer.MAX_VALUE);
+        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier, 100, Integer.MAX_VALUE);
 
     RestRequest request = new RestRequestBuilder(URI.create("http://test.com/any")).build();
     RestRequest darkRequest = new RestRequestBuilder(URI.create("http://dark.com/any")).build();

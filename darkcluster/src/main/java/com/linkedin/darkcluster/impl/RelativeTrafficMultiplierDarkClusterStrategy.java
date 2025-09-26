@@ -26,10 +26,7 @@ import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
 import com.linkedin.d2.balancer.properties.PropertyKeys;
-import com.linkedin.d2.balancer.util.LoadBalancerUtil;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
-import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
-import com.linkedin.d2.balancer.util.partitions.PartitionInfoProvider;
 import com.linkedin.darkcluster.api.BaseDarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterStrategy;
 import com.linkedin.r2.message.RequestContext;
@@ -53,7 +50,6 @@ public class RelativeTrafficMultiplierDarkClusterStrategy implements DarkCluster
   private final Notifier _notifier;
   private final Random _random;
   private final ClusterInfoProvider _clusterInfoProvider;
-  private final PartitionInfoProvider _partitionInfoProvider;
 
   public RelativeTrafficMultiplierDarkClusterStrategy(@Nonnull String originalClusterName, @Nonnull String darkClusterName, @Nonnull Float multiplier,
                                                       @Nonnull BaseDarkClusterDispatcher baseDarkClusterDispatcher,
@@ -67,31 +63,13 @@ public class RelativeTrafficMultiplierDarkClusterStrategy implements DarkCluster
     _baseDarkClusterDispatcher = baseDarkClusterDispatcher;
     _notifier = notifier;
     _clusterInfoProvider = clusterInfoProvider;
-    _random = random;
-    _partitionInfoProvider = null;
-  }
-
-  public RelativeTrafficMultiplierDarkClusterStrategy(@Nonnull String originalClusterName, @Nonnull String darkClusterName, @Nonnull Float multiplier,
-                                                      @Nonnull BaseDarkClusterDispatcher baseDarkClusterDispatcher,
-                                                      @Nonnull Notifier notifier,
-                                                      @Nonnull ClusterInfoProvider clusterInfoProvider,
-                                                      @Nonnull PartitionInfoProvider partitionInfoProvider,
-                                                      @Nonnull Random random)
-  {
-    _originalClusterName = originalClusterName;
-    _darkClusterName = darkClusterName;
-    _multiplier = multiplier;
-    _baseDarkClusterDispatcher = baseDarkClusterDispatcher;
-    _notifier = notifier;
-    _clusterInfoProvider = clusterInfoProvider;
-    _partitionInfoProvider = partitionInfoProvider;
     _random = random;
   }
 
   @Override
   public boolean handleRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
   {
-    int numRequestDuplicates = getNumDuplicateRequests(darkRequest);
+    int numRequestDuplicates = getNumDuplicateRequests();
     return _baseDarkClusterDispatcher.sendRequest(originalRequest, darkRequest, requestContext, numRequestDuplicates);
   }
 
@@ -131,13 +109,12 @@ public class RelativeTrafficMultiplierDarkClusterStrategy implements DarkCluster
    * 10 dark instances, 10 source instances, multiplier = 1.5. Avg#DarkRequests = (10 * 1.5)/10 = 1.5. In this case at least
    * 1 request will be sent, with a 50% probability another request will be sent as well.
    */
-  private int getNumDuplicateRequests(RestRequest darkRequest)
+  private int getNumDuplicateRequests()
   {
     try
     {
-      int partitionId = (_partitionInfoProvider != null) ? getPartitionId(darkRequest) : DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
-      int numDarkClusterInstances = _clusterInfoProvider.getClusterCount(_darkClusterName, PropertyKeys.HTTPS_SCHEME, partitionId);
-      int numSourceClusterInstances = _clusterInfoProvider.getClusterCount(_originalClusterName, PropertyKeys.HTTPS_SCHEME, partitionId);
+      int numDarkClusterInstances = _clusterInfoProvider.getHttpsClusterCount(_darkClusterName);
+      int numSourceClusterInstances = _clusterInfoProvider.getHttpsClusterCount(_originalClusterName);
       if (numSourceClusterInstances != 0)
       {
         float avgNumDarkRequests = (numDarkClusterInstances * _multiplier) / numSourceClusterInstances;
@@ -153,20 +130,6 @@ public class RelativeTrafficMultiplierDarkClusterStrategy implements DarkCluster
                                                     + _originalClusterName + ", darkClusterName: " + _darkClusterName, e));
       // safe thing is to return 0 so dark traffic isn't sent.
       return 0;
-    }
-  }
-
-  private int getPartitionId(RestRequest darkRequest)
-  {
-    try
-    {
-      String serviceName = LoadBalancerUtil.getServiceNameFromUri(darkRequest.getURI());
-      PartitionAccessor accessor = _partitionInfoProvider.getPartitionAccessor(serviceName);
-      return accessor.getPartitionId(darkRequest.getURI());
-    }
-    catch (Throwable t)
-    {
-      return DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
     }
   }
 

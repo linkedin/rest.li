@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import com.linkedin.d2.balancer.ServiceUnavailableException;
+import com.linkedin.d2.balancer.clusterfailout.FailoutConfig;
 
 import java.util.function.Supplier;
 import javax.annotation.Nonnull;
@@ -62,7 +64,9 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
   private final DarkClusterDispatcher _darkClusterDispatcher;
   private final Notifier _notifier;
 
-  private final Map<String, DarkClusterStrategy> _darkStrategyMap;
+  // Map of partition ID to dark cluster name to list of dark cluster strategies for that partition
+  private final Map<Integer, Map<String, DarkClusterStrategy>> _partitionToDarkStrategyMap;
+  private volatile boolean _sourceClusterPresent = false;
   private final Random _random;
   private final LoadBalancerClusterListener _clusterListener;
   private final DarkClusterVerifierManager _verifierManager;
@@ -79,7 +83,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
     _facilities = facilities;
     _sourceClusterName = sourceClusterName;
     _notifier = notifier;
-    _darkStrategyMap = new ConcurrentHashMap<>();
+    _partitionToDarkStrategyMap = new ConcurrentHashMap<>();
     _random = random;
     _darkClusterDispatcher = darkClusterDispatcher;
     _verifierManager = verifierManager;
@@ -138,16 +142,47 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
    * @return darkClusterStrategy to use.
    */
   @Override
-  public DarkClusterStrategy get(@Nonnull String darkClusterName)
+  public DarkClusterStrategy get(@Nonnull String darkClusterName, int partitionId)
   {
-    return _darkStrategyMap.getOrDefault(darkClusterName, NO_OP_DARK_CLUSTER_STRATEGY);
+    Map<String, DarkClusterStrategy> darkMap = _partitionToDarkStrategyMap.computeIfAbsent(partitionId, k -> new ConcurrentHashMap<>());
+    DarkClusterStrategy existing = darkMap.get(darkClusterName);
+    if (existing != null)
+    {
+      return existing;
+    }
+
+    if (!_sourceClusterPresent)
+    {
+      return NO_OP_DARK_CLUSTER_STRATEGY;
+    }
+
+    try
+    {
+      DarkClusterConfigMap darkClusterConfigMap = _facilities.getClusterInfoProvider().getDarkClusterConfigMap(_sourceClusterName);
+      if (darkClusterConfigMap != null && darkClusterConfigMap.containsKey(darkClusterName))
+      {
+        DarkClusterConfig config = darkClusterConfigMap.get(darkClusterName);
+        DarkClusterStrategy strategy = createStrategy(darkClusterName, config, partitionId);
+        darkMap.put(darkClusterName, strategy);
+        return strategy;
+      }
+    }
+    catch (Throwable t)
+    {
+      // fall-through to NO_OP
+    }
+    return NO_OP_DARK_CLUSTER_STRATEGY;
   }
 
   /**
    * In the future, additional strategies can be added, and the logic here can choose the appropriate one based on the config values.
    */
-  private DarkClusterStrategy createStrategy(String darkClusterName, DarkClusterConfig darkClusterConfig)
+  private DarkClusterStrategy createStrategy(String darkClusterName, DarkClusterConfig darkClusterConfig, int partitionId)
   {
+    // Create partition-aware ClusterInfoProvider that filters cluster information for this specific partition
+    com.linkedin.d2.balancer.util.ClusterInfoProvider partitionAwareProvider = 
+        new PartitionAwareClusterInfoProvider(_facilities.getClusterInfoProvider(), partitionId);
+        
     if (darkClusterConfig.hasDarkClusterStrategyPrioritizedList())
     {
       DarkClusterStrategyNameArray strategyList = darkClusterConfig.getDarkClusterStrategyPrioritizedList();
@@ -162,8 +197,8 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
                   new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
               return new RelativeTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName,
                                                                       darkClusterConfig.getMultiplier(), baseDarkClusterDispatcher,
-                                                                      _notifier, _facilities.getClusterInfoProvider(),
-                                                                      _facilities.getPartitionInfoProvider(), _random);
+                                                                      _notifier, partitionAwareProvider,
+                                                                      _random);
             }
             break;
           case IDENTICAL_TRAFFIC:
@@ -173,8 +208,8 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
                   new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
               return new IdenticalTrafficMultiplierDarkClusterStrategy(_sourceClusterName, darkClusterName,
                                                                        darkClusterConfig.getMultiplier(), baseDarkClusterDispatcher,
-                                                                       _notifier, _facilities.getClusterInfoProvider(),
-                                                                       _facilities.getPartitionInfoProvider(), _random);
+                                                                       _notifier, partitionAwareProvider,
+                                                                       _random);
             }
             break;
           case CONSTANT_QPS:
@@ -190,7 +225,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
                   new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
               return new ConstantQpsDarkClusterStrategy(_sourceClusterName, darkClusterName,
                   darkClusterConfig.getDispatcherOutboundTargetRate(), baseDarkClusterDispatcher,
-                  _notifier, _facilities.getClusterInfoProvider(), _facilities.getPartitionInfoProvider(),
+                  _notifier, partitionAwareProvider,
                   _rateLimiterSupplier, darkClusterConfig.getDispatcherMaxRequestsToBuffer(),
                   darkClusterConfig.getDispatcherBufferedRequestExpiryInSeconds());
             }
@@ -216,6 +251,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
       // pertinent dark cluster strategy properties are contained there.
       if (_sourceClusterName.equals(updatedClusterName))
       {
+        _sourceClusterPresent = true;
         _facilities.getClusterInfoProvider().getDarkClusterConfigMap(_sourceClusterName, new Callback<DarkClusterConfigMap>()
         {
           @Override
@@ -228,23 +264,23 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
           @Override
           public void onSuccess(DarkClusterConfigMap updatedDarkConfigMap)
           {
-            Set<String> oldDarkStrategySet = _darkStrategyMap.keySet();
-            Set<String> updatedDarkClusterConfigKeySet = updatedDarkConfigMap.keySet();
-            // Any old strategy entry that isn't in the "updated" set should be removed from the strategyMap.
-            oldDarkStrategySet.removeAll(updatedDarkClusterConfigKeySet);
-            for (String darkClusterToRemove : oldDarkStrategySet)
+            // Determine partitions to (re)build. If none exist yet, ensure default partition is initialized.
+            java.util.Set<Integer> partitions = new java.util.HashSet<>(_partitionToDarkStrategyMap.keySet());
+            if (partitions.isEmpty())
             {
-              _darkStrategyMap.remove(darkClusterToRemove);
-              LOG.info("Removed dark cluster strategy for dark cluster: " + darkClusterToRemove + ", source cluster: " + _sourceClusterName);
+              partitions.add(com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor.DEFAULT_PARTITION_ID);
             }
 
-            // Now update/add the dark clusters.
-            for (Map.Entry<String, DarkClusterConfig> entry : updatedDarkConfigMap.entrySet())
+            for (int partitionId : partitions)
             {
-              String darkClusterToAdd = entry.getKey();
-              // For simplicity, we refresh all strategies since we expect cluster updates to be rare and refresh to be cheap.
-              _darkStrategyMap.put(darkClusterToAdd, createStrategy(darkClusterToAdd, entry.getValue()));
-              LOG.info("Created new strategy for dark cluster: " + darkClusterToAdd + ", source cluster: " + _sourceClusterName);
+              Map<String, DarkClusterStrategy> darkStrategyMap = new ConcurrentHashMap<>();
+              for (Map.Entry<String, DarkClusterConfig> entry : updatedDarkConfigMap.entrySet())
+              {
+                String darkClusterToAdd = entry.getKey();
+                darkStrategyMap.put(darkClusterToAdd, createStrategy(darkClusterToAdd, entry.getValue(), partitionId));
+                LOG.info("Created new strategy for dark cluster: " + darkClusterToAdd + ", partition: " + partitionId + ", source cluster: " + _sourceClusterName);
+              }
+              _partitionToDarkStrategyMap.put(partitionId, darkStrategyMap);
             }
           }
         });
@@ -259,8 +295,59 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
     {
       if (_sourceClusterName.equals(clusterName))
       {
-        _darkStrategyMap.clear();
+        _partitionToDarkStrategyMap.clear();
+        _sourceClusterPresent = false;
       }
+    }
+  }
+
+  /**
+   * Partition-aware wrapper around a {@link ClusterInfoProvider} that filters cluster information
+   * for a specific partition before forwarding to the strategies.
+   */
+  private static final class PartitionAwareClusterInfoProvider implements com.linkedin.d2.balancer.util.ClusterInfoProvider {
+    private static final Logger LOG = LoggerFactory.getLogger(PartitionAwareClusterInfoProvider.class);
+    private final com.linkedin.d2.balancer.util.ClusterInfoProvider _delegate;
+    private final int _partitionId;
+
+    PartitionAwareClusterInfoProvider(com.linkedin.d2.balancer.util.ClusterInfoProvider delegate, int partitionId) {
+      _delegate = delegate;
+      _partitionId = partitionId;
+    }
+
+    @Override
+    public int getHttpsClusterCount(String clusterName) throws ServiceUnavailableException {
+      return getClusterCount(clusterName, PropertyKeys.HTTPS_SCHEME, _partitionId);
+    }
+
+    @Override
+    public int getClusterCount(String clusterName, String scheme, int partitionId) throws ServiceUnavailableException {
+      return _delegate.getClusterCount(clusterName, scheme, partitionId);
+    }
+
+    @Override
+    public DarkClusterConfigMap getDarkClusterConfigMap(String clusterName) throws ServiceUnavailableException {
+      return _delegate.getDarkClusterConfigMap(clusterName);
+    }
+
+    @Override
+    public void getDarkClusterConfigMap(String clusterName, Callback<DarkClusterConfigMap> callback) {
+      _delegate.getDarkClusterConfigMap(clusterName, callback);
+    }
+
+    @Override
+    public void registerClusterListener(LoadBalancerClusterListener clusterListener) {
+      _delegate.registerClusterListener(clusterListener);
+    }
+
+    @Override
+    public void unregisterClusterListener(LoadBalancerClusterListener clusterListener) {
+      _delegate.unregisterClusterListener(clusterListener);
+    }
+
+    @Override
+    public FailoutConfig getFailoutConfig(String clusterName) {
+      return _delegate.getFailoutConfig(clusterName);
     }
   }
 }
