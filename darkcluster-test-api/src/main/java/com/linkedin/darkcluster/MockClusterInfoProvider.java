@@ -40,7 +40,7 @@ public class MockClusterInfoProvider implements ClusterInfoProvider
   public int getClusterCount(String clusterName, String scheme, int partitionId)
     throws ServiceUnavailableException
   {
-    return 0;
+    return clusterHttpsCount.getOrDefault(clusterName, 1);
   }
 
   @Override
@@ -50,6 +50,7 @@ public class MockClusterInfoProvider implements ClusterInfoProvider
     return clusterHttpsCount.getOrDefault(clusterName, 1);
   }
 
+  
   @Override
   public DarkClusterConfigMap getDarkClusterConfigMap(String clusterName)
     throws ServiceUnavailableException

@@ -144,13 +144,14 @@ public class DarkClusterManagerImpl implements DarkClusterManager
         RestRequest reqCopy = originalRequest.builder().build();
         RequestContext newRequestContext = new RequestContext(originalRequestContext);
         DarkClusterConfigMap configMap = _facilities.getClusterInfoProvider().getDarkClusterConfigMap(_sourceClusterName);
+        int partitionId = getPartitionId(originalRequest);
         for (String darkClusterName : configMap.keySet())
         {
           if (_darkGateKeeper.shouldDispatchToDark(originalRequest, originalRequestContext, darkClusterName))
           {
             RestRequest newD2Request = rewriteRequest(reqCopy, darkClusterName);
             // now find the strategy appropriate for each dark cluster
-            DarkClusterStrategy strategy = _darkClusterStrategyFactory.get(darkClusterName);
+            DarkClusterStrategy strategy = _darkClusterStrategyFactory.get(darkClusterName, partitionId);
             darkRequestSent |= strategy.handleRequest(reqCopy, newD2Request, newRequestContext);
           }
         }
@@ -162,6 +163,20 @@ public class DarkClusterManagerImpl implements DarkClusterManager
       _notifier.notify(() -> new RuntimeException("DarkCanaryDispatcherFilter failed to send request: " + uri, e));
     }
     return darkRequestSent;
+  }
+
+  private int getPartitionId(RestRequest request)
+  {
+    try
+    {
+      String serviceName = com.linkedin.d2.balancer.util.LoadBalancerUtil.getServiceNameFromUri(request.getURI());
+      com.linkedin.d2.balancer.util.partitions.PartitionAccessor accessor = _facilities.getPartitionInfoProvider().getPartitionAccessor(serviceName);
+      return accessor.getPartitionId(request.getURI());
+    }
+    catch (Throwable t)
+    {
+      return com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
+    }
   }
 
   /**

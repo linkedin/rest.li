@@ -17,6 +17,7 @@
 package com.linkedin.darkcluster.impl;
 
 import java.util.Random;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 
@@ -24,6 +25,8 @@ import com.linkedin.common.util.Notifier;
 import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
+import com.linkedin.d2.balancer.properties.PropertyKeys;
+import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.darkcluster.api.BaseDarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterStrategy;
 import com.linkedin.r2.message.RequestContext;
@@ -110,8 +113,6 @@ public class RelativeTrafficMultiplierDarkClusterStrategy implements DarkCluster
   {
     try
     {
-      // Only support https for now. http support can be added later if truly needed, but would be non-ideal
-      // because potentially both dark and source would have to be configured.
       int numDarkClusterInstances = _clusterInfoProvider.getHttpsClusterCount(_darkClusterName);
       int numSourceClusterInstances = _clusterInfoProvider.getHttpsClusterCount(_originalClusterName);
       if (numSourceClusterInstances != 0)

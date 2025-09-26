@@ -27,9 +27,10 @@ public interface DarkClusterStrategyFactory
   /**
    * get retrieves the {@link DarkClusterStrategy} corresponding to the darkClusterName.
    * @param darkClusterName darkClusterName to look up
+   * @param partitionId partition id to scope the strategy to
    * @return {@link DarkClusterStrategy}
    */
-  DarkClusterStrategy get(String darkClusterName);
+  DarkClusterStrategy get(String darkClusterName, int partitionId);
 
   /**
    * Do any actions necessary to start the DarkClusterStrategyFactory.
