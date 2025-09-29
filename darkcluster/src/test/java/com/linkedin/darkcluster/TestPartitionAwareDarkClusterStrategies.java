@@ -96,10 +96,10 @@ public class TestPartitionAwareDarkClusterStrategies
     
     ConstantQpsDarkClusterStrategy strategyP0 = new ConstantQpsDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier, 100, 300);
+        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier.get());
     ConstantQpsDarkClusterStrategy strategyP1 = new ConstantQpsDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier, 100, 300);
+        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier.get());
     
     // Test requests to different partitions
     RestRequest request0 = new RestRequestBuilder(URI.create("http://test.com/partition0")).build();

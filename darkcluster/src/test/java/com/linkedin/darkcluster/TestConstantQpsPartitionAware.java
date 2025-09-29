@@ -93,10 +93,10 @@ public class TestConstantQpsPartitionAware
     
     ConstantQpsDarkClusterStrategy strategyP0 = new ConstantQpsDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier, 100, Integer.MAX_VALUE);
+        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier.get());
     ConstantQpsDarkClusterStrategy strategyP1 = new ConstantQpsDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier, 100, Integer.MAX_VALUE);
+        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier.get());
     
     // Make requests to different partitions
     RestRequest request0 = new RestRequestBuilder(URI.create("http://test.com/partition0")).build();
@@ -139,7 +139,7 @@ public class TestConstantQpsPartitionAware
     // Use constructor with supplier
     ConstantQpsDarkClusterStrategy strategy = new ConstantQpsDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, () -> rateLimiter, 100, Integer.MAX_VALUE);
+        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiter);
     
     RestRequest request = new RestRequestBuilder(URI.create("http://test.com/any")).build();
     RestRequest darkRequest = new RestRequestBuilder(URI.create("http://dark.com/any")).build();
@@ -179,7 +179,7 @@ public class TestConstantQpsPartitionAware
     
     ConstantQpsDarkClusterStrategy strategyP0b = new ConstantQpsDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier2, 100, Integer.MAX_VALUE);
+        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier2.get());
     
     // Test requests to different partitions - should use different host counts for rate calculation
     RestRequest request0 = new RestRequestBuilder(URI.create("http://test.com/partition0")).build();
@@ -229,7 +229,7 @@ public class TestConstantQpsPartitionAware
     
     ConstantQpsDarkClusterStrategy strategy = new ConstantQpsDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
-        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier, 100, Integer.MAX_VALUE);
+        new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier.get());
 
     RestRequest request = new RestRequestBuilder(URI.create("http://test.com/any")).build();
     RestRequest darkRequest = new RestRequestBuilder(URI.create("http://dark.com/any")).build();

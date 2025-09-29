@@ -180,9 +180,9 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
   private DarkClusterStrategy createStrategy(String darkClusterName, DarkClusterConfig darkClusterConfig, int partitionId)
   {
     // Create partition-aware ClusterInfoProvider that filters cluster information for this specific partition
-    com.linkedin.d2.balancer.util.ClusterInfoProvider partitionAwareProvider = 
+    com.linkedin.d2.balancer.util.ClusterInfoProvider partitionAwareProvider =
         new PartitionAwareClusterInfoProvider(_facilities.getClusterInfoProvider(), partitionId);
-        
+
     if (darkClusterConfig.hasDarkClusterStrategyPrioritizedList())
     {
       DarkClusterStrategyNameArray strategyList = darkClusterConfig.getDarkClusterStrategyPrioritizedList();
@@ -223,11 +223,12 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
             {
               BaseDarkClusterDispatcher baseDarkClusterDispatcher =
                   new BaseDarkClusterDispatcherImpl(darkClusterName, _darkClusterDispatcher, _notifier, _verifierManager);
+              ConstantQpsRateLimiter rateLimiter = _rateLimiterSupplier.get();
+              rateLimiter.setBufferCapacity(darkClusterConfig.getDispatcherMaxRequestsToBuffer());
+              rateLimiter.setBufferTtl(darkClusterConfig.getDispatcherBufferedRequestExpiryInSeconds(), ChronoUnit.SECONDS);
               return new ConstantQpsDarkClusterStrategy(_sourceClusterName, darkClusterName,
                   darkClusterConfig.getDispatcherOutboundTargetRate(), baseDarkClusterDispatcher,
-                  _notifier, partitionAwareProvider,
-                  _rateLimiterSupplier, darkClusterConfig.getDispatcherMaxRequestsToBuffer(),
-                  darkClusterConfig.getDispatcherBufferedRequestExpiryInSeconds());
+                  _notifier, partitionAwareProvider, rateLimiter);
             }
             break;
           default:
@@ -306,7 +307,6 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
    * for a specific partition before forwarding to the strategies.
    */
   private static final class PartitionAwareClusterInfoProvider implements com.linkedin.d2.balancer.util.ClusterInfoProvider {
-    private static final Logger LOG = LoggerFactory.getLogger(PartitionAwareClusterInfoProvider.class);
     private final com.linkedin.d2.balancer.util.ClusterInfoProvider _delegate;
     private final int _partitionId;
 
@@ -317,7 +317,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
 
     @Override
     public int getHttpsClusterCount(String clusterName) throws ServiceUnavailableException {
-      return getClusterCount(clusterName, PropertyKeys.HTTPS_SCHEME, _partitionId);
+      return getClusterCount(clusterName, com.linkedin.d2.balancer.properties.PropertyKeys.HTTPS_SCHEME, _partitionId);
     }
 
     @Override

@@ -17,7 +17,6 @@
 package com.linkedin.darkcluster.impl;
 
 import java.util.Random;
-import java.util.Map;
 
 import javax.annotation.Nonnull;
 
@@ -25,8 +24,6 @@ import com.linkedin.common.util.Notifier;
 import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.util.ClusterInfoProvider;
-import com.linkedin.d2.balancer.properties.PropertyKeys;
-import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.darkcluster.api.BaseDarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterStrategy;
 import com.linkedin.r2.message.RequestContext;

@@ -129,27 +129,21 @@ public class TestConstantQpsDarkClusterStrategy
           baseDispatcherOne,
           new DoNothingNotifier(),
           mockClusterInfoProvider,
-          () -> rateLimiterOne,
-          100,
-          60));
+          rateLimiterOne));
       strategies.add(new ConstantQpsDarkClusterStrategy(SOURCE_CLUSTER_NAME,
           DARK_CLUSTER_NAME_TWO,
           outboundQps,
           baseDispatcherTwo,
           new DoNothingNotifier(),
           mockClusterInfoProvider,
-          () -> rateLimiterTwo,
-          100,
-          60));
+          rateLimiterTwo));
       strategies.add(new ConstantQpsDarkClusterStrategy(SOURCE_CLUSTER_NAME,
           DARK_CLUSTER_NAME_THREE,
           outboundQps,
           baseDispatcherThree,
           new DoNothingNotifier(),
           mockClusterInfoProvider,
-          () -> rateLimiterThree,
-          100,
-          60));
+          rateLimiterThree));
 
       // simulate receiving the configured qps while dispatching over the duration
       int msBetweenEachInboundRequest = (int) (1000 / inboundQps);
