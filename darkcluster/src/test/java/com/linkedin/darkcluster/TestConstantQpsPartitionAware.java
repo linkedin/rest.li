@@ -91,12 +91,16 @@ public class TestConstantQpsPartitionAware
       return limiter;
     };
     
+    // With the current constructor design, each strategy gets its own rate limiter at construction time
     ConstantQpsDarkClusterStrategy strategyP0 = new ConstantQpsDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
         new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier.get());
     ConstantQpsDarkClusterStrategy strategyP1 = new ConstantQpsDarkClusterStrategy(
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
         new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier.get());
+    
+    // At this point, 2 rate limiters should have been created during construction
+    Assert.assertEquals(rateLimiterCount.get(), 2, "Two rate limiters should be created during construction");
     
     // Make requests to different partitions
     RestRequest request0 = new RestRequestBuilder(URI.create("http://test.com/partition0")).build();
@@ -107,21 +111,18 @@ public class TestConstantQpsPartitionAware
     RestRequest darkRequest1 = new RestRequestBuilder(URI.create("http://dark.com/partition1")).build();
     RequestContext context1 = new RequestContext();
     
-    // First request to partition 0 should create a rate limiter
+    // Requests should not create additional rate limiters since they're created at construction time
     strategyP0.handleRequest(request0, darkRequest0, context0);
-    Assert.assertEquals(rateLimiterCount.get(), 1, "First partition should create one rate limiter");
+    Assert.assertEquals(rateLimiterCount.get(), 2, "No additional rate limiters should be created");
     
-    // Second request to same partition should reuse the rate limiter
     strategyP0.handleRequest(request0, darkRequest0, new RequestContext());
-    Assert.assertEquals(rateLimiterCount.get(), 1, "Same partition should reuse rate limiter");
+    Assert.assertEquals(rateLimiterCount.get(), 2, "No additional rate limiters should be created");
     
-    // Request to different partition should create a new rate limiter
     strategyP1.handleRequest(request1, darkRequest1, context1);
-    Assert.assertEquals(rateLimiterCount.get(), 2, "Different partition should create new rate limiter");
+    Assert.assertEquals(rateLimiterCount.get(), 2, "No additional rate limiters should be created");
     
-    // Another request to partition 1 should reuse its rate limiter
     strategyP1.handleRequest(request1, darkRequest1, new RequestContext());
-    Assert.assertEquals(rateLimiterCount.get(), 2, "Same partition should reuse its rate limiter");
+    Assert.assertEquals(rateLimiterCount.get(), 2, "No additional rate limiters should be created");
   }
 
   @Test
@@ -231,14 +232,17 @@ public class TestConstantQpsPartitionAware
         SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, 10.0f, baseDispatcher,
         new DoNothingNotifier(), mockClusterInfoProvider, rateLimiterSupplier.get());
 
+    // Rate limiter should be created during construction
+    Assert.assertEquals(rateLimiterCount.get(), 1, "Rate limiter should be created during construction");
+
     RestRequest request = new RestRequestBuilder(URI.create("http://test.com/any")).build();
     RestRequest darkRequest = new RestRequestBuilder(URI.create("http://dark.com/any")).build();
     RequestContext context = new RequestContext();
     
-    // Should fall back to default partition and create one rate limiter
+    // Should handle request successfully
     boolean result = strategy.handleRequest(request, darkRequest, context);
     Assert.assertTrue(result, "Should handle request despite partition accessor failure");
-    Assert.assertEquals(rateLimiterCount.get(), 1, "Should create rate limiter for default partition");
+    Assert.assertEquals(rateLimiterCount.get(), 1, "No additional rate limiters should be created");
   }
 
   /**
