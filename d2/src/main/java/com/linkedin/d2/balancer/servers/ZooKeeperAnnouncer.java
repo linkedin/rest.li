@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -1034,7 +1035,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
   private void updateStatus(AnnouncementStatus newStatus)
   {
     AnnouncementStatus oldStatus = _status.getAnnouncementStatus();
-    if (oldStatus.equals(newStatus))
+    if (Objects.equals(oldStatus, newStatus))
     {
       return;
     }

@@ -176,21 +176,23 @@ public class TestZooKeeperAnnouncer
 
             // --- init status is announcing ---
             // dark warmup enabled, all markup and markdown successful
-            {ANNOUNCING, true, true, true, true, Arrays.asList(ANNOUNCING, ANNOUNCED)},
+            {ANNOUNCING, true, true, true, true, Collections.singletonList(ANNOUNCED)},
             // dark warmup enabled, warmup cluster markup successful but markdown failed, real cluster markup successful
-            {ANNOUNCING, true, true, false, true, Arrays.asList(ANNOUNCING, ANNOUNCED)},
+            {ANNOUNCING, true, true, false, true, Collections.singletonList(ANNOUNCED)},
             // dark warmup enabled, warmup cluster markup failed, real cluster markup successful
-            {ANNOUNCING, true, false, true, true, Arrays.asList(ANNOUNCING, ANNOUNCED)},
+            {ANNOUNCING, true, false, true, true, Collections.singletonList(ANNOUNCED)},
             // dark warmup enabled, warmup cluster markup failed, real cluster markup failed
-            {ANNOUNCING, true, false, true, false, Collections.singletonList(ANNOUNCING)},
+            {ANNOUNCING, true, false, true, false, Collections.emptyList()},
             // dark warmup disabled, real cluster markup successful
-            {ANNOUNCING, false, true, true, true, Arrays.asList(ANNOUNCING, ANNOUNCED)},
+            {ANNOUNCING, false, true, true, true, Collections.singletonList(ANNOUNCED)},
             // dark warmup disabled, real cluster markup failed
-            {ANNOUNCING, false, true, true, false, Collections.singletonList(ANNOUNCING)},
+            {ANNOUNCING, false, true, true, false, Collections.emptyList()},
 
             // --- other init statuses have the same behavior ---
             {ANNOUNCED, false, true, true, true, Arrays.asList(ANNOUNCING, ANNOUNCED)},
-            {DE_ANNOUNCING, false, true, true, true, Arrays.asList(ANNOUNCING, ANNOUNCED)}
+            {ANNOUNCED, false, true, true, false, Collections.singletonList(ANNOUNCING)},
+            {DE_ANNOUNCING, false, true, true, true, Arrays.asList(ANNOUNCING, ANNOUNCED)},
+            {DE_ANNOUNCING, false, true, true, false, Collections.singletonList(ANNOUNCING)}
         };
   }
   @Test(dataProvider = "testUpdateAnnouncerStatusForMarkUpDataProvider")
@@ -226,13 +228,15 @@ public class TestZooKeeperAnnouncer
 
         // --- init status is de-announcing ---
         // real cluster markdown successful
-        {DE_ANNOUNCING, true, Arrays.asList(DE_ANNOUNCING, DE_ANNOUNCED)},
+        {DE_ANNOUNCING, true, Collections.singletonList(DE_ANNOUNCED)},
         // real cluster markdown failed
-        {DE_ANNOUNCING, false, Collections.singletonList(DE_ANNOUNCING)},
+        {DE_ANNOUNCING, false, Collections.emptyList()},
 
         // --- other init statuses have the same behavior ---
         {DE_ANNOUNCED, true, Arrays.asList(DE_ANNOUNCING, DE_ANNOUNCED)},
-        {ANNOUNCING, true, Arrays.asList(DE_ANNOUNCING, DE_ANNOUNCED)}
+        {DE_ANNOUNCED, false, Collections.singletonList(DE_ANNOUNCING)},
+        {ANNOUNCING, true, Arrays.asList(DE_ANNOUNCING, DE_ANNOUNCED)},
+        {ANNOUNCING, false, Collections.singletonList(DE_ANNOUNCING)}
     };
   }
   @Test(dataProvider = "testUpdateAnnouncerStatusForMarkDownDataProvider")
