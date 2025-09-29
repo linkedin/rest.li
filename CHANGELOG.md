@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.77.0] - 2025-09-18
+- Add XdsClientValidator to pre check xDS client connection
+
 ## [29.76.0] - 2025-09-16
 - Add D2 service MethodLevelProperties configuration support
 
@@ -5900,7 +5903,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.76.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.77.0...master
+[29.77.0]: https://github.com/linkedin/rest.li/compare/v29.76.0...v29.77.0
 [29.76.0]: https://github.com/linkedin/rest.li/compare/v29.75.3...v29.76.0
 [29.75.4]: https://github.com/linkedin/rest.li/compare/v29.75.3...v29.75.4
 [29.75.3]: https://github.com/linkedin/rest.li/compare/v29.75.2...v29.75.3

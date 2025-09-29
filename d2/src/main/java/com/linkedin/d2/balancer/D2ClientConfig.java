@@ -30,6 +30,7 @@ import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
+import com.linkedin.d2.xds.XdsClientValidator;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory;
 import com.linkedin.d2.discovery.event.LogOnlyServiceDiscoveryEventEmitter;
@@ -37,6 +38,7 @@ import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperStore;
+import com.linkedin.d2.xds.XdsClientValidator.ActionOnPrecheckFailure;
 import com.linkedin.d2.jmx.XdsServerMetricsProvider;
 import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.d2.jmx.NoOpXdsServerMetricsProvider;
@@ -51,6 +53,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+
+import static com.linkedin.d2.xds.XdsClientValidator.DEFAULT_MINIMUM_JAVA_VERSION;
 
 public class D2ClientConfig
 {
@@ -178,6 +182,8 @@ public class D2ClientConfig
   public boolean loadBalanceStreamException = false;
   public boolean xdsInitialResourceVersionsEnabled = false;
   public Integer xdsStreamMaxRetryBackoffSeconds = null;
+  public String xdsMinimumJavaVersion = DEFAULT_MINIMUM_JAVA_VERSION;
+  public XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure = ActionOnPrecheckFailure.ERROR;
 
   /**
    * D2 client builder by default will detect if it's used to build a raw D2 client (as opposed to used by standard
@@ -272,7 +278,9 @@ public class D2ClientConfig
                  boolean disableDetectLiRawD2Client,
                  boolean isLiRawD2Client,
                  Integer xdsStreamMaxRetryBackoffSeconds,
-                 Long xdsChannelKeepAliveTimeMins)
+                 Long xdsChannelKeepAliveTimeMins,
+                 String xdsMinimumJavaVersion,
+                 XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure)
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -352,5 +360,7 @@ public class D2ClientConfig
     this.disableDetectLiRawD2Client = disableDetectLiRawD2Client;
     this.isLiRawD2Client = isLiRawD2Client;
     this.xdsStreamMaxRetryBackoffSeconds = xdsStreamMaxRetryBackoffSeconds;
+    this.xdsMinimumJavaVersion = xdsMinimumJavaVersion;
+    this.actionOnPrecheckFailure = actionOnPrecheckFailure;
   }
 }

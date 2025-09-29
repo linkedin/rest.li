@@ -26,6 +26,7 @@ import com.linkedin.d2.balancer.clients.FailoutClient;
 import com.linkedin.d2.balancer.clients.FailoutRedirectStrategy;
 import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.clients.RequestTimeoutClient;
+import javax.annotation.Nonnull;
 import com.linkedin.d2.balancer.clients.RetryClient;
 import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
 import com.linkedin.d2.balancer.dualread.DualReadStateManager;
@@ -50,6 +51,7 @@ import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.d2.jmx.XdsServerMetricsProvider;
 import com.linkedin.d2.jmx.JmxManager;
+import com.linkedin.d2.xds.XdsClientValidator;
 import com.linkedin.d2.jmx.NoOpJmxManager;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
@@ -236,7 +238,9 @@ public class D2ClientBuilder
                   _config.disableDetectLiRawD2Client,
                   _config.isLiRawD2Client,
                   _config.xdsStreamMaxRetryBackoffSeconds,
-                  _config.xdsChannelKeepAliveTimeMins
+                  _config.xdsChannelKeepAliveTimeMins,
+                  _config.xdsMinimumJavaVersion,
+                  _config.actionOnPrecheckFailure
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -850,6 +854,18 @@ public class D2ClientBuilder
   public D2ClientBuilder setXdsStreamMaxRetryBackoffSeconds(int xdsStreamMaxRetryBackoffSeconds)
   {
     _config.xdsStreamMaxRetryBackoffSeconds = xdsStreamMaxRetryBackoffSeconds;
+    return this;
+  }
+
+  public D2ClientBuilder setXdsMinimumJavaVersion(String xdsMinimumJavaVersion)
+  {
+    _config.xdsMinimumJavaVersion = xdsMinimumJavaVersion;
+    return this;
+  }
+
+  public D2ClientBuilder setActionOnPrecheckFailure(XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure)
+  {
+    _config.actionOnPrecheckFailure = actionOnPrecheckFailure;
     return this;
   }
 

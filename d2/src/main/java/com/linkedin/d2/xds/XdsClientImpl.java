@@ -55,6 +55,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -111,6 +112,9 @@ public class XdsClientImpl extends XdsClient
   private final XdsClientJmx _xdsClientJmx;
   private final XdsServerMetricsProvider _serverMetricsProvider;
   private final boolean _initialResourceVersionsEnabled;
+  private final String _minimumJavaVersion;
+  private final XdsClientValidator.ActionOnPrecheckFailure _actionOnPrecheckFailure;
+  private final AtomicBoolean _started = new AtomicBoolean();
 
   @Deprecated
   public XdsClientImpl(Node node, ManagedChannel managedChannel, ScheduledExecutorService executorService)
@@ -168,6 +172,7 @@ public class XdsClientImpl extends XdsClient
         irvSupport, null);
   }
 
+  @Deprecated
   public XdsClientImpl(Node node,
       ManagedChannel managedChannel,
       ScheduledExecutorService executorService,
@@ -176,6 +181,21 @@ public class XdsClientImpl extends XdsClient
       XdsServerMetricsProvider serverMetricsProvider,
       boolean irvSupport,
       Integer maxRetryBackoffSeconds)
+  {
+    this(node, managedChannel, executorService, readyTimeoutMillis, subscribeToUriGlobCollection,
+        serverMetricsProvider, irvSupport, maxRetryBackoffSeconds, XdsClientValidator.DEFAULT_MINIMUM_JAVA_VERSION, XdsClientValidator.DEFAULT_ACTION_ON_PRECHECK_FAILURE);
+  }
+
+  public XdsClientImpl(Node node,
+      ManagedChannel managedChannel,
+      ScheduledExecutorService executorService,
+      long readyTimeoutMillis,
+      boolean subscribeToUriGlobCollection,
+      XdsServerMetricsProvider serverMetricsProvider,
+      boolean irvSupport,
+      Integer maxRetryBackoffSeconds,
+      String minimumJavaVersion,
+      XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure)
   {
     _readyTimeoutMillis = readyTimeoutMillis;
     _node = node;
@@ -195,6 +215,12 @@ public class XdsClientImpl extends XdsClient
       _log.info("XDS initial resource versions support enabled");
     }
 
+    _minimumJavaVersion = minimumJavaVersion;
+    _log.info("Minimum Java version required: {}", _minimumJavaVersion);
+
+    _actionOnPrecheckFailure = actionOnPrecheckFailure;
+    _log.info("Action on pre-check failure: {}", _actionOnPrecheckFailure);
+
     _retryBackoffPolicy = _backoffPolicyProvider.get();
     Integer backoffSecs = (maxRetryBackoffSeconds != null && maxRetryBackoffSeconds > 0)
         ? maxRetryBackoffSeconds : DEFAULT_MAX_RETRY_BACKOFF_SECS;
@@ -205,7 +231,13 @@ public class XdsClientImpl extends XdsClient
   @Override
   public void start()
   {
+    if (!_started.compareAndSet(false, true))
+    {
+      throw new IllegalStateException("Cannot start XdsClient more than once");
+    }
+
     _xdsClientJmx.setXdsClient(this);
+    XdsClientValidator.preCheckForIndisConnection(_managedChannel, _readyTimeoutMillis, _minimumJavaVersion, _actionOnPrecheckFailure);
     startRpcStream();
   }
 
