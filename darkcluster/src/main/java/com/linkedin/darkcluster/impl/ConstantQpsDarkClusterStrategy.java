@@ -79,9 +79,10 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
   {
     // ClusterInfoProvider is already partition-aware, so we can use it directly
     float sendRate = getSendRate();
+    // set burst in such a way that requests are dispatched evenly across the ONE_SECOND_PERIOD
     int burst = (int) Math.max(1, Math.ceil(sendRate / ONE_SECOND_PERIOD));
     _rateLimiter.setRate(sendRate, ONE_SECOND_PERIOD, burst);
-    return addRequest(originalRequest, darkRequest, requestContext, _rateLimiter);
+    return addRequest(originalRequest, darkRequest, requestContext);
   }
 
   /**
@@ -129,7 +130,8 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
   {
     try
     {
-
+      // Only support https for now. http support can be added later if truly needed, but would be non-ideal
+      // because potentially both dark and source would have to be configured.
       int numDarkClusterInstances = _clusterInfoProvider.getHttpsClusterCount(_darkClusterName);
       int numSourceClusterInstances = _clusterInfoProvider.getHttpsClusterCount(_originalClusterName);
       if (numSourceClusterInstances != 0)
@@ -142,6 +144,7 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
     {
       _notifier.notify(() -> new RuntimeException(
           "PEGA_0020 unable to compute strategy for source cluster: " + _originalClusterName + ", darkClusterName: " + _darkClusterName, e));
+      // safe thing is to return 0 so dark traffic isn't sent.
       return 0F;
     }
   }
@@ -153,9 +156,9 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
 
    * @return always returns true since callbacks can always be added to {@link ConstantQpsRateLimiter};
    */
-  private boolean addRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext, ConstantQpsRateLimiter limiter)
+  private boolean addRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
   {
-    limiter.submit(new Callback<None>()
+    _rateLimiter.submit(new Callback<None>()
     {
       @Override
       public void onError(Throwable e)

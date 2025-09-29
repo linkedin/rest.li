@@ -146,18 +146,15 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
   {
     Map<String, DarkClusterStrategy> darkMap = _partitionToDarkStrategyMap.computeIfAbsent(partitionId, k -> new ConcurrentHashMap<>());
     DarkClusterStrategy existing = darkMap.get(darkClusterName);
+
     if (existing != null)
     {
       return existing;
     }
 
-    if (!_sourceClusterPresent)
-    {
-      return NO_OP_DARK_CLUSTER_STRATEGY;
-    }
-
     try
     {
+      // Lazily create the strategy if it doesn't exist.
       DarkClusterConfigMap darkClusterConfigMap = _facilities.getClusterInfoProvider().getDarkClusterConfigMap(_sourceClusterName);
       if (darkClusterConfigMap != null && darkClusterConfigMap.containsKey(darkClusterName))
       {
@@ -169,7 +166,7 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
     }
     catch (Throwable t)
     {
-      // fall-through to NO_OP
+      LOG.warn("Unable to get DarkClusterConfigMap for source cluster: " + _sourceClusterName, t);
     }
     return NO_OP_DARK_CLUSTER_STRATEGY;
   }
