@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.78.0] - 2025-09-30
+- Dark Cluster Partition Support
+
 ## [29.77.0] - 2025-09-18
 - Add XdsClientValidator to pre check xDS client connection
 
@@ -5903,7 +5906,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.77.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.78.0...master
+[29.78.0]: https://github.com/linkedin/rest.li/compare/v29.77.0...v29.78.0
 [29.77.0]: https://github.com/linkedin/rest.li/compare/v29.76.0...v29.77.0
 [29.76.0]: https://github.com/linkedin/rest.li/compare/v29.75.3...v29.76.0
 [29.75.4]: https://github.com/linkedin/rest.li/compare/v29.75.3...v29.75.4
