@@ -55,15 +55,12 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
   private final ClusterInfoProvider _clusterInfoProvider;
   private final ConstantQpsRateLimiter _rateLimiter;
 
-
-
   private static final long ONE_SECOND_PERIOD = TimeUnit.SECONDS.toMillis(1);
   private static final int NUM_REQUESTS_TO_SEND_PER_RATE_LIMITER_CYCLE = 1;
 
   public ConstantQpsDarkClusterStrategy(@Nonnull String originalClusterName, @Nonnull String darkClusterName,
       @Nonnull Float darkClusterPerHostQps, @Nonnull BaseDarkClusterDispatcher baseDarkClusterDispatcher,
-      @Nonnull Notifier notifier, @Nonnull ClusterInfoProvider clusterInfoProvider,
-      @Nonnull ConstantQpsRateLimiter rateLimiter)
+      @Nonnull Notifier notifier, @Nonnull ClusterInfoProvider clusterInfoProvider, @Nonnull ConstantQpsRateLimiter rateLimiter)
   {
     _originalClusterName = originalClusterName;
     _darkClusterName = darkClusterName;
@@ -77,7 +74,6 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
   @Override
   public boolean handleRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
   {
-    // ClusterInfoProvider is already partition-aware, so we can use it directly
     float sendRate = getSendRate();
     // set burst in such a way that requests are dispatched evenly across the ONE_SECOND_PERIOD
     int burst = (int) Math.max(1, Math.ceil(sendRate / ONE_SECOND_PERIOD));
@@ -138,6 +134,7 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
       {
         return (numDarkClusterInstances * _darkClusterPerHostQps) / numSourceClusterInstances;
       }
+
       return 0F;
     }
     catch (ServiceUnavailableException e)
@@ -174,6 +171,4 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
     });
     return true;
   }
-
-
 }
