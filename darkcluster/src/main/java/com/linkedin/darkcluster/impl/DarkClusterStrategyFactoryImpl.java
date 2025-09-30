@@ -145,30 +145,37 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
   public DarkClusterStrategy get(@Nonnull String darkClusterName, int partitionId)
   {
     Map<String, DarkClusterStrategy> darkMap = _partitionToDarkStrategyMap.computeIfAbsent(partitionId, k -> new ConcurrentHashMap<>());
-    DarkClusterStrategy existing = darkMap.get(darkClusterName);
-
-    if (existing != null)
-    {
-      return existing;
-    }
-
-    try
-    {
-      // Lazily create the strategy if it doesn't exist.
-      DarkClusterConfigMap darkClusterConfigMap = _facilities.getClusterInfoProvider().getDarkClusterConfigMap(_sourceClusterName);
-      if (darkClusterConfigMap != null && darkClusterConfigMap.containsKey(darkClusterName))
+    DarkClusterStrategy strategy = darkMap.computeIfAbsent(darkClusterName, k -> {
+      if (_sourceClusterPresent)
       {
-        DarkClusterConfig config = darkClusterConfigMap.get(darkClusterName);
-        DarkClusterStrategy strategy = createStrategy(darkClusterName, config, partitionId);
-        darkMap.put(darkClusterName, strategy);
-        return strategy;
+        try
+        {
+          // Lazily create the strategy if it doesn't exist.
+          DarkClusterConfigMap darkClusterConfigMap = _facilities.getClusterInfoProvider().getDarkClusterConfigMap(_sourceClusterName);
+          if (darkClusterConfigMap != null && darkClusterConfigMap.containsKey(darkClusterName))
+          {
+            DarkClusterConfig config = darkClusterConfigMap.get(darkClusterName);
+            return createStrategy(darkClusterName, config, partitionId);
+          }
+        }
+        catch (RuntimeException | ServiceUnavailableException t)
+        {
+          LOG.warn("Unable to get DarkClusterConfigMap for source cluster: " + _sourceClusterName, t);
+        }
       }
-    }
-    catch (Throwable t)
+      return null;
+    });
+
+    if (strategy == null)
     {
-      LOG.warn("Unable to get DarkClusterConfigMap for source cluster: " + _sourceClusterName, t);
+      LOG.debug("No strategy found for dark cluster: " + darkClusterName + ", partition: " + partitionId
+          + ", source cluster: " + _sourceClusterName + ". Returning NO_OP strategy.");
+      return NO_OP_DARK_CLUSTER_STRATEGY;
     }
-    return NO_OP_DARK_CLUSTER_STRATEGY;
+    return strategy;
+
+
+
   }
 
   /**

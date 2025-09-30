@@ -16,7 +16,9 @@
 
 package com.linkedin.darkcluster.impl;
 
+import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.servers.ZooKeeperAnnouncer;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
 import com.linkedin.darkcluster.api.DarkGateKeeper;
 import com.linkedin.darkcluster.api.DarkRequestHeaderGenerator;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -158,7 +160,7 @@ public class DarkClusterManagerImpl implements DarkClusterManager
 
       }
     }
-    catch (Throwable e)
+    catch (RuntimeException | ServiceUnavailableException e)
     {
       _notifier.notify(() -> new RuntimeException("DarkCanaryDispatcherFilter failed to send request: " + uri, e));
     }
@@ -173,8 +175,9 @@ public class DarkClusterManagerImpl implements DarkClusterManager
       com.linkedin.d2.balancer.util.partitions.PartitionAccessor accessor = _facilities.getPartitionInfoProvider().getPartitionAccessor(serviceName);
       return accessor.getPartitionId(request.getURI());
     }
-    catch (Throwable t)
+    catch (RuntimeException | PartitionAccessException | ServiceUnavailableException e)
     {
+      _log.error("Cannot find partition id for request: {}, defaulting to 0", request.getURI(), e);
       return com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
     }
   }
