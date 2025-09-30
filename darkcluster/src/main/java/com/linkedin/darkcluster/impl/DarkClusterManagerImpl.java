@@ -16,7 +16,9 @@
 
 package com.linkedin.darkcluster.impl;
 
+import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.servers.ZooKeeperAnnouncer;
+import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
 import com.linkedin.darkcluster.api.DarkGateKeeper;
 import com.linkedin.darkcluster.api.DarkRequestHeaderGenerator;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -149,19 +151,35 @@ public class DarkClusterManagerImpl implements DarkClusterManager
           if (_darkGateKeeper.shouldDispatchToDark(originalRequest, originalRequestContext, darkClusterName))
           {
             RestRequest newD2Request = rewriteRequest(reqCopy, darkClusterName);
+            int partitionId = getPartitionId(newD2Request);
             // now find the strategy appropriate for each dark cluster
-            DarkClusterStrategy strategy = _darkClusterStrategyFactory.get(darkClusterName);
+            DarkClusterStrategy strategy = _darkClusterStrategyFactory.get(darkClusterName, partitionId);
             darkRequestSent |= strategy.handleRequest(reqCopy, newD2Request, newRequestContext);
           }
         }
 
       }
     }
-    catch (Throwable e)
+    catch (RuntimeException | ServiceUnavailableException e)
     {
       _notifier.notify(() -> new RuntimeException("DarkCanaryDispatcherFilter failed to send request: " + uri, e));
     }
     return darkRequestSent;
+  }
+
+  private int getPartitionId(RestRequest request)
+  {
+    try
+    {
+      String serviceName = com.linkedin.d2.balancer.util.LoadBalancerUtil.getServiceNameFromUri(request.getURI());
+      com.linkedin.d2.balancer.util.partitions.PartitionAccessor accessor = _facilities.getPartitionInfoProvider().getPartitionAccessor(serviceName);
+      return accessor.getPartitionId(request.getURI());
+    }
+    catch (RuntimeException | PartitionAccessException | ServiceUnavailableException e)
+    {
+      _log.error("Cannot find partition id for request: {}, defaulting to 0", request.getURI(), e);
+      return com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
+    }
   }
 
   /**

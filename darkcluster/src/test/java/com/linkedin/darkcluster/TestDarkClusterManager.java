@@ -157,7 +157,7 @@ public class TestDarkClusterManager
     DarkClusterStrategy mockDarkStrategy = mock(DarkClusterStrategy.class);
 
     DarkRequestHeaderGenerator darkRequestHeaderGenerator = mock(DarkRequestHeaderGenerator.class);
-    Mockito.when(mockStrategyFactory.get(DARK_CLUSTER_NAME)).thenReturn(mockDarkStrategy);
+    Mockito.when(mockStrategyFactory.get(eq(DARK_CLUSTER_NAME), anyInt())).thenReturn(mockDarkStrategy);
     Mockito.when(darkRequestHeaderGenerator.get(DARK_CLUSTER_NAME))
         .thenReturn(Optional.of(new DarkRequestHeaderGenerator.HeaderNameValuePair("header", "value")));
 
@@ -220,7 +220,7 @@ public class TestDarkClusterManager
     Assert.assertTrue(darkClusterManager2.handleDarkRequest(restRequest, new RequestContext()));
   }
 
-  private static class MockStrategyFactory implements DarkClusterStrategyFactory
+    private static class MockStrategyFactory implements DarkClusterStrategyFactory
   {
     // Always return true from the strategy so that we can count reliably
     private static final DarkClusterStrategy NO_OP_STRATEGY = new NoOpDarkClusterStrategy(true);
@@ -228,7 +228,7 @@ public class TestDarkClusterManager
     int strategyGetOrCreateCount;
 
     @Override
-    public DarkClusterStrategy get(String darkClusterName)
+      public DarkClusterStrategy get(String darkClusterName, int partitionId)
     {
       strategyGetOrCreateCount++;
       return NO_OP_STRATEGY;

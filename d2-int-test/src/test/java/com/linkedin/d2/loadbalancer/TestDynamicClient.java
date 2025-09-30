@@ -75,6 +75,7 @@ import static org.testng.Assert.fail;
 public class TestDynamicClient extends D2BaseTest {
   private static final String D2_CONFIG_FILE = "d2_config_example.json";
   private static final String ZK_HOST = "127.0.0.1";
+  private static final String ECHO_SERVER_HOST = "127.0.0.1";
   private static final int ECHO_SERVER_PORT_START = 2851;
   private static final int NUMBER_OF_HOSTS = 5;
   private static final int NUMBER_OF_THREADS = 10;
