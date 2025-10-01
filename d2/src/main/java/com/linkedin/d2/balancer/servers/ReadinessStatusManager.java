@@ -5,7 +5,7 @@ import javax.annotation.Nonnull;
 
 
 /**
- * This class manages the readiness status of the server.
+ * This interface manages the readiness status of the server.
  * Currently, it's based on D2 announcements' statuses as a preliminary design, can be extended in future for internal
  * components' readiness status.
  * See the <a href="preliminary design doc">https://shorturl.at/hmjz8</a> for details of determining the readiness status based on
