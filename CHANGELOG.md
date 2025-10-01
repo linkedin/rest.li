@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Remove method defaults from `ResourceDefinition`.
 
 ## [29.78.0] - 2025-09-30
 - Dark Cluster Partition Support
