@@ -78,6 +78,8 @@ import javax.net.ssl.SSLParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Preconditions.*;
+
 
 /**
  * ATTENTION: Using this class MUST be reading from INDIS instead of Zookeeper. ZK read will crash in October 2025.
@@ -244,8 +246,7 @@ public class D2ClientBuilder
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
-      new ZKFSLoadBalancerWithFacilitiesFactory() :
-      _config.lbWithFacilitiesFactory;
+      new ZKFSLoadBalancerWithFacilitiesFactory() : _config.lbWithFacilitiesFactory;
 
     // log error for not using INDIS in raw d2 client
     if (_config.isLiRawD2Client && !loadBalancerFactory.isIndisOnly())
@@ -259,6 +260,12 @@ public class D2ClientBuilder
       LOG.error("[ATTENTION!!! ACTION REQUIRED] Creating Zookeeper-reading raw D2 Client in app-custom code WILL CRASH"
           + " after OCTOBER 1st 2025. See instructions at go/onboardindis to find the code owner and migrate to INDIS.\n"
           + "Using in stack: {}", stackTrace);
+    }
+
+    if (loadBalancerFactory.isIndisOnly() && cfg.xdsServer == null)
+    {
+      throw new IllegalStateException("xdsServer is null. Call setXdsServer with a valid indis server address. "
+          + "Reference go/onboardindis for guidelines.");
     }
 
     LoadBalancerWithFacilities loadBalancer = loadBalancerFactory.create(cfg);
@@ -352,6 +359,7 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setXdsServer(String xdsServer)
   {
+    checkNotNull(xdsServer, "xdsServer");
     _config.xdsServer = xdsServer;
     return this;
   }
@@ -866,6 +874,19 @@ public class D2ClientBuilder
   public D2ClientBuilder setActionOnPrecheckFailure(XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure)
   {
     _config.actionOnPrecheckFailure = actionOnPrecheckFailure;
+    return this;
+  }
+
+  /**
+   * Disable the detection of LI raw D2 client. This is intended for non-LI users who want to use this class to build
+   * a D2 client. All LI apps/jobs should NEVER set this to true (unless for test apps from service discovery team).
+   * When hostName and d2JmxManagerPrefix are not set, the app/job will be detected as a LI raw D2 client.
+   * @param disableDetectLiRawD2Client true to disable the detection, false to enable it.
+   * @return this builder.
+   */
+  public D2ClientBuilder setDisableDetectLiRawD2Client(boolean disableDetectLiRawD2Client)
+  {
+    _config.disableDetectLiRawD2Client = disableDetectLiRawD2Client;
     return this;
   }
 
