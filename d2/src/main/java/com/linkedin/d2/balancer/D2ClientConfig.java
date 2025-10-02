@@ -176,6 +176,7 @@ public class D2ClientConfig
   public String xdsChannelLoadBalancingPolicy = null;
   public Map<String, ?> xdsChannelLoadBalancingPolicyConfig = null;
   public Long xdsChannelKeepAliveTimeMins = null;
+  public Long xdsChannelConnectionTimeoutMs = null;
 
   public boolean subscribeToUriGlobCollection = false;
   public XdsServerMetricsProvider _xdsServerMetricsProvider = new NoOpXdsServerMetricsProvider();
@@ -280,7 +281,8 @@ public class D2ClientConfig
                  Integer xdsStreamMaxRetryBackoffSeconds,
                  Long xdsChannelKeepAliveTimeMins,
                  String xdsMinimumJavaVersion,
-                 XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure)
+                 XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure,
+                 Long xdsChannelConnectionTimeoutMs)
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -353,6 +355,7 @@ public class D2ClientConfig
     this.xdsChannelLoadBalancingPolicy = xdsChannelLoadBalancingPolicy;
     this.xdsChannelLoadBalancingPolicyConfig = xdsChannelLoadBalancingPolicyConfig;
     this.xdsChannelKeepAliveTimeMins = xdsChannelKeepAliveTimeMins;
+    this.xdsChannelConnectionTimeoutMs = xdsChannelConnectionTimeoutMs;
     this.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
     this._xdsServerMetricsProvider = xdsServerMetricsProvider;
     this.loadBalanceStreamException = loadBalanceStreamException;

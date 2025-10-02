@@ -240,7 +240,8 @@ public class D2ClientBuilder
                   _config.xdsStreamMaxRetryBackoffSeconds,
                   _config.xdsChannelKeepAliveTimeMins,
                   _config.xdsMinimumJavaVersion,
-                  _config.actionOnPrecheckFailure
+                  _config.actionOnPrecheckFailure,
+                  _config.xdsChannelConnectionTimeout
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -827,6 +828,12 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setXdsChannelKeepAliveTimeMins(Long keepAliveTimeMins) {
     _config.xdsChannelKeepAliveTimeMins = keepAliveTimeMins;
+    return this;
+  }
+
+  public D2ClientBuilder setXdsChannelConnectionTimeoutMs(long connectionTimeoutMs)
+  {
+    _config.xdsChannelConnectionTimeout = connectionTimeout;
     return this;
   }
 
