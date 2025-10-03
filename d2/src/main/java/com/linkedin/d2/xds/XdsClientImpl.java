@@ -67,6 +67,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Preconditions.*;
 
 /**
  * Implementation of {@link XdsClient} interface.
@@ -199,6 +200,7 @@ public class XdsClientImpl extends XdsClient
   {
     _readyTimeoutMillis = readyTimeoutMillis;
     _node = node;
+    checkNotNull(managedChannel, "managedChannel");
     _managedChannel = managedChannel;
     _executorService = executorService;
     _subscribeToUriGlobCollection = subscribeToUriGlobCollection;
