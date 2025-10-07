@@ -19,6 +19,7 @@ package com.linkedin.r2.netty.common;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.EntityStream;
 import com.linkedin.r2.netty.entitystream.StreamWriter;
+import com.linkedin.r2.netty.handler.common.CertificateHandler;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.http.client.AsyncPool;
 import com.linkedin.r2.transport.http.client.common.ssl.SslSessionValidator;
@@ -28,6 +29,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelPipeline;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.Promise;
+import java.security.cert.Certificate;
 import java.util.concurrent.ScheduledFuture;
 
 /**
@@ -75,4 +77,9 @@ public interface NettyChannelAttributes
    * Attribute for the {@link SslSessionValidator}.
    */
   AttributeKey<SslSessionValidator> SSL_SESSION_VALIDATOR = AttributeKey.valueOf("sslSessionValidator");
+
+  /**
+   * Attribute for the {@link CertificateHandler}.
+   */
+  AttributeKey<Certificate[]> PEER_CERTIFICATES = AttributeKey.valueOf("peerCertificates");
 }

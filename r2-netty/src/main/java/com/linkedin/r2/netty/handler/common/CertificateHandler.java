@@ -23,6 +23,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.ssl.SslHandler;
+import javax.net.ssl.SSLPeerUnverifiedException;
+
 
 /**
  * In the case the user requires the Server verification, we extract the
@@ -51,6 +53,11 @@ public class CertificateHandler extends ChannelOutboundHandlerAdapter
       if (!future.isSuccess())
       {
         return;
+      }
+
+      try {
+        ctx.channel().attr(NettyChannelAttributes.PEER_CERTIFICATES).set(_sslHandler.engine().getSession().getPeerCertificates());
+      } catch (SSLPeerUnverifiedException ignored) {
       }
 
       SslSessionValidator sslSessionValidator = ctx.channel().attr(NettyChannelAttributes.SSL_SESSION_VALIDATOR).getAndSet(null);
