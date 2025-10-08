@@ -81,5 +81,5 @@ public interface NettyChannelAttributes
   /**
    * Attribute for the {@link CertificateHandler}.
    */
-  AttributeKey<Certificate[]> PEER_CERTIFICATES = AttributeKey.valueOf("peerCertificates");
+  AttributeKey<Certificate[]> SERVER_CERTIFICATES = AttributeKey.valueOf("serverCertificates");
 }

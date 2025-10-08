@@ -56,7 +56,7 @@ public class CertificateHandler extends ChannelOutboundHandlerAdapter
       }
 
       try {
-        ctx.channel().attr(NettyChannelAttributes.PEER_CERTIFICATES).set(_sslHandler.engine().getSession().getPeerCertificates());
+        ctx.channel().attr(NettyChannelAttributes.SERVER_CERTIFICATES).set(_sslHandler.engine().getSession().getPeerCertificates());
       } catch (SSLPeerUnverifiedException ignored) {
       }
 

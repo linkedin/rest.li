@@ -79,10 +79,10 @@ public class SslHandshakeTimingHandler extends ChannelOutboundHandlerAdapter
         TimingContextUtil.markTiming(requestContext, TIMING_KEY, duration);
       }
 
-      Certificate[] peerCerts = channel.attr(NettyChannelAttributes.PEER_CERTIFICATES).getAndSet(null);
+      Certificate[] peerCerts = channel.attr(NettyChannelAttributes.SERVER_CERTIFICATES).getAndSet(null);
       if (peerCerts != null)
       {
-        requestContext.putLocalAttr(R2Constants.PEER_CERT, peerCerts);
+        requestContext.putLocalAttr(R2Constants.SERVER_CERT, peerCerts);
       }
 
       callback.onResponse(response);

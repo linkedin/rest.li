@@ -45,7 +45,7 @@ public class R2Constants
    */
   public static final String HTTP_PROTOCOL_VERSION = "HTTP_PROTOCOL_VERSION";
   public static final String IS_SECURE = "IS_SECURE";
-  public static final String PEER_CERT = "PEER_CERT";
+  public static final String SERVER_CERT = "SERVER_CERT";
   public static final String CLIENT_CERT = "CLIENT_CERT";
   public static final String CIPHER_SUITE = "CIPHER_SUITE";
   public static final String REQUEST_COMPRESSION_OVERRIDE = "REQUEST_COMPRESSION_OVERRIDE";
