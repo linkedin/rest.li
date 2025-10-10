@@ -128,9 +128,24 @@ public class ServiceStoreProperties extends ServiceProperties
       List<Map<String, Object>> backupRequests, Map<String, Object> relativeStrategyProperties,
       boolean enableClusterSubsetting, int minClusterSubsetSize, ServiceProperties canaryConfigs, CanaryDistributionStrategy distributionStrategy)
   {
+    this(serviceName, clusterName, path, prioritizedStrategyList, loadBalancerStrategyProperties,
+        transportClientProperties, degraderProperties, prioritizedSchemes, banned, serviceMetadataProperties,
+        backupRequests, relativeStrategyProperties, enableClusterSubsetting, minClusterSubsetSize, canaryConfigs,
+        distributionStrategy, Collections.emptyList());
+  }
+
+  public ServiceStoreProperties(String serviceName, String clusterName, String path,
+      List<String> prioritizedStrategyList, Map<String, Object> loadBalancerStrategyProperties,
+      Map<String, Object> transportClientProperties, Map<String, String> degraderProperties,
+      List<String> prioritizedSchemes, Set<URI> banned, Map<String, Object> serviceMetadataProperties,
+      List<Map<String, Object>> backupRequests, Map<String, Object> relativeStrategyProperties,
+      boolean enableClusterSubsetting, int minClusterSubsetSize, ServiceProperties canaryConfigs, CanaryDistributionStrategy distributionStrategy,
+      List<MethodLevelProperties> methodLevelProperties)
+  {
     super(serviceName, clusterName, path, prioritizedStrategyList, loadBalancerStrategyProperties,
         transportClientProperties, degraderProperties, prioritizedSchemes, banned, serviceMetadataProperties,
-        backupRequests, relativeStrategyProperties, enableClusterSubsetting, minClusterSubsetSize);
+        backupRequests, relativeStrategyProperties, enableClusterSubsetting, minClusterSubsetSize,
+        -1, methodLevelProperties);
     _canaryConfigs = canaryConfigs;
     _canaryDistributionStrategy = distributionStrategy;
   }
