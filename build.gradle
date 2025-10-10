@@ -238,7 +238,7 @@ subprojects {
 
     //Excluding vulnerable package (commons-lang)(CVE-2025-48924)
     all*.exclude group: 'commons-lang', module: 'commons-lang'
-    
+
     configureEach {
       // Force commons-lang3 to a fixed safe version
       resolutionStrategy {
@@ -493,5 +493,11 @@ project.gradle.buildFinished { BuildResult result ->
       msgBuilder.append("\n    ${className} > ${methods}")
     }
     logger.warn msgBuilder.toString()
+  }
+}
+
+allprojects {
+  repositories {
+    maven { url = System.getProperty("user.home") + "/local-repo" }
   }
 }
