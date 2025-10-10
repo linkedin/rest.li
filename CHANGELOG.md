@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.80.0] - 2025-10-10
 - Update methodLevelProperties in ServiceProperties constructor
 
 ## [29.79.2] - 2025-10-08
@@ -5916,7 +5918,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.79.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.80.0...master
+[29.80.0]: https://github.com/linkedin/rest.li/compare/v29.79.1...v29.80.0
 [29.79.1]: https://github.com/linkedin/rest.li/compare/v29.79.0...v29.79.1
 [29.79.0]: https://github.com/linkedin/rest.li/compare/v29.78.0...v29.79.0
 [29.78.0]: https://github.com/linkedin/rest.li/compare/v29.77.0...v29.78.0
