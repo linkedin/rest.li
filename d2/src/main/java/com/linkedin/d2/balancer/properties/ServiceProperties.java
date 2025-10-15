@@ -247,7 +247,8 @@ public class ServiceProperties
   {
     this(other._serviceName, other._clusterName, other._path, other._prioritizedStrategyList, other._loadBalancerStrategyProperties,
         other._transportClientProperties, other._degraderProperties, other._prioritizedSchemes, other._banned, other._serviceMetadataProperties,
-        other._backupRequests, other._relativeStrategyProperties, other._enableClusterSubsetting, other._minClusterSubsetSize);
+        other._backupRequests, other._relativeStrategyProperties, other._enableClusterSubsetting, other._minClusterSubsetSize,
+        other._version, other._methodLevelProperties);
   }
 
   public String getClusterName()

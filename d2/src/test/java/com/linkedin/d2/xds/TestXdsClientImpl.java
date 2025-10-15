@@ -18,6 +18,7 @@ import com.linkedin.util.clock.Clock;
 import com.linkedin.util.clock.Time;
 import indis.XdsD2;
 import io.envoyproxy.envoy.service.discovery.v3.Resource;
+import io.grpc.ManagedChannel;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -1221,7 +1222,7 @@ public class TestXdsClientImpl
 
       _executorService = spy(Executors.newScheduledThreadPool(1));
 
-      _xdsClientImpl = spy(new XdsClientImpl(null, null,
+      _xdsClientImpl = spy(new XdsClientImpl(null, mock(ManagedChannel.class),
           _executorService,
           0, useGlobCollections, _serverMetricsProvider, useIRV));
       _xdsClientImpl._adsStream = _adsStream;

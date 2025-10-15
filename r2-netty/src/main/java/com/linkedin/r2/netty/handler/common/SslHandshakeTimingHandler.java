@@ -16,11 +16,13 @@
 
 package com.linkedin.r2.netty.handler.common;
 
+import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.timing.TimingContextUtil;
 import com.linkedin.r2.message.timing.TimingImportance;
 import com.linkedin.r2.message.timing.TimingKey;
 import com.linkedin.r2.message.timing.TimingNameConstants;
+import com.linkedin.r2.netty.common.NettyChannelAttributes;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -28,6 +30,8 @@ import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.Future;
+import java.security.cert.Certificate;
+
 
 /**
  * An SSL handler that records time in establishing a handshake.
@@ -74,6 +78,13 @@ public class SslHandshakeTimingHandler extends ChannelOutboundHandlerAdapter
       {
         TimingContextUtil.markTiming(requestContext, TIMING_KEY, duration);
       }
+
+      Certificate[] peerCerts = channel.attr(NettyChannelAttributes.SERVER_CERTIFICATES).getAndSet(null);
+      if (peerCerts != null)
+      {
+        requestContext.putLocalAttr(R2Constants.SERVER_CERT, peerCerts);
+      }
+
       callback.onResponse(response);
     };
   }

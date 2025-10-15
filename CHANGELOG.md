@@ -14,6 +14,24 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.80.1] - 2025-10-15
+- Not to throw for duplicate xDS client start. Throw when setting xds server address to null only for indis-only.  
+
+## [29.80.0] - 2025-10-10
+- Update methodLevelProperties in ServiceProperties constructor
+
+## [29.79.2] - 2025-10-08
+- add PEER_CERT to client RequestContext
+
+## [29.79.1] - 2025-10-02
+- null guards for xds server and channel
+
+## [29.79.0] - 2025-10-01
+- Preliminary readiness management
+
+## [29.78.0] - 2025-09-30
+- Dark Cluster Partition Support
+
 ## [29.77.0] - 2025-09-18
 - Add XdsClientValidator to pre check xDS client connection
 
@@ -5903,7 +5921,12 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.77.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.80.1...master
+[29.80.1]: https://github.com/linkedin/rest.li/compare/v29.80.0...v29.80.1
+[29.80.0]: https://github.com/linkedin/rest.li/compare/v29.79.1...v29.80.0
+[29.79.1]: https://github.com/linkedin/rest.li/compare/v29.79.0...v29.79.1
+[29.79.0]: https://github.com/linkedin/rest.li/compare/v29.78.0...v29.79.0
+[29.78.0]: https://github.com/linkedin/rest.li/compare/v29.77.0...v29.78.0
 [29.77.0]: https://github.com/linkedin/rest.li/compare/v29.76.0...v29.77.0
 [29.76.0]: https://github.com/linkedin/rest.li/compare/v29.75.3...v29.76.0
 [29.75.4]: https://github.com/linkedin/rest.li/compare/v29.75.3...v29.75.4

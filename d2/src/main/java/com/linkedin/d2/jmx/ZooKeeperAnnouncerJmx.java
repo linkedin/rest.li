@@ -211,4 +211,9 @@ public class ZooKeeperAnnouncerJmx implements ZooKeeperAnnouncerJmxMXBean
   public int getServerAnnounceMode() {
     return _announcer.getServerAnnounceMode().ordinal();
   }
+
+  @Override
+  public int getAnnouncementStatus() {
+    return _announcer.getAnnouncementStatus().ordinal();
+  }
 }
