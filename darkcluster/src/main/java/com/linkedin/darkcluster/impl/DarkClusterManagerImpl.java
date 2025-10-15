@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DarkClusterManagerImpl implements DarkClusterManager
 {
-  private static final Logger _rateLimitedPartitionLogger =
+  private static final Logger _rateLimitedPartitionedLogger =
       new RateLimitedLogger(LoggerFactory.getLogger(DarkClusterManagerImpl.class), TimeUnit.MINUTES.toMillis(1), SystemClock.instance());
   private static final Logger _rateLimitedMethodLogger =
       new RateLimitedLogger(LoggerFactory.getLogger(DarkClusterManagerImpl.class), TimeUnit.MINUTES.toMillis(1), SystemClock.instance());
@@ -183,7 +183,7 @@ public class DarkClusterManagerImpl implements DarkClusterManager
     }
     catch (RuntimeException | PartitionAccessException | ServiceUnavailableException e)
     {
-      _rateLimitedPartitionLogger.error("Cannot find partition id for request: {}, defaulting to 0", request.getURI(), e);
+      _rateLimitedPartitionedLogger.error("Cannot find partition id for request: {}, defaulting to 0", request.getURI(), e);
       return com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
     }
   }
