@@ -56,7 +56,9 @@ import org.slf4j.LoggerFactory;
  */
 public class DarkClusterManagerImpl implements DarkClusterManager
 {
-  private static final Logger _rateLimitedLogger =
+  private static final Logger _rateLimitedPartitionLogger =
+      new RateLimitedLogger(LoggerFactory.getLogger(DarkClusterManagerImpl.class), TimeUnit.MINUTES.toMillis(1), SystemClock.instance());
+  private static final Logger _rateLimitedMethodLogger =
       new RateLimitedLogger(LoggerFactory.getLogger(DarkClusterManagerImpl.class), TimeUnit.MINUTES.toMillis(1), SystemClock.instance());
 
   private final Pattern _whiteListRegEx;
@@ -181,7 +183,7 @@ public class DarkClusterManagerImpl implements DarkClusterManager
     }
     catch (RuntimeException | PartitionAccessException | ServiceUnavailableException e)
     {
-      _rateLimitedLogger.error("Cannot find partition id for request: {}, defaulting to 0", request.getURI(), e);
+      _rateLimitedPartitionLogger.error("Cannot find partition id for request: {}, defaulting to 0", request.getURI(), e);
       return com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor.DEFAULT_PARTITION_ID;
     }
   }
@@ -211,7 +213,7 @@ public class DarkClusterManagerImpl implements DarkClusterManager
     }
     catch (Exception e)
     {
-      _rateLimitedLogger.error("Invalid HttpMethod: {}", req.getMethod());
+      _rateLimitedMethodLogger.error("Invalid HttpMethod: {}", req.getMethod());
       return false;
     }
   }
