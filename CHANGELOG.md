@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.80.2] - 2025-10-15
+- Rate limit dark cluster exception logging
+
 ## [29.80.1] - 2025-10-15
 - Not to throw for duplicate xDS client start. Throw when setting xds server address to null only for indis-only.  
 
