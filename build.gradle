@@ -238,7 +238,7 @@ subprojects {
 
     //Excluding vulnerable package (commons-lang)(CVE-2025-48924)
     all*.exclude group: 'commons-lang', module: 'commons-lang'
-    
+
     configureEach {
       // Force commons-lang3 to a fixed safe version
       resolutionStrategy {

@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -43,6 +44,8 @@ import com.linkedin.d2.discovery.event.D2ServiceDiscoveryEventHelper;
 import com.linkedin.d2.discovery.event.LogOnlyServiceDiscoveryEventEmitter;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter.StatusUpdateActionType;
+import com.linkedin.d2.balancer.servers.ReadinessStatusManager.AnnouncerStatus;
+import com.linkedin.d2.balancer.servers.ReadinessStatusManager.AnnouncerStatus.AnnouncementStatus;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.util.ArgumentUtil;
 
@@ -57,6 +60,9 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.linkedin.d2.balancer.servers.ReadinessStatusManager.AnnouncerStatus.AnnouncementStatus.*;
+
 
 /**
  * ZooKeeperAnnouncer combines a ZooKeeperServer with a configured "desired state", and
@@ -76,6 +82,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
   private static final Logger _log = LoggerFactory.getLogger(ZooKeeperAnnouncer.class);
   private volatile String _cluster;
   private volatile URI _uri;
+  private volatile String _announcementTargetId;
   /**
    * Ephemeral znode path and its data announced for the regular cluster and uri. It will be used as the tracingId in Service discovery status related tracking events.
    * It's updated ONLY at mark-ups: (including regular mark-up and changing uri data by marking down then marking up again)
@@ -184,6 +191,9 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
     RECTIFY
   }
 
+  private final AnnouncerStatus _status;
+  private final ReadinessStatusManager _readinessManager;
+
   /**
    * @deprecated Use the constructor {@link #ZooKeeperAnnouncer(LoadBalancerServer)} instead.
    */
@@ -241,6 +251,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
     this(server, initialIsUp, isDarkWarmupEnabled, warmupClusterName, warmupDuration, executorService, eventEmitter, null, ActionOnWeightBreach.IGNORE);
   }
 
+  @Deprecated
   public ZooKeeperAnnouncer(LoadBalancerServer server, boolean initialIsUp,
       boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService, ServiceDiscoveryEventEmitter eventEmitter)
   {
@@ -250,6 +261,18 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
   public ZooKeeperAnnouncer(LoadBalancerServer server, boolean initialIsUp,
       boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService,
       ServiceDiscoveryEventEmitter eventEmitter, BigDecimal maxWeight, ActionOnWeightBreach actionOnWeightBreach)
+  {
+    this(server, initialIsUp, isDarkWarmupEnabled, warmupClusterName, warmupDuration, executorService,
+        eventEmitter, maxWeight, actionOnWeightBreach, new AnnouncerStatus(
+            false, DE_ANNOUNCED),
+        new NoOpReadinessStatusManager()
+    );
+  }
+
+  public ZooKeeperAnnouncer(LoadBalancerServer server, boolean initialIsUp,
+      boolean isDarkWarmupEnabled, String warmupClusterName, int warmupDuration, ScheduledExecutorService executorService,
+      ServiceDiscoveryEventEmitter eventEmitter, BigDecimal maxWeight, ActionOnWeightBreach actionOnWeightBreach,
+      AnnouncerStatus status, ReadinessStatusManager readinessManager)
   {
     _server = server;
     // initialIsUp is used for delay mark up. If it's false, there won't be markup when the announcer is started.
@@ -273,6 +296,9 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
     {
       ((ZooKeeperServer) server).setServiceDiscoveryEventHelper(this);
     }
+
+    _status = status;
+    _readinessManager = readinessManager;
   }
 
   /**
@@ -355,6 +381,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
   {
     _pendingMarkUp.add(callback);
     _isUp = true;
+    updateStatus(ANNOUNCING);
     runNowOrEnqueue(() -> doMarkUp(callback));
   }
 
@@ -368,8 +395,9 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
         emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, true, false, _markUpStartAtRef.get());
         if (e instanceof KeeperException.ConnectionLossException || e instanceof KeeperException.SessionExpiredException)
         {
-          _log.warn("failed to mark up uri = {}, cluster = {}, partitionData = {}, uriSpecificProperties = {} due to {}.",
-              _uri, _cluster, _partitionDataMap, _uriSpecificProperties, e.getClass().getSimpleName());
+          _log.warn("failed to mark up uri = {}, cluster = {}, partitionData = {}, uriSpecificProperties = {},"
+                  + " announcementTarget = {} due to {}.",
+              _uri, _cluster, _partitionDataMap, _uriSpecificProperties, _announcementTargetId, e.getClass().getSimpleName());
           // Setting to null because if that connection dies, when don't want to continue making operations before
           // the connection is up again.
           // When the connection will be up again, the ZKAnnouncer will be restarted and it will read the _isUp
@@ -393,11 +421,13 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
       @Override
       public void onSuccess(None result)
       {
+        updateStatus(ANNOUNCED);
         _isMarkUpIntentSent.set(true);
         emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, true, true, _markUpStartAtRef.get());
         _markUpFailed = false;
-        _log.info("markUp for uri = {}, cluster = {}, partitionData = {}, uriSpecificProperties = {} succeeded.",
-            _uri, _cluster, _partitionDataMap, _uriSpecificProperties);
+        _log.info("markUp for uri = {}, cluster = {}, partitionData = {}, uriSpecificProperties = {},"
+                + " announcementTarget = {} succeeded.",
+            _uri, _cluster, _partitionDataMap, _uriSpecificProperties, _announcementTargetId);
         // Note that the pending callbacks we see at this point are
         // from the requests that are filed before us because zookeeper
         // guarantees the ordering of callback being invoked.
@@ -554,6 +584,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
   {
     _pendingMarkDown.add(callback);
     _isUp = false;
+    updateStatus(DE_ANNOUNCING);
     runNowOrEnqueue(() -> doMarkDown(callback));
   }
 
@@ -582,6 +613,7 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
       @Override
       public void onSuccess(None result)
       {
+        updateStatus(DE_ANNOUNCED);
         _isMarkUpIntentSent.set(false);
         emitSDStatusActiveUpdateIntentAndWriteEvents(_cluster, false, true, _markDownStartAtRef.get());
         _log.info("markDown for uri = {} succeeded.", _uri);
@@ -742,6 +774,12 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
     _uri = URI.create(uri);
   }
 
+  public void setAnnouncementTargetId(String announcementTargetId)
+  {
+    ArgumentUtil.notNull(announcementTargetId, "announcementTargetId");
+    _announcementTargetId = announcementTargetId;
+  }
+
   public void setUriSpecificProperties(Map<String, Object> uriSpecificProperties)
   {
     _uriSpecificProperties = Collections.unmodifiableMap(uriSpecificProperties);
@@ -864,6 +902,13 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
     _eventEmitter = emitter;
   }
 
+  public AnnouncementStatus getAnnouncementStatus()
+  {
+    return _status.getAnnouncementStatus();
+  }
+
+  // ##### End Properties Section #####
+
   @Override
   public void emitSDStatusActiveUpdateIntentAndWriteEvents(String cluster, boolean isMarkUp, boolean succeeded, long startAt) {
     // In this class, SD event should be sent only when the announcing mode is to old service registry or dual write,
@@ -985,5 +1030,24 @@ public class ZooKeeperAnnouncer implements D2ServiceDiscoveryEventHelper, Announ
     return new IllegalArgumentException(String.format("[ACTION NEEDED] Weight %s in Partition %d is greater"
         + " than the max weight allowed: %s. Please correct the weight. It will be force-capped to the max weight "
         + "in the future.", weight, partition, _maxWeight));
+  }
+
+  private void updateStatus(AnnouncementStatus newStatus)
+  {
+    AnnouncementStatus oldStatus = _status.getAnnouncementStatus();
+    if (Objects.equals(oldStatus, newStatus))
+    {
+      return;
+    }
+
+    _status.setAnnouncementStatus(newStatus);
+    _log.info("Announcement status changed from {} to {} for {}.", oldStatus, newStatus, getIdentifier());
+    _readinessManager.onAnnouncerStatusUpdated();
+  }
+
+  // unique identifier for this announcer instance with: kafka/zk addr + cluster + uri, useful for logging
+  private String getIdentifier()
+  {
+    return String.format("{Announcing target: %s, cluster: %s, uri: %s}", _announcementTargetId, _cluster, _uri);
   }
 }
