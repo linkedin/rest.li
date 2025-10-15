@@ -235,7 +235,8 @@ public class XdsClientImpl extends XdsClient
   {
     if (!_started.compareAndSet(false, true))
     {
-      throw new IllegalStateException("Cannot start XdsClient more than once");
+      _log.info("Xds client already started, ignoring subsequent calls.");
+      return;
     }
 
     _xdsClientJmx.setXdsClient(this);
