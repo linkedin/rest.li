@@ -359,7 +359,7 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setXdsServer(String xdsServer)
   {
-    if (_config.lbWithFacilitiesFactory.isIndisOnly())
+    if (_config.lbWithFacilitiesFactory == null || _config.lbWithFacilitiesFactory.isIndisOnly())
     {
       checkNotNull(xdsServer, "xdsServer");
     }
