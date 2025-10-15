@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.80.2] - 2025-10-15
+- Rate limit dark cluster exception logging
+
 ## [29.80.1] - 2025-10-15
 - Not to throw for duplicate xDS client start. Throw when setting xds server address to null only for indis-only.  
 
@@ -5921,7 +5924,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.80.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.80.2...master
+[29.80.2]: https://github.com/linkedin/rest.li/compare/v29.80.1...v29.80.2
 [29.80.1]: https://github.com/linkedin/rest.li/compare/v29.80.0...v29.80.1
 [29.80.0]: https://github.com/linkedin/rest.li/compare/v29.79.1...v29.80.0
 [29.79.1]: https://github.com/linkedin/rest.li/compare/v29.79.0...v29.79.1
