@@ -94,7 +94,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 {
   private static final String HOST_OVERRIDE_LIST = "HOST_OVERRIDE_LIST";
   private static final Logger     _log =
-                                           LoggerFactory.getLogger(SimpleLoadBalancer.class);
+      LoggerFactory.getLogger(SimpleLoadBalancer.class);
   private static final String     D2_SCHEME_NAME = "d2";
 
   private final LoadBalancerState _state;
@@ -108,31 +108,41 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   private final Random            _random = new Random();
   private final FailoutConfigProvider _failoutConfigProvider;
   private final ExecutorService _d2CallbackExecutorService;
+  private final Long _cacheExpiryInMS;
+  private final HashMap<String, Pair<Long, TrackerClientSubsetItem>> _cachePerClusterPartition = new HashMap<>();
 
   public SimpleLoadBalancer(LoadBalancerState state, ScheduledExecutorService executorService)
   {
-    this(state, new Stats(1000), new Stats(1000), 0, TimeUnit.SECONDS, executorService, null);
+    this(state, 0, TimeUnit.SECONDS, executorService, null);
   }
 
   public SimpleLoadBalancer(LoadBalancerState state, long timeout, TimeUnit unit, ScheduledExecutorService executor)
   {
-    this(state, new Stats(1000), new Stats(1000), timeout, unit, executor, null);
+    this(state, timeout, unit, executor, null);
   }
 
   public SimpleLoadBalancer(LoadBalancerState state, long timeout, TimeUnit unit, ScheduledExecutorService executor,
-                            FailoutConfigProviderFactory failoutConfigProviderFactory)
+      FailoutConfigProviderFactory failoutConfigProviderFactory)
   {
-    this(state, new Stats(1000), new Stats(1000), timeout, unit, executor, failoutConfigProviderFactory);
+    this(state, timeout, unit, executor, failoutConfigProviderFactory, 0, TimeUnit.MILLISECONDS);
   }
 
+  public SimpleLoadBalancer(LoadBalancerState state, long timeout, TimeUnit unit, ScheduledExecutorService executor,
+      FailoutConfigProviderFactory failoutConfigProviderFactory, long stateUpdateCooldown, TimeUnit stateUpdateCooldownUnit)
+  {
+    this(state, new Stats(1000), new Stats(1000), timeout, unit, executor, failoutConfigProviderFactory,
+        stateUpdateCooldown, stateUpdateCooldownUnit);
+  }
 
   public SimpleLoadBalancer(LoadBalancerState state,
-                            Stats serviceAvailableStats,
-                            Stats serviceUnavailableStats,
-                            long timeout,
-                            TimeUnit unit,
-                            ScheduledExecutorService executor,
-                            FailoutConfigProviderFactory failoutConfigProviderFactory)
+      Stats serviceAvailableStats,
+      Stats serviceUnavailableStats,
+      long timeout,
+      TimeUnit unit,
+      ScheduledExecutorService executor,
+      FailoutConfigProviderFactory failoutConfigProviderFactory,
+      long clusterUpdateCooldown,
+      TimeUnit clusterUpdateCooldownUnit)
   {
     _state = state;
     _serviceUnavailableStats = serviceUnavailableStats;
@@ -142,6 +152,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     _timeout = timeout;
     _unit = unit;
     _executor = executor;
+    _cacheExpiryInMS = clusterUpdateCooldownUnit.toMillis(clusterUpdateCooldown);
     if (failoutConfigProviderFactory != null)
     {
       _failoutConfigProvider = failoutConfigProviderFactory.create(state);
@@ -413,7 +424,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     else
     {
       throw new ServiceUnavailableException(serviceName, "PEGA_1002. Unable to find a load balancer strategy. " +
-        "Server Schemes: [" + String.join(", ", service.getPrioritizedSchemes()) + ']');
+          "Server Schemes: [" + String.join(", ", service.getPrioritizedSchemes()) + ']');
     }
   }
 
@@ -434,7 +445,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     UriProperties uris = uriItem.getProperty();
 
     List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
-      _state.getStrategiesForService(serviceName, service.getPrioritizedSchemes());
+        _state.getStrategiesForService(serviceName, service.getPrioritizedSchemes());
 
     if (! orderedStrategies.isEmpty())
     {
@@ -465,7 +476,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     else
     {
       throw new ServiceUnavailableException(serviceName, "PEGA_1003. Unable to find a load balancer strategy" +
-        "Server Schemes: [" + String.join(", ", service.getPrioritizedSchemes()) + ']');
+          "Server Schemes: [" + String.join(", ", service.getPrioritizedSchemes()) + ']');
     }
   }
 
@@ -482,7 +493,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     else
     {
       throw new ServiceUnavailableException(serviceName, "PEGA_1017. Unable to find a load balancer strategy" +
-        "Server Schemes: [" + String.join(", ", service.getPrioritizedSchemes()) + ']');
+          "Server Schemes: [" + String.join(", ", service.getPrioritizedSchemes()) + ']');
     }
   }
 
@@ -530,7 +541,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   private ServiceProperties listenToServiceAndCluster(URI uri)
-          throws ServiceUnavailableException
+      throws ServiceUnavailableException
   {
     if (!D2_SCHEME_NAME.equalsIgnoreCase(uri.getScheme()))
     {
@@ -544,7 +555,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   private ServiceProperties listenToServiceAndCluster(String serviceName)
-    throws ServiceUnavailableException
+      throws ServiceUnavailableException
   {
     FutureCallback<ServiceProperties> servicePropertiesFutureCallback = new FutureCallback<>();
     boolean waitForUpdatedValue = _timeout > 0;
@@ -571,10 +582,10 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   private void listenToServiceAndCluster(String serviceName, boolean waitForUpdatedValue, Callback<ServiceProperties> callback)
   {
     getLoadBalancedServiceProperties(serviceName, waitForUpdatedValue, Callbacks.handle(service ->
-      {
-        String clusterName = service.getClusterName();
-        listenToCluster(clusterName, waitForUpdatedValue, (type, name) -> callback.onSuccess(service));
-      }, callback));
+    {
+      String clusterName = service.getClusterName();
+      listenToCluster(clusterName, waitForUpdatedValue, (type, name) -> callback.onSuccess(service));
+    }, callback));
   }
 
   public void listenToCluster(String clusterName, boolean waitForUpdatedValue, LoadBalancerStateListenerCallback callback)
@@ -594,13 +605,13 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   public void warmUpService(String serviceName, Callback<None> callback)
   {
     listenToServiceAndCluster(serviceName, true,
-      Callbacks.handle(service -> callback.onSuccess(None.none()), callback));
+        Callbacks.handle(service -> callback.onSuccess(None.none()), callback));
   }
 
   private LoadBalancerStateItem<UriProperties> getUriItem(String serviceName,
-                                                          String clusterName,
-                                                          ClusterProperties cluster)
-          throws ServiceUnavailableException
+      String clusterName,
+      ClusterProperties cluster)
+      throws ServiceUnavailableException
   {
     // get the uris for this uri
     LoadBalancerStateItem<UriProperties> uriItem = _state.getUriProperties(clusterName);
@@ -617,8 +628,8 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   private ClusterProperties getClusterProperties(String serviceName,
-                                                 String clusterName)
-          throws ServiceUnavailableException
+      String clusterName)
+      throws ServiceUnavailableException
   {
     LoadBalancerStateItem<ClusterProperties> clusterItem =
         _state.getClusterProperties(clusterName);
@@ -648,9 +659,9 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
    */
   @Override
   public <K> HostToKeyMapper<K> getPartitionInformation(URI serviceUri, Collection<K> keys,
-                                                        int limitHostPerPartition,
-                                                        int hash)
-          throws ServiceUnavailableException
+      int limitHostPerPartition,
+      int hash)
+      throws ServiceUnavailableException
   {
     if (limitHostPerPartition <= 0)
     {
@@ -665,7 +676,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     UriProperties uris = uriItem.getProperty();
 
     List<LoadBalancerState.SchemeStrategyPair> orderedStrategies =
-            _state.getStrategiesForService(serviceName, service.getPrioritizedSchemes());
+        _state.getStrategiesForService(serviceName, service.getPrioritizedSchemes());
     Map<Integer, Integer> partitionWithoutEnoughHost = new HashMap<>();
 
     if (! orderedStrategies.isEmpty())
@@ -720,7 +731,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     else
     {
       throw new ServiceUnavailableException(serviceName, "PEGA_1009. Unable to find a load balancer strategy" +
-        "Server Schemes: [" + String.join(", ", service.getPrioritizedSchemes()) + ']');
+          "Server Schemes: [" + String.join(", ", service.getPrioritizedSchemes()) + ']');
     }
   }
 
@@ -763,7 +774,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
   @Override
   public PartitionAccessor getPartitionAccessor(String serviceName)
-          throws ServiceUnavailableException
+      throws ServiceUnavailableException
   {
     ServiceProperties service = listenToServiceAndCluster(serviceName);
     String clusterName = service.getClusterName();
@@ -989,12 +1000,12 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
 
   // supports partitioning
   private TrackerClientSubsetItem getPotentialClients(String serviceName,
-                                                  ServiceProperties serviceProperties,
-                                                  ClusterProperties clusterProperties,
-                                                  UriProperties uris,
-                                                  String scheme,
-                                                  int partitionId,
-                                                  long version)
+      ServiceProperties serviceProperties,
+      ClusterProperties clusterProperties,
+      UriProperties uris,
+      String scheme,
+      int partitionId,
+      long version)
   {
     Set<URI> possibleUris = uris.getUriBySchemeAndPartition(scheme, partitionId);
     Map<URI, TrackerClient> clientsToBalance = Collections.emptyMap();
@@ -1011,7 +1022,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         Map<URI, Double> weightedUris = new HashMap<>(possibleUris.size());
         for (URI possibleUri : possibleUris)
         {
-           weightedUris.put(possibleUri, uris.getPartitionDataMap(possibleUri).get(partitionId).getWeight());
+          weightedUris.put(possibleUri, uris.getPartitionDataMap(possibleUri).get(partitionId).getWeight());
         }
 
         SubsettingState.SubsetItem subsetItem = _state.getClientsSubset(serviceName,
@@ -1038,11 +1049,11 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   private Map<URI, TrackerClient> getPotentialClientsSubsetting(String serviceName,
-                                                  ServiceProperties serviceProperties,
-                                                  ClusterProperties clusterProperties,
-                                                  Set<URI> possibleUris,
-                                                  int partitionId,
-                                                  SubsettingState.SubsetItem subsetItem)
+      ServiceProperties serviceProperties,
+      ClusterProperties clusterProperties,
+      Set<URI> possibleUris,
+      int partitionId,
+      SubsettingState.SubsetItem subsetItem)
   {
     Map<URI, Double> weightedSubset = subsetItem.getWeightedUriSubset();;
     Set<URI> doNotSlowStartUris = subsetItem.getDoNotSlowStartUris();
@@ -1074,17 +1085,17 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   private Map<URI, TrackerClient> getPotentialClientsNotSubsetting(String serviceName,
-                                                               ServiceProperties serviceProperties,
-                                                               ClusterProperties clusterProperties,
-                                                               Set<URI> possibleUris) {
+      ServiceProperties serviceProperties,
+      ClusterProperties clusterProperties,
+      Set<URI> possibleUris) {
     return getPotentialClients(serviceProperties, clusterProperties, possibleUris,
         possibleUri -> _state.getClient(serviceName, possibleUri));
   }
 
   private Map<URI, TrackerClient> getPotentialClients(ServiceProperties serviceProperties,
-                                                  ClusterProperties clusterProperties,
-                                                  Set<URI> possibleUris,
-                                                  Function<URI, TrackerClient> trackerClientFinder)
+      ClusterProperties clusterProperties,
+      Set<URI> possibleUris,
+      Function<URI, TrackerClient> trackerClientFinder)
   {
     Map<URI, TrackerClient> clientsToLoadBalance = new HashMap<>(possibleUris.size());
     for (URI possibleUri : possibleUris)
@@ -1108,17 +1119,77 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   private TrackerClient chooseTrackerClient(Request request, RequestContext requestContext,
-                                            String serviceName, String clusterName,
-                                            ClusterProperties cluster,
-                                            LoadBalancerStateItem<UriProperties> uriItem,
-                                            UriProperties uris,
-                                            List<LoadBalancerState.SchemeStrategyPair> orderedStrategies,
-                                            ServiceProperties serviceProperties)
-          throws ServiceUnavailableException
+      String serviceName, String clusterName,
+      ClusterProperties cluster,
+      LoadBalancerStateItem<UriProperties> uriItem,
+      UriProperties uris,
+      List<LoadBalancerState.SchemeStrategyPair> orderedStrategies,
+      ServiceProperties serviceProperties)
+      throws ServiceUnavailableException
   {
     // now try and find a tracker client for the uri
     TrackerClient trackerClient = null;
     URI targetHost = KeyMapper.TargetHostHints.getRequestContextTargetHost(requestContext);
+    int partitionId = getPartitionId(request, serviceName, clusterName, uris, targetHost);
+
+    Map<URI, TrackerClient> clientsToLoadBalance = null;
+
+    for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
+    {
+      LoadBalancerStrategy strategy = pair.getStrategy();
+      String scheme = pair.getScheme();
+      String key = serviceName + "@" + clusterName + "@" + partitionId + "@" + scheme;
+      TrackerClientSubsetItem subsetItem = getPotentialClientsFromCache(key);
+      if (subsetItem == null)
+      {
+        subsetItem = getPotentialClients(serviceName, serviceProperties, cluster,
+            uriItem.getProperty(), scheme, partitionId, uriItem.getVersion());
+        _cachePerClusterPartition.put(key, Pair.of(System.currentTimeMillis(), subsetItem));
+      }
+      clientsToLoadBalance = subsetItem.getWeightedSubset();
+
+      trackerClient =
+          strategy.getTrackerClient(request, requestContext, uriItem.getVersion(), partitionId, clientsToLoadBalance,
+              subsetItem.shouldForceUpdate());
+
+      debug(_log,
+          "load balancer strategy for ",
+          serviceName,
+          " returned: ",
+          trackerClient);
+
+      // break as soon as we find an available cluster client
+      if (trackerClient != null)
+      {
+        break;
+      }
+    }
+
+    if (trackerClient == null)
+    {
+      if (clientsToLoadBalance == null || clientsToLoadBalance.isEmpty())
+      {
+        String requestedSchemes = orderedStrategies.stream()
+            .map(LoadBalancerState.SchemeStrategyPair::getScheme).collect(Collectors.joining(","));
+
+        die(serviceName, "PEGA_1015. Service: " + serviceName + " unable to find a host to route the request"
+            + " in partition: " + partitionId + " cluster: " + clusterName + " scheme: [" + requestedSchemes + "]," +
+            " total hosts in cluster: " + uris.Uris().size() + "."
+            + " Check what cluster and scheme your servers are announcing to.");
+      }
+      else
+      {
+        die(serviceName, "PEGA_1016. Service: " + serviceName + " is in a bad state (high latency/high error). "
+            + "Dropping request. Cluster: " + clusterName + ", partitionId:" + partitionId
+            + " (choosable: " + clientsToLoadBalance.size() + " hosts, total in cluster: " + uris.Uris().size() + ")");
+      }
+    }
+
+    return trackerClient;
+  }
+
+  private int getPartitionId(Request request, String serviceName, String clusterName, UriProperties uris,
+      URI targetHost) throws ServiceUnavailableException {
     int partitionId = -1;
     URI requestUri = request.getURI();
 
@@ -1169,56 +1240,20 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         partitionId = iterator.next();
       }
     }
+    return partitionId;
+  }
 
-    Map<URI, TrackerClient> clientsToLoadBalance = null;
-
-    for (LoadBalancerState.SchemeStrategyPair pair : orderedStrategies)
+  @Nullable
+  private TrackerClientSubsetItem getPotentialClientsFromCache(String key)
+  {
+    Pair<Long, TrackerClientSubsetItem> p  = _cachePerClusterPartition.get(key);
+    if (_cacheExpiryInMS == 0 || p == null  || System.currentTimeMillis() > p.getLeft() + _cacheExpiryInMS)
     {
-      LoadBalancerStrategy strategy = pair.getStrategy();
-      String scheme = pair.getScheme();
-
-      TrackerClientSubsetItem subsetItem = getPotentialClients(serviceName, serviceProperties, cluster,
-          uris, scheme, partitionId, uriItem.getVersion());
-      clientsToLoadBalance = subsetItem.getWeightedSubset();
-
-      trackerClient =
-          strategy.getTrackerClient(request, requestContext, uriItem.getVersion(), partitionId, clientsToLoadBalance,
-              subsetItem.shouldForceUpdate());
-
-      debug(_log,
-            "load balancer strategy for ",
-            serviceName,
-            " returned: ",
-            trackerClient);
-
-      // break as soon as we find an available cluster client
-      if (trackerClient != null)
-      {
-        break;
-      }
-    }
-
-    if (trackerClient == null)
+      return null;
+    } else
     {
-      if (clientsToLoadBalance == null || clientsToLoadBalance.isEmpty())
-      {
-        String requestedSchemes = orderedStrategies.stream()
-          .map(LoadBalancerState.SchemeStrategyPair::getScheme).collect(Collectors.joining(","));
-
-        die(serviceName, "PEGA_1015. Service: " + serviceName + " unable to find a host to route the request"
-          + " in partition: " + partitionId + " cluster: " + clusterName + " scheme: [" + requestedSchemes + "]," +
-          " total hosts in cluster: " + uris.Uris().size() + "."
-          + " Check what cluster and scheme your servers are announcing to.");
-      }
-      else
-      {
-        die(serviceName, "PEGA_1016. Service: " + serviceName + " is in a bad state (high latency/high error). "
-            + "Dropping request. Cluster: " + clusterName + ", partitionId:" + partitionId
-          + " (choosable: " + clientsToLoadBalance.size() + " hosts, total in cluster: " + uris.Uris().size() + ")");
-      }
+      return p.getRight();
     }
-
-    return trackerClient;
   }
 
   private void die(String serviceName, String message) throws ServiceUnavailableException
@@ -1376,7 +1411,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   }
 
   public static class SimpleLoadBalancerCountDownCallback implements
-    LoadBalancerStateListenerCallback
+                                                          LoadBalancerStateListenerCallback
   {
     private CountDownLatch _latch;
 
