@@ -1024,9 +1024,9 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   protected static boolean shouldUpdatePartition(long clusterGenerationId, PartitionDegraderLoadBalancerState partitionState,
       DegraderLoadBalancerStrategyConfig config, boolean updateEnabled, boolean shouldForceUpdate, List<DegraderTrackerClient> trackerClients)
   {
-    Map<URI, DegraderTrackerClient> trackerClientMap = new HashMap<>(trackerClients.size());
+    Map<URI, TrackerClient> trackerClientMap = new HashMap<>(trackerClients.size());
 
-    for (DegraderTrackerClient trackerClient : trackerClients)
+    for (TrackerClient trackerClient : trackerClients)
     {
       trackerClientMap.put(trackerClient.getUri(), trackerClient);
     }
