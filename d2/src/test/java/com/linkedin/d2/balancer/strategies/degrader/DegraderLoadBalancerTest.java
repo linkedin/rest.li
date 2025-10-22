@@ -57,6 +57,8 @@ import com.linkedin.util.degrader.ErrorType;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -77,6 +79,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nonnull;
 
+import javax.sound.midi.Track;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -1560,6 +1563,13 @@ public class DegraderLoadBalancerTest
     assertTrue(i == numberOfClients);
   }
 
+  private static Map<URI, TrackerClient> createTrackerClientMap(List<URI> uris) throws URISyntaxException{
+    Map<URI, TrackerClient> clients = new HashMap<>();
+    for (URI uri : uris) {
+      clients.put(uri, getClient(uri));
+    }
+    return clients;
+  }
 
   @Test(groups = { "small", "back-end" })
   public void testshouldUpdatePartition() throws URISyntaxException
@@ -1570,17 +1580,16 @@ public class DegraderLoadBalancerTest
     myConfig.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_INTERVAL_MS, 5000L);
     myConfig.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING, 100d);
     DegraderLoadBalancerStrategyV3 strategy = getStrategy(myConfig);
-    List<DegraderTrackerClient> clients = new ArrayList<>();
     Map<URI, Integer> pointsMap = new HashMap<>();
     long clusterCallCount = 15;
     RingFactory<URI> ringFactory = new DelegatingRingFactory<>(new DegraderLoadBalancerStrategyConfig(1L));
-
     URI uri1 = URI.create("http://test.linkedin.com:3242/fdsaf");
     URI uri2 = URI.create("http://test.linkedin.com:3243/fdsaf");
-    clients.add(getClient(uri1));
-    clients.add(getClient(uri2));
-    pointsMap.put(uri1, 1);
-    pointsMap.put(uri2, 1);
+    List<URI> uris = Arrays.asList(uri1, uri2);
+
+    Map<URI, TrackerClient> clients = createTrackerClientMap(uris);
+    pointsMap.put(uris.get(0), 1);
+    pointsMap.put(uris.get(1), 1);
 
     // state is default initialized, new cluster generation
     assertTrue(DegraderLoadBalancerStrategyV3.shouldUpdatePartition(0,
@@ -1695,17 +1704,17 @@ public class DegraderLoadBalancerTest
     myConfig.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_MAX_CLUSTER_LATENCY_WITHOUT_DEGRADING, 100d);
     myConfig.put(PropertyKeys.HTTP_LB_STRATEGY_PROPERTIES_UPDATE_ONLY_AT_INTERVAL, true);
     DegraderLoadBalancerStrategyV3 strategy = getStrategy(myConfig);
-    List<DegraderTrackerClient> clients = new ArrayList<>();
     Map<URI, Integer> pointsMap = new HashMap<>();
     long clusterCallCount = 15;
     RingFactory<URI> ringFactory = new DelegatingRingFactory<>(new DegraderLoadBalancerStrategyConfig(1L));
 
     URI uri1 = URI.create("http://test.linkedin.com:3242/fdsaf");
     URI uri2 = URI.create("http://test.linkedin.com:3243/fdsaf");
-    clients.add(getClient(uri1));
-    clients.add(getClient(uri2));
-    pointsMap.put(uri1, 1);
-    pointsMap.put(uri2, 1);
+    List<URI> uris = Arrays.asList(uri1, uri2);
+
+    Map<URI, TrackerClient> clients = createTrackerClientMap(uris);
+    pointsMap.put(uris.get(0), 1);
+    pointsMap.put(uris.get(1), 1);
 
     PartitionDegraderLoadBalancerState current =
         strategy.getState().getPartitionState(DEFAULT_PARTITION_ID);
