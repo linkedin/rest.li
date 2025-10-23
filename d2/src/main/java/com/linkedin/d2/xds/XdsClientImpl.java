@@ -1111,7 +1111,7 @@ public class XdsClientImpl extends XdsClient
       if (_fetchState.compareAndSet(FETCHED, SubscriberFetchState.PENDING_AFTER_RECONNECT))
       {
         _subscribedAt.set(_clock.currentTimeMillis());
-        _log.debug("Reset fetch state to PENDING_AFTER_RECONNECT for {} {} after reconnect.", _type, _resource);
+        _log.info("Reset fetch state to PENDING_AFTER_RECONNECT for {} {} after reconnect.", _type, _resource);
       }
     }
 
@@ -1294,7 +1294,7 @@ public class XdsClientImpl extends XdsClient
       if (_fetchState.compareAndSet(FETCHED, SubscriberFetchState.PENDING_AFTER_RECONNECT))
       {
         _subscribedAt.set(_clock.currentTimeMillis());
-        _log.debug("Reset fetch state to PENDING_AFTER_RECONNECT for {} wildcard subscriber after reconnect.", _type);
+        _log.info("Reset fetch state to PENDING_AFTER_RECONNECT for {} wildcard subscriber after reconnect.", _type);
       }
     }
 
