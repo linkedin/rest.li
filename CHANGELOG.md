@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.81.1] - 2025-11-04
+- Fix xds client active wait time metric also add more logs.
+
 ## [29.81.0] - 2025-11-03
 - Indis based d2 warmup for restli client
 
