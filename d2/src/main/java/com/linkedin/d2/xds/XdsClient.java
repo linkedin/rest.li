@@ -114,6 +114,22 @@ public abstract class XdsClient
     }
   }
 
+  public static abstract class D2CalleesResourceWatcher extends ResourceWatcher
+  {
+    public D2CalleesResourceWatcher()
+    {
+      super(ResourceType.D2_CALLEES);
+    }
+
+    public abstract void onChanged(D2CalleesUpdate update);
+
+    @Override
+    final void onChanged(ResourceUpdate update)
+    {
+      onChanged((D2CalleesUpdate) update);
+    }
+  }
+
   public static abstract class WildcardResourceWatcher
   {
     private final ResourceType _type;
@@ -233,6 +249,54 @@ public abstract class XdsClient
   public interface ResourceUpdate
   {
     boolean isValid();
+  }
+
+  public static final class D2CalleesUpdate implements ResourceUpdate
+  {
+    private final XdsD2.D2CalleeServices _calleeServices;
+
+    D2CalleesUpdate(XdsD2.D2CalleeServices calleeServices)
+    {
+      _calleeServices = calleeServices;
+    }
+
+    public XdsD2.D2CalleeServices getCalleeServices()
+    {
+      return _calleeServices;
+    }
+
+    @Override
+    public boolean isValid()
+    {
+      return _calleeServices != null;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+      if (this == o)
+      {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass())
+      {
+        return false;
+      }
+      D2CalleesUpdate that = (D2CalleesUpdate) o;
+      return Objects.equals(_calleeServices, that._calleeServices);
+    }
+
+    @Override
+    public int hashCode()
+    {
+      return Objects.hash(_calleeServices);
+    }
+
+    @Override
+    public String toString()
+    {
+      return MoreObjects.toStringHelper(this).add("_calleeServices", _calleeServices).toString();
+    }
   }
 
   public static final class NodeUpdate implements ResourceUpdate
@@ -527,14 +591,15 @@ public abstract class XdsClient
   public static final D2URIMapUpdate EMPTY_D2_URI_MAP_UPDATE = new D2URIMapUpdate(null);
   public static final D2ClusterOrServiceNameUpdate EMPTY_D2_CLUSTER_OR_SERVICE_NAME_UPDATE =
       new D2ClusterOrServiceNameUpdate(null);
-
+  public static final D2CalleesUpdate EMPTY_D2_CALLEES_UPDATE = new D2CalleesUpdate(XdsD2.D2CalleeServices.newBuilder().build());
   enum ResourceType
   {
     NODE("type.googleapis.com/indis.Node", EMPTY_NODE_UPDATE),
     D2_URI_MAP("type.googleapis.com/indis.D2URIMap", EMPTY_D2_URI_MAP_UPDATE),
     D2_URI("type.googleapis.com/indis.D2URI", EMPTY_D2_URI_MAP_UPDATE),
     D2_CLUSTER_OR_SERVICE_NAME("type.googleapis.com/indis.D2ClusterOrServiceName",
-        EMPTY_D2_CLUSTER_OR_SERVICE_NAME_UPDATE);
+        EMPTY_D2_CLUSTER_OR_SERVICE_NAME_UPDATE),
+    D2_CALLEES("type.googleapis.com/indis.D2CalleeServices", EMPTY_D2_CALLEES_UPDATE);
 
     private static final Map<String, ResourceType> TYPE_URL_TO_ENUM = Arrays.stream(values())
         .filter(e -> e.typeUrl() != null)
