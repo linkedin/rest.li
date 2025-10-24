@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.80.3] - 2025-10-23
+- Add Indis based downstream fetcher
+
 ## [29.80.2] - 2025-10-15
 - Throw when setting xds server address to null while lbWithFacilitiesFactory is null.  
 
@@ -5924,7 +5927,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.80.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.80.3...master
+[29.80.3]: https://github.com/linkedin/rest.li/compare/v29.80.2...v29.80.3
 [29.80.2]: https://github.com/linkedin/rest.li/compare/v29.80.1...v29.80.2
 [29.80.1]: https://github.com/linkedin/rest.li/compare/v29.80.0...v29.80.1
 [29.80.0]: https://github.com/linkedin/rest.li/compare/v29.79.1...v29.80.0
