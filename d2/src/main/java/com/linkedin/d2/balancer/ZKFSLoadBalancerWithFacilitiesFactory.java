@@ -62,7 +62,7 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
     {
       balancer = new WarmUpLoadBalancer(balancer, zkfsLoadBalancer, config.startUpExecutorService, config.fsBasePath,
         config.d2ServicePath, config.downstreamServicesFetcher, config.warmUpTimeoutSeconds,
-        config.warmUpConcurrentRequests, config.dualReadStateManager, false);
+        config.warmUpConcurrentRequests, config.dualReadStateManager, false, config.d2CalleeInfoRecorder);
     }
     return balancer;
   }

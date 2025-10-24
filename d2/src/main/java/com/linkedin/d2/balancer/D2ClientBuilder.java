@@ -26,6 +26,8 @@ import com.linkedin.d2.balancer.clients.FailoutClient;
 import com.linkedin.d2.balancer.clients.FailoutRedirectStrategy;
 import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.clients.RequestTimeoutClient;
+import com.linkedin.d2.balancer.util.D2CalleeInfoRecorder;
+import java.time.Duration;
 import javax.annotation.Nonnull;
 import com.linkedin.d2.balancer.clients.RetryClient;
 import com.linkedin.d2.balancer.clusterfailout.FailoutConfigProviderFactory;
@@ -242,7 +244,10 @@ public class D2ClientBuilder
                   _config.xdsStreamMaxRetryBackoffSeconds,
                   _config.xdsChannelKeepAliveTimeMins,
                   _config.xdsMinimumJavaVersion,
-                  _config.actionOnPrecheckFailure
+                  _config.actionOnPrecheckFailure,
+                  _config.d2CalleeInfoRecorder,
+                  _config.enableIndisDownstreamServicesFetcher,
+                  _config.indisDownstreamServicesFetchTimeout
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -890,6 +895,22 @@ public class D2ClientBuilder
   public D2ClientBuilder setDisableDetectLiRawD2Client(boolean disableDetectLiRawD2Client)
   {
     _config.disableDetectLiRawD2Client = disableDetectLiRawD2Client;
+    return this;
+  }
+
+  public D2ClientBuilder setD2CalleeInfoRecorder(D2CalleeInfoRecorder d2CalleeInfoRecorder)
+  {
+    _config.d2CalleeInfoRecorder = d2CalleeInfoRecorder;
+    return this;
+  }
+
+  public D2ClientBuilder setIndisDownstreamServicesFetchTimeout(Duration indisDownstreamServicesFetchTimeout) {
+    _config.indisDownstreamServicesFetchTimeout = indisDownstreamServicesFetchTimeout;
+    return this;
+  }
+
+  public D2ClientBuilder setEnableIndisDownstreamServicesFetcher(boolean enableIndisDownstreamServicesFetcher) {
+    _config.enableIndisDownstreamServicesFetcher = enableIndisDownstreamServicesFetcher;
     return this;
   }
 

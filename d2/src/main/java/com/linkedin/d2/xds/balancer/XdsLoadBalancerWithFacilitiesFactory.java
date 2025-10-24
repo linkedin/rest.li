@@ -20,6 +20,8 @@ import com.linkedin.d2.balancer.D2ClientConfig;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilitiesFactory;
 import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
+import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
+import com.linkedin.d2.balancer.util.downstreams.IndisBasedDownstreamServicesFetcher;
 import com.linkedin.d2.jmx.D2ClientJmxManager;
 import com.linkedin.d2.xds.Node;
 import com.linkedin.d2.xds.XdsChannelFactory;
@@ -94,9 +96,13 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
 
     if (config.warmUp)
     {
+      DownstreamServicesFetcher downstreamServicesFetcher = config.enableIndisDownstreamServicesFetcher
+          ? new IndisBasedDownstreamServicesFetcher(xdsClient, config.indisDownstreamServicesFetchTimeout,
+              config.xdsExecutorService, config.indisDownstreamServicesFetcher)
+          : config.indisDownstreamServicesFetcher;
       balancer = new WarmUpLoadBalancer(balancer, xdsLoadBalancer, config.indisStartUpExecutorService, config.indisFsBasePath,
-          config.d2ServicePath, config.indisDownstreamServicesFetcher, config.indisWarmUpTimeoutSeconds,
-          config.indisWarmUpConcurrentRequests, config.dualReadStateManager, true);
+          config.d2ServicePath, downstreamServicesFetcher, config.indisWarmUpConcurrentRequests, config.indisWarmUpTimeoutSeconds,
+          config.dualReadStateManager, true, config.d2CalleeInfoRecorder);
     }
 
     return balancer;
