@@ -783,12 +783,16 @@ public class TestXdsClientImpl {
     List<Map<String, String>> resourceVersions = fixture._resourceVersionsArgumentCaptor.getAllValues();
     if (useIRV) {
       Assert.assertEquals(resourceVersions,
-          useGlobCollection ? Arrays.asList(ImmutableMap.of(SERVICE_RESOURCE_NAME, VERSION1),
-              ImmutableMap.of(CLUSTER_RESOURCE_NAME, VERSION1, URI_URN1, VERSION1),
-              ImmutableMap.of(CLUSTER_RESOURCE_NAME, VERSION1, URI_URN1, VERSION1),
-              ImmutableMap.of(CLUSTER_NAME, VERSION1)) : Arrays.asList(ImmutableMap.of(SERVICE_RESOURCE_NAME, VERSION1),
-              ImmutableMap.of(CLUSTER_RESOURCE_NAME, VERSION1), ImmutableMap.of(URI_URN1, VERSION1),
-              ImmutableMap.of(CLUSTER_NAME, VERSION1)));
+          useGlobCollection
+              ? Arrays.asList(ImmutableMap.of(SERVICE_RESOURCE_NAME, VERSION1),
+                  ImmutableMap.of(CLUSTER_RESOURCE_NAME, VERSION1, URI_URN1, VERSION1),
+                  ImmutableMap.of(CLUSTER_RESOURCE_NAME, VERSION1, URI_URN1, VERSION1),
+                  ImmutableMap.of(CLUSTER_NAME, VERSION1),
+                  ImmutableMap.of(CALLEES_RESOURCE_NAME, VERSION1))
+              : Arrays.asList(ImmutableMap.of(SERVICE_RESOURCE_NAME, VERSION1),
+                  ImmutableMap.of(CLUSTER_RESOURCE_NAME, VERSION1), ImmutableMap.of(URI_URN1, VERSION1),
+                  ImmutableMap.of(CLUSTER_NAME, VERSION1),
+                  ImmutableMap.of(CALLEES_RESOURCE_NAME, VERSION1)));
     } else {
       resourceVersions.forEach(x -> Assert.assertEquals(x.size(), 0));
     }
@@ -996,19 +1000,21 @@ public class TestXdsClientImpl {
     fixture.watchAllResourceAndWatcherTypes();
     fixture.setAllSubscribersSubscribedAt(System.currentTimeMillis() - TEN_MINS);
 
-    // active initial wait time contributed from 6 subscribers for:
-    // individual node, uri, uri map, and wildcard node, uri map, and d2 cluster/service name
+    // active initial wait time contributed from 8 subscribers for:
+    // individual node, uri, uri map, and wildcard node, uri map, d2 cluster/service name, callees, and callees wildcard subscribers
     long activeWaitTime = fixture._xdsClientImpl.getActiveInitialWaitTimeMillis();
-    Assert.assertTrue(activeWaitTime >= Time.minutes(60) && activeWaitTime < Time.minutes(70));
+    Assert.assertTrue(activeWaitTime >= Time.minutes(80) && activeWaitTime < Time.minutes(90));
 
     if (responseAction == ResponseAction.UPDATE) {
       fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA1);
       fixture._xdsClientImpl.handleResponse(RESPONSE_D2URI1_WITH_NON_LAST_NONCE);
       fixture._xdsClientImpl.handleResponse(RESPONSE_WITH_SERVICE_NAMES);
+      fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_CALLEES_DATA1);
     } else if (responseAction == ResponseAction.REMOVAL) {
       fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_NODE_DATA_WITH_REMOVAL);
       fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_URI1_DATA_WITH_REMOVAL_NON_LAST_NONCE);
       fixture._xdsClientImpl.handleResponse(RESPONSE_WITH_NAME_REMOVAL);
+      fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_CALLEES_DATA_WITH_REMOVAL);
     }
     // All individual resource subscribers have received first response, so they won't contribute to active initial
     // wait time anymore.
@@ -1276,6 +1282,7 @@ public class TestXdsClientImpl {
       } else {
         _resourceVersions.computeIfAbsent(D2_URI_MAP, k -> new HashMap<>()).put(CLUSTER_RESOURCE_NAME, VERSION1);
       }
+      _resourceVersions.computeIfAbsent(D2_CALLEES, k -> new HashMap<>()).put(CALLEES_RESOURCE_NAME, VERSION1);
     }
 
     void watchAllResourceAndWatcherTypes() {
