@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nonnull;
 import org.slf4j.Logger;
@@ -50,7 +51,7 @@ public final class IndisBasedDownstreamServicesFetcher implements DownstreamServ
                   LOGGER.warn("Timeout fetching xDS resource: {}, falling back to delegate", resourceName);
                   _delegate.getServiceNames(appName, appInstance, clientScope, callback);
                 }
-              }, _timeout.toMillis(), java.util.concurrent.TimeUnit.MILLISECONDS);
+              }, _timeout.toMillis(), TimeUnit.MILLISECONDS);
 
           @Override
           public void onChanged(XdsClient.D2CalleesUpdate update) {
