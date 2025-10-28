@@ -28,4 +28,8 @@ import java.util.List;
 public interface DownstreamServicesFetcher
 {
   void getServiceNames(SuccessCallback<List<String>> callback);
+  default void getServiceNames(String appName, String appInstance, String clientScope, SuccessCallback<List<String>> callback)
+  {
+    getServiceNames(callback);
+  }
 }

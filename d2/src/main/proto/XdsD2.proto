@@ -153,3 +153,10 @@ message D2URI {
 message D2URIMap {
   map<string, D2URI> uris = 1;
 }
+
+// A message containing the list of d2 services that a client usually calls out to (i.e. callees)
+// This is typically used by clients for warm-up.
+message D2CalleeServices {
+  // List of d2 service names
+  repeated string services = 1;
+}

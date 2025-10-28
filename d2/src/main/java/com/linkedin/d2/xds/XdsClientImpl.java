@@ -495,6 +495,9 @@ public class XdsClientImpl extends XdsClient
       case D2_URI:
         handleD2URICollectionResponse(response);
         break;
+      case D2_CALLEES:
+        handleD2CalleesResponse(response);
+        break;
       default:
         throw new AssertionError("Missing case in enum switch: " + resourceType);
     }
@@ -729,6 +732,32 @@ public class XdsClientImpl extends XdsClient
     });
     sendAckOrNack(data.getResourceType(), data.getNonce(), errors);
     processResourceChanges(ResourceType.D2_URI_MAP, updates, removedClusters);
+  }
+
+  private void handleD2CalleesResponse(DiscoveryResponseData data)
+  {
+    Map<String, D2CalleesUpdate> updates = new HashMap<>();
+    List<String> errors = new ArrayList<>();
+
+    for (Resource resource : data.getResourcesList())
+    {
+      String resourceName = resource.getName();
+      try
+      {
+        XdsD2.D2CalleeServices calleeServices = resource.getResource()
+            .unpack(XdsD2.D2CalleeServices.class);
+        updates.put(resourceName, new D2CalleesUpdate(calleeServices));
+      }
+      catch (Exception e)
+      {
+        String errMsg = String.format("Failed to unpack D2CalleeServices for resource: %s.", resourceName);
+        _log.warn(errMsg, e);
+        errors.add(errMsg);
+        // Skip the update
+      }
+    }
+    sendAckOrNack(data.getResourceType(), data.getNonce(), errors);
+    processResourceChanges(data.getResourceType(), updates, data.getRemovedResources());
   }
 
   @VisibleForTesting
