@@ -50,6 +50,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,7 +84,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
   private final DualReadStateManager _dualReadStateManager;
   private final boolean _isIndis; // whether warming up for Indis (false means warming up for ZK)
   private final String _printName; // name of this warmup load balancer based on it's indis or not.
-  private final D2CalleeInfoRecorder _d2CalleeInfoRecorder;
+  @Nullable private final D2CalleeInfoRecorder _d2CalleeInfoRecorder;
   private volatile boolean _shuttingDown = false;
   private long _allStartTime;
   private List<String> _servicesToWarmUp = null;
@@ -133,7 +134,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
       ScheduledExecutorService executorService, String d2FsDirPath, String d2ServicePath,
       DownstreamServicesFetcher downstreamServicesFetcher, int warmUpTimeoutMillis, int concurrentRequests,
       DualReadStateManager dualReadStateManager, boolean isIndis, Supplier<Long> timeSupplierForTest,
-      D2CalleeInfoRecorder d2CalleeInfoRecorder)
+      @Nullable D2CalleeInfoRecorder d2CalleeInfoRecorder)
   {
     super(balancer);
     _serviceWarmupper = serviceWarmupper;
@@ -192,7 +193,6 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
         _executorService.submit(() -> prepareWarmUp(prepareWarmUpCallback));
       }
     });
-    _d2CalleeInfoRecorder.start();
   }
 
   private void prepareWarmUp(Callback<None> callback)

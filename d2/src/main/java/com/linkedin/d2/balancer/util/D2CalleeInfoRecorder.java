@@ -8,10 +8,6 @@ import javax.annotation.Nonnull;
  */
 public interface D2CalleeInfoRecorder {
   /**
-   * Starts the recorder to send periodic updates.
-   */
-  void start();
-  /**
    * Records a callee service name.
    * @param serviceName the callee service name to record
    */
@@ -25,9 +21,4 @@ public interface D2CalleeInfoRecorder {
 
   @Nonnull
   String getScope();
-
-  /**
-   * Stops periodic updates and shuts down the recorder.
-   */
-  void shutdown();
 }
