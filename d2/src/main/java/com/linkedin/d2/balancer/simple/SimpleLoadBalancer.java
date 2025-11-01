@@ -95,7 +95,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   private static final String HOST_OVERRIDE_LIST = "HOST_OVERRIDE_LIST";
   private static final Logger     _log =
                                            LoggerFactory.getLogger(SimpleLoadBalancer.class);
-  private static final String     D2_SCHEME_NAME = "d2";
+  public static final String     D2_SCHEME_NAME = "d2";
 
   private final LoadBalancerState _state;
   private final Stats _serviceUnavailableStats;

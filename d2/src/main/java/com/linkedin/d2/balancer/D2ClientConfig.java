@@ -25,6 +25,7 @@ import com.linkedin.d2.balancer.simple.SslSessionValidatorFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
+import com.linkedin.d2.balancer.util.D2CalleeInfoRecorder;
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.WarmUpLoadBalancer;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
@@ -45,6 +46,7 @@ import com.linkedin.d2.jmx.NoOpXdsServerMetricsProvider;
 import com.linkedin.d2.jmx.NoOpJmxManager;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -196,6 +198,13 @@ public class D2ClientConfig
    * apposed to created by standard LinkedIn d2 client factory in container library).
    */
   public boolean isLiRawD2Client = false;
+  // Callee info recorder for d2 warmup
+  public D2CalleeInfoRecorder d2CalleeInfoRecorder = null;
+  /**
+   * Whether to enable fetching downstream services from INDIS for warmup.
+   */
+  public boolean enableIndisDownstreamServicesFetcher = false;
+  public Duration indisDownstreamServicesFetchTimeout = Duration.ofSeconds(5);
 
   public D2ClientConfig()
   {
@@ -280,7 +289,10 @@ public class D2ClientConfig
                  Integer xdsStreamMaxRetryBackoffSeconds,
                  Long xdsChannelKeepAliveTimeMins,
                  String xdsMinimumJavaVersion,
-                 XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure)
+                 XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure,
+                 D2CalleeInfoRecorder d2CalleeInfoRecorder,
+                 Boolean enableIndisDownstreamServicesFetcher,
+                 Duration indisDownstreamServicesFetchTimeout)
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -362,5 +374,8 @@ public class D2ClientConfig
     this.xdsStreamMaxRetryBackoffSeconds = xdsStreamMaxRetryBackoffSeconds;
     this.xdsMinimumJavaVersion = xdsMinimumJavaVersion;
     this.actionOnPrecheckFailure = actionOnPrecheckFailure;
+    this.d2CalleeInfoRecorder = d2CalleeInfoRecorder;
+    this.indisDownstreamServicesFetchTimeout = indisDownstreamServicesFetchTimeout;
+    this.enableIndisDownstreamServicesFetcher = enableIndisDownstreamServicesFetcher;
   }
 }

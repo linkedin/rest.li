@@ -18,6 +18,7 @@ package com.linkedin.d2.balancer.util;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.linkedin.common.callback.Callback;
+import com.linkedin.common.callback.SuccessCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilities;
 import com.linkedin.d2.balancer.LoadBalancerWithFacilitiesDelegator;
@@ -49,8 +50,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.linkedin.d2.balancer.simple.SimpleLoadBalancer.*;
+
 
 /**
  * The WarmUpLoadBalancer warms up the internal {@link SimpleLoadBalancer} services/cluster list
@@ -79,6 +84,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
   private final DualReadStateManager _dualReadStateManager;
   private final boolean _isIndis; // whether warming up for Indis (false means warming up for ZK)
   private final String _printName; // name of this warmup load balancer based on it's indis or not.
+  @Nullable private final D2CalleeInfoRecorder _d2CalleeInfoRecorder;
   private volatile boolean _shuttingDown = false;
   private long _allStartTime;
   private List<String> _servicesToWarmUp = null;
@@ -103,14 +109,32 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
       DownstreamServicesFetcher downstreamServicesFetcher, int warmUpTimeoutSeconds, int concurrentRequests,
       DualReadStateManager dualReadStateManager, boolean isIndis) {
     this(balancer, serviceWarmupper, executorService, d2FsDirPath, d2ServicePath, downstreamServicesFetcher,
-        warmUpTimeoutSeconds * 1000, concurrentRequests, dualReadStateManager, isIndis, null);
+        warmUpTimeoutSeconds, concurrentRequests, dualReadStateManager, isIndis, (D2CalleeInfoRecorder) null);
   }
 
-  @VisibleForTesting
+  public WarmUpLoadBalancer(LoadBalancerWithFacilities balancer, WarmUpService serviceWarmupper,
+      ScheduledExecutorService executorService, String d2FsDirPath, String d2ServicePath,
+      DownstreamServicesFetcher downstreamServicesFetcher, int warmUpTimeoutSeconds, int concurrentRequests,
+      DualReadStateManager dualReadStateManager, boolean isIndis, D2CalleeInfoRecorder d2CalleeInfoRecorder) {
+    this(balancer, serviceWarmupper, executorService, d2FsDirPath, d2ServicePath, downstreamServicesFetcher,
+        warmUpTimeoutSeconds * 1000, concurrentRequests, dualReadStateManager, isIndis, null,
+        d2CalleeInfoRecorder);
+  }
+
+    @VisibleForTesting
   WarmUpLoadBalancer(LoadBalancerWithFacilities balancer, WarmUpService serviceWarmupper,
       ScheduledExecutorService executorService, String d2FsDirPath, String d2ServicePath,
       DownstreamServicesFetcher downstreamServicesFetcher, int warmUpTimeoutMillis, int concurrentRequests,
-      DualReadStateManager dualReadStateManager, boolean isIndis, Supplier<Long> timeSupplierForTest)
+      DualReadStateManager dualReadStateManager, boolean isIndis, Supplier<Long> timeSupplierForTest) {
+    this(balancer, serviceWarmupper, executorService, d2FsDirPath, d2ServicePath, downstreamServicesFetcher,
+        warmUpTimeoutMillis, concurrentRequests, dualReadStateManager, isIndis, timeSupplierForTest, null);
+  }
+
+  private WarmUpLoadBalancer(LoadBalancerWithFacilities balancer, WarmUpService serviceWarmupper,
+      ScheduledExecutorService executorService, String d2FsDirPath, String d2ServicePath,
+      DownstreamServicesFetcher downstreamServicesFetcher, int warmUpTimeoutMillis, int concurrentRequests,
+      DualReadStateManager dualReadStateManager, boolean isIndis, Supplier<Long> timeSupplierForTest,
+      @Nullable D2CalleeInfoRecorder d2CalleeInfoRecorder)
   {
     super(balancer);
     _serviceWarmupper = serviceWarmupper;
@@ -129,6 +153,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
     {
       _timeSupplier = timeSupplierForTest;
     }
+    _d2CalleeInfoRecorder = d2CalleeInfoRecorder;
   }
 
   @Override
@@ -176,7 +201,7 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
     final AtomicBoolean hasTimedOut = new AtomicBoolean(false);
 
     try {
-      _downstreamServicesFetcher.getServiceNames(serviceNames -> {
+      SuccessCallback<List<String>> serviceNamesCallback = serviceNames -> {
         // The downstreamServicesFetcher is the core group of the services that will be used during the lifecycle
         _usedServices.addAll(serviceNames);
 
@@ -240,7 +265,13 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
         {
           callback.onSuccess(None.none());
         }
-      });
+      };
+      if (_d2CalleeInfoRecorder != null) {
+        _downstreamServicesFetcher.getServiceNames(_d2CalleeInfoRecorder.getAppName(),
+            _d2CalleeInfoRecorder.getAppInstanceID(), _d2CalleeInfoRecorder.getScope(), serviceNamesCallback);
+      } else {
+        _downstreamServicesFetcher.getServiceNames(serviceNamesCallback);
+      }
     }
     catch (Exception e)
     {
@@ -446,6 +477,10 @@ public class WarmUpLoadBalancer extends LoadBalancerWithFacilitiesDelegator {
     // the call fails, we still *intend* to use serviceName, so it should be in _usedServices.
     String serviceName = LoadBalancerUtil.getServiceNameFromUri(request.getURI());
     _usedServices.add(serviceName);
+    if (_d2CalleeInfoRecorder != null && D2_SCHEME_NAME.equalsIgnoreCase(request.getURI().getScheme()))
+    {
+      _d2CalleeInfoRecorder.record(serviceName);
+    }
     return _loadBalancer.getClient(request, requestContext);
   }
 }
