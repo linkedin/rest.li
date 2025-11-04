@@ -14,9 +14,6 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.80.4] - 2025-11-03
-- Indis based d2 warmup for restli client
-
 ## [29.80.3] - 2025-10-23
 - Add Indis based downstream fetcher
 
@@ -5930,8 +5927,7 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.80.4...master
-[29.80.4]: https://github.com/linkedin/rest.li/compare/v29.80.3...v29.80.4
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.80.3...master
 [29.80.3]: https://github.com/linkedin/rest.li/compare/v29.80.2...v29.80.3
 [29.80.2]: https://github.com/linkedin/rest.li/compare/v29.80.1...v29.80.2
 [29.80.1]: https://github.com/linkedin/rest.li/compare/v29.80.0...v29.80.1
