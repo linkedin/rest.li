@@ -1017,19 +1017,20 @@ public class TestXdsClientImpl {
     fixture.setAllSubscribersSubscribedAt(System.currentTimeMillis() - TEN_MINS);
 
     // active initial wait time contributed from 8 subscribers for:
-    // individual node, uri, uri map, and wildcard node, uri map, d2 cluster/service name, callees, and callees wildcard subscribers
+    // individual node, uri, uri map, callees, and wildcard node, uri map, d2 cluster/service name and callees subscribers
     fixture.verifySubscribersState(INIT_PENDING);
-    verifyWaitTimeFromSubscribers(xdsClient.getActiveInitialWaitTimeMillis(), 6);
+    verifyWaitTimeFromSubscribers(xdsClient.getActiveInitialWaitTimeMillis(), 8);
 
     if (responseAction == ResponseAction.UPDATE) {
       xdsClient.handleResponse(DISCOVERY_RESPONSE_NODE_DATA1);
       xdsClient.handleResponse(RESPONSE_D2URI1);
       xdsClient.handleResponse(RESPONSE_WITH_SERVICE_NAMES);
-      fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_CALLEES_DATA1);
+      xdsClient.handleResponse(DISCOVERY_RESPONSE_CALLEES_DATA1);
     } else if (responseAction == ResponseAction.REMOVAL) {
       xdsClient.handleResponse(DISCOVERY_RESPONSE_NODE_DATA_WITH_REMOVAL);
       xdsClient.handleResponse(DISCOVERY_RESPONSE_URI1_DATA_WITH_REMOVAL);
       xdsClient.handleResponse(RESPONSE_WITH_NAME_REMOVAL);
+      xdsClient.handleResponse(DISCOVERY_RESPONSE_CALLEES_DATA_WITH_REMOVAL);
     }
     // All subscribers have received first response, so they won't contribute to active initial
     // wait time anymore.
@@ -1046,15 +1047,15 @@ public class TestXdsClientImpl {
       // subsequent data received will just be updates on the existing data, not part of the initial wait time
     }
     else {
-      // If IRV is not enabled, all 6 subscribers are contributing to wait time
+      // If IRV is not enabled, all subscribers are contributing to wait time
       fixture.setAllSubscribersSubscribedAt(System.currentTimeMillis() - TEN_MINS);
-      verifyWaitTimeFromSubscribers(xdsClient.getActiveInitialWaitTimeMillis(), 6);
+      verifyWaitTimeFromSubscribers(xdsClient.getActiveInitialWaitTimeMillis(), 8);
 
-      // 2 subscribers receive data again. 4 subscribers are still waiting.
+      // 2 subscribers receive data again. 6 subscribers are still waiting.
       xdsClient.handleResponse(DISCOVERY_RESPONSE_NODE_DATA1);
       assertEquals(FETCHED, fixture._nodeSubscriber.getFetchState());
       assertEquals(FETCHED, fixture._nodeWildcardSubscriber.getFetchState());
-      verifyWaitTimeFromSubscribers(xdsClient.getActiveInitialWaitTimeMillis(), 4);
+      verifyWaitTimeFromSubscribers(xdsClient.getActiveInitialWaitTimeMillis(), 6);
     }
   }
 
@@ -1071,13 +1072,13 @@ public class TestXdsClientImpl {
     fixture.reconnect();
     // reconnection while init data is still pending, subscribers state and subscribedAt time won't change
     fixture.verifySubscribersState(INIT_PENDING);
-    verifyWaitTimeFromSubscribers(xdsClient.getActiveInitialWaitTimeMillis(), 6);
+    verifyWaitTimeFromSubscribers(xdsClient.getActiveInitialWaitTimeMillis(), 8);
 
-    // 3 subscribers receive data. 3 subscribers are still waiting.
+    // 3 subscribers receive data. 5 subscribers are still waiting.
     xdsClient.handleResponse(RESPONSE_D2URI1);
     assertEquals(FETCHED, fixture._clusterSubscriber.getFetchState());
     assertEquals(FETCHED, fixture._uriMapWildcardSubscriber.getFetchState());
-    verifyWaitTimeFromSubscribers(xdsClient.getActiveInitialWaitTimeMillis(), 3);
+    verifyWaitTimeFromSubscribers(xdsClient.getActiveInitialWaitTimeMillis(), 5);
   }
 
   private void verifyWaitTimeFromSubscribers(long waitTime, int numSubscribers)
@@ -1120,8 +1121,8 @@ public class TestXdsClientImpl {
     fixture.watchAllResourceAndWatcherTypes();
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_WITH_EMPTY_CALLEES_RESPONSE);
     fixture.verifyAckSent(1);
-    verify(fixture._calleesSubscriber, times(0)).onData(any(), any(), anyBoolean());
-    verify(fixture._calleesWildcardSubscriber, times(0)).onData(any(), any(), any(), anyBoolean());
+    verify(fixture._calleesSubscriber, times(0)).onData(any(), any());
+    verify(fixture._calleesWildcardSubscriber, times(0)).onData(any(), any(), any());
   }
 
   @Test
@@ -1365,9 +1366,11 @@ public class TestXdsClientImpl {
       _nodeSubscriber.onReconnect();
       _clusterSubscriber.onReconnect();
       _d2UriSubscriber.onReconnect();
+      _calleesSubscriber.onReconnect();
       _nodeWildcardSubscriber.onReconnect();
       _uriMapWildcardSubscriber.onReconnect();
       _nameWildcardSubscriber.onReconnect();
+      _calleesWildcardSubscriber.onReconnect();
     }
 
     void watchNodeResource()
@@ -1420,9 +1423,11 @@ public class TestXdsClientImpl {
       assertEquals(expected, _nodeSubscriber.getFetchState());
       assertEquals(expected, _clusterSubscriber.getFetchState());
       assertEquals(expected, _d2UriSubscriber.getFetchState());
+      assertEquals(expected, _calleesSubscriber.getFetchState());
       assertEquals(expected, _nodeWildcardSubscriber.getFetchState());
       assertEquals(expected, _nameWildcardSubscriber.getFetchState());
       assertEquals(expected, _uriMapWildcardSubscriber.getFetchState());
+      assertEquals(expected, _calleesWildcardSubscriber.getFetchState());
     }
   }
 
