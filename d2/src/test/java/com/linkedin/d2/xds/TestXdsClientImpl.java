@@ -1084,7 +1084,7 @@ public class TestXdsClientImpl {
   {
     // each subscriber contributes 10 mins wait time
     Assert.assertTrue(waitTime >= numSubscribers * TEN_MINS && waitTime < (numSubscribers + 1) * TEN_MINS,
-        "Expected wait time from " + numSubscribers + " subscribers, actual wait time: " + waitTime);
+        "Expected wait time from " + numSubscribers + " subscribers, actual subscribers: " + waitTime / TEN_MINS);
   }
 
   @Test(dataProvider = "providerWatcherFlags")

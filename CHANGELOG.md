@@ -20,7 +20,6 @@ and what APIs have changed, if applicable.
 ## [29.81.0] - 2025-11-03
 - Indis based d2 warmup for restli client
 
-## [29.80.3] - 2025-10-23
 - Add Indis based downstream fetcher
 
 ## [29.80.2] - 2025-10-15

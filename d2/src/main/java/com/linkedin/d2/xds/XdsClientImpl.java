@@ -945,7 +945,7 @@ public class XdsClientImpl extends XdsClient
     @Nullable
     private ResourceUpdate _data;
     private final Clock _clock;
-    private AtomicReference<Long> _subscribedAt = new AtomicReference<>(0L);
+    private AtomicLong _subscribedAt = new AtomicLong(0L);
     private AtomicReference<SubscriberFetchState> _fetchState = new AtomicReference<>(SubscriberFetchState.INIT_PENDING);
     private final boolean _isIrvEnabled;
 
@@ -1143,7 +1143,7 @@ public class XdsClientImpl extends XdsClient
     private final Set<WildcardResourceWatcher> _watchers = new HashSet<>();
     private final Map<String, ResourceUpdate> _data = new HashMap<>();
     private final Clock _clock;
-    private AtomicReference<Long> _subscribedAt = new AtomicReference<>(0L);
+    private AtomicLong _subscribedAt = new AtomicLong(0L);
     private AtomicReference<SubscriberFetchState> _fetchState = new AtomicReference<>(SubscriberFetchState.INIT_PENDING);
     private final boolean _isIrvEnabled;
 
