@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.81.1] - 2025-11-04
+- Fix xds client active wait time metric also add more logs.
+
 ## [29.81.0] - 2025-11-03
 - Indis based d2 warmup for restli client
 
@@ -5930,7 +5933,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.81.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.81.1...master
+[29.81.1]: https://github.com/linkedin/rest.li/compare/v29.81.0...v29.81.1
 [29.81.0]: https://github.com/linkedin/rest.li/compare/v29.80.3...v29.81.0
 [29.80.3]: https://github.com/linkedin/rest.li/compare/v29.80.2...v29.80.3
 [29.80.2]: https://github.com/linkedin/rest.li/compare/v29.80.1...v29.80.2
