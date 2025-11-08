@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Remove method defaults from `ResourceDefinition`.
 
 ## [29.81.1] - 2025-11-04
 - Fix xds client active wait time metric also add more logs.
