@@ -542,7 +542,7 @@ public class TestXdsClientImpl {
     fixture.verifyAckSent(2);
     // onData is called only once. Empty response does not trigger onData calls.
     verify(fixture._clusterSubscriber).onData(any(), any());
-    verify(fixture._uriMapWildcardSubscriber).onData(any(), any(), any());
+    verify(fixture._uriMapWildcardSubscriber).onData(any(), any(), any(), any(), any());
   }
 
   @Test(dataProvider = "providerWatcherFlags")

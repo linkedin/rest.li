@@ -37,18 +37,39 @@ public class XdsClientJmx implements XdsClientJmxMBean
   private final AtomicInteger _resourceNotFoundCount = new AtomicInteger();
   private final AtomicInteger _resourceInvalidCount = new AtomicInteger();
   private final XdsServerMetricsProvider _xdsServerMetricsProvider;
+  private final XdsClientOtelMetricsProvider _otelMetricsProvider;
+
+  private String _clientName = "-";
+
   @Nullable private XdsClientImpl _xdsClient = null;
 
   @Deprecated
   public XdsClientJmx()
   {
-    this(new NoOpXdsServerMetricsProvider());
+    this(new NoOpXdsServerMetricsProvider(), new NoOpXdsClientOtelMetricsProvider());
   }
 
   public XdsClientJmx(XdsServerMetricsProvider xdsServerMetricsProvider)
   {
+    this(xdsServerMetricsProvider, new NoOpXdsClientOtelMetricsProvider());
+  }
+
+  public XdsClientJmx(XdsServerMetricsProvider xdsServerMetricsProvider, 
+                      XdsClientOtelMetricsProvider otelMetricsProvider)
+  {
     _xdsServerMetricsProvider = xdsServerMetricsProvider == null ?
         new NoOpXdsServerMetricsProvider() : xdsServerMetricsProvider;
+        _otelMetricsProvider = otelMetricsProvider == null ? 
+        new NoOpXdsClientOtelMetricsProvider() : otelMetricsProvider;
+  }
+
+  // Method to set client name (called from D2ClientJmxManager)
+  public void setClientName(String clientName) {
+    _clientName = clientName != "-" ? clientName : "-";
+  }
+
+  public String getClientName() {
+    return _clientName;
   }
 
   public void setXdsClient(XdsClientImpl xdsClient)
@@ -146,55 +167,66 @@ public class XdsClientJmx implements XdsClientJmxMBean
   @Override
   public long getActiveInitialWaitTimeMillis()
   {
+    long waitTime = -1;
     if (_xdsClient != null)
     {
-      return _xdsClient.getActiveInitialWaitTimeMillis();
+      waitTime = _xdsClient.getActiveInitialWaitTimeMillis();
+      _otelMetricsProvider.updateActiveInitialWaitTime(_clientName, waitTime);
     }
-    return -1;
+    return waitTime;
   }
 
   public void incrementConnectionLostCount()
   {
     _connectionLostCount.incrementAndGet();
+    _otelMetricsProvider.recordConnectionLost(_clientName);
   }
 
   public void incrementConnectionClosedCount()
   {
     _connectionClosedCount.incrementAndGet();
+    _otelMetricsProvider.recordConnectionClosed(_clientName);
   }
 
   public void incrementReconnectionCount()
   {
     _reconnectionCount.incrementAndGet();
+    _otelMetricsProvider.recordReconnection(_clientName);
   }
 
   public void incrementRequestSentCount()
   {
     _resquestSentCount.incrementAndGet();
+    _otelMetricsProvider.recordRequestSent(_clientName);
   }
 
   public void addToIrvSentCount(int delta)
   {
     _irvSentCount.addAndGet(delta);
+    _otelMetricsProvider.recordInitialResourceVersionSent(_clientName, delta);
   }
 
   public void incrementResponseReceivedCount()
   {
     _responseReceivedCount.incrementAndGet();
+    _otelMetricsProvider.recordResponseReceived(_clientName);
   }
 
   public void setIsConnected(boolean connected)
   {
     _isConnected.getAndSet(connected);
+    _otelMetricsProvider.updateConnectionState(_clientName, connected);
   }
 
   public void incrementResourceNotFoundCount()
   {
     _resourceNotFoundCount.incrementAndGet();
+    _otelMetricsProvider.recordResourceNotFound(_clientName);
   }
 
   public void incrementResourceInvalidCount()
   {
     _resourceInvalidCount.incrementAndGet();
+    _otelMetricsProvider.recordResourceInvalid(_clientName);
   }
 }
