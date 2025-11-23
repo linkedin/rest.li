@@ -183,7 +183,7 @@ public class D2ClientConfig
 
   public boolean subscribeToUriGlobCollection = false;
   public XdsServerMetricsProvider _xdsServerMetricsProvider = new NoOpXdsServerMetricsProvider();
-  public XdsClientOtelMetricsProvider _otelMetricsProvider = new NoOpXdsClientOtelMetricsProvider();
+  public XdsClientOtelMetricsProvider _xdsClientOtelMetricsProvider = new NoOpXdsClientOtelMetricsProvider();
   public boolean loadBalanceStreamException = false;
   public boolean xdsInitialResourceVersionsEnabled = false;
   public Integer xdsStreamMaxRetryBackoffSeconds = null;
@@ -345,7 +345,10 @@ public class D2ClientConfig
         xdsStreamMaxRetryBackoffSeconds,
         xdsChannelKeepAliveTimeMins,
         xdsMinimumJavaVersion,
-        actionOnPrecheckFailure);
+        actionOnPrecheckFailure,
+        d2CalleeInfoRecorder,
+        enableIndisDownstreamServicesFetcher,
+        indisDownstreamServicesFetchTimeout);
   }
 
   D2ClientConfig(String zkHosts,
@@ -420,7 +423,7 @@ public class D2ClientConfig
                  Map<String, ?> xdsChannelLoadBalancingPolicyConfig,
                  boolean subscribeToUriGlobCollection,
                  XdsServerMetricsProvider xdsServerMetricsProvider,
-                 XdsClientOtelMetricsProvider otelMetricsProvider,
+                 XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider,
                  boolean loadBalanceStreamException,
                  boolean xdsInitialResourceVersionsEnabled,
                  boolean disableDetectLiRawD2Client,
@@ -428,7 +431,10 @@ public class D2ClientConfig
                  Integer xdsStreamMaxRetryBackoffSeconds,
                  Long xdsChannelKeepAliveTimeMins,
                  String xdsMinimumJavaVersion,
-                 XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure)
+                 XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure,
+                 D2CalleeInfoRecorder d2CalleeInfoRecorder,
+                 Boolean enableIndisDownstreamServicesFetcher,
+                 Duration indisDownstreamServicesFetchTimeout)
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -503,7 +509,7 @@ public class D2ClientConfig
     this.xdsChannelKeepAliveTimeMins = xdsChannelKeepAliveTimeMins;
     this.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
     this._xdsServerMetricsProvider = xdsServerMetricsProvider;
-    this._otelMetricsProvider = otelMetricsProvider;
+    this._xdsClientOtelMetricsProvider = xdsClientOtelMetricsProvider;
     this.loadBalanceStreamException = loadBalanceStreamException;
     this.xdsInitialResourceVersionsEnabled = xdsInitialResourceVersionsEnabled;
     this.disableDetectLiRawD2Client = disableDetectLiRawD2Client;

@@ -307,32 +307,11 @@ public class D2ClientJmxManager
     }
     final String jmxName = String.format("%s-XdsClientJmx", getGlobalPrefix(null));
 
-    // Extract the actual client name from the JMX name pattern
-    String clientName = extractClientNameFromGlobalPrefix(getGlobalPrefix(null));
+    // Get the client name from global prefix
+    String clientName = getGlobalPrefix(null);
     xdsClientJmx.setClientName(clientName);
 
     _jmxManager.registerXdsClientJmxBean(jmxName, xdsClientJmx);
-  }
-
-   /**
-   * Extracts the client name from the JMX name.
-   * @param jmxName The full JMX name ending with "-XdsClientJmx"
-   * @return The extracted client name
-   */
-  private String extractClientNameFromGlobalPrefix(String prefix)
-  {
-    if(prefix == null){
-      return "-";
-    }
-    int lastDash = prefix.lastIndexOf('-');
-    if (lastDash == -1 || lastDash == prefix.length() - 1) {
-      return "-";
-    }
-    String clientName = prefix.substring(lastDash + 1);
-    if (!clientName.endsWith("Client")) {
-      return "-";
-    }
-    return clientName;
   }
 
   private void doRegisterLoadBalancer(SimpleLoadBalancer balancer, @Nullable DualReadModeProvider.DualReadMode mode)

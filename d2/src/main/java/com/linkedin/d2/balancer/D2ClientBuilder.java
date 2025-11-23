@@ -52,6 +52,7 @@ import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.d2.jmx.XdsServerMetricsProvider;
+import com.linkedin.d2.jmx.XdsClientOtelMetricsProvider;
 import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.d2.xds.XdsClientValidator;
 import com.linkedin.d2.jmx.NoOpJmxManager;
@@ -237,6 +238,7 @@ public class D2ClientBuilder
                   _config.xdsChannelLoadBalancingPolicyConfig,
                   _config.subscribeToUriGlobCollection,
                   _config._xdsServerMetricsProvider,
+                  _config._xdsClientOtelMetricsProvider,
                   _config.loadBalanceStreamException,
                   _config.xdsInitialResourceVersionsEnabled,
                   _config.disableDetectLiRawD2Client,
@@ -853,6 +855,11 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setXdsServerMetricsProvider(XdsServerMetricsProvider xdsServerMetricsProvider) {
     _config._xdsServerMetricsProvider = xdsServerMetricsProvider;
+    return this;
+  }
+
+  public D2ClientBuilder setXdsClientOtelMetricsProvider(XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider) {
+    _config._xdsClientOtelMetricsProvider = xdsClientOtelMetricsProvider;
     return this;
   }
 

@@ -8,6 +8,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.util.Timestamps;
 import com.linkedin.d2.jmx.XdsClientJmx;
+import com.linkedin.d2.jmx.XdsClientOtelMetricsProvider;
 import com.linkedin.d2.jmx.XdsServerMetricsProvider;
 import com.linkedin.d2.xds.XdsClient.D2URIMapUpdate;
 import com.linkedin.d2.xds.XdsClient.ResourceType;
@@ -541,7 +542,7 @@ public class TestXdsClientImpl {
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_WITH_EMPTY_URI_MAP_RESPONSE);
     fixture.verifyAckSent(2);
     // onData is called only once. Empty response does not trigger onData calls.
-    verify(fixture._clusterSubscriber).onData(any(), any());
+    verify(fixture._clusterSubscriber).onData(any(), any(), any(), any());
     verify(fixture._uriMapWildcardSubscriber).onData(any(), any(), any(), any(), any());
   }
 
@@ -1262,6 +1263,8 @@ public class TestXdsClientImpl {
     @Mock
     XdsServerMetricsProvider _serverMetricsProvider;
     @Mock
+    XdsClientOtelMetricsProvider _xdsClientOtelMetricsProvider;
+    @Mock
     Clock _clock;
 
     @Captor
@@ -1295,6 +1298,7 @@ public class TestXdsClientImpl {
       doNothing().when(_resourceWatcher).onChanged(any());
       doNothing().when(_wildcardResourceWatcher).onChanged(any(), any());
       doNothing().when(_serverMetricsProvider).trackLatency(anyLong());
+      doNothing().when(_xdsClientOtelMetricsProvider).recordServerLatency(anyString(), anyLong());
 
       for (ResourceSubscriber subscriber : Lists.newArrayList(_nodeSubscriber, _clusterSubscriber, _d2UriSubscriber,
           _calleesSubscriber)) {
@@ -1311,7 +1315,7 @@ public class TestXdsClientImpl {
       _executorService = spy(Executors.newScheduledThreadPool(1));
 
       _xdsClientImpl = spy(new XdsClientImpl(null, mock(ManagedChannel.class), _executorService, 0, useGlobCollections,
-          _serverMetricsProvider, useIRV));
+          _serverMetricsProvider, _xdsClientOtelMetricsProvider, useIRV, null, null, null));
       _xdsClientImpl._adsStream = _adsStream;
 
       doNothing().when(_xdsClientImpl).startRpcStreamLocal();
