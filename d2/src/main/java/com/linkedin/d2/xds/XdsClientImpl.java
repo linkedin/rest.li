@@ -1019,7 +1019,7 @@ public class XdsClientImpl extends XdsClient
     @VisibleForTesting
     void onData(ResourceUpdate data, XdsServerMetricsProvider metricsProvider)
     {
-      onData(data, metricsProvider, null, NO_VALUE);
+      onData(data, metricsProvider, new NoOpXdsClientOtelMetricsProvider(), NO_VALUE);
     }
 
     @VisibleForTesting
@@ -1221,7 +1221,7 @@ public class XdsClientImpl extends XdsClient
     @VisibleForTesting
     void onData(String resourceName, ResourceUpdate data, XdsServerMetricsProvider metricsProvider)
     {
-      onData(resourceName, data, metricsProvider, null, NO_VALUE);
+      onData(resourceName, data, metricsProvider, new NoOpXdsClientOtelMetricsProvider(), NO_VALUE);
     }
 
     @VisibleForTesting
@@ -1383,7 +1383,7 @@ public class XdsClientImpl extends XdsClient
   private static void trackServerLatency(ResourceUpdate resourceUpdate, ResourceUpdate currentData,
       XdsServerMetricsProvider metricsProvider, long subscribedAt, boolean isIrvEnabled, SubscriberFetchState fetchState)
   {
-    trackServerLatency(resourceUpdate, currentData, metricsProvider, subscribedAt, isIrvEnabled, fetchState, null, NO_VALUE);
+    trackServerLatency(resourceUpdate, currentData, metricsProvider, subscribedAt, isIrvEnabled, fetchState, new NoOpXdsClientOtelMetricsProvider(), NO_VALUE);
   }
 
   private static void trackServerLatency(ResourceUpdate resourceUpdate, ResourceUpdate currentData,
@@ -1436,7 +1436,7 @@ public class XdsClientImpl extends XdsClient
       XdsServerMetricsProvider metricsProvider, long end, long subscribedAt, boolean isIrvEnabled,
       SubscriberFetchState fetchState)
   {
-    trackServerLatencyForUris(uriMap, update, metricsProvider, end, subscribedAt, isIrvEnabled, fetchState, null, NO_VALUE);
+    trackServerLatencyForUris(uriMap, update, metricsProvider, end, subscribedAt, isIrvEnabled, fetchState, new NoOpXdsClientOtelMetricsProvider(), NO_VALUE);
   }
 
   private static void trackServerLatencyForUris(Map<String, XdsD2.D2URI> uriMap, D2URIMapUpdate update,
@@ -1462,7 +1462,7 @@ public class XdsClientImpl extends XdsClient
   private static boolean trackServerLatencyHelper(XdsServerMetricsProvider metricsProvider,
       long end, long modifiedAt, long subscribedAt, boolean isIrvEnabled, SubscriberFetchState fetchState)
   {
-    return trackServerLatencyHelper(metricsProvider, end, modifiedAt, subscribedAt, isIrvEnabled, fetchState, null, NO_VALUE);
+    return trackServerLatencyHelper(metricsProvider, end, modifiedAt, subscribedAt, isIrvEnabled, fetchState, new NoOpXdsClientOtelMetricsProvider(), NO_VALUE);
   }
 
   private static boolean trackServerLatencyHelper(XdsServerMetricsProvider metricsProvider,
@@ -1484,11 +1484,9 @@ public class XdsClientImpl extends XdsClient
     long latency = end - start;
     metricsProvider.trackLatency(latency);
 
-    // Record OpenTelemetry latency if provider is available
-    if (xdsClientOtelMetricsProvider != null)
-    {
-      xdsClientOtelMetricsProvider.recordServerLatency(clientName, latency);
-    }
+    // Record OpenTelemetry latency
+    xdsClientOtelMetricsProvider.recordServerLatency(clientName, latency);
+    
     return isStaleModifiedAt;
   }
 
