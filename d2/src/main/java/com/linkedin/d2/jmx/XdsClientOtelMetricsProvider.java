@@ -2,7 +2,6 @@ package com.linkedin.d2.jmx;
 
 /**
  * Interface for OpenTelemetry metrics collection for XDS Client.
- * Provides raw event-based metrics that will be processed by OpenTelemetry in the container.
  */
 public interface XdsClientOtelMetricsProvider {
   
