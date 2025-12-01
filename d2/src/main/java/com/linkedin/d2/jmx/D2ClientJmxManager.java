@@ -29,6 +29,8 @@ import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState.SimpleLoadBalancerStateListener;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
+import com.linkedin.d2.jmx.LoadBalancerStateOtelMetricsProvider;
+import com.linkedin.d2.jmx.NoOpLoadBalancerStateOtelMetricsProvider;
 import com.linkedin.d2.discovery.stores.file.FileStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
@@ -72,6 +74,7 @@ public class D2ClientJmxManager
   private final String _secondaryPrefixForLbPropertyJmxName;
 
   private final D2ClientJmxDualReadModeWatcherManager _watcherManager;
+  private final LoadBalancerStateOtelMetricsProvider _loadBalancerStateOtelMetricsProvider;
 
 
   public enum DiscoverySourceType
@@ -94,19 +97,21 @@ public class D2ClientJmxManager
 
   public D2ClientJmxManager(String prefix, @Nonnull JmxManager jmxManager)
   {
-    this(prefix, jmxManager, DiscoverySourceType.ZK, null);
+    this(prefix, jmxManager, DiscoverySourceType.ZK, null, null);
   }
 
   public D2ClientJmxManager(String prefix,
       @Nonnull JmxManager jmxManager,
       @Nonnull DiscoverySourceType discoverySourceType,
-      @Nullable DualReadStateManager dualReadStateManager)
+      @Nullable DualReadStateManager dualReadStateManager,
+      @Nullable LoadBalancerStateOtelMetricsProvider loadBalancerStateOtelMetricsProvider)
   {
     ArgumentUtil.ensureNotNull(jmxManager,"jmxManager");
     _primaryGlobalPrefix = prefix;
     _jmxManager = jmxManager;
     _discoverySourceType = discoverySourceType;
     _dualReadStateManager = dualReadStateManager;
+    _loadBalancerStateOtelMetricsProvider = loadBalancerStateOtelMetricsProvider == null ? new NoOpLoadBalancerStateOtelMetricsProvider() : loadBalancerStateOtelMetricsProvider;
     _secondaryGlobalPrefix = String.format("%s-%s", _primaryGlobalPrefix, _discoverySourceType.getPrintName());
     _secondaryPrefixForLbPropertyJmxName = String.format("%s-", _discoverySourceType.getPrintName());
     _watcherManager = _dualReadStateManager == null ? new NoOpD2ClientJmxDualReadModeWatcherManagerImpl()
@@ -317,8 +322,14 @@ public class D2ClientJmxManager
 
   private void doRegisterLoadBalancerState(SimpleLoadBalancerState state, @Nullable DualReadModeProvider.DualReadMode mode)
   {
-    final String jmxName = String.format("%s-LoadBalancerState", getGlobalPrefix(mode));
-    _jmxManager.registerLoadBalancerState(jmxName, state);
+  final String jmxName = String.format("%s-LoadBalancerState", getGlobalPrefix(mode));
+  // First call the existing API that tests expect (registerLoadBalancerState with the state)
+  _jmxManager.registerLoadBalancerState(jmxName, state);
+  // Then create the JMX bean with OTel provider and set client name before replacing the registration
+  SimpleLoadBalancerStateJmx bean = new SimpleLoadBalancerStateJmx(state, _loadBalancerStateOtelMetricsProvider);
+  String clientName = getGlobalPrefix(mode);
+  bean.setClientName(clientName);
+  _jmxManager.checkReg(bean, jmxName);
   }
 
   private <T> void doRegisterUriFileStore(FileStore<T> uriStore, @Nullable DualReadModeProvider.DualReadMode mode)

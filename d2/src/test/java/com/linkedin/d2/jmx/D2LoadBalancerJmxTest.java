@@ -114,7 +114,7 @@ public class D2LoadBalancerJmxTest
   private void testD2ClientJmxManagerRegisteringStrategies()
   {
     JmxManager mockJmxManager = mock(JmxManager.class);
-    D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(DUMMY_STRING, mockJmxManager);
+  D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(DUMMY_STRING, mockJmxManager, D2ClientJmxManager.DiscoverySourceType.ZK, null, null);
 
     SimpleLoadBalancerState simpleLoadBalancerState = mock(SimpleLoadBalancerState.class);
     d2ClientJmxManager.setSimpleLoadBalancerState(simpleLoadBalancerState);

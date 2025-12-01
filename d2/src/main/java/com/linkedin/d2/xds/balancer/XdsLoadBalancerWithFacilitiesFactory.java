@@ -50,7 +50,7 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
   public LoadBalancerWithFacilities create(D2ClientConfig config)
   {
     D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(config.d2JmxManagerPrefix, config.jmxManager,
-        D2ClientJmxManager.DiscoverySourceType.XDS, config.dualReadStateManager);
+        D2ClientJmxManager.DiscoverySourceType.XDS, config.dualReadStateManager, config._loadBalancerStateOtelMetricsProvider);
 
     if (config.dualReadStateManager != null)
     {

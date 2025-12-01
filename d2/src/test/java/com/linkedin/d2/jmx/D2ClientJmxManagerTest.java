@@ -157,11 +157,11 @@ public class D2ClientJmxManagerTest {
     {
       if (sourceType == null)
       { // default to ZK source type, null dualReadStateManager
-        _d2ClientJmxManager = new D2ClientJmxManager(prefix, _jmxManager);
+  _d2ClientJmxManager = new D2ClientJmxManager(prefix, _jmxManager, D2ClientJmxManager.DiscoverySourceType.ZK, null, null);
       }
       else
       {
-        _d2ClientJmxManager = new D2ClientJmxManager(prefix, _jmxManager, sourceType, isDualReadLB ? _dualReadStateManager : null);
+  _d2ClientJmxManager = new D2ClientJmxManager(prefix, _jmxManager, sourceType, isDualReadLB ? _dualReadStateManager : null, null);
       }
       return _d2ClientJmxManager;
     }

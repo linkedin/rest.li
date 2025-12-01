@@ -66,8 +66,8 @@ public class LastSeenBalancerWithFacilitiesFactory implements LoadBalancerWithFa
       logAppProps(LOG);
     }
 
-    D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(config.d2JmxManagerPrefix, config.jmxManager,
-        D2ClientJmxManager.DiscoverySourceType.ZK, config.dualReadStateManager);
+  D2ClientJmxManager d2ClientJmxManager = new D2ClientJmxManager(config.d2JmxManagerPrefix, config.jmxManager,
+    D2ClientJmxManager.DiscoverySourceType.ZK, config.dualReadStateManager, config._loadBalancerStateOtelMetricsProvider);
 
     // init connection
     ZKConnectionBuilder zkConnectionBuilder = new ZKConnectionBuilder(config.zkHosts);

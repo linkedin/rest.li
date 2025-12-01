@@ -49,6 +49,7 @@ import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
 import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
 import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
+import com.linkedin.d2.jmx.LoadBalancerStateOtelMetricsProvider;
 import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
 import com.linkedin.d2.jmx.XdsServerMetricsProvider;
@@ -237,6 +238,7 @@ public class D2ClientBuilder
                   _config.xdsChannelLoadBalancingPolicyConfig,
                   _config.subscribeToUriGlobCollection,
                   _config._xdsServerMetricsProvider,
+                  _config._loadBalancerStateOtelMetricsProvider,
                   _config.loadBalanceStreamException,
                   _config.xdsInitialResourceVersionsEnabled,
                   _config.disableDetectLiRawD2Client,
@@ -337,6 +339,12 @@ public class D2ClientBuilder
       d2Client = new ExecutorShutdownAwareD2Client(d2Client, executorsToShutDown);
     }
     return d2Client;
+  }
+
+  public D2ClientBuilder setLoadBalancerStateOtelMetricsProvider(LoadBalancerStateOtelMetricsProvider provider)
+  {
+    _config._loadBalancerStateOtelMetricsProvider = provider;
+    return this;
   }
 
   /**

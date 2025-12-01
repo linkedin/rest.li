@@ -164,7 +164,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
       new PartitionAccessorRegistryImpl(),
       false,
       validationStrings -> null,
-      new D2ClientJmxManager("notSpecified", new NoOpJmxManager()),
+  new D2ClientJmxManager("notSpecified", new NoOpJmxManager(), D2ClientJmxManager.DiscoverySourceType.ZK, null, null),
       ZooKeeperEphemeralStore.DEFAULT_READ_WINDOW_MS);
   }
 

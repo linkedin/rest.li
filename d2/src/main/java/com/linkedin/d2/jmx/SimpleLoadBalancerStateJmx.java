@@ -30,22 +30,46 @@ import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
 public class SimpleLoadBalancerStateJmx implements SimpleLoadBalancerStateJmxMBean
 {
   private final SimpleLoadBalancerState _state;
+  private final LoadBalancerStateOtelMetricsProvider _otelMetricsProvider;
+  private String _clientName = "-";
 
+  @Deprecated
   public SimpleLoadBalancerStateJmx(SimpleLoadBalancerState state)
   {
+    this(state, new NoOpLoadBalancerStateOtelMetricsProvider());
+  }
+
+  public SimpleLoadBalancerStateJmx(SimpleLoadBalancerState state, LoadBalancerStateOtelMetricsProvider otelMetricsProvider)
+  {
     _state = state;
+    _otelMetricsProvider = otelMetricsProvider == null ? new NoOpLoadBalancerStateOtelMetricsProvider() : otelMetricsProvider;
+  }
+
+  public void setClientName(String clientName)
+  {
+    _clientName = clientName == null ? "-" : clientName;
+  }
+
+  public String getClientName()
+  {
+    return _clientName;
   }
 
   @Override
   public int getClusterCount()
   {
-    return _state.getClusterCount();
+  int regular = _state.getClusterCount();
+  long symlink = _state.getClusters().stream().filter(SymlinkUtil::isSymlinkNodeOrPath).count();
+  _otelMetricsProvider.recordClusterCount(_clientName, regular, symlink);
+  return regular;
   }
 
   @Override
   public long getSymlinkClusterCount()
   {
-    return _state.getClusters().stream().filter(SymlinkUtil::isSymlinkNodeOrPath).count();
+  long symlink = _state.getClusters().stream().filter(SymlinkUtil::isSymlinkNodeOrPath).count();
+  _otelMetricsProvider.recordClusterCount(_clientName, _state.getClusterCount(), symlink);
+  return symlink;
   }
 
   @Override
@@ -63,7 +87,9 @@ public class SimpleLoadBalancerStateJmx implements SimpleLoadBalancerStateJmxMBe
   @Override
   public int getServiceCount()
   {
-    return _state.getServiceCount();
+  int count = _state.getServiceCount();
+  _otelMetricsProvider.recordServiceCount(_clientName, count);
+  return count;
   }
 
   @Override

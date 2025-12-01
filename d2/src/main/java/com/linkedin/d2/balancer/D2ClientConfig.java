@@ -44,6 +44,8 @@ import com.linkedin.d2.jmx.XdsServerMetricsProvider;
 import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.d2.jmx.NoOpXdsServerMetricsProvider;
 import com.linkedin.d2.jmx.NoOpJmxManager;
+import com.linkedin.d2.jmx.LoadBalancerStateOtelMetricsProvider;
+import com.linkedin.d2.jmx.NoOpLoadBalancerStateOtelMetricsProvider;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import java.time.Duration;
@@ -181,6 +183,7 @@ public class D2ClientConfig
 
   public boolean subscribeToUriGlobCollection = false;
   public XdsServerMetricsProvider _xdsServerMetricsProvider = new NoOpXdsServerMetricsProvider();
+  public LoadBalancerStateOtelMetricsProvider _loadBalancerStateOtelMetricsProvider = new NoOpLoadBalancerStateOtelMetricsProvider();
   public boolean loadBalanceStreamException = false;
   public boolean xdsInitialResourceVersionsEnabled = false;
   public Integer xdsStreamMaxRetryBackoffSeconds = null;
@@ -282,6 +285,7 @@ public class D2ClientConfig
                  Map<String, ?> xdsChannelLoadBalancingPolicyConfig,
                  boolean subscribeToUriGlobCollection,
                  XdsServerMetricsProvider xdsServerMetricsProvider,
+                 LoadBalancerStateOtelMetricsProvider loadBalancerStateOtelMetricsProvider,
                  boolean loadBalanceStreamException,
                  boolean xdsInitialResourceVersionsEnabled,
                  boolean disableDetectLiRawD2Client,
@@ -294,7 +298,7 @@ public class D2ClientConfig
                  Boolean enableIndisDownstreamServicesFetcher,
                  Duration indisDownstreamServicesFetchTimeout)
   {
-    this.zkHosts = zkHosts;
+  this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
     this.hostName = hostName;
     this.zkSessionTimeoutInMs = zkSessionTimeoutInMs;
@@ -366,7 +370,8 @@ public class D2ClientConfig
     this.xdsChannelLoadBalancingPolicyConfig = xdsChannelLoadBalancingPolicyConfig;
     this.xdsChannelKeepAliveTimeMins = xdsChannelKeepAliveTimeMins;
     this.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
-    this._xdsServerMetricsProvider = xdsServerMetricsProvider;
+  this._xdsServerMetricsProvider = xdsServerMetricsProvider;
+  this._loadBalancerStateOtelMetricsProvider = loadBalancerStateOtelMetricsProvider == null ? new NoOpLoadBalancerStateOtelMetricsProvider() : loadBalancerStateOtelMetricsProvider;
     this.loadBalanceStreamException = loadBalanceStreamException;
     this.xdsInitialResourceVersionsEnabled = xdsInitialResourceVersionsEnabled;
     this.disableDetectLiRawD2Client = disableDetectLiRawD2Client;
