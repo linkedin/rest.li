@@ -60,7 +60,7 @@ public class SimpleLoadBalancerStateJmx implements SimpleLoadBalancerStateJmxMBe
   {
   int regular = _state.getClusterCount();
   long symlink = _state.getClusters().stream().filter(SymlinkUtil::isSymlinkNodeOrPath).count();
-  _otelMetricsProvider.recordClusterCount(_clientName, regular, symlink);
+  _otelMetricsProvider.recordClusterCount(_clientName, (long) regular, symlink);
   return regular;
   }
 
@@ -68,7 +68,7 @@ public class SimpleLoadBalancerStateJmx implements SimpleLoadBalancerStateJmxMBe
   public long getSymlinkClusterCount()
   {
   long symlink = _state.getClusters().stream().filter(SymlinkUtil::isSymlinkNodeOrPath).count();
-  _otelMetricsProvider.recordClusterCount(_clientName, _state.getClusterCount(), symlink);
+  _otelMetricsProvider.recordClusterCount(_clientName, (long) _state.getClusterCount(), symlink);
   return symlink;
   }
 
@@ -88,7 +88,7 @@ public class SimpleLoadBalancerStateJmx implements SimpleLoadBalancerStateJmxMBe
   public int getServiceCount()
   {
   int count = _state.getServiceCount();
-  _otelMetricsProvider.recordServiceCount(_clientName, count);
+  _otelMetricsProvider.recordServiceCount(_clientName, (long) count);
   return count;
   }
 

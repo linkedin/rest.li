@@ -7,12 +7,12 @@ package com.linkedin.d2.jmx;
 public class NoOpLoadBalancerStateOtelMetricsProvider implements LoadBalancerStateOtelMetricsProvider {
 
   @Override
-  public void recordClusterCount(String clientName, int regularClusterCount, long symlinkClusterCount) {
+  public void recordClusterCount(String clientName, long regularClusterCount, long symlinkClusterCount) {
     // no-op
   }
 
   @Override
-  public void recordServiceCount(String clientName, int serviceCount) {
+  public void recordServiceCount(String clientName, long serviceCount) {
     // no-op
   }
 }

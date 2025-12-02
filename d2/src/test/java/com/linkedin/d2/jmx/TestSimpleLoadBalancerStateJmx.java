@@ -46,8 +46,8 @@ public class TestSimpleLoadBalancerStateJmx
     jmx.getServiceCount();
 
     // cluster count method is called twice (both getters call recordClusterCount)
-    verify(provider, times(2)).recordClusterCount("-", 2, 1L);
-    verify(provider, times(1)).recordServiceCount("-", 7);
+  verify(provider, times(2)).recordClusterCount("-", 2L, 1L);
+  verify(provider, times(1)).recordServiceCount("-", 7L);
 
     // set client name and verify subsequent calls use it
   jmx.setClientName("MyClient");
@@ -56,7 +56,7 @@ public class TestSimpleLoadBalancerStateJmx
   jmx.getSymlinkClusterCount();
   jmx.getServiceCount();
 
-  verify(provider, times(2)).recordClusterCount("MyClient", 2, 1L);
-  verify(provider, times(1)).recordServiceCount("MyClient", 7);
+  verify(provider, times(2)).recordClusterCount("MyClient", 2L, 1L);
+  verify(provider, times(1)).recordServiceCount("MyClient", 7L);
   }
 }

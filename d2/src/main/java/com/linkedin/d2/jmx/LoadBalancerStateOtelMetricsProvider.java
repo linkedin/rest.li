@@ -12,7 +12,7 @@ public interface LoadBalancerStateOtelMetricsProvider {
    * @param regularClusterCount regular cluster count
    * @param symlinkClusterCount symlink cluster count
    */
-  void recordClusterCount(String clientName, int regularClusterCount, long symlinkClusterCount);
+  void recordClusterCount(String clientName, long regularClusterCount, long symlinkClusterCount);
 
   /**
    * Records service count for a client.
@@ -20,5 +20,5 @@ public interface LoadBalancerStateOtelMetricsProvider {
    * @param clientName the client name
    * @param serviceCount service count
    */
-  void recordServiceCount(String clientName, int serviceCount);
+  void recordServiceCount(String clientName, long serviceCount);
 }
