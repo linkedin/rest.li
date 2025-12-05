@@ -183,6 +183,11 @@ public class D2ClientConfig
 
   public boolean subscribeToUriGlobCollection = false;
   public XdsServerMetricsProvider _xdsServerMetricsProvider = new NoOpXdsServerMetricsProvider();
+
+  /**
+   * Provider for OpenTelemetry metrics collection for XDS client operations.
+   * Defaults to no-op implementation; can be overridden to enable metric tracking.
+   */
   public XdsClientOtelMetricsProvider _xdsClientOtelMetricsProvider = new NoOpXdsClientOtelMetricsProvider();
   public boolean loadBalanceStreamException = false;
   public boolean xdsInitialResourceVersionsEnabled = false;

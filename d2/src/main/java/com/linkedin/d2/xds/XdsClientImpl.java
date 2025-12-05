@@ -84,7 +84,6 @@ public class XdsClientImpl extends XdsClient
       new RateLimitedLogger(_log, TimeUnit.MINUTES.toMillis(1), SystemClock.instance());
   public static final long DEFAULT_READY_TIMEOUT_MILLIS = 2000L;
   public static final Integer DEFAULT_MAX_RETRY_BACKOFF_SECS = 30; // default value for max retry backoff seconds
-  private static final String NO_VALUE = "-";
 
   /**
    * The resource subscribers maps the resource type to its subscribers. Note that the {@link ResourceType#D2_URI}
@@ -208,7 +207,12 @@ public class XdsClientImpl extends XdsClient
         this(node, managedChannel, executorService, readyTimeoutMillis, subscribeToUriGlobCollection,
         serverMetricsProvider, null, irvSupport, maxRetryBackoffSeconds, XdsClientValidator.DEFAULT_MINIMUM_JAVA_VERSION, XdsClientValidator.DEFAULT_ACTION_ON_PRECHECK_FAILURE);
       }
-
+  
+    /**
+   * Constructor for XdsClientImpl with OpenTelemetry metrics support.
+   *
+   * @param xdsClientOtelMetricsProvider provider for OpenTelemetry metrics collection, or null for no-op
+   */
   public XdsClientImpl(Node node,
       ManagedChannel managedChannel,
       ScheduledExecutorService executorService,
@@ -1017,12 +1021,6 @@ public class XdsClientImpl extends XdsClient
     }
 
     @VisibleForTesting
-    void onData(ResourceUpdate data, XdsServerMetricsProvider metricsProvider)
-    {
-      onData(data, metricsProvider, new NoOpXdsClientOtelMetricsProvider(), NO_VALUE);
-    }
-
-    @VisibleForTesting
     void onData(ResourceUpdate data, XdsServerMetricsProvider metricsProvider, XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider, String clientName)
     {
       SubscriberFetchState prev = _fetchState.getAndSet(FETCHED);
@@ -1219,12 +1217,6 @@ public class XdsClientImpl extends XdsClient
     }
 
     @VisibleForTesting
-    void onData(String resourceName, ResourceUpdate data, XdsServerMetricsProvider metricsProvider)
-    {
-      onData(resourceName, data, metricsProvider, new NoOpXdsClientOtelMetricsProvider(), NO_VALUE);
-    }
-
-    @VisibleForTesting
     void onData(String resourceName, ResourceUpdate data, XdsServerMetricsProvider metricsProvider,
                 XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider, String clientName)
     {
@@ -1381,12 +1373,6 @@ public class XdsClientImpl extends XdsClient
   }
 
   private static void trackServerLatency(ResourceUpdate resourceUpdate, ResourceUpdate currentData,
-      XdsServerMetricsProvider metricsProvider, long subscribedAt, boolean isIrvEnabled, SubscriberFetchState fetchState)
-  {
-    trackServerLatency(resourceUpdate, currentData, metricsProvider, subscribedAt, isIrvEnabled, fetchState, new NoOpXdsClientOtelMetricsProvider(), NO_VALUE);
-  }
-
-  private static void trackServerLatency(ResourceUpdate resourceUpdate, ResourceUpdate currentData,
       XdsServerMetricsProvider metricsProvider, long subscribedAt, boolean isIrvEnabled, SubscriberFetchState fetchState,
       XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider, String clientName)
   {
@@ -1434,13 +1420,6 @@ public class XdsClientImpl extends XdsClient
 
   private static void trackServerLatencyForUris(Map<String, XdsD2.D2URI> uriMap, D2URIMapUpdate update,
       XdsServerMetricsProvider metricsProvider, long end, long subscribedAt, boolean isIrvEnabled,
-      SubscriberFetchState fetchState)
-  {
-    trackServerLatencyForUris(uriMap, update, metricsProvider, end, subscribedAt, isIrvEnabled, fetchState, new NoOpXdsClientOtelMetricsProvider(), NO_VALUE);
-  }
-
-  private static void trackServerLatencyForUris(Map<String, XdsD2.D2URI> uriMap, D2URIMapUpdate update,
-      XdsServerMetricsProvider metricsProvider, long end, long subscribedAt, boolean isIrvEnabled,
       SubscriberFetchState fetchState, XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider, String clientName)
   {
     uriMap.forEach((k, v) -> {
@@ -1459,12 +1438,6 @@ public class XdsClientImpl extends XdsClient
   // -- When IRV is enabled, the caveat above will be fixed. Since the client will never receive resources that it already
   // received with IRV, except the first fetch, so after skipping the first fetch we can track latency always based
   // on the resource modified time.
-  private static boolean trackServerLatencyHelper(XdsServerMetricsProvider metricsProvider,
-      long end, long modifiedAt, long subscribedAt, boolean isIrvEnabled, SubscriberFetchState fetchState)
-  {
-    return trackServerLatencyHelper(metricsProvider, end, modifiedAt, subscribedAt, isIrvEnabled, fetchState, new NoOpXdsClientOtelMetricsProvider(), NO_VALUE);
-  }
-
   private static boolean trackServerLatencyHelper(XdsServerMetricsProvider metricsProvider,
       long end, long modifiedAt, long subscribedAt, boolean isIrvEnabled, SubscriberFetchState fetchState,
       XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider, String clientName)

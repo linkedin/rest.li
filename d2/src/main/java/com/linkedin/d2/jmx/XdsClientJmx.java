@@ -63,11 +63,21 @@ public class XdsClientJmx implements XdsClientJmxMBean
         new NoOpXdsClientOtelMetricsProvider() : xdsClientOtelMetricsProvider;
   }
 
-  // Method to set client name (called from D2ClientJmxManager)
+  /**
+   * Sets the client name for this XDS client instance.
+   * Used for identifying metrics associated with this client.
+   *
+   * @param clientName the name to identify this XDS client
+   */
   public void setClientName(String clientName) {
     _clientName = clientName;
   }
 
+  /**
+   * Gets the client name for this XDS client instance.
+   *
+   * @return the client name, or "-" if not set
+   */
   public String getClientName() {
     return _clientName;
   }

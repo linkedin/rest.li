@@ -337,9 +337,9 @@ public class TestXdsClientImpl {
     fixture.watchAllResourceAndWatcherTypes();
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_WITH_EMPTY_NODE_RESPONSE);
     fixture.verifyAckSent(1);
-    verify(fixture._d2UriSubscriber, times(0)).onData(any(), any());
-    verify(fixture._clusterSubscriber, times(0)).onData(any(), any());
-    verify(fixture._uriMapWildcardSubscriber, times(0)).onData(any(), any(), any());
+    verify(fixture._d2UriSubscriber, times(0)).onData(any(), any(), any(), any());
+    verify(fixture._clusterSubscriber, times(0)).onData(any(), any(), any(), any());
+    verify(fixture._uriMapWildcardSubscriber, times(0)).onData(any(), any(), any(), any(), any());
   }
 
   @DataProvider(name = "badNodeUpdateTestCases")
@@ -441,7 +441,7 @@ public class TestXdsClientImpl {
     fixture.watchAllResourceAndWatcherTypes();
     fixture._xdsClientImpl.handleResponse(RESPONSE_WITH_EMPTY_NAMES);
     fixture.verifyAckSent(1);
-    verify(fixture._nameWildcardSubscriber, times(0)).onData(any(), any(), any());
+    verify(fixture._nameWildcardSubscriber, times(0)).onData(any(), any(), any(), any(), any());
   }
 
   @Test
@@ -1122,8 +1122,8 @@ public class TestXdsClientImpl {
     fixture.watchAllResourceAndWatcherTypes();
     fixture._xdsClientImpl.handleResponse(DISCOVERY_RESPONSE_WITH_EMPTY_CALLEES_RESPONSE);
     fixture.verifyAckSent(1);
-    verify(fixture._calleesSubscriber, times(0)).onData(any(), any());
-    verify(fixture._calleesWildcardSubscriber, times(0)).onData(any(), any(), any());
+    verify(fixture._calleesSubscriber, times(0)).onData(any(), any(), any(), any());
+    verify(fixture._calleesWildcardSubscriber, times(0)).onData(any(), any(), any(), any(), any());
   }
 
   @Test

@@ -309,7 +309,11 @@ public class D2ClientJmxManager
 
     // Get the client name from global prefix
     String clientName = getGlobalPrefix(null);
-    xdsClientJmx.setClientName(clientName);
+    if(clientName != null && !clientName.isEmpty())
+    {
+      xdsClientJmx.setClientName(clientName);
+    }
+    
 
     _jmxManager.registerXdsClientJmxBean(jmxName, xdsClientJmx);
   }
