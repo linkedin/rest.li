@@ -1,6 +1,7 @@
 package com.linkedin.d2.jmx;
 
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -22,49 +23,52 @@ public class XdsClientOtelMetricsProviderTest {
     _testProvider = new TestMetricsProvider();
   }
 
-  @Test
-  public void testRecordConnectionLost() {
-    String clientName = "test-client-1";
-    _testProvider.recordConnectionLost(clientName);
-
-    assertEquals(_testProvider.getCallCount("recordConnectionLost"), 1);
-    assertEquals(_testProvider.getLastClientName("recordConnectionLost"), clientName);
+  @DataProvider(name = "simpleMethodProvider")
+  public Object[][] simpleMethodProvider() {
+    return new Object[][] {
+        {"recordConnectionLost"},
+        {"recordConnectionClosed"},
+        {"recordReconnection"},
+        {"recordRequestSent"},
+        {"recordResponseReceived"},
+        {"recordResourceNotFound"},
+        {"recordResourceInvalid"}
+    };
   }
 
-  @Test
-  public void testRecordConnectionClosed() {
-    String clientName = "test-client-2";
-    _testProvider.recordConnectionClosed(clientName);
+  @Test(dataProvider = "simpleMethodProvider")
+  public void testSimpleRecordMethods(String methodName) {
+    String clientName = "test-client-" + methodName;
+    
+    // Call the appropriate method based on methodName
+    switch (methodName) {
+      case "recordConnectionLost":
+        _testProvider.recordConnectionLost(clientName);
+        break;
+      case "recordConnectionClosed":
+        _testProvider.recordConnectionClosed(clientName);
+        break;
+      case "recordReconnection":
+        _testProvider.recordReconnection(clientName);
+        break;
+      case "recordRequestSent":
+        _testProvider.recordRequestSent(clientName);
+        break;
+      case "recordResponseReceived":
+        _testProvider.recordResponseReceived(clientName);
+        break;
+      case "recordResourceNotFound":
+        _testProvider.recordResourceNotFound(clientName);
+        break;
+      case "recordResourceInvalid":
+        _testProvider.recordResourceInvalid(clientName);
+        break;
+      default:
+        throw new IllegalArgumentException("Unknown method: " + methodName);
+    }
 
-    assertEquals(_testProvider.getCallCount("recordConnectionClosed"), 1);
-    assertEquals(_testProvider.getLastClientName("recordConnectionClosed"), clientName);
-  }
-
-  @Test
-  public void testRecordReconnection() {
-    String clientName = "test-client-3";
-    _testProvider.recordReconnection(clientName);
-
-    assertEquals(_testProvider.getCallCount("recordReconnection"), 1);
-    assertEquals(_testProvider.getLastClientName("recordReconnection"), clientName);
-  }
-
-  @Test
-  public void testRecordRequestSent() {
-    String clientName = "test-client-4";
-    _testProvider.recordRequestSent(clientName);
-
-    assertEquals(_testProvider.getCallCount("recordRequestSent"), 1);
-    assertEquals(_testProvider.getLastClientName("recordRequestSent"), clientName);
-  }
-
-  @Test
-  public void testRecordResponseReceived() {
-    String clientName = "test-client-5";
-    _testProvider.recordResponseReceived(clientName);
-
-    assertEquals(_testProvider.getCallCount("recordResponseReceived"), 1);
-    assertEquals(_testProvider.getLastClientName("recordResponseReceived"), clientName);
+    assertEquals(_testProvider.getCallCount(methodName), 1);
+    assertEquals(_testProvider.getLastClientName(methodName), clientName);
   }
 
   @Test
@@ -76,24 +80,6 @@ public class XdsClientOtelMetricsProviderTest {
     assertEquals(_testProvider.getCallCount("recordInitialResourceVersionSent"), 1);
     assertEquals(_testProvider.getLastClientName("recordInitialResourceVersionSent"), clientName);
     assertEquals(_testProvider.getLastCount("recordInitialResourceVersionSent").intValue(), count);
-  }
-
-  @Test
-  public void testRecordResourceNotFound() {
-    String clientName = "test-client-7";
-    _testProvider.recordResourceNotFound(clientName);
-
-    assertEquals(_testProvider.getCallCount("recordResourceNotFound"), 1);
-    assertEquals(_testProvider.getLastClientName("recordResourceNotFound"), clientName);
-  }
-
-  @Test
-  public void testRecordResourceInvalid() {
-    String clientName = "test-client-8";
-    _testProvider.recordResourceInvalid(clientName);
-
-    assertEquals(_testProvider.getCallCount("recordResourceInvalid"), 1);
-    assertEquals(_testProvider.getLastClientName("recordResourceInvalid"), clientName);
   }
 
   @Test

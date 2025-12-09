@@ -188,7 +188,7 @@ public class D2ClientConfig
    * Provider for OpenTelemetry metrics collection for XDS client operations.
    * Defaults to no-op implementation; can be overridden to enable metric tracking.
    */
-  public XdsClientOtelMetricsProvider _xdsClientOtelMetricsProvider = new NoOpXdsClientOtelMetricsProvider();
+  public XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider = new NoOpXdsClientOtelMetricsProvider();
   public boolean loadBalanceStreamException = false;
   public boolean xdsInitialResourceVersionsEnabled = false;
   public Integer xdsStreamMaxRetryBackoffSeconds = null;
@@ -514,7 +514,7 @@ public class D2ClientConfig
     this.xdsChannelKeepAliveTimeMins = xdsChannelKeepAliveTimeMins;
     this.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
     this._xdsServerMetricsProvider = xdsServerMetricsProvider;
-    this._xdsClientOtelMetricsProvider = xdsClientOtelMetricsProvider;
+    this.xdsClientOtelMetricsProvider = xdsClientOtelMetricsProvider;
     this.loadBalanceStreamException = loadBalanceStreamException;
     this.xdsInitialResourceVersionsEnabled = xdsInitialResourceVersionsEnabled;
     this.disableDetectLiRawD2Client = disableDetectLiRawD2Client;

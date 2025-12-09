@@ -238,7 +238,7 @@ public class D2ClientBuilder
                   _config.xdsChannelLoadBalancingPolicyConfig,
                   _config.subscribeToUriGlobCollection,
                   _config._xdsServerMetricsProvider,
-                  _config._xdsClientOtelMetricsProvider,
+                  _config.xdsClientOtelMetricsProvider,
                   _config.loadBalanceStreamException,
                   _config.xdsInitialResourceVersionsEnabled,
                   _config.disableDetectLiRawD2Client,
@@ -859,7 +859,7 @@ public class D2ClientBuilder
   }
 
   public D2ClientBuilder setXdsClientOtelMetricsProvider(XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider) {
-    _config._xdsClientOtelMetricsProvider = xdsClientOtelMetricsProvider;
+    _config.xdsClientOtelMetricsProvider = xdsClientOtelMetricsProvider;
     return this;
   }
 

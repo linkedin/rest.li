@@ -305,10 +305,11 @@ public class D2ClientJmxManager
     {
       _log.warn("Setting XdsClientJmx for Non-XDS source type: {}", _discoverySourceType);
     }
-    final String jmxName = String.format("%s-XdsClientJmx", getGlobalPrefix(null));
-
     // Get the client name from global prefix
     String clientName = getGlobalPrefix(null);
+
+    final String jmxName = String.format("%s-XdsClientJmx", clientName);
+
     if(clientName != null && !clientName.isEmpty())
     {
       xdsClientJmx.setClientName(clientName);

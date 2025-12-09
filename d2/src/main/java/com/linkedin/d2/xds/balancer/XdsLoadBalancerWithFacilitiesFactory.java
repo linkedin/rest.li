@@ -69,7 +69,7 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
         xdsStreamReadyTimeout,
         config.subscribeToUriGlobCollection,
         config._xdsServerMetricsProvider,
-        config._xdsClientOtelMetricsProvider,
+        config.xdsClientOtelMetricsProvider,
         config.xdsInitialResourceVersionsEnabled,
         config.xdsStreamMaxRetryBackoffSeconds,
         config.xdsMinimumJavaVersion,
