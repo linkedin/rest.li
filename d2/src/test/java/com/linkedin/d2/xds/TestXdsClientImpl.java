@@ -433,6 +433,7 @@ public class TestXdsClientImpl {
     Assert.assertEquals(fixture._nameWildcardSubscriber.getData(SERVICE_RESOURCE_NAME), SERVICE_NAME_DATA_UPDATE);
     Assert.assertEquals(fixture._nameWildcardSubscriber.getData(SERVICE_RESOURCE_NAME_2), SERVICE_NAME_DATA_UPDATE_2);
     verifyZeroInteractions(fixture._serverMetricsProvider); // D2ClusterOrServiceName response does not track latency
+    verifyZeroInteractions(fixture._xdsClientOtelMetricsProvider);
   }
 
   @Test
@@ -575,6 +576,7 @@ public class TestXdsClientImpl {
     // bad data will not overwrite the original valid data
     Assert.assertEquals(fixture._clusterSubscriber.getData(), D2_URI_MAP_UPDATE_WITH_DATA1);
     verifyZeroInteractions(fixture._serverMetricsProvider);
+    verifyZeroInteractions(fixture._xdsClientOtelMetricsProvider);
     D2URIMapUpdate actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();
     Assert.assertFalse(actualData.isGlobCollectionEnabled());
     Assert.assertTrue(actualData.getUpdatedUrisName().isEmpty());
@@ -686,6 +688,7 @@ public class TestXdsClientImpl {
     verify(fixture._wildcardResourceWatcher, times(toWatchWildcard ? 1 : 0)).onChanged(any(),
         eq(D2_URI_MAP.emptyData()));
     verifyZeroInteractions(fixture._serverMetricsProvider);
+    verifyZeroInteractions(fixture._xdsClientOtelMetricsProvider);
 
     // current data is not null, bad data will not overwrite the original valid data and watchers won't be notified.
     fixture._clusterSubscriber.setData(D2_URI_MAP_GLOB_COLLECTION_UPDATE_WITH_DATA1);
@@ -696,6 +699,7 @@ public class TestXdsClientImpl {
     verify(fixture._wildcardResourceWatcher, times(0)).onChanged(any(),
         eq(D2_URI_MAP_GLOB_COLLECTION_UPDATE_WITH_DATA1));
     verifyZeroInteractions(fixture._serverMetricsProvider);
+    verifyZeroInteractions(fixture._xdsClientOtelMetricsProvider);
     Assert.assertEquals(fixture._clusterSubscriber.getData(), D2_URI_MAP_GLOB_COLLECTION_UPDATE_WITH_DATA1);
     // Verify that bad data doesn't affect the updated and removed URIs
     D2URIMapUpdate actualData = (D2URIMapUpdate) fixture._clusterSubscriber.getData();

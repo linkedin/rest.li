@@ -307,15 +307,11 @@ public class D2ClientJmxManager
     }
     // Get the client name from global prefix
     String clientName = getGlobalPrefix(null);
-
-    final String jmxName = String.format("%s-XdsClientJmx", clientName);
-
     if(clientName != null && !clientName.isEmpty())
     {
       xdsClientJmx.setClientName(clientName);
     }
-    
-
+    final String jmxName = String.format("%s-XdsClientJmx", clientName);
     _jmxManager.registerXdsClientJmxBean(jmxName, xdsClientJmx);
   }
 

@@ -236,9 +236,9 @@ public class XdsClientImpl extends XdsClient
       _log.info("Glob collection support enabled");
     }
 
-    _xdsClientJmx = new XdsClientJmx(serverMetricsProvider, xdsClientOtelMetricsProvider);
-    _serverMetricsProvider = serverMetricsProvider == null ? new NoOpXdsServerMetricsProvider() : serverMetricsProvider;
     _xdsClientOtelMetricsProvider = xdsClientOtelMetricsProvider == null ? new NoOpXdsClientOtelMetricsProvider() : xdsClientOtelMetricsProvider;
+    _serverMetricsProvider = serverMetricsProvider == null ? new NoOpXdsServerMetricsProvider() : serverMetricsProvider;
+    _xdsClientJmx = new XdsClientJmx(serverMetricsProvider, _xdsClientOtelMetricsProvider);
     _initialResourceVersionsEnabled = irvSupport;
     if (_initialResourceVersionsEnabled)
     {

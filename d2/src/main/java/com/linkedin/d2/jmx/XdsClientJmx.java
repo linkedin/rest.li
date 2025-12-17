@@ -20,7 +20,10 @@ import com.linkedin.d2.xds.XdsClientImpl;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
+
+import static com.linkedin.d2.jmx.D2JmxConstants.NO_VALUE;
 
 
 public class XdsClientJmx implements XdsClientJmxMBean
@@ -38,9 +41,7 @@ public class XdsClientJmx implements XdsClientJmxMBean
   private final AtomicInteger _resourceInvalidCount = new AtomicInteger();
   private final XdsServerMetricsProvider _xdsServerMetricsProvider;
   private final XdsClientOtelMetricsProvider _xdsClientOtelMetricsProvider;
-
-  private String _clientName = "-";
-
+  private final AtomicReference<String> _clientName = new AtomicReference<>(NO_VALUE);
   @Nullable private XdsClientImpl _xdsClient = null;
 
   @Deprecated
@@ -70,7 +71,7 @@ public class XdsClientJmx implements XdsClientJmxMBean
    * @param clientName the name to identify this XDS client
    */
   public void setClientName(String clientName) {
-    _clientName = clientName;
+    _clientName.compareAndSet(NO_VALUE, clientName);
   }
 
   /**
@@ -79,7 +80,7 @@ public class XdsClientJmx implements XdsClientJmxMBean
    * @return the client name, or "-" if not set
    */
   public String getClientName() {
-    return _clientName;
+    return _clientName.get();
   }
 
   public void setXdsClient(XdsClientImpl xdsClient)
@@ -181,7 +182,7 @@ public class XdsClientJmx implements XdsClientJmxMBean
     if (_xdsClient != null)
     {
       waitTime = _xdsClient.getActiveInitialWaitTimeMillis();
-      _xdsClientOtelMetricsProvider.updateActiveInitialWaitTime(_clientName, waitTime);
+      _xdsClientOtelMetricsProvider.updateActiveInitialWaitTime(getClientName(), waitTime);
     }
     return waitTime;
   }
@@ -189,54 +190,54 @@ public class XdsClientJmx implements XdsClientJmxMBean
   public void incrementConnectionLostCount()
   {
     _connectionLostCount.incrementAndGet();
-    _xdsClientOtelMetricsProvider.recordConnectionLost(_clientName);
+    _xdsClientOtelMetricsProvider.recordConnectionLost(getClientName());
   }
 
   public void incrementConnectionClosedCount()
   {
     _connectionClosedCount.incrementAndGet();
-    _xdsClientOtelMetricsProvider.recordConnectionClosed(_clientName);
+    _xdsClientOtelMetricsProvider.recordConnectionClosed(getClientName());
   }
 
   public void incrementReconnectionCount()
   {
     _reconnectionCount.incrementAndGet();
-    _xdsClientOtelMetricsProvider.recordReconnection(_clientName);
+    _xdsClientOtelMetricsProvider.recordReconnection(getClientName());
   }
 
   public void incrementRequestSentCount()
   {
     _resquestSentCount.incrementAndGet();
-    _xdsClientOtelMetricsProvider.recordRequestSent(_clientName);
+    _xdsClientOtelMetricsProvider.recordRequestSent(getClientName());
   }
 
   public void addToIrvSentCount(int delta)
   {
     _irvSentCount.addAndGet(delta);
-    _xdsClientOtelMetricsProvider.recordInitialResourceVersionSent(_clientName, delta);
+    _xdsClientOtelMetricsProvider.recordInitialResourceVersionSent(getClientName(), delta);
   }
 
   public void incrementResponseReceivedCount()
   {
     _responseReceivedCount.incrementAndGet();
-    _xdsClientOtelMetricsProvider.recordResponseReceived(_clientName);
+    _xdsClientOtelMetricsProvider.recordResponseReceived(getClientName());
   }
 
   public void setIsConnected(boolean connected)
   {
     _isConnected.getAndSet(connected);
-    _xdsClientOtelMetricsProvider.updateConnectionState(_clientName, connected);
+    _xdsClientOtelMetricsProvider.updateConnectionState(getClientName(), connected);
   }
 
   public void incrementResourceNotFoundCount()
   {
     _resourceNotFoundCount.incrementAndGet();
-    _xdsClientOtelMetricsProvider.recordResourceNotFound(_clientName);
+    _xdsClientOtelMetricsProvider.recordResourceNotFound(getClientName());
   }
 
   public void incrementResourceInvalidCount()
   {
     _resourceInvalidCount.incrementAndGet();
-    _xdsClientOtelMetricsProvider.recordResourceInvalid(_clientName);
+    _xdsClientOtelMetricsProvider.recordResourceInvalid(getClientName());
   }
 }
