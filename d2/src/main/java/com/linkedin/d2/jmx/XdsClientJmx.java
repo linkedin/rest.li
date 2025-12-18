@@ -23,11 +23,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
-import static com.linkedin.d2.jmx.D2JmxConstants.NO_VALUE;
-
-
 public class XdsClientJmx implements XdsClientJmxMBean
 {
+  private final String NO_VALUE = "-";
 
   private final AtomicInteger _connectionLostCount = new AtomicInteger();
   private final AtomicInteger _connectionClosedCount = new AtomicInteger();
