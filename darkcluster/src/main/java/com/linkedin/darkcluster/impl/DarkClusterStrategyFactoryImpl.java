@@ -66,6 +66,9 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
 
   // Map of partition ID to dark cluster name to list of dark cluster strategies for that partition
   private final Map<Integer, Map<String, DarkClusterStrategy>> _partitionToDarkStrategyMap;
+  // Per-partition lock used to coordinate strategy creation vs strategy refresh/shutdown.
+  // This prevents a race where a strategy could be created into an old map while that map is being replaced.
+  private final Map<Integer, Object> _partitionLocks = new ConcurrentHashMap<>();
   private volatile boolean _sourceClusterPresent = false;
   private final Random _random;
   private final LoadBalancerClusterListener _clusterListener;
@@ -144,27 +147,44 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
   @Override
   public DarkClusterStrategy get(@Nonnull String darkClusterName, int partitionId)
   {
-    Map<String, DarkClusterStrategy> darkMap = _partitionToDarkStrategyMap.computeIfAbsent(partitionId, k -> new ConcurrentHashMap<>());
-    DarkClusterStrategy strategy = darkMap.computeIfAbsent(darkClusterName, k -> {
-      if (_sourceClusterPresent)
+    // Fast path: if a strategy already exists, avoid locking.
+    Map<String, DarkClusterStrategy> darkMap = _partitionToDarkStrategyMap.get(partitionId);
+    if (darkMap != null)
+    {
+      DarkClusterStrategy existing = darkMap.get(darkClusterName);
+      if (existing != null)
       {
-        try
+        return existing;
+      }
+    }
+
+    // Slow path: strategy missing; synchronize with refresh so we don't create strategies in a map that's being replaced.
+    DarkClusterStrategy strategy;
+    synchronized (getPartitionLock(partitionId))
+    {
+      Map<String, DarkClusterStrategy> lockedDarkMap =
+          _partitionToDarkStrategyMap.computeIfAbsent(partitionId, k -> new ConcurrentHashMap<>());
+      strategy = lockedDarkMap.computeIfAbsent(darkClusterName, k -> {
+        if (_sourceClusterPresent)
         {
-          // Lazily create the strategy if it doesn't exist.
-          DarkClusterConfigMap darkClusterConfigMap = _facilities.getClusterInfoProvider().getDarkClusterConfigMap(_sourceClusterName);
-          if (darkClusterConfigMap != null && darkClusterConfigMap.containsKey(darkClusterName))
+          try
           {
-            DarkClusterConfig config = darkClusterConfigMap.get(darkClusterName);
-            return createStrategy(darkClusterName, config, partitionId);
+            // Lazily create the strategy if it doesn't exist.
+            DarkClusterConfigMap darkClusterConfigMap = _facilities.getClusterInfoProvider().getDarkClusterConfigMap(_sourceClusterName);
+            if (darkClusterConfigMap != null && darkClusterConfigMap.containsKey(darkClusterName))
+            {
+              DarkClusterConfig config = darkClusterConfigMap.get(darkClusterName);
+              return createStrategy(darkClusterName, config, partitionId);
+            }
+          }
+          catch (RuntimeException | ServiceUnavailableException t)
+          {
+            LOG.warn("Unable to get DarkClusterConfigMap for source cluster: " + _sourceClusterName, t);
           }
         }
-        catch (RuntimeException | ServiceUnavailableException t)
-        {
-          LOG.warn("Unable to get DarkClusterConfigMap for source cluster: " + _sourceClusterName, t);
-        }
-      }
-      return null;
-    });
+        return null;
+      });
+    }
 
     if (strategy == null)
     {
@@ -181,6 +201,11 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
   /**
    * In the future, additional strategies can be added, and the logic here can choose the appropriate one based on the config values.
    */
+  private Object getPartitionLock(int partitionId)
+  {
+    return _partitionLocks.computeIfAbsent(partitionId, k -> new Object());
+  }
+
   private DarkClusterStrategy createStrategy(String darkClusterName, DarkClusterConfig darkClusterConfig, int partitionId)
   {
     // Create partition-aware ClusterInfoProvider that filters cluster information for this specific partition
@@ -278,14 +303,30 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
 
             for (int partitionId : partitions)
             {
-              Map<String, DarkClusterStrategy> darkStrategyMap = new ConcurrentHashMap<>();
-              for (Map.Entry<String, DarkClusterConfig> entry : updatedDarkConfigMap.entrySet())
+              synchronized (getPartitionLock(partitionId))
               {
-                String darkClusterToAdd = entry.getKey();
-                darkStrategyMap.put(darkClusterToAdd, createStrategy(darkClusterToAdd, entry.getValue(), partitionId));
-                LOG.info("Created new strategy for dark cluster: " + darkClusterToAdd + ", partition: " + partitionId + ", source cluster: " + _sourceClusterName);
+                Map<String, DarkClusterStrategy> darkStrategyMap = new ConcurrentHashMap<>();
+                for (Map.Entry<String, DarkClusterConfig> entry : updatedDarkConfigMap.entrySet())
+                {
+                  String darkClusterToAdd = entry.getKey();
+                  darkStrategyMap.put(darkClusterToAdd, createStrategy(darkClusterToAdd, entry.getValue(), partitionId));
+                  LOG.info("Created new strategy for dark cluster: " + darkClusterToAdd + ", partition: " + partitionId
+                      + ", source cluster: " + _sourceClusterName);
+                }
+
+                Map<String, DarkClusterStrategy> oldMap = _partitionToDarkStrategyMap.put(partitionId, darkStrategyMap);
+                if (oldMap != null)
+                {
+                  // Shutdown existing strategies for this partition
+                  for (DarkClusterStrategy strategy : oldMap.values())
+                  {
+                    if (strategy != null)
+                    {
+                      strategy.shutdown();
+                    }
+                  }
+                }
               }
-              _partitionToDarkStrategyMap.put(partitionId, darkStrategyMap);
             }
           }
         });
@@ -300,7 +341,25 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
     {
       if (_sourceClusterName.equals(clusterName))
       {
+        for (Map.Entry<Integer, Map<String, DarkClusterStrategy>> entry : _partitionToDarkStrategyMap.entrySet())
+        {
+          synchronized (getPartitionLock(entry.getKey()))
+          {
+            Map<String, DarkClusterStrategy> strategies = entry.getValue();
+            if (strategies != null)
+            {
+              for (DarkClusterStrategy strategy : strategies.values())
+              {
+                if (strategy != null)
+                {
+                  strategy.shutdown();
+                }
+              }
+            }
+          }
+        }
         _partitionToDarkStrategyMap.clear();
+        _partitionLocks.clear();
         _sourceClusterPresent = false;
       }
     }

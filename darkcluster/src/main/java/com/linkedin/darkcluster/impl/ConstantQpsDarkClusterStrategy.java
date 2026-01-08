@@ -81,6 +81,12 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
     return addRequest(originalRequest, darkRequest, requestContext);
   }
 
+  @Override
+  public void shutdown()
+  {
+    _rateLimiter.cancelAll(null);
+  }
+
   /**
    * We won't create this strategy if this config isn't valid for this strategy. For instance, we don't want to create
    * the ConstantQpsDarkClusterStrategy if any of the configurables are zero, because we'd be doing pointless work on every getOrCreate.
