@@ -303,30 +303,32 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
 
             for (int partitionId : partitions)
             {
-              synchronized (getPartitionLock(partitionId))
-              {
-                Map<String, DarkClusterStrategy> darkStrategyMap = new ConcurrentHashMap<>();
-                for (Map.Entry<String, DarkClusterConfig> entry : updatedDarkConfigMap.entrySet())
-                {
-                  String darkClusterToAdd = entry.getKey();
-                  darkStrategyMap.put(darkClusterToAdd, createStrategy(darkClusterToAdd, entry.getValue(), partitionId));
-                  LOG.info("Created new strategy for dark cluster: " + darkClusterToAdd + ", partition: " + partitionId
-                      + ", source cluster: " + _sourceClusterName);
-                }
 
-                Map<String, DarkClusterStrategy> oldMap = _partitionToDarkStrategyMap.put(partitionId, darkStrategyMap);
-                if (oldMap != null)
+              Map<String, DarkClusterStrategy> darkStrategyMap = new ConcurrentHashMap<>();
+              for (Map.Entry<String, DarkClusterConfig> entry : updatedDarkConfigMap.entrySet())
+              {
+                String darkClusterToAdd = entry.getKey();
+                darkStrategyMap.put(darkClusterToAdd, createStrategy(darkClusterToAdd, entry.getValue(), partitionId));
+                LOG.info("Created new strategy for dark cluster: " + darkClusterToAdd + ", partition: " + partitionId
+                    + ", source cluster: " + _sourceClusterName);
+              }
+              _partitionToDarkStrategyMap.compute(partitionId, (key, oldDarkStrategyMap) -> {
+                // Shutdown any old strategies that are being replaced.
+                if (oldDarkStrategyMap != null)
                 {
-                  // Shutdown existing strategies for this partition
-                  for (DarkClusterStrategy strategy : oldMap.values())
+                  for (Map.Entry<String, DarkClusterStrategy> oldEntry : oldDarkStrategyMap.entrySet())
                   {
-                    if (strategy != null)
+                    final DarkClusterStrategy oldStrategy = oldEntry.getValue();
+                    if (oldStrategy != null)
                     {
-                      strategy.shutdown();
+                      oldStrategy.shutdown();
+                      LOG.debug("Shut down old strategy for dark cluster: " + oldEntry.getKey() + ", partition: " + partitionId
+                          + ", source cluster: " + _sourceClusterName);
                     }
                   }
                 }
-              }
+                return darkStrategyMap;
+              });
             }
           }
         });
