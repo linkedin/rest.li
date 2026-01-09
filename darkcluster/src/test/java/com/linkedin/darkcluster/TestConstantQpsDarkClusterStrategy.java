@@ -35,12 +35,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 
 public class TestConstantQpsDarkClusterStrategy
@@ -204,9 +204,11 @@ public class TestConstantQpsDarkClusterStrategy
     // Call shutdown
     strategy.shutdown();
 
-    // Verify that cancelAll was called with a RuntimeException containing the expected message
-    verify(mockRateLimiter).cancelAll(argThat(throwable ->
-        throwable instanceof RuntimeException &&
-        throwable.getMessage().equals("Shutting down ConstantQpsDarkClusterStrategy")));
+    // Verify that cancelAll was called with a RuntimeException containing the expected message.
+    ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
+    verify(mockRateLimiter).cancelAll(throwableCaptor.capture());
+    Throwable throwable = throwableCaptor.getValue();
+    Assert.assertTrue(throwable instanceof RuntimeException);
+    Assert.assertEquals(throwable.getMessage(), "Shutting down ConstantQpsDarkClusterStrategy");
   }
 }
