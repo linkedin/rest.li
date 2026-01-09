@@ -178,6 +178,9 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
 
   }
 
+  /**
+   * In the future, additional strategies can be added, and the logic here can choose the appropriate one based on the config values.
+   */
   private DarkClusterStrategy createStrategy(String darkClusterName, DarkClusterConfig darkClusterConfig, int partitionId)
   {
     // Create partition-aware ClusterInfoProvider that filters cluster information for this specific partition
@@ -294,8 +297,6 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
                     if (oldStrategy != null)
                     {
                       oldStrategy.shutdown();
-                      LOG.debug("Shut down old strategy for dark cluster: " + oldEntry.getKey() + ", partition: " + partitionId
-                          + ", source cluster: " + _sourceClusterName);
                     }
                   }
                 }

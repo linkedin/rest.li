@@ -84,7 +84,7 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
   @Override
   public void shutdown()
   {
-    _rateLimiter.cancelAll(null);
+    _rateLimiter.cancelAll(new RuntimeException("Shutting down ConstantQpsDarkClusterStrategy"));
   }
 
   /**
