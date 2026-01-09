@@ -33,4 +33,9 @@ public interface DarkClusterStrategy
    * @return  true if at least one request was sent.
    */
   boolean handleRequest(final RestRequest originalRequest, final RestRequest darkRequest, final RequestContext requestContext);
+
+  default void shutdown()
+  {
+    // no-op by default
+  }
 }

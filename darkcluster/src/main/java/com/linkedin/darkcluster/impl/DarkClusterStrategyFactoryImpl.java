@@ -278,14 +278,30 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
 
             for (int partitionId : partitions)
             {
+
               Map<String, DarkClusterStrategy> darkStrategyMap = new ConcurrentHashMap<>();
               for (Map.Entry<String, DarkClusterConfig> entry : updatedDarkConfigMap.entrySet())
               {
                 String darkClusterToAdd = entry.getKey();
                 darkStrategyMap.put(darkClusterToAdd, createStrategy(darkClusterToAdd, entry.getValue(), partitionId));
-                LOG.info("Created new strategy for dark cluster: " + darkClusterToAdd + ", partition: " + partitionId + ", source cluster: " + _sourceClusterName);
+                LOG.info("Created new strategy for dark cluster: " + darkClusterToAdd + ", partition: " + partitionId
+                    + ", source cluster: " + _sourceClusterName);
               }
-              _partitionToDarkStrategyMap.put(partitionId, darkStrategyMap);
+              _partitionToDarkStrategyMap.compute(partitionId, (key, oldDarkStrategyMap) -> {
+                // Shutdown any old strategies that are being replaced.
+                if (oldDarkStrategyMap != null)
+                {
+                  for (Map.Entry<String, DarkClusterStrategy> oldEntry : oldDarkStrategyMap.entrySet())
+                  {
+                    final DarkClusterStrategy oldStrategy = oldEntry.getValue();
+                    if (oldStrategy != null)
+                    {
+                      oldStrategy.shutdown();
+                    }
+                  }
+                }
+                return darkStrategyMap;
+              });
             }
           }
         });
@@ -300,6 +316,20 @@ public class DarkClusterStrategyFactoryImpl implements DarkClusterStrategyFactor
     {
       if (_sourceClusterName.equals(clusterName))
       {
+        for (Map.Entry<Integer, Map<String, DarkClusterStrategy>> entry : _partitionToDarkStrategyMap.entrySet())
+        {
+          Map<String, DarkClusterStrategy> strategies = entry.getValue();
+          if (strategies != null)
+          {
+            for (DarkClusterStrategy strategy : strategies.values())
+            {
+              if (strategy != null)
+              {
+                strategy.shutdown();
+              }
+            }
+          }
+        }
         _partitionToDarkStrategyMap.clear();
         _sourceClusterPresent = false;
       }

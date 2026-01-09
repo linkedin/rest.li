@@ -26,6 +26,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.linkedin.d2.DarkClusterConfig;
 import com.linkedin.d2.DarkClusterStrategyNameArray;
@@ -36,6 +37,7 @@ import com.linkedin.darkcluster.api.DarkClusterDispatcher;
 import com.linkedin.darkcluster.api.DarkClusterStrategy;
 import com.linkedin.darkcluster.api.DarkClusterStrategyFactory;
 import com.linkedin.darkcluster.api.NoOpDarkClusterStrategy;
+import com.linkedin.darkcluster.impl.ConstantQpsDarkClusterStrategy;
 import com.linkedin.darkcluster.impl.RelativeTrafficMultiplierDarkClusterStrategy;
 import com.linkedin.darkcluster.impl.DarkClusterStrategyFactoryImpl;
 import com.linkedin.darkcluster.impl.DefaultDarkClusterDispatcher;
@@ -312,6 +314,79 @@ public class TestDarkClusterStrategyFactory
     // test that we choose a NoOpDarkClusterStrategy because we want to allow RelativeTrafficMultiplierStrategy with a zero muliplier to be
     // a NoOp. This allows clients to easily turn off traffic without adjusting multiple values.
     Assert.assertTrue(strategy instanceof NoOpDarkClusterStrategy);
+  }
+
+  @Test
+  public void testRefreshShutsDownExistingStrategiesPerPartition()
+  {
+    // Build real per-partition strategies (like testUpdateStrategyDarkClusterChange), then refresh and assert the old
+    // strategies were shut down.
+    //
+    // Note: RelativeTrafficMultiplierDarkClusterStrategy has no observable shutdown behavior. ConstantQpsDarkClusterStrategy
+    // does (it calls ConstantQpsRateLimiter.cancelAll), so we use CONSTANT_QPS here with a tracking rate limiter.
+    MockClusterInfoProvider clusterInfoProvider = new MockClusterInfoProvider();
+    Facilities facilities = new MockFacilities(clusterInfoProvider);
+    DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcher(new MockClient(false));
+    ClockedExecutor executor = new ClockedExecutor();
+
+    AtomicInteger cancelAllInvocations = new AtomicInteger(0);
+    Supplier<ConstantQpsRateLimiter> rateLimiterSupplier = () ->
+        new TrackingConstantQpsRateLimiter(executor, executor, executor,
+            TestConstantQpsDarkClusterStrategy.getBuffer(executor), cancelAllInvocations);
+
+    DarkClusterStrategyFactory strategyFactory = new DarkClusterStrategyFactoryImpl(facilities,
+        SOURCE_CLUSTER_NAME,
+        darkClusterDispatcher,
+        new DoNothingNotifier(),
+        new Random(SEED),
+        new CountingVerifierManager(),
+        rateLimiterSupplier);
+    strategyFactory.start();
+
+    DarkClusterStrategyNameArray strategyList = new DarkClusterStrategyNameArray();
+    strategyList.addAll(Collections.singletonList(CONSTANT_QPS));
+    DarkClusterConfig constantQpsConfig = new DarkClusterConfig()
+        .setDarkClusterStrategyPrioritizedList(strategyList)
+        .setDispatcherOutboundTargetRate(1.0f)
+        .setDispatcherMaxRequestsToBuffer(10)
+        .setDispatcherBufferedRequestExpiryInSeconds(10);
+    clusterInfoProvider.addDarkClusterConfig(SOURCE_CLUSTER_NAME, DARK_CLUSTER_NAME, constantQpsConfig);
+
+    // Trigger a refresh to build partition 0, then lazily create partition 1 so refresh will rebuild both.
+    clusterInfoProvider.notifyListenersClusterAdded(SOURCE_CLUSTER_NAME);
+    DarkClusterStrategy oldP0 = strategyFactory.get(DARK_CLUSTER_NAME, 0);
+    DarkClusterStrategy oldP1 = strategyFactory.get(DARK_CLUSTER_NAME, 1);
+    Assert.assertTrue(oldP0 instanceof ConstantQpsDarkClusterStrategy);
+    Assert.assertTrue(oldP1 instanceof ConstantQpsDarkClusterStrategy);
+
+    // Refresh again: should rebuild both partitions and shut down the old strategies.
+    clusterInfoProvider.notifyListenersClusterAdded(SOURCE_CLUSTER_NAME);
+    Assert.assertEquals(cancelAllInvocations.get(), 2,
+        "Expected existing strategies to be shut down once per partition on refresh");
+
+    Assert.assertTrue(strategyFactory.get(DARK_CLUSTER_NAME, 0) instanceof ConstantQpsDarkClusterStrategy);
+    Assert.assertTrue(strategyFactory.get(DARK_CLUSTER_NAME, 1) instanceof ConstantQpsDarkClusterStrategy);
+  }
+
+  private static final class TrackingConstantQpsRateLimiter extends ConstantQpsRateLimiter
+  {
+    private final AtomicInteger _cancelAllInvocations;
+
+    TrackingConstantQpsRateLimiter(ScheduledExecutorService scheduler,
+        java.util.concurrent.Executor executor,
+        com.linkedin.util.clock.Clock clock,
+        com.linkedin.r2.transport.http.client.EvictingCircularBuffer callbackBuffer,
+        AtomicInteger cancelAllInvocations)
+    {
+      super(scheduler, executor, clock, callbackBuffer);
+      _cancelAllInvocations = cancelAllInvocations;
+    }
+
+    @Override
+    public void cancelAll(Throwable throwable)
+    {
+      _cancelAllInvocations.incrementAndGet();
+    }
   }
 
   private static class DeletingClusterListener implements LoadBalancerClusterListener

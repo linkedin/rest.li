@@ -81,6 +81,12 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
     return addRequest(originalRequest, darkRequest, requestContext);
   }
 
+  @Override
+  public void shutdown()
+  {
+    _rateLimiter.cancelAll(new RuntimeException("Shutting down ConstantQpsDarkClusterStrategy"));
+  }
+
   /**
    * We won't create this strategy if this config isn't valid for this strategy. For instance, we don't want to create
    * the ConstantQpsDarkClusterStrategy if any of the configurables are zero, because we'd be doing pointless work on every getOrCreate.
@@ -155,6 +161,7 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
    */
   private boolean addRequest(RestRequest originalRequest, RestRequest darkRequest, RequestContext requestContext)
   {
+    final BaseDarkClusterDispatcher baseDispatcher = _baseDarkClusterDispatcher;
     _rateLimiter.submit(new Callback<None>()
     {
       @Override
@@ -166,7 +173,7 @@ public class ConstantQpsDarkClusterStrategy implements DarkClusterStrategy
       @Override
       public void onSuccess(None result)
       {
-        _baseDarkClusterDispatcher.sendRequest(originalRequest, darkRequest, requestContext, NUM_REQUESTS_TO_SEND_PER_RATE_LIMITER_CYCLE);
+        baseDispatcher.sendRequest(originalRequest, darkRequest, requestContext, NUM_REQUESTS_TO_SEND_PER_RATE_LIMITER_CYCLE);
       }
     });
     return true;
