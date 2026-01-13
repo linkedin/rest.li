@@ -157,6 +157,32 @@ public class EvictingCircularBuffer implements CallbackBuffer
   }
 
   /**
+   * Clears all callbacks and TTLs from the buffer immediately.
+   * Acquires write locks for all elements to avoid partially cleared reads/writes.
+   * Resets reader and writer positions to 0.
+   */
+  public void clear()
+  {
+    ArrayList<ReentrantReadWriteLock> tempLocks = new ArrayList<>();
+    _elementLocks.forEach(x ->
+    {
+      x.writeLock().lock();
+      tempLocks.add(x);
+    });
+    try
+    {
+      Collections.fill(_callbacks, null);
+      Collections.fill(_ttlBuffer, null);
+      _readerPosition.set(0);
+      _writerPosition.set(0);
+    }
+    finally
+    {
+      tempLocks.forEach(x -> x.writeLock().unlock());
+    }
+  }
+
+  /**
    * Resizes the circular buffer, deleting the contents in the process.
    * This method should not be called frequently, ideally only as part of a startup lifecycle, as it does heavy locking
    * to ensure all reads and writes are drained coinciding with the resizing of the buffer.

@@ -19,6 +19,7 @@ package com.linkedin.r2.transport.http.client.ratelimiter;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.ConstantQpsRateLimiter;
+import com.linkedin.r2.transport.http.client.EvictingCircularBuffer;
 import com.linkedin.r2.transport.http.client.TestEvictingCircularBuffer;
 import com.linkedin.test.util.ClockedExecutor;
 import com.linkedin.test.util.retry.ThreeRetries;
@@ -28,9 +29,11 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.testng.annotations.Test;
+import static org.junit.Assert.fail;
 
 
 public class TestConstantQpsRateLimiter
@@ -209,6 +212,59 @@ public class TestConstantQpsRateLimiter
     assert(maxBurstFailCount <= acceptableFailCount);
     assert(burstFreqFailCount <= acceptableFailCount);
     assert(zeroFreqFailCount <= acceptableFailCount);
+  }
+
+  @Test(timeOut = TEST_TIMEOUT)
+  /**
+   * This simulates the shutdown behavior of ConstantQpsDarkClusterStrategy,
+   * to verify that the buffer is cleared immediately upon shutdown.
+   */
+  public void shutdownClearsBufferImmediately()
+  {
+    ClockedExecutor executor = new ClockedExecutor();
+    // Use a separate clock for the circular buffer so TTL doesn’t auto-expire unless we advance it.
+    ClockedExecutor circularBufferExecutor = new ClockedExecutor();
+    EvictingCircularBuffer buffer = TestEvictingCircularBuffer.getBuffer(circularBufferExecutor);
+    ConstantQpsRateLimiter rateLimiter =
+        new ConstantQpsRateLimiter(executor, executor, executor, buffer);
+
+    // Ensure TTL is long so callbacks would normally remain unless explicitly cleared.
+    rateLimiter.setBufferTtl(Integer.MAX_VALUE, ChronoUnit.DAYS);
+    rateLimiter.setBufferCapacity(10);
+
+    // Submit several no-op callbacks
+    for (int i = 0; i < 10; i++)
+    {
+      rateLimiter.submit(new Callback<None>()
+      {
+        @Override
+        public void onError(Throwable e) { }
+
+        @Override
+        public void onSuccess(None result) { }
+      });
+    }
+
+    // Sanity: buffer should have something retrievable before cancelAll
+    Assert.assertNotNull(buffer.get());
+
+    // Invoke shutdown-like behavior: clear buffer immediately
+    rateLimiter.clear();
+
+    // Run the executor briefly to allow the event loop to process
+    executor.runFor(ONE_SECOND);
+
+    // Verify the buffer is cleared immediately (i.e., not waiting for TTL to expire)
+    boolean threw = false;
+    try
+    {
+      buffer.get();
+    }
+    catch (NoSuchElementException ex)
+    {
+      threw = true;
+    }
+    Assert.assertTrue("Expected the buffer to be empty immediately after clear()", threw);
   }
 
   private static class TattlingCallback<T> implements Callback<T>
