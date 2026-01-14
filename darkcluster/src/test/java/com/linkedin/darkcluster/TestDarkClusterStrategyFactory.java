@@ -323,16 +323,16 @@ public class TestDarkClusterStrategyFactory
     // strategies were shut down.
     //
     // Note: RelativeTrafficMultiplierDarkClusterStrategy has no observable shutdown behavior. ConstantQpsDarkClusterStrategy
-    // does (it calls ConstantQpsRateLimiter.cancelAll), so we use CONSTANT_QPS here with a tracking rate limiter.
+    // does (it calls ConstantQpsRateLimiter.clear()), so we use CONSTANT_QPS here with a tracking rate limiter.
     MockClusterInfoProvider clusterInfoProvider = new MockClusterInfoProvider();
     Facilities facilities = new MockFacilities(clusterInfoProvider);
     DarkClusterDispatcher darkClusterDispatcher = new DefaultDarkClusterDispatcher(new MockClient(false));
     ClockedExecutor executor = new ClockedExecutor();
 
-    AtomicInteger cancelAllInvocations = new AtomicInteger(0);
+    AtomicInteger clearInvocations = new AtomicInteger(0);
     Supplier<ConstantQpsRateLimiter> rateLimiterSupplier = () ->
         new TrackingConstantQpsRateLimiter(executor, executor, executor,
-            TestConstantQpsDarkClusterStrategy.getBuffer(executor), cancelAllInvocations);
+            TestConstantQpsDarkClusterStrategy.getBuffer(executor), clearInvocations);
 
     DarkClusterStrategyFactory strategyFactory = new DarkClusterStrategyFactoryImpl(facilities,
         SOURCE_CLUSTER_NAME,
@@ -361,8 +361,8 @@ public class TestDarkClusterStrategyFactory
 
     // Refresh again: should rebuild both partitions and shut down the old strategies.
     clusterInfoProvider.notifyListenersClusterAdded(SOURCE_CLUSTER_NAME);
-    Assert.assertEquals(cancelAllInvocations.get(), 2,
-        "Expected existing strategies to be shut down once per partition on refresh");
+    Assert.assertEquals(clearInvocations.get(), 2,
+        "Expected existing strategies to be cleared once per partition on refresh");
 
     Assert.assertTrue(strategyFactory.get(DARK_CLUSTER_NAME, 0) instanceof ConstantQpsDarkClusterStrategy);
     Assert.assertTrue(strategyFactory.get(DARK_CLUSTER_NAME, 1) instanceof ConstantQpsDarkClusterStrategy);
@@ -370,22 +370,23 @@ public class TestDarkClusterStrategyFactory
 
   private static final class TrackingConstantQpsRateLimiter extends ConstantQpsRateLimiter
   {
-    private final AtomicInteger _cancelAllInvocations;
+    private final AtomicInteger _clearInvocations;
 
     TrackingConstantQpsRateLimiter(ScheduledExecutorService scheduler,
         java.util.concurrent.Executor executor,
         com.linkedin.util.clock.Clock clock,
         com.linkedin.r2.transport.http.client.EvictingCircularBuffer callbackBuffer,
-        AtomicInteger cancelAllInvocations)
+        AtomicInteger clearInvocations)
     {
       super(scheduler, executor, clock, callbackBuffer);
-      _cancelAllInvocations = cancelAllInvocations;
+      _clearInvocations = clearInvocations;
     }
 
     @Override
-    public void cancelAll(Throwable throwable)
+    public void clear()
     {
-      _cancelAllInvocations.incrementAndGet();
+      _clearInvocations.incrementAndGet();
+      super.clear();
     }
   }
 
