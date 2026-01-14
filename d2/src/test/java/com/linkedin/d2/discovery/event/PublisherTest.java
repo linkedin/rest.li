@@ -191,6 +191,9 @@ public abstract class PublisherTest
       {
         _currentValues.put(prop, value);
         _initCondition.signalAll();
+        // Also signal add waiters: some publishers may emit initialize with a value
+        // (e.g., if a change occurs during initial fetch). Allow awaitAdd to wake and re-check.
+        _addCondition.signalAll();
       }
       finally
       {
