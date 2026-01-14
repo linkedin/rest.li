@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.82.0] - 2026-01-13
+Add clear method to EvictingCircularBuffer that doesnt attempt to drain
+
 ## [29.81.2] - 2026-01-09
 - Clear DarkCluster Buffer on Refresh
 
@@ -5936,7 +5939,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.81.2...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.82.0...master
+[29.82.0]: https://github.com/linkedin/rest.li/compare/v29.81.2...v29.82.0
 [29.81.2]: https://github.com/linkedin/rest.li/compare/v29.81.1...v29.81.2
 [29.81.1]: https://github.com/linkedin/rest.li/compare/v29.81.0...v29.81.1
 [29.81.0]: https://github.com/linkedin/rest.li/compare/v29.80.3...v29.81.0
