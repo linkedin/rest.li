@@ -204,11 +204,6 @@ public class TestConstantQpsDarkClusterStrategy
     // Call shutdown
     strategy.shutdown();
 
-    // Verify that cancelAll was called with a RuntimeException containing the expected message.
-    ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
-    verify(mockRateLimiter).cancelAll(throwableCaptor.capture());
-    Throwable throwable = throwableCaptor.getValue();
-    Assert.assertTrue(throwable instanceof RuntimeException);
-    Assert.assertEquals(throwable.getMessage(), "Shutting down ConstantQpsDarkClusterStrategy");
+    verify(mockRateLimiter).clear();
   }
 }

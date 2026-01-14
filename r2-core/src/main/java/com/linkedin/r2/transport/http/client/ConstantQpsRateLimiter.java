@@ -65,6 +65,14 @@ public class ConstantQpsRateLimiter extends SmoothRateLimiter
     _evictingCircularBuffer.setTtl(ttl, ttlUnit);
   }
 
+  /**
+   * Clears all callbacks currently stored in the underlying {@link EvictingCircularBuffer}.
+   */
+  public void clear()
+  {
+    _evictingCircularBuffer.clear();
+  }
+
 
   private static class UnboundedRateLimiterExecutionTracker implements RateLimiterExecutionTracker
   {
