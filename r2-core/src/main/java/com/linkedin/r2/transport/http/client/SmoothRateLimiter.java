@@ -58,7 +58,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
   private final EventLoop _eventLoop;
   private final CallbackBuffer _pendingCallbacks;
 
-  private final RateLimiterExecutionTracker _executionTracker;
+  protected final RateLimiterExecutionTracker _executionTracker;
   private final AtomicReference<Throwable> _invocationError = new AtomicReference<>(null);
 
   private final static Long OVER_BUFFER_RATELIMITEDLOG_RATE_MS = 60000L;
@@ -387,6 +387,12 @@ public class SmoothRateLimiter implements AsyncRateLimiter
       ArgumentUtil.checkArgument(maxBuffered >= 0, "maxBuffered");
 
       _maxBuffered = maxBuffered;
+    }
+
+    @Override
+    public void stopExecution()
+    {
+      LOG.warn("Method stopExecution is not implemented in BoundedRateLimiterExecutionTracker.");
     }
 
     public boolean getPausedAndIncrement()
