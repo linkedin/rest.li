@@ -72,6 +72,10 @@ public class ConstantQpsRateLimiter extends SmoothRateLimiter
   public void clear()
   {
     _evictingCircularBuffer.clear();
+  }
+
+  public void stop()
+  {
     _executionTracker.stopExecution();
   }
 

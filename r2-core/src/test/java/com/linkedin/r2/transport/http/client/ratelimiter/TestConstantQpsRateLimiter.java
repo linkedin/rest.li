@@ -35,6 +35,7 @@ import java.util.Deque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.junit.Assert.fail;
 import com.linkedin.util.clock.SettableClock;
@@ -303,8 +304,21 @@ public class TestConstantQpsRateLimiter
     }
   }
 
-  @Test(timeOut = TEST_TIMEOUT)
-  public void clearShouldCancelPendingEventLoopSchedule()
+  @DataProvider(name = "rateValuesForShutdownPendingSchedule")
+  public Object[][] rateValuesForShutdownPendingSchedule()
+  {
+    // null => don't call setRate (exercise the default zero-rate behavior)
+    return new Object[][]
+        {
+            {null}, // Dont set rate, this leaves it in the default state
+            {0d},
+            {1d},
+            {10d}
+        };
+  }
+
+  @Test(dataProvider = "rateValuesForShutdownPendingSchedule", timeOut = TEST_TIMEOUT)
+  public void shutdownShouldCancelPendingEventLoopScheduleImpl(Double permitsPerPeriod)
   {
     CapturingScheduledExecutor scheduler = new CapturingScheduledExecutor();
 
@@ -312,11 +326,6 @@ public class TestConstantQpsRateLimiter
     SettableClock clock = new SettableClock(0);
     EvictingCircularBuffer buffer = new EvictingCircularBuffer(1, Integer.MAX_VALUE, ChronoUnit.DAYS, clock);
     ConstantQpsRateLimiter rateLimiter = new ConstantQpsRateLimiter(scheduler, Runnable::run, clock, buffer);
-
-    // Use a realistic rate (1 request per second). Even here, the event loop can schedule a delayed tick
-    // that retains the limiter via the scheduler queue unless it is explicitly cancelled on clear().
-    rateLimiter.setRate(1d, ONE_SECOND, 1);
-    rateLimiter.setBufferCapacity(1);
 
     rateLimiter.submit(new Callback<None>()
     {
@@ -327,13 +336,24 @@ public class TestConstantQpsRateLimiter
       public void onSuccess(None result) { }
     });
 
-    // Drive the initial event loop execution that was enqueued via execute(...).
-    scheduler.runAllImmediate();
+    // Optionally change the rate AFTER submitting so the first event-loop run happens before any
+    // updateWithNewRate runnable is processed. This avoids flakiness from the internal Random-based delay.
+    if (permitsPerPeriod != null)
+    {
+      rateLimiter.setRate(permitsPerPeriod, ONE_SECOND, 1);
+    }
+
+    // Drive exactly one immediate runnable (the event loop enqueued via submit()).
+    scheduler.runNextImmediate();
     Assert.assertEquals("Expected a pending scheduled event-loop task", 1, scheduler.getScheduledCount());
 
     long nextDelayMs = scheduler.peekNextScheduledDelayMs();
 
+    rateLimiter.stop();
     rateLimiter.clear();
+
+    // Drain remaining immediate tasks (e.g., updateWithNewRate if we called setRate). Since we've stopped execution,
+    // none of these tasks should schedule additional delayed ticks.
     scheduler.runAllImmediate();
     Assert.assertEquals("Expected the already-scheduled event-loop tick to remain pending after clear()",
         1, scheduler.getScheduledCount());
@@ -389,6 +409,15 @@ public class TestConstantQpsRateLimiter
     {
       Runnable r;
       while ((r = _immediate.pollFirst()) != null)
+      {
+        r.run();
+      }
+    }
+
+    void runNextImmediate()
+    {
+      Runnable r = _immediate.pollFirst();
+      if (r != null)
       {
         r.run();
       }
