@@ -38,6 +38,7 @@ public class ConstantQpsRateLimiter extends SmoothRateLimiter
 {
   private final EvictingCircularBuffer _evictingCircularBuffer;
 
+
   public ConstantQpsRateLimiter(
       ScheduledExecutorService scheduler, Executor executor, Clock clock, EvictingCircularBuffer callbackBuffer)
   {
@@ -73,10 +74,16 @@ public class ConstantQpsRateLimiter extends SmoothRateLimiter
     _evictingCircularBuffer.clear();
   }
 
+  public void stop()
+  {
+    _executionTracker.stopExecution();
+  }
+
 
   private static class UnboundedRateLimiterExecutionTracker implements RateLimiterExecutionTracker
   {
     private final AtomicBoolean _paused = new AtomicBoolean(true);
+    private final AtomicBoolean _stopped = new AtomicBoolean(false);
     private final Random _random = new Random();
 
     public int getPending()
@@ -84,14 +91,26 @@ public class ConstantQpsRateLimiter extends SmoothRateLimiter
       return 1;
     }
 
+    @Override
+    public void stopExecution()
+    {
+      // Once stopped, this tracker must remain permanently paused and must never flip _paused to false again.
+      _stopped.set(true);
+      _paused.set(true);
+    }
+
     public boolean getPausedAndIncrement()
     {
+      if (_stopped.get())
+      {
+        return true;
+      }
       return _paused.getAndSet(false);
     }
 
     public boolean decrementAndGetPaused()
     {
-      return _paused.get();
+      return _stopped.get() || _paused.get();
     }
 
     public void pauseExecution()
@@ -101,7 +120,7 @@ public class ConstantQpsRateLimiter extends SmoothRateLimiter
 
     public boolean isPaused()
     {
-      return _paused.get();
+      return _stopped.get() || _paused.get();
     }
 
     public int getMaxBuffered()
