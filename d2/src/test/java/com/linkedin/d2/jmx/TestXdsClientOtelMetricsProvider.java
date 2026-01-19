@@ -6,9 +6,6 @@ import java.util.List;
 /**
  * Test implementation of {@link XdsClientOtelMetricsProvider} that tracks method calls
  * and their parameters for verification purposes.
- *
- * This class can be used as a simple no-op implementation or for detailed call verification
- * in tests that need to inspect metrics provider interactions.
  */
 public class TestXdsClientOtelMetricsProvider implements XdsClientOtelMetricsProvider {
 
