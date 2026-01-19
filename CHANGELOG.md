@@ -15,7 +15,7 @@ and what APIs have changed, if applicable.
 ## [Unreleased]
 
 ## [29.82.1] - 2026-01-19
-Add open telemetry support for xds client sensor.
+- Add open telemetry support for xds client sensor.
 
 ## [29.82.0] - 2026-01-13
 Add clear method to EvictingCircularBuffer that doesnt attempt to drain
