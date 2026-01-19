@@ -118,6 +118,7 @@ public class XdsClientImpl extends XdsClient
   private final XdsClientJmx _xdsClientJmx;
   private final XdsServerMetricsProvider _serverMetricsProvider;
   private final XdsClientOtelMetricsProvider _xdsClientOtelMetricsProvider;
+  private String _clientName;
   private final boolean _initialResourceVersionsEnabled;
   private final String _minimumJavaVersion;
   private final XdsClientValidator.ActionOnPrecheckFailure _actionOnPrecheckFailure;
@@ -205,7 +206,7 @@ public class XdsClientImpl extends XdsClient
       XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure)
   {
         this(node, managedChannel, executorService, readyTimeoutMillis, subscribeToUriGlobCollection,
-        serverMetricsProvider, null, irvSupport, maxRetryBackoffSeconds, XdsClientValidator.DEFAULT_MINIMUM_JAVA_VERSION, XdsClientValidator.DEFAULT_ACTION_ON_PRECHECK_FAILURE);
+        serverMetricsProvider, irvSupport, maxRetryBackoffSeconds, XdsClientValidator.DEFAULT_MINIMUM_JAVA_VERSION, XdsClientValidator.DEFAULT_ACTION_ON_PRECHECK_FAILURE, new NoOpXdsClientOtelMetricsProvider());
       }
   
     /**
@@ -219,11 +220,11 @@ public class XdsClientImpl extends XdsClient
       long readyTimeoutMillis,
       boolean subscribeToUriGlobCollection,
       XdsServerMetricsProvider serverMetricsProvider,
-      XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider,
       boolean irvSupport,
       Integer maxRetryBackoffSeconds,
       String minimumJavaVersion,
-      XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure)
+      XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure,
+      XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider)
   {
     _readyTimeoutMillis = readyTimeoutMillis;
     _node = node;
@@ -268,6 +269,8 @@ public class XdsClientImpl extends XdsClient
     }
 
     _xdsClientJmx.setXdsClient(this);
+    _clientName = _xdsClientJmx.getClientName();
+    _log.info("Starting XdsClient with name: {}", _clientName);
     XdsClientValidator.preCheckForIndisConnection(_managedChannel, _readyTimeoutMillis, _minimumJavaVersion, _actionOnPrecheckFailure);
     startRpcStream();
   }
@@ -703,7 +706,7 @@ public class XdsClientImpl extends XdsClient
             || uriSubscriber.getData() == null // The URI was corrupted and there was no previous version of this URI
         )
         {
-          uriSubscriber.onData(new D2URIUpdate(uri), _serverMetricsProvider, _xdsClientOtelMetricsProvider, _xdsClientJmx.getClientName());
+          uriSubscriber.onData(new D2URIUpdate(uri), _serverMetricsProvider, _xdsClientOtelMetricsProvider, _clientName);
         }
       }
 
@@ -811,7 +814,6 @@ public class XdsClientImpl extends XdsClient
 
   private void handleResourceUpdate(Map<String, ? extends ResourceUpdate> updates, ResourceType type)
   {
-    String clientName = _xdsClientJmx.getClientName();
     Map<String, ResourceSubscriber> subscribers = getResourceSubscriberMap(type);
     WildcardResourceSubscriber wildcardSubscriber = getWildcardResourceSubscriber(type);
 
@@ -820,12 +822,12 @@ public class XdsClientImpl extends XdsClient
       ResourceSubscriber subscriber = subscribers.get(entry.getKey());
       if (subscriber != null)
       {
-        subscriber.onData(entry.getValue(), _serverMetricsProvider, _xdsClientOtelMetricsProvider, clientName);
+        subscriber.onData(entry.getValue(), _serverMetricsProvider, _xdsClientOtelMetricsProvider, _clientName);
       }
 
       if (wildcardSubscriber != null)
       {
-        wildcardSubscriber.onData(entry.getKey(), entry.getValue(), _serverMetricsProvider, _xdsClientOtelMetricsProvider, clientName);
+        wildcardSubscriber.onData(entry.getKey(), entry.getValue(), _serverMetricsProvider, _xdsClientOtelMetricsProvider, _clientName);
       }
     }
   }

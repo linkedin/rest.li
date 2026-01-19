@@ -239,43 +239,53 @@ public class XdsClientOtelMetricsProviderTest {
     }
 
     public String getLastClientName(String methodName) {
-      return _calls.stream()
-          .filter(call -> call.methodName.equals(methodName))
-          .reduce((first, second) -> second)
-          .map(call -> call.clientName)
-          .orElse(null);
+      for (int i = _calls.size() - 1; i >= 0; i--) {
+        MetricsInvocation call = _calls.get(i);
+        if (call.methodName.equals(methodName)) {
+          return call.clientName;
+        }
+      }
+      return null;
     }
 
     public Integer getLastCount(String methodName) {
-      return _calls.stream()
-          .filter(call -> call.methodName.equals(methodName))
-          .reduce((first, second) -> second)
-          .map(call -> call.count)
-          .orElse(null);
+      for (int i = _calls.size() - 1; i >= 0; i--) {
+        MetricsInvocation call = _calls.get(i);
+        if (call.methodName.equals(methodName)) {
+          return call.count;
+        }
+      }
+      return null;
     }
 
     public Long getLastLatency(String methodName) {
-      return _calls.stream()
-          .filter(call -> call.methodName.equals(methodName))
-          .reduce((first, second) -> second)
-          .map(call -> call.latencyMs)
-          .orElse(null);
+      for (int i = _calls.size() - 1; i >= 0; i--) {
+        MetricsInvocation call = _calls.get(i);
+        if (call.methodName.equals(methodName)) {
+          return call.latencyMs;
+        }
+      }
+      return null;
     }
 
     public Boolean getLastConnectionState(String methodName) {
-      return _calls.stream()
-          .filter(call -> call.methodName.equals(methodName))
-          .reduce((first, second) -> second)
-          .map(call -> call.isConnected)
-          .orElse(null);
+      for (int i = _calls.size() - 1; i >= 0; i--) {
+        MetricsInvocation call = _calls.get(i);
+        if (call.methodName.equals(methodName)) {
+          return call.isConnected;
+        }
+      }
+      return null;
     }
 
     public Long getLastWaitTime(String methodName) {
-      return _calls.stream()
-          .filter(call -> call.methodName.equals(methodName))
-          .reduce((first, second) -> second)
-          .map(call -> call.waitTimeMs)
-          .orElse(null);
+      for (int i = _calls.size() - 1; i >= 0; i--) {
+        MetricsInvocation call = _calls.get(i);
+        if (call.methodName.equals(methodName)) {
+          return call.waitTimeMs;
+        }
+      }
+      return null;
     }
 
     /**

@@ -1319,7 +1319,7 @@ public class TestXdsClientImpl {
       _executorService = spy(Executors.newScheduledThreadPool(1));
 
       _xdsClientImpl = spy(new XdsClientImpl(null, mock(ManagedChannel.class), _executorService, 0, useGlobCollections,
-          _serverMetricsProvider, _xdsClientOtelMetricsProvider, useIRV, null, null, null));
+          _serverMetricsProvider, useIRV, null, null, null, _xdsClientOtelMetricsProvider));
       _xdsClientImpl._adsStream = _adsStream;
 
       doNothing().when(_xdsClientImpl).startRpcStreamLocal();

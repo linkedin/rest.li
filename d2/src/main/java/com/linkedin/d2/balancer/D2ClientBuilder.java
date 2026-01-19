@@ -238,7 +238,6 @@ public class D2ClientBuilder
                   _config.xdsChannelLoadBalancingPolicyConfig,
                   _config.subscribeToUriGlobCollection,
                   _config._xdsServerMetricsProvider,
-                  _config.xdsClientOtelMetricsProvider,
                   _config.loadBalanceStreamException,
                   _config.xdsInitialResourceVersionsEnabled,
                   _config.disableDetectLiRawD2Client,
@@ -249,7 +248,8 @@ public class D2ClientBuilder
                   _config.actionOnPrecheckFailure,
                   _config.d2CalleeInfoRecorder,
                   _config.enableIndisDownstreamServicesFetcher,
-                  _config.indisDownstreamServicesFetchTimeout
+                  _config.indisDownstreamServicesFetchTimeout,
+                  _config.xdsClientOtelMetricsProvider
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?

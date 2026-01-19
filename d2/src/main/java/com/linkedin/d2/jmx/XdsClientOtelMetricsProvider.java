@@ -6,35 +6,35 @@ package com.linkedin.d2.jmx;
 public interface XdsClientOtelMetricsProvider {
   
   /**
-   * Records a connection lost event in the OpenTelemetry counter.
+   * Records a connection lost event count in the OpenTelemetry counter.
    *
    * @param clientName the name of the XDS client
    */
   void recordConnectionLost(String clientName);
 
   /**
-   * Records a connection closed event in the OpenTelemetry counter.
+   * Records a connection closed event count in the OpenTelemetry counter.
    *
    * @param clientName the name of the XDS client
    */
   void recordConnectionClosed(String clientName);
 
   /**
-   * Records a reconnection event in the OpenTelemetry counter.
+   * Records a reconnection event count in the OpenTelemetry counter.
    *
    * @param clientName the name of the XDS client
    */
   void recordReconnection(String clientName);
   
   /**
-   * Records a request sent event in the OpenTelemetry counter.
+   * Records a request sent event count in the OpenTelemetry counter.
    *
    * @param clientName the name of the XDS client
    */
   void recordRequestSent(String clientName);
 
   /**
-   * Records a response received event in the OpenTelemetry counter.
+   * Records a response received count in the OpenTelemetry counter.
    *
    * @param clientName the name of the XDS client
    */
@@ -49,14 +49,14 @@ public interface XdsClientOtelMetricsProvider {
   void recordInitialResourceVersionSent(String clientName, int count);
   
   /**
-   * Records a resource not found error in the OpenTelemetry counter.
+   * Records a resource not found error count in the OpenTelemetry counter.
    *
    * @param clientName the name of the XDS client
    */
   void recordResourceNotFound(String clientName);
 
   /**
-   * Records a resource invalid error in the OpenTelemetry counter.
+   * Records a resource invalid error count in the OpenTelemetry counter.
    *
    * @param clientName the name of the XDS client
    */

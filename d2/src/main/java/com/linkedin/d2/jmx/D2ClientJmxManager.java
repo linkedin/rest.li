@@ -311,6 +311,10 @@ public class D2ClientJmxManager
     {
       xdsClientJmx.setClientName(clientName);
     }
+    else
+    {
+      _log.warn("Client name is empty, unable to set client name for XdsClientJmx");
+    }
     final String jmxName = String.format("%s-XdsClientJmx", clientName);
     _jmxManager.registerXdsClientJmxBean(jmxName, xdsClientJmx);
   }

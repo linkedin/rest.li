@@ -342,7 +342,6 @@ public class D2ClientConfig
         xdsChannelLoadBalancingPolicyConfig,
         subscribeToUriGlobCollection,
         xdsServerMetricsProvider,
-        new NoOpXdsClientOtelMetricsProvider(),
         loadBalanceStreamException,
         xdsInitialResourceVersionsEnabled,
         disableDetectLiRawD2Client,
@@ -353,7 +352,8 @@ public class D2ClientConfig
         actionOnPrecheckFailure,
         d2CalleeInfoRecorder,
         enableIndisDownstreamServicesFetcher,
-        indisDownstreamServicesFetchTimeout);
+        indisDownstreamServicesFetchTimeout,
+        new NoOpXdsClientOtelMetricsProvider());
   }
 
   D2ClientConfig(String zkHosts,
@@ -428,7 +428,6 @@ public class D2ClientConfig
                  Map<String, ?> xdsChannelLoadBalancingPolicyConfig,
                  boolean subscribeToUriGlobCollection,
                  XdsServerMetricsProvider xdsServerMetricsProvider,
-                 XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider,
                  boolean loadBalanceStreamException,
                  boolean xdsInitialResourceVersionsEnabled,
                  boolean disableDetectLiRawD2Client,
@@ -439,7 +438,8 @@ public class D2ClientConfig
                  XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure,
                  D2CalleeInfoRecorder d2CalleeInfoRecorder,
                  Boolean enableIndisDownstreamServicesFetcher,
-                 Duration indisDownstreamServicesFetchTimeout)
+                 Duration indisDownstreamServicesFetchTimeout,
+                 XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider)
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -514,7 +514,6 @@ public class D2ClientConfig
     this.xdsChannelKeepAliveTimeMins = xdsChannelKeepAliveTimeMins;
     this.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
     this._xdsServerMetricsProvider = xdsServerMetricsProvider;
-    this.xdsClientOtelMetricsProvider = xdsClientOtelMetricsProvider;
     this.loadBalanceStreamException = loadBalanceStreamException;
     this.xdsInitialResourceVersionsEnabled = xdsInitialResourceVersionsEnabled;
     this.disableDetectLiRawD2Client = disableDetectLiRawD2Client;
@@ -525,5 +524,6 @@ public class D2ClientConfig
     this.d2CalleeInfoRecorder = d2CalleeInfoRecorder;
     this.indisDownstreamServicesFetchTimeout = indisDownstreamServicesFetchTimeout;
     this.enableIndisDownstreamServicesFetcher = enableIndisDownstreamServicesFetcher;
+    this.xdsClientOtelMetricsProvider = xdsClientOtelMetricsProvider;
   }
 }
