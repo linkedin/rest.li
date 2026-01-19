@@ -2,6 +2,7 @@ package com.linkedin.d2.xds.balancer;
 
 import com.linkedin.d2.balancer.D2ClientConfig;
 import com.linkedin.d2.jmx.NoOpXdsClientOtelMetricsProvider;
+import com.linkedin.d2.jmx.TestXdsClientOtelMetricsProvider;
 import com.linkedin.d2.jmx.XdsClientOtelMetricsProvider;
 import org.testng.annotations.Test;
 
@@ -31,37 +32,9 @@ public class TestXdsLoadBalancerWithFacilitiesFactory {
   public void testConfigWithCustomMetricsProvider() {
     // Verify the config field that the factory uses can be set to a custom provider
     D2ClientConfig config = new D2ClientConfig();
-    XdsClientOtelMetricsProvider customProvider = new TestMetricsProvider();
+    XdsClientOtelMetricsProvider customProvider = new TestXdsClientOtelMetricsProvider();
     config.xdsClientOtelMetricsProvider = customProvider;
     
     assertSame(config.xdsClientOtelMetricsProvider, customProvider);
-  }
-
-  /**
-   * Minimal test metrics provider implementation.
-   */
-  private static class TestMetricsProvider implements XdsClientOtelMetricsProvider {
-    @Override
-    public void recordConnectionLost(String clientName) {}
-    @Override
-    public void recordConnectionClosed(String clientName) {}
-    @Override
-    public void recordReconnection(String clientName) {}
-    @Override
-    public void recordRequestSent(String clientName) {}
-    @Override
-    public void recordResponseReceived(String clientName) {}
-    @Override
-    public void recordInitialResourceVersionSent(String clientName, int count) {}
-    @Override
-    public void recordResourceNotFound(String clientName) {}
-    @Override
-    public void recordResourceInvalid(String clientName) {}
-    @Override
-    public void recordServerLatency(String clientName, long latencyMs) {}
-    @Override
-    public void updateConnectionState(String clientName, boolean isConnected) {}
-    @Override
-    public void updateActiveInitialWaitTime(String clientName, long waitTimeMs) {}
   }
 }
