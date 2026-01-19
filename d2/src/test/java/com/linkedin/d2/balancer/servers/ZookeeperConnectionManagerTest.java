@@ -833,21 +833,53 @@ public class ZookeeperConnectionManagerTest
     @Override
     public void onError(Throwable e)
     {
-      if (e instanceof CancellationException || e.getCause() instanceof CancellationException || (e.getCause().getCause() != null && e.getCause()
-        .getCause() instanceof CancellationException))
-      {
+      if (isIgnorable(e)) {
         _callback.onSuccess(None.none());
+        return;
       }
-      else
-      {
-        _callback.onError(e);
-      }
+      _callback.onError(e);
     }
 
     @Override
     public void onSuccess(None result)
     {
       _callback.onSuccess(result);
+    }
+
+    private boolean isIgnorable(Throwable t)
+    {
+      if (t == null)
+      {
+        return false;
+      }
+      // Directly ignorable types
+      if (t instanceof CancellationException)
+      {
+        return true;
+      }
+      if (t instanceof org.apache.zookeeper.KeeperException.NoNodeException)
+      {
+        return true;
+      }
+      // MultiException: all causes must be ignorable
+      if (t instanceof com.linkedin.common.callback.MultiException)
+      {
+        for (Throwable cause : ((com.linkedin.common.callback.MultiException) t).getCauses())
+        {
+          if (!isIgnorable(cause))
+          {
+            return false;
+          }
+        }
+        return true;
+      }
+      // Otherwise, walk the cause chain defensively
+      Throwable cause = t.getCause();
+      if (cause != null && cause != t)
+      {
+        return isIgnorable(cause);
+      }
+      return false;
     }
   }
 
