@@ -1,7 +1,7 @@
 package com.linkedin.d2.jmx;
 
 /**
- * Interface for OpenTelemetry metrics collection for XDS Client.
+ * Interface for OpenTelemetry metrics collection for the XDS Client.
  */
 public interface XdsClientOtelMetricsProvider {
   
