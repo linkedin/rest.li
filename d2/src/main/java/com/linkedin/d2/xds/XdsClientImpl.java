@@ -84,6 +84,7 @@ public class XdsClientImpl extends XdsClient
       new RateLimitedLogger(_log, TimeUnit.MINUTES.toMillis(1), SystemClock.instance());
   public static final long DEFAULT_READY_TIMEOUT_MILLIS = 2000L;
   public static final Integer DEFAULT_MAX_RETRY_BACKOFF_SECS = 30; // default value for max retry backoff seconds
+  private static String _clientName;
 
   /**
    * The resource subscribers maps the resource type to its subscribers. Note that the {@link ResourceType#D2_URI}
@@ -118,7 +119,6 @@ public class XdsClientImpl extends XdsClient
   private final XdsClientJmx _xdsClientJmx;
   private final XdsServerMetricsProvider _serverMetricsProvider;
   private final XdsClientOtelMetricsProvider _xdsClientOtelMetricsProvider;
-  private String _clientName;
   private final boolean _initialResourceVersionsEnabled;
   private final String _minimumJavaVersion;
   private final XdsClientValidator.ActionOnPrecheckFailure _actionOnPrecheckFailure;
@@ -706,7 +706,7 @@ public class XdsClientImpl extends XdsClient
             || uriSubscriber.getData() == null // The URI was corrupted and there was no previous version of this URI
         )
         {
-          uriSubscriber.onData(new D2URIUpdate(uri), _serverMetricsProvider, _xdsClientOtelMetricsProvider, _clientName);
+          uriSubscriber.onData(new D2URIUpdate(uri), _serverMetricsProvider, _xdsClientOtelMetricsProvider);
         }
       }
 
@@ -822,12 +822,12 @@ public class XdsClientImpl extends XdsClient
       ResourceSubscriber subscriber = subscribers.get(entry.getKey());
       if (subscriber != null)
       {
-        subscriber.onData(entry.getValue(), _serverMetricsProvider, _xdsClientOtelMetricsProvider, _clientName);
+        subscriber.onData(entry.getValue(), _serverMetricsProvider, _xdsClientOtelMetricsProvider);
       }
 
       if (wildcardSubscriber != null)
       {
-        wildcardSubscriber.onData(entry.getKey(), entry.getValue(), _serverMetricsProvider, _xdsClientOtelMetricsProvider, _clientName);
+        wildcardSubscriber.onData(entry.getKey(), entry.getValue(), _serverMetricsProvider, _xdsClientOtelMetricsProvider);
       }
     }
   }
@@ -1023,7 +1023,7 @@ public class XdsClientImpl extends XdsClient
     }
 
     @VisibleForTesting
-    void onData(ResourceUpdate data, XdsServerMetricsProvider metricsProvider, XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider, String clientName)
+    void onData(ResourceUpdate data, XdsServerMetricsProvider metricsProvider, XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider)
     {
       SubscriberFetchState prev = _fetchState.getAndSet(FETCHED);
       if (!FETCHED.equals(prev))
@@ -1038,7 +1038,7 @@ public class XdsClientImpl extends XdsClient
           // Even though the data is the same, the subscriber is waiting for init data after either startup
           // or a reconnection, so we need to track latency.
           // data updated, track xds server latency
-          trackServerLatency(data, _data, metricsProvider, _subscribedAt.get(), _isIrvEnabled, prev, xdsClientOtelMetricsProvider, clientName);
+          trackServerLatency(data, _data, metricsProvider, _subscribedAt.get(), _isIrvEnabled, prev, xdsClientOtelMetricsProvider);
         }
         _log.debug("Received resource update data equal to the current data. Will not perform any update.");
         return;
@@ -1047,7 +1047,7 @@ public class XdsClientImpl extends XdsClient
       // null value guard to avoid overwriting the property with null
       if (data != null && data.isValid())
       {
-        trackServerLatency(data, _data, metricsProvider, _subscribedAt.get(), _isIrvEnabled, prev, xdsClientOtelMetricsProvider, clientName);
+        trackServerLatency(data, _data, metricsProvider, _subscribedAt.get(), _isIrvEnabled, prev, xdsClientOtelMetricsProvider);
         _data = data;
       }
       else
@@ -1220,7 +1220,7 @@ public class XdsClientImpl extends XdsClient
 
     @VisibleForTesting
     void onData(String resourceName, ResourceUpdate data, XdsServerMetricsProvider metricsProvider,
-                XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider, String clientName)
+                XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider)
     {
       if (Objects.equals(_data.get(resourceName), data))
       {
@@ -1229,7 +1229,7 @@ public class XdsClientImpl extends XdsClient
           // Even though the data is the same, the subscriber is waiting for init data after either startup
           // or a reconnection, so we need to track latency.
           // we are passing OpenTelemetry provider for wildcard subscribers too
-          trackServerLatency(data, _data.get(resourceName), metricsProvider, _subscribedAt.get(), _isIrvEnabled, _fetchState.get(), xdsClientOtelMetricsProvider, clientName);
+          trackServerLatency(data, _data.get(resourceName), metricsProvider, _subscribedAt.get(), _isIrvEnabled, _fetchState.get(), xdsClientOtelMetricsProvider);
         }
         _log.debug("Received resource update data equal to the current data. Will not perform the update.");
         return;
@@ -1237,7 +1237,7 @@ public class XdsClientImpl extends XdsClient
       // null value guard to avoid overwriting the property with null
       if (data != null && data.isValid())
       {
-        trackServerLatency(data, _data.get(resourceName), metricsProvider, _subscribedAt.get(), _isIrvEnabled, _fetchState.get(), xdsClientOtelMetricsProvider, clientName);
+        trackServerLatency(data, _data.get(resourceName), metricsProvider, _subscribedAt.get(), _isIrvEnabled, _fetchState.get(), xdsClientOtelMetricsProvider);
         _data.put(resourceName, data);
       }
       else
@@ -1376,7 +1376,7 @@ public class XdsClientImpl extends XdsClient
 
   private static void trackServerLatency(ResourceUpdate resourceUpdate, ResourceUpdate currentData,
       XdsServerMetricsProvider metricsProvider, long subscribedAt, boolean isIrvEnabled, SubscriberFetchState fetchState,
-      XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider, String clientName)
+      XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider)
   {
     long now = SystemClock.instance().currentTimeMillis();
     if (resourceUpdate instanceof NodeUpdate)
@@ -1387,7 +1387,7 @@ public class XdsClientImpl extends XdsClient
         return;
       }
       trackServerLatencyHelper(metricsProvider, now, nodeData.getStat().getMtime(), subscribedAt,
-          isIrvEnabled, fetchState, xdsClientOtelMetricsProvider, clientName);
+          isIrvEnabled, fetchState, xdsClientOtelMetricsProvider);
     }
     else if (resourceUpdate instanceof D2URIMapUpdate)
     {
@@ -1402,9 +1402,9 @@ public class XdsClientImpl extends XdsClient
               Map.Entry::getKey,
               e -> e.getValue().leftValue()) // new data of updated uris
           );
-      trackServerLatencyForUris(updatedUris, update, metricsProvider, now, subscribedAt, isIrvEnabled, fetchState, xdsClientOtelMetricsProvider, clientName);
+      trackServerLatencyForUris(updatedUris, update, metricsProvider, now, subscribedAt, isIrvEnabled, fetchState, xdsClientOtelMetricsProvider);
       trackServerLatencyForUris(rawDiff.entriesOnlyOnLeft(), update, metricsProvider, now, subscribedAt,
-          isIrvEnabled, fetchState, xdsClientOtelMetricsProvider, clientName); // newly added uris
+          isIrvEnabled, fetchState, xdsClientOtelMetricsProvider); // newly added uris
     }
     else if (resourceUpdate instanceof D2URIUpdate)
     {
@@ -1414,7 +1414,7 @@ public class XdsClientImpl extends XdsClient
       {
         update.setIsStaleModifiedTime(
             trackServerLatencyHelper(metricsProvider, now, Timestamps.toMillis(uri.getModifiedTime()), subscribedAt,
-            isIrvEnabled, fetchState, xdsClientOtelMetricsProvider, clientName)
+            isIrvEnabled, fetchState, xdsClientOtelMetricsProvider)
         );
       }
     }
@@ -1422,11 +1422,11 @@ public class XdsClientImpl extends XdsClient
 
   private static void trackServerLatencyForUris(Map<String, XdsD2.D2URI> uriMap, D2URIMapUpdate update,
       XdsServerMetricsProvider metricsProvider, long end, long subscribedAt, boolean isIrvEnabled,
-      SubscriberFetchState fetchState, XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider, String clientName)
+      SubscriberFetchState fetchState, XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider)
   {
     uriMap.forEach((k, v) -> {
           boolean isStaleModifiedTime = trackServerLatencyHelper(metricsProvider, end, Timestamps.toMillis(v.getModifiedTime()), subscribedAt,
-              isIrvEnabled, fetchState, xdsClientOtelMetricsProvider, clientName);
+              isIrvEnabled, fetchState, xdsClientOtelMetricsProvider);
           update.setIsStaleModifiedTime(k, isStaleModifiedTime);
         }
       );
@@ -1442,7 +1442,7 @@ public class XdsClientImpl extends XdsClient
   // on the resource modified time.
   private static boolean trackServerLatencyHelper(XdsServerMetricsProvider metricsProvider,
       long end, long modifiedAt, long subscribedAt, boolean isIrvEnabled, SubscriberFetchState fetchState,
-      XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider, String clientName)
+      XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider)
   {
     long start;
     boolean isStaleModifiedAt;
@@ -1460,7 +1460,7 @@ public class XdsClientImpl extends XdsClient
     metricsProvider.trackLatency(latency);
 
     // Record OpenTelemetry latency
-    xdsClientOtelMetricsProvider.recordServerLatency(clientName, latency);
+    xdsClientOtelMetricsProvider.recordServerLatency(_clientName, latency);
     
     return isStaleModifiedAt;
   }
