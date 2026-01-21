@@ -22,6 +22,7 @@ package com.linkedin.r2.transport.http.client.ratelimiter;
 public interface RateLimiterExecutionTracker
 {
 
+    void stopExecution();
     /**
      * Unpauses execution on RateLimiter if applicable. Increments the number of pending callbacks by 1.
      * @return whether or not the RateLimiter was paused when method call happened.
