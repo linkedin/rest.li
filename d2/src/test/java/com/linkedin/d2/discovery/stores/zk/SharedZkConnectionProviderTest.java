@@ -228,6 +228,27 @@ public class SharedZkConnectionProviderTest {
     markupCallback.get(BLOCKING_CALL_TIMEOUT, TimeUnit.MILLISECONDS);
   }
 
+  private UriProperties waitForAnnouncedUriCount(int expectedUriCount) throws Exception {
+    final long deadlineNs = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(BLOCKING_CALL_TIMEOUT);
+    UriProperties lastSeen = null;
+    int lastSeenSize = -1;
+
+    while (System.nanoTime() < deadlineNs) {
+      lastSeen = _verificationStore.get(CLUSTER_NAME);
+      if (lastSeen != null) {
+        lastSeenSize = lastSeen.Uris().size();
+        if (lastSeenSize == expectedUriCount) {
+          return lastSeen;
+        }
+      }
+      Thread.sleep(10);
+    }
+
+    fail("Timed out waiting for " + expectedUriCount + " announced URIs. Last seen: "
+        + (lastSeen == null ? "null" : (lastSeenSize + " -> " + lastSeen.Uris())));
+    return lastSeen; // unreachable; required for compilation
+  }
+
   private List<ZKConnectionBuilder> identicalBuildersSetUp() {
     List<ZKConnectionBuilder> builders = new ArrayList<>();
     for (int i = 0; i < NUM_DEFAULT_SHAREABLE_BUILDERS; i++) {
@@ -343,7 +364,7 @@ public class SharedZkConnectionProviderTest {
 
     startConnectionManagers(connectionManagers);
 
-    UriProperties newProperties = _verificationStore.get(CLUSTER_NAME);
+    UriProperties newProperties = waitForAnnouncedUriCount(100);
     assertNotNull(newProperties);
     assertEquals(newProperties.Uris().size(), 100);
 
