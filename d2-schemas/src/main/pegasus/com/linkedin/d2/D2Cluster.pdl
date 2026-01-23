@@ -54,4 +54,9 @@ record D2Cluster includes D2ChangeTimeStamps {
   * Options for configuring the outlier detection. Only used by gRPC clients.
   */
   outlierDetectionConfig: optional OutlierDetectionConfig
+
+  /**
+   * Properties used for the relative load balancing strategy. Only used by gRPC clients.
+   */
+  relativeStrategyProperties: optional D2RelativeStrategyProperties
 }
