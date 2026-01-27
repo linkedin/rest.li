@@ -54,4 +54,35 @@ record D2Cluster includes D2ChangeTimeStamps {
   * Options for configuring the outlier detection. Only used by gRPC clients.
   */
   outlierDetectionConfig: optional OutlierDetectionConfig
+
+  /**
+   * The load balancing policy to use for this cluster. Only used by gRPC clients.
+   */
+  loadBalancingPolicy: optional enum LoadBalancingPolicy {
+    /**
+     * Round Robin load balancing policy.
+     */
+    ROUND_ROBIN
+
+    /**
+     * Least Request load balancing policy.
+     */
+    LEAST_REQUEST
+
+    /**
+     * Ring Hash load balancing policy.
+     */
+    RING_HASH
+
+    /**
+     * Random load balancing policy.
+     */
+    RANDOM
+  }
+
+  /**
+   * Configuration for Ring Hash load balancing policy if the load balancing policy is RING_HASH.
+   * Only used by gRPC clients.
+   */
+  ringHashLbConfig: optional RingHashLbConfig
 }
