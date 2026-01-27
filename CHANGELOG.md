@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.83.1] - 2026-01-19
+- Add open telemetry support for xds client sensor.
+
 ## [29.83.0] - 2026-01-16
 - Add stop method to RateLimiterExecutionTracker
 
@@ -5942,7 +5945,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.83.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.83.1...master
+[29.83.1]: https://github.com/linkedin/rest.li/compare/v29.83.0...v29.83.1
 [29.83.0]: https://github.com/linkedin/rest.li/compare/v29.82.0...v29.83.0
 [29.82.0]: https://github.com/linkedin/rest.li/compare/v29.81.2...v29.82.0
 [29.81.2]: https://github.com/linkedin/rest.li/compare/v29.81.1...v29.81.2

@@ -23,8 +23,10 @@ import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.google.protobuf.util.Timestamps;
 import com.google.rpc.Code;
+import com.linkedin.d2.jmx.NoOpXdsClientOtelMetricsProvider;
 import com.linkedin.d2.jmx.NoOpXdsServerMetricsProvider;
 import com.linkedin.d2.jmx.XdsClientJmx;
+import com.linkedin.d2.jmx.XdsClientOtelMetricsProvider;
 import com.linkedin.d2.jmx.XdsServerMetricsProvider;
 import com.linkedin.d2.xds.GlobCollectionUtils.D2UriIdentifier;
 import com.linkedin.util.RateLimitedLogger;
@@ -82,6 +84,7 @@ public class XdsClientImpl extends XdsClient
       new RateLimitedLogger(_log, TimeUnit.MINUTES.toMillis(1), SystemClock.instance());
   public static final long DEFAULT_READY_TIMEOUT_MILLIS = 2000L;
   public static final Integer DEFAULT_MAX_RETRY_BACKOFF_SECS = 30; // default value for max retry backoff seconds
+  private static String _clientName;
 
   /**
    * The resource subscribers maps the resource type to its subscribers. Note that the {@link ResourceType#D2_URI}
@@ -115,6 +118,7 @@ public class XdsClientImpl extends XdsClient
 
   private final XdsClientJmx _xdsClientJmx;
   private final XdsServerMetricsProvider _serverMetricsProvider;
+  private final XdsClientOtelMetricsProvider _xdsClientOtelMetricsProvider;
   private final boolean _initialResourceVersionsEnabled;
   private final String _minimumJavaVersion;
   private final XdsClientValidator.ActionOnPrecheckFailure _actionOnPrecheckFailure;
@@ -201,6 +205,27 @@ public class XdsClientImpl extends XdsClient
       String minimumJavaVersion,
       XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure)
   {
+        this(node, managedChannel, executorService, readyTimeoutMillis, subscribeToUriGlobCollection,
+        serverMetricsProvider, irvSupport, maxRetryBackoffSeconds, XdsClientValidator.DEFAULT_MINIMUM_JAVA_VERSION, XdsClientValidator.DEFAULT_ACTION_ON_PRECHECK_FAILURE, new NoOpXdsClientOtelMetricsProvider());
+      }
+  
+    /**
+   * Constructor for XdsClientImpl with OpenTelemetry metrics support.
+   *
+   * @param xdsClientOtelMetricsProvider provider for OpenTelemetry metrics collection, or null for no-op
+   */
+  public XdsClientImpl(Node node,
+      ManagedChannel managedChannel,
+      ScheduledExecutorService executorService,
+      long readyTimeoutMillis,
+      boolean subscribeToUriGlobCollection,
+      XdsServerMetricsProvider serverMetricsProvider,
+      boolean irvSupport,
+      Integer maxRetryBackoffSeconds,
+      String minimumJavaVersion,
+      XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure,
+      XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider)
+  {
     _readyTimeoutMillis = readyTimeoutMillis;
     _node = node;
     checkNotNull(managedChannel, "managedChannel");
@@ -212,8 +237,9 @@ public class XdsClientImpl extends XdsClient
       _log.info("Glob collection support enabled");
     }
 
-    _xdsClientJmx = new XdsClientJmx(serverMetricsProvider);
+    _xdsClientOtelMetricsProvider = xdsClientOtelMetricsProvider == null ? new NoOpXdsClientOtelMetricsProvider() : xdsClientOtelMetricsProvider;
     _serverMetricsProvider = serverMetricsProvider == null ? new NoOpXdsServerMetricsProvider() : serverMetricsProvider;
+    _xdsClientJmx = new XdsClientJmx(serverMetricsProvider, _xdsClientOtelMetricsProvider);
     _initialResourceVersionsEnabled = irvSupport;
     if (_initialResourceVersionsEnabled)
     {
@@ -243,6 +269,8 @@ public class XdsClientImpl extends XdsClient
     }
 
     _xdsClientJmx.setXdsClient(this);
+    _clientName = _xdsClientJmx.getClientName();
+    _log.info("Starting XdsClient with name: {}", _clientName);
     XdsClientValidator.preCheckForIndisConnection(_managedChannel, _readyTimeoutMillis, _minimumJavaVersion, _actionOnPrecheckFailure);
     startRpcStream();
   }
@@ -678,7 +706,7 @@ public class XdsClientImpl extends XdsClient
             || uriSubscriber.getData() == null // The URI was corrupted and there was no previous version of this URI
         )
         {
-          uriSubscriber.onData(new D2URIUpdate(uri), _serverMetricsProvider);
+          uriSubscriber.onData(new D2URIUpdate(uri), _serverMetricsProvider, _xdsClientOtelMetricsProvider);
         }
       }
 
@@ -794,12 +822,12 @@ public class XdsClientImpl extends XdsClient
       ResourceSubscriber subscriber = subscribers.get(entry.getKey());
       if (subscriber != null)
       {
-        subscriber.onData(entry.getValue(), _serverMetricsProvider);
+        subscriber.onData(entry.getValue(), _serverMetricsProvider, _xdsClientOtelMetricsProvider);
       }
 
       if (wildcardSubscriber != null)
       {
-        wildcardSubscriber.onData(entry.getKey(), entry.getValue(), _serverMetricsProvider);
+        wildcardSubscriber.onData(entry.getKey(), entry.getValue(), _serverMetricsProvider, _xdsClientOtelMetricsProvider);
       }
     }
   }
@@ -995,7 +1023,7 @@ public class XdsClientImpl extends XdsClient
     }
 
     @VisibleForTesting
-    void onData(ResourceUpdate data, XdsServerMetricsProvider metricsProvider)
+    void onData(ResourceUpdate data, XdsServerMetricsProvider metricsProvider, XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider)
     {
       SubscriberFetchState prev = _fetchState.getAndSet(FETCHED);
       if (!FETCHED.equals(prev))
@@ -1009,7 +1037,8 @@ public class XdsClientImpl extends XdsClient
         {
           // Even though the data is the same, the subscriber is waiting for init data after either startup
           // or a reconnection, so we need to track latency.
-          trackServerLatency(data, _data, metricsProvider, _subscribedAt.get(), _isIrvEnabled, prev);
+          // data updated, track xds server latency
+          trackServerLatency(data, _data, metricsProvider, _subscribedAt.get(), _isIrvEnabled, prev, xdsClientOtelMetricsProvider);
         }
         _log.debug("Received resource update data equal to the current data. Will not perform any update.");
         return;
@@ -1018,7 +1047,7 @@ public class XdsClientImpl extends XdsClient
       // null value guard to avoid overwriting the property with null
       if (data != null && data.isValid())
       {
-        trackServerLatency(data, _data, metricsProvider, _subscribedAt.get(), _isIrvEnabled, prev);
+        trackServerLatency(data, _data, metricsProvider, _subscribedAt.get(), _isIrvEnabled, prev, xdsClientOtelMetricsProvider);
         _data = data;
       }
       else
@@ -1190,7 +1219,8 @@ public class XdsClientImpl extends XdsClient
     }
 
     @VisibleForTesting
-    void onData(String resourceName, ResourceUpdate data, XdsServerMetricsProvider metricsProvider)
+    void onData(String resourceName, ResourceUpdate data, XdsServerMetricsProvider metricsProvider,
+                XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider)
     {
       if (Objects.equals(_data.get(resourceName), data))
       {
@@ -1198,7 +1228,8 @@ public class XdsClientImpl extends XdsClient
         {
           // Even though the data is the same, the subscriber is waiting for init data after either startup
           // or a reconnection, so we need to track latency.
-          trackServerLatency(data, _data.get(resourceName), metricsProvider, _subscribedAt.get(), _isIrvEnabled, _fetchState.get());
+          // we are passing OpenTelemetry provider for wildcard subscribers too
+          trackServerLatency(data, _data.get(resourceName), metricsProvider, _subscribedAt.get(), _isIrvEnabled, _fetchState.get(), xdsClientOtelMetricsProvider);
         }
         _log.debug("Received resource update data equal to the current data. Will not perform the update.");
         return;
@@ -1206,7 +1237,7 @@ public class XdsClientImpl extends XdsClient
       // null value guard to avoid overwriting the property with null
       if (data != null && data.isValid())
       {
-        trackServerLatency(data, _data.get(resourceName), metricsProvider, _subscribedAt.get(), _isIrvEnabled, _fetchState.get());
+        trackServerLatency(data, _data.get(resourceName), metricsProvider, _subscribedAt.get(), _isIrvEnabled, _fetchState.get(), xdsClientOtelMetricsProvider);
         _data.put(resourceName, data);
       }
       else
@@ -1344,7 +1375,8 @@ public class XdsClientImpl extends XdsClient
   }
 
   private static void trackServerLatency(ResourceUpdate resourceUpdate, ResourceUpdate currentData,
-      XdsServerMetricsProvider metricsProvider, long subscribedAt, boolean isIrvEnabled, SubscriberFetchState fetchState)
+      XdsServerMetricsProvider metricsProvider, long subscribedAt, boolean isIrvEnabled, SubscriberFetchState fetchState,
+      XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider)
   {
     long now = SystemClock.instance().currentTimeMillis();
     if (resourceUpdate instanceof NodeUpdate)
@@ -1355,7 +1387,7 @@ public class XdsClientImpl extends XdsClient
         return;
       }
       trackServerLatencyHelper(metricsProvider, now, nodeData.getStat().getMtime(), subscribedAt,
-          isIrvEnabled, fetchState);
+          isIrvEnabled, fetchState, xdsClientOtelMetricsProvider);
     }
     else if (resourceUpdate instanceof D2URIMapUpdate)
     {
@@ -1370,9 +1402,9 @@ public class XdsClientImpl extends XdsClient
               Map.Entry::getKey,
               e -> e.getValue().leftValue()) // new data of updated uris
           );
-      trackServerLatencyForUris(updatedUris, update, metricsProvider, now, subscribedAt, isIrvEnabled, fetchState);
+      trackServerLatencyForUris(updatedUris, update, metricsProvider, now, subscribedAt, isIrvEnabled, fetchState, xdsClientOtelMetricsProvider);
       trackServerLatencyForUris(rawDiff.entriesOnlyOnLeft(), update, metricsProvider, now, subscribedAt,
-          isIrvEnabled, fetchState); // newly added uris
+          isIrvEnabled, fetchState, xdsClientOtelMetricsProvider); // newly added uris
     }
     else if (resourceUpdate instanceof D2URIUpdate)
     {
@@ -1382,7 +1414,7 @@ public class XdsClientImpl extends XdsClient
       {
         update.setIsStaleModifiedTime(
             trackServerLatencyHelper(metricsProvider, now, Timestamps.toMillis(uri.getModifiedTime()), subscribedAt,
-            isIrvEnabled, fetchState)
+            isIrvEnabled, fetchState, xdsClientOtelMetricsProvider)
         );
       }
     }
@@ -1390,11 +1422,11 @@ public class XdsClientImpl extends XdsClient
 
   private static void trackServerLatencyForUris(Map<String, XdsD2.D2URI> uriMap, D2URIMapUpdate update,
       XdsServerMetricsProvider metricsProvider, long end, long subscribedAt, boolean isIrvEnabled,
-      SubscriberFetchState fetchState)
+      SubscriberFetchState fetchState, XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider)
   {
     uriMap.forEach((k, v) -> {
           boolean isStaleModifiedTime = trackServerLatencyHelper(metricsProvider, end, Timestamps.toMillis(v.getModifiedTime()), subscribedAt,
-              isIrvEnabled, fetchState);
+              isIrvEnabled, fetchState, xdsClientOtelMetricsProvider);
           update.setIsStaleModifiedTime(k, isStaleModifiedTime);
         }
       );
@@ -1409,7 +1441,8 @@ public class XdsClientImpl extends XdsClient
   // received with IRV, except the first fetch, so after skipping the first fetch we can track latency always based
   // on the resource modified time.
   private static boolean trackServerLatencyHelper(XdsServerMetricsProvider metricsProvider,
-      long end, long modifiedAt, long subscribedAt, boolean isIrvEnabled, SubscriberFetchState fetchState)
+      long end, long modifiedAt, long subscribedAt, boolean isIrvEnabled, SubscriberFetchState fetchState,
+      XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider)
   {
     long start;
     boolean isStaleModifiedAt;
@@ -1423,7 +1456,12 @@ public class XdsClientImpl extends XdsClient
       start = Math.max(modifiedAt, subscribedAt);
       isStaleModifiedAt = modifiedAt < subscribedAt;
     }
-    metricsProvider.trackLatency(end - start);
+    long latency = end - start;
+    metricsProvider.trackLatency(latency);
+
+    // Record OpenTelemetry latency
+    xdsClientOtelMetricsProvider.recordServerLatency(_clientName, latency);
+    
     return isStaleModifiedAt;
   }
 

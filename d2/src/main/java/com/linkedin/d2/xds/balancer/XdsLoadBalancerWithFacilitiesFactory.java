@@ -72,7 +72,8 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
         config.xdsInitialResourceVersionsEnabled,
         config.xdsStreamMaxRetryBackoffSeconds,
         config.xdsMinimumJavaVersion,
-        config.actionOnPrecheckFailure
+        config.actionOnPrecheckFailure,
+        config.xdsClientOtelMetricsProvider
     );
     d2ClientJmxManager.registerXdsClientJmx(xdsClient.getXdsClientJmx());
 
