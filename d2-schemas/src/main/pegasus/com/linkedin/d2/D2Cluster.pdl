@@ -57,32 +57,11 @@ record D2Cluster includes D2ChangeTimeStamps {
 
   /**
    * The load balancing policy to use for this cluster. Only used by gRPC clients.
+   * Each client will iterate over the list in order and stop at the first policy that it
+   * supports. This provides a mechanism for starting to use new LB policies that are not yet
+   * supported by all clients.
+   * This is inspired by Envoy's load balancing policy configuration:
+   * https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto#config-cluster-v3-loadbalancingpolicy
    */
-  loadBalancingPolicy: optional enum LoadBalancingPolicy {
-    /**
-     * Round Robin load balancing policy.
-     */
-    ROUND_ROBIN
-
-    /**
-     * Least Request load balancing policy.
-     */
-    LEAST_REQUEST
-
-    /**
-     * Ring Hash load balancing policy.
-     */
-    RING_HASH
-
-    /**
-     * Random load balancing policy.
-     */
-    RANDOM
-  }
-
-  /**
-   * Configuration for Ring Hash load balancing policy if the load balancing policy is RING_HASH.
-   * Only used by gRPC clients.
-   */
-  ringHashLbConfig: optional RingHashLbConfig
+  loadBalancingPolicies: optional array[LoadBalancingPolicyConfig]
 }
