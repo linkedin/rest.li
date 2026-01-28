@@ -31,6 +31,6 @@ record RingHashLbConfig {
      * std:hash<string> in GNU libstdc++ 3.4.20 or above. This is typically the case when compiled
      * on Linux and not macOS.
      */
-    MURMUR_HASH
+    MURMUR_HASH_2
   }
 }
