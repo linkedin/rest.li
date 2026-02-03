@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.84.0] - 2026-02-03
+- Add load balancing policies to D2Cluster and LB config for RingHash, LeastRequest, and RoundRobin.
+
 ## [29.83.1] - 2026-01-19
 - Add open telemetry support for xds client sensor.
 
@@ -36,10 +39,10 @@ Add clear method to EvictingCircularBuffer that doesnt attempt to drain
 - Add Indis based downstream fetcher
 
 ## [29.80.2] - 2025-10-15
-- Throw when setting xds server address to null while lbWithFacilitiesFactory is null.  
+- Throw when setting xds server address to null while lbWithFacilitiesFactory is null.
 
 ## [29.80.1] - 2025-10-15
-- Not to throw for duplicate xDS client start. Throw when setting xds server address to null only for indis-only.  
+- Not to throw for duplicate xDS client start. Throw when setting xds server address to null only for indis-only.
 
 ## [29.80.0] - 2025-10-10
 - Update methodLevelProperties in ServiceProperties constructor
@@ -63,10 +66,10 @@ Add clear method to EvictingCircularBuffer that doesnt attempt to drain
 - Add D2 service MethodLevelProperties configuration support
 
 ## [29.75.4] - 2025-09-10
-- Fix notifyOnLastChunk handling for D2URIMap WildcardResourceSubscriber 
+- Fix notifyOnLastChunk handling for D2URIMap WildcardResourceSubscriber
 
 ## [29.75.3] - 2025-09-08
-- DataTranslator: support no fieldDiscriminator in Avro union aliases. Deprecate SchemaTranslator for runtime use. 
+- DataTranslator: support no fieldDiscriminator in Avro union aliases. Deprecate SchemaTranslator for runtime use.
 
 ## [29.75.2] - 2025-09-05
 - Rename the outlier detection field in the D2 cluster
@@ -111,7 +114,7 @@ Add clear method to EvictingCircularBuffer that doesnt attempt to drain
 - log full announcement data at markup. Use samza container name and process user dir for tracking raw d2 client.
 
 ## [29.70.0] - 2025-07-15
-- Configure xds stream max retry backoff time and xds channel keep alive time 
+- Configure xds stream max retry backoff time and xds channel keep alive time
 
 ## [29.69.10] - 2025-07-08
 - Skipping RawD2Client trackig node creation for local execution
@@ -268,7 +271,7 @@ Add clear method to EvictingCircularBuffer that doesnt attempt to drain
 - degrade hosts for HTTP/2 stream errors in Degrader and Relative LB.
 
 ## [29.55.0] - 2024-05-23
-- Allow HttpBridge to return RetriableRequestException for the Netty max active stream error 
+- Allow HttpBridge to return RetriableRequestException for the Netty max active stream error
 
 ## [29.54.0] - 2024-05-08
 - Dual read monitors cluster uris similarity
@@ -286,7 +289,7 @@ Add clear method to EvictingCircularBuffer that doesnt attempt to drain
 - fix applying client side service config override in INDIS flow
 
 ## [29.51.14] - 2024-03-27
-- Support translating default values for optional non-record/union fields to Avro (when TRANSLATE_DEFAULT is enabled). 
+- Support translating default values for optional non-record/union fields to Avro (when TRANSLATE_DEFAULT is enabled).
 
 ## [29.51.13] - 2024-03-26
 Upgrade the io.envoyproxy.controlplane module to 0.1.35
@@ -496,7 +499,7 @@ adjust dual read monitoring data match logic and log rate limiter
 
 ## [29.42.1] - 2023-05-11
 - Add support for returning location of schema elements from the PDL schema encoder.
-  
+
 ## [29.42.0] - 2023-05-02
 - Remove the overriding of content-length for HEADER requests as per HTTP Spec
   More details about this issue can be found @ https://jira01.corp.linkedin.com:8443/browse/SI-31814
@@ -588,7 +591,7 @@ adjust dual read monitoring data match logic and log rate limiter
 - Add service discovery event emitter to d2 client
 
 ## [29.40.0] - 2022-10-13
-- Empty commit to bump pegasus minor version 
+- Empty commit to bump pegasus minor version
 
 ## [29.39.6] - 2022-10-06
 - Add equals and hashCode methods to `CollectionResult`, `GetResult`, `UpdateResponse` and `UpdateEntityResponse`.
@@ -642,7 +645,7 @@ Added `Request.getResourceMethodIdentifier()`,
 
 ## [29.37.18] - 2022-08-29
 - Support supplying D2 subsetting peer cluster name at run-time
- 
+
 ## [29.37.17] - 2022-08-29
 - Add "notify" to reversed word set when generating data template
 
@@ -684,7 +687,7 @@ Added `Request.getResourceMethodIdentifier()`,
 - Add option to skip deprecated field when recursively generate class spec
 
 ## [29.37.4] - 2022-07-25
-- Serialize ZK data with non-null fields only 
+- Serialize ZK data with non-null fields only
 
 ## [29.37.3] - 2022-07-18
 - Add connection warm up support when a failout has been initiated
@@ -699,7 +702,7 @@ Added `Request.getResourceMethodIdentifier()`,
 - Package translated legacy PDSC models into `:restli-common` JAR
 
 ## [29.36.1] - 2022-06-22
-- Fix FailoutClient delegated client's restRequest invocation 
+- Fix FailoutClient delegated client's restRequest invocation
 
 ## [29.36.0] - 2022-06-21
 - Add Enum symbols order change as compatible message in checker. This will make equivalent compatibility check to fail and publish the new snapshot files.
@@ -827,7 +830,7 @@ Added `Request.getResourceMethodIdentifier()`,
 
 ## [29.22.15] - 2021-11-30
 - Add mock response generator factory for BATCH_FINDER methods.
-- Deprecate `FileFormatDataSchemaParser#new(String, DataSchemaResolver, DataSchemaParserFactory)`. 
+- Deprecate `FileFormatDataSchemaParser#new(String, DataSchemaResolver, DataSchemaParserFactory)`.
 - Add file existence check before performing compatibility report check during snapshot and restmodel publishing
 
 ## [29.22.14] - 2021-11-24
@@ -5945,7 +5948,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.83.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.84.0...master
+[29.84.0]: https://github.com/linkedin/rest.li/compare/v29.83.1...v29.84.0
 [29.83.1]: https://github.com/linkedin/rest.li/compare/v29.83.0...v29.83.1
 [29.83.0]: https://github.com/linkedin/rest.li/compare/v29.82.0...v29.83.0
 [29.82.0]: https://github.com/linkedin/rest.li/compare/v29.81.2...v29.82.0
