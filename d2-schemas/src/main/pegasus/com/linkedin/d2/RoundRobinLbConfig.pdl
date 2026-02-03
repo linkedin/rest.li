@@ -1,0 +1,14 @@
+namespace com.linkedin.d2
+
+/**
+ * Configuration for Round Robin load balancing policy. Only used by gRPC clients.
+ * These are ported from the Envoy proto, please refer to the Envoy proto for more details:
+ * https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto#config-cluster-v3-cluster-roundrobinlbconfig
+ */
+record RoundRobinLbConfig {
+  /**
+   * Configuration for slow start mode.
+   * If this configuration is not set, slow start will not be enabled.
+   */
+  slow_start_config: optional SlowStartProperties
+}
