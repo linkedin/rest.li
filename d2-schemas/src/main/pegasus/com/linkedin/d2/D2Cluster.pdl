@@ -56,12 +56,7 @@ record D2Cluster includes D2ChangeTimeStamps {
   outlierDetectionConfig: optional OutlierDetectionConfig
 
   /**
-   * The load balancing policy to use for this cluster. Only used by gRPC clients.
-   * Each client will iterate over the list in order and stop at the first policy that it
-   * supports. This provides a mechanism for starting to use new LB policies that are not yet
-   * supported by all clients.
-   * This is inspired by Envoy's load balancing policy configuration:
-   * https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto#config-cluster-v3-loadbalancingpolicy
+   * The load balancing policies to use for this cluster.
    */
-  loadBalancingPolicies: optional array[LoadBalancingPolicyConfig]
+  loadBalancingPolicies: optional array[LoadBalancingPolicy]
 }

@@ -1,0 +1,19 @@
+namespace com.linkedin.d2
+
+/**
+ * A load balancing policy configuration with associated client types.
+ * The policy must have an explicit list of client types that can support such policy.
+ * This ensures that the policy is only used by the supported client types.
+ */
+record LoadBalancingPolicy {
+
+  /**
+   * The client types that should use this load balancing policy.
+   */
+  clientTypes: array[ClientType]
+
+  /**
+   * The load balancing policy configuration.
+   */
+  config: LoadBalancingPolicyConfig
+}

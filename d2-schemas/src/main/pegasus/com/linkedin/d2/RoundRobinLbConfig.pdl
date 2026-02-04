@@ -1,7 +1,7 @@
 namespace com.linkedin.d2
 
 /**
- * Configuration for Round Robin load balancing policy. Only used by gRPC clients.
+ * Configuration for Round Robin load balancing policy.
  * These are ported from the Envoy proto, please refer to the Envoy proto for more details:
  * https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto#config-cluster-v3-cluster-roundrobinlbconfig
  */
