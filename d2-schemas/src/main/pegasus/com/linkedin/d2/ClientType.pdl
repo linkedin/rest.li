@@ -1,0 +1,21 @@
+namespace com.linkedin.d2
+
+/**
+ * Enum representing different client types that can use a load balancing policy.
+ */
+enum ClientType {
+  /**
+   * D2 client
+   */
+  D2
+
+  /**
+   * Envoy client
+   */
+  ENVOY
+
+  /**
+   * Vanilla gRPC client
+   */
+  GRPC
+}
