@@ -197,6 +197,37 @@ public class DynamicClient extends AbstractClient implements D2Client
     });
   }
 
+  @Override
+  public void getClusterName(URI uri, Callback<String> callback)
+  {
+    if (_balancer == null)
+    {
+      callback.onSuccess(null);
+      return;
+    }
+    String serviceName = LoadBalancerUtil.getServiceNameFromUri(uri);
+    _balancer.getLoadBalancedServiceProperties(serviceName, new Callback<ServiceProperties>()
+    {
+      @Override
+      public void onError(Throwable e)
+      {
+        error(_log, e);
+        callback.onSuccess(null);
+      }
+
+      @Override
+      public void onSuccess(ServiceProperties serviceProperties)
+      {
+        if (serviceProperties == null)
+        {
+          callback.onSuccess(null);
+          return;
+        }
+        callback.onSuccess(serviceProperties.getClusterName());
+      }
+    });
+  }
+
   private static <T> Callback<T> decorateLoggingCallback(final Callback<T> callback, Request request, final String type)
   {
     if (_log.isTraceEnabled())

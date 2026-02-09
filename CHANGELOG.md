@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.85.0] - 2026-02-07
+- Add getClusterName method to D2Client
+
 ## [29.84.0] - 2026-02-03
 - Add load balancing policies to D2Cluster and LB config for RingHash, LeastRequest, and RoundRobin.
 
@@ -5948,7 +5951,9 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.84.0...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.0...master
+[29.85.0]: https://github.com/linkedin/rest.li/compare/v29.84.1...v29.85.0
+[29.84.1]: https://github.com/linkedin/rest.li/compare/v29.84.0...v29.84.1
 [29.84.0]: https://github.com/linkedin/rest.li/compare/v29.83.1...v29.84.0
 [29.83.1]: https://github.com/linkedin/rest.li/compare/v29.83.0...v29.83.1
 [29.83.0]: https://github.com/linkedin/rest.li/compare/v29.82.0...v29.83.0

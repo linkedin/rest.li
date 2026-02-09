@@ -21,7 +21,9 @@
 package com.linkedin.d2.balancer;
 
 
+import com.linkedin.common.callback.Callback;
 import com.linkedin.r2.transport.common.StartableClient;
+import java.net.URI;
 
 
 /**
@@ -41,4 +43,16 @@ import com.linkedin.r2.transport.common.StartableClient;
 public interface D2Client extends StartableClient
 {
   Facilities getFacilities();
+
+  /**
+   * Given a D2 URI, returns the cluster name associated with the service resolved from the URI.
+   * Returns {@code null} via the callback if the cluster name cannot be resolved.
+   *
+   * @param uri the D2 URI whose service's cluster name is to be resolved
+   * @param callback a callback that will receive the cluster name string, or {@code null} if unavailable
+   */
+  default void getClusterName(URI uri, Callback<String> callback)
+  {
+    callback.onSuccess(null);
+  }
 }

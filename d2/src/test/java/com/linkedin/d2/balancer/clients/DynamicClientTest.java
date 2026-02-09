@@ -19,11 +19,13 @@ package com.linkedin.d2.balancer.clients;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.Facilities;
+import com.linkedin.d2.balancer.LoadBalancer;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.clients.DegraderTrackerClientTest.TestCallback;
 import com.linkedin.d2.balancer.clients.stub.DirectoryProviderMock;
 import com.linkedin.d2.balancer.clients.stub.KeyMapperProviderMock;
 import com.linkedin.d2.balancer.clients.stub.LoadBalancerMock;
+import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.util.ClientFactoryProvider;
 import com.linkedin.d2.balancer.util.DelegatingFacilities;
 import com.linkedin.d2.balancer.util.DirectoryProvider;
@@ -39,6 +41,7 @@ import org.mockito.Mockito;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
@@ -120,6 +123,63 @@ public class DynamicClientTest
     }
 
     assertTrue(balancer.shutdown);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testGetClusterName() throws URISyntaxException
+  {
+    LoadBalancerMock balancer = new LoadBalancerMock(false);
+    DynamicClient client = new DynamicClient(balancer, null);
+    URI uri = URI.create("d2://test");
+    TestCallback<String> callback = new TestCallback<>();
+
+    client.getClusterName(uri, callback);
+
+    assertNull(callback.e);
+    assertNotNull(callback.t);
+    assertEquals(callback.t, "testCluster");
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testGetClusterNameServiceUnavailable() throws URISyntaxException
+  {
+    LoadBalancer balancer = Mockito.mock(LoadBalancer.class);
+    Mockito.doAnswer(invocation -> {
+      @SuppressWarnings("unchecked")
+      Callback<ServiceProperties> cb = (Callback<ServiceProperties>) invocation.getArguments()[1];
+      cb.onError(new ServiceUnavailableException("test", "service not found"));
+      return null;
+    }).when(balancer).getLoadBalancedServiceProperties(Mockito.anyString(), Mockito.any());
+
+    DynamicClient client = new DynamicClient(balancer, null);
+    URI uri = URI.create("d2://test");
+    TestCallback<String> callback = new TestCallback<>();
+
+    client.getClusterName(uri, callback);
+
+    assertNull(callback.e);
+    assertNull(callback.t);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testGetClusterNameNullServiceProperties() throws URISyntaxException
+  {
+    LoadBalancer balancer = Mockito.mock(LoadBalancer.class);
+    Mockito.doAnswer(invocation -> {
+      @SuppressWarnings("unchecked")
+      Callback<ServiceProperties> cb = (Callback<ServiceProperties>) invocation.getArguments()[1];
+      cb.onSuccess(null);
+      return null;
+    }).when(balancer).getLoadBalancedServiceProperties(Mockito.anyString(), Mockito.any());
+
+    DynamicClient client = new DynamicClient(balancer, null);
+    URI uri = URI.create("d2://test");
+    TestCallback<String> callback = new TestCallback<>();
+
+    client.getClusterName(uri, callback);
+
+    assertNull(callback.e);
+    assertNull(callback.t);
   }
 
   @DataProvider(name="restOverStreamSwitch")
