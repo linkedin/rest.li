@@ -157,7 +157,8 @@ public class DynamicClientTest
 
     client.getClusterName(uri, callback);
 
-    assertNull(callback.e);
+    assertNotNull(callback.e);
+    assertTrue(callback.e instanceof ServiceUnavailableException);
     assertNull(callback.t);
   }
 
@@ -178,7 +179,50 @@ public class DynamicClientTest
 
     client.getClusterName(uri, callback);
 
-    assertNull(callback.e);
+    assertNotNull(callback.e);
+    assertTrue(callback.e instanceof RuntimeException);
+    assertTrue(callback.e.getMessage().contains("Service properties not found"));
+    assertNull(callback.t);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testGetClusterNameNullBalancer() throws URISyntaxException
+  {
+    DynamicClient client = new DynamicClient(null, null);
+    URI uri = URI.create("d2://test");
+    TestCallback<String> callback = new TestCallback<>();
+
+    client.getClusterName(uri, callback);
+
+    assertNotNull(callback.e);
+    assertTrue(callback.e instanceof RuntimeException);
+    assertTrue(callback.e.getMessage().contains("Balancer is not available"));
+    assertNull(callback.t);
+  }
+
+  @Test(groups = { "small", "back-end" })
+  public void testGetClusterNameNullClusterName() throws URISyntaxException
+  {
+    ServiceProperties serviceProperties = Mockito.mock(ServiceProperties.class);
+    Mockito.when(serviceProperties.getClusterName()).thenReturn(null);
+
+    LoadBalancer balancer = Mockito.mock(LoadBalancer.class);
+    Mockito.doAnswer(invocation -> {
+      @SuppressWarnings("unchecked")
+      Callback<ServiceProperties> cb = (Callback<ServiceProperties>) invocation.getArguments()[1];
+      cb.onSuccess(serviceProperties);
+      return null;
+    }).when(balancer).getLoadBalancedServiceProperties(Mockito.anyString(), Mockito.any());
+
+    DynamicClient client = new DynamicClient(balancer, null);
+    URI uri = URI.create("d2://test");
+    TestCallback<String> callback = new TestCallback<>();
+
+    client.getClusterName(uri, callback);
+
+    assertNotNull(callback.e);
+    assertTrue(callback.e instanceof RuntimeException);
+    assertTrue(callback.e.getMessage().contains("Cluster name not found"));
     assertNull(callback.t);
   }
 

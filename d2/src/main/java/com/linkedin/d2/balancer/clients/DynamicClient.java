@@ -202,7 +202,7 @@ public class DynamicClient extends AbstractClient implements D2Client
   {
     if (_balancer == null)
     {
-      callback.onSuccess(null);
+      callback.onError(new RuntimeException("Balancer is not available"));
       return;
     }
     String serviceName = LoadBalancerUtil.getServiceNameFromUri(uri);
@@ -211,8 +211,7 @@ public class DynamicClient extends AbstractClient implements D2Client
       @Override
       public void onError(Throwable e)
       {
-        error(_log, e);
-        callback.onSuccess(null);
+        callback.onError(e);
       }
 
       @Override
@@ -220,10 +219,16 @@ public class DynamicClient extends AbstractClient implements D2Client
       {
         if (serviceProperties == null)
         {
-          callback.onSuccess(null);
+          callback.onError(new RuntimeException("Service properties not found for service: " + serviceName));
           return;
         }
-        callback.onSuccess(serviceProperties.getClusterName());
+        String clusterName = serviceProperties.getClusterName();
+        if (clusterName == null)
+        {
+          callback.onError(new RuntimeException("Cluster name not found for service: " + serviceName));
+          return;
+        }
+        callback.onSuccess(clusterName);
       }
     });
   }
