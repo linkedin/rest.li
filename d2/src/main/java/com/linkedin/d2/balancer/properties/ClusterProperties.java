@@ -66,6 +66,8 @@ public class ClusterProperties
   private long               _version;
   private final SlowStartProperties _slowStartProperties;
   private final ConnectionOptions _connectionOptions;
+  private final Map<String, Object> _outlierDetectionConfig;
+  private final List<Map<String, Object>> _loadBalancingPolicies;
 
   public ClusterProperties(String clusterName)
   {
@@ -187,7 +189,7 @@ public class ClusterProperties
       long version,
       @Nullable SlowStartProperties slowStartProperties) {
     this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings,
-        darkClusters, delegated, version, slowStartProperties, null);
+        darkClusters, delegated, version, slowStartProperties, null, null, null);
   }
 
   public ClusterProperties(String clusterName,
@@ -201,6 +203,55 @@ public class ClusterProperties
       long version,
       @Nullable SlowStartProperties slowStartProperties,
       @Nullable ConnectionOptions connectionOptions) {
+    this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings,
+        darkClusters, delegated, version, slowStartProperties, connectionOptions, null, null);
+  }
+
+  public ClusterProperties(String clusterName,
+      List<String> prioritizedSchemes,
+      Map<String, String> properties,
+      Set<URI> bannedUris,
+      PartitionProperties partitionProperties,
+      List<String> sslSessionValidationStrings,
+      Map<String, Object> darkClusters,
+      boolean delegated,
+      long version,
+      @Nullable SlowStartProperties slowStartProperties,
+      @Nullable ConnectionOptions connectionOptions,
+      @Nullable Map<String, Object> outlierDetectionConfig) {
+    this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings,
+        darkClusters, delegated, version, slowStartProperties, connectionOptions, outlierDetectionConfig, null);
+  }
+
+  public ClusterProperties(String clusterName,
+      List<String> prioritizedSchemes,
+      Map<String, String> properties,
+      Set<URI> bannedUris,
+      PartitionProperties partitionProperties,
+      List<String> sslSessionValidationStrings,
+      Map<String, Object> darkClusters,
+      boolean delegated,
+      long version,
+      @Nullable SlowStartProperties slowStartProperties,
+      @Nullable ConnectionOptions connectionOptions,
+      @Nullable List<Map<String, Object>> loadBalancingPolicies) {
+    this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings,
+        darkClusters, delegated, version, slowStartProperties, connectionOptions, null, loadBalancingPolicies);
+  }
+
+  public ClusterProperties(String clusterName,
+      List<String> prioritizedSchemes,
+      Map<String, String> properties,
+      Set<URI> bannedUris,
+      PartitionProperties partitionProperties,
+      List<String> sslSessionValidationStrings,
+      Map<String, Object> darkClusters,
+      boolean delegated,
+      long version,
+      @Nullable SlowStartProperties slowStartProperties,
+      @Nullable ConnectionOptions connectionOptions,
+      @Nullable Map<String, Object> outlierDetectionConfig,
+      @Nullable List<Map<String, Object>> loadBalancingPolicies) {
     _clusterName = clusterName;
     _prioritizedSchemes =
         (prioritizedSchemes != null) ? Collections.unmodifiableList(prioritizedSchemes)
@@ -215,6 +266,8 @@ public class ClusterProperties
     _version = version;
     _slowStartProperties = slowStartProperties;
     _connectionOptions = connectionOptions;
+    _outlierDetectionConfig = outlierDetectionConfig == null ? null : Collections.unmodifiableMap(outlierDetectionConfig);
+    _loadBalancingPolicies = loadBalancingPolicies == null ? null : Collections.unmodifiableList(loadBalancingPolicies);
   }
 
 
@@ -222,7 +275,7 @@ public class ClusterProperties
   {
     this(other._clusterName, other._prioritizedSchemes, other._properties, other._bannedUris, other._partitionProperties,
         other._sslSessionValidationStrings, other._darkClusters, other._delegated, other._version,
-        other._slowStartProperties, other._connectionOptions);
+        other._slowStartProperties, other._connectionOptions, other._outlierDetectionConfig, other._loadBalancingPolicies);
   }
 
   public boolean isBanned(URI uri)
@@ -298,6 +351,18 @@ public class ClusterProperties
     return _connectionOptions;
   }
 
+  @Nullable
+  public Map<String, Object> getOutlierDetectionConfig()
+  {
+    return _outlierDetectionConfig;
+  }
+
+  @Nullable
+  public List<Map<String, Object>> getLoadBalancingPolicies()
+  {
+    return _loadBalancingPolicies;
+  }
+
   @Override
   public String toString()
   {
@@ -305,7 +370,8 @@ public class ClusterProperties
         + _prioritizedSchemes + ", _properties=" + _properties + ", _bannedUris=" + _bannedUris
         + ", _partitionProperties=" + _partitionProperties + ", _sslSessionValidationStrings=" + _sslSessionValidationStrings
         + ", _darkClusterConfigMap=" + _darkClusters + ", _delegated=" + _delegated + ", _slowStartProperties="
-        + _slowStartProperties + ", _connectionOptions=" + _connectionOptions + "]";
+        + _slowStartProperties + ", _connectionOptions=" + _connectionOptions + ", _outlierDetectionConfig="
+        + _outlierDetectionConfig + ", _loadBalancingPolicies=" + _loadBalancingPolicies + "]";
   }
 
   @Override
@@ -325,6 +391,8 @@ public class ClusterProperties
     result = prime * result + ((_delegated) ? 1 : 0);
     result = prime * result + ((_slowStartProperties == null) ? 0 : _slowStartProperties.hashCode());
     result = prime * result + ((_connectionOptions == null) ? 0 : _connectionOptions.hashCode());
+    result = prime * result + ((_outlierDetectionConfig == null) ? 0 : _outlierDetectionConfig.hashCode());
+    result = prime * result + ((_loadBalancingPolicies == null) ? 0 : _loadBalancingPolicies.hashCode());
     return result;
   }
 
@@ -377,6 +445,14 @@ public class ClusterProperties
       return false;
     }
     if (!Objects.equals(_connectionOptions, other._connectionOptions))
+    {
+      return false;
+    }
+    if (!Objects.equals(_outlierDetectionConfig, other._outlierDetectionConfig))
+    {
+      return false;
+    }
+    if (!Objects.equals(_loadBalancingPolicies, other._loadBalancingPolicies))
     {
       return false;
     }

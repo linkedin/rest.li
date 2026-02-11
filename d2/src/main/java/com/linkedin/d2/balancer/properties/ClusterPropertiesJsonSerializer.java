@@ -241,12 +241,19 @@ public class ClusterPropertiesJsonSerializer implements
 
     ConnectionOptions connectionOptions = getConnectionOptions(map);
 
+    @SuppressWarnings("unchecked")
+    Map<String, Object> outlierDetectionConfig = mapGet(map, PropertyKeys.OUTLIER_DETECTION_CONFIG);
+
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> loadBalancingPolicies = mapGet(map, PropertyKeys.LOAD_BALANCING_POLICIES);
+
     boolean delegated = false;
     if (map.containsKey(PropertyKeys.DELEGATED)) {
       delegated = mapGet(map, PropertyKeys.DELEGATED);
     }
     return new ClusterProperties(clusterName, prioritizedSchemes, properties, banned, partitionProperties, validationList,
-        darkClusterProperty, delegated, ClusterProperties.DEFAULT_VERSION, slowStartProperties, connectionOptions);
+        darkClusterProperty, delegated, ClusterProperties.DEFAULT_VERSION, slowStartProperties, connectionOptions,
+        outlierDetectionConfig, loadBalancingPolicies);
   }
 
   private ConnectionOptions getConnectionOptions(Map<String, Object> map)
