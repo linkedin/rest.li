@@ -14,8 +14,12 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.85.0] - 2026-02-07
-- Add getClusterName method to D2Client
+## [29.85.0] - 2026-02-11
+Add getClusterName method to D2Client
+
+## [29.84.1] - 2026-02-10
+- Add missing ClusterProprties fields load balancing policies and outlier detection.
+- Use aliased union for load balancing policy config.
 
 ## [29.84.0] - 2026-02-03
 - Add load balancing policies to D2Cluster and LB config for RingHash, LeastRequest, and RoundRobin.
