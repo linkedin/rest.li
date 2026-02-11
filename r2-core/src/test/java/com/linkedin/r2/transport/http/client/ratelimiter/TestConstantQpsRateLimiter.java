@@ -272,6 +272,71 @@ public class TestConstantQpsRateLimiter
     Assert.assertTrue("Expected the buffer to be empty immediately after clear()", threw);
   }
 
+  /**
+   * Verifies that rates with non-integer millisecond periods dispatch accurately.
+   * <p>At 1729 QPS with burst=2 the internal period is 1000*2/1729 = 1.156ms.
+   * With fractional period tracking the observed rate should be close  to 1729/s.</p>
+   */
+  @Test(timeOut = TEST_TIMEOUT)
+  public void testFractionalPeriodRateAccuracy()
+  {
+    ClockedExecutor executor = new ClockedExecutor();
+    ClockedExecutor circularBufferExecutor = new ClockedExecutor();
+    ConstantQpsRateLimiter rateLimiter =
+            new ConstantQpsRateLimiter(executor, executor, executor, TestEvictingCircularBuffer.getBuffer(circularBufferExecutor));
+
+    int targetQps = 1729;
+    int burst = (int) Math.max(1, Math.ceil((double) targetQps / ONE_SECOND));
+    rateLimiter.setRate(targetQps, ONE_SECOND, burst);
+    rateLimiter.setBufferCapacity(1);
+
+    TattlingCallback<None> tattler = new TattlingCallback<>(executor);
+    rateLimiter.submit(tattler);
+
+    int durationSeconds = 5;
+    executor.runFor(ONE_SECOND * durationSeconds);
+
+    int totalDispatches = tattler.getInteractCount();
+    int expectedTotal = targetQps * durationSeconds;               // 7500
+    double errorPercent = 100.0 * Math.abs(totalDispatches - expectedTotal) / expectedTotal;
+    double maxErrorPercent = 5.0; // locally experiments show error with fix should be under 1%, but allow some buffer for CI variability
+    Assert.assertTrue(String.format("Expected total dispatches to be within %f%% of expected total, but was %d vs %d",
+            maxErrorPercent, totalDispatches, expectedTotal), errorPercent < maxErrorPercent);
+  }
+
+
+  /**
+   * Verifies that rates with non-integer millisecond periods dispatch accurately.
+   * <p>At 2595 QPS with burst=2 the internal period is 1000*2/2595 = 0.771ms.
+   * With fractional period tracking the observed rate should be close to 2595/s.</p>
+   */
+  @Test(timeOut = TEST_TIMEOUT)
+  public void testFractionalPeriodRateAccuracy_higher_qps()
+  {
+    ClockedExecutor executor = new ClockedExecutor();
+    ClockedExecutor circularBufferExecutor = new ClockedExecutor();
+    ConstantQpsRateLimiter rateLimiter =
+            new ConstantQpsRateLimiter(executor, executor, executor, TestEvictingCircularBuffer.getBuffer(circularBufferExecutor));
+
+    int targetQps = 2595;
+    int burst = (int) Math.max(1, Math.ceil((double) targetQps / ONE_SECOND));
+    rateLimiter.setRate(targetQps, ONE_SECOND, burst);
+    rateLimiter.setBufferCapacity(1);
+
+    TattlingCallback<None> tattler = new TattlingCallback<>(executor);
+    rateLimiter.submit(tattler);
+
+    int durationSeconds = 5;
+    executor.runFor(ONE_SECOND * durationSeconds);
+
+    int totalDispatches = tattler.getInteractCount();
+    int expectedTotal = targetQps * durationSeconds;               // 7500
+    double errorPercent = 100.0 * Math.abs(totalDispatches - expectedTotal) / expectedTotal;
+    double maxErrorPercent = 5.0; // locally experiments show error with fix should be under 1%, but allow some buffer for CI variability
+    Assert.assertTrue(String.format("Expected total dispatches to be within %f%% of expected total, but was %d vs %d",
+            maxErrorPercent, totalDispatches, expectedTotal), errorPercent < maxErrorPercent);
+  }
+
   private static class TattlingCallback<T> implements Callback<T>
   {
     private AtomicInteger _interactCount = new AtomicInteger();
@@ -528,7 +593,7 @@ public class TestConstantQpsRateLimiter
 
     @Override
     public <T> java.util.List<java.util.concurrent.Future<T>> invokeAll(java.util.Collection<? extends java.util.concurrent.Callable<T>> tasks,
-        long timeout, TimeUnit unit)
+                                                                        long timeout, TimeUnit unit)
     {
       throw new UnsupportedOperationException();
     }
