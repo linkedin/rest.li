@@ -269,6 +269,16 @@ public class D2ClientBuilder
           + "Using in stack: {}", stackTrace);
     }
 
+    // Adding logs to detect if any non-INDIS load balancer factory is being used.
+    if (!loadBalancerFactory.isIndisOnly())
+    {
+      LOG.error("[ACTION REQUIRED] Zookeeper-based D2 Client "
+          + "is deprecated (unless talking to a locally-deployed ZK, or for testing EI ZK) and must be migrated to INDIS. "
+          + "See instructions at go/onboardindis.\n"
+          + "Failing to do so will block other apps from stopping ZK announcements and will be escalated for site-up "
+          + "stability.");
+    }
+
     if (loadBalancerFactory.isIndisOnly() && cfg.xdsServer == null)
     {
       throw new IllegalStateException("xdsServer is null. Call setXdsServer with a valid indis server address. "
