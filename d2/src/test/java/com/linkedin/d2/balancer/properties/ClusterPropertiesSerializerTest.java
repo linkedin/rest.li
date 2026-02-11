@@ -205,6 +205,35 @@ public class ClusterPropertiesSerializerTest
         new ClusterStoreProperties(property, null, null));
   }
 
+  @Test
+  public void testOutlierDetectionConfig() throws PropertySerializationException {
+    ClusterPropertiesJsonSerializer jsonSerializer = new ClusterPropertiesJsonSerializer();
+    Map<String, Object> outlierDetectionConfig = new HashMap<>();
+    outlierDetectionConfig.put("consecutive_5xx", 5);
+    outlierDetectionConfig.put("interval", 10);
+    outlierDetectionConfig.put("base_ejection_time", 30);
+    ClusterProperties property = new ClusterProperties("test", new ArrayList<>(), new HashMap<>(), new HashSet<>(),
+        NullPartitionProperties.getInstance(), Collections.emptyList(), null, false,
+        ClusterProperties.DEFAULT_VERSION, null, null, outlierDetectionConfig);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)),
+        new ClusterStoreProperties(property, null, null));
+  }
+
+  @Test
+  public void testLoadBalancingPolicies() throws PropertySerializationException {
+    ClusterPropertiesJsonSerializer jsonSerializer = new ClusterPropertiesJsonSerializer();
+    List<Map<String, Object>> loadBalancingPolicies = new ArrayList<>();
+    Map<String, Object> policy = new HashMap<>();
+    policy.put("config", Collections.singletonMap("ringHashLbConfig", Collections.singletonMap("hash_function", "MURMUR_HASH_2")));
+    policy.put("clientTypes", Arrays.asList("ENVOY"));
+    loadBalancingPolicies.add(policy);
+    ClusterProperties property = new ClusterProperties("test", new ArrayList<>(), new HashMap<>(), new HashSet<>(),
+        NullPartitionProperties.getInstance(), Collections.emptyList(), null, false,
+        ClusterProperties.DEFAULT_VERSION, null, null, loadBalancingPolicies);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)),
+        new ClusterStoreProperties(property, null, null));
+  }
+
   @DataProvider(name = "distributionStrategies")
   public Object[][] getDistributionStrategies() {
     Map<String, Object> percentageProperties = new HashMap<>();
