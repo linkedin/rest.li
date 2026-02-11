@@ -18,7 +18,9 @@ package com.linkedin.d2.balancer.properties;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.linkedin.d2.DarkClusterConfigMap;
+import com.linkedin.d2.LoadBalancingPolicyArray;
 import com.linkedin.d2.balancer.config.DarkClustersConverter;
+import com.linkedin.d2.balancer.config.LoadBalancingPoliciesConverter;
 
 import java.net.URI;
 import java.util.Collections;
@@ -332,6 +334,12 @@ public class ClusterProperties
   public DarkClusterConfigMap accessDarkClusters()
   {
     return DarkClustersConverter.toConfig(_darkClusters);
+  }
+
+  // Named so Jackson won't use this method. Returns a type-safe Pegasus view of load balancing policies.
+  public LoadBalancingPolicyArray accessLoadBalancingPolicies()
+  {
+    return LoadBalancingPoliciesConverter.toConfig(_loadBalancingPolicies);
   }
 
   public boolean isDelegated()
