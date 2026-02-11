@@ -98,4 +98,10 @@ public abstract class D2ClientDelegator implements D2Client
   {
     _d2Client.getMetadata(uri, callback);
   }
+
+  @Override
+  public void getClusterName(URI uri, Callback<String> callback)
+  {
+    _d2Client.getClusterName(uri, callback);
+  }
 }
