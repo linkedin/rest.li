@@ -274,9 +274,7 @@ public class D2ClientBuilder
     {
       LOG.error("[ACTION REQUIRED] Zookeeper-based D2 Client "
           + "is deprecated (unless talking to a locally-deployed ZK, or for testing EI ZK) and must be migrated to INDIS. "
-          + "See instructions at go/onboardindis.\n"
-          + "Failing to do so will block other apps from stopping ZK announcements and will be escalated for site-up "
-          + "stability.");
+          + "See instructions at go/onboardindis");
     }
 
     if (loadBalancerFactory.isIndisOnly() && cfg.xdsServer == null)
