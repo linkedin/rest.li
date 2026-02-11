@@ -211,23 +211,41 @@ public class SmoothRateLimiter implements AsyncRateLimiter
   }
 
   /**
-   * A event loop implementation that dispatches and executes {@link Callback}s from the queue based
-   * on available permits. If permits are exhausted, the event loop will reschedule itself to run
-   * at the next permit issuance time. If the callback queue is exhausted, the event loop will exit
-   * and need to be restarted externally.
+   * An event loop that dispatches {@link Callback}s from the pending queue at the configured rate.
    *
-   * If there are more tasks than the max in the buffer, they'll be immediately executed to align with the limit
-   * <p>
-   * Event loop is meant to be run in a single-threaded setting.
+   * <p>Permits are refreshed every {@link Rate#getPeriodRaw()} milliseconds using fractional
+   * arithmetic so that sub-millisecond periods accumulate correctly. For example, at 750 QPS
+   * with burst=1 the internal period is 1.333ms. The period boundary advances as
+   * 0 -> 1.333 -> 2.666 -> 4.0, producing exactly 3 dispatches per 4ms (= 750/s).</p>
+   *
+   * <p>If permits are exhausted the loop reschedules itself for the next period boundary.
+   * If the callback queue is drained the loop exits and is restarted by the next
+   * {@link #submit(Callback)} call. If the buffer exceeds the configured max, at least one
+   * dispatch is forced to prevent a leak.</p>
+   *
+   * <p>This class is designed to run on a single-threaded {@link ScheduledExecutorService}
+   * and requires no synchronization.</p>
    */
   private class EventLoop
   {
     private final Clock _clock;
 
-    private long _permitTime;
-    private int _permitAvailableCount;
-    private int _permitsInTimeFrame;
+    /**
+     * Fractional period boundary. Advanced by {@link Rate#getPeriodRaw()} on each refresh
+     * so that sub-millisecond remainders carry over instead of being rounded away.
+     */
+    private double _permitTime;
+
+    /** Number of permits available for dispatch in the current period (fractional). */
+    private double _permitAvailableCount;
+
+    /** Total permits issued when the current period started (used to track consumption on rate change). */
+    private double _permitsInTimeFrame;
+
+    /** Absolute time of the next already-scheduled loop tick (prevents duplicate scheduling). */
     private long _nextScheduled;
+
+    /** Earliest wall-clock time at which a dispatch is allowed (supports execution delay). */
     private long _delayUntil;
 
     EventLoop(Clock clock)
@@ -235,21 +253,25 @@ public class SmoothRateLimiter implements AsyncRateLimiter
       _clock = clock;
       _permitTime = _clock.currentTimeMillis();
       Rate rate = _rate;
-      _permitAvailableCount = rate.getEvents();
-      _permitsInTimeFrame = rate.getEvents();
+      _permitAvailableCount = rate.getEventsRaw();
+      _permitsInTimeFrame = rate.getEventsRaw();
     }
 
+    /**
+     * Adjusts permit state when the rate changes via {@link #setRate}. Permits already consumed
+     * in the current period are preserved so that the transition does not over- or under-grant.
+     */
     private void updateWithNewRate()
     {
       Rate rate = _rate;
 
-      // if we already used some permits in the current period, we want to use just the possible remaining ones
-      // before entering the next period
-      _permitAvailableCount = Math.max(rate.getEvents() - (_permitsInTimeFrame - _permitAvailableCount), 0);
-      _permitsInTimeFrame = rate.getEvents();
+      // Carry forward consumed permits: if we used some in the current period, the new rate
+      // should start with correspondingly fewer permits available
+      _permitAvailableCount = Math.max(rate.getEventsRaw() - (_permitsInTimeFrame - _permitAvailableCount), 0);
+      _permitsInTimeFrame = rate.getEventsRaw();
       long now = _clock.currentTimeMillis();
-      // ensure to recalculate the delay, discounting any time already delayed
-      long timeSinceLastPermit = now - _permitTime;
+      // Recalculate execution delay, discounting any time already waited
+      long timeSinceLastPermit = now - (long) _permitTime;
       _delayUntil = now + Math.max(0, (_executionTracker.getNextExecutionDelay(_rate) - timeSinceLastPermit));
 
       loop();
@@ -257,14 +279,17 @@ public class SmoothRateLimiter implements AsyncRateLimiter
 
     public void loop()
     {
-      // Checks if permits should be refreshed
       long now = _clock.currentTimeMillis();
       Rate rate = _rate;
-      if (now - _permitTime >= rate.getPeriod())
+
+      // Refresh permits when the current period has elapsed.
+      // _permitTime is advanced by exactly getPeriodRaw() (not snapped to 'now') so that
+      // fractional sub-millisecond remainders accumulate across periods.
+      if (rate.getPeriodRaw() > 0 && now - _permitTime >= rate.getPeriodRaw())
       {
-        _permitTime = now;
-        _permitAvailableCount = rate.getEvents();
-        _permitsInTimeFrame = rate.getEvents();
+        _permitTime += rate.getPeriodRaw();
+        _permitAvailableCount = rate.getEventsRaw();
+        _permitsInTimeFrame = rate.getEventsRaw();
         _delayUntil = now + _executionTracker.getNextExecutionDelay(_rate);
       }
 
@@ -273,10 +298,10 @@ public class SmoothRateLimiter implements AsyncRateLimiter
         return;
       }
 
+      // Buffer overflow safeguard: force at least one dispatch to prevent a leak
       if (_executionTracker.getPending() > _executionTracker.getMaxBuffered())
       {
-        // We prefer running above the limit then risking a leak
-        _permitAvailableCount++;
+        _permitAvailableCount = Math.max(_permitAvailableCount, 1.0);
       }
 
       if (_permitAvailableCount > 0 && _delayUntil <= now)
@@ -295,8 +320,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
         }
         catch (Throwable e)
         {
-          // Invoke the callback#onError on the current thread as the last resort. Executing the callback on the
-          // current thread also prevents the scheduler from polling another callback while the executor is busy.
+          // Last resort: invoke onError on the scheduler thread to avoid losing the callback
           if (callback == null)
           {
             LOG.error("Unrecoverable exception occurred while executing a null callback in executor.", e);
@@ -319,9 +343,12 @@ public class SmoothRateLimiter implements AsyncRateLimiter
       {
         try
         {
-          // avoids executing too many duplicate tasks
-          // reschedule next iteration of the event loop to the next delay, or the beginning of the next period
-          long nextRunRelativeTime = _permitAvailableCount > 0 ? _delayUntil - now : Math.max(0, _permitTime + rate.getPeriod() - now);
+          // Schedule for the next opportunity: either the execution delay (if permits are available)
+          // or the next period boundary. Math.ceil rounds fractional periods up to the next whole
+          // millisecond so the scheduler never fires before the boundary.
+          long nextRunRelativeTime = _permitAvailableCount > 0
+                  ? _delayUntil - now
+                  : Math.max(1, (long) Math.ceil(_permitTime + rate.getPeriodRaw() - now));
           long nextRunAbsolute = now + nextRunRelativeTime;
           if (_nextScheduled > nextRunAbsolute || _nextScheduled <= now)
           {
