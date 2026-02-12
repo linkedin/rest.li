@@ -1079,6 +1079,22 @@ public class RestClient implements Client {
     return (scatterGatherStrategy != null) && scatterGatherStrategy.needScatterGather(request);
   }
 
+  /**
+   * Checks if the given request needs scatter gather.
+   * @param request rest.li request
+   * @param requestContext request context
+   * @return true if the given request needs scatter gather
+   */
+  public <T> boolean needScatterGather(final Request<T> request, final RequestContext requestContext) {
+    // Similar to getScatterGatherStrategy, but without removing the attribute from the request context
+    ScatterGatherStrategy scatterGatherStrategy =
+        (ScatterGatherStrategy) requestContext.getLocalAttr(SCATTER_GATHER_STRATEGY);
+    if (scatterGatherStrategy == null) {
+      scatterGatherStrategy = _restLiClientConfig.getScatterGatherStrategy();
+    }
+    return needScatterGather(request, requestContext, scatterGatherStrategy);
+  }
+
 
   @SuppressWarnings("unchecked")
   private <K, T> void handleScatterGatherRequest(final Request<T> request,
