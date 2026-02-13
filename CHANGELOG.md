@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.85.2] - 2026-02-13
+Adding logging in D2 client for ZK usages
+
 ## [29.85.1] - 2026-02-12
 Add public needScatterGather method to RestClient
 
@@ -5958,7 +5961,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.1...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.2...master
+[29.85.2]: https://github.com/linkedin/rest.li/compare/v29.85.1...v29.85.2
 [29.85.1]: https://github.com/linkedin/rest.li/compare/v29.85.0...v29.85.1
 [29.85.0]: https://github.com/linkedin/rest.li/compare/v29.84.1...v29.85.0
 [29.84.1]: https://github.com/linkedin/rest.li/compare/v29.84.0...v29.84.1
