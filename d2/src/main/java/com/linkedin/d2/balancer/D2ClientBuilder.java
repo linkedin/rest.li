@@ -273,7 +273,7 @@ public class D2ClientBuilder
     // Adding logs to detect if any non-INDIS load balancer factory is being used.
     if (!loadBalancerFactory.isIndisOnly())
     {
-      LOG.error("[ACTION REQUIRED] Zookeeper-based D2 Client "
+      LOG.warn("[ACTION REQUIRED] Zookeeper-based D2 Client "
           + "is deprecated (unless talking to a locally-deployed ZK, or for testing EI ZK) and must be migrated to INDIS. "
           + "See instructions at go/onboardindis , application identity: ", D2Utils.getAppIdentityName());
     }
