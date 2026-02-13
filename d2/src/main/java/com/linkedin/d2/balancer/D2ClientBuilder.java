@@ -27,6 +27,7 @@ import com.linkedin.d2.balancer.clients.FailoutRedirectStrategy;
 import com.linkedin.d2.balancer.clients.DynamicClient;
 import com.linkedin.d2.balancer.clients.RequestTimeoutClient;
 import com.linkedin.d2.balancer.util.D2CalleeInfoRecorder;
+import com.linkedin.d2.discovery.util.D2Utils;
 import java.time.Duration;
 import javax.annotation.Nonnull;
 import com.linkedin.d2.balancer.clients.RetryClient;
@@ -267,6 +268,14 @@ public class D2ClientBuilder
       LOG.error("[ATTENTION!!! ACTION REQUIRED] Creating Zookeeper-reading raw D2 Client in app-custom code WILL CRASH"
           + " after OCTOBER 1st 2025. See instructions at go/onboardindis to find the code owner and migrate to INDIS.\n"
           + "Using in stack: {}", stackTrace);
+    }
+
+    // Adding logs to detect if any non-INDIS load balancer factory is being used.
+    if (!loadBalancerFactory.isIndisOnly())
+    {
+      LOG.warn("[ACTION REQUIRED] Zookeeper-based D2 Client "
+          + "is deprecated (unless talking to a locally-deployed ZK, or for testing EI ZK) and must be migrated to INDIS. "
+          + "See instructions at go/onboardindis , application identity: ", D2Utils.getAppIdentityName());
     }
 
     if (loadBalancerFactory.isIndisOnly() && cfg.xdsServer == null)
