@@ -90,14 +90,9 @@ public class ForwardingRestClient extends RestClient implements Client {
     _restClient.sendRestRequest(request, requestContext, callback);
   }
 
-  // RestClient only method
-  @Deprecated
   @Override
   public <T> boolean needScatterGather(Request<T> request, RequestContext requestContext) {
-    if (_restClient == null) {
-      throw new UnsupportedOperationException("needScatterGather is not supported by the ForwardingRestClient");
-    }
-    return _restClient.needScatterGather(request, requestContext);
+    return _client.needScatterGather(request, requestContext);
   }
 
   @Override

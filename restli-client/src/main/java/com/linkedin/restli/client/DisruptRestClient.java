@@ -183,6 +183,12 @@ public class DisruptRestClient implements Client
     _client.sendRequest(multiplexedRequest, requestContext, callback);
   }
 
+  @Override
+  public <T> boolean needScatterGather(Request<T> request, RequestContext requestContext)
+  {
+    return _client.needScatterGather(request, requestContext);
+  }
+
   /**
    * Evaluates if a {@link MultiplexedRequest} should be disrupted, against the {@link DisruptRestController}
    * and store the corresponding {@link DisruptContext} into the {@link RequestContext}. However,
