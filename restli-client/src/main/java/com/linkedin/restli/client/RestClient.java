@@ -1101,6 +1101,7 @@ public class RestClient implements Client {
    * @param requestContext request context
    * @return true if the given request needs scatter gather
    */
+  @Override
   public <T> boolean needScatterGather(final Request<T> request, final RequestContext requestContext) {
     // Similar to getScatterGatherStrategy, but without removing the attribute from the request context
     ScatterGatherStrategy scatterGatherStrategy =
