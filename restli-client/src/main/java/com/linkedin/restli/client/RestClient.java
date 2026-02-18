@@ -1079,6 +1079,39 @@ public class RestClient implements Client {
     return (scatterGatherStrategy != null) && scatterGatherStrategy.needScatterGather(request);
   }
 
+  /**
+   * Checks if the given request needs scatter gather.
+   *
+   * <p>This method returns {@code false} in any of the following cases:</p>
+   * <ul>
+   *   <li>This RestClient was not constructed with a D2 URI prefix ({@code d2://}).</li>
+   *   <li>The request context already has a target host hint set
+   *       (via {@link com.linkedin.d2.balancer.KeyMapper.TargetHostHints}).</li>
+   *   <li>No {@link ScatterGatherStrategy} is available.</li>
+   * </ul>
+   *
+   * <p>The scatter-gather strategy is resolved by first checking the request context for a
+   * {@link Client#SCATTER_GATHER_STRATEGY} local attribute, then falling back to the strategy
+   * configured on this client's {@link com.linkedin.restli.client.util.RestLiClientConfig}.
+   * Unlike the internal request-sending path, this method does <b>not</b> remove the strategy
+   * attribute from the request context, so it is safe to call multiple times or before sending
+   * the request.</p>
+   *
+   * @param request rest.li request
+   * @param requestContext request context
+   * @return true if the given request needs scatter gather
+   */
+  @Override
+  public <T> boolean needScatterGather(final Request<T> request, final RequestContext requestContext) {
+    // Similar to getScatterGatherStrategy, but without removing the attribute from the request context
+    ScatterGatherStrategy scatterGatherStrategy =
+        (ScatterGatherStrategy) requestContext.getLocalAttr(SCATTER_GATHER_STRATEGY);
+    if (scatterGatherStrategy == null) {
+      scatterGatherStrategy = _restLiClientConfig.getScatterGatherStrategy();
+    }
+    return needScatterGather(request, requestContext, scatterGatherStrategy);
+  }
+
 
   @SuppressWarnings("unchecked")
   private <K, T> void handleScatterGatherRequest(final Request<T> request,

@@ -91,6 +91,11 @@ public class ForwardingRestClient extends RestClient implements Client {
   }
 
   @Override
+  public <T> boolean needScatterGather(Request<T> request, RequestContext requestContext) {
+    return _client.needScatterGather(request, requestContext);
+  }
+
+  @Override
   public void shutdown(Callback<None> callback) {
     _client.shutdown(callback);
   }

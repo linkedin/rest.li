@@ -6,7 +6,7 @@ namespace com.linkedin.d2
  * New load balancing policies can be added by extending this union.
  */
 typeref LoadBalancingPolicyConfig = union[
-  RingHashLbConfig,
-  LeastRequestLbConfig,
-  RoundRobinLbConfig
+  ringHashLbConfig: RingHashLbConfig,
+  leastRequestLbConfig: LeastRequestLbConfig,
+  roundRobinLbConfig: RoundRobinLbConfig
 ]

@@ -167,6 +167,8 @@ public class PropertyKeys
   public static final String SSL_VALIDATION_STRINGS = "sslSessionValidationStrings";
   public static final String DARK_CLUSTER_MAP = "darkClusters";
   public static final String DELEGATED = "delegated";
+  public static final String OUTLIER_DETECTION_CONFIG = "outlierDetectionConfig";
+  public static final String LOAD_BALANCING_POLICIES = "loadBalancingPolicies";
 
   //used by transport client creation
   public static final String HTTP_POOL_WAITER_SIZE = HttpClientFactory.HTTP_POOL_WAITER_SIZE;
