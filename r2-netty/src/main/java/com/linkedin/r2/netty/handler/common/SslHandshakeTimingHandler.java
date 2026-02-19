@@ -72,6 +72,12 @@ public class SslHandshakeTimingHandler extends ChannelOutboundHandlerAdapter
 
   public static <T> TransportCallback<T> getSslTimingCallback(Channel channel, RequestContext requestContext, TransportCallback<T> callback)
   {
+    // For HTTP/2, the pool hands out child stream channels whose attributes are separate
+    // from the parent TCP channel. The server certificate is set on the parent channel by
+    // CertificateHandler, so we must read from the parent when the channel is a child
+    // stream channel.
+    final Channel parentChannel = channel.parent() != null ? channel.parent() : channel;
+
     return response -> {
       Long duration = channel.attr(SslHandshakeTimingHandler.SSL_HANDSHAKE_START_TIME).getAndSet(null);
       if (duration != null)
@@ -79,7 +85,7 @@ public class SslHandshakeTimingHandler extends ChannelOutboundHandlerAdapter
         TimingContextUtil.markTiming(requestContext, TIMING_KEY, duration);
       }
 
-      Certificate[] peerCerts = channel.attr(NettyChannelAttributes.SERVER_CERTIFICATES).getAndSet(null);
+      Certificate[] peerCerts = parentChannel.attr(NettyChannelAttributes.SERVER_CERTIFICATES).get();
       if (peerCerts != null)
       {
         requestContext.putLocalAttr(R2Constants.SERVER_CERT, peerCerts);
