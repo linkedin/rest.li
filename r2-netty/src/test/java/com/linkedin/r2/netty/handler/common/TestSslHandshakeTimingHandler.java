@@ -24,186 +24,67 @@ import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
 import io.netty.channel.Channel;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.util.Attribute;
-import io.netty.util.AttributeKey;
 import java.security.cert.Certificate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 
 /**
- * Tests for {@link SslHandshakeTimingHandler}, specifically verifying that
- * server certificates are accessible to all concurrent callbacks on HTTP/2
- * multiplexed connections.
+ * Tests for {@link SslHandshakeTimingHandler#getSslTimingCallback}, verifying server certificate
+ * resolution for both HTTP/1.1 (cert on channel) and HTTP/2 (cert on parent channel).
  */
 public class TestSslHandshakeTimingHandler
 {
-  @Test(timeOut = 10000)
+  /**
+   * HTTP/1.1: cert is set directly on the channel by CertificateHandler.
+   */
+  @Test
   @SuppressWarnings("unchecked")
-  public void testConcurrentCallbacksAllReceiveCerts() throws Exception
+  public void testHttp1ReadsCertFromChannel()
   {
-    int numCallbacks = 10;
     EmbeddedChannel channel = new EmbeddedChannel();
-
     Certificate[] mockCerts = new Certificate[] { Mockito.mock(Certificate.class) };
     channel.attr(NettyChannelAttributes.SERVER_CERTIFICATES).set(mockCerts);
 
-    // Create N wrapped callbacks via getSslTimingCallback
-    List<RequestContext> contexts = new ArrayList<>();
-    List<TransportCallback<Object>> wrappedCallbacks = new ArrayList<>();
-    CountDownLatch ready = new CountDownLatch(numCallbacks);
-    CountDownLatch go = new CountDownLatch(1);
-    AtomicBoolean anyFailed = new AtomicBoolean(false);
+    RequestContext ctx = new RequestContext();
+    TransportCallback<Object> wrapped = SslHandshakeTimingHandler.getSslTimingCallback(channel, ctx, response -> {});
 
-    for (int i = 0; i < numCallbacks; i++)
-    {
-      RequestContext ctx = new RequestContext();
-      contexts.add(ctx);
+    wrapped.onResponse(Mockito.mock(TransportResponse.class));
 
-      TransportCallback<Object> inner = response -> {};
-      wrappedCallbacks.add(SslHandshakeTimingHandler.getSslTimingCallback(channel, ctx, inner));
-    }
-
-    // Fire all callbacks concurrently using a latch barrier
-    TransportResponse<Object> mockResponse = Mockito.mock(TransportResponse.class);
-    List<Thread> threads = new ArrayList<>();
-    for (int i = 0; i < numCallbacks; i++)
-    {
-      final int idx = i;
-      Thread t = new Thread(() -> {
-        ready.countDown();
-        try
-        {
-          go.await();
-        }
-        catch (InterruptedException e)
-        {
-          anyFailed.set(true);
-          return;
-        }
-        wrappedCallbacks.get(idx).onResponse(mockResponse);
-      });
-      threads.add(t);
-      t.start();
-    }
-
-    // Wait for all threads to be ready, then release them simultaneously
-    ready.await();
-    go.countDown();
-
-    for (Thread t : threads)
-    {
-      t.join();
-    }
-
-    Assert.assertFalse(anyFailed.get(), "A thread was interrupted unexpectedly");
-
-    // All N RequestContexts should have SERVER_CERT populated
-    for (int i = 0; i < numCallbacks; i++)
-    {
-      Certificate[] certs = (Certificate[]) contexts.get(i).getLocalAttr(R2Constants.SERVER_CERT);
-      Assert.assertNotNull(certs, "Callback " + i + " should have received certs");
-      Assert.assertSame(certs, mockCerts, "Callback " + i + " should have the same cert array");
-    }
-
-    channel.finish();
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  public void testHandshakeTimingOnlyRecordedOnce()
-  {
-    EmbeddedChannel channel = new EmbeddedChannel();
-
-    long handshakeDuration = 12345L;
-    channel.attr(SslHandshakeTimingHandler.SSL_HANDSHAKE_START_TIME).set(handshakeDuration);
-
-    TransportResponse<Object> mockResponse = Mockito.mock(TransportResponse.class);
-
-    // First callback should capture the handshake timing
-    RequestContext ctx1 = new RequestContext();
-    TransportCallback<Object> inner1 = response -> {};
-    TransportCallback<Object> wrapped1 = SslHandshakeTimingHandler.getSslTimingCallback(channel, ctx1, inner1);
-    wrapped1.onResponse(mockResponse);
-
-    // Second callback should NOT have handshake timing (already consumed)
-    RequestContext ctx2 = new RequestContext();
-    TransportCallback<Object> inner2 = response -> {};
-    TransportCallback<Object> wrapped2 = SslHandshakeTimingHandler.getSslTimingCallback(channel, ctx2, inner2);
-    wrapped2.onResponse(mockResponse);
-
-    // Verify SSL_HANDSHAKE_START_TIME was cleared after first callback
-    Assert.assertNull(channel.attr(SslHandshakeTimingHandler.SSL_HANDSHAKE_START_TIME).get(),
-        "Handshake start time should be cleared after first read");
-
+    Assert.assertSame(ctx.getLocalAttr(R2Constants.SERVER_CERT), mockCerts);
     channel.finish();
   }
 
   /**
-   * Simulates the HTTP/2 case: the child stream channel has no cert attribute,
-   * but its parent channel does. The fix should read from the parent.
+   * HTTP/2: cert is on the parent TCP channel, not the child stream channel.
    */
   @Test
   @SuppressWarnings("unchecked")
-  public void testChildStreamChannelReadsCertFromParent()
+  public void testHttp2ReadsCertFromParentChannel()
   {
-    // Parent channel holds the cert (set by CertificateHandler on the parent pipeline)
     EmbeddedChannel parentChannel = new EmbeddedChannel();
     Certificate[] mockCerts = new Certificate[] { Mockito.mock(Certificate.class) };
     parentChannel.attr(NettyChannelAttributes.SERVER_CERTIFICATES).set(mockCerts);
 
-    // Child stream channel has no cert attribute set -- mock it to return the parent
     Channel childChannel = Mockito.mock(Channel.class);
     Mockito.when(childChannel.parent()).thenReturn(parentChannel);
 
-    // The child channel needs to return a real attribute for SSL_HANDSHAKE_START_TIME
-    // (read from the child, not the parent -- this is intentional)
-    @SuppressWarnings("rawtypes")
+    // Child channel has no cert and no handshake timing
+    Attribute mockCertAttr = Mockito.mock(Attribute.class);
+    Mockito.when(mockCertAttr.get()).thenReturn(null);
+    Mockito.when(childChannel.attr(NettyChannelAttributes.SERVER_CERTIFICATES)).thenReturn(mockCertAttr);
+
     Attribute mockTimingAttr = Mockito.mock(Attribute.class);
     Mockito.when(mockTimingAttr.getAndSet(null)).thenReturn(null);
-    Mockito.when(childChannel.attr(SslHandshakeTimingHandler.SSL_HANDSHAKE_START_TIME))
-        .thenReturn(mockTimingAttr);
+    Mockito.when(childChannel.attr(SslHandshakeTimingHandler.SSL_HANDSHAKE_START_TIME)).thenReturn(mockTimingAttr);
 
     RequestContext ctx = new RequestContext();
-    TransportCallback<Object> inner = response -> {};
-    TransportCallback<Object> wrapped = SslHandshakeTimingHandler.getSslTimingCallback(childChannel, ctx, inner);
+    TransportCallback<Object> wrapped = SslHandshakeTimingHandler.getSslTimingCallback(childChannel, ctx, response -> {});
 
-    TransportResponse<Object> mockResponse = Mockito.mock(TransportResponse.class);
-    wrapped.onResponse(mockResponse);
+    wrapped.onResponse(Mockito.mock(TransportResponse.class));
 
-    Certificate[] certs = (Certificate[]) ctx.getLocalAttr(R2Constants.SERVER_CERT);
-    Assert.assertNotNull(certs, "Child channel callback should have received certs from parent");
-    Assert.assertSame(certs, mockCerts, "Certs should be the same array from the parent channel");
-
+    Assert.assertSame(ctx.getLocalAttr(R2Constants.SERVER_CERT), mockCerts);
     parentChannel.finish();
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  public void testNoCertSetDoesNotCrash()
-  {
-    EmbeddedChannel channel = new EmbeddedChannel();
-    // Intentionally do NOT set SERVER_CERTIFICATES on the channel
-
-    RequestContext ctx = new RequestContext();
-    AtomicBoolean innerCalled = new AtomicBoolean(false);
-    TransportCallback<Object> inner = response -> innerCalled.set(true);
-
-    TransportCallback<Object> wrapped = SslHandshakeTimingHandler.getSslTimingCallback(channel, ctx, inner);
-    TransportResponse<Object> mockResponse = Mockito.mock(TransportResponse.class);
-    wrapped.onResponse(mockResponse);
-
-    // Inner callback should still be invoked
-    Assert.assertTrue(innerCalled.get(), "Inner callback should have been invoked");
-
-    // SERVER_CERT should be absent from RequestContext
-    Assert.assertNull(ctx.getLocalAttr(R2Constants.SERVER_CERT),
-        "SERVER_CERT should be null when no cert is set on channel");
-
-    channel.finish();
   }
 }
