@@ -4,18 +4,12 @@ package com.linkedin.d2.jmx;
  * Interface for OpenTelemetry metrics collection for the RelativeLoadBalancerStrategy.
  * This provider captures latency distributions, host counts, and other load balancer metrics.
  *
- * <p>Latency metrics are recorded as raw values in a histogram, allowing OTEL to automatically
- * compute statistical aggregations like percentiles (p50, p90, p99), averages, min, max, standard
- * deviation, and other derived metrics.</p>
- *
- * <p>All metrics are tagged with two dimensions: serviceName and scheme.</p>
+ * All metrics are tagged with two dimensions: serviceName and scheme.</p>
  */
 public interface RelativeLoadBalancerStrategyOtelMetricsProvider {
 
   /**
    * Records a host's average latency in the OpenTelemetry histogram.
-   * OTEL will automatically compute percentiles (p50, p90, p99), averages, min, max,
-   * and other derived statistics from the recorded values.
    *
    * @param serviceName the name of the service
    * @param scheme the load balancer scheme (e.g., "http", "https")
