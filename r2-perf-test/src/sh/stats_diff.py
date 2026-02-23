@@ -9,8 +9,8 @@ def usage():
   """
   Prints the script's usage guide.
   """
-  print "Usage: stats_diff.sh [file1: url or file path] [file2: url or file path] [output file] [report name] [column1 prefix] [column2 prefix]"
-  print "Example:./stats_diff.sh http://jenkins.n.com/job/R2_PERF_TEST/lastSuccessfulBuild/artifact/pegasus/publish/reports/perftest.json /home/usr/R2_PERF_TEST/pegasus/publish/reports/perftest.json /home/usr/R2_PERF_TEST/pegasus/publish/reports/perftest.diff \"Perf_Test_Results_DIFF_(previos_vs_current_run)\""
+  print "Usage: stats_diff.py [file1: url or file path] [file2: url or file path] [output file] [report name] [column1 prefix] [column2 prefix]"
+  print "Example:./stats_diff.py http://jenkins.n.com/job/R2_PERF_TEST/lastSuccessfulBuild/artifact/pegasus/publish/reports/perftest.json /home/usr/R2_PERF_TEST/pegasus/publish/reports/perftest.json /home/usr/R2_PERF_TEST/pegasus/publish/reports/perftest.diff \"Perf_Test_Results_DIFF_(previos_vs_current_run)\""
 
 def getData(source):
   data=''
@@ -68,7 +68,7 @@ def main():
   """
   This is how we are called.
   Example call:
-  ./stats_diff.sh https://hudson.corp.linkedin.com/job/SI_R2_PERF_PEGASUS_RELEASE/lastSuccessfulBuild/artifact/pegasus/publish/reports/perftest.json /export/home/tester/hudson/data/workspace/SI_R2_PERF_PEGASUS_RELEASE/pegasus/publish/reports/perftest.json /export/home/tester/hudson/data/workspace/SI_R2_PERF_PEGASUS_RELEASE/pegasus/publish/reports/perftest.diff 'Perf Test Results DIFF (previos vs current run)' 'Previous' 'Current'
+  ./stats_diff.py https://hudson.corp.linkedin.com/job/SI_R2_PERF_PEGASUS_RELEASE/lastSuccessfulBuild/artifact/pegasus/publish/reports/perftest.json /export/home/tester/hudson/data/workspace/SI_R2_PERF_PEGASUS_RELEASE/pegasus/publish/reports/perftest.json /export/home/tester/hudson/data/workspace/SI_R2_PERF_PEGASUS_RELEASE/pegasus/publish/reports/perftest.diff 'Perf Test Results DIFF (previos vs current run)' 'Previous' 'Current'
   """
 
   print(len(sys.argv))
