@@ -148,7 +148,6 @@ public class TrackerClientImpl implements TrackerClient
 
   /**
    * Sets a listener that will be invoked with the actual duration (in ms) of each completed call.
-   * This enables per-call latency recording rather than interval averages.
    */
   public void setPerCallDurationListener(Consumer<Long> listener)
   {

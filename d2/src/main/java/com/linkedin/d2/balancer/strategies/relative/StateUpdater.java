@@ -72,7 +72,7 @@ public class StateUpdater
   private ConcurrentMap<Integer, PartitionState> _partitionLoadBalancerStateMap;
   private int _firstPartitionId = -1;
   private final boolean _loadBalanceStreamException;
-  private final RelativeLoadBalancerStrategyOtelMetricsProvider _otelMetricsProvider;
+  private final RelativeLoadBalancerStrategyOtelMetricsProvider _relativeLbOtelMetricsProvider;
 
   @Deprecated
   StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
@@ -82,7 +82,7 @@ public class StateUpdater
                        String serviceName)
   {
     this(relativeStrategyProperties, quarantineManager, executorService, new ConcurrentHashMap<>(), listenerFactories,
-        serviceName, false, new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider());
+        serviceName, false);
   }
 
   StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
@@ -92,7 +92,7 @@ public class StateUpdater
       String serviceName, boolean loadBalanceStreamException)
   {
     this(relativeStrategyProperties, quarantineManager, executorService, new ConcurrentHashMap<>(), listenerFactories,
-        serviceName, loadBalanceStreamException, new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider());
+        serviceName, loadBalanceStreamException);
   }
 
   StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
@@ -100,10 +100,10 @@ public class StateUpdater
       ScheduledExecutorService executorService,
       List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories,
       String serviceName, boolean loadBalanceStreamException,
-      RelativeLoadBalancerStrategyOtelMetricsProvider otelMetricsProvider)
+      RelativeLoadBalancerStrategyOtelMetricsProvider relativeLbOtelMetricsProvider)
   {
     this(relativeStrategyProperties, quarantineManager, executorService, new ConcurrentHashMap<>(), listenerFactories,
-        serviceName, loadBalanceStreamException, otelMetricsProvider);
+        serviceName, loadBalanceStreamException, relativeLbOtelMetricsProvider);
   }
 
   StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
@@ -114,7 +114,7 @@ public class StateUpdater
       String serviceName)
   {
     this(relativeStrategyProperties, quarantineManager, executorService, partitionLoadBalancerStateMap,
-        listenerFactories, serviceName, false, new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider());
+        listenerFactories, serviceName, false);
   }
 
   StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
@@ -134,7 +134,7 @@ public class StateUpdater
       ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap,
       List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories,
       String serviceName, boolean loadBalanceStreamException,
-      RelativeLoadBalancerStrategyOtelMetricsProvider otelMetricsProvider)
+      RelativeLoadBalancerStrategyOtelMetricsProvider relativeLbOtelMetricsProvider)
   {
     _relativeStrategyProperties = relativeStrategyProperties;
     _quarantineManager = quarantineManager;
@@ -144,7 +144,7 @@ public class StateUpdater
     _lock = new ReentrantLock();
     _serviceName = serviceName;
     _scheme = NO_VALUE;
-    _otelMetricsProvider = otelMetricsProvider;
+    _relativeLbOtelMetricsProvider = relativeLbOtelMetricsProvider;
 
     scheduledFuture = executorService.scheduleWithFixedDelay(this::updateState, EXECUTOR_INITIAL_DELAY,
         _relativeStrategyProperties.getUpdateIntervalMs(),
@@ -283,14 +283,13 @@ public class StateUpdater
     PartitionState newPartitionState = new PartitionState(oldPartitionState);
 
     // Register per-call OTel latency listener for clients joining this partition for the first time.
-    // Must be done against oldPartitionState before updateBaseHealthScoreAndState mutates the state map.
     Map<TrackerClient, TrackerClientState> oldStateMap = oldPartitionState.getTrackerClientStateMap();
     for (TrackerClient trackerClient : trackerClients)
     {
       if (!oldStateMap.containsKey(trackerClient) && !trackerClient.doNotLoadBalance())
       {
         trackerClient.setPerCallDurationListener(
-            duration -> _otelMetricsProvider.recordHostLatency(_serviceName, _scheme, duration));
+            duration -> _relativeLbOtelMetricsProvider.recordHostLatency(_serviceName, _scheme, duration));
       }
     }
 
@@ -521,32 +520,31 @@ public class StateUpdater
   /**
    * Emit OpenTelemetry metrics for the current partition state.
    * Host latencies are emitted per-call via the listener registered in
-   * {@link #calculateBaseHealthScore}. This method only updates gauge metrics.
+   * {@link #calculateBaseHealthScore}.
    */
   private void emitOtelMetrics(PartitionState partitionState)
   {
-    System.out.println("emitOtelMetrics: " + partitionState);
     // Update gauge metrics
-    _otelMetricsProvider.updateTotalHostsInAllPartitionsCount(_serviceName, _scheme, getTotalHostsInAllPartitions());
+    _relativeLbOtelMetricsProvider.updateTotalHostsInAllPartitionsCount(_serviceName, _scheme, getTotalHostsInAllPartitions());
 
     // Count unhealthy hosts
     int unhealthyCount = (int) partitionState.getTrackerClientStateMap().values().stream()
         .filter(TrackerClientState::isUnhealthy)
         .count();
-    _otelMetricsProvider.updateUnhealthyHostsCount(_serviceName, _scheme, unhealthyCount);
+    _relativeLbOtelMetricsProvider.updateUnhealthyHostsCount(_serviceName, _scheme, unhealthyCount);
 
     // Count quarantine hosts
     Map<TrackerClient, LoadBalancerQuarantine> quarantineMap = partitionState.getQuarantineMap();
     int quarantineCount = (int) quarantineMap.values().stream()
         .filter(LoadBalancerQuarantine::isInQuarantine)
         .count();
-    _otelMetricsProvider.updateQuarantineHostsCount(_serviceName, _scheme, quarantineCount);
+    _relativeLbOtelMetricsProvider.updateQuarantineHostsCount(_serviceName, _scheme, quarantineCount);
 
     // Total points in hash ring
     int totalPoints = partitionState.getPointsMap().values().stream()
         .mapToInt(Integer::intValue)
         .sum();
-    _otelMetricsProvider.updateTotalPointsInHashRing(_serviceName, _scheme, totalPoints);
+    _relativeLbOtelMetricsProvider.updateTotalPointsInHashRing(_serviceName, _scheme, totalPoints);
   }
 
   @VisibleForTesting

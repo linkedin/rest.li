@@ -79,13 +79,12 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
   private final EventEmitter _eventEmitter;
   private final Clock _clock;
   private final boolean _loadBalanceStreamException;
-  private final RelativeLoadBalancerStrategyOtelMetricsProvider _otelMetricsProvider;
+  private final RelativeLoadBalancerStrategyOtelMetricsProvider _relativeLbOtelMetricsProvider;
 
   public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
       List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter, Clock clock)
   {
-    this(executorService, healthCheckOperations, stateListenerFactories, eventEmitter, clock, false,
-        new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider());
+    this(executorService, healthCheckOperations, stateListenerFactories, eventEmitter, clock, false);
   }
 
   public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
@@ -98,7 +97,7 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
 
   public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
       List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter, Clock clock,
-      boolean loadBalanceStreamException, RelativeLoadBalancerStrategyOtelMetricsProvider otelMetricsProvider)
+      boolean loadBalanceStreamException, RelativeLoadBalancerStrategyOtelMetricsProvider relativeLbOtelMetricsProvider)
   {
     _executorService = executorService;
     _healthCheckOperations = healthCheckOperations;
@@ -106,7 +105,7 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
     _eventEmitter = (eventEmitter == null) ? new NoopEventEmitter() : eventEmitter;
     _clock = clock;
     _loadBalanceStreamException = loadBalanceStreamException;
-    _otelMetricsProvider = (otelMetricsProvider == null) ? new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider() : otelMetricsProvider;
+    _relativeLbOtelMetricsProvider = (relativeLbOtelMetricsProvider == null) ? new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider() : relativeLbOtelMetricsProvider;
   }
 
 
@@ -135,7 +134,7 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
       listenerFactories.addAll(_stateListenerFactories);
     }
     return new StateUpdater(relativeStrategyProperties, quarantineManager, _executorService, listenerFactories,
-        serviceName, _loadBalanceStreamException, _otelMetricsProvider);
+        serviceName, _loadBalanceStreamException, _relativeLbOtelMetricsProvider);
   }
 
   private ClientSelector getClientSelector(D2RelativeStrategyProperties relativeStrategyProperties)
