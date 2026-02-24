@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.85.4] - 2026-02-19
+Fix server certificate lookup for HTTP/2 streams by checking both the channel and parent channel
+
 ## [29.85.3] - 2026-02-13
 Move needScatterGather method to Client interface
 
@@ -5964,7 +5967,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.3...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.4...master
+[29.85.4]: https://github.com/linkedin/rest.li/compare/v29.85.3...v29.85.4
 [29.85.3]: https://github.com/linkedin/rest.li/compare/v29.85.2...v29.85.3
 [29.85.2]: https://github.com/linkedin/rest.li/compare/v29.85.1...v29.85.2
 [29.85.1]: https://github.com/linkedin/rest.li/compare/v29.85.0...v29.85.1
