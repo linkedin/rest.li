@@ -175,60 +175,47 @@ public class PotentialClientsCacheTest
   }
 
   /**
-   * Asserts that the two load balancers route the same request to the same set of
-   * possible hosts. Since the strategy may pick different individual hosts due to ring
-   * randomness, we compare the potential client maps directly from the state.
+   * Discovers all routable hosts from a load balancer by calling getClient() with many
+   * different request URIs to hit different positions on the consistent hash ring.
+   * Each call exercises the full code path: the cached LB uses the precomputed cache,
+   * the uncached LB falls through to the original O(n) logic.
+   */
+  private Set<URI> drainAllRoutableHosts(SimpleLoadBalancer lb, String service)
+  {
+    Set<URI> hosts = new HashSet<>();
+    // Use many different request URIs to hit different ring positions and discover all hosts.
+    // With degrader strategy's consistent hash ring, different URI suffixes hash to different points.
+    for (int i = 0; i < 1000; i++)
+    {
+      try
+      {
+        URIRequest request = new URIRequest("d2://" + service + "/resource/" + i);
+        RewriteLoadBalancerClient client =
+            (RewriteLoadBalancerClient) lb.getClient(request, new RequestContext());
+        hosts.add(client.getUri());
+      }
+      catch (ServiceUnavailableException e)
+      {
+        // All hosts degraded/dropped — stop
+        break;
+      }
+    }
+    return hosts;
+  }
+
+  /**
+   * Asserts that the cached and uncached load balancers produce the same set of
+   * routable hosts. Exercises both real code paths end-to-end by exhaustively
+   * draining all hosts from each LB via repeated getClient() calls.
    */
   private void assertPotentialClientsEquivalent(LBSetup cached, LBSetup uncached,
                                                 String service, String scheme, int partitionId)
   {
-    Map<URI, TrackerClient> cachedClients = cached.state.getPotentialClients(service, scheme, partitionId);
-    // The uncached state returns null (cache disabled) — build the set from _trackerClients instead
-    // by querying the load balancer which exercises the fallback O(n) path.
-    // We compare the URI key sets since the TrackerClient instances differ between the two states.
-    assertNotNull(cachedClients, "Cached potential clients should not be null when cache is enabled");
+    Set<URI> cachedHosts = drainAllRoutableHosts(cached.loadBalancer, service);
+    Set<URI> uncachedHosts = drainAllRoutableHosts(uncached.loadBalancer, service);
 
-    // Get the uncached set by querying through the uncached load balancer.
-    // The uncached state.getPotentialClients returns null, so we use the tracker clients as ground truth.
-    Map<URI, TrackerClient> uncachedTrackerClients = uncached.state.getTrackerClients().get(service);
-
-    // Both should have the same URI key set (modulo banned URIs which are filtered identically)
-    assertEquals(cachedClients.keySet(), filterForPartition(uncachedTrackerClients, cached, service, scheme, partitionId),
-        "Cached and uncached potential clients should have the same URI set");
-  }
-
-  /**
-   * Filters the uncached tracker clients to match what getPotentialClients would produce:
-   * only URIs in the given scheme+partition, excluding banned URIs.
-   */
-  private Set<URI> filterForPartition(Map<URI, TrackerClient> allClients, LBSetup setup,
-                                      String service, String scheme, int partitionId)
-  {
-    if (allClients == null)
-    {
-      return Collections.emptySet();
-    }
-    ServiceProperties serviceProps = setup.state.getServiceProperties().get(service).getProperty();
-    String cluster = serviceProps.getClusterName();
-    UriProperties uriProps = setup.state.getUriProperties().get(cluster).getProperty();
-    ClusterProperties clusterProps = setup.state.getClusterInfo().get(cluster)
-        .getClusterPropertiesItem().getProperty();
-
-    Set<URI> possibleUris = uriProps.getUriBySchemeAndPartition(scheme, partitionId);
-    if (possibleUris == null)
-    {
-      return Collections.emptySet();
-    }
-
-    Set<URI> result = new HashSet<>();
-    for (URI uri : possibleUris)
-    {
-      if (!serviceProps.isBanned(uri) && !clusterProps.isBanned(uri) && allClients.containsKey(uri))
-      {
-        result.add(uri);
-      }
-    }
-    return result;
+    assertEquals(cachedHosts, uncachedHosts,
+        "Cached and uncached load balancers should route to the same set of hosts");
   }
 
   // ─── Data Providers ───────────────────────────────────────────────────────
@@ -444,28 +431,19 @@ public class PotentialClientsCacheTest
     cached.populate(cluster, service, clusterProps, serviceProps, uriProps);
     uncached.populate(cluster, service, clusterProps, serviceProps, uriProps);
 
-    // Both load balancers should be able to route requests successfully.
-    // We verify the selected host is in the expected set (not banned).
-    URIRequest request = new URIRequest("d2://" + service + "/resource");
-    Set<URI> expectedUris = new HashSet<>(allUris);
-    expectedUris.removeAll(clusterBanned);
-    expectedUris.removeAll(serviceBanned);
-    // Transform to expected form with path appended
-    Set<URI> expectedWithPath = new HashSet<>();
-    for (URI uri : expectedUris)
-    {
-      expectedWithPath.add(URI.create(uri + "/" + service));
-    }
+    // Exhaustively drain all routable hosts from both LBs and verify the sets match.
+    // This exercises the full getClient() → getPotentialClients() → strategy path
+    // end-to-end through both the cached and uncached code paths.
+    Set<URI> cachedHosts = drainAllRoutableHosts(cached.loadBalancer, service);
+    Set<URI> uncachedHosts = drainAllRoutableHosts(uncached.loadBalancer, service);
 
-    RewriteLoadBalancerClient cachedClient =
-        (RewriteLoadBalancerClient) cached.loadBalancer.getClient(request, new RequestContext());
-    assertTrue(expectedWithPath.contains(cachedClient.getUri()),
-        "Cached LB selected " + cachedClient.getUri() + " which is not in expected set " + expectedWithPath);
+    assertEquals(cachedHosts, uncachedHosts,
+        "Cached and uncached LBs should route to the exact same set of hosts");
 
-    RewriteLoadBalancerClient uncachedClient =
-        (RewriteLoadBalancerClient) uncached.loadBalancer.getClient(request, new RequestContext());
-    assertTrue(expectedWithPath.contains(uncachedClient.getUri()),
-        "Uncached LB selected " + uncachedClient.getUri() + " which is not in expected set " + expectedWithPath);
+    // Also verify the count matches expected (not banned)
+    int expectedCount = numUris - Math.min(numClusterBanned, numUris) - (serviceEnd - serviceStart);
+    assertEquals(cachedHosts.size(), expectedCount,
+        "Expected " + expectedCount + " routable hosts");
   }
 
   @Test
