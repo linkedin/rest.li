@@ -325,6 +325,47 @@ public class PotentialClientsCacheTest
   }
 
   @Test
+  public void testStalePartitionRemovedOnUriChange() throws Exception
+  {
+    String cluster = "cluster-1";
+    String service = "foo";
+    String scheme = PropertyKeys.HTTP_SCHEME;
+
+    LBSetup setup = new LBSetup(true, _d2Executor);
+
+    ClusterProperties clusterProps = new ClusterProperties(cluster);
+    ServiceProperties serviceProps = new ServiceProperties(service, cluster, "/" + service,
+        Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+        Collections.singletonList(scheme), null);
+
+    // Start with URIs on partition 0 and partition 1
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
+    uriData.put(URI.create("http://host0.example.com:8080"),
+        Collections.singletonMap(0, new PartitionData(1d)));
+    uriData.put(URI.create("http://host1.example.com:8080"),
+        Collections.singletonMap(1, new PartitionData(1d)));
+    setup.populate(cluster, service, clusterProps, serviceProps,
+        new UriProperties(cluster, uriData));
+
+    assertNotNull(setup.state.getPotentialClients(service, scheme, 0),
+        "Partition 0 should be in cache");
+    assertNotNull(setup.state.getPotentialClients(service, scheme, 1),
+        "Partition 1 should be in cache");
+    assertEquals(setup.state.getPotentialClients(service, scheme, 0).size(), 1);
+    assertEquals(setup.state.getPotentialClients(service, scheme, 1).size(), 1);
+
+    // Update: only partition 0 remains, partition 1 is removed
+    setup.uriRegistry.put(cluster, buildUriProperties(cluster,
+        Collections.singletonList(URI.create("http://host0.example.com:8080")), 0));
+
+    assertNotNull(setup.state.getPotentialClients(service, scheme, 0),
+        "Partition 0 should still be in cache");
+    assertEquals(setup.state.getPotentialClients(service, scheme, 0).size(), 1);
+    assertNull(setup.state.getPotentialClients(service, scheme, 1),
+        "Partition 1 should be removed from cache after URI update removed it");
+  }
+
+  @Test
   public void testCacheRebuiltOnBanListChange() throws Exception
   {
     String cluster = "cluster-1";
