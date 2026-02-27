@@ -996,6 +996,20 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
                                                   int partitionId,
                                                   long version)
   {
+    // Fast path: use the precomputed cache from SimpleLoadBalancerState (O(1) lookup).
+    // The cache is rebuilt on state change events (URI/service/cluster property updates).
+    Map<URI, TrackerClient> cached = _state.getPotentialClients(serviceName, scheme, partitionId);
+    if (cached != null)
+    {
+      debug(_log,
+          "got clients to load balance for ",
+          serviceName,
+          " from cache: ",
+          cached);
+      return new TrackerClientSubsetItem(false, cached);
+    }
+
+    // Fallback for non-SimpleLoadBalancerState implementations: existing O(n) logic.
     Set<URI> possibleUris = uris.getUriBySchemeAndPartition(scheme, partitionId);
     Map<URI, TrackerClient> clientsToBalance = Collections.emptyMap();
     boolean shouldForceUpdate = false;
