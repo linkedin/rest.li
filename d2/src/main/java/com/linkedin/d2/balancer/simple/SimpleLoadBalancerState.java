@@ -60,7 +60,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
@@ -153,11 +152,15 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final boolean _enablePotentialClientsCache;
 
   /**
-   * Precomputed map of potential clients for load balancing, keyed by (serviceName, scheme, partitionId).
+   * Precomputed map of potential clients for load balancing.
+   * Structure: serviceName -> scheme -> partitionId -> Map<URI, TrackerClient>
    * Rebuilt eagerly on state change events (URI/service/cluster property updates).
    * Read by SimpleLoadBalancer on the request path for O(1) client lookups.
+   *
+   * On rebuild, the entire inner map for a service is replaced atomically, which
+   * naturally removes stale entries for partitions that no longer exist.
    */
-  private final ConcurrentMap<PotentialClientsKey, Map<URI, TrackerClient>> _potentialClientsCache;
+  private final ConcurrentMap<String, Map<String, Map<Integer, Map<URI, TrackerClient>>>> _potentialClientsCache;
 
   /*
    * Concurrency considerations:
@@ -864,7 +867,17 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     {
       return null;
     }
-    return _potentialClientsCache.get(new PotentialClientsKey(serviceName, scheme, partitionId));
+    Map<String, Map<Integer, Map<URI, TrackerClient>>> serviceCache = _potentialClientsCache.get(serviceName);
+    if (serviceCache == null)
+    {
+      return null;
+    }
+    Map<Integer, Map<URI, TrackerClient>> schemeCache = serviceCache.get(scheme);
+    if (schemeCache == null)
+    {
+      return null;
+    }
+    return schemeCache.get(partitionId);
   }
 
   /**
@@ -936,10 +949,14 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     boolean subsettingEnabled = serviceProps.isEnableClusterSubsetting();
     int minSubsetSize = serviceProps.getMinClusterSubsetSize();
 
+    // Build the complete nested map for this service, then replace atomically.
+    // This naturally removes stale entries for partitions/schemes that no longer exist.
+    Map<String, Map<Integer, Map<URI, TrackerClient>>> serviceCache = new HashMap<>();
     Map<String, Map<Integer, Set<URI>>> schemePartitionMap = uriProps.getUrisBySchemeAndPartition();
     for (Map.Entry<String, Map<Integer, Set<URI>>> schemeEntry : schemePartitionMap.entrySet())
     {
       String scheme = schemeEntry.getKey();
+      Map<Integer, Map<URI, TrackerClient>> partitionCache = new HashMap<>();
       for (Map.Entry<Integer, Set<URI>> partitionEntry : schemeEntry.getValue().entrySet())
       {
         int partitionId = partitionEntry.getKey();
@@ -958,10 +975,11 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
               trackerClients, possibleUris, hasBans);
         }
 
-        _potentialClientsCache.put(new PotentialClientsKey(serviceName, scheme, partitionId),
-            Collections.unmodifiableMap(result));
+        partitionCache.put(partitionId, Collections.unmodifiableMap(result));
       }
+      serviceCache.put(scheme, Collections.unmodifiableMap(partitionCache));
     }
+    _potentialClientsCache.put(serviceName, Collections.unmodifiableMap(serviceCache));
   }
 
   private Map<URI, TrackerClient> buildPotentialClientsNoSubsetting(
@@ -1038,7 +1056,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     {
       return;
     }
-    _potentialClientsCache.keySet().removeIf(key -> key._serviceName.equals(serviceName));
+    _potentialClientsCache.remove(serviceName);
   }
 
   /**
@@ -1606,46 +1624,6 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     for (LoadBalancerClusterListener clusterListener : _clusterListeners)
     {
       clusterListener.onClusterRemoved(clusterName);
-    }
-  }
-
-  /**
-   * Composite key for the potential clients cache: (serviceName, scheme, partitionId).
-   */
-  static final class PotentialClientsKey
-  {
-    final String _serviceName;
-    final String _scheme;
-    final int _partitionId;
-
-    PotentialClientsKey(String serviceName, String scheme, int partitionId)
-    {
-      _serviceName = serviceName;
-      _scheme = scheme;
-      _partitionId = partitionId;
-    }
-
-    @Override
-    public boolean equals(Object o)
-    {
-      if (this == o)
-      {
-        return true;
-      }
-      if (!(o instanceof PotentialClientsKey))
-      {
-        return false;
-      }
-      PotentialClientsKey that = (PotentialClientsKey) o;
-      return _partitionId == that._partitionId
-          && Objects.equals(_serviceName, that._serviceName)
-          && Objects.equals(_scheme, that._scheme);
-    }
-
-    @Override
-    public int hashCode()
-    {
-      return Objects.hash(_serviceName, _scheme, _partitionId);
     }
   }
 }
