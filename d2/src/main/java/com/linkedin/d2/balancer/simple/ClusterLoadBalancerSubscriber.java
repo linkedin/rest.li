@@ -17,10 +17,12 @@
 package com.linkedin.d2.balancer.simple;
 
 import com.linkedin.d2.balancer.LoadBalancerState;
+import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.config.CanaryDistributionStrategyConverter;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.ClusterStoreProperties;
 import com.linkedin.d2.balancer.properties.FailoutProperties;
+import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorFactory;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessorRegistry;
@@ -69,6 +71,11 @@ class ClusterLoadBalancerSubscriber extends
       if (_simpleLoadBalancerState.getClusterInfo().put(listenTo, newClusterInfoItem) == null) {
         info(_log, "getting new ClusterInfoItem for cluster ", listenTo, ": ", newClusterInfoItem);
       }
+
+      // Rebuild routing snapshots with updated cluster properties
+      LoadBalancerStateItem<UriProperties> uriItem = _simpleLoadBalancerState.getUriProperties(listenTo);
+      UriProperties uriProperties = uriItem == null ? null : uriItem.getProperty();
+      _simpleLoadBalancerState.rebuildRoutingSnapshotsForCluster(listenTo, uriProperties);
 
       _simpleLoadBalancerState.notifyListenersOnClusterInfoUpdates(newClusterInfoItem);
       // notify the cluster listeners only when discoveryProperties is not null, because we don't

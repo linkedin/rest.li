@@ -122,6 +122,8 @@ class UriLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<UriProper
         }
       }
 
+      // Rebuild routing snapshots before publishing the new LoadBalancerStateItem
+      _simpleLoadBalancerState.rebuildRoutingSnapshotsForCluster(clusterName, uriProperties);
     }
 
     // replace the URI properties
