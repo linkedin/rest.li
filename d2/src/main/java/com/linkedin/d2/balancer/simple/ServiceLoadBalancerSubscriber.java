@@ -98,6 +98,8 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
       }
 
       serviceNames.add(pickedProperties.getServiceName());
+
+      _simpleLoadBalancerState.rebuildPotentialClientsForService(pickedProperties.getServiceName());
     }
     else if (oldServicePropertiesItem != null)
     {
@@ -147,6 +149,7 @@ class ServiceLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<Servi
       }
 
       _simpleLoadBalancerState.notifyListenersOnServicePropertiesRemovals(serviceItem);
+      _simpleLoadBalancerState.invalidatePotentialClientsForService(listenTo);
       _simpleLoadBalancerState.shutdownClients(listenTo);
 
     }

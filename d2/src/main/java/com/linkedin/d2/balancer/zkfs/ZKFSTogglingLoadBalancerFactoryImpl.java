@@ -98,6 +98,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   private final ServiceDiscoveryEventEmitter _serviceDiscoveryEventEmitter;
   private final DualReadStateManager _dualReadStateManager;
   private final boolean _loadBalanceStreamException;
+  private final boolean _enablePotentialClientsCache;
   private final boolean _isRawD2Client;
 
   private static final Logger _log = LoggerFactory.getLogger(ZKFSTogglingLoadBalancerFactoryImpl.class);
@@ -369,7 +370,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
          sslContext, sslParameters, isSSLEnabled, clientServicesConfig, useNewEphemeralStoreWatcher, partitionAccessorRegistry,
          enableSaveUriDataOnDisk, sslSessionValidatorFactory, d2ClientJmxManager, zookeeperReadWindowMs,
          deterministicSubsettingMetadataProvider, failoutConfigProviderFactory, canaryDistributionProvider,
-         serviceDiscoveryEventEmitter, dualReadStateManager, false, false);
+         serviceDiscoveryEventEmitter, dualReadStateManager, false, false, false);
   }
 
   public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
@@ -396,6 +397,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
       ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter,
       DualReadStateManager dualReadStateManager,
       boolean loadBalanceStreamException,
+      boolean enablePotentialClientsCache,
       boolean isRawD2Client)
   {
     _factory = factory;
@@ -422,6 +424,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     _serviceDiscoveryEventEmitter = serviceDiscoveryEventEmitter;
     _dualReadStateManager = dualReadStateManager;
     _loadBalanceStreamException = loadBalanceStreamException;
+    _enablePotentialClientsCache = enablePotentialClientsCache;
     _isRawD2Client = isRawD2Client;
   }
 
@@ -484,7 +487,8 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     SimpleLoadBalancerState state = new SimpleLoadBalancerState(
         executorService, uriBus, clusterBus, serviceBus, _clientFactories, _loadBalancerStrategyFactories, _sslContext,
         _sslParameters, _isSSLEnabled, _partitionAccessorRegistry, _sslSessionValidatorFactory,
-        _deterministicSubsettingMetadataProvider, _canaryDistributionProvider, _loadBalanceStreamException);
+        _deterministicSubsettingMetadataProvider, _canaryDistributionProvider, _loadBalanceStreamException,
+        _enablePotentialClientsCache);
     _d2ClientJmxManager.setSimpleLoadBalancerState(state);
 
     SimpleLoadBalancer balancer = new SimpleLoadBalancer(state, _lbTimeout, _lbTimeoutUnit, executorService, _failoutConfigProviderFactory);
