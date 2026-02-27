@@ -71,6 +71,7 @@ class ClusterLoadBalancerSubscriber extends
       }
 
       _simpleLoadBalancerState.notifyListenersOnClusterInfoUpdates(newClusterInfoItem);
+      _simpleLoadBalancerState.rebuildPotentialClientsForCluster(listenTo);
       // notify the cluster listeners only when discoveryProperties is not null, because we don't
       // want to count initialization (just because listenToCluster is called)
       _simpleLoadBalancerState.notifyClusterListenersOnAdd(listenTo);
@@ -87,6 +88,7 @@ class ClusterLoadBalancerSubscriber extends
   @Override
   protected void handleRemove(final String listenTo)
   {
+    _simpleLoadBalancerState.invalidatePotentialClientsForCluster(listenTo);
     ClusterInfoItem clusterInfoRemoved = _simpleLoadBalancerState.getClusterInfo().remove(listenTo);
     _simpleLoadBalancerState.notifyListenersOnClusterInfoRemovals(clusterInfoRemoved);
     _simpleLoadBalancerState.notifyClusterListenersOnRemove(listenTo);

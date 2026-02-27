@@ -240,6 +240,7 @@ public class D2ClientBuilder
                   _config.subscribeToUriGlobCollection,
                   _config._xdsServerMetricsProvider,
                   _config.loadBalanceStreamException,
+                  _config.enablePotentialClientsCache,
                   _config.xdsInitialResourceVersionsEnabled,
                   _config.disableDetectLiRawD2Client,
                   _config.isLiRawD2Client,
@@ -874,6 +875,11 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setLoadBalanceStreamException(boolean loadBalanceStreamException) {
     _config.loadBalanceStreamException = loadBalanceStreamException;
+    return this;
+  }
+
+  public D2ClientBuilder setEnablePotentialClientsCache(boolean enablePotentialClientsCache) {
+    _config.enablePotentialClientsCache = enablePotentialClientsCache;
     return this;
   }
 

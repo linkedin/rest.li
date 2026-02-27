@@ -146,6 +146,11 @@ public class UriProperties
     return _uriSpecificProperties;
   }
 
+  public Map<String, Map<Integer, Set<URI>>> getUrisBySchemeAndPartition()
+  {
+    return _urisBySchemeAndPartition;
+  }
+
   public Set<URI> getUriBySchemeAndPartition(String scheme, int partitionId)
   {
     Map<Integer, Set<URI>> schemeUris = _urisBySchemeAndPartition.get(scheme);

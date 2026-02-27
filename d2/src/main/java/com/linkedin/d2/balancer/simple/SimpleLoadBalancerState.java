@@ -27,6 +27,7 @@ import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.clients.TrackerClientFactory;
 import com.linkedin.d2.balancer.properties.ClusterProperties;
 import com.linkedin.d2.balancer.properties.FailoutProperties;
+import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
@@ -60,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -147,6 +149,18 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final SubsettingState _subsettingState;
   private final CanaryDistributionProvider _canaryDistributionProvider;
   private final boolean _loadBalanceStreamException;
+  private final boolean _enablePotentialClientsCache;
+
+  /**
+   * Precomputed map of potential clients for load balancing.
+   * Structure: serviceName -> scheme -> partitionId -> Map<URI, TrackerClient>
+   * Rebuilt eagerly on state change events (URI/service/cluster property updates).
+   * Read by SimpleLoadBalancer on the request path for O(1) client lookups.
+   *
+   * On rebuild, the entire inner map for a service is replaced atomically, which
+   * naturally removes stale entries for partitions that no longer exist.
+   */
+  private final ConcurrentMap<String, Map<String, Map<Integer, Map<URI, TrackerClient>>>> _potentialClientsCache;
 
   /*
    * Concurrency considerations:
@@ -336,6 +350,27 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       CanaryDistributionProvider canaryDistributionProvider,
       boolean loadBalanceStreamException)
   {
+    this(executorService, uriBus, clusterBus, serviceBus, clientFactories, loadBalancerStrategyFactories, sslContext,
+        sslParameters, isSSLEnabled, partitionAccessorRegistry, sessionValidatorFactory,
+        deterministicSubsettingMetadataProvider, canaryDistributionProvider, loadBalanceStreamException, false);
+  }
+
+  public SimpleLoadBalancerState(ScheduledExecutorService executorService,
+      PropertyEventBus<UriProperties> uriBus,
+      PropertyEventBus<ClusterProperties> clusterBus,
+      PropertyEventBus<ServiceProperties> serviceBus,
+      Map<String, TransportClientFactory> clientFactories,
+      Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+      SSLContext sslContext,
+      SSLParameters sslParameters,
+      boolean isSSLEnabled,
+      PartitionAccessorRegistry partitionAccessorRegistry,
+      SslSessionValidatorFactory sessionValidatorFactory,
+      DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
+      CanaryDistributionProvider canaryDistributionProvider,
+      boolean loadBalanceStreamException,
+      boolean enablePotentialClientsCache)
+  {
     _executor = executorService;
     _uriProperties = new ConcurrentHashMap<>();
     _clusterInfo = new ConcurrentHashMap<>();
@@ -371,6 +406,8 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     }
     _canaryDistributionProvider = canaryDistributionProvider;
     _loadBalanceStreamException = loadBalanceStreamException;
+    _enablePotentialClientsCache = enablePotentialClientsCache;
+    _potentialClientsCache = new ConcurrentHashMap<>();
   }
 
   public void register(final SimpleLoadBalancerStateListener listener)
@@ -821,6 +858,224 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     }
 
     return trackerClient;
+  }
+
+  @Override
+  public Map<URI, TrackerClient> getPotentialClients(String serviceName, String scheme, int partitionId)
+  {
+    if (!_enablePotentialClientsCache)
+    {
+      return null;
+    }
+    Map<String, Map<Integer, Map<URI, TrackerClient>>> serviceCache = _potentialClientsCache.get(serviceName);
+    if (serviceCache == null)
+    {
+      return null;
+    }
+    Map<Integer, Map<URI, TrackerClient>> schemeCache = serviceCache.get(scheme);
+    if (schemeCache == null)
+    {
+      return null;
+    }
+    return schemeCache.get(partitionId);
+  }
+
+  /**
+   * Rebuilds the potential clients cache for all services on the given cluster.
+   * Called from subscriber callbacks after URI or cluster properties change.
+   */
+  void rebuildPotentialClientsForCluster(String clusterName)
+  {
+    if (!_enablePotentialClientsCache)
+    {
+      return;
+    }
+    Set<String> serviceNames = _servicesPerCluster.get(clusterName);
+    if (serviceNames != null)
+    {
+      for (String serviceName : serviceNames)
+      {
+        rebuildPotentialClientsForService(serviceName);
+      }
+    }
+  }
+
+  /**
+   * Rebuilds the potential clients cache for the given service across all scheme/partition combos.
+   * This performs the same filtering (banned URIs, subsetting) that getPotentialClients() in
+   * SimpleLoadBalancer previously did on every request, but does it once on state change.
+   */
+  void rebuildPotentialClientsForService(String serviceName)
+  {
+    if (!_enablePotentialClientsCache)
+    {
+      return;
+    }
+    LoadBalancerStateItem<ServiceProperties> serviceItem = _serviceProperties.get(serviceName);
+    if (serviceItem == null || serviceItem.getProperty() == null)
+    {
+      invalidatePotentialClientsForService(serviceName);
+      return;
+    }
+    ServiceProperties serviceProps = serviceItem.getProperty();
+    String clusterName = serviceProps.getClusterName();
+
+    ClusterInfoItem clusterInfo = _clusterInfo.get(clusterName);
+    if (clusterInfo == null || clusterInfo.getClusterPropertiesItem() == null
+        || clusterInfo.getClusterPropertiesItem().getProperty() == null)
+    {
+      invalidatePotentialClientsForService(serviceName);
+      return;
+    }
+    ClusterProperties clusterProps = clusterInfo.getClusterPropertiesItem().getProperty();
+
+    LoadBalancerStateItem<UriProperties> uriItem = _uriProperties.get(clusterName);
+    if (uriItem == null || uriItem.getProperty() == null)
+    {
+      invalidatePotentialClientsForService(serviceName);
+      return;
+    }
+    UriProperties uriProps = uriItem.getProperty();
+    long version = uriItem.getVersion();
+
+    Map<URI, TrackerClient> trackerClients = _trackerClients.get(serviceName);
+    if (trackerClients == null)
+    {
+      invalidatePotentialClientsForService(serviceName);
+      return;
+    }
+
+    boolean hasBans = !serviceProps.getBanned().isEmpty() || !clusterProps.getBannedUris().isEmpty();
+    boolean subsettingEnabled = serviceProps.isEnableClusterSubsetting();
+    int minSubsetSize = serviceProps.getMinClusterSubsetSize();
+
+    // Build the complete nested map for this service, then replace atomically.
+    // This naturally removes stale entries for partitions/schemes that no longer exist.
+    Map<String, Map<Integer, Map<URI, TrackerClient>>> serviceCache = new HashMap<>();
+    Map<String, Map<Integer, Set<URI>>> schemePartitionMap = uriProps.getUrisBySchemeAndPartition();
+    for (Map.Entry<String, Map<Integer, Set<URI>>> schemeEntry : schemePartitionMap.entrySet())
+    {
+      String scheme = schemeEntry.getKey();
+      Map<Integer, Map<URI, TrackerClient>> partitionCache = new HashMap<>();
+      for (Map.Entry<Integer, Set<URI>> partitionEntry : schemeEntry.getValue().entrySet())
+      {
+        int partitionId = partitionEntry.getKey();
+        Set<URI> possibleUris = partitionEntry.getValue();
+
+        Map<URI, TrackerClient> result;
+
+        if (subsettingEnabled)
+        {
+          result = buildPotentialClientsSubsetting(serviceName, serviceProps, clusterProps,
+              uriProps, trackerClients, possibleUris, partitionId, minSubsetSize, version, hasBans);
+        }
+        else
+        {
+          result = buildPotentialClientsNoSubsetting(serviceProps, clusterProps,
+              trackerClients, possibleUris, hasBans);
+        }
+
+        partitionCache.put(partitionId, Collections.unmodifiableMap(result));
+      }
+      serviceCache.put(scheme, Collections.unmodifiableMap(partitionCache));
+    }
+    _potentialClientsCache.put(serviceName, Collections.unmodifiableMap(serviceCache));
+  }
+
+  private Map<URI, TrackerClient> buildPotentialClientsNoSubsetting(
+      ServiceProperties serviceProps, ClusterProperties clusterProps,
+      Map<URI, TrackerClient> trackerClients, Set<URI> possibleUris, boolean hasBans)
+  {
+    Map<URI, TrackerClient> result = new HashMap<>(possibleUris.size());
+    for (URI uri : possibleUris)
+    {
+      if (hasBans && (serviceProps.isBanned(uri) || clusterProps.isBanned(uri)))
+      {
+        continue;
+      }
+      TrackerClient client = trackerClients.get(uri);
+      if (client != null)
+      {
+        result.put(uri, client);
+      }
+    }
+    return result;
+  }
+
+  private Map<URI, TrackerClient> buildPotentialClientsSubsetting(
+      String serviceName, ServiceProperties serviceProps, ClusterProperties clusterProps,
+      UriProperties uriProps, Map<URI, TrackerClient> trackerClients,
+      Set<URI> possibleUris, int partitionId, int minSubsetSize, long version, boolean hasBans)
+  {
+    // Build weighted URI map for subsetting computation
+    Map<URI, Double> weightedUris = new HashMap<>(possibleUris.size());
+    for (URI uri : possibleUris)
+    {
+      weightedUris.put(uri, uriProps.getPartitionDataMap(uri).get(partitionId).getWeight());
+    }
+
+    SubsettingState.SubsetItem subsetItem = getClientsSubset(serviceName, minSubsetSize,
+        partitionId, weightedUris, version);
+
+    Map<URI, Double> weightedSubset = subsetItem.getWeightedUriSubset();
+    Set<URI> doNotSlowStartUris = subsetItem.getDoNotSlowStartUris();
+    boolean isWeightedSubset = subsetItem.isWeightedSubset();
+
+    // Iterate the subset (size m), not all possibleUris (size n)
+    Map<URI, TrackerClient> result = new HashMap<>(weightedSubset.size());
+    for (Map.Entry<URI, Double> entry : weightedSubset.entrySet())
+    {
+      URI uri = entry.getKey();
+      if (hasBans && (serviceProps.isBanned(uri) || clusterProps.isBanned(uri)))
+      {
+        continue;
+      }
+      TrackerClient client = trackerClients.get(uri);
+      if (client != null)
+      {
+        if (doNotSlowStartUris.contains(uri))
+        {
+          client.setDoNotSlowStart(true);
+        }
+        if (isWeightedSubset)
+        {
+          client.setSubsetWeight(partitionId, entry.getValue());
+        }
+        result.put(uri, client);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Removes all cached potential client entries for the given service.
+   */
+  void invalidatePotentialClientsForService(String serviceName)
+  {
+    if (!_enablePotentialClientsCache)
+    {
+      return;
+    }
+    _potentialClientsCache.remove(serviceName);
+  }
+
+  /**
+   * Removes all cached potential client entries for all services on the given cluster.
+   */
+  void invalidatePotentialClientsForCluster(String clusterName)
+  {
+    if (!_enablePotentialClientsCache)
+    {
+      return;
+    }
+    Set<String> serviceNames = _servicesPerCluster.get(clusterName);
+    if (serviceNames != null)
+    {
+      for (String serviceName : serviceNames)
+      {
+        invalidatePotentialClientsForService(serviceName);
+      }
+    }
   }
 
   public List<URI> getServerUrisForServiceName(String clusterName)

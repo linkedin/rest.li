@@ -103,6 +103,18 @@ public interface LoadBalancerState
   List<SchemeStrategyPair> getStrategiesForService(String serviceName,
                                                     List<String> prioritizedSchemes);
 
+  /**
+   * Returns the precomputed potential clients for the given service, scheme, and partition.
+   * These are the TrackerClients available for load balancing, with banned URIs filtered out
+   * and subsetting applied (if enabled).
+   *
+   * @return the cached client map, or null if no precomputed cache is available.
+   */
+  default Map<URI, TrackerClient> getPotentialClients(String serviceName, String scheme, int partitionId)
+  {
+    return null;
+  }
+
   default SubsettingState.SubsetItem getClientsSubset(String serviceName,
                                                    int minClusterSubsetSize,
                                                    int partitionId,
