@@ -1001,11 +1001,6 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
     Map<URI, TrackerClient> cached = _state.getPotentialClients(serviceName, scheme, partitionId);
     if (cached != null)
     {
-      debug(_log,
-          "got clients to load balance for ",
-          serviceName,
-          " from cache: ",
-          cached);
       return new TrackerClientSubsetItem(false, cached);
     }
 
@@ -1037,12 +1032,6 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
         shouldForceUpdate = subsetItem.shouldForceUpdate();
       }
     }
-
-    debug(_log,
-        "got clients to load balance for ",
-        serviceName,
-        ": ",
-        clientsToBalance);
 
     if (clientsToBalance.isEmpty())
     {
