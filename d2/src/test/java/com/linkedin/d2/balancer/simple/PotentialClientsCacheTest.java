@@ -487,6 +487,474 @@ public class PotentialClientsCacheTest
         "Expected " + expectedCount + " routable hosts");
   }
 
+  // ─── End-to-end equivalence after state changes ─────────────────────────
+
+  @Test
+  public void testEquivalenceAfterUriExpansion() throws Exception
+  {
+    String cluster = "cluster-1";
+    String service = "foo";
+    String scheme = PropertyKeys.HTTP_SCHEME;
+
+    LBSetup cached = new LBSetup(true, _d2Executor);
+    LBSetup uncached = new LBSetup(false, _d2Executor);
+
+    ClusterProperties clusterProps = new ClusterProperties(cluster);
+    ServiceProperties serviceProps = new ServiceProperties(service, cluster, "/" + service,
+        Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+        Collections.singletonList(scheme), null);
+
+    // Start with 3 hosts
+    for (LBSetup setup : new LBSetup[]{cached, uncached})
+    {
+      setup.populate(cluster, service, clusterProps, serviceProps,
+          buildUriProperties(cluster, generateUris(3), 0));
+    }
+    assertPotentialClientsEquivalent(cached, uncached, service, scheme, 0);
+
+    // Expand to 8 hosts — verify equivalence still holds
+    for (LBSetup setup : new LBSetup[]{cached, uncached})
+    {
+      setup.uriRegistry.put(cluster, buildUriProperties(cluster, generateUris(8), 0));
+    }
+    assertPotentialClientsEquivalent(cached, uncached, service, scheme, 0);
+  }
+
+  @Test
+  public void testEquivalenceAfterUriReduction() throws Exception
+  {
+    String cluster = "cluster-1";
+    String service = "foo";
+    String scheme = PropertyKeys.HTTP_SCHEME;
+
+    LBSetup cached = new LBSetup(true, _d2Executor);
+    LBSetup uncached = new LBSetup(false, _d2Executor);
+
+    ClusterProperties clusterProps = new ClusterProperties(cluster);
+    ServiceProperties serviceProps = new ServiceProperties(service, cluster, "/" + service,
+        Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+        Collections.singletonList(scheme), null);
+
+    // Start with 8 hosts
+    for (LBSetup setup : new LBSetup[]{cached, uncached})
+    {
+      setup.populate(cluster, service, clusterProps, serviceProps,
+          buildUriProperties(cluster, generateUris(8), 0));
+    }
+    assertPotentialClientsEquivalent(cached, uncached, service, scheme, 0);
+
+    // Reduce to 2 hosts — verify equivalence still holds
+    for (LBSetup setup : new LBSetup[]{cached, uncached})
+    {
+      setup.uriRegistry.put(cluster, buildUriProperties(cluster, generateUris(2), 0));
+    }
+    assertPotentialClientsEquivalent(cached, uncached, service, scheme, 0);
+  }
+
+  @Test
+  public void testEquivalenceAfterBanListChange() throws Exception
+  {
+    String cluster = "cluster-1";
+    String service = "foo";
+    String scheme = PropertyKeys.HTTP_SCHEME;
+
+    List<URI> uris = generateUris(6);
+
+    LBSetup cached = new LBSetup(true, _d2Executor);
+    LBSetup uncached = new LBSetup(false, _d2Executor);
+
+    ClusterProperties clusterProps = new ClusterProperties(cluster);
+    ServiceProperties serviceProps = new ServiceProperties(service, cluster, "/" + service,
+        Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+        Collections.singletonList(scheme), null);
+
+    for (LBSetup setup : new LBSetup[]{cached, uncached})
+    {
+      setup.populate(cluster, service, clusterProps, serviceProps,
+          buildUriProperties(cluster, uris, 0));
+    }
+    assertPotentialClientsEquivalent(cached, uncached, service, scheme, 0);
+
+    // Ban 2 URIs via cluster properties — verify equivalence after change
+    Set<URI> banned = new HashSet<>(uris.subList(0, 2));
+    ClusterProperties bannedClusterProps = new ClusterProperties(cluster, Collections.emptyList(),
+        Collections.emptyMap(), banned, NullPartitionProperties.getInstance());
+    for (LBSetup setup : new LBSetup[]{cached, uncached})
+    {
+      setup.clusterRegistry.put(cluster, bannedClusterProps);
+    }
+    assertPotentialClientsEquivalent(cached, uncached, service, scheme, 0);
+  }
+
+  // ─── Service property change scenarios ─────────────────────────────────
+
+  @Test
+  public void testServiceBanListUpdate() throws Exception
+  {
+    String cluster = "cluster-1";
+    String service = "foo";
+    String scheme = PropertyKeys.HTTP_SCHEME;
+
+    LBSetup setup = new LBSetup(true, _d2Executor);
+
+    List<URI> uris = generateUris(5);
+    setup.populate(cluster, service,
+        new ClusterProperties(cluster),
+        new ServiceProperties(service, cluster, "/" + service,
+            Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+            Collections.singletonList(scheme), null),
+        buildUriProperties(cluster, uris, 0));
+
+    assertEquals(setup.state.getPotentialClients(service, scheme, 0).size(), 5);
+
+    // Update service properties with a ban list
+    Set<URI> serviceBanned = new HashSet<>(uris.subList(0, 3));
+    setup.serviceRegistry.put(service, new ServiceProperties(service, cluster, "/" + service,
+        Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+        Collections.singletonList(scheme), serviceBanned));
+
+    assertEquals(setup.state.getPotentialClients(service, scheme, 0).size(), 2);
+  }
+
+  @Test
+  public void testCacheInvalidatedWhenServiceMovesToDifferentCluster() throws Exception
+  {
+    String cluster1 = "cluster-1";
+    String cluster2 = "cluster-2";
+    String service = "foo";
+    String scheme = PropertyKeys.HTTP_SCHEME;
+
+    LBSetup setup = new LBSetup(true, _d2Executor);
+
+    setup.populate(cluster1, service,
+        new ClusterProperties(cluster1),
+        new ServiceProperties(service, cluster1, "/" + service,
+            Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+            Collections.singletonList(scheme), null),
+        buildUriProperties(cluster1, generateUris(3), 0));
+
+    assertEquals(setup.state.getPotentialClients(service, scheme, 0).size(), 3);
+
+    // Move service to cluster-2 (whose URIs are not yet subscribed)
+    // The old cluster-1 cache entries must not linger.
+    setup.serviceRegistry.put(service, new ServiceProperties(service, cluster2, "/" + service,
+        Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+        Collections.singletonList(scheme), null));
+
+    // Cache should not still contain cluster-1's 3 hosts — it should either
+    // have cluster-2's entries or be null (if cluster-2 URIs aren't available yet)
+    Map<URI, TrackerClient> clients = setup.state.getPotentialClients(service, scheme, 0);
+    if (clients != null)
+    {
+      // If non-null, it must not contain any cluster-1 hosts
+      for (URI uri : clients.keySet())
+      {
+        assertFalse(uri.getHost().startsWith("host"),
+            "Stale cluster-1 host found in cache after service moved to cluster-2: " + uri);
+      }
+    }
+  }
+
+  // ─── Cluster property change scenarios ─────────────────────────────────
+
+  @Test
+  public void testClusterRemoval() throws Exception
+  {
+    String cluster = "cluster-1";
+    String service = "foo";
+    String scheme = PropertyKeys.HTTP_SCHEME;
+
+    LBSetup setup = new LBSetup(true, _d2Executor);
+
+    setup.populate(cluster, service,
+        new ClusterProperties(cluster),
+        new ServiceProperties(service, cluster, "/" + service,
+            Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+            Collections.singletonList(scheme), null),
+        buildUriProperties(cluster, generateUris(3), 0));
+
+    assertNotNull(setup.state.getPotentialClients(service, scheme, 0));
+
+    // Remove the cluster
+    setup.clusterRegistry.remove(cluster);
+
+    assertNull(setup.state.getPotentialClients(service, scheme, 0),
+        "Cache should be invalidated after cluster removal");
+  }
+
+  // ─── Partition scenarios ───────────────────────────────────────────────
+
+  @Test
+  public void testHostServesMultiplePartitions() throws Exception
+  {
+    String cluster = "cluster-1";
+    String service = "foo";
+    String scheme = PropertyKeys.HTTP_SCHEME;
+
+    LBSetup setup = new LBSetup(true, _d2Executor);
+
+    // Host0 serves partitions 0 and 1, Host1 serves only partition 0
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
+    Map<Integer, PartitionData> host0Partitions = new HashMap<>();
+    host0Partitions.put(0, new PartitionData(1d));
+    host0Partitions.put(1, new PartitionData(1d));
+    uriData.put(URI.create("http://host0.example.com:8080"), host0Partitions);
+    uriData.put(URI.create("http://host1.example.com:8080"),
+        Collections.singletonMap(0, new PartitionData(1d)));
+
+    setup.populate(cluster, service,
+        new ClusterProperties(cluster),
+        new ServiceProperties(service, cluster, "/" + service,
+            Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+            Collections.singletonList(scheme), null),
+        new UriProperties(cluster, uriData));
+
+    // Partition 0 should have both hosts
+    assertEquals(setup.state.getPotentialClients(service, scheme, 0).size(), 2);
+    // Partition 1 should have only host0
+    assertEquals(setup.state.getPotentialClients(service, scheme, 1).size(), 1);
+    assertTrue(setup.state.getPotentialClients(service, scheme, 1)
+        .containsKey(URI.create("http://host0.example.com:8080")));
+  }
+
+  @Test
+  public void testAllUrisRemovedForCluster() throws Exception
+  {
+    String cluster = "cluster-1";
+    String service = "foo";
+    String scheme = PropertyKeys.HTTP_SCHEME;
+
+    LBSetup setup = new LBSetup(true, _d2Executor);
+
+    setup.populate(cluster, service,
+        new ClusterProperties(cluster),
+        new ServiceProperties(service, cluster, "/" + service,
+            Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+            Collections.singletonList(scheme), null),
+        buildUriProperties(cluster, generateUris(3), 0));
+
+    assertEquals(setup.state.getPotentialClients(service, scheme, 0).size(), 3);
+
+    // Remove all URIs
+    setup.uriRegistry.remove(cluster);
+
+    assertNull(setup.state.getPotentialClients(service, scheme, 0),
+        "Cache should be invalidated after all URIs removed");
+  }
+
+  // ─── Multi-cluster isolation ───────────────────────────────────────────
+
+  @Test
+  public void testServicesOnDifferentClustersAreIsolated() throws Exception
+  {
+    String cluster1 = "cluster-1";
+    String cluster2 = "cluster-2";
+    String scheme = PropertyKeys.HTTP_SCHEME;
+
+    LBSetup setup = new LBSetup(true, _d2Executor);
+
+    setup.clusterRegistry.put(cluster1, new ClusterProperties(cluster1));
+    setup.clusterRegistry.put(cluster2, new ClusterProperties(cluster2));
+    setup.serviceRegistry.put("svc1", new ServiceProperties("svc1", cluster1, "/svc1",
+        Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+        Collections.singletonList(scheme), null));
+    setup.serviceRegistry.put("svc2", new ServiceProperties("svc2", cluster2, "/svc2",
+        Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+        Collections.singletonList(scheme), null));
+    setup.uriRegistry.put(cluster1, buildUriProperties(cluster1, generateUris(3), 0));
+    setup.uriRegistry.put(cluster2, buildUriProperties(cluster2,
+        Collections.singletonList(URI.create("http://other.example.com:9090")), 0));
+    setup.triggerListening("svc1");
+    setup.triggerListening("svc2");
+
+    assertEquals(setup.state.getPotentialClients("svc1", scheme, 0).size(), 3);
+    assertEquals(setup.state.getPotentialClients("svc2", scheme, 0).size(), 1);
+
+    // Update cluster-1 URIs — svc2 on cluster-2 should be unaffected
+    setup.uriRegistry.put(cluster1, buildUriProperties(cluster1, generateUris(5), 0));
+
+    assertEquals(setup.state.getPotentialClients("svc1", scheme, 0).size(), 5);
+    assertEquals(setup.state.getPotentialClients("svc2", scheme, 0).size(), 1,
+        "svc2 on cluster-2 should be unaffected by cluster-1 URI change");
+  }
+
+  // ─── Overlapping bans ─────────────────────────────────────────────────
+
+  @Test
+  public void testOverlappingClusterAndServiceBans() throws Exception
+  {
+    String cluster = "cluster-1";
+    String service = "foo";
+    String scheme = PropertyKeys.HTTP_SCHEME;
+
+    List<URI> uris = generateUris(5);
+    // host0 banned by cluster, host1 banned by service, host0 also banned by service (overlap)
+    Set<URI> clusterBanned = new HashSet<>(uris.subList(0, 1)); // host0
+    Set<URI> serviceBanned = new HashSet<>(uris.subList(0, 2)); // host0, host1
+
+    LBSetup cached = new LBSetup(true, _d2Executor);
+    LBSetup uncached = new LBSetup(false, _d2Executor);
+
+    ClusterProperties clusterProps = new ClusterProperties(cluster, Collections.emptyList(),
+        Collections.emptyMap(), clusterBanned, NullPartitionProperties.getInstance());
+    ServiceProperties serviceProps = new ServiceProperties(service, cluster, "/" + service,
+        Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+        Collections.singletonList(scheme), serviceBanned);
+
+    for (LBSetup setup : new LBSetup[]{cached, uncached})
+    {
+      setup.populate(cluster, service, clusterProps, serviceProps,
+          buildUriProperties(cluster, uris, 0));
+    }
+
+    // host0 and host1 banned (overlap on host0 should not cause issues), 3 remaining
+    assertPotentialClientsEquivalent(cached, uncached, service, scheme, 0);
+    assertEquals(cached.state.getPotentialClients(service, scheme, 0).size(), 3);
+  }
+
+  // ─── Cache immutability ───────────────────────────────────────────────
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testCachedMapIsUnmodifiable() throws Exception
+  {
+    String cluster = "cluster-1";
+    String service = "foo";
+    String scheme = PropertyKeys.HTTP_SCHEME;
+
+    LBSetup setup = new LBSetup(true, _d2Executor);
+
+    setup.populate(cluster, service,
+        new ClusterProperties(cluster),
+        new ServiceProperties(service, cluster, "/" + service,
+            Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+            Collections.singletonList(scheme), null),
+        buildUriProperties(cluster, generateUris(3), 0));
+
+    Map<URI, TrackerClient> clients = setup.state.getPotentialClients(service, scheme, 0);
+    // This should throw UnsupportedOperationException
+    clients.put(URI.create("http://rogue.example.com:8080"), null);
+  }
+
+  // ─── Cache disabled fallback works end-to-end ─────────────────────────
+
+  @Test
+  public void testGetClientWorksWithCacheDisabled() throws Exception
+  {
+    String cluster = "cluster-1";
+    String service = "foo";
+    String scheme = PropertyKeys.HTTP_SCHEME;
+
+    LBSetup setup = new LBSetup(false, _d2Executor);
+
+    setup.populate(cluster, service,
+        new ClusterProperties(cluster),
+        new ServiceProperties(service, cluster, "/" + service,
+            Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+            Collections.singletonList(scheme), null),
+        buildUriProperties(cluster, generateUris(3), 0));
+
+    // Cache is disabled but getClient should still work via fallback O(n) path
+    assertNull(setup.state.getPotentialClients(service, scheme, 0));
+    URIRequest request = new URIRequest("d2://" + service + "/resource");
+    RewriteLoadBalancerClient client =
+        (RewriteLoadBalancerClient) setup.loadBalancer.getClient(request, new RequestContext());
+    assertNotNull(client);
+  }
+
+  // ─── Rapid sequential updates ─────────────────────────────────────────
+
+  @Test
+  public void testRapidUriUpdatesConvergeToFinalState() throws Exception
+  {
+    String cluster = "cluster-1";
+    String service = "foo";
+    String scheme = PropertyKeys.HTTP_SCHEME;
+
+    LBSetup setup = new LBSetup(true, _d2Executor);
+
+    setup.populate(cluster, service,
+        new ClusterProperties(cluster),
+        new ServiceProperties(service, cluster, "/" + service,
+            Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+            Collections.singletonList(scheme), null),
+        buildUriProperties(cluster, generateUris(1), 0));
+
+    // Fire 10 rapid updates with different host counts
+    for (int i = 2; i <= 10; i++)
+    {
+      setup.uriRegistry.put(cluster, buildUriProperties(cluster, generateUris(i), 0));
+    }
+
+    // Cache should reflect the final state (10 hosts)
+    assertEquals(setup.state.getPotentialClients(service, scheme, 0).size(), 10);
+  }
+
+  // ─── Nonexistent partition/scheme lookups ──────────────────────────────
+
+  @Test
+  public void testLookupNonexistentPartitionReturnsNull() throws Exception
+  {
+    String cluster = "cluster-1";
+    String service = "foo";
+    String scheme = PropertyKeys.HTTP_SCHEME;
+
+    LBSetup setup = new LBSetup(true, _d2Executor);
+
+    setup.populate(cluster, service,
+        new ClusterProperties(cluster),
+        new ServiceProperties(service, cluster, "/" + service,
+            Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+            Collections.singletonList(scheme), null),
+        buildUriProperties(cluster, generateUris(3), 0));
+
+    // Partition 0 exists, partition 99 does not
+    assertNotNull(setup.state.getPotentialClients(service, scheme, 0));
+    assertNull(setup.state.getPotentialClients(service, scheme, 99),
+        "Nonexistent partition should return null");
+  }
+
+  @Test
+  public void testLookupNonexistentSchemeReturnsNull() throws Exception
+  {
+    String cluster = "cluster-1";
+    String service = "foo";
+
+    LBSetup setup = new LBSetup(true, _d2Executor);
+
+    setup.populate(cluster, service,
+        new ClusterProperties(cluster),
+        new ServiceProperties(service, cluster, "/" + service,
+            Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+            Collections.singletonList(PropertyKeys.HTTP_SCHEME), null),
+        buildUriProperties(cluster, generateUris(3), 0));
+
+    assertNotNull(setup.state.getPotentialClients(service, PropertyKeys.HTTP_SCHEME, 0));
+    assertNull(setup.state.getPotentialClients(service, "https", 0),
+        "Nonexistent scheme should return null");
+  }
+
+  @Test
+  public void testLookupNonexistentServiceReturnsNull() throws Exception
+  {
+    String cluster = "cluster-1";
+    String service = "foo";
+    String scheme = PropertyKeys.HTTP_SCHEME;
+
+    LBSetup setup = new LBSetup(true, _d2Executor);
+
+    setup.populate(cluster, service,
+        new ClusterProperties(cluster),
+        new ServiceProperties(service, cluster, "/" + service,
+            Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+            Collections.singletonList(scheme), null),
+        buildUriProperties(cluster, generateUris(3), 0));
+
+    assertNull(setup.state.getPotentialClients("nonexistent-service", scheme, 0),
+        "Nonexistent service should return null");
+  }
+
+  // ─── Multi-service / multi-cluster tests (existing) ────────────────────
+
   @Test
   public void testMultipleServicesOnSameCluster() throws Exception
   {
