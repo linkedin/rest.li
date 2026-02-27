@@ -190,6 +190,7 @@ public class D2ClientConfig
    */
   public XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider = new NoOpXdsClientOtelMetricsProvider();
   public boolean loadBalanceStreamException = false;
+  public boolean enablePotentialClientsCache = false;
   public boolean xdsInitialResourceVersionsEnabled = false;
   public Integer xdsStreamMaxRetryBackoffSeconds = null;
   public String xdsMinimumJavaVersion = DEFAULT_MINIMUM_JAVA_VERSION;
@@ -291,6 +292,7 @@ public class D2ClientConfig
                  boolean subscribeToUriGlobCollection,
                  XdsServerMetricsProvider xdsServerMetricsProvider,
                  boolean loadBalanceStreamException,
+                 boolean enablePotentialClientsCache,
                  boolean xdsInitialResourceVersionsEnabled,
                  boolean disableDetectLiRawD2Client,
                  boolean isLiRawD2Client,
@@ -343,6 +345,7 @@ public class D2ClientConfig
         subscribeToUriGlobCollection,
         xdsServerMetricsProvider,
         loadBalanceStreamException,
+        enablePotentialClientsCache,
         xdsInitialResourceVersionsEnabled,
         disableDetectLiRawD2Client,
         isLiRawD2Client,
@@ -429,6 +432,7 @@ public class D2ClientConfig
                  boolean subscribeToUriGlobCollection,
                  XdsServerMetricsProvider xdsServerMetricsProvider,
                  boolean loadBalanceStreamException,
+                 boolean enablePotentialClientsCache,
                  boolean xdsInitialResourceVersionsEnabled,
                  boolean disableDetectLiRawD2Client,
                  boolean isLiRawD2Client,
@@ -515,6 +519,7 @@ public class D2ClientConfig
     this.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
     this._xdsServerMetricsProvider = xdsServerMetricsProvider;
     this.loadBalanceStreamException = loadBalanceStreamException;
+    this.enablePotentialClientsCache = enablePotentialClientsCache;
     this.xdsInitialResourceVersionsEnabled = xdsInitialResourceVersionsEnabled;
     this.disableDetectLiRawD2Client = disableDetectLiRawD2Client;
     this.isLiRawD2Client = isLiRawD2Client;
