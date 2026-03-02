@@ -22,6 +22,7 @@ import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.properties.UriProperties;
 import com.linkedin.d2.discovery.event.PropertyEventBus;
+import com.linkedin.internal.common.util.CollectionUtils;
 import com.linkedin.util.RateLimitedLogger;
 import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
@@ -81,17 +82,26 @@ class UriLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<UriProper
       {
         for (String serviceName : serviceNames)
         {
-          Map<URI, TrackerClient> trackerClients = _simpleLoadBalancerState.getTrackerClients().get(serviceName);
-          if (trackerClients == null)
+          Map<URI, TrackerClient> existingTrackerClients = _simpleLoadBalancerState.getTrackerClients().get(serviceName);
+
+          // Build a new tracker client map rather than mutating the existing one in place.
+          // This avoids a race condition where a reader thread calling getClient() could see
+          // a partially-updated map (e.g., a URI momentarily missing between a remove and put).
+          Map<URI, TrackerClient> trackerClients;
+          if (existingTrackerClients == null)
           {
             trackerClients = new ConcurrentHashMap<>();
-            _simpleLoadBalancerState.getTrackerClients().put(serviceName, trackerClients);
+          }
+          else
+          {
+            trackerClients = new ConcurrentHashMap<>(
+                CollectionUtils.getMapInitialCapacity(existingTrackerClients.size(), 0.75f), 0.75f, 1);
+            trackerClients.putAll(existingTrackerClients);
           }
 
           for (URI uri : uriProperties.Uris())
           {
             Map<Integer, PartitionData> partitionDataMap = uriProperties.getPartitionDataMap(uri);
-            TrackerClient client = trackerClients.get(uri);
 
             Optional<Map<String, Object>> newUriSpecificProperties = Optional.ofNullable(uriProperties.getUriSpecificProperties())
               .map(uriSpecificProperties -> uriSpecificProperties.get(uri));
@@ -101,7 +111,17 @@ class UriLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<UriProper
               .map(UriProperties::getUriSpecificProperties)
               .map(uriSpecificProperties -> uriSpecificProperties.get(uri));
 
-            if (client == null || !client.getPartitionDataMap().equals(partitionDataMap) || !newUriSpecificProperties.equals(oldUriSpecificProperties))
+            // We always remove the tracker client for the URI and re-add it, to ensure the
+            // URI instance from the new UriProperties is used as the key.
+            // ConcurrentHashMap.get() has an identity shortcut (key == storedKey) that skips
+            // the expensive URI.equals()/hashCode() calls. Once this map is swapped into
+            // _trackerClients, getClient() lookups will use URIs from the current UriProperties.
+            // Without refreshing the keys, the identity shortcut would never match and every
+            // lookup would pay the full URI.equals() cost.
+            TrackerClient existingClient = trackerClients.remove(uri);
+
+            TrackerClient client;
+            if (existingClient == null || !existingClient.getPartitionDataMap().equals(partitionDataMap) || !newUriSpecificProperties.equals(oldUriSpecificProperties))
             {
               client = _simpleLoadBalancerState.buildTrackerClient(uri, uriProperties, serviceName);
 
@@ -114,11 +134,31 @@ class UriLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<UriProper
                 {
                   listener.onClientAdded(serviceName, client);
                 }
-
-                trackerClients.put(uri, client);
+              }
+              else
+              {
+                // Preserve the existing client if the new client creation failed.
+                // This is a best-effort attempt to keep the old client alive if
+                // we encounter an issue with the new URI properties (e.g., invalid partition data).
+                client = existingClient;
               }
             }
+            else
+            {
+              // No change in partition data or URI-specific properties, keep using the existing client.
+              client = existingClient;
+            }
+
+            // Re-insert with the new URI instance as key.
+            // client is null only when no existing client existed and buildTrackerClient also failed.
+            if (client != null)
+            {
+              trackerClients.put(uri, client);
+            }
           }
+
+          // Atomically swap the fully-built map into _trackerClients
+          _simpleLoadBalancerState.getTrackerClients().put(serviceName, trackerClients);
         }
       }
 
