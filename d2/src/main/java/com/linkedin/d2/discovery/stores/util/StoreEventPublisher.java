@@ -68,6 +68,11 @@ public class StoreEventPublisher<T> implements PropertyEventPublisher<T>
       // Publish null value to avoid hanging waiters; Listener interface does not contemplate errors
       _eventBus.publishInitialize(prop, null);
     }
+    catch (RuntimeException e)
+    {
+      LOG.error("Unexpected error getting property " + prop + " from underlying store", e);
+      _eventBus.publishInitialize(prop, null);
+    }
   }
 
   @Override

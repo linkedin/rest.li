@@ -25,10 +25,10 @@ import com.linkedin.d2.discovery.event.PropertyEventSubscriber;
 import com.linkedin.d2.discovery.stores.PropertyStore;
 import com.linkedin.d2.discovery.util.Stats;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -139,19 +139,7 @@ public class FileStore<T> implements PropertyStore<T>, PropertyEventSubscriber<T
       {
         try
         {
-          byte content[] = new byte[(int) file.length()];
-          int offset = 0;
-          int read = 0;
-          int length = (int) file.length();
-          FileInputStream inputStream = new FileInputStream(file);
-
-          while ((read = inputStream.read(content, offset, length - offset)) > 0)
-          {
-            offset += read;
-          }
-
-          inputStream.close();
-
+          byte[] content = Files.readAllBytes(file.toPath());
           return _serializer.fromBytes(content);
         }
         catch (IOException e)
