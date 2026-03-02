@@ -964,11 +964,11 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       ServiceProperties serviceProperties)
   {
     TransportClient transportClient = getTransportClient(serviceName, uri);
-    LoadBalancerStrategy loadBalancerStrategy = _serviceStrategies.get(serviceName).get(uri.getScheme().toLowerCase());
     if (transportClient == null)
     {
       return null;
     }
+    LoadBalancerStrategy loadBalancerStrategy = _serviceStrategies.get(serviceName).get(uri.getScheme().toLowerCase());
     if (loadBalancerStrategy == null)
     {
       return null;
