@@ -46,6 +46,10 @@ import com.linkedin.d2.jmx.NoOpXdsServerMetricsProvider;
 import com.linkedin.d2.jmx.NoOpJmxManager;
 import com.linkedin.d2.jmx.XdsClientOtelMetricsProvider;
 import com.linkedin.d2.jmx.NoOpXdsClientOtelMetricsProvider;
+import com.linkedin.d2.jmx.DegraderLoadBalancerStrategyV3OtelMetricsProvider;
+import com.linkedin.d2.jmx.NoOpDegraderLoadBalancerStrategyV3OtelMetricsProvider;
+import com.linkedin.d2.jmx.RelativeLoadBalancerStrategyOtelMetricsProvider;
+import com.linkedin.d2.jmx.NoOpRelativeLoadBalancerStrategyOtelMetricsProvider;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import java.time.Duration;
@@ -189,6 +193,19 @@ public class D2ClientConfig
    * Defaults to no-op implementation; can be overridden to enable metric tracking.
    */
   public XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider = new NoOpXdsClientOtelMetricsProvider();
+
+  /**
+   * Provider for OpenTelemetry metrics collection for RelativeLoadBalancerStrategy operations.
+   * Defaults to no-op implementation; can be overridden to enable metric tracking.
+   */
+  public RelativeLoadBalancerStrategyOtelMetricsProvider relativeLoadBalancerStrategyOtelMetricsProvider = new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider();
+  
+  /**
+   * Provider for OpenTelemetry metrics collection for DegraderLoadBalancerStrategyV3 operations.
+   * Defaults to no-op implementation; can be overridden to enable metric tracking.
+   */
+  public DegraderLoadBalancerStrategyV3OtelMetricsProvider degraderLoadBalancerStrategyV3OtelMetricsProvider = new NoOpDegraderLoadBalancerStrategyV3OtelMetricsProvider();
+
   public boolean loadBalanceStreamException = false;
   public boolean xdsInitialResourceVersionsEnabled = false;
   public Integer xdsStreamMaxRetryBackoffSeconds = null;
@@ -353,7 +370,9 @@ public class D2ClientConfig
         d2CalleeInfoRecorder,
         enableIndisDownstreamServicesFetcher,
         indisDownstreamServicesFetchTimeout,
-        new NoOpXdsClientOtelMetricsProvider());
+        new NoOpXdsClientOtelMetricsProvider(),
+        new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider(),
+        new NoOpDegraderLoadBalancerStrategyV3OtelMetricsProvider());
   }
 
   D2ClientConfig(String zkHosts,
@@ -439,7 +458,9 @@ public class D2ClientConfig
                  D2CalleeInfoRecorder d2CalleeInfoRecorder,
                  Boolean enableIndisDownstreamServicesFetcher,
                  Duration indisDownstreamServicesFetchTimeout,
-                 XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider)
+                 XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider,
+                 RelativeLoadBalancerStrategyOtelMetricsProvider relativeLoadBalancerStrategyOtelMetricsProvider,
+                 DegraderLoadBalancerStrategyV3OtelMetricsProvider degraderLoadBalancerStrategyV3OtelMetricsProvider)
   {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
@@ -525,5 +546,7 @@ public class D2ClientConfig
     this.indisDownstreamServicesFetchTimeout = indisDownstreamServicesFetchTimeout;
     this.enableIndisDownstreamServicesFetcher = enableIndisDownstreamServicesFetcher;
     this.xdsClientOtelMetricsProvider = xdsClientOtelMetricsProvider;
+    this.relativeLoadBalancerStrategyOtelMetricsProvider = relativeLoadBalancerStrategyOtelMetricsProvider;
+    this.degraderLoadBalancerStrategyV3OtelMetricsProvider = degraderLoadBalancerStrategyV3OtelMetricsProvider;
   }
 }

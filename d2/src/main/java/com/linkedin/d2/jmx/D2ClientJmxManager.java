@@ -29,6 +29,8 @@ import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancerState.SimpleLoadBalancerStateListener;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
+import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
+import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
 import com.linkedin.d2.discovery.stores.file.FileStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
@@ -207,6 +209,15 @@ public class D2ClientJmxManager
       private void doRegisterLoadBalancerStrategy(String serviceName, String scheme, LoadBalancerStrategy strategy,
           @Nullable DualReadModeProvider.DualReadMode mode)
       {
+        // Set scheme for OTEL metrics tagging
+        if (strategy instanceof RelativeLoadBalancerStrategy)
+        {
+          ((RelativeLoadBalancerStrategy) strategy).setScheme(scheme);
+        }
+        else if (strategy instanceof DegraderLoadBalancerStrategyV3)
+        {
+          ((DegraderLoadBalancerStrategyV3) strategy).setScheme(scheme);
+        }
         String jmxName = getLoadBalancerStrategyJmxName(serviceName, scheme, mode);
         _jmxManager.registerLoadBalancerStrategy(jmxName, strategy);
       }

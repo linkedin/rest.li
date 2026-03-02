@@ -34,6 +34,8 @@ import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.RandomHash;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
+import com.linkedin.d2.jmx.NoOpRelativeLoadBalancerStrategyOtelMetricsProvider;
+import com.linkedin.d2.jmx.RelativeLoadBalancerStrategyOtelMetricsProvider;
 import com.linkedin.r2.message.Request;
 import com.linkedin.util.clock.Clock;
 import java.util.ArrayList;
@@ -77,6 +79,7 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
   private final EventEmitter _eventEmitter;
   private final Clock _clock;
   private final boolean _loadBalanceStreamException;
+  private final RelativeLoadBalancerStrategyOtelMetricsProvider _relativeLbOtelMetricsProvider;
 
   public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
       List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter, Clock clock)
@@ -88,12 +91,21 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
       List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter, Clock clock,
       boolean loadBalanceStreamException)
   {
+    this(executorService, healthCheckOperations, stateListenerFactories, eventEmitter, clock, loadBalanceStreamException,
+        new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider());
+  }
+
+  public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
+      List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter, Clock clock,
+      boolean loadBalanceStreamException, RelativeLoadBalancerStrategyOtelMetricsProvider relativeLbOtelMetricsProvider)
+  {
     _executorService = executorService;
     _healthCheckOperations = healthCheckOperations;
     _stateListenerFactories = stateListenerFactories;
     _eventEmitter = (eventEmitter == null) ? new NoopEventEmitter() : eventEmitter;
     _clock = clock;
     _loadBalanceStreamException = loadBalanceStreamException;
+    _relativeLbOtelMetricsProvider = (relativeLbOtelMetricsProvider == null) ? new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider() : relativeLbOtelMetricsProvider;
   }
 
 
@@ -122,7 +134,7 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
       listenerFactories.addAll(_stateListenerFactories);
     }
     return new StateUpdater(relativeStrategyProperties, quarantineManager, _executorService, listenerFactories,
-        serviceName, _loadBalanceStreamException);
+        serviceName, _loadBalanceStreamException, _relativeLbOtelMetricsProvider);
   }
 
   private ClientSelector getClientSelector(D2RelativeStrategyProperties relativeStrategyProperties)
