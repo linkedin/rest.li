@@ -234,6 +234,16 @@ public class ClusterPropertiesSerializerTest
         new ClusterStoreProperties(property, null, null));
   }
 
+  @Test
+  public void testClusterSubsettingConfig() throws PropertySerializationException {
+    ClusterPropertiesJsonSerializer jsonSerializer = new ClusterPropertiesJsonSerializer();
+    ClusterProperties property = new ClusterProperties("test", new ArrayList<>(), new HashMap<>(), new HashSet<>(),
+        NullPartitionProperties.getInstance(), Collections.emptyList(), null, false,
+        ClusterProperties.DEFAULT_VERSION, null, null, null, null, true, 10);
+    assertEquals(jsonSerializer.fromBytes(jsonSerializer.toBytes(property)),
+        new ClusterStoreProperties(property, null, null));
+  }
+
   @DataProvider(name = "distributionStrategies")
   public Object[][] getDistributionStrategies() {
     Map<String, Object> percentageProperties = new HashMap<>();

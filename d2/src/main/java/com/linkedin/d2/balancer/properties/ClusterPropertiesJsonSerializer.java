@@ -247,13 +247,16 @@ public class ClusterPropertiesJsonSerializer implements
     @SuppressWarnings("unchecked")
     List<Map<String, Object>> loadBalancingPolicies = mapGet(map, PropertyKeys.LOAD_BALANCING_POLICIES);
 
+    boolean enableClusterSubsetting = mapGetOrDefault(map, PropertyKeys.ENABLE_CLUSTER_SUBSETTING, false);
+    int minClusterSubsetSize = mapGetOrDefault(map, PropertyKeys.MIN_CLUSTER_SUBSET_SIZE, -1);
+
     boolean delegated = false;
     if (map.containsKey(PropertyKeys.DELEGATED)) {
       delegated = mapGet(map, PropertyKeys.DELEGATED);
     }
     return new ClusterProperties(clusterName, prioritizedSchemes, properties, banned, partitionProperties, validationList,
         darkClusterProperty, delegated, ClusterProperties.DEFAULT_VERSION, slowStartProperties, connectionOptions,
-        outlierDetectionConfig, loadBalancingPolicies);
+        outlierDetectionConfig, loadBalancingPolicies, enableClusterSubsetting, minClusterSubsetSize);
   }
 
   private ConnectionOptions getConnectionOptions(Map<String, Object> map)
