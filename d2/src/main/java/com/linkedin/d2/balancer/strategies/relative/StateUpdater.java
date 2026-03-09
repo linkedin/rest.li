@@ -19,9 +19,12 @@ package com.linkedin.d2.balancer.strategies.relative;
 import com.google.common.annotations.VisibleForTesting;
 import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.strategies.LoadBalancerQuarantine;
 import com.linkedin.d2.balancer.strategies.PartitionStateUpdateListener;
 import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
 import com.linkedin.d2.balancer.util.hashing.Ring;
+import com.linkedin.d2.jmx.NoOpRelativeLoadBalancerStrategyOtelMetricsProvider;
+import com.linkedin.d2.jmx.RelativeLoadBalancerStrategyOtelMetricsProvider;
 import com.linkedin.util.degrader.CallTracker;
 import com.linkedin.util.degrader.ErrorType;
 import java.net.URI;
@@ -56,6 +59,7 @@ public class StateUpdater
   private static final int SLOW_START_RECOVERY_FACTOR = 2;
   private static final int LOG_UNHEALTHY_CLIENT_NUMBERS = 10;
   private static final long EXECUTOR_INITIAL_DELAY = 10;
+  private static final String NO_VALUE = "-";
 
   private final D2RelativeStrategyProperties _relativeStrategyProperties;
   private final QuarantineManager _quarantineManager;
@@ -63,10 +67,12 @@ public class StateUpdater
   private final Lock _lock;
   private final List<PartitionStateUpdateListener.Factory<PartitionState>> _listenerFactories;
   private final String _serviceName;
+  private volatile String _scheme;
   private final ScheduledFuture<?> scheduledFuture;
   private ConcurrentMap<Integer, PartitionState> _partitionLoadBalancerStateMap;
   private int _firstPartitionId = -1;
   private final boolean _loadBalanceStreamException;
+  private final RelativeLoadBalancerStrategyOtelMetricsProvider _relativeLbOtelMetricsProvider;
 
   @Deprecated
   StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
@@ -92,6 +98,17 @@ public class StateUpdater
   StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
       QuarantineManager quarantineManager,
       ScheduledExecutorService executorService,
+      List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories,
+      String serviceName, boolean loadBalanceStreamException,
+      RelativeLoadBalancerStrategyOtelMetricsProvider relativeLbOtelMetricsProvider)
+  {
+    this(relativeStrategyProperties, quarantineManager, executorService, new ConcurrentHashMap<>(), listenerFactories,
+        serviceName, loadBalanceStreamException, relativeLbOtelMetricsProvider);
+  }
+
+  StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
+      QuarantineManager quarantineManager,
+      ScheduledExecutorService executorService,
       ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap,
       List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories,
       String serviceName)
@@ -107,6 +124,18 @@ public class StateUpdater
       List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories,
       String serviceName, boolean loadBalanceStreamException)
   {
+    this(relativeStrategyProperties, quarantineManager, executorService, partitionLoadBalancerStateMap,
+        listenerFactories, serviceName, loadBalanceStreamException, new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider());
+  }
+
+  StateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
+      QuarantineManager quarantineManager,
+      ScheduledExecutorService executorService,
+      ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap,
+      List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories,
+      String serviceName, boolean loadBalanceStreamException,
+      RelativeLoadBalancerStrategyOtelMetricsProvider relativeLbOtelMetricsProvider)
+  {
     _relativeStrategyProperties = relativeStrategyProperties;
     _quarantineManager = quarantineManager;
     _executorService = executorService;
@@ -114,11 +143,27 @@ public class StateUpdater
     _partitionLoadBalancerStateMap = partitionLoadBalancerStateMap;
     _lock = new ReentrantLock();
     _serviceName = serviceName;
+    _scheme = NO_VALUE;
+    _relativeLbOtelMetricsProvider = relativeLbOtelMetricsProvider;
 
     scheduledFuture = executorService.scheduleWithFixedDelay(this::updateState, EXECUTOR_INITIAL_DELAY,
         _relativeStrategyProperties.getUpdateIntervalMs(),
         TimeUnit.MILLISECONDS);
     _loadBalanceStreamException = loadBalanceStreamException;
+  }
+
+  /**
+   * Sets the scheme for this state updater. Used for OTEL metrics tagging.
+   * This is called after strategy creation when the scheme becomes available.
+   *
+   * @param scheme the load balancer scheme (e.g., "http", "https")
+   */
+  public void setScheme(String scheme)
+  {
+    if (scheme != null && !scheme.equals(NO_VALUE))
+    {
+      _scheme = scheme;
+    }
   }
 
   /**
@@ -237,6 +282,17 @@ public class StateUpdater
     LOG.debug("Updating for partition: " + partitionId + ", state: " + oldPartitionState);
     PartitionState newPartitionState = new PartitionState(oldPartitionState);
 
+    // Register per-call OTel latency listener for clients joining this partition for the first time.
+    Map<TrackerClient, TrackerClientState> oldStateMap = oldPartitionState.getTrackerClientStateMap();
+    for (TrackerClient trackerClient : trackerClients)
+    {
+      if (!oldStateMap.containsKey(trackerClient) && !trackerClient.doNotLoadBalance())
+      {
+        trackerClient.setPerCallDurationListener(
+            duration -> _relativeLbOtelMetricsProvider.recordHostLatency(_serviceName, _scheme, duration));
+      }
+    }
+
     // Step 1: Update the base health scores for each {@link TrackerClient} in the cluster
     Map<TrackerClient, CallTracker.CallStats> latestCallStatsMap = new HashMap<>();
     long avgClusterLatency = getAvgClusterLatency(trackerClients, latestCallStatsMap);
@@ -256,6 +312,7 @@ public class StateUpdater
     // Step 4: Log and emit monitor event
     _executorService.execute(() -> {
       logState(oldPartitionState, newPartitionState, partitionId);
+      emitOtelMetrics(newPartitionState);
       notifyPartitionStateUpdateListener(newPartitionState);
     });
   }
@@ -458,6 +515,36 @@ public class StateUpdater
   private void notifyPartitionStateUpdateListener(PartitionState state)
   {
     state.getListeners().forEach(listener -> listener.onUpdate(state));
+  }
+
+  /**
+   * Emit OpenTelemetry metrics for the current partition state.
+   * Host latencies are emitted per-call via the listener registered in
+   * {@link #calculateBaseHealthScore}.
+   */
+  private void emitOtelMetrics(PartitionState partitionState)
+  {
+    // Update gauge metrics
+    _relativeLbOtelMetricsProvider.updateTotalHostsInAllPartitionsCount(_serviceName, _scheme, getTotalHostsInAllPartitions());
+
+    // Count unhealthy hosts
+    int unhealthyCount = (int) partitionState.getTrackerClientStateMap().values().stream()
+        .filter(TrackerClientState::isUnhealthy)
+        .count();
+    _relativeLbOtelMetricsProvider.updateUnhealthyHostsCount(_serviceName, _scheme, unhealthyCount);
+
+    // Count quarantine hosts
+    Map<TrackerClient, LoadBalancerQuarantine> quarantineMap = partitionState.getQuarantineMap();
+    int quarantineCount = (int) quarantineMap.values().stream()
+        .filter(LoadBalancerQuarantine::isInQuarantine)
+        .count();
+    _relativeLbOtelMetricsProvider.updateQuarantineHostsCount(_serviceName, _scheme, quarantineCount);
+
+    // Total points in hash ring
+    int totalPoints = partitionState.getPointsMap().values().stream()
+        .mapToInt(Integer::intValue)
+        .sum();
+    _relativeLbOtelMetricsProvider.updateTotalPointsInHashRing(_serviceName, _scheme, totalPoints);
   }
 
   @VisibleForTesting

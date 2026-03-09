@@ -52,6 +52,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
@@ -77,9 +78,11 @@ public class TrackerClientImpl implements TrackerClient
   private final Predicate<Integer> _isErrorStatus;
   private final ConcurrentMap<Integer, Double> _subsetWeightMap;
   private final boolean _doNotLoadBalance;
+  private final Clock _clock;
   final CallTracker _callTracker;
 
   private boolean _doNotSlowStart;
+  private volatile Consumer<Long> _perCallDurationListener = duration -> {};
 
   private volatile CallTracker.CallStats _latestCallStats;
 
@@ -94,6 +97,7 @@ public class TrackerClientImpl implements TrackerClient
   {
     _uri = uri;
     _transportClient = transportClient;
+    _clock = clock;
     _callTracker = new CallTrackerImpl(interval, clock, percentileTrackingEnabled);
     _isErrorStatus = isErrorStatus;
     _partitionData = Collections.unmodifiableMap(partitionDataMap);
@@ -142,13 +146,23 @@ public class TrackerClientImpl implements TrackerClient
     return _subsetWeightMap.getOrDefault(partitionId, 1D);
   }
 
+  /**
+   * Sets a listener that will be invoked with the actual duration (in ms) of each completed call.
+   */
+  public void setPerCallDurationListener(Consumer<Long> listener)
+  {
+    _perCallDurationListener = listener != null ? listener : duration -> {};
+  }
+
   @Override
   public void restRequest(RestRequest request,
                           RequestContext requestContext,
                           Map<String, String> wireAttrs,
                           TransportCallback<RestResponse> callback)
   {
-    _transportClient.restRequest(request, requestContext, wireAttrs, new TrackerClientRestCallback(callback, _callTracker.startCall()));
+    long startTime = _clock.currentTimeMillis();
+    _transportClient.restRequest(request, requestContext, wireAttrs,
+        new TrackerClientRestCallback(callback, _callTracker.startCall(), startTime));
   }
 
   @Override
@@ -157,7 +171,9 @@ public class TrackerClientImpl implements TrackerClient
                             Map<String, String> wireAttrs,
                             TransportCallback<StreamResponse> callback)
   {
-    _transportClient.streamRequest(request, requestContext, wireAttrs, new TrackerClientStreamCallback(callback, _callTracker.startCall()));
+    long startTime = _clock.currentTimeMillis();
+    _transportClient.streamRequest(request, requestContext, wireAttrs,
+        new TrackerClientStreamCallback(callback, _callTracker.startCall(), startTime));
   }
 
   @Override
@@ -182,17 +198,20 @@ public class TrackerClientImpl implements TrackerClient
   {
     private TransportCallback<RestResponse> _wrappedCallback;
     private CallCompletion       _callCompletion;
+    private final long _startTime;
 
     public TrackerClientRestCallback(TransportCallback<RestResponse> wrappedCallback,
-                                 CallCompletion callCompletion)
+                                 CallCompletion callCompletion, long startTime)
     {
       _wrappedCallback = wrappedCallback;
       _callCompletion = callCompletion;
+      _startTime = startTime;
     }
 
     @Override
     public void onResponse(TransportResponse<RestResponse> response)
     {
+      long duration = _clock.currentTimeMillis() - _startTime;
       if (response.hasError())
       {
         Throwable throwable = response.getError();
@@ -202,6 +221,7 @@ public class TrackerClientImpl implements TrackerClient
       {
         _callCompletion.endCall();
       }
+      _perCallDurationListener.accept(duration);
 
       _wrappedCallback.onResponse(response);
     }
@@ -229,12 +249,14 @@ public class TrackerClientImpl implements TrackerClient
   {
     private TransportCallback<StreamResponse> _wrappedCallback;
     private CallCompletion       _callCompletion;
+    private final long _startTime;
 
     public TrackerClientStreamCallback(TransportCallback<StreamResponse> wrappedCallback,
-                                 CallCompletion callCompletion)
+                                 CallCompletion callCompletion, long startTime)
     {
       _wrappedCallback = wrappedCallback;
       _callCompletion = callCompletion;
+      _startTime = startTime;
     }
 
     @Override
@@ -244,6 +266,7 @@ public class TrackerClientImpl implements TrackerClient
       {
         Throwable throwable = response.getError();
         handleError(_callCompletion, throwable);
+        _perCallDurationListener.accept(_clock.currentTimeMillis() - _startTime);
       }
       else
       {
@@ -264,6 +287,7 @@ public class TrackerClientImpl implements TrackerClient
          * In this way, D2 still monitors the responsiveness of a server without the interference from the client
          * side events, and error counting still works as before.
          */
+        long firstByteTime = _clock.currentTimeMillis();
         _callCompletion.record();
         Observer observer = new Observer()
         {
@@ -276,12 +300,14 @@ public class TrackerClientImpl implements TrackerClient
           public void onDone()
           {
             _callCompletion.endCall();
+            _perCallDurationListener.accept(firstByteTime - _startTime);
           }
 
           @Override
           public void onError(Throwable e)
           {
             handleError(_callCompletion, e);
+            _perCallDurationListener.accept(_clock.currentTimeMillis() - _startTime);
           }
         };
         entityStream.addObserver(observer);

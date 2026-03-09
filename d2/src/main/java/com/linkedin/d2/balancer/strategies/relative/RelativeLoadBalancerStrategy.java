@@ -135,6 +135,17 @@ public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
   }
 
   /**
+   * Sets the scheme for this strategy. Used for OTEL metrics tagging.
+   * This is called after strategy creation when the scheme becomes available.
+   *
+   * @param scheme the load balancer scheme (e.g., "http", "https")
+   */
+  public void setScheme(String scheme)
+  {
+    _stateUpdater.setScheme(scheme);
+  }
+
+  /**
    * Exposed for testings
    */
   Map<URI, Integer> getPointsMap(int partitionId)

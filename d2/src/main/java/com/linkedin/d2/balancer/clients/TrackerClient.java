@@ -16,6 +16,7 @@
 package com.linkedin.d2.balancer.clients;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
@@ -90,4 +91,14 @@ public interface TrackerClient extends LoadBalancerClient
    * @return CallTracker.
    */
   CallTracker getCallTracker();
+
+  /**
+   * Sets a listener that is invoked with the actual duration (in ms) of each completed call.
+   * Implementations that do not support per-call listeners can leave this as a no-op.
+   *
+   * @param listener consumer that receives the call duration in milliseconds
+   */
+  default void setPerCallDurationListener(Consumer<Long> listener)
+  {
+  }
 }
