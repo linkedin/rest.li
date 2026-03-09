@@ -108,6 +108,12 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
   private final Map<String, Map<URI, TrackerClient>>                                     _trackerClients;
 
   /**
+   * Pre-computed routing snapshots per service. Updated on topology changes (URI/cluster/service updates)
+   * so the read path in {@link SimpleLoadBalancer} avoids per-request O(n) HashMap rebuilds.
+   */
+  private final ConcurrentHashMap<String, PartitionRoutingTable>                         _routingSnapshots = new ConcurrentHashMap<>();
+
+  /**
    * Map from serviceName => schemeName.toLowerCase() => TransportClient
    */
   private final Map<String, Map<String, TransportClient>>                                _serviceClients;
@@ -664,6 +670,62 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     return _version;
   }
 
+  /**
+   * Returns the pre-computed routing snapshot for the given service, or null if not yet built.
+   * Called by {@link SimpleLoadBalancer} on the request path for O(1) lookups.
+   */
+  public PartitionRoutingTable getRoutingSnapshot(String serviceName)
+  {
+    return _routingSnapshots.get(serviceName);
+  }
+
+  /**
+   * Rebuilds the routing snapshot for a single service. Called from the update thread
+   * when URI or cluster properties change.
+   */
+  void rebuildRoutingSnapshot(String serviceName, UriProperties uriProperties)
+  {
+    if (uriProperties == null)
+    {
+      _routingSnapshots.remove(serviceName);
+      return;
+    }
+
+    LoadBalancerStateItem<ServiceProperties> serviceItem = _serviceProperties.get(serviceName);
+    ServiceProperties serviceProperties = serviceItem == null ? null : serviceItem.getProperty();
+
+    ClusterInfoItem clusterInfoItem = serviceProperties == null ? null
+        : _clusterInfo.get(serviceProperties.getClusterName());
+    LoadBalancerStateItem<ClusterProperties> clusterItem = clusterInfoItem == null ? null
+        : clusterInfoItem.getClusterPropertiesItem();
+    ClusterProperties clusterProperties = clusterItem == null ? null : clusterItem.getProperty();
+
+    Map<URI, TrackerClient> trackerClients = _trackerClients.get(serviceName);
+
+    PartitionRoutingTable table = PartitionRoutingTable.build(uriProperties, serviceProperties,
+        clusterProperties, trackerClients);
+    if (table != null)
+    {
+      _routingSnapshots.put(serviceName, table);
+    }
+  }
+
+  /**
+   * Rebuilds routing snapshots for all services on a cluster. Called when URI or cluster
+   * properties change to keep snapshots consistent with the latest topology.
+   */
+  void rebuildRoutingSnapshotsForCluster(String clusterName, UriProperties uriProperties)
+  {
+    Set<String> serviceNames = _servicesPerCluster.get(clusterName);
+    if (serviceNames != null)
+    {
+      for (String serviceName : serviceNames)
+      {
+        rebuildRoutingSnapshot(serviceName, uriProperties);
+      }
+    }
+  }
+
   public int getClusterCount()
   {
     return _clusterInfo.size();
@@ -933,6 +995,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       for (String serviceName : serviceNames)
       {
         Map<URI, TrackerClient> clients = _trackerClients.remove(serviceName);
+        _routingSnapshots.remove(serviceName);
 
         if (clients != null)
         {
@@ -1041,6 +1104,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     }
 
     _trackerClients.put(serviceName, newTrackerClients);
+    rebuildRoutingSnapshot(serviceName, uriProperties);
 
     shutdownTransportClients(oldTransportClients, serviceName);
   }
@@ -1163,6 +1227,7 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
     _log.warn("shutting down all tracker clients and transport clients for service " + serviceName);
 
     Map<URI, TrackerClient> clients = _trackerClients.remove(serviceName);
+    _routingSnapshots.remove(serviceName);
 
     if (clients != null)
     {
