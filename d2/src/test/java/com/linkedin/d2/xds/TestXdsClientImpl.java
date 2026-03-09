@@ -20,6 +20,7 @@ import com.linkedin.util.clock.Time;
 import indis.XdsD2;
 import io.envoyproxy.envoy.service.discovery.v3.Resource;
 import io.grpc.ManagedChannel;
+import io.grpc.Status;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -809,6 +810,67 @@ public class TestXdsClientImpl {
     } else {
       resourceVersions.forEach(x -> Assert.assertEquals(x.size(), 0));
     }
+  }
+
+  /**
+   * Verifies that when the ready timeout fires and the stream is not ready, the stream is closed and a retry is
+   * scheduled with backoff. This tests the fix for the bug where gRPC hangs indefinitely on name resolution errors:
+   * {@code withWaitForReady()} prevents {@code onError} from ever being called on the stream observer when the channel
+   * is in TRANSIENT_FAILURE, so the old code's "no need to start a retry task" assumption was incorrect.
+   */
+  @Test(timeOut = 2000)
+  public void testReadyTimeoutClosesStreamAndSchedulesRetry()
+  {
+    XdsClientImplFixture fixture = new XdsClientImplFixture();
+    fixture.watchAllResourceAndWatcherTypes();
+
+    // Create a real AdsStream attached to the fixture's XdsClientImpl. The stream has not been started, so
+    // isReady() returns false, simulating a gRPC channel stuck in TRANSIENT_FAILURE (e.g., name resolution error).
+    XdsClientImpl.AdsStream stream = fixture._xdsClientImpl.createTestAdsStream();
+    fixture._xdsClientImpl._adsStream = stream;
+
+    // Simulate the ready timeout firing
+    fixture._xdsClientImpl.handleReadyTimeout(stream);
+
+    // All subscribers should be notified of the DEADLINE_EXCEEDED error
+    ArgumentCaptor<Status> statusCaptor = ArgumentCaptor.forClass(Status.class);
+    verify(fixture._resourceWatcher, times(4)).onError(statusCaptor.capture());
+    statusCaptor.getAllValues().forEach(s -> Assert.assertEquals(s.getCode(), Status.Code.DEADLINE_EXCEEDED));
+
+    ArgumentCaptor<Status> wildcardStatusCaptor = ArgumentCaptor.forClass(Status.class);
+    verify(fixture._wildcardResourceWatcher, times(4)).onError(wildcardStatusCaptor.capture());
+    wildcardStatusCaptor.getAllValues().forEach(s -> Assert.assertEquals(s.getCode(), Status.Code.DEADLINE_EXCEEDED));
+
+    // Stream should be closed — old code left it open and hanging
+    Assert.assertNull(fixture._xdsClientImpl._adsStream, "ADS stream should be closed after ready timeout");
+
+    // A retry should be scheduled — key new behavior; old code only called notifyStreamError() with no retry
+    Assert.assertNotNull(fixture._xdsClientImpl._retryRpcStreamFuture,
+        "Retry should be scheduled after ready timeout to recover from name resolution errors");
+  }
+
+  /**
+   * Verifies that the ready timeout is a no-op when the stream reference has changed (race condition guard),
+   * i.e. when {@code _adsStream != stream}.
+   */
+  @Test
+  public void testReadyTimeoutIsNoOpWhenStreamMismatch()
+  {
+    XdsClientImplFixture fixture = new XdsClientImplFixture();
+    fixture.watchAllResourceAndWatcherTypes();
+
+    XdsClientImpl.AdsStream stream1 = fixture._xdsClientImpl.createTestAdsStream();
+    XdsClientImpl.AdsStream stream2 = fixture._xdsClientImpl.createTestAdsStream();
+    // _adsStream points to stream2, but the timeout was scheduled for stream1 — simulates the race condition
+    fixture._xdsClientImpl._adsStream = stream2;
+
+    fixture._xdsClientImpl.handleReadyTimeout(stream1);
+
+    // Nothing should happen — no subscriber notifications, no retry scheduled
+    verify(fixture._resourceWatcher, never()).onError(any());
+    verify(fixture._wildcardResourceWatcher, never()).onError(any());
+    Assert.assertNotNull(fixture._xdsClientImpl._adsStream, "ADS stream should be unchanged");
+    Assert.assertNull(fixture._xdsClientImpl._retryRpcStreamFuture, "No retry should be scheduled");
   }
 
   @Test

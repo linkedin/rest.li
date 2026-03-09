@@ -400,21 +400,8 @@ public class XdsClientImpl extends XdsClient
         AggregatedDiscoveryServiceGrpc.newStub(_managedChannel);
     AdsStream stream = new AdsStream(stub);
     _adsStream = stream;
-    _readyTimeoutFuture = checkShutdownAndSchedule(() ->
-    {
-      // There is a race condition where the task can be executed right as it's being cancelled. This checks whether
-      // the current state is still pointing to the right stream, and whether it is ready before notifying of an error.
-      if (_adsStream != stream || stream.isReady())
-      {
-        return;
-      }
-      _log.warn("ADS stream not ready within {} milliseconds. Underlying grpc channel will keep retrying to connect to "
-          + "xds servers.", _readyTimeoutMillis);
-      // notify subscribers about the error and wait for the stream to be ready by keeping it open.
-      notifyStreamError(Status.DEADLINE_EXCEEDED);
-      // note: no need to start a retry task explicitly since xds stream internally will keep on retrying to connect
-      // to one of the sub-channels (unless an error or complete callback is called).
-    }, _readyTimeoutMillis, TimeUnit.MILLISECONDS);
+    _readyTimeoutFuture = checkShutdownAndSchedule(
+        () -> handleReadyTimeout(stream), _readyTimeoutMillis, TimeUnit.MILLISECONDS);
     _adsStream.start();
     _log.info("Starting ADS stream, connecting to server: {}", _managedChannel.authority());
   }
@@ -1366,6 +1353,47 @@ public class XdsClientImpl extends XdsClient
     }
     _adsStream = testStream;
     _retryRpcStreamFuture = checkShutdownAndSchedule(new RpcRetryTask(), 0, TimeUnit.NANOSECONDS);
+  }
+
+  /**
+   * Handles the ready timeout for the given ADS stream. If the stream is not ready by the timeout, closes the stream
+   * and schedules a retry with backoff to ensure calls do not hang forever. This is necessary because
+   * {@link AdsStream#start()} uses {@code withWaitForReady()}, which causes gRPC calls to hang indefinitely when the
+   * channel is in TRANSIENT_FAILURE state (e.g., due to a name resolution error).
+   *
+   * Must be called from the executor.
+   */
+  @VisibleForTesting
+  void handleReadyTimeout(AdsStream stream)
+  {
+    // There is a race condition where the task can be executed right as it's being cancelled. This checks whether
+    // the current state is still pointing to the right stream, and whether it is ready before acting.
+    if (_adsStream != stream || stream.isReady())
+    {
+      return;
+    }
+    _log.warn("ADS stream not ready within {} milliseconds. This may be caused by a name resolution error leaving "
+        + "the gRPC channel in TRANSIENT_FAILURE. Closing stream and scheduling retry.", _readyTimeoutMillis);
+    // Close the stream, notify subscribers with an error, and schedule a retry with backoff.
+    stream.handleRpcStreamClosed(Status.DEADLINE_EXCEEDED.withDescription(
+        "ADS stream not ready within " + _readyTimeoutMillis + " ms, possible name resolution error"));
+    // Cancel the hanging gRPC call that is waiting for the channel to become ready. This triggers onError on the
+    // response observer, which is a no-op since _closed is already set by handleRpcStreamClosed above.
+    if (stream._requestWriter != null)
+    {
+      ((ClientCallStreamObserver<?>) stream._requestWriter).cancel(
+          "Cancelling ADS stream call that timed out waiting for channel to be ready", null);
+    }
+  }
+
+  /**
+   * Creates a new {@link AdsStream} for testing. The returned stream has not been started ({@code _requestWriter} is
+   * null and {@code isReady()} returns false). Must only be called from tests.
+   */
+  @VisibleForTesting
+  AdsStream createTestAdsStream()
+  {
+    return new AdsStream(AggregatedDiscoveryServiceGrpc.newStub(_managedChannel));
   }
 
   // Return true if the client should subscribe to URI glob collection for the given resource type.
