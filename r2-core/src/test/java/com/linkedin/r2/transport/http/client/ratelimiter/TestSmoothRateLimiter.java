@@ -22,11 +22,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.AsyncRateLimiter;
 import com.linkedin.r2.transport.http.client.SmoothRateLimiter;
+import com.linkedin.test.util.ClockedExecutor;
 import com.linkedin.util.clock.Clock;
 
 import java.util.concurrent.TimeUnit;
@@ -35,6 +37,7 @@ import org.junit.Assert;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 
 public class TestSmoothRateLimiter extends BaseTestSmoothRateLimiter
@@ -118,9 +121,65 @@ public class TestSmoothRateLimiter extends BaseTestSmoothRateLimiter
     Assert.assertTrue("The tasks should run", callback.isDone());
   }
 
+  /**
+   * Verifies that fractional millisecond periods are handled accurately using raw period values.
+   *
+   * <p>At 750 QPS with burst=1 the internal period is 1000/750 = 1.333ms (fractional).
+   * Without fractional tracking this would round to 1ms, causing ~1000 QPS dispatches (+33% error).
+   * With fractional period accumulation the rate should be accurate within 10%.</p>
+   */
+  @Test(timeOut = 10000)
+  public void testFractionalPeriodAccuracy()
+  {
+    ClockedExecutor executor = new ClockedExecutor();
+    SmoothRateLimiter rateLimiter = new SmoothRateLimiter(
+            executor, executor, executor, _queue, Integer.MAX_VALUE,
+            SmoothRateLimiter.BufferOverflowMode.DROP, RATE_LIMITER_NAME_TEST);
+
+    int targetQps = 750;
+    int burst = 1;
+    rateLimiter.setRate(targetQps, ONE_SECOND_PERIOD, burst);
+
+    AtomicInteger dispatchCount = new AtomicInteger(0);
+
+    // Submit enough callbacks to run for 4 seconds
+    for (int i = 0; i < targetQps * 4; i++)
+    {
+      rateLimiter.submit(new Callback<None>()
+      {
+        @Override
+        public void onError(Throwable e)
+        {
+          Assert.fail("Unexpected error: " + e.getMessage());
+        }
+
+        @Override
+        public void onSuccess(None result)
+        {
+          dispatchCount.incrementAndGet();
+        }
+      });
+    }
+
+    // Run for exactly 4 seconds
+    int durationSeconds = 4;
+    executor.runFor(ONE_SECOND_PERIOD * durationSeconds);
+
+    int totalDispatches = dispatchCount.get();
+    int expectedTotal = targetQps * durationSeconds;  // 3000
+    double errorPercent = 100.0 * Math.abs(totalDispatches - expectedTotal) / expectedTotal;
+    double maxErrorPercent = 10.0;
+
+    // Without fractional period tracking the error would be ~33%.
+    // With the fix it should be well under 10%.
+    assertTrue(errorPercent < maxErrorPercent,
+            "Dispatched " + totalDispatches + " in " + durationSeconds + "s, expected ~" + expectedTotal
+                    + " (error " + String.format("%.1f", errorPercent) + "%, max allowed " + maxErrorPercent + "%)");
+  }
+
   protected AsyncRateLimiter getRateLimiter(ScheduledExecutorService executorService, ExecutorService executor, Clock clock)
   {
     return new SmoothRateLimiter(executorService, executor, clock, _queue, MAX_BUFFERED_CALLBACKS, SmoothRateLimiter.BufferOverflowMode.DROP,
-                                 RATE_LIMITER_NAME_TEST);
+            RATE_LIMITER_NAME_TEST);
   }
 }
