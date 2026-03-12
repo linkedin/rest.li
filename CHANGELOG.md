@@ -14,9 +14,11 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.85.7-rc1] - 2026-03-12
+- Add Stable ConstantQPS DarkCluster Strategy
+
 ## [29.85.6] - 2026-03-06
 - Add cluster subsetting configuration (enableClusterSubsetting, minClusterSubsetSize) to D2Cluster and ClusterProperties.
-- Add Stable ConstantQPS DarkCluster Strategy
 
 ## [29.85.5] - 2026-02-24
 - Pass WarmUpLoadBalancer constructor params in the correct order
@@ -5974,7 +5976,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.6...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.7-rc1...master
+[29.85.7-rc1]: https://github.com/linkedin/rest.li/compare/v29.85.6...v29.85.7-rc1
 [29.85.6]: https://github.com/linkedin/rest.li/compare/v29.85.5...v29.85.6
 [29.85.5]: https://github.com/linkedin/rest.li/compare/v29.85.4...v29.85.5
 [29.85.4]: https://github.com/linkedin/rest.li/compare/v29.85.3...v29.85.4
