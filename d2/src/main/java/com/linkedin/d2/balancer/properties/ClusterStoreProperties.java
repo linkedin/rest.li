@@ -153,7 +153,8 @@ public class ClusterStoreProperties extends ClusterProperties
         stableConfigs.getSslSessionValidationStrings(), stableConfigs.getDarkClusters(),
         stableConfigs.isDelegated(), stableConfigs.getVersion(), stableConfigs.getSlowStartProperties(),
         stableConfigs.getConnectionOptions(), stableConfigs.getOutlierDetectionConfig(),
-        stableConfigs.getLoadBalancingPolicies());
+        stableConfigs.getLoadBalancingPolicies(), stableConfigs.isEnableClusterSubsetting(),
+        stableConfigs.getMinClusterSubsetSize());
     _canaryConfigs = canaryConfigs;
     _canaryDistributionStrategy = distributionStrategy;
     _failoutProperties = failoutProperties;

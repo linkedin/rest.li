@@ -70,6 +70,8 @@ public class ClusterProperties
   private final ConnectionOptions _connectionOptions;
   private final Map<String, Object> _outlierDetectionConfig;
   private final List<Map<String, Object>> _loadBalancingPolicies;
+  private final boolean _enableClusterSubsetting;
+  private final int _minClusterSubsetSize;
 
   public ClusterProperties(String clusterName)
   {
@@ -254,6 +256,26 @@ public class ClusterProperties
       @Nullable ConnectionOptions connectionOptions,
       @Nullable Map<String, Object> outlierDetectionConfig,
       @Nullable List<Map<String, Object>> loadBalancingPolicies) {
+    this(clusterName, prioritizedSchemes, properties, bannedUris, partitionProperties, sslSessionValidationStrings,
+        darkClusters, delegated, version, slowStartProperties, connectionOptions, outlierDetectionConfig,
+        loadBalancingPolicies, false, -1);
+  }
+
+  public ClusterProperties(String clusterName,
+      List<String> prioritizedSchemes,
+      Map<String, String> properties,
+      Set<URI> bannedUris,
+      PartitionProperties partitionProperties,
+      List<String> sslSessionValidationStrings,
+      Map<String, Object> darkClusters,
+      boolean delegated,
+      long version,
+      @Nullable SlowStartProperties slowStartProperties,
+      @Nullable ConnectionOptions connectionOptions,
+      @Nullable Map<String, Object> outlierDetectionConfig,
+      @Nullable List<Map<String, Object>> loadBalancingPolicies,
+      boolean enableClusterSubsetting,
+      int minClusterSubsetSize) {
     _clusterName = clusterName;
     _prioritizedSchemes =
         (prioritizedSchemes != null) ? Collections.unmodifiableList(prioritizedSchemes)
@@ -270,6 +292,8 @@ public class ClusterProperties
     _connectionOptions = connectionOptions;
     _outlierDetectionConfig = outlierDetectionConfig == null ? null : Collections.unmodifiableMap(outlierDetectionConfig);
     _loadBalancingPolicies = loadBalancingPolicies == null ? null : Collections.unmodifiableList(loadBalancingPolicies);
+    _enableClusterSubsetting = enableClusterSubsetting;
+    _minClusterSubsetSize = minClusterSubsetSize;
   }
 
 
@@ -277,7 +301,8 @@ public class ClusterProperties
   {
     this(other._clusterName, other._prioritizedSchemes, other._properties, other._bannedUris, other._partitionProperties,
         other._sslSessionValidationStrings, other._darkClusters, other._delegated, other._version,
-        other._slowStartProperties, other._connectionOptions, other._outlierDetectionConfig, other._loadBalancingPolicies);
+        other._slowStartProperties, other._connectionOptions, other._outlierDetectionConfig, other._loadBalancingPolicies,
+        other._enableClusterSubsetting, other._minClusterSubsetSize);
   }
 
   public boolean isBanned(URI uri)
@@ -371,6 +396,16 @@ public class ClusterProperties
     return _loadBalancingPolicies;
   }
 
+  public boolean isEnableClusterSubsetting()
+  {
+    return _enableClusterSubsetting;
+  }
+
+  public int getMinClusterSubsetSize()
+  {
+    return _minClusterSubsetSize;
+  }
+
   @Override
   public String toString()
   {
@@ -379,7 +414,8 @@ public class ClusterProperties
         + ", _partitionProperties=" + _partitionProperties + ", _sslSessionValidationStrings=" + _sslSessionValidationStrings
         + ", _darkClusterConfigMap=" + _darkClusters + ", _delegated=" + _delegated + ", _slowStartProperties="
         + _slowStartProperties + ", _connectionOptions=" + _connectionOptions + ", _outlierDetectionConfig="
-        + _outlierDetectionConfig + ", _loadBalancingPolicies=" + _loadBalancingPolicies + "]";
+        + _outlierDetectionConfig + ", _loadBalancingPolicies=" + _loadBalancingPolicies
+        + ", _enableClusterSubsetting=" + _enableClusterSubsetting + ", _minClusterSubsetSize=" + _minClusterSubsetSize + "]";
   }
 
   @Override
@@ -401,6 +437,8 @@ public class ClusterProperties
     result = prime * result + ((_connectionOptions == null) ? 0 : _connectionOptions.hashCode());
     result = prime * result + ((_outlierDetectionConfig == null) ? 0 : _outlierDetectionConfig.hashCode());
     result = prime * result + ((_loadBalancingPolicies == null) ? 0 : _loadBalancingPolicies.hashCode());
+    result = prime * result + ((_enableClusterSubsetting) ? 1 : 0);
+    result = prime * result + _minClusterSubsetSize;
     return result;
   }
 
@@ -461,6 +499,14 @@ public class ClusterProperties
       return false;
     }
     if (!Objects.equals(_loadBalancingPolicies, other._loadBalancingPolicies))
+    {
+      return false;
+    }
+    if (_enableClusterSubsetting != other._enableClusterSubsetting)
+    {
+      return false;
+    }
+    if (_minClusterSubsetSize != other._minClusterSubsetSize)
     {
       return false;
     }

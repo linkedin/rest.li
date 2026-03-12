@@ -14,8 +14,8 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
-## [29.85.6] - 2026-02-25
-
+## [29.85.6] - 2026-03-06
+- Add cluster subsetting configuration (enableClusterSubsetting, minClusterSubsetSize) to D2Cluster and ClusterProperties.
 - Add Stable ConstantQPS DarkCluster Strategy
 
 ## [29.85.5] - 2026-02-24
