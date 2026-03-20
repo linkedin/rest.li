@@ -41,6 +41,8 @@ import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategy
 import com.linkedin.d2.balancer.strategies.random.RandomLoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.relative.RelativeLoadBalancerStrategyFactory;
+import com.linkedin.d2.jmx.DegraderLoadBalancerStrategyV3OtelMetricsProvider;
+import com.linkedin.d2.jmx.RelativeLoadBalancerStrategyOtelMetricsProvider;
 import com.linkedin.d2.balancer.subsetting.DeterministicSubsettingMetadataProvider;
 import com.linkedin.d2.balancer.util.canary.CanaryDistributionProvider;
 import com.linkedin.d2.balancer.util.downstreams.DownstreamServicesFetcher;
@@ -250,7 +252,9 @@ public class D2ClientBuilder
                   _config.d2CalleeInfoRecorder,
                   _config.enableIndisDownstreamServicesFetcher,
                   _config.indisDownstreamServicesFetchTimeout,
-                  _config.xdsClientOtelMetricsProvider
+                  _config.xdsClientOtelMetricsProvider,
+                  _config.relativeLoadBalancerStrategyOtelMetricsProvider,
+                  _config.degraderLoadBalancerStrategyV3OtelMetricsProvider
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -872,6 +876,18 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setRelativeLoadBalancerStrategyOtelMetricsProvider(
+      RelativeLoadBalancerStrategyOtelMetricsProvider relativeLoadBalancerStrategyOtelMetricsProvider) {
+    _config.relativeLoadBalancerStrategyOtelMetricsProvider = relativeLoadBalancerStrategyOtelMetricsProvider;
+    return this;
+  }
+
+  public D2ClientBuilder setDegraderLoadBalancerStrategyV3OtelMetricsProvider(
+      DegraderLoadBalancerStrategyV3OtelMetricsProvider degraderLoadBalancerStrategyV3OtelMetricsProvider) {
+    _config.degraderLoadBalancerStrategyV3OtelMetricsProvider = degraderLoadBalancerStrategyV3OtelMetricsProvider;
+    return this;
+  }
+
   public D2ClientBuilder setLoadBalanceStreamException(boolean loadBalanceStreamException) {
     _config.loadBalanceStreamException = loadBalanceStreamException;
     return this;
@@ -965,7 +981,7 @@ public class D2ClientBuilder
       // TODO: create StateUpdater.LoadBalanceConfig and pass it to the RelativeLoadBalancerStrategyFactory
       final RelativeLoadBalancerStrategyFactory relativeLoadBalancerStrategyFactory = new RelativeLoadBalancerStrategyFactory(
           _config._executorService, _config.healthCheckOperations, Collections.emptyList(), _config.eventEmitter,
-          SystemClock.instance(), _config.loadBalanceStreamException);
+          SystemClock.instance(), _config.loadBalanceStreamException, _config.relativeLoadBalancerStrategyOtelMetricsProvider);
       loadBalancerStrategyFactories.putIfAbsent(RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME,
           relativeLoadBalancerStrategyFactory);
     }

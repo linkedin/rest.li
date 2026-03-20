@@ -32,6 +32,8 @@ import com.linkedin.d2.balancer.util.hashing.SeededRandomHash;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheck;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckClientBuilder;
+import com.linkedin.d2.jmx.DegraderLoadBalancerStrategyV3OtelMetricsProvider;
+import com.linkedin.d2.jmx.NoOpDegraderLoadBalancerStrategyV3OtelMetricsProvider;
 import com.linkedin.r2.filter.R2Constants;
 import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
@@ -54,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import org.slf4j.Logger;
@@ -88,16 +91,29 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
   private static final double FAST_RECOVERY_MAX_DROPRATE = 0.5;
   private static final TimingKey TIMING_KEY = TimingKey.registerNewKey(TimingNameConstants.D2_UPDATE_PARTITION, TimingImportance.LOW);
 
+  private static final String NO_VALUE = "-";
+
   private boolean                                     _updateEnabled;
   private volatile DegraderLoadBalancerStrategyConfig _config;
   private volatile HashFunction<Request>              _hashFunction;
   private final DegraderLoadBalancerState _state;
 
   private final RateLimitedLogger _rateLimitedLogger;
+  private final DegraderLoadBalancerStrategyV3OtelMetricsProvider _degraderLbOtelMetricsProvider;
+  private volatile String _scheme;
 
   public DegraderLoadBalancerStrategyV3(DegraderLoadBalancerStrategyConfig config, String serviceName,
       Map<String, String> degraderProperties,
       List<PartitionDegraderLoadBalancerStateListener.Factory> degraderStateListenerFactories)
+  {
+    this(config, serviceName, degraderProperties, degraderStateListenerFactories,
+        new NoOpDegraderLoadBalancerStrategyV3OtelMetricsProvider());
+  }
+
+  public DegraderLoadBalancerStrategyV3(DegraderLoadBalancerStrategyConfig config, String serviceName,
+      Map<String, String> degraderProperties,
+      List<PartitionDegraderLoadBalancerStateListener.Factory> degraderStateListenerFactories,
+      DegraderLoadBalancerStrategyV3OtelMetricsProvider degraderLbOtelMetricsProvider)
   {
     _updateEnabled = true;
     setConfig(config);
@@ -107,7 +123,22 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     }
     _state = new DegraderLoadBalancerState(serviceName, degraderProperties, config, degraderStateListenerFactories);
     _rateLimitedLogger = new RateLimitedLogger(_log, config.DEFAULT_UPDATE_INTERVAL_MS, config.getClock());
+    _degraderLbOtelMetricsProvider = degraderLbOtelMetricsProvider;
+    _scheme = NO_VALUE;
+  }
 
+  /**
+   * Sets the scheme for this strategy. Used for OTEL metrics tagging.
+   * This is called after strategy creation when the scheme becomes available.
+   *
+   * @param scheme the load balancer scheme (e.g., "http", "https")
+   */
+  public void setScheme(String scheme)
+  {
+    if (scheme != null && !scheme.equals(NO_VALUE))
+    {
+      _scheme = scheme;
+    }
   }
 
   @Override
@@ -418,6 +449,18 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
       }
     }
 
+    // Register per-call OTEL latency listener for clients joining this partition for the first time.
+    Set<URI> knownUris = partitionState.getPointsMap().keySet();
+    for (DegraderTrackerClient client : trackerClients)
+    {
+      if (!knownUris.contains(client.getUri()))
+      {
+        client.setPerCallDurationListener(
+            duration -> _degraderLbOtelMetricsProvider.recordHostLatency(
+                _state.getServiceName(), _scheme, duration));
+      }
+    }
+
     // doUpdatePartitionState has no side effects on _state or trackerClients.
     // all changes to the trackerClients would be recorded in clientUpdaters
     partitionState = doUpdatePartitionState(clusterGenerationId, partition.getId(), partitionState,
@@ -429,6 +472,21 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     {
       clientUpdater.update();
     }
+
+    emitOtelMetrics(partitionState);
+  }
+
+  private void emitOtelMetrics(PartitionDegraderLoadBalancerState partitionState)
+  {
+    _degraderLbOtelMetricsProvider.updateOverrideClusterDropRate(_state.getServiceName(), _scheme,
+        partitionState.getCurrentOverrideDropRate());
+
+    int totalPoints = 0;
+    for (Integer points : partitionState.getPointsMap().values())
+    {
+      totalPoints += points;
+    }
+    _degraderLbOtelMetricsProvider.updateTotalPointsInHashRing(_state.getServiceName(), _scheme, totalPoints);
   }
 
 
