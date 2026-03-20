@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.85.6] - 2026-03-06
+- Add cluster subsetting configuration (enableClusterSubsetting, minClusterSubsetSize) to D2Cluster and ClusterProperties.
+
 ## [29.85.5] - 2026-02-24
 - Pass WarmUpLoadBalancer constructor params in the correct order
 
@@ -5970,7 +5973,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.5...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.6...master
+[29.85.6]: https://github.com/linkedin/rest.li/compare/v29.85.5...v29.85.6
 [29.85.5]: https://github.com/linkedin/rest.li/compare/v29.85.4...v29.85.5
 [29.85.4]: https://github.com/linkedin/rest.li/compare/v29.85.3...v29.85.4
 [29.85.3]: https://github.com/linkedin/rest.li/compare/v29.85.2...v29.85.3
