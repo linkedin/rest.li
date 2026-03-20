@@ -59,4 +59,14 @@ record D2Cluster includes D2ChangeTimeStamps {
    * The load balancing policies to use for this cluster.
    */
   loadBalancingPolicies: optional array[LoadBalancingPolicy]
+
+  /**
+   * When enabled, client will only send requests to a subset of the hosts in the cluster. Used together with minClusterSubsetSize.
+   */
+  enableClusterSubsetting: boolean = false
+
+  /**
+   * The minimum cluster subset size for this cluster. Will only take effect when it is a positive integer and enableClusterSubsetting is set to true. Will be capped at the number of hosts in the cluster.
+   */
+  minClusterSubsetSize: int = -1
 }
