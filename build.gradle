@@ -62,6 +62,7 @@ project.ext.externalDependency = [
   'disruptor': 'com.lmax:disruptor:3.2.0',
   'easymock': 'org.easymock:easymock:4.0.2',
   'findbugs': 'com.google.code.findbugs:annotations:3.0.0',
+  'errorProneAnnotations': 'com.google.errorprone:error_prone_annotations:2.26.1',
   'mockito': 'org.mockito:mockito-all:1.9.5',
   'metricsCore': 'io.dropwizard.metrics:metrics-core:4.2.10',
   'guava': 'com.google.guava:guava:18.0',
