@@ -1,0 +1,36 @@
+namespace com.linkedin.d2
+
+/**
+ * Configuration for Ring Hash load balancing policy.
+ * These are ported from the Envoy proto, please refer to the Envoy proto for more details:
+ * https://www.envoyproxy.io/docs/envoy/latest/api-v3/config/cluster/v3/cluster.proto#config-cluster-v3-cluster-ringhashlbconfig
+ */
+record RingHashLbConfig {
+  /**
+   * Minimum hash ring size. The larger the ring is (that is, the more hashes there are for each provided host)
+   * the better the request distribution will reflect the desired weights.
+   */
+  minimum_ring_size: optional int
+
+  /**
+   * Maximum hash ring size.
+   */
+  maximum_ring_size: optional int
+
+  /**
+   * The hash function used to hash hosts onto the ring.
+  */
+  hash_function: optional enum HashFunction {
+    /**
+     * Use `xxHash <https://github.com/Cyan4973/xxHash>`
+     */
+    XX_HASH
+
+    /**
+     * Use `MurmurHash2 <https://sites.google.com/site/murmurhash/>`, this is compatible with
+     * std:hash<string> in GNU libstdc++ 3.4.20 or above. This is typically the case when compiled
+     * on Linux and not macOS.
+     */
+    MURMUR_HASH_2
+  }
+}

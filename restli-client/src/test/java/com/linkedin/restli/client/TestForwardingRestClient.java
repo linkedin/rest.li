@@ -179,6 +179,9 @@ public class TestForwardingRestClient {
       if (clazz == String.class) {
         return DEFAULT_STRING_RESPONSE;
       }
+      if (clazz == Boolean.class || clazz == boolean.class) {
+        return false;
+      }
       return mock(clazz);
     } catch (Exception e) {
       // If an error is thrown during dataProvider creation the test relying on the dataProvider is silently skipped.

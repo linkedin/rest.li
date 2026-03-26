@@ -23,6 +23,7 @@ package com.linkedin.restli.client;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.KeyMapper;
 import com.linkedin.data.DataMap;
 import com.linkedin.data.template.RecordTemplate;
 import com.linkedin.r2.RemoteInvocationException;
@@ -32,6 +33,7 @@ import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.rest.RestResponseBuilder;
 import com.linkedin.r2.transport.common.Client;
+import com.linkedin.restli.client.util.RestLiClientConfig;
 import com.linkedin.restli.common.ContentType;
 import com.linkedin.restli.common.EmptyRecord;
 import com.linkedin.restli.common.ErrorDetails;
@@ -46,6 +48,7 @@ import com.linkedin.restli.internal.common.TestConstants;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpCookie;
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,6 +61,8 @@ import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import static org.mockito.Mockito.*;
 
 /**
  * @author Steven Ihde
@@ -885,5 +890,125 @@ public class RestClientTest
     headers.put(RestConstants.HEADER_RESTLI_PROTOCOL_VERSION, protocolVersion.toString());
 
     return new RestClient(new MyMockClient(httpCode, headers, mapBytes), "http://localhost");
+  }
+
+  // ==================== Tests for needScatterGather(Request, RequestContext) ====================
+
+  @Test
+  public void testNeedScatterGatherWithStrategyFromRequestContext()
+  {
+    ScatterGatherStrategy mockStrategy = mock(ScatterGatherStrategy.class);
+    when(mockStrategy.needScatterGather(any())).thenReturn(true);
+
+    RestClient restClient = createD2RestClient(null);
+    RequestContext requestContext = new RequestContext();
+    requestContext.putLocalAttr(com.linkedin.restli.client.Client.SCATTER_GATHER_STRATEGY, mockStrategy);
+    Request<?> request = mock(Request.class);
+
+    Assert.assertTrue(restClient.needScatterGather(request, requestContext));
+    verify(mockStrategy).needScatterGather(request);
+  }
+
+  @Test
+  public void testNeedScatterGatherWithStrategyFromClientConfig()
+  {
+    ScatterGatherStrategy mockStrategy = mock(ScatterGatherStrategy.class);
+    when(mockStrategy.needScatterGather(any())).thenReturn(true);
+
+    RestClient restClient = createD2RestClient(mockStrategy);
+    RequestContext requestContext = new RequestContext();
+    Request<?> request = mock(Request.class);
+
+    Assert.assertTrue(restClient.needScatterGather(request, requestContext));
+    verify(mockStrategy).needScatterGather(request);
+  }
+
+  @Test
+  public void testNeedScatterGatherWithNoStrategy()
+  {
+    RestClient restClient = createD2RestClient(null);
+    RequestContext requestContext = new RequestContext();
+    Request<?> request = mock(Request.class);
+
+    Assert.assertFalse(restClient.needScatterGather(request, requestContext));
+  }
+
+  @Test
+  public void testNeedScatterGatherWithNonD2Uri()
+  {
+    ScatterGatherStrategy mockStrategy = mock(ScatterGatherStrategy.class);
+    when(mockStrategy.needScatterGather(any())).thenReturn(true);
+
+    Client r2Client = mock(Client.class);
+    RestLiClientConfig config = new RestLiClientConfig();
+    config.setScatterGatherStrategy(mockStrategy);
+    RestClient restClient = new RestClient(r2Client, "http://localhost:8080", config);
+    RequestContext requestContext = new RequestContext();
+    Request<?> request = mock(Request.class);
+
+    Assert.assertFalse(restClient.needScatterGather(request, requestContext));
+    verify(mockStrategy, never()).needScatterGather(any());
+  }
+
+  @Test
+  public void testNeedScatterGatherWithTargetHostHintSet()
+  {
+    ScatterGatherStrategy mockStrategy = mock(ScatterGatherStrategy.class);
+    when(mockStrategy.needScatterGather(any())).thenReturn(true);
+
+    RestClient restClient = createD2RestClient(mockStrategy);
+    RequestContext requestContext = new RequestContext();
+    KeyMapper.TargetHostHints.setRequestContextTargetHost(requestContext, URI.create("http://host1:8080/"));
+    Request<?> request = mock(Request.class);
+
+    Assert.assertFalse(restClient.needScatterGather(request, requestContext));
+    verify(mockStrategy, never()).needScatterGather(any());
+  }
+
+  @Test
+  public void testNeedScatterGatherRequestContextStrategyTakesPrecedence()
+  {
+    ScatterGatherStrategy contextStrategy = mock(ScatterGatherStrategy.class);
+    when(contextStrategy.needScatterGather(any())).thenReturn(true);
+    ScatterGatherStrategy clientConfigStrategy = mock(ScatterGatherStrategy.class);
+    when(clientConfigStrategy.needScatterGather(any())).thenReturn(false);
+
+    RestClient restClient = createD2RestClient(clientConfigStrategy);
+    RequestContext requestContext = new RequestContext();
+    requestContext.putLocalAttr(com.linkedin.restli.client.Client.SCATTER_GATHER_STRATEGY, contextStrategy);
+    Request<?> request = mock(Request.class);
+
+    Assert.assertTrue(restClient.needScatterGather(request, requestContext));
+    verify(contextStrategy).needScatterGather(request);
+    verify(clientConfigStrategy, never()).needScatterGather(any());
+  }
+
+  @Test
+  public void testNeedScatterGatherDoesNotRemoveStrategyFromRequestContext()
+  {
+    ScatterGatherStrategy mockStrategy = mock(ScatterGatherStrategy.class);
+    when(mockStrategy.needScatterGather(any())).thenReturn(true);
+
+    RestClient restClient = createD2RestClient(null);
+    RequestContext requestContext = new RequestContext();
+    requestContext.putLocalAttr(com.linkedin.restli.client.Client.SCATTER_GATHER_STRATEGY, mockStrategy);
+    Request<?> request = mock(Request.class);
+
+    restClient.needScatterGather(request, requestContext);
+
+    // Verify the strategy attribute is still present (non-destructive read)
+    Assert.assertSame(requestContext.getLocalAttr(com.linkedin.restli.client.Client.SCATTER_GATHER_STRATEGY),
+        mockStrategy, "ScatterGatherStrategy should not be removed from request context");
+  }
+
+  private RestClient createD2RestClient(ScatterGatherStrategy strategy)
+  {
+    Client r2Client = mock(Client.class);
+    RestLiClientConfig config = new RestLiClientConfig();
+    if (strategy != null)
+    {
+      config.setScatterGatherStrategy(strategy);
+    }
+    return new RestClient(r2Client, "d2://", config);
   }
 }

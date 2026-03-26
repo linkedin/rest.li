@@ -213,6 +213,18 @@ public interface Client
   }
 
   /**
+   * Determines whether the given request needs scatter-gather routing.
+   *
+   * @param request rest.li request
+   * @param requestContext request context
+   * @return true if the given request needs scatter gather, false by default
+   */
+  default <T> boolean needScatterGather(Request<T> request, RequestContext requestContext)
+  {
+    return false;
+  }
+
+  /**
    * Sends a type-bound REST request using a callback.
    *
    * @param request to send

@@ -79,7 +79,17 @@ public class SslHandshakeTimingHandler extends ChannelOutboundHandlerAdapter
         TimingContextUtil.markTiming(requestContext, TIMING_KEY, duration);
       }
 
-      Certificate[] peerCerts = channel.attr(NettyChannelAttributes.SERVER_CERTIFICATES).getAndSet(null);
+      // Try reading the server certificate from the current channel first (works for HTTP/1.1
+      // where CertificateHandler sets it directly on the channel). 
+      Certificate[] peerCerts = channel.attr(NettyChannelAttributes.SERVER_CERTIFICATES).get();
+
+      // If not found, read from the parent channel (works for HTTP/2 where the pool hands out
+      // child stream channels but the certificate is set on the parent TCP channel).
+      if (peerCerts == null && channel.parent() != null)
+      {
+        peerCerts = channel.parent().attr(NettyChannelAttributes.SERVER_CERTIFICATES).get();
+      }
+      
       if (peerCerts != null)
       {
         requestContext.putLocalAttr(R2Constants.SERVER_CERT, peerCerts);
