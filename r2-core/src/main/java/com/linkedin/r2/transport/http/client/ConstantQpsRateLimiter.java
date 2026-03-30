@@ -38,11 +38,26 @@ public class ConstantQpsRateLimiter extends SmoothRateLimiter
 {
   private final EvictingCircularBuffer _evictingCircularBuffer;
 
-
   public ConstantQpsRateLimiter(
       ScheduledExecutorService scheduler, Executor executor, Clock clock, EvictingCircularBuffer callbackBuffer)
   {
-    super(scheduler, executor, clock, callbackBuffer, BufferOverflowMode.NONE, "ConstantQpsRateLimiter", new UnboundedRateLimiterExecutionTracker());
+    this(scheduler, executor, clock, callbackBuffer, false);
+  }
+
+  /**
+   * Constructs a new instance with an option to enable precise period tracking.
+   *
+   * @param enablePrecisePeriodTracking When {@code true}, uses double-precision period and permit
+   *                             tracking to eliminate millisecond quantization errors at rates where the
+   *                             internal period is non-integer (e.g., 750 QPS &rarr; 1.333ms period).
+   *                             When {@code false} (default), uses integer-rounded period and permit values.
+   */
+  public ConstantQpsRateLimiter(
+      ScheduledExecutorService scheduler, Executor executor, Clock clock, EvictingCircularBuffer callbackBuffer,
+      boolean enablePrecisePeriodTracking)
+  {
+    super(scheduler, executor, clock, callbackBuffer, BufferOverflowMode.NONE, "ConstantQpsRateLimiter",
+        new UnboundedRateLimiterExecutionTracker(), enablePrecisePeriodTracking);
     _evictingCircularBuffer = callbackBuffer;
   }
 

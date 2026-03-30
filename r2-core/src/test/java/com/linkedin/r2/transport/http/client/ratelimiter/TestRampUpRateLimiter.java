@@ -32,6 +32,7 @@ import java.util.stream.IntStream;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
@@ -136,10 +137,7 @@ public class TestRampUpRateLimiter extends TestSmoothRateLimiter
         if (i < targetPermitsPerPeriod) countBelowTarget++;
       }
 
-      // Allow occasional overshoots during rate transitions due to fractional period catch-up behavior.
-      // When switching from a slow rate to a fast rate, accumulated time can grant multiple periods
-      // worth of permits in a single tick, causing brief bursts above target.
-      assertTrue(countAboveMaxTarget <= 2, "Should have at most 2 seconds above target QPS during rate transitions (found " + countAboveMaxTarget + ")");
+      assertEquals(countAboveMaxTarget, 0, "It should never go above the target QPS");
       assertTrue(countAtTarget > 0, "There should be at least one at the target QPS since it should reach the stable state after a while");
 
       long actualStepsToTarget = (countBelowTarget + 1)
