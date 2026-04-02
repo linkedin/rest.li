@@ -133,8 +133,8 @@ public class TestSmoothRateLimiter extends BaseTestSmoothRateLimiter
   {
     ClockedExecutor executor = new ClockedExecutor();
     SmoothRateLimiter rateLimiter = new SmoothRateLimiter(
-            executor, executor, executor, _queue, Integer.MAX_VALUE,
-            SmoothRateLimiter.BufferOverflowMode.DROP, RATE_LIMITER_NAME_TEST);
+        executor, executor, executor, _queue, Integer.MAX_VALUE,
+        SmoothRateLimiter.BufferOverflowMode.DROP, RATE_LIMITER_NAME_TEST, true);
 
     int targetQps = 750;
     int burst = 1;
@@ -173,13 +173,13 @@ public class TestSmoothRateLimiter extends BaseTestSmoothRateLimiter
     // Without fractional period tracking the error would be ~33%.
     // With the fix it should be well under 10%.
     assertTrue(errorPercent < maxErrorPercent,
-            "Dispatched " + totalDispatches + " in " + durationSeconds + "s, expected ~" + expectedTotal
-                    + " (error " + String.format("%.1f", errorPercent) + "%, max allowed " + maxErrorPercent + "%)");
+        "Dispatched " + totalDispatches + " in " + durationSeconds + "s, expected ~" + expectedTotal
+            + " (error " + String.format("%.1f", errorPercent) + "%, max allowed " + maxErrorPercent + "%)");
   }
 
   protected AsyncRateLimiter getRateLimiter(ScheduledExecutorService executorService, ExecutorService executor, Clock clock)
   {
     return new SmoothRateLimiter(executorService, executor, clock, _queue, MAX_BUFFERED_CALLBACKS, SmoothRateLimiter.BufferOverflowMode.DROP,
-            RATE_LIMITER_NAME_TEST);
+                                 RATE_LIMITER_NAME_TEST);
   }
 }
