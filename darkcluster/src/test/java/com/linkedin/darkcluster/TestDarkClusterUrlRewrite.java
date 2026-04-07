@@ -51,4 +51,56 @@ public class TestDarkClusterUrlRewrite
     URI outputURI = rewriter.rewriteURI(inputUri);
     Assert.assertEquals(outputURI, expectedURI, "URI's don't match");
   }
+
+  @Test
+  public void testRewriteGoodSkipReEncoding()
+  {
+    String darkServiceName = "FooCluster-dark";
+    URI configuredURI = URI.create("d2://" + darkServiceName);
+    D2URIRewriter rewriter = new D2URIRewriter(configuredURI, true);
+
+    URI inputUri = URI.create("/MyRestliResource/foo/1");
+    URI expectedURI = URI.create("d2://"+ darkServiceName + "/MyRestliResource/foo/1");
+    URI outputURI = rewriter.rewriteURI(inputUri);
+    Assert.assertEquals(outputURI, expectedURI, "URI's don't match");
+  }
+
+  @Test
+  public void testRewriteWithQueryParamsSkipReEncoding()
+  {
+    String darkServiceName = "FooCluster-dark";
+    URI configuredURI = URI.create("d2://" + darkServiceName);
+    D2URIRewriter rewriter = new D2URIRewriter(configuredURI, true);
+
+    URI inputUri = URI.create("/MyRestliResource/foo/1?param1=bar&param2=baz");
+    URI expectedURI = URI.create("d2://"+ darkServiceName + "/MyRestliResource/foo/1?param1=bar&param2=baz");
+    URI outputURI = rewriter.rewriteURI(inputUri);
+    Assert.assertEquals(outputURI, expectedURI, "URI's don't match");
+  }
+
+  @Test
+  public void testRewriteWithEncodedQueryParamsSkipReEncoding()
+  {
+    String darkServiceName = "FooCluster-dark";
+    URI configuredURI = URI.create("d2://" + darkServiceName);
+    D2URIRewriter rewriter = new D2URIRewriter(configuredURI, true);
+
+    URI inputUri = URI.create("/MyRestliResource/foo/1?param1=hello%20world&param2=a%26b%3Dc");
+    URI expectedURI = URI.create("d2://"+ darkServiceName + "/MyRestliResource/foo/1?param1=hello%20world&param2=a%26b%3Dc");
+    URI outputURI = rewriter.rewriteURI(inputUri);
+    Assert.assertEquals(outputURI, expectedURI, "URI's don't match");
+  }
+
+  @Test
+  public void testRewriteSkipReEncodingMatchesDefault()
+  {
+    String darkServiceName = "FooCluster-dark";
+    URI configuredURI = URI.create("d2://" + darkServiceName);
+    D2URIRewriter defaultRewriter = new D2URIRewriter(configuredURI);
+    D2URIRewriter fastRewriter = new D2URIRewriter(configuredURI, true);
+
+    URI inputUri = URI.create("/MyRestliResource/foo/1?param1=bar&param2=baz");
+    Assert.assertEquals(fastRewriter.rewriteURI(inputUri), defaultRewriter.rewriteURI(inputUri),
+        "skipReEncoding result should match default");
+  }
 }

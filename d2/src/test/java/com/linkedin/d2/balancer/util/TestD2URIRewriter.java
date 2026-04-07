@@ -40,4 +40,56 @@ public class TestD2URIRewriter
     URI finalURI = URIRewriter.rewriteURI(d2URI);
     Assert.assertEquals(finalURI.toString(), expectURL);
   }
+
+  @Test
+  public void testSimpleD2RewriteSkipReEncoding() throws URISyntaxException
+  {
+    final URI httpURI = new URIBuilder("http://www.linkedin.com:1234/test").build();
+    final URI d2URI = new URIBuilder("d2://serviceName/request/query?q=5678").build();
+    final String expectURL = "http://www.linkedin.com:1234/test/request/query?q=5678";
+
+    URIRewriter URIRewriter = new D2URIRewriter(httpURI, true);
+
+    URI finalURI = URIRewriter.rewriteURI(d2URI);
+    Assert.assertEquals(finalURI.toString(), expectURL);
+  }
+
+  @Test
+  public void testSkipReEncodingWithEncodedQuery() throws URISyntaxException
+  {
+    final URI httpURI = new URIBuilder("http://www.linkedin.com:1234/test").build();
+    final URI d2URI = URI.create("d2://serviceName/request/query?q=hello%20world&name=foo%26bar");
+    final String expectURL = "http://www.linkedin.com:1234/test/request/query?q=hello%20world&name=foo%26bar";
+
+    URI resultDefault = new D2URIRewriter(httpURI).rewriteURI(d2URI);
+    URI resultFast = new D2URIRewriter(httpURI, true).rewriteURI(d2URI);
+    Assert.assertEquals(resultDefault.toString(), expectURL);
+    Assert.assertEquals(resultFast.toString(), expectURL);
+  }
+
+  @Test
+  public void testSkipReEncodingNoQuery() throws URISyntaxException
+  {
+    final URI httpURI = new URIBuilder("http://www.linkedin.com:1234/test").build();
+    final URI d2URI = URI.create("d2://serviceName/request/path");
+    final String expectURL = "http://www.linkedin.com:1234/test/request/path";
+
+    URI resultDefault = new D2URIRewriter(httpURI).rewriteURI(d2URI);
+    URI resultFast = new D2URIRewriter(httpURI, true).rewriteURI(d2URI);
+    Assert.assertEquals(resultDefault.toString(), expectURL);
+    Assert.assertEquals(resultFast.toString(), expectURL);
+  }
+
+  @Test
+  public void testSkipReEncodingWithFragment() throws URISyntaxException
+  {
+    final URI httpURI = new URIBuilder("http://www.linkedin.com:1234").build();
+    final URI d2URI = URI.create("d2://serviceName/path?q=1#section");
+    final String expectURL = "http://www.linkedin.com:1234/path?q=1#section";
+
+    URI resultDefault = new D2URIRewriter(httpURI).rewriteURI(d2URI);
+    URI resultFast = new D2URIRewriter(httpURI, true).rewriteURI(d2URI);
+    Assert.assertEquals(resultDefault.toString(), expectURL);
+    Assert.assertEquals(resultFast.toString(), expectURL);
+  }
 }

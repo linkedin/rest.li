@@ -232,7 +232,7 @@ public class DarkClusterManagerImpl implements DarkClusterManager
     {
       _uriRewriterMap.computeIfAbsent(darkServiceName, k -> {
         URI configuredURI = URI.create("d2://" + darkServiceName);
-        URIRewriter rewriter = new D2URIRewriter(configuredURI);
+        URIRewriter rewriter = new D2URIRewriter(configuredURI, true);
         return new AtomicReference<>(rewriter);
       });
     }
