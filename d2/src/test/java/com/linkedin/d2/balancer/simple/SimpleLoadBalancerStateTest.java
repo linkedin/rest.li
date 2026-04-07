@@ -94,6 +94,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNotSame;
 import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertSame;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -2021,6 +2022,268 @@ public class SimpleLoadBalancerStateTest
       return _latch.await(timeout, timeoutUnit);
     }
   }
+
+  /**
+   * Verifies that after a UriProperties update where an existing host is unchanged,
+   * the tracker-client map key is refreshed to the new UriProperties' URI instance.
+   * This ensures that subsequent {@code getClient()} lookups (which receive URIs from
+   * the current UriProperties via {@code getUriBySchemeAndPartition()}) hit the
+   * {@code ConcurrentHashMap} identity shortcut ({@code key == storedKey}) and skip
+   * the expensive {@code URI.equals()} call.
+   */
+  @Test(groups = { "small", "back-end" })
+  public void testTrackerClientMapKeyRefreshedOnUriPropertiesUpdate()
+  {
+    reset();
+
+    URI uri = URI.create("http://host1.example.com:8080/service");
+    List<String> schemes = new ArrayList<>();
+    schemes.add("http");
+
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
+    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
+    uriData.put(uri, partitionData);
+
+    // Set up state: cluster, service, and initial URI properties.
+    _state.listenToCluster("cluster-1", new NullStateListenerCallback());
+    _state.listenToService("service-1", new NullStateListenerCallback());
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
+        "/service", Arrays.asList("random"), Collections.emptyMap(),
+        null, null, schemes, null));
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+
+    // Verify initial client exists.
+    TrackerClient client = _state.getClient("service-1", uri);
+    assertNotNull(client);
+
+    // Capture the map key URI instance after the first update.
+    Map<URI, TrackerClient> trackerClients = _state.getTrackerClients().get("service-1");
+    assertNotNull(trackerClients);
+    URI firstKey = trackerClients.keySet().iterator().next();
+    // The map key should be the same instance as the URI we put into UriProperties.
+    assertSame(firstKey, uri, "Initial map key should be the URI from the first UriProperties");
+
+    // Now simulate a second UriProperties update that includes the SAME host plus a new
+    // host. The new host makes the UriProperties non-equal to the old one, so handlePut
+    // won't short-circuit at the duplicate check. The unchanged host (host1) should have
+    // its map key refreshed to the new UriProperties' URI instance.
+    URI uri2 = URI.create("http://host1.example.com:8080/service");
+    URI newHost = URI.create("http://host2.example.com:8080/service");
+    assertNotSame(uri, uri2, "uri and uri2 must be distinct objects for this test to be valid");
+    assertEquals(uri, uri2);
+
+    Map<URI, Map<Integer, PartitionData>> uriData2 = new HashMap<>();
+    uriData2.put(uri2, partitionData);
+    uriData2.put(newHost, partitionData);
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData2));
+
+    // The TrackerClient for host1 should be unchanged (same partition data, same properties).
+    TrackerClient clientAfterUpdate = _state.getClient("service-1", uri2);
+    assertNotNull(clientAfterUpdate);
+    assertSame(client, clientAfterUpdate, "TrackerClient instance should be reused for unchanged host");
+
+    // The map key for host1 should now be the URI instance from the SECOND UriProperties
+    // (uri2), not the original (uri). This is the key assertion: the re-insert refreshed
+    // the key so that subsequent lookups with URIs from the current UriProperties will hit
+    // the ConcurrentHashMap identity shortcut (key == storedKey).
+    // Re-fetch the map since handlePut builds a new map and swaps it atomically.
+    trackerClients = _state.getTrackerClients().get("service-1");
+    boolean foundRefreshedKey = false;
+    for (URI key : trackerClients.keySet())
+    {
+      if (key.equals(uri))
+      {
+        assertSame(key, uri2, "Map key for unchanged host should be refreshed to new UriProperties' URI instance");
+        assertNotSame(key, uri, "Map key should no longer be the old URI instance");
+        foundRefreshedKey = true;
+      }
+    }
+    assertTrue(foundRefreshedKey, "Should have found the key for host1 in the tracker client map");
+  }
+
+  /**
+   * Verifies that when an existing URI's partition data changes, a new TrackerClient is built
+   * and the map key is refreshed to the new URI instance.
+   */
+  @Test(groups = { "small", "back-end" })
+  public void testTrackerClientRebuiltOnPartitionDataChange()
+  {
+    reset();
+
+    URI uri = URI.create("http://host1.example.com:8080/service");
+    List<String> schemes = new ArrayList<>();
+    schemes.add("http");
+
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
+    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
+    uriData.put(uri, partitionData);
+
+    // Set up state: cluster, service, and initial URI properties.
+    _state.listenToCluster("cluster-1", new NullStateListenerCallback());
+    _state.listenToService("service-1", new NullStateListenerCallback());
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
+        "/service", Arrays.asList("random"), Collections.emptyMap(),
+        null, null, schemes, null));
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+
+    TrackerClient originalClient = _state.getClient("service-1", uri);
+    assertNotNull(originalClient);
+
+    // Update with changed partition data (weight 0.5 instead of 1.0).
+    URI uri2 = URI.create("http://host1.example.com:8080/service");
+    assertNotSame(uri, uri2, "uri and uri2 must be distinct objects for this test to be valid");
+
+    Map<Integer, PartitionData> changedPartitionData = new HashMap<>(1);
+    changedPartitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(0.5d));
+    Map<URI, Map<Integer, PartitionData>> uriData2 = new HashMap<>();
+    uriData2.put(uri2, changedPartitionData);
+    // Add a second host so UriProperties is not equal to the old one (avoids duplicate check).
+    URI newHost = URI.create("http://host2.example.com:8080/service");
+    uriData2.put(newHost, partitionData);
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData2));
+
+    TrackerClient updatedClient = _state.getClient("service-1", uri2);
+    assertNotNull(updatedClient);
+    // A new client should have been built because partition data changed.
+    assertNotSame(originalClient, updatedClient,
+        "TrackerClient should be rebuilt when partition data changes");
+    assertEquals(updatedClient.getPartitionDataMap().get(DefaultPartitionAccessor.DEFAULT_PARTITION_ID).getWeight(),
+        0.5d, "New client should have the updated partition weight");
+
+    // The map key should be the new URI instance.
+    Map<URI, TrackerClient> trackerClients = _state.getTrackerClients().get("service-1");
+    for (URI key : trackerClients.keySet())
+    {
+      if (key.equals(uri))
+      {
+        assertSame(key, uri2, "Map key should be refreshed to the new URI instance");
+      }
+    }
+  }
+
+  /**
+   * Verifies that when an existing URI's uriSpecificProperties change, a new TrackerClient
+   * is built and the map key is refreshed to the new URI instance.
+   */
+  @Test(groups = { "small", "back-end" })
+  public void testTrackerClientRebuiltOnUriSpecificPropertiesChange()
+  {
+    reset();
+
+    URI uri = URI.create("http://host1.example.com:8080/service");
+    List<String> schemes = new ArrayList<>();
+    schemes.add("http");
+
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
+    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
+    uriData.put(uri, partitionData);
+
+    Map<String, Object> uriSpecificProps = new HashMap<>();
+    uriSpecificProps.put("foo", "bar");
+    Map<URI, Map<String, Object>> uriSpecificPropertiesMap = new HashMap<>();
+    uriSpecificPropertiesMap.put(uri, uriSpecificProps);
+
+    // Set up state: cluster, service, and initial URI properties with uri-specific properties.
+    _state.listenToCluster("cluster-1", new NullStateListenerCallback());
+    _state.listenToService("service-1", new NullStateListenerCallback());
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
+        "/service", Arrays.asList("random"), Collections.emptyMap(),
+        null, null, schemes, null));
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData, uriSpecificPropertiesMap));
+
+    TrackerClient originalClient = _state.getClient("service-1", uri);
+    assertNotNull(originalClient);
+
+    // Update with changed uri-specific properties (same partition data).
+    URI uri2 = URI.create("http://host1.example.com:8080/service");
+    assertNotSame(uri, uri2, "uri and uri2 must be distinct objects for this test to be valid");
+
+    Map<String, Object> changedUriSpecificProps = new HashMap<>();
+    changedUriSpecificProps.put("foo", "baz");
+    Map<URI, Map<String, Object>> changedUriSpecificPropsMap = new HashMap<>();
+    changedUriSpecificPropsMap.put(uri2, changedUriSpecificProps);
+
+    Map<URI, Map<Integer, PartitionData>> uriData2 = new HashMap<>();
+    uriData2.put(uri2, partitionData);
+    // Add a second host so UriProperties is not equal to the old one (avoids duplicate check).
+    URI newHost = URI.create("http://host2.example.com:8080/service");
+    uriData2.put(newHost, partitionData);
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData2, changedUriSpecificPropsMap));
+
+    TrackerClient updatedClient = _state.getClient("service-1", uri2);
+    assertNotNull(updatedClient);
+    // A new client should have been built because uri-specific properties changed.
+    assertNotSame(originalClient, updatedClient,
+        "TrackerClient should be rebuilt when URI-specific properties change");
+
+    // The map key should be the new URI instance.
+    Map<URI, TrackerClient> trackerClients = _state.getTrackerClients().get("service-1");
+    for (URI key : trackerClients.keySet())
+    {
+      if (key.equals(uri))
+      {
+        assertSame(key, uri2, "Map key should be refreshed to the new URI instance");
+      }
+    }
+  }
+
+  /**
+   * Verifies that when buildTrackerClient returns null (e.g., due to a missing transport client
+   * for the URI's scheme), the existing TrackerClient is preserved as a fallback.
+   */
+  @Test(groups = { "small", "back-end" })
+  public void testExistingClientPreservedWhenBuildTrackerClientReturnsNull()
+  {
+    reset();
+
+    URI uri = URI.create("http://host1.example.com:8080/service");
+    List<String> schemes = new ArrayList<>();
+    schemes.add("http");
+
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
+    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
+    uriData.put(uri, partitionData);
+
+    // Set up state with an initial URI.
+    _state.listenToCluster("cluster-1", new NullStateListenerCallback());
+    _state.listenToService("service-1", new NullStateListenerCallback());
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1", "cluster-1",
+        "/service", Arrays.asList("random"), Collections.emptyMap(),
+        null, null, schemes, null));
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData));
+
+    TrackerClient originalClient = _state.getClient("service-1", uri);
+    assertNotNull(originalClient);
+
+    // Now remove the service properties so that buildTrackerClient returns null
+    // (serviceProperties == null → returns null in buildTrackerClient).
+    _state.getServiceProperties().remove("service-1");
+
+    // Push a URI update with changed partition data to force a rebuild attempt.
+    URI uri2 = URI.create("http://host1.example.com:8080/service");
+    assertNotSame(uri, uri2);
+
+    Map<Integer, PartitionData> changedPartitionData = new HashMap<>(1);
+    changedPartitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(0.5d));
+    Map<URI, Map<Integer, PartitionData>> uriData2 = new HashMap<>();
+    uriData2.put(uri2, changedPartitionData);
+    URI newHost = URI.create("http://host2.example.com:8080/service");
+    uriData2.put(newHost, partitionData);
+    _uriRegistry.put("cluster-1", new UriProperties("cluster-1", uriData2));
+
+    // The original client should be preserved since buildTrackerClient returned null.
+    Map<URI, TrackerClient> trackerClients = _state.getTrackerClients().get("service-1");
+    assertNotNull(trackerClients);
+    TrackerClient fallbackClient = trackerClients.get(uri2);
+    assertNotNull(fallbackClient, "Existing client should be preserved when buildTrackerClient returns null");
+    assertSame(originalClient, fallbackClient,
+        "Should fall back to the existing TrackerClient when build fails");
+  }
+
   public static class TestListener implements SimpleLoadBalancerStateListener
   {
     public String               serviceName;
