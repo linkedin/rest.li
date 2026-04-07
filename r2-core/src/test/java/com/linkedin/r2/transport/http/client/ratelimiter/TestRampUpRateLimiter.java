@@ -185,6 +185,6 @@ public class TestRampUpRateLimiter extends TestSmoothRateLimiter
   protected AsyncRateLimiter getRateLimiter(ScheduledExecutorService executorService, ExecutorService executor, Clock clock)
   {
     return new RampUpRateLimiterImpl(new SmoothRateLimiter(executorService, executor, clock, _queue, MAX_BUFFERED_CALLBACKS, SmoothRateLimiter.BufferOverflowMode.DROP,
-                                                           RATE_LIMITER_NAME_TEST), executorService);
+            RATE_LIMITER_NAME_TEST), executorService);
   }
 }

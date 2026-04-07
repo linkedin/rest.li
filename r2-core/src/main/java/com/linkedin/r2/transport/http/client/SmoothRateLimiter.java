@@ -58,6 +58,18 @@ public class SmoothRateLimiter implements AsyncRateLimiter
   private final EventLoop _eventLoop;
   private final CallbackBuffer _pendingCallbacks;
 
+  /**
+   * Controls the permit-tracking strategy used by the {@link EventLoop}.
+   *
+   * <p>When {@code true}, the EventLoop uses fractional (double-precision) arithmetic for period
+   * tracking and permit accumulation, eliminating millisecond quantization errors at rates where
+   * {@code period * burst / events} yields a non-integer millisecond value.</p>
+   *
+   * <p>When {@code false} (the default), the EventLoop uses integer-rounded values from
+   * {@link Rate#getEvents()} and {@link Rate#getPeriod()}.</p>
+   */
+  private final boolean _enablePrecisePeriodTracking;
+
   protected final RateLimiterExecutionTracker _executionTracker;
   private final AtomicReference<Throwable> _invocationError = new AtomicReference<>(null);
 
@@ -83,7 +95,15 @@ public class SmoothRateLimiter implements AsyncRateLimiter
   public SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock, Queue<Callback<None>> pendingCallbacks,
                            int maxBuffered, BufferOverflowMode bufferOverflowMode, String rateLimiterName)
   {
-    this(scheduler, executor, clock, new SimpleCallbackBuffer(pendingCallbacks), bufferOverflowMode, rateLimiterName, new BoundedRateLimiterExecutionTracker(maxBuffered));
+    this(scheduler, executor, clock, pendingCallbacks, maxBuffered, bufferOverflowMode, rateLimiterName, false);
+  }
+
+  public SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock, Queue<Callback<None>> pendingCallbacks,
+                           int maxBuffered, BufferOverflowMode bufferOverflowMode, String rateLimiterName,
+                           boolean enablePrecisePeriodTracking)
+  {
+    this(scheduler, executor, clock, new SimpleCallbackBuffer(pendingCallbacks), bufferOverflowMode, rateLimiterName,
+        new BoundedRateLimiterExecutionTracker(maxBuffered), enablePrecisePeriodTracking);
   }
 
   /**
@@ -102,6 +122,28 @@ public class SmoothRateLimiter implements AsyncRateLimiter
   SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock, CallbackBuffer pendingCallbacks,
                     BufferOverflowMode bufferOverflowMode, String rateLimiterName, RateLimiterExecutionTracker executionTracker)
   {
+    this(scheduler, executor, clock, pendingCallbacks, bufferOverflowMode, rateLimiterName, executionTracker, false);
+  }
+
+  /**
+   * Constructs a new instance of {@link SmoothRateLimiter} with an option to enable precise
+   * period tracking for improved rate accuracy at sub-millisecond periods.
+   *
+   * @param scheduler              Scheduler used to execute the internal non-blocking event loop. MUST be single-threaded
+   * @param executor               Executes the tasks for invoking #onSuccess and #onError (only during #callAll)
+   * @param clock                  Clock implementation that supports getting the current time accurate to milliseconds
+   * @param pendingCallbacks       THREAD SAFE and NON-BLOCKING implementation of callback queue
+   * @param bufferOverflowMode     What to do if the max buffer is reached
+   * @param rateLimiterName        Name assigned for logging purposes
+   * @param executionTracker       Adjusts the behavior of the rate limiter based on policies/state of RateLimiterExecutionTracker
+   * @param enablePrecisePeriodTracking   When {@code true}, uses double-precision period and permit tracking
+   *                               to eliminate millisecond quantization errors. When {@code false}, uses
+   *                               integer-rounded period and permit values. Defaults to {@code false}.
+   */
+  SmoothRateLimiter(ScheduledExecutorService scheduler, Executor executor, Clock clock, CallbackBuffer pendingCallbacks,
+                    BufferOverflowMode bufferOverflowMode, String rateLimiterName, RateLimiterExecutionTracker executionTracker,
+                    boolean enablePrecisePeriodTracking)
+  {
     ArgumentUtil.ensureNotNull(scheduler, "scheduler");
     ArgumentUtil.ensureNotNull(executor, "executor");
     ArgumentUtil.ensureNotNull(clock, "clock");
@@ -112,6 +154,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     _bufferOverflowMode = bufferOverflowMode;
     _rateLimiterName = rateLimiterName;
     _executionTracker = executionTracker;
+    _enablePrecisePeriodTracking = enablePrecisePeriodTracking;
 
     _eventLoop = new EventLoop(clock);
     _rateLimitedLoggerOverBuffer = new RateLimitedLogger(LOG, OVER_BUFFER_RATELIMITEDLOG_RATE_MS, clock);
@@ -211,23 +254,45 @@ public class SmoothRateLimiter implements AsyncRateLimiter
   }
 
   /**
-   * A event loop implementation that dispatches and executes {@link Callback}s from the queue based
-   * on available permits. If permits are exhausted, the event loop will reschedule itself to run
-   * at the next permit issuance time. If the callback queue is exhausted, the event loop will exit
-   * and need to be restarted externally.
+   * A single-threaded event loop that dispatches {@link Callback}s from the pending queue at
+   * the configured rate. Supports two permit-tracking strategies controlled by
+   * {@link #_enablePrecisePeriodTracking}:
    *
-   * If there are more tasks than the max in the buffer, they'll be immediately executed to align with the limit
-   * <p>
-   * Event loop is meant to be run in a single-threaded setting.
+   * <ul>
+   *   <li><b>Classic mode</b> ({@code enablePrecisePeriodTracking=false}, the default) &mdash;
+   *       period and event counts come from {@link Rate#getPeriod()} / {@link Rate#getEvents()}
+   *       (integer-rounded). The period boundary is snapped to {@code now} on each refresh.</li>
+   *   <li><b>Precise mode</b> ({@code enablePrecisePeriodTracking=true}) &mdash;
+   *       period and event counts come from {@link Rate#getPeriodRaw()} / {@link Rate#getEventsRaw()}
+   *       (double-precision). The period boundary advances by the exact fractional period so
+   *       sub-millisecond remainders accumulate across refreshes. For example, at 750&nbsp;QPS
+   *       with burst=1 the period is 1.333&thinsp;ms and the boundary advances as
+   *       0&nbsp;&rarr;&nbsp;1.333&nbsp;&rarr;&nbsp;2.666&nbsp;&rarr;&nbsp;4.0, producing exactly
+   *       3&nbsp;dispatches per 4&thinsp;ms (=&nbsp;750/s).</li>
+   * </ul>
+   *
+   * <p>If permits are exhausted the loop reschedules itself for the next period boundary.
+   * If the callback queue is drained the loop exits and is restarted by
+   * {@link #submit(Callback)}. If the buffer exceeds the configured max, at least one dispatch
+   * is forced to prevent a leak.</p>
    */
   private class EventLoop
   {
     private final Clock _clock;
 
-    private long _permitTime;
-    private int _permitAvailableCount;
-    private int _permitsInTimeFrame;
+    /** Period boundary timestamp; advanced each refresh (fractional in fractional mode). */
+    private double _permitTime;
+
+    /** Permits remaining in the current period. */
+    private double _permitAvailableCount;
+
+    /** Total permits granted at the start of the current period (used to track consumption across rate changes). */
+    private double _permitsInTimeFrame;
+
+    /** Absolute time of the next already-scheduled tick (prevents duplicate scheduling). */
     private long _nextScheduled;
+
+    /** Earliest wall-clock time at which the next dispatch is allowed (execution-delay support). */
     private long _delayUntil;
 
     EventLoop(Clock clock)
@@ -235,21 +300,24 @@ public class SmoothRateLimiter implements AsyncRateLimiter
       _clock = clock;
       _permitTime = _clock.currentTimeMillis();
       Rate rate = _rate;
-      _permitAvailableCount = rate.getEvents();
-      _permitsInTimeFrame = rate.getEvents();
+      _permitAvailableCount = _enablePrecisePeriodTracking ? rate.getEventsRaw() : rate.getEvents();
+      _permitsInTimeFrame = _enablePrecisePeriodTracking ? rate.getEventsRaw() : rate.getEvents();
     }
 
+    /**
+     * Called when the rate changes via {@link #setRate}. Preserves the number of permits already
+     * consumed in the current period so the transition does not over- or under-grant.
+     */
     private void updateWithNewRate()
     {
       Rate rate = _rate;
 
-      // if we already used some permits in the current period, we want to use just the possible remaining ones
-      // before entering the next period
-      _permitAvailableCount = Math.max(rate.getEvents() - (_permitsInTimeFrame - _permitAvailableCount), 0);
-      _permitsInTimeFrame = rate.getEvents();
+      double events = _enablePrecisePeriodTracking ? rate.getEventsRaw() : rate.getEvents();
+      double consumed = _permitsInTimeFrame - _permitAvailableCount;
+      _permitAvailableCount = Math.max(events - consumed, 0);
+      _permitsInTimeFrame = events;
       long now = _clock.currentTimeMillis();
-      // ensure to recalculate the delay, discounting any time already delayed
-      long timeSinceLastPermit = now - _permitTime;
+      long timeSinceLastPermit = now - (long) _permitTime;
       _delayUntil = now + Math.max(0, (_executionTracker.getNextExecutionDelay(_rate) - timeSinceLastPermit));
 
       loop();
@@ -257,14 +325,27 @@ public class SmoothRateLimiter implements AsyncRateLimiter
 
     public void loop()
     {
-      // Checks if permits should be refreshed
       long now = _clock.currentTimeMillis();
       Rate rate = _rate;
-      if (now - _permitTime >= rate.getPeriod())
+
+      double period = _enablePrecisePeriodTracking ? rate.getPeriodRaw() : rate.getPeriod();
+      double events = _enablePrecisePeriodTracking ? rate.getEventsRaw() : rate.getEvents();
+
+      // Refresh permits when the current period has elapsed.
+      if (now - _permitTime >= period)
       {
-        _permitTime = now;
-        _permitAvailableCount = rate.getEvents();
-        _permitsInTimeFrame = rate.getEvents();
+        if (_enablePrecisePeriodTracking)
+        {
+          // Advance by exact fractional period so sub-millisecond remainders accumulate.
+          _permitTime += period;
+        }
+        else
+        {
+          // Classic: snap to wall-clock time.
+          _permitTime = now;
+        }
+        _permitAvailableCount = events;
+        _permitsInTimeFrame = events;
         _delayUntil = now + _executionTracker.getNextExecutionDelay(_rate);
       }
 
@@ -273,10 +354,17 @@ public class SmoothRateLimiter implements AsyncRateLimiter
         return;
       }
 
+      // Buffer overflow safeguard: force at least one dispatch to avoid a leak.
       if (_executionTracker.getPending() > _executionTracker.getMaxBuffered())
       {
-        // We prefer running above the limit then risking a leak
-        _permitAvailableCount++;
+        if (_enablePrecisePeriodTracking)
+        {
+          _permitAvailableCount = Math.max(_permitAvailableCount, 1.0);
+        }
+        else
+        {
+          _permitAvailableCount++;
+        }
       }
 
       if (_permitAvailableCount > 0 && _delayUntil <= now)
@@ -295,8 +383,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
         }
         catch (Throwable e)
         {
-          // Invoke the callback#onError on the current thread as the last resort. Executing the callback on the
-          // current thread also prevents the scheduler from polling another callback while the executor is busy.
+          // Last resort: invoke onError on the scheduler thread to avoid losing the callback
           if (callback == null)
           {
             LOG.error("Unrecoverable exception occurred while executing a null callback in executor.", e);
@@ -319,9 +406,21 @@ public class SmoothRateLimiter implements AsyncRateLimiter
       {
         try
         {
-          // avoids executing too many duplicate tasks
-          // reschedule next iteration of the event loop to the next delay, or the beginning of the next period
-          long nextRunRelativeTime = _permitAvailableCount > 0 ? _delayUntil - now : Math.max(0, _permitTime + rate.getPeriod() - now);
+          // Reschedule: either wait for the execution delay or the next period boundary.
+          long nextRunRelativeTime;
+          if (_permitAvailableCount > 0)
+          {
+            nextRunRelativeTime = _delayUntil - now;
+          }
+          else if (_enablePrecisePeriodTracking)
+          {
+            // Round up so the scheduler never fires before the fractional boundary.
+            nextRunRelativeTime = Math.max(1, (long) Math.ceil(_permitTime + period - now));
+          }
+          else
+          {
+            nextRunRelativeTime = Math.max(0, (long) (_permitTime + period) - now);
+          }
           long nextRunAbsolute = now + nextRunRelativeTime;
           if (_nextScheduled > nextRunAbsolute || _nextScheduled <= now)
           {
