@@ -233,7 +233,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     EventLoop(Clock clock)
     {
       _clock = clock;
-      _permitTime = _clock.currentTimeMillis();
+      _permitTime = _clock.currentTimeNanos();
       Rate rate = _rate;
       _permitAvailableCount = rate.getEvents();
       _permitsInTimeFrame = rate.getEvents();
@@ -247,10 +247,10 @@ public class SmoothRateLimiter implements AsyncRateLimiter
       // before entering the next period
       _permitAvailableCount = Math.max(rate.getEvents() - (_permitsInTimeFrame - _permitAvailableCount), 0);
       _permitsInTimeFrame = rate.getEvents();
-      long now = _clock.currentTimeMillis();
+      long now = _clock.currentTimeNanos();
       // ensure to recalculate the delay, discounting any time already delayed
       long timeSinceLastPermit = now - _permitTime;
-      _delayUntil = now + Math.max(0, (_executionTracker.getNextExecutionDelay(_rate) - timeSinceLastPermit));
+      _delayUntil = now + Math.max(0, (_executionTracker.getNextExecutionDelayNanos(_rate) - timeSinceLastPermit));
 
       loop();
     }
@@ -258,14 +258,14 @@ public class SmoothRateLimiter implements AsyncRateLimiter
     public void loop()
     {
       // Checks if permits should be refreshed
-      long now = _clock.currentTimeMillis();
+      long now = _clock.currentTimeNanos();
       Rate rate = _rate;
-      if (now - _permitTime >= rate.getPeriod())
+      if (now - _permitTime >= rate.getPeriodNanos())
       {
         _permitTime = now;
         _permitAvailableCount = rate.getEvents();
         _permitsInTimeFrame = rate.getEvents();
-        _delayUntil = now + _executionTracker.getNextExecutionDelay(_rate);
+        _delayUntil = now + _executionTracker.getNextExecutionDelayNanos(_rate);
       }
 
       if (_executionTracker.isPaused())
@@ -281,7 +281,7 @@ public class SmoothRateLimiter implements AsyncRateLimiter
 
       if (_permitAvailableCount > 0 && _delayUntil <= now)
       {
-        _delayUntil = now + _executionTracker.getNextExecutionDelay(_rate);
+        _delayUntil = now + _executionTracker.getNextExecutionDelayNanos(_rate);
         _permitAvailableCount--;
         Callback<None> callback = null;
         try
@@ -321,12 +321,12 @@ public class SmoothRateLimiter implements AsyncRateLimiter
         {
           // avoids executing too many duplicate tasks
           // reschedule next iteration of the event loop to the next delay, or the beginning of the next period
-          long nextRunRelativeTime = _permitAvailableCount > 0 ? _delayUntil - now : Math.max(0, _permitTime + rate.getPeriod() - now);
+          long nextRunRelativeTime = _permitAvailableCount > 0 ? _delayUntil - now : Math.max(0, _permitTime + rate.getPeriodNanos() - now);
           long nextRunAbsolute = now + nextRunRelativeTime;
           if (_nextScheduled > nextRunAbsolute || _nextScheduled <= now)
           {
             _nextScheduled = nextRunAbsolute;
-            _scheduler.schedule(this::loop, nextRunRelativeTime, TimeUnit.MILLISECONDS);
+            _scheduler.schedule(this::loop, nextRunRelativeTime, TimeUnit.NANOSECONDS);
           }
         }
         catch (Throwable throwable)

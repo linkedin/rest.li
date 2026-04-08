@@ -22,6 +22,7 @@ import com.linkedin.util.clock.Clock;
 import java.time.temporal.ChronoUnit;
 import java.util.Random;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -130,7 +131,13 @@ public class ConstantQpsRateLimiter extends SmoothRateLimiter
 
     public int getNextExecutionDelay(Rate rate)
     {
-      return _random.nextInt(Math.max(1, (int) (rate.getPeriodRaw() / rate.getEventsRaw())));
+      return _random.nextInt(Math.max(1, rate.getEventIntervalMillis()));
+    }
+
+    @Override
+    public long getNextExecutionDelayNanos(Rate rate)
+    {
+      return ThreadLocalRandom.current().nextLong(Math.max(1L, rate.getEventIntervalNanos()));
     }
   }
 }
