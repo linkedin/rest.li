@@ -51,4 +51,17 @@ public class TestDarkClusterUrlRewrite
     URI outputURI = rewriter.rewriteURI(inputUri);
     Assert.assertEquals(outputURI, expectedURI, "URI's don't match");
   }
+
+  @Test
+  public void testRewriteWithEncodedQueryParams()
+  {
+    String darkServiceName = "FooCluster-dark";
+    URI configuredURI = URI.create("d2://" + darkServiceName);
+    D2URIRewriter rewriter = new D2URIRewriter(configuredURI);
+
+    URI inputUri = URI.create("/MyRestliResource/foo/1?param1=hello%20world&param2=a%26b%3Dc");
+    URI expectedURI = URI.create("d2://"+ darkServiceName + "/MyRestliResource/foo/1?param1=hello%20world&param2=a%26b%3Dc");
+    URI outputURI = rewriter.rewriteURI(inputUri);
+    Assert.assertEquals(outputURI, expectedURI, "URI's don't match");
+  }
 }

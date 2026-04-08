@@ -454,6 +454,22 @@ public class UriBuilder
     }
 
     /**
+     * Replace the query string with the raw (already percent-encoded) query from the given URI.
+     * This avoids the expensive character-by-character re-encoding in {@link #replaceQuery(String)}
+     * when the source is a {@link URI} whose query is already properly encoded.
+     * @param uri the URI whose raw query string to copy
+     * @return this
+     */
+    public UriBuilder replaceQueryFrom(URI uri) {
+        checkSsp();
+        this.query.setLength(0);
+        String rawQuery = uri.getRawQuery();
+        if (rawQuery != null)
+            this.query.append(rawQuery);
+        return this;
+    }
+
+    /**
      * add the given queryParam and its value(s) to the UriBuilder
      * @param name name of the queryParam
      * @param values values of the queryParam
