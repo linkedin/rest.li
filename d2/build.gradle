@@ -80,3 +80,20 @@ configurations {
   // exclude slf4j-log4j12 which is pulled in from zookeeper
   all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
+
+// Separate test task for gRPC channel tests that require an isolated JVM.
+// gRPC 1.68's RetryingNameResolver has a bug where shared global state (NameResolverRegistry)
+// from other test classes causes NPEs. Running these tests in their own JVM avoids the issue.
+task grpcSlowChannelTest(type: Test) {
+  useTestNG()
+  include '**/PickFirstSlowConnectionTest.class'
+  classpath = sourceSets.test.runtimeClasspath
+  testClassesDirs = sourceSets.test.output.classesDirs
+}
+
+// Exclude from the main test task to avoid running them twice
+test {
+  exclude '**/PickFirstSlowConnectionTest.class'
+}
+
+check.dependsOn grpcSlowChannelTest
