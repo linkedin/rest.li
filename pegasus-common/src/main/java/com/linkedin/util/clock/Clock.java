@@ -37,6 +37,6 @@ public interface Clock
    */
   default long currentTimeNanos()
   {
-    return System.nanoTime();
+    return currentTimeMillis() * 1_000_000L;
   }
 }
