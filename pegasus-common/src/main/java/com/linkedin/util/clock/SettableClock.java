@@ -64,10 +64,4 @@ public class SettableClock implements Clock
   {
     _currentTimeMillis -= millis;
   }
-
-  @Override
-  public long currentTimeNanos()
-  {
-    return _currentTimeMillis * 1_000_000L;
-  }
 }
