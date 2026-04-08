@@ -19,8 +19,6 @@ package com.linkedin.d2.balancer.util;
 import com.linkedin.jersey.api.uri.UriBuilder;
 import com.linkedin.util.ArgumentUtil;
 import java.net.URI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 /**
@@ -29,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 public class D2URIRewriter implements URIRewriter
 {
-  final private static Logger LOGGER = LoggerFactory.getLogger(D2URIRewriter.class);
   final private URI _httpURI;
   final private boolean _skipReEncoding;
 
@@ -55,11 +52,7 @@ public class D2URIRewriter implements URIRewriter
   @Override
   public URI rewriteURI(URI d2Uri)
   {
-    URI rewrittenUri = _skipReEncoding ? rewriteURIFromRaw(d2Uri) : rewriteURIWithBuilder(d2Uri);
-
-    LOGGER.debug("rewrite uri {} -> {}", d2Uri, rewrittenUri);
-
-    return rewrittenUri;
+    return _skipReEncoding ? rewriteURIFromRaw(d2Uri) : rewriteURIWithBuilder(d2Uri);
   }
 
   private URI rewriteURIWithBuilder(URI d2Uri)
