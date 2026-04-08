@@ -13,6 +13,9 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Add optional precomputed potential clients cache to SimpleLoadBalancerState, moving O(n) per-request
+  host filtering in SimpleLoadBalancer.getPotentialClients() to state-change event handlers for O(1) lookups.
+  Gated behind new `enablePotentialClientsCache` config flag (default: off).
 
 ## [29.85.7] - 2026-04-08
 - Fix SmoothRateLimiter precision loss by switching from millisecond to nanosecond time tracking, eliminating ~33% QPS error for rates with fractional-ms periods.
