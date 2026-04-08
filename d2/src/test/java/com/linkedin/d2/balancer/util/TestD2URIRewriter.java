@@ -45,67 +45,42 @@ public class TestD2URIRewriter
   }
 
   @Test
-  public void testSimpleD2RewriteSkipReEncoding() throws URISyntaxException
-  {
-    final URI httpURI = new URIBuilder("http://www.linkedin.com:1234/test").build();
-    final URI d2URI = new URIBuilder("d2://serviceName/request/query?q=5678").build();
-    final String expectURL = "http://www.linkedin.com:1234/test/request/query?q=5678";
-
-    URIRewriter URIRewriter = new D2URIRewriter(httpURI, true);
-
-    URI finalURI = URIRewriter.rewriteURI(d2URI);
-    Assert.assertEquals(finalURI.toString(), expectURL);
-  }
-
-  @Test
-  public void testSkipReEncodingWithEncodedQuery() throws URISyntaxException
+  public void testRewriteWithEncodedQuery() throws URISyntaxException
   {
     final URI httpURI = new URIBuilder("http://www.linkedin.com:1234/test").build();
     final URI d2URI = URI.create("d2://serviceName/request/query?q=hello%20world&name=foo%26bar");
     final String expectURL = "http://www.linkedin.com:1234/test/request/query?q=hello%20world&name=foo%26bar";
 
-    URI resultDefault = new D2URIRewriter(httpURI).rewriteURI(d2URI);
-    URI resultFast = new D2URIRewriter(httpURI, true).rewriteURI(d2URI);
-    Assert.assertEquals(resultDefault.toString(), expectURL);
-    Assert.assertEquals(resultFast.toString(), expectURL);
+    URI result = new D2URIRewriter(httpURI).rewriteURI(d2URI);
+    Assert.assertEquals(result.toString(), expectURL);
   }
 
   @Test
-  public void testSkipReEncodingNoQuery() throws URISyntaxException
+  public void testRewriteNoQuery() throws URISyntaxException
   {
     final URI httpURI = new URIBuilder("http://www.linkedin.com:1234/test").build();
     final URI d2URI = URI.create("d2://serviceName/request/path");
     final String expectURL = "http://www.linkedin.com:1234/test/request/path";
 
-    URI resultDefault = new D2URIRewriter(httpURI).rewriteURI(d2URI);
-    URI resultFast = new D2URIRewriter(httpURI, true).rewriteURI(d2URI);
-    Assert.assertEquals(resultDefault.toString(), expectURL);
-    Assert.assertEquals(resultFast.toString(), expectURL);
+    URI result = new D2URIRewriter(httpURI).rewriteURI(d2URI);
+    Assert.assertEquals(result.toString(), expectURL);
   }
 
   @Test
-  public void testSkipReEncodingWithFragment() throws URISyntaxException
+  public void testRewriteWithFragment() throws URISyntaxException
   {
     final URI httpURI = new URIBuilder("http://www.linkedin.com:1234").build();
     final URI d2URI = URI.create("d2://serviceName/path?q=1#section");
     final String expectURL = "http://www.linkedin.com:1234/path?q=1#section";
 
-    URI resultDefault = new D2URIRewriter(httpURI).rewriteURI(d2URI);
-    URI resultFast = new D2URIRewriter(httpURI, true).rewriteURI(d2URI);
-    Assert.assertEquals(resultDefault.toString(), expectURL);
-    Assert.assertEquals(resultFast.toString(), expectURL);
+    URI result = new D2URIRewriter(httpURI).rewriteURI(d2URI);
+    Assert.assertEquals(result.toString(), expectURL);
   }
 
   /**
-   * Exhaustive proof that skipReEncoding produces identical results to the UriBuilder path
-   * for every printable ASCII character in a query string when the character is already
-   * percent-encoded (which is the form that RestRequest URIs always use).
-   *
-   * Also tests literal characters that java.net.URI accepts in raw queries. The only known
-   * divergence is literal '[' and ']' — Jersey encodes them but the fast path preserves them
-   * as-is. This is safe because these characters never appear un-encoded in practice:
-   * the Servlet spec returns percent-encoded query strings, and Rest.li's UriBuilder encodes
-   * all query parameters. The test documents this divergence explicitly rather than hiding it.
+   * Verify that rewriting preserves percent-encoded characters in query strings.
+   * Uses {@link com.linkedin.jersey.api.uri.UriBuilder#replaceQueryFrom(URI)} which copies
+   * the raw query directly, avoiding character-by-character re-encoding.
    */
   @DataProvider(name = "asciiQueryCharsEncoded")
   public Object[][] asciiQueryCharsEncoded()
@@ -137,61 +112,27 @@ public class TestD2URIRewriter
   }
 
   @Test(dataProvider = "asciiQueryCharsEncoded")
-  public void testSkipReEncodingEquivalenceForEncodedInputs(String description, String uriString)
+  public void testRewritePreservesEncodedQuery(String description, String uriString)
   {
     URI configuredURI = URI.create("d2://testService");
-    D2URIRewriter defaultRewriter = new D2URIRewriter(configuredURI);
-    D2URIRewriter fastRewriter = new D2URIRewriter(configuredURI, true);
+    D2URIRewriter rewriter = new D2URIRewriter(configuredURI);
 
     URI input = URI.create(uriString);
-    URI resultDefault = defaultRewriter.rewriteURI(input);
-    URI resultFast = fastRewriter.rewriteURI(input);
+    URI result = rewriter.rewriteURI(input);
 
-    Assert.assertEquals(resultFast.toString(), resultDefault.toString(),
-        "Divergence for [" + description + "] input=" + uriString);
+    // The raw query should be preserved exactly as-is
+    Assert.assertEquals(result.getRawQuery(), input.getRawQuery(),
+        "Query not preserved for [" + description + "] input=" + uriString);
   }
 
-  /**
-   * Documents the known divergence for literal '[' and ']'. Jersey's contextualEncode encodes
-   * them to %5B/%5D, but the fast path preserves them. This is safe because these characters
-   * never appear un-encoded in RestRequest URIs — the Servlet spec and Rest.li's UriBuilder
-   * both guarantee percent-encoding.
-   */
-  @Test
-  public void testSkipReEncodingKnownDivergenceLiteralBrackets()
-  {
-    URI configuredURI = URI.create("d2://testService");
-    D2URIRewriter defaultRewriter = new D2URIRewriter(configuredURI);
-    D2URIRewriter fastRewriter = new D2URIRewriter(configuredURI, true);
-
-    // Literal brackets — can only happen with hand-crafted URIs, never in real RestRequest URIs
-    URI inputBracket = URI.create("/path?q=[value]");
-    URI resultDefault = defaultRewriter.rewriteURI(inputBracket);
-    URI resultFast = fastRewriter.rewriteURI(inputBracket);
-
-    // Jersey encodes them, fast path preserves them
-    Assert.assertEquals(resultDefault.toString(), "d2://testService/path?q=%5Bvalue%5D");
-    Assert.assertEquals(resultFast.toString(), "d2://testService/path?q=[value]");
-
-    // When properly percent-encoded (the real-world form), both paths agree
-    URI inputEncoded = URI.create("/path?q=%5Bvalue%5D");
-    Assert.assertEquals(
-        fastRewriter.rewriteURI(inputEncoded).toString(),
-        defaultRewriter.rewriteURI(inputEncoded).toString());
-  }
-
-  /**
-   * Tests all literal ASCII characters that java.net.URI accepts in query strings,
-   * excluding '[' and ']' (documented divergence above).
-   */
   @DataProvider(name = "asciiQueryCharsLiteral")
   public Object[][] asciiQueryCharsLiteral()
   {
     List<Object[]> cases = new ArrayList<>();
     for (int c = 0x20; c <= 0x7E; c++)
     {
-      // # terminates query, % needs hex pair, [ ] are the known divergence
-      if (c == '#' || c == '%' || c == '[' || c == ']')
+      // # terminates query, % needs hex pair
+      if (c == '#' || c == '%')
       {
         continue;
       }
@@ -214,17 +155,16 @@ public class TestD2URIRewriter
   }
 
   @Test(dataProvider = "asciiQueryCharsLiteral")
-  public void testSkipReEncodingEquivalenceForLiteralChars(String description, String uriString)
+  public void testRewritePreservesLiteralQuery(String description, String uriString)
   {
     URI configuredURI = URI.create("d2://testService");
-    D2URIRewriter defaultRewriter = new D2URIRewriter(configuredURI);
-    D2URIRewriter fastRewriter = new D2URIRewriter(configuredURI, true);
+    D2URIRewriter rewriter = new D2URIRewriter(configuredURI);
 
     URI input = URI.create(uriString);
-    URI resultDefault = defaultRewriter.rewriteURI(input);
-    URI resultFast = fastRewriter.rewriteURI(input);
+    URI result = rewriter.rewriteURI(input);
 
-    Assert.assertEquals(resultFast.toString(), resultDefault.toString(),
-        "Divergence for [" + description + "] input=" + uriString);
+    // The raw query should be preserved exactly as-is
+    Assert.assertEquals(result.getRawQuery(), input.getRawQuery(),
+        "Query not preserved for [" + description + "] input=" + uriString);
   }
 }
