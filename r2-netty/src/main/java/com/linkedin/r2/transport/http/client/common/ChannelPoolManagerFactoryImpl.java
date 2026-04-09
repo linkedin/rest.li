@@ -19,6 +19,7 @@ package com.linkedin.r2.transport.http.client.common;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.netty.client.http.HttpChannelPoolFactory;
+import com.linkedin.r2.netty.client.http2.Http2ChannelLifecycle;
 import com.linkedin.r2.netty.client.http2.Http2ChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.rest.HttpNettyChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamChannelPoolFactory;
@@ -56,6 +57,7 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
   private final int _channelPoolWaiterTimeout;
   private final int _connectTimeout;
   private final int _sslHandShakeTimeout;
+  private final long _http2ChannelCreationTimeoutMs;
 
   /**
    * @param eventLoopGroup The EventLoopGroup; it is the caller's responsibility to shut
@@ -65,9 +67,19 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
    * @param enableSSLSessionResumption Enable reuse of Ssl Session.
    * @param usePipelineV2 Use unified new code.
    */
+  @Deprecated
   public ChannelPoolManagerFactoryImpl(EventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler,
       boolean enableSSLSessionResumption, boolean usePipelineV2, int channelPoolWaiterTimeout,
       int connectTimeout, int sslHandShakeTimeout)
+  {
+    this(eventLoopGroup, scheduler, enableSSLSessionResumption, usePipelineV2, channelPoolWaiterTimeout,
+        connectTimeout, sslHandShakeTimeout,
+        Http2ChannelLifecycle.DEFAULT_CHANNEL_CREATION_TIMEOUT_MS);
+  }
+
+  public ChannelPoolManagerFactoryImpl(EventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler,
+      boolean enableSSLSessionResumption, boolean usePipelineV2, int channelPoolWaiterTimeout,
+      int connectTimeout, int sslHandShakeTimeout, long http2ChannelCreationTimeoutMs)
   {
     _eventLoopGroup = eventLoopGroup;
     _scheduler = scheduler;
@@ -76,6 +88,7 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
     _channelPoolWaiterTimeout = channelPoolWaiterTimeout;
     _connectTimeout = connectTimeout;
     _sslHandShakeTimeout = sslHandShakeTimeout;
+    _http2ChannelCreationTimeoutMs = http2ChannelCreationTimeoutMs;
   }
 
   @Override
@@ -204,7 +217,8 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
           _enableSSLSessionResumption,
           _connectTimeout,
           _sslHandShakeTimeout,
-          channelPoolManagerKey.getUdsAddress());
+          channelPoolManagerKey.getUdsAddress(),
+          _http2ChannelCreationTimeoutMs);
     }
     else
     {
