@@ -148,7 +148,7 @@ public final class MIMEParse
   {
     ParseResults results = parseMimeType(range);
     String q = results.params.get(QUALITY_PARAM);
-    float f = NumberUtils.toFloat(q, 1);
+    float f = (q == null) ? 1.0f : NumberUtils.toFloat(q, 1);
     if (StringUtils.isBlank(q) || f < 0 || f > 1)
       results.params.put(QUALITY_PARAM, "1");
     return results;
@@ -223,7 +223,8 @@ public final class MIMEParse
           if (fitness > bestFitness)
           {
             bestFitness = fitness;
-            bestFitQ = NumberUtils.toFloat(range.params.get(QUALITY_PARAM), 0);
+            String qParam = range.params.get(QUALITY_PARAM);
+            bestFitQ = (qParam == null) ? 0f : NumberUtils.toFloat(qParam, 0);
             bestFitParams = range.params;
           }
         }
