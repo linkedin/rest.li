@@ -41,7 +41,6 @@ import com.linkedin.r2.message.rest.RestResponse;
 import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.netty.client.DnsMetricsCallback;
-import com.linkedin.r2.netty.client.http2.Http2ChannelLifecycle;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
@@ -160,7 +159,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_CONNECT_TIMEOUT = 30000;
   public static final int DEFAULT_SSL_HANDSHAKE_TIMEOUT = 10000;
   public static final int DEFAULT_CHANNELPOOL_WAITER_TIMEOUT = Integer.MAX_VALUE;
-  public static final long DEFAULT_HTTP2_CHANNEL_CREATION_TIMEOUT_MS = Http2ChannelLifecycle.DEFAULT_CHANNEL_CREATION_TIMEOUT_MS;
+  public static final long DEFAULT_HTTP2_CHANNEL_CREATION_TIMEOUT_MS = 10000;
   public static final double DEFAULT_MAX_CLIENT_REQUEST_RETRY_RATIO = 0.2;
   public static final double UNLIMITED_CLIENT_REQUEST_RETRY_RATIO = 1.0;
   /**

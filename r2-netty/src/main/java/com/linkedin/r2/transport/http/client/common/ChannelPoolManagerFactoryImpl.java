@@ -19,8 +19,8 @@ package com.linkedin.r2.transport.http.client.common;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.netty.client.http.HttpChannelPoolFactory;
-import com.linkedin.r2.netty.client.http2.Http2ChannelLifecycle;
 import com.linkedin.r2.netty.client.http2.Http2ChannelPoolFactory;
+import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.transport.http.client.rest.HttpNettyChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.stream.http.HttpNettyStreamChannelPoolFactory;
 import com.linkedin.r2.transport.http.client.stream.http2.Http2NettyStreamChannelPoolFactory;
@@ -74,7 +74,7 @@ public class ChannelPoolManagerFactoryImpl implements ChannelPoolManagerFactory
   {
     this(eventLoopGroup, scheduler, enableSSLSessionResumption, usePipelineV2, channelPoolWaiterTimeout,
         connectTimeout, sslHandShakeTimeout,
-        Http2ChannelLifecycle.DEFAULT_CHANNEL_CREATION_TIMEOUT_MS);
+        HttpClientFactory.DEFAULT_HTTP2_CHANNEL_CREATION_TIMEOUT_MS);
   }
 
   public ChannelPoolManagerFactoryImpl(EventLoopGroup eventLoopGroup, ScheduledExecutorService scheduler,
