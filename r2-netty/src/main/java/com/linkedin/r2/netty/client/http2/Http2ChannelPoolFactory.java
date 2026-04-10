@@ -79,8 +79,7 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
       int sslHandShakeTimeout) {
     this(scheduler, eventLoopGroup, channelGroup, strategy, sslContext, sslParameters, maxPoolSize, minPoolSize,
         maxPoolWaiterSize, maxInitialLineLength, maxHeaderSize, maxChunkSize, idleTimeout, maxContentLength, tcpNoDelay,
-        enableSSLSessionResumption, connectTimeout, sslHandShakeTimeout, null,
-        Http2ChannelLifecycle.DEFAULT_CHANNEL_CREATION_TIMEOUT_MS);
+        enableSSLSessionResumption, connectTimeout, sslHandShakeTimeout, null);
   }
 
   @Deprecated
