@@ -46,7 +46,7 @@ if [ ! -z "$GITHUB_HEAD_REF" ] && [ ! -z "$GITHUB_BASE_REF" ]; then
     exit 1
   fi
   # Skip module-specific tests if its module dependencies haven't been touched
-  CONDITIONAL_TESTING_MODULES='d2 r2-int-test restli-int-test'
+  CONDITIONAL_TESTING_MODULES='d2 r2-int-test restli-int-test multipart-mime'
   echo "This is a PR build, so testing will be conditional for these subprojects: [${CONDITIONAL_TESTING_MODULES// /,}]"
   # If any Gradle file was touched, run all tests just to be safe
   if (git diff ${GITHUB_BASE_REF}...HEAD --name-only | grep '\.gradle' > /dev/null); then
