@@ -544,6 +544,66 @@ public class TestRestLiValidationFilter
     }
   }
 
+  /**
+   * Ensures that when {@code invalidProjectionAs5xx} is {@code true}, an invalid projection
+   * (projected field not present in schema) throws HTTP 500 instead of HTTP 400.
+   */
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testInvalidProjectionAs5xxEnabled()
+  {
+    RestLiResponseData<GetResponseEnvelope> getResponseData =
+        ResponseDataBuilderUtil.buildGetResponseData(HttpStatus.S_200_OK, makeTestRecord());
+
+    when(filterRequestContext.getRequestData()).thenReturn(new RestLiRequestDataImpl.Builder().entity(makeTestRecord()).build());
+    when(filterRequestContext.getMethodType()).thenReturn(GET);
+    when(filterRequestContext.getProjectionMask()).thenReturn(makeMask("nonexistentField"));
+    when(filterResponseContext.getResponseData()).thenReturn((RestLiResponseData) getResponseData);
+
+    RestLiValidationFilter validationFilter = new RestLiValidationFilter(Collections.emptyList(), null, true);
+
+    try
+    {
+      validationFilter.onRequest(filterRequestContext);
+      Assert.fail("Expected a RestLiServiceException to be thrown for an invalid projection, but none was.");
+    }
+    catch (RestLiServiceException e)
+    {
+      Assert.assertEquals(e.getStatus(), HttpStatus.S_500_INTERNAL_SERVER_ERROR,
+          "Expected HTTP 500 when invalidProjectionAs5xx is enabled.");
+    }
+  }
+
+  /**
+   * Ensures that when {@code invalidProjectionAs5xx} is {@code false} (the default), an invalid projection
+   * still throws HTTP 400 for backward compatibility.
+   */
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testInvalidProjectionAs5xxDisabledDefaultsTo400()
+  {
+    RestLiResponseData<GetResponseEnvelope> getResponseData =
+        ResponseDataBuilderUtil.buildGetResponseData(HttpStatus.S_200_OK, makeTestRecord());
+
+    when(filterRequestContext.getRequestData()).thenReturn(new RestLiRequestDataImpl.Builder().entity(makeTestRecord()).build());
+    when(filterRequestContext.getMethodType()).thenReturn(GET);
+    when(filterRequestContext.getProjectionMask()).thenReturn(makeMask("nonexistentField"));
+    when(filterResponseContext.getResponseData()).thenReturn((RestLiResponseData) getResponseData);
+
+    RestLiValidationFilter validationFilter = new RestLiValidationFilter(Collections.emptyList(), null, false);
+
+    try
+    {
+      validationFilter.onRequest(filterRequestContext);
+      Assert.fail("Expected a RestLiServiceException to be thrown for an invalid projection, but none was.");
+    }
+    catch (RestLiServiceException e)
+    {
+      Assert.assertEquals(e.getStatus(), HttpStatus.S_400_BAD_REQUEST,
+          "Expected HTTP 400 when invalidProjectionAs5xx is disabled.");
+    }
+  }
+
   private TestRecord makeTestRecord()
   {
     return new TestRecord().setIntField(123).setLongField(456L).setFloatField(7.89F).setDoubleField(1.2345);
