@@ -18,6 +18,7 @@ package com.linkedin.d2.balancer.simple;
 
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.ServiceUnavailableException;
 import com.linkedin.d2.balancer.clients.RewriteLoadBalancerClient;
 import com.linkedin.d2.balancer.clients.TrackerClient;
@@ -31,12 +32,27 @@ import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyFactoryV3;
 import com.linkedin.d2.balancer.util.URIRequest;
+import com.linkedin.d2.balancer.util.TogglingLoadBalancer;
+import com.linkedin.d2.balancer.zkfs.ZKFSTogglingLoadBalancerFactoryImpl;
+import com.linkedin.d2.discovery.PropertySerializer;
 import com.linkedin.d2.discovery.event.PropertyEventBusImpl;
 import com.linkedin.d2.discovery.event.SynchronousExecutorService;
 import com.linkedin.d2.discovery.stores.mock.MockStore;
+import com.linkedin.d2.discovery.stores.zk.ZKConnection;
+import com.linkedin.d2.discovery.stores.zk.ZooKeeperEphemeralStore;
+import com.linkedin.d2.discovery.stores.zk.ZooKeeperPermanentStore;
+import com.linkedin.d2.discovery.stores.zk.ZooKeeperPropertyMerger;
+import com.linkedin.d2.jmx.D2ClientJmxManager;
+import com.linkedin.d2.xds.XdsToD2PropertiesAdaptor;
+import com.linkedin.d2.xds.balancer.XdsFsTogglingLoadBalancerFactory;
 import com.linkedin.r2.message.RequestContext;
+import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.function.Consumer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,9 +60,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.DataProvider;
@@ -98,19 +117,13 @@ public class PotentialClientsCacheTest
     {
       ScheduledExecutorService executorService = new SynchronousExecutorService();
 
-      Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> strategyFactories = new HashMap<>();
-      strategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
-
-      Map<String, com.linkedin.r2.transport.common.TransportClientFactory> clientFactories = new HashMap<>();
-      clientFactories.put(PropertyKeys.HTTP_SCHEME, new SimpleLoadBalancerTest.DoNothingClientFactory());
-
       state = new SimpleLoadBalancerState(
           executorService,
           new PropertyEventBusImpl<>(executorService, uriRegistry),
           new PropertyEventBusImpl<>(executorService, clusterRegistry),
           new PropertyEventBusImpl<>(executorService, serviceRegistry),
-          clientFactories,
-          strategyFactories,
+          createClientFactories(),
+          createStrategyFactories(),
           null, null, false, null, null, null, null, false,
           enableCache);
 
@@ -131,8 +144,6 @@ public class PotentialClientsCacheTest
       clusterRegistry.put(cluster, clusterProps);
       serviceRegistry.put(service, serviceProps);
       uriRegistry.put(cluster, uriProps);
-
-      // Trigger listening — this causes startPublishing → publishInitialize for each property
       triggerListening(service);
     }
 
@@ -152,6 +163,128 @@ public class PotentialClientsCacheTest
         // May happen if setup is incomplete — that's fine, the subscribers have still fired
       }
     }
+  }
+
+  /**
+   * Runs a factory callback that registers state on a mock D2ClientJmxManager,
+   * then captures and returns the SimpleLoadBalancerState via ArgumentCaptor.
+   */
+  private static SimpleLoadBalancerState captureStateFromFactory(
+      Consumer<D2ClientJmxManager> factoryAction)
+  {
+    D2ClientJmxManager jmxManager = Mockito.mock(D2ClientJmxManager.class);
+    factoryAction.accept(jmxManager);
+
+    ArgumentCaptor<SimpleLoadBalancerState> captor =
+        ArgumentCaptor.forClass(SimpleLoadBalancerState.class);
+    Mockito.verify(jmxManager).setSimpleLoadBalancerState(captor.capture());
+    return captor.getValue();
+  }
+
+  /**
+   * Creates a SimpleLoadBalancerState through XdsFsTogglingLoadBalancerFactory (the real
+   * XDS factory code path).
+   */
+  private static SimpleLoadBalancerState createStateViaXdsFactory(boolean enableCache) throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("d2-xds-test");
+    return captureStateFromFactory(jmxManager ->
+    {
+      XdsFsTogglingLoadBalancerFactory factory = new XdsFsTogglingLoadBalancerFactory(
+          5000, TimeUnit.MILLISECONDS, tempDir.toString(),
+          createClientFactories(), createStrategyFactories(), "/d2",
+          null, null, false, null, null, null, jmxManager,
+          null, null, null, false, enableCache);
+      factory.create(new SynchronousExecutorService(), Mockito.mock(XdsToD2PropertiesAdaptor.class));
+    });
+  }
+
+  /**
+   * Creates a SimpleLoadBalancerState through ZKFSTogglingLoadBalancerFactoryImpl (the real
+   * ZK factory code path). Store creation methods are overridden to avoid requiring a real
+   * ZooKeeper connection.
+   */
+  private static SimpleLoadBalancerState createStateViaZkFactory(boolean enableCache) throws IOException
+  {
+    Path tempDir = Files.createTempDirectory("d2-zk-test");
+    ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory componentFactory =
+        Mockito.mock(ZKFSTogglingLoadBalancerFactoryImpl.ComponentFactory.class);
+    Mockito.when(componentFactory.createBalancer(Mockito.any(), Mockito.any(),
+        Mockito.any(), Mockito.any(), Mockito.any()))
+        .thenReturn(Mockito.mock(TogglingLoadBalancer.class));
+
+    return captureStateFromFactory(jmxManager ->
+    {
+      ZKFSTogglingLoadBalancerFactoryImpl factory = new ZKFSTogglingLoadBalancerFactoryImpl(
+          componentFactory, 5000, TimeUnit.MILLISECONDS, "/d2", tempDir.toString(),
+          createClientFactories(), createStrategyFactories(), "/d2",
+          null, null, false, null, false, null, false, null,
+          jmxManager, 0, null, null, null, null, null,
+          false, false, enableCache)
+      {
+        @Override
+        protected <T> ZooKeeperPermanentStore<T> createPermanentStore(
+            ZKConnection zkConnection, String nodePath, PropertySerializer<T> serializer,
+            ScheduledExecutorService executorService, int zookeeperReadWindowMs)
+        {
+          return Mockito.mock(ZooKeeperPermanentStore.class);
+        }
+
+        @Override
+        protected <T> ZooKeeperEphemeralStore<T> createEphemeralStore(
+            ZKConnection zkConnection, String nodePath, PropertySerializer<T> serializer,
+            ZooKeeperPropertyMerger<T> merger, boolean useNewWatcher, String backupStoreFilePath,
+            ScheduledExecutorService executorService, int readWindow, boolean isRawD2Client)
+        {
+          return Mockito.mock(ZooKeeperEphemeralStore.class);
+        }
+      };
+      factory.createLoadBalancer(null, new SynchronousExecutorService());
+    });
+  }
+
+  private static Map<String, TransportClientFactory> createClientFactories()
+  {
+    Map<String, TransportClientFactory> clientFactories = new HashMap<>();
+    clientFactories.put(PropertyKeys.HTTP_SCHEME, new SimpleLoadBalancerTest.DoNothingClientFactory());
+    return clientFactories;
+  }
+
+  private static Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> createStrategyFactories()
+  {
+    Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> strategyFactories = new HashMap<>();
+    strategyFactories.put("degrader", new DegraderLoadBalancerStrategyFactoryV3());
+    return strategyFactories;
+  }
+
+  /**
+   * Populates a SimpleLoadBalancerState directly (bypassing property buses) and
+   * rebuilds the potential clients cache. Used for states created by factories
+   * whose internal buses are not accessible from the test.
+   */
+  private static void populateAndRebuildCache(SimpleLoadBalancerState state,
+      String cluster, String service, ClusterProperties clusterProps,
+      ServiceProperties serviceProps, UriProperties uriProps)
+  {
+    state.getServiceProperties().put(service,
+        new LoadBalancerStateItem<>(serviceProps, 1, System.currentTimeMillis()));
+    state.getClusterInfo().put(cluster,
+        new ClusterInfoItem(state, clusterProps, null));
+    state.getUriProperties().put(cluster,
+        new LoadBalancerStateItem<>(uriProps, 1, System.currentTimeMillis()));
+
+    Map<URI, TrackerClient> trackerClients = new ConcurrentHashMap<>();
+    for (URI uri : uriProps.Uris())
+    {
+      trackerClients.put(uri, Mockito.mock(TrackerClient.class));
+    }
+    state.getTrackerClients().put(service, trackerClients);
+
+    Set<String> services = ConcurrentHashMap.newKeySet();
+    services.add(service);
+    state.getServicesPerCluster().put(cluster, services);
+
+    state.rebuildPotentialClientsForService(service);
   }
 
   private static UriProperties buildUriProperties(String cluster, List<URI> uris, int partitionId)
@@ -1027,5 +1160,67 @@ public class PotentialClientsCacheTest
 
     assertEquals(setup.state.getPotentialClients("svc1", scheme, 0).size(), 7);
     assertEquals(setup.state.getPotentialClients("svc2", scheme, 0).size(), 7);
+  }
+
+  // ─── Config propagation tests ───────────────────────────────────────
+  //
+  // Regression tests verifying that enablePotentialClientsCache is propagated through
+  // all factory code paths to SimpleLoadBalancerState. The flag was originally only
+  // plumbed through the ZK path, not the XDS or LastSeen paths.
+
+  @DataProvider
+  public Object[][] cacheFlagPropagationScenarios()
+  {
+    return new Object[][] {
+        // {useXdsFactory, enableCache}
+        {false, true},   // ZK path, cache enabled
+        {false, false},  // ZK path, cache disabled
+        {true,  true},   // XDS path, cache enabled
+        {true,  false},  // XDS path, cache disabled
+    };
+  }
+
+  /**
+   * Verifies that enablePotentialClientsCache is correctly propagated to SimpleLoadBalancerState
+   * through both the ZK and XDS factory paths.
+   *
+   * <ul>
+   *   <li><b>ZK path:</b> exercises ZKFSTogglingLoadBalancerFactoryImpl.createLoadBalancer(),
+   *       with ZooKeeper stores mocked out since no real ZK connection is available.</li>
+   *   <li><b>XDS path:</b> exercises XdsFsTogglingLoadBalancerFactory.create().</li>
+   * </ul>
+   *
+   * Both paths capture the resulting SimpleLoadBalancerState via a mock D2ClientJmxManager,
+   * populate it with data, and verify that getPotentialClients returns cached data (when
+   * enabled) or null (when disabled).
+   */
+  @Test(dataProvider = "cacheFlagPropagationScenarios")
+  public void testCacheFlagPropagation(boolean useXdsFactory, boolean enableCache) throws Exception
+  {
+    String cluster = "cluster-1";
+    String service = "foo";
+    String scheme = PropertyKeys.HTTP_SCHEME;
+
+    ClusterProperties clusterProps = new ClusterProperties(cluster);
+    ServiceProperties serviceProps = new ServiceProperties(service, cluster, "/" + service,
+        Collections.singletonList("degrader"), Collections.emptyMap(), null, null,
+        Collections.singletonList(scheme), null);
+    UriProperties uriProps = buildUriProperties(cluster, generateUris(3), 0);
+
+    SimpleLoadBalancerState state = useXdsFactory
+        ? createStateViaXdsFactory(enableCache)
+        : createStateViaZkFactory(enableCache);
+    populateAndRebuildCache(state, cluster, service, clusterProps, serviceProps, uriProps);
+
+    Map<URI, TrackerClient> cached = state.getPotentialClients(service, scheme, 0);
+    if (enableCache)
+    {
+      assertNotNull(cached, "getPotentialClients should return cached data when cache is enabled");
+      assertEquals(cached.size(), 3);
+    }
+    else
+    {
+      assertNull(cached, "getPotentialClients should return null when cache is disabled");
+    }
   }
 }

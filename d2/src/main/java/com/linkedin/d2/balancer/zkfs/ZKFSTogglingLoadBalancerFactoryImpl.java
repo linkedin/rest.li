@@ -98,8 +98,8 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
   private final ServiceDiscoveryEventEmitter _serviceDiscoveryEventEmitter;
   private final DualReadStateManager _dualReadStateManager;
   private final boolean _loadBalanceStreamException;
-  private final boolean _enablePotentialClientsCache;
   private final boolean _isRawD2Client;
+  private final boolean _enablePotentialClientsCache;
 
   private static final Logger _log = LoggerFactory.getLogger(ZKFSTogglingLoadBalancerFactoryImpl.class);
 
@@ -370,7 +370,7 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
          sslContext, sslParameters, isSSLEnabled, clientServicesConfig, useNewEphemeralStoreWatcher, partitionAccessorRegistry,
          enableSaveUriDataOnDisk, sslSessionValidatorFactory, d2ClientJmxManager, zookeeperReadWindowMs,
          deterministicSubsettingMetadataProvider, failoutConfigProviderFactory, canaryDistributionProvider,
-         serviceDiscoveryEventEmitter, dualReadStateManager, false, false, false);
+         serviceDiscoveryEventEmitter, dualReadStateManager, false, false);
   }
 
   public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
@@ -397,8 +397,42 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
       ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter,
       DualReadStateManager dualReadStateManager,
       boolean loadBalanceStreamException,
-      boolean enablePotentialClientsCache,
       boolean isRawD2Client)
+  {
+    this(factory, timeout, timeoutUnit, baseZKPath, fsBasePath, clientFactories, loadBalancerStrategyFactories,
+         d2ServicePath, sslContext, sslParameters, isSSLEnabled, clientServicesConfig, useNewEphemeralStoreWatcher,
+         partitionAccessorRegistry, enableSaveUriDataOnDisk, sslSessionValidatorFactory, d2ClientJmxManager,
+         zookeeperReadWindowMs, deterministicSubsettingMetadataProvider, failoutConfigProviderFactory,
+         canaryDistributionProvider, serviceDiscoveryEventEmitter, dualReadStateManager,
+         loadBalanceStreamException, isRawD2Client, false);
+  }
+
+  public ZKFSTogglingLoadBalancerFactoryImpl(ComponentFactory factory,
+      long timeout,
+      TimeUnit timeoutUnit,
+      String baseZKPath,
+      String fsBasePath,
+      Map<String, TransportClientFactory> clientFactories,
+      Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+      String d2ServicePath,
+      SSLContext sslContext,
+      SSLParameters sslParameters,
+      boolean isSSLEnabled,
+      Map<String, Map<String, Object>> clientServicesConfig,
+      boolean useNewEphemeralStoreWatcher,
+      PartitionAccessorRegistry partitionAccessorRegistry,
+      boolean enableSaveUriDataOnDisk,
+      SslSessionValidatorFactory sslSessionValidatorFactory,
+      D2ClientJmxManager d2ClientJmxManager,
+      int zookeeperReadWindowMs,
+      DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
+      FailoutConfigProviderFactory failoutConfigProviderFactory,
+      CanaryDistributionProvider canaryDistributionProvider,
+      ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter,
+      DualReadStateManager dualReadStateManager,
+      boolean loadBalanceStreamException,
+      boolean isRawD2Client,
+      boolean enablePotentialClientsCache)
   {
     _factory = factory;
     _lbTimeout = timeout;
@@ -424,8 +458,8 @@ public class ZKFSTogglingLoadBalancerFactoryImpl implements ZKFSLoadBalancer.Tog
     _serviceDiscoveryEventEmitter = serviceDiscoveryEventEmitter;
     _dualReadStateManager = dualReadStateManager;
     _loadBalanceStreamException = loadBalanceStreamException;
-    _enablePotentialClientsCache = enablePotentialClientsCache;
     _isRawD2Client = isRawD2Client;
+    _enablePotentialClientsCache = enablePotentialClientsCache;
   }
 
   @Override
