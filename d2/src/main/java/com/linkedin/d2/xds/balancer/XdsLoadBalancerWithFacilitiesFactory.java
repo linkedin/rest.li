@@ -89,7 +89,8 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
             config.clientFactories, config.loadBalancerStrategyFactories, config.d2ServicePath, config.sslContext,
             config.sslParameters, config.isSSLEnabled, config.clientServicesConfig, config.partitionAccessorRegistry,
             config.sslSessionValidatorFactory, d2ClientJmxManager, config.deterministicSubsettingMetadataProvider,
-            config.failoutConfigProviderFactory, config.canaryDistributionProvider, config.loadBalanceStreamException),
+            config.failoutConfigProviderFactory, config.canaryDistributionProvider, config.loadBalanceStreamException,
+            config.enablePotentialClientsCache),
         directory
     );
 
