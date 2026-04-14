@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.85.8] - 2026-04-14
+- Add `invalidProjectionAs5xx` flag to `RestLiValidationFilter` to report projected fields missing from schema as HTTP 500 instead of 400, so server-side schema regressions trigger alerts.
+
 ## [29.85.7] - 2026-04-08
 - Fix SmoothRateLimiter precision loss by switching from millisecond to nanosecond time tracking, eliminating ~33% QPS error for rates with fractional-ms periods.
 
@@ -5976,7 +5979,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.7...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.8...master
+[29.85.8]: https://github.com/linkedin/rest.li/compare/v29.85.7...v29.85.8
 [29.85.7]: https://github.com/linkedin/rest.li/compare/v29.85.6...v29.85.7
 [29.85.6]: https://github.com/linkedin/rest.li/compare/v29.85.5...v29.85.6
 [29.85.5]: https://github.com/linkedin/rest.li/compare/v29.85.4...v29.85.5
