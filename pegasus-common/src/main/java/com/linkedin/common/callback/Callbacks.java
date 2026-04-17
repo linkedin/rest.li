@@ -91,7 +91,7 @@ public class Callbacks
 
   /**
    * Returns a new callback which defers invocation of another callback until a specified
-   * number of onSuccess() or onError() calls to the new callback have occured.
+   * number of onSuccess() or onError() calls to the new callback have occurred.
    *
    * @param callback
    *          the underlying callback
