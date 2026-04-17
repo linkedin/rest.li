@@ -21,7 +21,7 @@
 package com.linkedin.d2.discovery;
 
 /**
- * Denotes a data format or other error occured during serialization or deserialization.
+ * Denotes a data format or other error occurred during serialization or deserialization.
  * @author Steven Ihde
  * @version $Revision: $
  */
