@@ -21,7 +21,7 @@
 package com.linkedin.d2.discovery.stores;
 
 /**
- * Denotes a communication error occured during an operation on a PropertyStore.
+ * Denotes a communication error occurred during an operation on a PropertyStore.
  * @author Steven Ihde
  * @version $Revision: $
  */
