@@ -98,6 +98,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
   public static final String     D2_SCHEME_NAME = "d2";
 
   private final LoadBalancerState _state;
+  private final SimpleLoadBalancerState _simpleState;
   private final Stats _serviceUnavailableStats;
   private final Stats _serviceAvailableStats;
   private final Stats _serviceNotFoundStats; // service is not present in service discovery system
@@ -135,6 +136,7 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
                             FailoutConfigProviderFactory failoutConfigProviderFactory)
   {
     _state = state;
+    _simpleState = (state instanceof SimpleLoadBalancerState) ? (SimpleLoadBalancerState) state : null;
     _serviceUnavailableStats = serviceUnavailableStats;
     _serviceAvailableStats = serviceAvailableStats;
     _serviceNotFoundStats = new Stats(1000);
@@ -996,6 +998,35 @@ public class SimpleLoadBalancer implements LoadBalancer, HashRingProvider, Clien
                                                   int partitionId,
                                                   long version)
   {
+    // Fast path: use pre-computed routing table when available (O(1) lookup, no allocation)
+    if (_simpleState != null)
+    {
+      PartitionRoutingTable routingTable = _simpleState.getRoutingSnapshot(serviceName);
+      if (routingTable != null)
+      {
+        if (!serviceProperties.isEnableClusterSubsetting())
+        {
+          return new TrackerClientSubsetItem(false, routingTable.getPartitionClients(scheme, partitionId));
+        }
+        else
+        {
+          Map<URI, Double> weightedUris = routingTable.getWeightedUris(scheme, partitionId);
+          SubsettingState.SubsetItem subsetItem = _state.getClientsSubset(serviceName,
+              serviceProperties.getMinClusterSubsetSize(), partitionId, weightedUris, version);
+          Set<URI> possibleUrisForSubsetting = uris.getUriBySchemeAndPartition(scheme, partitionId);
+          if (possibleUrisForSubsetting == null)
+          {
+            possibleUrisForSubsetting = Collections.emptySet();
+          }
+          Map<URI, TrackerClient> clientsToBalance = getPotentialClientsSubsetting(
+              serviceName, serviceProperties, clusterProperties,
+              possibleUrisForSubsetting, partitionId, subsetItem);
+          return new TrackerClientSubsetItem(subsetItem.shouldForceUpdate(), clientsToBalance);
+        }
+      }
+    }
+
+    // Fallback: build routing info on the fly (O(n) per request)
     Set<URI> possibleUris = uris.getUriBySchemeAndPartition(scheme, partitionId);
     Map<URI, TrackerClient> clientsToBalance = Collections.emptyMap();
     boolean shouldForceUpdate = false;
