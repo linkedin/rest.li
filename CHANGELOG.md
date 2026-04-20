@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Remove method defaults from `ResourceDefinition`.
 
 ## [29.85.8] - 2026-04-14
 - Add `invalidProjectionAs5xx` flag to `RestLiValidationFilter` to report projected fields missing from schema as HTTP 500 instead of 400, so server-side schema regressions trigger alerts.
