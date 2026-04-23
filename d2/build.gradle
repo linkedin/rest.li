@@ -23,6 +23,7 @@ dependencies {
   compile externalDependency.zero_allocation_hashing
   compile externalDependency.xchart
   compileOnly externalDependency.findbugs
+  compileOnly externalDependency.errorProneAnnotations
   testCompile externalDependency.metricsCore
   testCompile externalDependency.xerialSnappy
   testCompile externalDependency.testng
