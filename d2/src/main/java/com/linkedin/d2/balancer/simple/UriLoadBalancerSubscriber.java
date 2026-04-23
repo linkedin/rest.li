@@ -171,6 +171,12 @@ class UriLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<UriProper
       // cache file, or we just started listening to a cluster without any uris yet.
       RATE_LIMITED_LOGGER.warn("Received a null uri properties for cluster: {}", cluster);
     }
+
+    // Rebuild the potential clients cache for all services on this cluster
+    if (uriProperties != null)
+    {
+      _simpleLoadBalancerState.rebuildPotentialClientsForCluster(uriProperties.getClusterName());
+    }
   }
 
   @Override
@@ -178,6 +184,7 @@ class UriLoadBalancerSubscriber extends AbstractLoadBalancerSubscriber<UriProper
   {
     _simpleLoadBalancerState.getUriProperties().remove(cluster);
     warn(RATE_LIMITED_LOGGER, "received a uri properties event remove() for cluster: ", cluster);
+    _simpleLoadBalancerState.invalidatePotentialClientsForCluster(cluster);
     _simpleLoadBalancerState.removeTrackerClients(cluster);
   }
 }
