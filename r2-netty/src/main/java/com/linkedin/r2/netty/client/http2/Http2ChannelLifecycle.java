@@ -76,7 +76,8 @@ class Http2ChannelLifecycle implements AsyncPool.Lifecycle<Channel>
   private long _lastActiveTime;
 
   Http2ChannelLifecycle(SocketAddress address, ScheduledExecutorService scheduler, Clock clock,
-      ChannelGroup channelGroup, boolean ssl, long maxContentLength, long idleTimeout, AsyncPool.Lifecycle<Channel> parentChannelLifecycle)
+      ChannelGroup channelGroup, boolean ssl, long maxContentLength, long idleTimeout,
+      AsyncPool.Lifecycle<Channel> parentChannelLifecycle, long channelCreationTimeoutMs)
   {
     _address = address;
     _scheduler = scheduler;
@@ -87,7 +88,7 @@ class Http2ChannelLifecycle implements AsyncPool.Lifecycle<Channel>
     _idleTimeout = idleTimeout;
     _parentChannelLifecycle = parentChannelLifecycle;
     _childChannelCount = 0;
-    _channelCreationTimeoutMs = DEFAULT_CHANNEL_CREATION_TIMEOUT_MS; // TODO: expose this through cfg2
+    _channelCreationTimeoutMs = channelCreationTimeoutMs > 0 ? channelCreationTimeoutMs : DEFAULT_CHANNEL_CREATION_TIMEOUT_MS;
 
     _lastActiveTime = _clock.currentTimeMillis();
     _scheduler.scheduleAtFixedRate(this::closeParentIfIdle, idleTimeout, idleTimeout, TimeUnit.MILLISECONDS);

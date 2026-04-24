@@ -159,6 +159,7 @@ public class HttpClientFactory implements TransportClientFactory
   public static final int DEFAULT_CONNECT_TIMEOUT = 30000;
   public static final int DEFAULT_SSL_HANDSHAKE_TIMEOUT = 10000;
   public static final int DEFAULT_CHANNELPOOL_WAITER_TIMEOUT = Integer.MAX_VALUE;
+  public static final long DEFAULT_HTTP2_CHANNEL_CREATION_TIMEOUT_MS = 10000;
   public static final double DEFAULT_MAX_CLIENT_REQUEST_RETRY_RATIO = 0.2;
   public static final double UNLIMITED_CLIENT_REQUEST_RETRY_RATIO = 1.0;
   /**
@@ -203,6 +204,7 @@ public class HttpClientFactory implements TransportClientFactory
   private final int _connectTimeout;
   private final int _sslHandShakeTimeout;
   private final int _channelPoolWaiterTimeout;
+  private final long _http2ChannelCreationTimeoutMs;
   private final String _udsAddress;
   /** Request compression config for each http service. */
   private final Map<String, CompressionConfig> _requestCompressionConfigs;
@@ -657,7 +659,8 @@ public class HttpClientFactory implements TransportClientFactory
         shutdownCallbackExecutor, jmxManager, requestCompressionThresholdDefault, requestCompressionConfigs,
         responseCompressionConfigs, compressionExecutor, defaultHttpVersion, shareConnection, eventProviderRegistry,
         enableSSLSessionResumption, usePipelineV2, executorsToShutDown, DEFAULT_CONNECT_TIMEOUT,
-        DEFAULT_SSL_HANDSHAKE_TIMEOUT, DEFAULT_CHANNELPOOL_WAITER_TIMEOUT, udsAddress, null);
+        DEFAULT_SSL_HANDSHAKE_TIMEOUT, DEFAULT_CHANNELPOOL_WAITER_TIMEOUT, udsAddress, null,
+        DEFAULT_HTTP2_CHANNEL_CREATION_TIMEOUT_MS);
   }
 
   private HttpClientFactory(FilterChain filters,
@@ -682,7 +685,8 @@ public class HttpClientFactory implements TransportClientFactory
                             int sslHandShakeTimeout,
                             int channelPoolWaiterTimeout,
                             String udsAddress,
-                            DnsMetricsCallback dnsMetricsCallback)
+                            DnsMetricsCallback dnsMetricsCallback,
+                            long http2ChannelCreationTimeoutMs)
   {
     _filters = filters;
     _eventLoopGroup = eventLoopGroup;
@@ -698,6 +702,7 @@ public class HttpClientFactory implements TransportClientFactory
     _connectTimeout = connectTimeout;
     _sslHandShakeTimeout = sslHandShakeTimeout;
     _channelPoolWaiterTimeout = channelPoolWaiterTimeout;
+    _http2ChannelCreationTimeoutMs = http2ChannelCreationTimeoutMs;
     _udsAddress = udsAddress;
     _dnsMetricsCallback = dnsMetricsCallback;
     if (requestCompressionConfigs == null)
@@ -715,7 +720,7 @@ public class HttpClientFactory implements TransportClientFactory
     _defaultHttpVersion = defaultHttpVersion;
     _channelPoolManagerFactory = new ChannelPoolManagerFactoryImpl(
         _eventLoopGroup, _executor, enableSSLSessionResumption,_usePipelineV2, _channelPoolWaiterTimeout,
-        _connectTimeout, _sslHandShakeTimeout);
+        _connectTimeout, _sslHandShakeTimeout, _http2ChannelCreationTimeoutMs);
 
     if (eventProviderRegistry != null)
     {
@@ -760,6 +765,7 @@ public class HttpClientFactory implements TransportClientFactory
     private int _connectTimeout = DEFAULT_CONNECT_TIMEOUT;
     private int _sslHandShakeTimeout = DEFAULT_SSL_HANDSHAKE_TIMEOUT;
     private int _channelPoolWaiterTimeout = DEFAULT_CHANNELPOOL_WAITER_TIMEOUT;
+    private long _http2ChannelCreationTimeoutMs = DEFAULT_HTTP2_CHANNEL_CREATION_TIMEOUT_MS;
     private DnsMetricsCallback _dnsMetricsCallback;
 
     /**
@@ -931,6 +937,20 @@ public class HttpClientFactory implements TransportClientFactory
       return this;
     }
 
+    /**
+     * Sets the timeout for HTTP/2 parent channel creation. When establishing a new HTTP/2
+     * connection, if the TCP + TLS handshake does not complete within this timeout, an
+     * {@link ObjectCreationTimeoutException} is thrown. Lower values cause faster fail-over
+     * to healthy hosts but may trigger false positives on slow networks.
+     *
+     * @param http2ChannelCreationTimeoutMs timeout in milliseconds (default: 10000)
+     */
+    public Builder setHttp2ChannelCreationTimeout(long http2ChannelCreationTimeoutMs)
+    {
+      _http2ChannelCreationTimeoutMs = http2ChannelCreationTimeoutMs;
+      return this;
+    }
+
     public Builder setChannelPoolWaiterTimeout(int channelPoolWaiterTimeout)
     {
       _channelPoolWaiterTimeout = channelPoolWaiterTimeout;
@@ -1007,7 +1027,7 @@ public class HttpClientFactory implements TransportClientFactory
         _requestCompressionThresholdDefault, _requestCompressionConfigs, _responseCompressionConfigs,
         compressionExecutor, _defaultHttpVersion, _shareConnection, eventProviderRegistry, _enableSSLSessionResumption,
           _usePipelineV2, executorsToShutDown, _connectTimeout, _sslHandShakeTimeout, _channelPoolWaiterTimeout,
-          _udsAddress, _dnsMetricsCallback);
+          _udsAddress, _dnsMetricsCallback, _http2ChannelCreationTimeoutMs);
     }
 
   }
