@@ -22,11 +22,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.linkedin.common.callback.FutureCallback;
 import com.linkedin.common.util.None;
 import com.linkedin.r2.transport.http.client.AsyncRateLimiter;
 import com.linkedin.r2.transport.http.client.SmoothRateLimiter;
+import com.linkedin.test.util.ClockedExecutor;
 import com.linkedin.util.clock.Clock;
 
 import java.util.concurrent.TimeUnit;
@@ -35,6 +37,7 @@ import org.junit.Assert;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 
 public class TestSmoothRateLimiter extends BaseTestSmoothRateLimiter
@@ -116,6 +119,59 @@ public class TestSmoothRateLimiter extends BaseTestSmoothRateLimiter
     }
     callback.get(5, TimeUnit.SECONDS);
     Assert.assertTrue("The tasks should run", callback.isDone());
+  }
+
+  /**
+   * Verifies that nanosecond period tracking produces accurate dispatch rates for fractional
+   * millisecond periods.
+   *
+   * <p>At 750 QPS with burst=1, the Rate constructor computes an internal period of
+   * 1000/750 = 1.333ms. Previously, {@link Rate#getPeriod()} rounded this to 1ms, causing the
+   * event loop to dispatch at ~1000 QPS (+33% error). With nanosecond tracking via
+   * {@link Rate#getPeriodNanos()}, the period is represented as 1,333,333ns and the dispatch
+   * rate matches the target.</p>
+   */
+  @Test(timeOut = 10000)
+  public void testFractionalPeriodAccuracy()
+  {
+    ClockedExecutor executor = new ClockedExecutor();
+    SmoothRateLimiter rateLimiter = new SmoothRateLimiter(
+        executor, executor, executor, _queue, Integer.MAX_VALUE,
+        SmoothRateLimiter.BufferOverflowMode.DROP, RATE_LIMITER_NAME_TEST);
+
+    int targetQps = 750;
+    int burst = 1;
+    rateLimiter.setRate(targetQps, ONE_SECOND_PERIOD, burst);
+
+    AtomicInteger dispatchCount = new AtomicInteger(0);
+
+    for (int i = 0; i < targetQps * 4; i++)
+    {
+      rateLimiter.submit(new Callback<None>()
+      {
+        @Override
+        public void onError(Throwable e) { }
+
+        @Override
+        public void onSuccess(None result)
+        {
+          dispatchCount.incrementAndGet();
+        }
+      });
+    }
+
+    int durationSeconds = 3;
+    executor.runFor(ONE_SECOND_PERIOD * durationSeconds);
+
+    int totalDispatches = dispatchCount.get();
+    int expectedTotal = targetQps * durationSeconds;
+    double errorPercent = 100.0 * Math.abs(totalDispatches - expectedTotal) / expectedTotal;
+
+    // Without nanosecond tracking, getPeriod() rounds 1.333ms to 1ms, yielding ~1000 QPS (+33% error).
+    // With nanosecond tracking, getPeriodNanos() = 1,333,333ns and the rate is accurate within 5%.
+    assertTrue(errorPercent < 5.0,
+        "Dispatched " + totalDispatches + " in " + durationSeconds + "s, expected ~" + expectedTotal
+            + " (error " + String.format("%.1f", errorPercent) + "%)");
   }
 
   protected AsyncRateLimiter getRateLimiter(ScheduledExecutorService executorService, ExecutorService executor, Clock clock)

@@ -118,6 +118,36 @@ public class Rate
     return _period;
   }
 
+  /**
+   * Gets period in Nanoseconds.
+   *
+   * @return Period in nanoseconds.
+   */
+  public long getPeriodNanos()
+  {
+    return (long) (_period * 1_000_000L);
+  }
+
+  /**
+   * Gets the duration of a single event interval in milliseconds.
+   *
+   * @return Milliseconds per event.
+   */
+  public int getEventIntervalMillis()
+  {
+    return (int) (_period / _events);
+  }
+
+  /**
+   * Gets the duration of a single event interval in nanoseconds.
+   *
+   * @return Nanoseconds per event.
+   */
+  public long getEventIntervalNanos()
+  {
+    return (long) (_period / _events * 1_000_000L);
+  }
+
   public boolean equals(Object o)
   {
     if (this == o)

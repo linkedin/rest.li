@@ -80,6 +80,11 @@ public class RestLiValidationFilter implements Filter
   // error message and error details.
   private final ValidationErrorHandler _validationErrorHandler;
 
+  // When enabled, an invalid projection (field not present in schema) is reported as HTTP 500
+  // instead of HTTP 400, so that server-side schema regressions trigger alerts rather than being
+  // silently classified as client errors.
+  private final boolean _invalidProjectionAs5xx;
+
   public RestLiValidationFilter()
   {
     this(Collections.emptyList());
@@ -107,8 +112,27 @@ public class RestLiValidationFilter implements Filter
   public RestLiValidationFilter(Collection<String> nonSchemaFieldsToAllowInProjectionMask,
       ValidationErrorHandler errorHandler)
   {
+    this(nonSchemaFieldsToAllowInProjectionMask, errorHandler, false);
+  }
+
+  /**
+   * Constructs {@link RestLiValidationFilter}
+   *
+   * @param nonSchemaFieldsToAllowInProjectionMask field names to allow in the projection mask
+   *                                               even if the field is not present in the schema.
+   * @param errorHandler {@link ValidationErrorHandler} interface allows applications to customize the service error code,
+   *                                                   error message and error details.
+   * @param invalidProjectionAs5xx when {@code true}, an invalid projection (projected field not present in schema)
+   *                               is reported as HTTP 500 Internal Server Error instead of HTTP 400 Bad Request.
+   *                               Enable this to ensure server-side schema regressions surface as 5xx errors and
+   *                               trigger alerts, rather than being silently classified as client errors.
+   */
+  public RestLiValidationFilter(Collection<String> nonSchemaFieldsToAllowInProjectionMask,
+      ValidationErrorHandler errorHandler, boolean invalidProjectionAs5xx)
+  {
     _nonSchemaFieldsToAllowInProjectionMask = nonSchemaFieldsToAllowInProjectionMask;
     _validationErrorHandler = errorHandler;
+    _invalidProjectionAs5xx = invalidProjectionAs5xx;
   }
 
   @Override
@@ -135,7 +159,9 @@ public class RestLiValidationFilter implements Filter
         }
         catch (InvalidProjectionException e)
         {
-          throw new RestLiServiceException(HttpStatus.S_400_BAD_REQUEST, e.getMessage());
+          HttpStatus projectionErrorStatus = _invalidProjectionAs5xx
+              ? HttpStatus.S_500_INTERNAL_SERVER_ERROR : HttpStatus.S_400_BAD_REQUEST;
+          throw new RestLiServiceException(projectionErrorStatus, e.getMessage());
         }
         catch (TemplateRuntimeException e)
         {

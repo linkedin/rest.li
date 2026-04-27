@@ -31,4 +31,12 @@ public interface Clock
    * @return the current time of this clock in milliseconds.
    */
   long currentTimeMillis();
+
+  /**
+   * @return the current time of this clock in nanoseconds.
+   */
+  default long currentTimeNanos()
+  {
+    return currentTimeMillis() * 1_000_000L;
+  }
 }

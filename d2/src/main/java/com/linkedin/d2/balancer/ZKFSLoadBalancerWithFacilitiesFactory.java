@@ -107,7 +107,8 @@ public class ZKFSLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFa
                                                    config.serviceDiscoveryEventEmitter,
                                                    config.dualReadStateManager,
                                                    config.loadBalanceStreamException,
-                                                   config.isLiRawD2Client
+                                                   config.isLiRawD2Client,
+                                                   config.enablePotentialClientsCache
     );
   }
 }
