@@ -370,9 +370,7 @@ public class D2ClientConfig
         d2CalleeInfoRecorder,
         enableIndisDownstreamServicesFetcher,
         indisDownstreamServicesFetchTimeout,
-        new NoOpXdsClientOtelMetricsProvider(),
-        new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider(),
-        new NoOpDegraderLoadBalancerStrategyV3OtelMetricsProvider());
+        new NoOpXdsClientOtelMetricsProvider());
   }
 
   /**
