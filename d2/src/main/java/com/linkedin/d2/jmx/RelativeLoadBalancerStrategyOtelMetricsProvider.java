@@ -4,18 +4,13 @@ package com.linkedin.d2.jmx;
  * Interface for OpenTelemetry metrics collection for the RelativeLoadBalancerStrategy.
  * This provider captures latency distributions, host counts, and other load balancer metrics.
  *
- * All metrics are tagged with two dimensions: serviceName and scheme.</p>
+ * <p>Methods inherited from {@link LoadBalancerStrategyOtelMetricsProvider} cover metrics shared
+ * with other LB strategy providers (host latency, hash ring point count). The methods declared
+ * directly on this interface are specific to the relative LB strategy.
+ *
+ * <p>All metrics are tagged with two dimensions: {@code serviceName} and {@code scheme}.
  */
-public interface RelativeLoadBalancerStrategyOtelMetricsProvider {
-
-  /**
-   * Records a host's average latency in the OpenTelemetry histogram.
-   *
-   * @param serviceName the name of the service
-   * @param scheme the load balancer scheme (e.g., "http", "https")
-   * @param hostLatencyMs the average latency of the host in milliseconds
-   */
-  void recordHostLatency(String serviceName, String scheme, long hostLatencyMs);
+public interface RelativeLoadBalancerStrategyOtelMetricsProvider extends LoadBalancerStrategyOtelMetricsProvider {
 
   /**
    * Updates the number of total hosts in all partitions regardless of their status.
@@ -43,13 +38,4 @@ public interface RelativeLoadBalancerStrategyOtelMetricsProvider {
    * @param quarantineHostsCount the count of quarantine hosts
    */
   void updateQuarantineHostsCount(String serviceName, String scheme, int quarantineHostsCount);
-
-  /**
-   * Updates the total number of points in hash ring.
-   *
-   * @param serviceName the name of the service
-   * @param scheme the load balancer scheme (e.g., "http", "https")
-   * @param totalPointsInHashRing the total points in the hash ring
-   */
-  void updateTotalPointsInHashRing(String serviceName, String scheme, int totalPointsInHashRing);
 }

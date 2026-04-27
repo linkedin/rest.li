@@ -288,8 +288,16 @@ public class StateUpdater
     {
       if (!oldStateMap.containsKey(trackerClient) && !trackerClient.doNotLoadBalance())
       {
-        trackerClient.setPerCallDurationListener(
-            duration -> _relativeLbOtelMetricsProvider.recordHostLatency(_serviceName, _scheme, duration));
+        trackerClient.setPerCallDurationListener(duration -> {
+          // Skip emission if the scheme has not been initialized yet (setScheme is called from
+          // D2ClientJmxManager.doRegisterLoadBalancerStrategy after construction).
+          String scheme = _scheme;
+          if (NO_VALUE.equals(scheme))
+          {
+            return;
+          }
+          _relativeLbOtelMetricsProvider.recordHostLatency(_serviceName, scheme, duration);
+        });
       }
     }
 
@@ -521,30 +529,39 @@ public class StateUpdater
    * Emit OpenTelemetry metrics for the current partition state.
    * Host latencies are emitted per-call via the listener registered in
    * {@link #calculateBaseHealthScore}.
+   *
+   * <p>Skips emission entirely if the scheme has not been initialized yet (i.e. before
+   * {@link #setScheme(String)} runs from D2ClientJmxManager).
    */
   private void emitOtelMetrics(PartitionState partitionState)
   {
+    String scheme = _scheme;
+    if (NO_VALUE.equals(scheme))
+    {
+      return;
+    }
+
     // Update gauge metrics
-    _relativeLbOtelMetricsProvider.updateTotalHostsInAllPartitionsCount(_serviceName, _scheme, getTotalHostsInAllPartitions());
+    _relativeLbOtelMetricsProvider.updateTotalHostsInAllPartitionsCount(_serviceName, scheme, getTotalHostsInAllPartitions());
 
     // Count unhealthy hosts
     int unhealthyCount = (int) partitionState.getTrackerClientStateMap().values().stream()
         .filter(TrackerClientState::isUnhealthy)
         .count();
-    _relativeLbOtelMetricsProvider.updateUnhealthyHostsCount(_serviceName, _scheme, unhealthyCount);
+    _relativeLbOtelMetricsProvider.updateUnhealthyHostsCount(_serviceName, scheme, unhealthyCount);
 
     // Count quarantine hosts
     Map<TrackerClient, LoadBalancerQuarantine> quarantineMap = partitionState.getQuarantineMap();
     int quarantineCount = (int) quarantineMap.values().stream()
         .filter(LoadBalancerQuarantine::isInQuarantine)
         .count();
-    _relativeLbOtelMetricsProvider.updateQuarantineHostsCount(_serviceName, _scheme, quarantineCount);
+    _relativeLbOtelMetricsProvider.updateQuarantineHostsCount(_serviceName, scheme, quarantineCount);
 
     // Total points in hash ring
     int totalPoints = partitionState.getPointsMap().values().stream()
         .mapToInt(Integer::intValue)
         .sum();
-    _relativeLbOtelMetricsProvider.updateTotalPointsInHashRing(_serviceName, _scheme, totalPoints);
+    _relativeLbOtelMetricsProvider.updateTotalPointsInHashRing(_serviceName, scheme, totalPoints);
   }
 
   @VisibleForTesting

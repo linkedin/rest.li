@@ -33,6 +33,7 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.EntityStream;
 import com.linkedin.r2.message.stream.entitystream.Observer;
+import com.linkedin.d2.balancer.util.RateLimitedLogger;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
@@ -71,6 +72,9 @@ public class TrackerClientImpl implements TrackerClient
   public static final long DEFAULT_CALL_TRACKER_INTERVAL = DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS;
 
   private static final Logger _log = LoggerFactory.getLogger(TrackerClient.class);
+  // Rate at which warnings about a misbehaving per-call duration listener are logged. Keeps a
+  // persistently-throwing OTel provider from flooding the logs on hot request paths.
+  private static final long PER_CALL_LISTENER_LOG_RATE_MS = 60_000L;
 
   private final TransportClient _transportClient;
   private final Map<Integer, PartitionData> _partitionData;
@@ -83,6 +87,7 @@ public class TrackerClientImpl implements TrackerClient
 
   private boolean _doNotSlowStart;
   private volatile Consumer<Long> _perCallDurationListener = duration -> {};
+  private final RateLimitedLogger _rateLimitedListenerErrorLogger;
 
   private volatile CallTracker.CallStats _latestCallStats;
 
@@ -107,6 +112,8 @@ public class TrackerClientImpl implements TrackerClient
     _doNotLoadBalance = doNotLoadBalance;
 
     _callTracker.addStatsRolloverEventListener(event -> _latestCallStats = event.getCallStats());
+
+    _rateLimitedListenerErrorLogger = new RateLimitedLogger(_log, PER_CALL_LISTENER_LOG_RATE_MS, clock);
 
     debug(_log, "created tracker client: ", this);
   }
@@ -147,11 +154,33 @@ public class TrackerClientImpl implements TrackerClient
   }
 
   /**
-   * Sets a listener that will be invoked with the actual duration (in ms) of each completed call.
+   * Sets a listener that is invoked once per completed call with the duration (in ms) the server
+   * was perceived to have contributed to the request.
+   *
+   * <p>See {@link TrackerClient#setPerCallDurationListener(Consumer)} for the broader design
+   * rationale (why a setter is used instead of constructor injection, the timing requirement,
+   * and the silent-absence caveat for custom {@link TrackerClient} implementations).
    */
+  @Override
   public void setPerCallDurationListener(Consumer<Long> listener)
   {
     _perCallDurationListener = listener != null ? listener : duration -> {};
+  }
+
+  /**
+   * Invokes the per-call duration listener and swallows any {@link RuntimeException} it throws.
+   */
+  private void safelyNotifyDurationListener(long duration)
+  {
+    try
+    {
+      _perCallDurationListener.accept(duration);
+    }
+    catch (RuntimeException e)
+    {
+      _rateLimitedListenerErrorLogger.warn(
+          "Per-call duration listener threw an exception; latency metric not recorded for this call", e);
+    }
   }
 
   @Override
@@ -221,7 +250,7 @@ public class TrackerClientImpl implements TrackerClient
       {
         _callCompletion.endCall();
       }
-      _perCallDurationListener.accept(duration);
+      safelyNotifyDurationListener(duration);
 
       _wrappedCallback.onResponse(response);
     }
@@ -266,7 +295,7 @@ public class TrackerClientImpl implements TrackerClient
       {
         Throwable throwable = response.getError();
         handleError(_callCompletion, throwable);
-        _perCallDurationListener.accept(_clock.currentTimeMillis() - _startTime);
+        safelyNotifyDurationListener(_clock.currentTimeMillis() - _startTime);
       }
       else
       {
@@ -300,14 +329,16 @@ public class TrackerClientImpl implements TrackerClient
           public void onDone()
           {
             _callCompletion.endCall();
-            _perCallDurationListener.accept(firstByteTime - _startTime);
+            safelyNotifyDurationListener(firstByteTime - _startTime);
           }
 
           @Override
           public void onError(Throwable e)
           {
             handleError(_callCompletion, e);
-            _perCallDurationListener.accept(_clock.currentTimeMillis() - _startTime);
+            // Record TTFB (firstByteTime - startTime) instead of full duration up to the streaming
+            // error.
+            safelyNotifyDurationListener(firstByteTime - _startTime);
           }
         };
         entityStream.addObserver(observer);

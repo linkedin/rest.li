@@ -94,9 +94,20 @@ public interface TrackerClient extends LoadBalancerClient
 
   /**
    * Sets a listener that is invoked with the actual duration (in ms) of each completed call.
-   * Implementations that do not support per-call listeners can leave this as a no-op.
    *
-   * @param listener consumer that receives the call duration in milliseconds
+   * <p><b>Why this is a setter and not a constructor parameter.</b> A {@link TrackerClient} is
+   * constructed by the discovery-side {@code TrackerClientFactory} before any
+   * {@link com.linkedin.d2.balancer.strategies.LoadBalancerStrategy} that consumes its metrics
+   * exists. The strategy registers its listener when it first observes the tracker client during
+   * a partition-state update.
+   *
+   * <p><b>Single-owner contract.</b> A {@link TrackerClient} supports at most one duration
+   * listener at a time. Calling this method replaces any previously-registered listener (last
+   * writer wins) — listeners are <em>not</em> composed.
+   *
+   * <p>Passing {@code null} resets the listener to a no-op.
+   *
+   * @param listener consumer that receives the call duration in milliseconds; may be {@code null}
    */
   default void setPerCallDurationListener(Consumer<Long> listener)
   {

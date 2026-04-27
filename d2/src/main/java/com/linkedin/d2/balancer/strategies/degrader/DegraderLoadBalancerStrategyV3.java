@@ -129,10 +129,10 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
 
   /**
    * Sets the scheme for this strategy. Used for OTEL metrics tagging.
-   * This is called after strategy creation when the scheme becomes available.
-   *
-   * @param scheme the load balancer scheme (e.g., "http", "https")
+   * This is called after strategy creation when the scheme becomes available, see
+   * {@link com.linkedin.d2.balancer.strategies.LoadBalancerStrategy#setScheme(String)}.
    */
+  @Override
   public void setScheme(String scheme)
   {
     if (scheme != null && !scheme.equals(NO_VALUE))
@@ -455,9 +455,16 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     {
       if (!knownUris.contains(client.getUri()))
       {
-        client.setPerCallDurationListener(
-            duration -> _degraderLbOtelMetricsProvider.recordHostLatency(
-                _state.getServiceName(), _scheme, duration));
+        client.setPerCallDurationListener(duration -> {
+          // Skip emission if the scheme has not been initialized yet (setScheme is called from
+          // D2ClientJmxManager.doRegisterLoadBalancerStrategy after construction).
+          String scheme = _scheme;
+          if (NO_VALUE.equals(scheme))
+          {
+            return;
+          }
+          _degraderLbOtelMetricsProvider.recordHostLatency(_state.getServiceName(), scheme, duration);
+        });
       }
     }
 
@@ -476,9 +483,21 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     emitOtelMetrics(partitionState);
   }
 
+  /**
+   * Emit OpenTelemetry metrics for the current partition state.
+   *
+   * <p>Skips emission entirely if the scheme has not been initialized yet (i.e. before
+   * {@link #setScheme(String)} runs from D2ClientJmxManager).
+   */
   private void emitOtelMetrics(PartitionDegraderLoadBalancerState partitionState)
   {
-    _degraderLbOtelMetricsProvider.updateOverrideClusterDropRate(_state.getServiceName(), _scheme,
+    String scheme = _scheme;
+    if (NO_VALUE.equals(scheme))
+    {
+      return;
+    }
+
+    _degraderLbOtelMetricsProvider.updateOverrideClusterDropRate(_state.getServiceName(), scheme,
         partitionState.getCurrentOverrideDropRate());
 
     int totalPoints = 0;
@@ -486,7 +505,7 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy
     {
       totalPoints += points;
     }
-    _degraderLbOtelMetricsProvider.updateTotalPointsInHashRing(_state.getServiceName(), _scheme, totalPoints);
+    _degraderLbOtelMetricsProvider.updateTotalPointsInHashRing(_state.getServiceName(), scheme, totalPoints);
   }
 
 

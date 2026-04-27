@@ -972,10 +972,10 @@ public class D2ClientBuilder
     final DegraderLoadBalancerStrategyFactoryV3 degraderStrategyFactoryV3 = new DegraderLoadBalancerStrategyFactoryV3(
         _config.healthCheckOperations, _config._executorService, _config.eventEmitter, Collections.emptyList(), 
         _config.degraderLoadBalancerStrategyV3OtelMetricsProvider);
-    loadBalancerStrategyFactories.put("degrader", degraderStrategyFactoryV3);
-    loadBalancerStrategyFactories.put("degraderV2", degraderStrategyFactoryV3);
-    loadBalancerStrategyFactories.put("degraderV3", degraderStrategyFactoryV3);
-    loadBalancerStrategyFactories.put("degraderV2_1", degraderStrategyFactoryV3);
+    loadBalancerStrategyFactories.putIfAbsent("degrader", degraderStrategyFactoryV3);
+    loadBalancerStrategyFactories.putIfAbsent("degraderV2", degraderStrategyFactoryV3);
+    loadBalancerStrategyFactories.putIfAbsent("degraderV3", degraderStrategyFactoryV3);
+    loadBalancerStrategyFactories.putIfAbsent("degraderV2_1", degraderStrategyFactoryV3);
 
     if (_config.enableRelativeLoadBalancer)
     {
