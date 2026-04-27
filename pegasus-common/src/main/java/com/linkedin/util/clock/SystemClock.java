@@ -46,4 +46,10 @@ public class SystemClock implements Clock
   {
     return System.currentTimeMillis();
   }
+
+  @Override
+  public long currentTimeNanos()
+  {
+    return System.nanoTime();
+  }
 }

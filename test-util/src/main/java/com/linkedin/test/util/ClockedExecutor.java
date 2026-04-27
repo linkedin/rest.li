@@ -29,8 +29,9 @@ import org.slf4j.LoggerFactory;
 public class ClockedExecutor implements Clock, ScheduledExecutorService
 {
   private static final Logger LOG = LoggerFactory.getLogger(ClockedExecutor.class);
+  private static final long NANOS_PER_MILLI = 1_000_000L;
 
-  private volatile long _currentTimeMillis = 0L;
+  private volatile long _currentTimeNanos = 0L;
   private volatile Boolean _stopped = true;
   private volatile long _taskCount = 0L;
   private PriorityBlockingQueue<ClockedTask> _taskList = new PriorityBlockingQueue<>();
@@ -42,6 +43,11 @@ public class ClockedExecutor implements Clock, ScheduledExecutorService
 
   public Future<Void> runUntil(long untilTime)
   {
+    return runUntilNanos(untilTime * NANOS_PER_MILLI);
+  }
+
+  private Future<Void> runUntilNanos(long untilTimeNanos)
+  {
     if (!_stopped)
     {
       throw new IllegalArgumentException("Already Started!");
@@ -52,32 +58,32 @@ public class ClockedExecutor implements Clock, ScheduledExecutorService
     }
     _stopped = false;
 
-    while (!_stopped && !_taskList.isEmpty() && (untilTime <= 0L || untilTime >= _currentTimeMillis))
+    while (!_stopped && !_taskList.isEmpty() && (untilTimeNanos <= 0L || untilTimeNanos >= _currentTimeNanos))
     {
       ClockedTask task = _taskList.peek();
       long expectTime = task.getScheduledTime();
 
-      if (expectTime > untilTime)
+      if (expectTime > untilTimeNanos)
       {
-        _currentTimeMillis = untilTime;
+        _currentTimeNanos = untilTimeNanos;
         break;
       }
 
       _taskList.remove();
 
-      if (expectTime > _currentTimeMillis)
+      if (expectTime > _currentTimeNanos)
       {
-        _currentTimeMillis = expectTime;
+        _currentTimeNanos = expectTime;
       }
       if (LOG.isDebugEnabled())
       {
-        LOG.debug("Processing task " + task.toString() + " total {}, time {}", _taskList.size(), _currentTimeMillis);
+        LOG.debug("Processing task " + task.toString() + " total {}, time {}", _taskList.size(), _currentTimeNanos);
       }
       task.run();
       _taskCount++;
       if (task.repeatCount() > 0 && !task.isCancelled() && !_stopped)
       {
-        task.reschedule(_currentTimeMillis);
+        task.reschedule(_currentTimeNanos);
         _taskList.add(task);
       }
     }
@@ -93,7 +99,7 @@ public class ClockedExecutor implements Clock, ScheduledExecutorService
   @Override
   public ScheduledFuture<Void> schedule(Runnable cmd, long delay, TimeUnit unit)
   {
-    ClockedTask task = new ClockedTask("ScheduledTask", cmd, _currentTimeMillis + unit.toMillis(delay));
+    ClockedTask task = new ClockedTask("ScheduledTask", cmd, _currentTimeNanos + unit.toNanos(delay));
     _taskList.add(task);
     return task;
   }
@@ -108,7 +114,7 @@ public class ClockedExecutor implements Clock, ScheduledExecutorService
   public ScheduledFuture<Void> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit)
   {
     ClockedTask task =
-      new ClockedTask("scheduleAtFixedRate", command, _currentTimeMillis + unit.toMillis(initialDelay), unit.toMillis(period), Long.MAX_VALUE);
+      new ClockedTask("scheduleAtFixedRate", command, _currentTimeNanos + unit.toNanos(initialDelay), unit.toNanos(period), Long.MAX_VALUE);
     _taskList.add(task);
     return task;
   }
@@ -117,21 +123,21 @@ public class ClockedExecutor implements Clock, ScheduledExecutorService
   public ScheduledFuture<Void> scheduleWithFixedDelay(Runnable cmd, long initDelay, long interval, TimeUnit unit)
   {
     ClockedTask task =
-      new ClockedTask("scheduledWithDelayTask", cmd, _currentTimeMillis + unit.toMillis(initDelay), unit.toMillis(interval), Long.MAX_VALUE);
+      new ClockedTask("scheduledWithDelayTask", cmd, _currentTimeNanos + unit.toNanos(initDelay), unit.toNanos(interval), Long.MAX_VALUE);
     _taskList.add(task);
     return task;
   }
 
   public void scheduleWithRepeat(Runnable cmd, long initDelay, long interval, long repeatTimes)
   {
-    ClockedTask task = new ClockedTask("scheduledWithRepeatTask", cmd, _currentTimeMillis + initDelay, interval, repeatTimes);
+    ClockedTask task = new ClockedTask("scheduledWithRepeatTask", cmd, _currentTimeNanos + initDelay * NANOS_PER_MILLI, interval * NANOS_PER_MILLI, repeatTimes);
     _taskList.add(task);
   }
 
   @Override
   public void execute(Runnable cmd)
   {
-    ClockedTask task = new ClockedTask("executeTask", cmd, _currentTimeMillis);
+    ClockedTask task = new ClockedTask("executeTask", cmd, _currentTimeNanos);
     _taskList.add(task);
   }
 
@@ -220,42 +226,48 @@ public class ClockedExecutor implements Clock, ScheduledExecutorService
   @Override
   public long currentTimeMillis()
   {
-    return _currentTimeMillis;
+    return _currentTimeNanos / NANOS_PER_MILLI;
+  }
+
+  @Override
+  public long currentTimeNanos()
+  {
+    return _currentTimeNanos;
   }
 
   @Override
   public String toString()
   {
-    return "ClockedExecutor [_currentTimeMillis: " + _currentTimeMillis + "_taskList:" + _taskList.stream().map(e -> e.toString())
+    return "ClockedExecutor [_currentTimeMillis: " + currentTimeMillis() + "_taskList:" + _taskList.stream().map(e -> e.toString())
       .collect(Collectors.joining(","));
   }
 
   public long getCurrentTimeMillis()
   {
-    return _currentTimeMillis;
+    return _currentTimeNanos / NANOS_PER_MILLI;
   }
 
   private class ClockedTask implements Runnable, ScheduledFuture<Void>
   {
     final private String _name;
-    private long _expectTimeMillis;
-    private long _interval;
+    private long _expectTimeNanos;
+    private long _intervalNanos;
     private Runnable _task;
     private long _repeatTimes;
     private CountDownLatch _done;
     private boolean _cancelled;
 
-    ClockedTask(String name, Runnable task, long scheduledTime)
+    ClockedTask(String name, Runnable task, long scheduledTimeNanos)
     {
-      this(name, task, scheduledTime, 0l, 0l);
+      this(name, task, scheduledTimeNanos, 0L, 0L);
     }
 
-    ClockedTask(String name, Runnable task, long scheduledTime, long interval, long repeat)
+    ClockedTask(String name, Runnable task, long scheduledTimeNanos, long intervalNanos, long repeat)
     {
       _name = name;
       _task = task;
-      _expectTimeMillis = scheduledTime;
-      _interval = interval;
+      _expectTimeNanos = scheduledTimeNanos;
+      _intervalNanos = intervalNanos;
       _repeatTimes = repeat;
       _done = new CountDownLatch(1);
       _cancelled = false;
@@ -278,14 +290,14 @@ public class ClockedExecutor implements Clock, ScheduledExecutorService
 
     long getScheduledTime()
     {
-      return _expectTimeMillis;
+      return _expectTimeNanos;
     }
 
-    void reschedule(long currentTime)
+    void reschedule(long currentTimeNanos)
     {
-      if (!_cancelled && currentTime >= _expectTimeMillis && _repeatTimes-- > 0)
+      if (!_cancelled && currentTimeNanos >= _expectTimeNanos && _repeatTimes-- > 0)
       {
-        _expectTimeMillis += (_interval - (currentTime - _expectTimeMillis));
+        _expectTimeNanos += (_intervalNanos - (currentTimeNanos - _expectTimeNanos));
         _done = new CountDownLatch(1);
       }
     }
@@ -333,19 +345,19 @@ public class ClockedExecutor implements Clock, ScheduledExecutorService
     @Override
     public long getDelay(TimeUnit unit)
     {
-      return unit.convert(_expectTimeMillis - _currentTimeMillis, TimeUnit.MILLISECONDS);
+      return unit.convert(_expectTimeNanos - _currentTimeNanos, TimeUnit.NANOSECONDS);
     }
 
     @Override
     public int compareTo(Delayed other)
     {
-      return (int) (getDelay(TimeUnit.MILLISECONDS) - other.getDelay(TimeUnit.MILLISECONDS));
+      return Long.compare(getDelay(TimeUnit.NANOSECONDS), other.getDelay(TimeUnit.NANOSECONDS));
     }
 
     @Override
     public String toString()
     {
-      return "ClockedTask [_name=" + _name + "_expectedTime=" + _expectTimeMillis + "_repeatTimes=" + _repeatTimes + "_interval=" + _interval + "]";
+      return "ClockedTask [_name=" + _name + "_expectedTime=" + _expectTimeNanos + "_repeatTimes=" + _repeatTimes + "_interval=" + _intervalNanos + "]";
     }
   }
 }

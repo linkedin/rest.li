@@ -56,9 +56,16 @@ public interface RateLimiterExecutionTracker
     int getMaxBuffered();
 
     /**
-     * @return amount of delay to be incurred before executing the next callback, based on provided rate
+     * @return amount of delay in milliseconds to be incurred before executing the next callback, based on provided rate
      */
     default int getNextExecutionDelay(Rate rate) {
         return 0;
+    }
+
+    /**
+     * @return amount of delay in nanoseconds to be incurred before executing the next callback, based on provided rate
+     */
+    default long getNextExecutionDelayNanos(Rate rate) {
+        return getNextExecutionDelay(rate) * 1_000_000L;
     }
 }
