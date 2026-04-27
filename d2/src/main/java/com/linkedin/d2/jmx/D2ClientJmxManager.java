@@ -207,6 +207,9 @@ public class D2ClientJmxManager
       private void doRegisterLoadBalancerStrategy(String serviceName, String scheme, LoadBalancerStrategy strategy,
           @Nullable DualReadModeProvider.DualReadMode mode)
       {
+        // Each strategy that emits OTel metrics overrides setScheme to wire the
+        // scheme tag through; strategies that don't care inherit the no-op default.
+        strategy.setScheme(scheme);
         String jmxName = getLoadBalancerStrategyJmxName(serviceName, scheme, mode);
         _jmxManager.registerLoadBalancerStrategy(jmxName, strategy);
       }
