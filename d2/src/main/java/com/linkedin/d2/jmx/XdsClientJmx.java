@@ -238,4 +238,9 @@ public class XdsClientJmx implements XdsClientJmxMBean
     _resourceInvalidCount.incrementAndGet();
     _xdsClientOtelMetricsProvider.recordResourceInvalid(getClientName());
   }
+
+  public void recordRequestSizeBytes(long sizeBytes)
+  {
+    _xdsClientOtelMetricsProvider.recordRequestSizeBytes(getClientName(), sizeBytes);
+  }
 }

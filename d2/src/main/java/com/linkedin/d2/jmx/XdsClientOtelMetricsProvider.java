@@ -85,4 +85,13 @@ public interface XdsClientOtelMetricsProvider {
    * @param waitTimeMs the wait time in milliseconds
    */
   void updateActiveInitialWaitTime(String clientName, long waitTimeMs);
+
+  /**
+   * Records the serialized byte size of an outgoing discovery request.
+   * Used to detect clients approaching or exceeding gRPC's per-message size limit.
+   *
+   * @param clientName the name of the XDS client
+   * @param sizeBytes  the serialized size in bytes of the {@code DeltaDiscoveryRequest}
+   */
+  void recordRequestSizeBytes(String clientName, long sizeBytes);
 }

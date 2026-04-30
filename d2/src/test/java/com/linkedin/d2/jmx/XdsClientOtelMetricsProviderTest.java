@@ -113,6 +113,17 @@ public class XdsClientOtelMetricsProviderTest {
   }
 
   @Test
+  public void testRecordRequestSizeBytes() {
+    String clientName = "test-client-12";
+    long sizeBytes = 1024L;
+    _testProvider.recordRequestSizeBytes(clientName, sizeBytes);
+
+    assertEquals(_testProvider.getCallCount("recordRequestSizeBytes"), 1);
+    assertEquals(_testProvider.getLastClientName("recordRequestSizeBytes"), clientName);
+    assertEquals(_testProvider.getLastSizeBytes("recordRequestSizeBytes").longValue(), sizeBytes);
+  }
+
+  @Test
   public void testMultipleCalls() {
     String clientName = "test-client-multi";
     
@@ -149,6 +160,7 @@ public class XdsClientOtelMetricsProviderTest {
     _testProvider.recordServerLatency(clientName, 200L);
     _testProvider.updateConnectionState(clientName, true);
     _testProvider.updateActiveInitialWaitTime(clientName, 3000L);
+    _testProvider.recordRequestSizeBytes(clientName, 512L);
 
     // Verify all methods were called exactly once
     assertEquals(_testProvider.getCallCount("recordConnectionLost"), 1);
@@ -162,5 +174,6 @@ public class XdsClientOtelMetricsProviderTest {
     assertEquals(_testProvider.getCallCount("recordServerLatency"), 1);
     assertEquals(_testProvider.getCallCount("updateConnectionState"), 1);
     assertEquals(_testProvider.getCallCount("updateActiveInitialWaitTime"), 1);
+    assertEquals(_testProvider.getCallCount("recordRequestSizeBytes"), 1);
   }
 }
