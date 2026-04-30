@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.85.10] - 2026-04-30
 - Added `recordRequestSizeBytes` metric to `XdsClientOtelMetricsProvider` to track the serialized byte size of outgoing XDS discovery requests, enabling detection of clients approaching gRPC's per-message size limit.
 
 ## [29.85.9] - 2026-04-21
@@ -5985,7 +5987,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.9...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.10...master
+[29.85.10]: https://github.com/linkedin/rest.li/compare/v29.85.9...v29.85.10
 [29.85.9]: https://github.com/linkedin/rest.li/compare/v29.85.8...v29.85.9
 [29.85.8]: https://github.com/linkedin/rest.li/compare/v29.85.7...v29.85.8
 [29.85.7]: https://github.com/linkedin/rest.li/compare/v29.85.6...v29.85.7
