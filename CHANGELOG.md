@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Added `recordRequestSizeBytes` metric to `XdsClientOtelMetricsProvider` to track the serialized byte size of outgoing XDS discovery requests, enabling detection of clients approaching gRPC's per-message size limit.
 
 ## [29.85.9] - 2026-04-21
 - Add optional precomputed potential clients cache to SimpleLoadBalancerState, moving O(n) per-request
