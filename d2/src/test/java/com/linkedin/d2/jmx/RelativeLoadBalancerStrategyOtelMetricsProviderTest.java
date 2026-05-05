@@ -1,5 +1,7 @@
 package com.linkedin.d2.jmx;
 
+import com.linkedin.d2.balancer.clients.PerCallDurationSemantics;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -38,7 +40,7 @@ public class RelativeLoadBalancerStrategyOtelMetricsProviderTest {
     String scheme = "http";
     long latencyMs = 150L;
 
-    _testProvider.recordHostLatency(serviceName, scheme, latencyMs);
+    _testProvider.recordHostLatency(serviceName, scheme, latencyMs, PerCallDurationSemantics.FULL_ROUND_TRIP);
 
     assertEquals(_testProvider.getCallCount("recordHostLatency"), 1);
     assertEquals(_testProvider.getLastServiceName("recordHostLatency"), serviceName);
@@ -51,11 +53,11 @@ public class RelativeLoadBalancerStrategyOtelMetricsProviderTest {
     String scheme = "https";
 
     // Simulate recording latencies for multiple hosts in a cluster
-    _testProvider.recordHostLatency(serviceName, scheme, 100L);
-    _testProvider.recordHostLatency(serviceName, scheme, 150L);
-    _testProvider.recordHostLatency(serviceName, scheme, 200L);
-    _testProvider.recordHostLatency(serviceName, scheme, 120L);
-    _testProvider.recordHostLatency(serviceName, scheme, 180L);
+    _testProvider.recordHostLatency(serviceName, scheme, 100L, PerCallDurationSemantics.FULL_ROUND_TRIP);
+    _testProvider.recordHostLatency(serviceName, scheme, 150L, PerCallDurationSemantics.FULL_ROUND_TRIP);
+    _testProvider.recordHostLatency(serviceName, scheme, 200L, PerCallDurationSemantics.FULL_ROUND_TRIP);
+    _testProvider.recordHostLatency(serviceName, scheme, 120L, PerCallDurationSemantics.FULL_ROUND_TRIP);
+    _testProvider.recordHostLatency(serviceName, scheme, 180L, PerCallDurationSemantics.FULL_ROUND_TRIP);
 
     assertEquals(_testProvider.getCallCount("recordHostLatency"), 5);
     assertEquals(_testProvider.getLastServiceName("recordHostLatency"), serviceName);
@@ -115,9 +117,9 @@ public class RelativeLoadBalancerStrategyOtelMetricsProviderTest {
     String scheme = "https";
 
     // Record host latency (histogram - OTEL computes percentiles, std dev, etc. automatically)
-    _testProvider.recordHostLatency(serviceName, scheme, 100L);
-    _testProvider.recordHostLatency(serviceName, scheme, 150L);
-    _testProvider.recordHostLatency(serviceName, scheme, 200L);
+    _testProvider.recordHostLatency(serviceName, scheme, 100L, PerCallDurationSemantics.FULL_ROUND_TRIP);
+    _testProvider.recordHostLatency(serviceName, scheme, 150L, PerCallDurationSemantics.FULL_ROUND_TRIP);
+    _testProvider.recordHostLatency(serviceName, scheme, 200L, PerCallDurationSemantics.FULL_ROUND_TRIP);
 
     // Update all gauge metrics
     _testProvider.updateTotalHostsInAllPartitionsCount(serviceName, scheme, 100);
@@ -140,7 +142,7 @@ public class RelativeLoadBalancerStrategyOtelMetricsProviderTest {
     String serviceName = "test-service-reset";
     String scheme = "http";
 
-    _testProvider.recordHostLatency(serviceName, scheme, 100L);
+    _testProvider.recordHostLatency(serviceName, scheme, 100L, PerCallDurationSemantics.FULL_ROUND_TRIP);
     _testProvider.updateTotalHostsInAllPartitionsCount(serviceName, scheme, 10);
 
     assertEquals(_testProvider.getCallCount("recordHostLatency"), 1);
@@ -157,7 +159,7 @@ public class RelativeLoadBalancerStrategyOtelMetricsProviderTest {
     String serviceName = "test-service-zero";
     String scheme = "http";
 
-    _testProvider.recordHostLatency(serviceName, scheme, 0L);
+    _testProvider.recordHostLatency(serviceName, scheme, 0L, PerCallDurationSemantics.FULL_ROUND_TRIP);
     _testProvider.updateTotalHostsInAllPartitionsCount(serviceName, scheme, 0);
     _testProvider.updateUnhealthyHostsCount(serviceName, scheme, 0);
     _testProvider.updateQuarantineHostsCount(serviceName, scheme, 0);
@@ -175,7 +177,7 @@ public class RelativeLoadBalancerStrategyOtelMetricsProviderTest {
         new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider();
 
     // Histogram metrics should execute without throwing
-    noOpProvider.recordHostLatency("service", "http", 150L);
+    noOpProvider.recordHostLatency("service", "http", 150L, PerCallDurationSemantics.FULL_ROUND_TRIP);
 
     // Gauge metrics should execute without throwing
     noOpProvider.updateTotalHostsInAllPartitionsCount("service", "https", 100);
@@ -193,7 +195,7 @@ public class RelativeLoadBalancerStrategyOtelMetricsProviderTest {
     // Record latencies from 10 hosts with varying performance
     long[] hostLatencies = {50L, 55L, 60L, 65L, 70L, 75L, 100L, 150L, 200L, 500L};
     for (long latency : hostLatencies) {
-      _testProvider.recordHostLatency(serviceName, scheme, latency);
+      _testProvider.recordHostLatency(serviceName, scheme, latency, PerCallDurationSemantics.FULL_ROUND_TRIP);
     }
 
     // Verify all data points were recorded

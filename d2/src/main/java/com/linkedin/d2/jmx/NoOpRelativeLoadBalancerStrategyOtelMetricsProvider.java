@@ -1,5 +1,7 @@
 package com.linkedin.d2.jmx;
 
+import com.linkedin.d2.balancer.clients.PerCallDurationSemantics;
+
 /**
  * No-Op implementation of {@link RelativeLoadBalancerStrategyOtelMetricsProvider}.
  * Used when OpenTelemetry metrics are disabled.
@@ -10,7 +12,8 @@ public class NoOpRelativeLoadBalancerStrategyOtelMetricsProvider implements Rela
    * {@inheritDoc}
    */
   @Override
-  public void recordHostLatency(String serviceName, String scheme, long hostLatencyMs) {
+  public void recordHostLatency(String serviceName, String scheme, long hostLatencyMs,
+      PerCallDurationSemantics semantics) {
     // No-op
   }
 

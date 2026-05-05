@@ -1,5 +1,7 @@
 package com.linkedin.d2.jmx;
 
+import com.linkedin.d2.balancer.clients.PerCallDurationSemantics;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -33,12 +35,25 @@ public class DegraderLoadBalancerStrategyV3OtelMetricsProviderTest {
     String scheme = "http";
     long latencyMs = 150L;
 
-    _testProvider.recordHostLatency(serviceName, scheme, latencyMs);
+    _testProvider.recordHostLatency(serviceName, scheme, latencyMs, PerCallDurationSemantics.FULL_ROUND_TRIP);
 
     assertEquals(_testProvider.getCallCount("recordHostLatency"), 1);
     assertEquals(_testProvider.getLastServiceName("recordHostLatency"), serviceName);
     assertEquals(_testProvider.getLastScheme("recordHostLatency"), scheme);
     assertEquals(_testProvider.getLastLongValue("recordHostLatency").longValue(), latencyMs);
+    assertEquals(_testProvider.getLastPerCallDurationSemantics("recordHostLatency"),
+        PerCallDurationSemantics.FULL_ROUND_TRIP);
+  }
+
+  @Test
+  public void testRecordHostLatencySemanticsDimensionLastWriteWins() {
+    _testProvider.recordHostLatency("svc", "http", 10L, PerCallDurationSemantics.FULL_ROUND_TRIP);
+    assertEquals(_testProvider.getLastPerCallDurationSemantics("recordHostLatency"),
+        PerCallDurationSemantics.FULL_ROUND_TRIP);
+    _testProvider.recordHostLatency("svc", "http", 20L, PerCallDurationSemantics.TIME_TO_FIRST_BYTE);
+    assertEquals(_testProvider.getLastLongValue("recordHostLatency").longValue(), 20L);
+    assertEquals(_testProvider.getLastPerCallDurationSemantics("recordHostLatency"),
+        PerCallDurationSemantics.TIME_TO_FIRST_BYTE);
   }
 
   @Test
@@ -47,11 +62,11 @@ public class DegraderLoadBalancerStrategyV3OtelMetricsProviderTest {
     String scheme = "https";
 
     // Simulate recording raw per-call latencies for multiple requests from a single host
-    _testProvider.recordHostLatency(serviceName, scheme, 100L);
-    _testProvider.recordHostLatency(serviceName, scheme, 150L);
-    _testProvider.recordHostLatency(serviceName, scheme, 200L);
-    _testProvider.recordHostLatency(serviceName, scheme, 120L);
-    _testProvider.recordHostLatency(serviceName, scheme, 180L);
+    _testProvider.recordHostLatency(serviceName, scheme, 100L, PerCallDurationSemantics.FULL_ROUND_TRIP);
+    _testProvider.recordHostLatency(serviceName, scheme, 150L, PerCallDurationSemantics.FULL_ROUND_TRIP);
+    _testProvider.recordHostLatency(serviceName, scheme, 200L, PerCallDurationSemantics.FULL_ROUND_TRIP);
+    _testProvider.recordHostLatency(serviceName, scheme, 120L, PerCallDurationSemantics.FULL_ROUND_TRIP);
+    _testProvider.recordHostLatency(serviceName, scheme, 180L, PerCallDurationSemantics.FULL_ROUND_TRIP);
 
     assertEquals(_testProvider.getCallCount("recordHostLatency"), 5);
     assertEquals(_testProvider.getLastServiceName("recordHostLatency"), serviceName);
@@ -68,7 +83,7 @@ public class DegraderLoadBalancerStrategyV3OtelMetricsProviderTest {
 
   @Test
   public void testRecordHostLatencyZero() {
-    _testProvider.recordHostLatency("test-service", "http", 0L);
+    _testProvider.recordHostLatency("test-service", "http", 0L, PerCallDurationSemantics.FULL_ROUND_TRIP);
 
     assertEquals(_testProvider.getCallCount("recordHostLatency"), 1);
     assertEquals(_testProvider.getLastLongValue("recordHostLatency").longValue(), 0L);
@@ -162,9 +177,9 @@ public class DegraderLoadBalancerStrategyV3OtelMetricsProviderTest {
 
   @Test
   public void testLatencyIsolatedByServiceAndScheme() {
-    _testProvider.recordHostLatency("service-A", "http", 100L);
-    _testProvider.recordHostLatency("service-A", "https", 200L);
-    _testProvider.recordHostLatency("service-B", "http", 300L);
+    _testProvider.recordHostLatency("service-A", "http", 100L, PerCallDurationSemantics.FULL_ROUND_TRIP);
+    _testProvider.recordHostLatency("service-A", "https", 200L, PerCallDurationSemantics.FULL_ROUND_TRIP);
+    _testProvider.recordHostLatency("service-B", "http", 300L, PerCallDurationSemantics.FULL_ROUND_TRIP);
 
     List<Long> serviceAHttp = _testProvider.getAllLatencyValues("service-A", "http");
     List<Long> serviceAHttps = _testProvider.getAllLatencyValues("service-A", "https");
@@ -185,9 +200,9 @@ public class DegraderLoadBalancerStrategyV3OtelMetricsProviderTest {
     String scheme = "https";
 
     // Raw per-call latencies recorded to histogram (OTEL computes derived metrics automatically)
-    _testProvider.recordHostLatency(serviceName, scheme, 100L);
-    _testProvider.recordHostLatency(serviceName, scheme, 150L);
-    _testProvider.recordHostLatency(serviceName, scheme, 200L);
+    _testProvider.recordHostLatency(serviceName, scheme, 100L, PerCallDurationSemantics.FULL_ROUND_TRIP);
+    _testProvider.recordHostLatency(serviceName, scheme, 150L, PerCallDurationSemantics.FULL_ROUND_TRIP);
+    _testProvider.recordHostLatency(serviceName, scheme, 200L, PerCallDurationSemantics.FULL_ROUND_TRIP);
 
     // Gauge metrics updated each partition-state cycle
     _testProvider.updateOverrideClusterDropRate(serviceName, scheme, 0.0);
@@ -222,7 +237,7 @@ public class DegraderLoadBalancerStrategyV3OtelMetricsProviderTest {
     String serviceName = "test-service-reset";
     String scheme = "http";
 
-    _testProvider.recordHostLatency(serviceName, scheme, 100L);
+    _testProvider.recordHostLatency(serviceName, scheme, 100L, PerCallDurationSemantics.FULL_ROUND_TRIP);
     _testProvider.updateOverrideClusterDropRate(serviceName, scheme, 0.2);
     _testProvider.updateTotalPointsInHashRing(serviceName, scheme, 500);
 
@@ -247,7 +262,7 @@ public class DegraderLoadBalancerStrategyV3OtelMetricsProviderTest {
         new NoOpDegraderLoadBalancerStrategyV3OtelMetricsProvider();
 
     // Histogram metric
-    noOpProvider.recordHostLatency("service", "http", 150L);
+    noOpProvider.recordHostLatency("service", "http", 150L, PerCallDurationSemantics.FULL_ROUND_TRIP);
 
     // Gauge metrics
     noOpProvider.updateOverrideClusterDropRate("service", "https", 0.25);
@@ -268,7 +283,7 @@ public class DegraderLoadBalancerStrategyV3OtelMetricsProviderTest {
 
     long[] callLatencies = {50L, 55L, 60L, 65L, 70L, 75L, 100L, 150L, 200L, 500L};
     for (long latency : callLatencies) {
-      _testProvider.recordHostLatency(serviceName, scheme, latency);
+      _testProvider.recordHostLatency(serviceName, scheme, latency, PerCallDurationSemantics.FULL_ROUND_TRIP);
     }
 
     List<Long> recorded = _testProvider.getAllLatencyValues(serviceName, scheme);

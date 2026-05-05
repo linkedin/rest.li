@@ -77,15 +77,23 @@ public class DegraderLoadBalancerStrategyFactoryV3 implements
   @Override
   public DegraderLoadBalancerStrategyV3 newLoadBalancer(ServiceProperties serviceProperties)
   {
+    return newLoadBalancer(serviceProperties, null);
+  }
+
+  @Override
+  public DegraderLoadBalancerStrategyV3 newLoadBalancer(ServiceProperties serviceProperties, String scheme)
+  {
     return newLoadBalancer(serviceProperties.getServiceName(),
                            serviceProperties.getLoadBalancerStrategyProperties(),
                            serviceProperties.getDegraderProperties(),
                            serviceProperties.getPath(),
-                           serviceProperties.getClusterName());
+                           serviceProperties.getClusterName(),
+                           scheme);
   }
 
   private DegraderLoadBalancerStrategyV3 newLoadBalancer(String serviceName,
-      Map<String, Object> strategyProperties, Map<String, String> degraderProperties, String path, String clusterName)
+      Map<String, Object> strategyProperties, Map<String, String> degraderProperties, String path, String clusterName,
+      String scheme)
   {
     debug(LOG, "created a degrader load balancer strategyV3");
 
@@ -108,6 +116,6 @@ public class DegraderLoadBalancerStrategyFactoryV3 implements
     listeners.addAll(_degraderStateListenerFactories);
 
     return new DegraderLoadBalancerStrategyV3(config, serviceName, degraderProperties, listeners,
-        _degraderLbOtelMetricsProvider);
+        _degraderLbOtelMetricsProvider, scheme);
   }
 }

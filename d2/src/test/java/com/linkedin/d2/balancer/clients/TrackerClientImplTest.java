@@ -38,7 +38,7 @@ import org.testng.annotations.Test;
  * <p>In addition to coverage of the basic configuration accessors, this class verifies the
  * per-call duration instrumentation introduced for OTel:
  * <ul>
- *   <li>{@link TrackerClientImpl#setPerCallDurationListener(java.util.function.Consumer)} stores
+ *   <li>{@link TrackerClientImpl#setPerCallDurationListener(PerCallDurationListener)} stores
  *       the listener and tolerates {@code null}.</li>
  *   <li>The listener is invoked with the correct duration on every callback path:
  *       REST success, REST error, stream transport error, stream {@code onDone}, and stream
@@ -53,6 +53,15 @@ public class TrackerClientImplTest
   private static final long DEFAULT_INTERVAL_MS = 1000L;
 
   private TrackerClientImpl _trackerClient;
+
+  private static PerCallDurationListener durationSink(
+      AtomicLong durationOut, AtomicReference<PerCallDurationSemantics> semanticsOut)
+  {
+    return (d, s) -> {
+      durationOut.set(d);
+      semanticsOut.set(s);
+    };
+  }
 
   @Test
   public void testDoNotLoadBalance()
@@ -102,7 +111,8 @@ public class TrackerClientImplTest
     TrackerClientImpl client = newClient(clock, transport);
 
     AtomicLong observedDuration = new AtomicLong(-1);
-    client.setPerCallDurationListener(observedDuration::set);
+    AtomicReference<PerCallDurationSemantics> observedSemantics = new AtomicReference<>();
+    client.setPerCallDurationListener(durationSink(observedDuration, observedSemantics));
 
     client.restRequest(new RestRequestBuilder(URI_FOO).build(), new RequestContext(), new HashMap<>(),
         new CapturingTransportCallback<>());
@@ -113,6 +123,7 @@ public class TrackerClientImplTest
 
     Assert.assertEquals("REST success path should record the measured duration", expectedDuration,
         observedDuration.get());
+    Assert.assertEquals(PerCallDurationSemantics.FULL_ROUND_TRIP, observedSemantics.get());
   }
 
   @Test
@@ -123,7 +134,8 @@ public class TrackerClientImplTest
     TrackerClientImpl client = newClient(clock, transport);
 
     AtomicLong observedDuration = new AtomicLong(-1);
-    client.setPerCallDurationListener(observedDuration::set);
+    AtomicReference<PerCallDurationSemantics> observedSemantics = new AtomicReference<>();
+    client.setPerCallDurationListener(durationSink(observedDuration, observedSemantics));
 
     client.restRequest(new RestRequestBuilder(URI_FOO).build(), new RequestContext(), new HashMap<>(),
         new CapturingTransportCallback<>());
@@ -135,6 +147,7 @@ public class TrackerClientImplTest
 
     Assert.assertEquals("REST error path should record the measured duration", expectedDuration,
         observedDuration.get());
+    Assert.assertEquals(PerCallDurationSemantics.FULL_ROUND_TRIP, observedSemantics.get());
   }
 
   // ---------------------------------------------------------------------------
@@ -154,7 +167,8 @@ public class TrackerClientImplTest
     TrackerClientImpl client = newClient(clock, transport);
 
     AtomicLong observedDuration = new AtomicLong(-1);
-    client.setPerCallDurationListener(observedDuration::set);
+    AtomicReference<PerCallDurationSemantics> observedSemantics = new AtomicReference<>();
+    client.setPerCallDurationListener(durationSink(observedDuration, observedSemantics));
 
     StreamRequest streamRequest = new StreamRequestBuilder(URI_FOO).build(EntityStreams.emptyStream());
     client.streamRequest(streamRequest, new RequestContext(), new HashMap<>(), new CapturingTransportCallback<>());
@@ -166,6 +180,7 @@ public class TrackerClientImplTest
 
     Assert.assertEquals("Stream transport-error path should record the measured duration",
         expectedDuration, observedDuration.get());
+    Assert.assertEquals(PerCallDurationSemantics.FULL_ROUND_TRIP, observedSemantics.get());
   }
 
   /**
@@ -181,7 +196,8 @@ public class TrackerClientImplTest
     TrackerClientImpl client = newClient(clock, transport);
 
     AtomicLong observedDuration = new AtomicLong(-1);
-    client.setPerCallDurationListener(observedDuration::set);
+    AtomicReference<PerCallDurationSemantics> observedSemantics = new AtomicReference<>();
+    client.setPerCallDurationListener(durationSink(observedDuration, observedSemantics));
 
     StreamRequest streamRequest = new StreamRequestBuilder(URI_FOO).build(EntityStreams.emptyStream());
     client.streamRequest(streamRequest, new RequestContext(), new HashMap<>(), new CapturingTransportCallback<>());
@@ -205,6 +221,7 @@ public class TrackerClientImplTest
 
     Assert.assertEquals("Stream success path should record firstByteTime - startTime, not the "
         + "onDone time", firstByteOffset, observedDuration.get());
+    Assert.assertEquals(PerCallDurationSemantics.TIME_TO_FIRST_BYTE, observedSemantics.get());
   }
 
   /**
@@ -222,7 +239,8 @@ public class TrackerClientImplTest
     TrackerClientImpl client = newClient(clock, transport);
 
     AtomicLong observedDuration = new AtomicLong(-1);
-    client.setPerCallDurationListener(observedDuration::set);
+    AtomicReference<PerCallDurationSemantics> observedSemantics = new AtomicReference<>();
+    client.setPerCallDurationListener(durationSink(observedDuration, observedSemantics));
 
     StreamRequest streamRequest = new StreamRequestBuilder(URI_FOO).build(EntityStreams.emptyStream());
     client.streamRequest(streamRequest, new RequestContext(), new HashMap<>(), new CapturingTransportCallback<>());
@@ -243,6 +261,7 @@ public class TrackerClientImplTest
 
     Assert.assertEquals("Stream onError path should record firstByteTime - startTime (TTFB), "
         + "ignoring streaming-time after first byte", firstByteOffset, observedDuration.get());
+    Assert.assertEquals(PerCallDurationSemantics.TIME_TO_FIRST_BYTE, observedSemantics.get());
   }
 
   // ---------------------------------------------------------------------------
@@ -282,7 +301,8 @@ public class TrackerClientImplTest
     TrackerClientImpl client = newClient(clock, transport);
 
     AtomicLong observedDuration = new AtomicLong(-1);
-    client.setPerCallDurationListener(observedDuration::set);
+    AtomicReference<PerCallDurationSemantics> observedSemantics = new AtomicReference<>();
+    client.setPerCallDurationListener(durationSink(observedDuration, observedSemantics));
 
     client.restRequest(new RestRequestBuilder(URI_FOO).build(), new RequestContext(), new HashMap<>(),
         new CapturingTransportCallback<>());
@@ -299,6 +319,7 @@ public class TrackerClientImplTest
     }
 
     Assert.assertEquals(assertionMessage, expectedDuration, observedDuration.get());
+    Assert.assertEquals(PerCallDurationSemantics.FULL_ROUND_TRIP, observedSemantics.get());
   }
 
   /**
@@ -334,7 +355,8 @@ public class TrackerClientImplTest
     TrackerClientImpl client = newClient(clock, transport);
 
     AtomicLong observedDuration = new AtomicLong(-1);
-    client.setPerCallDurationListener(observedDuration::set);
+    AtomicReference<PerCallDurationSemantics> observedSemantics = new AtomicReference<>();
+    client.setPerCallDurationListener(durationSink(observedDuration, observedSemantics));
 
     StreamRequest streamRequest = new StreamRequestBuilder(URI_FOO).build(EntityStreams.emptyStream());
     client.streamRequest(streamRequest, new RequestContext(), new HashMap<>(), new CapturingTransportCallback<>());
@@ -358,6 +380,7 @@ public class TrackerClientImplTest
     }
 
     Assert.assertEquals(assertionMessage, firstByteOffset, observedDuration.get());
+    Assert.assertEquals(PerCallDurationSemantics.TIME_TO_FIRST_BYTE, observedSemantics.get());
   }
 
   /**
@@ -373,7 +396,7 @@ public class TrackerClientImplTest
     TrackerClientImpl client = newClient(clock, transport);
 
     AtomicLong listenerInvocations = new AtomicLong();
-    client.setPerCallDurationListener(duration -> {
+    client.setPerCallDurationListener((duration, semantics) -> {
       listenerInvocations.incrementAndGet();
       throw new RuntimeException("simulated OTel SDK failure");
     });
@@ -405,8 +428,8 @@ public class TrackerClientImplTest
 
     AtomicReference<Long> firstSink = new AtomicReference<>();
     AtomicReference<Long> secondSink = new AtomicReference<>();
-    client.setPerCallDurationListener(firstSink::set);
-    client.setPerCallDurationListener(secondSink::set);
+    client.setPerCallDurationListener((d, s) -> firstSink.set(d));
+    client.setPerCallDurationListener((d, s) -> secondSink.set(d));
 
     client.restRequest(new RestRequestBuilder(URI_FOO).build(), new RequestContext(), new HashMap<>(),
         new CapturingTransportCallback<>());

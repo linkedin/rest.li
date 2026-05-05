@@ -3,9 +3,12 @@ package com.linkedin.d2.balancer.strategies.degrader;
 import com.linkedin.common.callback.Callback;
 import com.linkedin.common.util.None;
 import com.linkedin.d2.balancer.clients.DegraderTrackerClient;
+import com.linkedin.d2.balancer.clients.PerCallDurationListener;
+import com.linkedin.d2.balancer.clients.PerCallDurationSemantics;
 import com.linkedin.d2.balancer.clients.DegraderTrackerClientImpl;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.properties.PartitionData;
+import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.DefaultPartitionAccessor;
 import com.linkedin.d2.jmx.DegraderLoadBalancerStrategyV3OtelMetricsProvider;
 import com.linkedin.d2.jmx.TestDegraderLoadBalancerStrategyV3OtelMetricsProvider;
@@ -23,11 +26,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 
@@ -66,7 +69,7 @@ public class DegraderLoadBalancerStrategyV3OtelIntegrationTest
 
     Map<URI, TrackerClient> trackerClients = newTrackerClientMap(3);
 
-    // Triggers checkUpdatePartitionState -> updatePartitionState -> emitOtelMetrics.
+    // Triggers checkUpdatePartitionState -> updatePartitionState -> scheduleEmitOtelMetrics.
     strategy.getRing(CLUSTER_GENERATION_ID, PARTITION_ID, trackerClients);
 
     assertEquals(_provider.getCallCount("updateOverrideClusterDropRate"), 1,
@@ -109,7 +112,7 @@ public class DegraderLoadBalancerStrategyV3OtelIntegrationTest
     {
       if (client.capturedListener != null)
       {
-        client.capturedListener.accept(simulatedLatencyMs);
+        client.capturedListener.accept(simulatedLatencyMs, PerCallDurationSemantics.FULL_ROUND_TRIP);
         invokedListeners++;
       }
     }
@@ -120,6 +123,39 @@ public class DegraderLoadBalancerStrategyV3OtelIntegrationTest
     assertEquals(_provider.getLastLongValue("recordHostLatency").longValue(), simulatedLatencyMs);
     assertEquals(_provider.getLastServiceName("recordHostLatency"), SERVICE_NAME);
     assertEquals(_provider.getLastScheme("recordHostLatency"), SCHEME);
+    assertEquals(_provider.getLastPerCallDurationSemantics("recordHostLatency"),
+        PerCallDurationSemantics.FULL_ROUND_TRIP);
+  }
+
+  /**
+   * After cluster regeneration, host URIs may be identical but {@link DegraderTrackerClient}
+   * instances are new; per-call listeners must be attached to the new instances.
+   */
+  @Test
+  public void testPerCallListenerReRegisteredAfterClusterRegenWithSameUris()
+  {
+    DegraderLoadBalancerStrategyV3 strategy = newStrategy();
+    strategy.setScheme(SCHEME);
+
+    URI uri = URI.create("http://host0:1234");
+    ListenerCapturingTrackerClient firstGeneration = newListenerCapturingTrackerClient(uri);
+    Map<URI, TrackerClient> firstClients = new HashMap<>();
+    firstClients.put(uri, firstGeneration);
+
+    strategy.getRing(CLUSTER_GENERATION_ID, PARTITION_ID, firstClients);
+    assertTrue(firstGeneration.capturedListener != null, "First generation client should get a listener");
+
+    ListenerCapturingTrackerClient secondGeneration = newListenerCapturingTrackerClient(uri);
+    Map<URI, TrackerClient> secondClients = new HashMap<>();
+    secondClients.put(uri, secondGeneration);
+
+    strategy.getRing(CLUSTER_GENERATION_ID + 1, PARTITION_ID, secondClients);
+
+    assertTrue(secondGeneration.capturedListener != null,
+        "New tracker client instance at an existing URI must receive a per-call listener after cluster regen");
+    secondGeneration.capturedListener.accept(99L, PerCallDurationSemantics.FULL_ROUND_TRIP);
+    assertEquals(_provider.getCallCount("recordHostLatency"), 1);
+    assertEquals(_provider.getLastLongValue("recordHostLatency").longValue(), 99L);
   }
 
   @Test
@@ -154,13 +190,13 @@ public class DegraderLoadBalancerStrategyV3OtelIntegrationTest
     assertTrue(client.capturedListener != null, "Listener must still be registered on the tracker client");
 
     // Listener fires but should short-circuit because scheme is uninitialized.
-    client.capturedListener.accept(123L);
+    client.capturedListener.accept(123L, PerCallDurationSemantics.FULL_ROUND_TRIP);
     assertEquals(_provider.getCallCount("recordHostLatency"), 0,
         "Per-call latency must not be recorded before setScheme is called");
 
     // Once setScheme is called, the same listener should start forwarding to the provider.
     strategy.setScheme(SCHEME);
-    client.capturedListener.accept(321L);
+    client.capturedListener.accept(321L, PerCallDurationSemantics.FULL_ROUND_TRIP);
     assertEquals(_provider.getCallCount("recordHostLatency"), 1,
         "Per-call latency should be recorded once scheme is initialized");
     assertEquals(_provider.getLastLongValue("recordHostLatency").longValue(), 321L);
@@ -200,6 +236,35 @@ public class DegraderLoadBalancerStrategyV3OtelIntegrationTest
     assertEquals(_provider.getCallCount("updateOverrideClusterDropRate"), 1);
     assertEquals(_provider.getLastScheme("updateOverrideClusterDropRate"), SCHEME,
         "setScheme(\"-\") must not change the scheme");
+  }
+
+  @Test
+  public void testGaugeEmissionRuntimeExceptionDoesNotAbortRingUpdate()
+  {
+    DegraderLoadBalancerStrategyV3OtelMetricsProvider provider = new TestDegraderLoadBalancerStrategyV3OtelMetricsProvider()
+    {
+      @Override
+      public void updateOverrideClusterDropRate(String serviceName, String scheme, double overrideClusterDropRate)
+      {
+        throw new RuntimeException("simulated OTel gauge failure");
+      }
+    };
+    DegraderLoadBalancerStrategyV3 strategy = new DegraderLoadBalancerStrategyV3(
+        new DegraderLoadBalancerStrategyConfig(5000),
+        SERVICE_NAME,
+        null,
+        NO_LISTENERS,
+        provider);
+    strategy.setScheme(SCHEME);
+
+    Ring<URI> ring = strategy.getRing(CLUSTER_GENERATION_ID, PARTITION_ID, newTrackerClientMap(1));
+    assertNotNull(ring, "Ring must be returned even when gauge emission throws");
+
+    // Partition update must still advance: a subsequent cycle (different cluster generation) must
+    // also return a ring, proving the throw on the first cycle didn't poison strategy state.
+    Ring<URI> secondRing = strategy.getRing(CLUSTER_GENERATION_ID + 1, PARTITION_ID, newTrackerClientMap(2));
+    assertNotNull(secondRing,
+        "Subsequent ring must still be returned; provider exceptions on gauges must not halt updates");
   }
 
   @Test
@@ -265,7 +330,7 @@ public class DegraderLoadBalancerStrategyV3OtelIntegrationTest
    */
   private static final class ListenerCapturingTrackerClient extends DegraderTrackerClientImpl
   {
-    volatile Consumer<Long> capturedListener;
+    volatile PerCallDurationListener capturedListener;
 
     ListenerCapturingTrackerClient(URI uri, Map<Integer, PartitionData> partitionDataMap, TransportClient client)
     {
@@ -273,7 +338,7 @@ public class DegraderLoadBalancerStrategyV3OtelIntegrationTest
     }
 
     @Override
-    public void setPerCallDurationListener(Consumer<Long> listener)
+    public void setPerCallDurationListener(PerCallDurationListener listener)
     {
       capturedListener = listener;
       super.setPerCallDurationListener(listener);

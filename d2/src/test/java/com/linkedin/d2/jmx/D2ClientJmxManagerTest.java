@@ -375,12 +375,12 @@ public class D2ClientJmxManagerTest {
   }
   /**
    * Verifies that {@code D2ClientJmxManager}'s {@code SimpleLoadBalancerStateListener#onStrategyAdded}
-   * propagates the scheme to the strategy via
-   * {@link com.linkedin.d2.balancer.strategies.LoadBalancerStrategy#setScheme(String)}.
+   * propagates the scheme to a {@link com.linkedin.d2.balancer.strategies.SchemeAware} strategy via
+   * {@link com.linkedin.d2.balancer.strategies.SchemeAware#setScheme(String)}.
    * Since the scheme is a dimension on every per-strategy OTel metric, this wiring is critical:
-   * a regression that drops the call (e.g. accidentally removing the polymorphic dispatch in
-   * {@code doRegisterLoadBalancerStrategy}) would leave all strategies tagged with their default
-   * placeholder.
+   * a regression that drops the call (e.g. accidentally removing the {@code instanceof SchemeAware}
+   * dispatch in {@code doRegisterLoadBalancerStrategy}) would leave all strategies tagged with their
+   * default placeholder.
    */
   @Test
   public void testOnStrategyAddedPropagatesSchemeToStrategy()

@@ -31,4 +31,31 @@ public interface LoadBalancerStrategyFactory<T extends LoadBalancerStrategy>
    * @return Load balancer strategy.
    */
   T newLoadBalancer(ServiceProperties serviceProperties);
+
+  /**
+   * Create new {@link LoadBalancerStrategy} for a service, with the URI scheme it will serve known
+   * up front. Strategies that emit OpenTelemetry metrics tagged by scheme should override this
+   * overload so the scheme is set at construction time, eliminating the bootstrap window between
+   * {@link #newLoadBalancer(ServiceProperties)} and
+   * {@code D2ClientJmxManager.doRegisterLoadBalancerStrategy(...)} during which per-call listener
+   * emissions and gauge updates would otherwise be silently dropped.
+   *
+   * <p>The default implementation delegates to {@link #newLoadBalancer(ServiceProperties)} for
+   * backward source compatibility with factories (including out-of-tree implementations) that
+   * have not been migrated.
+   *
+   * @param serviceProperties {@link ServiceProperties}.
+   * @param scheme            URI scheme this strategy instance will serve (e.g. {@code "http"} or
+   *                          {@code "https"}); may be {@code null} if unknown at the call site.
+   * @return Load balancer strategy.
+   */
+  default T newLoadBalancer(ServiceProperties serviceProperties, String scheme)
+  {
+    T strategy = newLoadBalancer(serviceProperties);
+    if (strategy instanceof SchemeAware && scheme != null)
+    {
+      ((SchemeAware) strategy).setScheme(scheme);
+    }
+    return strategy;
+  }
 }

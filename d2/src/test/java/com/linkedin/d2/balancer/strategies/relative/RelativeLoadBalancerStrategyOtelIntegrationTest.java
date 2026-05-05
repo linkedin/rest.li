@@ -1,6 +1,8 @@
 package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.D2RelativeStrategyProperties;
+import com.linkedin.d2.balancer.clients.PerCallDurationListener;
+import com.linkedin.d2.balancer.clients.PerCallDurationSemantics;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.PartitionStateUpdateListener;
 import com.linkedin.d2.jmx.RelativeLoadBalancerStrategyOtelMetricsProvider;
@@ -11,7 +13,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.function.Consumer;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.testng.annotations.BeforeMethod;
@@ -91,6 +92,19 @@ public class RelativeLoadBalancerStrategyOtelIntegrationTest
     // 3 tracker clients => updateTotalHostsInAllPartitionsCount should reflect 3.
     assertEquals(_provider.getLastIntValue("updateTotalHostsInAllPartitionsCount").intValue(), 3,
         "Total hosts gauge should match the number of tracker clients");
+
+    // The fixture creates 3 healthy hosts (call count 20, no quarantine), so the unhealthy and
+    // quarantine gauges must report 0. A regression that miscounts here would leak under-reported
+    // health to ops dashboards. The total points in the hash ring must be strictly positive
+    // because at least one host contributes points.
+    assertEquals(_provider.getLastIntValue("updateUnhealthyHostsCount").intValue(), 0,
+        "All hosts in the fixture are healthy; unhealthy gauge must be 0");
+    assertEquals(_provider.getLastIntValue("updateQuarantineHostsCount").intValue(), 0,
+        "No host in the fixture is quarantined; quarantine gauge must be 0");
+    assertEquals(_provider.getLastServiceName("updateQuarantineHostsCount"), SERVICE_NAME);
+    assertEquals(_provider.getLastScheme("updateQuarantineHostsCount"), SCHEME);
+    assertTrue(_provider.getLastIntValue("updateTotalPointsInHashRing") > 0,
+        "Total ring points should be strictly positive when there are healthy hosts");
   }
 
   @Test
@@ -113,20 +127,21 @@ public class RelativeLoadBalancerStrategyOtelIntegrationTest
 
     // The state updater should have registered exactly one per-call latency listener on the
     // tracker client. Capture it and verify it forwards to the provider.
-    @SuppressWarnings("rawtypes")
-    ArgumentCaptor<Consumer> listenerCaptor = ArgumentCaptor.forClass(Consumer.class);
+    ArgumentCaptor<PerCallDurationListener> listenerCaptor =
+        ArgumentCaptor.forClass(PerCallDurationListener.class);
     Mockito.verify(trackerClients.get(0)).setPerCallDurationListener(listenerCaptor.capture());
 
     long simulatedLatencyMs = 321L;
-    @SuppressWarnings("unchecked")
-    Consumer<Long> capturedListener = listenerCaptor.getValue();
-    capturedListener.accept(simulatedLatencyMs);
+    PerCallDurationListener capturedListener = listenerCaptor.getValue();
+    capturedListener.accept(simulatedLatencyMs, PerCallDurationSemantics.FULL_ROUND_TRIP);
 
     assertEquals(_provider.getCallCount("recordHostLatency"), 1,
         "Listener should forward exactly one recordHostLatency invocation");
     assertEquals(_provider.getLastLongValue("recordHostLatency").longValue(), simulatedLatencyMs);
     assertEquals(_provider.getLastServiceName("recordHostLatency"), SERVICE_NAME);
     assertEquals(_provider.getLastScheme("recordHostLatency"), SCHEME);
+    assertEquals(_provider.getLastPerCallDurationSemantics("recordHostLatency"),
+        PerCallDurationSemantics.FULL_ROUND_TRIP);
   }
 
   @Test
@@ -173,21 +188,20 @@ public class RelativeLoadBalancerStrategyOtelIntegrationTest
     stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID,
         DEFAULT_CLUSTER_GENERATION_ID, false);
 
-    @SuppressWarnings("rawtypes")
-    ArgumentCaptor<Consumer> listenerCaptor = ArgumentCaptor.forClass(Consumer.class);
+    ArgumentCaptor<PerCallDurationListener> listenerCaptor =
+        ArgumentCaptor.forClass(PerCallDurationListener.class);
     Mockito.verify(trackerClients.get(0)).setPerCallDurationListener(listenerCaptor.capture());
 
-    @SuppressWarnings("unchecked")
-    Consumer<Long> capturedListener = listenerCaptor.getValue();
+    PerCallDurationListener capturedListener = listenerCaptor.getValue();
 
     // Without setScheme, the listener must short-circuit.
-    capturedListener.accept(100L);
+    capturedListener.accept(100L, PerCallDurationSemantics.FULL_ROUND_TRIP);
     assertEquals(_provider.getCallCount("recordHostLatency"), 0,
         "Per-call latency must not be recorded before setScheme is called");
 
     // After setScheme, the same listener should now record.
     stateUpdater.setScheme(SCHEME);
-    capturedListener.accept(200L);
+    capturedListener.accept(200L, PerCallDurationSemantics.FULL_ROUND_TRIP);
     assertEquals(_provider.getCallCount("recordHostLatency"), 1,
         "Per-call latency should be recorded once scheme is initialized");
     assertEquals(_provider.getLastLongValue("recordHostLatency").longValue(), 200L);
@@ -243,6 +257,52 @@ public class RelativeLoadBalancerStrategyOtelIntegrationTest
     assertEquals(_provider.getCallCount("updateTotalPointsInHashRing"), 1);
     assertEquals(_provider.getLastScheme("updateTotalPointsInHashRing"), SCHEME,
         "setScheme(\"-\") must not change the scheme");
+  }
+
+  /**
+   * If the OTel provider throws during gauge emission, the partition state update must still
+   * advance: subsequent {@code updateState} calls should continue to publish to a now-recovered
+   * provider and the strategy must not be left in a permanently broken state. Regression for
+   * "provider-throws-on-gauge halts the partition update".
+   */
+  @Test
+  public void testStateUpdateAdvancesWhenProviderThrowsOnGauge()
+  {
+    // First cycle: provider throws on every gauge call.
+    _provider = new TestRelativeLoadBalancerStrategyOtelMetricsProvider()
+    {
+      @Override
+      public void updateTotalPointsInHashRing(String serviceName, String scheme, int totalPointsInHashRing)
+      {
+        throw new RuntimeException("simulated OTel SDK gauge failure");
+      }
+    };
+
+    StateUpdater stateUpdater = newStateUpdater();
+    stateUpdater.setScheme(SCHEME);
+
+    List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(
+        2,
+        Arrays.asList(20, 20),
+        Arrays.asList(10, 10),
+        Arrays.asList(200L, 200L),
+        Arrays.asList(100L, 100L),
+        Arrays.asList(0, 0));
+
+    // Must not throw; the wrapping in updateStateForPartition swallows OTel gauge exceptions.
+    stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID,
+        DEFAULT_CLUSTER_GENERATION_ID, false);
+
+    // Partition state must have advanced: a subsequent forced update must trigger a fresh
+    // emission cycle (which will throw again from updateTotalPointsInHashRing but the earlier
+    // gauges will have been recorded before the throw).
+    stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID,
+        DEFAULT_CLUSTER_GENERATION_ID + 1, true);
+
+    // updateTotalHostsInAllPartitionsCount runs before the throwing call in emitOtelMetrics,
+    // so it must record at least once across the two cycles.
+    assertTrue(_provider.getCallCount("updateTotalHostsInAllPartitionsCount") >= 1,
+        "Earlier gauges must still be recorded even when a later gauge throws");
   }
 
   @Test

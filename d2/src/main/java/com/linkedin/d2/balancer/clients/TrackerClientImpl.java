@@ -53,7 +53,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
@@ -86,7 +85,8 @@ public class TrackerClientImpl implements TrackerClient
   final CallTracker _callTracker;
 
   private boolean _doNotSlowStart;
-  private volatile Consumer<Long> _perCallDurationListener = duration -> {};
+  private volatile PerCallDurationListener _perCallDurationListener = (d, s) -> {
+  };
   private final RateLimitedLogger _rateLimitedListenerErrorLogger;
 
   private volatile CallTracker.CallStats _latestCallStats;
@@ -155,26 +155,28 @@ public class TrackerClientImpl implements TrackerClient
 
   /**
    * Sets a listener that is invoked once per completed call with the duration (in ms) the server
-   * was perceived to have contributed to the request.
+   * was perceived to have contributed to the request, and with {@link PerCallDurationSemantics}
+   * describing that measurement.
    *
-   * <p>See {@link TrackerClient#setPerCallDurationListener(Consumer)} for the broader design
-   * rationale (why a setter is used instead of constructor injection, the timing requirement,
-   * and the silent-absence caveat for custom {@link TrackerClient} implementations).
+   * <p>See {@link TrackerClient#setPerCallDurationListener(PerCallDurationListener)} for the
+   * broader design rationale (why a setter is used instead of constructor injection, the timing
+   * requirement, and the silent-absence caveat for custom {@link TrackerClient} implementations).
    */
   @Override
-  public void setPerCallDurationListener(Consumer<Long> listener)
+  public void setPerCallDurationListener(PerCallDurationListener listener)
   {
-    _perCallDurationListener = listener != null ? listener : duration -> {};
+    _perCallDurationListener = listener != null ? listener : (d, s) -> {
+    };
   }
 
   /**
    * Invokes the per-call duration listener and swallows any {@link RuntimeException} it throws.
    */
-  private void safelyNotifyDurationListener(long duration)
+  private void safelyNotifyDurationListener(long duration, PerCallDurationSemantics semantics)
   {
     try
     {
-      _perCallDurationListener.accept(duration);
+      _perCallDurationListener.accept(duration, semantics);
     }
     catch (RuntimeException e)
     {
@@ -250,7 +252,7 @@ public class TrackerClientImpl implements TrackerClient
       {
         _callCompletion.endCall();
       }
-      safelyNotifyDurationListener(duration);
+      safelyNotifyDurationListener(duration, PerCallDurationSemantics.FULL_ROUND_TRIP);
 
       _wrappedCallback.onResponse(response);
     }
@@ -295,7 +297,8 @@ public class TrackerClientImpl implements TrackerClient
       {
         Throwable throwable = response.getError();
         handleError(_callCompletion, throwable);
-        safelyNotifyDurationListener(_clock.currentTimeMillis() - _startTime);
+        safelyNotifyDurationListener(_clock.currentTimeMillis() - _startTime,
+            PerCallDurationSemantics.FULL_ROUND_TRIP);
       }
       else
       {
@@ -329,7 +332,8 @@ public class TrackerClientImpl implements TrackerClient
           public void onDone()
           {
             _callCompletion.endCall();
-            safelyNotifyDurationListener(firstByteTime - _startTime);
+            safelyNotifyDurationListener(firstByteTime - _startTime,
+                PerCallDurationSemantics.TIME_TO_FIRST_BYTE);
           }
 
           @Override
@@ -338,7 +342,8 @@ public class TrackerClientImpl implements TrackerClient
             handleError(_callCompletion, e);
             // Record TTFB (firstByteTime - startTime) instead of full duration up to the streaming
             // error.
-            safelyNotifyDurationListener(firstByteTime - _startTime);
+            safelyNotifyDurationListener(firstByteTime - _startTime,
+                PerCallDurationSemantics.TIME_TO_FIRST_BYTE);
           }
         };
         entityStream.addObserver(observer);

@@ -112,18 +112,6 @@ public interface LoadBalancerStrategy
   {
   }
 
-  /**
-   * Sets the URI scheme this strategy is associated with. Implementations that emit per-strategy
-   * telemetry (e.g. OpenTelemetry metrics) use this for tagging so the consumer can attribute
-   * metrics to the correct (service, scheme) pair.
-   *
-   * @param scheme the load balancer scheme (e.g. {@code "http"}, {@code "https"}); never null in
-   *               normal operation
-   */
-  default void setScheme(String scheme)
-  {
-  }
-
   class ExcludedHostHints
   {
     private static final String EXCLUDED_HOST_KEY_NAME = "D2-Hint-ExcludedHosts";

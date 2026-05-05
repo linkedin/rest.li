@@ -1,5 +1,7 @@
 package com.linkedin.d2.jmx;
 
+import com.linkedin.d2.balancer.clients.PerCallDurationSemantics;
+
 /**
  * Common base contract for OpenTelemetry metrics providers used by D2 load balancer strategies.
  *
@@ -15,15 +17,19 @@ package com.linkedin.d2.jmx;
 public interface LoadBalancerStrategyOtelMetricsProvider {
 
   /**
-   * Records a host's average latency as a raw value into the OpenTelemetry histogram.
-   * Called once per completed call; the histogram aggregates standard deviation, percentiles,
-   * and max across the recorded observations.
+   * Records a per-call host latency sample.
    *
-   * @param serviceName the name of the service
-   * @param scheme the load balancer scheme (e.g., "http", "https")
-   * @param hostLatencyMs the duration the server contributed to the call in milliseconds
+   * <p>Implementations MUST emit a single histogram and attach {@code semantics} as an attribute,
+   * so {@link PerCallDurationSemantics#FULL_ROUND_TRIP} and
+   * {@link PerCallDurationSemantics#TIME_TO_FIRST_BYTE} samples remain queryable independently.
+   *
+   * @param serviceName   D2 service name
+   * @param scheme        URI scheme (e.g. {@code "http"}, {@code "https"})
+   * @param hostLatencyMs duration in milliseconds
+   * @param semantics     what {@code hostLatencyMs} measures; emit as a histogram attribute
    */
-  void recordHostLatency(String serviceName, String scheme, long hostLatencyMs);
+  void recordHostLatency(String serviceName, String scheme, long hostLatencyMs,
+      PerCallDurationSemantics semantics);
 
   /**
    * Updates the total number of points across all hosts in the consistent hash ring.

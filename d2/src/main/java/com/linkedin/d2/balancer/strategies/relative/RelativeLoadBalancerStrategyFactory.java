@@ -105,12 +105,23 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
     _eventEmitter = (eventEmitter == null) ? new NoopEventEmitter() : eventEmitter;
     _clock = clock;
     _loadBalanceStreamException = loadBalanceStreamException;
-    _relativeLbOtelMetricsProvider = (relativeLbOtelMetricsProvider == null) ? new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider() : relativeLbOtelMetricsProvider;
+    // Coalesce null to a no-op so the per-call latency listener and gauge emitters can dispatch
+    // without a null-check. Mirrors the eventEmitter handling above. The internal forwarders
+    // never pass null; this guards external callers of the public 7-arg ctor.
+    _relativeLbOtelMetricsProvider = (relativeLbOtelMetricsProvider == null)
+        ? new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider()
+        : relativeLbOtelMetricsProvider;
   }
 
 
   @Override
   public RelativeLoadBalancerStrategy newLoadBalancer(ServiceProperties serviceProperties)
+  {
+    return newLoadBalancer(serviceProperties, null);
+  }
+
+  @Override
+  public RelativeLoadBalancerStrategy newLoadBalancer(ServiceProperties serviceProperties, String scheme)
   {
     D2RelativeStrategyProperties relativeStrategyProperties = RelativeStrategyPropertiesConverter
         .toProperties(serviceProperties.getRelativeStrategyProperties());
@@ -118,11 +129,11 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
 
     return new RelativeLoadBalancerStrategy(getRelativeStateUpdater(relativeStrategyProperties,
                                             serviceProperties.getServiceName(), serviceProperties.getClusterName(),
-                                            serviceProperties.getPath()), getClientSelector(relativeStrategyProperties));
+                                            serviceProperties.getPath(), scheme), getClientSelector(relativeStrategyProperties));
   }
 
   private StateUpdater getRelativeStateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
-      String serviceName, String clusterName, String servicePath)
+      String serviceName, String clusterName, String servicePath, String scheme)
   {
     QuarantineManager quarantineManager = getQuarantineManager(relativeStrategyProperties, serviceName, servicePath);
     final List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories = new ArrayList<>();
@@ -134,7 +145,7 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
       listenerFactories.addAll(_stateListenerFactories);
     }
     return new StateUpdater(relativeStrategyProperties, quarantineManager, _executorService, listenerFactories,
-        serviceName, _loadBalanceStreamException, _relativeLbOtelMetricsProvider);
+        serviceName, _loadBalanceStreamException, _relativeLbOtelMetricsProvider, scheme);
   }
 
   private ClientSelector getClientSelector(D2RelativeStrategyProperties relativeStrategyProperties)

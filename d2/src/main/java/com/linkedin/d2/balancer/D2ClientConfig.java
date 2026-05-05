@@ -58,14 +58,23 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.linkedin.d2.xds.XdsClientValidator.DEFAULT_MINIMUM_JAVA_VERSION;
 
 public class D2ClientConfig
 {
+  private static final Logger LOG = LoggerFactory.getLogger(D2ClientConfig.class);
+
+  // Guards so the deprecated-forwarder OTel-NoOp warnings are emitted at most once per JVM each.
+  private static final AtomicBoolean PRE_XDS_OTEL_FORWARDER_WARNED = new AtomicBoolean(false);
+  private static final AtomicBoolean PRE_STRATEGY_OTEL_FORWARDER_WARNED = new AtomicBoolean(false);
+
   // default values for some configs, to be shared with other classes
   public static final String D2_JMX_MANAGER_PREFIX_DEFAULT = "UnknownPrefix";
   public static final int DEFAULT_RETRY_LIMIT = 3;
@@ -374,17 +383,23 @@ public class D2ClientConfig
         enableIndisDownstreamServicesFetcher,
         indisDownstreamServicesFetchTimeout,
         new NoOpXdsClientOtelMetricsProvider());
+    // Deprecated ctor: all three OTel providers defaulted to NoOp; warn once per JVM.
+    if (PRE_XDS_OTEL_FORWARDER_WARNED.compareAndSet(false, true))
+    {
+      LOG.warn("Deprecated D2ClientConfig ctor: XDS, Relative LB, and Degrader LB OTel providers default to NoOp. "
+          + "Use the ctor with all three providers or set them on D2ClientConfig / D2ClientBuilder.");
+    }
   }
 
   /**
-   * Backward-compatible overload preserving the constructor signature introduced by the XDS OTel
-   * change (PR #1127), so that any in-package callers updated for that signature continue to
-   * compile after this PR adds the relative- and degrader-strategy OTel providers. New callers
-   * should use the constructor that accepts all three OTel metrics providers.
+   * Backward-compatible overload preserving the constructor signature that took only an
+   * {@link XdsClientOtelMetricsProvider}, so that any in-package callers updated for that signature
+   * continue to compile now that the relative- and degrader-strategy OTel providers have been
+   * added. New callers should use the constructor that accepts all three OTel metrics providers.
    *
-   * @deprecated Use the constructor that takes
+   * @deprecated Use the constructor that additionally takes
    *     {@link RelativeLoadBalancerStrategyOtelMetricsProvider} and
-   *     {@link DegraderLoadBalancerStrategyV3OtelMetricsProvider} explicitly.
+   *     {@link DegraderLoadBalancerStrategyV3OtelMetricsProvider}.
    */
   @Deprecated
   D2ClientConfig(String zkHosts,
@@ -528,6 +543,12 @@ public class D2ClientConfig
         xdsClientOtelMetricsProvider,
         new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider(),
         new NoOpDegraderLoadBalancerStrategyV3OtelMetricsProvider());
+    // Deprecated ctor: Relative/Degrader LB OTel providers defaulted to NoOp; warn once per JVM.
+    if (PRE_STRATEGY_OTEL_FORWARDER_WARNED.compareAndSet(false, true))
+    {
+      LOG.warn("Deprecated D2ClientConfig ctor: Relative and Degrader LB OTel providers default to NoOp. "
+          + "Use the ctor that takes both providers or set them on D2ClientConfig / D2ClientBuilder.");
+    }
   }
 
   D2ClientConfig(String zkHosts,
