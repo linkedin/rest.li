@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.85.11] - 2026-05-05
+- Memoize negative results in DataTemplateUtil.getSchema to avoid recomputation for classes without a valid SCHEMA field
+
 ## [29.85.10] - 2026-04-30
 - Added `recordRequestSizeBytes` metric to `XdsClientOtelMetricsProvider` to track the serialized byte size of outgoing XDS discovery requests, enabling detection of clients approaching gRPC's per-message size limit.
 
@@ -5987,7 +5990,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.10...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.11...master
+[29.85.11]: https://github.com/linkedin/rest.li/compare/v29.85.10...29.85.11
 [29.85.10]: https://github.com/linkedin/rest.li/compare/v29.85.9...v29.85.10
 [29.85.9]: https://github.com/linkedin/rest.li/compare/v29.85.8...v29.85.9
 [29.85.8]: https://github.com/linkedin/rest.li/compare/v29.85.7...v29.85.8
