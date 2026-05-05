@@ -44,6 +44,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DataTemplateUtil
@@ -55,6 +56,10 @@ public class DataTemplateUtil
   private static final boolean debug = false;
   // Cache to speed up data schema retrieval
   private static final Map<Class<?>, DataSchema> _classToSchemaMap = new ConcurrentHashMap<>();
+  // Negative cache for classes that lack a SCHEMA field, since the positive
+  // cache (_classToSchemaMap) doesn't memoize the exception thrown when trying
+  // to access the non-existent SCHEMA field.
+  private static final Set<Class<?>> _classesWithoutSchema = ConcurrentHashMap.newKeySet();
 
   private DataTemplateUtil()
   {
@@ -473,25 +478,48 @@ public class DataTemplateUtil
     // (http://cs.oswego.edu/pipermail/concurrency-interest/2014-December/013360.html) can be removed
     // when we upgrade to Java 9 when this concurrent issue is improved.
     DataSchema typeSchema = _classToSchemaMap.get(type);
-    return (typeSchema != null) ? typeSchema : _classToSchemaMap.computeIfAbsent(type, key ->
+    if (typeSchema != null)
     {
-      try
-      {
-        Field schemaField = type.getDeclaredField(SCHEMA_FIELD_NAME);
-        schemaField.setAccessible(true);
-        DataSchema schema = (DataSchema) schemaField.get(null);
-        if (schema == null)
-        {
-          throw new TemplateRuntimeException("Schema field is not set in class: " + type.getName());
-        }
+      return typeSchema;
+    }
 
-        return schema;
-      }
-      catch (IllegalAccessException | NoSuchFieldException e)
+    // Check negative-cache to short-circuit classes known to fail
+    // the reflection call so we don't incur the bin-level monitor
+    // on _classToSchemaMap.
+    if (_classesWithoutSchema.contains(type))
+    {
+      throw new TemplateRuntimeException("Schema field is not set in class: " + type.getName());
+    }
+
+    try
+    {
+      return _classToSchemaMap.computeIfAbsent(type, key ->
       {
-        throw new TemplateRuntimeException("Error accessing schema field in class: " + type.getName(), e);
-      }
-    });
+        try
+        {
+          Field schemaField = type.getDeclaredField(SCHEMA_FIELD_NAME);
+          schemaField.setAccessible(true);
+          DataSchema schema = (DataSchema) schemaField.get(null);
+          if (schema == null)
+          {
+            throw new TemplateRuntimeException("Schema field is not set in class: " + type.getName());
+          }
+
+          return schema;
+        }
+        catch (IllegalAccessException | NoSuchFieldException e)
+        {
+          throw new TemplateRuntimeException("Error accessing schema field in class: " + type.getName(), e);
+        }
+      });
+    }
+    catch (TemplateRuntimeException e)
+    {
+      // Populate the negative cache so we don't incur the
+      // reflection cost next time we encounter the same class.
+      _classesWithoutSchema.add(type);
+      throw e;
+    }
   }
 
   /**
