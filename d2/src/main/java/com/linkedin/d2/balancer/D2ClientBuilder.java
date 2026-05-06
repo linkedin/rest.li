@@ -52,11 +52,13 @@ import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import com.linkedin.d2.discovery.stores.zk.ZKPersistentConnection;
 import com.linkedin.d2.discovery.stores.zk.ZooKeeper;
-import com.linkedin.d2.jmx.XdsServerMetricsProvider;
-import com.linkedin.d2.jmx.XdsClientOtelMetricsProvider;
+import com.linkedin.d2.jmx.DegraderLoadBalancerStrategyV3OtelMetricsProvider;
 import com.linkedin.d2.jmx.JmxManager;
-import com.linkedin.d2.xds.XdsClientValidator;
 import com.linkedin.d2.jmx.NoOpJmxManager;
+import com.linkedin.d2.jmx.RelativeLoadBalancerStrategyOtelMetricsProvider;
+import com.linkedin.d2.jmx.XdsClientOtelMetricsProvider;
+import com.linkedin.d2.jmx.XdsServerMetricsProvider;
+import com.linkedin.d2.xds.XdsClientValidator;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
@@ -251,7 +253,9 @@ public class D2ClientBuilder
                   _config.d2CalleeInfoRecorder,
                   _config.enableIndisDownstreamServicesFetcher,
                   _config.indisDownstreamServicesFetchTimeout,
-                  _config.xdsClientOtelMetricsProvider
+                  _config.xdsClientOtelMetricsProvider,
+                  _config.relativeLoadBalancerStrategyOtelMetricsProvider,
+                  _config.degraderLoadBalancerStrategyV3OtelMetricsProvider
     );
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
@@ -873,6 +877,18 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setRelativeLoadBalancerStrategyOtelMetricsProvider(
+      RelativeLoadBalancerStrategyOtelMetricsProvider relativeLoadBalancerStrategyOtelMetricsProvider) {
+    _config.relativeLoadBalancerStrategyOtelMetricsProvider = relativeLoadBalancerStrategyOtelMetricsProvider;
+    return this;
+  }
+
+  public D2ClientBuilder setDegraderLoadBalancerStrategyV3OtelMetricsProvider(
+      DegraderLoadBalancerStrategyV3OtelMetricsProvider degraderLoadBalancerStrategyV3OtelMetricsProvider) {
+    _config.degraderLoadBalancerStrategyV3OtelMetricsProvider = degraderLoadBalancerStrategyV3OtelMetricsProvider;
+    return this;
+  }
+
   public D2ClientBuilder setLoadBalanceStreamException(boolean loadBalanceStreamException) {
     _config.loadBalanceStreamException = loadBalanceStreamException;
     return this;
@@ -960,7 +976,8 @@ public class D2ClientBuilder
     loadBalancerStrategyFactories.putIfAbsent("random", randomStrategyFactory);
 
     final DegraderLoadBalancerStrategyFactoryV3 degraderStrategyFactoryV3 = new DegraderLoadBalancerStrategyFactoryV3(
-        _config.healthCheckOperations, _config._executorService, _config.eventEmitter, Collections.emptyList());
+        _config.healthCheckOperations, _config._executorService, _config.eventEmitter, Collections.emptyList(), 
+        _config.degraderLoadBalancerStrategyV3OtelMetricsProvider);
     loadBalancerStrategyFactories.putIfAbsent("degrader", degraderStrategyFactoryV3);
     loadBalancerStrategyFactories.putIfAbsent("degraderV2", degraderStrategyFactoryV3);
     loadBalancerStrategyFactories.putIfAbsent("degraderV3", degraderStrategyFactoryV3);
@@ -971,7 +988,7 @@ public class D2ClientBuilder
       // TODO: create StateUpdater.LoadBalanceConfig and pass it to the RelativeLoadBalancerStrategyFactory
       final RelativeLoadBalancerStrategyFactory relativeLoadBalancerStrategyFactory = new RelativeLoadBalancerStrategyFactory(
           _config._executorService, _config.healthCheckOperations, Collections.emptyList(), _config.eventEmitter,
-          SystemClock.instance(), _config.loadBalanceStreamException);
+          SystemClock.instance(), _config.loadBalanceStreamException, _config.relativeLoadBalancerStrategyOtelMetricsProvider);
       loadBalancerStrategyFactories.putIfAbsent(RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME,
           relativeLoadBalancerStrategyFactory);
     }

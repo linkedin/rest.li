@@ -90,4 +90,33 @@ public interface TrackerClient extends LoadBalancerClient
    * @return CallTracker.
    */
   CallTracker getCallTracker();
+
+  /**
+   * Sets a listener that is invoked for each completed call with the duration (in ms) the server
+   * was perceived to have contributed, and a {@link PerCallDurationSemantics} value describing
+   * what that duration measures (full round trip vs. streaming TTFB).
+   *
+   * <p><b>Why this is a setter and not a constructor parameter.</b> A {@link TrackerClient} is
+   * constructed by the discovery-side {@code TrackerClientFactory} before any
+   * {@link com.linkedin.d2.balancer.strategies.LoadBalancerStrategy} that consumes its metrics
+   * exists. The strategy registers its listener when it first observes the tracker client during
+   * a partition-state update.
+   *
+   * <p><b>Single-owner contract.</b> A {@link TrackerClient} supports at most one duration
+   * listener at a time. Calling this method replaces any previously-registered listener (last
+   * writer wins) — listeners are <em>not</em> composed.
+   *
+   * <p><b>Threading.</b> The listener fires <em>synchronously</em> on the transport-completion
+   * thread, immediately before the wrapped {@code TransportCallback} runs (REST path) or from
+   * the entity stream's {@code onDone}/{@code onError} (streaming path). Implementations
+   * <b>MUST NOT block</b> &mdash; any latency added here directly delays request completion
+   * and the downstream user callback. See {@link PerCallDurationListener} for the full contract.
+   *
+   * <p>Passing {@code null} resets the listener to a no-op.
+   *
+   * @param listener primitive-{@code long} duration sink; may be {@code null}
+   */
+  default void setPerCallDurationListener(PerCallDurationListener listener)
+  {
+  }
 }

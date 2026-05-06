@@ -22,6 +22,8 @@ import com.linkedin.d2.balancer.properties.PropertyKeys;
 import com.linkedin.d2.balancer.properties.ServiceProperties;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategyFactory;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
+import com.linkedin.d2.jmx.DegraderLoadBalancerStrategyV3OtelMetricsProvider;
+import com.linkedin.d2.jmx.NoOpDegraderLoadBalancerStrategyV3OtelMetricsProvider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,37 +45,55 @@ public class DegraderLoadBalancerStrategyFactoryV3 implements
   private final ScheduledExecutorService _executorService;
   private final EventEmitter _eventEmitter;
   private final List<PartitionDegraderLoadBalancerStateListener.Factory> _degraderStateListenerFactories;
+  private final DegraderLoadBalancerStrategyV3OtelMetricsProvider _degraderLbOtelMetricsProvider;
 
   public DegraderLoadBalancerStrategyFactoryV3()
   {
-    _healthCheckOperations = null;
-    _executorService = null;
-    _eventEmitter = new NoopEventEmitter();
-    _degraderStateListenerFactories = Collections.emptyList();
+    this(null, null, new NoopEventEmitter(), Collections.emptyList());
   }
 
   public DegraderLoadBalancerStrategyFactoryV3(HealthCheckOperations healthCheckOperations,
       ScheduledExecutorService executorService, EventEmitter emitter,
       List<PartitionDegraderLoadBalancerStateListener.Factory> degraderStateListenerFactories)
   {
+    this(healthCheckOperations, executorService, emitter, degraderStateListenerFactories,
+        new NoOpDegraderLoadBalancerStrategyV3OtelMetricsProvider());
+  }
+
+  public DegraderLoadBalancerStrategyFactoryV3(HealthCheckOperations healthCheckOperations,
+      ScheduledExecutorService executorService, EventEmitter emitter,
+      List<PartitionDegraderLoadBalancerStateListener.Factory> degraderStateListenerFactories,
+      DegraderLoadBalancerStrategyV3OtelMetricsProvider degraderLbOtelMetricsProvider)
+  {
     _healthCheckOperations = healthCheckOperations;
     _executorService = executorService;
     _eventEmitter = (emitter == null) ? new NoopEventEmitter() : emitter;
     _degraderStateListenerFactories = degraderStateListenerFactories;
+    _degraderLbOtelMetricsProvider = (degraderLbOtelMetricsProvider == null)
+        ? new NoOpDegraderLoadBalancerStrategyV3OtelMetricsProvider()
+        : degraderLbOtelMetricsProvider;
   }
 
   @Override
   public DegraderLoadBalancerStrategyV3 newLoadBalancer(ServiceProperties serviceProperties)
   {
+    return newLoadBalancer(serviceProperties, null);
+  }
+
+  @Override
+  public DegraderLoadBalancerStrategyV3 newLoadBalancer(ServiceProperties serviceProperties, String scheme)
+  {
     return newLoadBalancer(serviceProperties.getServiceName(),
                            serviceProperties.getLoadBalancerStrategyProperties(),
                            serviceProperties.getDegraderProperties(),
                            serviceProperties.getPath(),
-                           serviceProperties.getClusterName());
+                           serviceProperties.getClusterName(),
+                           scheme);
   }
 
   private DegraderLoadBalancerStrategyV3 newLoadBalancer(String serviceName,
-      Map<String, Object> strategyProperties, Map<String, String> degraderProperties, String path, String clusterName)
+      Map<String, Object> strategyProperties, Map<String, String> degraderProperties, String path, String clusterName,
+      String scheme)
   {
     debug(LOG, "created a degrader load balancer strategyV3");
 
@@ -95,6 +115,7 @@ public class DegraderLoadBalancerStrategyFactoryV3 implements
     listeners.add(new DegraderMonitorEventEmitter.Factory(serviceName));
     listeners.addAll(_degraderStateListenerFactories);
 
-    return new DegraderLoadBalancerStrategyV3(config, serviceName, degraderProperties, listeners);
+    return new DegraderLoadBalancerStrategyV3(config, serviceName, degraderProperties, listeners,
+        _degraderLbOtelMetricsProvider, scheme);
   }
 }

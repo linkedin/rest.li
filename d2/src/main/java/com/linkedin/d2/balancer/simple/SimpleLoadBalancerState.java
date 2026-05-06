@@ -1519,7 +1519,10 @@ public class SimpleLoadBalancerState implements LoadBalancerState, ClientFactory
       List<String> schemes = serviceProperties.getPrioritizedSchemes();
       for (String scheme : schemes)
       {
-        LoadBalancerStrategy strategy = factory.newLoadBalancer(serviceProperties);
+        // Pass scheme through so OTel-emitting strategies can tag metrics from the very first
+        // per-call listener invocation, eliminating the bootstrap window between strategy
+        // construction and the subsequent setScheme call from D2ClientJmxManager.
+        LoadBalancerStrategy strategy = factory.newLoadBalancer(serviceProperties, scheme);
 
         newStrategies.put(scheme, strategy);
       }

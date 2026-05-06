@@ -373,6 +373,31 @@ public class D2ClientJmxManagerTest {
                 DualReadModeProvider.DualReadMode.OLD_LB_ONLY, true, false}
         };
   }
+  /**
+   * Verifies that {@code D2ClientJmxManager}'s {@code SimpleLoadBalancerStateListener#onStrategyAdded}
+   * propagates the scheme to a {@link com.linkedin.d2.balancer.strategies.SchemeAware} strategy via
+   * {@link com.linkedin.d2.balancer.strategies.SchemeAware#setScheme(String)}.
+   * Since the scheme is a dimension on every per-strategy OTel metric, this wiring is critical:
+   * a regression that drops the call (e.g. accidentally removing the {@code instanceof SchemeAware}
+   * dispatch in {@code doRegisterLoadBalancerStrategy}) would leave all strategies tagged with their
+   * default placeholder.
+   */
+  @Test
+  public void testOnStrategyAddedPropagatesSchemeToStrategy()
+  {
+    D2ClientJmxManagerFixture fixture = new D2ClientJmxManagerFixture();
+    // Use the simplest configuration (null source, single-read) so we don't have to reason about
+    // dual-read JMX-name prefixing. The unit under test here is scheme propagation, not naming.
+    D2ClientJmxManager d2ClientJmxManager = fixture.getD2ClientJmxManager("Foo", null, false);
+    d2ClientJmxManager.setSimpleLoadBalancerState(fixture._simpleLoadBalancerState);
+    SimpleLoadBalancerState.SimpleLoadBalancerStateListener lbStateListener =
+        fixture._simpleLoadBalancerStateListenerCaptor.getValue();
+
+    lbStateListener.onStrategyAdded("S_Foo", "https", fixture._relativeLoadBalancerStrategy);
+
+    Mockito.verify(fixture._relativeLoadBalancerStrategy).setScheme("https");
+  }
+
   @Test(dataProvider = "sourceTypeAndDualReadModeForLixSwitch")
   public void testJmxNamesOnDualReadModeSwitch(D2ClientJmxManager.DiscoverySourceType sourceType,
       DualReadModeProvider.DualReadMode oldMode, DualReadModeProvider.DualReadMode newMode, boolean isPrimaryBefore, boolean isPrimaryAfter)

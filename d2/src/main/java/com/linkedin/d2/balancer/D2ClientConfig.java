@@ -46,6 +46,10 @@ import com.linkedin.d2.jmx.NoOpXdsServerMetricsProvider;
 import com.linkedin.d2.jmx.NoOpJmxManager;
 import com.linkedin.d2.jmx.XdsClientOtelMetricsProvider;
 import com.linkedin.d2.jmx.NoOpXdsClientOtelMetricsProvider;
+import com.linkedin.d2.jmx.DegraderLoadBalancerStrategyV3OtelMetricsProvider;
+import com.linkedin.d2.jmx.NoOpDegraderLoadBalancerStrategyV3OtelMetricsProvider;
+import com.linkedin.d2.jmx.RelativeLoadBalancerStrategyOtelMetricsProvider;
+import com.linkedin.d2.jmx.NoOpRelativeLoadBalancerStrategyOtelMetricsProvider;
 import com.linkedin.r2.transport.common.TransportClientFactory;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import java.time.Duration;
@@ -54,14 +58,23 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.linkedin.d2.xds.XdsClientValidator.DEFAULT_MINIMUM_JAVA_VERSION;
 
 public class D2ClientConfig
 {
+  private static final Logger LOG = LoggerFactory.getLogger(D2ClientConfig.class);
+
+  // Guards so the deprecated-forwarder OTel-NoOp warnings are emitted at most once per JVM each.
+  private static final AtomicBoolean PRE_XDS_OTEL_FORWARDER_WARNED = new AtomicBoolean(false);
+  private static final AtomicBoolean PRE_STRATEGY_OTEL_FORWARDER_WARNED = new AtomicBoolean(false);
+
   // default values for some configs, to be shared with other classes
   public static final String D2_JMX_MANAGER_PREFIX_DEFAULT = "UnknownPrefix";
   public static final int DEFAULT_RETRY_LIMIT = 3;
@@ -189,6 +202,19 @@ public class D2ClientConfig
    * Defaults to no-op implementation; can be overridden to enable metric tracking.
    */
   public XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider = new NoOpXdsClientOtelMetricsProvider();
+
+  /**
+   * Provider for OpenTelemetry metrics collection for RelativeLoadBalancerStrategy operations.
+   * Defaults to no-op implementation; can be overridden to enable metric tracking.
+   */
+  public RelativeLoadBalancerStrategyOtelMetricsProvider relativeLoadBalancerStrategyOtelMetricsProvider = new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider();
+  
+  /**
+   * Provider for OpenTelemetry metrics collection for DegraderLoadBalancerStrategyV3 operations.
+   * Defaults to no-op implementation; can be overridden to enable metric tracking.
+   */
+  public DegraderLoadBalancerStrategyV3OtelMetricsProvider degraderLoadBalancerStrategyV3OtelMetricsProvider = new NoOpDegraderLoadBalancerStrategyV3OtelMetricsProvider();
+
   public boolean loadBalanceStreamException = false;
   public boolean enablePotentialClientsCache = false;
   public boolean xdsInitialResourceVersionsEnabled = false;
@@ -357,8 +383,25 @@ public class D2ClientConfig
         enableIndisDownstreamServicesFetcher,
         indisDownstreamServicesFetchTimeout,
         new NoOpXdsClientOtelMetricsProvider());
+    // Deprecated ctor: all three OTel providers defaulted to NoOp; warn once per JVM.
+    if (PRE_XDS_OTEL_FORWARDER_WARNED.compareAndSet(false, true))
+    {
+      LOG.warn("Deprecated D2ClientConfig ctor: XDS, Relative LB, and Degrader LB OTel providers default to NoOp. "
+          + "Use the ctor with all three providers or set them on D2ClientConfig / D2ClientBuilder.");
+    }
   }
 
+  /**
+   * Backward-compatible overload preserving the constructor signature that took only an
+   * {@link XdsClientOtelMetricsProvider}, so that any in-package callers updated for that signature
+   * continue to compile now that the relative- and degrader-strategy OTel providers have been
+   * added. New callers should use the constructor that accepts all three OTel metrics providers.
+   *
+   * @deprecated Use the constructor that additionally takes
+   *     {@link RelativeLoadBalancerStrategyOtelMetricsProvider} and
+   *     {@link DegraderLoadBalancerStrategyV3OtelMetricsProvider}.
+   */
+  @Deprecated
   D2ClientConfig(String zkHosts,
                  String xdsServer,
                  String hostName,
@@ -445,6 +488,157 @@ public class D2ClientConfig
                  Duration indisDownstreamServicesFetchTimeout,
                  XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider)
   {
+    this(zkHosts, xdsServer, hostName, zkSessionTimeoutInMs, zkStartupTimeoutInMs, lbWaitTimeout, lbWaitUnit,
+        flagFile, basePath, fsBasePath, indisFsBasePath, componentFactory, clientFactories, lbWithFacilitiesFactory,
+        sslContext, grpcSslContext, sslParameters, isSSLEnabled, shutdownAsynchronously, isSymlinkAware,
+        clientServicesConfig, d2ServicePath, useNewEphemeralStoreWatcher, healthCheckOperations, executorService,
+        retry, restRetryEnabled, streamRetryEnabled, retryLimit, retryUpdateIntervalMs, retryAggregatedIntervalNum,
+        warmUp, warmUpTimeoutSeconds, indisWarmUpTimeoutSeconds, warmUpConcurrentRequests,
+        indisWarmUpConcurrentRequests, downstreamServicesFetcher, indisDownstreamServicesFetcher,
+        backupRequestsEnabled, backupRequestsStrategyStatsConsumer,
+        backupRequestsLatencyNotificationInterval,
+        backupRequestsLatencyNotificationIntervalUnit,
+        enableBackupRequestsClientAsync,
+        backupRequestsExecutorService,
+        emitter,
+        partitionAccessorRegistry,
+        zooKeeperDecorator,
+        enableSaveUriDataOnDisk,
+        loadBalancerStrategyFactories,
+        requestTimeoutHandlerEnabled,
+        sslSessionValidatorFactory,
+        zkConnection,
+        startUpExecutorService,
+        indisStartUpExecutorService,
+        jmxManager,
+        d2JmxManagerPrefix,
+        zookeeperReadWindowMs,
+        enableRelativeLoadBalancer,
+        deterministicSubsettingMetadataProvider,
+        canaryDistributionProvider,
+        enableClusterFailout,
+        failoutConfigProviderFactory,
+        failoutRedirectStrategy,
+        serviceDiscoveryEventEmitter,
+        dualReadStateManager,
+        xdsExecutorService,
+        xdsStreamReadyTimeout,
+        dualReadNewLbExecutor,
+        xdsChannelLoadBalancingPolicy,
+        xdsChannelLoadBalancingPolicyConfig,
+        subscribeToUriGlobCollection,
+        xdsServerMetricsProvider,
+        loadBalanceStreamException,
+        enablePotentialClientsCache,
+        xdsInitialResourceVersionsEnabled,
+        disableDetectLiRawD2Client,
+        isLiRawD2Client,
+        xdsStreamMaxRetryBackoffSeconds,
+        xdsChannelKeepAliveTimeMins,
+        xdsMinimumJavaVersion,
+        actionOnPrecheckFailure,
+        d2CalleeInfoRecorder,
+        enableIndisDownstreamServicesFetcher,
+        indisDownstreamServicesFetchTimeout,
+        xdsClientOtelMetricsProvider,
+        new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider(),
+        new NoOpDegraderLoadBalancerStrategyV3OtelMetricsProvider());
+    // Deprecated ctor: Relative/Degrader LB OTel providers defaulted to NoOp; warn once per JVM.
+    if (PRE_STRATEGY_OTEL_FORWARDER_WARNED.compareAndSet(false, true))
+    {
+      LOG.warn("Deprecated D2ClientConfig ctor: Relative and Degrader LB OTel providers default to NoOp. "
+          + "Use the ctor that takes both providers or set them on D2ClientConfig / D2ClientBuilder.");
+    }
+  }
+
+  D2ClientConfig(String zkHosts,
+                 String xdsServer,
+                 String hostName,
+                 long zkSessionTimeoutInMs,
+                 long zkStartupTimeoutInMs,
+                 long lbWaitTimeout,
+                 TimeUnit lbWaitUnit,
+                 String flagFile,
+                 String basePath,
+                 String fsBasePath,
+                 String indisFsBasePath,
+                 ComponentFactory componentFactory,
+                 Map<String, TransportClientFactory> clientFactories,
+                 LoadBalancerWithFacilitiesFactory lbWithFacilitiesFactory,
+                 SSLContext sslContext,
+                 SslContext grpcSslContext,
+                 SSLParameters sslParameters,
+                 boolean isSSLEnabled,
+                 boolean shutdownAsynchronously,
+                 boolean isSymlinkAware,
+                 Map<String, Map<String, Object>> clientServicesConfig,
+                 String d2ServicePath,
+                 boolean useNewEphemeralStoreWatcher,
+                 HealthCheckOperations healthCheckOperations,
+                 ScheduledExecutorService executorService,
+                 boolean retry,
+                 boolean restRetryEnabled,
+                 boolean streamRetryEnabled,
+                 int retryLimit,
+                 long retryUpdateIntervalMs,
+                 int retryAggregatedIntervalNum,
+                 boolean warmUp,
+                 int warmUpTimeoutSeconds,
+                 int indisWarmUpTimeoutSeconds,
+                 int warmUpConcurrentRequests,
+                 int indisWarmUpConcurrentRequests,
+                 DownstreamServicesFetcher downstreamServicesFetcher,
+                 DownstreamServicesFetcher indisDownstreamServicesFetcher,
+                 boolean backupRequestsEnabled,
+                 BackupRequestsStrategyStatsConsumer backupRequestsStrategyStatsConsumer,
+                 long backupRequestsLatencyNotificationInterval,
+                 TimeUnit backupRequestsLatencyNotificationIntervalUnit,
+                 boolean enableBackupRequestsClientAsync,
+                 ScheduledExecutorService backupRequestsExecutorService,
+                 EventEmitter emitter,
+                 PartitionAccessorRegistry partitionAccessorRegistry,
+                 Function<ZooKeeper, ZooKeeper> zooKeeperDecorator,
+                 boolean enableSaveUriDataOnDisk,
+                 Map<String, LoadBalancerStrategyFactory<? extends LoadBalancerStrategy>> loadBalancerStrategyFactories,
+                 boolean requestTimeoutHandlerEnabled,
+                 SslSessionValidatorFactory sslSessionValidatorFactory,
+                 ZKPersistentConnection zkConnection,
+                 ScheduledExecutorService startUpExecutorService,
+                 ScheduledExecutorService indisStartUpExecutorService,
+                 JmxManager jmxManager,
+                 String d2JmxManagerPrefix,
+                 int zookeeperReadWindowMs,
+                 boolean enableRelativeLoadBalancer,
+                 DeterministicSubsettingMetadataProvider deterministicSubsettingMetadataProvider,
+                 CanaryDistributionProvider canaryDistributionProvider,
+                 boolean enableClusterFailout,
+                 FailoutConfigProviderFactory failoutConfigProviderFactory,
+                 FailoutRedirectStrategy failoutRedirectStrategy,
+                 ServiceDiscoveryEventEmitter serviceDiscoveryEventEmitter,
+                 DualReadStateManager dualReadStateManager,
+                 ScheduledExecutorService xdsExecutorService,
+                 Long xdsStreamReadyTimeout,
+                 ExecutorService dualReadNewLbExecutor,
+                 String xdsChannelLoadBalancingPolicy,
+                 Map<String, ?> xdsChannelLoadBalancingPolicyConfig,
+                 boolean subscribeToUriGlobCollection,
+                 XdsServerMetricsProvider xdsServerMetricsProvider,
+                 boolean loadBalanceStreamException,
+                 boolean enablePotentialClientsCache,
+                 boolean xdsInitialResourceVersionsEnabled,
+                 boolean disableDetectLiRawD2Client,
+                 boolean isLiRawD2Client,
+                 Integer xdsStreamMaxRetryBackoffSeconds,
+                 Long xdsChannelKeepAliveTimeMins,
+                 String xdsMinimumJavaVersion,
+                 XdsClientValidator.ActionOnPrecheckFailure actionOnPrecheckFailure,
+                 D2CalleeInfoRecorder d2CalleeInfoRecorder,
+                 Boolean enableIndisDownstreamServicesFetcher,
+                 Duration indisDownstreamServicesFetchTimeout,
+                 XdsClientOtelMetricsProvider xdsClientOtelMetricsProvider,
+                 RelativeLoadBalancerStrategyOtelMetricsProvider relativeLoadBalancerStrategyOtelMetricsProvider,
+                 DegraderLoadBalancerStrategyV3OtelMetricsProvider degraderLoadBalancerStrategyV3OtelMetricsProvider)
+  {
     this.zkHosts = zkHosts;
     this.xdsServer = xdsServer;
     this.hostName = hostName;
@@ -530,5 +724,7 @@ public class D2ClientConfig
     this.indisDownstreamServicesFetchTimeout = indisDownstreamServicesFetchTimeout;
     this.enableIndisDownstreamServicesFetcher = enableIndisDownstreamServicesFetcher;
     this.xdsClientOtelMetricsProvider = xdsClientOtelMetricsProvider;
+    this.relativeLoadBalancerStrategyOtelMetricsProvider = relativeLoadBalancerStrategyOtelMetricsProvider;
+    this.degraderLoadBalancerStrategyV3OtelMetricsProvider = degraderLoadBalancerStrategyV3OtelMetricsProvider;
   }
 }

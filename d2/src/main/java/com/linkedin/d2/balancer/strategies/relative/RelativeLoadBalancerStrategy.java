@@ -18,6 +18,7 @@ package com.linkedin.d2.balancer.strategies.relative;
 
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
+import com.linkedin.d2.balancer.strategies.SchemeAware;
 import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.r2.message.Request;
@@ -41,7 +42,7 @@ import org.slf4j.LoggerFactory;
  *
  * @see com.linkedin.d2.D2RelativeStrategyProperties
  */
-public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
+public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy, SchemeAware
 {
   private static final Logger LOG = LoggerFactory.getLogger(RelativeLoadBalancerStrategy.class);
   public static final String RELATIVE_LOAD_BALANCER_STRATEGY_NAME = "relative";
@@ -132,6 +133,17 @@ public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
   public int getTotalHostsInAllPartitions()
   {
     return _stateUpdater.getTotalHostsInAllPartitions();
+  }
+
+  /**
+   * {@link SchemeAware} implementation: forwards to the underlying {@link StateUpdater} so OTel
+   * metrics can be tagged with the scheme. Treats {@code null} / {@code "-"} as "no change" via
+   * {@code StateUpdater#setScheme} for partially-initialized callers.
+   */
+  @Override
+  public void setScheme(String scheme)
+  {
+    _stateUpdater.setScheme(scheme);
   }
 
   /**
