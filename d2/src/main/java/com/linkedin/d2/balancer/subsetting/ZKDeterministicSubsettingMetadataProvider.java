@@ -140,8 +140,14 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
           }
           if (addr instanceof Inet6Address)
           {
-            identities.add("[" + addrStr + "]");
-            identities.add(addrStr);
+            // Funnel both forms through the same canonicalizer the peer-side resolver uses
+            // (see canonicalizeIpv6IfApplicable below). For the common case this is a no-op
+            // round-trip — Inet6Address.getHostAddress() already returns the canonical
+            // expanded form — but routing both sides through the same function keeps the
+            // local and peer identity strings in lockstep by construction, e.g. for
+            // IPv4-mapped IPv6 (::ffff:a.b.c.d) which auto-converts to a plain IPv4 address.
+            identities.add(canonicalizeIpv6IfApplicable("[" + addrStr + "]"));
+            identities.add(canonicalizeIpv6IfApplicable(addrStr));
           }
           else
           {
@@ -160,6 +166,57 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
           hostName, e);
     }
     return Collections.unmodifiableSet(identities);
+  }
+
+  /**
+   * Returns the canonical form of {@code host} when it is an IPv6 literal (bracketed or
+   * unbracketed); otherwise returns {@code host} unchanged. Parses any string containing a
+   * {@code ':'} via {@link InetAddress#getByName(String)} and re-emits via
+   * {@link InetAddress#getHostAddress()}, which produces the RFC 4291 fully-expanded form. The
+   * original bracketing is preserved, except for IPv4-mapped IPv6 literals (e.g.
+   * {@code ::ffff:1.2.3.4}) which {@code getByName} auto-converts to {@link java.net.Inet4Address}
+   * — brackets are dropped in that case since IPv4 addresses are not bracketed.
+   *
+   * <p>FQDNs and IPv4 literals short-circuit on the colon check and pass through unchanged so
+   * we never trigger a DNS lookup on the hot path. Unparseable IPv6-like strings (rare; e.g.
+   * a malformed URI host) also pass through.
+   *
+   * <p>Used to bridge the gap between {@link Inet6Address#getHostAddress()} (always returns
+   * the expanded form, used to build candidate identities at startup) and
+   * {@link URI#getHost()} on a peer URI (returns whatever was literally in the URI string —
+   * could be compressed or expanded). Calling this on both sides makes the equality check
+   * insensitive to which form the d2 client materialized.
+   */
+  private static String canonicalizeIpv6IfApplicable(String host)
+  {
+    if (host == null)
+    {
+      return null;
+    }
+    boolean bracketed = host.startsWith("[") && host.endsWith("]");
+    String inner = bracketed ? host.substring(1, host.length() - 1) : host;
+    if (inner.indexOf(':') < 0)
+    {
+      return host;
+    }
+    try
+    {
+      InetAddress addr = InetAddress.getByName(inner);
+      String canonical = addr.getHostAddress();
+      if (addr instanceof Inet6Address)
+      {
+        return bracketed ? "[" + canonical + "]" : canonical;
+      }
+      // IPv4-mapped IPv6 (::ffff:a.b.c.d) collapses to Inet4Address. IPv4 isn't bracketed, so
+      // drop any brackets so a canonicalized peer URI matches a local Inet4Address candidate
+      // built from the same physical address.
+      return canonical;
+    }
+    catch (UnknownHostException e)
+    {
+      // Not a parseable IP literal — pass through and let string equality decide.
+      return host;
+    }
   }
 
   public void setClusterName(String clusterName) {
@@ -204,9 +261,14 @@ public class ZKDeterministicSubsettingMetadataProvider implements DeterministicS
           UriProperties uriProperties = uriItem.getProperty();
           if (uriProperties != null)
           {
-            // Sort the URIs so each client sees the same ordering
+            // Sort the URIs so each client sees the same ordering. Canonicalize IPv6 host
+            // strings here so a peer URI in compressed form (e.g. "[2a04:f547::1a95]") still
+            // matches a candidate identity built from the JDK's expanded form (e.g.
+            // "[2a04:f547:0:0:0:0:0:1a95]"). FQDNs and IPv4 literals pass through unchanged,
+            // so no DNS work happens on the hot path.
             List<String> sortedHosts = uriProperties.getPartitionDesc().keySet().stream()
                 .map(URI::getHost)
+                .map(ZKDeterministicSubsettingMetadataProvider::canonicalizeIpv6IfApplicable)
                 .filter(Objects::nonNull)
                 .sorted()
                 .distinct()

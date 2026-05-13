@@ -241,6 +241,40 @@ public class ZKDeterministicSubsettingMetadataProviderTest
   }
 
   @Test
+  public void testGetSubsettingMetadata_matchesViaCompressedIpv6PeerUri() throws Exception
+  {
+    // Defensive: even if d2 ever materializes peer URIs in compressed IPv6 form
+    // (e.g. "[2a04:f547:43:e66a::1a95]"), the resolver's IPv6 canonicalization should expand
+    // them at lookup time so the candidate identity (built from Inet6Address.getHostAddress(),
+    // which is always expanded) still matches.
+    InetAddress selfIpv6 = InetAddress.getByName("2a04:f547:43:e66a::1a95");
+    ZKDeterministicSubsettingMetadataProvider compressedProvider = new ZKDeterministicSubsettingMetadataProvider(
+        CLUSTER_NAME, HOST_NAME, 1000, TimeUnit.MILLISECONDS,
+        host -> new InetAddress[] {selfIpv6});
+
+    Map<Integer, PartitionData> partitionData = new HashMap<>(1);
+    partitionData.put(DefaultPartitionAccessor.DEFAULT_PARTITION_ID, new PartitionData(1d));
+    Map<URI, Map<Integer, PartitionData>> uriData = new HashMap<>();
+    // Peer URI uses the COMPRESSED IPv6 form ("::"), not the expanded form. URI.getHost()
+    // would return "[2a04:f547:43:e66a::1a95]", which doesn't string-match the candidate's
+    // expanded form "[2a04:f547:43:e66a:0:0:0:1a95]" without the canonicalization step.
+    uriData.put(URI.create("https://[2a04:f547:43:e66a::1a95]:8888/test"), partitionData);
+
+    _state.listenToCluster(CLUSTER_NAME, new LoadBalancerState.NullStateListenerCallback());
+    _state.listenToService("service-1", new LoadBalancerState.NullStateListenerCallback());
+    _clusterRegistry.put(CLUSTER_NAME, new ClusterProperties(CLUSTER_NAME, Collections.singletonList("https")));
+    _uriRegistry.put(CLUSTER_NAME, new UriProperties(CLUSTER_NAME, uriData));
+    _serviceRegistry.put("service-1", new ServiceProperties("service-1", CLUSTER_NAME, "/test",
+        Collections.singletonList("random")));
+
+    DeterministicSubsettingMetadata metadata = compressedProvider.getSubsettingMetadata(_state);
+
+    assertNotNull(metadata, "compressed peer URI must canonicalize to expanded and match self");
+    assertEquals(metadata.getTotalInstanceCount(), 1);
+    assertEquals(metadata.getInstanceId(), 0);
+  }
+
+  @Test
   public void testGetSubsettingMetadata_noMatch_warnsOnceThenReArmsOnRecovery()
   {
     InetAddress otherIpv4;
