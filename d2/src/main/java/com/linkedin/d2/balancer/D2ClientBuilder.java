@@ -883,6 +883,11 @@ public class D2ClientBuilder
     return this;
   }
 
+  public D2ClientBuilder setEnableRelativeStrategyDeferredAllocation(boolean enableRelativeStrategyDeferredAllocation) {
+    _config.enableRelativeStrategyDeferredAllocation = enableRelativeStrategyDeferredAllocation;
+    return this;
+  }
+
   public D2ClientBuilder setXdsInitialResourceVersionsEnabled(boolean xdsIRVEnabled)
   {
     _config.xdsInitialResourceVersionsEnabled = xdsIRVEnabled;
@@ -971,7 +976,7 @@ public class D2ClientBuilder
       // TODO: create StateUpdater.LoadBalanceConfig and pass it to the RelativeLoadBalancerStrategyFactory
       final RelativeLoadBalancerStrategyFactory relativeLoadBalancerStrategyFactory = new RelativeLoadBalancerStrategyFactory(
           _config._executorService, _config.healthCheckOperations, Collections.emptyList(), _config.eventEmitter,
-          SystemClock.instance(), _config.loadBalanceStreamException);
+          SystemClock.instance(), _config.loadBalanceStreamException, _config.enableRelativeStrategyDeferredAllocation);
       loadBalancerStrategyFactories.putIfAbsent(RelativeLoadBalancerStrategy.RELATIVE_LOAD_BALANCER_STRATEGY_NAME,
           relativeLoadBalancerStrategyFactory);
     }

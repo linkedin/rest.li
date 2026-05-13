@@ -77,16 +77,25 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
   private final EventEmitter _eventEmitter;
   private final Clock _clock;
   private final boolean _loadBalanceStreamException;
+  private final boolean _enableRelativeStrategyDeferredAllocation;
 
   public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
       List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter, Clock clock)
   {
-    this(executorService, healthCheckOperations, stateListenerFactories, eventEmitter, clock, false);
+    this(executorService, healthCheckOperations, stateListenerFactories, eventEmitter, clock, false, false);
   }
 
   public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
       List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter, Clock clock,
       boolean loadBalanceStreamException)
+  {
+    this(executorService, healthCheckOperations, stateListenerFactories, eventEmitter, clock,
+        loadBalanceStreamException, false);
+  }
+
+  public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
+      List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter, Clock clock,
+      boolean loadBalanceStreamException, boolean enableRelativeStrategyDeferredAllocation)
   {
     _executorService = executorService;
     _healthCheckOperations = healthCheckOperations;
@@ -94,6 +103,7 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
     _eventEmitter = (eventEmitter == null) ? new NoopEventEmitter() : eventEmitter;
     _clock = clock;
     _loadBalanceStreamException = loadBalanceStreamException;
+    _enableRelativeStrategyDeferredAllocation = enableRelativeStrategyDeferredAllocation;
   }
 
 
@@ -106,7 +116,8 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
 
     return new RelativeLoadBalancerStrategy(getRelativeStateUpdater(relativeStrategyProperties,
                                             serviceProperties.getServiceName(), serviceProperties.getClusterName(),
-                                            serviceProperties.getPath()), getClientSelector(relativeStrategyProperties));
+                                            serviceProperties.getPath()), getClientSelector(relativeStrategyProperties),
+                                            _enableRelativeStrategyDeferredAllocation);
   }
 
   private StateUpdater getRelativeStateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,

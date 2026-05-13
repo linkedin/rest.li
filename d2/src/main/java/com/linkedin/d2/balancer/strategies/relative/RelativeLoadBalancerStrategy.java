@@ -50,12 +50,21 @@ public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
 
   private final StateUpdater _stateUpdater;
   private final ClientSelector _clientSelector;
+  private final boolean _enableRelativeStrategyDeferredAllocation;
 
   public RelativeLoadBalancerStrategy(StateUpdater stateUpdater,
                                       ClientSelector clientSelector)
   {
+    this(stateUpdater, clientSelector, false);
+  }
+
+  public RelativeLoadBalancerStrategy(StateUpdater stateUpdater,
+                                      ClientSelector clientSelector,
+                                      boolean enableRelativeStrategyDeferredAllocation)
+  {
     _stateUpdater = stateUpdater;
     _clientSelector = clientSelector;
+    _enableRelativeStrategyDeferredAllocation = enableRelativeStrategyDeferredAllocation;
   }
 
   @Override
@@ -90,7 +99,9 @@ public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
       return null;
     }
 
-    _stateUpdater.updateState(new HashSet<>(trackerClients.values()), partitionId, clusterGenerationId, shouldForceUpdate);
+    _stateUpdater.updateState(
+        _enableRelativeStrategyDeferredAllocation ? trackerClients.values() : new HashSet<>(trackerClients.values()),
+        partitionId, clusterGenerationId, shouldForceUpdate);
     Ring<URI> ring = _stateUpdater.getRing(partitionId);
     return _clientSelector.getTrackerClient(request, requestContext, ring, trackerClients);
   }
@@ -115,7 +126,9 @@ public class RelativeLoadBalancerStrategy implements LoadBalancerStrategy
   @Override
   public Ring<URI> getRing(long clusterGenerationId, int partitionId, Map<URI, TrackerClient> trackerClients, boolean shouldForceUpdate)
   {
-    _stateUpdater.updateState(new HashSet<>(trackerClients.values()), partitionId, clusterGenerationId, shouldForceUpdate);
+    _stateUpdater.updateState(
+        _enableRelativeStrategyDeferredAllocation ? trackerClients.values() : new HashSet<>(trackerClients.values()),
+        partitionId, clusterGenerationId, shouldForceUpdate);
     return _stateUpdater.getRing(partitionId);
   }
 

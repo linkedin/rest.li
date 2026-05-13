@@ -13,6 +13,7 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+- Avoid per-request HashSet allocation in RelativeLoadBalancerStrategy
 
 ## [29.85.11] - 2026-05-05
 - Memoize negative results in DataTemplateUtil.getSchema to avoid recomputation for classes without a valid SCHEMA field
