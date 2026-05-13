@@ -93,5 +93,7 @@ public interface XdsClientOtelMetricsProvider {
    * @param clientName the name of the XDS client
    * @param sizeBytes  the serialized size in bytes of the {@code DeltaDiscoveryRequest}
    */
-  void recordRequestSizeBytes(String clientName, long sizeBytes);
+  default void recordRequestSizeBytes(String clientName, long sizeBytes) {
+    // Default no-op: implementors may override to record the metric.
+  }
 }

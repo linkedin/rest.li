@@ -14,6 +14,7 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 - Avoid per-request HashSet allocation in RelativeLoadBalancerStrategy
+- Make `recordRequestSizeBytes` a `default` no-op method on `XdsClientOtelMetricsProvider` to restore binary compatibility with older implementations (e.g., container <= 38.31.0) that predate the method.
 
 ## [29.85.11] - 2026-05-05
 - Memoize negative results in DataTemplateUtil.getSchema to avoid recomputation for classes without a valid SCHEMA field
