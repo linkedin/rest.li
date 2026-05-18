@@ -217,6 +217,7 @@ public class D2ClientConfig
 
   public boolean loadBalanceStreamException = false;
   public boolean enablePotentialClientsCache = false;
+  public boolean enableRelativeStrategyDeferredAllocation = false;
   public boolean xdsInitialResourceVersionsEnabled = false;
   public Integer xdsStreamMaxRetryBackoffSeconds = null;
   public String xdsMinimumJavaVersion = DEFAULT_MINIMUM_JAVA_VERSION;

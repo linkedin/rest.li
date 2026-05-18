@@ -14,6 +14,16 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.85.12] - 2026-05-14
+- Avoid per-request HashSet allocation in RelativeLoadBalancerStrategy
+- Make `recordRequestSizeBytes` a `default` no-op method on `XdsClientOtelMetricsProvider` to restore binary compatibility with older implementations (e.g., container <= 38.31.0) that predate the method.
+
+## [29.85.11] - 2026-05-05
+- Memoize negative results in DataTemplateUtil.getSchema to avoid recomputation for classes without a valid SCHEMA field
+
+## [29.85.10] - 2026-04-30
+- Added `recordRequestSizeBytes` metric to `XdsClientOtelMetricsProvider` to track the serialized byte size of outgoing XDS discovery requests, enabling detection of clients approaching gRPC's per-message size limit.
+
 ## [29.85.9] - 2026-04-21
 - Add optional precomputed potential clients cache to SimpleLoadBalancerState, moving O(n) per-request
   host filtering in SimpleLoadBalancer.getPotentialClients() to state-change event handlers for O(1) lookups.
@@ -5984,7 +5994,10 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.9...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.12...master
+[29.85.12]: https://github.com/linkedin/rest.li/compare/v29.85.11...v29.85.12
+[29.85.11]: https://github.com/linkedin/rest.li/compare/v29.85.10...29.85.11
+[29.85.10]: https://github.com/linkedin/rest.li/compare/v29.85.9...v29.85.10
 [29.85.9]: https://github.com/linkedin/rest.li/compare/v29.85.8...v29.85.9
 [29.85.8]: https://github.com/linkedin/rest.li/compare/v29.85.7...v29.85.8
 [29.85.7]: https://github.com/linkedin/rest.li/compare/v29.85.6...v29.85.7

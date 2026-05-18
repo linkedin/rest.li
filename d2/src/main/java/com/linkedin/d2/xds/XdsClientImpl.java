@@ -1752,6 +1752,7 @@ public class XdsClientImpl extends XdsClient
       _xdsClientJmx.incrementRequestSentCount();
       _xdsClientJmx.addToIrvSentCount(resourceVersions.size());
       DeltaDiscoveryRequest request = new DiscoveryRequestData(_node, type, resources, resourceVersions).toEnvoyProto();
+      _xdsClientJmx.recordRequestSizeBytes(request.getSerializedSize());
       _requestWriter.onNext(request);
       _log.debug("Sent DiscoveryRequest\n{}", request);
     }

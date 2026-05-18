@@ -66,6 +66,11 @@ public class TestXdsClientOtelMetricsProvider implements XdsClientOtelMetricsPro
     _calls.add(new MetricsInvocation("updateActiveInitialWaitTime", clientName, waitTimeMs));
   }
 
+  @Override
+  public void recordRequestSizeBytes(String clientName, long sizeBytes) {
+    _calls.add(new MetricsInvocation("recordRequestSizeBytes", clientName, sizeBytes));
+  }
+
   // Helper methods for verification
 
   public int getCallCount(String methodName) {
@@ -124,6 +129,16 @@ public class TestXdsClientOtelMetricsProvider implements XdsClientOtelMetricsPro
     return null;
   }
 
+  public Long getLastSizeBytes(String methodName) {
+    for (int i = _calls.size() - 1; i >= 0; i--) {
+      MetricsInvocation call = _calls.get(i);
+      if (call.methodName.equals(methodName)) {
+        return call.sizeBytes;
+      }
+    }
+    return null;
+  }
+
   /**
    * Clears all recorded calls. Useful for resetting state between tests.
    */
@@ -141,6 +156,7 @@ public class TestXdsClientOtelMetricsProvider implements XdsClientOtelMetricsPro
     Long latencyMs;
     Boolean isConnected;
     Long waitTimeMs;
+    Long sizeBytes;
 
     MetricsInvocation(String methodName, String clientName) {
       this.methodName = methodName;
@@ -154,11 +170,18 @@ public class TestXdsClientOtelMetricsProvider implements XdsClientOtelMetricsPro
 
     MetricsInvocation(String methodName, String clientName, long value) {
       this(methodName, clientName);
-      // Determine if it's latency or wait time based on method name
-      if (methodName.equals("recordServerLatency")) {
-        this.latencyMs = value;
-      } else if (methodName.equals("updateActiveInitialWaitTime")) {
-        this.waitTimeMs = value;
+      switch (methodName) {
+        case "recordServerLatency":
+          this.latencyMs = value;
+          break;
+        case "updateActiveInitialWaitTime":
+          this.waitTimeMs = value;
+          break;
+        case "recordRequestSizeBytes":
+          this.sizeBytes = value;
+          break;
+        default:
+          break;
       }
     }
 

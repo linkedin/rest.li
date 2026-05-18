@@ -29,7 +29,9 @@ import com.linkedin.d2.jmx.RelativeLoadBalancerStrategyOtelMetricsProvider;
 import com.linkedin.util.degrader.CallTracker;
 import com.linkedin.util.degrader.ErrorType;
 import java.net.URI;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -196,12 +198,12 @@ public class StateUpdater
   /**
    * Update the state of the partition if necessary
    * This update is triggered by the request. If the cluster is not initialized or the uris changed, we will update the state.
-   *  @param trackerClients The set of hosts for this partition
+   *  @param trackerClients The hosts for this partition
    * @param partitionId The id of the partition
    * @param clusterGenerationId The id that uniquely identifies a set of hosts in the cluster
    * @param shouldForceUpdate Whether or not to force update
    */
-  public void updateState(Set<TrackerClient> trackerClients, int partitionId, long clusterGenerationId,
+  public void updateState(Collection<TrackerClient> trackerClients, int partitionId, long clusterGenerationId,
       boolean shouldForceUpdate)
   {
     if (!_partitionLoadBalancerStateMap.containsKey(partitionId))
@@ -216,7 +218,6 @@ public class StateUpdater
       {
         _lock.unlock();
       }
-
     }
     else if (shouldForceUpdate || clusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId()
         || trackerClients.size() != _partitionLoadBalancerStateMap.get(partitionId).getPointsMap().size())
@@ -303,7 +304,7 @@ public class StateUpdater
    * @param clusterGenerationId The id that identifies the cluster version
    * @param shouldForceUpdate Whether or not to force update
    */
-  void updateStateForPartition(Set<TrackerClient> trackerClients, int partitionId, PartitionState oldPartitionState,
+  void updateStateForPartition(Collection<TrackerClient> trackerClients, int partitionId, PartitionState oldPartitionState,
       Long clusterGenerationId, boolean shouldForceUpdate)
   {
     LOG.debug("Updating for partition: " + partitionId + ", state: " + oldPartitionState);
@@ -363,7 +364,7 @@ public class StateUpdater
    * We will check the cluster generation id again before performing the actual update to make sure only one updates got executed
    * This can be guaranteed because the executor service has has 1 thread
    */
-  void updateStateDueToClusterChange(Set<TrackerClient> trackerClients, int partitionId, Long newClusterGenerationId,
+  void updateStateDueToClusterChange(Collection<TrackerClient> trackerClients, int partitionId, Long newClusterGenerationId,
       boolean shouldForceUpdate)
   {
     if (shouldForceUpdate || newClusterGenerationId != _partitionLoadBalancerStateMap.get(partitionId).getClusterGenerationId()
@@ -377,7 +378,7 @@ public class StateUpdater
   /**
    * Update the health score of all tracker clients for the service
    */
-  private void updateBaseHealthScoreAndState(Set<TrackerClient> trackerClients,
+  private void updateBaseHealthScoreAndState(Collection<TrackerClient> trackerClients,
       PartitionState partitionState, long clusterAvgLatency,
       boolean clusterUpdated, Map<TrackerClient, CallTracker.CallStats> lastCallStatsMap)
   {
@@ -386,10 +387,13 @@ public class StateUpdater
 
     // Remove the trackerClients from original map if there is any change in uri list
     Map<TrackerClient, TrackerClientState> trackerClientStateMap = partitionState.getTrackerClientStateMap();
-    if (clusterUpdated)
+    if (clusterUpdated && !trackerClientStateMap.isEmpty())
     {
+      Set<TrackerClient> trackerClientSet = trackerClients instanceof Set
+          ? (Set<TrackerClient>) trackerClients
+          : new HashSet<>(trackerClients);
       List<TrackerClient> trackerClientsToRemove = trackerClientStateMap.keySet().stream()
-          .filter(oldTrackerClient -> !trackerClients.contains(oldTrackerClient))
+          .filter(oldTrackerClient -> !trackerClientSet.contains(oldTrackerClient))
           .collect(Collectors.toList());
       for (TrackerClient trackerClient : trackerClientsToRemove)
       {
@@ -398,7 +402,7 @@ public class StateUpdater
     }
   }
 
-  private void calculateBaseHealthScore(Set<TrackerClient> trackerClients, PartitionState partitionState,
+  private void calculateBaseHealthScore(Collection<TrackerClient> trackerClients, PartitionState partitionState,
       long avgClusterLatency, Map<TrackerClient, CallTracker.CallStats> lastCallStatsMap)
   {
     Map<TrackerClient, TrackerClientState> trackerClientStateMap = partitionState.getTrackerClientStateMap();
@@ -489,7 +493,7 @@ public class StateUpdater
   /**
    * Get the weighted average cluster latency
    */
-  private long getAvgClusterLatency(Set<TrackerClient> trackerClients, Map<TrackerClient, CallTracker.CallStats> latestCallStatsMap)
+  private long getAvgClusterLatency(Collection<TrackerClient> trackerClients, Map<TrackerClient, CallTracker.CallStats> latestCallStatsMap)
   {
     long latencySum = 0;
     long outstandingLatencySum = 0;
@@ -629,7 +633,7 @@ public class StateUpdater
     return callCount == 0 ? 0 : validExceptionCount / callCount;
   }
 
-  private void initializePartition(Set<TrackerClient> trackerClients, int partitionId, long clusterGenerationId)
+  private void initializePartition(Collection<TrackerClient> trackerClients, int partitionId, long clusterGenerationId)
   {
     if (!_partitionLoadBalancerStateMap.containsKey(partitionId))
     {

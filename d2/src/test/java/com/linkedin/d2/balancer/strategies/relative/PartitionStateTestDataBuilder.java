@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer.strategies.relative;
 import com.linkedin.d2.balancer.clients.TrackerClient;
 import com.linkedin.d2.balancer.strategies.DistributionNonDiscreteRingFactory;
 import com.linkedin.d2.balancer.strategies.LoadBalancerQuarantine;
+import com.linkedin.d2.balancer.strategies.PartitionStateUpdateListener;
 import com.linkedin.d2.balancer.strategies.RingFactory;
 import java.net.URI;
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ public class PartitionStateTestDataBuilder
   private Set<TrackerClient> _recoveryTrackerClients = new HashSet<>();
   private Map<TrackerClient, LoadBalancerQuarantine> _quarantineMap = new HashMap<>();
   private Map<TrackerClient, TrackerClientState> _trackerClientStateMap = new HashMap<>();
+  private List<PartitionStateUpdateListener<PartitionState>> _listeners = new ArrayList<>();
 
   PartitionStateTestDataBuilder()
   {
@@ -96,10 +98,16 @@ public class PartitionStateTestDataBuilder
     return this;
   }
 
+  PartitionStateTestDataBuilder setListeners(List<PartitionStateUpdateListener<PartitionState>> listeners)
+  {
+    _listeners = listeners;
+    return this;
+  }
+
   PartitionState build()
   {
     return new PartitionState(DEFAULT_PARTITION_ID, _ringFactory, DEFAULT_POINTS_PER_WEIGHT,
         _recoveryTrackerClients, _clusterGenerationId, _quarantineMap, new HashMap<>(), new HashMap<>(),
-        _trackerClientStateMap, new ArrayList<>());
+        _trackerClientStateMap, _listeners);
   }
 }

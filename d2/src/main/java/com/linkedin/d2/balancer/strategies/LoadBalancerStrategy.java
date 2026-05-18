@@ -51,7 +51,9 @@ public interface LoadBalancerStrategy
    * @param requestContext
    * @param clusterGenerationId
    * @param partitionId
-   * @param trackerClients
+   * @param trackerClients candidate clients for this partition. Implementations may retain a
+   *     reference and read from it asynchronously (e.g. on an executor thread), so the caller
+   *     MUST NOT mutate this map after the call returns.
    * @return TrackerClient
    */
   @Nullable
@@ -82,7 +84,9 @@ public interface LoadBalancerStrategy
    *
    * @param clusterGenerationId
    * @param partitionId
-   * @param trackerClients
+   * @param trackerClients candidate clients for this partition. Implementations may retain a
+   *     reference and read from it asynchronously (e.g. on an executor thread), so the caller
+   *     MUST NOT mutate this map after the call returns.
    * @return Ring
    */
   @Nonnull

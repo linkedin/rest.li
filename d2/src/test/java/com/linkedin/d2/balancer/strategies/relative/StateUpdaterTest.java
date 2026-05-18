@@ -19,6 +19,7 @@ package com.linkedin.d2.balancer.strategies.relative;
 import com.google.common.collect.ImmutableMap;
 import com.linkedin.d2.D2RelativeStrategyProperties;
 import com.linkedin.d2.balancer.clients.TrackerClient;
+import com.linkedin.d2.balancer.strategies.PartitionStateUpdateListener;
 import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.test.util.retry.ThreeRetries;
 import com.linkedin.util.degrader.ErrorType;
@@ -250,10 +251,21 @@ public class StateUpdaterTest
     executorService.shutdown();
   }
 
-  @Test(retryAnalyzer = ThreeRetries.class) // Known to be flaky in CI
+  @Test
   public void testClusterGenerationIdChange() throws InterruptedException {
+    // Reset _quarantineManager: an earlier test (testExecutorScheduleWithError) installs a
+    // doThrow stub on this shared mock, which would otherwise leak in and abort the executor task.
+    Mockito.doNothing().when(_quarantineManager).updateQuarantineState(any(), any(), anyLong());
+
+    // Listener-based latch: onUpdate is invoked by the executor only AFTER the new partition state
+    // has been swapped into _partitionLoadBalancerStateMap and updateRing() has refreshed _pointsMap,
+    // so the post-await assertions observe a fully consistent state with no timing race.
+    CountDownLatch updateCompleted = new CountDownLatch(1);
+    PartitionStateUpdateListener<PartitionState> listener = ps -> updateCompleted.countDown();
+
     PartitionState state = new PartitionStateTestDataBuilder()
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
+        .setListeners(Collections.singletonList(listener))
         .build();
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
@@ -266,13 +278,9 @@ public class StateUpdaterTest
     _stateUpdater = new StateUpdater(relativeStrategyProperties, _quarantineManager, executorService,
         partitionLoadBalancerStateMap, Collections.emptyList(), SERVICE_NAME);
 
-    // update will be scheduled twice, once from interval update, once from cluster change
-    CountDownLatch countDownLatch = new CountDownLatch(2);
-    Mockito.doAnswer(new ExecutionCountDown<>(countDownLatch)).when(_quarantineManager).updateQuarantineState(any(), any(), anyLong());
-
     // Cluster generation id changed from 0 to 1
     _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, 1, false);
-    if (!countDownLatch.await(5, TimeUnit.SECONDS))
+    if (!updateCompleted.await(5, TimeUnit.SECONDS))
     {
       fail("cluster update failed to finish within 5 seconds");
     }
@@ -281,11 +289,102 @@ public class StateUpdaterTest
     executorService.shutdown();
   }
 
-  @Test(retryAnalyzer = ThreeRetries.class) // Known to be flaky in CI
+  /**
+   * Exercises the non-Set Collection slow path in {@link StateUpdater#updateBaseHealthScoreAndState}.
+   * When the caller passes {@code Map.values()} (a non-Set Collection) and the state map has pre-existing
+   * entries, the {@code instanceof Set} guard takes the else-branch and materializes a HashSet locally
+   * for the identity-based {@code contains()}.
+   */
+  @Test
+  public void testClusterGenerationIdChangeWithNonSetCollection() throws InterruptedException
+  {
+    // Reset _quarantineManager (see testClusterGenerationIdChange comment).
+    Mockito.doNothing().when(_quarantineManager).updateQuarantineState(any(), any(), anyLong());
+
+    List<TrackerClient> initialClients = TrackerClientMockHelper.mockTrackerClients(3,
+        Arrays.asList(20, 20, 20), Arrays.asList(10, 10, 10),
+        Arrays.asList(200L, 500L, 300L), Arrays.asList(100L, 200L, 150L), Arrays.asList(0, 0, 0));
+
+    // Count=2: one onUpdate fires after the initial partition setup, another after the cluster-change
+    // executor task completes the partition swap into _partitionLoadBalancerStateMap. Awaiting both
+    // guarantees a fully consistent post-update state when we assert below.
+    CountDownLatch updateCompleted = new CountDownLatch(2);
+    PartitionStateUpdateListener.Factory<PartitionState> listenerFactory =
+        partitionId -> ps -> updateCompleted.countDown();
+
+    ConcurrentMap<Integer, PartitionState> partitionLoadBalancerStateMap = new ConcurrentHashMap<>();
+    ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    D2RelativeStrategyProperties props = RelativeLoadBalancerStrategyFactory.putDefaultValues(new D2RelativeStrategyProperties());
+    _stateUpdater = new StateUpdater(props, _quarantineManager, executorService,
+        partitionLoadBalancerStateMap, Collections.singletonList(listenerFactory), SERVICE_NAME);
+
+    // Step 1: initialize the partition so the state map has entries; this is the precondition
+    // for exercising the `instanceof Set` else-branch on the subsequent cluster change.
+    _stateUpdater.updateState(new HashSet<>(initialClients), DEFAULT_PARTITION_ID, DEFAULT_CLUSTER_GENERATION_ID, false);
+
+    // Step 2: cluster change with a smaller set of clients passed as a non-Set Collection (Map.values()).
+    // One of the original clients is dropped, exercising the contains()-based removal logic with
+    // a Collection that is not a Set.
+    Map<URI, TrackerClient> newClientsMap = new HashMap<>();
+    newClientsMap.put(initialClients.get(0).getUri(), initialClients.get(0));
+    newClientsMap.put(initialClients.get(1).getUri(), initialClients.get(1));
+    assertFalse(newClientsMap.values() instanceof Set, "precondition: Map.values() must not be a Set");
+
+    _stateUpdater.updateState(newClientsMap.values(), DEFAULT_PARTITION_ID, 1L, false);
+    if (!updateCompleted.await(5, TimeUnit.SECONDS))
+    {
+      fail("cluster update failed to finish within 5 seconds");
+    }
+
+    // After the update the dropped client should be removed and the two retained clients present.
+    Map<URI, Integer> pointsMap = _stateUpdater.getPointsMap(DEFAULT_PARTITION_ID);
+    assertEquals(pointsMap.size(), 2);
+    assertTrue(pointsMap.containsKey(initialClients.get(0).getUri()));
+    assertTrue(pointsMap.containsKey(initialClients.get(1).getUri()));
+    assertFalse(pointsMap.containsKey(initialClients.get(2).getUri()),
+        "dropped client should be removed via the non-Set Collection slow path");
+    executorService.shutdown();
+  }
+
+  /**
+   * Equivalence: an initial {@code updateState} call with a non-Set Collection (e.g. {@code Map.values()})
+   * produces the same partition state as one with a HashSet of the same elements.
+   */
+  @Test
+  public void testInitializePartitionWithNonSetCollection()
+  {
+    setup(new D2RelativeStrategyProperties(), new ConcurrentHashMap<>());
+
+    List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
+        Arrays.asList(20, 20), Arrays.asList(10, 10), Arrays.asList(200L, 500L), Arrays.asList(100L, 200L), Arrays.asList(0, 0));
+
+    Map<URI, TrackerClient> clientsMap = new HashMap<>();
+    for (TrackerClient client : trackerClients)
+    {
+      clientsMap.put(client.getUri(), client);
+    }
+    assertFalse(clientsMap.values() instanceof Set, "precondition: Map.values() must not be a Set");
+
+    _stateUpdater.updateState(clientsMap.values(), DEFAULT_PARTITION_ID, DEFAULT_CLUSTER_GENERATION_ID, false);
+
+    assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(0).getUri()).intValue(), HEALTHY_POINTS);
+    assertEquals(_stateUpdater.getPointsMap(DEFAULT_PARTITION_ID).get(trackerClients.get(1).getUri()).intValue(), HEALTHY_POINTS);
+  }
+
+  @Test
   public void testForceUpdate() throws InterruptedException
   {
+    // Reset _quarantineManager (see testClusterGenerationIdChange comment).
+    Mockito.doNothing().when(_quarantineManager).updateQuarantineState(any(), any(), anyLong());
+
+    // Count=2: two updateState calls each produce one onUpdate after their respective partition
+    // swap. Awaiting both guarantees the post-force-update state is fully observable.
+    CountDownLatch updateCompleted = new CountDownLatch(2);
+    PartitionStateUpdateListener<PartitionState> listener = ps -> updateCompleted.countDown();
+
     PartitionState state = new PartitionStateTestDataBuilder()
         .setClusterGenerationId(DEFAULT_CLUSTER_GENERATION_ID)
+        .setListeners(Collections.singletonList(listener))
         .build();
 
     List<TrackerClient> trackerClients = TrackerClientMockHelper.mockTrackerClients(2,
@@ -298,14 +397,10 @@ public class StateUpdaterTest
     _stateUpdater = new StateUpdater(relativeStrategyProperties, _quarantineManager, executorService,
         partitionLoadBalancerStateMap, Collections.emptyList(), SERVICE_NAME);
 
-    // update will be scheduled three times, once from interval update, once from cluster change, once from force update
-    CountDownLatch countDownLatch = new CountDownLatch(3);
-    Mockito.doAnswer(new ExecutionCountDown<>(countDownLatch)).when(_quarantineManager).updateQuarantineState(any(), any(), anyLong());
-
     // Cluster generation id changed from 0 to 1
     _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, 1, false);
     _stateUpdater.updateState(new HashSet<>(trackerClients), DEFAULT_PARTITION_ID, 1, true);
-    if (!countDownLatch.await(5, TimeUnit.SECONDS))
+    if (!updateCompleted.await(5, TimeUnit.SECONDS))
     {
       fail("cluster update failed to finish within 5 seconds");
     }

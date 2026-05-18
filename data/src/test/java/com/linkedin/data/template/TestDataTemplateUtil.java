@@ -16,19 +16,24 @@
 
 package com.linkedin.data.template;
 
+import com.linkedin.data.DataMap;
 import com.linkedin.data.schema.DataSchema;
 import com.linkedin.data.schema.PathSpec;
 import com.linkedin.data.schema.RecordDataSchema;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Set;
 
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertSame;
 import static org.testng.Assert.fail;
 
 
@@ -239,5 +244,57 @@ public class TestDataTemplateUtil
     // Convert Specific Floating point string - NEGATIVE_INFINITY to Float
     Object object6 = DataTemplateUtil.coerceOutput(NEGATIVE_INFINITY, Float.class);
     assertEquals(object6, Float.NEGATIVE_INFINITY);
+  }
+
+  public static class RecordWithSchemaField extends RecordTemplate
+  {
+    public static final RecordDataSchema SCHEMA = (RecordDataSchema) DataTemplateUtil.parseSchema(
+        "{ \"type\" : \"record\", \"name\" : \"RecordWithSchemaField\","
+            + " \"namespace\" : \"com.linkedin.data.template\","
+            + " \"fields\" : [ { \"name\" : \"f\", \"type\" : \"string\" } ] }");
+
+    public RecordWithSchemaField()
+    {
+      super(new DataMap(), SCHEMA);
+    }
+  }
+
+  public static class ClassWithoutSchemaField
+  {
+  }
+
+  @Test
+  public void testGetSchemaForClassWithSchemaField()
+  {
+    DataSchema schema = DataTemplateUtil.getSchema(RecordWithSchemaField.class);
+    assertNotNull(schema);
+    // Lookup from cache
+    assertSame(DataTemplateUtil.getSchema(RecordWithSchemaField.class), schema);
+  }
+
+  @Test
+  public void testGetSchemaForClassWithoutSchemaFieldThrows() throws Exception
+  {
+    // Every call must still throw TemplateRuntimeException to not break the contract
+    // even if we shortcircuit the reflection call using the negative cache.
+    for (int i = 0; i < 5; i++)
+    {
+      try
+      {
+        DataTemplateUtil.getSchema(ClassWithoutSchemaField.class);
+        fail("Expected TemplateRuntimeException");
+      }
+      catch (TemplateRuntimeException expected)
+      {
+        assertTrue(expected.getMessage().contains(ClassWithoutSchemaField.class.getName()),
+            "Expected exception message to contain the class name, got: " + expected.getMessage());
+      }
+    }
+
+    // Check that the negative cache is populated.
+    Field cacheField = DataTemplateUtil.class.getDeclaredField("_classesWithoutSchema");
+    cacheField.setAccessible(true);
+    Set<?> negativeCache = (Set<?>) cacheField.get(null);
+    assertTrue(negativeCache.contains(ClassWithoutSchemaField.class));
   }
 }

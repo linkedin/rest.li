@@ -93,4 +93,12 @@ public class NoOpXdsClientOtelMetricsProvider implements XdsClientOtelMetricsPro
   public void updateActiveInitialWaitTime(String clientName, long waitTimeMs) {
     // No-op
   }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void recordRequestSizeBytes(String clientName, long sizeBytes) {
+    // No-op
+  }
 }
