@@ -33,6 +33,7 @@ import com.linkedin.r2.message.stream.StreamRequest;
 import com.linkedin.r2.message.stream.StreamResponse;
 import com.linkedin.r2.message.stream.entitystream.EntityStream;
 import com.linkedin.r2.message.stream.entitystream.Observer;
+import com.linkedin.d2.balancer.util.RateLimitedLogger;
 import com.linkedin.r2.transport.common.bridge.client.TransportClient;
 import com.linkedin.r2.transport.common.bridge.common.TransportCallback;
 import com.linkedin.r2.transport.common.bridge.common.TransportResponse;
@@ -70,6 +71,9 @@ public class TrackerClientImpl implements TrackerClient
   public static final long DEFAULT_CALL_TRACKER_INTERVAL = DegraderLoadBalancerStrategyConfig.DEFAULT_UPDATE_INTERVAL_MS;
 
   private static final Logger _log = LoggerFactory.getLogger(TrackerClient.class);
+  // Rate at which warnings about a misbehaving per-call duration listener are logged. Keeps a
+  // persistently-throwing OTel provider from flooding the logs on hot request paths.
+  private static final long PER_CALL_LISTENER_LOG_RATE_MS = 60_000L;
 
   private final TransportClient _transportClient;
   private final Map<Integer, PartitionData> _partitionData;
@@ -77,9 +81,13 @@ public class TrackerClientImpl implements TrackerClient
   private final Predicate<Integer> _isErrorStatus;
   private final ConcurrentMap<Integer, Double> _subsetWeightMap;
   private final boolean _doNotLoadBalance;
+  private final Clock _clock;
   final CallTracker _callTracker;
 
   private boolean _doNotSlowStart;
+  private volatile PerCallDurationListener _perCallDurationListener = (d, s) -> {
+  };
+  private final RateLimitedLogger _rateLimitedListenerErrorLogger;
 
   private volatile CallTracker.CallStats _latestCallStats;
 
@@ -94,6 +102,7 @@ public class TrackerClientImpl implements TrackerClient
   {
     _uri = uri;
     _transportClient = transportClient;
+    _clock = clock;
     _callTracker = new CallTrackerImpl(interval, clock, percentileTrackingEnabled);
     _isErrorStatus = isErrorStatus;
     _partitionData = Collections.unmodifiableMap(partitionDataMap);
@@ -103,6 +112,8 @@ public class TrackerClientImpl implements TrackerClient
     _doNotLoadBalance = doNotLoadBalance;
 
     _callTracker.addStatsRolloverEventListener(event -> _latestCallStats = event.getCallStats());
+
+    _rateLimitedListenerErrorLogger = new RateLimitedLogger(_log, PER_CALL_LISTENER_LOG_RATE_MS, clock);
 
     debug(_log, "created tracker client: ", this);
   }
@@ -142,13 +153,47 @@ public class TrackerClientImpl implements TrackerClient
     return _subsetWeightMap.getOrDefault(partitionId, 1D);
   }
 
+  /**
+   * Sets a listener that is invoked once per completed call with the duration (in ms) the server
+   * was perceived to have contributed to the request, and with {@link PerCallDurationSemantics}
+   * describing that measurement.
+   *
+   * <p>See {@link TrackerClient#setPerCallDurationListener(PerCallDurationListener)} for the
+   * broader design rationale (why a setter is used instead of constructor injection, the timing
+   * requirement, and the silent-absence caveat for custom {@link TrackerClient} implementations).
+   */
+  @Override
+  public void setPerCallDurationListener(PerCallDurationListener listener)
+  {
+    _perCallDurationListener = listener != null ? listener : (d, s) -> {
+    };
+  }
+
+  /**
+   * Invokes the per-call duration listener and swallows any {@link RuntimeException} it throws.
+   */
+  private void safelyNotifyDurationListener(long duration, PerCallDurationSemantics semantics)
+  {
+    try
+    {
+      _perCallDurationListener.accept(duration, semantics);
+    }
+    catch (RuntimeException e)
+    {
+      _rateLimitedListenerErrorLogger.warn(
+          "Per-call duration listener threw an exception; latency metric not recorded for this call", e);
+    }
+  }
+
   @Override
   public void restRequest(RestRequest request,
                           RequestContext requestContext,
                           Map<String, String> wireAttrs,
                           TransportCallback<RestResponse> callback)
   {
-    _transportClient.restRequest(request, requestContext, wireAttrs, new TrackerClientRestCallback(callback, _callTracker.startCall()));
+    long startTime = _clock.currentTimeMillis();
+    _transportClient.restRequest(request, requestContext, wireAttrs,
+        new TrackerClientRestCallback(callback, _callTracker.startCall(), startTime));
   }
 
   @Override
@@ -157,7 +202,9 @@ public class TrackerClientImpl implements TrackerClient
                             Map<String, String> wireAttrs,
                             TransportCallback<StreamResponse> callback)
   {
-    _transportClient.streamRequest(request, requestContext, wireAttrs, new TrackerClientStreamCallback(callback, _callTracker.startCall()));
+    long startTime = _clock.currentTimeMillis();
+    _transportClient.streamRequest(request, requestContext, wireAttrs,
+        new TrackerClientStreamCallback(callback, _callTracker.startCall(), startTime));
   }
 
   @Override
@@ -182,17 +229,20 @@ public class TrackerClientImpl implements TrackerClient
   {
     private TransportCallback<RestResponse> _wrappedCallback;
     private CallCompletion       _callCompletion;
+    private final long _startTime;
 
     public TrackerClientRestCallback(TransportCallback<RestResponse> wrappedCallback,
-                                 CallCompletion callCompletion)
+                                 CallCompletion callCompletion, long startTime)
     {
       _wrappedCallback = wrappedCallback;
       _callCompletion = callCompletion;
+      _startTime = startTime;
     }
 
     @Override
     public void onResponse(TransportResponse<RestResponse> response)
     {
+      long duration = _clock.currentTimeMillis() - _startTime;
       if (response.hasError())
       {
         Throwable throwable = response.getError();
@@ -202,6 +252,7 @@ public class TrackerClientImpl implements TrackerClient
       {
         _callCompletion.endCall();
       }
+      safelyNotifyDurationListener(duration, PerCallDurationSemantics.FULL_ROUND_TRIP);
 
       _wrappedCallback.onResponse(response);
     }
@@ -229,12 +280,14 @@ public class TrackerClientImpl implements TrackerClient
   {
     private TransportCallback<StreamResponse> _wrappedCallback;
     private CallCompletion       _callCompletion;
+    private final long _startTime;
 
     public TrackerClientStreamCallback(TransportCallback<StreamResponse> wrappedCallback,
-                                 CallCompletion callCompletion)
+                                 CallCompletion callCompletion, long startTime)
     {
       _wrappedCallback = wrappedCallback;
       _callCompletion = callCompletion;
+      _startTime = startTime;
     }
 
     @Override
@@ -244,6 +297,8 @@ public class TrackerClientImpl implements TrackerClient
       {
         Throwable throwable = response.getError();
         handleError(_callCompletion, throwable);
+        safelyNotifyDurationListener(_clock.currentTimeMillis() - _startTime,
+            PerCallDurationSemantics.FULL_ROUND_TRIP);
       }
       else
       {
@@ -264,6 +319,7 @@ public class TrackerClientImpl implements TrackerClient
          * In this way, D2 still monitors the responsiveness of a server without the interference from the client
          * side events, and error counting still works as before.
          */
+        long firstByteTime = _clock.currentTimeMillis();
         _callCompletion.record();
         Observer observer = new Observer()
         {
@@ -276,12 +332,18 @@ public class TrackerClientImpl implements TrackerClient
           public void onDone()
           {
             _callCompletion.endCall();
+            safelyNotifyDurationListener(firstByteTime - _startTime,
+                PerCallDurationSemantics.TIME_TO_FIRST_BYTE);
           }
 
           @Override
           public void onError(Throwable e)
           {
             handleError(_callCompletion, e);
+            // Record TTFB (firstByteTime - startTime) instead of full duration up to the streaming
+            // error.
+            safelyNotifyDurationListener(firstByteTime - _startTime,
+                PerCallDurationSemantics.TIME_TO_FIRST_BYTE);
           }
         };
         entityStream.addObserver(observer);
