@@ -24,6 +24,7 @@ import com.linkedin.d2.balancer.strategies.PartitionStateUpdateListener;
 import com.linkedin.d2.balancer.strategies.DelegatingRingFactory;
 import com.linkedin.d2.balancer.strategies.SchemeAware;
 import com.linkedin.d2.balancer.util.hashing.Ring;
+import com.linkedin.d2.jmx.HostStatus;
 import com.linkedin.d2.jmx.NoOpRelativeLoadBalancerStrategyOtelMetricsProvider;
 import com.linkedin.d2.jmx.RelativeLoadBalancerStrategyOtelMetricsProvider;
 import com.linkedin.util.degrader.CallTracker;
@@ -578,7 +579,6 @@ public class StateUpdater
       return;
     }
 
-    // Snapshot maps once to avoid repeated lookups and keep each map's traversal local.
     Map<TrackerClient, TrackerClientState> trackerClientStateMap = partitionState.getTrackerClientStateMap();
     Map<TrackerClient, LoadBalancerQuarantine> quarantineMap = partitionState.getQuarantineMap();
     Map<URI, Integer> pointsMap = partitionState.getPointsMap();
@@ -610,8 +610,8 @@ public class StateUpdater
 
     String serviceName = _serviceName;
     _relativeLbOtelMetricsProvider.updateTotalHostsInAllPartitionsCount(serviceName, scheme, getTotalHostsInAllPartitions());
-    _relativeLbOtelMetricsProvider.updateUnhealthyHostsCount(serviceName, scheme, unhealthyCount);
-    _relativeLbOtelMetricsProvider.updateQuarantineHostsCount(serviceName, scheme, quarantineCount);
+    _relativeLbOtelMetricsProvider.updateDegradedHostsCount(serviceName, scheme, HostStatus.UNHEALTHY, unhealthyCount);
+    _relativeLbOtelMetricsProvider.updateDegradedHostsCount(serviceName, scheme, HostStatus.QUARANTINED, quarantineCount);
     _relativeLbOtelMetricsProvider.updateTotalPointsInHashRing(serviceName, scheme, totalPoints);
   }
 

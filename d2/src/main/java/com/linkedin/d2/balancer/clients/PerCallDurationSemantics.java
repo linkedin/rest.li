@@ -9,32 +9,21 @@
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR ANY KIND, either express or implied.
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
 */
 package com.linkedin.d2.balancer.clients;
 
 /**
- * Describes what the per-call duration value from
- * {@link TrackerClient#setPerCallDurationListener(PerCallDurationListener)} represents, so
- * load-balancer metrics can keep REST / stream transport timing separate from streaming
- * time-to-first-byte (TTFB) measurements.
- *
- * <p>See {@link TrackerClientImpl} for the exact callback mapping.
+ * What a per-call duration measures when passed to
+ * {@link PerCallDurationListener#accept(long, PerCallDurationSemantics)}.
  */
 public enum PerCallDurationSemantics
 {
-  /**
-   * Elapsed time from the start of the outbound request until the REST response callback, or until
-   * a stream transport-level error (no response body / entity stream).
-   */
+  /** REST: full callback latency. Streaming: transport failure before any response body. */
   FULL_ROUND_TRIP,
 
-  /**
-   * Elapsed time from the start of the outbound request until the first byte of a successful
-   * streaming response; used when the stream body completes in {@code onDone} or fails in
-   * {@code onError} after headers/first bytes (D2 call-tracking policy).
-   */
+  /** Streaming only: request start through first response byte (success or mid-stream error). */
   TIME_TO_FIRST_BYTE
 }

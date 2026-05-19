@@ -459,12 +459,18 @@ public class DegraderLoadBalancerStrategyV3 implements LoadBalancerStrategy, Sch
       }
     }
 
-    // Register per-call OTEL latency listener on every tracker client for this update.
+    // Register per-call OTEL latency listener for clients joining this partition for the first
+    // time.
     // Capture serviceName outside the lambda so each per-call invocation skips a virtual call
     // through _state — the value is immutable for the lifetime of this strategy.
     final String serviceName = _state.getServiceName();
+    Set<DegraderTrackerClient> previouslySeenClients = partitionState.getTrackerClients();
     for (DegraderTrackerClient client : trackerClients)
     {
+      if (previouslySeenClients.contains(client))
+      {
+        continue;
+      }
       client.setPerCallDurationListener((duration, semantics) -> {
         // skip emission if the scheme has not been initialized yet.
         String scheme = _scheme;

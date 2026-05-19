@@ -15,8 +15,18 @@
 */
 package com.linkedin.d2.jmx;
 
-/** OTel metrics for {@code DegraderLoadBalancerStrategyV3}. */
-public interface DegraderLoadBalancerStrategyV3OtelMetricsProvider extends LoadBalancerStrategyOtelMetricsProvider
+/** Host status for {@code D2.RelativeLb.DegradedHostsCount} gauge attributes. */
+public enum HostStatus
 {
-  void updateOverrideClusterDropRate(String serviceName, String scheme, double overrideClusterDropRate);
+  /**
+   * Hosts whose health score has been reduced due to high latency or error rate. Still receive
+   * traffic at a reduced weight; not yet quarantined.
+   */
+  UNHEALTHY,
+
+  /**
+   * Hosts currently in quarantine. They are not receiving production traffic and are pending
+   * health-check recovery before being re-admitted.
+   */
+  QUARANTINED
 }

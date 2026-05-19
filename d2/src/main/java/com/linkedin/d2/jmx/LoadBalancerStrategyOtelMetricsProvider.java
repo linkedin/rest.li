@@ -1,32 +1,32 @@
+/*
+   Copyright (c) 2026 LinkedIn Corp.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
 package com.linkedin.d2.jmx;
 
 import com.linkedin.d2.balancer.clients.PerCallDurationSemantics;
 
-/**
- * Common base contract for OpenTelemetry metrics providers used by D2 load balancer strategies.
- *
- * <p>This interface captures the metrics that are shared across strategy implementations (e.g.
- * {@link DegraderLoadBalancerStrategyV3OtelMetricsProvider} and
- * {@link RelativeLoadBalancerStrategyOtelMetricsProvider}) so they don't drift over time.
- * Strategy-specific metrics live on the per-strategy sub-interfaces.
- *
- * <p>All metrics defined here are tagged with two dimensions: {@code serviceName} and
- * {@code scheme}. {@code serviceName} identifies the D2 service; {@code scheme} identifies the
- * URI scheme (e.g. {@code "http"} or {@code "https"}) the strategy is associated with.
- */
-public interface LoadBalancerStrategyOtelMetricsProvider {
-
+/** Shared OTel metrics for D2 load balancer strategies. */
+public interface LoadBalancerStrategyOtelMetricsProvider
+{
   /**
    * Records a per-call host latency sample.
    *
-   * <p>Implementations MUST emit a single histogram and attach {@code semantics} as an attribute,
-   * so {@link PerCallDurationSemantics#FULL_ROUND_TRIP} and
-   * {@link PerCallDurationSemantics#TIME_TO_FIRST_BYTE} samples remain queryable independently.
-   *
-   * @param serviceName   D2 service name
-   * @param scheme        URI scheme (e.g. {@code "http"}, {@code "https"})
-   * @param hostLatencyMs duration in milliseconds
-   * @param semantics     what {@code hostLatencyMs} measures; emit as a histogram attribute
+   * @param serviceName the name of the service
+   * @param scheme the load balancer scheme (e.g., "http", "https")
+   * @param hostLatencyMs the duration in milliseconds
+   * @param semantics the semantics of the latency
    */
   void recordHostLatency(String serviceName, String scheme, long hostLatencyMs,
       PerCallDurationSemantics semantics);

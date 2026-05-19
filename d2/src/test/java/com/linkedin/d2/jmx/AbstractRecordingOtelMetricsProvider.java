@@ -20,20 +20,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-/**
- * Shared base for in-memory recording test doubles of the OTel metrics provider interfaces. The
- * {@code Test{Relative,Degrader}LoadBalancerStrategy*OtelMetricsProvider} test fixtures extend this
- * class and add only the provider-specific {@code @Override} methods that delegate to the {@code
- * record*} helpers below. Verification helpers (counts, last-value getters, latency replays, reset)
- * live here so behaviour cannot drift between fixtures.
- */
+/** Shared recording base for strategy OTel metrics test doubles. */
 abstract class AbstractRecordingOtelMetricsProvider
 {
   private final List<MetricsInvocation> _calls = new ArrayList<>();
-
-  // -------------------------------------------------------------------------
-  // Record helpers — concrete provider methods call these from their @Override
-  // -------------------------------------------------------------------------
 
   protected void recordLong(String methodName, String serviceName, String scheme, long longValue)
   {
@@ -51,14 +41,16 @@ abstract class AbstractRecordingOtelMetricsProvider
     _calls.add(new MetricsInvocation(methodName, serviceName, scheme, intValue));
   }
 
+  protected void recordInt(String methodName, String serviceName, String scheme, int intValue,
+      HostStatus hostStatus)
+  {
+    _calls.add(new MetricsInvocation(methodName, serviceName, scheme, intValue, hostStatus));
+  }
+
   protected void recordDouble(String methodName, String serviceName, String scheme, double doubleValue)
   {
     _calls.add(new MetricsInvocation(methodName, serviceName, scheme, doubleValue));
   }
-
-  // -------------------------------------------------------------------------
-  // Verification helpers
-  // -------------------------------------------------------------------------
 
   public int getCallCount(String methodName)
   {
@@ -107,6 +99,41 @@ abstract class AbstractRecordingOtelMetricsProvider
   {
     MetricsInvocation last = lastFor(methodName);
     return last == null ? null : last.perCallDurationSemantics;
+  }
+
+  /**
+   * Returns the number of invocations of {@code methodName} whose recorded {@link HostStatus}
+   * tag matched {@code status}. Used to assert that a single attribute-dimensioned gauge has
+   * been emitted once per status value in the same emission cycle.
+   */
+  public int getCallCountForHostStatus(String methodName, HostStatus status)
+  {
+    int count = 0;
+    for (MetricsInvocation call : _calls)
+    {
+      if (call.methodName.equals(methodName) && call.hostStatus == status)
+      {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Returns the most recent integer value recorded for {@code methodName} with the given
+   * {@link HostStatus} attribute, or {@code null} if no such call was recorded.
+   */
+  public Integer getLastIntValueForHostStatus(String methodName, HostStatus status)
+  {
+    for (int i = _calls.size() - 1; i >= 0; i--)
+    {
+      MetricsInvocation call = _calls.get(i);
+      if (call.methodName.equals(methodName) && call.hostStatus == status)
+      {
+        return call.intValue;
+      }
+    }
+    return null;
   }
 
   /**
@@ -166,6 +193,7 @@ abstract class AbstractRecordingOtelMetricsProvider
     Integer intValue;
     Double doubleValue;
     PerCallDurationSemantics perCallDurationSemantics;
+    HostStatus hostStatus;
 
     MetricsInvocation(String methodName, String serviceName, String scheme, long longValue)
     {
@@ -191,6 +219,16 @@ abstract class AbstractRecordingOtelMetricsProvider
       this.serviceName = serviceName;
       this.scheme = scheme;
       this.intValue = intValue;
+    }
+
+    MetricsInvocation(String methodName, String serviceName, String scheme, int intValue,
+        HostStatus hostStatus)
+    {
+      this.methodName = methodName;
+      this.serviceName = serviceName;
+      this.scheme = scheme;
+      this.intValue = intValue;
+      this.hostStatus = hostStatus;
     }
 
     MetricsInvocation(String methodName, String serviceName, String scheme, double doubleValue)
