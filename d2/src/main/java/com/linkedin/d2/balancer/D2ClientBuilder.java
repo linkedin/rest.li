@@ -79,6 +79,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+import com.google.errorprone.annotations.RestrictedApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,9 +100,29 @@ public class D2ClientBuilder
   private boolean _restOverStream = false;
   private final D2ClientConfig _config = new D2ClientConfig();
 
+  @RestrictedApi(
+      explanation = "Direct instantiation of D2ClientBuilder is restricted for LinkedIn-internal callers. "
+          + "Use D2ClientFactory (container) instead. See go/onboardindis.",
+      link = "go/onboardindis",
+      allowedOnPath = ".*/factory/D2ClientFactory\\.java"   // LinkedIn's blessed factory
+          + "|.*/test/.*"                                   // all test code
+          + "|^(?!.*com/linkedin).*$",                     // all non-LinkedIn (open-source) callers
+      allowlistAnnotations = {AllowRawD2ClientBuilder.class, SuppressWarnings.class}
+  )
+  public D2ClientBuilder() {}
+
   /**
    * @return {@link D2Client} that is not started yet. Call start(Callback) to start it.
    */
+  @RestrictedApi(
+      explanation = "Direct use of D2ClientBuilder.build() is restricted for LinkedIn-internal callers. "
+          + "Use D2ClientFactory (container) instead. See go/onboardindis.",
+      link = "go/onboardindis",
+      allowedOnPath = ".*/factory/D2ClientFactory\\.java"   // LinkedIn's blessed factory
+          + "|.*/test/.*"                                   // all test code
+          + "|^(?!.*com/linkedin).*$",                     // all non-LinkedIn (open-source) callers
+      allowlistAnnotations = {AllowRawD2ClientBuilder.class, SuppressWarnings.class}
+  )
   public D2Client build()
   {
     if (!_config.disableDetectLiRawD2Client && isLiRawD2Client())
