@@ -195,7 +195,7 @@ public class ZooKeeperPermanentStore<T> extends ZooKeeperStore<T>
           }
           catch (PropertySerializationException e)
           {
-            _log.error("Failed to deserialize property " + propertyName + ", value in bytes:" + new String(bytes), e);
+            _log.error("Failed to deserialize property " + propertyName + ", value in bytes:" + (bytes == null ? "null" : new String(bytes)), e);
             propertyValue = null;
           }
           reportDualReadData(propertyName, propertyValue);
