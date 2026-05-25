@@ -41,12 +41,25 @@ public abstract class BaseMessage implements MessageHeaders
 
   protected BaseMessage(Map<String, String> headers, List<String> cookies)
   {
-    ArgumentUtil.notNull(headers, "headers");
-    ArgumentUtil.notNull(cookies, "cookies");
-    TreeMap<String, String> tmpHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-    tmpHeaders.putAll(headers);
-    _headers = Collections.unmodifiableSortedMap(tmpHeaders);
-    _cookies = Collections.unmodifiableList(new ArrayList<>(cookies));
+    this(headers, cookies, true);
+  }
+
+  protected BaseMessage(Map<String, String> headers, List<String> cookies, boolean validateArgs)
+  {
+    if (validateArgs)
+    {
+      ArgumentUtil.notNull(headers, "headers");
+      ArgumentUtil.notNull(cookies, "cookies");
+      TreeMap<String, String> tmpHeaders = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+      tmpHeaders.putAll(headers);
+      _headers = Collections.unmodifiableSortedMap(tmpHeaders);
+      _cookies = Collections.unmodifiableList(new ArrayList<>(cookies));
+    }
+    else
+    {
+      _headers = headers;
+      _cookies = cookies;
+    }
   }
 
   @Override
