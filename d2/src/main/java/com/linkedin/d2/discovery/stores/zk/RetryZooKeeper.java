@@ -354,6 +354,25 @@ public class RetryZooKeeper extends AbstractZooKeeper implements Retryable
   }
 
   @Override
+  public void getChildren(final String path, Watcher watcher, AsyncCallback.Children2Callback cb, Object ctx)
+  {
+    final RetryCallback callback = new RetryCallback() {
+      @Override
+      protected void retry() {
+        _log.info("Retry getChildren with AsyncCallback.Children2Callback operation: path = " + path);
+        zkGetChildren2(path, watcher, this, ctx);
+      }
+      @Override
+      protected void processChildrenResult(int rc, String path, Object ctx, List<String> children, Stat stat)
+      {
+        cb.processResult(rc, path, ctx, children, stat);
+      }
+    };
+
+    zkGetChildren2(path, watcher, callback, ctx);
+  }
+
+  @Override
   public void getData(final String path, final Watcher watcher, final AsyncCallback.DataCallback cb, final Object ctx)
   {
     final RetryCallback callback = new RetryCallback() {
@@ -421,7 +440,7 @@ public class RetryZooKeeper extends AbstractZooKeeper implements Retryable
   to touch that.
   */
   private abstract class RetryCallback implements AsyncCallback.DataCallback, AsyncCallback.ChildrenCallback,
-      AsyncCallback.StatCallback, AsyncCallback.StringCallback, AsyncCallback.VoidCallback
+      AsyncCallback.StatCallback, AsyncCallback.StringCallback, AsyncCallback.VoidCallback, AsyncCallback.Children2Callback
   {
     private int             _retry = 0;
 
@@ -435,6 +454,10 @@ public class RetryZooKeeper extends AbstractZooKeeper implements Retryable
       throw new UnsupportedOperationException("Must override use processDataResult");
     }
     protected void processChildrenResult(int rc, String path, Object ctx, List<String> children)
+    {
+      throw new UnsupportedOperationException("Must override use processChildResult");
+    }
+    protected void processChildrenResult(int rc, String path, Object ctx, List<String> children, Stat stat)
     {
       throw new UnsupportedOperationException("Must override use processChildResult");
     }
@@ -490,6 +513,24 @@ public class RetryZooKeeper extends AbstractZooKeeper implements Retryable
         _interval = _initInterval;
         // subclass should invoke original callback's processResult method here.
         processDataResult(rc, path, ctx, data, stat) ;
+      }
+      else
+      {
+        retryLimitedTimes();
+      }
+    }
+
+    // for Children2Callback
+    @Override
+    public void processResult(int rc, String path, Object ctx, List<String> children, Stat stat)
+    {
+      KeeperException.Code result = KeeperException.Code.get(rc);
+      if (result != KeeperException.Code.CONNECTIONLOSS)
+      {
+        // reset backoff interval
+        _interval = _initInterval;
+        // subclass should invoke original callback's processResult method here.
+        processChildrenResult(rc, path, ctx, children, stat);
       }
       else
       {
@@ -601,6 +642,11 @@ public class RetryZooKeeper extends AbstractZooKeeper implements Retryable
   }
 
   public void zkGetChildren(final String path, Watcher watcher, AsyncCallback.ChildrenCallback cb, Object ctx)
+  {
+    _zk.getChildren(path, watcher, cb, ctx) ;
+  }
+
+  public void zkGetChildren2(final String path, Watcher watcher, AsyncCallback.Children2Callback cb, Object ctx)
   {
     _zk.getChildren(path, watcher, cb, ctx) ;
   }
