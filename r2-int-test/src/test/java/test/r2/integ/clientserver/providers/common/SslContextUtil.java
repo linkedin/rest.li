@@ -29,7 +29,9 @@ public final class SslContextUtil
   public static final String KEY_STORE = SslContextUtil.class.getClassLoader().getResource("keystore").getPath();
   public static final String KEY_STORE_PASSWORD = "password";
 
-  private static final String[] CIPHER_SUITE = {"TLS_RSA_WITH_AES_128_CBC_SHA256"};
+  // Note: TLS_RSA_WITH_AES_128_CBC_SHA256 was removed from the supported cipher list in Java 11+
+  // security updates (RSA key-exchange ciphers lack forward secrecy). We let the JDK negotiate
+  // the best available cipher suite rather than pinning one that may not be present.
   private static final String[] PROTOCOLS = {"TLSv1.2"};
 
   private static final int HTTPS_TO_HTTP_PORT_SPAN = 1000;
@@ -57,7 +59,6 @@ public final class SslContextUtil
   public static SSLParameters getSSLParameters()
   {
     SSLParameters sslParameters = new SSLParameters();
-    sslParameters.setCipherSuites(CIPHER_SUITE);
     sslParameters.setProtocols(PROTOCOLS);
     return sslParameters;
   }
