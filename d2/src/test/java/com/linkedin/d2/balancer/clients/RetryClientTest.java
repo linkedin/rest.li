@@ -24,11 +24,16 @@ import com.linkedin.d2.balancer.LoadBalancerState;
 import com.linkedin.d2.balancer.PartitionedLoadBalancerTestState;
 import com.linkedin.d2.balancer.properties.PartitionData;
 import com.linkedin.d2.balancer.simple.SimpleLoadBalancer;
+import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy;
+import com.linkedin.d2.balancer.strategies.LoadBalancerStrategy.ExcludedHostHints;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyConfig;
 import com.linkedin.d2.balancer.strategies.degrader.DegraderLoadBalancerStrategyV3;
+import com.linkedin.d2.balancer.util.hashing.HashFunction;
+import com.linkedin.d2.balancer.util.hashing.Ring;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessException;
 import com.linkedin.d2.balancer.util.partitions.PartitionAccessor;
 import com.linkedin.data.ByteString;
+import com.linkedin.r2.message.Request;
 import com.linkedin.r2.message.RequestContext;
 import com.linkedin.r2.message.rest.RestRequest;
 import com.linkedin.r2.message.rest.RestRequestBuilder;
@@ -41,8 +46,6 @@ import com.linkedin.r2.message.stream.entitystream.EntityStreams;
 import com.linkedin.r2.transport.http.client.HttpClientFactory;
 import com.linkedin.r2.util.NamedThreadFactory;
 import com.linkedin.test.util.ClockedExecutor;
-import com.linkedin.test.util.retry.SingleRetry;
-import com.linkedin.test.util.retry.ThreeRetries;
 import com.linkedin.util.clock.SettableClock;
 import com.linkedin.util.clock.SystemClock;
 import java.net.URI;
@@ -53,6 +56,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -137,10 +141,12 @@ public class RetryClientTest
     assertNotNull(restCallback.t);
   }
 
-  @Test(retryAnalyzer = ThreeRetries.class) // Known to be flaky in CI
+  @Test
   public void testIgnoreStreamRetry() throws Exception
   {
-    SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/good"),
+    // Only include retry URIs: stream retry is disabled so "good" is never needed and its presence
+    // caused non-deterministic host selection (consistent-hash could pick "good" first).
+    SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1"),
         HttpClientFactory.UNLIMITED_CLIENT_REQUEST_RETRY_RATIO);
 
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
@@ -330,10 +336,15 @@ public class RetryClientTest
     }
   }
 
-  @Test(retryAnalyzer = ThreeRetries.class) // Known to be flaky in CI
+  @Test
   public void testRestRetryExceedsClientRetryRatio() throws Exception
   {
-    SimpleLoadBalancer balancer = prepareLoadBalancer(Arrays.asList("http://test.linkedin.com/retry1", "http://test.linkedin.com/good"),
+    // OrderedLoadBalancerStrategy guarantees retry1 → retry2 → good selection order,
+    // making the test fully deterministic regardless of JVM consistent-hash ring layout.
+    SimpleLoadBalancer balancer = prepareLoadBalancerOrdered(
+        Arrays.asList("http://test.linkedin.com/retry1",
+                      "http://test.linkedin.com/retry2",
+                      "http://test.linkedin.com/good"),
         HttpClientFactory.DEFAULT_MAX_CLIENT_REQUEST_RETRY_RATIO);
     SettableClock clock = new SettableClock();
     DynamicClient dynamicClient = new DynamicClient(balancer, null);
@@ -347,40 +358,37 @@ public class RetryClientTest
         true,
         false);
     URI uri1 = URI.create("d2://retryService1?arg1=empty&arg2=empty");
-    RestRequest restRequest1 = new RestRequestBuilder(uri1).build();
-
     URI uri2 = URI.create("d2://retryService2?arg1=empty&arg2=empty");
-    RestRequest restRequest2 = new RestRequestBuilder(uri2).build();
 
-    // This request will be retried and route to the good host
+    // This request will be retried (retry1 → retry2 → good) and succeed.
     DegraderTrackerClientTest.TestCallback<RestResponse> restCallback = new DegraderTrackerClientTest.TestCallback<>();
-    client.restRequest(restRequest1, restCallback);
+    client.restRequest(new RestRequestBuilder(uri1).build(), new RequestContext(), restCallback);
 
     assertNull(restCallback.e);
     assertNotNull(restCallback.t);
 
-    // This request will not be retried because the retry ratio is exceeded
+    // This request will not be retried because the retry ratio is exceeded.
     clock.addDuration(RetryClient.DEFAULT_UPDATE_INTERVAL_MS);
 
     restCallback = new DegraderTrackerClientTest.TestCallback<>();
-    client.restRequest(restRequest1, restCallback);
+    client.restRequest(new RestRequestBuilder(uri1).build(), new RequestContext(), restCallback);
 
     assertNull(restCallback.t);
     assertNotNull(restCallback.e);
     assertTrue(restCallback.e.getMessage().contains("Data not available"));
 
-    // If the client sends request to a different service endpoint, the retry ratio should not interfere
+    // If the client sends request to a different service endpoint, the retry ratio should not interfere.
     restCallback = new DegraderTrackerClientTest.TestCallback<>();
-    client.restRequest(restRequest2, restCallback);
+    client.restRequest(new RestRequestBuilder(uri2).build(), new RequestContext(), restCallback);
 
     assertNull(restCallback.e);
     assertNotNull(restCallback.t);
 
-    // After 5s interval, retry counter is reset and this request will be retried again
+    // After 5s interval, retry counter is reset and this request will be retried again.
     clock.addDuration(RetryClient.DEFAULT_UPDATE_INTERVAL_MS * RetryClient.DEFAULT_AGGREGATED_INTERVAL_NUM);
 
     restCallback = new DegraderTrackerClientTest.TestCallback<>();
-    client.restRequest(restRequest1, restCallback);
+    client.restRequest(new RestRequestBuilder(uri1).build(), new RequestContext(), restCallback);
 
     assertNull(restCallback.e);
     assertNotNull(restCallback.t);
@@ -416,6 +424,95 @@ public class RetryClientTest
     }, 0, 100, TimeUnit.MILLISECONDS);
 
     clock.runFor(RetryClient.DEFAULT_UPDATE_INTERVAL_MS * 2);
+  }
+
+  /**
+   * Like {@link #prepareLoadBalancer} but uses {@link OrderedLoadBalancerStrategy} instead of
+   * {@link DegraderLoadBalancerStrategyV3}. Hosts are always selected in the order given, making
+   * tests that depend on pick order fully deterministic.
+   */
+  public SimpleLoadBalancer prepareLoadBalancerOrdered(List<String> uris, double maxClientRequestRetryRatio)
+      throws URISyntaxException
+  {
+    String serviceName = "retryService";
+    String clusterName = "cluster";
+    String path = "";
+    String strategyName = "degrader";
+
+    Map<URI, Map<Integer, PartitionData>> partitionDescriptions = new HashMap<>();
+    List<URI> orderedUris = new ArrayList<>();
+    for (String uri : uris)
+    {
+      URI foo = URI.create(uri);
+      orderedUris.add(foo);
+      Map<Integer, PartitionData> foo1Data = new HashMap<>();
+      foo1Data.put(0, new PartitionData(1.0));
+      partitionDescriptions.put(foo, foo1Data);
+    }
+
+    LoadBalancerStrategy strategy = new OrderedLoadBalancerStrategy(orderedUris);
+    List<LoadBalancerState.SchemeStrategyPair> orderedStrategies = new ArrayList<>();
+    orderedStrategies.add(new LoadBalancerState.SchemeStrategyPair("http", strategy));
+
+    PartitionAccessor accessor = new TestRetryPartitionAccessor();
+
+    return new SimpleLoadBalancer(new PartitionedLoadBalancerTestState(
+        clusterName, serviceName, path, strategyName, partitionDescriptions, orderedStrategies,
+        accessor, maxClientRequestRetryRatio
+    ), _executor);
+  }
+
+  /**
+   * Deterministic {@link LoadBalancerStrategy} for testing. Always selects the first host from a
+   * fixed ordered list that is not already in {@link ExcludedHostHints}, then marks it excluded so
+   * subsequent retries advance to the next host in order.
+   */
+  private static class OrderedLoadBalancerStrategy implements LoadBalancerStrategy
+  {
+    private final List<URI> _orderedUris;
+
+    OrderedLoadBalancerStrategy(List<URI> orderedUris)
+    {
+      _orderedUris = orderedUris;
+    }
+
+    @Override
+    public String getName()
+    {
+      return "ordered";
+    }
+
+    @Override
+    public TrackerClient getTrackerClient(Request request, RequestContext requestContext,
+        long clusterGenerationId, int partitionId, Map<URI, TrackerClient> trackerClients)
+    {
+      Set<URI> excluded = ExcludedHostHints.getRequestContextExcludedHosts(requestContext);
+      if (excluded == null)
+      {
+        excluded = Collections.emptySet();
+      }
+      for (URI uri : _orderedUris)
+      {
+        if (!excluded.contains(uri) && trackerClients.containsKey(uri))
+        {
+          ExcludedHostHints.addRequestContextExcludedHost(requestContext, uri);
+          return trackerClients.get(uri);
+        }
+      }
+      return null;
+    }
+
+    @Override
+    public Ring<URI> getRing(long clusterGenerationId, int partitionId, Map<URI, TrackerClient> trackerClients)
+    {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public HashFunction<Request> getHashFunction()
+    {
+      return null;
+    }
   }
 
   public SimpleLoadBalancer prepareLoadBalancer(List<String> uris, double maxClientRequestRetryRatio) throws URISyntaxException
