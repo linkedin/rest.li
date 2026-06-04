@@ -51,6 +51,7 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
   private final int _minPoolSize;
   private final boolean _tcpNoDelay;
   private final boolean _ssl;
+  private final long _channelCreationTimeoutMs;
   private final Bootstrap _bootstrap;
   private final ChannelGroup _allChannels;
   private final ScheduledExecutorService _scheduler;
@@ -81,6 +82,7 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
         enableSSLSessionResumption, connectTimeout, sslHandShakeTimeout, null);
   }
 
+  @Deprecated
   public Http2ChannelPoolFactory(
       ScheduledExecutorService scheduler,
       EventLoopGroup eventLoopGroup,
@@ -100,7 +102,34 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
       boolean enableSSLSessionResumption,
       int connectTimeout,
       int sslHandShakeTimeout,
-      String udsAddress)
+      String udsAddress) {
+    this(scheduler, eventLoopGroup, channelGroup, strategy, sslContext, sslParameters, maxPoolSize, minPoolSize,
+        maxPoolWaiterSize, maxInitialLineLength, maxHeaderSize, maxChunkSize, idleTimeout, maxContentLength, tcpNoDelay,
+        enableSSLSessionResumption, connectTimeout, sslHandShakeTimeout, udsAddress,
+        Http2ChannelLifecycle.DEFAULT_CHANNEL_CREATION_TIMEOUT_MS);
+  }
+
+  public Http2ChannelPoolFactory(
+      ScheduledExecutorService scheduler,
+      EventLoopGroup eventLoopGroup,
+      ChannelGroup channelGroup,
+      AsyncPoolImpl.Strategy strategy,
+      SSLContext sslContext,
+      SSLParameters sslParameters,
+      int maxPoolSize,
+      int minPoolSize,
+      int maxPoolWaiterSize,
+      int maxInitialLineLength,
+      int maxHeaderSize,
+      int maxChunkSize,
+      long idleTimeout,
+      long maxContentLength,
+      boolean tcpNoDelay,
+      boolean enableSSLSessionResumption,
+      int connectTimeout,
+      int sslHandShakeTimeout,
+      String udsAddress,
+      long channelCreationTimeoutMs)
   {
     final ChannelInitializer<Channel> initializer = new Http2ChannelInitializer(
         sslContext, sslParameters, maxInitialLineLength, maxHeaderSize, maxChunkSize, maxContentLength,
@@ -115,6 +144,7 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
     _idleTimeout = idleTimeout;
     _maxContentLength = maxContentLength;
     _tcpNoDelay = tcpNoDelay;
+    _channelCreationTimeoutMs = channelCreationTimeoutMs;
 
     Bootstrap bootstrap = !StringUtils.isEmpty(udsAddress) ?
         new Bootstrap().channel(getDomainSocketClass()) : new Bootstrap().channel(NioSocketChannel.class);
@@ -144,7 +174,8 @@ public class Http2ChannelPoolFactory implements ChannelPoolFactory
                 _bootstrap,
                 _allChannels,
                 _tcpNoDelay
-            )),
+            ),
+            _channelCreationTimeoutMs),
         _maxPoolSize,
         _idleTimeout,
         _scheduler,
