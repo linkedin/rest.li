@@ -13,6 +13,8 @@ When updating the changelog, remember to be very clear about what behavior has c
 and what APIs have changed, if applicable.
 
 ## [Unreleased]
+
+## [29.85.13] - 2026-06-04
 - Make the HTTP/2 parent channel creation timeout configurable via
   `HttpClientFactory.Builder.setHttp2ChannelCreationTimeout(...)`, allowing callers to
   fail faster on unreachable hosts (default unchanged at 10,000ms).
@@ -5997,7 +5999,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.12...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.13...master
+[29.85.13]: https://github.com/linkedin/rest.li/compare/v29.85.12...v29.85.13
 [29.85.12]: https://github.com/linkedin/rest.li/compare/v29.85.11...v29.85.12
 [29.85.11]: https://github.com/linkedin/rest.li/compare/v29.85.10...29.85.11
 [29.85.10]: https://github.com/linkedin/rest.li/compare/v29.85.9...v29.85.10
