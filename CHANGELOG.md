@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.85.14] - 2026-06-09
+- Fix cluster subsetting silent failure when peer URIs are IPv6
+
 ## [29.85.13] - 2026-06-04
 - Make the HTTP/2 parent channel creation timeout configurable via
   `HttpClientFactory.Builder.setHttp2ChannelCreationTimeout(...)`, allowing callers to
@@ -5999,7 +6002,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.13...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.14...master
+[29.85.14]: https://github.com/linkedin/rest.li/compare/v29.85.13...v29.85.14
 [29.85.13]: https://github.com/linkedin/rest.li/compare/v29.85.12...v29.85.13
 [29.85.12]: https://github.com/linkedin/rest.li/compare/v29.85.11...v29.85.12
 [29.85.11]: https://github.com/linkedin/rest.li/compare/v29.85.10...29.85.11
