@@ -47,4 +47,32 @@ public class D2ClientBuilderTest
       return Mockito.mock(LoadBalancerWithFacilities.class);
     });
   }
+
+  @Test
+  void testSetRelativeLoadBalancerStrategyOtelMetricsProviderNullForwardedToConfig()
+  {
+    D2ClientBuilder d2ClientBuilder = new D2ClientBuilder();
+    d2ClientBuilder.setRelativeLoadBalancerStrategyOtelMetricsProvider(null);
+
+    d2ClientBuilder.setLoadBalancerWithFacilitiesFactory(config -> {
+      Assert.assertNull(config.relativeLoadBalancerStrategyOtelMetricsProvider,
+          "Builder must forward null to the config field; NoOp-fallback is the strategy's "
+              + "responsibility, not the builder's");
+      return Mockito.mock(LoadBalancerWithFacilities.class);
+    });
+  }
+
+  @Test
+  void testSetDegraderLoadBalancerStrategyV3OtelMetricsProviderNullForwardedToConfig()
+  {
+    D2ClientBuilder d2ClientBuilder = new D2ClientBuilder();
+    d2ClientBuilder.setDegraderLoadBalancerStrategyV3OtelMetricsProvider(null);
+
+    d2ClientBuilder.setLoadBalancerWithFacilitiesFactory(config -> {
+      Assert.assertNull(config.degraderLoadBalancerStrategyV3OtelMetricsProvider,
+          "Builder must forward null to the config field; NoOp-fallback is the strategy's "
+              + "responsibility, not the builder's");
+      return Mockito.mock(LoadBalancerWithFacilities.class);
+    });
+  }
 }
