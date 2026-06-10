@@ -18,14 +18,22 @@ package com.linkedin.d2.jmx;
 
 import com.linkedin.d2.balancer.LoadBalancerStateItem;
 import com.linkedin.d2.balancer.simple.ClusterInfoItem;
+import com.linkedin.d2.jmx.ClusterInfoOtelMetricsProvider;
 
 
 public class ClusterInfoJmx implements ClusterInfoJmxMBean
 {
   private final ClusterInfoItem _clusterInfoItem;
+  private final ClusterInfoOtelMetricsProvider _clusterInfoOtelMetricsProvider;
 
-  public ClusterInfoJmx(ClusterInfoItem clusterInfoItem) {
+  public ClusterInfoJmx(ClusterInfoItem clusterInfoItem)
+  {
+    this(clusterInfoItem, new NoOpClusterInfoOtelMetricsProvider());
+  }
+
+  public ClusterInfoJmx(ClusterInfoItem clusterInfoItem, ClusterInfoOtelMetricsProvider clusterInfoOtelMetricsProvider) {
     _clusterInfoItem = clusterInfoItem;
+    _clusterInfoOtelMetricsProvider = clusterInfoOtelMetricsProvider;
   }
 
   @Override
@@ -37,11 +45,19 @@ public class ClusterInfoJmx implements ClusterInfoJmxMBean
   @Override
   public int getCanaryDistributionPolicy()
   {
+    String clusterName = _clusterInfoItem.getClusterPropertiesItem().getProperty().getClusterName();
+    
     switch (_clusterInfoItem.getClusterPropertiesItem().getDistribution())
     {
-      case STABLE: return 0;
-      case CANARY: return 1;
-      default: return -1;
+      case STABLE: 
+        _clusterInfoOtelMetricsProvider.recordCanaryDistributionPolicy(clusterName, 0);
+        return 0;
+      case CANARY: 
+        _clusterInfoOtelMetricsProvider.recordCanaryDistributionPolicy(clusterName, 1);
+        return 1;
+      default: 
+        _clusterInfoOtelMetricsProvider.recordCanaryDistributionPolicy(clusterName, -1);
+        return -1;
     }
   }
 }

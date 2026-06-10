@@ -50,10 +50,17 @@ public class JmxManager
 
   private final MBeanServer   _server;
   private final Set<ObjectName> _registeredNames = new HashSet<>();
+  private ClusterInfoOtelMetricsProvider _clusterInfoOtelMetricsProvider;
 
   public JmxManager()
   {
+    this(new NoOpClusterInfoOtelMetricsProvider());
+  }
+
+  public JmxManager(ClusterInfoOtelMetricsProvider clusterInfoOtelMetricsProvider)
+  {
     _server = ManagementFactory.getPlatformMBeanServer();
+    _clusterInfoOtelMetricsProvider = clusterInfoOtelMetricsProvider;
   }
 
   MBeanServer getMBeanServer()
@@ -118,7 +125,7 @@ public class JmxManager
 
   public synchronized JmxManager registerClusterInfo(String name, ClusterInfoItem clusterInfo)
   {
-    checkReg(new ClusterInfoJmx(clusterInfo), name);
+    checkReg(new ClusterInfoJmx(clusterInfo, _clusterInfoOtelMetricsProvider), name);
 
     return this;
   }

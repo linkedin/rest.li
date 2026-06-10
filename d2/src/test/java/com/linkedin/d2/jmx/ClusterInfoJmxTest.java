@@ -31,6 +31,8 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import static org.mockito.Mockito.*;
+
 
 public class ClusterInfoJmxTest
 {
@@ -70,5 +72,29 @@ public class ClusterInfoJmxTest
         }, distribution)
     );
     Assert.assertEquals(clusterInfoJmx.getCanaryDistributionPolicy(), expectedValue);
+  }
+
+  @Test(dataProvider = "getCanaryDistributionPoliciesTestData")
+  public void testGetCanaryDistributionPolicyWithMetricsProvider(CanaryDistributionProvider.Distribution distribution, int expectedValue)
+  {
+    ClusterInfoOtelMetricsProvider mockProvider = mock(ClusterInfoOtelMetricsProvider.class);
+    ClusterInfoItem clusterInfoItem = new ClusterInfoItem(_mockedSimpleBalancerState, new ClusterProperties("Foo"), new PartitionAccessor() {
+      @Override
+      public int getMaxPartitionId() {
+        return 0;
+      }
+
+      @Override
+      public int getPartitionId(URI uri) {
+        return 0;
+      }
+    }, distribution);
+
+    ClusterInfoJmx clusterInfoJmx = new ClusterInfoJmx(clusterInfoItem, mockProvider);
+    
+    int actualValue = clusterInfoJmx.getCanaryDistributionPolicy();
+    
+    Assert.assertEquals(actualValue, expectedValue);
+    verify(mockProvider, times(1)).recordCanaryDistributionPolicy("Foo", expectedValue);
   }
 }
