@@ -34,6 +34,8 @@ import com.linkedin.d2.balancer.util.hashing.HashFunction;
 import com.linkedin.d2.balancer.util.hashing.RandomHash;
 import com.linkedin.d2.balancer.util.hashing.URIRegexHash;
 import com.linkedin.d2.balancer.util.healthcheck.HealthCheckOperations;
+import com.linkedin.d2.jmx.NoOpRelativeLoadBalancerStrategyOtelMetricsProvider;
+import com.linkedin.d2.jmx.RelativeLoadBalancerStrategyOtelMetricsProvider;
 import com.linkedin.r2.message.Request;
 import com.linkedin.util.clock.Clock;
 import java.util.ArrayList;
@@ -78,24 +80,35 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
   private final Clock _clock;
   private final boolean _loadBalanceStreamException;
   private final boolean _enableRelativeStrategyDeferredAllocation;
+  private final RelativeLoadBalancerStrategyOtelMetricsProvider _relativeLbOtelMetricsProvider;
 
   public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
       List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter, Clock clock)
   {
-    this(executorService, healthCheckOperations, stateListenerFactories, eventEmitter, clock, false, false);
+    this(executorService, healthCheckOperations, stateListenerFactories, eventEmitter, clock, false, false,
+        new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider());
   }
 
   public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
       List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter, Clock clock,
       boolean loadBalanceStreamException)
   {
-    this(executorService, healthCheckOperations, stateListenerFactories, eventEmitter, clock,
-        loadBalanceStreamException, false);
+    this(executorService, healthCheckOperations, stateListenerFactories, eventEmitter, clock, loadBalanceStreamException,
+        false, new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider());
   }
 
   public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
       List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter, Clock clock,
       boolean loadBalanceStreamException, boolean enableRelativeStrategyDeferredAllocation)
+  {
+    this(executorService, healthCheckOperations, stateListenerFactories, eventEmitter, clock, loadBalanceStreamException,
+        enableRelativeStrategyDeferredAllocation, new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider());
+  }
+
+  public RelativeLoadBalancerStrategyFactory(ScheduledExecutorService executorService, HealthCheckOperations healthCheckOperations,
+      List<PartitionStateUpdateListener.Factory<PartitionState>> stateListenerFactories, EventEmitter eventEmitter, Clock clock,
+      boolean loadBalanceStreamException, boolean enableRelativeStrategyDeferredAllocation,
+      RelativeLoadBalancerStrategyOtelMetricsProvider relativeLbOtelMetricsProvider)
   {
     _executorService = executorService;
     _healthCheckOperations = healthCheckOperations;
@@ -104,11 +117,20 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
     _clock = clock;
     _loadBalanceStreamException = loadBalanceStreamException;
     _enableRelativeStrategyDeferredAllocation = enableRelativeStrategyDeferredAllocation;
+    _relativeLbOtelMetricsProvider = (relativeLbOtelMetricsProvider == null)
+        ? new NoOpRelativeLoadBalancerStrategyOtelMetricsProvider()
+        : relativeLbOtelMetricsProvider;
   }
 
 
   @Override
   public RelativeLoadBalancerStrategy newLoadBalancer(ServiceProperties serviceProperties)
+  {
+    return newLoadBalancer(serviceProperties, null);
+  }
+
+  @Override
+  public RelativeLoadBalancerStrategy newLoadBalancer(ServiceProperties serviceProperties, String scheme)
   {
     D2RelativeStrategyProperties relativeStrategyProperties = RelativeStrategyPropertiesConverter
         .toProperties(serviceProperties.getRelativeStrategyProperties());
@@ -116,12 +138,12 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
 
     return new RelativeLoadBalancerStrategy(getRelativeStateUpdater(relativeStrategyProperties,
                                             serviceProperties.getServiceName(), serviceProperties.getClusterName(),
-                                            serviceProperties.getPath()), getClientSelector(relativeStrategyProperties),
+                                            serviceProperties.getPath(), scheme), getClientSelector(relativeStrategyProperties),
                                             _enableRelativeStrategyDeferredAllocation);
   }
 
   private StateUpdater getRelativeStateUpdater(D2RelativeStrategyProperties relativeStrategyProperties,
-      String serviceName, String clusterName, String servicePath)
+      String serviceName, String clusterName, String servicePath, String scheme)
   {
     QuarantineManager quarantineManager = getQuarantineManager(relativeStrategyProperties, serviceName, servicePath);
     final List<PartitionStateUpdateListener.Factory<PartitionState>> listenerFactories = new ArrayList<>();
@@ -133,7 +155,7 @@ public class RelativeLoadBalancerStrategyFactory implements LoadBalancerStrategy
       listenerFactories.addAll(_stateListenerFactories);
     }
     return new StateUpdater(relativeStrategyProperties, quarantineManager, _executorService, listenerFactories,
-        serviceName, _loadBalanceStreamException);
+        serviceName, _loadBalanceStreamException, _relativeLbOtelMetricsProvider, scheme);
   }
 
   private ClientSelector getClientSelector(D2RelativeStrategyProperties relativeStrategyProperties)
