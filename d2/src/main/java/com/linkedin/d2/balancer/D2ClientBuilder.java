@@ -253,6 +253,8 @@ public class D2ClientBuilder
                   _config.indisDownstreamServicesFetchTimeout,
                   _config.xdsClientOtelMetricsProvider
     );
+    // Copied after construction to avoid threading another parameter through the large D2ClientConfig constructor.
+    cfg.subscribeToIndisObserverCluster = _config.subscribeToIndisObserverCluster;
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() : _config.lbWithFacilitiesFactory;
@@ -860,6 +862,11 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setSubscribeToUriGlobCollection(boolean subscribeToUriGlobCollection) {
     _config.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
+    return this;
+  }
+
+  public D2ClientBuilder setSubscribeToIndisObserverCluster(boolean subscribeToIndisObserverCluster) {
+    _config.subscribeToIndisObserverCluster = subscribeToIndisObserverCluster;
     return this;
   }
 
