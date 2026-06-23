@@ -3,6 +3,7 @@ package com.linkedin.d2.xds;
 import com.linkedin.d2.balancer.dualread.DualReadLoadBalancerJmx;
 import com.linkedin.d2.balancer.dualread.DualReadModeProvider;
 import com.linkedin.d2.balancer.dualread.DualReadStateManager;
+import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
 import com.linkedin.d2.jmx.D2ClientJmxManager;
 import com.linkedin.d2.jmx.JmxManager;
 import com.linkedin.d2.jmx.NoOpXdsServerMetricsProvider;
@@ -10,6 +11,7 @@ import com.linkedin.d2.xds.util.SslContextUtil;
 import com.linkedin.util.clock.SystemClock;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.Executors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -111,11 +113,51 @@ public class XdsToD2SampleClient
         () -> DualReadModeProvider.DualReadMode.DUAL_READ,
         Executors.newSingleThreadScheduledExecutor(), true);
 
-    XdsToD2PropertiesAdaptor adaptor = new XdsToD2PropertiesAdaptor(xdsClient, dualReadStateManager, null);
-    adaptor.listenToService(serviceName);
-    adaptor.listenToCluster("TokiBackendGrpc");
+    // WS2 local end-to-end check: subscribe to the INDIS observer's own cluster + uris and log what comes back.
+    XdsToD2PropertiesAdaptor adaptor =
+        new XdsToD2PropertiesAdaptor(xdsClient, dualReadStateManager, new LoggingSdEventEmitter());
+    adaptor.setSubscribeToObserverCluster(true);
+    adaptor.start();
+    System.out.println("[observer-test] started; subscribed to IndisRegistryObserver cluster + uris. "
+        + "Waiting for endpoints from " + xdsServer + " ...");
 
     while (true)
+    {
+      Thread.sleep(5000);
+    }
+  }
+
+  /**
+   * Minimal {@link ServiceDiscoveryEventEmitter} that logs received service-discovery updates to stdout,
+   * so the local observer-subscription test can show the observer's endpoints arriving over xDS.
+   */
+  private static class LoggingSdEventEmitter implements ServiceDiscoveryEventEmitter
+  {
+    @Override
+    public void emitSDStatusInitialRequestEvent(String cluster, boolean isNextGen, long duration, boolean succeeded)
+    {
+      System.out.println("[observer-test] initial request for cluster '" + cluster + "' succeeded=" + succeeded
+          + " (" + duration + "ms)");
+    }
+
+    @Override
+    public void emitSDStatusUpdateReceiptEvent(String cluster, String host, int port, StatusUpdateActionType actionType,
+        boolean isNextGen, String serviceRegistry, String serviceRegistryKey, String serviceRegistryValue,
+        Integer serviceRegistryVersion, String tracingId, long timestamp)
+    {
+      System.out.println("[observer-test] endpoint " + actionType + ": cluster='" + cluster + "' " + host + ":" + port);
+    }
+
+    @Override
+    public void emitSDStatusActiveUpdateIntentEvent(List<String> clustersClaimed, StatusUpdateActionType actionType,
+        boolean isNextGen, String tracingId, long timestamp)
+    {
+    }
+
+    @Override
+    public void emitSDStatusWriteEvent(String cluster, String host, int port, StatusUpdateActionType actionType,
+        String serviceRegistry, String serviceRegistryKey, String serviceRegistryValue, Integer serviceRegistryVersion,
+        String tracingId, boolean succeeded, long timestamp)
     {
     }
   }

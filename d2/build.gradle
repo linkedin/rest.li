@@ -80,3 +80,13 @@ configurations {
   // exclude slf4j-log4j12 which is pulled in from zookeeper
   all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
+
+// Local-only harness for manually testing the INDIS observer-cluster subscription (WS2) against a running
+// observer. Not part of the build; see OBSERVER_LOCAL_TEST.md. Example:
+//   ./gradlew :d2:runSampleClient --args="-xds localhost:32123"
+task runSampleClient(type: JavaExec) {
+  group = 'verification'
+  description = 'Run XdsToD2SampleClient against an xDS observer to verify the observer-cluster subscription.'
+  classpath = sourceSets.test.runtimeClasspath
+  main = 'com.linkedin.d2.xds.XdsToD2SampleClient'
+}
