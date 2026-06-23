@@ -238,6 +238,7 @@ public class D2ClientBuilder
                   _config.xdsChannelLoadBalancingPolicy,
                   _config.xdsChannelLoadBalancingPolicyConfig,
                   _config.subscribeToUriGlobCollection,
+                  _config.subscribeToIndisObserverCluster,
                   _config._xdsServerMetricsProvider,
                   _config.loadBalanceStreamException,
                   _config.enablePotentialClientsCache,
@@ -253,8 +254,6 @@ public class D2ClientBuilder
                   _config.indisDownstreamServicesFetchTimeout,
                   _config.xdsClientOtelMetricsProvider
     );
-    // Copied after construction to avoid threading another parameter through the large D2ClientConfig constructor.
-    cfg.subscribeToIndisObserverCluster = _config.subscribeToIndisObserverCluster;
 
     final LoadBalancerWithFacilitiesFactory loadBalancerFactory = (_config.lbWithFacilitiesFactory == null) ?
       new ZKFSLoadBalancerWithFacilitiesFactory() : _config.lbWithFacilitiesFactory;
