@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Local-only logging config for the WS2 observer-subscription harness (runSampleClient).
+     Surfaces XdsClientImpl "Subscribing to ..." lines and XdsToD2PropertiesAdaptor parse
+     warnings so the observer-cluster endpoint delivery can be verified. See OBSERVER_LOCAL_TEST.md. -->
+<Configuration status="WARN">
+  <Appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"/>
+    </Console>
+  </Appenders>
+  <Loggers>
+    <Logger name="com.linkedin.d2.xds" level="debug" additivity="false">
+      <AppenderRef ref="Console"/>
+    </Logger>
+    <Root level="info">
+      <AppenderRef ref="Console"/>
+    </Root>
+  </Loggers>
+</Configuration>

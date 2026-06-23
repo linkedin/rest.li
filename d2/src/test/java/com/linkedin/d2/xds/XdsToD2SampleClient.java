@@ -118,6 +118,41 @@ public class XdsToD2SampleClient
         new XdsToD2PropertiesAdaptor(xdsClient, dualReadStateManager, new LoggingSdEventEmitter());
     adaptor.setSubscribeToObserverCluster(true);
     adaptor.start();
+
+    // WS2 diagnostic: a second, independent watcher straight on the XdsClient for the observer's uris resource,
+    // printing exactly what XdsClientImpl delivers to watchers (map size/keys, glob updated/removed names). This
+    // bypasses the adaptor's SD-event-emitter path so we can see whether the empty-map is at the client layer.
+    xdsClient.watchXdsResource("/d2/uris/IndisRegistryObserver", new XdsClient.D2URIMapResourceWatcher()
+    {
+      @Override
+      public void onChanged(XdsClient.D2URIMapUpdate update)
+      {
+        java.util.Map<String, ?> uriMap = update.getURIMap();
+        System.out.println("[observer-test][raw-uri-watcher] onChanged:"
+            + " globCollectionEnabled=" + update.isGlobCollectionEnabled()
+            + " mapSize=" + (uriMap == null ? "null" : uriMap.size())
+            + " keys=" + (uriMap == null ? "[]" : uriMap.keySet())
+            + " updated=" + update.getUpdatedUrisName()
+            + " removed=" + update.getRemovedUrisName());
+        if (uriMap != null)
+        {
+          uriMap.forEach((k, v) -> System.out.println("[observer-test][raw-uri-watcher]   " + k + " -> " + v));
+        }
+      }
+
+      @Override
+      public void onError(io.grpc.Status error)
+      {
+        System.out.println("[observer-test][raw-uri-watcher] onError: " + error);
+      }
+
+      @Override
+      public void onReconnect()
+      {
+        System.out.println("[observer-test][raw-uri-watcher] onReconnect");
+      }
+    });
+
     System.out.println("[observer-test] started; subscribed to IndisRegistryObserver cluster + uris. "
         + "Waiting for endpoints from " + xdsServer + " ...");
 

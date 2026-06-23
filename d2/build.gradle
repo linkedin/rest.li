@@ -79,6 +79,17 @@ task scripts(dependsOn: packup, type: Zip) {
 configurations {
   // exclude slf4j-log4j12 which is pulled in from zookeeper
   all*.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+
+  // Isolated SLF4J->log4j2 binding for the local harness only (the test runtime has no binding, so it
+  // otherwise defaults to the NOP logger and swallows XdsClientImpl/adaptor logs). Not added to the test
+  // suite classpath on purpose.
+  sampleClientLogging
+}
+
+dependencies {
+  sampleClientLogging externalDependency.slf4jLog4j2
+  sampleClientLogging externalDependency.log4j2Core
+  sampleClientLogging externalDependency.log4j2Api
 }
 
 // Local-only harness for manually testing the INDIS observer-cluster subscription (WS2) against a running
@@ -87,6 +98,8 @@ configurations {
 task runSampleClient(type: JavaExec) {
   group = 'verification'
   description = 'Run XdsToD2SampleClient against an xDS observer to verify the observer-cluster subscription.'
-  classpath = sourceSets.test.runtimeClasspath
+  classpath = sourceSets.test.runtimeClasspath + configurations.sampleClientLogging
   main = 'com.linkedin.d2.xds.XdsToD2SampleClient'
+  // Surface XdsClientImpl "Subscribing to ..." lines and adaptor parse warnings (see log4j2-sampleclient.xml).
+  systemProperty 'log4j.configurationFile', file('src/test/resources/log4j2-sampleclient.xml').absolutePath
 }
