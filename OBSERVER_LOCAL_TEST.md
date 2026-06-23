@@ -20,10 +20,12 @@ arrive = the change works end to end.
   - Flag plumbed via `D2ClientConfig.subscribeToIndisObserverCluster` → `D2ClientBuilder` →
     `XdsLoadBalancerWithFacilitiesFactory` → `adaptor.setSubscribeToObserverCluster(...)`.
 - **The harness (this branch only):**
-  - `d2/src/test/java/com/linkedin/d2/xds/XdsToD2SampleClient.java` — sets the flag, calls `start()`,
-    logs SD events via a small `LoggingSdEventEmitter`, AND registers a direct
-    `XdsClient.D2URIMapResourceWatcher` (`[raw-uri-watcher]`) that prints exactly what the xDS client
-    delivers to watchers (map size/keys/values) — this is the authoritative proof the endpoint arrived.
+  - `d2/src/test/java/com/linkedin/d2/xds/XdsToD2SampleClient.java` — builds a real `D2Client` through
+    `D2ClientBuilder` with the shipping `XdsLoadBalancerWithFacilitiesFactory` and
+    `.setSubscribeToIndisObserverCluster(true)`, then `start()`s it (warm-up disabled). This drives the
+    **full production plumbing** — `D2ClientConfig` → `D2ClientBuilder` → factory →
+    `adaptor.setSubscribeToObserverCluster` — against a live observer, rather than hand-building the adaptor.
+    SD events are logged via a small `LoggingSdEventEmitter`.
   - `d2/build.gradle` — adds task `:d2:runSampleClient` (JavaExec over the test classpath), plus an
     isolated `sampleClientLogging` configuration (SLF4J→log4j2 binding). **The test runtime has no SLF4J
     binding, so without this the run silently uses the NOP logger and you see none of the XdsClientImpl
@@ -76,21 +78,22 @@ process never exits on its own, so a foreground `gradlew` will appear to "hang."
 
 ## Success criteria
 In the output you should see (order may vary):
+- `[observer-test] D2 client started via D2ClientBuilder (subscribeToIndisObserverCluster=true, warmUp=false)`
+  — confirms the full builder path (not a hand-built adaptor) started.
 - `Subscribing to NODE resource: /d2/clusters/IndisRegistryObserver` **and**
   `Subscribing to D2_URI_MAP resource: /d2/uris/IndisRegistryObserver` (from `XdsClientImpl`) — proves the
-  subscription is sent.
+  subscription is sent, driven by the config flag through the production plumbing.
 - `[observer-test] initial request for cluster 'IndisRegistryObserver' succeeded=true`.
 - **The authoritative win** — the observer's own endpoint delivered and cached over xDS:
   - `Received initial data for D2_URI_MAP /d2/uris/IndisRegistryObserver. Set state to FETCHED.`
-  - `[observer-test][raw-uri-watcher] onChanged: ... mapSize=1 keys=[https://<host>:32123]` followed by the
-    full `D2URI` payload (`cluster_name: "IndisRegistryObserver"`, `uri:`, `partition_desc`, ...).
+  - just above it, the raw `D2URI` payload for the resource (`cluster_name: "IndisRegistryObserver"`, `uri:
+    "https://<host>:32123"`, `partition_desc`, ...).
 
-  This `mapSize=1` + FETCHED-with-real-payload **is** the proof the change works end to end. Treat it as
-  the success signal, not MARK_READY (see next section).
+  FETCHED-with-real-payload **is** the proof the change works end to end. Treat it as the success signal,
+  not MARK_READY (see next section).
 
-If you flip the behavior off (set `adaptor.setSubscribeToObserverCluster(false)` in the sample client and
-rerun), you should see **no** `IndisRegistryObserver` subscription and the `[raw-uri-watcher]` should get
-nothing — the negative case.
+To see the negative case, set `.setSubscribeToIndisObserverCluster(false)` (or drop the call) in the sample
+client and rerun: there should be **no** `IndisRegistryObserver` subscription at all.
 
 ## Why you will NOT see a `MARK_READY` line (and why that's fine)
 The `[observer-test] endpoint MARK_READY: ...` SD-status event does **not** fire for an endpoint that was
@@ -104,8 +107,8 @@ itself long before you start the harness. This is by design, not a failure:
   (`if (xdsUpdate.isStaleModifiedTime(name)) return;`), so no receipt event is emitted.
 
 MARK_READY is downstream **telemetry** for *newly-changed* endpoints; it is not the subscribe-and-cache
-behavior this PR adds. The FETCHED `D2URIMapUpdate` with `mapSize=1` proves the endpoint is received and
-cached regardless.
+behavior this PR adds. The FETCHED `D2_URI_MAP` with the real endpoint payload proves the endpoint is
+received and cached regardless.
 
 Bouncing the observer does **not** produce a MARK_READY either: on reconnect the subscriber's `reset()`
 bumps `subscribedAt` to the reconnect time, so the re-announced endpoint stays stale. The only way to force
@@ -125,7 +128,7 @@ cosmetic log line.
 - **Connection refused / UNAVAILABLE** → observer not reachable at that host:port.
 - **TLS handshake / SSL errors** → keystore/truststore path or password wrong.
 - **Subscribes, FETCHED, but no MARK_READY** → expected; see "Why you will NOT see a `MARK_READY` line".
-- **Subscribes but `mapSize=0` / no payload** → the observer isn't actually announcing
+- **Subscribes but never reaches FETCHED / no payload** → the observer isn't actually announcing
   `IndisRegistryObserver`; check its `_json-uri-audit.log` for a `clusterName":"IndisRegistryObserver"`
   mark-up.
 
@@ -142,10 +145,11 @@ the observer cluster). The rest.li change is implemented + unit-tested on `hlian
 `:d2:runSampleClient` against a live observer on this VM and confirm the observer's endpoints arrive over xDS.
 JDK 11 required. Do not modify the PR change; harness edits stay on this branch.
 
-**Status as of last run (verified):** the change works end to end. Over mTLS the client subscribes to
-`/d2/clusters/IndisRegistryObserver` + `/d2/uris/IndisRegistryObserver`, the initial request succeeds, and the
-observer's own endpoint (`https://hliang-ld1.linkedin.biz:32123`) is received and cached over xDS
-(`D2_URI_MAP ... FETCHED`, `[raw-uri-watcher] mapSize=1`). The doc's old "MARK_READY" success bullet was
-misleading: that SD-status event is intentionally suppressed for endpoints announced before the subscription
-(stale-modified-time guard). The FETCHED `D2URIMapUpdate` payload is the real success signal. See the two
-sections above for the full explanation. Nothing further is needed to call WS2 verified.
+**Status as of last run (verified):** the change works end to end through the full production path. The
+harness builds a `D2Client` via `D2ClientBuilder.setSubscribeToIndisObserverCluster(true)` and starts it; over
+mTLS the client subscribes to `/d2/clusters/IndisRegistryObserver` + `/d2/uris/IndisRegistryObserver`, the
+initial request succeeds, and the observer's own endpoint (`https://hliang-ld1.linkedin.biz:32123`) is received
+and cached over xDS (`D2_URI_MAP ... FETCHED` with the real payload). The doc's old "MARK_READY" success bullet
+was misleading: that SD-status event is intentionally suppressed for endpoints announced before the
+subscription (stale-modified-time guard). The FETCHED `D2_URI_MAP` payload is the real success signal. See the
+two sections above for the full explanation. Nothing further is needed to call WS2 verified.

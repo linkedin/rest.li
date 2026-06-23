@@ -1,17 +1,18 @@
 package com.linkedin.d2.xds;
 
-import com.linkedin.d2.balancer.dualread.DualReadLoadBalancerJmx;
+import com.linkedin.common.callback.Callback;
+import com.linkedin.common.util.None;
+import com.linkedin.d2.balancer.D2Client;
+import com.linkedin.d2.balancer.D2ClientBuilder;
 import com.linkedin.d2.balancer.dualread.DualReadModeProvider;
 import com.linkedin.d2.balancer.dualread.DualReadStateManager;
 import com.linkedin.d2.discovery.event.ServiceDiscoveryEventEmitter;
-import com.linkedin.d2.jmx.D2ClientJmxManager;
-import com.linkedin.d2.jmx.JmxManager;
-import com.linkedin.d2.jmx.NoOpXdsServerMetricsProvider;
+import com.linkedin.d2.xds.balancer.XdsLoadBalancerWithFacilitiesFactory;
 import com.linkedin.d2.xds.util.SslContextUtil;
-import com.linkedin.util.clock.SystemClock;
 import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext;
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -20,6 +21,22 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 
 
+/**
+ * WS2 local end-to-end harness for the INDIS observer-cluster subscription.
+ *
+ * <p>Unlike a hand-built {@link XdsToD2PropertiesAdaptor}, this drives the <b>real production path</b>: it
+ * builds a {@link D2Client} via {@link D2ClientBuilder} with the shipping {@link XdsLoadBalancerWithFacilitiesFactory}
+ * and the {@code subscribeToIndisObserverCluster} config flag turned on, then starts it. That exercises the full
+ * plumbing under test — {@code D2ClientConfig} -> {@code D2ClientBuilder} -> {@code XdsLoadBalancerWithFacilitiesFactory}
+ * -> {@code XdsToD2PropertiesAdaptor.setSubscribeToObserverCluster} -> the xDS subscription — against a live observer.
+ *
+ * <p>Success looks like these lines in the logs (DEBUG for {@code com.linkedin.d2.xds}):
+ * <pre>
+ *   Subscribing to D2_URI_MAP resource: /d2/uris/IndisRegistryObserver
+ *   Received initial data for D2_URI_MAP /d2/uris/IndisRegistryObserver. Set state to FETCHED.
+ * </pre>
+ * See OBSERVER_LOCAL_TEST.md.
+ */
 public class XdsToD2SampleClient
 {
   public static void main(String[] args) throws Exception
@@ -30,18 +47,9 @@ public class XdsToD2SampleClient
     hostNameOption.setRequired(false);
     options.addOption(hostNameOption);
 
-    Option nodeClusterOption =
-        new Option("nodeCluster", true, "The local service cluster name where xds client is running");
-    nodeClusterOption.setRequired(false);
-    options.addOption(nodeClusterOption);
-
     Option xdsServerOption = new Option("xds", true, "xDS server address");
     xdsServerOption.setRequired(false);
     options.addOption(xdsServerOption);
-
-    Option serviceNameOption = new Option("service", true, "Service name to discover");
-    serviceNameOption.setRequired(false);
-    options.addOption(serviceNameOption);
 
     Option keyStoreFilePathOption = new Option("keyStoreFilePath", true, "keyStoreFilePath for TLS");
     keyStoreFilePathOption.setRequired(false);
@@ -63,26 +71,11 @@ public class XdsToD2SampleClient
     trustStorePasswordOption.setRequired(false);
     options.addOption(trustStorePasswordOption);
 
-    Option lbPolicyOption = new Option("lbPolicy", true, "The LB policy name to use");
-    lbPolicyOption.setRequired(false);
-    options.addOption(lbPolicyOption);
-
     CommandLineParser parser = new GnuParser();
     CommandLine cmd = parser.parse(options, args);
 
-    Node node = Node.DEFAULT_NODE;
-    if (cmd.hasOption(hostNameOption.getOpt()) && cmd.hasOption(nodeClusterOption.getOpt()))
-    {
-      node = new Node(
-          cmd.getOptionValue(hostNameOption.getOpt()),
-          cmd.getOptionValue(nodeClusterOption.getOpt()),
-          "gRPC",
-          null
-      );
-    }
-
     String xdsServer = cmd.getOptionValue(xdsServerOption.getOpt(), "localhost:32123");
-    String serviceName = cmd.getOptionValue(serviceNameOption.getOpt(), "tokiBackendGrpc");
+    String hostName = cmd.getOptionValue(hostNameOption.getOpt(), "observer-local-test-client");
 
     String keyStoreFilePath = cmd.getOptionValue(keyStoreFilePathOption.getOpt());
     String keyStorePassword = cmd.getOptionValue(keyStorePasswordOption.getOpt());
@@ -91,7 +84,6 @@ public class XdsToD2SampleClient
     String trustStorePassword = cmd.getOptionValue(trustStorePasswordOption.getOpt());
 
     SslContext sslContext = null;
-
     if (keyStoreFilePath != null && keyStorePassword != null && keyStoreType != null
         && trustStoreFilePath != null && trustStorePassword != null)
     {
@@ -100,61 +92,54 @@ public class XdsToD2SampleClient
       );
     }
 
-    XdsChannelFactory xdsChannelFactory = new XdsChannelFactory(
-        sslContext,
-        xdsServer,
-        cmd.getOptionValue(lbPolicyOption.getOpt(), IPv6AwarePickFirstLoadBalancer.POLICY_NAME)
-    );
-    XdsClient xdsClient = new XdsClientImpl(node, xdsChannelFactory.createChannel(),
-        Executors.newSingleThreadScheduledExecutor(), XdsClientImpl.DEFAULT_READY_TIMEOUT_MILLIS, false,
-        new NoOpXdsServerMetricsProvider(), false);
-
     DualReadStateManager dualReadStateManager = new DualReadStateManager(
         () -> DualReadModeProvider.DualReadMode.DUAL_READ,
         Executors.newSingleThreadScheduledExecutor(), true);
 
-    // WS2 local end-to-end check: subscribe to the INDIS observer's own cluster + uris and log what comes back.
-    XdsToD2PropertiesAdaptor adaptor =
-        new XdsToD2PropertiesAdaptor(xdsClient, dualReadStateManager, new LoggingSdEventEmitter());
-    adaptor.setSubscribeToObserverCluster(true);
-    adaptor.start();
+    // Build through the real production path with the config flag flipped on. warmUp is disabled because we only
+    // need the load balancer to start (which triggers the observer subscription); we are not making D2 requests.
+    D2Client client = new D2ClientBuilder()
+        .setXdsServer(xdsServer)
+        .setHostName(hostName)
+        .setGrpcSslContext(sslContext)
+        .setDualReadStateManager(dualReadStateManager)
+        .setServiceDiscoveryEventEmitter(new LoggingSdEventEmitter())
+        .setLoadBalancerWithFacilitiesFactory(new XdsLoadBalancerWithFacilitiesFactory())
+        .setSubscribeToIndisObserverCluster(true) // the config flag under test
+        .setWarmUp(false)
+        .build();
 
-    // WS2 diagnostic: a second, independent watcher straight on the XdsClient for the observer's uris resource,
-    // printing exactly what XdsClientImpl delivers to watchers (map size/keys, glob updated/removed names). This
-    // bypasses the adaptor's SD-event-emitter path so we can see whether the empty-map is at the client layer.
-    xdsClient.watchXdsResource("/d2/uris/IndisRegistryObserver", new XdsClient.D2URIMapResourceWatcher()
+    CountDownLatch started = new CountDownLatch(1);
+    Throwable[] startError = {null};
+    client.start(new Callback<None>()
     {
       @Override
-      public void onChanged(XdsClient.D2URIMapUpdate update)
+      public void onSuccess(None result)
       {
-        java.util.Map<String, ?> uriMap = update.getURIMap();
-        System.out.println("[observer-test][raw-uri-watcher] onChanged:"
-            + " globCollectionEnabled=" + update.isGlobCollectionEnabled()
-            + " mapSize=" + (uriMap == null ? "null" : uriMap.size())
-            + " keys=" + (uriMap == null ? "[]" : uriMap.keySet())
-            + " updated=" + update.getUpdatedUrisName()
-            + " removed=" + update.getRemovedUrisName());
-        if (uriMap != null)
-        {
-          uriMap.forEach((k, v) -> System.out.println("[observer-test][raw-uri-watcher]   " + k + " -> " + v));
-        }
+        System.out.println("[observer-test] D2 client started via D2ClientBuilder "
+            + "(subscribeToIndisObserverCluster=true, warmUp=false)");
+        started.countDown();
       }
 
       @Override
-      public void onError(io.grpc.Status error)
+      public void onError(Throwable e)
       {
-        System.out.println("[observer-test][raw-uri-watcher] onError: " + error);
-      }
-
-      @Override
-      public void onReconnect()
-      {
-        System.out.println("[observer-test][raw-uri-watcher] onReconnect");
+        startError[0] = e;
+        System.out.println("[observer-test] D2 client start FAILED: " + e);
+        started.countDown();
       }
     });
+    started.await();
+    if (startError[0] != null)
+    {
+      startError[0].printStackTrace();
+      return;
+    }
 
-    System.out.println("[observer-test] started; subscribed to IndisRegistryObserver cluster + uris. "
-        + "Waiting for endpoints from " + xdsServer + " ...");
+    System.out.println("[observer-test] started through full builder path; watch for "
+        + "'Subscribing to D2_URI_MAP resource: /d2/uris/IndisRegistryObserver' and "
+        + "'Received initial data for D2_URI_MAP /d2/uris/IndisRegistryObserver. Set state to FETCHED.' from "
+        + xdsServer);
 
     while (true)
     {
