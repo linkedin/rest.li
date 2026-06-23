@@ -298,6 +298,7 @@ public class D2ClientConfig
                  String xdsChannelLoadBalancingPolicy,
                  Map<String, ?> xdsChannelLoadBalancingPolicyConfig,
                  boolean subscribeToUriGlobCollection,
+                 boolean subscribeToIndisObserverCluster,
                  XdsServerMetricsProvider xdsServerMetricsProvider,
                  boolean loadBalanceStreamException,
                  boolean enablePotentialClientsCache,
@@ -351,6 +352,7 @@ public class D2ClientConfig
         xdsChannelLoadBalancingPolicy,
         xdsChannelLoadBalancingPolicyConfig,
         subscribeToUriGlobCollection,
+        subscribeToIndisObserverCluster,
         xdsServerMetricsProvider,
         loadBalanceStreamException,
         enablePotentialClientsCache,
@@ -438,6 +440,7 @@ public class D2ClientConfig
                  String xdsChannelLoadBalancingPolicy,
                  Map<String, ?> xdsChannelLoadBalancingPolicyConfig,
                  boolean subscribeToUriGlobCollection,
+                 boolean subscribeToIndisObserverCluster,
                  XdsServerMetricsProvider xdsServerMetricsProvider,
                  boolean loadBalanceStreamException,
                  boolean enablePotentialClientsCache,
@@ -525,6 +528,7 @@ public class D2ClientConfig
     this.xdsChannelLoadBalancingPolicyConfig = xdsChannelLoadBalancingPolicyConfig;
     this.xdsChannelKeepAliveTimeMins = xdsChannelKeepAliveTimeMins;
     this.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
+    this.subscribeToIndisObserverCluster = subscribeToIndisObserverCluster;
     this._xdsServerMetricsProvider = xdsServerMetricsProvider;
     this.loadBalanceStreamException = loadBalanceStreamException;
     this.enablePotentialClientsCache = enablePotentialClientsCache;
