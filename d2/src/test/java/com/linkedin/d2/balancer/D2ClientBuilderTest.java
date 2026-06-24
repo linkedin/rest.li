@@ -57,7 +57,7 @@ public class D2ClientBuilderTest
     // The flag set on the builder must reach the D2ClientConfig handed to the load balancer factory, i.e. it
     // must be carried through the (large) D2ClientConfig constructor rather than dropped. Capture that config
     // during build() and assert the flag is set. (XdsLoadBalancerWithFacilitiesFactory then forwards it to
-    // XdsToD2PropertiesAdaptor.setSubscribeToObserverCluster, which TestXdsToD2PropertiesAdaptor covers.)
+    // XdsToD2PropertiesAdaptor.setSubscribeToIndisObserverCluster, which TestXdsToD2PropertiesAdaptor covers.)
     boolean[] factoryInvoked = {false};
 
     new D2ClientBuilder()

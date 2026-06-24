@@ -94,7 +94,7 @@ public class XdsToD2PropertiesAdaptor
   private PropertyEventBus<ServiceProperties> _serviceEventBus;
   private PropertyEventBus<ClusterProperties> _clusterEventBus;
   // When true, start() also subscribes to the INDIS observer's own cluster (see INDIS_REGISTRY_OBSERVER_CLUSTER).
-  private boolean _subscribeToObserverCluster = false;
+  private boolean _subscribeToIndisObserverCluster = false;
 
   public XdsToD2PropertiesAdaptor(XdsClient xdsClient, DualReadStateManager dualReadStateManager,
       ServiceDiscoveryEventEmitter eventEmitter)
@@ -116,9 +116,9 @@ public class XdsToD2PropertiesAdaptor
     _servicePropertiesJsonSerializer = servicePropertiesJsonSerializer;
   }
 
-  public void setSubscribeToObserverCluster(boolean subscribeToObserverCluster)
+  public void setSubscribeToIndisObserverCluster(boolean subscribeToIndisObserverCluster)
   {
-    _subscribeToObserverCluster = subscribeToObserverCluster;
+    _subscribeToIndisObserverCluster = subscribeToIndisObserverCluster;
   }
 
   public void start()
@@ -128,7 +128,7 @@ public class XdsToD2PropertiesAdaptor
     // TODO: Note, this is a workaround since the xDS client implementation currently integrates connection
     //   error/success notifications along with the resource updates. This can be improved in a future refactor.
     listenToCluster(NON_EXISTENT_CLUSTER);
-    if (_subscribeToObserverCluster)
+    if (_subscribeToIndisObserverCluster)
     {
       // Subscribe to the observer's own cluster and uris so the live observer endpoint set is received and
       // cached over xDS. Re-subscription on reconnect is handled automatically by XdsClientImpl.

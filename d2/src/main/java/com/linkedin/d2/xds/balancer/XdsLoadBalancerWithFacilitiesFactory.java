@@ -79,7 +79,7 @@ public class XdsLoadBalancerWithFacilitiesFactory implements LoadBalancerWithFac
 
     XdsToD2PropertiesAdaptor adaptor = new XdsToD2PropertiesAdaptor(xdsClient, config.dualReadStateManager,
         config.serviceDiscoveryEventEmitter, config.clientServicesConfig);
-    adaptor.setSubscribeToObserverCluster(config.subscribeToIndisObserverCluster);
+    adaptor.setSubscribeToIndisObserverCluster(config.subscribeToIndisObserverCluster);
 
     XdsDirectory directory = new XdsDirectory(xdsClient);
 

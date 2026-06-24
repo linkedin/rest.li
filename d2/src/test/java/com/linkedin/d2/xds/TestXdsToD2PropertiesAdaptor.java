@@ -383,11 +383,11 @@ public class TestXdsToD2PropertiesAdaptor {
   }
 
   @Test
-  public void testStartSubscribesToObserverClusterWhenEnabled()
+  public void testStartSubscribesToIndisObserverClusterWhenEnabled()
   {
     XdsToD2PropertiesAdaptorFixture fixture = new XdsToD2PropertiesAdaptorFixture();
     XdsToD2PropertiesAdaptor adaptor = fixture.getSpiedAdaptor();
-    adaptor.setSubscribeToObserverCluster(true);
+    adaptor.setSubscribeToIndisObserverCluster(true);
 
     adaptor.start();
 
@@ -398,7 +398,7 @@ public class TestXdsToD2PropertiesAdaptor {
   }
 
   @Test
-  public void testStartDoesNotSubscribeToObserverClusterByDefault()
+  public void testStartDoesNotSubscribeToIndisObserverClusterByDefault()
   {
     XdsToD2PropertiesAdaptorFixture fixture = new XdsToD2PropertiesAdaptorFixture();
     XdsToD2PropertiesAdaptor adaptor = fixture.getSpiedAdaptor();
