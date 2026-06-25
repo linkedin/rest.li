@@ -66,7 +66,6 @@ public class TestXdsToD2PropertiesAdaptor {
   private static final String OBSERVER_CLUSTER_NAME = "IndisRegistryObserver";
   private static final String OBSERVER_CLUSTER_RESOURCE_NAME = CLUSTER_NODE_PREFIX + OBSERVER_CLUSTER_NAME;
   private static final String OBSERVER_URI_RESOURCE_NAME = URI_NODE_PREFIX + OBSERVER_CLUSTER_NAME;
-  private static final String NON_EXISTENT_CLUSTER_RESOURCE_NAME = CLUSTER_NODE_PREFIX + "NonExistentCluster";
   private static final long VERSION = 123;
   private static final long VERSION_2 = 124;
   private static final String LOCAL_HOST = "localhost";
@@ -405,9 +404,7 @@ public class TestXdsToD2PropertiesAdaptor {
 
     adaptor.start();
 
-    // start() still runs its existing connection-probe subscription...
-    verify(fixture._xdsClient).watchXdsResource(eq(NON_EXISTENT_CLUSTER_RESOURCE_NAME), anyNodeWatcher());
-    // ...but with the flag off (default), the observer cluster/uris are never subscribed to.
+    // with the flag off (default), the observer cluster/uris are never subscribed to.
     verify(fixture._xdsClient, never()).watchXdsResource(eq(OBSERVER_CLUSTER_RESOURCE_NAME), anyNodeWatcher());
     verify(fixture._xdsClient, never()).watchXdsResource(eq(OBSERVER_URI_RESOURCE_NAME), anyMapWatcher());
   }

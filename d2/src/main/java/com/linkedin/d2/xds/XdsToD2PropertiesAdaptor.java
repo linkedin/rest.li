@@ -56,8 +56,8 @@ public class XdsToD2PropertiesAdaptor
   private static final String D2_URI_NODE_PREFIX = "/d2/uris/";
   private static final char PATH_SEPARATOR = '/';
   private static final String NON_EXISTENT_CLUSTER = "NonExistentCluster";
-  // The INDIS observer's own D2 cluster. Subscribing to it lets every client cache the live observer
-  // endpoint set over xDS, so discovering the observer no longer hard-depends on DNS-DISCO.
+  // The INDIS observer's own D2 cluster. Subscribing to it lets a client cache the live observer
+  // endpoint set over xDS.
   private static final String INDIS_REGISTRY_OBSERVER_CLUSTER = "IndisRegistryObserver";
 
   private final XdsClient _xdsClient;
