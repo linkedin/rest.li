@@ -136,10 +136,10 @@ public class XdsToD2SampleClient
       return;
     }
 
-    System.out.println("[observer-test] started through full builder path; watch for "
-        + "'Subscribing to D2_URI_MAP resource: /d2/uris/IndisRegistryObserver' and "
-        + "'Received initial data for D2_URI_MAP /d2/uris/IndisRegistryObserver. Set state to FETCHED.' from "
-        + xdsServer);
+    System.out.println("[observer-test] started through full builder path; watch for 'Subscribing to' + "
+        + "'Received initial data ... Set state to FETCHED' for all three observer resources: "
+        + "NODE /d2/services/indisRegistryObserver, NODE /d2/clusters/IndisRegistryObserver, and "
+        + "D2_URI_MAP /d2/uris/IndisRegistryObserver. From " + xdsServer);
 
     while (true)
     {

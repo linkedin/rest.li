@@ -15,8 +15,9 @@ arrive = the change works end to end.
 
 ## What's in this branch
 - **The PR change** (`com.linkedin.pegasus:d2`):
-  - `XdsToD2PropertiesAdaptor.start()` → when `_subscribeToObserverCluster` is true, also calls
-    `listenToCluster("IndisRegistryObserver")` + `listenToUris("IndisRegistryObserver")`.
+  - `XdsToD2PropertiesAdaptor.start()` → when `_subscribeToIndisObserverCluster` is true, also calls
+    `listenToService("indisRegistryObserver")` + `listenToCluster("IndisRegistryObserver")` +
+    `listenToUris("IndisRegistryObserver")`.
   - Flag plumbed via `D2ClientConfig.subscribeToIndisObserverCluster` → `D2ClientBuilder` →
     `XdsLoadBalancerWithFacilitiesFactory` → `adaptor.setSubscribeToObserverCluster(...)`.
 - **The harness (this branch only):**
@@ -80,14 +81,18 @@ process never exits on its own, so a foreground `gradlew` will appear to "hang."
 In the output you should see (order may vary):
 - `[observer-test] D2 client started via D2ClientBuilder (subscribeToIndisObserverCluster=true, warmUp=false)`
   — confirms the full builder path (not a hand-built adaptor) started.
-- `Subscribing to NODE resource: /d2/clusters/IndisRegistryObserver` **and**
-  `Subscribing to D2_URI_MAP resource: /d2/uris/IndisRegistryObserver` (from `XdsClientImpl`) — proves the
-  subscription is sent, driven by the config flag through the production plumbing.
+- All three observer subscriptions sent (from `XdsClientImpl`), driven by the config flag through the
+  production plumbing:
+  - `Subscribing to NODE resource: /d2/services/indisRegistryObserver`
+  - `Subscribing to NODE resource: /d2/clusters/IndisRegistryObserver`
+  - `Subscribing to D2_URI_MAP resource: /d2/uris/IndisRegistryObserver`
 - `[observer-test] initial request for cluster 'IndisRegistryObserver' succeeded=true`.
-- **The authoritative win** — the observer's own endpoint delivered and cached over xDS:
-  - `Received initial data for D2_URI_MAP /d2/uris/IndisRegistryObserver. Set state to FETCHED.`
-  - just above it, the raw `D2URI` payload for the resource (`cluster_name: "IndisRegistryObserver"`, `uri:
-    "https://<host>:32123"`, `partition_desc`, ...).
+- **The authoritative win** — the observer's own service/cluster/endpoint delivered and cached over xDS, each
+  reaching `Set state to FETCHED`:
+  - `Received initial data for NODE /d2/services/indisRegistryObserver. Set state to FETCHED.`
+  - `Received initial data for NODE /d2/clusters/IndisRegistryObserver. Set state to FETCHED.`
+  - `Received initial data for D2_URI_MAP /d2/uris/IndisRegistryObserver. Set state to FETCHED.` — just above
+    it, the raw `D2URI` payload (`cluster_name: "IndisRegistryObserver"`, `uri: "https://<host>:32123"`, ...).
 
   FETCHED-with-real-payload **is** the proof the change works end to end. Treat it as the success signal,
   not MARK_READY (see next section).
