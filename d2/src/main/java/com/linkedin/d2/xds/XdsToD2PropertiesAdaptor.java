@@ -56,9 +56,10 @@ public class XdsToD2PropertiesAdaptor
   private static final String D2_URI_NODE_PREFIX = "/d2/uris/";
   private static final char PATH_SEPARATOR = '/';
   private static final String NON_EXISTENT_CLUSTER = "NonExistentCluster";
-  // The INDIS observer's own D2 cluster. Subscribing to it lets a client cache the live observer
+  // The INDIS observer's own D2 cluster and service. Subscribing to it lets a client cache the live observer
   // endpoint set over xDS.
   private static final String INDIS_REGISTRY_OBSERVER_CLUSTER = "IndisRegistryObserver";
+  private static final String INDIS_REGISTRY_OBSERVER_SERVICE = "indisRegistryObserver";
 
   private final XdsClient _xdsClient;
   private final List<XdsConnectionListener> _xdsConnectionListeners = Collections.synchronizedList(new ArrayList<>());
@@ -93,7 +94,7 @@ public class XdsToD2PropertiesAdaptor
   private PropertyEventBus<UriProperties> _uriEventBus;
   private PropertyEventBus<ServiceProperties> _serviceEventBus;
   private PropertyEventBus<ClusterProperties> _clusterEventBus;
-  // When true, start() also subscribes to the INDIS observer's own cluster (see INDIS_REGISTRY_OBSERVER_CLUSTER).
+  // When true, start() also subscribes to the INDIS observer's own service, cluster, and uris.
   private boolean _subscribeToIndisObserverCluster = false;
 
   public XdsToD2PropertiesAdaptor(XdsClient xdsClient, DualReadStateManager dualReadStateManager,
@@ -130,8 +131,8 @@ public class XdsToD2PropertiesAdaptor
     listenToCluster(NON_EXISTENT_CLUSTER);
     if (_subscribeToIndisObserverCluster)
     {
-      // Subscribe to the observer's own cluster and uris so the live observer endpoint set is received and
-      // cached over xDS. Re-subscription on reconnect is handled automatically by XdsClientImpl.
+      // Subscribe to the observer's own service, cluster, and uris
+      listenToService(INDIS_REGISTRY_OBSERVER_SERVICE);
       listenToCluster(INDIS_REGISTRY_OBSERVER_CLUSTER);
       listenToUris(INDIS_REGISTRY_OBSERVER_CLUSTER);
     }

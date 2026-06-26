@@ -66,6 +66,8 @@ public class TestXdsToD2PropertiesAdaptor {
   private static final String OBSERVER_CLUSTER_NAME = "IndisRegistryObserver";
   private static final String OBSERVER_CLUSTER_RESOURCE_NAME = CLUSTER_NODE_PREFIX + OBSERVER_CLUSTER_NAME;
   private static final String OBSERVER_URI_RESOURCE_NAME = URI_NODE_PREFIX + OBSERVER_CLUSTER_NAME;
+  private static final String OBSERVER_SERVICE_NAME = "indisRegistryObserver";
+  private static final String OBSERVER_SERVICE_RESOURCE_NAME = "/d2/services/" + OBSERVER_SERVICE_NAME;
   private static final long VERSION = 123;
   private static final long VERSION_2 = 124;
   private static final String LOCAL_HOST = "localhost";
@@ -390,8 +392,8 @@ public class TestXdsToD2PropertiesAdaptor {
 
     adaptor.start();
 
-    // both the observer's cluster node and its uri map are subscribed to, so the live observer endpoint set
-    // is received and cached over xDS.
+    // the observer's service, cluster, and uri map are all subscribed to.
+    verify(fixture._xdsClient).watchXdsResource(eq(OBSERVER_SERVICE_RESOURCE_NAME), anyNodeWatcher());
     verify(fixture._xdsClient).watchXdsResource(eq(OBSERVER_CLUSTER_RESOURCE_NAME), anyNodeWatcher());
     verify(fixture._xdsClient).watchXdsResource(eq(OBSERVER_URI_RESOURCE_NAME), anyMapWatcher());
   }
@@ -404,7 +406,8 @@ public class TestXdsToD2PropertiesAdaptor {
 
     adaptor.start();
 
-    // with the flag off (default), the observer cluster/uris are never subscribed to.
+    // with the flag off (default), the observer service/cluster/uris are never subscribed to.
+    verify(fixture._xdsClient, never()).watchXdsResource(eq(OBSERVER_SERVICE_RESOURCE_NAME), anyNodeWatcher());
     verify(fixture._xdsClient, never()).watchXdsResource(eq(OBSERVER_CLUSTER_RESOURCE_NAME), anyNodeWatcher());
     verify(fixture._xdsClient, never()).watchXdsResource(eq(OBSERVER_URI_RESOURCE_NAME), anyMapWatcher());
   }
