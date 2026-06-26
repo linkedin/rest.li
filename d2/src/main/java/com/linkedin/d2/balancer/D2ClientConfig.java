@@ -185,7 +185,6 @@ public class D2ClientConfig
   /**
    * When enabled, the xDS-based D2 client subscribes to the INDIS observer's own D2 cluster
    * ("IndisRegistryObserver") so it receives and caches the live observer endpoint set over xDS.
-   * This is the first step toward removing the hard DNS-DISCO dependency for discovering the observer.
    * Defaults to false; intended to be ramped on via config.
    */
   public boolean subscribeToIndisObserverCluster = false;
