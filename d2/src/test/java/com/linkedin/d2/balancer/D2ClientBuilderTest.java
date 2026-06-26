@@ -17,6 +17,9 @@
 package com.linkedin.d2.balancer;
 
 import com.linkedin.d2.balancer.zkfs.ZKFSUtil;
+import com.linkedin.r2.transport.common.TransportClientFactory;
+import java.util.Collections;
+import java.util.Map;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -46,5 +49,51 @@ public class D2ClientBuilderTest
       Assert.assertEquals(config.d2ServicePath, expectedD2ServicePath);
       return Mockito.mock(LoadBalancerWithFacilities.class);
     });
+  }
+
+  @Test
+  void testSubscribeToIndisObserverClusterPropagatesToConfig()
+  {
+    // The flag set on the builder must reach the D2ClientConfig handed to the load balancer factory, i.e. it
+    // must be carried through the (large) D2ClientConfig constructor rather than dropped. Capture that config
+    // during build() and assert the flag is set. (XdsLoadBalancerWithFacilitiesFactory then forwards it to
+    // XdsToD2PropertiesAdaptor.setSubscribeToIndisObserverCluster, which TestXdsToD2PropertiesAdaptor covers.)
+    boolean[] factoryInvoked = {false};
+
+    new D2ClientBuilder()
+        .setClientFactories(emptyClientFactories()) // keep the test hermetic: no real transport factories
+        .setSubscribeToIndisObserverCluster(true)
+        .setLoadBalancerWithFacilitiesFactory(config -> {
+          factoryInvoked[0] = true;
+          Assert.assertTrue(config.subscribeToIndisObserverCluster,
+              "subscribeToIndisObserverCluster set on the builder should propagate to the config given to the factory");
+          return Mockito.mock(LoadBalancerWithFacilities.class);
+        })
+        .build();
+
+    Assert.assertTrue(factoryInvoked[0], "build() should have invoked the load balancer factory");
+  }
+
+  @Test
+  void testSubscribeToIndisObserverClusterDefaultsFalse()
+  {
+    boolean[] factoryInvoked = {false};
+
+    new D2ClientBuilder()
+        .setClientFactories(emptyClientFactories())
+        .setLoadBalancerWithFacilitiesFactory(config -> {
+          factoryInvoked[0] = true;
+          Assert.assertFalse(config.subscribeToIndisObserverCluster,
+              "subscribeToIndisObserverCluster should default to false when not set on the builder");
+          return Mockito.mock(LoadBalancerWithFacilities.class);
+        })
+        .build();
+
+    Assert.assertTrue(factoryInvoked[0], "build() should have invoked the load balancer factory");
+  }
+
+  private static Map<String, TransportClientFactory> emptyClientFactories()
+  {
+    return Collections.emptyMap();
   }
 }

@@ -56,6 +56,10 @@ public class XdsToD2PropertiesAdaptor
   private static final String D2_URI_NODE_PREFIX = "/d2/uris/";
   private static final char PATH_SEPARATOR = '/';
   private static final String NON_EXISTENT_CLUSTER = "NonExistentCluster";
+  // The INDIS observer's own D2 cluster and service. Subscribing to it lets a client cache the live observer
+  // endpoint set over xDS.
+  private static final String INDIS_REGISTRY_OBSERVER_CLUSTER = "IndisRegistryObserver";
+  private static final String INDIS_REGISTRY_OBSERVER_SERVICE = "indisRegistryObserver";
 
   private final XdsClient _xdsClient;
   private final List<XdsConnectionListener> _xdsConnectionListeners = Collections.synchronizedList(new ArrayList<>());
@@ -90,6 +94,8 @@ public class XdsToD2PropertiesAdaptor
   private PropertyEventBus<UriProperties> _uriEventBus;
   private PropertyEventBus<ServiceProperties> _serviceEventBus;
   private PropertyEventBus<ClusterProperties> _clusterEventBus;
+  // When true, start() also subscribes to the INDIS observer's own service, cluster, and uris.
+  private boolean _subscribeToIndisObserverCluster = false;
 
   public XdsToD2PropertiesAdaptor(XdsClient xdsClient, DualReadStateManager dualReadStateManager,
       ServiceDiscoveryEventEmitter eventEmitter)
@@ -111,6 +117,11 @@ public class XdsToD2PropertiesAdaptor
     _servicePropertiesJsonSerializer = servicePropertiesJsonSerializer;
   }
 
+  public void setSubscribeToIndisObserverCluster(boolean subscribeToIndisObserverCluster)
+  {
+    _subscribeToIndisObserverCluster = subscribeToIndisObserverCluster;
+  }
+
   public void start()
   {
     _xdsClient.start();
@@ -118,6 +129,13 @@ public class XdsToD2PropertiesAdaptor
     // TODO: Note, this is a workaround since the xDS client implementation currently integrates connection
     //   error/success notifications along with the resource updates. This can be improved in a future refactor.
     listenToCluster(NON_EXISTENT_CLUSTER);
+    if (_subscribeToIndisObserverCluster)
+    {
+      // Subscribe to the observer's own service, cluster, and uris
+      listenToService(INDIS_REGISTRY_OBSERVER_SERVICE);
+      listenToCluster(INDIS_REGISTRY_OBSERVER_CLUSTER);
+      listenToUris(INDIS_REGISTRY_OBSERVER_CLUSTER);
+    }
   }
 
   public void shutdown()

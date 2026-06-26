@@ -63,6 +63,11 @@ public class TestXdsToD2PropertiesAdaptor {
   private static final ClusterStoreProperties PRIMARY_CLUSTER_PROPERTIES = new ClusterStoreProperties(PRIMARY_CLUSTER_NAME);
   private static final String URI_SYMLINK_RESOURCE_NAME = URI_NODE_PREFIX + SYMLINK_NAME;
   private static final String PRIMARY_URI_RESOURCE_NAME = URI_NODE_PREFIX + PRIMARY_CLUSTER_NAME;
+  private static final String OBSERVER_CLUSTER_NAME = "IndisRegistryObserver";
+  private static final String OBSERVER_CLUSTER_RESOURCE_NAME = CLUSTER_NODE_PREFIX + OBSERVER_CLUSTER_NAME;
+  private static final String OBSERVER_URI_RESOURCE_NAME = URI_NODE_PREFIX + OBSERVER_CLUSTER_NAME;
+  private static final String OBSERVER_SERVICE_NAME = "indisRegistryObserver";
+  private static final String OBSERVER_SERVICE_RESOURCE_NAME = "/d2/services/" + OBSERVER_SERVICE_NAME;
   private static final long VERSION = 123;
   private static final long VERSION_2 = 124;
   private static final String LOCAL_HOST = "localhost";
@@ -376,6 +381,35 @@ public class TestXdsToD2PropertiesAdaptor {
     D2URIMapResourceWatcher uriWatcher = fixture._uriMapWatcher;
     uriWatcher.onChanged(EMPTY_DATA_URI_MAP);
     verify(fixture._uriEventBus).publishInitialize(PRIMARY_CLUSTER_NAME, null);
+  }
+
+  @Test
+  public void testStartSubscribesToIndisObserverClusterWhenEnabled()
+  {
+    XdsToD2PropertiesAdaptorFixture fixture = new XdsToD2PropertiesAdaptorFixture();
+    XdsToD2PropertiesAdaptor adaptor = fixture.getSpiedAdaptor();
+    adaptor.setSubscribeToIndisObserverCluster(true);
+
+    adaptor.start();
+
+    // the observer's service, cluster, and uri map are all subscribed to.
+    verify(fixture._xdsClient).watchXdsResource(eq(OBSERVER_SERVICE_RESOURCE_NAME), anyNodeWatcher());
+    verify(fixture._xdsClient).watchXdsResource(eq(OBSERVER_CLUSTER_RESOURCE_NAME), anyNodeWatcher());
+    verify(fixture._xdsClient).watchXdsResource(eq(OBSERVER_URI_RESOURCE_NAME), anyMapWatcher());
+  }
+
+  @Test
+  public void testStartDoesNotSubscribeToIndisObserverClusterByDefault()
+  {
+    XdsToD2PropertiesAdaptorFixture fixture = new XdsToD2PropertiesAdaptorFixture();
+    XdsToD2PropertiesAdaptor adaptor = fixture.getSpiedAdaptor();
+
+    adaptor.start();
+
+    // with the flag off (default), the observer service/cluster/uris are never subscribed to.
+    verify(fixture._xdsClient, never()).watchXdsResource(eq(OBSERVER_SERVICE_RESOURCE_NAME), anyNodeWatcher());
+    verify(fixture._xdsClient, never()).watchXdsResource(eq(OBSERVER_CLUSTER_RESOURCE_NAME), anyNodeWatcher());
+    verify(fixture._xdsClient, never()).watchXdsResource(eq(OBSERVER_URI_RESOURCE_NAME), anyMapWatcher());
   }
 
   private static XdsD2.D2URI getD2URI(String clusterName, String uri, long version)

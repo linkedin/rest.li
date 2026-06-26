@@ -238,6 +238,7 @@ public class D2ClientBuilder
                   _config.xdsChannelLoadBalancingPolicy,
                   _config.xdsChannelLoadBalancingPolicyConfig,
                   _config.subscribeToUriGlobCollection,
+                  _config.subscribeToIndisObserverCluster,
                   _config._xdsServerMetricsProvider,
                   _config.loadBalanceStreamException,
                   _config.enablePotentialClientsCache,
@@ -860,6 +861,11 @@ public class D2ClientBuilder
 
   public D2ClientBuilder setSubscribeToUriGlobCollection(boolean subscribeToUriGlobCollection) {
     _config.subscribeToUriGlobCollection = subscribeToUriGlobCollection;
+    return this;
+  }
+
+  public D2ClientBuilder setSubscribeToIndisObserverCluster(boolean subscribeToIndisObserverCluster) {
+    _config.subscribeToIndisObserverCluster = subscribeToIndisObserverCluster;
     return this;
   }
 
