@@ -14,6 +14,9 @@ and what APIs have changed, if applicable.
 
 ## [Unreleased]
 
+## [29.85.15] - 2026-06-29
+- Add `D2ClientConfig.subscribeToIndisObserverCluster` (default `false`): when enabled, the xDS-based D2 client subscribes to the `IndisRegistryObserver` D2 service, cluster, and URIs so it receives and caches the live observer endpoint set over xDS.
+
 ## [29.85.14] - 2026-06-09
 - Fix cluster subsetting silent failure when peer URIs are IPv6
 
@@ -6002,7 +6005,8 @@ patch operations can re-use these classes for generating patch messages.
 
 ## [0.14.1]
 
-[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.14...master
+[Unreleased]: https://github.com/linkedin/rest.li/compare/v29.85.15...master
+[29.85.15]: https://github.com/linkedin/rest.li/compare/v29.85.14...v29.85.15
 [29.85.14]: https://github.com/linkedin/rest.li/compare/v29.85.13...v29.85.14
 [29.85.13]: https://github.com/linkedin/rest.li/compare/v29.85.12...v29.85.13
 [29.85.12]: https://github.com/linkedin/rest.li/compare/v29.85.11...v29.85.12
